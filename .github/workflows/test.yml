@@ -6,6 +6,15 @@ on:
   pull_request:
     branches: [main]
 
+# Default to read-only at the workflow level so each individual job
+# follows the principle of least privilege. Jobs that need additional
+# permissions (e.g. `actions/upload-artifact`) declare the elevated
+# scope locally. Closes the OpenSSF Scorecard
+# `actions/missing-workflow-permissions` advisory + reduces blast
+# radius on a compromised third-party action.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
