@@ -130,7 +130,10 @@ class TestCheckUrl:
             check_url("https://api.openai.com/v1/chat", subsystem="llm_client")
         err = excinfo.value
         assert err.subsystem == "llm_client"
-        assert "api.openai.com" in err.target
+        # Exact-string assertion (not substring) so this stays a
+        # well-formed test — substring-on-URL is a CodeQL
+        # py/incomplete-url-substring-sanitization smell even in tests.
+        assert err.target == "https://api.openai.com/v1/chat"
         assert err.remediation
 
     def test_error_carries_remediation_hint(self) -> None:
@@ -175,7 +178,11 @@ class TestCheckLlmModel:
     def test_rejects_custom_api_base_on_cloud(self) -> None:
         with offline_mode(), pytest.raises(OfflineViolationError) as excinfo:
             check_llm_model("gpt-4o", api_base="https://api.openai.com/v1")
-        assert "api.openai.com" in excinfo.value.target
+        # Exact-string assertion: the target field for model + api_base
+        # cases is "<model> @ <api_base>". Substring-in-URL is the
+        # same CodeQL smell flagged in test_rejects_cloud_host_when_offline
+        # above.
+        assert excinfo.value.target == "gpt-4o @ https://api.openai.com/v1"
 
     def test_case_insensitive_prefix_match(self) -> None:
         with offline_mode():
