@@ -58,7 +58,16 @@ class TestJiraStatus:
         assert r.status_code == 200
         payload = r.json()
         assert payload["configured"] is False
-        assert "JIRA_BASE_URL" in payload["error"]
+        # Error message is sanitized + correlated by request_id; the
+        # specifics (which env var, exception class, etc.) live in the
+        # server log only.
+        assert payload["error"] == (
+            "Jira configuration is incomplete or invalid."
+        )
+        assert len(payload["request_id"]) == 12
+        # Critical: env-var name + secret-store hints must not leak.
+        assert "JIRA_BASE_URL" not in r.text
+        assert "JIRA_API_TOKEN" not in r.text
 
     def test_returns_configured_on_success(
         self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
@@ -103,7 +112,14 @@ class TestJiraStatus:
         assert r.status_code == 200
         payload = r.json()
         assert payload["configured"] is False
-        assert "401" in payload["error"] or "Bad credentials" in payload["error"]
+        # Sanitized message + request-id correlation; upstream Jira
+        # response codes + error text live in the server log only.
+        assert payload["error"] == (
+            "Jira API call failed; check server logs with the request_id."
+        )
+        assert len(payload["request_id"]) == 12
+        assert "401" not in r.text
+        assert "Bad credentials" not in r.text
         assert "secret-never-in-response" not in r.text
 
 

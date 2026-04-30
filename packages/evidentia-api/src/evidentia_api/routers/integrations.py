@@ -10,6 +10,7 @@ display name — never the API token value.
 from __future__ import annotations
 
 import logging
+import uuid
 from typing import Any
 
 from evidentia_core.gap_store import (
@@ -22,6 +23,18 @@ from fastapi import APIRouter, HTTPException
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _new_request_id() -> str:
+    """Generate a short opaque ID to correlate a client error with the
+    server-side log entry that contains the full exception detail.
+
+    Returned to the client in error responses; the server-side log
+    line uses the same ID so an operator can grep the application log
+    for the specifics without exposing exception messages over the
+    wire.
+    """
+    return uuid.uuid4().hex[:12]
 
 
 def _load_report(key: str) -> GapAnalysisReport:
@@ -62,22 +75,37 @@ async def jira_status() -> dict[str, Any]:
             JiraConfig,
         )
     except ImportError as e:  # pragma: no cover — integrations package ships with CLI
-        return {"configured": False, "error": f"evidentia-integrations not available: {e}"}
+        rid = _new_request_id()
+        logger.warning("jira_status import failure [%s]: %r", rid, e)
+        return {
+            "configured": False,
+            "error": "evidentia-integrations package is not installed.",
+            "request_id": rid,
+        }
 
     try:
         cfg = JiraConfig.from_env()
     except ValueError as e:
-        return {"configured": False, "error": str(e)}
+        rid = _new_request_id()
+        logger.warning("jira_status config failure [%s]: %r", rid, e)
+        return {
+            "configured": False,
+            "error": "Jira configuration is incomplete or invalid.",
+            "request_id": rid,
+        }
 
     try:
         with JiraClient(cfg) as client:
             info = client.test_connection()
     except JiraApiError as e:
+        rid = _new_request_id()
+        logger.warning("jira_status api failure [%s]: %r", rid, e)
         return {
             "configured": False,
             "base_url": cfg.base_url,
             "project_key": cfg.project_key,
-            "error": str(e),
+            "error": "Jira API call failed; check server logs with the request_id.",
+            "request_id": rid,
         }
 
     return {
