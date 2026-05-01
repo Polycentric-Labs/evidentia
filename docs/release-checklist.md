@@ -166,6 +166,10 @@ Acceptance:
 - [ ] (If Dockerfile / container-build.yml touched) local
       `docker build` succeeds; in-image `evidentia version` and
       `evidentia catalog list` return expected output
+- [ ] (v0.7.5+) Dockerfile pin updated to current release version
+      (`pip install evidentia[gui]==X.Y.Z`); local `docker build` AND
+      in-image HEALTHCHECK against `/api/health` (NOT `/health` —
+      the SPA fallback would mask a broken API) succeed
 
 ---
 
@@ -321,6 +325,35 @@ Within 30 minutes of `release.yml` reporting success:
       commands work end-to-end. Also verify `pip install "evidentia[gui]==X.Y.Z"`
       pulls in `evidentia_api` (the `[gui]` extra; required to import
       the FastAPI surface).
+- [ ] **(v0.7.5+) Container image published to ghcr.io** — pulls
+      successfully and the in-image CLI works:
+      ```bash
+      docker pull ghcr.io/allenfbyrd/evidentia:vX.Y.Z
+      docker run --rm ghcr.io/allenfbyrd/evidentia:vX.Y.Z version
+      docker run --rm ghcr.io/allenfbyrd/evidentia:vX.Y.Z catalog list | head -5
+      ```
+- [ ] **(v0.7.5+) Verify cosign keyless signature on the image** —
+      validates the OIDC identity binding (release.yml@refs/tags/v*):
+      ```bash
+      cosign verify ghcr.io/allenfbyrd/evidentia:vX.Y.Z \
+          --certificate-identity-regexp 'https://github\.com/allenfbyrd/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
+          --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
+      ```
+      Expect "Verified OK" + the certificate identity URL printed.
+- [ ] **(v0.7.5+) Verify SLSA build provenance on the image digest**
+      — independent of cosign, validates the build-provenance predicate:
+      ```bash
+      gh attestation verify oci://ghcr.io/allenfbyrd/evidentia:vX.Y.Z \
+          -R allenfbyrd/evidentia
+      ```
+      Expect "verified" + the workflow run id matching the release.
+- [ ] **(v0.7.5+) Tag and `:latest` resolve to same digest** — sanity
+      check the rolling-pointer is up to date:
+      ```bash
+      docker buildx imagetools inspect ghcr.io/allenfbyrd/evidentia:vX.Y.Z --raw | grep -i digest
+      docker buildx imagetools inspect ghcr.io/allenfbyrd/evidentia:latest --raw | grep -i digest
+      # both should print the same sha256:... line
+      ```
 
 ---
 

@@ -233,18 +233,82 @@ spec. The relevant fields:
 
 ---
 
+## Verifying the published container image (v0.7.5+)
+
+Evidentia v0.7.5+ ships a signed container image to
+`ghcr.io/allenfbyrd/evidentia` on every release tag. Two independent
+verification paths cover the image — cosign keyless (PEP 740-equivalent
+for OCI artifacts) and SLSA L3 build provenance — mirroring the
+dual-path coverage on the published wheels.
+
+### Cosign keyless verification
+
+Verifies the signature against the OIDC identity binding the GitHub
+Actions workflow used to sign:
+
+```bash
+cosign verify ghcr.io/allenfbyrd/evidentia:v0.7.5 \
+  --certificate-identity-regexp 'https://github\.com/allenfbyrd/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
+  --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
+```
+
+A successful verification prints the certificate identity URL
+(matching the regexp above) and the Rekor transparency-log entry
+URL. Pin to a specific version for reproducibility (the example
+above is `v0.7.5`); use `:latest` only for development.
+
+### SLSA build provenance verification
+
+Independent of cosign, the same image carries an
+`actions/attest-build-provenance@v2` SLSA L3 attestation stored under
+`https://github.com/allenfbyrd/evidentia/attestations` and resolvable
+via:
+
+```bash
+gh attestation verify oci://ghcr.io/allenfbyrd/evidentia:v0.7.5 \
+  -R allenfbyrd/evidentia
+```
+
+This validates the build provenance predicate (workflow run id,
+commit SHA, builder identity) for the image digest — the same SLSA
+L3 path the wheels use, just keyed on the OCI digest instead of the
+wheel filename.
+
+### Pinning by digest for production deployment
+
+Tags are mutable; digests are not. For production GitOps / k8s
+manifests, pin to the digest emitted in the GitHub Release notes:
+
+```bash
+docker buildx imagetools inspect ghcr.io/allenfbyrd/evidentia:v0.7.5
+# prints sha256:<64-hex>; copy it into your k8s manifest like so:
+#   image: ghcr.io/allenfbyrd/evidentia@sha256:abc123...
+```
+
+Both `cosign verify` and `gh attestation verify` accept a digest
+reference (`@sha256:...`) and verify it identically — the signature
+binding is digest-based, not tag-based.
+
+---
+
 ## See also
 
 - [`docs/air-gapped.md`](air-gapped.md) — the GPG path for environments
   that cannot reach Fulcio / Rekor
 - [`docs/release-checklist.md`](release-checklist.md) Step 9 — the
-  release-time verifier checklist (PEP 740 + SLSA L3 paths covered)
+  release-time verifier checklist (PEP 740 + SLSA L3 + container
+  paths covered as of v0.7.5)
 - [`docs/enterprise-grade.md`](enterprise-grade.md) BLOCKER B1 / B6 /
-  H4 — the enterprise-grade quality bar Sigstore signing closes
+  H4 — the enterprise-grade quality bar Sigstore signing closes;
+  v0.7.5 flipped L1 (container image distribution) to ✅
+- [`docs/troubleshooting.md`](troubleshooting.md) — Sigstore TUF
+  fetch failures + air-gap fallback
+- [GitHub Container Registry — `evidentia` package](https://github.com/allenfbyrd/evidentia/pkgs/container/evidentia)
 - [Sigstore project docs](https://docs.sigstore.dev/)
 - [RFC 8785 — JSON Canonicalization Scheme](https://datatracker.ietf.org/doc/html/rfc8785)
 
 ---
 
-*Last reviewed: v0.7.3 cycle. Tested against Sigstore SDK 4.x +
+*Last reviewed: v0.7.5 cycle. Container-image verification sections
+added in v0.7.5. Tested against Sigstore SDK 4.x + cosign 2.4.x +
 Fulcio v1 + Rekor v1.*

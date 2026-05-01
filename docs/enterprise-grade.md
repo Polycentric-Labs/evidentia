@@ -78,7 +78,7 @@ Priority tiers:
 
 | # | Item | v0.7.0 status |
 |---|---|---|
-| L1 | Container image (Docker Hub / ECR) | ⚠️ Repo-root `Dockerfile` ships in v0.7.3 + CI smoke-test on every PR (`.github/workflows/container-build.yml`) — but **not yet published** to a public registry. Pin to a future release that explicitly opts in to ghcr.io publishing + cosign signing. |
+| L1 | Container image (Docker Hub / ECR / ghcr) | ✅ Published to `ghcr.io/allenfbyrd/evidentia` per release with cosign keyless OIDC signing + SLSA L3 build provenance attestation against the image digest (v0.7.5+). Verifiable via `cosign verify ghcr.io/allenfbyrd/evidentia:vX.Y.Z` (PEP 740-equivalent for OCI) and `gh attestation verify oci://ghcr.io/allenfbyrd/evidentia:vX.Y.Z` (SLSA path). Repo-root `Dockerfile` + CI smoke test on every Dockerfile-touching PR (`.github/workflows/container-build.yml`) provides an early-warning signal independent of release cadence. |
 | L2 | SLA documentation | ❌ Not currently documented |
 | L3 | Terraform / CloudFormation templates | ❌ Not currently provided |
 | L4 | Pre-built compliance profile library | ⚠️ 82 frameworks bundled (v0.2+); not OSCAL Profile format |
@@ -91,7 +91,7 @@ Using the enterprise-grade scoring rubric:
 - **BLOCKER**: **10/10** ✅ (all closed for v0.7.0)
 - **HIGH**: 12/15 ✅; 3 with documented remediation plan (H7 OIDC + PEP 740 attestations also closing in v0.7.0)
 - **MEDIUM**: 6/10 ✅; 4 deferred
-- **LOW**: 1/5 ✅ (partial)
+- **LOW**: 2/5 ✅ (L1 closed in v0.7.5)
 
 **v0.7.0 classification: Enterprise-ready, BLOCKER-complete (L3 on
 the research's capability-maturity scale).** This is the first
@@ -104,6 +104,7 @@ The supply-chain hardening narrative is end-to-end:
 - **Build provenance**: GitHub Actions workflow with OIDC identity
 - **Signed publish**: PyPI Trusted Publisher (OIDC, no long-lived tokens)
 - **Per-artifact attestations**: PEP 740 Sigstore attestations on every wheel + sdist, logged to Rekor
+- **Container image provenance**: ghcr.io publish with cosign keyless signing + `actions/attest-build-provenance` SLSA L3 build provenance against the image digest (v0.7.5+); independent verification via `cosign verify` (Fulcio identity binding) AND `gh attestation verify oci://...` (SLSA predicate)
 - **Software bill of materials**: CycloneDX SBOM attached to every GitHub Release
 - **Schema conformance**: `compliance-trestle` round-trip in CI
 - **Evidence integrity**: SHA-256 digests + GPG signatures (air-gap) or Sigstore bundles (online) on every AR
