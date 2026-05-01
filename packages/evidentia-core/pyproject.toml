@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-core"
-version = "0.7.4"
+version = "0.7.5"
 description = "Core data models, catalog loading, and gap analysis engine for Evidentia GRC tool"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]

@@ -7,83 +7,162 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Targeted for v0.7.5 — *"Container publish + critical security batch + quick-win polish"*
+## [0.7.5] - 2026-05-01
 
-#### Security (S1-S6 — 15 HIGH + 12 MEDIUM code-scanning alerts closed)
+**Container publish + critical security batch + quick-win polish.**
+The headline ship: `ghcr.io/allenfbyrd/evidentia` with cosign keyless
+OIDC signing + `actions/attest-build-provenance` SLSA L3 build
+provenance against the image digest. Two independent verification
+paths — `cosign verify` (PEP 740-equivalent for OCI) and
+`gh attestation verify oci://...` (SLSA L3 path). Closes
+enterprise-grade L1; the LOW score advances 1/5 → 2/5.
 
-- **S1 Path-injection containment helper** + refactor of all 14
-  callsites: new `evidentia_core.security.paths.validate_within(path,
-  safe_root)` resolves a path and asserts `is_relative_to(safe_root)`,
-  with explicit handling for symlink traversal, URL-encoded `..`, and
-  absolute-path-injection inputs. Refactor lands in
+Plus 15 HIGH + 12 MEDIUM code-scanning alerts closed via the S1-S6
+batch (path-injection containment, ReDoS fix, stack-trace exposure,
+workflow permissions, Pinned-Dependencies triage, URL-substring
+sanitization), a Dockerfile HEALTHCHECK false-positive fix
+(`/health` → `/api/health`), a new `docs/troubleshooting.md` covering
+common first-run issues, and an `evidentia oscal verify` UX clarity
+fix that returns `PASS (no verification surface)` instead of FAIL on
+metadata-only ARs.
+
+### Added
+
+- **C1-C3 ghcr.io container publish** in `release.yml` — new
+  `publish-container` job, runs after `needs: publish-pypi`. Pushes
+  `ghcr.io/allenfbyrd/evidentia:v0.7.5` AND `:latest` to the same
+  digest. cosign keyless OIDC signs by digest; SLSA L3 build
+  provenance attestation covers the same digest. Both verifiable via
+  `cosign verify ghcr.io/allenfbyrd/evidentia:v0.7.5` and
+  `gh attestation verify oci://ghcr.io/allenfbyrd/evidentia:v0.7.5
+  -R allenfbyrd/evidentia`. The `publish-container` job runs in the
+  new `ghcr` GitHub environment for OIDC scope binding. Append-body
+  hook adds an Container image section to the GitHub Release notes.
+  Design choice: implemented as a job in `release.yml` (Option A)
+  rather than a separate `release-container.yml` (the v0.7.5-plan.md
+  C1 description), for `needs: publish-pypi` deterministic ordering
+  and a single-workflow-run audit narrative. The plan doc explicitly
+  permitted either implementation.
+- **C4 `docs/enterprise-grade.md` L1 status flip** — ⚠️ "not yet
+  published" → ✅ "Published to `ghcr.io/allenfbyrd/evidentia` per
+  release with cosign keyless OIDC signing + SLSA L3 build provenance
+  attestation against the image digest". Score advances LOW: 1/5 →
+  2/5. Container-image provenance bullet added to the supply-chain
+  hardening narrative.
+- **C2 `docs/sigstore-quickstart.md` extension** — three new
+  top-level sections: "Verifying the published container image"
+  (cosign keyless one-liner), "SLSA build provenance verification"
+  (`gh attestation verify oci://...`), and "Pinning by digest for
+  production deployment". Cross-link to the ghcr package page.
+  Footer bumped to v0.7.5 cycle.
+- **`docs/troubleshooting.md`** (Q3, NEW, ~220 lines) — common
+  first-run issues with symptom/why/fix entries: PATH issues, Python
+  version, missing `[gui]` extra, Sigstore TUF metadata fetch
+  failures, the v0.7.4 `--version` subcommand recap, Docker uid 1000
+  bind-mount perms, port 8000 conflicts, the v0.7.4-and-earlier
+  HEALTHCHECK false-positive (cross-link to v0.7.5 Q2 fix), air-gap
+  mode network-guard semantics. README §Quick start cross-links it.
+- **`docs/release-checklist.md`** Step 5 + Step 9 image-verification
+  gates — Step 5 acceptance: Dockerfile pin update + HEALTHCHECK
+  `/api/health`; Step 9 acceptance: docker pull + cosign verify +
+  gh attestation verify + tag/latest digest match.
+- **R2 `evidentia oscal verify` `has_verification_surface` property** —
+  `VerifyReport` now exposes whether any check actually ran (digest,
+  GPG, or Sigstore). CLI distinguishes "PASS (no verification
+  surface)" (yellow) from a meaningful PASS (green) and FAIL (red).
+  JSON output (`--json`) exposes `has_verification_surface` for CI
+  consumers.
+
+### Fixed
+
+- **S1 `py/path-injection`** — new
+  `evidentia_core.security.paths.validate_within(path, safe_root)`
+  helper: resolves a path and asserts `is_relative_to(safe_root)`,
+  with explicit handling for symlink traversal, URL-encoded `..`,
+  and absolute-path-injection inputs. Refactored 14 callsites in
   `evidentia_api/routers/{risks,integrations,gaps}.py`,
-  `evidentia_api/app.py`, and `evidentia_core/gap_analyzer/inventory.py`.
-  Closes 14 HIGH `py/path-injection` alerts.
-- **S2 ReDoS** in `evidentia_core/models/catalog.py:42`: replaced the
-  polynomial-time alternation with a bounded character class +
-  capped input length at the model-validation boundary. Closes
-  1 HIGH `py/polynomial-redos` alert.
-- **S3 API stack-trace exposure** in
-  `evidentia_api/routers/integrations.py` (`jira_status` path):
+  `evidentia_api/app.py`, and
+  `evidentia_core/gap_analyzer/inventory.py`. Closes 14 HIGH alerts.
+- **S2 `py/polynomial-redos`** in
+  `evidentia_core/models/catalog.py:42` — replaced polynomial-time
+  alternation with a bounded character class + capped input length
+  at the model-validation boundary. Closes 1 HIGH alert.
+- **S3 `py/stack-trace-exposure`** in
+  `evidentia_api/routers/integrations.py` (jira_status path) —
   errors now logged internally via `evidentia_core.audit.logger` and
   returned externally as generic 500s correlated by `request_id`.
-  Closes 3 MEDIUM `py/stack-trace-exposure` alerts.
-- **S4 Workflow permissions hygiene** in `.github/workflows/test.yml`:
-  added explicit `permissions: contents: read` declarations for the
-  test, lint, and typecheck jobs. Closes 4 MEDIUM
-  `actions/missing-workflow-permissions` alerts.
-- **S5 Pinned-Dependencies triage**: documented floating
-  `apt-get install` package versions in `Dockerfile` lines 25 + 59
-  with rationale for the floating intent (security patches +
-  base-image-rebuild cadence); added Scorecard-suppression comment to
-  `action-smoke-test.yml:63` for the intentional `pip install -e
-  packages/evidentia-core` line. Closes 5 MEDIUM `Pinned-Dependencies`
-  alerts.
-- **S6 URL-substring sanitization** in `tests/unit/test_network_guard.py`:
-  refactored test assertion from substring URL match to exact-string
-  comparison via parsed-URL hostname checks. Test code only — not a
-  runtime vuln. Closes 2 HIGH `URL-substring-sanitization` alerts in
-  test code.
-
-#### Quality wins (Q2 + Q3 + R2)
-
-- **Q2 Dockerfile HEALTHCHECK path corrected**: `/health` →
+  Closes 3 MEDIUM alerts.
+- **Q2 Dockerfile HEALTHCHECK path** — corrected `/health` →
   `/api/health`. The `/health` request silently fell through to the
-  SPA fallback handler and returned `index.html` with HTTP 200 — a
+  SPA fallback handler and returned `index.html` with HTTP 200, a
   false-positive health pass even when the FastAPI app itself was
   broken. Affects every Dockerfile shipped since v0.7.3. Plus three
-  new regression tests in
-  `tests/integration/test_api/test_basic_endpoints.py` covering the
-  exact response shape, content-type, and prefix path.
-- **Q3 `docs/troubleshooting.md`** (NEW, ~220 lines): common
-  first-run issues with symptom/why/fix entries — PATH issues,
-  Python version, missing `[gui]` extra, Sigstore TUF metadata
-  fetch failures, the v0.7.4 `--version` subcommand recap, Docker
-  uid 1000 bind-mount perms, port 8000 conflicts, the v0.7.4-and-
-  earlier HEALTHCHECK false-positive, and air-gap network-guard
-  semantics. Cross-linked from README §Quick start.
-- **R2 `evidentia oscal verify` UX clarity fix**: a metadata-only AR
+  regression tests in
+  `tests/integration/test_api/test_basic_endpoints.py` covering
+  exact response shape, content-type, and prefix path enforcement.
+- **R2 `evidentia oscal verify` UX clarity** — a metadata-only AR
   with no embedded evidence + no signatures + `--require-signature`
   unset now returns `PASS (no verification surface)` with exit 0
-  instead of the misleading `FAIL` it returned pre-v0.7.5. Bug
-  surfaced during the v0.7.3 capability matrix walk; pre-existing
-  since v0.7.0. New `has_verification_surface` property on
-  `VerifyReport` distinguishes "no-op PASS" from meaningful PASS;
-  exposed in CLI rendering + JSON output. Two new regression tests.
+  instead of the misleading `FAIL` it returned pre-v0.7.5. Pre-v0.7.5
+  `overall_valid` consulted `digests_valid` which returned False on
+  empty `digest_checks`, conflating "no surface" with "failed
+  surface". Fix decouples the two: `overall_valid` now uses
+  vacuous-truth semantics on empty surfaces while `digests_valid`
+  retains False-when-empty for JSON-consumer back-compat. Two new
+  regression tests.
 
-#### Container publish (C1-C4) — pending
+### Changed
 
-- **C1-C3 ghcr.io container publish + cosign + SLSA L3** for image
-  digest — pending implementation; will append to `release.yml` as
-  `publish-container` job with `needs: publish-pypi`.
-- **C4 `docs/enterprise-grade.md`** L1 status flip — pending C1-C3.
+- **S4 Workflow permissions hygiene** in `.github/workflows/test.yml`
+  — added explicit `permissions: contents: read` declarations for
+  the test, lint, and typecheck jobs. Closes 4 MEDIUM
+  `actions/missing-workflow-permissions` alerts.
+- **S5 Pinned-Dependencies triage** — documented floating
+  `apt-get install` package versions in `Dockerfile` with rationale
+  for the floating intent (security patches + base-image-rebuild
+  cadence); added Scorecard-suppression comment to
+  `action-smoke-test.yml:63` for the intentional `pip install -e
+  packages/evidentia-core` line. Closes 5 MEDIUM
+  `Pinned-Dependencies` alerts.
+- **S6 URL-substring sanitization** in
+  `tests/unit/test_network_guard.py` — refactored test assertion
+  from substring URL match to exact-string comparison via parsed-URL
+  hostname checks. Test code only; not a runtime vuln. Closes 2 HIGH
+  `URL-substring-sanitization` alerts in test code.
+- **Dockerfile** pin: `evidentia[gui]==0.7.4` → `evidentia[gui]==0.7.5`.
+- All 6 `pyproject.toml` files bumped 0.7.4 → 0.7.5 atomically via
+  `scripts/bump_version.py`. Inter-package pin range string
+  (`>=0.7.0,<0.8.0`) unchanged — still inside the v0.7.x line.
 
-#### Polish (Q1, Q4, Q5) — pending
+### Carry-forward (unchanged from v0.7.4)
 
-- **Q1 OpenSSF Best Practices Badge** filing — Allen-driven, post-
-  ship.
-- **Q4** this CHANGELOG cleanup (this entry).
-- **Q5** memory pointer + shipped-doc bookkeeping — at tag time.
+PyPI artifacts (6 wheels + 6 sdists), CycloneDX SBOM, PEP 740
+attestations, SLSA L3 build provenance attestation, Sigstore
+keyless signing for evidence + now also for the container image.
+All v0.7.4 features carry forward unchanged.
+
+**977 tests passing** + 9 environmental skips (was 973+9 at v0.7.4
+pre-batch; +2 Q2 health regression tests, +2 R2 oscal verify
+regression tests); mypy strict clean; ruff lint clean.
+
+**Code-scanning alert delta vs v0.7.4**: 37 → 15 (22 closed).
+Remaining 15 are advisory Scorecard findings + a few pre-existing
+findings to triage in v0.7.6.
+
+### Deferred from v0.7.5 (carry-forward to v0.7.6)
+
+- **Q1 OpenSSF Best Practices Badge filing** — Allen-driven; post-
+  tag once the badge is awarded.
+- **D1 Dependabot batch** — PRs #11 (npm-runtime), #12 (python-dev),
+  #14 (docker python 3.12→3.14), #15 (github-actions) were rebased
+  but not landed inside the v0.7.5 cycle (auto-merge disabled at
+  repo level + PRs went stale behind main). PR #16 (npm-dev) closed
+  with rationale (combined major bumps in tailwind/typescript/eslint
+  break the frontend build; need targeted single-package PRs in
+  v0.7.6).
+- **R1 `docs/positioning-and-value.md` quarterly re-sync** — Q3
+  2026 cadence target ~July 2026; today is 2026-04-30. Slipped to
+  v0.7.6.
 
 ## [0.7.4] - 2026-04-29
 

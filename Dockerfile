@@ -59,7 +59,7 @@ WORKDIR /home/evidentia
 # Bumped on every release that ships a Dockerfile change; dependabot
 # tracks the upstream evidentia release via the `uv` ecosystem and
 # tracks this Dockerfile pin via the `docker` ecosystem.
-RUN pip install --no-cache-dir --user "evidentia[gui]==0.7.4"
+RUN pip install --no-cache-dir --user "evidentia[gui]==0.7.5"
 
 # Put the user-installed `evidentia` entrypoint on PATH.
 ENV PATH="/home/evidentia/.local/bin:${PATH}"

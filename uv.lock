@@ -825,7 +825,7 @@ wheels = [
 
 [[package]]
 name = "evidentia"
-version = "0.7.4"
+version = "0.7.5"
 source = { editable = "packages/evidentia" }
 dependencies = [
     { name = "evidentia-ai" },
@@ -855,7 +855,7 @@ provides-extras = ["gui"]
 
 [[package]]
 name = "evidentia-ai"
-version = "0.7.4"
+version = "0.7.5"
 source = { editable = "packages/evidentia-ai" }
 dependencies = [
     { name = "evidentia-core" },
@@ -874,7 +874,7 @@ requires-dist = [
 
 [[package]]
 name = "evidentia-api"
-version = "0.7.4"
+version = "0.7.5"
 source = { editable = "packages/evidentia-api" }
 dependencies = [
     { name = "evidentia-ai" },
@@ -897,7 +897,7 @@ requires-dist = [
 
 [[package]]
 name = "evidentia-collectors"
-version = "0.7.4"
+version = "0.7.5"
 source = { editable = "packages/evidentia-collectors" }
 dependencies = [
     { name = "evidentia-core" },
@@ -951,7 +951,7 @@ provides-extras = ["aws", "azure", "gcp", "github", "okta", "all"]
 
 [[package]]
 name = "evidentia-core"
-version = "0.7.4"
+version = "0.7.5"
 source = { editable = "packages/evidentia-core" }
 dependencies = [
     { name = "platformdirs" },
@@ -985,7 +985,7 @@ provides-extras = ["sigstore"]
 
 [[package]]
 name = "evidentia-integrations"
-version = "0.7.4"
+version = "0.7.5"
 source = { editable = "packages/evidentia-integrations" }
 dependencies = [
     { name = "evidentia-core" },
@@ -1017,7 +1017,7 @@ provides-extras = ["jira", "servicenow", "all"]
 
 [[package]]
 name = "evidentia-workspace"
-version = "0.7.4"
+version = "0.7.5"
 source = { virtual = "." }
 
 [package.dev-dependencies]
