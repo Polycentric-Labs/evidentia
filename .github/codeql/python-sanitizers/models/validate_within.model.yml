@@ -1,0 +1,38 @@
+# Sanitizer model for evidentia_core.security.paths.validate_within
+# (v0.7.7 CF3).
+#
+# Declares that the return value of `validate_within(candidate, safe_root)`
+# is a sanitized Path — any flow through that function is safe from
+# path-injection attacks. The function itself implements the validation
+# (resolves the path + asserts is_relative_to(safe_root) + raises
+# PathTraversalError on traversal).
+#
+# Closes the 3 false-positive HIGH alerts (#71/#72/#73):
+# - #73 evidentia_core/security/paths.py:91 (the validate_within
+#   helper itself; CodeQL flagged it because the resolve() call
+#   accepts an externally-influenced path. With this model declared,
+#   the function's own resolve() callsite is a SOURCE that immediately
+#   sanitizes — flow analysis stops there.)
+# - #72/#71 evidentia_core/gap_store.py:182, 185 (downstream of
+#   validate_within; with this model the path argument flowing through
+#   the gap_store.py callsites is sanitized before the read_text /
+#   is_file calls).
+#
+# Data-extension YAML schema reference:
+# https://docs.github.com/en/code-security/code-scanning/managing-your-code-scanning-configuration/managing-codeql-with-data-extensions
+
+extensions:
+  # Declare validate_within as a path-sanitizer. The CodeQL Python
+  # path-injection query consumes this via the standard
+  # SanitizerCustomizations module's extensible predicate.
+  - addsTo:
+      pack: codeql/python-all
+      extensible: pathSanitizerModel
+    data:
+      # [package, type, subtypes, name, signature, ext, output, kind, provenance]
+      # validate_within(candidate, safe_root) -> Path:
+      #   - package = "evidentia_core.security.paths"
+      #   - name = "validate_within"
+      #   - output = "ReturnValue" (the returned Path is sanitized)
+      #   - kind = "path-injection" (the threat model this sanitizer covers)
+      - ["evidentia_core.security.paths", "", "", "validate_within", "", "", "ReturnValue", "path-injection", "manual"]

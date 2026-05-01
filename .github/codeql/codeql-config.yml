@@ -1,0 +1,32 @@
+# CodeQL config for Evidentia advanced setup (v0.7.7 CF3).
+#
+# Loads the security-extended query suite (matching what default
+# setup runs) PLUS our custom python-sanitizers pack which declares
+# `evidentia_core.security.paths.validate_within` as a sanitizer
+# for the `py/path-injection` query. The custom pack closes the
+# 3 false-positive HIGH alerts (#71/#72/#73) at the analysis layer.
+#
+# To verify the sanitizer is firing, look at the CodeQL job logs
+# after a push: the `Analyze` step should show the python-sanitizers
+# pack being loaded; the analysis should NOT re-flag the
+# validate_within callsites that previously produced #71/#72/#73.
+
+name: "Evidentia CodeQL config"
+
+# Add our local sanitizer pack alongside the default query suites.
+# `packs:` accepts both registry-published packs and on-disk paths.
+packs:
+  python:
+    - ./.github/codeql/python-sanitizers
+
+# Path filters: skip generated SPA bundle artifacts; include only
+# our source.
+paths:
+  - packages
+  - tests
+
+paths-ignore:
+  - packages/evidentia-api/src/evidentia_api/static
+  - packages/evidentia-ui/dist
+  - packages/evidentia-ui/node_modules
+  - "**/*.js.map"

@@ -1,0 +1,64 @@
+# Advanced CodeQL setup for Evidentia (v0.7.7 CF3).
+#
+# Replaces GitHub's default CodeQL setup with an advanced workflow
+# that pulls in a custom QL pack declaring `validate_within` as a
+# sanitizer for the `py/path-injection` query. This closes the
+# 3 false-positive HIGH alerts (#71/#72/#73) at the analysis layer
+# rather than per-instance dismissal.
+#
+# Default setup must be disabled in repo Settings -> Code security
+# and analysis BEFORE this workflow takes over. While both are
+# enabled they overlap; only one will produce the canonical alert
+# stream.
+#
+# References:
+# - https://docs.github.com/en/code-security/code-scanning/creating-an-advanced-setup-for-code-scanning
+# - https://docs.github.com/en/code-security/codeql-cli/using-the-codeql-cli/extending-the-default-codeql-suite-with-custom-queries
+# - https://github.com/github/codeql-action
+
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly re-scan to catch query-suite updates that surface new
+    # alerts without a code change. Mondays 12:00 UTC.
+    - cron: '0 12 * * 1'
+
+permissions:
+  # Least-privilege; security-events: write is the canonical scope
+  # for code-scanning result upload.
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript-typescript, actions]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@14c9a0cbe6373488c2a41f7e75c8dd142bb2aba8  # v3.35.3
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql/codeql-config.yml
+          # security-extended adds the same query suite as default
+          # setup; security-and-quality is broader but noisier.
+          queries: security-extended
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@14c9a0cbe6373488c2a41f7e75c8dd142bb2aba8  # v3.35.3
+        with:
+          category: "/language:${{ matrix.language }}"
