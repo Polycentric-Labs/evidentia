@@ -64,7 +64,15 @@ jobs:
           # uv sync already locked + installed every dep from uv.lock.
           # No PyPI fetch happens here, so OpenSSF Scorecard's
           # Pinned-Dependencies signal is satisfied.
-          .venv/bin/python -m pip install -e packages/evidentia-core --no-deps
+          #
+          # NOTE (v0.7.6): switched from `python -m pip install` to
+          # `uv pip install`. The uv-managed venv does not include the
+          # `pip` module by default (uv has its own resolver), so the
+          # original `python -m pip install` errored with
+          # "No module named pip" on every run. `uv pip install`
+          # provides the same surface against the active venv without
+          # needing a separate `python -m ensurepip` bootstrap.
+          uv pip install -e packages/evidentia-core --no-deps
           .venv/bin/evidentia version
           # Make the uv venv the default Python for downstream steps,
           # so the composite action's `python -m pip install` and
