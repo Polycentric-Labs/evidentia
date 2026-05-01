@@ -34,6 +34,21 @@ jobs:
   build:
     name: Build + smoke test
     runs-on: ubuntu-latest
+    # Skip the smoke test on release-bump commits (`chore(release):
+    # bump to X.Y.Z`). Such commits bump the Dockerfile's
+    # `pip install evidentia[gui]==X.Y.Z` pin to a version that
+    # PyPI doesn't have yet (the tag hasn't fired release.yml +
+    # publish-pypi). The smoke test would then fail with
+    # "No matching distribution" — a benign false positive that
+    # creates audit-log smell without surfacing real issues.
+    # release.yml's publish-container job has its own Wait-for-PyPI
+    # step (CI1, v0.7.6) that handles the propagation race for the
+    # actual ship.
+    #
+    # False-positive recovery: if a non-release commit accidentally
+    # starts with `chore(release):`, run this workflow via the
+    # workflow_dispatch trigger to verify manually.
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
