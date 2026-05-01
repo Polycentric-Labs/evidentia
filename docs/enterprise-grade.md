@@ -104,6 +104,13 @@ Using the enterprise-grade scoring rubric:
 > + reproducibility recipe live at
 > [`docs/benchmarks.md`](benchmarks.md). Closes M4. Updated each
 > release as the surface stabilizes.
+>
+> Public threat model — external input surfaces, sanitization
+> layers, and acknowledged gaps — lives at
+> [`docs/threat-model.md`](threat-model.md). Reviewed each release;
+> full deep-pass walk on every minor + quarterly cadence. Satisfies
+> pre-release-review v4 G5 (threat-model existence gate) for the
+> v0.8.0 minor.
 
 **v0.7.0 classification: Enterprise-ready, BLOCKER-complete (L3 on
 the research's capability-maturity scale).** This is the first
