@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-collectors"
-version = "0.7.5"
+version = "0.7.6"
 description = "Evidence collection agents for AWS, Azure, GCP, GitHub, and Okta"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]

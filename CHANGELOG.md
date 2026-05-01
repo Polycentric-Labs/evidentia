@@ -7,6 +7,139 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.6] - 2026-05-01
+
+**UI alpha.2 completion + carry-forward CI hygiene + perf benchmarks +
+quickstart polish + accepted-findings doc.** This release closes
+the alpha.2 GUI gap that's been outstanding since v0.4.0 (Gap
+Analyze form / Gap Diff picker / Risk Generate streaming pages were
+implemented but never routed in `App.tsx`), lands the 5-screenshot
+walkthrough in `docs/gui/`, ships `docs/benchmarks.md` with
+reproducible perf numbers, ships `docs/quickstart.md` (90-second
+tutorial), and documents 5 accepted code-scanning false positives
+in `docs/enterprise-grade-accepted-findings.md`.
+
+Plus 3 carry-forward CI fixes from the v0.7.5 cycle: the PyPI
+propagation race that briefly broke v0.7.5's first-tag publish-
+container fire (now pre-empted by a Wait-for-PyPI step), the
+composite-action-smoke `pip install` failure (uv-managed venvs
+don't ship pip; switched to `uv pip install`), and the Meridian v2
+baseline cache key that contained a stale legacy
+`controlbridge_version` field from before the rename.
+
+The v0.7.6 P1 Q2 `/security-review` deep pass walked 54 surfaces
+across 5 tiers; **0 HIGH, 0 MEDIUM, 3 LOW (all design-choice or
+intentional)**. v0.7.5 sanitization patterns confirmed clean at
+every callsite.
+
+### Added
+
+- **U1 Gap Analyze form page** routed at `/gap/analyze` —
+  interactive form with file upload + framework picker + per-run
+  organization/system overrides; results render as a TanStack
+  GapTable with critical/high/medium/low badges + coverage % +
+  efficiency-opportunity counts.
+- **U2 Gap Diff picker page** routed at `/gap/diff` — two-report
+  selector from gap-store list with download-as-markdown +
+  download-as-PR-comment buttons.
+- **U3 Risk Generate streaming page** routed at `/risk/generate` —
+  gap-id picker + LLM provider selector + SSE-streamed risk
+  statements with per-gap progress indicators.
+- **U4 5 web UI screenshots** captured at 1440×900 against
+  `evidentia serve --dev` + reproducible Playwright capture recipe
+  in `.local/capture_screenshots.py`. README §"Web UI flows"
+  references all 5; `docs/gui/README.md` walkthrough updated to
+  v0.7.6 alpha.2 wiring with embedded thumbnails.
+- **B1 `docs/benchmarks.md`** (NEW, ~246 lines) — gap-analysis
+  throughput across 4 sample inventories (5-13 ms median, 75-200
+  reports/sec headroom on Ryzen-class hardware), NIST 800-53 Rev 5
+  catalog load (138 ms median for 324 controls), web UI bundle
+  (358 KB JS / 108 KB gzip / 22 KB CSS), test suite (977 tests in
+  11.1 s). Hardware baseline + reproducibility recipe. Closes
+  enterprise-grade M4 (performance benchmarks).
+- **Q1 `docs/quickstart.md`** (NEW, ~165 lines) — 90-second
+  tutorial: 5 commands from `pip install` to a verified OSCAL
+  Assessment Results document. Cross-linked from README §Quick
+  start.
+- **GE5 `docs/enterprise-grade-accepted-findings.md`** (NEW,
+  ~115 lines) — per-finding rationale for the 5 code-scanning HIGH
+  alerts surfaced post-v0.7.5 push (3 CodeQL `py/path-injection`
+  false positives on the `validate_within` sanitizer; 2 OpenSSF
+  Scorecard accepts: `contents: write` for release-notes append +
+  `==X.Y.Z` PyPI pin). Cross-linked from `docs/enterprise-grade.md`.
+- **CI1 Wait-for-PyPI step** in the `publish-container` job of
+  `release.yml`. Polls `pip index versions` until the new wheel
+  appears (capped 5 min) + 20 s mirror catch-up sleep. Pre-empts
+  the v0.7.5-trap PyPI propagation race that fired ~50 % of the
+  time on first tag publish.
+
+### Changed
+
+- **App.tsx** routes 3 alpha.2 pages (`/gap/analyze`, `/gap/diff`,
+  `/risk/generate`) instead of falling through to the 404 page.
+  The page implementations have shipped since v0.4.x; the routing
+  was the missing piece.
+- **AppLayout sidebar** version-footer string bumped from
+  `v0.4.1` to `v0.7.6 (alpha.2 wired)`.
+- **CI2 `.github/workflows/action-smoke-test.yml`** switched from
+  `python -m pip install -e packages/evidentia-core --no-deps`
+  (failed with "No module named pip" because uv venvs lack pip) to
+  `uv pip install -e packages/evidentia-core --no-deps`.
+- **CI3 `.github/workflows/evidentia.yml`** Meridian baseline cache
+  key bumped from `meridian-baseline-*` to
+  `meridian-baseline-v0.7.6-*` to invalidate the stale snapshot
+  that contained a legacy `controlbridge_version` field rejected by
+  Pydantic strict-mode.
+- **Dockerfile** pin `evidentia[gui]==0.7.5` → `evidentia[gui]==0.7.6`.
+- All 6 `pyproject.toml` files bumped 0.7.5 → 0.7.6 atomically via
+  `scripts/bump_version.py`. Inter-package pin range string
+  (`>=0.7.0,<0.8.0`) unchanged — still inside the v0.7.x line.
+- **`docs/v0.7.6-plan.md`** flipped status PLANNED → NEXT (now
+  retro after this ship); marks Q1, Q2, U1-U4, B1, GE5, CI1-CI3
+  all LANDED. P0.7 dismissals + P0.6 Dependabot batch + P1 R1
+  Q3 quarterly resync remain ship-pending or carry-forward.
+- **`docs/v0.8.0-plan.md`** gains a new §P0.5 "Identity +
+  governance setup" covering GH1-GH5 (the GitHub Enterprise +
+  Code Security + Secret Protection items deferred from v0.7.6
+  P0.8) plus OR1 ORCID author-identifier registration. Deferred
+  pairs with a forthcoming entity / governance setup.
+
+### Deferred to v0.7.7+
+
+- **P0.6 Dependabot batch** — PRs #11 (npm-runtime), #12
+  (python-dev), #14 (docker python 3.12→3.14), #17 (github-actions
+  re-bumped post-v0.7.5). Auto-merge disabled at repo level + PRs
+  stale behind main; background routine
+  `trig_01QJXnE5QHxdz3bNYs371pnM` (fires 2026-05-08T13:00 Z) handles
+  the rebase + merge-recommendation cycle. PR #16 (npm-dev majors:
+  tailwind 3→4 + ts 5→6 + eslint 9→10 + jsdom 25→29) deferred —
+  needs targeted single-package PRs since the batched majors break
+  the frontend build.
+- **P0.7 dismissals** — 5 `gh api PATCH` commands to dismiss the
+  accepted false-positive code-scanning alerts (#71, #72, #73, #74,
+  #75) with rationale strings referencing
+  `docs/enterprise-grade-accepted-findings.md`. Each dismissal is
+  publish-authority gated; await explicit approval per
+  CLAUDE.md.
+- **P1 R1 quarterly research-resync** — Q3 2026 cadence
+  (~July 2026); not yet due.
+
+### Carry-forward (unchanged from v0.7.5)
+
+PyPI artifacts (6 wheels + 6 sdists), CycloneDX SBOM, PEP 740
+attestations, SLSA L3 build provenance attestation, Sigstore
+keyless signing, ghcr.io container publish + cosign + SLSA L3
+attestation against the image digest. All v0.7.5 features carry
+forward unchanged.
+
+**977 tests passing** + 9 environmental skips (unchanged from
+v0.7.5; +6 vitest tests passing for evidentia-ui); mypy strict
+clean (73 source files); ruff lint clean.
+
+**Code-scanning alert delta vs v0.7.5**: 16 → 16 (5 new HIGH
+documented as accepted; 5 dismissals queued for approval bring
+the count to ≤11 once landed).
+
 ## [0.7.5] - 2026-05-01
 
 **Container publish + critical security batch + quick-win polish.**
