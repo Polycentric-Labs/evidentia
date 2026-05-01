@@ -93,6 +93,12 @@ Using the enterprise-grade scoring rubric:
 - **MEDIUM**: 6/10 ✅; 4 deferred
 - **LOW**: 2/5 ✅ (L1 closed in v0.7.5)
 
+> Static-analysis findings that have been knowingly accepted instead
+> of fixed (e.g., CodeQL false positives on the `validate_within`
+> sanitizer, OpenSSF Scorecard `Token-Permissions` accepts on
+> release-write permissions) are documented per-finding in
+> [`docs/enterprise-grade-accepted-findings.md`](enterprise-grade-accepted-findings.md).
+
 **v0.7.0 classification: Enterprise-ready, BLOCKER-complete (L3 on
 the research's capability-maturity scale).** This is the first
 fully-featured enterprise GRC release with all 10 BLOCKER items
