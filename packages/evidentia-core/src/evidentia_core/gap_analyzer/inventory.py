@@ -14,6 +14,7 @@ import json
 import logging
 from io import StringIO
 from pathlib import Path
+from typing import Any
 
 import yaml
 from thefuzz import fuzz
@@ -141,7 +142,7 @@ def _parse_evidentia_yaml(content: str, source_path: str) -> ControlInventory:
 
 
 def _parse_evidentia_dict(
-    data: dict, source_path: str, format_name: str
+    data: dict[str, Any], source_path: str, format_name: str
 ) -> ControlInventory:
     """Parse a Evidentia-format dict (from YAML or JSON)."""
     controls: list[ControlImplementation] = []
@@ -237,7 +238,7 @@ def _parse_csv(content: str, source_path: str) -> ControlInventory:
 
 
 def _parse_oscal_component_definition(
-    data: dict, source_path: str
+    data: dict[str, Any], source_path: str
 ) -> ControlInventory:
     """Parse an OSCAL component-definition JSON into a ControlInventory."""
     comp_def = data["component-definition"]
@@ -282,7 +283,7 @@ def _parse_oscal_component_definition(
     )
 
 
-def _parse_ciso_assistant(data: dict, source_path: str) -> ControlInventory:
+def _parse_ciso_assistant(data: dict[str, Any], source_path: str) -> ControlInventory:
     """Parse a CISO Assistant JSON export into a ControlInventory."""
     controls: list[ControlImplementation] = []
 

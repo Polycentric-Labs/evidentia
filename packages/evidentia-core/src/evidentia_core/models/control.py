@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from pydantic import Field
 
@@ -124,7 +125,7 @@ class ControlInventory(EvidentiaModel):
         default=None,
         description="Path to the source file this inventory was loaded from",
     )
-    metadata: dict = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict,
         description="Additional metadata from the source format",
     )

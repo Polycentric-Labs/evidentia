@@ -526,7 +526,7 @@ def _add_to_user_manifest(
         id=framework_id,
         name=name,
         version=version,
-        tier=tier,  # type: ignore[arg-type]  # validated by model
+        tier=tier,
         category="control",
         path=path,
         license=license_terms,

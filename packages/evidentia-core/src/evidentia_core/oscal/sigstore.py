@@ -146,7 +146,7 @@ def sign_file(
         else:
             token = IdentityToken(identity_token)
 
-        ctx = SigningContext.production()  # type: ignore[attr-defined]
+        ctx = SigningContext.production()
         with ctx.signer(token) as signer, artifact.open("rb") as fh:
             bundle = signer.sign_artifact(fh.read())
 

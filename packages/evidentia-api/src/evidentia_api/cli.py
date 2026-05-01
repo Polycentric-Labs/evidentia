@@ -19,6 +19,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +99,7 @@ def serve(
 
     # Windows: CREATE_NEW_PROCESS_GROUP lets Ctrl+C in the parent terminate
     # the child cleanly without leaving a zombie on the port.
-    popen_kwargs: dict = {"env": env}
+    popen_kwargs: dict[str, Any] = {"env": env}
     if sys.platform == "win32":
         popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
 

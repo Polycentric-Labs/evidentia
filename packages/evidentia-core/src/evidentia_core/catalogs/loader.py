@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
 from evidentia_core.catalogs.manifest import load_manifest
 from evidentia_core.models.catalog import CatalogControl, ControlCatalog
@@ -67,7 +68,7 @@ def load_oscal_catalog(catalog_path: Path) -> ControlCatalog:
     return catalog
 
 
-def _parse_oscal_control(oscal_control: dict, family: str) -> CatalogControl:
+def _parse_oscal_control(oscal_control: dict[str, Any], family: str) -> CatalogControl:
     """Parse a single OSCAL control into a CatalogControl."""
     control_id = oscal_control.get("id", "").upper()
     title = oscal_control.get("title", "")
@@ -139,7 +140,7 @@ def _parse_oscal_control(oscal_control: dict, family: str) -> CatalogControl:
     )
 
 
-def _extract_prose(part: dict) -> str:
+def _extract_prose(part: dict[str, Any]) -> str:
     """Recursively extract prose text from an OSCAL part."""
     prose: str = str(part.get("prose", ""))
     for sub_part in part.get("parts", []):
@@ -149,7 +150,7 @@ def _extract_prose(part: dict) -> str:
     return prose.strip()
 
 
-def _detect_framework_id(path: Path, metadata: dict) -> str:
+def _detect_framework_id(path: Path, metadata: dict[str, Any]) -> str:
     """Detect the framework ID from the file path or metadata."""
     stem = path.stem.lower()
     if "800-53" in stem and "rev5" in stem:

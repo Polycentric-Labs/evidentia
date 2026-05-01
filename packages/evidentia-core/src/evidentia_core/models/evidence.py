@@ -140,7 +140,7 @@ class EvidenceArtifact(EvidentiaModel):
     )
     # Metadata
     tags: list[str] = Field(default_factory=list)
-    metadata: dict = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict,
         description="Collector-specific metadata (region, account ID, etc.)",
     )

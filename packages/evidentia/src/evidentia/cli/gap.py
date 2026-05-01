@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 import typer
 from evidentia_core.gap_analyzer import GapAnalyzer, export_report, load_inventory
@@ -226,7 +227,7 @@ def analyze(
         console.print(top_table)
 
     # v0.7.0: load optional collector findings for OSCAL AR evidence embedding.
-    findings_list: list | None = None
+    findings_list: list[Any] | None = None
     if findings is not None:
         if format != "oscal-ar":
             console.print(
