@@ -18,6 +18,32 @@ class TestHealth:
         assert payload["status"] == "ok"
         assert "version" in payload
 
+    def test_health_strict_shape(self, api_client: TestClient) -> None:
+        # Pydantic ConfigDict(extra="forbid") on HealthResponse enforces
+        # this server-side; we still assert it client-side so the contract
+        # is visible to anyone reading the test file.
+        r = api_client.get("/api/health")
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("application/json")
+        payload = r.json()
+        assert set(payload.keys()) == {"status", "version"}
+        assert payload["status"] == "ok"
+        assert isinstance(payload["version"], str)
+        assert payload["version"], "version was empty string"
+
+    def test_health_path_matches_dockerfile_healthcheck(
+        self, api_client: TestClient
+    ) -> None:
+        # The Dockerfile HEALTHCHECK at the repo root calls
+        # http://localhost:8000/api/health — guard against a future
+        # router-prefix refactor silently breaking the container's
+        # liveness probe. /health (no prefix) would fall through to
+        # the SPA fallback handler and return index.html with 200,
+        # masking an actually-broken API.
+        r_with_prefix = api_client.get("/api/health")
+        assert r_with_prefix.status_code == 200
+        assert r_with_prefix.json()["status"] == "ok"
+
     def test_version_shape(self, api_client: TestClient) -> None:
         r = api_client.get("/api/version")
         assert r.status_code == 200

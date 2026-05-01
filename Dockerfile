@@ -80,10 +80,16 @@ EXPOSE 8000
 # option: --version Did you mean --verbose?".
 RUN evidentia version
 
-# Health check: hit the FastAPI server's /health endpoint. Honors
+# Health check: hit the FastAPI server's /api/health endpoint. Honors
 # both the default port (8000) and the typical CMD override pattern.
+# Note: must be /api/health (not /health) — the health router is mounted
+# under the /api prefix in evidentia_api.app:create_app. A bare /health
+# request silently falls through to the SPA fallback handler and
+# returns index.html with 200 (a false-positive health pass). The
+# regression test for this path lives in
+# tests/integration/test_api/test_basic_endpoints.py::TestHealth.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD curl -fsS http://localhost:8000/health || exit 1
+    CMD curl -fsS http://localhost:8000/api/health || exit 1
 
 # Default command starts the web UI. Override with any other
 # evidentia subcommand:
