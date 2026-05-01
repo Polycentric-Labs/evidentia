@@ -243,6 +243,38 @@ jobs:
           echo "tag=${REF}" >> "$GITHUB_OUTPUT"
           echo "semver=${REF#v}" >> "$GITHUB_OUTPUT"
 
+      # v0.7.6 — pre-emptive PyPI propagation wait. v0.7.5 ship hit
+      # this race: even with `needs: publish-pypi` ordering, the
+      # PyPI Fastly CDN hadn't propagated the new wheel by the time
+      # the docker build's `pip install evidentia[gui]==<version>`
+      # ran (~50% failure rate observed on first-tag-push of v0.7.5).
+      # The previous design assumed propagation would be < buildx
+      # warm-up time; in practice it isn't. Loop polls `pip index
+      # versions` until the new version appears, capped at 5 minutes.
+      - name: Wait for PyPI propagation
+        env:
+          VERSION: ${{ steps.version.outputs.semver }}
+        run: |
+          echo "Waiting for evidentia==${VERSION} to appear on PyPI..."
+          attempts=0
+          max_attempts=30  # 30 * 10s = 5 min cap
+          until pip index versions evidentia 2>&1 | grep -q "${VERSION}"; do
+            attempts=$((attempts + 1))
+            if [ "${attempts}" -ge "${max_attempts}" ]; then
+              echo "ERROR: PyPI propagation timed out after 5 min."
+              echo "Latest visible:"
+              pip index versions evidentia 2>&1 | head -3
+              exit 1
+            fi
+            echo "  attempt ${attempts}/${max_attempts}: not yet propagated, sleeping 10s"
+            sleep 10
+          done
+          # Extra safety margin for Fastly mirror lag — even after the
+          # index page lists the version, individual mirror nodes can
+          # lag by 10-20s before the wheel file itself is fetchable.
+          echo "Index lists ${VERSION}; sleeping 20s for mirror catch-up"
+          sleep 20
+
       - name: Build and push image to ghcr.io
         id: build
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6.19.2
