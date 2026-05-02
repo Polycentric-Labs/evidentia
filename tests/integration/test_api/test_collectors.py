@@ -121,3 +121,64 @@ class TestSQLiteCollectEndpointSafeRoot:
             json={"database_path": str(db)},
         )
         assert r.status_code == 200
+
+
+class TestSnowflakeCollectEndpoint:
+    """Smoke coverage for /api/collectors/snowflake/collect (v0.7.8 P0.2).
+
+    No live Snowflake; we validate routing + body validation + secret-
+    handling guarantees.
+    """
+
+    def test_missing_account_returns_422(
+        self, api_client: TestClient
+    ) -> None:
+        r = api_client.post(
+            "/api/collectors/snowflake/collect",
+            json={"user": "EVIDENTIA_AUDIT_RO"},
+        )
+        assert r.status_code == 422
+        assert "account" in r.json()["detail"]
+
+    def test_missing_user_returns_422(
+        self, api_client: TestClient
+    ) -> None:
+        r = api_client.post(
+            "/api/collectors/snowflake/collect",
+            json={"account": "acme-prod"},
+        )
+        assert r.status_code == 422
+        assert "user" in r.json()["detail"]
+
+    def test_missing_password_env_returns_422(
+        self,
+        api_client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        # Ensure neither default nor any custom env is set.
+        monkeypatch.delenv("SNOWFLAKE_PASSWORD", raising=False)
+        r = api_client.post(
+            "/api/collectors/snowflake/collect",
+            json={
+                "account": "acme-prod",
+                "user": "EVIDENTIA_AUDIT_RO",
+            },
+        )
+        # 422 because the password env var resolves to nothing.
+        assert r.status_code == 422
+        assert "SNOWFLAKE_PASSWORD" in r.json()["detail"]
+
+    def test_status_endpoint_includes_snowflake_entry(
+        self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv(
+            "SNOWFLAKE_PASSWORD",
+            "fake-pwd-must-not-appear-in-response",
+        )
+        r = api_client.get("/api/collectors/status")
+        assert r.status_code == 200
+        payload = r.json()
+        assert "snowflake" in payload
+        assert payload["snowflake"]["default_password_env_configured"] is True
+        # Secret value MUST NOT leak.
+        assert "fake-pwd-must-not-appear-in-response" not in r.text

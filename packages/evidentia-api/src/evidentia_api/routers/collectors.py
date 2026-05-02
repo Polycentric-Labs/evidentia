@@ -575,6 +575,128 @@ async def databricks_collect(
     return findings
 
 
+@router.post(
+    "/collectors/snowflake/collect",
+    response_model=list[SecurityFinding],
+)
+async def snowflake_collect(
+    payload: dict[str, Any],
+) -> list[SecurityFinding]:
+    """Run the Snowflake collector (v0.7.8 P0.2).
+
+    Request body (required):
+
+    - ``account``: Snowflake account locator (e.g. ``acme-prod``).
+    - ``user``: Snowflake username for the audit principal.
+
+    Request body (optional):
+
+    - ``password_env``: name of the env var holding the password
+      (default ``SNOWFLAKE_PASSWORD``). The API server reads this
+      env var server-side; the password NEVER flows through the
+      request body.
+    - ``private_key_path``: path to a PEM-encoded RSA private key
+      for key-pair authentication. When set, password_env is
+      ignored.
+    - ``warehouse``: optional warehouse name.
+    - ``role``: optional role name.
+    - ``login_history_window_days``: how many days back to scan in
+      LOGIN_HISTORY (default 90).
+
+    Auth modes (per the snowflake-connector-python driver):
+
+    - Password (env-sourced via ``password_env``)
+    - Key-pair (preferred for production; Snowflake is deprecating
+      password auth)
+
+    Per CLAUDE.md secret-handling protocol, the request body NEVER
+    carries a plaintext password. Operators set the password env
+    var server-side and reference it by name.
+
+    Response: list of SecurityFinding objects covering 6 evidence
+    sources (login history, user inventory, grant inventory,
+    network policies, masking + row-access policy inventory,
+    operator-attested key-rotation).
+    """
+    try:
+        from evidentia_collectors.snowflake import (
+            SnowflakeCollector,
+            SnowflakeCollectorError,
+        )
+    except ImportError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Snowflake collector not installed. Run "
+                "`pip install 'evidentia-collectors[snowflake]'`."
+            ),
+        ) from e
+
+    account = str(payload.get("account") or "").strip()
+    user = str(payload.get("user") or "").strip()
+    if not account:
+        raise HTTPException(
+            status_code=422,
+            detail="Request body must include 'account'.",
+        )
+    if not user:
+        raise HTTPException(
+            status_code=422,
+            detail="Request body must include 'user'.",
+        )
+
+    private_key_path = payload.get("private_key_path")
+    private_key_path_str: str | None = (
+        str(private_key_path) if private_key_path else None
+    )
+
+    password: str | None = None
+    if private_key_path_str is None:
+        password_env = (
+            str(payload.get("password_env") or "SNOWFLAKE_PASSWORD")
+            .strip()
+            or "SNOWFLAKE_PASSWORD"
+        )
+        password = os.environ.get(password_env)
+        if not password:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Env var '{password_env}' is not set or is "
+                    f"empty. Either set it server-side OR pass "
+                    f"'private_key_path' for key-pair auth."
+                ),
+            )
+
+    warehouse = payload.get("warehouse")
+    role = payload.get("role")
+    login_history_window_days = int(
+        payload.get("login_history_window_days") or 90
+    )
+
+    try:
+        with SnowflakeCollector(
+            account=account,
+            user=user,
+            password=password,
+            private_key_path=private_key_path_str,
+            warehouse=str(warehouse) if warehouse else None,
+            role=str(role) if role else None,
+            login_history_window_days=login_history_window_days,
+        ) as collector:
+            findings = collector.collect()
+    except SnowflakeCollectorError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    except Exception as e:
+        logger.exception("Snowflake collector failed")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Snowflake collector failed: {e}",
+        ) from e
+
+    return findings
+
+
 @router.get("/collectors/status")
 async def collectors_status() -> dict[str, Any]:
     """Report which collectors are installed + which credentials are set.
@@ -591,6 +713,7 @@ async def collectors_status() -> dict[str, Any]:
     mssql_installed = False
     oracle_installed = False
     databricks_installed = False
+    snowflake_installed = False
     try:
         import evidentia_collectors.aws
 
@@ -669,7 +792,7 @@ async def collectors_status() -> dict[str, Any]:
         # Databricks adapter loads cleanly without databricks-sdk
         # installed; the actual SDK import happens lazily on first
         # collect_v2 call.
-        import evidentia_collectors.databricks  # noqa: F401
+        import evidentia_collectors.databricks
 
         try:
             import databricks.sdk  # type: ignore[import-untyped]  # noqa: F401
@@ -677,6 +800,20 @@ async def collectors_status() -> dict[str, Any]:
             databricks_installed = True
         except ImportError:
             databricks_installed = False
+    except ImportError:
+        pass
+    try:
+        # Snowflake adapter loads cleanly without
+        # snowflake-connector-python installed; the actual driver
+        # import happens lazily on first connect.
+        import evidentia_collectors.snowflake  # noqa: F401
+
+        try:
+            import snowflake.connector  # type: ignore[import-untyped]  # noqa: F401
+
+            snowflake_installed = True
+        except ImportError:
+            snowflake_installed = False
     except ImportError:
         pass
 
@@ -770,6 +907,20 @@ async def collectors_status() -> dict[str, Any]:
             "oauth_m2m_configured": bool(
                 os.environ.get("DATABRICKS_CLIENT_ID")
                 and os.environ.get("DATABRICKS_CLIENT_SECRET")
+            ),
+        },
+        "snowflake": {
+            "installed": snowflake_installed,
+            "credentials_hint": (
+                "Pass account + user in the request body; password "
+                "is sourced server-side from the env var named via "
+                "password_env (default SNOWFLAKE_PASSWORD). For "
+                "production, prefer key-pair auth via "
+                "private_key_path. The collector NEVER accepts a "
+                "plaintext password via the request body."
+            ),
+            "default_password_env_configured": bool(
+                os.environ.get("SNOWFLAKE_PASSWORD")
             ),
         },
     }

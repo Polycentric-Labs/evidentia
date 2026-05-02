@@ -537,6 +537,176 @@ def collect_databricks(
     )
 
 
+@app.command("snowflake")
+def collect_snowflake(
+    account: str = typer.Option(
+        ...,
+        "--account",
+        "-a",
+        help=(
+            "Snowflake account locator. "
+            "Example: 'acme-prod' or 'acme-prod.us-east-1'. "
+            "The driver appends '.snowflakecomputing.com' "
+            "automatically."
+        ),
+    ),
+    user: str = typer.Option(
+        ...,
+        "--user",
+        "-u",
+        help=(
+            "Snowflake user for the audit principal. "
+            "Recommended: dedicated EVIDENTIA_AUDIT_RO user with "
+            "MONITOR USAGE on account + IMPORTED PRIVILEGES on "
+            "the SNOWFLAKE shared database."
+        ),
+    ),
+    password_env: str = typer.Option(
+        "SNOWFLAKE_PASSWORD",
+        "--password-env",
+        help=(
+            "Name of the env var holding the password. The CLI "
+            "reads from this env var rather than accepting the "
+            "password as a flag (per secret-handling protocol). "
+            "Defaults to SNOWFLAKE_PASSWORD."
+        ),
+    ),
+    private_key_path: Path | None = typer.Option(
+        None,
+        "--private-key-path",
+        help=(
+            "Path to a PEM-encoded RSA private key for key-pair "
+            "authentication. Preferred over password for "
+            "production deployments. When set, --password-env is "
+            "ignored."
+        ),
+    ),
+    warehouse: str | None = typer.Option(
+        None,
+        "--warehouse",
+        "-w",
+        help=(
+            "Optional warehouse name. Audit principals SHOULD "
+            "use a dedicated low-cost warehouse "
+            "(e.g. EVIDENTIA_AUDIT_WH XS auto-suspend 60s)."
+        ),
+    ),
+    role: str | None = typer.Option(
+        None,
+        "--role",
+        "-r",
+        help=(
+            "Optional role name. Defaults to the user's "
+            "default role."
+        ),
+    ),
+    login_history_window_days: int = typer.Option(
+        90,
+        "--login-history-window-days",
+        help=(
+            "How many days back to scan in LOGIN_HISTORY. "
+            "Defaults to 90 (industry-standard window)."
+        ),
+    ),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Where to write the findings JSON. Default: stdout.",
+    ),
+) -> None:
+    """Collect compliance evidence from a Snowflake account (read-only).
+
+    v0.7.8 P0.2 ships 6 evidence sources:
+
+    - LOGIN_HISTORY (AC-7 / AU-2) — per-user inventory + per-failed-
+      login row over the configured window
+    - USERS (AC-2 / AC-2(3) / IA-2(1)/IA-2(2)) — inventory + MFA-
+      disabled + disabled-account + never-logged-in findings
+    - GRANTS_TO_USERS (AC-3 / AC-6 / AC-6(7)) — inventory +
+      privileged-role grant findings (ACCOUNTADMIN /
+      SECURITYADMIN / ORGADMIN)
+    - Network policies (SC-7 / SC-7(5)) — inventory + finding when
+      no account-level policy is set
+    - Masking + row-access policies (AC-3 / AC-3(7) / SC-28) — per-
+      database inventory across every database the principal can see
+    - Operator-attested encryption-key rotation (SC-12) — single
+      resolved finding documenting the platform-managed default
+
+    Auth modes:
+
+    - Password (--password-env $VAR; default SNOWFLAKE_PASSWORD)
+    - Key-pair (--private-key-path /path/to/rsa.pem) — preferred
+      for production; Snowflake is deprecating password auth
+    - OAuth (programmatic only — not supported via CLI)
+
+    Required principal privileges:
+
+    - IMPORTED PRIVILEGES on the SNOWFLAKE shared database
+    - MONITOR USAGE on the account
+    - USAGE on each database whose policies should be inventoried
+
+    See `evidentia_collectors.snowflake.__init__` for the
+    recommended setup script.
+
+    Deferred to subsequent v0.7.8 commits:
+
+    - ACCESS_HISTORY (data lineage; large rowcount — pagination +
+      sampling design needed)
+    - Failed-login spike detection (sliding-window heuristic;
+      separate from inventory)
+    """
+    try:
+        from evidentia_collectors.snowflake import (
+            SnowflakeCollector,
+            SnowflakeCollectorError,
+        )
+    except ImportError as e:
+        console.print(
+            "[red]Error:[/red] Snowflake collector is not installed. "
+            "Run [cyan]pip install 'evidentia-collectors[snowflake]'[/cyan]."
+        )
+        raise typer.Exit(code=1) from e
+
+    # Source the password from env (never accept as a flag value).
+    # Skip when private_key_path is set — key-pair auth bypasses the
+    # password requirement.
+    password: str | None = None
+    if private_key_path is None:
+        password = os.environ.get(password_env)
+        if not password:
+            console.print(
+                f"[red]Error:[/red] env var [cyan]{password_env}"
+                f"[/cyan] is not set or is empty. Either set it "
+                f"to the Snowflake password OR pass "
+                f"[cyan]--private-key-path[/cyan] for key-pair auth."
+            )
+            raise typer.Exit(code=1)
+
+    try:
+        with SnowflakeCollector(
+            account=account,
+            user=user,
+            password=password,
+            private_key_path=(
+                str(private_key_path) if private_key_path else None
+            ),
+            warehouse=warehouse,
+            role=role,
+            login_history_window_days=login_history_window_days,
+        ) as collector:
+            findings = collector.collect()
+    except SnowflakeCollectorError as e:
+        console.print(f"[red]Snowflake collection failed:[/red] {e}")
+        raise typer.Exit(code=1) from e
+
+    _write_findings(
+        findings,
+        output,
+        title=f"Snowflake findings ({account})",
+    )
+
+
 # ── rendering ────────────────────────────────────────────────────────────
 
 
