@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.7.7] - 2026-05-XX
+## [0.7.7] - 2026-05-02
 
 **SQL family evidence collectors + Okta + ServiceNow + carry-forward
 hardening.** First substantive new-collector release since v0.5.0.
@@ -119,10 +119,23 @@ dismissed.
 - **mypy strict 0/0 across 123 source files** (was 2 pre-existing
   errors at v0.7.6 ship: `hatch_build.py:39` `BuildHookInterface`
   subclass + `jira/mapper.py:147` stale `type: ignore`).
+- **F-001 / CWE-22**: SQLite REST + CLI surfaces now honor
+  `EVIDENTIA_SQLITE_SAFE_ROOT` env var for path-traversal
+  containment in multi-tenant deployments. Surfaced by the
+  v0.7.7 pre-release-review Step 3 `/security-review` invocation.
+- **F-002 / CWE-209**: connection-error wrappers in all 5 SQL
+  adapters now report only the driver class name (e.g.,
+  `(driver: OperationalError)`) instead of the full driver-side
+  exception message — reduces accidental disclosure of
+  connection-string internals to log streams.
+- **F-003 / CWE-20**: SQLite `file:?mode=ro` URI now uses
+  `urllib.parse.quote(path, safe="/")` before interpolation so
+  paths containing `?`, `#`, or `%` cannot smuggle URI options.
 
-EOF lifecycle: 1015 unit tests passing at v0.7.6 → 1050 at
-v0.7.7 (35 new tests covering ServiceNow + Okta + 5 SQL
-adapters; 88 SQL adapter tests already counted in P0).
+EOF lifecycle: 1015 unit tests passing at v0.7.6 → 1103 at
+v0.7.7 (88 SQL adapter unit tests + 20 Okta + 35 ServiceNow + 3
+new SQLite REST safe_root tests + 8 mapping/aggregate test
+extensions).
 
 ## [0.7.6] - 2026-05-01
 

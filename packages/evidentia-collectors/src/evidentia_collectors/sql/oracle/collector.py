@@ -230,7 +230,7 @@ class OracleCollector:
             self._connection = oracledb.connect(**kwargs)
         except Exception as e:
             raise OracleConnectionError(
-                f"Could not connect to Oracle: {e}"
+                f"Could not connect to Oracle (driver: {type(e).__name__})"
             ) from e
         return self._connection
 

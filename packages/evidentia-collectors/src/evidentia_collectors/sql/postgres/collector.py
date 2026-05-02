@@ -235,7 +235,7 @@ class PostgresCollector:
             )
         except Exception as e:
             raise PostgresConnectionError(
-                f"Could not connect to Postgres: {e}"
+                f"Could not connect to Postgres (driver: {type(e).__name__})"
             ) from e
         return self._connection
 

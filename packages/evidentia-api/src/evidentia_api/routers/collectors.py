@@ -465,6 +465,12 @@ async def sqlite_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     Read-only by design — the collector opens the file via
     ``file:?mode=ro`` URI. If the underlying filesystem still
     permits write, EVIDENTIA-WRITE-PRIV-DETECTED fires (AC-6).
+
+    Path containment: when the ``EVIDENTIA_SQLITE_SAFE_ROOT`` env
+    var is set, the collector refuses any ``database_path`` that
+    resolves outside it (path-traversal mitigation; CWE-22). For
+    multi-tenant deployments this MUST be set; for single-tenant
+    trusted-perimeter deployments it can be left unset.
     """
     try:
         from evidentia_collectors.sql.sqlite import (
@@ -484,8 +490,13 @@ async def sqlite_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             detail="Request body must include 'database_path'.",
         )
 
+    safe_root = os.environ.get("EVIDENTIA_SQLITE_SAFE_ROOT") or None
+
     try:
-        with SQLiteCollector(database_path=database_path) as collector:
+        with SQLiteCollector(
+            database_path=database_path,
+            safe_root=safe_root,
+        ) as collector:
             findings = collector.collect()
     except SQLiteCollectorError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e

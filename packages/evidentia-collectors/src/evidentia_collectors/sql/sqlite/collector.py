@@ -251,11 +251,16 @@ class SQLiteCollector:
         try:
             # Open read-only via URI to enforce the read-only contract
             # at the connection level. PRAGMA writes are still rejected.
-            uri = f"file:{self._database_path}?mode=ro"
+            # Quote the path component so paths containing ?, #, or %
+            # cannot smuggle URI options (CWE-20 input validation).
+            import urllib.parse
+
+            quoted = urllib.parse.quote(str(self._database_path), safe="/")
+            uri = f"file:{quoted}?mode=ro"
             self._connection = sqlite3.connect(uri, uri=True)
         except Exception as e:
             raise SQLiteConnectionError(
-                f"Could not open SQLite database: {e}"
+                f"Could not open SQLite database (driver: {type(e).__name__})"
             ) from e
         return self._connection
 

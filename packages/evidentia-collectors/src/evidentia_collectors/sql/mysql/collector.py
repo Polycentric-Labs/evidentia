@@ -203,7 +203,7 @@ class MySQLCollector:
             self._connection = pymysql.connect(**kwargs)
         except Exception as e:
             raise MySQLConnectionError(
-                f"Could not connect to MySQL: {e}"
+                f"Could not connect to MySQL (driver: {type(e).__name__})"
             ) from e
         return self._connection
 

@@ -361,8 +361,14 @@ def collect_sql(
 
         # SQLite has no auth — the connection_uri is treated as the
         # database file path. No password env var is required or read.
+        # Honor EVIDENTIA_SQLITE_SAFE_ROOT for path-traversal containment
+        # in multi-tenant deployments (CWE-22; see docs/sql-collectors.md).
+        safe_root = os.environ.get("EVIDENTIA_SQLITE_SAFE_ROOT") or None
         try:
-            with SQLiteCollector(database_path=connection_uri) as collector:
+            with SQLiteCollector(
+                database_path=connection_uri,
+                safe_root=safe_root,
+            ) as collector:
                 findings = collector.collect()
         except SQLiteCollectorError as e:
             console.print(f"[red]SQLite collection failed:[/red] {e}")

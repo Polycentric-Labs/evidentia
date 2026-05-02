@@ -222,7 +222,7 @@ class MSSQLCollector:
             self._connection = pyodbc.connect(conn_str, autocommit=True)
         except Exception as e:
             raise MSSQLConnectionError(
-                f"Could not connect to MSSQL: {e}"
+                f"Could not connect to MSSQL (driver: {type(e).__name__})"
             ) from e
         return self._connection
 
