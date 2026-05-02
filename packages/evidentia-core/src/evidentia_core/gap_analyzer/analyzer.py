@@ -134,8 +134,12 @@ class GapAnalyzer:
         min_efficiency_frameworks: int = 3,
     ) -> GapAnalysisReport:
         """Run gap analysis against specified frameworks."""
+        # %r (repr) escapes control characters in user-controlled values
+        # — closes CodeQL py/log-injection alerts #78 + #79 (CWE-117)
+        # per v0.7.8 P0.5 S2. inventory.organization is user-supplied
+        # via CSV/YAML/JSON; frameworks is user-supplied via CLI/API.
         logger.info(
-            "Starting gap analysis for %s: %d controls vs %s",
+            "Starting gap analysis for %r: %d controls vs %r",
             inventory.organization,
             len(inventory.controls),
             frameworks,

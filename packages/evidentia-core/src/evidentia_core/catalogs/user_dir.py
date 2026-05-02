@@ -118,10 +118,15 @@ def resolve_catalog_path(
     if user_entry is not None:
         user_dir = get_user_catalog_dir(user_dir_override)
         path = user_dir / user_entry.path
+        # %r (repr) escapes control chars in user-controlled framework_id
+        # + path — closes CodeQL py/log-injection alert #81 (CWE-117)
+        # per v0.7.8 P0.5 S2. framework_id comes from CLI/API arg;
+        # path derives from user_entry which is loaded from user-supplied
+        # manifest YAML.
         logger.info(
-            "Framework '%s' resolved from user dir (%s) — shadows bundled catalog"
+            "Framework %r resolved from user dir (%r) — shadows bundled catalog"
             if bundled_manifest.get(framework_id)
-            else "Framework '%s' resolved from user dir (%s)",
+            else "Framework %r resolved from user dir (%r)",
             framework_id,
             path,
         )

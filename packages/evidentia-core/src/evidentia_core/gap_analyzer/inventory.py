@@ -222,7 +222,10 @@ def _parse_csv(content: str, source_path: str) -> ControlInventory:
             )
         )
 
-    logger.info("Parsed CSV inventory: %d controls from %s", len(controls), source_path)
+    # %r (repr) escapes control chars in user-controlled source_path —
+    # closes CodeQL py/log-injection alert #80 (CWE-117) per v0.7.8
+    # P0.5 S2.
+    logger.info("Parsed CSV inventory: %d controls from %r", len(controls), source_path)
     # v0.2.1: CSV format has no dedicated organization field, so we fall
     # back to a neutral placeholder. Callers that want a real org name
     # should pass `--organization` on the CLI or set it in
