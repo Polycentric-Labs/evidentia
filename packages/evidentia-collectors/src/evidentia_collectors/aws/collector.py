@@ -40,12 +40,12 @@ from evidentia_core.audit import (
     new_run_id,
     with_retry,
 )
-from evidentia_core.audit.provenance import utc_now
 from evidentia_core.models.common import (
     ControlMapping,
     OLIRRelationship,
     Severity,
     current_version,
+    utc_now,
 )
 from evidentia_core.models.finding import FindingStatus, SecurityFinding
 
