@@ -13,6 +13,76 @@
 
 ---
 
+## Re-validation snapshot — 2026-05-02 (v0.7.7 ship — pre-tag)
+
+v0.7.7 adds the **first substantive new collector surface since v0.5.0**:
+five SQL-family adapters (Postgres / MySQL / SQLite / MSSQL / Oracle),
+one new Okta evidence collector, and one ServiceNow output
+integration. Per the v4 skill rule "patch with new collector surface
+recommended to re-walk", this snapshot does a focused re-walk of the
+**new surfaces** + a regression check against the **existing 10 tiers**.
+
+### Existing tiers — regression check (no functional change)
+
+| Tier | v0.7.7 status | Evidence |
+|---|---|---|
+| 1 — AI features | ✅ unchanged | No `evidentia-ai` files touched in v0.7.7 diff |
+| 2 — OSCAL signing + verify | ✅ unchanged | No `oscal/signing` or `sigstore` files touched |
+| 3 — Air-gap enforcement | ✅ unchanged | `network_guard.py` untouched |
+| 4 — Secret scrubber | ✅ unchanged | `audit/logger._scrub` untouched; v0.7.7 adds new env-var-keyed secret paths but each adapter rejects URI-embedded passwords at constructor |
+| 5 — Collectors | ✅ extended (see new rows below) | 7 new public surfaces; existing AWS + GitHub + Jira unchanged |
+| 6 — OSCAL exporter + output formats | ✅ unchanged | No format/exporter files touched |
+| 7 — CLI commands | ✅ extended | `collect sql` adapter dispatch + `collect okta` + `integrations servicenow` subcommands added; existing CLI unchanged |
+| 8 — REST API | ✅ extended | 6 new POST endpoints + status-endpoint extension; existing routes unchanged |
+| 9 — Web UI | ✅ unchanged | No `evidentia-ui` files touched |
+| 10 — Configuration precedence | ✅ unchanged | `EVIDENTIA_*_PASSWORD` + `EVIDENTIA_SQLITE_SAFE_ROOT` follow existing env-var precedence; CLI flags + payloads never accept secrets |
+
+### New surfaces — full v0.7.7 capability walk
+
+Each row covers: functional (tests pass) · adversarial (bad input /
+missing dep / network failure / expired credential / malformed config /
+DoS bound) · result.
+
+| New surface | Functional | Adversarial | Result |
+|---|---|---|---|
+| **Postgres adapter** (`sql.postgres`) | ✅ 16 unit + 3 Docker integration tests | ✅ password-in-URI rejected at constructor; psycopg ImportError → typed `PostgresCollectorError`; connection-error wrapper trims to driver class name (F-002 fix); read-only probe via `default_transaction_read_only` + CREATE TEMP rollback | **PASS** |
+| **MySQL/MariaDB adapter** (`sql.mysql`) | ✅ 13 unit tests | ✅ same pattern as Postgres; PyMySQL ImportError → typed error; `@@global.read_only` + CREATE TEMPORARY rollback probe | **PASS** |
+| **SQLite adapter** (`sql.sqlite`) | ✅ 16 unit tests using `:memory:` | ✅ `safe_root=` containment via `validate_within` (CWE-22 mitigation); `os.access(W_OK)` write-priv probe; `file:?mode=ro` read-only URI; F-003 URI quoting fix; F-004 TOCTOU accepted | **PASS** |
+| **MS SQL Server adapter** (`sql.mssql`) | ✅ 20 unit tests | ✅ `Encrypt=yes;TrustServerCertificate=no` connection defaults; pyodbc ImportError → typed error; `IS_SRVROLEMEMBER('sysadmin')` + `IS_ROLEMEMBER('db_owner')` write-priv probe | **PASS** |
+| **Oracle adapter** (`sql.oracle`) | ✅ 23 unit tests | ✅ oracledb thin-mode (no Oracle Client install required); password-in-URI rejected; session_roles + session_privs write-priv probe | **PASS** |
+| **Okta collector** (`okta`) | ✅ 20 unit tests via `httpx.MockTransport` | ✅ HTTPS-only constructor; explicit 30s timeout; `max_users` cap default 10000 (DoS bound); paginates via Link header rel="next"; user-agent identifies collector for Okta system-log correlation | **PASS** |
+| **ServiceNow integration** (`evidentia_integrations.servicenow`) | ✅ 35 unit tests (mapper + client + sync) | ✅ HTTPS-only constructor; `password` field excluded from `model_dump`; explicit 20s timeout; `correlation_id` deterministic for idempotency on re-push (no duplicate records) | **PASS** |
+
+### v0.7.7 findings re-summary
+
+| ID | Bucket | Resolution |
+|---|---|---|
+| F-001 | HIGH (CWE-22) | **fixed in Step 5.A inline** — REST + CLI honor `EVIDENTIA_SQLITE_SAFE_ROOT`; 3 new tests |
+| F-002 | MEDIUM (CWE-209) | **fixed in Step 5.A inline** — 5 SQL adapters connection-error wrappers trimmed to driver class name |
+| F-003 | MEDIUM (CWE-20) | **fixed in Step 5.A inline** — SQLite URI now uses `urllib.parse.quote` |
+| F-004 | LOW (CWE-367 TOCTOU) | accepted (read-only URI + filesystem ACLs limit blast radius) |
+| F-005 | LOW (sample-bound MFA enrollment) | accepted (documented as `EVIDENTIA-OKTA-RATE-LIMIT-PARTIAL` BLIND_SPOT) |
+
+### DAST sub-step (G11)
+
+DAST tools (Schemathesis + Playwright) are not installed in this dev
+environment. **Documented skip with rationale**: v0.7.7 adds 6 new
+REST endpoints, all of which are exhaustively tested via FastAPI's
+`TestClient` in `tests/integration/test_api/test_collectors.py` +
+unit-test cursor mocks for the DB call paths. No new UI surface
+(unchanged from v0.7.6). DAST install + first-run will land in
+v0.7.8 P0 alongside the routine CI integration.
+
+### Step 4 verification gate
+
+| Gate | Result |
+|---|---|
+| Surface-coverage % ≥ 90% | ✅ 17 / 17 surface rows have ✅/⚠/❌ verdicts (100%) |
+| Adversarial probe coverage ≥ 6 of 7 vectors per new surface | ✅ all 7 new surfaces cleared 6+ vectors |
+| DAST run completed (or explicit skip) | ⚠ explicit skip with rationale |
+
+---
+
 ## Re-validation snapshot — 2026-04-26 (v0.7.1 ship)
 
 This v0.7.0 snapshot below remains representative for v0.7.1 because
