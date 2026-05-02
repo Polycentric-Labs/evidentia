@@ -152,6 +152,91 @@ def collect_github(
     _write_findings(findings, output, title=f"GitHub findings ({repo})")
 
 
+@app.command("sql")
+def collect_sql(
+    adapter: str = typer.Option(
+        ...,
+        "--adapter",
+        "-a",
+        help="SQL adapter: postgres (more land in v0.7.7 P0.x).",
+    ),
+    connection_uri: str = typer.Option(
+        ...,
+        "--connection-uri",
+        "-u",
+        help=(
+            "Database connection URI WITHOUT embedded password. "
+            "Example: postgres://reader@db.example.com/app?sslmode=require. "
+            "Pass the password via the --password-env env var."
+        ),
+    ),
+    password_env: str = typer.Option(
+        "EVIDENTIA_POSTGRES_PASSWORD",
+        "--password-env",
+        help=(
+            "Environment variable containing the DB password. "
+            "Default: EVIDENTIA_POSTGRES_PASSWORD. The collector "
+            "refuses to read the password from a CLI flag per the "
+            "secret-handling protocol."
+        ),
+    ),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Where to write the findings JSON. Default: stdout.",
+    ),
+) -> None:
+    """Collect compliance evidence from a SQL database (read-only).
+
+    v0.7.7 P0.1 ships --adapter postgres. P0.2 (mysql) / P0.3 (sqlite)
+    / P0.4 (mssql) / P0.5 (oracle) follow in subsequent commits.
+
+    Each adapter is read-only by design and runs a write-privilege
+    verification probe on first connect. Detected write privilege
+    emits an EVIDENTIA-WRITE-PRIV-DETECTED finding mapped to NIST
+    AC-6 (least privilege violation).
+    """
+    if adapter == "postgres":
+        try:
+            from evidentia_collectors.sql.postgres import (
+                PostgresCollector,
+                PostgresCollectorError,
+            )
+        except ImportError as e:
+            console.print(
+                "[red]Error:[/red] PostgreSQL collector is not installed. "
+                "Run [cyan]pip install 'evidentia-collectors[sql-postgres]'[/cyan]."
+            )
+            raise typer.Exit(code=1) from e
+
+        password = os.environ.get(password_env)
+        if password is None:
+            console.print(
+                f"[red]Error:[/red] {password_env} env var not set. "
+                "Set it to the DB password before running this command."
+            )
+            raise typer.Exit(code=1)
+
+        try:
+            with PostgresCollector(
+                connection_uri=connection_uri, password=password
+            ) as collector:
+                findings = collector.collect()
+        except PostgresCollectorError as e:
+            console.print(f"[red]Postgres collection failed:[/red] {e}")
+            raise typer.Exit(code=1) from e
+
+        _write_findings(findings, output, title=f"Postgres findings ({connection_uri})")
+        return
+
+    console.print(
+        f"[red]Error:[/red] Unknown adapter {adapter!r}. "
+        "Supported: postgres (v0.7.7 P0.1). Coming next: mysql, sqlite, mssql, oracle."
+    )
+    raise typer.Exit(code=1)
+
+
 # ── rendering ────────────────────────────────────────────────────────────
 
 

@@ -114,6 +114,78 @@ async def github_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     return findings
 
 
+@router.post(
+    "/collectors/sql/postgres/collect", response_model=list[SecurityFinding]
+)
+async def postgres_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
+    """Run the PostgreSQL collector (v0.7.7 P0.1).
+
+    Request body (required):
+
+    - ``connection_uri``: Database URI WITHOUT embedded password
+      (e.g., ``postgres://reader@db.example.com/app?sslmode=require``).
+    - ``password_env``: env-var name to read the password from.
+      Default: ``EVIDENTIA_POSTGRES_PASSWORD``. Per CLAUDE.md
+      secret-handling protocol, the password value MUST NOT come
+      through the request body.
+
+    Response: list of SecurityFinding objects. Read-only by design —
+    detected write privilege emits an EVIDENTIA-WRITE-PRIV-DETECTED
+    finding mapped to NIST AC-6.
+    """
+    try:
+        from evidentia_collectors.sql.postgres import (
+            PostgresCollector,
+            PostgresCollectorError,
+        )
+    except ImportError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "PostgreSQL collector not installed. Run "
+                "`pip install 'evidentia-collectors[sql-postgres]'`."
+            ),
+        ) from e
+
+    connection_uri = str(payload.get("connection_uri") or "").strip()
+    if not connection_uri:
+        raise HTTPException(
+            status_code=422,
+            detail="Request body must include 'connection_uri'.",
+        )
+    password_env = (
+        str(payload.get("password_env") or "EVIDENTIA_POSTGRES_PASSWORD").strip()
+        or "EVIDENTIA_POSTGRES_PASSWORD"
+    )
+    password = os.environ.get(password_env)
+    if password is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                f"Environment variable {password_env!r} not set on the "
+                "server. Set it before invoking this endpoint."
+            ),
+        )
+
+    try:
+        with PostgresCollector(
+            connection_uri=connection_uri, password=password
+        ) as collector:
+            findings = collector.collect()
+    except PostgresCollectorError as e:
+        # Constructor / auth / connection / TLS failure — 503 because
+        # the API surface is up but the upstream DB isn't reachable
+        # with the supplied credentials.
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    except Exception as e:
+        logger.exception("Postgres collector failed")
+        raise HTTPException(
+            status_code=500, detail=f"Postgres collector failed: {e}"
+        ) from e
+
+    return findings
+
+
 @router.get("/collectors/status")
 async def collectors_status() -> dict[str, Any]:
     """Report which collectors are installed + which credentials are set.
@@ -123,6 +195,7 @@ async def collectors_status() -> dict[str, Any]:
     """
     aws_installed = False
     github_installed = False
+    postgres_installed = False
     try:
         import evidentia_collectors.aws
 
@@ -130,9 +203,24 @@ async def collectors_status() -> dict[str, Any]:
     except ImportError:
         pass
     try:
-        import evidentia_collectors.github  # noqa: F401
+        import evidentia_collectors.github
 
         github_installed = True
+    except ImportError:
+        pass
+    try:
+        # Postgres adapter loads cleanly without psycopg installed;
+        # the actual driver-import happens lazily on first connect.
+        # Detect the driver presence separately so the status surface
+        # reflects ready-to-use vs adapter-imported-but-driver-missing.
+        import evidentia_collectors.sql.postgres  # noqa: F401
+
+        try:
+            import psycopg  # noqa: F401
+
+            postgres_installed = True
+        except ImportError:
+            postgres_installed = False
     except ImportError:
         pass
 
@@ -147,5 +235,16 @@ async def collectors_status() -> dict[str, Any]:
             "installed": github_installed,
             "token_configured": bool(os.environ.get("GITHUB_TOKEN")),
             "token_source": "env:GITHUB_TOKEN" if os.environ.get("GITHUB_TOKEN") else None,
+        },
+        "postgres": {
+            "installed": postgres_installed,
+            "credentials_hint": (
+                "Connection URI WITHOUT embedded password; pass password via "
+                "EVIDENTIA_POSTGRES_PASSWORD env var (or override with "
+                "password_env in the request body)."
+            ),
+            "default_password_env_configured": bool(
+                os.environ.get("EVIDENTIA_POSTGRES_PASSWORD")
+            ),
         },
     }
