@@ -27,6 +27,15 @@ azure = ["azure-identity>=1.19", "azure-mgmt-resource>=23.0"]
 gcp = ["google-cloud-asset>=3.27"]
 github = ["pygithub>=2.4"]
 okta = ["okta>=2.9"]
+# v0.7.7 P0: SQL family adapters. Each adapter is its own optional
+# sub-extra so users only install what they need; the umbrella `sql`
+# extra pulls in all of them.
+sql-postgres = ["psycopg[binary]>=3.1"]
+# sql-mysql, sql-sqlite, sql-mssql, sql-oracle land in subsequent
+# v0.7.7 P0.x commits.
+sql = [
+    "psycopg[binary]>=3.1",
+]
 all = [
     "boto3>=1.35",
     "azure-identity>=1.19",
@@ -34,6 +43,7 @@ all = [
     "google-cloud-asset>=3.27",
     "pygithub>=2.4",
     "okta>=2.9",
+    "psycopg[binary]>=3.1",
 ]
 
 [project.urls]
