@@ -509,6 +509,72 @@ async def sqlite_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     return findings
 
 
+@router.post(
+    "/collectors/databricks/collect", response_model=list[SecurityFinding]
+)
+async def databricks_collect(
+    payload: dict[str, Any],
+) -> list[SecurityFinding]:
+    """Run the Databricks collector (v0.7.8 P0.1).
+
+    Request body (required):
+
+    - ``workspace_url``: Databricks workspace URL
+      (e.g., ``https://my-workspace.cloud.databricks.com``).
+
+    Auth is delegated to the Databricks SDK's unified-auth
+    resolver — credentials come from server-side environment
+    variables (``DATABRICKS_TOKEN``, ``DATABRICKS_CLIENT_ID`` +
+    ``DATABRICKS_CLIENT_SECRET``, Azure AD, AWS IAM, or
+    ``.databrickscfg``). Per CLAUDE.md secret-handling protocol,
+    the request body NEVER carries a token.
+
+    Response: list of SecurityFinding objects covering 4 evidence
+    sources (PAT inventory, cluster compliance, service principal
+    inventory, secret scope inventory).
+
+    Deferred to subsequent v0.7.8 commits:
+
+    - Workspace audit logs + table/column lineage (need SQL
+      Warehouse plumbing)
+    - Workspace network policies (need Account API auth path)
+    """
+    try:
+        from evidentia_collectors.databricks import (
+            DatabricksCollector,
+            DatabricksCollectorError,
+        )
+    except ImportError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Databricks collector not installed. Run "
+                "`pip install 'evidentia-collectors[databricks]'`."
+            ),
+        ) from e
+
+    workspace_url = str(payload.get("workspace_url") or "").strip()
+    if not workspace_url:
+        raise HTTPException(
+            status_code=422,
+            detail="Request body must include 'workspace_url'.",
+        )
+
+    try:
+        with DatabricksCollector(host=workspace_url) as collector:
+            findings = collector.collect()
+    except DatabricksCollectorError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    except Exception as e:
+        logger.exception("Databricks collector failed")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Databricks collector failed: {e}",
+        ) from e
+
+    return findings
+
+
 @router.get("/collectors/status")
 async def collectors_status() -> dict[str, Any]:
     """Report which collectors are installed + which credentials are set.
@@ -524,6 +590,7 @@ async def collectors_status() -> dict[str, Any]:
     sqlite_installed = False
     mssql_installed = False
     oracle_installed = False
+    databricks_installed = False
     try:
         import evidentia_collectors.aws
 
@@ -588,7 +655,7 @@ async def collectors_status() -> dict[str, Any]:
     except ImportError:
         pass
     try:
-        import evidentia_collectors.sql.oracle  # noqa: F401
+        import evidentia_collectors.sql.oracle
 
         try:
             import oracledb  # noqa: F401
@@ -596,6 +663,20 @@ async def collectors_status() -> dict[str, Any]:
             oracle_installed = True
         except ImportError:
             oracle_installed = False
+    except ImportError:
+        pass
+    try:
+        # Databricks adapter loads cleanly without databricks-sdk
+        # installed; the actual SDK import happens lazily on first
+        # collect_v2 call.
+        import evidentia_collectors.databricks  # noqa: F401
+
+        try:
+            import databricks.sdk  # type: ignore[import-untyped]  # noqa: F401
+
+            databricks_installed = True
+        except ImportError:
+            databricks_installed = False
     except ImportError:
         pass
 
@@ -672,6 +753,23 @@ async def collectors_status() -> dict[str, Any]:
             ),
             "default_password_env_configured": bool(
                 os.environ.get("EVIDENTIA_ORACLE_PASSWORD")
+            ),
+        },
+        "databricks": {
+            "installed": databricks_installed,
+            "credentials_hint": (
+                "Auth via Databricks SDK unified-auth resolver. "
+                "Set DATABRICKS_TOKEN (PAT), or DATABRICKS_CLIENT_ID + "
+                "DATABRICKS_CLIENT_SECRET (OAuth M2M), or rely on Azure "
+                "AD / AWS IAM / .databrickscfg. The collector NEVER "
+                "accepts a token via the request body."
+            ),
+            "default_token_env_configured": bool(
+                os.environ.get("DATABRICKS_TOKEN")
+            ),
+            "oauth_m2m_configured": bool(
+                os.environ.get("DATABRICKS_CLIENT_ID")
+                and os.environ.get("DATABRICKS_CLIENT_SECRET")
             ),
         },
     }

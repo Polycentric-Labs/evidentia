@@ -462,6 +462,81 @@ def collect_sql(
     raise typer.Exit(code=1)
 
 
+@app.command("databricks")
+def collect_databricks(
+    workspace_url: str = typer.Option(
+        ...,
+        "--workspace-url",
+        "-w",
+        help=(
+            "Databricks workspace URL. "
+            "Example: https://my-workspace.cloud.databricks.com. "
+            "Auth is delegated to the Databricks SDK's unified-auth "
+            "resolver — set DATABRICKS_TOKEN env var (PAT) OR "
+            "configure Azure AD / AWS IAM / OAuth M2M / "
+            ".databrickscfg. The collector NEVER accepts a token "
+            "via CLI flag per the secret-handling protocol."
+        ),
+    ),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Where to write the findings JSON. Default: stdout.",
+    ),
+) -> None:
+    """Collect compliance evidence from a Databricks workspace (read-only).
+
+    v0.7.8 P0.1 ships 4 evidence sources:
+
+    - PAT inventory (AC-2 / IA-5) + long-lived + never-expires checks
+    - Cluster compliance (CM-2 / CM-8 / SI-2) + outdated-runtime
+    - Service principal inventory (AC-2 / AC-3) + inactive-SP
+    - Secret scope inventory (SC-12 / IA-5) + Key-Vault-vs-Databricks-
+      backed advisories
+
+    Auth modes (via SDK unified-auth):
+
+    - PAT (DATABRICKS_TOKEN env var) — simplest for CI/dev
+    - OAuth M2M (DATABRICKS_CLIENT_ID + DATABRICKS_CLIENT_SECRET)
+      — recommended for production
+    - Azure AD service principal (when on Azure Databricks)
+    - AWS IAM (when on AWS Databricks)
+    - .databrickscfg profile
+
+    See `evidentia_collectors.databricks.__init__` for full docs.
+
+    Deferred to subsequent v0.7.8 commits:
+
+    - Workspace audit logs + table/column lineage (need SQL Warehouse)
+    - Workspace network policies (need Account API auth path)
+    """
+    try:
+        from evidentia_collectors.databricks import (
+            DatabricksCollector,
+            DatabricksCollectorError,
+        )
+    except ImportError as e:
+        console.print(
+            "[red]Error:[/red] Databricks collector is not installed. "
+            "Run [cyan]pip install 'evidentia-collectors[databricks]'[/cyan]."
+        )
+        raise typer.Exit(code=1) from e
+
+    try:
+        with DatabricksCollector(host=workspace_url) as collector:
+            findings = collector.collect()
+    except DatabricksCollectorError as e:
+        console.print(f"[red]Databricks collection failed:[/red] {e}")
+        raise typer.Exit(code=1) from e
+
+    _write_findings(
+        findings,
+        output,
+        title=f"Databricks findings ({workspace_url})",
+    )
+
+
 # ── rendering ────────────────────────────────────────────────────────────
 
 
