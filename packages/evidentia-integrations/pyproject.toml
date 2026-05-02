@@ -24,7 +24,23 @@ dependencies = [
 [project.optional-dependencies]
 jira = ["jira>=3.8"]
 servicenow = ["pysnc>=1.1"]
-all = ["jira>=3.8", "pysnc>=1.1"]
+# v0.7.8 P1.1: Tableau Server / Cloud publish integration. The
+# tableauserverclient library is pure-Python and wraps the Tableau
+# REST API with auth, sites, and data-source publishing. We ship
+# CSV-datasource publish in v0.7.8; .hyper-extract publish (which
+# would require the heavyweight `tableauhyperapi` native binary)
+# is documented as a v0.7.9+ follow-up.
+tableau = ["tableauserverclient>=0.30"]
+# v0.7.8 P1.2: Power BI Push Datasets / Service Principal integration.
+# msal handles the Azure AD service-principal OAuth2 flow; httpx
+# (already a base dep) handles the actual Push Datasets API calls.
+powerbi = ["msal>=1.31"]
+all = [
+    "jira>=3.8",
+    "pysnc>=1.1",
+    "tableauserverclient>=0.30",
+    "msal>=1.31",
+]
 
 [project.urls]
 Homepage = "https://github.com/allenfbyrd/evidentia"
