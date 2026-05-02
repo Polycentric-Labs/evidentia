@@ -1,6 +1,6 @@
 {
   "name": "@evidentia/ui",
-  "version": "0.7.7.1",
+  "version": "0.7.8",
   "description": "Evidentia web UI — React + Vite + shadcn/ui frontend served by evidentia-api.",
   "private": true,
   "type": "module",

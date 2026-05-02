@@ -1,6 +1,6 @@
 [project]
 name = "evidentia"
-version = "0.7.7.1"
+version = "0.7.8"
 description = "Open-source GRC tool: gap analysis, risk statements, evidence collection, web UI, and compliance automation"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]

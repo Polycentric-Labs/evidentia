@@ -176,6 +176,15 @@ wheels = [
 ]
 
 [[package]]
+name = "asn1crypto"
+version = "1.5.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/cf/d547feed25b5244fcb9392e288ff9fdc3280b10260362fc45d37a798a6ee/asn1crypto-1.5.1.tar.gz", hash = "sha256:13ae38502be632115abf8a24cbe5f4da52e3b5231990aff31123c805306ccb9c", size = 121080, upload-time = "2022-03-15T14:46:52.889Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c9/7f/09065fd9e27da0eda08b4d6897f1c13535066174cc023af248fc2a8d5e5a/asn1crypto-1.5.1-py2.py3-none-any.whl", hash = "sha256:db4e40728b728508912cbb3d44f19ce188f218e9eba635821bb4b68564f8fd67", size = 105045, upload-time = "2022-03-15T14:46:51.055Z" },
+]
+
+[[package]]
 name = "attrs"
 version = "26.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -753,6 +762,20 @@ wheels = [
 ]
 
 [[package]]
+name = "databricks-sdk"
+version = "0.106.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "google-auth" },
+    { name = "protobuf" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b5/b7/ef86e7b8c3d135c844f972e06efb628e147eed0a7b9a0ecbf9511437a3c2/databricks_sdk-0.106.0.tar.gz", hash = "sha256:6bbd492cb8593747aced037b9186f8632e9d553fc358e6f3d83b7e959851d9d3", size = 930953, upload-time = "2026-04-30T12:33:19.601Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/a9/63b4f6ef3078e4d060faaad85c4e43667189c3429edd68d5cbddc45187ca/databricks_sdk-0.106.0-py3-none-any.whl", hash = "sha256:db9de5566279ae80dfea0ecd37231e8968523ef984e83cbe4bd77e50c59aa6a5", size = 879452, upload-time = "2026-04-30T12:33:18.116Z" },
+]
+
+[[package]]
 name = "defusedxml"
 version = "0.7.1"
 source = { registry = "https://pypi.org/simple" }
@@ -826,7 +849,7 @@ wheels = [
 
 [[package]]
 name = "evidentia"
-version = "0.7.7.1"
+version = "0.7.8"
 source = { editable = "packages/evidentia" }
 dependencies = [
     { name = "evidentia-ai" },
@@ -856,7 +879,7 @@ provides-extras = ["gui"]
 
 [[package]]
 name = "evidentia-ai"
-version = "0.7.7.1"
+version = "0.7.8"
 source = { editable = "packages/evidentia-ai" }
 dependencies = [
     { name = "evidentia-core" },
@@ -875,7 +898,7 @@ requires-dist = [
 
 [[package]]
 name = "evidentia-api"
-version = "0.7.7.1"
+version = "0.7.8"
 source = { editable = "packages/evidentia-api" }
 dependencies = [
     { name = "evidentia-ai" },
@@ -898,7 +921,7 @@ requires-dist = [
 
 [[package]]
 name = "evidentia-collectors"
-version = "0.7.7.1"
+version = "0.7.8"
 source = { editable = "packages/evidentia-collectors" }
 dependencies = [
     { name = "evidentia-core" },
@@ -910,6 +933,7 @@ all = [
     { name = "azure-identity" },
     { name = "azure-mgmt-resource" },
     { name = "boto3" },
+    { name = "databricks-sdk" },
     { name = "google-cloud-asset" },
     { name = "okta" },
     { name = "oracledb" },
@@ -917,6 +941,7 @@ all = [
     { name = "pygithub" },
     { name = "pymysql" },
     { name = "pyodbc" },
+    { name = "snowflake-connector-python" },
 ]
 aws = [
     { name = "boto3" },
@@ -924,6 +949,9 @@ aws = [
 azure = [
     { name = "azure-identity" },
     { name = "azure-mgmt-resource" },
+]
+databricks = [
+    { name = "databricks-sdk" },
 ]
 gcp = [
     { name = "google-cloud-asset" },
@@ -933,6 +961,9 @@ github = [
 ]
 okta = [
     { name = "okta" },
+]
+snowflake = [
+    { name = "snowflake-connector-python" },
 ]
 sql = [
     { name = "oracledb" },
@@ -961,6 +992,8 @@ requires-dist = [
     { name = "azure-mgmt-resource", marker = "extra == 'azure'", specifier = ">=23.0" },
     { name = "boto3", marker = "extra == 'all'", specifier = ">=1.35" },
     { name = "boto3", marker = "extra == 'aws'", specifier = ">=1.35" },
+    { name = "databricks-sdk", marker = "extra == 'all'", specifier = ">=0.30" },
+    { name = "databricks-sdk", marker = "extra == 'databricks'", specifier = ">=0.30" },
     { name = "evidentia-core", editable = "packages/evidentia-core" },
     { name = "google-cloud-asset", marker = "extra == 'all'", specifier = ">=3.27" },
     { name = "google-cloud-asset", marker = "extra == 'gcp'", specifier = ">=3.27" },
@@ -981,12 +1014,14 @@ requires-dist = [
     { name = "pyodbc", marker = "extra == 'all'", specifier = ">=5.0" },
     { name = "pyodbc", marker = "extra == 'sql'", specifier = ">=5.0" },
     { name = "pyodbc", marker = "extra == 'sql-mssql'", specifier = ">=5.0" },
+    { name = "snowflake-connector-python", marker = "extra == 'all'", specifier = ">=3.10" },
+    { name = "snowflake-connector-python", marker = "extra == 'snowflake'", specifier = ">=3.10" },
 ]
-provides-extras = ["aws", "azure", "gcp", "github", "okta", "sql-postgres", "sql-mysql", "sql-sqlite", "sql-mssql", "sql-oracle", "sql", "all"]
+provides-extras = ["aws", "azure", "gcp", "github", "okta", "sql-postgres", "sql-mysql", "sql-sqlite", "sql-mssql", "sql-oracle", "sql", "databricks", "snowflake", "all"]
 
 [[package]]
 name = "evidentia-core"
-version = "0.7.7.1"
+version = "0.7.8"
 source = { editable = "packages/evidentia-core" }
 dependencies = [
     { name = "platformdirs" },
@@ -1020,7 +1055,7 @@ provides-extras = ["sigstore"]
 
 [[package]]
 name = "evidentia-integrations"
-version = "0.7.7.1"
+version = "0.7.8"
 source = { editable = "packages/evidentia-integrations" }
 dependencies = [
     { name = "evidentia-core" },
@@ -1030,13 +1065,21 @@ dependencies = [
 [package.optional-dependencies]
 all = [
     { name = "jira" },
+    { name = "msal" },
     { name = "pysnc" },
+    { name = "tableauserverclient" },
 ]
 jira = [
     { name = "jira" },
 ]
+powerbi = [
+    { name = "msal" },
+]
 servicenow = [
     { name = "pysnc" },
+]
+tableau = [
+    { name = "tableauserverclient" },
 ]
 
 [package.metadata]
@@ -1045,14 +1088,18 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "jira", marker = "extra == 'all'", specifier = ">=3.8" },
     { name = "jira", marker = "extra == 'jira'", specifier = ">=3.8" },
+    { name = "msal", marker = "extra == 'all'", specifier = ">=1.31" },
+    { name = "msal", marker = "extra == 'powerbi'", specifier = ">=1.31" },
     { name = "pysnc", marker = "extra == 'all'", specifier = ">=1.1" },
     { name = "pysnc", marker = "extra == 'servicenow'", specifier = ">=1.1" },
+    { name = "tableauserverclient", marker = "extra == 'all'", specifier = ">=0.30" },
+    { name = "tableauserverclient", marker = "extra == 'tableau'", specifier = ">=0.30" },
 ]
-provides-extras = ["jira", "servicenow", "all"]
+provides-extras = ["jira", "servicenow", "tableau", "powerbi", "all"]
 
 [[package]]
 name = "evidentia-workspace"
-version = "0.7.7.1"
+version = "0.7.8"
 source = { virtual = "." }
 
 [package.dev-dependencies]
@@ -3176,6 +3223,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pytz"
+version = "2026.1.post1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/56/db/b8721d71d945e6a8ac63c0fc900b2067181dbb50805958d4d4661cf7d277/pytz-2026.1.post1.tar.gz", hash = "sha256:3378dde6a0c3d26719182142c56e60c7f9af7e968076f31aae569d72a0358ee1", size = 321088, upload-time = "2026-03-03T07:47:50.683Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/10/99/781fe0c827be2742bcc775efefccb3b048a3a9c6ce9aec0cbf4a101677e5/pytz-2026.1.post1-py2.py3-none-any.whl", hash = "sha256:f2fd16142fda348286a75e1a524be810bb05d444e5a081f37f7affc635035f7a", size = 510489, upload-time = "2026-03-03T07:47:49.167Z" },
+]
+
+[[package]]
 name = "pywin32"
 version = "311"
 source = { registry = "https://pypi.org/simple" }
@@ -3736,6 +3792,54 @@ wheels = [
 ]
 
 [[package]]
+name = "snowflake-connector-python"
+version = "4.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "asn1crypto" },
+    { name = "boto3" },
+    { name = "botocore" },
+    { name = "certifi" },
+    { name = "charset-normalizer" },
+    { name = "cryptography" },
+    { name = "filelock" },
+    { name = "idna" },
+    { name = "packaging" },
+    { name = "platformdirs" },
+    { name = "pyjwt" },
+    { name = "pyopenssl" },
+    { name = "pytz" },
+    { name = "requests" },
+    { name = "sortedcontainers" },
+    { name = "tomlkit" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/01/b1/11c03e05bd2a2da590c1b77c8455f40eb505888a2683c4e41b487d79568c/snowflake_connector_python-4.4.0.tar.gz", hash = "sha256:648f49029d699591af0f253e81c5bf60efc4411c7b0149ef074a59a038210a3b", size = 924803, upload-time = "2026-03-25T23:31:27.368Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/52/14/3a6e3c8685688554bc4dfb2ad44bd04e6b4867eb3cd624b57c9eeadc9b2d/snowflake_connector_python-4.4.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:e8e7ce0e8b33aec8b1fc6741eb51dbeb54e2c3a6d282a0d459c355a85f089b08", size = 11916622, upload-time = "2026-03-25T23:31:34.7Z" },
+    { url = "https://files.pythonhosted.org/packages/28/7c/fe422007388dc7e222f710a57e3b89295d7cd79a90f88f8fd3ff98c33fea/snowflake_connector_python-4.4.0-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:a088f108da4653ad1396ddb63a1c757ad614d0862c38f6f69cc77344bdcfeccb", size = 2868496, upload-time = "2026-03-25T23:31:14.995Z" },
+    { url = "https://files.pythonhosted.org/packages/59/88/4ecb989e878f8766dd0e66bb1a7e2eea84f4b5083cea3a0b7be102fb53b7/snowflake_connector_python-4.4.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:b9f0ac0c00075321e1720d3876e936ee0256f54832e7463c5193a8dfa54913d5", size = 2900797, upload-time = "2026-03-25T23:31:16.738Z" },
+    { url = "https://files.pythonhosted.org/packages/91/05/dc07125f05465eb34bb35903f7be94919f422f9fad22c6887292ad77e65f/snowflake_connector_python-4.4.0-cp312-cp312-win_amd64.whl", hash = "sha256:ea6e4083ebea0a814b46f029d64a2fb0ba6e7732952cd8af4406041708ce0e21", size = 12067958, upload-time = "2026-03-25T23:31:49.111Z" },
+    { url = "https://files.pythonhosted.org/packages/01/6a/34b472fb23c8e7e31d856d89260681a7eb27839cc6f91e4c167def60cea6/snowflake_connector_python-4.4.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:2a6f6a514a10c3bb2d4554132f0b639f43d7e9fbb73fa1fae1c8a75333102686", size = 11917483, upload-time = "2026-03-25T23:31:36.848Z" },
+    { url = "https://files.pythonhosted.org/packages/b8/3a/633668de05c41f6907b0cd2b9e0cdf6c63468fe3f44bf4077ab26d1dc47a/snowflake_connector_python-4.4.0-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:8304b4818d3e9de552dcfbdd0bca61bae1583e1c9794e242e58fe44bce701604", size = 2834042, upload-time = "2026-03-25T23:31:18.291Z" },
+    { url = "https://files.pythonhosted.org/packages/94/c5/658a136c3ebed7064b2d509a9fc7bcb17f9b62f3c47356486f1ba7c59b05/snowflake_connector_python-4.4.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:c828248214a49f77b903e05acf887d3ccb9d958b5a979f2ed3663bba1bd0f2b3", size = 2868361, upload-time = "2026-03-25T23:31:20.14Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/72/cba3cc8b7099adf95f0af454ccf0af78673d8e16ec742cff74d79928869e/snowflake_connector_python-4.4.0-cp313-cp313-win_amd64.whl", hash = "sha256:56ff04dd9e17edc82128f412aa3776687dc94088f3d6b9144971e169952623cb", size = 12068046, upload-time = "2026-03-25T23:31:51.275Z" },
+    { url = "https://files.pythonhosted.org/packages/1e/be/59642cf1c5b254561bd9775dc9511fe7c935894af567f94870e69dda644d/snowflake_connector_python-4.4.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:96fdca994c4d9f7780e82fc7b4bd3398d856b43de3bae57d44e242ff435a2431", size = 11917786, upload-time = "2026-03-25T23:31:39.233Z" },
+    { url = "https://files.pythonhosted.org/packages/75/d2/e1cc3871439a8b73cd2e9ab0398290a66a504c64b31804d847845831b230/snowflake_connector_python-4.4.0-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:9fa43d330389df27024757c4f97dabddafbedc74b8bcc189b6a86e8b4d036014", size = 2834023, upload-time = "2026-03-25T23:31:21.536Z" },
+    { url = "https://files.pythonhosted.org/packages/30/e3/53cb5b019b5a06a627e279c0bde410dfa23e0c5dfaa462e83e9200a9b20a/snowflake_connector_python-4.4.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:43e1a2f3ac51d24406d4eb0c23a8ceb9d6f5cb4854c941e5e1375d8c481e2844", size = 2864401, upload-time = "2026-03-25T23:31:23.297Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/22/2a02e6af15bb1070a09543e7d11a33a297d171bdca39566a0e307f5c7deb/snowflake_connector_python-4.4.0-cp314-cp314-win_amd64.whl", hash = "sha256:d8ac1659c8e588b9502f8d3d03c1ded2f274de0da9c09e62fe007cba5b46d6a5", size = 12206879, upload-time = "2026-03-25T23:31:53.355Z" },
+]
+
+[[package]]
+name = "sortedcontainers"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/c4/ba2f8066cceb6f23394729afe52f3bf7adec04bf9ed2c820b39e19299111/sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88", size = 30594, upload-time = "2021-05-16T22:03:42.897Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0", size = 29575, upload-time = "2021-05-16T22:03:41.177Z" },
+]
+
+[[package]]
 name = "sse-starlette"
 version = "3.3.4"
 source = { registry = "https://pypi.org/simple" }
@@ -3771,6 +3875,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/83/d3/803453b36afefb7c2bb238361cd4ae6125a569b4db67cd9e79846ba2d68c/sympy-1.14.0.tar.gz", hash = "sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517", size = 7793921, upload-time = "2025-04-27T18:05:01.611Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl", hash = "sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5", size = 6299353, upload-time = "2025-04-27T18:04:59.103Z" },
+]
+
+[[package]]
+name = "tableauserverclient"
+version = "0.40"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "defusedxml" },
+    { name = "packaging" },
+    { name = "requests" },
+    { name = "typing-extensions" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d4/57/4e661856ceb051acf97998cb0e75ab5300aaa29cd36937c1eca18ea3921b/tableauserverclient-0.40.tar.gz", hash = "sha256:544f38b9d4b46846ebe98b668d249e303bc5e73403fd966513918a12ce59db02", size = 630725, upload-time = "2026-02-03T20:21:08.907Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6b/70/580952c49ded142c48cfe3999d8b4ff657f412f1c9616fbcdb6d6b3a6cec/tableauserverclient-0.40-py3-none-any.whl", hash = "sha256:346e092ae8a5237309c0638107074f6d84312dca7ca73f16fd26ac75d1ebe2fc", size = 214090, upload-time = "2026-02-03T20:21:07.222Z" },
 ]
 
 [[package]]
@@ -3865,6 +3985,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/fd/18/a545c4ea42af3df6effd7d13d250ba77a0a86fb20393143bbb9a92e434d4/tokenizers-0.22.2-cp39-abi3-win32.whl", hash = "sha256:a6bf3f88c554a2b653af81f3204491c818ae2ac6fbc09e76ef4773351292bc92", size = 2502363, upload-time = "2026-01-05T10:45:20.593Z" },
     { url = "https://files.pythonhosted.org/packages/65/71/0670843133a43d43070abeb1949abfdef12a86d490bea9cd9e18e37c5ff7/tokenizers-0.22.2-cp39-abi3-win_amd64.whl", hash = "sha256:c9ea31edff2968b44a88f97d784c2f16dc0729b8b143ed004699ebca91f05c48", size = 2747786, upload-time = "2026-01-05T10:45:18.411Z" },
     { url = "https://files.pythonhosted.org/packages/72/f4/0de46cfa12cdcbcd464cc59fde36912af405696f687e53a091fb432f694c/tokenizers-0.22.2-cp39-abi3-win_arm64.whl", hash = "sha256:9ce725d22864a1e965217204946f830c37876eee3b2ba6fc6255e8e903d5fcbc", size = 2612133, upload-time = "2026-01-05T10:45:17.232Z" },
+]
+
+[[package]]
+name = "tomlkit"
+version = "0.14.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c3/af/14b24e41977adb296d6bd1fb59402cf7d60ce364f90c890bd2ec65c43b5a/tomlkit-0.14.0.tar.gz", hash = "sha256:cf00efca415dbd57575befb1f6634c4f42d2d87dbba376128adb42c121b87064", size = 187167, upload-time = "2026-01-13T01:14:53.304Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b5/11/87d6d29fb5d237229d67973a6c9e06e048f01cf4994dee194ab0ea841814/tomlkit-0.14.0-py3-none-any.whl", hash = "sha256:592064ed85b40fa213469f81ac584f67a4f2992509a7c3ea2d632208623a3680", size = 39310, upload-time = "2026-01-13T01:14:51.965Z" },
 ]
 
 [[package]]

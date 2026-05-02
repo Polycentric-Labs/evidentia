@@ -374,18 +374,31 @@ schema change history) to NIST 800-53 controls AC-2 / AC-3 / AC-6
 collector + ServiceNow integration + a benchmark re-run. ~6-8 week
 ship target.
 
-## v0.7.8 — Cloud data-warehouse collectors + BI integrations — PLANNED
+## v0.7.8 — Cloud data-warehouse collectors + BI integrations — SHIPPED
 
-See [`docs/v0.7.8-plan.md`](v0.7.8-plan.md). Extends the v0.7.7
-relational-DB evidence layer into modern cloud data warehouses
-(Databricks, Snowflake) and adds the first BI output integrations
-(Tableau, Power BI). Each cloud-DW adapter maps to the same
-NIST 800-53 control families as the SQL adapters. The Tableau +
-Power BI integrations push compliance datasets (gap reports + risk
-register) to enterprise BI surfaces, positioning Evidentia as the
+See [`docs/v0.7.8-plan.md`](v0.7.8-plan.md) for the full plan.
+Extended the v0.7.7 relational-DB evidence layer into modern cloud
+data warehouses (Databricks, Snowflake) and added the first BI
+output integrations (Tableau, Power BI). Each cloud-DW adapter
+maps to the same NIST 800-53 control families as the SQL adapters
+plus AC-2(11), AC-6(7), AC-7, IA-2(1)/(2), IR-4 for Snowflake.
+The Tableau + Power BI integrations push three datasets (gap
+inventory, risk register with AI-provenance, collection-run audit
+trail) to enterprise BI surfaces, positioning Evidentia as the
 OSS evidence-feed beneath dashboards risk officers + audit
-committees + boards already consume. Ships starter Tableau
-workbook + Power BI report templates. ~6-8 week ship target.
+committees + boards already consume.
+
+CSV-based Tableau publish (no `.hyper` native binary needed) +
+Power BI Push Datasets via Azure AD service-principal OAuth. CLI
++ REST + status-endpoint wiring for all four. Comprehensive
+walkthrough docs (`docs/cloud-dw-collectors.md`,
+`docs/bi-integrations.md`) + Meridian-with-BI demo scenario
+(`examples/meridian-fintech-v2-with-bi/`). 1256 tests passing
+(+156 new); mypy strict clean across 139 source files. Some
+evidence sources DEFERRED to v0.7.9+ (Databricks audit logs +
+lineage need SQL Warehouse plumbing; Snowflake ACCESS_HISTORY
+needs pagination design; Databricks network policies need
+Account API auth path) — all surfaced as explicit BLIND_SPOTS.
 
 ## v0.7.9 — Industry overlay (TPRM module + model risk + 7 new catalogs) — PLANNED
 

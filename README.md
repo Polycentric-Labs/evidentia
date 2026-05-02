@@ -142,48 +142,43 @@ Evidentia is built on four principles:
 
 ### Recent releases
 
-**v0.7.4 (April 2026)** — *same-day Dockerfile invocation
-hot-fix*. Corrects three wrong CLI invocations shipped in v0.7.3
-(`evidentia --version` → `evidentia version`; `evidentia
-frameworks list` → `evidentia catalog list`) plus a pre-existing
-latent same-pattern bug in the composite action's install step.
-v0.7.3's container-build.yml workflow was failing on every push
-+ PR touching the Dockerfile; v0.7.4 unblocks that path. Adds a
-"local Docker build" line to `docs/release-checklist.md` Step 5
-so future Dockerfile-touching releases catch this class of bug
-pre-tag. All v0.7.3 PyPI artifacts (wheels, SBOM, attestations)
-carry forward unchanged.
+**v0.7.8 (May 2026)** — *cloud data-warehouse collectors + BI
+integrations*. Adds two read-only evidence collectors for cloud
+data warehouses (Databricks workspace API + Snowflake
+`account_usage` views; mapped to NIST 800-53 controls AC-2 / AC-3
+/ AC-6 / AC-7 / AU-2 / AU-3 / IA-2 / IA-5 / SC-7 / SC-12 / SI-2)
+plus the first **output integrations to enterprise BI platforms**
+(Tableau Server / Cloud + Power BI). Three published datasets per
+BI platform: gap inventory, NIST SP 800-30 risk register with AI-
+provenance fields, and CollectionContext audit trail. Ships
+walkthrough docs (`docs/cloud-dw-collectors.md`,
+`docs/bi-integrations.md`) and an end-to-end Meridian-with-BI
+demo. 1256 tests passing (+156 new). Ship summary:
+[docs/v0.7.8-plan.md](docs/v0.7.8-plan.md).
 
-**v0.7.3 (April 2026)** — *composite action hardening + docs
-polish*. Closes the OpenSSF Scorecard "Pinned-Dependencies" check
-end-to-end (28 SHA-pinned `uses:` refs across the composite action
-+ every workflow file), adds composite-action E2E smoke testing
-that catches future action.yml ↔ CLI drift, lands SLSA L3 build
-provenance via `actions/attest-build-provenance@v2.4.0` (restoring
-`gh attestation verify` as a working verifier alongside
-`pypi-attestations verify pypi`). Publishes
-[docs/v0.8.0-plan.md](docs/v0.8.0-plan.md) (the OSS-native AI
-moat — DFAH determinism harness, PRT mode, MCP server,
-plugin-contract scaffolding) and
-[docs/sigstore-quickstart.md](docs/sigstore-quickstart.md). Lands
-pre-commit hooks + dev container, container-image build smoke
-test + Dockerfile, frontend dev-stack CVE bumps (vite + vitest +
-plugin-react). Ship summary:
-[docs/v0.7.3-plan.md](docs/v0.7.3-plan.md).
+**v0.7.7 (May 2026)** — *SQL family evidence collectors*. Five
+read-only relational-DB adapters (`[sql-postgres]`, `[sql-mysql]`,
+`[sql-sqlite]`, `[sql-mssql]`, `[sql-oracle]`) mapping DB-resident
+compliance evidence to NIST 800-53 controls. Plus ServiceNow
+output integration carry-forward. Ship summary:
+[docs/v0.7.7-plan.md](docs/v0.7.7-plan.md).
 
-**v0.7.2 (April 2026)** — *supply-chain polish + documentation
-refresh*. OpenSSF Scorecard weekly workflow publishing to
-[securityscorecards.dev](https://securityscorecards.dev/),
-version-controlled Cursor + VS Code workspace config for
-testing/validation inline, catalog-drift false-positive fix
-(PyYAML word-wrap deterministic emit + workflow
-`--ignore-all-space` guard), pre-release-review refinements pass.
-Ship summary: [docs/v0.7.2-plan.md](docs/v0.7.2-plan.md).
+**v0.7.5 (May 2026)** — *container publish + critical security
+batch + quick-win polish*. Container image publish to
+`ghcr.io/allenfbyrd/evidentia` with cosign keyless OIDC signing;
+critical security batch (P0.5: 14 HIGH py/path-injection + 1 HIGH
+py/polynomial-redos + 3 MEDIUM stack-trace exposure + 4 MEDIUM
+workflow permissions + URL-sanitization review); Dependabot
+batch merge; OpenSSF Best Practices Badge filing; `/api/health`
+hardening; `docs/troubleshooting.md`. Ship summary:
+[docs/v0.7.5-plan.md](docs/v0.7.5-plan.md).
 
 See [`CHANGELOG.md`](CHANGELOG.md) for the full version history
-(v0.1.0 through v0.7.2). For forward direction, see
-[`docs/v0.7.3-plan.md`](docs/v0.7.3-plan.md) (next),
-[`docs/v0.8.0-plan.md`](docs/v0.8.0-plan.md) (the AI moat), and
+(v0.1.0 through v0.7.8). For forward direction, see
+[`docs/v0.7.9-plan.md`](docs/v0.7.9-plan.md) (industry overlay —
+TPRM + model risk + 7 new catalogs),
+[`docs/v0.8.0-plan.md`](docs/v0.8.0-plan.md) (the AI moat — DFAH +
+PRT + MCP + plugin contract), and
 [`docs/ROADMAP.md`](docs/ROADMAP.md) (everything else).
 
 ### What works today

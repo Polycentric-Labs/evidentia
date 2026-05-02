@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-integrations"
-version = "0.7.7.1"
+version = "0.7.8"
 description = "Output integrations for Jira and ServiceNow"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]

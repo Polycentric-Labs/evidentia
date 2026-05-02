@@ -7,6 +7,152 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.8] - 2026-05-02
+
+**The cloud data-warehouse + BI integrations release.** Brings
+two long-anticipated capability areas into Evidentia: read-only
+evidence collection from cloud data warehouses (Databricks +
+Snowflake) and the first **output integrations to enterprise BI
+platforms** (Tableau + Power BI). Positions Evidentia as the OSS
+evidence feed beneath enterprise risk-officer + audit-committee
+dashboards.
+
+### Added
+
+- **Databricks evidence collector**
+  (`evidentia-collectors[databricks]`). Read-only adapter
+  surfacing Personal Access Token inventory + lifecycle
+  (long-lived, never-expires findings), cluster compliance
+  (runtime version, libraries, init scripts), service-principal
+  inventory + active/inactive status, and secret-scope inventory
+  (Databricks-backed vs Azure Key Vault-backed) — all mapped to
+  NIST 800-53 controls AC-2 / AC-2(3) / AC-2(11) / AC-3 / CM-2 /
+  CM-3 / CM-8 / IA-5 / IA-5(1) / SC-12 / SI-2. Auth via the
+  Databricks SDK's unified-auth resolver (PAT, OAuth M2M, Azure
+  AD, AWS IAM, `.databrickscfg`). Ships 7 documented BLIND_SPOTS
+  + 27 unit tests with full mock coverage. CLI: `evidentia
+  collect databricks --workspace-url ...`. REST: `POST
+  /api/collectors/databricks/collect`.
+- **Snowflake evidence collector**
+  (`evidentia-collectors[snowflake]`). Read-only adapter
+  surfacing LOGIN_HISTORY (per-user inventory + per-failed-login
+  row over a 90-day window), USERS inventory + MFA enforcement +
+  disabled-account + never-logged-in findings, GRANTS_TO_USERS
+  inventory + privileged-role grants (ACCOUNTADMIN /
+  SECURITYADMIN / ORGADMIN), network-policy inventory + account-
+  level baseline check, masking + row-access policy inventory
+  per database, and operator-attested key-rotation status — all
+  mapped to NIST controls AC-2 / AC-2(3) / AC-3 / AC-3(7) / AC-6
+  / AC-6(7) / AC-7 / AU-2 / AU-3 / IA-2(1) / IA-2(2) / IR-4 /
+  SC-7 / SC-7(5) / SC-12 / SC-28. Auth via password (env-var
+  sourced) or key-pair (preferred for production — Snowflake is
+  deprecating password auth). Ships 7 documented BLIND_SPOTS +
+  29 unit tests + 4 API smoke tests. CLI: `evidentia collect
+  snowflake --account ... --user ... --password-env ...`. REST:
+  `POST /api/collectors/snowflake/collect`.
+- **Tableau publish integration**
+  (`evidentia-integrations[tableau]`). First substantive output
+  integration since Jira (v0.5.0). Publishes gap inventory + risk
+  register + collection-run audit trail to a Tableau Server /
+  Tableau Cloud site as **CSV-based data sources** ready for
+  refreshable risk-officer dashboards. Three datasets:
+  `evidentia-gaps` (22 columns mirroring ControlGap), `evidentia-
+  risks` (NIST SP 800-30 shape with AI-provenance fields surfaced
+  from GenerationContext), `evidentia-collection-runs`
+  (CollectionContext audit trail). Auth via Personal Access Token
+  read from `TABLEAU_PAT_NAME` + `TABLEAU_PAT_SECRET` env vars
+  (the integration NEVER accepts the PAT secret as a CLI flag or
+  in a request body — only the env-var names). Ships 22 unit
+  tests + 3 API smoke tests. CLI: `evidentia integrations tableau
+  publish --gaps report.json --server-url ...`. REST: `POST
+  /api/integrations/tableau/publish/{report_key}`.
+- **Power BI publish integration**
+  (`evidentia-integrations[powerbi]`). Pushes the same three
+  datasets to a Power BI workspace as **Push Datasets** via the
+  Power BI REST API + Azure AD service-principal OAuth2 (MSAL
+  Python). Full-refresh semantics by default (clear-then-push).
+  10,000-row batching per Power BI's documented limit. Schema-
+  declared dataset creation auto-detects existing datasets by
+  name and reuses IDs (idempotent re-runs). Auth via service
+  principal with `Dataset.ReadWrite.All`; client secret read
+  from `POWERBI_CLIENT_SECRET` env var server-side; never in
+  request bodies. Ships 29 row-builder + schema unit tests + 15
+  mocked-MSAL/httpx client tests + 4 API smoke tests. CLI:
+  `evidentia integrations powerbi publish --gaps report.json
+  --workspace-id ... --tenant-id ... --client-id ...`. REST:
+  `POST /api/integrations/powerbi/publish/{report_key}`.
+- **`docs/cloud-dw-collectors.md`** — comprehensive walkthrough
+  for the Databricks + Snowflake collectors. Install, auth modes,
+  required principal privileges (with the recommended hardened
+  Snowflake setup SQL), every evidence source mapped to NIST
+  controls, CLI/REST examples, programmatic-use snippets,
+  BLIND_SPOTS tables, end-to-end pattern, future-work roadmap.
+- **`docs/bi-integrations.md`** — comprehensive walkthrough for
+  the Tableau + Power BI integrations. Includes the three-dataset
+  schema tables, full audit-cycle workflow showing both
+  integrations side-by-side, dashboard tips for Tableau and
+  Power BI, troubleshooting playbook for common auth errors.
+- **`examples/meridian-fintech-v2-with-bi/README.md`** — companion
+  end-to-end demo to `examples/meridian-fintech-v2/`. Walks
+  through cloud-DW evidence collection → gap analysis → AI risk
+  generation → publish to BOTH Tableau AND Power BI →
+  refresh-cadence recommendations.
+
+### Changed
+
+- **`evidentia-collectors`**: new `[databricks]` extra (pulls in
+  `databricks-sdk>=0.30`) and `[snowflake]` extra (pulls in
+  `snowflake-connector-python>=3.10`). Both included in the
+  umbrella `[all]` extra alongside the existing AWS/Azure/GCP/
+  GitHub/Okta/SQL adapters.
+- **`evidentia-integrations`**: new `[tableau]` extra
+  (`tableauserverclient>=0.30` — pure-Python; no native deps)
+  and `[powerbi]` extra (`msal>=1.31`; httpx is already a base
+  dep). Both included in the umbrella `[all]` extra alongside
+  Jira + ServiceNow.
+- **`/api/collectors/status`**: now reports Databricks and
+  Snowflake `installed` + auth-configured status flags
+  alongside the existing AWS / GitHub / Okta / SQL family
+  entries. The status endpoint NEVER returns secret values —
+  only `<env_var>_configured: bool` indicators.
+- **`evidentia integrations`**: new `tableau` and `powerbi`
+  Typer subcommand groups alongside the existing `jira` and
+  `servicenow` groups.
+
+### Notes
+
+- **CSV-only Tableau publish in v0.7.8**. `.hyper` extract
+  publish (which would require the heavyweight
+  `tableauhyperapi` native binary, ~100 MB) is documented as a
+  v0.7.9+ enhancement under a separate `[tableau-hyper]` extra.
+- **Push Datasets only for Power BI in v0.7.8**. Power BI
+  Premium / Fabric capacity (full Tabular Model storage) is
+  documented as a future enhancement; Push Datasets fits the
+  compliance-dashboard use case cleanly and works on the
+  standard Power BI Pro license.
+- **Some Databricks + Snowflake evidence sources DEFERRED to
+  v0.7.9+**: Databricks workspace audit logs + table/column
+  lineage (need SQL Warehouse plumbing); Databricks workspace
+  network policies (need Account API auth path); Snowflake
+  ACCESS_HISTORY lineage (large rowcount; pagination + sampling
+  design needed); Snowflake failed-login spike-detection
+  heuristic (separate from inventory). All deferred items are
+  documented in `docs/v0.7.8-plan.md` and surfaced as explicit
+  BLIND_SPOTS in each adapter.
+
+**1256 tests passing** + 12 environmental skips (was 1100 at
+v0.7.7 ship; +156 new tests covering Databricks + Snowflake +
+Tableau + Power BI + new API surfaces); mypy strict clean across
+139 source files; ruff lint clean.
+
+### Carry-forward (unchanged from v0.7.7)
+
+PyPI artifacts (6 wheels + 6 sdists), CycloneDX SBOM, PEP 740
+attestations, SLSA L3 build provenance, Sigstore keyless signing,
+container-image publish to ghcr.io with cosign verification, the
+v0.7.7 SQL adapter family + ServiceNow integration, all v0.7.x
+features carry forward.
+
 ## [0.7.7.1] - 2026-05-02
 
 **Same-day Dockerfile-pin hot-fix for v0.7.7.** The `release.yml`
