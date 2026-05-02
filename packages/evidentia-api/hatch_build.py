@@ -36,7 +36,7 @@ _UI_DIST = _UI_DIR / "dist"
 _STATIC_DEST = _PKG_ROOT / "src" / "evidentia_api" / "static"
 
 
-class FrontendBundleHook(BuildHookInterface):
+class FrontendBundleHook(BuildHookInterface):  # type: ignore[misc]
     """Copies the React SPA build output into the Python package tree."""
 
     PLUGIN_NAME = "evidentia-frontend"

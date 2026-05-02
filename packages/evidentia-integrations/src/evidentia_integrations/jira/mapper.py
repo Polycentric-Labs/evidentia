@@ -144,7 +144,7 @@ def gap_to_create_request(gap: ControlGap) -> dict[str, object]:
     priority_name = _SEVERITY_TO_PRIORITY.get(
         gap.gap_severity
         if isinstance(gap.gap_severity, GapSeverity)
-        else GapSeverity(gap.gap_severity)  # type: ignore[arg-type]
+        else GapSeverity(gap.gap_severity)
     )
 
     extra_fields: dict[str, object] = {}
