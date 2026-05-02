@@ -182,3 +182,87 @@ class TestJiraPushSyncValidation:
         r = api_client.post(f"/api/integrations/jira/push/{key}")
         assert r.status_code == 503
         assert "JIRA_BASE_URL" in r.json()["detail"]
+
+
+# ── Tableau publish endpoint (v0.7.8 P1.1) ────────────────────────
+
+
+class TestTableauPublishEndpoint:
+    def test_invalid_key_returns_422(
+        self, api_client: TestClient
+    ) -> None:
+        r = api_client.post(
+            "/api/integrations/tableau/publish/not-a-hex-key",
+            json={"server_url": "https://example.tableau"},
+        )
+        assert r.status_code == 422
+
+    def test_missing_server_url_returns_422(
+        self, api_client: TestClient
+    ) -> None:
+        r = api_client.post(
+            "/api/integrations/tableau/publish/0123456789abcdef",
+            json={},
+        )
+        assert r.status_code == 422
+        assert "server_url" in r.json()["detail"]
+
+    def test_invalid_risks_array_returns_422(
+        self, api_client: TestClient
+    ) -> None:
+        r = api_client.post(
+            "/api/integrations/tableau/publish/0123456789abcdef",
+            json={
+                "server_url": "https://example.tableau.com",
+                "risks": "not-a-list",
+            },
+        )
+        assert r.status_code == 422
+
+
+# ── Power BI publish endpoint (v0.7.8 P1.2) ───────────────────────
+
+
+class TestPowerBIPublishEndpoint:
+    def test_invalid_key_returns_422(
+        self, api_client: TestClient
+    ) -> None:
+        r = api_client.post(
+            "/api/integrations/powerbi/publish/not-a-hex-key",
+            json={
+                "workspace_id": "ws-1",
+                "tenant_id": "t-1",
+                "client_id": "c-1",
+            },
+        )
+        assert r.status_code == 422
+
+    def test_missing_workspace_returns_422(
+        self, api_client: TestClient
+    ) -> None:
+        r = api_client.post(
+            "/api/integrations/powerbi/publish/0123456789abcdef",
+            json={"tenant_id": "t-1", "client_id": "c-1"},
+        )
+        assert r.status_code == 422
+        assert "workspace_id" in r.json()["detail"]
+
+    def test_missing_tenant_returns_422(
+        self, api_client: TestClient
+    ) -> None:
+        r = api_client.post(
+            "/api/integrations/powerbi/publish/0123456789abcdef",
+            json={"workspace_id": "ws-1", "client_id": "c-1"},
+        )
+        assert r.status_code == 422
+        assert "tenant_id" in r.json()["detail"]
+
+    def test_missing_client_returns_422(
+        self, api_client: TestClient
+    ) -> None:
+        r = api_client.post(
+            "/api/integrations/powerbi/publish/0123456789abcdef",
+            json={"workspace_id": "ws-1", "tenant_id": "t-1"},
+        )
+        assert r.status_code == 422
+        assert "client_id" in r.json()["detail"]

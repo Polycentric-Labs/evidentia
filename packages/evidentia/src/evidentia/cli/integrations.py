@@ -48,6 +48,24 @@ servicenow_app = typer.Typer(
 )
 app.add_typer(servicenow_app, name="servicenow")
 
+tableau_app = typer.Typer(
+    no_args_is_help=True,
+    help=(
+        "Tableau integration — publish gap inventory + risk register "
+        "+ collection-run audit trail to Tableau Server / Cloud."
+    ),
+)
+app.add_typer(tableau_app, name="tableau")
+
+powerbi_app = typer.Typer(
+    no_args_is_help=True,
+    help=(
+        "Power BI integration — push gap inventory + risk register "
+        "+ collection-run audit trail to a Power BI workspace."
+    ),
+)
+app.add_typer(powerbi_app, name="powerbi")
+
 console = Console()
 
 
@@ -381,3 +399,256 @@ def jira_status_map(
     for jira_name, gs in JIRA_STATUS_TO_GAP_STATUS.items():
         table2.add_row(jira_name, gs.value)
     console.print(table2)
+
+
+# ── Tableau commands (v0.7.8 P1.1) ────────────────────────────────
+
+
+def _load_risks_optional(risks_path: Path | None) -> object | None:
+    """Load a JSON file containing a list of RiskStatement objects.
+
+    Returns the parsed list, or None if no path was provided.
+    Imports are inline so the function is free of evidentia-ai
+    coupling when not needed.
+    """
+    if risks_path is None:
+        return None
+    if not risks_path.is_file():
+        console.print(
+            f"[red]Error:[/red] risks file not found: {risks_path}."
+        )
+        raise typer.Exit(code=1)
+    import json as _json
+
+    from evidentia_core.models.risk import RiskStatement
+
+    payload = _json.loads(risks_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, list):
+        console.print(
+            "[red]Error:[/red] risks file must contain a JSON list."
+        )
+        raise typer.Exit(code=1)
+    return [RiskStatement.model_validate(item) for item in payload]
+
+
+@tableau_app.command("publish")
+def tableau_publish(
+    gaps: Path = typer.Option(
+        ...,
+        "--gaps",
+        help=(
+            "Path to a gap-analysis report JSON file (the output "
+            "of 'evidentia gap analyze --output ...')."
+        ),
+    ),
+    server_url: str = typer.Option(
+        ...,
+        "--server-url",
+        help=(
+            "Tableau Server / Cloud base URL. Example: "
+            "'https://us-east-1.online.tableau.com' or "
+            "'https://tableau.acme.example.com'. NO trailing slash."
+        ),
+    ),
+    site_id: str = typer.Option(
+        "",
+        "--site-id",
+        help=(
+            "Tableau site ID slug. For Tableau Cloud, this is the "
+            "site you signed up for; for Tableau Server's default "
+            "site, leave empty (default empty string)."
+        ),
+    ),
+    project_name: str = typer.Option(
+        "default",
+        "--project-name",
+        help=(
+            "Project name on the Tableau site to publish into. "
+            "Defaults to 'default' (auto-created on every site)."
+        ),
+    ),
+    pat_name_env: str = typer.Option(
+        "TABLEAU_PAT_NAME",
+        "--pat-name-env",
+        help=(
+            "Name of the env var holding the PAT name. The CLI "
+            "reads from this env var (never accepts the PAT name "
+            "or secret as a flag value)."
+        ),
+    ),
+    pat_secret_env: str = typer.Option(
+        "TABLEAU_PAT_SECRET",
+        "--pat-secret-env",
+        help="Name of the env var holding the PAT secret.",
+    ),
+    risks: Path | None = typer.Option(
+        None,
+        "--risks",
+        help=(
+            "Optional path to a JSON list of RiskStatement objects "
+            "to publish as the 'evidentia-risks' dataset."
+        ),
+    ),
+    no_overwrite: bool = typer.Option(
+        False,
+        "--no-overwrite",
+        help=(
+            "If set, publish in CreateNew mode and fail if the "
+            "datasets already exist. Default is Overwrite (re-"
+            "running the publish updates the existing data sources)."
+        ),
+    ),
+) -> None:
+    """Publish gap inventory + risk register to Tableau as data sources."""
+    try:
+        from evidentia_integrations.tableau import (
+            TableauApiError,
+            TableauConfig,
+            publish_report,
+        )
+    except ImportError as e:
+        console.print(
+            "[red]Error:[/red] Tableau integration is not "
+            "installed. Run "
+            "[cyan]pip install 'evidentia-integrations[tableau]'[/cyan]."
+        )
+        raise typer.Exit(code=1) from e
+
+    report = _load_report(gaps)
+    risk_list = _load_risks_optional(risks)
+    cfg = TableauConfig(
+        server_url=server_url,
+        site_id=site_id,
+        project_name=project_name,
+        pat_name_env=pat_name_env,
+        pat_secret_env=pat_secret_env,
+    )
+    try:
+        result = publish_report(
+            config=cfg,
+            report=report,
+            risks=risk_list,  # type: ignore[arg-type]
+            overwrite=not no_overwrite,
+        )
+    except TableauApiError as e:
+        console.print(
+            f"[red]Tableau publish failed:[/red] {e}"
+        )
+        raise typer.Exit(code=1) from e
+
+    table = Table(title=f"Tableau publish result ({server_url})")
+    table.add_column("Dataset", style="cyan")
+    table.add_column("Datasource ID")
+    table.add_column("Rows")
+    for ds in result.datasets:
+        table.add_row(ds.name, ds.datasource_id, str(ds.rows))
+    console.print(table)
+    if result.skipped:
+        console.print(
+            "[yellow]Skipped:[/yellow] " + "; ".join(result.skipped)
+        )
+
+
+# ── Power BI commands (v0.7.8 P1.2) ───────────────────────────────
+
+
+@powerbi_app.command("publish")
+def powerbi_publish(
+    gaps: Path = typer.Option(
+        ...,
+        "--gaps",
+        help="Path to a gap-analysis report JSON file.",
+    ),
+    workspace_id: str = typer.Option(
+        ...,
+        "--workspace-id",
+        help="Power BI workspace ID (UUID).",
+    ),
+    tenant_id: str = typer.Option(
+        ...,
+        "--tenant-id",
+        help="Azure AD tenant ID (UUID).",
+    ),
+    client_id: str = typer.Option(
+        ...,
+        "--client-id",
+        help=(
+            "Azure AD service-principal application (client) ID. "
+            "Must have Dataset.ReadWrite.All on the target "
+            "workspace."
+        ),
+    ),
+    client_secret_env: str = typer.Option(
+        "POWERBI_CLIENT_SECRET",
+        "--client-secret-env",
+        help=(
+            "Name of the env var holding the service-principal "
+            "client secret. The CLI reads from this env var "
+            "(never accepts the secret as a flag value)."
+        ),
+    ),
+    risks: Path | None = typer.Option(
+        None,
+        "--risks",
+        help="Optional path to a JSON list of RiskStatement objects.",
+    ),
+    no_clear: bool = typer.Option(
+        False,
+        "--no-clear",
+        help=(
+            "If set, append rows to existing datasets rather than "
+            "clearing them first (default behavior is full-refresh "
+            "via clear-then-push)."
+        ),
+    ),
+) -> None:
+    """Push gap inventory + risk register to Power BI as Push Datasets."""
+    try:
+        from evidentia_integrations.powerbi import (
+            PowerBIApiError,
+            PowerBIConfig,
+            publish_report,
+        )
+    except ImportError as e:
+        console.print(
+            "[red]Error:[/red] Power BI integration is not "
+            "installed. Run "
+            "[cyan]pip install 'evidentia-integrations[powerbi]'[/cyan]."
+        )
+        raise typer.Exit(code=1) from e
+
+    report = _load_report(gaps)
+    risk_list = _load_risks_optional(risks)
+    cfg = PowerBIConfig(
+        workspace_id=workspace_id,
+        tenant_id=tenant_id,
+        client_id=client_id,
+        client_secret_env=client_secret_env,
+    )
+    try:
+        result = publish_report(
+            config=cfg,
+            report=report,
+            risks=risk_list,  # type: ignore[arg-type]
+            clear_before_push=not no_clear,
+        )
+    except PowerBIApiError as e:
+        console.print(f"[red]Power BI publish failed:[/red] {e}")
+        raise typer.Exit(code=1) from e
+
+    table = Table(
+        title=f"Power BI publish result (workspace {workspace_id})"
+    )
+    table.add_column("Dataset", style="cyan")
+    table.add_column("Dataset ID")
+    table.add_column("Table")
+    table.add_column("Rows")
+    for ds in result.datasets:
+        table.add_row(
+            ds.name, ds.dataset_id, ds.table_name, str(ds.rows)
+        )
+    console.print(table)
+    if result.skipped:
+        console.print(
+            "[yellow]Skipped:[/yellow] " + "; ".join(result.skipped)
+        )

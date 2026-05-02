@@ -230,3 +230,254 @@ async def jira_status_map() -> dict[str, dict[str, str]]:
             k: v.value for k, v in JIRA_STATUS_TO_GAP_STATUS.items()
         },
     }
+
+
+# ── Tableau publish (v0.7.8 P1.1) ─────────────────────────────────
+
+
+@router.post("/integrations/tableau/publish/{report_key}")
+async def tableau_publish(
+    report_key: str,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    """Publish a stored gap report to Tableau as data sources.
+
+    Path:
+      - ``report_key``: the gap-store key for a previously saved
+        :class:`GapAnalysisReport`.
+
+    Required body:
+      - ``server_url``: Tableau Server / Cloud base URL.
+
+    Optional body:
+      - ``site_id``: Tableau site slug (default empty for default
+        site).
+      - ``project_name``: project on the site to publish into
+        (default ``"default"``).
+      - ``pat_name_env`` / ``pat_secret_env``: env-var names for
+        the PAT (defaults ``TABLEAU_PAT_NAME`` /
+        ``TABLEAU_PAT_SECRET``).
+      - ``risks``: optional list of pre-computed RiskStatement
+        dicts to publish alongside the gaps.
+      - ``overwrite``: bool (default true) — overwrite existing
+        datasets vs. fail on conflict.
+
+    Per ``~/.claude/CLAUDE.md`` secret-handling protocol, the PAT
+    name + secret values NEVER flow through the request body —
+    only the env-var names do.
+    """
+    request_id = _new_request_id()
+    try:
+        from evidentia_integrations.tableau import (
+            TableauApiError,
+            TableauConfig,
+            publish_report,
+        )
+    except ImportError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Tableau integration not installed. Run "
+                "`pip install 'evidentia-integrations[tableau]'`."
+            ),
+        ) from e
+
+    server_url = str(payload.get("server_url") or "").strip()
+    if not server_url:
+        raise HTTPException(
+            status_code=422,
+            detail="Request body must include 'server_url'.",
+        )
+
+    # Validate body shape (risks list) BEFORE report lookup so 422
+    # is returned for malformed bodies instead of 404 for missing
+    # reports.
+    risks_input = payload.get("risks")
+    risks: Any | None = None
+    if risks_input is not None:
+        from evidentia_core.models.risk import RiskStatement
+
+        if not isinstance(risks_input, list):
+            raise HTTPException(
+                status_code=422,
+                detail="'risks' must be a JSON array.",
+            )
+        try:
+            risks = [
+                RiskStatement.model_validate(item)
+                for item in risks_input
+            ]
+        except Exception as exc:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid risk payload: {exc}",
+            ) from exc
+
+    report = _load_report(report_key)
+
+    cfg = TableauConfig(
+        server_url=server_url,
+        site_id=str(payload.get("site_id") or ""),
+        project_name=str(payload.get("project_name") or "default"),
+        pat_name_env=str(
+            payload.get("pat_name_env") or "TABLEAU_PAT_NAME"
+        ),
+        pat_secret_env=str(
+            payload.get("pat_secret_env") or "TABLEAU_PAT_SECRET"
+        ),
+    )
+
+    overwrite = bool(payload.get("overwrite", True))
+
+    try:
+        result = publish_report(
+            config=cfg,
+            report=report,
+            risks=risks,
+            overwrite=overwrite,
+        )
+    except TableauApiError as exc:
+        logger.exception(
+            "Tableau publish failed (request_id=%s)", request_id
+        )
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception(
+            "Tableau publish unexpected error (request_id=%s)",
+            request_id,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"Tableau publish failed; request_id={request_id}"
+            ),
+        ) from exc
+
+    return result.model_dump()
+
+
+# ── Power BI publish (v0.7.8 P1.2) ────────────────────────────────
+
+
+@router.post("/integrations/powerbi/publish/{report_key}")
+async def powerbi_publish(
+    report_key: str,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    """Push a stored gap report to Power BI as Push Datasets.
+
+    Path:
+      - ``report_key``: the gap-store key for a previously saved
+        :class:`GapAnalysisReport`.
+
+    Required body:
+      - ``workspace_id``: Power BI workspace ID (UUID).
+      - ``tenant_id``: Azure AD tenant ID (UUID).
+      - ``client_id``: Azure AD service-principal application ID.
+
+    Optional body:
+      - ``client_secret_env``: env-var name for the client secret
+        (default ``POWERBI_CLIENT_SECRET``).
+      - ``risks``: optional list of pre-computed RiskStatement
+        dicts.
+      - ``clear_before_push``: bool (default true) — full-refresh
+        semantics; clear datasets before pushing new rows.
+
+    Per CLAUDE.md secret-handling protocol, the client secret value
+    NEVER flows through the request body — only the env-var name.
+    """
+    request_id = _new_request_id()
+    try:
+        from evidentia_integrations.powerbi import (
+            PowerBIApiError,
+            PowerBIConfig,
+            publish_report,
+        )
+    except ImportError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Power BI integration not installed. Run "
+                "`pip install 'evidentia-integrations[powerbi]'`."
+            ),
+        ) from e
+
+    workspace_id = str(payload.get("workspace_id") or "").strip()
+    tenant_id = str(payload.get("tenant_id") or "").strip()
+    client_id = str(payload.get("client_id") or "").strip()
+    if not workspace_id:
+        raise HTTPException(
+            status_code=422,
+            detail="Request body must include 'workspace_id'.",
+        )
+    if not tenant_id:
+        raise HTTPException(
+            status_code=422,
+            detail="Request body must include 'tenant_id'.",
+        )
+    if not client_id:
+        raise HTTPException(
+            status_code=422,
+            detail="Request body must include 'client_id'.",
+        )
+
+    # Validate body shape BEFORE report lookup.
+    risks_input = payload.get("risks")
+    risks: Any | None = None
+    if risks_input is not None:
+        from evidentia_core.models.risk import RiskStatement
+
+        if not isinstance(risks_input, list):
+            raise HTTPException(
+                status_code=422,
+                detail="'risks' must be a JSON array.",
+            )
+        try:
+            risks = [
+                RiskStatement.model_validate(item)
+                for item in risks_input
+            ]
+        except Exception as exc:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid risk payload: {exc}",
+            ) from exc
+
+    report = _load_report(report_key)
+
+    cfg = PowerBIConfig(
+        workspace_id=workspace_id,
+        tenant_id=tenant_id,
+        client_id=client_id,
+        client_secret_env=str(
+            payload.get("client_secret_env")
+            or "POWERBI_CLIENT_SECRET"
+        ),
+    )
+    clear_before_push = bool(payload.get("clear_before_push", True))
+
+    try:
+        result = publish_report(
+            config=cfg,
+            report=report,
+            risks=risks,
+            clear_before_push=clear_before_push,
+        )
+    except PowerBIApiError as exc:
+        logger.exception(
+            "Power BI publish failed (request_id=%s)", request_id
+        )
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception(
+            "Power BI publish unexpected error (request_id=%s)",
+            request_id,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"Power BI publish failed; request_id={request_id}"
+            ),
+        ) from exc
+
+    return result.model_dump()
