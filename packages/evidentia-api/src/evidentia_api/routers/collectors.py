@@ -186,6 +186,72 @@ async def postgres_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     return findings
 
 
+@router.post(
+    "/collectors/sql/mysql/collect", response_model=list[SecurityFinding]
+)
+async def mysql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
+    """Run the MySQL / MariaDB collector (v0.7.7 P0.2).
+
+    Request body (required):
+
+    - ``connection_uri``: ``mysql://user@host:3306/dbname`` WITHOUT
+      embedded password.
+    - ``password_env``: env-var name to read the password from.
+      Default: ``EVIDENTIA_MYSQL_PASSWORD``.
+
+    Read-only by design — write privilege fires
+    EVIDENTIA-WRITE-PRIV-DETECTED finding mapped to NIST AC-6.
+    """
+    try:
+        from evidentia_collectors.sql.mysql import (
+            MySQLCollector,
+            MySQLCollectorError,
+        )
+    except ImportError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "MySQL collector not installed. Run "
+                "`pip install 'evidentia-collectors[sql-mysql]'`."
+            ),
+        ) from e
+
+    connection_uri = str(payload.get("connection_uri") or "").strip()
+    if not connection_uri:
+        raise HTTPException(
+            status_code=422,
+            detail="Request body must include 'connection_uri'.",
+        )
+    password_env = (
+        str(payload.get("password_env") or "EVIDENTIA_MYSQL_PASSWORD").strip()
+        or "EVIDENTIA_MYSQL_PASSWORD"
+    )
+    password = os.environ.get(password_env)
+    if password is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                f"Environment variable {password_env!r} not set on the "
+                "server."
+            ),
+        )
+
+    try:
+        with MySQLCollector(
+            connection_uri=connection_uri, password=password
+        ) as collector:
+            findings = collector.collect()
+    except MySQLCollectorError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    except Exception as e:
+        logger.exception("MySQL collector failed")
+        raise HTTPException(
+            status_code=500, detail=f"MySQL collector failed: {e}"
+        ) from e
+
+    return findings
+
+
 @router.get("/collectors/status")
 async def collectors_status() -> dict[str, Any]:
     """Report which collectors are installed + which credentials are set.
@@ -196,6 +262,7 @@ async def collectors_status() -> dict[str, Any]:
     aws_installed = False
     github_installed = False
     postgres_installed = False
+    mysql_installed = False
     try:
         import evidentia_collectors.aws
 
@@ -206,6 +273,17 @@ async def collectors_status() -> dict[str, Any]:
         import evidentia_collectors.github
 
         github_installed = True
+    except ImportError:
+        pass
+    try:
+        import evidentia_collectors.sql.mysql
+
+        try:
+            import pymysql  # type: ignore[import-untyped]  # noqa: F401
+
+            mysql_installed = True
+        except ImportError:
+            mysql_installed = False
     except ImportError:
         pass
     try:
@@ -245,6 +323,17 @@ async def collectors_status() -> dict[str, Any]:
             ),
             "default_password_env_configured": bool(
                 os.environ.get("EVIDENTIA_POSTGRES_PASSWORD")
+            ),
+        },
+        "mysql": {
+            "installed": mysql_installed,
+            "credentials_hint": (
+                "Connection URI WITHOUT embedded password; pass password via "
+                "EVIDENTIA_MYSQL_PASSWORD env var (or override with "
+                "password_env in the request body)."
+            ),
+            "default_password_env_configured": bool(
+                os.environ.get("EVIDENTIA_MYSQL_PASSWORD")
             ),
         },
     }

@@ -913,6 +913,7 @@ all = [
     { name = "okta" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pygithub" },
+    { name = "pymysql" },
 ]
 aws = [
     { name = "boto3" },
@@ -932,6 +933,10 @@ okta = [
 ]
 sql = [
     { name = "psycopg", extra = ["binary"] },
+    { name = "pymysql" },
+]
+sql-mysql = [
+    { name = "pymysql" },
 ]
 sql-postgres = [
     { name = "psycopg", extra = ["binary"] },
@@ -956,8 +961,11 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"], marker = "extra == 'sql-postgres'", specifier = ">=3.1" },
     { name = "pygithub", marker = "extra == 'all'", specifier = ">=2.4" },
     { name = "pygithub", marker = "extra == 'github'", specifier = ">=2.4" },
+    { name = "pymysql", marker = "extra == 'all'", specifier = ">=1.1" },
+    { name = "pymysql", marker = "extra == 'sql'", specifier = ">=1.1" },
+    { name = "pymysql", marker = "extra == 'sql-mysql'", specifier = ">=1.1" },
 ]
-provides-extras = ["aws", "azure", "gcp", "github", "okta", "sql-postgres", "sql", "all"]
+provides-extras = ["aws", "azure", "gcp", "github", "okta", "sql-postgres", "sql-mysql", "sql", "all"]
 
 [[package]]
 name = "evidentia-core"
@@ -2903,6 +2911,15 @@ wheels = [
 [package.optional-dependencies]
 crypto = [
     { name = "cryptography" },
+]
+
+[[package]]
+name = "pymysql"
+version = "1.1.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/7f/ec/8d45c920e90445f0b75c590b32851853ed319763b0d8dff8d283052da8cf/pymysql-1.1.3.tar.gz", hash = "sha256:e70ebf2047a4edf6138cf79c68ad418ef620af65900aa585c5e8bfc95044d43a", size = 48207, upload-time = "2026-05-01T09:09:54.532Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8e/dc/9085f3d6f497e9b25fb40d6e8ecef3ddbb5cf977a949b933624a299f5c16/pymysql-1.1.3-py3-none-any.whl", hash = "sha256:8164ba62c552f6105f3b11753352d0f16b90d1703ba67d81923d5a8a5d1c5289", size = 45356, upload-time = "2026-05-01T09:09:53.316Z" },
 ]
 
 [[package]]

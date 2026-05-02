@@ -210,7 +210,12 @@ def collect_sql(
             )
             raise typer.Exit(code=1) from e
 
-        password = os.environ.get(password_env)
+        # Default env-var name follows per-adapter convention; override
+        # via --password-env for non-default placements.
+        if password_env == "EVIDENTIA_POSTGRES_PASSWORD":
+            password = os.environ.get(password_env)
+        else:
+            password = os.environ.get(password_env)
         if password is None:
             console.print(
                 f"[red]Error:[/red] {password_env} env var not set. "
@@ -230,9 +235,49 @@ def collect_sql(
         _write_findings(findings, output, title=f"Postgres findings ({connection_uri})")
         return
 
+    if adapter == "mysql":
+        try:
+            from evidentia_collectors.sql.mysql import (
+                MySQLCollector,
+                MySQLCollectorError,
+            )
+        except ImportError as e:
+            console.print(
+                "[red]Error:[/red] MySQL collector is not installed. "
+                "Run [cyan]pip install 'evidentia-collectors[sql-mysql]'[/cyan]."
+            )
+            raise typer.Exit(code=1) from e
+
+        # MySQL defaults to a different env-var name unless overridden
+        effective_env = (
+            "EVIDENTIA_MYSQL_PASSWORD"
+            if password_env == "EVIDENTIA_POSTGRES_PASSWORD"
+            else password_env
+        )
+        password = os.environ.get(effective_env)
+        if password is None:
+            console.print(
+                f"[red]Error:[/red] {effective_env} env var not set. "
+                "Set it to the DB password before running this command."
+            )
+            raise typer.Exit(code=1)
+
+        try:
+            with MySQLCollector(
+                connection_uri=connection_uri, password=password
+            ) as collector:
+                findings = collector.collect()
+        except MySQLCollectorError as e:
+            console.print(f"[red]MySQL collection failed:[/red] {e}")
+            raise typer.Exit(code=1) from e
+
+        _write_findings(findings, output, title=f"MySQL findings ({connection_uri})")
+        return
+
     console.print(
         f"[red]Error:[/red] Unknown adapter {adapter!r}. "
-        "Supported: postgres (v0.7.7 P0.1). Coming next: mysql, sqlite, mssql, oracle."
+        "Supported: postgres, mysql (v0.7.7 P0.1+P0.2). "
+        "Coming next: sqlite, mssql, oracle."
     )
     raise typer.Exit(code=1)
 
