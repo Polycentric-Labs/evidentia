@@ -28,17 +28,21 @@ on:
     # alerts without a code change. Mondays 12:00 UTC.
     - cron: '0 12 * * 1'
 
+# Top-level permissions are read-only-by-default; the analyze job
+# elevates to security-events: write at job scope only (closes the
+# OpenSSF Scorecard Token-Permissions alert that flagged top-level
+# write scope as too broad).
 permissions:
-  # Least-privilege; security-events: write is the canonical scope
-  # for code-scanning result upload.
   contents: read
-  security-events: write
-  actions: read
 
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
 
     strategy:
       fail-fast: false
