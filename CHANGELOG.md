@@ -7,6 +7,123 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.7] - 2026-05-XX
+
+**SQL family evidence collectors + Okta + ServiceNow + carry-forward
+hardening.** First substantive new-collector release since v0.5.0.
+Adds five read-only SQL adapters (PostgreSQL, MySQL/MariaDB,
+SQLite, MS SQL Server, Oracle Database), a new Okta evidence
+collector, and a ServiceNow output integration. All five SQL
+adapters follow the v0.7.0 enterprise-grade collector pattern
+(typed exceptions, CollectionContext, CollectionManifest, ECS
+audit logging, BLIND_SPOTS, read-only principal probe).
+
+The carry-forward CI hygiene from v0.7.6 lands cleanly: container-
+build smoke test now skips on `chore(release):` commits (pre-empts
+the PyPI propagation race during release-bump), advanced CodeQL
+setup with custom config replaces the default setup, threat-model
+publicly elevated to `docs/threat-model.md`, 5 v0.7.5 P0.7 alerts
+dismissed.
+
+### Added
+
+- **PostgreSQL evidence collector** (`evidentia-collectors[sql-postgres]`):
+  user + role inventory (`pg_roles` + `pg_authid`; AC-2),
+  privilege grants (`INFORMATION_SCHEMA.TABLE_PRIVILEGES`,
+  `pg_class.relacl`; AC-3, AC-6), audit log status
+  (`pg_settings.log_*`, pgaudit; AU-2, AU-3), crypto config
+  (`password_encryption`, TLS settings; SC-12), encryption posture
+  (TLS-on-the-wire as proxy; SC-28 with documented BLIND_SPOT for
+  filesystem-level), connection limits (`max_connections`; AC-3).
+  16 unit tests + 3 Docker integration tests.
+- **MySQL / MariaDB evidence collector**
+  (`evidentia-collectors[sql-mysql]`): mirrors the Postgres surface
+  using `mysql.user`, `INFORMATION_SCHEMA.USER_PRIVILEGES`,
+  `general_log` / `audit_log_*`, `default_authentication_plugin`,
+  InnoDB tablespace encryption + keyring plugin status. 13 unit
+  tests. 3 BLIND_SPOTS documented (Community Edition audit gap,
+  my.cnf filesystem access, cloud-managed variable visibility).
+- **SQLite evidence collector** (`evidentia-collectors[sql-sqlite]`,
+  empty extra — uses stdlib `sqlite3`): file-level + extension-
+  level evidence — file ACL probe (UNIX mode bits; AC-3), write-
+  privilege probe via `os.access` (AC-6), `PRAGMA journal_mode` +
+  `synchronous` (durability; SC-28), `PRAGMA integrity_check(1)` +
+  `foreign_key_check` (SI-7), encryption-extension probe
+  (SEE / SQLCipher / WxSQLite3; SC-28). 16 unit tests using
+  in-process `:memory:` databases.
+- **MS SQL Server evidence collector**
+  (`evidentia-collectors[sql-mssql]`, requires `pyodbc>=5.0` +
+  Microsoft ODBC Driver 18 OS-level): `sys.server_principals` /
+  `sys.database_principals` (AC-2), `sys.server_role_members` for
+  sysadmin count (AC-6), `sys.server_audits` (AU-2),
+  `sys.dm_database_encryption_keys` for TDE state (SC-28),
+  `CONNECTIONPROPERTY` for TLS posture (SC-12). 20 unit tests.
+- **Oracle Database evidence collector**
+  (`evidentia-collectors[sql-oracle]`, uses `oracledb>=2.0` thin
+  mode — no Oracle Client install required): `dba_users` (AC-2),
+  `dba_role_privs` for DBA membership (AC-6), `dba_profiles` for
+  password policy (IA-5), `AUDIT_UNIFIED_ENABLED_POLICIES`
+  (12c+) or legacy `audit_trail` (AU-2),
+  `v$encryption_wallet` + `dba_tablespaces.encrypted` for TDE
+  (SC-28), `sqlnet.encryption_server` for in-transit (SC-12).
+  23 unit tests. 4 BLIND_SPOTS documented (Advanced Security
+  licensing, Unified vs Traditional audit, CDB/PDB context,
+  sqlnet.ora client availability).
+- **CLI `evidentia collect sql --adapter <name>`** routes to the
+  per-adapter collector. Connection passwords MUST come from
+  `EVIDENTIA_<ADAPTER>_PASSWORD` env vars per the secret-handling
+  protocol — refused via CLI flag.
+- **REST endpoints** `POST /api/collectors/sql/{postgres,mysql,sqlite,mssql,oracle}/collect`
+  with corresponding `/api/collectors/status` extensions.
+- **Okta evidence collector** (`evidentia-collectors[okta]`): MFA
+  enrollment rate (sampled per-user `/api/v1/users/{id}/factors`;
+  IA-2), inactive accounts (last_login > 90 days; AC-2(3)),
+  privileged-account count (`/api/v1/iam/assignees/users`; AC-2,
+  AC-6), password policy (`/api/v1/policies?type=PASSWORD`; IA-5),
+  sign-on policies with adaptive MFA detection (AC-3). 20 unit
+  tests. CLI: `evidentia collect okta --org-url ...` (token via
+  `OKTA_API_TOKEN` env var). REST: `POST /api/collectors/okta/collect`.
+- **ServiceNow output integration**
+  (`evidentia-integrations[servicenow]`): push-only gap-to-record
+  workflow via the Table API. Default target table `incident`
+  with override to `sn_grc_issue` (GRC plugin) or custom GRC
+  tables. Idempotent — `correlation_id = "evidentia-gap-<gap.id>"`
+  detects existing records on re-push. 35 unit tests across
+  mapper / client / sync. CLI: `evidentia integrations servicenow
+  test` + `evidentia integrations servicenow push --gaps gaps.json`.
+- **`docs/sql-collectors.md`** comprehensive walkthrough covering
+  all 5 SQL adapters: common design, read-only principal
+  verification table, secret handling, CLI + REST surface, NIST
+  800-53 mapping summary table (9 controls × 5 adapters), per-
+  adapter sections, troubleshooting guide.
+- **`docs/threat-model.md`** publicly elevated from
+  `.local/security-deep-pass-2026-Q3.md` with internal-detail
+  scrub. Prereq for v0.8.0 minor per pre-release-review G5.
+
+### Changed
+
+- **CodeQL**: migrated from default setup to advanced workflow with
+  custom config (`.github/codeql/codeql-config.yml`) +
+  `.github/codeql/python-sanitizers/` pack scaffold. Sanitizer
+  for `validate_within` deferred to v0.7.8+ (data-extension YAML
+  + QL BarrierGuard subclass approaches both failed to fire; the
+  3 false-positive `py/path-injection` alerts on `validate_within`
+  were dismissed as part of the v0.7.5 P0.7 batch).
+- **`.github/workflows/container-build.yml`**: `Build + smoke test`
+  job skips when commit message starts with `chore(release):` —
+  pre-empts the PyPI propagation race that briefly broke v0.7.5's
+  first-fire publish-container.
+
+### Fixed
+
+- **mypy strict 0/0 across 123 source files** (was 2 pre-existing
+  errors at v0.7.6 ship: `hatch_build.py:39` `BuildHookInterface`
+  subclass + `jira/mapper.py:147` stale `type: ignore`).
+
+EOF lifecycle: 1015 unit tests passing at v0.7.6 → 1050 at
+v0.7.7 (35 new tests covering ServiceNow + Okta + 5 SQL
+adapters; 88 SQL adapter tests already counted in P0).
+
 ## [0.7.6] - 2026-05-01
 
 **UI alpha.2 completion + carry-forward CI hygiene + perf benchmarks +

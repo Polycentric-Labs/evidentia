@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-workspace"
-version = "0.7.6"
+version = "0.7.7"
 requires-python = ">=3.12"
 description = "Workspace root for the Evidentia GRC tool monorepo"
 

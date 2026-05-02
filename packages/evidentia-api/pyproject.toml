@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-api"
-version = "0.7.6"
+version = "0.7.7"
 description = "FastAPI REST server + bundled React web UI for Evidentia"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
