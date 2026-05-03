@@ -39,7 +39,7 @@ class _MockCursor:
         self._last_query = ""
         self.executed: list[tuple[str, Any]] = []
 
-    def __enter__(self) -> "_MockCursor":
+    def __enter__(self) -> _MockCursor:
         return self
 
     def __exit__(self, *exc: Any) -> None:

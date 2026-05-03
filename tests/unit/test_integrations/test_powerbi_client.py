@@ -262,13 +262,13 @@ class TestRESTHelpers:
         response = MagicMock()
         response.status_code = 503
         response.reason_phrase = "Service Unavailable"
-        with patch.object(
-            client._http, "delete", return_value=response
+        with (
+            patch.object(client._http, "delete", return_value=response),
+            pytest.raises(PowerBIPublishError),
         ):
-            with pytest.raises(PowerBIPublishError):
-                client.clear_table(
-                    dataset_id="ds-x", table_name="gaps"
-                )
+            client.clear_table(
+                dataset_id="ds-x", table_name="gaps"
+            )
 
     def test_push_rows_chunks_at_10k(
         self, monkeypatch: pytest.MonkeyPatch

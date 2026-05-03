@@ -736,7 +736,7 @@ async def collectors_status() -> dict[str, Any]:
         import evidentia_collectors.sql.mysql
 
         try:
-            import pymysql  # type: ignore[import-untyped]  # noqa: F401
+            import pymysql  # type: ignore[import-untyped, unused-ignore]  # noqa: F401
 
             mysql_installed = True
         except ImportError:

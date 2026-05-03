@@ -274,7 +274,7 @@ class DatabricksCollector:
         # Cached on first call to test_connection() so subsequent
         # sub-checks don't re-probe the SDK.
         self._cached_user_name: str | None = None
-        self._cached_workspace_id: str | None = None
+        self._cached_workspace_url: str | None = None
         self._cached_sdk_version: str | None = None
 
     # ── Lifecycle ───────────────────────────────────────────────────
@@ -329,7 +329,7 @@ class DatabricksCollector:
         )
         # workspace_id is part of the SDK config; we read it from the
         # client's config object rather than a separate API call.
-        self._cached_workspace_id = (
+        self._cached_workspace_url = (
             getattr(getattr(client, "config", None), "host", None)
             or self._host
             or "unknown"
@@ -344,13 +344,13 @@ class DatabricksCollector:
             self._cached_sdk_version = "unknown"
         return {
             "user_name": self._cached_user_name,
-            "workspace": self._cached_workspace_id,
+            "workspace": self._cached_workspace_url,
             "sdk_version": self._cached_sdk_version,
         }
 
     def _build_context(self, run_id: str) -> CollectionContext:
         user = self._cached_user_name or "unknown"
-        workspace = self._cached_workspace_id or "unknown"
+        workspace = self._cached_workspace_url or "unknown"
         return CollectionContext(
             collector_id=COLLECTOR_ID,
             collector_version=current_version(),
@@ -952,7 +952,7 @@ class DatabricksCollector:
                     "id": COLLECTOR_ID,
                     "version": current_version(),
                 },
-                "workspace": self._cached_workspace_id,
+                "workspace": self._cached_workspace_url,
             },
         ):
             _log.info(
@@ -960,7 +960,7 @@ class DatabricksCollector:
                 message=(
                     f"Databricks collection starting for "
                     f"{self._cached_user_name}@"
-                    f"{self._cached_workspace_id}"
+                    f"{self._cached_workspace_url}"
                 ),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.START],
@@ -1023,13 +1023,27 @@ class DatabricksCollector:
                 types=[EventType.END],
             )
 
-        # Coverage tracking: PATs are the single resource type
-        # enumerated in this v0.7.8 P0.1 first slice. scanned + matched
-        # are equal (no PAT-side filtering); collected counts emitted
-        # findings (inventory + long-lived + never-expires).
-        active_finding_count = sum(
-            1 for f in findings if f.status == FindingStatus.ACTIVE
-        )
+        # Coverage tracking: single-pass grouping by resource_type
+        # (closes F-V08-CR-MEDIUM #3 — was O(4N) with 4 separate sum()
+        # generator passes; now O(N) with a single dict accumulator).
+        # PAT/cluster/service-principal/secret-scope are the four
+        # resource types enumerated in v0.7.8 P0.1; scanned, matched,
+        # and collected are all equal because there's no resource-side
+        # filtering (we report every PAT/cluster/etc. we see).
+        _coverage_buckets = {
+            "Databricks::PAT": "databricks-pat",
+            "Databricks::Cluster": "databricks-cluster",
+            "Databricks::ServicePrincipal": "databricks-service-principal",
+            "Databricks::SecretScope": "databricks-secret-scope",
+        }
+        _counts: dict[str, int] = {v: 0 for v in _coverage_buckets.values()}
+        for f in findings:
+            if f.resource_type is None:
+                continue
+            bucket = _coverage_buckets.get(f.resource_type)
+            if bucket:
+                _counts[bucket] += 1
+
         manifest = CollectionManifest(
             run_id=run_id,
             collector_id=COLLECTOR_ID,
@@ -1038,91 +1052,20 @@ class DatabricksCollector:
             collection_finished_at=utc_now(),
             source_system_ids=[
                 f"databricks:{self._cached_user_name or 'unknown'}"
-                f"@{self._cached_workspace_id or 'unknown'}"
+                f"@{self._cached_workspace_url or 'unknown'}"
             ],
             filters_applied={
                 "user": self._cached_user_name or "unknown",
-                "workspace": self._cached_workspace_id or "unknown",
+                "workspace": self._cached_workspace_url or "unknown",
             },
             coverage_counts=[
                 CoverageCount(
-                    resource_type="databricks-pat",
-                    scanned=sum(
-                        1
-                        for f in findings
-                        if f.resource_type == "Databricks::PAT"
-                    ),
-                    matched_filter=sum(
-                        1
-                        for f in findings
-                        if f.resource_type == "Databricks::PAT"
-                    ),
-                    collected=sum(
-                        1
-                        for f in findings
-                        if f.resource_type == "Databricks::PAT"
-                    ),
-                ),
-                CoverageCount(
-                    resource_type="databricks-cluster",
-                    scanned=sum(
-                        1
-                        for f in findings
-                        if f.resource_type == "Databricks::Cluster"
-                    ),
-                    matched_filter=sum(
-                        1
-                        for f in findings
-                        if f.resource_type == "Databricks::Cluster"
-                    ),
-                    collected=sum(
-                        1
-                        for f in findings
-                        if f.resource_type == "Databricks::Cluster"
-                    ),
-                ),
-                CoverageCount(
-                    resource_type="databricks-service-principal",
-                    scanned=sum(
-                        1
-                        for f in findings
-                        if f.resource_type
-                        == "Databricks::ServicePrincipal"
-                    ),
-                    matched_filter=sum(
-                        1
-                        for f in findings
-                        if f.resource_type
-                        == "Databricks::ServicePrincipal"
-                    ),
-                    collected=sum(
-                        1
-                        for f in findings
-                        if f.resource_type
-                        == "Databricks::ServicePrincipal"
-                    ),
-                ),
-                CoverageCount(
-                    resource_type="databricks-secret-scope",
-                    scanned=sum(
-                        1
-                        for f in findings
-                        if f.resource_type
-                        == "Databricks::SecretScope"
-                    ),
-                    matched_filter=sum(
-                        1
-                        for f in findings
-                        if f.resource_type
-                        == "Databricks::SecretScope"
-                    ),
-                    collected=sum(
-                        1
-                        for f in findings
-                        if f.resource_type
-                        == "Databricks::SecretScope"
-                    ),
-                ),
+                    resource_type=name,
+                    scanned=_counts[name],
+                    matched_filter=_counts[name],
+                    collected=_counts[name],
+                )
+                for name in _coverage_buckets.values()
             ],
             total_findings=len(findings),
             is_complete=not errors,
@@ -1139,10 +1082,6 @@ class DatabricksCollector:
             ],
             errors=errors,
         )
-        # active_finding_count is exposed via manifest.coverage_counts
-        # downstream consumers can compute it themselves; we tracked it
-        # here for the post-emission log line below.
-        del active_finding_count
 
         with contextlib.suppress(Exception):
             # Final manifest-emission log entry — failures here MUST
