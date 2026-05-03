@@ -7,6 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+Foundation for the v0.7.9 industry-overlay release. The first
+slice of `evidentia tprm` lands the data + storage + CLI + REST
+primitives that subsequent v0.7.9 sub-slices (DD-questionnaire
+generator, concentration-risk reporting, vendor-risk collectors,
+OSCAL TPRM emit) build on:
+
+- **TPRM Pydantic models** (`evidentia_core.models.tprm`):
+  `Vendor`, `FourthParty`, `EvidenceRef` plus three supporting
+  enums — `VendorType` (saas / subservice_org / contractor /
+  data_processor / cloud_provider / open_source), `CriticalityTier`
+  (critical / high / medium / low), and `RegulatoryClassification`
+  (custody / clearing / model / data_processor /
+  critical_third_party). Aligned to FFIEC Vendor Management +
+  NIST 800-161 SCRM categories + OCC Bulletin 2013-29 / FRB SR
+  13-19. The `model` regulatory flag cross-links to the v0.7.9
+  P0.6 Model Risk Management module under the active SR 26-02 +
+  OCC Bulletin 2026-13a guidance.
+- **`Vendor.compute_next_review_due`** — pure-function helper
+  that maps criticality tier → DD-review cadence (critical/high
+  → annual; medium → biennial; low → triennial) with
+  calendar-aware month arithmetic (year roll + last-day clamp
+  for Feb 29 leap → Feb 28 non-leap on annual roll).
+- **`vendor_store` JSON-file persistence** — one file per
+  vendor named `<vendor_id>.json` under a platformdirs-backed
+  user-dir directory. `EVIDENTIA_VENDOR_STORE_DIR` env var
+  override. CRUD surface: `save_vendor`, `load_vendor_by_id`,
+  `list_vendors` (sorted by criticality → name),
+  `delete_vendor`. ID-shape validation rejects non-UUID inputs
+  (path-traversal segments, empty strings, etc.) with
+  `InvalidVendorIdError`; resolved file path passes through
+  `validate_within` for belt-and-suspenders boundary
+  enforcement.
+- **`evidentia tprm vendor add/list/show/edit/delete` CLI**
+  with hybrid input UX: atomic-field flags for the common case
+  (`--name`, `--type`, `--criticality-tier`, etc.) +
+  `--from-yaml <path>` for complex adds with nested fields
+  (4th-parties, evidence-refs). `edit` also supports
+  `--editor` to open the current YAML in `$EDITOR`. `delete`
+  prompts by default with `--yes` to bypass. Output: rich
+  table by default, `--json` for machine-readable.
+- **REST router** at `/api/tprm/vendors`: `GET` (with
+  skip/limit pagination + criticality_tier/type filters),
+  `POST` (201 on create), `GET/PUT/DELETE /{vendor_id}`, plus
+  a `GET /{vendor_id}/next-review-due` cadence-preview helper.
+  Error normalization preserves the v0.7.8 F-V08-DAST-3 fix
+  (manual `HTTPException` uses 400, not 422, for runtime
+  body-content errors so the `{detail: string}` response shape
+  matches OpenAPI declaration).
+
+48 new unit + integration tests (1305 → 1353); mypy strict
+clean across 142 source files; ruff clean.
+
+The full v0.7.9 plan (TPRM module + Model Risk Management
+overlay + 7 new bundled catalogs + risk-governance primitives
++ audit chain-of-custody + WORM backends) lives in
+`docs/v0.7.9-plan.md`. Estimated ship: 8.5–10.5 weeks after
+v0.7.8 ship date.
+
 ## [0.7.8] - 2026-05-03
 
 **The cloud data-warehouse + BI integrations release.** Brings
