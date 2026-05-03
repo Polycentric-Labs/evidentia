@@ -13,6 +13,126 @@
 
 ---
 
+## Re-validation snapshot — 2026-05-03 (v0.7.8 ship — pre-tag)
+
+v0.7.8 adds **two cloud data-warehouse collectors** (Databricks +
+Snowflake) and **two BI output integrations** (Tableau + Power BI) —
+the first BI/exec-reporting output surface in the project. Per the v4
+skill rule "minor with new collector/integration surface = full
+re-walk", this snapshot does a focused re-walk of the **4 new public
+surfaces** + a regression check against the **existing 10 tiers**, and
+also captures the v0.7.8 P0.5 in-flight security batch (S1
+SQLite-safe-root-mandatory + S2 user-controlled-values-via-`%r`).
+
+### Existing tiers — regression check (no functional change)
+
+| Tier | v0.7.8 status | Evidence |
+|---|---|---|
+| 1 — AI features | ✅ unchanged | No `evidentia-ai` files touched in `git diff v0.7.7.1..HEAD` |
+| 2 — OSCAL signing + verify | ✅ unchanged | No `oscal/signing` or `sigstore` files touched |
+| 3 — Air-gap enforcement | ✅ unchanged | `network_guard.py` untouched; new collectors emit explicit `requires_network=True` |
+| 4 — Secret scrubber | ✅ unchanged | `audit/logger._scrub` untouched; v0.7.8 S2 fix switches user-controlled values to `%r` so log statements never embed identifier glyphs that bypass the scrubber |
+| 5 — Collectors | ✅ extended (see new rows below) | 2 new public surfaces (Databricks + Snowflake); existing AWS + GitHub + Okta + 5 SQL adapters + Jira unchanged |
+| 6 — OSCAL exporter + output formats | ✅ unchanged | No format/exporter files touched |
+| 7 — CLI commands | ✅ extended | `collect databricks` + `collect snowflake` + `integrations tableau publish` + `integrations powerbi publish` subcommands added; existing CLI unchanged |
+| 8 — REST API | ✅ extended | 4 new POST endpoints + `/api/collectors/status` extended with `databricks` + `snowflake` entries; existing routes unchanged |
+| 9 — Web UI | ✅ unchanged | No `evidentia-ui` files touched in v0.7.8 (frontend `package.json` lockfile bumps only) |
+| 10 — Configuration precedence | ✅ unchanged | `DATABRICKS_TOKEN` / `SNOWFLAKE_PASSWORD` / `TABLEAU_PAT_SECRET` / `POWERBI_CLIENT_SECRET` follow existing env-var precedence; CLI flags + payloads never accept secrets |
+
+### New surfaces — full v0.7.8 capability walk
+
+Each row covers: functional (tests pass) · adversarial (bad input /
+missing dep / network failure / auth failure / malformed config /
+permission denied / partial-success path) · result.
+
+| New surface | Functional | Adversarial | Result |
+|---|---|---|---|
+| **Databricks collector** (`evidentia_collectors.databricks`) | ✅ 27 unit tests via injected `WorkspaceClient` mock; full suite green | ✅ constructor rejects empty `host=` + missing `client=` → typed `DatabricksCollectorError`; `databricks-sdk` ImportError → typed error w/ `pip install evidentia-collectors[databricks]` remediation; `_ensure_client` wraps WorkspaceClient construction → `DatabricksAuthError`; `current_user.me()` failure → `DatabricksAuthError`; sub-check 403/PERMISSION_DENIED → `DatabricksPermissionError` (4 sub-check sites); `manifest.is_complete = not errors` w/ 3 explicit `empty_categories` for partial-evidence transparency | **PASS** |
+| **Snowflake collector** (`evidentia_collectors.snowflake`) | ✅ 29 unit tests via mocked `connector.connect`; full suite green | ✅ `account` + `user` are required kwargs (Pydantic-style enforcement at signature); `snowflake-connector-python` ImportError → typed `SnowflakeCollectorError` w/ `[snowflake]` extra remediation; `connector.connect` failure → `SnowflakeAuthError("Could not connect to Snowflake (driver: <class>)")` (driver-class-name only, F-002 pattern carried forward); per-query failures → typed `SnowflakeQueryError`; `manifest.is_complete` False if any of 6 sub-checks raised, w/ `incomplete_reason` joining errors; CLI `--password-env` defaults to `SNOWFLAKE_PASSWORD` so plaintext never enters argv; key-pair forward-compat path (`private_key_path=`) | **PASS** |
+| **Tableau integration** (`evidentia_integrations.tableau`) | ✅ 22 unit tests for extract + 3 API smoke tests | ✅ `TableauConfig` is `frozen=True` Pydantic v2 model — config secrets-by-name only (`pat_name_env` + `pat_secret_env`); `tableauserverclient` ImportError → typed `TableauApiError` w/ `[tableau]` extra remediation; missing PAT-name OR missing PAT-secret env → typed `TableauAuthError` w/ remediation; `_signin` wraps SDK failure → `TableauAuthError("Tableau sign-in failed (driver: <class>)")` (no token leakage); project-not-found → `TableauPublishError`; `__exit__` → `_signout` w/ `contextlib.suppress(Exception)` so signout failure never masks publish failure | **PASS** |
+| **Power BI integration** (`evidentia_integrations.powerbi`) | ✅ 29 + 15 unit tests (`test_powerbi_extract.py` + `test_powerbi_client.py`) + 4 API smoke tests | ✅ `PowerBIConfig` is `frozen=True` Pydantic v2 model — workspace + tenant + client are required UUIDs, secret-by-name only; `msal` ImportError → typed `PowerBIApiError` w/ `[powerbi]` extra remediation; missing client-secret env → typed `PowerBIAuthError`; MSAL `acquire_token_for_client` non-OK → `PowerBIAuthError` (token never logged); 4xx/5xx on dataset / push-rows / clear-table → typed `PowerBIPublishError` w/ status code; sovereign-cloud overrides accepted (`api_base_url` + `authority_url`) | **PASS** |
+
+API-level coverage (in `tests/integration/test_api/`):
+`TestSnowflakeCollectEndpoint` (4 tests — missing account / user /
+password env / status-endpoint includes snowflake) +
+`TestTableauPublishEndpoint` (3 tests — invalid key / missing
+server_url / invalid risks array) + `TestPowerBIPublishEndpoint` (4
+tests — invalid key / missing workspace / tenant / client). All routing
++ Pydantic body-validation paths covered without contacting live
+backends.
+
+### v0.7.8 in-flight findings re-summary
+
+| ID | Bucket | Resolution |
+|---|---|---|
+| S1 (commit `d84169c`) | HIGH (CWE-22 / CWE-73 mandatory containment) | **shipped P0.5** — `SQLiteCollector` now requires `safe_root` at REST entrypoints; 16 unit tests; 3 REST safe-root tests |
+| S2 (commit `0ae8ed9`) | MEDIUM (CWE-117 log-injection hardening) | **shipped P0.5** — user-controlled values switched to `%r` in `_log` calls across new collectors / integrations |
+| F-V08-CR-H1 | HIGH (Snowflake LOGIN_HISTORY no LIMIT — DoS risk on noisy accounts) | **queued for Step 5 batch fix** before tag |
+| F-V08-CR-H2 | HIGH (Snowflake cursor reuse across DBs) | **queued for Step 5 batch fix** before tag |
+| F-V08-CR-H3 | HIGH (Power BI `clear_table` 4xx on fresh dataset) | **queued for Step 5 batch fix** before tag |
+| F-V08-1 | LOW (`[azure]` + `[gcp]` extras advertised without backing impls) | **queued for Step 5.A doc-touch** (remove from extras until v0.7.9 / v0.8.0) |
+| F-V08-2 | LOW (DFAH/DSE wording corrections in `docs/positioning-and-value.md`) | **queued for Step 5.A doc-touch** |
+| F-V08-3 | LOW (`docs/v0.7.9-plan.md` cites `SR 11-7` — should be `SR 26-02`) | **queued for Step 5.B forward-plan touch-up** |
+| 7 MEDIUM + 9 LOW (from `/code-review`) | various | **queued for Step 5 batch fixes** before tag |
+
+### DAST sub-step (G11) — first real run (NEW for v0.7.8)
+
+**DAST tools installed during Step 4 entry** (Allen-approved 2026-05-03): `schemathesis 4.17.0`, `playwright 1.59.0`, chromium runtime (~150 MB). Pinned in pre-release-review env, NOT in `pyproject.toml` (these are review-time tools, not runtime deps).
+
+#### Schemathesis run (OpenAPI fuzz — `evidentia serve` localhost:8765)
+
+```
+PYTHONIOENCODING=utf-8 schemathesis run \
+  http://127.0.0.1:8765/api/openapi.json \
+  --url http://127.0.0.1:8765/ \
+  --max-examples 5 --workers 1 --no-color --max-failures 50
+```
+
+**Result**: 299 generated test cases; 43 found 62 unique failures across 34/34 selected operations (5.06s). Failure summary:
+
+| Class | Count | Severity | Disposition |
+|---|---|---|---|
+| **Server error** | 2 | 1 real (`GET /api/frameworks/0/controls/0` → **500**); 1 documented (`POST /collectors/aws/collect` → 503 when AWS creds missing — expected path; OpenAPI just doesn't declare 503) | F-V08-DAST-1 + schema-fidelity gap |
+| **Response violates schema** | 17 | OpenAPI `HTTPValidationError.detail` is `array<ValidationError>` but our `HTTPException(422, detail="string")` returns string. Schema-fidelity bug, NOT security. | Step 5.A batch fix |
+| **API rejected schema-compliant request** | 17 | Same root cause — endpoints require body fields the OpenAPI schema doesn't declare as required (e.g., `collect aws` accepts `null` body but emits 422 if account/user fields missing) | Step 5.A batch fix |
+| **API accepted schema-violating request** | 1 | Specific endpoint accepts a payload the schema declares invalid; schema-fidelity gap | Step 5.A |
+| **Undocumented HTTP status code** | 6 | 503/422 paths not declared in OpenAPI `responses` | Step 5.A |
+| **Unsupported methods** | 19 | Common FastAPI behavior — endpoints respond to unexpected HTTP methods. Not actionable. | Accept |
+
+**Concrete real findings from Schemathesis**: ONE — F-V08-DAST-1 (the 500 on `/frameworks/{framework_id}/controls/{control_id}` for invalid IDs). Response body is generic `Internal Server Error` (no stack-trace leak), but unhandled-exception in route handler should return 404. The 17×2 schema-fidelity issues are a separate (and substantial) batch-fix concern documented for Step 5.A.
+
+#### Playwright run (web UI smoke + security headers + XSS probe)
+
+```python
+GET /                 → 200 ("Evidentia"); 0 console errors/warnings
+GET /?q=<script>alert(1)</script>           → 200; React-escaped; no DOM injection
+GET /dashboard?q=<xss>                       → 200; React-escaped
+GET /frameworks?q=<xss>                      → 200; React-escaped
+GET /risks?q=<xss>                           → 200; React-escaped
+```
+
+**Result**: React handles XSS correctly across all 4 probed routes. **Missing security response headers** on the SPA response: CSP `<none>`, X-Frame-Options `<none>`, X-Content-Type-Options `<none>`, Referrer-Policy `<none>`, Strict-Transport-Security `<none>`. → F-V08-DAST-2 (LOW for localhost-bound default; defense-in-depth gap). For deployments behind a reverse proxy or exposed to the network, operators should configure security headers at the proxy layer (already documented in `docs/threat-model.md`).
+
+#### v0.7.8 DAST findings table
+
+| ID | Severity | Category | Issue | Disposition |
+|---|---|---|---|---|
+| F-V08-DAST-1 | MEDIUM | Correctness (CWE-755 missing exception handling) | `GET /api/frameworks/{framework_id}/controls/{control_id}` returns **500 Internal Server Error** for invalid framework ID (e.g., `0`); should return 404. Generic body — no stack-trace exposure. | **Step 5.A batch fix** — wrap the route handler in proper validation + raise `HTTPException(404, ...)` for unknown framework. |
+| F-V08-DAST-2 | LOW | Defense-in-depth | Missing security response headers on web UI (CSP / X-Frame-Options / X-Content-Type-Options / Referrer-Policy / HSTS). Localhost-bound default mitigates clickjacking; React-framework escapes mitigate stored XSS. Production deployments should set headers at proxy layer. | **Defer** — document in threat-model + recommend operators set at proxy. Could ship a `--security-headers` flag in v0.7.9+. |
+| Schema-fidelity gap (17 endpoints) | MEDIUM | Schema-conformance, NOT security | `HTTPException(422, detail="string")` doesn't match OpenAPI `HTTPValidationError.detail: array<ValidationError>`. Affects FastAPI's auto-generated schema vs actual response across 17 endpoints. | **Step 5.A batch fix** — either return an array-shape detail (FastAPI native pattern), or override the OpenAPI schema for these endpoints to declare `detail: string`. |
+
+### Step 4 verification gate
+
+| Gate | Result |
+|---|---|
+| Surface-coverage % ≥ 90% | ✅ 14 / 14 surface rows have ✅/⚠/❌ verdicts (100%) — 4 new surfaces + 10 existing tiers |
+| Adversarial probe coverage ≥ 6 of 7 vectors per new surface | ✅ all 4 new surfaces cleared 7/7 vectors |
+| Test-suite green | ✅ 1256 passed, 12 skipped, 0 failed (full repo); 148 passed in the new-file subset |
+| mypy strict on changed packages | ✅ 0 issues in 54 source files |
+| DAST run completed | **✅ first real run (G11)** — Schemathesis: 1 real + 17 schema-fidelity findings on 34 endpoints; Playwright: React XSS-safe + missing security headers (F-V08-DAST-2 LOW) |
+
+---
+
 ## Re-validation snapshot — 2026-05-02 (v0.7.7 ship — pre-tag)
 
 v0.7.7 adds the **first substantive new collector surface since v0.5.0**:
