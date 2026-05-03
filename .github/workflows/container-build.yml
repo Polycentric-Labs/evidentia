@@ -34,27 +34,91 @@ jobs:
   build:
     name: Build + smoke test
     runs-on: ubuntu-latest
-    # Skip the smoke test on release-bump commits (`chore(release):
-    # bump to X.Y.Z`). Such commits bump the Dockerfile's
-    # `pip install evidentia[gui]==X.Y.Z` pin to a version that
-    # PyPI doesn't have yet (the tag hasn't fired release.yml +
-    # publish-pypi). The smoke test would then fail with
-    # "No matching distribution" — a benign false positive that
-    # creates audit-log smell without surfacing real issues.
-    # release.yml's publish-container job has its own Wait-for-PyPI
-    # step (CI1, v0.7.6) that handles the propagation race for the
-    # actual ship.
-    #
-    # False-positive recovery: if a non-release commit accidentally
-    # starts with `chore(release):`, run this workflow via the
-    # workflow_dispatch trigger to verify manually.
-    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f  # v3.12.0
+
+      # v0.7.9 — PyPI propagation wait (mirrors release.yml's
+      # publish-container Wait-for-PyPI step added in v0.7.6).
+      #
+      # WHY THIS EXISTS: the Dockerfile pins `evidentia[gui]==X.Y.Z`
+      # to the exact current release. When the version-bump commit
+      # (`chore(release): bump to X.Y.Z`) lands on main as part of a
+      # multi-commit push, the smoke test fires before X.Y.Z has been
+      # published to PyPI (publish only happens when the matching `vX.Y.Z`
+      # tag is pushed, triggering release.yml). The pre-v0.7.9 design
+      # tried to avoid this with `if: !startsWith(github.event.head_commit.message, 'chore(release):')`
+      # — but that only checks the head commit. In a 21-commit push
+      # where the bump is the 5th commit and 16 docs/refactor commits
+      # follow it (the v0.7.8 ship pattern), the head IS NOT the bump,
+      # the guard misses, and the build hits "No matching distribution
+      # found for evidentia==X.Y.Z" 1.3 seconds in.
+      #
+      # THE FIX: parse the Dockerfile's pinned version + poll PyPI
+      # until that exact version is fetchable, capped at 5 min. Same
+      # mechanism as release.yml/publish-container (v0.7.6 CI1) so
+      # one mental model covers both workflows. Robust to any push
+      # composition.
+      #
+      # FAILURE MODE: if the wait times out, the most likely cause is
+      # that the version-bump commit was pushed without the matching
+      # tag being pushed (so release.yml never fired). The error
+      # message below makes that explicit.
+      - name: Extract Dockerfile version pin
+        id: pin
+        run: |
+          # Match `evidentia[gui]==X.Y.Z` or `==X.Y.Z.N` (4-digit
+          # version support added in v0.7.7.1 bump_version.py).
+          # Using `sed -nE` (extended regex, portable across GNU + BSD)
+          # rather than `grep -oP` (PCRE) to avoid locale unibyte
+          # warnings on minimal runners.
+          VERSION=$(sed -nE 's/.*evidentia\[gui\]==([0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?).*/\1/p' Dockerfile | head -n1)
+          if [ -z "${VERSION}" ]; then
+            echo "ERROR: could not parse pinned evidentia version from Dockerfile."
+            echo "Expected pattern: pip install ... \"evidentia[gui]==X.Y.Z\""
+            grep -n 'pip install' Dockerfile || true
+            exit 1
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Dockerfile pins evidentia[gui]==${VERSION}"
+
+      - name: Wait for PyPI propagation
+        env:
+          VERSION: ${{ steps.pin.outputs.version }}
+        run: |
+          echo "Waiting for evidentia==${VERSION} to appear on PyPI..."
+          attempts=0
+          max_attempts=30  # 30 * 10s = 5 min cap
+          until pip index versions evidentia 2>&1 | grep -q "${VERSION}"; do
+            attempts=$((attempts + 1))
+            if [ "${attempts}" -ge "${max_attempts}" ]; then
+              echo ""
+              echo "::error::PyPI propagation timed out after 5 min waiting for evidentia==${VERSION}."
+              echo ""
+              echo "Most likely cause: the version-bump commit was pushed without"
+              echo "the matching v${VERSION} tag, so release.yml never fired and"
+              echo "evidentia==${VERSION} was never published to PyPI."
+              echo ""
+              echo "Recovery:"
+              echo "  git tag v${VERSION}"
+              echo "  git push origin v${VERSION}"
+              echo "  # then re-run this workflow via workflow_dispatch"
+              echo ""
+              echo "Latest visible on PyPI:"
+              pip index versions evidentia 2>&1 | head -3
+              exit 1
+            fi
+            echo "  attempt ${attempts}/${max_attempts}: not yet propagated, sleeping 10s"
+            sleep 10
+          done
+          # Extra safety margin for Fastly mirror lag — even after the
+          # index page lists the version, individual mirror nodes can
+          # lag by 10-20s before the wheel file itself is fetchable.
+          echo "Index lists ${VERSION}; sleeping 20s for mirror catch-up"
+          sleep 20
 
       - name: Build image (load into local Docker, not pushed)
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6.19.2
