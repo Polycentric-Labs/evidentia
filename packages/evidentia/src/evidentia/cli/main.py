@@ -21,6 +21,7 @@ from evidentia.cli import init as init_cmd
 from evidentia.cli import integrations as integrations_cmd
 from evidentia.cli import oscal as oscal_cmd
 from evidentia.cli import risk as risk_cmd
+from evidentia.cli import tprm as tprm_cmd
 
 app = typer.Typer(
     name="evidentia",
@@ -55,6 +56,11 @@ app.add_typer(
     oscal_cmd.app,
     name="oscal",
     help="OSCAL integrity + signature tooling (v0.7.0).",
+)
+app.add_typer(
+    tprm_cmd.app,
+    name="tprm",
+    help="Third-Party Risk Management — vendor inventory + DD (v0.7.9 P0.1).",
 )
 app.command(name="init", help="Initialize a new Evidentia project.")(init_cmd.init)
 
