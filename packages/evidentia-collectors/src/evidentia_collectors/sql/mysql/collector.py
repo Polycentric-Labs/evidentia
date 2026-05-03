@@ -46,7 +46,7 @@ from evidentia_collectors.sql.mysql.mapping import (
 )
 
 if TYPE_CHECKING:
-    import pymysql  # type: ignore[import-untyped]  # noqa: F401
+    import pymysql  # type: ignore[import-untyped, unused-ignore]  # noqa: F401
 
 
 _log = get_logger("evidentia.collectors.sql.mysql")

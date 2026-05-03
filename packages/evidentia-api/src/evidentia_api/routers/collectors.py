@@ -795,7 +795,7 @@ async def collectors_status() -> dict[str, Any]:
         import evidentia_collectors.databricks
 
         try:
-            import databricks.sdk  # type: ignore[import-untyped]  # noqa: F401
+            import databricks.sdk  # type: ignore[import-untyped, unused-ignore]  # noqa: F401
 
             databricks_installed = True
         except ImportError:
@@ -809,7 +809,7 @@ async def collectors_status() -> dict[str, Any]:
         import evidentia_collectors.snowflake  # noqa: F401
 
         try:
-            import snowflake.connector  # type: ignore[import-untyped]  # noqa: F401
+            import snowflake.connector  # type: ignore[import-untyped, unused-ignore]  # noqa: F401
 
             snowflake_installed = True
         except ImportError:
