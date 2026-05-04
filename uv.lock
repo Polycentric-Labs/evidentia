@@ -1107,8 +1107,11 @@ source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [
+    { name = "azure-identity" },
+    { name = "azure-storage-blob" },
     { name = "boto3" },
     { name = "compliance-trestle" },
+    { name = "google-cloud-storage" },
     { name = "moto", extra = ["all"] },
     { name = "mypy" },
     { name = "pydantic" },
@@ -1123,8 +1126,11 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "azure-identity", specifier = ">=1.16.0" },
+    { name = "azure-storage-blob", specifier = ">=12.19.0" },
     { name = "boto3", specifier = ">=1.43.2" },
     { name = "compliance-trestle", specifier = ">=4.0,<5.0" },
+    { name = "google-cloud-storage", specifier = ">=2.18.0" },
     { name = "moto", extras = ["all"], specifier = ">=5.0" },
     { name = "mypy", specifier = ">=1.20.2" },
     { name = "pydantic", specifier = ">=2.9" },

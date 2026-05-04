@@ -43,6 +43,12 @@ dev = [
     # without an extra install step.
     "boto3>=1.43.2",
     "moto[all]>=5.0",
+    # v0.7.12 P0: cloud-WORM backend SDKs (gated as evidentia[worm-X]
+    # extras for end-users; in dev-deps so the dev/CI venv runs the
+    # backend tests without needing the extra activated).
+    "azure-storage-blob>=12.19.0",
+    "azure-identity>=1.16.0",
+    "google-cloud-storage>=2.18.0",
     # v0.7.0: BLOCKER B7 (docs/enterprise-grade.md). Validates that our
     # OSCAL Assessment Results output round-trips through the NIST
     # OSCAL-Compass reference impl. Trestle is on pydantic.v1 internally
