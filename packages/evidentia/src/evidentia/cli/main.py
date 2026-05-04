@@ -19,6 +19,7 @@ from evidentia.cli import explain as explain_cmd
 from evidentia.cli import gap as gap_cmd
 from evidentia.cli import init as init_cmd
 from evidentia.cli import integrations as integrations_cmd
+from evidentia.cli import model_risk as model_risk_cmd
 from evidentia.cli import oscal as oscal_cmd
 from evidentia.cli import risk as risk_cmd
 from evidentia.cli import tprm as tprm_cmd
@@ -61,6 +62,11 @@ app.add_typer(
     tprm_cmd.app,
     name="tprm",
     help="Third-Party Risk Management — vendor inventory + DD (v0.7.9 P0.1).",
+)
+app.add_typer(
+    model_risk_cmd.app,
+    name="model-risk",
+    help="Model Risk Management — SR 11-7 / SR 26-02 model inventory (v0.7.10 P0.6).",
 )
 app.command(name="init", help="Initialize a new Evidentia project.")(init_cmd.init)
 

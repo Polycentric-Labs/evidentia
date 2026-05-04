@@ -39,6 +39,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `delete_model`. 18 unit tests covering store-dir resolution
   precedence / ID-shape gate / save+load round-trip / atomic-tmp
   cleanup / validation-finding preservation / list sort order.
+- **`evidentia model-risk model` CLI** (v0.7.10 P0.6 second
+  slice). 5 verbs mirroring the v0.7.9 TPRM CLI pattern:
+  `add` / `list` / `show` / `edit` / `delete`. Hybrid input model
+  on `add` — atomic per-field flags (`--name` / `--purpose` /
+  `--methodology` / `--vendor-or-internal` / `--tier` / `--owner`
+  / `--last-validation-date` / `--next-validation-due` /
+  `--vendor-id` / `--retirement-plan` / `--notes`) for the common
+  case + `--from-yaml <path>` for full record including inputs /
+  outputs / validation_findings. `edit` supports per-field flags
+  + `--from-yaml` (full replace) + `--editor` (open YAML in
+  `$EDITOR` for in-place edit). `list` filters by `--tier` /
+  `--methodology` / `--vendor-or-internal` and ships a `--json`
+  bare-array machine-readable mode. `show` / `delete` accept
+  UUIDs only with strict shape validation. Auto-recompute of
+  `next_validation_due` from `tier` + `last_validation_date`
+  honors operator overrides via `--next-validation-due`. 23 CLI
+  integration tests covering every verb + atomic + YAML +
+  validation contract.
 
 ## [0.7.9] - 2026-05-04
 
