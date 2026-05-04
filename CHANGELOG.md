@@ -57,6 +57,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   honors operator overrides via `--next-validation-due`. 23 CLI
   integration tests covering every verb + atomic + YAML +
   validation contract.
+- **`docs/model-risk.md` comprehensive walkthrough** (v0.7.10
+  P4). Full module-walk: regulatory rationale (SR 11-7 / SR 26-02
+  / OCC 2011-12 / OCC 2026-13a + the GenAI-exclusion vacuum),
+  module surface (CLI + REST + governance siblings), data model
+  (ModelInventory + sub-models + vendor-or-internal contract +
+  auto-cadence), quick-start sequence (add/list/doc/validation
+  report), AI-feature linkage usage example, Three Lines of
+  Defense workflow, Effective Challenge log workflow, OSS
+  license + data sovereignty notes, cross-references.
 - **`evidentia governance challenge` — Effective Challenge log**
   (v0.7.10 P1.5 G2). New `EffectiveChallenge` Pydantic schema +
   `ChallengeOutcome` enum (accepted/rejected/modify/pending) +
