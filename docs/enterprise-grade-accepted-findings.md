@@ -103,8 +103,32 @@ this doc with rationale, or dismissed via the GitHub UI.
 
 ---
 
-*Last reviewed: v0.7.9 P0.6 ship cycle (2026-05-04). v0.7.9
-review:
+*Last reviewed: v0.7.10 ship cycle (2026-05-04). v0.7.10 review:
+
+- 4 new CodeQL `py/path-injection` alerts opened against
+  `packages/evidentia-core/src/evidentia_core/model_risk_store.py`
+  (#94 / #95 / #96 / #97). Same template as the v0.7.9
+  vendor_store alerts (#87 / #88 / #89 / #90). CodeQL doesn't
+  recognize `validate_within(candidate, store_dir)` as a
+  sanitizer; all four model_risk_store call sites use the same
+  belt-and-suspenders pattern (UUID-shape `_validate_id_shape`
+  followed by `validate_within` containment check). **Accepted as
+  false positives** under the existing rationale; the long-term
+  CodeQL custom-pack fix (write a query suite that recognizes
+  `validate_within` as a sanitizer) is queued for v0.7.11 P3.
+- F-V10-S1 inline-fix added `validate_within` to
+  `effective_challenge_store.py` so it now joins vendor_store +
+  model_risk_store under the same pattern. Future CodeQL custom
+  pack must cover all 3 stores.
+- The Dockerfile pin is now `evidentia[gui]==0.7.10` (was 0.7.9).
+  When Scorecard surfaces a new alert for the 0.7.10 pin, dismiss
+  with the same `won't_fix` rationale as #74 / #84.
+- New v0.7.10 surfaces (model-risk module + governance primitives
+  + 7 new bundled catalogs + Codecov integration) added 4 net-new
+  accepted findings (#94 / #95 / #96 / #97 above) — all CodeQL
+  false positives in the same `py/path-injection` template.
+
+v0.7.9 review (carried forward):
 
 - Re-confirmed CodeQL `py/path-injection` false positives (#71/#72/#73)
   remain accepted under the same rationale; the long-term CodeQL

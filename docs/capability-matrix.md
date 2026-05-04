@@ -13,6 +13,60 @@
 
 ---
 
+## Re-validation snapshot — 2026-05-04 (v0.7.10 ship — pre-tag)
+
+v0.7.10 ships the **Model Risk Management overlay** (`evidentia
+model-risk` top-level subcommand group: model CRUD + doc generate
++ validation-report generate + RiskStatement.model_inventory_ref
+AI-feature linkage), **`evidentia governance` primitives** (Three
+Lines of Defense lines-report + Effective Challenge log), **7 new
+bundled regulatory catalogs** (5 FFIEC IT Handbook booklets + FFIEC
+CAT + OCC Bulletin 2026-13a / FRB SR 26-02; total 82 → 89), **P2
+Codecov + 81.87% statement coverage closing the last OpenSSF Silver
+MUST**, and **P3 first-batch v0.7.9 deferral closures** (M-1 / M-2 /
+L-3 / L-7).
+
+### Existing tiers — regression check (v0.7.10)
+
+| Tier | v0.7.10 status | Evidence |
+|---|---|---|
+| 1 — AI features | ✅ extended (additive) | RiskStatementGenerator gains optional model_inventory_id constructor param; RiskStatement schema gains optional model_inventory_ref field; backward-compatible default None for all pre-v0.7.10 callers. Step 4 /security-review confirmed opaque-metadata-only flow. |
+| 2 — OSCAL signing + verify | ✅ unchanged | Zero changes under packages/evidentia-core/src/evidentia_core/oscal/ in v0.7.9..HEAD |
+| 3 — Air-gap enforcement | ✅ unchanged | network_guard.py untouched |
+| 4 — Secret scrubber | ✅ unchanged + hardened | _scrub regex unchanged; v0.7.10 P3 M-1 closure tightened token-input validation across 4 collectors. |
+| 5 — Collectors | ✅ hardened (v0.7.10 P3) | All 4 vendor-risk collectors received: M-1 whitespace-only token rejection + M-2 round() not int() for ratings/scores + L-7 BLIND_SPOTS/COLLECTOR_ID re-exports. 9 new tests. |
+| 6 — OSCAL exporter + output formats | ✅ unchanged | gap_report_to_oscal_ar surface untouched in v0.7.10 |
+| 7 — CLI commands | ✅ extended (3 new top-level groups) | `evidentia model-risk` + `evidentia governance` + 7 sub-commands |
+| 8 — REST API | ✅ extended (8 new endpoints) | 6 model-risk CRUD + 2 Markdown-render endpoints. Error-shape consistency follows v0.7.8 F-V08-DAST-3 + F-V08-DAST-1 widening pattern. PlainTextResponse for Markdown emit prevents MIME-sniffing escalation under SecurityHeadersMiddleware. |
+| 9 — Web UI | ✅ unchanged | No evidentia-ui files touched in v0.7.10 |
+| 10 — Configuration precedence | ✅ extended | EVIDENTIA_MODEL_STORE_DIR + EVIDENTIA_CHALLENGE_STORE_DIR env vars added; follow established platformdirs precedence |
+| 11 — JSON-file persistence | ✅ extended (2 new sibling stores) | model_risk_store.py + effective_challenge_store.py mirror v0.7.9 vendor_store secure pattern. F-V10-S1 inline-fix harmonized validate_within usage across all 3 stores. |
+| 12 — Bundled regulatory catalogs | ✅ extended (82 → 89) | 7 new Tier A US-federal public-domain catalogs (full FFIEC IT Handbook stack + FFIEC CAT + OCC Bulletin 2026-13a / FRB SR 26-02). Auto-tested via evidentia_core.catalogs.loader; 169 catalog tests pass. |
+
+### New v0.7.10 surfaces
+
+| # | New surface | Status | Evidence |
+|---|---|---|---|
+| N1 | `evidentia model-risk model {add/list/show/edit/delete}` CLI + REST | ✅ | 23 CLI integration tests + 24 REST integration tests + 22 unit tests for schemas + 18 unit tests for store. Adversarial: invalid UUID shape → 404, bad enums → 400/Exit(1), path-traversal IDs rejected at UUID gate. |
+| N2 | `evidentia model-risk doc generate` + `validation-report generate` Markdown emitters | ✅ | 11 unit tests per generator + 4 CLI tests + 4 REST tests. Determinism tested. |
+| N3 | `evidentia governance lines-report` + `challenge {add/list/show}` | ✅ | 23 unit tests for lines-of-defense + 28 unit + CLI tests for effective-challenge. YAML safe_load. F-V10-S1 inline-fixed at Step 3. |
+| N4 | `RiskStatement.model_inventory_ref` AI-feature linkage | ✅ | 4 model-level tests + 2 generator-level tests. Step 4 /security-review confirmed opaque-metadata-only flow. |
+
+### Adversarial probing summary (v0.7.10 surfaces)
+
+Coverage: **6 of 7 vectors** addressed where applicable (network n/a for local-store-only modules). Bad-input / missing-dep / malformed-config / race-condition vectors all addressed via Pydantic extra="forbid" + atomic os.replace + YAML safe_load + 1730-test suite.
+
+### F-V10 findings disposition
+
+| ID | Severity | Disposition |
+|---|---|---|
+| F-V10-S1 | MEDIUM | INLINE-FIXED at Step 3 (effective_challenge_store.py defense-in-depth gap) |
+| F-V10-S2 | LOW | DEFERRED to v0.7.11 (cli/model_risk.py --editor $EDITOR not allowlisted; risk amplifier only) |
+
+**0 unfixed findings at v0.7.10 ship.**
+
+---
+
 ## Re-validation snapshot — 2026-05-04 (v0.7.9 ship — pre-tag)
 
 v0.7.9 ships the **TPRM module** (`evidentia tprm` top-level
