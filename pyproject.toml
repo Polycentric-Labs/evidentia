@@ -41,8 +41,8 @@ dev = [
     # `boto3` is the runtime dependency (also in evidentia-collectors
     # [aws] extra); having it in dev deps means collector tests run
     # without an extra install step.
-    "boto3>=1.43.2",
-    "moto[all]>=5.0",
+    "boto3>=1.43.3",
+    "moto[all]>=5.2.0",
     # v0.7.12 P0: cloud-WORM backend SDKs (gated as evidentia[worm-X]
     # extras for end-users; in dev-deps so the dev/CI venv runs the
     # backend tests without needing the extra activated).
