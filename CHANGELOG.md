@@ -57,6 +57,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   honors operator overrides via `--next-validation-due`. 23 CLI
   integration tests covering every verb + atomic + YAML +
   validation contract.
+- **`evidentia governance lines-report` — Three Lines of Defense
+  capability** (v0.7.10 P1.5 G1). New foundation module
+  `evidentia_core.governance` ships `LineOfDefense` enum
+  (first/second/third per IIA Three Lines Model 2020 revision),
+  `Owner` Pydantic model (email + line_of_defense + optional
+  team/title), and `generate_lines_report()` deterministic
+  Markdown report generator. CLI: `evidentia governance
+  lines-report --classifications <yaml> [--output <path>]
+  [--force]` reads a YAML overlay listing classified owners and
+  produces a 4-section report — executive summary with
+  per-line counts/percentages, **3LOD crossover warning callout**
+  (any email classified across multiple lines is flagged as a
+  regulator-noted anti-pattern; FFIEC + OCC + FRB expect strict
+  separation between 1st-line execution / 2nd-line oversight /
+  3rd-line audit assurance), per-line owner listing with
+  team+title metadata, and per-team breakdown showing which lines
+  each team participates in. Empty-input case renders a minimal
+  valid report. 23 new tests covering enum coverage / Owner
+  validation contract / report distribution math / crossover
+  detection / per-line empty-state handling / team breakdown
+  / determinism / CLI YAML loading + invalid-yaml + invalid-line
+  + scalar-rejection + empty-file + crossover-in-CLI.
 - **`evidentia model-risk doc generate` + `validation-report
   generate`** (v0.7.10 P0.6.2 + P0.6.3). New CLI verbs +
   REST endpoints (`GET /api/model-risk/models/{id}/documentation`
