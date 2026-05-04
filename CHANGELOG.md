@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.12] - 2026-05-04
+
 **The cloud-WORM trifecta + GDPR Article 17 + FAIR Monte Carlo
-ship target.** v0.7.12 carries the v0.7.11 P0 audit chain-of-
+release.** v0.7.12 carries the v0.7.11 P0 audit chain-of-
 custody from operator-side-metadata-only to regulator-grade
 hardware-WORM enforcement across S3 / Azure / GCS, closes the
 v0.7.11 GDPR functional gap surfaced by Step-4 /security-review,

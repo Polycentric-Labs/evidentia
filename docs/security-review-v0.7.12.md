@@ -49,7 +49,7 @@ fix.
 | Commit | Fix | Trigger |
 |---|---|---|
 | `7a96fe1` | `WORMBackend.purge_immediately` now emits `RETENTION_GDPR_PURGE` audit event with `record_id` + `gdpr_request_ref` + `operator_id` + `classification` + `retention_period_days`. Wrapped in try/except so audit-logger failure does NOT unwind the already-completed purge. | Step 3 /security-review observation: threat-model.md v0.7.12 delta promised "every put / delete / extend_retention / legal_hold operation flows through the audit logger" but `purge_immediately` was missing the emit. |
-| `6b9d383` | `docs/positioning-and-value.md` line 886 "open-core deep dive" → "OSS-GRC deep dive". | Step 6.D 16-row pre-push gate row 4 (standing-rule keyword sweep). Pre-existing leak shipped since v0.7.8; v0.7.9-v0.7.11 skipped it via Step 2 skip-by-reuse. |
+| `6b9d383` | `docs/positioning-and-value.md` line 886 — replaced legacy commercialization-vocabulary phrase in an SACR-targeting row with neutral "OSS-GRC deep dive" framing. | Step 6.D 16-row pre-push gate row 4 (standing-rule keyword sweep). Pre-existing leak shipped since v0.7.8; v0.7.9-v0.7.11 skipped it via Step 2 skip-by-reuse. |
 
 ---
 
