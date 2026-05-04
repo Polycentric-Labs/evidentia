@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`evidentia risk quantify --method open-fair` — Open FAIR risk
+  quantification** (v0.7.11 P1.5 G4). Implements the Open Group's
+  Open FAIR (Factor Analysis of Information Risk) taxonomy for
+  dollarized risk quantification (per the Open Group's Open Risk
+  Taxonomy Standard + ISO/IEC 27005 Annex E). New module
+  `evidentia_core.risk_quant.open_fair` ships:
+  - `OpenFAIRScenario` Pydantic schema with TEF + Vulnerability
+    + Primary Loss + Secondary Loss factors. Each factor accepts
+    either a scalar OR a `PERTRange` (low / most-likely / high).
+  - `PERTRange` 3-point estimate with `low <= most_likely <= high`
+    invariant + Beta-PERT mean formula
+    `E[X] = (low + 4*most_likely + high) / 6`
+  - `compute_lef()` (LEF = TEF × Vulnerability)
+  - `compute_loss_magnitude()` (LM = PrimaryLoss + SecondaryLoss)
+  - `compute_ale()` (ALE = LEF × LM, the Annualized Loss Expectancy)
+  - `categorize_risk()` mapping ALE to FAIR risk bands (severe /
+    high / significant / moderate / low)
+  - `generate_risk_quantification_report()` deterministic Markdown
+    report with executive summary (total ALE + category
+    distribution) + per-scenario detail (LEF + LM breakdown +
+    each factor's resolved-mean) sorted by ALE descending
+  CLI: `evidentia risk quantify --method open-fair --scenarios
+  <yaml/json>` reads scenarios from disk + writes the Markdown
+  report (stdout or `--output`). Full Monte Carlo simulation is
+  deferred to v0.7.12; v0.7.11 ships the deterministic
+  PERT-mean expected-value form. 30 new tests (23 unit + 7 CLI).
+
 - **`evidentia governance metrics` — KRI / KPI / KGI metric
   primitives** (v0.7.11 P1.5 G3). Brings the third governance
   primitive into the v0.7.10 governance overlay. New module

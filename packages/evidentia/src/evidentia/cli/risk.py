@@ -1,16 +1,23 @@
-"""`evidentia risk` — AI risk statement generation."""
+"""`evidentia risk` — AI risk statement generation + Open FAIR quantification."""
 
 from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
 
 import typer
+import yaml
+from evidentia_core.risk_quant import (
+    OpenFAIRScenario,
+    generate_risk_quantification_report,
+)
+from pydantic import ValidationError
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-app = typer.Typer(help="AI-powered risk statement generation.")
+app = typer.Typer(help="AI-powered risk statement generation + risk quantification.")
 console = Console()
 
 
@@ -176,3 +183,144 @@ def generate(
         f"[green]Generated[/green] {len(risks)}/{len(target_gaps)} risk statements"
     )
     console.print(f"[green]Output:[/green] [bold]{output}[/bold]")
+
+
+# ── Open FAIR risk quantification (v0.7.11 P1.5 G4) ───────────────
+
+
+def _load_scenarios_or_exit(path: Path) -> list[OpenFAIRScenario]:
+    """Load + validate FAIR scenarios from YAML or JSON.
+
+    Expected file shape: a top-level list of scenario records,
+    each matching the OpenFAIRScenario schema (see module docs).
+    """
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as e:
+        console.print(f"[red]Error:[/red] could not read {path}: {e}")
+        raise typer.Exit(code=1) from e
+
+    suffix = path.suffix.lower()
+    try:
+        if suffix in {".yaml", ".yml"}:
+            raw = yaml.safe_load(text)
+        elif suffix == ".json":
+            raw = json.loads(text)
+        else:
+            # Try YAML first (it's a JSON superset for valid JSON)
+            raw = yaml.safe_load(text)
+    except (yaml.YAMLError, json.JSONDecodeError) as e:
+        console.print(
+            f"[red]Error:[/red] {path} is not valid YAML/JSON: {e}"
+        )
+        raise typer.Exit(code=1) from e
+
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        console.print(
+            f"[red]Error:[/red] {path} must be a list of scenario "
+            f"records (got {type(raw).__name__})."
+        )
+        raise typer.Exit(code=1)
+
+    scenarios: list[OpenFAIRScenario] = []
+    for i, entry in enumerate(raw):
+        if not isinstance(entry, dict):
+            console.print(
+                f"[red]Error:[/red] entry {i} in {path} is not a "
+                f"mapping; got {type(entry).__name__}."
+            )
+            raise typer.Exit(code=1)
+        try:
+            scenarios.append(OpenFAIRScenario.model_validate(entry))
+        except ValidationError as e:
+            console.print(
+                f"[red]Error:[/red] entry {i} in {path} failed "
+                f"validation: {e}"
+            )
+            raise typer.Exit(code=1) from e
+    return scenarios
+
+
+@app.command("quantify")
+def quantify(
+    method: str = typer.Option(
+        "open-fair",
+        "--method",
+        help="Quantification method. Currently: 'open-fair'.",
+    ),
+    scenarios: Path = typer.Option(
+        ...,
+        "--scenarios",
+        "-s",
+        help="Path to a YAML or JSON file listing FAIR scenarios.",
+    ),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output path. If omitted, prints the Markdown report to stdout.",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Overwrite the output path if it already exists.",
+    ),
+) -> None:
+    """Compute dollarized risk quantification per the chosen method.
+
+    Currently supports Open FAIR (`--method open-fair`). Produces
+    a deterministic Markdown report covering total ALE,
+    risk-category distribution, and per-scenario LEF / LM / ALE
+    breakdown with each factor's resolved-mean value.
+
+    Scenarios file shape (YAML)::
+
+        - name: Credential stuffing
+          description: External attackers reuse leaked credentials
+          tef: 365            # daily attempts
+          vulnerability: 0.001
+          primary_loss: 5000
+          secondary_loss:     # PERT range
+            low: 10000
+            most_likely: 50000
+            high: 250000
+        - name: Ransomware on file server
+          ...
+
+    A future v0.7.12 sub-slice will add Monte Carlo simulation
+    (FAIR's canonical quantification path); v0.7.11 ships the
+    deterministic PERT-mean expected-value form per the v0.7.11
+    P1.5 G4 plan.
+    """
+    if method != "open-fair":
+        console.print(
+            f"[red]Error:[/red] --method must be 'open-fair' (got "
+            f"{method!r}). Future versions will add fair-mc, "
+            f"openfair-mc, etc."
+        )
+        raise typer.Exit(code=1)
+
+    scenarios_list = _load_scenarios_or_exit(scenarios)
+    rendered = generate_risk_quantification_report(scenarios_list)
+
+    if output is None:
+        sys.stdout.write(rendered)
+        if not rendered.endswith("\n"):
+            sys.stdout.write("\n")
+        return
+
+    if output.exists() and not force:
+        console.print(
+            f"[red]Error:[/red] {output} already exists; pass --force "
+            f"to overwrite."
+        )
+        raise typer.Exit(code=1)
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(rendered, encoding="utf-8")
+    console.print(
+        f"[green]Wrote[/green] FAIR quantification report to "
+        f"[bold]{output}[/bold] ({len(scenarios_list)} scenario(s))."
+    )
