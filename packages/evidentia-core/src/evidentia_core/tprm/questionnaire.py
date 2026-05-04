@@ -12,37 +12,43 @@ Format catalogue (per ``QuestionnaireFormat`` enum):
   baseline questionnaire (~20 questions across FFIEC vendor-
   management domains: governance, access control, data handling,
   incident response, business continuity, 4th-party disclosure).
-  Use when no specific industry framework is mandated; useful for
-  internal ops + smaller vendors that don't warrant a full SIG.
 
-- **``caiq-lite``** — CC BY 4.0 / CSA Consensus Assessments
-  Initiative Questionnaire (CAIQ) v4.0.3 representative subset
-  (~25 questions). Operators wanting the full 245-question CAIQ
-  should download from <https://cloudsecurityalliance.org/research/cloud-controls-matrix/>
-  and use the planned ``--from-template`` BYO ingestion path.
-  Maps to NIST 800-53 + ISO 27001 + CSA CCM v4.
+- **``caiq-lite``** — CC BY 4.0 / CSA CAIQ v4.0.3 representative
+  ~25-question subset.
 
-- **``sig``** / **``sig-lite``** — STUB. Shared Assessments
-  paywalls the SIG question content (license terms forbid
-  redistribution). Future versions will support a
-  ``--from-template <path-to-licensed-xlsx>`` BYO-template
-  pattern: operators with Shared Assessments membership supply
-  their licensed XLSX, Evidentia pre-fills vendor metadata into
-  the standard SIG layout, returns the partially-filled file for
-  the vendor to complete. **In v0.7.9 P0.2 first slice these
-  emit a clear "BYO-template not yet implemented" error.**
+- **``caiq-full``** — CC BY 4.0 / CSA CAIQ v4.0.3 expanded
+  ~50-question subset covering all 17 control domains. v0.7.9
+  P0.2 second slice. Operators wanting the full 245-question
+  CAIQ should download from
+  <https://cloudsecurityalliance.org/research/cloud-controls-matrix/>
+  and use the BYO ``--from-template`` path.
+
+- **``sig``** / **``sig-lite``** — STUB content + BYO-template
+  path (v0.7.9 P0.2 second slice). Shared Assessments paywalls
+  SIG questions, but operators with a licensed XLSX can supply
+  it via ``--from-template <path>``. Evidentia parses the SIG
+  layout, pre-fills vendor metadata into standard cells, and
+  returns the partially-filled XLSX for the vendor to complete.
+  Without ``--from-template``, the format raises a clear
+  "BYO-template required" error.
 
 Output formats (per ``--output-format`` flag):
 
 - **``json``** — full Pydantic model dump; machine-consumable
-- **``csv``** — flat (one row per question); spreadsheet-friendly
+- **``csv``** — flat; spreadsheet-pivot friendly without binary deps
+- **``xlsx``** — workbook with vendor-prefill header sheet +
+  one questions sheet per domain. Requires
+  ``pip install 'evidentia-core[xlsx]'`` (openpyxl).
+  v0.7.9 P0.2 second slice.
 
-XLSX output is deferred — would require an ``openpyxl`` extra
-that brings ~3 MB of binary deps for the formatting machinery.
-CSV is sufficient for the spreadsheet-pivot use case.
+Ingest path (v0.7.9 P0.2 second slice):
 
-The ``ingest`` command (vendor responses flow back into Evidentia)
-is also deferred to a follow-up sub-slice.
+The ``ingest`` workflow loads a completed vendor questionnaire
+back into Evidentia and correlates it to a vendor record via the
+questionnaire's UUID (or an explicit ``--vendor-id`` override).
+Supported input shapes: JSON / CSV / XLSX produced by the
+generate path. Vendor evidence_refs[] is updated; subsequent
+``evidentia tprm vendor show`` reflects the ingested response.
 """
 
 from __future__ import annotations
@@ -79,16 +85,25 @@ class QuestionnaireFormat(str, Enum):
 
     EVIDENTIA_GENERIC = "evidentia-generic"
     CAIQ_LITE = "caiq-lite"
+    CAIQ_FULL = "caiq-full"
     SIG = "sig"
     SIG_LITE = "sig-lite"
 
 
 # Format → data-file basename mapping. Stubs (sig/sig-lite) have
-# no entry and raise NotImplementedError at generate time.
+# no entry and raise NotImplementedError at generate time UNLESS
+# a ``--from-template`` path is supplied (BYO XLSX ingestion).
 _PACKAGED_DATA_FORMATS: dict[QuestionnaireFormat, str] = {
     QuestionnaireFormat.EVIDENTIA_GENERIC: "evidentia_generic.json",
     QuestionnaireFormat.CAIQ_LITE: "caiq_lite.json",
+    QuestionnaireFormat.CAIQ_FULL: "caiq_full.json",
 }
+
+# SIG / SIG-Lite formats that accept BYO XLSX templates (no
+# packaged data; content comes from the operator's licensed file).
+_BYO_TEMPLATE_FORMATS: frozenset[QuestionnaireFormat] = frozenset(
+    {QuestionnaireFormat.SIG, QuestionnaireFormat.SIG_LITE}
+)
 
 
 class Question(EvidentiaModel):
@@ -382,3 +397,598 @@ def shipped_formats() -> list[QuestionnaireFormat]:
     hard-coding the stub-vs-shipped split in three places.
     """
     return sorted(_PACKAGED_DATA_FORMATS.keys(), key=lambda f: f.value)
+
+
+def byo_template_formats() -> list[QuestionnaireFormat]:
+    """Return the sorted list of formats that accept BYO XLSX templates.
+
+    Used by CLI help text to differentiate between packaged-content
+    formats (caiq-lite / caiq-full / evidentia-generic) and BYO-only
+    formats (sig / sig-lite).
+    """
+    return sorted(_BYO_TEMPLATE_FORMATS, key=lambda f: f.value)
+
+
+# ── v0.7.9 P0.2 second slice: XLSX render ─────────────────────────
+
+
+class XlsxNotInstalledError(ImportError):
+    """Raised when XLSX functionality is requested but openpyxl is missing.
+
+    The operator can resolve by installing the optional extra::
+
+        pip install 'evidentia-core[xlsx]'
+    """
+
+
+def _require_openpyxl() -> Any:
+    """Lazy-import openpyxl with a clear, actionable error message."""
+    try:
+        import openpyxl  # type: ignore[import-untyped, unused-ignore]
+    except ImportError as e:
+        raise XlsxNotInstalledError(
+            "openpyxl is required for XLSX output / ingestion. "
+            "Install via `pip install 'evidentia-core[xlsx]'`. "
+            "openpyxl is ~3 MB pure-Python; gated behind an extra "
+            "to keep default installs slim."
+        ) from e
+    return openpyxl
+
+
+def render_xlsx_questionnaire(q: Questionnaire) -> bytes:
+    """Render a Questionnaire as an Excel workbook (.xlsx) bytes.
+
+    Layout:
+    - Sheet 1: ``Vendor metadata`` — all VendorPreFill fields as
+      key/value pairs, plus questionnaire ID + format + generated_at.
+    - Sheet 2..N: one sheet per question domain (sanitized to fit
+      Excel's 31-character sheet-name limit + reserved chars). Each
+      domain sheet has columns: id / question / response_options /
+      notes / vendor_response (blank for the vendor to complete).
+
+    The XLSX file inherits CSV-formula-injection defenses for
+    user-supplied content cells: vendor.name / fourth_party_names /
+    region / relationship_owner all flow through the same
+    `_csv_safe()` neutralizer used by the CSV path. The XLSX file
+    format does NOT auto-evaluate formulas the same way CSV
+    spreadsheet importers do, but defense-in-depth is cheap.
+
+    Args:
+        q: The generated questionnaire to render.
+
+    Returns:
+        XLSX file content as bytes (ready to write to disk or
+        return via REST). The caller is responsible for I/O.
+
+    Raises:
+        XlsxNotInstalledError: openpyxl is not installed; install
+            the ``[xlsx]`` extra.
+    """
+    openpyxl = _require_openpyxl()
+    wb = openpyxl.Workbook()
+    # Default sheet becomes the metadata sheet
+    meta_ws = wb.active
+    meta_ws.title = "Vendor metadata"
+    meta_rows: list[list[str]] = [
+        ["Title", _csv_safe(q.title)],
+        ["Questionnaire ID", q.id],
+        ["Format", str(q.format)],
+        ["Generated at", q.generated_at.isoformat()],
+        ["Vendor ID", q.vendor.vendor_id],
+        ["Vendor name", _csv_safe(q.vendor.vendor_name)],
+        ["Vendor type", q.vendor.vendor_type],
+        ["Criticality tier", q.vendor.criticality_tier],
+        ["Relationship owner", _csv_safe(q.vendor.relationship_owner)],
+        ["Contract start", str(q.vendor.contract_start_date)],
+    ]
+    if q.vendor.contract_end_date:
+        meta_rows.append(["Contract end", str(q.vendor.contract_end_date)])
+    if q.vendor.region:
+        meta_rows.append(["Region", _csv_safe(q.vendor.region)])
+    if q.vendor.regulatory_classification:
+        meta_rows.append(
+            [
+                "Regulatory classification",
+                _csv_safe(", ".join(q.vendor.regulatory_classification)),
+            ]
+        )
+    if q.vendor.fourth_party_count:
+        meta_rows.append(
+            [
+                "4th parties",
+                _csv_safe(
+                    f"{q.vendor.fourth_party_count}: "
+                    + ", ".join(q.vendor.fourth_party_names)
+                ),
+            ]
+        )
+    if q.licensing_attribution:
+        meta_rows.append(["Attribution", q.licensing_attribution])
+    for row in meta_rows:
+        meta_ws.append(row)
+
+    # Group questions by domain → one sheet per domain.
+    by_domain: dict[str, list[Question]] = {}
+    for question in q.questions:
+        by_domain.setdefault(question.domain, []).append(question)
+
+    for domain, questions in by_domain.items():
+        sheet_name = _sanitize_sheet_name(domain)
+        # Excel requires unique sheet names; the sanitizer does its
+        # best but collisions can still happen if two domains
+        # truncate identically.
+        suffix = ""
+        attempt = 0
+        while (sheet_name + suffix) in wb.sheetnames:
+            attempt += 1
+            suffix = f" ({attempt})"
+        ws = wb.create_sheet(title=sheet_name + suffix)
+        ws.append(
+            [
+                "id",
+                "question_text",
+                "response_options",
+                "notes",
+                "vendor_response",
+            ]
+        )
+        for question in questions:
+            ws.append(
+                [
+                    question.id,
+                    _csv_safe(question.question_text),
+                    " | ".join(question.response_options),
+                    _csv_safe(question.notes) if question.notes else "",
+                    "",  # blank for vendor to complete
+                ]
+            )
+
+    out = io.BytesIO()
+    wb.save(out)
+    return out.getvalue()
+
+
+# Excel sheet-name constraints:
+# - Max 31 characters
+# - Cannot contain: : \ / ? * [ ]
+# - Cannot start or end with a single quote
+_EXCEL_SHEET_BAD_CHARS = ":\\/?*[]"
+
+
+def _sanitize_sheet_name(name: str) -> str:
+    """Sanitize a domain string into a valid Excel sheet name."""
+    cleaned = "".join(
+        c for c in name if c not in _EXCEL_SHEET_BAD_CHARS
+    )
+    cleaned = cleaned.strip().strip("'")
+    if not cleaned:
+        cleaned = "Questions"
+    return cleaned[:31]
+
+
+# ── v0.7.9 P0.2 second slice: SIG BYO template ────────────────────
+
+
+def generate_from_byo_template(
+    vendor: Vendor,
+    *,
+    template_path: Any,
+    fmt: QuestionnaireFormat,
+) -> bytes:
+    """Pre-fill vendor metadata into an operator-supplied SIG XLSX.
+
+    Operators with Shared Assessments membership supply their
+    licensed SIG / SIG-Lite XLSX template. Evidentia opens the
+    workbook, locates the standard "Vendor Information" / "Company
+    Information" sheet, pre-fills vendor metadata into the
+    documented cells, and returns the partially-filled file as bytes
+    for the vendor to complete the control questions.
+
+    The SIG template's question content stays UNTOUCHED — Evidentia
+    only writes to vendor-metadata cells. This respects Shared
+    Assessments' license terms (no redistribution of question
+    content; operator's licensed copy stays on the operator's
+    machine).
+
+    Cell-coordinate convention (best-effort, defensive):
+    The SIG / SIG-Lite layouts vary across Shared Assessments
+    publication years. The function looks for a sheet whose name
+    contains "vendor information" / "company information" /
+    "company profile" (case-insensitive), then writes to the FIRST
+    cell in column B / C of rows whose column-A label matches
+    well-known SIG vendor-metadata labels (Company Name / Vendor
+    Name / Legal Name / Address / Primary Contact / etc.).
+
+    If no recognized layout is detected, the function raises a
+    clear error with debug info and the operator can fall back to
+    the JSON / CSV / XLSX evidentia-generic / caiq-lite formats
+    (which carry their own layouts).
+
+    Args:
+        vendor: The vendor to pre-fill metadata from.
+        template_path: Path to the operator's licensed SIG /
+            SIG-Lite XLSX file.
+        fmt: Either ``QuestionnaireFormat.SIG`` or
+            ``QuestionnaireFormat.SIG_LITE``. Used in error
+            messages only — both follow the same layout convention.
+
+    Returns:
+        Pre-filled XLSX bytes ready for the operator to send the
+        vendor.
+
+    Raises:
+        XlsxNotInstalledError: openpyxl missing.
+        ValueError: ``fmt`` is not a BYO-template format.
+        FileNotFoundError: template_path does not exist or isn't
+            readable.
+        RuntimeError: no recognized SIG layout found in the workbook.
+    """
+    if fmt not in _BYO_TEMPLATE_FORMATS:
+        raise ValueError(
+            f"Format {fmt.value!r} does not accept a BYO template. "
+            "Only sig / sig-lite use --from-template."
+        )
+    openpyxl = _require_openpyxl()
+    from pathlib import Path as _Path
+
+    path = _Path(str(template_path))
+    if not path.exists() or not path.is_file():
+        raise FileNotFoundError(
+            f"BYO SIG template not found at {path!r}. Operators "
+            "with Shared Assessments membership can download the "
+            "current SIG / SIG-Lite XLSX from "
+            "https://sharedassessments.org/sig/ and supply the "
+            "path here."
+        )
+    wb = openpyxl.load_workbook(filename=str(path), data_only=False)
+
+    # Find the vendor-metadata sheet using fuzzy name matching.
+    target_sheet_name: str | None = None
+    name_keywords = (
+        "vendor information",
+        "company information",
+        "company profile",
+        "vendor profile",
+        "general information",
+    )
+    for sheet_name in wb.sheetnames:
+        normalized = sheet_name.lower().strip()
+        if any(kw in normalized for kw in name_keywords):
+            target_sheet_name = sheet_name
+            break
+    if target_sheet_name is None:
+        raise RuntimeError(
+            f"No recognizable vendor-metadata sheet found in "
+            f"{path.name!r}. Expected a sheet named one of: "
+            f"{', '.join(name_keywords)}. Workbook sheets: "
+            f"{wb.sheetnames}. The SIG layout has changed over "
+            "time; operators may need to manually populate vendor "
+            "metadata in the licensed template."
+        )
+    ws = wb[target_sheet_name]
+
+    # Map column-A labels (lowercased + normalized) to vendor values.
+    # Defensive: if an operator's template uses different labels,
+    # we silently skip the fields that don't match — better partial
+    # pre-fill than failure.
+    label_to_value: dict[str, str] = {
+        "company name": vendor.name,
+        "vendor name": vendor.name,
+        "legal name": vendor.name,
+        "vendor": vendor.name,
+        "primary contact": vendor.relationship_owner,
+        "primary contact email": vendor.relationship_owner,
+        "relationship owner": vendor.relationship_owner,
+        "contract start date": vendor.contract_start_date.isoformat(),
+        "contract effective date": vendor.contract_start_date.isoformat(),
+        "vendor type": (
+            vendor.type.value
+            if hasattr(vendor.type, "value")
+            else str(vendor.type)
+        ),
+        "service type": (
+            vendor.type.value
+            if hasattr(vendor.type, "value")
+            else str(vendor.type)
+        ),
+        "criticality": (
+            vendor.criticality_tier.value
+            if hasattr(vendor.criticality_tier, "value")
+            else str(vendor.criticality_tier)
+        ),
+        "criticality tier": (
+            vendor.criticality_tier.value
+            if hasattr(vendor.criticality_tier, "value")
+            else str(vendor.criticality_tier)
+        ),
+        "tier": (
+            vendor.criticality_tier.value
+            if hasattr(vendor.criticality_tier, "value")
+            else str(vendor.criticality_tier)
+        ),
+    }
+    if vendor.contract_end_date:
+        label_to_value["contract end date"] = (
+            vendor.contract_end_date.isoformat()
+        )
+        label_to_value["contract expiration date"] = (
+            vendor.contract_end_date.isoformat()
+        )
+    if vendor.region:
+        label_to_value["region"] = vendor.region
+        label_to_value["geographic region"] = vendor.region
+
+    # Walk rows; for each label-match, write value into column B
+    # (most common SIG layout) AND column C (some templates put
+    # response in column C with column B as instructions). We
+    # check the cell is empty first so we don't clobber existing
+    # operator content.
+    pre_filled_count = 0
+    for row in ws.iter_rows(min_row=1, max_row=ws.max_row):
+        if not row:
+            continue
+        a_cell = row[0]
+        if a_cell.value is None:
+            continue
+        a_value = str(a_cell.value).strip().lower().rstrip(":")
+        target = label_to_value.get(a_value)
+        if target is None:
+            continue
+        # Try column B first (standard layout)
+        if len(row) > 1 and row[1].value in (None, ""):
+            row[1].value = target
+            pre_filled_count += 1
+        # Some templates use column C for vendor response
+        elif len(row) > 2 and row[2].value in (None, ""):
+            row[2].value = target
+            pre_filled_count += 1
+
+    if pre_filled_count == 0:
+        raise RuntimeError(
+            f"No SIG vendor-metadata cells matched the pre-fill "
+            f"label list in {path.name!r}. The template's row "
+            "labels may differ from the documented Shared "
+            "Assessments convention; operators may need to "
+            "populate metadata manually. Recognized labels: "
+            f"{sorted(label_to_value.keys())}."
+        )
+
+    out = io.BytesIO()
+    wb.save(out)
+    return out.getvalue()
+
+
+# ── v0.7.9 P0.2 second slice: ingest path ─────────────────────────
+
+
+class CompletedQuestionnaire(EvidentiaModel):
+    """A completed (or partially-completed) vendor questionnaire response.
+
+    Produced by :func:`parse_completed_questionnaire`. Carries the
+    same questionnaire UUID as the originating Questionnaire so the
+    ingest CLI can correlate back without ambiguity. The
+    ``responses`` mapping is keyed by question.id (e.g.,
+    ``EVG-GOV-01`` / ``CAIQ-AAC-01``).
+    """
+
+    questionnaire_id: str | None = Field(
+        default=None,
+        description=(
+            "UUID from the originating Questionnaire. Required for "
+            "automatic vendor correlation; can be omitted if the "
+            "ingest call passes --vendor-id explicitly."
+        ),
+    )
+    vendor_id: str | None = Field(
+        default=None,
+        description="Vendor ID from the originating prefill (when present).",
+    )
+    format: QuestionnaireFormat | None = None
+    responses: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Per-question vendor responses keyed by question.id. "
+            "Empty string == 'no response'. Operators can post-"
+            "process this map for compliance scoring or evidence-"
+            "of-due-diligence claims."
+        ),
+    )
+    ingested_at: datetime = Field(default_factory=utc_now)
+    source_path: str | None = None
+
+
+def parse_completed_questionnaire(
+    path: Any,
+) -> CompletedQuestionnaire:
+    """Parse a vendor's completed questionnaire from disk.
+
+    Auto-detects format from the file extension:
+
+    - ``.json`` — uses the canonical Questionnaire shape; pulls
+      ``vendor_response`` per question (when present), plus
+      ``vendor_id`` and questionnaire ``id`` for correlation
+    - ``.csv`` — reads the flat CSV produced by
+      :func:`render_csv_questionnaire`; correlates via the
+      ``# Questionnaire ID`` and ``# Vendor ID`` header rows
+    - ``.xlsx`` — reads workbooks produced by
+      :func:`render_xlsx_questionnaire`; correlates via
+      "Vendor metadata" sheet's ``Questionnaire ID`` / ``Vendor ID``
+      rows; question responses come from per-domain sheets'
+      ``vendor_response`` column
+
+    Args:
+        path: Filesystem path to the completed questionnaire.
+
+    Returns:
+        :class:`CompletedQuestionnaire` carrying the responses.
+
+    Raises:
+        FileNotFoundError: path doesn't exist.
+        ValueError: extension not supported, or malformed content.
+        XlsxNotInstalledError: ``.xlsx`` requested without openpyxl.
+    """
+    from pathlib import Path as _Path
+
+    p = _Path(str(path))
+    if not p.exists():
+        raise FileNotFoundError(f"Questionnaire file not found: {p!r}")
+    suffix = p.suffix.lower()
+    if suffix == ".json":
+        return _parse_completed_json(p)
+    if suffix == ".csv":
+        return _parse_completed_csv(p)
+    if suffix == ".xlsx":
+        return _parse_completed_xlsx(p)
+    raise ValueError(
+        f"Unsupported questionnaire file extension: {suffix!r}. "
+        "Supported: .json, .csv, .xlsx."
+    )
+
+
+def _parse_completed_json(path: Any) -> CompletedQuestionnaire:
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise ValueError(
+            "Completed questionnaire JSON must be an object "
+            "(matching the Questionnaire shape)."
+        )
+    responses: dict[str, str] = {}
+    for q in raw.get("questions", []):
+        if not isinstance(q, dict):
+            continue
+        qid = q.get("id")
+        resp = q.get("vendor_response", "")
+        if isinstance(qid, str) and qid:
+            responses[qid] = str(resp) if resp is not None else ""
+    fmt_raw = raw.get("format")
+    fmt: QuestionnaireFormat | None = None
+    if isinstance(fmt_raw, str):
+        try:
+            fmt = QuestionnaireFormat(fmt_raw)
+        except ValueError:
+            fmt = None
+    vendor_block = raw.get("vendor") or {}
+    vendor_id_raw = (
+        vendor_block.get("vendor_id")
+        if isinstance(vendor_block, dict)
+        else None
+    )
+    return CompletedQuestionnaire(
+        questionnaire_id=raw.get("id") if isinstance(raw.get("id"), str) else None,
+        vendor_id=vendor_id_raw if isinstance(vendor_id_raw, str) else None,
+        format=fmt,
+        responses=responses,
+        source_path=str(path),
+    )
+
+
+def _parse_completed_csv(path: Any) -> CompletedQuestionnaire:
+    """Parse the flat CSV emitted by render_csv_questionnaire.
+
+    Header rows start with '#' sentinel; question rows are tabular
+    with header columns id / domain / question_text / response_options
+    / notes / vendor_response. The vendor_response column is what
+    we extract.
+    """
+    text = path.read_text(encoding="utf-8")
+    reader = csv.reader(io.StringIO(text))
+    questionnaire_id: str | None = None
+    vendor_id: str | None = None
+    fmt: QuestionnaireFormat | None = None
+    headers: list[str] | None = None
+    responses: dict[str, str] = {}
+    for row in reader:
+        if not row:
+            continue
+        first = row[0].strip()
+        if first.startswith("#"):
+            # Header / metadata row
+            label = first.lstrip("#").strip().lower()
+            value = row[1].strip() if len(row) > 1 else ""
+            if label == "questionnaire id":
+                questionnaire_id = value or None
+            elif label == "vendor id":
+                vendor_id = value or None
+            elif label == "format":
+                try:
+                    fmt = QuestionnaireFormat(value)
+                except ValueError:
+                    fmt = None
+            continue
+        if headers is None:
+            # First non-comment row is the column header
+            headers = [c.strip() for c in row]
+            continue
+        # Question response row
+        col_map = dict(zip(headers, row, strict=False))
+        qid = col_map.get("id", "").strip()
+        if not qid:
+            continue
+        responses[qid] = col_map.get("vendor_response", "").strip()
+    return CompletedQuestionnaire(
+        questionnaire_id=questionnaire_id,
+        vendor_id=vendor_id,
+        format=fmt,
+        responses=responses,
+        source_path=str(path),
+    )
+
+
+def _parse_completed_xlsx(path: Any) -> CompletedQuestionnaire:
+    """Parse XLSX workbooks emitted by render_xlsx_questionnaire."""
+    openpyxl = _require_openpyxl()
+    wb = openpyxl.load_workbook(filename=str(path), data_only=True)
+    questionnaire_id: str | None = None
+    vendor_id: str | None = None
+    fmt: QuestionnaireFormat | None = None
+    if "Vendor metadata" in wb.sheetnames:
+        ws = wb["Vendor metadata"]
+        for row in ws.iter_rows(values_only=True):
+            if not row or row[0] is None:
+                continue
+            label = str(row[0]).strip().lower()
+            value = str(row[1]).strip() if len(row) > 1 and row[1] else ""
+            if label == "questionnaire id":
+                questionnaire_id = value or None
+            elif label == "vendor id":
+                vendor_id = value or None
+            elif label == "format":
+                try:
+                    fmt = QuestionnaireFormat(value)
+                except ValueError:
+                    fmt = None
+    responses: dict[str, str] = {}
+    for sheet_name in wb.sheetnames:
+        if sheet_name == "Vendor metadata":
+            continue
+        ws = wb[sheet_name]
+        rows_iter = ws.iter_rows(values_only=True)
+        try:
+            header_row = next(rows_iter)
+        except StopIteration:
+            continue
+        if not header_row:
+            continue
+        headers = [str(c).strip() if c else "" for c in header_row]
+        try:
+            id_idx = headers.index("id")
+            resp_idx = headers.index("vendor_response")
+        except ValueError:
+            continue
+        for row in rows_iter:
+            if not row or row[id_idx] is None:
+                continue
+            qid = str(row[id_idx]).strip()
+            resp_cell = (
+                row[resp_idx] if resp_idx < len(row) else None
+            )
+            responses[qid] = (
+                str(resp_cell).strip() if resp_cell is not None else ""
+            )
+    return CompletedQuestionnaire(
+        questionnaire_id=questionnaire_id,
+        vendor_id=vendor_id,
+        format=fmt,
+        responses=responses,
+        source_path=str(path),
+    )

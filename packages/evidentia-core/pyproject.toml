@@ -37,6 +37,12 @@ dependencies = [
 # Not compatible with air-gap mode (Sigstore requires network access to
 # Fulcio + Rekor for signing). Air-gap deployments stay on GPG.
 sigstore = ["sigstore>=3.0"]
+# v0.7.9 P0.2 second slice: Excel (.xlsx) output / ingestion for the
+# TPRM due-diligence questionnaire generator. openpyxl is ~3 MB pure-
+# Python; gated behind an extra so default installs stay slim.
+xlsx = [
+    "openpyxl>=3.1",
+]
 
 [project.urls]
 Homepage = "https://github.com/allenfbyrd/evidentia"

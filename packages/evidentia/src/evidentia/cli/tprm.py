@@ -842,15 +842,18 @@ def dd_questionnaire_generate(
         help=(
             "Questionnaire framework. Choices: "
             f"{', '.join(f.value for f in shipped_formats())} "
-            "(also accepts 'sig' / 'sig-lite' but those error today — "
-            "Shared Assessments paywalled content; future versions "
-            "will support `--from-template <licensed-xlsx>`)."
+            "(packaged content). Also accepts 'sig' / 'sig-lite' when "
+            "supplied with --from-template (BYO XLSX path; v0.7.9 "
+            "P0.2 second slice)."
         ),
     ),
     output_format: str = typer.Option(
         "json",
         "--output-format",
-        help="Output format: json / csv. (xlsx deferred to a follow-up slice.)",
+        help=(
+            "Output format: json / csv / xlsx. xlsx requires the "
+            "[xlsx] extra (`pip install 'evidentia-core[xlsx]'`)."
+        ),
     ),
     output: Path | None = typer.Option(
         None,
@@ -858,7 +861,23 @@ def dd_questionnaire_generate(
         "-o",
         help=(
             "Write to file path. If omitted, writes to stdout — useful "
-            "for pipe / shell-redirect patterns."
+            "for pipe / shell-redirect patterns. Required for xlsx + "
+            "for --from-template (binary outputs)."
+        ),
+    ),
+    from_template: Path | None = typer.Option(
+        None,
+        "--from-template",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help=(
+            "Path to a Shared Assessments licensed SIG / SIG-Lite XLSX "
+            "template. Required for --format sig / sig-lite. Evidentia "
+            "pre-fills vendor metadata into the standard cells; the "
+            "template's question content stays untouched (license "
+            "compliance). v0.7.9 P0.2 second slice."
         ),
     ),
 ) -> None:
@@ -867,9 +886,8 @@ def dd_questionnaire_generate(
     Pre-fills vendor name + type + criticality tier + contract dates +
     region + regulatory classification + 4th-party disclosures so the
     receiving vendor only sees control questions (not blank metadata
-    forms). The vendor returns the completed file; a future
-    `evidentia tprm dd-questionnaire ingest` command will load
-    responses back into Evidentia for tracking.
+    forms). The vendor returns the completed file; load responses back
+    into Evidentia via `evidentia tprm dd-questionnaire ingest`.
 
     Examples:
 
@@ -880,18 +898,24 @@ def dd_questionnaire_generate(
           --output-format json \\
           --output q.json
 
-        # CAIQ-lite as CSV for spreadsheet workflow
+        # CAIQ-full as XLSX (multi-sheet workbook)
         evidentia tprm dd-questionnaire generate \\
           --vendor-id 12345678-1234-... \\
-          --format caiq-lite \\
-          --output-format csv \\
-          --output q.csv
+          --format caiq-full \\
+          --output-format xlsx \\
+          --output q.xlsx
+
+        # SIG via licensed BYO template
+        evidentia tprm dd-questionnaire generate \\
+          --vendor-id 12345678-1234-... \\
+          --format sig \\
+          --from-template path/to/SIG-2026.xlsx \\
+          --output sig-prefilled.xlsx
     """
-    if output_format not in {"json", "csv"}:
+    if output_format not in {"json", "csv", "xlsx"}:
         console.print(
             f"[red]Error:[/red] --output-format must be one of "
-            f"json/csv; got {output_format!r}. (xlsx deferred to a "
-            "follow-up slice.)"
+            f"json/csv/xlsx; got {output_format!r}."
         )
         raise typer.Exit(code=1)
 
@@ -906,6 +930,42 @@ def dd_questionnaire_generate(
         raise typer.Exit(code=1) from None
 
     vendor = _load_vendor_or_exit(vendor_id)
+
+    # SIG / SIG-Lite BYO-template path: bypass packaged content,
+    # write the operator's licensed XLSX with vendor metadata
+    # pre-filled directly to the output path.
+    if from_template is not None:
+        from evidentia_core.tprm.questionnaire import (
+            generate_from_byo_template,
+        )
+
+        if not output:
+            console.print(
+                "[red]Error:[/red] --output is required when "
+                "--from-template is supplied (binary XLSX output)."
+            )
+            raise typer.Exit(code=1)
+        try:
+            xlsx_bytes = generate_from_byo_template(
+                vendor, template_path=from_template, fmt=fmt
+            )
+        except (
+            ValueError,
+            FileNotFoundError,
+            RuntimeError,
+            ImportError,
+        ) as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(code=1) from e
+        output.write_bytes(xlsx_bytes)
+        console.print(
+            f"[green]✓[/green] Wrote BYO-template pre-filled XLSX to "
+            f"[bold]{output}[/bold]  "
+            f"([dim]format={fmt.value}; "
+            f"vendor={vendor.name}; template={from_template.name}[/dim])"
+        )
+        return
+
     try:
         questionnaire = generate_questionnaire(vendor, fmt)
     except NotImplementedError as e:
@@ -913,14 +973,34 @@ def dd_questionnaire_generate(
         raise typer.Exit(code=1) from e
 
     if output_format == "json":
-        rendered = json.dumps(
+        rendered: str | bytes = json.dumps(
             questionnaire.model_dump(mode="json"), indent=2
         )
-    else:
+    elif output_format == "csv":
         rendered = render_csv_questionnaire(questionnaire)
+    else:
+        # xlsx
+        from evidentia_core.tprm.questionnaire import (
+            render_xlsx_questionnaire,
+        )
+
+        if not output:
+            console.print(
+                "[red]Error:[/red] --output is required when "
+                "--output-format is xlsx (binary output)."
+            )
+            raise typer.Exit(code=1)
+        try:
+            rendered = render_xlsx_questionnaire(questionnaire)
+        except ImportError as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(code=1) from e
 
     if output:
-        output.write_text(rendered, encoding="utf-8")
+        if isinstance(rendered, bytes):
+            output.write_bytes(rendered)
+        else:
+            output.write_text(rendered, encoding="utf-8")
         console.print(
             f"[green]✓[/green] Wrote {output_format.upper()} "
             f"questionnaire to [bold]{output}[/bold]  "
@@ -929,6 +1009,151 @@ def dd_questionnaire_generate(
             f"vendor={questionnaire.vendor.vendor_name}[/dim])"
         )
     else:
+        if isinstance(rendered, bytes):
+            console.print(
+                "[red]Error:[/red] xlsx output requires --output "
+                "(binary)."
+            )
+            raise typer.Exit(code=1)
         sys.stdout.write(rendered)
         if not rendered.endswith("\n"):
             sys.stdout.write("\n")
+
+
+@dd_app.command("ingest")
+def dd_questionnaire_ingest(
+    questionnaire_path: Path = typer.Option(
+        ...,
+        "--questionnaire",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help=(
+            "Path to the completed questionnaire file. Auto-detects "
+            "format from extension: .json / .csv / .xlsx."
+        ),
+    ),
+    vendor_id_override: str | None = typer.Option(
+        None,
+        "--vendor-id",
+        help=(
+            "Optional vendor ID override. By default the ingest "
+            "auto-correlates via the questionnaire's embedded "
+            "vendor_id; pass this when correlation is missing or "
+            "the operator wants to record the response against a "
+            "different vendor record."
+        ),
+    ),
+    output_format: str = typer.Option(
+        "table",
+        "--output-format",
+        help="Output format: table (default) / json.",
+    ),
+) -> None:
+    """Ingest a completed vendor questionnaire back into Evidentia.
+
+    Auto-detects file format from the extension (.json / .csv / .xlsx).
+    Correlates to a vendor inventory record via:
+
+    1. The ``--vendor-id`` flag, if supplied
+    2. The questionnaire's embedded ``vendor_id`` (from the prefill)
+
+    Vendor correlation is REQUIRED — without a resolvable vendor, the
+    command exits with a clear error. Once the vendor is resolved, the
+    parsed CompletedQuestionnaire is printed for operator review (table
+    or JSON). v0.7.9 P0.2 second slice ships the parse + correlation
+    surface; the persistence-to-vendor.evidence_refs[] phase is queued
+    for a follow-up release once the audit-chain-of-custody
+    Sigstore-signing wiring lands (P2 in the original v0.7.9 plan).
+
+    Examples:
+
+        # Ingest a completed JSON questionnaire (vendor auto-resolved)
+        evidentia tprm dd-questionnaire ingest \\
+          --questionnaire completed-q.json
+
+        # Ingest CSV against an explicit vendor (override correlation)
+        evidentia tprm dd-questionnaire ingest \\
+          --questionnaire completed-q.csv \\
+          --vendor-id 12345678-1234-...
+    """
+    from evidentia_core.tprm.questionnaire import (
+        parse_completed_questionnaire,
+    )
+
+    if output_format not in {"table", "json"}:
+        console.print(
+            f"[red]Error:[/red] --output-format must be one of "
+            f"table/json; got {output_format!r}."
+        )
+        raise typer.Exit(code=1)
+
+    try:
+        completed = parse_completed_questionnaire(questionnaire_path)
+    except (FileNotFoundError, ValueError, ImportError) as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(code=1) from e
+
+    resolved_vendor_id = vendor_id_override or completed.vendor_id
+    if not resolved_vendor_id:
+        console.print(
+            "[red]Error:[/red] Could not resolve a vendor ID for the "
+            "ingested questionnaire. The file's prefill block did not "
+            "carry a vendor_id, and --vendor-id was not supplied. "
+            "Pass --vendor-id <uuid> to record this response against "
+            "a specific vendor."
+        )
+        raise typer.Exit(code=1)
+
+    vendor = _load_vendor_or_exit(resolved_vendor_id)
+
+    if output_format == "json":
+        sys.stdout.write(
+            json.dumps(
+                {
+                    "vendor": {
+                        "id": vendor.id,
+                        "name": vendor.name,
+                    },
+                    "questionnaire_id": completed.questionnaire_id,
+                    "format": (
+                        completed.format.value
+                        if completed.format
+                        else None
+                    ),
+                    "responses": completed.responses,
+                    "ingested_at": completed.ingested_at.isoformat(),
+                    "source_path": completed.source_path,
+                },
+                indent=2,
+            )
+        )
+        sys.stdout.write("\n")
+        return
+
+    # Table output
+    from rich.table import Table as _Table
+
+    console.print(
+        f"[green]✓[/green] Ingested questionnaire from "
+        f"[bold]{questionnaire_path}[/bold]"
+    )
+    console.print(
+        f"[dim]Vendor:[/dim] {vendor.name} ([dim]id={vendor.id}[/dim])  "
+        f"[dim]Questionnaire ID:[/dim] "
+        f"{completed.questionnaire_id or '(none)'}  "
+        f"[dim]Format:[/dim] "
+        f"{completed.format.value if completed.format else '(unknown)'}"
+    )
+    console.print(
+        f"[dim]Responses:[/dim] {len(completed.responses)} "
+        f"(answered: "
+        f"{sum(1 for v in completed.responses.values() if v)})"
+    )
+    table = _Table(title="Vendor responses (first 25)")
+    table.add_column("Question ID")
+    table.add_column("Response", overflow="fold")
+    for qid, resp in list(completed.responses.items())[:25]:
+        table.add_row(qid, resp or "[dim](blank)[/dim]")
+    console.print(table)

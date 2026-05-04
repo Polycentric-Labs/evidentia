@@ -9,6 +9,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TPRM DD-questionnaire P0.2 second slice** (v0.7.9 — completes
+  the questionnaire round-trip workflow).
+  - **XLSX output format**. New `--output-format xlsx` flag on
+    `evidentia tprm dd-questionnaire generate` produces a multi-
+    sheet Excel workbook (Sheet 1 = vendor metadata; one sheet per
+    question domain). Gated behind a new optional `[xlsx]` extra:
+    `pip install 'evidentia-core[xlsx]'` (openpyxl ~3 MB pure-
+    Python). The collector raises a clear actionable
+    `XlsxNotInstalledError` if openpyxl is missing.
+  - **Ingest CLI + parser**. New `evidentia tprm dd-questionnaire
+    ingest --questionnaire <path> [--vendor-id <id>]` command +
+    `parse_completed_questionnaire()` engine function. Auto-
+    detects format from the file extension (.json / .csv / .xlsx)
+    + correlates back to a vendor inventory record via the
+    questionnaire's embedded vendor_id (or explicit `--vendor-id`
+    override). Returns a `CompletedQuestionnaire` carrying the
+    per-question response map keyed by question.id; CLI prints
+    table or JSON. Persistence to `Vendor.evidence_refs[]`
+    deferred to a follow-up release once the audit-chain-of-
+    custody Sigstore-signing wiring lands.
+  - **SIG / SIG-Lite BYO XLSX template**. New `--from-template
+    <path>` flag on `evidentia tprm dd-questionnaire generate`
+    accepts an operator-supplied Shared Assessments licensed SIG
+    XLSX. Evidentia opens the workbook, locates the standard
+    "Vendor Information" / "Company Information" sheet via
+    fuzzy name matching, and pre-fills vendor metadata into the
+    documented label cells (Company Name / Vendor Type /
+    Criticality Tier / Primary Contact / Contract Start Date /
+    Region etc.). The SIG question content stays UNTOUCHED —
+    Shared Assessments' license terms forbid redistribution, so
+    Evidentia only writes to vendor-metadata cells. Returns
+    pre-filled XLSX bytes; clear error messages when the
+    workbook layout can't be recognized or no metadata rows
+    matched.
+  - **CAIQ-Full questionnaire**. New `caiq-full` format value
+    with ~50 representative questions across all 17 CSA control
+    domains (vs caiq-lite's ~25). Same CC BY 4.0 attribution
+    string. Operators wanting the authoritative full 245-
+    question CAIQ should download from CSA + use the BYO
+    `--from-template` path once that surface lands for SIG-style
+    XLSX templates.
+  - **All four deliverables ship together** as one cohesive
+    P0.2 second slice. New `evidentia-core[xlsx]` optional dep
+    pulls `openpyxl>=3.1`. 15 new unit tests in
+    `tests/unit/test_tprm_questionnaire.py` covering XLSX
+    render + multi-sheet structure, JSON / CSV / XLSX ingest
+    round-trip, SIG BYO pre-fill happy path, BYO error paths
+    (non-BYO format / missing template / unrecognizable layout),
+    + caiq-full domain coverage + CSA attribution.
 - **OSCAL TPRM vendor-inventory emit** (v0.7.9 P0.5). Extends
   `evidentia_core.oscal.exporter.gap_report_to_oscal_ar` (and
   the `evidentia_core.gap_analyzer.export_report` driver) with

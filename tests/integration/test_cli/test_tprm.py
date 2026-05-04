@@ -800,8 +800,23 @@ class TestDDQuestionnaireGenerate:
     def test_invalid_output_format_errors(
         self, runner: CliRunner
     ) -> None:
+        """v0.7.9 P0.2 second slice: xlsx is now valid; an invalid
+        format like 'pdf' should be rejected, AND xlsx-without-output
+        should be rejected with the binary-output guard."""
         vid = self._add_vendor(runner)
+        # Truly invalid format
         result = runner.invoke(
+            app,
+            [
+                "tprm", "dd-questionnaire", "generate",
+                "--vendor-id", vid,
+                "--output-format", "pdf",
+            ],
+        )
+        assert result.exit_code == 1
+        assert "json/csv/xlsx" in result.output
+        # xlsx without --output errors on the binary-output guard
+        result_xlsx = runner.invoke(
             app,
             [
                 "tprm", "dd-questionnaire", "generate",
@@ -809,8 +824,8 @@ class TestDDQuestionnaireGenerate:
                 "--output-format", "xlsx",
             ],
         )
-        assert result.exit_code == 1
-        assert "json/csv" in result.output
+        assert result_xlsx.exit_code == 1
+        assert "binary output" in result_xlsx.output.lower()
 
     def test_unknown_vendor_id_errors(
         self, runner: CliRunner

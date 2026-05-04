@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from datetime import date
+from pathlib import Path
+from typing import Any
 
 import pytest
 from evidentia_core.models.tprm import (
@@ -45,11 +47,14 @@ def _make_vendor(
 
 
 class TestShippedFormats:
-    def test_returns_two_formats(self) -> None:
+    def test_includes_packaged_formats(self) -> None:
         formats = shipped_formats()
-        # caiq-lite + evidentia-generic shipped today; sig + sig-lite are stubs
+        # v0.7.9 P0.2 first slice: caiq-lite + evidentia-generic.
+        # P0.2 second slice adds caiq-full. sig + sig-lite are
+        # BYO-template only (not packaged content).
         assert QuestionnaireFormat.CAIQ_LITE in formats
         assert QuestionnaireFormat.EVIDENTIA_GENERIC in formats
+        assert QuestionnaireFormat.CAIQ_FULL in formats
         assert QuestionnaireFormat.SIG not in formats
         assert QuestionnaireFormat.SIG_LITE not in formats
 
@@ -370,3 +375,319 @@ class TestQuestionnaireJsonRoundTrip:
         assert restored.format == q.format
         assert len(restored.questions) == len(q.questions)
         assert restored.vendor.vendor_name == q.vendor.vendor_name
+
+
+# ── v0.7.9 P0.2 second slice: caiq-full ────────────────────────────
+
+
+class TestCaiqFull:
+    def test_caiq_full_loads(self) -> None:
+        v = _make_vendor()
+        q = generate_questionnaire(v, QuestionnaireFormat.CAIQ_FULL)
+        assert q.format == QuestionnaireFormat.CAIQ_FULL.value
+        # caiq-full ships ~50 questions vs caiq-lite's ~25
+        assert len(q.questions) >= 40
+        # All standard CAIQ domains covered
+        domains = {qq.domain for qq in q.questions}
+        assert "Audit Assurance & Compliance" in domains
+        assert "Identity & Access Management" in domains
+        assert "Encryption & Key Management" in domains
+
+    def test_caiq_full_carries_csa_attribution(self) -> None:
+        v = _make_vendor()
+        q = generate_questionnaire(v, QuestionnaireFormat.CAIQ_FULL)
+        # CC BY 4.0 attribution required by CSA license
+        assert q.licensing_attribution is not None
+        assert "CC BY 4.0" in q.licensing_attribution
+        assert "Cloud Security Alliance" in q.licensing_attribution
+
+
+# ── v0.7.9 P0.2 second slice: XLSX render ──────────────────────────
+
+
+class TestRenderXlsxQuestionnaire:
+    def test_xlsx_round_trip_returns_bytes(self) -> None:
+        from evidentia_core.tprm.questionnaire import (
+            render_xlsx_questionnaire,
+        )
+
+        v = _make_vendor()
+        q = generate_questionnaire(
+            v, QuestionnaireFormat.EVIDENTIA_GENERIC
+        )
+        xlsx = render_xlsx_questionnaire(q)
+        assert isinstance(xlsx, bytes)
+        # XLSX files start with PK (zip magic)
+        assert xlsx[:2] == b"PK"
+
+    def test_xlsx_contains_vendor_metadata_sheet(self) -> None:
+        import io
+
+        import openpyxl
+        from evidentia_core.tprm.questionnaire import (
+            render_xlsx_questionnaire,
+        )
+
+        v = _make_vendor(name="ParseMe Co")
+        q = generate_questionnaire(
+            v, QuestionnaireFormat.EVIDENTIA_GENERIC
+        )
+        xlsx = render_xlsx_questionnaire(q)
+        wb = openpyxl.load_workbook(filename=io.BytesIO(xlsx))
+        assert "Vendor metadata" in wb.sheetnames
+        meta_ws = wb["Vendor metadata"]
+        meta_rows = list(meta_ws.iter_rows(values_only=True))
+        # At least the standard prefill fields land here
+        labels = {row[0] for row in meta_rows if row and row[0]}
+        assert "Title" in labels
+        assert "Vendor name" in labels
+        assert "Vendor ID" in labels
+        # Vendor name cell is correctly written
+        for label, value, *_ in meta_rows:
+            if label == "Vendor name":
+                assert value == "ParseMe Co"
+                break
+
+    def test_xlsx_groups_questions_by_domain(self) -> None:
+        import io
+
+        import openpyxl
+        from evidentia_core.tprm.questionnaire import (
+            render_xlsx_questionnaire,
+        )
+
+        v = _make_vendor()
+        q = generate_questionnaire(v, QuestionnaireFormat.CAIQ_LITE)
+        xlsx = render_xlsx_questionnaire(q)
+        wb = openpyxl.load_workbook(filename=io.BytesIO(xlsx))
+        # One sheet per domain plus the metadata sheet
+        non_meta = [s for s in wb.sheetnames if s != "Vendor metadata"]
+        domains = {qq.domain for qq in q.questions}
+        # Each unique domain has at least one corresponding sheet
+        # (sanitized — Excel limits sheet names to 31 chars)
+        assert len(non_meta) >= len(domains) - 2  # allow truncation
+
+
+# ── v0.7.9 P0.2 second slice: ingest path ──────────────────────────
+
+
+class TestParseCompletedQuestionnaire:
+    def test_parses_json_round_trip(self, tmp_path: Path) -> None:
+        from evidentia_core.tprm.questionnaire import (
+            parse_completed_questionnaire,
+        )
+
+        v = _make_vendor()
+        q = generate_questionnaire(
+            v, QuestionnaireFormat.EVIDENTIA_GENERIC
+        )
+        # Simulate vendor responses by populating vendor_response on
+        # the model dump
+        dump = q.model_dump(mode="json")
+        for question in dump["questions"]:
+            question["vendor_response"] = "Yes"
+        json_path = tmp_path / "completed.json"
+        import json as _json
+
+        json_path.write_text(_json.dumps(dump), encoding="utf-8")
+        completed = parse_completed_questionnaire(json_path)
+        assert completed.questionnaire_id == q.id
+        assert completed.vendor_id == v.id
+        assert len(completed.responses) == len(q.questions)
+        assert all(r == "Yes" for r in completed.responses.values())
+
+    def test_parses_csv(self, tmp_path: Path) -> None:
+        from evidentia_core.tprm.questionnaire import (
+            parse_completed_questionnaire,
+            render_csv_questionnaire,
+        )
+
+        v = _make_vendor()
+        q = generate_questionnaire(
+            v, QuestionnaireFormat.EVIDENTIA_GENERIC
+        )
+        csv_text = render_csv_questionnaire(q)
+        # Simulate one filled-in response by editing the last column
+        # of the first question row (column index 5)
+        lines = csv_text.splitlines()
+        # Find first question row (after header row "id,domain,...")
+        for i, line in enumerate(lines):
+            if line.startswith("id,"):
+                # Next line is first question
+                target = i + 1
+                cols = lines[target].split(",")
+                while len(cols) < 6:
+                    cols.append("")
+                cols[5] = "Yes"
+                lines[target] = ",".join(cols)
+                break
+        csv_path = tmp_path / "completed.csv"
+        csv_path.write_text("\n".join(lines), encoding="utf-8")
+        completed = parse_completed_questionnaire(csv_path)
+        assert completed.questionnaire_id == q.id
+        assert completed.vendor_id == v.id
+        # At least one response captured
+        assert any(r == "Yes" for r in completed.responses.values())
+
+    def test_parses_xlsx(self, tmp_path: Path) -> None:
+        import openpyxl
+        from evidentia_core.tprm.questionnaire import (
+            parse_completed_questionnaire,
+            render_xlsx_questionnaire,
+        )
+
+        v = _make_vendor()
+        q = generate_questionnaire(
+            v, QuestionnaireFormat.EVIDENTIA_GENERIC
+        )
+        xlsx_bytes = render_xlsx_questionnaire(q)
+        xlsx_path = tmp_path / "completed.xlsx"
+        xlsx_path.write_bytes(xlsx_bytes)
+        # Open + populate vendor_response cells in one domain sheet
+        wb = openpyxl.load_workbook(filename=str(xlsx_path))
+        first_domain_sheet = next(
+            s for s in wb.sheetnames if s != "Vendor metadata"
+        )
+        ws = wb[first_domain_sheet]
+        # Header row exists; row 2 is first question
+        if ws.max_row >= 2:
+            # vendor_response is column 5 (1-indexed)
+            ws.cell(row=2, column=5).value = "Yes"
+        wb.save(str(xlsx_path))
+        completed = parse_completed_questionnaire(xlsx_path)
+        assert completed.questionnaire_id == q.id
+        assert completed.vendor_id == v.id
+        # At least one response captured
+        assert any(r == "Yes" for r in completed.responses.values())
+
+    def test_unsupported_extension_errors(self, tmp_path: Path) -> None:
+        from evidentia_core.tprm.questionnaire import (
+            parse_completed_questionnaire,
+        )
+
+        path = tmp_path / "weird.docx"
+        path.write_text("not really a docx", encoding="utf-8")
+        with pytest.raises(ValueError, match="Unsupported"):
+            parse_completed_questionnaire(path)
+
+    def test_missing_file_errors(self, tmp_path: Path) -> None:
+        from evidentia_core.tprm.questionnaire import (
+            parse_completed_questionnaire,
+        )
+
+        with pytest.raises(FileNotFoundError):
+            parse_completed_questionnaire(tmp_path / "ghost.json")
+
+
+# ── v0.7.9 P0.2 second slice: SIG BYO template ─────────────────────
+
+
+class TestGenerateFromByoTemplate:
+    def _make_synthetic_sig(self, tmp_path: Any) -> Any:  # type: ignore[name-defined]
+        """Build a synthetic XLSX shaped like a SIG layout (label-
+        in-column-A, response-in-column-B)."""
+        import openpyxl
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Vendor Information"
+        ws.append(["Label", "Response"])
+        ws.append(["Company Name", ""])
+        ws.append(["Vendor Type", ""])
+        ws.append(["Criticality Tier", ""])
+        ws.append(["Primary Contact", ""])
+        ws.append(["Contract Start Date", ""])
+        ws.append(["Region", ""])
+        # Add an unrelated questions sheet so the workbook is realistic
+        q_ws = wb.create_sheet("Questions")
+        q_ws.append(["QID", "Question", "Response"])
+        q_ws.append(["Q-1", "Have you done X?", ""])
+        path = tmp_path / "sig-template.xlsx"
+        wb.save(str(path))
+        return path
+
+    def test_byo_sig_pre_fills_vendor_metadata(
+        self, tmp_path: Any  # type: ignore[name-defined]
+    ) -> None:
+        import io
+
+        import openpyxl
+        from evidentia_core.tprm.questionnaire import (
+            generate_from_byo_template,
+        )
+
+        template = self._make_synthetic_sig(tmp_path)
+        v = _make_vendor(
+            name="Acme Cloud",
+            type_=VendorType.SAAS,
+            criticality_tier=CriticalityTier.HIGH,
+            region="us-east-1",
+        )
+        out = generate_from_byo_template(
+            v, template_path=template, fmt=QuestionnaireFormat.SIG
+        )
+        assert isinstance(out, bytes)
+        assert out[:2] == b"PK"  # XLSX zip magic
+        wb = openpyxl.load_workbook(filename=io.BytesIO(out))
+        ws = wb["Vendor Information"]
+        rows = list(ws.iter_rows(values_only=True))
+        # Find the company-name row and assert it was filled
+        for label, response, *_ in rows:
+            if label == "Company Name":
+                assert response == "Acme Cloud"
+
+    def test_byo_sig_refuses_non_byo_format(
+        self, tmp_path: Any  # type: ignore[name-defined]
+    ) -> None:
+        from evidentia_core.tprm.questionnaire import (
+            generate_from_byo_template,
+        )
+
+        template = self._make_synthetic_sig(tmp_path)
+        v = _make_vendor()
+        with pytest.raises(
+            ValueError, match="does not accept a BYO template"
+        ):
+            generate_from_byo_template(
+                v,
+                template_path=template,
+                fmt=QuestionnaireFormat.CAIQ_LITE,
+            )
+
+    def test_byo_sig_errors_on_missing_template(
+        self, tmp_path: Any  # type: ignore[name-defined]
+    ) -> None:
+        from evidentia_core.tprm.questionnaire import (
+            generate_from_byo_template,
+        )
+
+        v = _make_vendor()
+        with pytest.raises(FileNotFoundError):
+            generate_from_byo_template(
+                v,
+                template_path=tmp_path / "nonexistent.xlsx",
+                fmt=QuestionnaireFormat.SIG,
+            )
+
+    def test_byo_sig_errors_on_unrecognized_layout(
+        self, tmp_path: Any  # type: ignore[name-defined]
+    ) -> None:
+        import openpyxl
+        from evidentia_core.tprm.questionnaire import (
+            generate_from_byo_template,
+        )
+
+        # XLSX with no recognizable vendor-metadata sheet
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Random Sheet"
+        ws.append(["Some", "Random", "Data"])
+        path = tmp_path / "weird.xlsx"
+        wb.save(str(path))
+        v = _make_vendor()
+        with pytest.raises(
+            RuntimeError, match="No recognizable vendor-metadata"
+        ):
+            generate_from_byo_template(
+                v, template_path=path, fmt=QuestionnaireFormat.SIG
+            )
