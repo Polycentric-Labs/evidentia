@@ -139,7 +139,7 @@ Meanwhile, the compliance workload keeps growing. A single fintech or healthcare
 > publish, Power BI publish — last two NEW in v0.7.8), AI-powered
 > risk-statement + control-explanation generation with full
 > GenerationContext provenance (model + temperature + prompt-hash +
-> run-id), **88 bundled framework catalogs** (4 redistribution tiers),
+> run-id), **89 bundled framework catalogs** (4 redistribution tiers),
 > bundled crosswalks, four output formats including OSCAL Assessment
 > Results with embedded SHA-256 evidence digests + Sigstore/Rekor or
 > GPG signing, cosign-signed container image at
@@ -158,7 +158,7 @@ Meanwhile, the compliance workload keeps growing. A single fintech or healthcare
 | `evidentia init` | Scaffold a new project (creates `evidentia.yaml`, `my-controls.yaml`, `system-context.yaml`) |
 | `evidentia doctor [--check-air-gap]` | System diagnostics; verifies LLM connectivity, file permissions, air-gap posture |
 | `evidentia version` | Print version of evidentia + its workspace packages |
-| `evidentia catalog list [--tier ... --category ...]` | Browse 82 bundled frameworks, filter by tier (A/B/C/D) or category |
+| `evidentia catalog list [--tier ... --category ...]` | Browse 89 bundled frameworks, filter by tier (A/B/C/D) or category |
 | `evidentia catalog show <fw> --control <id>` | Display the full text of a single control |
 | `evidentia catalog crosswalk --source <fw> --target <fw> --control <id>` | Show how a control maps across frameworks |
 | `evidentia catalog import [--mode stub\|oscal-profile\|json]` | Import licensed Tier-C catalog content (e.g., ISO 27001) |
@@ -226,13 +226,15 @@ implementing modules.
 - **Tableau publish** (v0.7.8; `[tableau]` extra) — publishes 3 datasets to Tableau Server / Cloud as CSV-based data sources: `evidentia-gaps` (one row per ControlGap), `evidentia-risks` (NIST SP 800-30 shape with AI-provenance fields), `evidentia-collection-runs` (CollectionContext audit trail). PAT auth via `TABLEAU_PAT_NAME` + `TABLEAU_PAT_SECRET` env vars (never accepted as flag values). `tableauserverclient>=0.30` (pure Python). **`.hyper` extract publish documented as v0.7.9+ enhancement** under separate `[tableau-hyper]` extra (would require heavyweight `tableauhyperapi` native binary).
 - **Power BI publish** (v0.7.8; `[powerbi]` extra) — pushes same 3 datasets as Power BI Push Datasets via REST API + Azure AD service-principal OAuth2 (MSAL Python). Full-refresh semantics by default (clear-then-push). 10,000-row batching per Power BI's documented limit. Schema-declared dataset auto-creation via `ensure_dataset` (idempotent re-runs). Auth: service principal with `Dataset.ReadWrite.All`; client secret from `POWERBI_CLIENT_SECRET` env var server-side; never in request bodies. `msal>=1.31` driver.
 
-### 3.6 Bundled framework catalogs (88 total, four redistribution tiers)
+### 3.6 Bundled framework catalogs (89 total, four redistribution tiers)
 
-**88 catalog files (.json)** verified by direct codebase walk on
-2026-05-02 (was 82 at v0.7.0; +6 since). The tier breakdown below is
-the v0.7.0 baseline; per-catalog accounting at v0.7.8 is in
+**89 catalog files (.json)** verified by direct codebase walk
+post-v0.7.9 (was 82 at v0.7.0; +7 in v0.7.9 — 5 FFIEC IT
+Examination Handbook booklets + OCC 2011-12/FRB SR 11-7 + FFIEC
+Cybersecurity Assessment Tool). The tier breakdown below is
+the v0.7.0 baseline; per-catalog accounting is in
 `packages/evidentia-core/src/evidentia_core/catalogs/`. **+7 catalog
-additions are queued for v0.7.9** (5 FFIEC IT Examination Handbook
+additions shipped in v0.7.9** (5 FFIEC IT Examination Handbook
 booklets + OCC 2011-12 / FRB SR 11-7 + FFIEC Cybersecurity Assessment
 Tool — but note the FFIEC CAT was sunset by FFIEC 2025-08-31 in favor
 of NIST CSF 2.0 + CRI Profile v2.0; v0.7.9 plan needs touch-up to
@@ -504,7 +506,7 @@ A genuinely new tier surfaced through v0.7.x. Capital concentrated in agentic-AI
 ### 6.2 Where Evidentia is at parity (don't oversell)
 
 - **AI-assisted control mapping** — Vanta AI Agent, SafeBase AI, RegScale all do this. Evidentia at parity, not advantage.
-- **Multi-framework crosswalking** — Hyperproof's Hyperintelligence and Drata's framework engine are mature. Evidentia at 82 catalogs is at parity in coverage; quality of the crosswalk graph needs more validation.
+- **Multi-framework crosswalking** — Hyperproof's Hyperintelligence and Drata's framework engine are mature. Evidentia at 89 catalogs is at parity in coverage; quality of the crosswalk graph needs more validation.
 - **Evidence collection from cloud APIs** — Tier 1 vendors and CSPM tools both do this well. Evidentia's collectors (AWS, GitHub Dependabot, IAM Access Analyzer) are at parity for the integrations shipped, behind on coverage breadth.
 - **CycloneDX SBOM output** — Industry standard now (Anchore, Chainguard, Snyk). Parity, not ahead.
 - **Sigstore/Rekor signing of releases** — Increasingly table-stakes (Chainguard pioneered, Anchore + others adopting). Parity.

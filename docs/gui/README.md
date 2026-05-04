@@ -72,7 +72,7 @@ Click any report in `alpha.2` to drill into a full per-gap view. For now, use `e
 
 ![Frameworks browser](screenshots/frameworks.png)
 
-Browses all 82 bundled catalogs with three filters:
+Browses all 89 bundled catalogs with three filters:
 
 - **Tier** — A (public domain), B (free-restricted), C (licensed), D (government regulation)
 - **Category** — control, technique, vulnerability, obligation

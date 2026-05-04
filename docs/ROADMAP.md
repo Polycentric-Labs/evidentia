@@ -1,11 +1,12 @@
 # Evidentia roadmap
 
-**Last updated: v0.7.2 (April 2026).**
+**Last updated: v0.7.11 (May 2026).**
 
 This roadmap synthesizes community feedback with the architecture plan
-at the project root. Versions v0.3.0 through v0.7.2 have shipped;
-v0.7.3 is the next active scope (see
-[`v0.7.3-plan.md`](v0.7.3-plan.md)). Anything beyond v0.7.3 is
+at the project root. Versions v0.3.0 through v0.7.11 have shipped;
+v0.7.12 is the next active scope (see
+[`v0.7.12-plan.md`](v0.7.12-plan.md) — concrete cloud-WORM backends
++ FAIR Monte Carlo + remaining deferrals). Anything beyond v0.7.12 is
 forward-looking — the exact shape will depend on real-world usage
 patterns and the bigger v0.8+ direction documented in
 [`positioning-and-value.md`](positioning-and-value.md) §13.

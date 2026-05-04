@@ -35,7 +35,7 @@ Every endpoint is typed with Pydantic models reused from `evidentia-core`. All e
 | POST | `/api/doctor/check-air-gap` | Air-gap validator |
 | GET | `/api/config` | Read `evidentia.yaml` |
 | PUT | `/api/config` | Write `evidentia.yaml` |
-| GET | `/api/frameworks` | List all 82 bundled catalogs |
+| GET | `/api/frameworks` | List all 89 bundled catalogs |
 | GET | `/api/frameworks/{id}` | Framework detail |
 | GET | `/api/frameworks/{id}/controls/{control_id}` | Single control |
 | POST | `/api/gap/analyze` | Run GapAnalyzer, save to gap store |

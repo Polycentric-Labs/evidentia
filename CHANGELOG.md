@@ -2931,7 +2931,7 @@ that slipped into `evidentia-api` routers on the alpha.1 release.
   - "Start from scratch" — 4-question wizard (industry / hosting /
     data types / regulatory) -> POST /api/init/wizard -> previews
     all three generated YAMLs with copy-to-clipboard
-- **Gap Analyze page** — framework multi-select (82 catalogs filterable),
+- **Gap Analyze page** — framework multi-select (89 catalogs filterable),
   file upload OR server-side path, organization / system_name overrides,
   run button -> TanStack Table with sortable columns + global filter +
   severity/effort/priority badges.

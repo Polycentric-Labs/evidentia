@@ -148,6 +148,31 @@ Evidentia is built on four principles:
 
 ### Recent releases
 
+**v0.7.11 (May 2026)** — *audit chain-of-custody + governance trio
++ Open FAIR + 6-store harmony*. Adds the `evidentia retention`
+CLI (set / list / show / extend / transition / delete / report)
+with 10-regime classification (SEC 17a-4 / FINRA 3110 / IRS / SOX
+/ HIPAA / GLBA / PCI / SR 11-7 / GDPR / generic) and a
+`WORMBackend` ABC with a `LocalFilesystemWORM` reference impl.
+Adds KRI/KPI/KGI metrics overlay (P1.5 G3), Open FAIR risk
+quantification (P1.5 G4 deterministic PERT-mean), and
+process-as-code governance workflows (P1.5 G5). Closes 9 of 17
+v0.7.10 P3 deferrals including F-V10-S2 (`$EDITOR` allowlist).
+**First v0.7.x PROCEED-CLEAN** /security-review (0 findings).
+1929 tests passing across 184 source files.
+
+**v0.7.9 + v0.7.10 (May 2026)** — *industry overlay (financial
+services TPRM + model risk + governance primitives) + federal-
+compliance carry-overs*. v0.7.9 ships `evidentia tprm` (vendor
+inventory + DD-questionnaire generator with 5 output formats
+including SIG BYO + caiq-full + concentration-report) + 4
+vendor-risk SaaS collectors (Vanta / Drata / BitSight /
+SecurityScorecard) + OSCAL TPRM emit. v0.7.10 adds the model-
+risk overlay (SR 11-7 / OCC 2011-12 model inventory + validation
+report templates) + 7 new bundled catalogs (5 FFIEC IT Handbook
+booklets + OCC 2011-12 / FRB SR 11-7 + FFIEC CAT). Bundled
+catalog count: 82 → 89.
+
 **v0.7.8 (May 2026)** — *cloud data-warehouse collectors + BI
 integrations*. Adds two read-only evidence collectors for cloud
 data warehouses (Databricks workspace API + Snowflake
@@ -159,37 +184,25 @@ BI platform: gap inventory, NIST SP 800-30 risk register with AI-
 provenance fields, and CollectionContext audit trail. Ships
 walkthrough docs (`docs/cloud-dw-collectors.md`,
 `docs/bi-integrations.md`) and an end-to-end Meridian-with-BI
-demo. 1256 tests passing (+156 new). Ship summary:
-[docs/v0.7.8-plan.md](docs/v0.7.8-plan.md).
+demo.
 
 **v0.7.7 (May 2026)** — *SQL family evidence collectors*. Five
 read-only relational-DB adapters (`[sql-postgres]`, `[sql-mysql]`,
 `[sql-sqlite]`, `[sql-mssql]`, `[sql-oracle]`) mapping DB-resident
 compliance evidence to NIST 800-53 controls. Plus ServiceNow
-output integration carry-forward. Ship summary:
-[docs/v0.7.7-plan.md](docs/v0.7.7-plan.md).
-
-**v0.7.5 (May 2026)** — *container publish + critical security
-batch + quick-win polish*. Container image publish to
-`ghcr.io/allenfbyrd/evidentia` with cosign keyless OIDC signing;
-critical security batch (P0.5: 14 HIGH py/path-injection + 1 HIGH
-py/polynomial-redos + 3 MEDIUM stack-trace exposure + 4 MEDIUM
-workflow permissions + URL-sanitization review); Dependabot
-batch merge; OpenSSF Best Practices Badge filing; `/api/health`
-hardening; `docs/troubleshooting.md`. Ship summary:
-[docs/v0.7.5-plan.md](docs/v0.7.5-plan.md).
+output integration carry-forward.
 
 See [`CHANGELOG.md`](CHANGELOG.md) for the full version history
-(v0.1.0 through v0.7.8). For forward direction, see
-[`docs/v0.7.9-plan.md`](docs/v0.7.9-plan.md) (industry overlay —
-TPRM + model risk + 7 new catalogs),
-[`docs/v0.8.0-plan.md`](docs/v0.8.0-plan.md) (the AI moat — DFAH +
-PRT + MCP + plugin contract), and
+(v0.1.0 through v0.7.11). For forward direction, see
+[`docs/v0.7.12-plan.md`](docs/v0.7.12-plan.md) (concrete cloud-
+WORM backends + FAIR Monte Carlo + remaining deferrals),
+[`docs/v0.8.0-plan.md`](docs/v0.8.0-plan.md) (the OSS-native AI
+moat — DFAH + PRT + MCP + plugin contracts), and
 [`docs/ROADMAP.md`](docs/ROADMAP.md) (everything else).
 
 ### What works today
 
-- **Gap analysis against 77 bundled frameworks** across four redistribution
+- **Gap analysis against 89 bundled frameworks** across four redistribution
   tiers:
 
   - **Tier A — US federal (25 frameworks, verbatim public domain):**
@@ -363,7 +376,7 @@ mirroring the CLI 1:1:
 | Page | What it does |
 |---|---|
 | [Home](docs/gui/screenshots/home.png) | Three-path onboarding (sample data / upload / wizard) |
-| [Frameworks](docs/gui/screenshots/frameworks.png) | Browse all 82 bundled catalogs with tier + category filters |
+| [Frameworks](docs/gui/screenshots/frameworks.png) | Browse all 89 bundled catalogs with tier + category filters |
 | [Gap Analyze](docs/gui/screenshots/gap-analyze.png) | Form + framework picker → TanStack Table results |
 | [Gap Diff](docs/gui/screenshots/gap-diff.png) | Two-report classification + PR-comment markdown export |
 | [Risk Generate](docs/gui/screenshots/risk-generate.png) | Streamed AI risk statements per gap |

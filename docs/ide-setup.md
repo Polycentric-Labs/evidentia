@@ -175,7 +175,7 @@ Active hooks:
 - **prettier** — applies to `packages/evidentia-ui/{src,public}/`;
   excludes generated TypeScript types at `src/types/api.ts`
 - **yamllint** — config at `.yamllint`; scoped to `.github/`,
-  `.cursor/`, and `docs/` YAML (the 82 bundled catalog YAML files
+  `.cursor/`, and `docs/` YAML (the 89 bundled catalog YAML files
   are explicitly excluded — their upstream sources aren't
   yamllint-clean by our standards and we don't author them)
 - **end-of-file-fixer**, **trailing-whitespace**, **check-yaml**,

@@ -62,7 +62,7 @@ All endpoints live under `/api/*`. Interactive docs at `/api/docs`.
 
 | Method | Path | Response | Purpose |
 |---|---|---|---|
-| GET | `/api/frameworks?tier=A&category=control` | `{total, frameworks: [...]}` | List all 82 bundled catalogs |
+| GET | `/api/frameworks?tier=A&category=control` | `{total, frameworks: [...]}` | List all 89 bundled catalogs |
 | GET | `/api/frameworks/{id}` | `ControlCatalog` | Framework metadata + full control tree |
 | GET | `/api/frameworks/{id}/controls/{control_id}` | `CatalogControl` | Single control detail (normalized ID lookup) |
 
