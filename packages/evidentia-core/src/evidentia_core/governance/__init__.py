@@ -31,11 +31,27 @@ from evidentia_core.governance.lines_of_defense import (
     Owner,
     generate_lines_report,
 )
+from evidentia_core.governance.metrics import (
+    Metric,
+    MetricDirection,
+    MetricKind,
+    MetricObservation,
+    MetricStatus,
+    evaluate_metric,
+    generate_metrics_report,
+)
 
 __all__ = [
     "ChallengeOutcome",
     "EffectiveChallenge",
     "LineOfDefense",
+    "Metric",
+    "MetricDirection",
+    "MetricKind",
+    "MetricObservation",
+    "MetricStatus",
     "Owner",
+    "evaluate_metric",
     "generate_lines_report",
+    "generate_metrics_report",
 ]

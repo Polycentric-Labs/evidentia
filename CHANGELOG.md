@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`evidentia governance metrics` — KRI / KPI / KGI metric
+  primitives** (v0.7.11 P1.5 G3). Brings the third governance
+  primitive into the v0.7.10 governance overlay. New module
+  `evidentia_core.governance.metrics` ships:
+  - `MetricKind` enum (kri / kpi / kgi) per IIA + COSO ERM
+  - `MetricDirection` enum (higher_is_worse / higher_is_better)
+  - `MetricStatus` enum (comfortable / watch / breach / no_data)
+  - `Metric` Pydantic schema with name + description + kind +
+    direction + unit + optional owner_email + optional warning
+    + critical thresholds + observation history + notes
+  - `MetricObservation` schema (date + value + optional note)
+  - `evaluate_metric()` deterministic threshold-evaluation
+  - `generate_metrics_report()` deterministic Markdown dashboard
+    with executive summary + BREACH-state warning callout +
+    per-kind tables + status counts
+  - `evidentia_core.metric_store` JSON-file persistence (mirrors
+    the v0.7.11-harmonized `validate_within` belt-and-suspenders
+    pattern across all 4 stores: vendor_store + model_risk_store
+    + effective_challenge_store + metric_store)
+  CLI: `evidentia governance metrics {add,list,show,edit,delete,
+  observe,report}` with full `--json` machine-readable mode +
+  filterable list. 42 new tests cover schema validation +
+  evaluate_metric across all 4 status branches + report
+  rendering + store CRUD + 14 CLI integration tests.
+
 ### Fixed
 
 - **F-V10-S2 closure** (v0.7.11 P3): `evidentia model-risk model
