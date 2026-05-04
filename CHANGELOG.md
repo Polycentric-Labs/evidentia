@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Model Risk Management Pydantic schemas** (v0.7.10 P0.6.1
+  first slice). New module
+  `evidentia_core.models.model_risk` introducing `ModelInventory`
+  + `ModelInput` + `ModelOutput` + `ValidationFinding` Pydantic
+  models plus 5 supporting enums (`Methodology` / `Provenance` /
+  `Tier` / `ValidationStatus` / `ValidationSeverity`) per SR 11-7
+  / OCC Bulletin 2011-12 (historical) and SR 26-02 / OCC Bulletin
+  2026-13a (April 2026 active guidance). Validation:
+  `@model_validator(mode='after')` enforces the vendor-or-internal
+  cross-link contract — vendor-provenance models MUST set
+  `vendor_id` (cross-links to v0.7.9 TPRM `Vendor.id`); internal-
+  provenance models MUST NOT set it. Auto-cadence helper
+  `compute_next_validation_due()` maps Tier 1 → annual / Tier 2 →
+  biennial / Tier 3 → triennial with leap-year-clamp month
+  arithmetic mirroring v0.7.9 P0.1 `Vendor.compute_next_review_due`.
+  `EvidenceRef` is reused from the v0.7.9 TPRM module so the same
+  artifact_id-or-file_path two-mode contract applies. 22 unit
+  tests covering enum coverage / sub-model construction /
+  validator firing / cadence math / leap-year clamps / Pydantic
+  extra-forbid sanity.
+- **`evidentia_core.model_risk_store` JSON-file persistence**
+  (v0.7.10 P0.6.1 first slice). One JSON file per ModelInventory
+  record under platformdirs-backed user-dir; `EVIDENTIA_MODEL_STORE_DIR`
+  env-var override; UUID-shape ID validation rejecting path-
+  traversal; atomic `os.replace(tmp, out_path)` save semantics.
+  CRUD primitives: `save_model` / `load_model_by_id` /
+  `list_models` (sorted by Tier 1 → Tier 3 then name) /
+  `delete_model`. 18 unit tests covering store-dir resolution
+  precedence / ID-shape gate / save+load round-trip / atomic-tmp
+  cleanup / validation-finding preservation / list sort order.
+
 ## [0.7.9] - 2026-05-04
 
 **The financial-services TPRM ship.** Brings Evidentia into the

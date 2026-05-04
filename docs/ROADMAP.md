@@ -408,35 +408,67 @@ lineage need SQL Warehouse plumbing; Snowflake ACCESS_HISTORY
 needs pagination design; Databricks network policies need
 Account API auth path) — all surfaced as explicit BLIND_SPOTS.
 
-## v0.7.9 — Industry overlay (TPRM module + model risk + 7 new catalogs) — PLANNED
+## v0.7.9 — TPRM module + 4 vendor-risk-collectors + OSCAL TPRM emit — SHIPPED
 
-See [`docs/v0.7.9-plan.md`](v0.7.9-plan.md). Largest single patch
-in the v0.7.x line. Brings Evidentia into the regulated
-financial-services compliance domain via two new top-level
-capability modules — `evidentia tprm` (Third-Party Risk
-Management: vendor inventory, due-diligence questionnaire
-generator with SIG/SIG-Lite/CAIQ output, concentration-risk
-reporting, vendor-risk collectors for Vanta/Drata/BitSight/
-SecurityScorecard, OSCAL TPRM model emit) and `evidentia
-model-risk` (model inventory schema, SR 11-7-aligned
-documentation generator, validation report templates, AI-feature
-linkage so every `risk generate` invocation is SR-11-7-traceable
-back to a model inventory entry). Plus 7 new bundled catalogs
-(all Tier A — public-domain regulatory publications): FFIEC IT
-Examination Handbook (Information Security, Audit, Management,
-Operations, Outsourcing booklets), OCC Bulletin 2011-12 / FRB SR
-11-7 (Model Risk Management), FFIEC Cybersecurity Assessment
-Tool. Plus audit-chain-of-custody enhancements: retention metadata
-on `CollectionContext`, WORM backend support (S3 Object Lock,
-Azure Immutable Blob, GCS Bucket Lock). Total bundled catalogs
-goes from 82 → 89. ~8-10 week ship target.
+See [`docs/v0.7.9-plan.md`](v0.7.9-plan.md) + the v0.7.9 SHIPPED
+memory pointer. Tag `v0.7.9` at commit `b643caf` (2026-05-04).
+Brings Evidentia into the regulated financial-services compliance
+domain via the new `evidentia tprm` top-level capability module —
+vendor inventory CRUD, due-diligence questionnaire generation +
+ingestion (5 formats incl. SIG BYO + caiq-full), concentration-
+risk reporting (6 dimensions), OSCAL TPRM emit (vendor inventory
+in metadata.parties[] + back-matter.resources[] with SHA-256
+integrity hashes), and 4 vendor-risk SaaS collectors (Vanta +
+Drata + BitSight + SecurityScorecard). Plus the v0.7.8 Step 5.A
+carry-over batch (4 MEDIUM closed) + `--security-headers`
+middleware + PR #18 actions-bump fix. Per the comprehensive plan
+§19.1 final-scope-narrowing decision, the model-risk module + 7
+new catalogs + governance primitives + audit chain-of-custody
+work split out across v0.7.10 + v0.7.11 follow-ons (rather than
+the original 8-10 week mega-release scope). 1540 tests / mypy
+strict 0/0 across 160 source files / ruff clean. Image digest
+`sha256:a378f24efef3ea33062592a767abc82d5c4df9accea61e409a404faec34ac344`.
 
-## v0.7.9.x — Patches + bridge to v0.8.0 — RESERVED
+## v0.7.10 — Federal compliance + Model Risk Management overlay — NEXT
 
-Reserved patch window for hot-fixes surfacing during v0.7.7-v0.7.9
+See [`docs/v0.7.10-plan.md`](v0.7.10-plan.md). The v0.7.9
+follow-on closing the regulatory framework that v0.7.9's TPRM
+module pointed at via `RegulatoryClassification.MODEL` but didn't
+yet implement. Top-level new capability module `evidentia
+model-risk` per SR 11-7 / SR 26-02 / OCC Bulletin 2011-12 / OCC
+2026-13a — model inventory schema, SR-11-7-aligned documentation
+generator, validation report templates, AI-feature linkage (every
+`risk generate` invocation traces back to a ModelInventory entry
+via the existing `GenerationContext` provenance chain). Plus 7
+new bundled Tier-A catalogs: FFIEC IT Examination Handbook (5
+booklets — Information Security, Audit, Management, Operations,
+Outsourcing) + OCC 2026-13a / FRB SR 26-02 (the April 2026 active
+model-risk guidance superseding 2011 originals; explicitly
+EXCLUDES generative + agentic AI from scope) + FFIEC Cybersecurity
+Assessment Tool. Total bundled catalogs goes from 89 → 96. Plus
+the first two governance primitives: G1 Three Lines of Defense +
+G2 Effective Challenge. Plus closes the last remaining OpenSSF
+Best Practices Silver-tier MUST: `test_statement_coverage80` via
+Codecov publishing. Plus rolls up the 17 v0.7.9-deferred
+MEDIUM/LOW findings + the 9 v0.7.8 LOW × 9 batch into a single
+`chore(refinements):` commit. ~4-5 week ship target.
+
+## v0.7.11 — Audit chain-of-custody + KRI/KPI/KGI + Open FAIR — RESERVED
+
+Per the comprehensive plan §19.1, captures the remaining items
+originally scoped for the v0.7.9 8-10 week mega-release: P2
+retention metadata + WORM backend support (S3 Object Lock /
+Azure Immutable Blob / GCS Bucket Lock) + the remaining three
+governance primitives (G3 KRI/KPI/KGI Pydantic schemas + metrics
+dashboard, G4 Open FAIR risk quantification, G5 process-as-code
+governance workflows). ~2.5 week ship target.
+
+## v0.7.x — Patches + bridge to v0.8.0 — RESERVED
+
+Reserved patch window for hot-fixes surfacing during v0.7.7-v0.7.11
 dogfooding, domain-expert walk-through scheduling for the v0.9.0
 federal-compliance theme (CONMON + POA&M), and final polish
-before the v0.8.0 AI moat work begins. ~2-4 week reservation.
+before the v0.8.0 AI moat work begins. ~1-2 week reservation.
 
 ## v0.8.0 — The OSS-native AI moat — PLANNED
 
