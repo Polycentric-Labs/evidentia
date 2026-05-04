@@ -697,6 +697,101 @@ async def snowflake_collect(
     return findings
 
 
+@router.post(
+    "/collectors/vanta/collect",
+    response_model=list[SecurityFinding],
+)
+async def vanta_collect(
+    payload: dict[str, Any] | None = None,
+) -> list[SecurityFinding]:
+    """Run the Vanta vendor-inventory collector (v0.7.9 P0.4 first slice).
+
+    Request body (optional):
+
+    - ``base_url``: override the Vanta API base URL (default
+      ``https://api.vanta.com``); mostly useful for staging /
+      enterprise-tenant URLs.
+    - ``max_vendors``: pagination ceiling (default 2000).
+    - ``token_env``: name of the env var holding the Vanta API
+      token (default ``VANTA_API_TOKEN``). The API server reads
+      this env var server-side; the token NEVER flows through
+      the request body.
+
+    Auth: a Vanta Personal Access Token (developer / scripting
+    use) OR an OAuth 2.0 client-credentials access token, scoped
+    to ``vendors:read``. Per CLAUDE.md secret-handling protocol,
+    the token MUST come from a server-side env var.
+
+    Response: list of SecurityFinding objects covering the
+    Vanta-managed vendor inventory + per-vendor high-risk flag
+    (when the underlying vendor record carries a HIGH or
+    CRITICAL risk classification).
+
+    Mappings: NIST 800-53 SR-2 / SR-3 / SR-6 + RA-3 (high-risk
+    flag); OCC Bulletin 2013-29 §III.A + §III.A.4; FRB SR 13-19
+    §II + §II.D; FFIEC IT Examination Handbook Outsourcing
+    booklet §II.
+
+    First-slice scope: vendor inventory only. Subsequent slices
+    will add control-test pulls + ongoing-monitoring posture.
+    """
+    try:
+        from evidentia_collectors.vanta import (
+            VantaCollector,
+            VantaCollectorError,
+        )
+    except ImportError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Vanta collector not installed. The collector is "
+                "part of the base evidentia-collectors install — "
+                "if this fires, check the package install "
+                "completed cleanly."
+            ),
+        ) from e
+
+    body = payload or {}
+    base_url = (
+        str(body.get("base_url") or "https://api.vanta.com").strip()
+        or "https://api.vanta.com"
+    )
+    max_vendors = int(body.get("max_vendors") or 2000)
+    token_env = (
+        str(body.get("token_env") or "VANTA_API_TOKEN").strip()
+        or "VANTA_API_TOKEN"
+    )
+    api_token = os.environ.get(token_env)
+    if not api_token:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                f"Env var '{token_env}' is not set or is empty. "
+                "Set it server-side before invoking this endpoint. "
+                "The Vanta token MUST NOT flow through the "
+                "request body."
+            ),
+        )
+
+    try:
+        with VantaCollector(
+            api_token=api_token,
+            base_url=base_url,
+            max_vendors=max_vendors,
+        ) as collector:
+            findings = collector.collect()
+    except VantaCollectorError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    except Exception as e:
+        logger.exception("Vanta collector failed")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Vanta collector failed: {e}",
+        ) from e
+
+    return findings
+
+
 @router.get("/collectors/status")
 async def collectors_status() -> dict[str, Any]:
     """Report which collectors are installed + which credentials are set.
@@ -714,6 +809,7 @@ async def collectors_status() -> dict[str, Any]:
     oracle_installed = False
     databricks_installed = False
     snowflake_installed = False
+    vanta_installed = False
     try:
         import evidentia_collectors.aws
 
@@ -806,7 +902,7 @@ async def collectors_status() -> dict[str, Any]:
         # Snowflake adapter loads cleanly without
         # snowflake-connector-python installed; the actual driver
         # import happens lazily on first connect.
-        import evidentia_collectors.snowflake  # noqa: F401
+        import evidentia_collectors.snowflake
 
         try:
             import snowflake.connector  # type: ignore[import-untyped, unused-ignore]  # noqa: F401
@@ -814,6 +910,14 @@ async def collectors_status() -> dict[str, Any]:
             snowflake_installed = True
         except ImportError:
             snowflake_installed = False
+    except ImportError:
+        pass
+    try:
+        # Vanta uses httpx (already a base dep) — no extra pyproject
+        # extra to detect. Adapter importability == ready-to-use.
+        import evidentia_collectors.vanta  # noqa: F401
+
+        vanta_installed = True
     except ImportError:
         pass
 
@@ -921,6 +1025,20 @@ async def collectors_status() -> dict[str, Any]:
             ),
             "default_password_env_configured": bool(
                 os.environ.get("SNOWFLAKE_PASSWORD")
+            ),
+        },
+        "vanta": {
+            "installed": vanta_installed,
+            "credentials_hint": (
+                "Vanta Personal Access Token (developer / scripting) "
+                "OR OAuth 2.0 client-credentials access token, "
+                "scoped to vendors:read. Set the token via the "
+                "VANTA_API_TOKEN env var (or override with token_env "
+                "in the request body). The collector NEVER accepts "
+                "a token via the request body."
+            ),
+            "default_token_env_configured": bool(
+                os.environ.get("VANTA_API_TOKEN")
             ),
         },
     }

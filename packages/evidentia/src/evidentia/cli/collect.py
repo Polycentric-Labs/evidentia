@@ -707,6 +707,119 @@ def collect_snowflake(
     )
 
 
+@app.command("vanta")
+def collect_vanta(
+    token_env: str = typer.Option(
+        "VANTA_API_TOKEN",
+        "--token-env",
+        help=(
+            "Name of the env var holding the Vanta API token. The "
+            "CLI reads from this env var rather than accepting the "
+            "token as a flag (per secret-handling protocol). "
+            "Defaults to VANTA_API_TOKEN. The token can be either a "
+            "Personal Access Token (developer / scripting use) or "
+            "a pre-acquired OAuth 2.0 access token; both pass "
+            "Authorization: Bearer <token>."
+        ),
+    ),
+    base_url: str = typer.Option(
+        "https://api.vanta.com",
+        "--base-url",
+        help=(
+            "Vanta Public API base URL. Override for staging / "
+            "dev tenants."
+        ),
+    ),
+    max_vendors: int = typer.Option(
+        2000,
+        "--max-vendors",
+        min=1,
+        max=100_000,
+        help=(
+            "Hard cap on vendor enumeration. Default 2000 — covers "
+            "typical orgs without unbounded pagination."
+        ),
+    ),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Where to write the findings JSON. Default: stdout.",
+    ),
+) -> None:
+    """Collect compliance evidence from a Vanta TPRM workspace (read-only).
+
+    v0.7.9 P0.4 first slice ships ONE evidence source:
+
+    - **Vanta vendor inventory** (NIST 800-53 SR-2 / SR-3 / SR-6 +
+      OCC 2013-29 §III.A + FRB SR 13-19 §II + FFIEC IT Handbook
+      Outsourcing booklet §II) — every vendor in the operator's
+      Vanta workspace gets an INFORMATIONAL inventory finding;
+      Vanta-flagged HIGH or CRITICAL risk-tier vendors additionally
+      get a MEDIUM ACTIVE finding with OCC §III.A.4 ongoing-
+      monitoring mappings calling for operator review.
+
+    Auth: pass the API token via env var (default
+    ``VANTA_API_TOKEN``). Vanta supports both Personal Access
+    Tokens (developer / scripting use) and OAuth 2.0 access
+    tokens (pre-acquired via client-credentials grant). Both pass
+    ``Authorization: Bearer <token>``. Recommended scope:
+    ``vendors:read`` only — no broader scopes needed for this
+    first-slice surface.
+
+    Deferred to subsequent v0.7.9 P0.4 slices:
+
+    - Vanta control test results (/v1/controls + /v1/control-tests)
+    - Ongoing-monitoring posture changes (state-diff)
+    - OAuth 2.0 client-credentials grant (token exchange + refresh)
+    - Webhook event ingestion (push model)
+
+    See `evidentia_collectors.vanta.__init__` for the public-
+    surface walkthrough.
+    """
+    try:
+        from evidentia_collectors.vanta import (
+            VantaCollector,
+            VantaCollectorError,
+        )
+    except ImportError as e:
+        # Should never fire today (httpx is a base dep) but kept
+        # for parity with the per-collector extras pattern in case
+        # a future evidentia-collectors[vanta] extra brings in
+        # extra deps.
+        console.print(
+            "[red]Error:[/red] Vanta collector module not importable. "
+            "Run [cyan]pip install evidentia-collectors[/cyan]."
+        )
+        raise typer.Exit(code=1) from e
+
+    api_token = os.environ.get(token_env)
+    if not api_token:
+        console.print(
+            f"[red]Error:[/red] env var [cyan]{token_env}[/cyan] "
+            "is not set or is empty. Set it to your Vanta API "
+            "token (Personal Access Token or OAuth access token)."
+        )
+        raise typer.Exit(code=1)
+
+    try:
+        with VantaCollector(
+            api_token=api_token,
+            base_url=base_url,
+            max_vendors=max_vendors,
+        ) as collector:
+            findings = collector.collect()
+    except VantaCollectorError as e:
+        console.print(f"[red]Vanta collection failed:[/red] {e}")
+        raise typer.Exit(code=1) from e
+
+    _write_findings(
+        findings,
+        output,
+        title=f"Vanta findings ({base_url})",
+    )
+
+
 # ── rendering ────────────────────────────────────────────────────────────
 
 

@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Vanta vendor-inventory collector** (v0.7.9 P0.4 first slice).
+  New `evidentia collect vanta` CLI command + `POST
+  /api/collectors/vanta/collect` REST endpoint. Read-only
+  adapter pulling the operator's Vanta-managed vendor inventory
+  via the Vanta Public API (`/v1/vendors`), surfacing each
+  vendor as a `vanta-vendor-inventory` SecurityFinding (NIST
+  800-53 SR-2 / SR-3 / SR-6 + OCC Bulletin 2013-29 §III.A +
+  FRB SR 13-19 §II + FFIEC IT Handbook Outsourcing booklet
+  §II) plus an additional `vanta-vendor-high-risk` finding
+  whenever the underlying record carries a HIGH or CRITICAL
+  risk-tier flag (RA-3 + OCC §III.A.4 + SR 13-19 §II.D).
+  Auth: VANTA_API_TOKEN env var (Personal Access Token or
+  OAuth 2.0 client-credentials access token), scoped to
+  `vendors:read`; the token NEVER flows through CLI args or
+  request bodies. Lazy-import design: imports cleanly even
+  when the optional `httpx` extra resolves at runtime; uses
+  cursor-based pagination with a 2000-vendor default ceiling
+  (overridable via `--max-vendors`). 13 unit tests with
+  mocked httpx covering happy path, pagination, max-vendors
+  ceiling, four high-risk field-shape variants (riskTier,
+  risk_tier, riskLevel/risk_level, nested riskAssessment),
+  401/403 → VantaAuthError, network failure → manifest-level
+  error, empty inventory → empty findings. First slice scope
+  is vendor inventory only; subsequent slices will add
+  control-test pulls + ongoing-monitoring posture per the
+  v0.7.9 P0.4 plan.
 - **TPRM due-diligence questionnaire generator** (v0.7.9 P0.2).
   New `evidentia tprm dd-questionnaire generate --vendor-id <id>
   --format ... --output-format json|csv --output <path>` CLI +
