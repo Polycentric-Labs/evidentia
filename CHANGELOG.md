@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **F-V10-S2 closure** (v0.7.11 P3): `evidentia model-risk model
+  edit --editor` and `evidentia tprm vendor edit --editor` no
+  longer launch arbitrary `$EDITOR` binaries. New helper
+  `evidentia.cli._editor.resolve_editor_or_exit` does
+  `shutil.which` resolution, parses `$EDITOR` via `shlex.split`
+  (handles patterns like `EDITOR='code -w'`), and applies a
+  default allowlist of common editors (vi/vim/nvim/nano/emacs/
+  micro/pico/code/subl/atom/gedit/kate/notepad). Operators with
+  non-standard editors set `EVIDENTIA_EDITOR_ALLOW_ANY=1` to opt
+  out. 13 new tests cover the helper across happy-path resolution,
+  argv splitting, opt-out semantics, and 5 error paths
+  (empty / not-on-PATH / not-allowlisted / unbalanced-quotes /
+  custom-allowlist). Closes the v0.7.10 LOW-severity CWE-78 risk
+  amplifier finding (F-V10-S2) AND the parallel surface that has
+  shipped in the v0.7.9 TPRM CLI since v0.7.9 P0.1.3.
+
+### Changed
+
+- **`validate_within` harmonization across all 3 JSON-file stores**
+  (v0.7.11 P3, Step 4 forward-look from v0.7.10 security review).
+  The v0.7.10 P1.5 G2 `effective_challenge_store` shipped with
+  belt-and-suspenders `validate_within(candidate, store_dir)` on
+  every CRUD operation; the older v0.7.9 `vendor_store` and
+  v0.7.10 P0.6.1 `model_risk_store` previously relied on UUID-shape
+  gate alone for `save_*` paths. This release adds the same
+  defense-in-depth check to `save_vendor` and `save_model` so all
+  three stores follow identical secure patterns. No behavioral
+  change for valid UUIDs; future shape-gate relaxations (e.g.,
+  ULID acceptance) won't silently disable the second barrier.
+- **v0.7.9 deferral closures (P3 second batch)**:
+  - **L-1**: REST collector endpoints (vanta + drata + bitsight
+    + securityscorecard + okta + servicenow) replace silent
+    `int(body.get("max_x") or 2000)` coercion with explicit type +
+    range validation matching the CLI's `min=1, max=100_000` Typer
+    gate. Bad input now returns 400 with a clear message instead
+    of silently defaulting to 2000.
+  - **L-6**: SecurityScorecard CLI verb docstring rewritten with
+    PEP-257 single-line summary.
+  - **M-5**: BitSight cross-host pagination break + scheme-
+    downgrade pagination break now emit structured warning events
+    (`COLLECT_ABORTED` action with `reason` evidentia field). The
+    previously-silent break is now observable in audit logs.
+  - **M-6**: SecurityScorecard `_resolve_portfolio_id` emits a
+    structured warning when auto-selecting from multiple
+    portfolios so operators know the choice was non-deterministic.
+
+
+
 ## [0.7.10] - 2026-05-04
 
 **The financial-services Model Risk Management + governance ship.**

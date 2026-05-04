@@ -295,6 +295,27 @@ class SecurityScorecardCollector:
                 "SecurityScorecard portfolio entry is missing a "
                 "string `id` field."
             )
+        # v0.7.11 P3 closure of v0.7.9 M-6: emit a warning so
+        # operators with multiple SSC portfolios know an arbitrary
+        # one was selected. Pass --portfolio-id explicitly to
+        # control the choice deterministically.
+        if len(entries) > 1:
+            _log.warning(
+                action=EventAction.COLLECT_PAGE_FETCHED,
+                outcome=EventOutcome.SUCCESS,
+                message=(
+                    f"SecurityScorecard portfolio_id not specified; "
+                    f"auto-selected first of {len(entries)} portfolios. "
+                    f"Pass --portfolio-id (CLI) or portfolio_id=... "
+                    f"(library) to choose deterministically."
+                ),
+                evidentia={
+                    "collector_id": COLLECTOR_ID,
+                    "selected_portfolio_id": portfolio_id,
+                    "selected_portfolio_name": first.get("name"),
+                    "total_portfolios": len(entries),
+                },
+            )
         return portfolio_id
 
     def _paginate_portfolio(

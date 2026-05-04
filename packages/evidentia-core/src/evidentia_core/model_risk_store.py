@@ -130,7 +130,11 @@ def save_model(
     store.mkdir(parents=True, exist_ok=True)
 
     model.updated_at = utc_now()
-    out_path = store / f"{model.id}.json"
+    # v0.7.11 P3 harmonization: apply validate_within
+    # belt-and-suspenders on the save path (matches the harmonized
+    # pattern across vendor_store + effective_challenge_store).
+    candidate = store / f"{model.id}.json"
+    out_path = validate_within(candidate, store)
     tmp_path = store / f"{model.id}.json.tmp"
     tmp_path.write_text(model.model_dump_json(indent=2), encoding="utf-8")
     os.replace(tmp_path, out_path)

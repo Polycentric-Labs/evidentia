@@ -756,7 +756,28 @@ async def vanta_collect(
         str(body.get("base_url") or "https://api.vanta.com").strip()
         or "https://api.vanta.com"
     )
-    max_vendors = int(body.get("max_vendors") or 2000)
+    # v0.7.11 P3 closure of v0.7.9 L-1: explicit type+range
+    # validation rather than silent `or 2000` coercion. Treats
+    # missing/None as default; rejects 0 / negative / >100k with
+    # a clear 400, matching CLI's `min=1, max=100_000` Typer gate.
+    raw_max_vendors = body.get("max_vendors")
+    if raw_max_vendors is None:
+        max_vendors = 2000
+    else:
+        try:
+            max_vendors = int(raw_max_vendors)
+        except (TypeError, ValueError) as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"max_vendors must be int; got {raw_max_vendors!r}",
+            ) from e
+        if max_vendors < 1 or max_vendors > 100_000:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"max_vendors must be in [1, 100000]; got {max_vendors}"
+                ),
+            )
     token_env = (
         str(body.get("token_env") or "VANTA_API_TOKEN").strip()
         or "VANTA_API_TOKEN"
@@ -849,7 +870,28 @@ async def drata_collect(
         str(body.get("base_url") or "https://public-api.drata.com").strip()
         or "https://public-api.drata.com"
     )
-    max_vendors = int(body.get("max_vendors") or 2000)
+    # v0.7.11 P3 closure of v0.7.9 L-1: explicit type+range
+    # validation rather than silent `or 2000` coercion. Treats
+    # missing/None as default; rejects 0 / negative / >100k with
+    # a clear 400, matching CLI's `min=1, max=100_000` Typer gate.
+    raw_max_vendors = body.get("max_vendors")
+    if raw_max_vendors is None:
+        max_vendors = 2000
+    else:
+        try:
+            max_vendors = int(raw_max_vendors)
+        except (TypeError, ValueError) as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"max_vendors must be int; got {raw_max_vendors!r}",
+            ) from e
+        if max_vendors < 1 or max_vendors > 100_000:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"max_vendors must be in [1, 100000]; got {max_vendors}"
+                ),
+            )
     token_env = (
         str(body.get("token_env") or "DRATA_API_TOKEN").strip()
         or "DRATA_API_TOKEN"
@@ -933,7 +975,26 @@ async def bitsight_collect(
         str(body.get("base_url") or "https://api.bitsighttech.com").strip()
         or "https://api.bitsighttech.com"
     )
-    max_companies = int(body.get("max_companies") or 2000)
+    # v0.7.11 P3 closure of v0.7.9 L-1: see `max_vendors`
+    # comment above; identical pattern.
+    raw_max_companies = body.get("max_companies")
+    if raw_max_companies is None:
+        max_companies = 2000
+    else:
+        try:
+            max_companies = int(raw_max_companies)
+        except (TypeError, ValueError) as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"max_companies must be int; got {raw_max_companies!r}",
+            ) from e
+        if max_companies < 1 or max_companies > 100_000:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"max_companies must be in [1, 100000]; got {max_companies}"
+                ),
+            )
     rating_threshold = int(body.get("rating_threshold") or 700)
     if not 250 <= rating_threshold <= 900:
         raise HTTPException(
@@ -1035,7 +1096,26 @@ async def securityscorecard_collect(
         str(body.get("base_url") or "https://api.securityscorecard.io").strip()
         or "https://api.securityscorecard.io"
     )
-    max_companies = int(body.get("max_companies") or 2000)
+    # v0.7.11 P3 closure of v0.7.9 L-1: see `max_vendors`
+    # comment above; identical pattern.
+    raw_max_companies = body.get("max_companies")
+    if raw_max_companies is None:
+        max_companies = 2000
+    else:
+        try:
+            max_companies = int(raw_max_companies)
+        except (TypeError, ValueError) as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"max_companies must be int; got {raw_max_companies!r}",
+            ) from e
+        if max_companies < 1 or max_companies > 100_000:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"max_companies must be in [1, 100000]; got {max_companies}"
+                ),
+            )
     score_threshold = int(body.get("score_threshold") or 70)
     if not 0 <= score_threshold <= 100:
         raise HTTPException(

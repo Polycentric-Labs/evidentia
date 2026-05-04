@@ -324,7 +324,25 @@ class BitSightCollector:
             parsed = urlparse(raw_next)
             base_parsed = urlparse(self._base_url)
             if parsed.netloc and parsed.netloc != base_parsed.netloc:
-                # Defensive: don't follow cross-host pagination links
+                # Defensive: don't follow cross-host pagination links.
+                # v0.7.11 P3 closure of v0.7.9 M-5: emit a structured
+                # warning so the silent break is observable in audit
+                # logs + collection manifest.
+                _log.warning(
+                    action=EventAction.COLLECT_ABORTED,
+                    outcome=EventOutcome.FAILURE,
+                    message=(
+                        "BitSight cross-host pagination link refused; "
+                        "stopping enumeration early."
+                    ),
+                    evidentia={
+                        "collector_id": COLLECTOR_ID,
+                        "reason": "cross_host_next_url",
+                        "next_netloc": parsed.netloc,
+                        "base_netloc": base_parsed.netloc,
+                        "results_collected": len(out),
+                    },
+                )
                 break
             # v0.7.9 P0.4 Continuous F-V09-S1 (CWE-319): also refuse
             # scheme-downgrade. A malicious upstream returning an
@@ -337,6 +355,21 @@ class BitSightCollector:
                 and base_parsed.scheme
                 and parsed.scheme != base_parsed.scheme
             ):
+                _log.warning(
+                    action=EventAction.COLLECT_ABORTED,
+                    outcome=EventOutcome.FAILURE,
+                    message=(
+                        "BitSight scheme-downgrade pagination link "
+                        "refused; stopping enumeration early."
+                    ),
+                    evidentia={
+                        "collector_id": COLLECTOR_ID,
+                        "reason": "scheme_downgrade_next_url",
+                        "next_scheme": parsed.scheme,
+                        "base_scheme": base_parsed.scheme,
+                        "results_collected": len(out),
+                    },
+                )
                 break
             next_url = (
                 raw_next

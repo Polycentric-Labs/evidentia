@@ -27,7 +27,6 @@ foundation.
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 import sys
 import tempfile
@@ -62,6 +61,8 @@ from evidentia_core.vendor_store import (
 )
 from rich.console import Console
 from rich.table import Table
+
+from evidentia.cli._editor import resolve_editor_or_exit
 
 app = typer.Typer(help="Third-Party Risk Management commands.")
 vendor_app = typer.Typer(help="Vendor inventory commands.")
@@ -636,7 +637,11 @@ def vendor_edit(
     elif editor:
         import yaml as yaml_mod
 
-        editor_cmd = os.environ.get("EDITOR", "vi")
+        # v0.7.11 P3 closure of v0.7.10 F-V10-S2 (and parallel
+        # surface in this v0.7.9 TPRM CLI): resolve $EDITOR via
+        # the shared allowlist-aware helper to mitigate the
+        # CWE-78 risk-amplifier path.
+        editor_argv = resolve_editor_or_exit()
         with tempfile.NamedTemporaryFile(
             mode="w+", suffix=".yaml", delete=False, encoding="utf-8"
         ) as tmp:
@@ -649,7 +654,7 @@ def vendor_edit(
             )
             tmp_path = Path(tmp.name)
         try:
-            subprocess.run([editor_cmd, str(tmp_path)], check=True)
+            subprocess.run([*editor_argv, str(tmp_path)], check=True)
             edited_text = tmp_path.read_text(encoding="utf-8").strip()
             if not edited_text:
                 console.print(

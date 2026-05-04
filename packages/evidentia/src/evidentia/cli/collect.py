@@ -1081,11 +1081,11 @@ def collect_securityscorecard(
         help="Where to write the findings JSON. Default: stdout.",
     ),
 ) -> None:
-    """Collect compliance evidence from a SecurityScorecard
-    portfolio (read-only).
+    """Collect compliance evidence from a SecurityScorecard portfolio (read-only).
 
-    v0.7.9 P0.4 fourth slice ships portfolio inventory + per-company
-    low-score flag detection. Sister collector to BitSight.
+    v0.7.11 P3 closure of v0.7.9 L-6: PEP-257 single-line summary
+    above; v0.7.9 P0.4 fourth slice ships portfolio inventory +
+    per-company low-score flag detection. Sister collector to BitSight.
 
     SSC scores 0-100 with grades A (90+), B (80-89), C (70-79),
     D (60-69), F (<60). The collector emits an INFORMATIONAL

@@ -130,7 +130,17 @@ def save_vendor(
     store.mkdir(parents=True, exist_ok=True)
 
     vendor.updated_at = utc_now()
-    out_path = store / f"{vendor.id}.json"
+    # v0.7.11 P3 harmonization (Step 4 forward-look from v0.7.10
+    # security review): apply validate_within belt-and-suspenders
+    # check on the save path, matching the pattern shipped in
+    # load_vendor_by_id + the v0.7.10 P0.6.1 model_risk_store +
+    # the v0.7.10 P1.5 G2 effective_challenge_store. Even though
+    # `vendor.id` is UUID-shape-validated above + the path is
+    # constructed from a controlled f-string, the validate_within
+    # check defends against future regressions (e.g., if the
+    # shape gate is relaxed to accept ULIDs alongside UUIDs).
+    candidate = store / f"{vendor.id}.json"
+    out_path = validate_within(candidate, store)
     tmp_path = store / f"{vendor.id}.json.tmp"
     tmp_path.write_text(vendor.model_dump_json(indent=2), encoding="utf-8")
     os.replace(tmp_path, out_path)
