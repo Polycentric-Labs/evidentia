@@ -451,14 +451,120 @@ suppress duplicates via `--no-security-headers`.
 
 ---
 
+## v0.7.12 attack-surface delta (PLANNED — concrete WORM + Monte Carlo + GDPR purge)
+
+The v0.7.12 ship adds **5 new public surfaces** plus 1
+fundamental contract refinement:
+
+### Cloud-WORM backends — `S3ObjectLockWORM` / `AzureImmutableBlobWORM` / `GCSBucketLockWORM`
+
+Three new WORMBackend subclasses providing regulator-grade
+hardware-WORM enforcement on top of the v0.7.11
+`LocalFilesystemWORM` reference impl. The cloud SDKs (boto3,
+azure-storage-blob, google-cloud-storage) are gated behind
+`evidentia[worm-s3]` / `[worm-azure]` / `[worm-gcs]` extras.
+
+**STRIDE coverage** (vs the existing `WORMBackend` ABC threat
+model):
+
+- **Spoofing**: cloud SDK auth chains (boto3 default chain,
+  Azure DefaultAzureCredential, GCS Application Default
+  Credentials) — operator's responsibility per the runbook
+  in `docs/worm-backends.md`. No new attack surface
+  introduced; reuses existing cloud-IAM trust chains.
+- **Tampering**: payload writes use cloud-WORM primitives (S3
+  Object Lock RetainUntilDate, Azure Immutable Blob
+  ImmutabilityPolicy.Locked, GCS Bucket Lock); cloud-side
+  enforcement is the second line of defense. Sidecar
+  metadata is intentionally mutable (operator-managed
+  lifecycle tracking) and is NOT subject to retention.
+- **Repudiation**: every put / delete / extend_retention /
+  legal_hold operation flows through the audit logger
+  (RETENTION_RECORD_PUT / RETENTION_RECORD_PURGED /
+  RETENTION_LEGAL_HOLD_APPLIED / etc.) for non-repudiable
+  operator-action provenance.
+- **Information disclosure**: cloud auth tokens are never
+  logged, displayed, or persisted; standard secret-scrubbing
+  applies to all cloud-side error messages surfaced via
+  WORMBackendError.
+- **Denial of service**: cloud SDK retries via tenacity bounded-
+  exponential-backoff (already in `evidentia-core`); cloud
+  rate-limits surface as `HttpResponseError` / `ClientError`
+  / `GoogleAPIError` and propagate as WORMBackendError.
+- **Elevation of privilege**: 3-layer delete defense
+  (legal_hold → is_locked → lifecycle != EXPIRED) at the
+  application layer, plus cloud-side enforcement (S3
+  Compliance mode: even AWS root cannot bypass; Azure
+  Locked: even account owner cannot reduce; GCS Bucket
+  Lock: even project owner cannot reduce post-lock).
+
+### GDPR Article 17 `purge_immediately` operator workflow
+
+New `WORMBackend.purge_immediately(record_id, *,
+gdpr_request_ref, operator_id)` method handles
+right-to-erasure with full audit-trail provenance.
+Pre-conditions: GDPR-shaped record (retention_period_days=0,
+no legal hold), non-empty operator_id + gdpr_request_ref.
+The operator override is scoped: it does NOT permit purge of
+non-GDPR records (those follow standard retention path) and
+does NOT bypass legal_hold (which trumps GDPR per most legal
+frameworks). Audit-trail snapshot returned even after delete
+— legal-counsel-defensible artifact persists in the audit
+log independent of the record itself.
+
+### FAIR Monte Carlo simulation — `evidentia risk quantify --method fair-mc`
+
+Stdlib-only Beta-PERT sampling (no numpy dep added) over the
+existing `OpenFAIRScenario` schema. New surface = a CLI flag +
+a `SimulationResult` Pydantic model + an optional CSV export
+of per-iteration ALE samples. Threat model unchanged from
+v0.7.11 deterministic-PERT path; same input validation, same
+output sanitization. CSV export uses `csv.writer` (no
+injection surface).
+
+### CodeQL CRITICAL #92 closure — `securityscorecard` portfolio_id allow-list
+
+Pre-v0.7.12: REST request body `payload` (dict[str, Any], no
+Pydantic validation) flowed `portfolio_id` into
+`f"/portfolios/{portfolio_id}/companies"` at
+`_paginate_portfolio` line 330; httpx then resolved the
+URL against the SSC base URL — letting a path-traversing
+portfolio_id rewrite the request path (CVE class: partial
+SSRF, CWE-918, CVSS 7.6).
+
+v0.7.12 adds `_validate_portfolio_id_shape` regex
+allow-list (`^[A-Za-z0-9_-]{1,128}$`) applied at 3 layers:
+REST router (early-fail with 400), collector __init__
+(pre-construction reject), and `_resolve_portfolio_id`
+(defense-in-depth against malicious SSC API responses).
+29 new validation tests cover the allow-list edge cases.
+
+### Codecov path-resolution fix
+
+Not strictly an attack-surface change; the `[tool.coverage.run]
+relative_files = true` + codecov.yml `fixes:` removal closes
+the v0.7.10/v0.7.11 0%-badge bug. No threat model impact.
+
+### `bump_version.py` inter-package pin tightening
+
+Defensive hardening rather than a new attack surface.
+Closes the v0.7.11 PyPI propagation foot-gun where
+`pip install evidentia==X.Y.Z` could resolve a cached
+`evidentia-core==X.Y.Z-1` against loose `>=0.7.0,<0.8.0`
+range pins. v0.7.12 ship has all inter-package pin lower
+bounds tightened to the current release version.
+
+---
+
 ## Review cadence
 
 This doc is reviewed at every release per
-[`release-checklist.md`](release-checklist.md) Step 5. A full
-deep-pass walk (re-walk of every external input surface, not just
-diff scope) runs at every minor release per pre-release-review
-v4 §G5 + on a quarterly cadence regardless of release activity
-per Step 11.
+[`release-checklist.md`](release-checklist.md) Step 5 (and the
+new Step 5.5 doc-consistency sweep introduced in v0.7.12). A
+full deep-pass walk (re-walk of every external input surface,
+not just diff scope) runs at every minor release per pre-
+release-review v4 §G5 + on a quarterly cadence regardless of
+release activity per Step 11.
 
 ---
 
