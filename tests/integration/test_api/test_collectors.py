@@ -185,3 +185,49 @@ class TestSnowflakeCollectEndpoint:
         assert payload["snowflake"]["default_password_env_configured"] is True
         # Secret value MUST NOT leak.
         assert "fake-pwd-must-not-appear-in-response" not in r.text
+
+
+class TestSecurityScorecardCollectEndpointSSRFGuard:
+    """v0.7.12 P0.6 / CodeQL #92 closure (CRITICAL py/partial-ssrf).
+
+    The /api/collectors/securityscorecard/collect endpoint must
+    reject portfolio_id values containing path-traversal segments
+    BEFORE they flow into the f-string URL composition at
+    ``_paginate_portfolio``. The collector itself also validates
+    (defense-in-depth) but a 400 here gives the API consumer a
+    sharper error than the collector's 503.
+    """
+
+    @pytest.mark.parametrize(
+        "bad_portfolio_id",
+        [
+            "../admin",
+            "portfolio/companies",
+            "portfolio\\evil",
+            "/leading-slash",
+            "trailing-slash/",
+            "portfolio?inject=1",
+            "portfolio#frag",
+            "portfolio with spaces",
+            "portfolio\nnewline",
+        ],
+    )
+    def test_rejects_unsafe_portfolio_id_with_400(
+        self,
+        api_client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+        bad_portfolio_id: str,
+    ) -> None:
+        # Provide a token so the env-var gate doesn't fail first
+        monkeypatch.setenv("SECURITYSCORECARD_API_TOKEN", "ssc_test")
+        r = api_client.post(
+            "/api/collectors/securityscorecard/collect",
+            json={"portfolio_id": bad_portfolio_id},
+        )
+        # 400 (not 422) — early-fail at the REST boundary; matches
+        # the OpenAPI {detail: string} shape (F-V08-DAST-3 pattern).
+        assert r.status_code == 400, (
+            f"Expected 400 for portfolio_id={bad_portfolio_id!r}, "
+            f"got {r.status_code}: {r.text}"
+        )
+        assert "portfolio_id" in r.json()["detail"].lower()

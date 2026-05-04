@@ -1092,6 +1092,21 @@ async def securityscorecard_collect(
     portfolio_id_str: str | None = (
         str(portfolio_id).strip() if portfolio_id else None
     )
+    # v0.7.12 P0.6 / CodeQL #92 closure: early-fail at the REST
+    # boundary with 400 if portfolio_id contains characters that
+    # could path-traverse the SSC API URL. The collector itself
+    # also validates (defense-in-depth) but a 400 here gives the
+    # caller a more specific error than the collector's 503.
+    if portfolio_id_str is not None:
+        from evidentia_collectors.securityscorecard import (
+            SecurityScorecardInvalidPortfolioIdError,
+            _validate_portfolio_id_shape,
+        )
+
+        try:
+            _validate_portfolio_id_shape(portfolio_id_str)
+        except SecurityScorecardInvalidPortfolioIdError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
     base_url = (
         str(body.get("base_url") or "https://api.securityscorecard.io").strip()
         or "https://api.securityscorecard.io"

@@ -367,3 +367,142 @@ def test_re_export_blind_spots_and_collector_id() -> None:
     assert COLLECTOR_ID == "securityscorecard-scan"
     assert isinstance(BLIND_SPOTS, list)
     assert len(BLIND_SPOTS) > 0
+
+
+# ── v0.7.12 P0.6 / CodeQL #92 closure: portfolio_id SSRF guards ────
+
+
+@pytest.mark.parametrize(
+    "good_id",
+    [
+        # Real-world MongoDB ObjectId form (24-char hex)
+        "5f9b2e1a4c8d3e5b6a7f1234",
+        # Vendor-hyphenated variants
+        "portfolio-1",
+        "ALL-CAPS-2024",
+        "underscore_separated_id",
+        # Single-character minimum
+        "a",
+        # 128-char maximum boundary
+        "a" * 128,
+        # All hex digits (typical)
+        "deadbeef" * 3,
+    ],
+)
+def test_validate_portfolio_id_accepts_safe_values(good_id: str) -> None:
+    """v0.7.12 P0.6 / CodeQL #92: legitimate portfolio_ids pass."""
+    from evidentia_collectors.securityscorecard import (
+        _validate_portfolio_id_shape,
+    )
+
+    # Should not raise
+    _validate_portfolio_id_shape(good_id)
+
+
+@pytest.mark.parametrize(
+    "bad_id",
+    [
+        # Path-traversal classic
+        "../admin",
+        "..%2Fadmin",
+        # Forward + back slashes
+        "portfolio/companies",
+        "portfolio\\companies",
+        # Empty string
+        "",
+        # Whitespace-only
+        "   ",
+        # Beyond 128-char cap
+        "a" * 129,
+        # URL-injection chars
+        "p?inject=1",
+        "p#frag",
+        "p&q",
+        "p%20space",
+        # Leading/trailing slash
+        "/portfolio",
+        "portfolio/",
+        # Newline / tab
+        "portfolio\n",
+        "portfolio\tid",
+        # Spaces
+        "portfolio id",
+        # Quote / brace injection
+        "p\"q",
+        "p<>q",
+        # Unicode mock
+        "пidence",
+    ],
+)
+def test_validate_portfolio_id_rejects_unsafe_values(bad_id: str) -> None:
+    """v0.7.12 P0.6 / CodeQL #92: path-traversal + URL-injection
+    chars all trip the validator.
+    """
+    from evidentia_collectors.securityscorecard import (
+        SecurityScorecardInvalidPortfolioIdError,
+        _validate_portfolio_id_shape,
+    )
+
+    with pytest.raises(SecurityScorecardInvalidPortfolioIdError):
+        _validate_portfolio_id_shape(bad_id)
+
+
+def test_validate_portfolio_id_rejects_non_string() -> None:
+    """v0.7.12 P0.6 / CodeQL #92: non-string portfolio_id is rejected
+    (the SSC collector accepts ``str | None``, but defense-in-depth
+    catches a misdirected int / list / dict).
+    """
+    from evidentia_collectors.securityscorecard import (
+        SecurityScorecardInvalidPortfolioIdError,
+        _validate_portfolio_id_shape,
+    )
+
+    with pytest.raises(SecurityScorecardInvalidPortfolioIdError):
+        _validate_portfolio_id_shape(123)  # type: ignore[arg-type]
+    with pytest.raises(SecurityScorecardInvalidPortfolioIdError):
+        _validate_portfolio_id_shape(["portfolio-1"])  # type: ignore[arg-type]
+
+
+def test_collector_init_rejects_unsafe_portfolio_id() -> None:
+    """v0.7.12 P0.6 / CodeQL #92: SSRF-attempting portfolio_id
+    rejected at __init__, before any HTTP call.
+    """
+    from evidentia_collectors.securityscorecard import (
+        SecurityScorecardInvalidPortfolioIdError,
+    )
+
+    with pytest.raises(SecurityScorecardInvalidPortfolioIdError):
+        SecurityScorecardCollector(
+            api_token="ssc_test", portfolio_id="../admin"
+        )
+    with pytest.raises(SecurityScorecardInvalidPortfolioIdError):
+        SecurityScorecardCollector(
+            api_token="ssc_test", portfolio_id="portfolio/companies"
+        )
+
+
+def test_resolve_portfolio_id_rejects_unsafe_api_response() -> None:
+    """v0.7.12 P0.6 / CodeQL #92 defense-in-depth: even if the SSC
+    API itself returns a path-traversing portfolio_id, the collector
+    rejects it before composing the URL.
+    """
+    from evidentia_collectors.securityscorecard import (
+        SecurityScorecardInvalidPortfolioIdError,
+    )
+
+    # Mock a /portfolios response whose first entry has an unsafe id
+    bad_portfolio_response = MagicMock(spec=httpx.Response)
+    bad_portfolio_response.status_code = 200
+    bad_portfolio_response.json.return_value = {
+        "entries": [
+            {"id": "../etc/passwd", "name": "Evil Portfolio"}
+        ],
+    }
+    bad_portfolio_response.raise_for_status = MagicMock()
+
+    mock_client = _make_client([bad_portfolio_response])
+    collector = SecurityScorecardCollector(
+        api_token="ssc_test", client=mock_client
+    )
+    with pytest.raises(SecurityScorecardInvalidPortfolioIdError):
+        collector._resolve_portfolio_id()

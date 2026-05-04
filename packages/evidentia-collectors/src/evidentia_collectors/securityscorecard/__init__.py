@@ -58,11 +58,21 @@ from evidentia_collectors.securityscorecard.collector import (
     SecurityScorecardCollector,
     SecurityScorecardCollectorError,
     SecurityScorecardConnectionError,
+    SecurityScorecardInvalidPortfolioIdError,
     SecurityScorecardQueryError,
+    _validate_portfolio_id_shape,
 )
 
 # v0.7.10 P3 closure of v0.7.9 L-7: re-export BLIND_SPOTS +
 # COLLECTOR_ID at the package level.
+# v0.7.12 P0.6 / CodeQL #92 closure: re-export the
+# `SecurityScorecardInvalidPortfolioIdError` exception type and the
+# `_validate_portfolio_id_shape` helper so the REST router can
+# early-fail with 400 before reaching the collector. The leading
+# underscore on the helper is preserved to mark it as
+# "library-internal but cross-package-shared" — external consumers
+# should construct a SecurityScorecardCollector with their
+# portfolio_id and let it validate.
 __all__ = [
     "BLIND_SPOTS",
     "COLLECTOR_ID",
@@ -70,5 +80,7 @@ __all__ = [
     "SecurityScorecardCollector",
     "SecurityScorecardCollectorError",
     "SecurityScorecardConnectionError",
+    "SecurityScorecardInvalidPortfolioIdError",
     "SecurityScorecardQueryError",
+    "_validate_portfolio_id_shape",
 ]

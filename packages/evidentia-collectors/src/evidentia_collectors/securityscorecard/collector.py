@@ -29,6 +29,7 @@ historical grade trends.
 from __future__ import annotations
 
 import contextlib
+import re
 from typing import Any
 
 import httpx
@@ -91,6 +92,50 @@ class SecurityScorecardConnectionError(SecurityScorecardCollectorError):
 class SecurityScorecardQueryError(SecurityScorecardCollectorError):
     """A specific API call failed (4xx / 5xx other than auth, or a
     malformed response)."""
+
+
+class SecurityScorecardInvalidPortfolioIdError(SecurityScorecardCollectorError):
+    """Raised when a candidate portfolio_id contains characters that
+    could path-traverse the SSC API URL.
+
+    Closes v0.7.12 P0.6 / CodeQL alert #92 (`py/partial-ssrf`,
+    CRITICAL): a `portfolio_id` value containing path-traversal
+    segments (``..``, ``/``, etc.) flowed from the REST request body
+    into ``f"/portfolios/{portfolio_id}/companies"`` at
+    ``_paginate_portfolio``, which httpx then resolved against the
+    SSC base URL — letting an attacker rewrite the request path.
+
+    The validation predicate (``_PORTFOLIO_ID_RE``) accepts only
+    ``[A-Za-z0-9_-]{1,128}``, which covers the MongoDB ObjectId
+    24-char hex form SSC actually issues plus a defensive allowance
+    for vendor-hyphenated variants. Anything else (``..``, ``/``,
+    ``\\``, spaces, empty strings, leading/trailing slashes, query
+    strings, fragments) trips this exception.
+    """
+
+
+# v0.7.12 P0.6 / CodeQL #92 closure: SSC portfolio_id allow-list.
+# SSC issues 24-char MongoDB-ObjectId-style hex strings; the broader
+# ``[A-Za-z0-9_-]`` character class is a defensive allowance for any
+# vendor-hyphenated variants without admitting path-traversal chars.
+_PORTFOLIO_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+
+
+def _validate_portfolio_id_shape(portfolio_id: str) -> None:
+    """Reject SSC portfolio IDs that aren't shape-safe for URL interpolation.
+
+    See :class:`SecurityScorecardInvalidPortfolioIdError` for the
+    full rationale. Raises that exception on any value that does
+    not match :data:`_PORTFOLIO_ID_RE`.
+    """
+    if not isinstance(portfolio_id, str) or not _PORTFOLIO_ID_RE.fullmatch(
+        portfolio_id
+    ):
+        raise SecurityScorecardInvalidPortfolioIdError(
+            "Invalid SecurityScorecard portfolio_id format "
+            "(expected [A-Za-z0-9_-]{1,128}; got "
+            f"{portfolio_id!r})"
+        )
 
 
 # ── BLIND_SPOTS list ───────────────────────────────────────────────
@@ -191,6 +236,12 @@ class SecurityScorecardCollector:
                 "SECURITYSCORECARD_API_TOKEN env var per the "
                 "secret-handling protocol."
             )
+        # v0.7.12 P0.6 / CodeQL #92 closure: validate portfolio_id
+        # at the trust boundary so any path-traversal attempt is
+        # rejected before the URL composition at
+        # `_paginate_portfolio`.
+        if portfolio_id is not None:
+            _validate_portfolio_id_shape(portfolio_id)
         self._api_token = api_token
         self._portfolio_id = portfolio_id
         self._base_url = base_url.rstrip("/")
@@ -295,6 +346,11 @@ class SecurityScorecardCollector:
                 "SecurityScorecard portfolio entry is missing a "
                 "string `id` field."
             )
+        # v0.7.12 P0.6 / CodeQL #92 closure: defense-in-depth.
+        # Even if the SSC API itself returns a malformed/malicious
+        # portfolio_id, reject it before it's composed into the
+        # `/portfolios/{portfolio_id}/companies` URL.
+        _validate_portfolio_id_shape(portfolio_id)
         # v0.7.11 P3 closure of v0.7.9 M-6: emit a warning so
         # operators with multiple SSC portfolios know an arbitrary
         # one was selected. Pass --portfolio-id explicitly to
