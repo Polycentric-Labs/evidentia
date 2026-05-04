@@ -51,10 +51,12 @@ def _validate_id_shape(workflow_id: str) -> None:
 def get_workflow_store_dir(override: Path | None = None) -> Path:
     """Resolve the workflow store directory."""
     if override is not None:
-        return Path(override)
+        return Path(override).expanduser().resolve()
     env = os.environ.get(WORKFLOW_STORE_ENV_VAR)
     if env:
-        return Path(env)
+        # v0.7.12 P3 cosmetic harmonization: match vendor_store +
+        # model_risk_store pattern.
+        return Path(env).expanduser().resolve()
     return Path(user_data_dir("evidentia", appauthor=False)) / "workflow_store"
 
 

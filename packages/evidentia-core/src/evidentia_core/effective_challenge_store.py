@@ -53,10 +53,14 @@ def _validate_id_shape(challenge_id: str) -> None:
 def get_challenge_store_dir(override: Path | None = None) -> Path:
     """Resolve the effective-challenge store directory."""
     if override is not None:
-        return Path(override)
+        return Path(override).expanduser().resolve()
     env = os.environ.get(CHALLENGE_STORE_ENV_VAR)
     if env:
-        return Path(env)
+        # v0.7.12 P3 cosmetic harmonization: match vendor_store +
+        # model_risk_store pattern. expanduser() resolves ``~/`` in
+        # operator-supplied paths; resolve() collapses ``..`` segments
+        # before any downstream validate_within() call sees them.
+        return Path(env).expanduser().resolve()
     return Path(user_data_dir("evidentia", appauthor=False)) / "challenge_store"
 
 

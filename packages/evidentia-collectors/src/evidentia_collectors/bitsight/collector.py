@@ -466,24 +466,25 @@ class BitSightCollector:
             errors=errors,
         )
 
-        with contextlib.suppress(Exception):
-            _log.info(
-                action=EventAction.COLLECT_COMPLETED,
-                outcome=(
-                    EventOutcome.SUCCESS if not errors
-                    else EventOutcome.UNKNOWN
-                ),
-                message=(
-                    f"BitSight collection finished: {len(findings)} "
-                    f"finding(s) across {scanned} company(s)"
-                ),
-                evidentia={
-                    "run_id": run_id,
-                    "collector_id": COLLECTOR_ID,
-                    "company_count": scanned,
-                    "finding_count": len(findings),
-                },
-            )
+        # v0.7.12 P3 closure of v0.7.9 M-3: drop over-defensive
+        # contextlib.suppress wrapping on the audit logger.
+        _log.info(
+            action=EventAction.COLLECT_COMPLETED,
+            outcome=(
+                EventOutcome.SUCCESS if not errors
+                else EventOutcome.UNKNOWN
+            ),
+            message=(
+                f"BitSight collection finished: {len(findings)} "
+                f"finding(s) across {scanned} company(s)"
+            ),
+            evidentia={
+                "run_id": run_id,
+                "collector_id": COLLECTOR_ID,
+                "company_count": scanned,
+                "finding_count": len(findings),
+            },
+        )
 
         return findings, manifest
 
