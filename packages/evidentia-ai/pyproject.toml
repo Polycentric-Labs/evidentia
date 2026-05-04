@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-ai"
-version = "0.7.8"
+version = "0.7.9"
 description = "LLM-powered risk statement generator and evidence validator for Evidentia"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]

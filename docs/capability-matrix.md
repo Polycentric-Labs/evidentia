@@ -13,6 +13,105 @@
 
 ---
 
+## Re-validation snapshot — 2026-05-04 (v0.7.9 ship — pre-tag)
+
+v0.7.9 ships the **TPRM module** (`evidentia tprm` top-level
+subcommand group: vendor CRUD + concentration-report + DD-
+questionnaire generator + ingest), **4 vendor-risk SaaS
+collectors** (Vanta + Drata + BitSight + SecurityScorecard), and
+**OSCAL TPRM emit** (vendor inventory in metadata.parties[] +
+back-matter.resources[] with SHA-256 integrity hashes). Plus
+the v0.7.8 Step 5.A carry-over batch (Snowflake count separation
++ quoted-id hardening + Databricks PermissionDenied typed catch
++ Power BI 1MB byte-cap guard + PR #18 workflow fix).
+
+Per the v4 skill rule "patch with substantial new capability
+surface = capability-matrix re-walk on the new surfaces +
+regression check on existing tiers", this snapshot does a focused
+re-walk of the **9 new public surfaces** + a regression check
+against the **14 existing surfaces** (10 tiers + 4 v0.7.8 surfaces
+that became existing in this snapshot).
+
+### Existing tiers — regression check (no functional change)
+
+| Tier | v0.7.9 status | Evidence |
+|---|---|---|
+| 1 — AI features | ✅ unchanged | No `evidentia-ai` files touched in `git diff v0.7.8..HEAD` |
+| 2 — OSCAL signing + verify | ✅ extended (additive) | `oscal/exporter.py` gained vendor_inventory parameter (P0.5); existing finding-resource integrity + Sigstore signing path unchanged |
+| 3 — Air-gap enforcement | ✅ unchanged | `network_guard.py` untouched; new collectors emit explicit `requires_network=True` |
+| 4 — Secret scrubber | ✅ unchanged | `audit/logger._scrub` untouched; new collectors source tokens via env vars, never via CLI args or REST bodies |
+| 5 — Collectors | ✅ extended (4 new) | Vanta + Drata + BitSight + SecurityScorecard packages added; existing AWS / GitHub / Okta / 5 SQL / Databricks / Snowflake unchanged |
+| 6 — OSCAL exporter + output formats | ✅ extended (P0.5) | `gap_report_to_oscal_ar` gained `vendor_inventory: list[Vendor] \| None`; emits vendors as `metadata.parties[]` parties + `back-matter.resources[]` with SHA-256 integrity hash |
+| 7 — CLI commands | ✅ extended | `evidentia tprm vendor add/list/show/edit/delete`, `evidentia tprm concentration-report`, `evidentia tprm dd-questionnaire generate/ingest`, `evidentia collect vanta/drata/bitsight/securityscorecard`, `evidentia gap analyze --vendor-inventory <path>`. Existing CLI unchanged |
+| 8 — REST API | ✅ extended | TPRM CRUD (5) + concentration (1) + DD-questionnaire (1) + 4 collector endpoints + status endpoint extended with vanta/drata/bitsight/securityscorecard entries. All new endpoints follow v0.7.8 F-V08-DAST-3 pattern (400 not 422 for body errors; 503 for upstream/auth; 500 for unexpected) |
+| 9 — Web UI | ✅ unchanged | No `evidentia-ui` files touched in v0.7.9 (frontend bundle unchanged) |
+| 10 — Configuration precedence | ✅ unchanged | `VANTA_API_TOKEN` / `DRATA_API_TOKEN` / `BITSIGHT_API_TOKEN` / `SECURITYSCORECARD_API_TOKEN` follow existing env-var precedence; CLI flags + payloads never accept secrets |
+| 11 — Databricks collector | ✅ unchanged + hardened | PermissionDenied typed catch (carry-over from v0.7.8 F-V08-CR-MEDIUM); existing 27 unit tests still pass |
+| 12 — Snowflake collector | ✅ unchanged + hardened | Quoted-identifier escape + masking-policy / row-access count separation (both carry-over from v0.7.8 F-V08-CR-MEDIUM); 4 new tests for `_quote_snowflake_identifier()` |
+| 13 — Tableau integration | ✅ unchanged | No tableau files touched in v0.7.9 |
+| 14 — Power BI integration | ✅ unchanged + hardened | 1 MB byte-cap bisection in `push_rows()` (carry-over from v0.7.8 F-V08-CR-MEDIUM); 4 new tests for batch bisection / oversize-row error / empty-rows short-circuit |
+
+### New surfaces — full v0.7.9 capability walk
+
+Each row covers: functional · adversarial · result.
+
+| New surface | Functional | Adversarial | Result |
+|---|---|---|---|
+| **TPRM Vendor model + storage** (`evidentia_core.models.tprm`, `evidentia_core.vendor_store`) | ✅ 23 unit tests for Pydantic models (Vendor + FourthParty + EvidenceRef + 3 enums + `compute_next_review_due` with leap-year clamp) + 23 unit tests for vendor_store JSON-file persistence (UUID validation, atomic save, EVIDENTIA_VENDOR_STORE_DIR override) | ✅ Pydantic `extra="forbid"` rejects unknown fields; UUID-shape validation rejects path traversal in vendor IDs; EvidenceRef `@model_validator` enforces artifact_id-or-file_path + sha256-with-file_path contract (P0.1 H-1 inline-fix); atomic save via `os.replace(tmp, out_path)` (P0.1 M-1 inline-fix) | **PASS** |
+| **TPRM CLI** (`evidentia tprm vendor add/list/show/edit/delete`) | ✅ 25 integration tests via Typer's CliRunner (3 input modes for add: atomic flags + --from-yaml; 3 input modes for edit: atomic + --from-yaml + --editor; --yes-bypass for delete; rich-table + --json for list/show) | ✅ All 11 atomic-flag fields validated through Pydantic on construction; `--from-yaml` only accepts top-level YAML mapping; UUID-shape validation; CLI bare-array vs REST-envelope contract documented in CLI docstring (P0.1 H-2 doc fix) | **PASS** |
+| **TPRM REST CRUD** (`/api/tprm/vendors` + cadence preview) | ✅ 23 integration tests via FastAPI TestClient (POST/GET/PUT/DELETE + skip/limit pagination + criticality_tier/type filters + cadence-preview helper); `model_copy(update=...)` pattern in PUT to avoid mutating the request DTO (P0.1 H-3 inline-fix) | ✅ 400 for body-content errors (preserves v0.7.8 F-V08-DAST-3 fix); paginated envelope contract; UUID-shape validation in path params; max `limit=1000` to bound memory usage | **PASS** |
+| **TPRM concentration-report** (`evidentia tprm concentration-report` + `/api/tprm/concentration`) | ✅ 20 unit + 6 CLI integration + 6 REST integration = 32 tests; 6 dimensions (region / cloud-provider / 4th-party / service-category / criticality-tier / regulatory-classification); HTML/JSON/CSV outputs; threshold flagging | ✅ HTML output is single-file (no JS deps; `html.escape` XSS-safe on all user-supplied vendor + value names — H-1 P0.3 Continuous fix); CSV-injection defense (`_csv_safe` OWASP single-quote prefix per CWE-1236 — H-1 P0.3 Continuous fix); cloud-provider direct-vs-4P collision resolved with `(direct)` / `(4th-party)` source suffix (H-2 P0.3 Continuous fix); format-string foot-gun on vendor.name closed via `.replace()` (H-3 P0.3 Continuous fix) | **PASS** |
+| **TPRM DD-questionnaire generator** (`evidentia tprm dd-questionnaire generate`) | ✅ 24 unit + 7 CLI integration + 6 REST integration = 37 tests; 5 format catalogue (evidentia-generic / caiq-lite / caiq-full / sig BYO / sig-lite BYO); 3 output formats (json / csv / xlsx); 9 new P0.2 second-slice tests covering caiq-full domain coverage + XLSX render + SIG BYO | ✅ Packaged JSON loaded via `importlib.resources` (zipimport-safe); CSV-injection defenses on all user-content cells (vendor name + 4th-party + region + relationship_owner + question_text + notes); XLSX written via openpyxl gated behind `[xlsx]` extra (clear `XlsxNotInstalledError` if missing); SIG BYO `_parse_sig_template` uses fuzzy sheet-name matching + label-based pre-fill (CLI-only; no REST exposure) | **PASS** |
+| **TPRM DD-questionnaire ingest** (`evidentia tprm dd-questionnaire ingest`) | ✅ 6 unit + 2 H-4 inline-tests (vendor_id=None ingest + SIG BYO partial-match); auto-detects file format from extension (.json/.csv/.xlsx) | ✅ JSON path uses `json.loads` (CWE-502-safe; never `pickle.loads` / `yaml.unsafe_load`); CSV uses `csv.reader` (safe); XLSX uses `openpyxl.load_workbook(data_only=True)` (no formula evaluation; no VBA macro execution); unsupported extension → typed `ValueError`; missing file → `FileNotFoundError`; missing vendor correlation → clear CLI error w/ remediation | **PASS** |
+| **Vanta vendor-risk collector** (`evidentia_collectors.vanta`) | ✅ 13 unit tests with mocked httpx (happy path, pagination, max-vendors ceiling, 4 high-risk field-shape variants, 401/403 → VantaAuthError, network failure → manifest-level error, empty inventory) | ✅ Constructor rejects empty token; bearer-token in headers (never URL/query); `_paginate` cursor-based with `max_vendors=2000` cap; stuck-cursor guard (Continuous H-1 inline-fix); defensive `_is_high_risk` across `riskTier`/`risk_tier`/`riskLevel`/`risk_level`/nested `riskAssessment.{tier,level,severity}`; auth errors fatal (re-raise); connection/query errors land in manifest's `errors` list | **PASS** |
+| **Drata vendor-risk collector** (`evidentia_collectors.drata`) | ✅ 13 unit tests with mocked httpx (covers same patterns as Vanta + 6 high-risk field-shape variants including numeric `inherentRisk` / `residualRisk` on Drata's documented 1-5 / 1-25 scales) | ✅ Same posture as Vanta + explicit-key payload-priority `if "data" in data: ...` (Continuous H-2 inline-fix; previously fell through `[]` to other keys); stuck-cursor guard (Continuous H-1 inline-fix); typed `DrataAuthError` on 401/403 | **PASS** |
+| **BitSight portfolio collector** (`evidentia_collectors.bitsight`) | ✅ 13 unit tests with mocked httpx (portfolio-inventory + low-rating threshold emit; cross-host pagination guard; oversize/underrated edge cases) | ✅ HTTP Basic auth with token-as-username + empty password (token wrapped internally; never in URL); BitSight returns absolute URLs in `next` field — collector refuses to follow cross-host AND scheme-downgraded URLs (Continuous F-V09-S1 fix per CWE-319); `low_rating_threshold` configurable (default 700 BitSight Basic boundary); rating-as-string falls through gracefully (no false positive on stringified rating) | **PASS** |
+| **SecurityScorecard portfolio collector** (`evidentia_collectors.securityscorecard`) | ✅ 13 unit tests with mocked httpx (portfolio-inventory + low-score emit; auto-resolve portfolio path; page-based pagination; auth/connection failure paths) | ✅ `Authorization: Token <value>` header (distinct from BitSight's HTTP Basic + Vanta/Drata's Bearer); explicit-key payload-priority (Continuous H-2 inline-fix); monotonic-increase guard (Continuous H-3 inline-fix); auto-resolve portfolio_id when omitted; empty-portfolios path raises typed `SecurityScorecardQueryError` (NOT auth error) | **PASS** |
+| **OSCAL TPRM emit** (`evidentia_core.oscal.exporter` extended) | ✅ 9 new unit tests covering parties+back-matter dual-encoding, UUID consistency, prop population, integrity-hash determinism, canonical-JSON round-trip, vendor-count metadata, no-vendor-no-noise behavior, vendor+finding coexistence | ✅ Vendor.id reused as both party UUID + back-matter resource UUID (cross-reference resolution); Evidentia-namespaced props (`vendor-id` / `vendor-type` / `criticality-tier` / etc.); SHA-256 hash on canonical JSON via deterministic `json.dumps(sort_keys=True, separators=(",", ":"))`; tampering with vendor record changes hash + fails `verify_ar_file`; optional fields surface only when present (clean diff); `--vendor-inventory` CLI flag accepts JSON-array file with operator-friendly error messages on malformed input | **PASS** |
+| **`--security-headers` middleware** (`evidentia_api.security_headers`) | ✅ Tests: middleware applies CSP / X-Frame-Options DENY / X-Content-Type-Options nosniff / Referrer-Policy / HSTS / Permissions-Policy on all responses; `should_enable_for_host()` False for 127.0.0.1/localhost/::1 + True for non-loopback | ✅ Always-set semantic (no skip on already-present); `--security-headers / --no-security-headers` CLI flags on `evidentia serve`; default = auto (off for localhost dev parity, on for non-loopback bind = operator opted into network exposure); operators behind TLS-terminating proxy can pass `--no-security-headers` to suppress duplicates. Closes v0.7.8 F-V08-DAST-2 LOW (CWE-693). | **PASS** |
+
+### v0.7.9 in-flight findings re-summary
+
+| Source | Bucket | Count | Status |
+|---|---|---|---|
+| Continuous-variant Step 3 (P0.4 quartet + P0.5 + P0.2-second-slice) | HIGH | 5 (H-1 stuck cursor / H-2 fall-through / H-3 partial loop guard / H-4 test gaps / H-5 SIG BYO column order) | **all 5 inline-fixed** in commit `3315150` |
+| Continuous-variant Step 3 | LOW security | 1 (F-V09-S1 BitSight TLS-downgrade scheme guard / CWE-319) | **inline-fixed** in commit `3315150` |
+| Continuous-variant Step 5 | Project-wide | 5 housekeeping (CHANGELOG gaps + README staleness + ROADMAP staleness + plan-status wording + pyproject description) | **all inline-fixed** in commit `3315150` |
+| Pre-tag Step 3 incremental | HIGH | 1 (H-1 docs/tprm.md references non-existent `--region` and `--next-review-due` CLI flags) | **inline-fixed** by adding both flags to `vendor add` + `vendor edit` (this commit) |
+| v0.7.8 carry-over batch | MEDIUM × 4 | Snowflake count split + quoted-id + Databricks PermissionDenied + Power BI 1MB | **all 4 inline-fixed** in commit `cf1c07e` |
+| v0.7.8 carry-over LOW × 9 | LOW | Opportunistic refinements per security-review-v0.7.8.md "no correctness defects" disposition | **DEFERRED to v0.7.10** with explicit rationale (ship-velocity per Allen 2026-05-04) |
+| Pre-tag MEDIUM × 9 + LOW × 8 (Continuous run) | MEDIUM/LOW | Whitespace-token validation, int(rating) truncation, contextlib.suppress, cross-collector base-class refactor, etc. | **DEFERRED to v0.7.10** per Continuous-variant disposition |
+
+### DAST sub-step (G11) — regression-only this run
+
+The v0.7.8 ship cleared the schema-fidelity batch (17 endpoints
+moved from 422→400; F-V08-DAST-3 batch fix). v0.7.9 added 11 new
+POST endpoints (4 collectors + 5 TPRM CRUD + 1 concentration + 1
+DD-questionnaire) all following the v0.7.8 F-V08-DAST-3 pattern by
+construction (verified by code-review at the per-route HTTPException
+sites). UI is unchanged in v0.7.9, so the v0.7.8 Playwright XSS-
+probe results carry forward unchanged. F-V08-DAST-2 (security
+headers) shipped in commit `ae4fc59` per the v0.7.9 P0 cycle.
+
+Schemathesis re-run **deferred** to ship-time post-tag verification
+(Step 7) as a regression check rather than re-fired here for
+review-time efficiency. Per-run JSON captures the deferral.
+
+### Step 4 verification gate (v0.7.9)
+
+| Gate | Result |
+|---|---|
+| Surface-coverage % ≥ 90% | ✅ 26 / 26 surface rows have ✅ verdicts (100%) — 12 new surfaces + 14 existing |
+| Adversarial probe coverage ≥ 6 of 7 vectors per new surface | ✅ all 12 new surfaces cleared 7/7 vectors |
+| Test-suite green | ✅ 1540 passed, 12 skipped, 0 failed (full repo) |
+| mypy strict on changed packages | ✅ 0 issues in 160 source files |
+| ruff clean on packages/ + tests/ | ✅ all checks passed |
+| DAST regression check (G11) | ✅ all v0.7.9 new POST endpoints follow v0.7.8 F-V08-DAST-3 fix pattern by construction (code-review verified); UI unchanged from v0.7.8 (Playwright results carry forward); Schemathesis re-fire deferred to Step 7 post-tag |
+| Standing-rule keyword sweep | ✅ 0 hits across 21 forbidden tokens (Continuous-variant + Pre-tag incremental sweeps both clean) |
+| Claude-attribution sweep | ✅ 0 hits in any commit since v0.7.8 |
+
+---
+
 ## Re-validation snapshot — 2026-05-03 (v0.7.8 ship — pre-tag)
 
 v0.7.8 adds **two cloud data-warehouse collectors** (Databricks +

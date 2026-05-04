@@ -258,6 +258,23 @@ def vendor_add(
         "--last-due-diligence-review",
         help="Date of most recent completed DD review (YYYY-MM-DD).",
     ),
+    next_review_due: str | None = typer.Option(
+        None,
+        "--next-review-due",
+        help=(
+            "Override the auto-computed next-review-due date "
+            "(YYYY-MM-DD). When omitted, the value is auto-computed "
+            "from criticality_tier + last_due_diligence_review."
+        ),
+    ),
+    region: str | None = typer.Option(
+        None,
+        "--region",
+        help=(
+            "Free-text geo / cloud-region label (max 128 chars). "
+            "Used by `concentration-report --by region`."
+        ),
+    ),
     regulatory_classification: str | None = typer.Option(
         None,
         "--regulatory-classification",
@@ -311,6 +328,7 @@ def vendor_add(
     lddr = _parse_date_or_exit(
         last_due_diligence_review, "--last-due-diligence-review"
     )
+    nrd = _parse_date_or_exit(next_review_due, "--next-review-due")
 
     if from_yaml:
         import yaml as yaml_mod  # lazy import
@@ -336,6 +354,10 @@ def vendor_add(
             data["contract_end_date"] = ced.isoformat()
         if lddr:
             data["last_due_diligence_review"] = lddr.isoformat()
+        if nrd:
+            data["next_review_due"] = nrd.isoformat()
+        if region is not None:
+            data["region"] = region
         if regulatory_classification is not None:
             data["regulatory_classification"] = _parse_csv_enum(
                 regulatory_classification, RegulatoryClassification
@@ -383,6 +405,10 @@ def vendor_add(
                     "last_due_diligence_review": (
                         lddr.isoformat() if lddr else None
                     ),
+                    "next_review_due": (
+                        nrd.isoformat() if nrd else None
+                    ),
+                    "region": region,
                     "regulatory_classification": _parse_csv_enum(
                         regulatory_classification, RegulatoryClassification
                     ),
@@ -507,6 +533,23 @@ def vendor_edit(
     last_due_diligence_review: str | None = typer.Option(
         None, "--last-due-diligence-review", help="YYYY-MM-DD"
     ),
+    next_review_due: str | None = typer.Option(
+        None,
+        "--next-review-due",
+        help=(
+            "YYYY-MM-DD. Override the auto-computed next-review-due "
+            "date; otherwise auto-recomputed when "
+            "--last-due-diligence-review is updated."
+        ),
+    ),
+    region: str | None = typer.Option(
+        None,
+        "--region",
+        help=(
+            "Free-text geo / cloud-region label (max 128 chars). "
+            "Used by `concentration-report --by region`."
+        ),
+    ),
     regulatory_classification: str | None = typer.Option(
         None,
         "--regulatory-classification",
@@ -557,6 +600,8 @@ def vendor_edit(
             owner,
             contract_end_date,
             last_due_diligence_review,
+            next_review_due,
+            region,
             regulatory_classification,
             residual_risk_score,
             notes,
@@ -648,6 +693,12 @@ def vendor_edit(
             vendor.last_due_diligence_review = _parse_date_or_exit(
                 last_due_diligence_review, "--last-due-diligence-review"
             )
+        if next_review_due is not None:
+            vendor.next_review_due = _parse_date_or_exit(
+                next_review_due, "--next-review-due"
+            )
+        if region is not None:
+            vendor.region = region
         if regulatory_classification is not None:
             vendor.regulatory_classification = _parse_csv_enum(  # type: ignore[assignment]
                 regulatory_classification, RegulatoryClassification
@@ -657,8 +708,14 @@ def vendor_edit(
         if notes is not None:
             vendor.notes = notes
 
-    # Re-compute next_review_due if the anchor changed.
-    if vendor.last_due_diligence_review:
+    # Re-compute next_review_due if the anchor changed AND the
+    # operator didn't explicitly supply --next-review-due. Atomic
+    # --next-review-due takes precedence over auto-recompute (the
+    # operator is asserting a manual cadence override).
+    if (
+        vendor.last_due_diligence_review
+        and next_review_due is None
+    ):
         vendor.next_review_due = vendor.compute_next_review_due()
 
     save_vendor(vendor)

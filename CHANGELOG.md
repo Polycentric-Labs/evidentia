@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.9] - 2026-05-04
+
+**The financial-services TPRM ship.** Brings Evidentia into the
+regulated third-party-risk-management compliance domain via the
+new `evidentia tprm` top-level capability module — vendor inventory
+CRUD, due-diligence questionnaire generation + ingestion (5
+formats incl. SIG BYO + caiq-full), concentration-risk reporting
+across 6 dimensions, OSCAL TPRM emit, and 4 vendor-risk SaaS
+collectors (Vanta + Drata + BitSight + SecurityScorecard). Plus
+the v0.7.8 Step 5.A carry-over batch (4 MEDIUM findings closed),
+defense-in-depth security headers middleware (closes v0.7.8
+F-V08-DAST-2 LOW), and PR #18 actions-bump workflow fix.
+
+Per the v0.7.9 plan §19 final-scope-narrowing decision, the
+TPRM module ships **complete** (P0.1 → P0.5 finished); v0.7.10
+will be the "Federal compliance + Model Risk" follow-on (P0.6
+Model Risk overlay + P1 7 new bundled catalogs + P1.5 G1+G2
+Three Lines of Defense + Effective Challenge governance
+primitives), and v0.7.11 the "Audit chain-of-custody" follow-on
+(P2 retention metadata + WORM backends + P1.5 G3+G4+G5 KRI/KPI/
+KGI + Open FAIR + process-as-code).
+
 ### Fixed
 
 - **v0.7.8 Step 5.A carry-over batch** — 4 MEDIUM findings closed +
