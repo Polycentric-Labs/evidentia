@@ -57,6 +57,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   honors operator overrides via `--next-validation-due`. 23 CLI
   integration tests covering every verb + atomic + YAML +
   validation contract.
+- **`evidentia model-risk doc generate` + `validation-report
+  generate`** (v0.7.10 P0.6.2 + P0.6.3). New CLI verbs +
+  REST endpoints (`GET /api/model-risk/models/{id}/documentation`
+  + `GET /api/model-risk/models/{id}/validation-report`) producing
+  SR 11-7 / SR 26-02 / OCC Bulletin 2011-12 / OCC Bulletin
+  2026-13a-aligned model documentation + validation cycle reports
+  from a `ModelInventory` record. Output is plain Markdown —
+  diff-able, version-controllable, and consumable by every common
+  auditor toolchain (Word via pandoc, PDF via pandoc, HTML, plain
+  text). Both generators are deterministic — same input produces
+  the same output character-for-character. Doc generator covers 9
+  numbered sections (identification, purpose, methodology, inputs,
+  outputs, assumptions/limitations, validation history, monitoring/
+  retirement, audit trail) per SR 11-7 §III.B framework. Validation
+  report includes executive summary with HIGH-open warning callout,
+  finding-disposition counts (severity × status × total), detailed
+  findings table, per-finding remediation narrative, and tier-driven
+  cadence context. CLI surfaces `--output <path>` + `--force` flags
+  with stdout default; REST endpoints return `Content-Type:
+  text/plain; charset=utf-8` so the Markdown body lands raw. New
+  `evidentia_core.model_risk` public module: `generate_model_
+  documentation` + `generate_validation_report`. 22 new tests
+  (11 unit + 4 CLI + 4 REST + 3 disposition/warning logic).
 - **`RiskStatement.model_inventory_ref` AI-feature linkage**
   (v0.7.10 P0.6.4). New optional UUID field on
   `evidentia_core.models.risk.RiskStatement` pointing to a

@@ -319,3 +319,52 @@ class TestPreviewNextValidationDue:
             "00000000-0000-0000-0000-000000000000/next-validation-due"
         )
         assert r.status_code == 404
+
+
+# ── GET /api/model-risk/models/{id}/documentation (P0.6.2) ─────────
+
+
+class TestDocumentation:
+    def test_returns_markdown_with_correct_content_type(
+        self, api_client: TestClient
+    ) -> None:
+        post = api_client.post(
+            "/api/model-risk/models", json=_make_payload()
+        )
+        mid = post.json()["id"]
+        r = api_client.get(f"/api/model-risk/models/{mid}/documentation")
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("text/plain")
+        assert "## 1. Identification" in r.text
+        assert "## 9. Audit trail" in r.text
+
+    def test_unknown_returns_404(self, api_client: TestClient) -> None:
+        r = api_client.get(
+            "/api/model-risk/models/"
+            "00000000-0000-0000-0000-000000000000/documentation"
+        )
+        assert r.status_code == 404
+
+
+# ── GET /api/model-risk/models/{id}/validation-report (P0.6.3) ─────
+
+
+class TestValidationReportEndpoint:
+    def test_returns_markdown(self, api_client: TestClient) -> None:
+        post = api_client.post(
+            "/api/model-risk/models", json=_make_payload()
+        )
+        mid = post.json()["id"]
+        r = api_client.get(
+            f"/api/model-risk/models/{mid}/validation-report"
+        )
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("text/plain")
+        assert "## Executive summary" in r.text
+
+    def test_unknown_returns_404(self, api_client: TestClient) -> None:
+        r = api_client.get(
+            "/api/model-risk/models/"
+            "00000000-0000-0000-0000-000000000000/validation-report"
+        )
+        assert r.status_code == 404

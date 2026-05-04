@@ -30,6 +30,10 @@ from datetime import date
 from pathlib import Path
 
 import typer
+from evidentia_core.model_risk import (
+    generate_model_documentation,
+    generate_validation_report,
+)
 from evidentia_core.model_risk_store import (
     InvalidModelIdError,
     delete_model,
@@ -48,7 +52,13 @@ from rich.table import Table
 
 app = typer.Typer(help="Model Risk Management commands (SR 11-7 / SR 26-02).")
 model_app = typer.Typer(help="Model inventory commands.")
+doc_app = typer.Typer(help="Model documentation generators (SR 11-7 §III.A).")
+validation_app = typer.Typer(
+    help="Validation report generators (SR 11-7 §III.D)."
+)
 app.add_typer(model_app, name="model")
+app.add_typer(doc_app, name="doc")
+app.add_typer(validation_app, name="validation-report")
 
 console = Console()
 
@@ -681,3 +691,110 @@ def model_delete(
         console.print(
             f"[yellow]No record removed for ID {model_id!r}.[/yellow]"
         )
+
+
+# ── doc generate (v0.7.10 P0.6.2) ──────────────────────────────────
+
+
+@doc_app.command("generate")
+def doc_generate(
+    model_id: str = typer.Argument(..., help="Model ID (UUID)."),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help=(
+            "Output path. If omitted, prints to stdout. The file is "
+            "written atomically and never overwrites an existing path "
+            "unless `--force` is set."
+        ),
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Overwrite the output path if it already exists.",
+    ),
+) -> None:
+    """Generate SR 11-7-aligned model documentation in Markdown.
+
+    Writes a self-contained Markdown document covering identification,
+    purpose, methodology, inputs, outputs, validation history,
+    monitoring/retirement, and the SR 11-7 / SR 26-02 audit-trail
+    section linking back to AI-generated risk statements.
+    """
+    model = _load_model_or_exit(model_id)
+    rendered = generate_model_documentation(model)
+
+    if output is None:
+        # stdout — pipe-friendly; no rich formatting to keep the
+        # Markdown clean for downstream tools (pandoc, etc.).
+        sys.stdout.write(rendered)
+        if not rendered.endswith("\n"):
+            sys.stdout.write("\n")
+        return
+
+    if output.exists() and not force:
+        console.print(
+            f"[red]Error:[/red] {output} already exists; pass --force to overwrite."
+        )
+        raise typer.Exit(code=1)
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(rendered, encoding="utf-8")
+    console.print(
+        f"[green]Wrote[/green] model documentation to [bold]{output}[/bold] "
+        f"({len(rendered)} chars)."
+    )
+
+
+# ── validation-report generate (v0.7.10 P0.6.3) ────────────────────
+
+
+@validation_app.command("generate")
+def validation_report_generate(
+    model_id: str = typer.Argument(..., help="Model ID (UUID)."),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help=(
+            "Output path. If omitted, prints to stdout. The file is "
+            "written atomically and never overwrites an existing path "
+            "unless `--force` is set."
+        ),
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Overwrite the output path if it already exists.",
+    ),
+) -> None:
+    """Generate SR 11-7-aligned validation cycle report in Markdown.
+
+    Renders the executive summary (with HIGH-open warning callout
+    if applicable), finding-disposition table (severity × status),
+    detailed findings table, per-finding remediation narrative, and
+    cycle context with tier-driven cadence metadata.
+    """
+    model = _load_model_or_exit(model_id)
+    rendered = generate_validation_report(model)
+
+    if output is None:
+        sys.stdout.write(rendered)
+        if not rendered.endswith("\n"):
+            sys.stdout.write("\n")
+        return
+
+    if output.exists() and not force:
+        console.print(
+            f"[red]Error:[/red] {output} already exists; pass --force to overwrite."
+        )
+        raise typer.Exit(code=1)
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(rendered, encoding="utf-8")
+    console.print(
+        f"[green]Wrote[/green] validation report to [bold]{output}[/bold] "
+        f"({len(rendered)} chars)."
+    )
+

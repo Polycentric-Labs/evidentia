@@ -411,3 +411,81 @@ class TestModelDelete:
         )
         assert result.exit_code == 1
         assert "Invalid model ID" in result.output
+
+
+# ── doc generate (P0.6.2) ──────────────────────────────────────────
+
+
+class TestDocGenerate:
+    def test_to_stdout(self, runner: CliRunner) -> None:
+        mid = _add_minimal_model(runner)
+        result = runner.invoke(
+            app, ["model-risk", "doc", "generate", mid]
+        )
+        assert result.exit_code == 0, result.output
+        assert "## 1. Identification" in result.output
+        assert "## 9. Audit trail" in result.output
+
+    def test_to_file(self, runner: CliRunner, tmp_path: Path) -> None:
+        mid = _add_minimal_model(runner)
+        out = tmp_path / "doc.md"
+        result = runner.invoke(
+            app,
+            ["model-risk", "doc", "generate", mid, "--output", str(out)],
+        )
+        assert result.exit_code == 0, result.output
+        assert out.exists()
+        body = out.read_text(encoding="utf-8")
+        assert "Model Documentation — Test Model" in body
+
+    def test_refuses_to_overwrite_without_force(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        mid = _add_minimal_model(runner)
+        out = tmp_path / "doc.md"
+        out.write_text("pre-existing", encoding="utf-8")
+        result = runner.invoke(
+            app,
+            ["model-risk", "doc", "generate", mid, "--output", str(out)],
+        )
+        assert result.exit_code == 1
+        assert "--force" in result.output
+        assert out.read_text(encoding="utf-8") == "pre-existing"
+
+    def test_unknown_id_errors(self, runner: CliRunner) -> None:
+        result = runner.invoke(
+            app,
+            [
+                "model-risk", "doc", "generate",
+                "00000000-0000-0000-0000-000000000000",
+            ],
+        )
+        assert result.exit_code == 1
+
+
+# ── validation-report generate (P0.6.3) ────────────────────────────
+
+
+class TestValidationReportGenerate:
+    def test_to_stdout(self, runner: CliRunner) -> None:
+        mid = _add_minimal_model(runner)
+        result = runner.invoke(
+            app, ["model-risk", "validation-report", "generate", mid]
+        )
+        assert result.exit_code == 0, result.output
+        assert "## Executive summary" in result.output
+        assert "## Finding disposition" in result.output
+
+    def test_to_file(self, runner: CliRunner, tmp_path: Path) -> None:
+        mid = _add_minimal_model(runner)
+        out = tmp_path / "report.md"
+        result = runner.invoke(
+            app,
+            [
+                "model-risk", "validation-report", "generate",
+                mid, "--output", str(out),
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        body = out.read_text(encoding="utf-8")
+        assert "Validation Report — Test Model" in body

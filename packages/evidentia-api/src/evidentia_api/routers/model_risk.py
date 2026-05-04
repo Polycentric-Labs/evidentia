@@ -34,6 +34,10 @@ from __future__ import annotations
 
 from datetime import date
 
+from evidentia_core.model_risk import (
+    generate_model_documentation,
+    generate_validation_report,
+)
 from evidentia_core.model_risk_store import (
     InvalidModelIdError,
     delete_model,
@@ -48,6 +52,7 @@ from evidentia_core.models.model_risk import (
     Tier,
 )
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import PlainTextResponse
 
 router = APIRouter()
 
@@ -309,3 +314,58 @@ async def preview_next_validation_due(
     return {
         "next_validation_due": computed.isoformat() if computed else None,
     }
+
+
+# ── docs + validation reports (v0.7.10 P0.6.2 + P0.6.3) ──────────
+
+
+@router.get(
+    "/model-risk/models/{model_id}/documentation",
+    response_class=PlainTextResponse,
+)
+async def model_documentation(model_id: str) -> str:
+    """Return SR 11-7-aligned model documentation as Markdown text.
+
+    Response Content-Type is ``text/plain; charset=utf-8`` so the
+    Markdown body lands raw in the client (curl, browser-Save-As,
+    pandoc-pipe, etc.) without JSON-string escaping. Same content
+    as ``evidentia model-risk doc generate``.
+    """
+    try:
+        model = load_model_by_id(model_id)
+    except InvalidModelIdError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Model {model_id!r} not found.",
+        ) from exc
+    if model is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Model {model_id!r} not found.",
+        )
+    return generate_model_documentation(model)
+
+
+@router.get(
+    "/model-risk/models/{model_id}/validation-report",
+    response_class=PlainTextResponse,
+)
+async def model_validation_report(model_id: str) -> str:
+    """Return SR 11-7-aligned validation cycle report as Markdown.
+
+    Response Content-Type is ``text/plain; charset=utf-8``. Same
+    content as ``evidentia model-risk validation-report generate``.
+    """
+    try:
+        model = load_model_by_id(model_id)
+    except InvalidModelIdError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Model {model_id!r} not found.",
+        ) from exc
+    if model is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Model {model_id!r} not found.",
+        )
+    return generate_validation_report(model)
