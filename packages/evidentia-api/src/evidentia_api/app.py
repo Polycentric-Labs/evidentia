@@ -162,6 +162,9 @@ def create_app(
         llm_status as llm_status_router,
     )
     from evidentia_api.routers import (
+        model_risk as model_risk_router,
+    )
+    from evidentia_api.routers import (
         risks as risks_router,
     )
     from evidentia_api.routers import (
@@ -188,6 +191,9 @@ def create_app(
         collectors_router.router, prefix="/api", tags=["collectors"]
     )
     app.include_router(tprm_router.router, prefix="/api", tags=["tprm"])
+    app.include_router(
+        model_risk_router.router, prefix="/api", tags=["model-risk"]
+    )
 
     # Static SPA mount — everything that isn't /api/* falls through to index.html.
     _mount_spa(app)

@@ -57,6 +57,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   honors operator overrides via `--next-validation-due`. 23 CLI
   integration tests covering every verb + atomic + YAML +
   validation contract.
+- **`/api/model-risk/models` REST CRUD** (v0.7.10 P0.6 third
+  slice). 6 endpoints mirroring the v0.7.9 P0.1.4 TPRM router
+  pattern: `GET /api/model-risk/models` (list with skip/limit
+  pagination + tier/methodology/vendor_or_internal filters),
+  `POST /api/model-risk/models` (create; server fills id /
+  created_at / updated_at / evidentia_version),
+  `GET /api/model-risk/models/{id}` (single fetch),
+  `PUT /api/model-risk/models/{id}` (full-replace; preserves
+  id + created_at; auto-recomputes next_validation_due if
+  anchor changed and operator did not override),
+  `DELETE /api/model-risk/models/{id}` (204 no-body),
+  `GET /api/model-risk/models/{id}/next-validation-due` (cadence
+  preview without persisting). Error normalization follows the
+  v0.7.8 F-V08-DAST-3 fix (manual HTTPException uses 400 / 404
+  with `{detail: string}` shape; Pydantic 422s preserve
+  array-shape detail). Path-traversal-shape IDs normalize to 404
+  to match the not-found case. 24 TestClient integration tests.
 
 ## [0.7.9] - 2026-05-04
 
