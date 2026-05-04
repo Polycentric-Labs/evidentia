@@ -1028,6 +1028,127 @@ def collect_bitsight(
     )
 
 
+@app.command("securityscorecard")
+def collect_securityscorecard(
+    portfolio_id: str | None = typer.Option(
+        None,
+        "--portfolio-id",
+        help=(
+            "SSC portfolio identifier. If omitted, the collector "
+            "lists portfolios first and pulls from the first "
+            "available one."
+        ),
+    ),
+    token_env: str = typer.Option(
+        "SECURITYSCORECARD_API_TOKEN",
+        "--token-env",
+        help=(
+            "Name of the env var holding the SSC API token. "
+            "Defaults to SECURITYSCORECARD_API_TOKEN. The collector "
+            "passes Authorization: Token <value> headers."
+        ),
+    ),
+    base_url: str = typer.Option(
+        "https://api.securityscorecard.io",
+        "--base-url",
+        help="SecurityScorecard API base URL.",
+    ),
+    max_companies: int = typer.Option(
+        2000,
+        "--max-companies",
+        min=1,
+        max=100_000,
+        help=(
+            "Hard cap on portfolio enumeration. Default 2000 — "
+            "covers typical portfolios."
+        ),
+    ),
+    score_threshold: int = typer.Option(
+        70,
+        "--score-threshold",
+        min=0,
+        max=100,
+        help=(
+            "SSC score below which to emit a low-score finding. "
+            "Default 70 (boundary between C and D grades). "
+            "Range 0-100."
+        ),
+    ),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Where to write the findings JSON. Default: stdout.",
+    ),
+) -> None:
+    """Collect compliance evidence from a SecurityScorecard
+    portfolio (read-only).
+
+    v0.7.9 P0.4 fourth slice ships portfolio inventory + per-company
+    low-score flag detection. Sister collector to BitSight.
+
+    SSC scores 0-100 with grades A (90+), B (80-89), C (70-79),
+    D (60-69), F (<60). The collector emits an INFORMATIONAL
+    finding per portfolio company plus a MEDIUM ACTIVE finding
+    when the score falls below the operator-configured threshold
+    (default 70).
+
+    Auth: pass the API token via env var (default
+    ``SECURITYSCORECARD_API_TOKEN``). SSC uses
+    ``Authorization: Token <value>`` headers (distinct from
+    BitSight's HTTP Basic).
+
+    Deferred to subsequent v0.7.9 P0.4 slices:
+
+    - Per-company factor scores (Application Security, DNS Health,
+      Endpoint Security, Hacker Chatter, IP Reputation, Network
+      Security, Patching Cadence, Social Engineering, etc.)
+    - Historical grade trends
+    """
+    try:
+        from evidentia_collectors.securityscorecard import (
+            SecurityScorecardCollector,
+            SecurityScorecardCollectorError,
+        )
+    except ImportError as e:
+        console.print(
+            "[red]Error:[/red] SecurityScorecard collector module "
+            "not importable. Run "
+            "[cyan]pip install evidentia-collectors[/cyan]."
+        )
+        raise typer.Exit(code=1) from e
+
+    api_token = os.environ.get(token_env)
+    if not api_token:
+        console.print(
+            f"[red]Error:[/red] env var [cyan]{token_env}[/cyan] "
+            "is not set or is empty. Set it to your "
+            "SecurityScorecard API token."
+        )
+        raise typer.Exit(code=1)
+
+    try:
+        with SecurityScorecardCollector(
+            api_token=api_token,
+            portfolio_id=portfolio_id,
+            base_url=base_url,
+            max_companies=max_companies,
+            low_score_threshold=score_threshold,
+        ) as collector:
+            findings = collector.collect()
+    except SecurityScorecardCollectorError as e:
+        console.print(
+            f"[red]SecurityScorecard collection failed:[/red] {e}"
+        )
+        raise typer.Exit(code=1) from e
+
+    _write_findings(
+        findings,
+        output,
+        title=f"SecurityScorecard findings ({base_url})",
+    )
+
+
 # ── rendering ────────────────────────────────────────────────────────────
 
 

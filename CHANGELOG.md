@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **SecurityScorecard portfolio collector** (v0.7.9 P0.4 fourth
+  slice — completes the v0.7.9 P0.4 vendor-risk-collector quartet).
+  New `evidentia collect securityscorecard [--portfolio-id <id>]`
+  CLI command + `POST /api/collectors/securityscorecard/collect`
+  REST endpoint. Read-only adapter pulling SSC portfolio companies
+  via the SecurityScorecard API
+  (`/portfolios/{portfolio_id}/companies`), surfacing each
+  portfolio company as an INFORMATIONAL `company-inventory`
+  SecurityFinding (NIST 800-53 SR-2 / SR-3 / SR-6 + OCC Bulletin
+  2013-29 §III.A + FRB SR 13-19 §II + FFIEC IT Examination Handbook
+  Outsourcing booklet §II) plus an additional MEDIUM-severity
+  `company-low-score` finding when the score falls below the
+  operator-configured threshold (default 70, the C/D grade
+  boundary; range 0-100). Low-score mappings: RA-3 + CA-7 + OCC
+  §III.A.4 + SR 13-19 §II.D. Portfolio resolution: explicit
+  `--portfolio-id` flag OR auto-resolution by listing portfolios
+  + picking the first available. Auth: `SECURITYSCORECARD_API_TOKEN`
+  env var passed as `Authorization: Token <value>` (distinct from
+  BitSight's HTTP Basic and Vanta/Drata's Bearer). Page+per_page
+  pagination via response's `page_count` field. 13 unit tests with
+  mocked httpx covering happy path, portfolio auto-resolution,
+  configurable score threshold, unscored companies, page-based
+  pagination, max-companies ceiling, 401 → SSCAuthError, empty
+  portfolio handling, network failure → manifest-level error
+  capture. First-slice scope is portfolio inventory + summary
+  score; subsequent slices add per-company factor scores
+  (Application Security, DNS Health, Endpoint Security, Hacker
+  Chatter, IP Reputation, Network Security, Patching Cadence,
+  Social Engineering) + historical grade trends.
 - **BitSight portfolio collector** (v0.7.9 P0.4 third slice).
   New `evidentia collect bitsight` CLI command + `POST
   /api/collectors/bitsight/collect` REST endpoint. Read-only adapter

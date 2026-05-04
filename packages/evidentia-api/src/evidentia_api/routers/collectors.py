@@ -976,6 +976,107 @@ async def bitsight_collect(
     return findings
 
 
+@router.post(
+    "/collectors/securityscorecard/collect",
+    response_model=list[SecurityFinding],
+)
+async def securityscorecard_collect(
+    payload: dict[str, Any] | None = None,
+) -> list[SecurityFinding]:
+    """Run the SecurityScorecard portfolio collector
+    (v0.7.9 P0.4 fourth slice).
+
+    Request body (optional):
+
+    - ``portfolio_id``: SSC portfolio identifier. If omitted,
+      the collector lists portfolios + uses the first available.
+    - ``base_url``: override the SSC API base URL.
+    - ``max_companies``: pagination ceiling (default 2000).
+    - ``score_threshold``: integer 0-100; scores below this
+      emit a MEDIUM-severity finding (default 70).
+    - ``token_env``: env var name (default
+      ``SECURITYSCORECARD_API_TOKEN``).
+
+    Auth: SSC API token passed as
+    ``Authorization: Token <value>`` (NOT Bearer or Basic).
+    The collector handles header construction internally. Per
+    CLAUDE.md secret-handling protocol, the token MUST come
+    from a server-side env var.
+
+    Response: list of SecurityFinding objects covering SSC
+    portfolio inventory + per-company low-score flag.
+
+    Mappings: NIST 800-53 SR-2 / SR-3 / SR-6 + RA-3 / CA-7
+    (low score); OCC Bulletin 2013-29 §III.A + §III.A.4; FRB
+    SR 13-19 §II + §II.D; FFIEC IT Examination Handbook
+    Outsourcing §II.
+    """
+    try:
+        from evidentia_collectors.securityscorecard import (
+            SecurityScorecardCollector,
+            SecurityScorecardCollectorError,
+        )
+    except ImportError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "SecurityScorecard collector not installed. The "
+                "collector is part of the base evidentia-collectors "
+                "install."
+            ),
+        ) from e
+
+    body = payload or {}
+    portfolio_id = body.get("portfolio_id")
+    portfolio_id_str: str | None = (
+        str(portfolio_id).strip() if portfolio_id else None
+    )
+    base_url = (
+        str(body.get("base_url") or "https://api.securityscorecard.io").strip()
+        or "https://api.securityscorecard.io"
+    )
+    max_companies = int(body.get("max_companies") or 2000)
+    score_threshold = int(body.get("score_threshold") or 70)
+    if not 0 <= score_threshold <= 100:
+        raise HTTPException(
+            status_code=400,
+            detail="score_threshold must be in SSC's 0-100 range.",
+        )
+    token_env = (
+        str(body.get("token_env") or "SECURITYSCORECARD_API_TOKEN").strip()
+        or "SECURITYSCORECARD_API_TOKEN"
+    )
+    api_token = os.environ.get(token_env)
+    if not api_token:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                f"Env var '{token_env}' is not set or is empty. "
+                "Set it server-side before invoking this endpoint."
+            ),
+        )
+
+    try:
+        with SecurityScorecardCollector(
+            api_token=api_token,
+            portfolio_id=portfolio_id_str,
+            base_url=base_url,
+            max_companies=max_companies,
+            low_score_threshold=score_threshold,
+        ) as collector:
+            findings = collector.collect()
+    except SecurityScorecardCollectorError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    except Exception as e:
+        logger.exception("SecurityScorecard collector failed")
+        raise HTTPException(
+            status_code=500,
+            detail=f"SecurityScorecard collector failed: {e}",
+        ) from e
+
+    return findings
+
+
 @router.get("/collectors/status")
 async def collectors_status() -> dict[str, Any]:
     """Report which collectors are installed + which credentials are set.
@@ -996,6 +1097,7 @@ async def collectors_status() -> dict[str, Any]:
     vanta_installed = False
     drata_installed = False
     bitsight_installed = False
+    securityscorecard_installed = False
     try:
         import evidentia_collectors.aws
 
@@ -1115,9 +1217,16 @@ async def collectors_status() -> dict[str, Any]:
         pass
     try:
         # BitSight uses httpx (already a base dep) — same pattern.
-        import evidentia_collectors.bitsight  # noqa: F401
+        import evidentia_collectors.bitsight
 
         bitsight_installed = True
+    except ImportError:
+        pass
+    try:
+        # SecurityScorecard uses httpx (already a base dep).
+        import evidentia_collectors.securityscorecard  # noqa: F401
+
+        securityscorecard_installed = True
     except ImportError:
         pass
 
@@ -1266,6 +1375,21 @@ async def collectors_status() -> dict[str, Any]:
             ),
             "default_token_env_configured": bool(
                 os.environ.get("BITSIGHT_API_TOKEN")
+            ),
+        },
+        "securityscorecard": {
+            "installed": securityscorecard_installed,
+            "credentials_hint": (
+                "SecurityScorecard API token (paid subscription "
+                "required). Passed via Authorization: Token "
+                "<value> headers. Set the token via the "
+                "SECURITYSCORECARD_API_TOKEN env var. The "
+                "collector NEVER accepts a token via the request "
+                "body. Optional portfolio_id selects a specific "
+                "portfolio; if omitted, the first available is used."
+            ),
+            "default_token_env_configured": bool(
+                os.environ.get("SECURITYSCORECARD_API_TOKEN")
             ),
         },
     }
