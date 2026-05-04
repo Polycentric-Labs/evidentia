@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Drata vendor-inventory collector** (v0.7.9 P0.4 second slice).
+  New `evidentia collect drata` CLI command + `POST
+  /api/collectors/drata/collect` REST endpoint. Read-only adapter
+  pulling the operator's Drata-managed vendor inventory via the
+  Drata Public API (`/public/v1/vendors`), surfacing each vendor
+  as a `vendor-inventory` SecurityFinding (NIST 800-53 SR-2 /
+  SR-3 / SR-6 + OCC Bulletin 2013-29 §III.A + FRB SR 13-19 §II +
+  FFIEC IT Handbook Outsourcing booklet §II) plus an additional
+  `vendor-high-risk` finding whenever the underlying record carries
+  a HIGH or CRITICAL risk-level flag (RA-3 + OCC §III.A.4 + SR
+  13-19 §II.D). Auth: `DRATA_API_TOKEN` env var (Drata Personal
+  API token), read-only vendor scope; the token NEVER flows
+  through CLI args or request bodies. Uses Drata's documented
+  `nextPageToken` cursor-based pagination with a 2000-vendor
+  default ceiling (overridable via `--max-vendors`). Defensive
+  high-risk detection across six field-shape variants:
+  `riskLevel`, `risk_level`, `riskTier`, `risk_tier`, nested
+  `riskAssessment.{level,tier,severity}`, plus numeric
+  `inherentRisk`/`residualRisk` on Drata's documented 1-5 / 1-25
+  scales. 13 unit tests with mocked httpx covering happy path,
+  pagination, max-vendors ceiling, six high-risk field-shape
+  variants, 401/403 → DrataAuthError, network failure → manifest-
+  level error capture. First-slice scope is vendor inventory only;
+  subsequent slices add control-test pulls + ongoing-monitoring
+  posture per the v0.7.9 P0.4 plan.
 - **Vanta vendor-inventory collector** (v0.7.9 P0.4 first slice).
   New `evidentia collect vanta` CLI command + `POST
   /api/collectors/vanta/collect` REST endpoint. Read-only

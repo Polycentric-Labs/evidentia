@@ -820,6 +820,105 @@ def collect_vanta(
     )
 
 
+@app.command("drata")
+def collect_drata(
+    token_env: str = typer.Option(
+        "DRATA_API_TOKEN",
+        "--token-env",
+        help=(
+            "Name of the env var holding the Drata API token. The "
+            "CLI reads from this env var rather than accepting the "
+            "token as a flag (per secret-handling protocol). "
+            "Defaults to DRATA_API_TOKEN."
+        ),
+    ),
+    base_url: str = typer.Option(
+        "https://public-api.drata.com",
+        "--base-url",
+        help=(
+            "Drata Public API base URL. Override for staging / "
+            "dev tenants."
+        ),
+    ),
+    max_vendors: int = typer.Option(
+        2000,
+        "--max-vendors",
+        min=1,
+        max=100_000,
+        help=(
+            "Hard cap on vendor enumeration. Default 2000 — covers "
+            "typical orgs without unbounded pagination."
+        ),
+    ),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Where to write the findings JSON. Default: stdout.",
+    ),
+) -> None:
+    """Collect compliance evidence from a Drata workspace (read-only).
+
+    v0.7.9 P0.4 second slice ships ONE evidence source:
+
+    - **Drata vendor inventory** (NIST 800-53 SR-2 / SR-3 / SR-6 +
+      OCC 2013-29 §III.A + FRB SR 13-19 §II + FFIEC IT Handbook
+      Outsourcing booklet §II) — every vendor in the operator's
+      Drata workspace gets an INFORMATIONAL inventory finding;
+      Drata-flagged HIGH or CRITICAL risk-level vendors additionally
+      get a MEDIUM ACTIVE finding with OCC §III.A.4 ongoing-
+      monitoring mappings calling for operator review.
+
+    Auth: pass the API token via env var (default
+    ``DRATA_API_TOKEN``). Drata uses Personal API tokens that pass
+    ``Authorization: Bearer <token>`` headers. Recommended scope:
+    read-only access to the vendor inventory surface.
+
+    Deferred to subsequent v0.7.9 P0.4 slices:
+
+    - Drata control test results
+    - Ongoing-monitoring posture changes (state-diff)
+    - OAuth 2.0 client-credentials grant
+    - Webhook event ingestion (push model)
+    """
+    try:
+        from evidentia_collectors.drata import (
+            DrataCollector,
+            DrataCollectorError,
+        )
+    except ImportError as e:
+        console.print(
+            "[red]Error:[/red] Drata collector module not importable. "
+            "Run [cyan]pip install evidentia-collectors[/cyan]."
+        )
+        raise typer.Exit(code=1) from e
+
+    api_token = os.environ.get(token_env)
+    if not api_token:
+        console.print(
+            f"[red]Error:[/red] env var [cyan]{token_env}[/cyan] "
+            "is not set or is empty. Set it to your Drata API token."
+        )
+        raise typer.Exit(code=1)
+
+    try:
+        with DrataCollector(
+            api_token=api_token,
+            base_url=base_url,
+            max_vendors=max_vendors,
+        ) as collector:
+            findings = collector.collect()
+    except DrataCollectorError as e:
+        console.print(f"[red]Drata collection failed:[/red] {e}")
+        raise typer.Exit(code=1) from e
+
+    _write_findings(
+        findings,
+        output,
+        title=f"Drata findings ({base_url})",
+    )
+
+
 # ── rendering ────────────────────────────────────────────────────────────
 
 

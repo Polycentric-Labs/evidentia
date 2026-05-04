@@ -792,6 +792,99 @@ async def vanta_collect(
     return findings
 
 
+@router.post(
+    "/collectors/drata/collect",
+    response_model=list[SecurityFinding],
+)
+async def drata_collect(
+    payload: dict[str, Any] | None = None,
+) -> list[SecurityFinding]:
+    """Run the Drata vendor-inventory collector (v0.7.9 P0.4 second slice).
+
+    Request body (optional):
+
+    - ``base_url``: override the Drata API base URL (default
+      ``https://public-api.drata.com``).
+    - ``max_vendors``: pagination ceiling (default 2000).
+    - ``token_env``: name of the env var holding the Drata API
+      token (default ``DRATA_API_TOKEN``). The API server reads
+      this env var server-side; the token NEVER flows through
+      the request body.
+
+    Auth: a Drata Personal API token with read-only access to
+    the vendor inventory. Per CLAUDE.md secret-handling protocol,
+    the token MUST come from a server-side env var.
+
+    Response: list of SecurityFinding objects covering the
+    Drata-managed vendor inventory + per-vendor high-risk flag
+    (when the underlying vendor record carries a HIGH or
+    CRITICAL risk classification).
+
+    Mappings: NIST 800-53 SR-2 / SR-3 / SR-6 + RA-3 (high-risk
+    flag); OCC Bulletin 2013-29 §III.A + §III.A.4; FRB SR 13-19
+    §II + §II.D; FFIEC IT Examination Handbook Outsourcing
+    booklet §II.
+
+    First-slice scope: vendor inventory only. Subsequent slices
+    will add control-test pulls + ongoing-monitoring posture.
+    """
+    try:
+        from evidentia_collectors.drata import (
+            DrataCollector,
+            DrataCollectorError,
+        )
+    except ImportError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Drata collector not installed. The collector is "
+                "part of the base evidentia-collectors install — "
+                "if this fires, check the package install "
+                "completed cleanly."
+            ),
+        ) from e
+
+    body = payload or {}
+    base_url = (
+        str(body.get("base_url") or "https://public-api.drata.com").strip()
+        or "https://public-api.drata.com"
+    )
+    max_vendors = int(body.get("max_vendors") or 2000)
+    token_env = (
+        str(body.get("token_env") or "DRATA_API_TOKEN").strip()
+        or "DRATA_API_TOKEN"
+    )
+    api_token = os.environ.get(token_env)
+    if not api_token:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                f"Env var '{token_env}' is not set or is empty. "
+                "Set it server-side before invoking this endpoint. "
+                "The Drata token MUST NOT flow through the "
+                "request body."
+            ),
+        )
+
+    try:
+        with DrataCollector(
+            api_token=api_token,
+            base_url=base_url,
+            max_vendors=max_vendors,
+        ) as collector:
+            findings = collector.collect()
+    except DrataCollectorError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    except Exception as e:
+        logger.exception("Drata collector failed")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Drata collector failed: {e}",
+        ) from e
+
+    return findings
+
+
 @router.get("/collectors/status")
 async def collectors_status() -> dict[str, Any]:
     """Report which collectors are installed + which credentials are set.
@@ -810,6 +903,7 @@ async def collectors_status() -> dict[str, Any]:
     databricks_installed = False
     snowflake_installed = False
     vanta_installed = False
+    drata_installed = False
     try:
         import evidentia_collectors.aws
 
@@ -915,9 +1009,16 @@ async def collectors_status() -> dict[str, Any]:
     try:
         # Vanta uses httpx (already a base dep) — no extra pyproject
         # extra to detect. Adapter importability == ready-to-use.
-        import evidentia_collectors.vanta  # noqa: F401
+        import evidentia_collectors.vanta
 
         vanta_installed = True
+    except ImportError:
+        pass
+    try:
+        # Drata uses httpx (already a base dep) — same pattern as Vanta.
+        import evidentia_collectors.drata  # noqa: F401
+
+        drata_installed = True
     except ImportError:
         pass
 
@@ -1039,6 +1140,19 @@ async def collectors_status() -> dict[str, Any]:
             ),
             "default_token_env_configured": bool(
                 os.environ.get("VANTA_API_TOKEN")
+            ),
+        },
+        "drata": {
+            "installed": drata_installed,
+            "credentials_hint": (
+                "Drata Personal API token with read-only vendor-"
+                "inventory scope. Set the token via the "
+                "DRATA_API_TOKEN env var (or override with token_env "
+                "in the request body). The collector NEVER accepts "
+                "a token via the request body."
+            ),
+            "default_token_env_configured": bool(
+                os.environ.get("DRATA_API_TOKEN")
             ),
         },
     }
