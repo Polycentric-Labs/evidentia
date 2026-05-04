@@ -194,6 +194,66 @@ class TestPurgeImmediatelyLocal:
         assert snapshot.notes == m.notes
         assert snapshot.lifecycle_stage == RetentionLifecycleStage.PURGED.value
 
+    def test_purge_emits_gdpr_audit_event(
+        self, worm: LocalFilesystemWORM
+    ) -> None:
+        """v0.7.12 closure of Step-3 /security-review observation:
+        every successful GDPR purge MUST emit a
+        RETENTION_GDPR_PURGE audit event with operator + request-ref
+        provenance.
+
+        Patches the audit-log call to spy on its keyword arguments;
+        verifies the event payload carries the canonical fields the
+        threat-model.md v0.7.12 delta promises (record_id +
+        gdpr_request_ref + operator_id + classification +
+        retention_period_days).
+        """
+        from unittest.mock import MagicMock, patch
+
+        m = _gdpr_meta(notes="Article 17 request")
+        worm.put(m.id, b"gdpr-payload", m)
+
+        captured_calls: list[dict[str, object]] = []
+
+        def _spy_logger(_name: str) -> MagicMock:
+            spy = MagicMock()
+
+            def _capture_info(**kwargs: object) -> None:
+                captured_calls.append(kwargs)
+
+            spy.info = _capture_info
+            return spy
+
+        with patch(
+            "evidentia_core.audit.get_logger",
+            side_effect=_spy_logger,
+        ):
+            worm.purge_immediately(
+                m.id,
+                gdpr_request_ref="GDPR-REQ-2026-AUDIT",
+                operator_id="alice@evidentia.dev",
+            )
+
+        from evidentia_core.audit import EventAction
+
+        gdpr_events = [
+            c for c in captured_calls
+            if c.get("action") == EventAction.RETENTION_GDPR_PURGE
+        ]
+        assert len(gdpr_events) == 1, (
+            f"Expected exactly one RETENTION_GDPR_PURGE event, "
+            f"got {len(gdpr_events)}: {captured_calls}"
+        )
+        event = gdpr_events[0]
+        assert "evidentia" in event
+        evidentia_payload = event["evidentia"]
+        assert isinstance(evidentia_payload, dict)
+        assert evidentia_payload["record_id"] == m.id
+        assert evidentia_payload["gdpr_request_ref"] == "GDPR-REQ-2026-AUDIT"
+        assert evidentia_payload["operator_id"] == "alice@evidentia.dev"
+        assert evidentia_payload["classification"] == "gdpr"
+        assert evidentia_payload["retention_period_days"] == 0
+
 
 # ── Cross-cloud parity (S3 + Azure + GCS) ──────────────────────────
 

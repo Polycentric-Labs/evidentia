@@ -206,6 +206,46 @@ class WORMBackend(ABC):
         # Now delete (lifecycle is EXPIRED, no legal hold, lock_until
         # is None so is_locked() returns False)
         self.delete(record_id)
+        # v0.7.12 P1 closure of Step-3 /security-review observation:
+        # emit the canonical RETENTION_GDPR_PURGE audit event so the
+        # audit log carries non-repudiable provenance for every
+        # Article 17 purge. Without this, the threat-model claim that
+        # "every put / delete / extend_retention / legal_hold
+        # operation flows through the audit logger" is incomplete —
+        # GDPR purges are the most legally-consequential operation
+        # in the retention contract and MUST hit the audit trail.
+        # Emitted AFTER delete completes so the event is only logged
+        # on successful purge (failures surface as WORMBackendError
+        # without an audit-trail false-positive).
+        try:
+            from evidentia_core.audit import (
+                EventAction,
+                EventOutcome,
+                get_logger,
+            )
+
+            _audit_log = get_logger("evidentia.retention.gdpr_purge")
+            _audit_log.info(
+                action=EventAction.RETENTION_GDPR_PURGE,
+                outcome=EventOutcome.SUCCESS,
+                message=(
+                    f"GDPR Article 17 purge completed for record "
+                    f"{record_id!r}"
+                ),
+                evidentia={
+                    "record_id": record_id,
+                    "gdpr_request_ref": gdpr_request_ref,
+                    "operator_id": operator_id,
+                    "classification": metadata.classification,
+                    "retention_period_days": metadata.retention_period_days,
+                },
+            )
+        except Exception:  # pragma: no cover — audit must not break purge
+            # If the audit logger itself fails, the record is already
+            # purged from storage; do NOT raise (the purge succeeded).
+            # The returned snapshot still serves as the
+            # caller-visible audit trail.
+            pass
         # Return a "PURGED" terminal snapshot for audit-trail
         # callers. The underlying record is gone; this object exists
         # only as a return value capturing the final state.
