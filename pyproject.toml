@@ -151,6 +151,21 @@ markers = [
 # library-tested-elsewhere principle.
 [tool.coverage.run]
 branch = false
+# v0.7.12 P0.7 closure of Codecov 0% bug: coverage.py defaults to
+# emitting filenames RELATIVE TO each `source` root, which produces
+# bare paths like `evidentia_core/foo.py` (no `packages/.../src/`
+# prefix) in the XML report. Codecov's path-matcher then can't
+# locate these files in the GitHub repo (whose layout IS
+# `packages/.../src/...`) and rejects every line as unmatched →
+# `state: error` with `totals: 0` on every commit, badge shows 0%.
+#
+# `relative_files = true` rewrites the XML to emit repo-relative
+# paths (`packages/evidentia-core/src/evidentia_core/foo.py`),
+# which Codecov maps directly to GitHub's tree without needing
+# `fixes:` rules in codecov.yml.
+#
+# Reference: https://coverage.readthedocs.io/en/latest/config.html#run-relative-files
+relative_files = true
 source = [
     "packages/evidentia-core/src/evidentia_core",
     "packages/evidentia-ai/src/evidentia_ai",

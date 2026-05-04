@@ -42,15 +42,22 @@ comment:
   behavior: default
   require_changes: true
 
-# Tell Codecov how the workspace is laid out so file paths in the
-# coverage XML resolve cleanly.
-fixes:
-  - "packages/evidentia-core/src/evidentia_core/::evidentia_core/"
-  - "packages/evidentia/src/evidentia/::evidentia/"
-  - "packages/evidentia-api/src/evidentia_api/::evidentia_api/"
-  - "packages/evidentia-collectors/src/evidentia_collectors/::evidentia_collectors/"
-  - "packages/evidentia-ai/src/evidentia_ai/::evidentia_ai/"
-  - "packages/evidentia-integrations/src/evidentia_integrations/::evidentia_integrations/"
+# v0.7.12 P0.7: removed the inverted `fixes:` mappings.
+#
+# The previous `fixes:` rewrote `packages/X/src/X/` → `X/`, which
+# would have been correct IF coverage.xml emitted full repo-relative
+# paths AND we wanted the Codecov dashboard to display the shorter
+# import-style paths. But coverage.py with multi-source config and
+# `relative_files = false` (the default) emits bare filenames
+# without any `packages/` prefix — so the `fixes:` matched nothing
+# AND Codecov couldn't resolve any paths to the GitHub repo →
+# `state: error` + `totals: 0` on every commit.
+#
+# With `[tool.coverage.run] relative_files = true` (now set in
+# pyproject.toml), the XML emits literal repo-relative paths like
+# `packages/evidentia-core/src/evidentia_core/foo.py`. Codecov's
+# default path-matcher resolves these directly against the GitHub
+# tree — no rewriting needed.
 
 # Ignore non-Python tracked paths so Codecov doesn't churn on
 # docs / static / TS files that aren't in the Python coverage scope.
