@@ -59,17 +59,26 @@ jobs:
 
       # v0.7.10 P2: upload Linux coverage to Codecov for the
       # OpenSSF Silver `test_statement_coverage80` MUST.
-      # Failure to upload does NOT fail the build (token-less
-      # public repo upload can transient-fail; coverage gate is
-      # enforced locally via the codecov.yml `target: 80%`).
+      # Failure to upload does NOT fail the build; coverage gate
+      # is enforced locally via the codecov.yml `target: 80%`.
+      #
+      # CODECOV_TOKEN is read from the repo's Actions secrets.
+      # As of Codecov v6 (2024+), tokenless uploads from public
+      # repos are rate-limited and sometimes silently dropped —
+      # the explicit token resolves the "unknown" badge issue.
+      # Set via `gh secret set CODECOV_TOKEN --body <token>`
+      # after activating at https://app.codecov.io/.
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2  # v6.0.0
         with:
           files: coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
           flags: python
           name: evidentia-python
+          slug: allenfbyrd/evidentia
+          verbose: true
 
   lint:
     name: ruff
