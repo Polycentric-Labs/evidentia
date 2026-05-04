@@ -179,6 +179,51 @@ Acceptance:
 
 ---
 
+## Step 5.5 — Doc consistency sweep (v0.7.12+)
+
+Per Allen's 2026-05-04 directive ("ensure documentation is
+comprehensively updated for consistency across the board, and
+that each release triggers another internally consistent
+documentation update"), every release MUST run a doc-consistency
+sweep before the tag. This is the in-repo public-facing
+counterpart to the pre-release-review v4 skill's per-step
+`references/doc-consistency-checklist.md`.
+
+Cross-doc invariants to verify (pre-tag):
+
+- [ ] **Test count** consistent across README, CHANGELOG, recent
+      docs: bump to current release's pytest count
+- [ ] **Source-file count** consistent ("across N source files")
+- [ ] **Bundled catalog count** consistent (canonical via
+      `evidentia_core.catalogs.registry.FRAMEWORK_METADATA` —
+      currently 89 post-v0.7.9)
+- [ ] **Package count** consistent (6 Python wheels at PyPI:
+      evidentia + evidentia-core + evidentia-ai +
+      evidentia-collectors + evidentia-integrations + evidentia-api;
+      evidentia-ui is a Vite project, NOT a Python wheel)
+- [ ] **Latest version references** match the current release
+      (no straggler "v0.7.X" where X is one or more behind)
+- [ ] **Cross-doc links resolve** — every `[link](other.md)`
+      points at an existing file
+- [ ] **Feature-claim consistency** — same feature described
+      same way across README + docs/positioning-and-value.md +
+      docs/capability-matrix.md
+- [ ] **Capability-matrix freshness** — surfaces tested count +
+      revalidation date current
+- [ ] **threat-model.md delta** — append a v{X.Y.Z}-delta sub-
+      section covering any new public surface
+- [ ] **enterprise-grade.md** — every BLOCKER / HIGH / MEDIUM /
+      LOW row reflects current shipped state
+- [ ] **ROADMAP.md** — current release marked SHIPPED; next
+      release promoted to NEXT
+- [ ] **AI-assistance acknowledgment** in README — Allen's
+      per-release manual update; flag if missing
+
+Apply via Grep/Edit; commit as a single
+`docs(consistency):` commit per release.
+
+---
+
 ## Step 6 — Inconsistency scour
 
 Per the testing-playbook 3-pass scour pattern:
@@ -294,6 +339,50 @@ Within 30 minutes of `release.yml` reporting success:
 
 - [ ] PyPI: each of the 6 packages shows version X.Y.Z at
       `https://pypi.org/project/<name>/`.
+- [ ] **Codecov badge** registers ≥80% coverage (post-v0.7.12 fix:
+      coverage.xml emits repo-relative paths via `[tool.coverage.run]
+      relative_files = true` so Codecov's path matcher resolves
+      against the GitHub tree).
+
+### Step 9.5 — Release notes audit (v0.7.12+)
+
+Per Allen's 2026-05-04 directive ("review all release notes for
+missing entries and update accordingly, commit that practice to
+memory for each release as well"), every release MUST audit the
+GitHub Release body for completeness post-tag.
+
+For the just-tagged release `vX.Y.Z`, verify the release body
+contains:
+
+- [ ] Body present (not auto-generated empty default)
+- [ ] CHANGELOG `[X.Y.Z]` block content matches the release body
+      (or release body summarizes correctly)
+- [ ] Container image stanza (post-v0.7.5; the Dockerfile-
+      published releases) — `ghcr.io/allenfbyrd/evidentia:vX.Y.Z`
+      with image digest
+- [ ] PEP 740 verification stanza — pypi-attestations verify
+      command line that an operator can copy-paste
+- [ ] Cosign verify stanza for the container (post-v0.7.5)
+- [ ] CycloneDX SBOM noted as a release asset
+- [ ] Step 7 post-tag verification snapshot (v4 pre-release-
+      review skill output)
+- [ ] Hot-fix mention if applicable (e.g., v0.7.4 fixed the
+      v0.7.3 Dockerfile invocation; v0.7.7.1 fixed v0.7.7's
+      container-pin drift)
+
+Per the publishing-authority protocol in `~/.claude/CLAUDE.md`,
+any `gh release edit` on a published release is a public-surface
+mutation and requires explicit per-action approval — surface
+the diff before mutating.
+
+For prior releases (v0.7.0 → previous-X.Y.Z), the same audit
+runs once per cycle to catch any historical gaps. v0.7.12
+introduced this practice retroactively.
+
+### Step 9.6 — Other PyPI checks
+
+- [ ] PyPI per-file pages show the "Provenance" / PEP 740 attestation
+      section with the GitHub Actions workflow URL + commit SHA.
 - [ ] PyPI per-file pages show the "Provenance" / PEP 740 attestation
       section with the GitHub Actions workflow URL + commit SHA.
 - [ ] **Verify PEP 740 publish attestations (PyPI path)** — primary
