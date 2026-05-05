@@ -73,11 +73,29 @@ ignore:
   - "**/*.json"
   - "**/*.toml"
 
-flag_management:
-  default_rules:
-    carryforward: true
-  individual_flags:
-    - name: python
-      paths:
-        - "packages/*/src/"
-      carryforward: true
+# v0.7.14 P2.1 deeper diagnosis of Codecov 0% bug:
+#
+# The v0.7.13 source_pkgs fix produced correct full-path Cobertura
+# XML locally (verified: <class filename="packages/evidentia-core/
+# src/evidentia_core/audit/logger.py">) but Codecov continued to
+# show state=ERROR + totals=null + report.files=[] on every
+# commit since v0.7.10.
+#
+# Codecov upload-state endpoint confirmed the file lands on
+# their side but parses to 0 files. Most likely cause: the
+# `flag_management.individual_flags[].paths` glob
+# `["packages/*/src/"]` was filtering all files out (Codecov's
+# glob semantics for flag-paths don't reliably recurse into
+# sub-directories of the matched prefix).
+#
+# Fix attempt 1 (v0.7.14): remove the `flag_management` block
+# entirely. Coverage flagging by `python` still works at the
+# `flags: python` upload-time arg in tests.yml; the carry-
+# forward behavior on default_rules also defaults to True per
+# Codecov's docs without explicit config.
+#
+# If this fixes the 0% bug: keep removed in v0.7.14 ship.
+# If still broken after re-push, try fix attempt 2: explicit
+# `path_fixes:` mapping. If still broken after attempt 2:
+# escalate to Codecov support + switch to GitHub-built-in
+# coverage display per the v0.7.14 plan §23.A escalation path.
