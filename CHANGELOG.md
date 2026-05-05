@@ -7,6 +7,115 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.13] - 2026-05-04
+
+**The dependency modernization + Codecov fix + P3 carry-over
+closure release.** Wrap-up of the v0.7.x cycle before v0.8.0
+opens. No new public surfaces — the work is supply-chain
+modernization, internal-hygiene fixes, and release-process
+ergonomics that prevent recurring gaps.
+
+### Added
+
+- **`docs/dockerfile-pinning.md`** documenting the exact-version
+  pinning policy + recurring-Scorecard-alert dismissal runbook +
+  roadmap to full hash-pinning (paired with v0.8.0 G4
+  reproducible-build verification).
+- **`scripts/extract_changelog_block.py`** + 21 self-tests
+  covering every shipped v0.7.x CHANGELOG block — wired into
+  `release.yml` so future releases auto-populate their GitHub
+  Release body from the matching `[X.Y.Z]` block + canonical
+  PEP 740 wheel-verify stanza. Closes the v0.7.5→v0.7.12
+  stub-body gap structurally.
+- **`tests/integration/test_oscal/test_uuid_in_two_locations.py`
+  → `tests/unit/test_oscal/test_trestle_conformance.py`** v0.7.9
+  M-9 closure: 2 new tests asserting Vendor UUID identity across
+  `metadata.parties[].uuid` AND `back-matter.resources[].uuid`,
+  with trestle-conformance round-trip + multi-vendor pairwise
+  invariant.
+- **Vanta + Drata `_is_high_risk` extended field shapes**
+  (v0.7.9 L-2 closure): top-level `severity` / `tier` / `risk` /
+  `riskRating` / `riskClass` field probes; nested `assessment` /
+  `risk_summary` / `riskSummary` block probes; `SEVERE` matched
+  alongside `HIGH` / `CRITICAL`. 2 new test cases (one per
+  collector) covering all 7 extended shapes.
+- **SIG BYO sparse-row debug logging** (v0.7.9 L-4 closure):
+  `generate_from_byo_template` emits per-row `_log.debug(...)`
+  on label mismatches, sparse rows, already-populated cells, and
+  successful pre-fills. Operators ingesting partially-completed
+  SIG templates can diagnose label drift via
+  `evidentia --log-level debug`.
+
+### Fixed
+
+- **Codecov 0% on every commit since v0.7.10** (P0.3): root cause
+  re-diagnosed against local `coverage.xml` — the v0.7.12 P0.7
+  `relative_files = true` fix didn't help because Cobertura
+  encodes file paths relative to whichever `<source>` root
+  matches, and 6 source roots × filename collisions (every
+  package has `__init__.py`, several have `app.py` etc.) made
+  the XML fundamentally ambiguous. Switched to `source_pkgs` so
+  the Cobertura output records full on-disk paths
+  (`packages/evidentia-core/src/evidentia_core/...`) without
+  per-source-root disambiguation. Codecov's path-resolver maps
+  these directly to the GitHub repo tree.
+- **Power BI `_row_value` None handling in lists** (v0.7.8 LOW
+  item 5): `[None, "x", None]` was joining as `"None;x;None"`.
+  Filtered Nones before join.
+- **Power BI + Tableau Pydantic `.value` duck-typing collision**
+  (v0.7.8 LOW items 7 + 8): the previous
+  `hasattr(value, "value") and not isinstance(value, str|int|float)`
+  matched ANY object with a `.value` field — including Pydantic
+  models that happen to expose one. Tightened to
+  `isinstance(value, Enum)` so only true Enum instances take
+  the value-extraction branch.
+- **Snowflake LOGIN_HISTORY datetime tz-cast** (v0.7.8 LOW
+  item 4): naive `event_timestamp` values now force-cast to
+  UTC + emit tz-aware ISO 8601 strings via the new
+  `_to_utc_iso(value)` helper, ensuring audit-trail correlation
+  works across operator infrastructure that mixes UTC + local-tz
+  timestamps.
+
+### Changed
+
+- **`release.yml` GitHub Release body** now auto-populated from
+  the matching `CHANGELOG.md` `[X.Y.Z]` block + PEP 740
+  wheel-verify stanza template, via the new
+  `Extract release body from CHANGELOG` step + `body_path:
+  release-body.md` argument to softprops/action-gh-release. The
+  publish-container append-step continues unchanged. Workflow
+  fails fast (exit 1) if the extracted body is < 1500 bytes
+  (a sanity gate against malformed CHANGELOG blocks shipping
+  stub releases).
+- **`docs/threat-model.md`** appended a v0.7.13 attack-surface
+  delta sub-section documenting the no-new-surface state +
+  carry-forward of v0.7.12 trust boundaries.
+- **`docs/v0.8.0-plan.md`** documents M-4 collector base-class
+  refactor as paired with the P0.4 plugin-contract scaffolding
+  work. Acceptance criterion: `BaseSaaSCollector` ABC exists;
+  v0.7.9 Vanta/Drata/BitSight/SecurityScorecard collectors
+  inherit from it; per-collector LOC drops ≥ 25% on common
+  scaffolding.
+- **`docs/ROADMAP.md`** v0.7.12 promoted from NEXT to SHIPPED;
+  v0.7.13 added as new NEXT section; v0.7.14 reserved for patches
+  and remaining v0.7.13 deferrals.
+- **`README.md`** v0.7.12 added to recent-releases section;
+  CHANGELOG version-history range updated to v0.1.0–v0.7.12;
+  forward-pointer simplified (v0.7.12-plan.md reference removed
+  since v0.7.12 is shipped).
+
+### Notes
+
+- 3 of the 9 v0.7.8 LOW × 9 batch deferred to v0.7.14 with
+  rationale: test-coverage gaps (item 1 — needs net-new tests),
+  Tableau Windows tempfile cleanup (item 3 — current
+  `suppress(OSError)` is acceptable; full fix is feature work),
+  Databricks LTS hard-coded list (item 6 — env-var extensibility
+  is feature work, paired better with v0.8.0 plugin contracts).
+- 1 of the 9 was already closed in v0.7.12: contextlib.suppress
+  on logger calls (4 collectors had the wrapping removed in
+  v0.7.12 P3).
+
 ## [0.7.12] - 2026-05-04
 
 **The cloud-WORM trifecta + GDPR Article 17 + FAIR Monte Carlo

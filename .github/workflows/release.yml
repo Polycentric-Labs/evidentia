@@ -186,13 +186,49 @@ jobs:
           skip-existing: true
           verbose: true
 
+      # v0.7.13 P2.2.1: extract the [X.Y.Z] block from CHANGELOG.md
+      # so the GitHub Release body carries the substantive release
+      # narrative (was: stub body with only the auto-appended
+      # container-image stanza, gap discovered during v0.7.13
+      # plan-mode investigation that surfaced 9 stub release bodies
+      # from v0.7.5 → v0.7.12). The CHANGELOG-extraction script
+      # also wraps the block in a PEP 740 wheel-verify stanza
+      # template + CHANGELOG-link footer.
+      #
+      # The version is parsed from `${{ github.ref_name }}` which is
+      # `v0.7.13` for `refs/tags/v0.7.13` — strip the leading `v`
+      # before passing to the script.
+      - name: Extract release body from CHANGELOG
+        id: release-body
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "Extracting CHANGELOG block for version $version"
+          python scripts/extract_changelog_block.py "$version" \
+            > release-body.md
+          # Sanity gate: refuse to publish a near-empty body. 1500
+          # bytes is well below the smallest meaningful release (v0.7.4
+          # hot-fix is ~2700 bytes); a body shorter than this signals
+          # an extraction failure or a malformed CHANGELOG block.
+          body_size=$(wc -c < release-body.md)
+          echo "release-body.md size: $body_size bytes"
+          if [ "$body_size" -lt 1500 ]; then
+            echo "::error::release-body.md is suspiciously small ($body_size bytes); refusing to publish stub release"
+            cat release-body.md
+            exit 1
+          fi
+
       # Attach the SBOM to the GitHub Release alongside the wheels so
       # consumers can validate their install against the shipped SBOM.
+      # v0.7.13 P2.2.1: also passes the extracted CHANGELOG body via
+      # `body_path` so the Release body is substantive on first
+      # publish (publish-container then appends the container-image
+      # stanza via append_body).
       - name: Attach SBOM to GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2.6.2
         with:
           files: evidentia-sbom.cdx.json
           fail_on_unmatched_files: false
+          body_path: release-body.md
 
   # v0.7.5 (C1-C3): Container image publish to ghcr.io with cosign keyless
   # OIDC signing + SLSA L3 build provenance attestation for the image

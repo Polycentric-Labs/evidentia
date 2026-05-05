@@ -556,6 +556,112 @@ bounds tightened to the current release version.
 
 ---
 
+## v0.7.13 attack-surface delta
+
+v0.7.13 is a wrap-up release for the v0.7.x cycle: dependency
+modernization (Dependabot #18 GH Actions major bumps + Dependabot
+#21 frontend major bumps), Codecov coverage-upload fix, P3
+carry-over closures (M-9 OSCAL UUID test + L-2 high-risk field
+shapes + L-4 SIG BYO debug logging + 5 of 9 v0.7.8 LOWs), and
+release-notes hygiene (9 stub bodies backfilled + workflow
+auto-population from CHANGELOG).
+
+### No new attack surface
+
+v0.7.13 adds zero new public surfaces. The work is entirely:
+
+- **Dependency upgrades** (supply-chain version bumps) — these
+  reduce attack surface (newer pinned versions of GitHub Actions
+  + npm-dev tooling) without introducing new entry points.
+- **Internal hygiene** (Codecov fix, P3 closures, release-notes
+  workflow) — these touch test/CI/release tooling, not runtime
+  surfaces accessible to external attackers.
+- **Documentation** (Dockerfile pinning policy, M-4 deferral
+  doc, release-notes audit log) — pure markdown.
+
+### Carry-forward state
+
+All v0.7.12 trust boundaries + STRIDE entries carry forward
+unchanged. The 6 retention/WORM stores, the 3 cloud-WORM
+backends, the GDPR purge-flow, and the FAIR Monte Carlo
+simulator all stay as documented in §v0.7.12.
+
+### `_is_high_risk` extended field shapes (L-2 closure)
+
+The Vanta + Drata vendor-risk collectors gained 7 additional
+field-name probes (top-level `severity` / `tier` / `risk` /
+`riskRating` / `risk_rating` / `riskClass` / `risk_class`) +
+expanded the `riskAssessment` block probe to also cover
+`assessment` / `risk_summary` / `riskSummary` blocks. Plus a
+3rd matched value (`SEVERE`) alongside the existing `HIGH` /
+`CRITICAL`.
+
+This widens the high-risk DETECTION surface but not the
+EXPLOITATION surface — the helpers still return `bool` and
+the caller still emits the same `vendor-high-risk:<id>` finding
+shape. The defensive return-False-on-unknown semantics
+preserved.
+
+### `_to_utc_iso` audit-trail tz-cast (v0.7.8 LOW item 4)
+
+The Snowflake collector's `login-failed:<user>:<ts>:<ip>`
+finding ID now force-casts naive datetimes to UTC before
+emitting the ISO 8601 timestamp (was: ambiguous bare iso
+without tz suffix when the connector emitted naive
+`event_timestamp`). This tightens audit-trail correlation
+across operator infrastructure that mixes UTC + local-tz
+timestamps; no new attack surface.
+
+### Pydantic `.value` duck-typing tightening (LOW items 5/7/8)
+
+The PowerBI `_row_value` and Tableau `_serialize` helpers
+previously used `hasattr(value, "value")` to detect Pydantic
+Enums. This was duck-typing too permissive — any Pydantic model
+with a `.value` field would match. Tightened to
+`isinstance(value, Enum)` so only true Enum instances take
+the value-extraction branch. Plus list/tuple branch now skips
+Nones before joining (was: `[None, "x", None]` → `"None;x;None"`).
+
+The previous behavior produced harmless garbage strings in
+output rows; the tightening produces correct strings. No
+attack-surface change.
+
+### Codecov `source_pkgs` (v0.7.13 P0.3)
+
+The Codecov coverage-upload fix switches `[tool.coverage.run]`
+from `source = [<6 directories>]` to `source_pkgs = [<6
+package names>]`. The Cobertura XML output now emits full
+repo-relative file paths, which Codecov's path-resolver maps
+directly to GitHub's tree.
+
+Coverage data is **read-only metadata** about the test suite
+— it doesn't expose any code-execution path or sensitive
+content. Codecov's processor receives paths + line-coverage
+counts; no source code or vendor data flows through the
+upload. No trust-boundary change; closes the
+`test_statement_coverage80` Silver-tier OpenSSF criterion.
+
+### `release.yml` CHANGELOG auto-population (v0.7.13 P2.2.1)
+
+The `release.yml` workflow gains a CHANGELOG-extraction step
+that pulls the `[X.Y.Z]` block from `CHANGELOG.md` and writes
+it to the GitHub Release body via `body_path`. The release
+content was already public (CHANGELOG is in the public OSS
+repo + GitHub Release bodies are public artifacts); this
+just reduces manual `gh release edit` overhead. Trust boundary
+unchanged.
+
+The extraction runs entirely within the build runner using
+shell + python; no external network calls; no new dependencies.
+
+### Standing-rule sweep posture (carries forward)
+
+All 21 forbidden tokens unchanged. The `.local/release-notes-
+audit-2026-05-04.md` private audit log stays gitignored
+throughout.
+
+---
+
 ## Review cadence
 
 This doc is reviewed at every release per

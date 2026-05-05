@@ -1,12 +1,12 @@
 # Evidentia roadmap
 
-**Last updated: v0.7.11 (May 2026).**
+**Last updated: v0.7.12 (May 2026).**
 
 This roadmap synthesizes community feedback with the architecture plan
-at the project root. Versions v0.3.0 through v0.7.11 have shipped;
-v0.7.12 is the next active scope (see
-[`v0.7.12-plan.md`](v0.7.12-plan.md) — concrete cloud-WORM backends
-+ FAIR Monte Carlo + remaining deferrals). Anything beyond v0.7.12 is
+at the project root. Versions v0.3.0 through v0.7.12 have shipped;
+v0.7.13 is the next active scope — a wrap-up of the v0.7.x cycle
+(dependency modernization + Codecov fix + P3 closures + release-notes
+hygiene) before v0.8.0 opens. Anything beyond v0.7.13 is
 forward-looking — the exact shape will depend on real-world usage
 patterns and the bigger v0.8+ direction documented in
 [`positioning-and-value.md`](positioning-and-value.md) §13.
@@ -461,20 +461,50 @@ FAIR Monte Carlo simulation deferred to v0.7.12. Pre-tag review
 0 HIGH / 0 MEDIUM / 0 LOW — first PROCEED-CLEAN of the v0.7.x
 cycle.
 
-## v0.7.12 — Concrete WORM backends + FAIR Monte Carlo + P3 second batch — NEXT
+## v0.7.12 — Concrete WORM backends + FAIR Monte Carlo + alert-zero — SHIPPED
 
-See [`docs/v0.7.12-plan.md`](v0.7.12-plan.md). Adds the three
-canonical cloud-WORM implementations (S3 Object Lock + Azure
-Immutable Blob + GCS Bucket Lock) + FAIR Monte Carlo simulation
-+ remaining ~12 deferrals from v0.7.8/v0.7.9/v0.7.10. ~4-5 week
-ship target.
+See [`docs/v0.7.12-plan.md`](v0.7.12-plan.md). Shipped: 3 cloud-
+WORM backend implementations (`S3ObjectLockWORM` /
+`AzureImmutableBlobWORM` / `GCSBucketLockWORM` via
+`evidentia[worm-s3]` / `[worm-azure]` / `[worm-gcs]` extras),
+FAIR Monte Carlo simulation (`risk quantify --method fair-mc`),
+GDPR Article 17 purge-flow (`purge_immediately` +
+`force_gdpr_purge` operator override), CodeQL custom sanitizer
+pack registering `validate_within` as a path-injection sanitizer,
+`bump_version.py` inter-package pin tightening, release-checklist
+Steps 5.5 + 9.5 doc-consistency + release-notes practices, and
+3 cloud-WORM operator runbooks. Second consecutive PROCEED-CLEAN
+/security-review (0 HIGH / 0 MEDIUM / 0 LOW). 2075 tests passing
+across 188 source files.
 
-## v0.7.x — Patches + bridge to v0.8.0 — RESERVED
+## v0.7.13 — Dependency modernization + Codecov fix + P3 closures + release-notes hygiene — NEXT
 
-Reserved patch window for hot-fixes surfacing during v0.7.7-v0.7.11
-dogfooding, domain-expert walk-through scheduling for the v0.9.0
+Wrap-up release for the v0.7.x cycle before v0.8.0 opens.
+Dependency modernization (Dependabot #18 — 13 GH Actions major
+bumps; Dependabot #21 — frontend major bumps including tailwind
+3→4 + typescript 5→6 + eslint 9→10). Codecov 0% fix
+(switched to `source_pkgs` so the Cobertura XML emits full
+repo-relative file paths Codecov's path-resolver can match).
+P3 carry-over closures (M-9 OSCAL UUID conformance test + L-2
+`_is_high_risk` extra field shapes for Vanta + Drata + L-4 SIG
+BYO sparse-row debug logging + 5 of 9 v0.7.8 LOWs; remaining
+3 LOWs deferred to v0.7.14 with rationale). Release-notes
+hygiene (9 stub bodies backfilled v0.7.5→v0.7.12 + workflow
+auto-population from CHANGELOG so future releases never
+re-encounter the stub-body gap). M-4 collector base-class
+refactor formally documented as paired with v0.8.0 plugin
+contracts. Dockerfile pinning policy doc + recurring-Scorecard-
+alert dismissal runbook. ~3 weeks ship target.
+
+## v0.7.14 — Patches + bridge to v0.8.0 — RESERVED
+
+Reserved patch window for hot-fixes surfacing post-v0.7.13,
+domain-expert walk-through scheduling for the v0.9.0
 federal-compliance theme (CONMON + POA&M), and final polish
-before the v0.8.0 AI moat work begins. ~1-2 week reservation.
+before the v0.8.0 AI moat work begins. v0.7.13 deferrals
+(Tableau Windows tempfile cleanup + Databricks LTS list
+extensibility + test-coverage gaps) land here if not otherwise
+absorbed into v0.8.0. ~1-2 week reservation.
 
 ## v0.8.0 — The OSS-native AI moat — PLANNED
 

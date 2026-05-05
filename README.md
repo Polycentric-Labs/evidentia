@@ -148,6 +148,22 @@ Evidentia is built on four principles:
 
 ### Recent releases
 
+**v0.7.12 (May 2026)** — *concrete cloud-WORM backends + FAIR
+Monte Carlo + GDPR purge-flow + alert-zero*. Adds the three cloud
+backends to the `WORMBackend` ABC introduced in v0.7.11:
+`S3ObjectLockWORM`, `AzureImmutableBlobWORM`, `GCSBucketLockWORM`
+(installed via `evidentia[worm-s3]` / `[worm-azure]` /
+`[worm-gcs]` extras). Adds FAIR Monte Carlo simulation
+(`risk quantify --method fair-mc`) using stdlib-only Beta-PERT
+sampling. Adds GDPR Article 17 purge-flow (`purge_immediately` +
+`force_gdpr_purge` operator override). Plus 3 cloud-WORM operator
+runbooks, alert-zero closure (CodeQL custom sanitizer pack
+registers `validate_within` as a path-injection sanitizer),
+`bump_version.py` inter-package pin tightening, and
+release-checklist Steps 5.5 + 9.5 doc-consistency + release-notes
+practices. Second consecutive PROCEED-CLEAN /security-review.
+2075 tests passing across 188 source files.
+
 **v0.7.11 (May 2026)** — *audit chain-of-custody + governance trio
 + Open FAIR + 6-store harmony*. Adds the `evidentia retention`
 CLI (set / list / show / extend / transition / delete / report)
@@ -193,11 +209,9 @@ compliance evidence to NIST 800-53 controls. Plus ServiceNow
 output integration carry-forward.
 
 See [`CHANGELOG.md`](CHANGELOG.md) for the full version history
-(v0.1.0 through v0.7.11). For forward direction, see
-[`docs/v0.7.12-plan.md`](docs/v0.7.12-plan.md) (concrete cloud-
-WORM backends + FAIR Monte Carlo + remaining deferrals),
+(v0.1.0 through v0.7.12). For forward direction, see
 [`docs/v0.8.0-plan.md`](docs/v0.8.0-plan.md) (the OSS-native AI
-moat — DFAH + PRT + MCP + plugin contracts), and
+moat — DFAH + PRT + MCP + plugin contracts) and
 [`docs/ROADMAP.md`](docs/ROADMAP.md) (everything else).
 
 ### What works today
