@@ -573,21 +573,41 @@ class VantaCollector:
         should verify against their Vanta UI; the BLIND_SPOTS list
         documents the field-shape uncertainty.
         """
-        # Walk a small set of likely field names — Vanta's API
-        # publication has used `riskTier`, `risk_tier`, `riskLevel`,
-        # `risk_level` across published versions; we accept any of
-        # them.
-        for key in ("riskTier", "risk_tier", "riskLevel", "risk_level"):
+        # Walk a defensive set of field names — Vanta's API
+        # publication has used different names across versions
+        # (`riskTier`, `risk_tier`, `riskLevel`, `risk_level`) and
+        # SI partners reshaping records via the API may use other
+        # common synonyms.
+        #
+        # v0.7.13 P3 L-2: extended the documented surface to also
+        # cover `severity`, `tier`, `risk` (bare), `riskRating`,
+        # `risk_rating`, `riskClass`, `risk_class`. Each accepts the
+        # same canonical HIGH-tier values.
+        for key in (
+            "riskTier", "risk_tier",
+            "riskLevel", "risk_level",
+            "riskRating", "risk_rating",
+            "riskClass", "risk_class",
+            "severity", "tier", "risk",
+        ):
             value = vendor.get(key)
-            if isinstance(value, str) and value.upper() in ("HIGH", "CRITICAL"):
+            if isinstance(value, str) and value.upper() in (
+                "HIGH", "CRITICAL", "SEVERE"
+            ):
                 return True
         # Some Vanta exports nest risk under a `riskAssessment` block.
-        risk_assessment = vendor.get("riskAssessment") or vendor.get("risk_assessment")
-        if isinstance(risk_assessment, dict):
-            for key in ("tier", "level", "severity"):
-                value = risk_assessment.get(key)
-                if isinstance(value, str) and value.upper() in (
-                    "HIGH", "CRITICAL"
-                ):
-                    return True
+        # v0.7.13 P3 L-2: also probe `assessment` / `risk_summary`
+        # nested blocks under the same set of inner keys.
+        for outer in (
+            "riskAssessment", "risk_assessment",
+            "assessment", "risk_summary", "riskSummary",
+        ):
+            block = vendor.get(outer)
+            if isinstance(block, dict):
+                for key in ("tier", "level", "severity", "rating", "class"):
+                    value = block.get(key)
+                    if isinstance(value, str) and value.upper() in (
+                        "HIGH", "CRITICAL", "SEVERE"
+                    ):
+                        return True
         return False

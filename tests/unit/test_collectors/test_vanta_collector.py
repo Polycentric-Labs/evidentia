@@ -181,6 +181,67 @@ def test_high_risk_detection_handles_alternative_field_shapes() -> None:
     assert len(high_risk) == 4
 
 
+def test_high_risk_detection_handles_extended_field_shapes_v0_7_13() -> None:
+    """v0.7.13 P3 L-2: extended `_is_high_risk` covers more field shapes.
+
+    Adds: top-level `severity`, `tier`, `risk` (bare), `riskRating`,
+    `risk_rating`, `riskClass`, `risk_class`. Plus nested
+    `assessment.{tier,level,severity,rating,class}` and
+    `risk_summary.*` / `riskSummary.*`. Plus a third matched value
+    `SEVERE` alongside `HIGH` / `CRITICAL`.
+    """
+    variants = [
+        _vendor_record(
+            vendor_id="v-extended-severity",
+            risk_tier=None,
+            extra={"severity": "high"},
+        ),
+        _vendor_record(
+            vendor_id="v-extended-tier",
+            risk_tier=None,
+            extra={"tier": "CRITICAL"},
+        ),
+        _vendor_record(
+            vendor_id="v-extended-bare-risk",
+            risk_tier=None,
+            extra={"risk": "Severe"},
+        ),
+        _vendor_record(
+            vendor_id="v-extended-rating",
+            risk_tier=None,
+            extra={"riskRating": "high"},
+        ),
+        _vendor_record(
+            vendor_id="v-extended-class",
+            risk_tier=None,
+            extra={"risk_class": "critical"},
+        ),
+        _vendor_record(
+            vendor_id="v-extended-nested-rating",
+            risk_tier=None,
+            extra={"riskAssessment": {"rating": "HIGH"}},
+        ),
+        _vendor_record(
+            vendor_id="v-extended-summary-block",
+            risk_tier=None,
+            extra={"risk_summary": {"severity": "critical"}},
+        ),
+    ]
+    mock_client = _make_client([_page_response(variants)])
+
+    collector = VantaCollector(api_token="vt_test", client=mock_client)
+    findings = collector.collect()
+
+    high_risk = [
+        f for f in findings if (f.source_finding_id or "").startswith("vendor-high-risk:")
+    ]
+    assert len(high_risk) == 7, (
+        f"Expected all 7 extended-field variants to map to high-risk; "
+        f"got {len(high_risk)}: "
+        f"{[f.source_finding_id for f in high_risk]}"
+    )
+
+
 def test_collect_paginates_via_endCursor() -> None:
     page_1 = _page_response(
         [_vendor_record(vendor_id="v-1")],

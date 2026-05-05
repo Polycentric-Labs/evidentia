@@ -536,28 +536,37 @@ class DrataCollector:
         """
         # Drata's API has used `riskLevel` + `risk_level` in published
         # versions; older releases used `riskTier`. Accept any.
+        #
+        # v0.7.13 P3 L-2: extended the documented surface to also
+        # cover `severity`, `tier`, `risk` (bare), `riskRating`,
+        # `risk_rating`, `riskClass`, `risk_class`.
         for key in (
-            "riskLevel",
-            "risk_level",
-            "riskTier",
-            "risk_tier",
+            "riskLevel", "risk_level",
+            "riskTier", "risk_tier",
+            "riskRating", "risk_rating",
+            "riskClass", "risk_class",
+            "severity", "tier", "risk",
         ):
             value = vendor.get(key)
-            if isinstance(value, str) and value.upper() in ("HIGH", "CRITICAL"):
+            if isinstance(value, str) and value.upper() in (
+                "HIGH", "CRITICAL", "SEVERE"
+            ):
                 return True
         # Some Drata exports nest risk under a `riskAssessment` block.
-        risk_assessment = (
-            vendor.get("riskAssessment")
-            or vendor.get("risk_assessment")
-        )
-        if isinstance(risk_assessment, dict):
-            for key in ("level", "tier", "severity"):
-                value = risk_assessment.get(key)
-                if isinstance(value, str) and value.upper() in (
-                    "HIGH",
-                    "CRITICAL",
-                ):
-                    return True
+        # v0.7.13 P3 L-2: also probe `assessment` / `risk_summary`
+        # nested blocks under the same set of inner keys.
+        for outer in (
+            "riskAssessment", "risk_assessment",
+            "assessment", "risk_summary", "riskSummary",
+        ):
+            block = vendor.get(outer)
+            if isinstance(block, dict):
+                for key in ("level", "tier", "severity", "rating", "class"):
+                    value = block.get(key)
+                    if isinstance(value, str) and value.upper() in (
+                        "HIGH", "CRITICAL", "SEVERE"
+                    ):
+                        return True
         # Drata also sometimes uses `inherentRisk` or `residualRisk`
         # numeric fields on a 1-5 / 1-25 scale; treat 4+ on a 5-scale
         # OR 16+ on a 25-scale as HIGH.

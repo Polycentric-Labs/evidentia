@@ -56,6 +56,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import logging
 from datetime import date, datetime
 from enum import Enum
 from importlib import resources
@@ -71,6 +72,13 @@ from evidentia_core.models.common import (
 )
 from evidentia_core.models.tprm import Vendor
 from evidentia_core.tprm.concentration import _csv_safe
+
+# v0.7.13 P3 L-4: module-level logger for SIG BYO debug diagnostics.
+# Operators ingesting partially-completed SIG XLSX templates can
+# surface per-row label-match decisions via `evidentia --log-level
+# debug` to diagnose why specific rows weren't pre-filled (typically
+# label drift across Shared Assessments publication years).
+_log = logging.getLogger(__name__)
 
 
 class QuestionnaireFormat(str, Enum):
@@ -742,16 +750,46 @@ def generate_from_byo_template(
     # response in column C with column B as instructions). We
     # check the cell is empty first so we don't clobber existing
     # operator content.
+    #
+    # v0.7.13 P3 L-4: emit debug logs for sparse-row triage. When
+    # operators run `evidentia --log-level debug`, they get visibility
+    # into:
+    #   - rows skipped because column-A was None (sparse rows)
+    #   - rows skipped because column-A label wasn't in the recognized
+    #     set (label drift — most common cause of partial pre-fill)
+    #   - rows where the label matched but both target cells were
+    #     already populated (won't clobber)
+    #   - rows where the pre-fill landed (column index + value)
     pre_filled_count = 0
-    for row in ws.iter_rows(min_row=1, max_row=ws.max_row):
+    skipped_unknown_label = 0
+    skipped_already_populated = 0
+    skipped_sparse = 0
+    for row_idx, row in enumerate(
+        ws.iter_rows(min_row=1, max_row=ws.max_row), start=1
+    ):
         if not row:
+            skipped_sparse += 1
+            _log.debug(
+                "SIG BYO row %d skipped: empty row tuple", row_idx
+            )
             continue
         a_cell = row[0]
         if a_cell.value is None:
+            skipped_sparse += 1
+            _log.debug(
+                "SIG BYO row %d skipped: column-A is None", row_idx
+            )
             continue
         a_value = str(a_cell.value).strip().lower().rstrip(":")
         target = label_to_value.get(a_value)
         if target is None:
+            skipped_unknown_label += 1
+            _log.debug(
+                "SIG BYO row %d skipped: column-A label %r not in "
+                "recognized set",
+                row_idx,
+                a_value,
+            )
             continue
         # v0.7.9 P0.4 Continuous H-5: real-world Shared Assessments
         # SIG / SIG-Lite templates frequently put instruction text in
@@ -763,9 +801,42 @@ def generate_from_byo_template(
         if len(row) > 2 and row[2].value in (None, ""):
             row[2].value = target
             pre_filled_count += 1
+            _log.debug(
+                "SIG BYO row %d pre-filled: label=%r → column C = %r",
+                row_idx,
+                a_value,
+                target,
+            )
         elif len(row) > 1 and row[1].value in (None, ""):
             row[1].value = target
             pre_filled_count += 1
+            _log.debug(
+                "SIG BYO row %d pre-filled: label=%r → column B = %r",
+                row_idx,
+                a_value,
+                target,
+            )
+        else:
+            skipped_already_populated += 1
+            _log.debug(
+                "SIG BYO row %d skipped: label=%r matched but "
+                "columns B + C both already populated; not clobbering",
+                row_idx,
+                a_value,
+            )
+
+    _log.debug(
+        "SIG BYO pre-fill summary for %s: pre_filled=%d, "
+        "skipped_unknown_label=%d, skipped_already_populated=%d, "
+        "skipped_sparse=%d, total_rows_scanned=%d",
+        path.name,
+        pre_filled_count,
+        skipped_unknown_label,
+        skipped_already_populated,
+        skipped_sparse,
+        pre_filled_count + skipped_unknown_label
+        + skipped_already_populated + skipped_sparse,
+    )
 
     if pre_filled_count == 0:
         raise RuntimeError(
@@ -774,7 +845,9 @@ def generate_from_byo_template(
             "labels may differ from the documented Shared "
             "Assessments convention; operators may need to "
             "populate metadata manually. Recognized labels: "
-            f"{sorted(label_to_value.keys())}."
+            f"{sorted(label_to_value.keys())}. "
+            "Run with `evidentia --log-level debug` to see "
+            "per-row label-match diagnostics."
         )
 
     out = io.BytesIO()

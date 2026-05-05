@@ -153,3 +153,161 @@ def test_blind_spots_in_back_matter_accepted() -> None:
                 assert "evidentia.dev/oscal" in str(p.ns)
                 blind_spot_ids.add(p.value)
     assert blind_spot_ids == {"kms-grants", "service-linked-roles"}
+
+
+def test_vendor_uuid_identity_across_party_and_back_matter() -> None:
+    """v0.7.13 P3 closure for M-9: vendor UUID is identical in
+    ``metadata.parties[].uuid`` and ``back-matter.resources[].uuid``.
+
+    The exporter contract (per ``_vendor_to_oscal_party`` +
+    ``_vendor_to_oscal_resource`` docstrings) states that a Vendor
+    appears in BOTH the AR's ``metadata.parties[]`` (organizational-
+    party form for OSCAL-native consumers) and its ``back-matter.
+    resources[]`` (Evidentia-style tamper-evident embedded form),
+    keyed by the SAME UUID so that ``href: "#<vendor-id>"``
+    cross-references resolve unambiguously regardless of which
+    side of the AR a tool reads from.
+
+    This test asserts the invariant by:
+
+    1. Constructing a minimal AR with one Vendor in inventory,
+    2. Round-tripping through trestle's pydantic.v1 Model (proves
+       the dual-emission survives a full OSCAL conformance parse),
+    3. Verifying ``vendor.id`` equals exactly one party UUID AND
+       exactly one back-matter resource UUID,
+    4. Verifying both sides carry the matching ``vendor-id`` prop
+       so a downstream filter on ``vendor-id`` returns both.
+
+    A regression here (e.g. someone reassigning ``uuid: uuid4()``
+    in either helper rather than ``uuid: vendor.id``) would leave
+    cross-references dangling — caught immediately by this test.
+    """
+    from datetime import date
+
+    from evidentia_core.models.tprm import (
+        CriticalityTier,
+        Vendor,
+        VendorType,
+    )
+
+    # Construct a minimal Vendor — only required fields, no optional
+    # surface (4th-parties / regulatory-classification / region etc.).
+    # Keeps the test focused on the UUID invariant.
+    vendor = Vendor(
+        name="Acme Cloud Services",
+        type=VendorType.SAAS,
+        criticality_tier=CriticalityTier.HIGH,
+        relationship_owner="vendor-management@example.com",
+        contract_start_date=date(2025, 1, 1),
+    )
+
+    ar_dict = gap_report_to_oscal_ar(
+        _make_minimal_report(), vendor_inventory=[vendor]
+    )
+
+    # Round-trip through trestle to confirm OSCAL conformance.
+    parsed = trestle_ar.Model.parse_obj(ar_dict)
+    ar = parsed.assessment_results
+
+    # ─── Party side: vendor.id appears exactly once in parties[] ───
+    parties = ar.metadata.parties or []
+    matching_parties = [p for p in parties if str(p.uuid) == vendor.id]
+    assert len(matching_parties) == 1, (
+        f"Expected vendor.id={vendor.id!r} to match exactly one party "
+        f"UUID; found {len(matching_parties)}"
+    )
+    party = matching_parties[0]
+    assert str(party.uuid) == vendor.id
+
+    # The party MUST carry a ``vendor-id`` prop equal to vendor.id
+    # (so a back-matter-blind tool filtering parties[] by vendor-id
+    # finds this vendor without having to walk back-matter).
+    party_vendor_id_props = [
+        p for p in (party.props or []) if p.name == "vendor-id"
+    ]
+    assert len(party_vendor_id_props) == 1
+    assert party_vendor_id_props[0].value == vendor.id
+
+    # ─── Back-matter side: same UUID, same prop ───
+    bm = ar.back_matter
+    assert bm is not None
+    assert bm.resources is not None
+    matching_resources = [
+        r for r in bm.resources if str(r.uuid) == vendor.id
+    ]
+    assert len(matching_resources) == 1, (
+        f"Expected vendor.id={vendor.id!r} to match exactly one "
+        f"back-matter resource UUID; found {len(matching_resources)}"
+    )
+    resource = matching_resources[0]
+    assert str(resource.uuid) == vendor.id
+
+    resource_vendor_id_props = [
+        p for p in (resource.props or []) if p.name == "vendor-id"
+    ]
+    assert len(resource_vendor_id_props) == 1
+    assert resource_vendor_id_props[0].value == vendor.id
+
+    # ─── Cross-side identity: party UUID == back-matter UUID ───
+    # Belt-and-suspenders: the previous two checks already establish
+    # this transitively, but the direct assertion is what M-9 codifies.
+    assert str(party.uuid) == str(resource.uuid) == vendor.id
+
+
+def test_multiple_vendors_keep_uuid_identity_pairwise() -> None:
+    """v0.7.13 P3 follow-up to M-9: with N>1 vendors, every party
+    UUID has exactly one matching back-matter resource UUID and
+    vice-versa.
+
+    A regression that uses ``uuid4()`` per call instead of
+    ``vendor.id`` would surface here as one-side-only entries —
+    parties with no matching resource, or resources with no
+    matching party.
+    """
+    from datetime import date
+
+    from evidentia_core.models.tprm import (
+        CriticalityTier,
+        Vendor,
+        VendorType,
+    )
+
+    vendors = [
+        Vendor(
+            name=f"Vendor {i}",
+            type=VendorType.SAAS,
+            criticality_tier=CriticalityTier.MEDIUM,
+            relationship_owner=f"owner-{i}@example.com",
+            contract_start_date=date(2025, 1, 1),
+        )
+        for i in range(3)
+    ]
+    expected_ids = {v.id for v in vendors}
+
+    ar_dict = gap_report_to_oscal_ar(
+        _make_minimal_report(), vendor_inventory=vendors
+    )
+    parsed = trestle_ar.Model.parse_obj(ar_dict)
+    ar = parsed.assessment_results
+
+    party_ids = {
+        str(p.uuid)
+        for p in (ar.metadata.parties or [])
+        if any((q.name == "vendor-id" for q in (p.props or [])))
+    }
+    bm = ar.back_matter
+    assert bm is not None
+    assert bm.resources is not None
+    resource_ids = {
+        str(r.uuid)
+        for r in bm.resources
+        if any((q.name == "vendor-id" for q in (r.props or [])))
+    }
+
+    assert party_ids == expected_ids, (
+        f"Party UUIDs {party_ids} != expected {expected_ids}"
+    )
+    assert resource_ids == expected_ids, (
+        f"Resource UUIDs {resource_ids} != expected {expected_ids}"
+    )
+    assert party_ids == resource_ids
