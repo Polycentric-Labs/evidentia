@@ -111,6 +111,22 @@ def main() -> int:
     ap.add_argument(
         "--dry-run", action="store_true", help="print changes without writing"
     )
+    ap.add_argument(
+        "--regenerate-requirements",
+        action="store_true",
+        help=(
+            "v0.7.14 P1.5 preview: also regenerate "
+            "docker/requirements.txt via pip-compile --generate-hashes "
+            "against evidentia[gui]==<--to>. The Dockerfile install "
+            "line continues to use exact-version pinning for now; the "
+            "switch to pip install --require-hashes -r requirements.txt "
+            "lands in v0.8.0 G4 (reproducible-build verification). "
+            "Until then, the regenerated file ships as v0.8.0 "
+            "foundation + can be inspected by operators planning their "
+            "own hash-pinned image builds. Requires pip-tools "
+            "installed (pip install pip-tools)."
+        ),
+    )
     args = ap.parse_args()
 
     if not VERSION_RE.fullmatch(args.to):
@@ -183,6 +199,77 @@ def main() -> int:
     print(
         f"Summary: {files_changed} file(s), {total_subs} substitution(s){suffix}"
     )
+
+    # v0.7.14 P1.5: optional regeneration of docker/requirements.txt
+    # via pip-compile. Runs AFTER the version-bump substitutions so
+    # the requirements.in pin is updated to the new version before
+    # pip-compile resolves the transitive closure.
+    if args.regenerate_requirements:
+        print()
+        print("Regenerating docker/requirements.txt (P1.5 preview)...")
+        if args.dry_run:
+            print("  (dry run; would have run pip-compile)")
+        else:
+            import subprocess
+            from pathlib import Path
+
+            repo_root = Path(__file__).resolve().parent.parent
+            docker_dir = repo_root / "docker"
+            req_in = docker_dir / "requirements.in"
+            req_out = docker_dir / "requirements.txt"
+            if not req_in.exists():
+                docker_dir.mkdir(exist_ok=True)
+                req_in.write_text(
+                    f"evidentia[gui]=={args.to}\n",
+                    encoding="utf-8",
+                )
+            else:
+                # Update the pin in requirements.in to match the
+                # new version (single-line file).
+                req_in.write_text(
+                    f"evidentia[gui]=={args.to}\n",
+                    encoding="utf-8",
+                )
+            try:
+                result = subprocess.run(
+                    [
+                        "pip-compile",
+                        "--generate-hashes",
+                        "--output-file",
+                        str(req_out),
+                        str(req_in),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                if result.returncode != 0:
+                    print(
+                        "  pip-compile FAILED; check output:",
+                        result.stderr[-500:],
+                    )
+                    print(
+                        "  (regeneration skipped; install pip-tools "
+                        "via `pip install pip-tools` then re-run)"
+                    )
+                else:
+                    pkg_count = sum(
+                        1
+                        for line in req_out.read_text(
+                            encoding="utf-8"
+                        ).splitlines()
+                        if line and line[0].isalpha()
+                    )
+                    print(
+                        f"  docker/requirements.txt regenerated: "
+                        f"{pkg_count} packages with SHA256 hashes"
+                    )
+            except FileNotFoundError:
+                print(
+                    "  pip-compile not found; install via "
+                    "`pip install pip-tools` (regeneration skipped)"
+                )
+
     if not args.dry_run and files_changed > 0:
         print()
         print("Next steps (per the publishing-authority protocol, do these manually):")

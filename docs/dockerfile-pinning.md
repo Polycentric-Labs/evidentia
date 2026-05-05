@@ -64,6 +64,42 @@ each release touches 6 wheels and their transitive trees. Folding it
 into G4's reproducible-build work keeps the verification scope
 coherent.
 
+### v0.7.14 P1.5 preview state (2026-05-05)
+
+Steps 1 + 2 above LANDED in v0.7.14:
+
+- **`docker/requirements.txt`** is generated via
+  `pip-compile --generate-hashes` against `evidentia[gui]==0.7.13`
+  (and bumped on each release via `bump_version.py
+  --regenerate-requirements`). 80 packages × 2-N SHA256 hashes per
+  package (~2200 lines). Inspectable for operators planning their
+  own hash-pinned image builds.
+- **`scripts/bump_version.py`** has a new `--regenerate-requirements`
+  flag that calls `pip-compile` after the version-bump
+  substitutions. Default OFF so routine bumps don't re-resolve
+  the transitive closure unless explicitly requested.
+
+Steps 3 + 4 stay deferred to v0.8.0 G4. The v0.7.14 Dockerfile
+`RUN pip install --no-cache-dir --user "evidentia[gui]==X.Y.Z"`
+line is unchanged. Operators wanting to validate the hash-pin
+locally can run:
+
+```bash
+docker run --rm -v "$PWD/docker/requirements.txt:/tmp/req.txt" \
+  python:3.14-slim \
+  pip install --require-hashes -r /tmp/req.txt --dry-run
+```
+
+If the dry-run succeeds, the official Dockerfile switch in v0.8.0
+G4 will work.
+
+**Why preview vs. ship**: switching the production Dockerfile install
+to `--require-hashes` requires that the file format be validated
+across all 6 cloud-WORM extras + the [gui] extra + future v0.8.0
+extras. v0.7.14 ships the [gui]-only file as the canonical test
+case; v0.8.0 G4 validates the full extras matrix + flips the
+Dockerfile install line.
+
 ## What to do when the alert re-fires
 
 Each release that bumps the Dockerfile line (`==0.7.12` →
