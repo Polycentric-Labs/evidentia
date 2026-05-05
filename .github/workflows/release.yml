@@ -301,24 +301,38 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.semver }}
         run: |
-          echo "Waiting for evidentia==${VERSION} to appear on PyPI..."
-          attempts=0
-          max_attempts=30  # 30 * 10s = 5 min cap
-          until pip index versions evidentia 2>&1 | grep -q "${VERSION}"; do
-            attempts=$((attempts + 1))
-            if [ "${attempts}" -ge "${max_attempts}" ]; then
-              echo "ERROR: PyPI propagation timed out after 5 min."
-              echo "Latest visible:"
-              pip index versions evidentia 2>&1 | head -3
-              exit 1
-            fi
-            echo "  attempt ${attempts}/${max_attempts}: not yet propagated, sleeping 10s"
-            sleep 10
+          # v0.7.16: extend the wait to ALL 6 inter-package deps
+          # (matches the v0.7.14 P2.2 fix in container-build.yml).
+          # The v0.7.15 first ship failed at the docker build because
+          # this Wait step polled only `evidentia` while pip's
+          # resolution then failed on `evidentia-core<0.8.0,>=0.7.15`
+          # (not yet propagated). The pin-trap fix correctly REFUSED
+          # to fall back, surfacing the propagation race as a hard
+          # CI failure. Polling all 6 packages prevents this entirely.
+          PACKAGES="evidentia evidentia-core evidentia-ai evidentia-collectors evidentia-integrations evidentia-api"
+          for pkg in $PACKAGES; do
+            echo "Waiting for ${pkg}==${VERSION} to appear on PyPI..."
+            attempts=0
+            max_attempts=30  # 30 * 10s = 5 min cap per package
+            until pip index versions "${pkg}" 2>&1 | grep -q "${VERSION}"; do
+              attempts=$((attempts + 1))
+              if [ "${attempts}" -ge "${max_attempts}" ]; then
+                echo ""
+                echo "::error::PyPI propagation timed out after 5 min waiting for ${pkg}==${VERSION}."
+                echo "Latest visible:"
+                pip index versions "${pkg}" 2>&1 | head -3
+                exit 1
+              fi
+              echo "  ${pkg} attempt ${attempts}/${max_attempts}: not yet propagated, sleeping 10s"
+              sleep 10
+            done
+            echo "  ${pkg}==${VERSION} visible on PyPI"
           done
-          # Extra safety margin for Fastly mirror lag — even after the
-          # index page lists the version, individual mirror nodes can
-          # lag by 10-20s before the wheel file itself is fetchable.
-          echo "Index lists ${VERSION}; sleeping 20s for mirror catch-up"
+          # Extra safety margin for Fastly mirror lag — even after
+          # every index page lists the version, individual mirror
+          # nodes can lag by 10-20s before the wheel files themselves
+          # are fetchable.
+          echo "All 6 packages list ${VERSION}; sleeping 20s for mirror catch-up"
           sleep 20
 
       - name: Build and push image to ghcr.io
