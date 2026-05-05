@@ -1,72 +1,146 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/*
+ * v0.7.15 P0.1: Tailwind 3 → 4 migration. CSS-first config replaces
+ * tailwind.config.ts. All theme tokens live in `@theme` blocks below;
+ * the shadcn/ui new-york preset palette + Evidentia severity colors
+ * carry forward unchanged in their visual values, but are now declared
+ * as CSS custom properties under `--color-*` namespace per Tailwind 4
+ * conventions.
+ *
+ * `@import "tailwindcss"` replaces the v3 `@tailwind base/components/
+ * utilities` triple. v4 includes preflight + utilities + components in
+ * the single import.
+ *
+ * `tw-animate-css` replaces the v3-era `tailwindcss-animate` plugin
+ * (last v1.0.7; not v4-compatible). Same accordion + keyframe
+ * primitives; v4-native plugin surface.
+ */
+
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Tailwind v4 dark-mode strategy: enable class-based dark mode
+ * (matches the v3 `darkMode: ["class"]` config). Without this directive,
+ * v4 defaults to media-query dark-mode which doesn't honor `<html
+ * class="dark">`. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /*
  * shadcn/ui new-york theme customized for Evidentia.
  * Severity palette aligns with the Rich CLI output colors so users who
  * switch between the two see the same visual language.
+ *
+ * In Tailwind 4, theme tokens are declared in `@theme` blocks. Each
+ * `--color-<name>` becomes a Tailwind utility class (`bg-<name>`,
+ * `text-<name>`, `border-<name>`, etc.) automatically. The HSL CSS
+ * variables (`--<token>`) are kept for the shadcn/ui dark-mode toggle
+ * pattern (the `.dark` selector swaps the var values; the @theme tokens
+ * reference them via `hsl(var(--<token>))`).
  */
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 186 100% 37%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 186 100% 37%;
-    --radius: 0.5rem;
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
 
-    /* Evidentia severity palette — matches the Rich CLI table colors */
-    --severity-critical: 0 84% 40%;
-    --severity-high: 14 90% 50%;
-    --severity-medium: 38 92% 50%;
-    --severity-low: 200 80% 50%;
-    --severity-informational: 215 16% 47%;
-  }
+  /* Evidentia severity palette — matches the Rich CLI table colors */
+  --color-severity-critical: hsl(var(--severity-critical));
+  --color-severity-high: hsl(var(--severity-high));
+  --color-severity-medium: hsl(var(--severity-medium));
+  --color-severity-low: hsl(var(--severity-low));
+  --color-severity-informational: hsl(var(--severity-informational));
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 186 100% 45%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 186 100% 45%;
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
 
-    --severity-critical: 0 85% 60%;
-    --severity-high: 14 90% 60%;
-    --severity-medium: 38 92% 60%;
-    --severity-low: 200 80% 60%;
-    --severity-informational: 215 16% 60%;
-  }
+  /* Container utility (Tailwind v4 doesn't ship a built-in container
+   * — we replicate the v3 `theme.container` config here). */
+  --container-2xl: 1400px;
 }
 
+/* CSS variable definitions — the shadcn/ui dark-mode swap lives here.
+ * Tokens are referenced by the @theme block above via `hsl(var(--*))`,
+ * so toggling `.dark` on the document root swaps the entire palette
+ * without re-defining `@theme`.
+ */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 186 100% 37%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 186 100% 37%;
+  --radius: 0.5rem;
+
+  /* Evidentia severity palette — matches the Rich CLI table colors */
+  --severity-critical: 0 84% 40%;
+  --severity-high: 14 90% 50%;
+  --severity-medium: 38 92% 50%;
+  --severity-low: 200 80% 50%;
+  --severity-informational: 215 16% 47%;
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 186 100% 45%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 186 100% 45%;
+
+  --severity-critical: 0 85% 60%;
+  --severity-high: 14 90% 60%;
+  --severity-medium: 38 92% 60%;
+  --severity-low: 200 80% 60%;
+  --severity-informational: 215 16% 60%;
+}
+
+/* Tailwind 4 base layer — equivalent to the v3 `@layer base` block.
+ * The `@apply` directive carries forward from v3; the `border-border`
+ * + `bg-background text-foreground` utilities resolve via the @theme
+ * tokens declared above.
+ */
 @layer base {
   * {
     @apply border-border;

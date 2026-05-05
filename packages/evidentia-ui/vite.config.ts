@@ -2,6 +2,7 @@
 import path from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 
 /**
  * Vite config for the Evidentia web UI.
@@ -14,9 +15,14 @@ import react from "@vitejs/plugin-react";
  * Dev mode: Vite serves at :5173; the backend FastAPI (started via
  * `evidentia serve --dev`) runs at :8000 with permissive CORS so
  * fetch("/api/...") from :5173 reaches the backend via the proxy below.
+ *
+ * v0.7.15: tailwindcss v4 first-class vite plugin replaces the v3
+ * PostCSS chain (postcss.config.js + tailwind.config.ts both removed).
+ * All theme config lives in src/index.css `@theme {}` blocks per the
+ * v4 CSS-first design.
  */
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
