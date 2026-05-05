@@ -72,7 +72,7 @@ WORKDIR /home/evidentia
 # the v0.8.0 plan). Until then, the recurring Scorecard alert on this
 # line is dismissed at each rescan with rationale pointing here. See
 # docs/dockerfile-pinning.md for the full policy.
-RUN pip install --no-cache-dir --user "evidentia[gui]==0.7.15"
+RUN pip install --no-cache-dir --user "evidentia[gui]==0.7.16"
 
 # Put the user-installed `evidentia` entrypoint on PATH.
 ENV PATH="/home/evidentia/.local/bin:${PATH}"
