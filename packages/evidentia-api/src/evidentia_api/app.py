@@ -162,6 +162,9 @@ def create_app(
         llm_status as llm_status_router,
     )
     from evidentia_api.routers import (
+        metrics as metrics_router,
+    )
+    from evidentia_api.routers import (
         model_risk as model_risk_router,
     )
     from evidentia_api.routers import (
@@ -172,6 +175,7 @@ def create_app(
     )
 
     app.include_router(health_router.router, prefix="/api", tags=["health"])
+    app.include_router(metrics_router.router, prefix="/api", tags=["metrics"])
     app.include_router(config_router.router, prefix="/api", tags=["config"])
     app.include_router(doctor_router.router, prefix="/api", tags=["doctor"])
     app.include_router(llm_status_router.router, prefix="/api", tags=["llm"])

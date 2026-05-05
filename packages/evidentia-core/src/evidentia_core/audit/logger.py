@@ -347,6 +347,14 @@ class EvidentiaLogger:
             _scrub(message),
             extra={"ecs_record": ecs_record},
         )
+        # v0.8.0 P1 G3: tap event into the in-process Prometheus
+        # counter aggregator. Lazy-import keeps logger.py free of
+        # the metrics module's threading.Lock at import time.
+        from evidentia_core.audit.metrics import record_event
+
+        action_str = action.value if hasattr(action, "value") else str(action)
+        outcome_str = outcome.value if hasattr(outcome, "value") else str(outcome)
+        record_event(action=action_str, outcome=outcome_str)
 
 
 def get_logger(name: str) -> EvidentiaLogger:
