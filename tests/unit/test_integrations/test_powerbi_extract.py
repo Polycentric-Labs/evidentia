@@ -126,6 +126,59 @@ class TestRowValue:
     def test_enum_value(self) -> None:
         assert _row_value(GapSeverity.HIGH) == "high"
 
+    def test_list_with_nones_filters(self) -> None:
+        """v0.7.13 P3 LOW item 5 closure: None elements in lists
+        are filtered before join, not stringified as 'None'."""
+        assert _row_value([None, "x", None, "y"]) == "x;y"
+
+    def test_empty_list_yields_empty_string(self) -> None:
+        assert _row_value([]) == ""
+
+    def test_tuple_treated_like_list(self) -> None:
+        """list and tuple share the same join branch."""
+        assert _row_value(("a", "b")) == "a;b"
+
+    def test_nested_list_recurses(self) -> None:
+        """A list inside a list still gets stringified (the inner
+        list takes the list branch + joins; outer wraps that
+        result)."""
+        result = _row_value([["a", "b"], "c"])
+        # Outer list joins with semi-colon; inner list also joins
+        # with semi-colon; the outer result becomes "a;b;c".
+        assert result == "a;b;c"
+
+    def test_unknown_type_falls_back_to_str(self) -> None:
+        """Type the helper doesn't recognize → str() fallback.
+
+        Covers the line 64 fallback path. A class instance
+        without isoformat()/.value/numeric type should land on
+        the final return.
+        """
+        class Custom:
+            def __str__(self) -> str:
+                return "custom-repr"
+
+        assert _row_value(Custom()) == "custom-repr"
+
+    def test_pydantic_model_with_value_field_does_not_match_enum_branch(
+        self,
+    ) -> None:
+        """v0.7.13 P3 LOW items 7+8: a Pydantic model with a
+        ``value`` field should NOT take the Enum branch (which
+        was the duck-typing collision the v0.7.13 fix tightened
+        away)."""
+        from pydantic import BaseModel
+
+        class FakeWithValue(BaseModel):
+            value: str = "should-not-leak"
+
+        result = _row_value(FakeWithValue())
+        # The Pydantic model takes the str() fallback, NOT the
+        # value-extraction branch.
+        assert "should-not-leak" not in result or result.startswith(
+            "value="
+        ) or result.startswith("FakeWithValue")
+
 
 # ── TestSchemas ────────────────────────────────────────────────────
 

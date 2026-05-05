@@ -30,6 +30,7 @@ warehouse plumbing or Account API auth path.
 from __future__ import annotations
 
 import contextlib
+import os
 from typing import TYPE_CHECKING, Any
 
 from evidentia_core.audit import (
@@ -231,12 +232,54 @@ _CURRENT_LTS_RUNTIMES = frozenset(
 )
 
 
+def _extra_lts_from_env() -> frozenset[str]:
+    """Read operator-supplied extra LTS runtimes from env.
+
+    v0.7.14 P1.3 closure for v0.7.8 LOW item 6 (Databricks LTS
+    hard-coded list). Operators can supply additional LTS
+    runtime version prefixes via the
+    ``DATABRICKS_EXTRA_LTS_RUNTIMES`` env var (comma-separated).
+
+    Each entry is normalized to lowercase + stripped of
+    whitespace before being merged into the in-package
+    allowlist. Empty / whitespace-only entries are silently
+    dropped.
+
+    Examples:
+        # Operator on a newer LTS than what evidentia-collectors ships
+        export DATABRICKS_EXTRA_LTS_RUNTIMES="17.3.x-lts,18.0.x-lts"
+
+        # Single-value (no commas)
+        export DATABRICKS_EXTRA_LTS_RUNTIMES="17.3.x-lts"
+
+    The values are matched against the cluster's
+    ``runtime_version`` field via a ``startswith()`` prefix
+    check (same as the in-package allowlist), so suffix
+    variants like ``-photon-scala2.12`` continue to match.
+    """
+    raw = os.environ.get("DATABRICKS_EXTRA_LTS_RUNTIMES", "")
+    if not raw:
+        return frozenset()
+    values = (entry.strip().lower() for entry in raw.split(","))
+    return frozenset(v for v in values if v)
+
+
 def _is_current_lts(runtime_version: str | None) -> bool:
-    """Return True if runtime is on the current-LTS allowlist."""
+    """Return True if runtime is on the current-LTS allowlist.
+
+    Checks both the in-package ``_CURRENT_LTS_RUNTIMES``
+    frozenset AND the operator-supplied
+    ``DATABRICKS_EXTRA_LTS_RUNTIMES`` env-var values (v0.7.14
+    P1.3). Operator-supplied values are read at call time, not
+    cached, so a long-running process that reads the env var
+    after the helper is first called still picks up the new
+    values.
+    """
     if not runtime_version:
         return False
     rv = runtime_version.lower()
-    return any(rv.startswith(lts) for lts in _CURRENT_LTS_RUNTIMES)
+    allowlist = _CURRENT_LTS_RUNTIMES | _extra_lts_from_env()
+    return any(rv.startswith(lts) for lts in allowlist)
 
 
 # ── Main collector class ────────────────────────────────────────────

@@ -316,3 +316,80 @@ class TestSerializerEdgeCases:
         # it doesn't crash.
         result = _serialize([["a", "b"], ["c"]])
         assert "a" in result and "b" in result and "c" in result
+
+    def test_list_with_nones_filters(self) -> None:
+        """v0.7.13 P3 LOW item 5 closure: None elements in lists
+        are filtered before join, not stringified as 'None'."""
+        from evidentia_integrations.tableau.extract import _serialize
+
+        assert _serialize([None, "x", None, "y"]) == "x;y"
+
+    def test_empty_list_to_empty_string(self) -> None:
+        from evidentia_integrations.tableau.extract import _serialize
+
+        assert _serialize([]) == ""
+
+    def test_unknown_type_falls_back_to_str(self) -> None:
+        """Type the helper doesn't recognize → str() fallback."""
+        from evidentia_integrations.tableau.extract import _serialize
+
+        class Custom:
+            def __str__(self) -> str:
+                return "custom-tableau-repr"
+
+        assert _serialize(Custom()) == "custom-tableau-repr"
+
+
+class TestCountCSVRows:
+    """v0.7.14 P1.1 closure for v0.7.8 LOW item 1: test-coverage
+    gaps in `tableau/publish.py::_count_csv_rows`."""
+
+    def test_empty_bytes_yields_zero(self) -> None:
+        from evidentia_integrations.tableau.publish import (
+            _count_csv_rows,
+        )
+
+        assert _count_csv_rows(b"") == 0
+
+    def test_whitespace_only_yields_zero(self) -> None:
+        from evidentia_integrations.tableau.publish import (
+            _count_csv_rows,
+        )
+
+        assert _count_csv_rows(b"   \n  \n") == 0
+
+    def test_header_only_yields_zero(self) -> None:
+        from evidentia_integrations.tableau.publish import (
+            _count_csv_rows,
+        )
+
+        assert _count_csv_rows(b"col_a,col_b\n") == 0
+
+    def test_header_plus_one_data_row(self) -> None:
+        from evidentia_integrations.tableau.publish import (
+            _count_csv_rows,
+        )
+
+        assert _count_csv_rows(b"col_a,col_b\nv1,v2\n") == 1
+
+    def test_header_plus_three_data_rows(self) -> None:
+        from evidentia_integrations.tableau.publish import (
+            _count_csv_rows,
+        )
+
+        assert (
+            _count_csv_rows(
+                b"col_a,col_b\nr1,r1\nr2,r2\nr3,r3\n"
+            )
+            == 3
+        )
+
+    def test_no_trailing_newline(self) -> None:
+        from evidentia_integrations.tableau.publish import (
+            _count_csv_rows,
+        )
+
+        # The last row may not end with a newline.
+        assert (
+            _count_csv_rows(b"col_a,col_b\nr1,r1\nr2,r2") == 2
+        )

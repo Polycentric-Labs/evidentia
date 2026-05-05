@@ -555,3 +555,90 @@ class TestManifestAfterAllSubChecks:
             "table_lineage",
             "network_policy",
         }
+
+
+# ── v0.7.14 P1.3: DATABRICKS_EXTRA_LTS_RUNTIMES env-var ───────────
+
+
+class TestExtraLTSFromEnv:
+    """v0.7.14 P1.3 closure for v0.7.8 LOW item 6.
+
+    Operators on a newer LTS than what evidentia-collectors
+    ships can supply additional version prefixes via
+    ``DATABRICKS_EXTRA_LTS_RUNTIMES`` (comma-separated).
+    """
+
+    def test_no_env_var_returns_empty(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from evidentia_collectors.databricks.collector import (
+            _extra_lts_from_env,
+        )
+        monkeypatch.delenv(
+            "DATABRICKS_EXTRA_LTS_RUNTIMES", raising=False
+        )
+        assert _extra_lts_from_env() == frozenset()
+
+    def test_single_value_lowercased(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from evidentia_collectors.databricks.collector import (
+            _extra_lts_from_env,
+        )
+        monkeypatch.setenv(
+            "DATABRICKS_EXTRA_LTS_RUNTIMES", "17.3.X-LTS"
+        )
+        assert _extra_lts_from_env() == frozenset({"17.3.x-lts"})
+
+    def test_multi_value_comma_separated(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from evidentia_collectors.databricks.collector import (
+            _extra_lts_from_env,
+        )
+        monkeypatch.setenv(
+            "DATABRICKS_EXTRA_LTS_RUNTIMES",
+            "17.3.x-lts, 18.0.x-lts ,19.1.x-lts",
+        )
+        assert _extra_lts_from_env() == frozenset(
+            {"17.3.x-lts", "18.0.x-lts", "19.1.x-lts"}
+        )
+
+    def test_empty_entries_dropped(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from evidentia_collectors.databricks.collector import (
+            _extra_lts_from_env,
+        )
+        monkeypatch.setenv(
+            "DATABRICKS_EXTRA_LTS_RUNTIMES",
+            "17.3.x-lts,,  ,18.0.x-lts",
+        )
+        assert _extra_lts_from_env() == frozenset(
+            {"17.3.x-lts", "18.0.x-lts"}
+        )
+
+    def test_is_current_lts_includes_env_extras(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Operator-supplied entries are honored by
+        ``_is_current_lts()`` via the merged allowlist."""
+        from evidentia_collectors.databricks.collector import (
+            _is_current_lts,
+        )
+        # 17.3 is NOT in the in-package allowlist (only 14.3 / 15.4 / 16.4)
+        monkeypatch.delenv(
+            "DATABRICKS_EXTRA_LTS_RUNTIMES", raising=False
+        )
+        assert not _is_current_lts(
+            "17.3.x-lts-photon-scala2.12"
+        )
+        # With env-var override, it's recognized via the
+        # startswith() prefix match (17.3.x-lts matches
+        # 17.3.x-lts-photon-scala2.12).
+        monkeypatch.setenv(
+            "DATABRICKS_EXTRA_LTS_RUNTIMES", "17.3.x-lts"
+        )
+        assert _is_current_lts(
+            "17.3.x-lts-photon-scala2.12"
+        )

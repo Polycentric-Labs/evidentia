@@ -176,8 +176,28 @@ class TableauClient:
         """Publish a CSV byte-blob as a Tableau data source.
 
         The SDK requires a file path; we write the CSV to a
-        temporary file under ``tempfile.NamedTemporaryFile``,
-        publish, then clean up.
+        temporary file inside a ``tempfile.TemporaryDirectory()``
+        context, publish, then let the directory cleanup handle
+        the file removal.
+
+        v0.7.14 P1.2 closure for v0.7.8 LOW item 3 (Tableau
+        Windows tempfile cleanup): the previous implementation
+        used ``NamedTemporaryFile(delete=False)`` + manual
+        ``unlink()`` wrapped in ``contextlib.suppress(OSError)``.
+        On Windows, the SDK call sometimes left a handle open
+        long enough for ``unlink()`` to fail with
+        ``PermissionError`` (a sub-class of ``OSError``);
+        the suppress swallowed it silently, leaving a leaked
+        .csv tempfile in the system tempdir.
+
+        ``TemporaryDirectory()`` is the canonical fix: the
+        directory cleanup at context exit handles the file
+        removal cleanly across both POSIX and Windows. If a
+        handle is still open at exit time, ``shutil.rmtree``
+        retries (Python 3.12+ has ``ignore_cleanup_errors=True``
+        as an option, which we don't enable — we want any
+        cleanup failure to surface as a logger warning, not
+        silently leak files).
 
         Returns the published data-source ID.
         """
@@ -192,13 +212,11 @@ class TableauClient:
         try:
             ds_item = TSC.DatasourceItem(project_id=project_id)
             ds_item.name = datasource_name
-            with tempfile.NamedTemporaryFile(
-                suffix=".csv", delete=False
-            ) as tmp:
-                tmp.write(csv_bytes)
-                tmp.flush()
-                tmp_path = Path(tmp.name)
-            try:
+            with tempfile.TemporaryDirectory(
+                prefix="evidentia-tableau-"
+            ) as tmpdir:
+                tmp_path = Path(tmpdir) / "datasource.csv"
+                tmp_path.write_bytes(csv_bytes)
                 mode = (
                     TSC.Server.PublishMode.Overwrite
                     if overwrite
@@ -207,9 +225,8 @@ class TableauClient:
                 published = self._server.datasources.publish(
                     ds_item, str(tmp_path), mode
                 )
-            finally:
-                with contextlib.suppress(OSError):
-                    tmp_path.unlink()
+                # Directory cleanup happens automatically at
+                # context exit; no manual unlink needed.
         except Exception as e:
             raise TableauPublishError(
                 f"Datasource publish failed (driver: "
