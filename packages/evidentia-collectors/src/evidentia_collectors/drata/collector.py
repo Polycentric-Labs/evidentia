@@ -20,10 +20,8 @@ slices add Drata control-test pulls + ongoing-monitoring posture
 
 from __future__ import annotations
 
-import contextlib
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import httpx
 from evidentia_core.audit import (
     CollectionContext,
     CollectionManifest,
@@ -39,11 +37,22 @@ from evidentia_core.models.common import (
     utc_now,
 )
 from evidentia_core.models.finding import FindingStatus, SecurityFinding
+from evidentia_core.plugins.collectors import (
+    BaseSaaSCollector,
+    SaaSAuthError,
+    SaaSCollectorError,
+    SaaSConnectionError,
+    SaaSQueryError,
+)
 
 from evidentia_collectors.drata.mapping import (
     VENDOR_HIGH_RISK_MAPPINGS,
     VENDOR_INVENTORY_MAPPINGS,
 )
+
+if TYPE_CHECKING:
+    import httpx
+
 
 _log = get_logger("evidentia.collectors.drata")
 
@@ -70,21 +79,27 @@ DEFAULT_TIMEOUT_SECONDS = 30.0
 
 
 # ── Typed exception hierarchy ──────────────────────────────────────
+# v0.8.0 P0.4 / M-4: DrataCollectorError now subclasses
+# SaaSCollectorError + the three typed errors multi-inherit from
+# their generic SaaS* counterparts, preserving the existing
+# `pytest.raises(DrataAuthError)` test semantics + adding the
+# generic-class-hierarchy behavior so `pytest.raises(SaaSAuthError)`
+# also matches.
 
 
-class DrataCollectorError(Exception):
+class DrataCollectorError(SaaSCollectorError):
     """Base class for all Drata collector failures."""
 
 
-class DrataAuthError(DrataCollectorError):
+class DrataAuthError(DrataCollectorError, SaaSAuthError):
     """Authentication / authorization failure — 401 / 403 from the API."""
 
 
-class DrataConnectionError(DrataCollectorError):
+class DrataConnectionError(DrataCollectorError, SaaSConnectionError):
     """Network / TLS / timeout failure — could not reach the Drata API."""
 
 
-class DrataQueryError(DrataCollectorError):
+class DrataQueryError(DrataCollectorError, SaaSQueryError):
     """A specific API call failed (4xx / 5xx other than auth, or a
     malformed response). Surfaced inside ``collect_v2`` and recorded
     in the manifest's ``errors`` list rather than failing the whole
@@ -158,7 +173,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
 # ── Collector ──────────────────────────────────────────────────────
 
 
-class DrataCollector:
+class DrataCollector(BaseSaaSCollector):
     """Drata vendor-inventory collector.
 
     Args:
@@ -180,6 +195,20 @@ class DrataCollector:
         DrataAuthError: missing API token at construction time.
     """
 
+    # v0.8.0 P0.4 / M-4: Drive BaseSaaSCollector behavior via class
+    # attributes. The base handles auth-token validation, httpx
+    # client lifecycle (__enter__/__exit__/_ensure_client), and
+    # GET + auth/connection/query error normalization (_get).
+    # DrataCollector adds Drata-specific cursor-based pagination
+    # + the per-vendor finding projection below.
+    COLLECTOR_ID = "drata-scan"
+    DEFAULT_BASE_URL = "https://public-api.drata.com"
+    TOKEN_ENV_VAR = "DRATA_API_TOKEN"
+    DEFAULT_TIMEOUT_SECONDS = 30.0
+    AUTH_ERROR_CLASS = DrataAuthError
+    CONNECTION_ERROR_CLASS = DrataConnectionError
+    QUERY_ERROR_CLASS = DrataQueryError
+
     def __init__(
         self,
         *,
@@ -189,91 +218,13 @@ class DrataCollector:
         timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
         client: httpx.Client | None = None,
     ) -> None:
-        # v0.7.10 P3 closure of v0.7.9 M-1: whitespace-only tokens.
-        if api_token is not None:
-            api_token = api_token.strip() or None
-        if not api_token and client is None:
-            raise DrataAuthError(
-                "DrataCollector requires either an api_token or a "
-                "pre-configured httpx.Client. The token is sourced "
-                "from the DRATA_API_TOKEN env var per the secret-"
-                "handling protocol."
-            )
-        self._api_token = api_token
-        self._base_url = base_url.rstrip("/")
-        self._max_vendors = max_vendors
-        self._timeout_seconds = timeout_seconds
-        self._client = client
-        self._owns_client = client is None
-
-    def __enter__(self) -> DrataCollector:
-        return self
-
-    def __exit__(self, *exc: object) -> None:
-        if self._owns_client and self._client is not None:
-            with contextlib.suppress(Exception):
-                self._client.close()
-            self._client = None
-
-    def _ensure_client(self) -> httpx.Client:
-        if self._client is not None:
-            return self._client
-        if self._api_token is None:  # defensive — checked in __init__
-            raise DrataAuthError("missing api_token")
-        self._client = httpx.Client(
-            base_url=self._base_url,
-            headers={
-                "Authorization": f"Bearer {self._api_token}",
-                "Accept": "application/json",
-                "User-Agent": (
-                    f"evidentia-collectors/{current_version()} "
-                    "(DrataCollector; https://github.com/allenfbyrd/evidentia)"
-                ),
-            },
-            timeout=self._timeout_seconds,
+        super().__init__(
+            api_token=api_token,
+            base_url=base_url,
+            timeout_seconds=timeout_seconds,
+            client=client,
         )
-        return self._client
-
-    # ── HTTP plumbing ──────────────────────────────────────────────
-
-    def _get(self, path: str, **params: Any) -> dict[str, Any]:
-        """GET + JSON-decode + auth/connection error normalization."""
-        client = self._ensure_client()
-        try:
-            resp = client.get(path, params=params)
-        except httpx.TimeoutException as exc:
-            raise DrataConnectionError(
-                f"Drata API timeout after {self._timeout_seconds}s "
-                f"on GET {path}"
-            ) from exc
-        except httpx.HTTPError as exc:
-            raise DrataConnectionError(
-                f"Drata API connection failure on GET {path}: "
-                f"{type(exc).__name__}"
-            ) from exc
-        if resp.status_code in (401, 403):
-            raise DrataAuthError(
-                f"Drata API auth failure on GET {path}: "
-                f"HTTP {resp.status_code}. Verify DRATA_API_TOKEN "
-                "scope + expiration."
-            )
-        if resp.status_code >= 400:
-            raise DrataQueryError(
-                f"Drata API error on GET {path}: "
-                f"HTTP {resp.status_code}"
-            )
-        try:
-            data = resp.json()
-        except ValueError as exc:
-            raise DrataQueryError(
-                f"Drata API returned non-JSON response on GET {path}"
-            ) from exc
-        if not isinstance(data, dict):
-            raise DrataQueryError(
-                f"Drata API returned non-object JSON on GET {path}: "
-                f"{type(data).__name__}"
-            )
-        return data
+        self._max_vendors = max_vendors
 
     def _paginate(
         self, path: str, **params: Any

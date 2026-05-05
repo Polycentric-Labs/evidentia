@@ -37,10 +37,8 @@ even if the API adds or renames fields.
 
 from __future__ import annotations
 
-import contextlib
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import httpx
 from evidentia_core.audit import (
     CollectionContext,
     CollectionManifest,
@@ -56,11 +54,22 @@ from evidentia_core.models.common import (
     utc_now,
 )
 from evidentia_core.models.finding import FindingStatus, SecurityFinding
+from evidentia_core.plugins.collectors import (
+    BaseSaaSCollector,
+    SaaSAuthError,
+    SaaSCollectorError,
+    SaaSConnectionError,
+    SaaSQueryError,
+)
 
 from evidentia_collectors.vanta.mapping import (
     VENDOR_HIGH_RISK_MAPPINGS,
     VENDOR_INVENTORY_MAPPINGS,
 )
+
+if TYPE_CHECKING:
+    import httpx
+
 
 _log = get_logger("evidentia.collectors.vanta")
 
@@ -88,13 +97,19 @@ DEFAULT_TIMEOUT_SECONDS = 30.0
 
 
 # ── Typed exception hierarchy ──────────────────────────────────────
+# v0.8.0 P0.4 / M-4: VantaCollectorError now subclasses
+# SaaSCollectorError + the three typed errors multi-inherit from
+# their generic SaaS* counterparts, preserving the existing
+# `pytest.raises(VantaAuthError)` test semantics + adding the
+# generic-class-hierarchy behavior so `pytest.raises(SaaSAuthError)`
+# also matches.
 
 
-class VantaCollectorError(Exception):
+class VantaCollectorError(SaaSCollectorError):
     """Base class for all Vanta collector failures."""
 
 
-class VantaAuthError(VantaCollectorError):
+class VantaAuthError(VantaCollectorError, SaaSAuthError):
     """Authentication / authorization failure — 401 / 403 from the API.
 
     Distinguished from query errors so callers can surface a clear
@@ -103,11 +118,11 @@ class VantaAuthError(VantaCollectorError):
     """
 
 
-class VantaConnectionError(VantaCollectorError):
+class VantaConnectionError(VantaCollectorError, SaaSConnectionError):
     """Network / TLS / timeout failure — could not reach api.vanta.com."""
 
 
-class VantaQueryError(VantaCollectorError):
+class VantaQueryError(VantaCollectorError, SaaSQueryError):
     """A specific API call failed (4xx / 5xx other than auth, or a
     malformed response). Surfaced inside ``collect_v2`` and recorded
     in the manifest's ``errors`` list rather than failing the whole
@@ -182,7 +197,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
 # ── Collector ──────────────────────────────────────────────────────
 
 
-class VantaCollector:
+class VantaCollector(BaseSaaSCollector):
     """Vanta vendor-inventory collector.
 
     Args:
@@ -210,6 +225,20 @@ class VantaCollector:
         VantaAuthError: missing API token at construction time.
     """
 
+    # v0.8.0 P0.4 / M-4: Drive BaseSaaSCollector behavior via class
+    # attributes. The base handles auth-token validation, httpx
+    # client lifecycle (__enter__/__exit__/_ensure_client), and
+    # GET + auth/connection/query error normalization (_get).
+    # VantaCollector adds Vanta-specific cursor-based pagination
+    # + the per-vendor finding projection below.
+    COLLECTOR_ID = "vanta-scan"
+    DEFAULT_BASE_URL = "https://api.vanta.com"
+    TOKEN_ENV_VAR = "VANTA_API_TOKEN"
+    DEFAULT_TIMEOUT_SECONDS = 30.0
+    AUTH_ERROR_CLASS = VantaAuthError
+    CONNECTION_ERROR_CLASS = VantaConnectionError
+    QUERY_ERROR_CLASS = VantaQueryError
+
     def __init__(
         self,
         *,
@@ -219,99 +248,13 @@ class VantaCollector:
         timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
         client: httpx.Client | None = None,
     ) -> None:
-        # v0.7.10 P3 closure of v0.7.9 M-1: whitespace-only tokens
-        # bypass the truthiness check (`not " "` is False); strip
-        # before validating so accidental "  " or "\n" envs surface
-        # as a clear error rather than later opaque 401s.
-        if api_token is not None:
-            api_token = api_token.strip() or None
-        if not api_token and client is None:
-            raise VantaAuthError(
-                "VantaCollector requires either an api_token or a "
-                "pre-configured httpx.Client. The token is sourced "
-                "from the VANTA_API_TOKEN env var per the secret-"
-                "handling protocol."
-            )
-        self._api_token = api_token
-        self._base_url = base_url.rstrip("/")
-        self._max_vendors = max_vendors
-        self._timeout_seconds = timeout_seconds
-        self._client = client
-        self._owns_client = client is None
-
-    def __enter__(self) -> VantaCollector:
-        return self
-
-    def __exit__(self, *exc: object) -> None:
-        if self._owns_client and self._client is not None:
-            with contextlib.suppress(Exception):
-                self._client.close()
-            self._client = None
-
-    def _ensure_client(self) -> httpx.Client:
-        if self._client is not None:
-            return self._client
-        # Caller-owned construction: build an httpx.Client with the
-        # bearer token + base URL. The token never appears in logs
-        # because we use httpx's auth-header injection, not a URL
-        # query parameter.
-        if self._api_token is None:  # defensive — checked in __init__
-            raise VantaAuthError("missing api_token")
-        self._client = httpx.Client(
-            base_url=self._base_url,
-            headers={
-                "Authorization": f"Bearer {self._api_token}",
-                "Accept": "application/json",
-                "User-Agent": (
-                    f"evidentia-collectors/{current_version()} "
-                    "(VantaCollector; https://github.com/allenfbyrd/evidentia)"
-                ),
-            },
-            timeout=self._timeout_seconds,
+        super().__init__(
+            api_token=api_token,
+            base_url=base_url,
+            timeout_seconds=timeout_seconds,
+            client=client,
         )
-        return self._client
-
-    # ── HTTP plumbing ──────────────────────────────────────────────
-
-    def _get(self, path: str, **params: Any) -> dict[str, Any]:
-        """GET + JSON-decode + auth/connection error normalization."""
-        client = self._ensure_client()
-        try:
-            resp = client.get(path, params=params)
-        except httpx.TimeoutException as exc:
-            raise VantaConnectionError(
-                f"Vanta API timeout after {self._timeout_seconds}s "
-                f"on GET {path}"
-            ) from exc
-        except httpx.HTTPError as exc:
-            # Network / TLS / DNS / connection-refused etc.
-            raise VantaConnectionError(
-                f"Vanta API connection failure on GET {path}: "
-                f"{type(exc).__name__}"
-            ) from exc
-        if resp.status_code in (401, 403):
-            raise VantaAuthError(
-                f"Vanta API auth failure on GET {path}: "
-                f"HTTP {resp.status_code}. Verify VANTA_API_TOKEN "
-                "scope + expiration."
-            )
-        if resp.status_code >= 400:
-            raise VantaQueryError(
-                f"Vanta API error on GET {path}: "
-                f"HTTP {resp.status_code}"
-            )
-        try:
-            data = resp.json()
-        except ValueError as exc:
-            raise VantaQueryError(
-                f"Vanta API returned non-JSON response on GET {path}"
-            ) from exc
-        if not isinstance(data, dict):
-            raise VantaQueryError(
-                f"Vanta API returned non-object JSON on GET {path}: "
-                f"{type(data).__name__}"
-            )
-        return data
+        self._max_vendors = max_vendors
 
     def _paginate(
         self, path: str, **params: Any

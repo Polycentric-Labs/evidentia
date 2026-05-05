@@ -30,11 +30,9 @@ historical rating data.
 from __future__ import annotations
 
 import base64
-import contextlib
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
-import httpx
 from evidentia_core.audit import (
     CollectionContext,
     CollectionManifest,
@@ -50,11 +48,22 @@ from evidentia_core.models.common import (
     utc_now,
 )
 from evidentia_core.models.finding import FindingStatus, SecurityFinding
+from evidentia_core.plugins.collectors import (
+    BaseSaaSCollector,
+    SaaSAuthError,
+    SaaSCollectorError,
+    SaaSConnectionError,
+    SaaSQueryError,
+)
 
 from evidentia_collectors.bitsight.mapping import (
     LOW_RATING_MAPPINGS,
     PORTFOLIO_INVENTORY_MAPPINGS,
 )
+
+if TYPE_CHECKING:
+    import httpx
+
 
 _log = get_logger("evidentia.collectors.bitsight")
 
@@ -84,19 +93,27 @@ DEFAULT_TIMEOUT_SECONDS = 30.0
 # ── Typed exception hierarchy ──────────────────────────────────────
 
 
-class BitSightCollectorError(Exception):
+# v0.8.0 P0.4 / M-4: BitSightCollectorError now subclasses
+# SaaSCollectorError + the three typed errors multi-inherit from
+# their generic SaaS* counterparts, preserving the existing
+# `pytest.raises(BitSightAuthError)` test semantics + adding the
+# generic-class-hierarchy behavior so `pytest.raises(SaaSAuthError)`
+# also matches.
+
+
+class BitSightCollectorError(SaaSCollectorError):
     """Base class for all BitSight collector failures."""
 
 
-class BitSightAuthError(BitSightCollectorError):
+class BitSightAuthError(BitSightCollectorError, SaaSAuthError):
     """Auth failure — 401 / 403 from the API."""
 
 
-class BitSightConnectionError(BitSightCollectorError):
+class BitSightConnectionError(BitSightCollectorError, SaaSConnectionError):
     """Network / TLS / timeout failure."""
 
 
-class BitSightQueryError(BitSightCollectorError):
+class BitSightQueryError(BitSightCollectorError, SaaSQueryError):
     """A specific API call failed (4xx / 5xx other than auth, or a
     malformed response)."""
 
@@ -155,7 +172,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
 # ── Collector ──────────────────────────────────────────────────────
 
 
-class BitSightCollector:
+class BitSightCollector(BaseSaaSCollector):
     """BitSight portfolio collector.
 
     Args:
@@ -178,6 +195,21 @@ class BitSightCollector:
         BitSightAuthError: missing API token at construction time.
     """
 
+    # v0.8.0 P0.4 / M-4: Drive BaseSaaSCollector behavior via class
+    # attributes. The base handles auth-token validation, httpx
+    # client lifecycle (__enter__/__exit__/_ensure_client), and
+    # GET + auth/connection/query error normalization (_get).
+    # BitSightCollector overrides _auth_header() for HTTP Basic and
+    # adds BitSight-specific portfolio pagination + per-company
+    # finding projection below.
+    COLLECTOR_ID = "bitsight-scan"
+    DEFAULT_BASE_URL = "https://api.bitsighttech.com"
+    TOKEN_ENV_VAR = "BITSIGHT_API_TOKEN"
+    DEFAULT_TIMEOUT_SECONDS = 30.0
+    AUTH_ERROR_CLASS = BitSightAuthError
+    CONNECTION_ERROR_CLASS = BitSightConnectionError
+    QUERY_ERROR_CLASS = BitSightQueryError
+
     def __init__(
         self,
         *,
@@ -188,109 +220,31 @@ class BitSightCollector:
         timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
         client: httpx.Client | None = None,
     ) -> None:
-        # v0.7.10 P3 closure of v0.7.9 M-1: whitespace-only tokens.
-        if api_token is not None:
-            api_token = api_token.strip() or None
-        if not api_token and client is None:
-            raise BitSightAuthError(
-                "BitSightCollector requires either an api_token or a "
-                "pre-configured httpx.Client. The token is sourced "
-                "from the BITSIGHT_API_TOKEN env var per the secret-"
-                "handling protocol."
-            )
-        self._api_token = api_token
-        self._base_url = base_url.rstrip("/")
+        super().__init__(
+            api_token=api_token,
+            base_url=base_url,
+            timeout_seconds=timeout_seconds,
+            client=client,
+        )
         self._max_companies = max_companies
         self._low_rating_threshold = low_rating_threshold
-        self._timeout_seconds = timeout_seconds
-        self._client = client
-        self._owns_client = client is None
 
-    def __enter__(self) -> BitSightCollector:
-        return self
+    def _auth_header(self) -> str:
+        """BitSight uses HTTP Basic with token as username, empty password.
 
-    def __exit__(self, *exc: object) -> None:
-        if self._owns_client and self._client is not None:
-            with contextlib.suppress(Exception):
-                self._client.close()
-            self._client = None
-
-    def _ensure_client(self) -> httpx.Client:
-        if self._client is not None:
-            return self._client
-        if self._api_token is None:
-            raise BitSightAuthError("missing api_token")
-        # BitSight uses HTTP Basic with the token as username + empty
-        # password. We construct the header manually because httpx's
-        # auth=BasicAuth(...) helper would also work but constructing
-        # the header keeps the token-handling pattern symmetric with
-        # Vanta + Drata (header-driven, not auth-helper-driven).
+        Constructed manually rather than via httpx's BasicAuth
+        helper to keep the token-handling pattern symmetric with
+        the header-driven default (Bearer) — and so the token never
+        materializes in a separate auth-object that downstream
+        code might log.
+        """
+        # _api_token is non-None at this point; the base raises
+        # AUTH_ERROR_CLASS in __init__ otherwise.
+        assert self._api_token is not None  # runtime invariant
         encoded = base64.b64encode(
             f"{self._api_token}:".encode("ascii")
         ).decode("ascii")
-        self._client = httpx.Client(
-            base_url=self._base_url,
-            headers={
-                "Authorization": f"Basic {encoded}",
-                "Accept": "application/json",
-                "User-Agent": (
-                    f"evidentia-collectors/{current_version()} "
-                    "(BitSightCollector; "
-                    "https://github.com/allenfbyrd/evidentia)"
-                ),
-            },
-            timeout=self._timeout_seconds,
-        )
-        return self._client
-
-    # ── HTTP plumbing ──────────────────────────────────────────────
-
-    def _get(self, path_or_url: str, **params: Any) -> dict[str, Any]:
-        """GET + JSON-decode + auth/connection error normalization.
-
-        Accepts either a relative path (e.g. ``/portfolio``) or an
-        absolute URL (e.g. the ``next`` field from a paginated
-        response). When given an absolute URL on the same host as
-        the configured base, the ``next``-following honors the
-        cursor BitSight already encoded server-side.
-        """
-        client = self._ensure_client()
-        try:
-            resp = client.get(path_or_url, params=params)
-        except httpx.TimeoutException as exc:
-            raise BitSightConnectionError(
-                f"BitSight API timeout after {self._timeout_seconds}s "
-                f"on GET {path_or_url}"
-            ) from exc
-        except httpx.HTTPError as exc:
-            raise BitSightConnectionError(
-                f"BitSight API connection failure on GET "
-                f"{path_or_url}: {type(exc).__name__}"
-            ) from exc
-        if resp.status_code in (401, 403):
-            raise BitSightAuthError(
-                f"BitSight API auth failure on GET {path_or_url}: "
-                f"HTTP {resp.status_code}. Verify "
-                "BITSIGHT_API_TOKEN scope + expiration."
-            )
-        if resp.status_code >= 400:
-            raise BitSightQueryError(
-                f"BitSight API error on GET {path_or_url}: "
-                f"HTTP {resp.status_code}"
-            )
-        try:
-            data = resp.json()
-        except ValueError as exc:
-            raise BitSightQueryError(
-                f"BitSight API returned non-JSON response on GET "
-                f"{path_or_url}"
-            ) from exc
-        if not isinstance(data, dict):
-            raise BitSightQueryError(
-                f"BitSight API returned non-object JSON on GET "
-                f"{path_or_url}: {type(data).__name__}"
-            )
-        return data
+        return f"Basic {encoded}"
 
     def _paginate_portfolio(self) -> list[dict[str, Any]]:
         """Walk the portfolio paginated response.

@@ -28,11 +28,9 @@ historical grade trends.
 
 from __future__ import annotations
 
-import contextlib
 import re
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import httpx
 from evidentia_core.audit import (
     CollectionContext,
     CollectionManifest,
@@ -48,11 +46,22 @@ from evidentia_core.models.common import (
     utc_now,
 )
 from evidentia_core.models.finding import FindingStatus, SecurityFinding
+from evidentia_core.plugins.collectors import (
+    BaseSaaSCollector,
+    SaaSAuthError,
+    SaaSCollectorError,
+    SaaSConnectionError,
+    SaaSQueryError,
+)
 
 from evidentia_collectors.securityscorecard.mapping import (
     LOW_SCORE_MAPPINGS,
     PORTFOLIO_INVENTORY_MAPPINGS,
 )
+
+if TYPE_CHECKING:
+    import httpx
+
 
 _log = get_logger("evidentia.collectors.securityscorecard")
 
@@ -77,19 +86,33 @@ DEFAULT_TIMEOUT_SECONDS = 30.0
 # ── Typed exception hierarchy ──────────────────────────────────────
 
 
-class SecurityScorecardCollectorError(Exception):
+# v0.8.0 P0.4 / M-4: SecurityScorecardCollectorError now subclasses
+# SaaSCollectorError + the three typed errors multi-inherit from
+# their generic SaaS* counterparts, preserving the existing
+# `pytest.raises(SecurityScorecardAuthError)` test semantics + adding
+# the generic-class-hierarchy behavior so
+# `pytest.raises(SaaSAuthError)` also matches.
+
+
+class SecurityScorecardCollectorError(SaaSCollectorError):
     """Base class for all SecurityScorecard collector failures."""
 
 
-class SecurityScorecardAuthError(SecurityScorecardCollectorError):
+class SecurityScorecardAuthError(
+    SecurityScorecardCollectorError, SaaSAuthError
+):
     """Auth failure — 401 / 403 from the API."""
 
 
-class SecurityScorecardConnectionError(SecurityScorecardCollectorError):
+class SecurityScorecardConnectionError(
+    SecurityScorecardCollectorError, SaaSConnectionError
+):
     """Network / TLS / timeout failure."""
 
 
-class SecurityScorecardQueryError(SecurityScorecardCollectorError):
+class SecurityScorecardQueryError(
+    SecurityScorecardCollectorError, SaaSQueryError
+):
     """A specific API call failed (4xx / 5xx other than auth, or a
     malformed response)."""
 
@@ -192,7 +215,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
 # ── Collector ──────────────────────────────────────────────────────
 
 
-class SecurityScorecardCollector:
+class SecurityScorecardCollector(BaseSaaSCollector):
     """SecurityScorecard portfolio collector.
 
     Args:
@@ -212,7 +235,24 @@ class SecurityScorecardCollector:
 
     Raises:
         SecurityScorecardAuthError: missing API token at construction.
+        SecurityScorecardInvalidPortfolioIdError: malformed portfolio_id.
     """
+
+    # v0.8.0 P0.4 / M-4: Drive BaseSaaSCollector behavior via class
+    # attributes. The base handles auth-token validation, httpx
+    # client lifecycle (__enter__/__exit__/_ensure_client), and
+    # GET + auth/connection/query error normalization (_get).
+    # SecurityScorecardCollector overrides _auth_header() for the
+    # SSC-specific ``Token <api_token>`` scheme and adds the
+    # CodeQL-#92 portfolio_id validation + portfolio pagination +
+    # per-company finding projection below.
+    COLLECTOR_ID = "securityscorecard-scan"
+    DEFAULT_BASE_URL = "https://api.securityscorecard.io"
+    TOKEN_ENV_VAR = "SECURITYSCORECARD_API_TOKEN"
+    DEFAULT_TIMEOUT_SECONDS = 30.0
+    AUTH_ERROR_CLASS = SecurityScorecardAuthError
+    CONNECTION_ERROR_CLASS = SecurityScorecardConnectionError
+    QUERY_ERROR_CLASS = SecurityScorecardQueryError
 
     def __init__(
         self,
@@ -225,101 +265,31 @@ class SecurityScorecardCollector:
         timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
         client: httpx.Client | None = None,
     ) -> None:
-        # v0.7.10 P3 closure of v0.7.9 M-1: whitespace-only tokens.
-        if api_token is not None:
-            api_token = api_token.strip() or None
-        if not api_token and client is None:
-            raise SecurityScorecardAuthError(
-                "SecurityScorecardCollector requires either an "
-                "api_token or a pre-configured httpx.Client. The "
-                "token is sourced from the "
-                "SECURITYSCORECARD_API_TOKEN env var per the "
-                "secret-handling protocol."
-            )
         # v0.7.12 P0.6 / CodeQL #92 closure: validate portfolio_id
         # at the trust boundary so any path-traversal attempt is
         # rejected before the URL composition at
-        # `_paginate_portfolio`.
+        # `_paginate_portfolio`. Runs BEFORE super().__init__()
+        # so an invalid id surfaces synchronously even if the
+        # auth-token check would also fail.
         if portfolio_id is not None:
             _validate_portfolio_id_shape(portfolio_id)
-        self._api_token = api_token
+        super().__init__(
+            api_token=api_token,
+            base_url=base_url,
+            timeout_seconds=timeout_seconds,
+            client=client,
+        )
         self._portfolio_id = portfolio_id
-        self._base_url = base_url.rstrip("/")
         self._max_companies = max_companies
         self._low_score_threshold = low_score_threshold
-        self._timeout_seconds = timeout_seconds
-        self._client = client
-        self._owns_client = client is None
 
-    def __enter__(self) -> SecurityScorecardCollector:
-        return self
+    def _auth_header(self) -> str:
+        """SSC uses ``Authorization: Token <api_token>`` (custom prefix).
 
-    def __exit__(self, *exc: object) -> None:
-        if self._owns_client and self._client is not None:
-            with contextlib.suppress(Exception):
-                self._client.close()
-            self._client = None
-
-    def _ensure_client(self) -> httpx.Client:
-        if self._client is not None:
-            return self._client
-        if self._api_token is None:
-            raise SecurityScorecardAuthError("missing api_token")
-        self._client = httpx.Client(
-            base_url=self._base_url,
-            headers={
-                "Authorization": f"Token {self._api_token}",
-                "Accept": "application/json",
-                "User-Agent": (
-                    f"evidentia-collectors/{current_version()} "
-                    "(SecurityScorecardCollector; "
-                    "https://github.com/allenfbyrd/evidentia)"
-                ),
-            },
-            timeout=self._timeout_seconds,
-        )
-        return self._client
-
-    # ── HTTP plumbing ──────────────────────────────────────────────
-
-    def _get(self, path: str, **params: Any) -> dict[str, Any]:
-        client = self._ensure_client()
-        try:
-            resp = client.get(path, params=params)
-        except httpx.TimeoutException as exc:
-            raise SecurityScorecardConnectionError(
-                f"SecurityScorecard API timeout after "
-                f"{self._timeout_seconds}s on GET {path}"
-            ) from exc
-        except httpx.HTTPError as exc:
-            raise SecurityScorecardConnectionError(
-                f"SecurityScorecard API connection failure on GET "
-                f"{path}: {type(exc).__name__}"
-            ) from exc
-        if resp.status_code in (401, 403):
-            raise SecurityScorecardAuthError(
-                f"SecurityScorecard API auth failure on GET "
-                f"{path}: HTTP {resp.status_code}. Verify "
-                "SECURITYSCORECARD_API_TOKEN scope + expiration."
-            )
-        if resp.status_code >= 400:
-            raise SecurityScorecardQueryError(
-                f"SecurityScorecard API error on GET {path}: "
-                f"HTTP {resp.status_code}"
-            )
-        try:
-            data = resp.json()
-        except ValueError as exc:
-            raise SecurityScorecardQueryError(
-                f"SecurityScorecard API returned non-JSON response "
-                f"on GET {path}"
-            ) from exc
-        if not isinstance(data, dict):
-            raise SecurityScorecardQueryError(
-                f"SecurityScorecard API returned non-object JSON on "
-                f"GET {path}: {type(data).__name__}"
-            )
-        return data
+        Distinct from Bearer (Vanta/Drata) and Basic (BitSight) — SSC's
+        documented scheme is the ``Token`` prefix.
+        """
+        return f"Token {self._api_token}"
 
     def _resolve_portfolio_id(self) -> str:
         """Return the configured portfolio_id, or list portfolios
