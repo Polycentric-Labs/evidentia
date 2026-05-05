@@ -46,7 +46,11 @@ from evidentia_core.audit import (
     new_run_id,
 )
 from evidentia_core.models.gap import ControlGap
-from evidentia_core.models.risk import RiskStatement
+from evidentia_core.models.risk import (
+    ReasoningTrace,
+    RiskStatement,
+    TraceClaim,
+)
 from evidentia_core.network_guard import OfflineViolationError
 from instructor.core import InstructorRetryException
 
@@ -319,6 +323,7 @@ class RiskStatementGenerator:
         gap: ControlGap,
         system_context: SystemContext,
         run_id: str | None = None,
+        emit_trace: bool = False,
     ) -> RiskStatement:
         """Generate a single risk statement for a control gap.
 
@@ -329,6 +334,16 @@ class RiskStatementGenerator:
         ``run_id`` is populated automatically per-call; pass an explicit
         run_id when threading a single batch identity through multiple
         calls (see :meth:`generate_batch` for the canonical pattern).
+
+        ``emit_trace`` (v0.8.0 P0.2) attaches a Policy Reasoning
+        Trace (per arXiv 2509.23291) to the returned risk statement.
+        v0.8.0 ships a stub trace — a single foundational claim
+        citing the source gap's framework + control_id at
+        confidence 0.5. The stub is honest signaling that the
+        substantive LLM-driven trace authoring is a v0.8.1
+        follow-up. Operators wanting richer traces today can
+        author them by hand against the :class:`ReasoningTrace`
+        model and assign to ``risk.reasoning_trace`` post-call.
         """
         user_prompt = _build_risk_context(gap, system_context)
         gap_label = f"{gap.framework}:{gap.control_id}"
@@ -362,7 +377,62 @@ class RiskStatementGenerator:
             RISK_STATEMENT_SYSTEM_PROMPT, user_prompt, attempts, run_id=run_id
         )
         risk = self._enrich(risk, gap, gen_ctx)
+        if emit_trace:
+            risk = self._attach_stub_trace(risk, gap, run_id)
         self._emit_success(risk, gap_label, attempts)
+        return risk
+
+    def _attach_stub_trace(
+        self,
+        risk: RiskStatement,
+        gap: ControlGap,
+        run_id: str | None,
+    ) -> RiskStatement:
+        """Attach a v0.8.0 stub PRT and emit AI_RISK_TRACE_EMITTED.
+
+        v0.8.0 ships a single-claim stub trace as honest signaling
+        that the LLM-driven trace authoring (per-claim
+        decomposition + per-clause citation) is a v0.8.1
+        follow-up. The stub trace lets the operator wire OSCAL
+        emit + Sigstore signing pipelines today; the substantive
+        trace authoring lands as a follow-up sub-slice.
+        """
+        stub_trace = ReasoningTrace(
+            claims=[
+                TraceClaim(
+                    claim=(
+                        f"Risk applies to control {gap.control_id} "
+                        f"in framework {gap.framework}."
+                    ),
+                    clause_citations=[
+                        f"{gap.framework}:{gap.control_id}",
+                    ],
+                    confidence=0.5,
+                ),
+            ],
+            methodology=(
+                "v0.8.0 stub — single foundational claim citing the "
+                "source gap. v0.8.1 ships LLM-driven per-claim "
+                "decomposition + per-clause citation."
+            ),
+            overall_confidence=0.5,
+        )
+        risk = risk.model_copy(update={"reasoning_trace": stub_trace})
+        _log.info(
+            action=EventAction.AI_RISK_TRACE_EMITTED,
+            outcome=EventOutcome.SUCCESS,
+            message=(
+                f"Reasoning trace emitted for "
+                f"{gap.framework}:{gap.control_id}"
+            ),
+            evidentia={
+                "run_id": run_id or risk.id,
+                "risk_id": risk.id,
+                "claim_count": len(stub_trace.claims),
+                "overall_confidence": stub_trace.overall_confidence,
+                "trace_kind": "v0.8.0-stub",
+            },
+        )
         return risk
 
     def generate_batch(

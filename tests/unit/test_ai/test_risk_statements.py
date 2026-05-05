@@ -243,6 +243,40 @@ def test_generate_with_explicit_run_id_threads_through(
     assert result.generation_context.run_id == "01HXAAAAAAAAAAAAAAAAAAAAAA"
 
 
+def test_generate_without_emit_trace_leaves_reasoning_trace_none(
+    system_context: SystemContext,
+) -> None:
+    """v0.8.0 P0.2 — emit_trace=False (default) keeps reasoning_trace None.
+
+    Backward compat for operators not opting in to PRT.
+    """
+    gap = _make_gap()
+    with _patched_sync_create(side_effect=[_fake_risk_statement()]):
+        gen = RiskStatementGenerator()
+        result = gen.generate(gap, system_context)
+    assert result.reasoning_trace is None
+
+
+def test_generate_with_emit_trace_attaches_stub_trace(
+    system_context: SystemContext,
+) -> None:
+    """v0.8.0 P0.2 — emit_trace=True attaches a stub PRT to the risk."""
+    gap = _make_gap("AC-2")
+    with _patched_sync_create(side_effect=[_fake_risk_statement()]):
+        gen = RiskStatementGenerator()
+        result = gen.generate(gap, system_context, emit_trace=True)
+    assert result.reasoning_trace is not None
+    # Stub trace has exactly one foundational claim citing the source gap.
+    assert len(result.reasoning_trace.claims) == 1
+    cite = result.reasoning_trace.claims[0].clause_citations[0]
+    assert "AC-2" in cite
+    assert "nist-800-53-rev5" in cite
+    # Stub overall_confidence is 0.5 (intentionally moderate to
+    # signal it's not LLM-derived).
+    assert result.reasoning_trace.overall_confidence == 0.5
+    assert "stub" in result.reasoning_trace.methodology.lower()
+
+
 def test_generate_propagates_model_inventory_ref_when_configured(
     system_context: SystemContext,
 ) -> None:

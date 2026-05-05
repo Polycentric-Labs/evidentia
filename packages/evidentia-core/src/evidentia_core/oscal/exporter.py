@@ -34,6 +34,7 @@ from evidentia_core.oscal.digest import digest_bytes, format_digest
 
 if TYPE_CHECKING:
     from evidentia_core.models.finding import SecurityFinding
+    from evidentia_core.models.risk import RiskStatement
     from evidentia_core.models.tprm import Vendor
 
 
@@ -49,6 +50,7 @@ def gap_report_to_oscal_ar(
     findings: list[SecurityFinding] | None = None,
     blind_spots: list[dict[str, str]] | None = None,
     vendor_inventory: list[Vendor] | None = None,
+    risk_statements_with_traces: list[RiskStatement] | None = None,
 ) -> dict[str, Any]:
     """Convert a Evidentia gap report to an OSCAL Assessment Results dict.
 
@@ -142,6 +144,19 @@ def gap_report_to_oscal_ar(
         for vendor in vendor_inventory:
             back_matter_resources.append(_vendor_to_oscal_resource(vendor))
             vendor_parties.append(_vendor_to_oscal_party(vendor))
+
+    # v0.8.0 P0.2: Policy Reasoning Trace surfacing. When operators
+    # pass risk statements that carry a reasoning_trace, each trace
+    # lands as a back-matter resource so trestle-conformance round-
+    # trips preserve the trace — auditors get the LLM's claim-by-
+    # claim reasoning chain inline alongside the gap findings.
+    if risk_statements_with_traces:
+        for stmt in risk_statements_with_traces:
+            if stmt.reasoning_trace is None:
+                continue
+            back_matter_resources.append(
+                _reasoning_trace_to_oscal_resource(stmt)
+            )
 
     findings_output = [_gap_to_finding(gap) for gap in report.gaps]
     observations = [_gap_to_observation(gap, resource_by_control) for gap in report.gaps]
@@ -332,6 +347,97 @@ def _finding_canonical_json(finding: SecurityFinding) -> bytes:
     """
     payload = finding.model_dump(mode="json")
     return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+
+def _reasoning_trace_canonical_json(stmt: RiskStatement) -> bytes:
+    """Serialize a RiskStatement's reasoning_trace to canonical JSON bytes.
+
+    Pre-condition: stmt.reasoning_trace is not None. Caller must
+    have filtered. Same sort_keys + separators contract as
+    :func:`_finding_canonical_json` so the verifier path is
+    symmetric.
+    """
+    if stmt.reasoning_trace is None:  # pragma: no cover — caller-filtered
+        raise ValueError(
+            "_reasoning_trace_canonical_json called on RiskStatement "
+            "with no reasoning_trace"
+        )
+    payload = stmt.reasoning_trace.model_dump(mode="json")
+    return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+
+def _reasoning_trace_to_oscal_resource(stmt: RiskStatement) -> dict[str, Any]:
+    """Convert a RiskStatement's reasoning_trace to an OSCAL back-matter resource.
+
+    The resource embeds the trace's canonical JSON in
+    ``base64.value`` + a SHA-256 hash in ``rlinks[].hashes[]`` —
+    same tamper-evident pattern as v0.7.0 finding resources +
+    v0.7.9 vendor resources. Auditors verifying the AR re-derive
+    the hash from the canonical bytes; tampering with the trace
+    after emit fails verification.
+
+    Resource UUID derives from the RiskStatement.id so re-emits
+    of the same trace produce reviewable diffs (only the
+    canonical bytes + hash change if the trace was modified).
+    """
+    canonical = _reasoning_trace_canonical_json(stmt)
+    hex_digest = digest_bytes(canonical)
+    trace = stmt.reasoning_trace
+    assert trace is not None  # caller-filtered; satisfies mypy
+    return {
+        "uuid": stmt.id,
+        "title": (
+            f"Reasoning trace for risk statement "
+            f"{stmt.source_gap_id or stmt.id}"
+        ),
+        "description": (
+            f"Policy Reasoning Trace per arXiv 2509.23291 — "
+            f"{len(trace.claims)} claim(s); overall confidence "
+            f"{trace.overall_confidence:.4f}."
+        ),
+        "props": [
+            {
+                "name": "reasoning-trace-source-statement",
+                "ns": EVIDENTIA_OSCAL_NS,
+                "value": stmt.id,
+                "class": "prt",
+            },
+            {
+                "name": "reasoning-trace-claim-count",
+                "ns": EVIDENTIA_OSCAL_NS,
+                "value": str(len(trace.claims)),
+                "class": "prt",
+            },
+            {
+                "name": "reasoning-trace-overall-confidence",
+                "ns": EVIDENTIA_OSCAL_NS,
+                "value": f"{trace.overall_confidence:.4f}",
+                "class": "prt",
+            },
+            {
+                "name": "evidence-digest",
+                "ns": EVIDENTIA_OSCAL_NS,
+                "value": format_digest(hex_digest),
+                "class": "integrity",
+            },
+        ],
+        "rlinks": [
+            {
+                "href": f"sha256:{hex_digest}",
+                "hashes": [
+                    {
+                        "algorithm": "SHA-256",
+                        "value": hex_digest,
+                    },
+                ],
+            },
+        ],
+        "base64": {
+            "filename": f"reasoning-trace-{stmt.id}.json",
+            "media-type": "application/json",
+            "value": base64.b64encode(canonical).decode("ascii"),
+        },
+    }
 
 
 def _gap_to_finding(gap: ControlGap) -> dict[str, Any]:

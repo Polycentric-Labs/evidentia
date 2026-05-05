@@ -61,6 +61,101 @@ class RiskTreatment(str, Enum):
     PENDING = "pending"
 
 
+class TraceClaim(EvidentiaModel):
+    """A single claim within a Policy Reasoning Trace (v0.8.0 P0.2).
+
+    Per arXiv 2509.23291, a reasoning trace decomposes the
+    AI-generated artifact into ordered atomic claims, each
+    pointing back to the policy clauses (catalog control IDs,
+    OCC bulletin paragraphs, etc.) that justify it. Lets a
+    3PAO / federal SI auditor verify the LLM's reasoning chain
+    rather than treating the output as an opaque blob.
+    """
+
+    claim: str = Field(
+        description=(
+            "A single atomic claim from the AI-generated "
+            "artifact. Should be self-contained — interpretable "
+            "without needing to re-read the surrounding text."
+        ),
+    )
+    clause_citations: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Policy clauses that justify the claim. Format is "
+            "free-form but recommended convention is "
+            "``<framework_id>:<control_id>`` (e.g., "
+            "``nist-800-53-rev5-moderate:AC-2``) for catalog "
+            "controls, or ``<source>:<section>`` (e.g., "
+            "``occ-2026-13a:III.A.4``) for regulatory "
+            "publications. May be empty for foundational "
+            "claims (assertions about the system context that "
+            "don't require external citation)."
+        ),
+    )
+    confidence: float = Field(
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Self-reported confidence that the claim is "
+            "supportable by the cited clauses. 1.0 = highly "
+            "confident; 0.0 = fully uncertain. Auditors should "
+            "treat this as a hint, not authoritative — the "
+            "value reflects the LLM's introspection, not "
+            "objective truth."
+        ),
+    )
+
+
+class ReasoningTrace(EvidentiaModel):
+    """Policy Reasoning Trace for an AI-generated artifact (v0.8.0 P0.2).
+
+    Per arXiv 2509.23291. A structured decomposition of the
+    artifact's claims + per-claim clause citations + confidence
+    scores. Auditor-defensible because the LLM's reasoning
+    chain is exposed for review rather than buried inside the
+    final text.
+
+    The trace lives as an optional field on artifacts that
+    benefit from PRT (currently :class:`RiskStatement`; future
+    artifacts: plain-English explanations, threat models,
+    OSCAL component-definition narratives). When present, OSCAL
+    emit surfaces the trace in back-matter as an Evidentia-
+    namespaced resource so trestle-conformance round-trips
+    preserve it.
+    """
+
+    claims: list[TraceClaim] = Field(
+        description=(
+            "Ordered list of atomic claims composing the AI "
+            "artifact. The order is rhetorical — claim N may "
+            "build on claim N-1 — so reordering is not safe."
+        ),
+    )
+    methodology: str = Field(
+        default="",
+        description=(
+            "Short note describing how the LLM was instructed "
+            "to decompose its output into claims. Useful for "
+            "auditors comparing traces across model versions / "
+            "prompt revisions. Optional (empty string when the "
+            "trace was authored without a documented methodology)."
+        ),
+    )
+    overall_confidence: float = Field(
+        ge=0.0,
+        le=1.0,
+        default=0.0,
+        description=(
+            "Self-reported confidence across the entire trace, "
+            "typically the geometric mean of per-claim "
+            "confidences. Provided for fast filtering — "
+            "auditors looking for low-confidence traces don't "
+            "have to aggregate across claims."
+        ),
+    )
+
+
 class RiskStatement(EvidentiaModel):
     """A structured risk statement following NIST SP 800-30 Rev 1 format.
 
@@ -179,6 +274,22 @@ class RiskStatement(EvidentiaModel):
             "model-risk-management programs (banks, insurers, "
             "broker-dealers). Operators wire the linkage via "
             "`RiskStatementGenerator(model_inventory_id=...)`."
+        ),
+    )
+    reasoning_trace: ReasoningTrace | None = Field(
+        default=None,
+        description=(
+            "v0.8.0 P0.2 Policy Reasoning Trace per arXiv 2509.23291. "
+            "Optional structured decomposition of the risk statement "
+            "into atomic claims + per-claim clause citations + "
+            "confidence scores. Populated when the operator passes "
+            "``--emit-trace`` to ``evidentia risk generate`` (or "
+            "``emit_trace=True`` on ``RiskStatementGenerator.generate``). "
+            "Backward compatible — pre-v0.8.0 deserialization still "
+            "succeeds with this field defaulting to None. When present, "
+            "OSCAL emit surfaces the trace in back-matter as an "
+            "Evidentia-namespaced resource so trestle-conformance "
+            "round-trips preserve it."
         ),
     )
     tags: list[str] = Field(default_factory=list)

@@ -123,6 +123,14 @@ class EventAction(str, Enum):
     AI_EVAL_FAITHFULNESS_VIOLATION = "evidentia.ai.eval_faithfulness_violation"
     AI_EVAL_COMPLETED = "evidentia.ai.eval_completed"
 
+    # v0.8.0 P0.2: Policy Reasoning Trace emit (arXiv 2509.23291).
+    # Fired once per RiskStatement (or future trace-bearing
+    # artifact) when the operator opts in to ``--emit-trace``.
+    # Lets auditors reconstruct exactly which artifacts carry a
+    # trace and which do not, plus the trace's overall_confidence
+    # for fast filtering of low-confidence outputs.
+    AI_RISK_TRACE_EMITTED = "evidentia.ai.risk_trace_emitted"
+
     # Retention + WORM lifecycle events (v0.7.12 P1) — audit-trail
     # actions on records under retention metadata. The PURGED variant
     # serves as the canonical legal-counsel-defensible artifact for

@@ -67,6 +67,18 @@ def generate(
         "-n",
         help="Maximum number of gaps to process.",
     ),
+    emit_trace: bool = typer.Option(
+        False,
+        "--emit-trace",
+        help=(
+            "v0.8.0 P0.2: attach a Policy Reasoning Trace (PRT) "
+            "per arXiv 2509.23291 to each generated risk statement. "
+            "v0.8.0 ships a single-claim stub trace; v0.8.1 ships "
+            "the substantive LLM-driven per-claim decomposition. "
+            "Trace data flows through OSCAL emit + Sigstore signing "
+            "today regardless of whether it's stub or LLM-driven."
+        ),
+    ),
 ) -> None:
     """Generate NIST SP 800-30 risk statements for gaps using an LLM."""
     # Lazy import — avoid loading litellm/instructor unless this command is invoked
@@ -163,7 +175,9 @@ def generate(
         task = progress.add_task("Generating...", total=len(target_gaps))
         for gap in target_gaps:
             try:
-                risk = generator.generate(gap, sys_ctx)
+                risk = generator.generate(
+                    gap, sys_ctx, emit_trace=emit_trace
+                )
                 risks.append(risk)
             except Exception as e:
                 console.print(
