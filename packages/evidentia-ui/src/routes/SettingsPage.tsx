@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
+import type { EvidentiaConfig } from "@/types/config";
 
 /**
  * Settings page — editable for v0.4.1.
@@ -22,9 +23,19 @@ import { api } from "@/lib/api";
  * validated payload. Immutable sections (LLM providers, air-gap
  * posture) stay read-only since they're derived from server process
  * state (env vars) rather than the yaml file.
+ *
+ * v0.7.15 P0.2: split the form into <SettingsForm/> sub-component
+ * keyed on the loaded config's source_path (or "loading" sentinel).
+ * The previous pattern (useEffect → setState to seed form fields
+ * from configQuery.data) tripped the react-hooks/set-state-in-effect
+ * rule introduced in plugin-react-hooks v7. The key-based remount
+ * pattern is React's canonical idiom for "initialize state from
+ * async data": when the query resolves, the sub-component's `key`
+ * changes, React unmounts + remounts it, and useState's lazy
+ * initializer seeds with the fresh data on first render. No effect
+ * + no setState-in-effect.
  */
 export function SettingsPage() {
-  const queryClient = useQueryClient();
   const configQuery = useQuery({
     queryKey: ["config"],
     queryFn: () => api.getConfig(),
@@ -38,25 +49,137 @@ export function SettingsPage() {
     queryFn: () => api.doctorCheckAirGap(),
   });
 
-  const [organization, setOrganization] = useState("");
-  const [systemName, setSystemName] = useState("");
-  const [frameworks, setFrameworks] = useState("");
-  const [llmModel, setLlmModel] = useState("");
-  const [llmTemperature, setLlmTemperature] = useState<string>("");
+  return (
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
+        <p className="mt-1 text-muted-foreground">
+          Edit{" "}
+          <code className="rounded bg-muted px-1 py-0.5">
+            evidentia.yaml
+          </code>{" "}
+          here. The server writes the file after validation; your CLI
+          + GUI both pick up the new values immediately.
+        </p>
+      </header>
 
-  useEffect(() => {
-    if (configQuery.data) {
-      setOrganization(configQuery.data.organization ?? "");
-      setSystemName(configQuery.data.system_name ?? "");
-      setFrameworks(configQuery.data.frameworks.join(", "));
-      setLlmModel(configQuery.data.llm.model ?? "");
-      setLlmTemperature(
-        configQuery.data.llm.temperature != null
-          ? String(configQuery.data.llm.temperature)
-          : "",
-      );
-    }
-  }, [configQuery.data]);
+      {configQuery.data ? (
+        <SettingsForm
+          // Key change on source-path swap (or initial load) remounts the
+          // form with fresh initial state seeded by useState's lazy
+          // initializer. Replaces the v0.4.1 useEffect+setState seed
+          // pattern that tripped react-hooks/set-state-in-effect (v7).
+          key={configQuery.data.source_path ?? "default"}
+          config={configQuery.data}
+        />
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Project configuration</CardTitle>
+            <CardDescription>Loading…</CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>LLM providers (read-only)</CardTitle>
+          <CardDescription>
+            Keys are sourced from environment variables; the browser
+            never sees key values.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          {llm.data ? (
+            Object.entries(llm.data.providers).map(([name, state]) => (
+              <div key={name} className="flex items-center justify-between">
+                <span className="capitalize">{name.replace(/_/g, " ")}</span>
+                {state.configured ? (
+                  <Badge>configured via {state.source}</Badge>
+                ) : (
+                  <Badge variant="outline">not configured</Badge>
+                )}
+              </div>
+            ))
+          ) : (
+            <span className="text-muted-foreground">Loading...</span>
+          )}
+          <p className="pt-2 text-xs text-muted-foreground">
+            Active model:{" "}
+            <code className="rounded bg-muted px-1 py-0.5">
+              {llm.data?.configured_model ?? "—"}
+            </code>
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            Air-gap posture
+            {airGap.data?.air_gapped ? (
+              <Badge>air-gap ready</Badge>
+            ) : (
+              <Badge variant="destructive">would leak</Badge>
+            )}
+          </CardTitle>
+          <CardDescription>
+            Audits configured endpoints without issuing network IO.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          {airGap.data?.checks.map((check) => (
+            <div
+              key={check.subsystem}
+              className="flex items-start justify-between gap-4"
+            >
+              <div>
+                <div className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+                  {check.subsystem}
+                </div>
+                <div>{check.detail}</div>
+              </div>
+              {check.status === "ok" && <Badge>ok</Badge>}
+              {check.status === "would_leak" && (
+                <Badge variant="destructive">would leak</Badge>
+              )}
+              {check.status === "skipped" && (
+                <Badge variant="outline">skipped</Badge>
+              )}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+interface SettingsFormProps {
+  config: EvidentiaConfig;
+}
+
+/**
+ * Inner form component — owns the editable form state. Mounted with
+ * `key={config.source_path}` so each new config-load triggers a
+ * remount with fresh initial state seeded via useState's lazy
+ * initializer. This avoids useEffect+setState (v0.7.15 P0.2 pattern).
+ */
+function SettingsForm({ config }: SettingsFormProps) {
+  const queryClient = useQueryClient();
+
+  const [organization, setOrganization] = useState(
+    () => config.organization ?? "",
+  );
+  const [systemName, setSystemName] = useState(
+    () => config.system_name ?? "",
+  );
+  const [frameworks, setFrameworks] = useState(() =>
+    config.frameworks.join(", "),
+  );
+  const [llmModel, setLlmModel] = useState(() => config.llm.model ?? "");
+  const [llmTemperature, setLlmTemperature] = useState<string>(() =>
+    config.llm.temperature != null ? String(config.llm.temperature) : "",
+  );
 
   const saveMutation = useMutation({
     mutationFn: () => {
@@ -83,28 +206,16 @@ export function SettingsPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
-        <p className="mt-1 text-muted-foreground">
-          Edit{" "}
-          <code className="rounded bg-muted px-1 py-0.5">
-            evidentia.yaml
-          </code>{" "}
-          here. The server writes the file after validation; your CLI
-          + GUI both pick up the new values immediately.
-        </p>
-      </header>
-
+    <>
       <Card>
         <CardHeader>
           <CardTitle>Project configuration</CardTitle>
           <CardDescription>
-            {configQuery.data?.source_path ? (
+            {config.source_path ? (
               <>
                 File:{" "}
                 <code className="rounded bg-muted px-1 py-0.5">
-                  {configQuery.data.source_path}
+                  {config.source_path}
                 </code>
               </>
             ) : (
@@ -190,8 +301,8 @@ export function SettingsPage() {
         <Alert variant="success">
           <AlertTitle>Saved</AlertTitle>
           <AlertDescription>
-            {configQuery.data?.source_path
-              ? `Wrote ${configQuery.data.source_path}.`
+            {config.source_path
+              ? `Wrote ${config.source_path}.`
               : "Wrote evidentia.yaml."}
           </AlertDescription>
         </Alert>
@@ -205,76 +316,6 @@ export function SettingsPage() {
           {saveMutation.isPending ? "Saving..." : "Save"}
         </Button>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>LLM providers (read-only)</CardTitle>
-          <CardDescription>
-            Keys are sourced from environment variables; the browser
-            never sees key values.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          {llm.data ? (
-            Object.entries(llm.data.providers).map(([name, state]) => (
-              <div key={name} className="flex items-center justify-between">
-                <span className="capitalize">{name.replace(/_/g, " ")}</span>
-                {state.configured ? (
-                  <Badge>configured via {state.source}</Badge>
-                ) : (
-                  <Badge variant="outline">not configured</Badge>
-                )}
-              </div>
-            ))
-          ) : (
-            <span className="text-muted-foreground">Loading...</span>
-          )}
-          <p className="pt-2 text-xs text-muted-foreground">
-            Active model:{" "}
-            <code className="rounded bg-muted px-1 py-0.5">
-              {llm.data?.configured_model ?? "—"}
-            </code>
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Air-gap posture
-            {airGap.data?.air_gapped ? (
-              <Badge>air-gap ready</Badge>
-            ) : (
-              <Badge variant="destructive">would leak</Badge>
-            )}
-          </CardTitle>
-          <CardDescription>
-            Audits configured endpoints without issuing network IO.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          {airGap.data?.checks.map((check) => (
-            <div
-              key={check.subsystem}
-              className="flex items-start justify-between gap-4"
-            >
-              <div>
-                <div className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-                  {check.subsystem}
-                </div>
-                <div>{check.detail}</div>
-              </div>
-              {check.status === "ok" && <Badge>ok</Badge>}
-              {check.status === "would_leak" && (
-                <Badge variant="destructive">would leak</Badge>
-              )}
-              {check.status === "skipped" && (
-                <Badge variant="outline">skipped</Badge>
-              )}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    </div>
+    </>
   );
 }

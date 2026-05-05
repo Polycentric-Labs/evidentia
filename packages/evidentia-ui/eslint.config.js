@@ -43,28 +43,17 @@ export default tseslint.config(
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
-      // v0.7.14 P0.3: react-hooks v7 added a new
-      // `set-state-in-effect` rule that flags setState calls
-      // inside useEffect. SettingsPage.tsx uses this pattern
-      // for a config-load workflow that's intentional but
-      // needs refactoring to a controlled-form pattern in a
-      // follow-up. Keep as warning for v0.7.14; promote to
-      // error in v0.7.15 / v0.8.0 once SettingsPage.tsx is
-      // refactored.
-      "react-hooks/set-state-in-effect": "warn",
+      // v0.7.15 P0.2: SettingsPage.tsx refactored to a key-based
+      // remount pattern (sub-component <SettingsForm/> keyed on
+      // configQuery.data.source_path; useState lazy initializers
+      // seed from props). Promoted from `warn` (v0.7.14) back to
+      // the recommended `error` level — any future regression
+      // (setState inside useEffect) now fails CI.
+      "react-hooks/set-state-in-effect": "error",
     },
-  },
-  {
-    // tailwind.config.ts uses CommonJS require() for the
-    // tailwindcss-animate plugin (legacy tailwind v3 plugin
-    // surface). v0.7.14 P0.3 keeps this as a warning since
-    // the migration to tailwind 4 (P0.1; defer-to-v0.8.0
-    // possible) replaces this entire file with CSS-first
-    // @theme. After tailwind 4 migration, this scope override
-    // becomes obsolete + can be removed.
-    files: ["tailwind.config.ts"],
-    rules: {
-      "@typescript-eslint/no-require-imports": "warn",
-    },
+    // v0.7.15 P0.1 cleanup: tailwind.config.ts removed (migrated
+    // to CSS-first @theme in src/index.css). The previous override
+    // block for `@typescript-eslint/no-require-imports` is no longer
+    // needed.
   },
 );
