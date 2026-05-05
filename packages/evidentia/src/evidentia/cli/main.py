@@ -80,6 +80,46 @@ app.add_typer(
     name="retention",
     help="Audit chain-of-custody — retention metadata + WORM (v0.7.11 P0).",
 )
+
+# v0.8.0 P0.3: MCP server — wired conditionally so operators
+# without the `evidentia[mcp]` extra installed don't see an
+# import error at CLI startup. When the extra IS installed,
+# `evidentia mcp serve` and `evidentia mcp doctor` are
+# available; when not, a stub command surfaces a helpful
+# install hint.
+try:
+    from evidentia_mcp.cli import app as _mcp_app
+
+    app.add_typer(
+        _mcp_app,
+        name="mcp",
+        help=(
+            "Model Context Protocol (MCP) server (v0.8.0 P0.3). "
+            "Exposes gap analysis, control lookup, and gap diff "
+            "to MCP-aware AI clients."
+        ),
+    )
+except ImportError:
+    _mcp_stub = typer.Typer(
+        name="mcp",
+        help=(
+            "Model Context Protocol (MCP) server (v0.8.0 P0.3) — "
+            "requires the `evidentia[mcp]` extra to be installed."
+        ),
+    )
+
+    @_mcp_stub.callback(invoke_without_command=True)
+    def _mcp_extra_not_installed(ctx: typer.Context) -> None:
+        if ctx.invoked_subcommand is None:
+            typer.echo(
+                "The MCP server requires the `evidentia[mcp]` extra. "
+                "Install with: pip install 'evidentia[mcp]'",
+                err=True,
+            )
+            raise typer.Exit(code=2)
+
+    app.add_typer(_mcp_stub, name="mcp")
+
 app.command(name="init", help="Initialize a new Evidentia project.")(init_cmd.init)
 
 console = Console()

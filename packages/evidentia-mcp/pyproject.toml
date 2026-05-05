@@ -1,0 +1,47 @@
+[project]
+name = "evidentia-mcp"
+version = "0.7.16"
+description = "Model Context Protocol (MCP) server for Evidentia — exposes gap analysis, risk generation, explanation, and OSCAL emit to MCP-aware AI clients (Claude Desktop, Claude Code, ChatGPT, etc.)"
+readme = "README.md"
+authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
+license = "Apache-2.0"
+requires-python = ">=3.12"
+keywords = ["grc", "compliance", "mcp", "model-context-protocol", "ai-agent"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+dependencies = [
+    "evidentia-core>=0.7.16,<0.8.0",
+    "evidentia-ai>=0.7.16,<0.8.0",
+    "evidentia-collectors>=0.7.16,<0.8.0",
+    # MCP Python SDK. Includes FastMCP server scaffolding +
+    # protocol types. Floor pinned to 1.27 (the version Evidentia
+    # was tested against during v0.8.0 P0.3 development);
+    # capped below 2.0 until the SDK reaches a stable 1.x and
+    # we have evidence of breaking changes warranting a bump.
+    "mcp>=1.27,<2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/allenfbyrd/evidentia"
+Repository = "https://github.com/allenfbyrd/evidentia"
+Issues = "https://github.com/allenfbyrd/evidentia/issues"
+Changelog = "https://github.com/allenfbyrd/evidentia/blob/main/CHANGELOG.md"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/evidentia_mcp"]
+
+[tool.uv.sources]
+evidentia-core = { workspace = true }
+evidentia-ai = { workspace = true }
+evidentia-collectors = { workspace = true }

@@ -37,6 +37,13 @@ gui = ["evidentia-api>=0.7.16,<0.8.0"]
 worm-s3 = ["evidentia-core[worm-s3]>=0.7.16,<0.8.0"]
 worm-azure = ["evidentia-core[worm-azure]>=0.7.16,<0.8.0"]
 worm-gcs = ["evidentia-core[worm-gcs]>=0.7.16,<0.8.0"]
+# v0.8.0 P0.3: Model Context Protocol (MCP) server. Exposes
+# Evidentia's gap-analysis, control-lookup, and gap-diff
+# surfaces to MCP-aware AI clients (Claude Desktop, Claude
+# Code, ChatGPT Desktop, custom clients) over stdio.
+# Usage: `pip install "evidentia[mcp]"`, then `evidentia mcp
+# serve`.
+mcp = ["evidentia-mcp>=0.7.16,<0.8.0"]
 
 [project.scripts]
 evidentia = "evidentia.cli.main:app"
@@ -61,3 +68,4 @@ evidentia-ai = { workspace = true }
 evidentia-collectors = { workspace = true }
 evidentia-integrations = { workspace = true }
 evidentia-api = { workspace = true }
+evidentia-mcp = { workspace = true }

@@ -12,6 +12,7 @@ members = [
     "packages/evidentia-integrations",
     "packages/evidentia",
     "packages/evidentia-api",
+    "packages/evidentia-mcp",
     # v0.7.0: shim-controlbridge-* workspace members removed per the
     # public contract documented in README.md, RENAMED.md, and CHANGELOG.md.
     # The v0.5.1 shim wheels remain on PyPI for installed users (until
@@ -58,6 +59,7 @@ dev = [
     # props in back-matter are accepted unchanged. Guarded with
     # pytest.importorskip so the test suite runs on minimal installs.
     "compliance-trestle>=4.0,<5.0",
+    "mcp>=1.27.0",
 ]
 
 [tool.uv.sources]
@@ -67,6 +69,7 @@ evidentia-collectors = { workspace = true }
 evidentia-integrations = { workspace = true }
 evidentia = { workspace = true }
 evidentia-api = { workspace = true }
+evidentia-mcp = { workspace = true }
 
 [tool.ruff]
 target-version = "py312"
@@ -188,6 +191,7 @@ source_pkgs = [
     "evidentia_collectors",
     "evidentia_integrations",
     "evidentia_api",
+    "evidentia_mcp",
     "evidentia",
 ]
 omit = [
