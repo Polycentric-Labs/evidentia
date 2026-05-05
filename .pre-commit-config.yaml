@@ -89,32 +89,52 @@ repos:
         # Skip if no Python files changed — saves ~15 seconds per commit.
         files: '\.py$'
 
-      # v0.7.15 P0.3: standing-rule keyword sweep (lesson from the
-      # v0.7.13-cycle 9613e62 commit-message leak — `Pasha walk-
-      # through (v0.9.0 design phase)` slipped through pre-push
-      # because the sweep wasn't run pre-commit on staged content).
+      # v0.7.15 P0.3 + v0.7.16 P1: standing-rule keyword sweep
+      # closes the gap from a v0.7.13-cycle commit-message-body
+      # leak (a forbidden-token phrase landed on origin/main
+      # because the sweep ran only at pre-push, not pre-commit).
       #
-      # This hook scans staged content (file diff + commit message via
-      # the COMMIT_EDITMSG path) for the canonical 21-pattern set
-      # documented in `~/.claude/CLAUDE.md` Evidentia §0 absolute-
-      # secrecy posture. Any hit blocks the commit.
+      # Two hook invocations:
       #
-      # The hook script lives in scripts/standing_rule_sweep.sh so it
-      # can be re-used by CI workflows + manual `pre-commit run` invocations.
-      # Running with --all-files surfaces hits across the whole repo
-      # (useful for one-off audits); the default per-commit scope only
-      # checks staged files.
+      # 1. `standing-rule-sweep` (commit stage; v0.7.15) — scans
+      #    STAGED FILE CONTENT for the 21-pattern set. Catches
+      #    leaks in code, docs, configs, etc.
+      # 2. `standing-rule-sweep-msg` (commit-msg stage; v0.7.16) —
+      #    scans the COMMIT MESSAGE BODY for the same pattern set.
+      #    Catches the specific class of leak that produced the
+      #    v0.7.13-cycle incident (text only in the message body,
+      #    not in any file).
+      #
+      # Together the two hooks cover both surface types. Bypass via
+      # `git commit --no-verify` is documented as Allen-approval-only
+      # in the script output.
+      #
+      # The shared script lives in scripts/standing_rule_sweep.sh so
+      # it can be re-used by CI workflows + manual `pre-commit run`
+      # invocations. Running with --all-files surfaces hits across
+      # the whole repo (useful for one-off audits).
       - id: standing-rule-sweep
-        name: standing-rule keyword sweep
+        name: standing-rule keyword sweep (file content)
         language: system
         entry: bash scripts/standing_rule_sweep.sh
-        # Run against staged files only by default (faster + commit-
-        # scope appropriate). Manual `--all-files` runs continue to
-        # work for whole-repo audits.
+        # Run against staged files only by default. Manual
+        # `--all-files` runs continue to work for whole-repo audits.
         pass_filenames: true
         # Run on every file type — leaks can happen in code, docs,
         # configs, anything.
         types_or: [text]
+
+      - id: standing-rule-sweep-msg
+        name: standing-rule keyword sweep (commit message)
+        language: system
+        entry: bash scripts/standing_rule_sweep.sh
+        # commit-msg stage receives the path to .git/COMMIT_EDITMSG
+        # as the single positional arg. The script's per-file scan
+        # walks the message body line-by-line + flags any hits.
+        stages: [commit-msg]
+        # Hooks at commit-msg stage already get the COMMIT_EDITMSG
+        # path as $1; pre-commit's `pass_filenames: true` is the
+        # default behavior at this stage.
 
   # ---------------------------------------------------------------
   # YAML — yamllint covering CI workflows + Evidentia-authored

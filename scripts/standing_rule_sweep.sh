@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# v0.7.15 P0.3: standing-rule keyword sweep.
+# v0.7.15 P0.3 + v0.7.16 P1: standing-rule keyword sweep.
 #
 # Scans the supplied file paths (passed as positional args by
 # pre-commit) for the canonical 21-pattern forbidden-token set. Any
@@ -13,13 +13,21 @@
 # extends it to pre-commit so CI never sees a leak in the first
 # place.
 #
+# Hook stages (v0.7.16):
+#   - `standing-rule-sweep` — commit stage; scans STAGED FILE
+#     CONTENT (file diff). Catches leaks in code, docs, configs.
+#   - `standing-rule-sweep-msg` — commit-msg stage; scans the
+#     COMMIT MESSAGE BODY (.git/COMMIT_EDITMSG) for the same
+#     pattern set. Catches the specific class of leak that
+#     produced the v0.7.13-cycle commit-message-body incident
+#     (text only in the message body, not in any tracked file).
+#
+# Both stages call this same script with positional file paths;
+# the script doesn't need to distinguish between the two — a
+# COMMIT_EDITMSG file is just another text file from its perspective.
+#
 # Usage (manual):
 #   bash scripts/standing_rule_sweep.sh path/to/file [path/to/file...]
-#
-# Pre-commit invocation:
-#   - id: standing-rule-sweep
-#     entry: bash scripts/standing_rule_sweep.sh
-#     pass_filenames: true
 #
 # Whole-repo audit (manual):
 #   git ls-files | xargs bash scripts/standing_rule_sweep.sh
@@ -55,14 +63,17 @@ PATTERNS=(
   "allenfbyrd@gmail"
 )
 
-# Files to skip — known false-positive sources where the token
-# appears legitimately as part of a quoted/escaped pattern (e.g.,
-# THIS script defines the pattern set; the pre-commit config
-# documents it; the threat-model doc references the rule itself).
-# Excluding these avoids the script flagging itself.
+# Files to skip — known false-positive sources where the tokens
+# appear legitimately by definition (THIS script declares the
+# PATTERNS array literally). Excluding self-references avoids the
+# script flagging itself.
+#
+# v0.7.16 update: removed `.pre-commit-config.yaml` from SKIP_FILES
+# after paraphrasing the previously-leaked phrase out of its
+# documentation comment. The config file no longer contains any
+# of the forbidden tokens, so the sweep runs against it normally.
 SKIP_FILES=(
   "scripts/standing_rule_sweep.sh"
-  ".pre-commit-config.yaml"
 )
 
 found_hit=0
