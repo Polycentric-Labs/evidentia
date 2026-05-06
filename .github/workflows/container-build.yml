@@ -44,46 +44,61 @@ jobs:
       # v0.7.9 — PyPI propagation wait (mirrors release.yml's
       # publish-container Wait-for-PyPI step added in v0.7.6).
       #
-      # WHY THIS EXISTS: the Dockerfile pins `evidentia[gui]==X.Y.Z`
-      # to the exact current release. When the version-bump commit
-      # (`chore(release): bump to X.Y.Z`) lands on main as part of a
-      # multi-commit push, the smoke test fires before X.Y.Z has been
-      # published to PyPI (publish only happens when the matching `vX.Y.Z`
-      # tag is pushed, triggering release.yml). The pre-v0.7.9 design
-      # tried to avoid this with `if: !startsWith(github.event.head_commit.message, 'chore(release):')`
+      # WHY THIS EXISTS: the container build pins
+      # `evidentia[gui]==X.Y.Z` to the exact current release. When
+      # the version-bump commit (`chore(release): bump to X.Y.Z`)
+      # lands on main as part of a multi-commit push, the smoke
+      # test fires before X.Y.Z has been published to PyPI (publish
+      # only happens when the matching `vX.Y.Z` tag is pushed,
+      # triggering release.yml). The pre-v0.7.9 design tried to
+      # avoid this with `if: !startsWith(github.event.head_commit.message, 'chore(release):')`
       # — but that only checks the head commit. In a 21-commit push
       # where the bump is the 5th commit and 16 docs/refactor commits
       # follow it (the v0.7.8 ship pattern), the head IS NOT the bump,
       # the guard misses, and the build hits "No matching distribution
       # found for evidentia==X.Y.Z" 1.3 seconds in.
       #
-      # THE FIX: parse the Dockerfile's pinned version + poll PyPI
-      # until that exact version is fetchable, capped at 5 min. Same
-      # mechanism as release.yml/publish-container (v0.7.6 CI1) so
-      # one mental model covers both workflows. Robust to any push
-      # composition.
+      # THE FIX: parse the version pin + poll PyPI until that exact
+      # version is fetchable, capped at 5 min. Same mechanism as
+      # release.yml/publish-container (v0.7.6 CI1) so one mental
+      # model covers both workflows.
       #
-      # FAILURE MODE: if the wait times out, the most likely cause is
-      # that the version-bump commit was pushed without the matching
-      # tag being pushed (so release.yml never fired). The error
-      # message below makes that explicit.
-      - name: Extract Dockerfile version pin
+      # v0.8.4 G4 Path 2: with the Dockerfile now using
+      # `pip install --require-hashes -r /tmp/requirements.txt`,
+      # the version pin lives in `docker/requirements.txt` (which
+      # release.yml regenerates ephemerally against PyPI's just-
+      # published wheels at tag time). Pre-tag pushes carry the
+      # PREVIOUS release's pin (e.g. v0.8.4 cycle pre-tag push
+      # carries v0.8.3 hashes). The smoke test validates the
+      # build process works against the previous release on every
+      # main push; the actual v0.8.4-pinned image is built at tag
+      # time by release.yml (which regenerates requirements.txt
+      # first against PyPI's just-published v0.8.4 wheels).
+      #
+      # FAILURE MODE: if the wait times out, the most likely cause
+      # is that the smoke test is running for a release that hasn't
+      # actually been published to PyPI yet. The error message
+      # below makes that explicit.
+      - name: Extract version pin (v0.8.4: from docker/requirements.txt)
         id: pin
         run: |
+          # v0.8.4 G4 Path 2: read pin from docker/requirements.txt
+          # (committed preview state) instead of Dockerfile (which
+          # now uses --require-hashes).
           # Match `evidentia[gui]==X.Y.Z` or `==X.Y.Z.N` (4-digit
           # version support added in v0.7.7.1 bump_version.py).
           # Using `sed -nE` (extended regex, portable across GNU + BSD)
           # rather than `grep -oP` (PCRE) to avoid locale unibyte
           # warnings on minimal runners.
-          VERSION=$(sed -nE 's/.*evidentia\[gui\]==([0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?).*/\1/p' Dockerfile | head -n1)
+          VERSION=$(sed -nE 's/.*evidentia\[gui\]==([0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?).*/\1/p' docker/requirements.txt | head -n1)
           if [ -z "${VERSION}" ]; then
-            echo "ERROR: could not parse pinned evidentia version from Dockerfile."
-            echo "Expected pattern: pip install ... \"evidentia[gui]==X.Y.Z\""
-            grep -n 'pip install' Dockerfile || true
+            echo "ERROR: could not parse pinned evidentia version from docker/requirements.txt."
+            echo "Expected pattern: evidentia[gui]==X.Y.Z \\"
+            grep -n 'evidentia\[gui\]' docker/requirements.txt || true
             exit 1
           fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "Dockerfile pins evidentia[gui]==${VERSION}"
+          echo "docker/requirements.txt pins evidentia[gui]==${VERSION}"
 
       - name: Wait for PyPI propagation
         env:
@@ -135,6 +150,42 @@ jobs:
           # CDN node, not per package).
           echo "All 6 packages list ${VERSION}; sleeping 20s for mirror catch-up"
           sleep 20
+
+      # v0.8.4 G4 Path 2: regenerate docker/requirements.txt against
+      # PyPI's just-confirmed-propagated wheels BEFORE the docker
+      # build. Mirrors release.yml's publish-container regeneration
+      # step. The committed docker/requirements.txt is preview
+      # state — release.yml AND this smoke test both overwrite it
+      # ephemerally so hashes match the bytes actually being
+      # downloaded by the container build's `pip install
+      # --require-hashes` step. Without this, the committed file's
+      # hashes (which may be from a Windows local pip-compile run
+      # whose `uv build` produced different bytes than the
+      # PyPI-uploaded Linux-CI build) wouldn't match what pip
+      # downloads, breaking the install.
+      - name: Regenerate hash-pinned requirements.txt against PyPI
+        env:
+          VERSION: ${{ steps.pin.outputs.version }}
+        run: |
+          echo "evidentia[gui]==${VERSION}" > docker/requirements.in
+          pip install -q pip-tools
+          attempts=0
+          max_attempts=3
+          until pip-compile --generate-hashes \
+                            --no-emit-find-links \
+                            --output-file=docker/requirements.txt \
+                            docker/requirements.in
+          do
+            attempts=$((attempts + 1))
+            if [ "${attempts}" -ge "${max_attempts}" ]; then
+              echo "::error::pip-compile against PyPI failed after ${max_attempts} attempts"
+              exit 1
+            fi
+            echo "  pip-compile attempt ${attempts}/${max_attempts} failed, sleeping 30s"
+            sleep 30
+          done
+          echo "Regenerated docker/requirements.txt; evidentia[gui]==${VERSION} hashes:"
+          grep -A2 "^evidentia\[gui\]==" docker/requirements.txt | head -4
 
       - name: Build image (load into local Docker, not pushed)
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f  # v7.1.0
