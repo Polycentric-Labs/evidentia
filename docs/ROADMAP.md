@@ -606,6 +606,19 @@ on Dockerfile); 0 open code-scanning alerts at close.
 
 ## v0.8.1 — Review-deferral close-out + LLM richness + network surfaces — SHIPPED
 
+Tag `v0.8.1` at commit `3e520a0`. Image digest
+`sha256:c9dfcfee90685b6b3232646d11eb43ebf4c6842847f6fe82cec52944b45ca352`.
+PyPI: 7 packages all at 0.8.1 with PEP 740 attestations
+verified. Release pipeline first-fire PASS (3m56s).
+Step 7 post-tag verification all sub-checks PASS: PEP 740 +
+cosign + osv-scanner (159 packages / 0 issues) + docker run
+smoke (89 frameworks + 9 crosswalks) + fresh-venv install
+(7th consecutive pin-trap validation) + G16 release-body
+8484 bytes (6th consecutive auto-populate-from-CHANGELOG).
+0 open code-scanning alerts at close. **Pre-release-review
+v4 Continuous variant PROCEED-CLEAN — 8th consecutive of
+the v0.7.x → v0.8.x line.**
+
 See [`docs/security-review-v0.8.1.md`](security-review-v0.8.1.md)
 for the full Pre-tag review. Aggressive ~4-week scope (Allen's
 v0.8.1 cycle-open lock-in 2026-05-05) executed in a single
