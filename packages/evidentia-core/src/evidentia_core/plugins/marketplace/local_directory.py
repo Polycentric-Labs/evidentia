@@ -84,10 +84,36 @@ class LocalDirectoryMarketplaceProvider(MarketplaceProvider):
                     cid = entry.get("catalog_id")
                     if isinstance(cid, str):
                         self._manifest[cid] = entry
-            except (json.JSONDecodeError, ValueError):
-                # Fall back to filename heuristics if manifest is
-                # malformed; don't fail the whole provider.
-                pass
+            except (json.JSONDecodeError, ValueError) as exc:
+                # v0.8.1 F-V08-S5: emit an audit warning so the
+                # operator sees the misconfiguration. v0.8.0
+                # silently fell back to filename heuristics; the
+                # silence masked configuration drift. Provider
+                # still works (filename heuristics are the v0.8.0
+                # fallback path); operator now knows to fix.
+                from evidentia_core.audit import (
+                    EventAction,
+                    EventOutcome,
+                    get_logger,
+                )
+
+                _log = get_logger("evidentia.plugins.marketplace.local_directory")
+                _log.warning(
+                    action=EventAction.COLLECT_FAILED,
+                    outcome=EventOutcome.UNKNOWN,
+                    message=(
+                        f"LocalDirectoryMarketplaceProvider: "
+                        f"manifest.json at {manifest_file} is "
+                        f"malformed ({type(exc).__name__}); "
+                        f"falling back to filename heuristics. "
+                        f"Catalog metadata will be limited to "
+                        f"defaults until the manifest is repaired."
+                    ),
+                    evidentia={
+                        "manifest_path": str(manifest_file),
+                        "error_type": type(exc).__name__,
+                    },
+                )
 
     def list_catalogs(self) -> Iterator[CatalogManifest]:
         for catalog_file in self._base.glob("*.json"):

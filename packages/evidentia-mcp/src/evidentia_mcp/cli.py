@@ -77,6 +77,13 @@ def doctor() -> None:
     human-readable diagnostic on stderr).
     """
     failures: list[str] = []
+    # v0.8.1 F-V08-CR-5: initialize report variables at top of
+    # function so the report-block is unconditionally safe even
+    # if a check fails before the variable would have been
+    # populated. Defensive against a future refactor that moves
+    # the report-block out of the success-path conditional.
+    fws: list[dict[str, str]] = []
+    registered: set[str] = set()
 
     # 1. MCP SDK import
     try:
@@ -88,7 +95,7 @@ def doctor() -> None:
     try:
         from evidentia_core.catalogs.registry import FrameworkRegistry
 
-        fws = FrameworkRegistry().list_frameworks()
+        fws = list(FrameworkRegistry().list_frameworks())
         if not fws:
             failures.append("Catalog registry loaded but is empty.")
     except Exception as exc:
@@ -102,12 +109,17 @@ def doctor() -> None:
         "gap_diff",
     }
     try:
+        import asyncio
+
         from evidentia_mcp.server import build_server
 
         server = build_server()
-        # FastMCP exposes registered tools via _tool_manager._tools
-        # (private but stable across the 1.x SDK line).
-        registered = set(server._tool_manager._tools.keys())
+        # v0.8.1 F-V08-CR-4: switch from FastMCP private API
+        # (_tool_manager._tools) to the public ``list_tools()``
+        # async method. Robust against SDK minor-version
+        # internal renames.
+        tools = asyncio.run(server.list_tools())
+        registered = {t.name for t in tools}
         missing = expected_tools - registered
         if missing:
             failures.append(

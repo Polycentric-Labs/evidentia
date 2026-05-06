@@ -155,6 +155,29 @@ class DFAHarness:
     provider config — those are the caller's concern. The
     contract is "give me a callable that produces strings; I'll
     run it N times + measure".
+
+    RESOURCE BOUNDS (v0.8.1 F-V08-S4 defense-in-depth note):
+    the harness fires ``sample_count_per_prompt × len(samples)``
+    generator calls with no per-call timeout, no aggregate-
+    time budget, and no token-budget tracking. A pathological
+    generator (third-party plugin, custom CLI script) can
+    exhaust CPU / memory / LLM-token-budget. This is by design
+    — the harness is a library API the operator wires up; the
+    operator owns the resource discipline. Recommended
+    operator-side guardrails:
+
+    1. Wrap third-party generators in a
+       :class:`concurrent.futures.ThreadPoolExecutor` with a
+       per-call timeout via ``Future.result(timeout=...)``.
+    2. Configure the LLM provider's per-request timeout +
+       max-tokens at the caller (LiteLLM env vars or
+       ``RiskStatementGenerator(...)`` constructor args).
+    3. Cap ``sample_count_per_prompt`` based on the corpus
+       size — 5 × 50 = 250 LLM calls; budget accordingly.
+
+    A future v0.8.x slice may add a ``max_total_calls`` +
+    ``per_call_timeout_seconds`` kwarg as first-class
+    safeguards; for now the operator owns the guardrails.
     """
 
     def __init__(

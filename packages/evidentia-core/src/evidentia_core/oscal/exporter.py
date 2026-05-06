@@ -383,7 +383,15 @@ def _reasoning_trace_to_oscal_resource(stmt: RiskStatement) -> dict[str, Any]:
     canonical = _reasoning_trace_canonical_json(stmt)
     hex_digest = digest_bytes(canonical)
     trace = stmt.reasoning_trace
-    assert trace is not None  # caller-filtered; satisfies mypy
+    # v0.8.1 F-V08-CR-8: replace ``assert`` with explicit
+    # ValueError so the invariant survives PYTHONOPTIMIZE=1
+    # / -O deployments (where asserts are stripped).
+    if trace is None:  # caller-filtered; defensive
+        raise ValueError(
+            "_reasoning_trace_to_oscal_resource called on "
+            "RiskStatement with no reasoning_trace; caller must "
+            "filter via `if stmt.reasoning_trace is not None`"
+        )
     return {
         "uuid": stmt.id,
         "title": (

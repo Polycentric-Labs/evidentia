@@ -239,8 +239,13 @@ class BitSightCollector(BaseSaaSCollector):
         code might log.
         """
         # _api_token is non-None at this point; the base raises
-        # AUTH_ERROR_CLASS in __init__ otherwise.
-        assert self._api_token is not None  # runtime invariant
+        # AUTH_ERROR_CLASS in __init__ otherwise. v0.8.1 F-V08-
+        # CR-8: explicit check instead of ``assert`` so the
+        # invariant survives PYTHONOPTIMIZE=1 / -O deployments.
+        if self._api_token is None:  # pragma: no cover - defensive
+            raise self.AUTH_ERROR_CLASS(
+                f"{type(self).__name__}: missing api_token"
+            )
         encoded = base64.b64encode(
             f"{self._api_token}:".encode("ascii")
         ).decode("ascii")

@@ -244,9 +244,28 @@ class BaseSaaSCollector(ABC):
                 f"response on GET {path}: {exc}"
             ) from exc
         if not isinstance(data, dict):
-            # Some APIs return top-level lists; wrap for caller
-            # uniformity.
-            return {"items": data}
+            # v0.8.1 F-V08-CR-3: previously the base wrapped
+            # non-dict responses as ``{"items": data}``. None of
+            # the 4 vendor-risk collectors (Vanta/Drata/BitSight/
+            # SecurityScorecard) actually consume list responses;
+            # the wrap silently masked non-conformant API
+            # responses (e.g., a 200 with JSON string ``"OK"``).
+            # The collector's downstream ``data.get("results", [])``
+            # would yield ``[]`` and produce zero findings without
+            # surfacing the anomaly. Now: raise a typed query
+            # error so the operator sees the malformed response.
+            #
+            # If a future collector legitimately needs to consume
+            # top-level list responses, it should override _get to
+            # implement the wrap explicitly (the override stays
+            # narrow + documented), or use a different parsing
+            # path that handles list responses outside _get.
+            raise self.QUERY_ERROR_CLASS(
+                f"{type(self).__name__} API returned non-object "
+                f"JSON on GET {path}: {type(data).__name__}. "
+                f"Subclasses needing list-response handling must "
+                f"override _get explicitly."
+            )
         return data
 
     @abstractmethod
@@ -256,5 +275,15 @@ class BaseSaaSCollector(ABC):
         Subclasses define the return type (typically
         ``list[SecurityFinding]`` or
         ``tuple[list[SecurityFinding], CollectionManifest]``).
+
+        v0.8.1 F-V08-CR-10 design note: unlike :class:`StorageBackend[T]`,
+        ``BaseSaaSCollector`` does NOT use a PEP 695 generic
+        ``collect()`` return type. Rationale: the v0.8.0 collectors
+        return polymorphic shapes (``list[SecurityFinding]`` for
+        legacy ``collect()``; ``tuple[list[SecurityFinding],
+        CollectionManifest]`` for the v2 manifest-aware
+        ``collect_v2()`` contract). A single generic type
+        parameter wouldn't capture both. Subclasses document
+        their own return type via the override's annotation.
         """
         raise NotImplementedError

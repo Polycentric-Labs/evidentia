@@ -59,15 +59,27 @@ __all__ = [
 ]
 
 
-def discover_plugins(group: str = "evidentia.plugins") -> dict[str, object]:
+def discover_plugins(
+    group: str = "evidentia.plugins",
+    *,
+    of_type: type | None = None,
+) -> dict[str, object]:
     """Discover registered plugins via ``importlib.metadata``.
 
     Args:
         group: The entry-point group to query. Defaults to
             ``evidentia.plugins`` per the Evidentia convention.
+        of_type: Optional ABC class to narrow the result. When
+            supplied, only entry points whose loaded value is a
+            subclass of ``of_type`` are returned. Useful for
+            filtering by plugin contract without each caller
+            re-implementing the ``isinstance + issubclass``
+            check (v0.8.1 F-V08-CR-11 ergonomics fix).
 
     Returns:
         Mapping of entry-point name → loaded plugin object.
+        When ``of_type`` is supplied, the values are guaranteed
+        to be subclasses of that type.
 
     Example:
         Out-of-tree plugin authors register their plugin in their
@@ -78,12 +90,19 @@ def discover_plugins(group: str = "evidentia.plugins") -> dict[str, object]:
 
         At runtime, Evidentia loads them via::
 
-            from evidentia_core.plugins import discover_plugins
+            from evidentia_core.plugins import (
+                discover_plugins,
+                StorageBackend,
+            )
 
-            plugins = discover_plugins()
-            for name, plugin in plugins.items():
+            # v0.8.0 verbose pattern:
+            for name, plugin in discover_plugins().items():
                 if isinstance(plugin, type) and issubclass(plugin, StorageBackend):
                     register_storage_backend(name, plugin)
+
+            # v0.8.1+ narrowed pattern:
+            for name, cls in discover_plugins(of_type=StorageBackend).items():
+                register_storage_backend(name, cls)
 
     The default behavior is opt-in (callers explicitly invoke
     ``discover_plugins()``); Evidentia's default runtime does
@@ -93,4 +112,15 @@ def discover_plugins(group: str = "evidentia.plugins") -> dict[str, object]:
     from importlib.metadata import entry_points
 
     eps = entry_points(group=group)
-    return {ep.name: ep.load() for ep in eps}
+    loaded = {ep.name: ep.load() for ep in eps}
+    if of_type is None:
+        return loaded
+    # Narrow to subclasses of of_type. Defensive: tolerate
+    # entries that aren't classes (factory functions etc.) by
+    # silently skipping them — caller asked for "subclasses
+    # of X" so non-class entries don't satisfy the request.
+    return {
+        name: cls
+        for name, cls in loaded.items()
+        if isinstance(cls, type) and issubclass(cls, of_type)
+    }

@@ -80,7 +80,7 @@ class TestLocalTokenAuthProvider:
 
         result = provider.authenticate(authorization_header=None)
         assert result.authenticated is False
-        assert "missing" in result.reason.lower()
+        assert result.reason is not None and "missing" in result.reason.lower()
 
     def test_rejects_malformed_header(self, tmp_path: Path) -> None:
         token_file = tmp_path / "token.txt"
@@ -91,7 +91,7 @@ class TestLocalTokenAuthProvider:
             authorization_header="malformed-no-scheme"
         )
         assert result.authenticated is False
-        assert "malformed" in result.reason.lower()
+        assert result.reason is not None and "malformed" in result.reason.lower()
 
     def test_rejects_unsupported_scheme(self, tmp_path: Path) -> None:
         token_file = tmp_path / "token.txt"
@@ -102,7 +102,7 @@ class TestLocalTokenAuthProvider:
             authorization_header="Basic dXNlcjpwYXNz"
         )
         assert result.authenticated is False
-        assert "Bearer" in result.reason
+        assert result.reason is not None and "Bearer" in result.reason
 
     def test_rejects_invalid_token(self, tmp_path: Path) -> None:
         token_file = tmp_path / "token.txt"
@@ -113,7 +113,7 @@ class TestLocalTokenAuthProvider:
             authorization_header="Bearer wrong-token"
         )
         assert result.authenticated is False
-        assert "invalid" in result.reason.lower()
+        assert result.reason is not None and "invalid" in result.reason.lower()
 
     def test_missing_token_file_raises(
         self, tmp_path: Path
@@ -126,6 +126,27 @@ class TestLocalTokenAuthProvider:
         token_file.write_text("   \n   ")
         with pytest.raises(ValueError):
             LocalTokenAuthProvider(token_file=token_file)
+
+    def test_symlink_token_file_rejected(self, tmp_path: Path) -> None:
+        """v0.8.1 F-V08-S2: symlinks are rejected at construction
+        time to prevent TOCTOU swap attacks via a shared parent
+        directory.
+        """
+        import os
+        import sys
+
+        if sys.platform == "win32":
+            # Windows symlink creation requires elevated privileges
+            # by default; skip this OS where the lstat-based
+            # rejection still functions but creating the symlink
+            # fixture is non-trivial in CI.
+            pytest.skip("symlink fixture creation requires elevation on Windows")
+        real_target = tmp_path / "real-token.txt"
+        real_target.write_text("secret-from-real-target")
+        symlink_path = tmp_path / "token-link.txt"
+        os.symlink(real_target, symlink_path)
+        with pytest.raises(ValueError, match="symbolic link"):
+            LocalTokenAuthProvider(token_file=symlink_path)
 
     def test_default_provider_name(self, tmp_path: Path) -> None:
         token_file = tmp_path / "token.txt"

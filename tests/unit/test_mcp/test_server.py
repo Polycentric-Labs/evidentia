@@ -102,22 +102,30 @@ class TestServerBuild:
         assert server.name == "evidentia"
 
     def test_four_core_tools_registered(self) -> None:
+        # v0.8.1 F-V08-CR-4: use public list_tools() async API
+        # rather than _tool_manager._tools private access.
+        import asyncio
+
         server = build_server()
-        # FastMCP exposes registered tools via _tool_manager._tools
-        tools = set(server._tool_manager._tools.keys())
+        tools = asyncio.run(server.list_tools())
+        registered = {t.name for t in tools}
         assert {
             "list_frameworks",
             "get_control",
             "gap_analyze",
             "gap_diff",
-        } <= tools
+        } <= registered
 
     def test_each_tool_has_a_description(self) -> None:
         """FastMCP renders the docstring as the MCP tool description."""
+        # v0.8.1 F-V08-CR-4: public list_tools() API.
+        import asyncio
+
         server = build_server()
-        for tool_name, tool_obj in server._tool_manager._tools.items():
-            assert tool_obj.description, (
-                f"Tool {tool_name!r} is missing a description; "
+        tools = asyncio.run(server.list_tools())
+        for tool in tools:
+            assert tool.description, (
+                f"Tool {tool.name!r} is missing a description; "
                 f"FastMCP needs the function docstring populated."
             )
 

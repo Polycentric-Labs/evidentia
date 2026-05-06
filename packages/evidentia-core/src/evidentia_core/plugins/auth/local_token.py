@@ -21,6 +21,7 @@ following the contract.
 from __future__ import annotations
 
 import hmac
+import os
 from pathlib import Path
 
 from evidentia_core.plugins.auth._base import AuthProvider, AuthResult
@@ -35,13 +36,20 @@ class LocalTokenAuthProvider(AuthProvider):
 
     Args:
         token_file: Path to a file containing the bearer token
-            (single line; trailing whitespace stripped).
+            (single line; trailing whitespace stripped). MUST
+            NOT be a symlink (v0.8.1 F-V08-S2 hardening — see
+            :exc:`ValueError` raise below).
         provider_name: Optional name for audit-log identification.
             Defaults to ``"local-token"``.
 
     Raises:
         FileNotFoundError: token_file doesn't exist.
-        ValueError: token_file is empty after strip.
+        ValueError: token_file is empty after strip, OR is a
+            symlink (the v0.8.1 F-V08-S2 symlink-rejection
+            hardening — closes the construction-time TOCTOU
+            window where a non-operator user with shared
+            parent-dir write could swap the symlink target
+            mid-construction).
     """
 
     def __init__(
@@ -50,7 +58,33 @@ class LocalTokenAuthProvider(AuthProvider):
         token_file: Path | str,
         provider_name: str = "local-token",
     ) -> None:
-        path = Path(token_file).expanduser().resolve()
+        # v0.8.1 F-V08-S2: reject symlinks BEFORE resolution. The
+        # ``resolve()`` call below would follow the symlink; we
+        # check the un-resolved path first via ``os.lstat``.
+        candidate = Path(token_file).expanduser()
+        try:
+            stat_result = os.lstat(candidate)
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(
+                f"AuthProvider token-file not found at {candidate}"
+            ) from exc
+        # ``S_ISLNK`` is the canonical symlink check (also catches
+        # exotic file types that aren't regular files; fail
+        # closed). Reject any non-regular-file at the trust
+        # boundary so an attacker who can swap the file's parent
+        # directory cannot redirect the read via a symlink.
+        import stat
+
+        if stat.S_ISLNK(stat_result.st_mode):
+            raise ValueError(
+                f"AuthProvider token-file at {candidate} is a "
+                f"symbolic link; symlinks are rejected to "
+                f"prevent construction-time TOCTOU swap "
+                f"attacks. Pass a regular file path, OR "
+                f"resolve the symlink yourself + verify the "
+                f"target before constructing."
+            )
+        path = candidate.resolve()
         if not path.exists() or not path.is_file():
             raise FileNotFoundError(
                 f"AuthProvider token-file not found at {path}"
