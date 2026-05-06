@@ -33,6 +33,7 @@ def serve(
     open_browser: bool = True,
     reload: bool = False,
     security_headers: bool | None = None,
+    auth_token_file: str | None = None,
 ) -> int:
     """Spawn uvicorn serving the Evidentia API + web UI.
 
@@ -82,8 +83,8 @@ def serve(
             )
 
     # Environment plumbing: offline flag + dev mode + security-headers
-    # flag are read by evidentia_api.app.create_app via module-level
-    # env vars so they survive the subprocess boundary.
+    # flag + auth-token-file are read by evidentia_api.app.create_app
+    # via module-level env vars so they survive the subprocess boundary.
     env = os.environ.copy()
     if offline:
         env["EVIDENTIA_API_OFFLINE"] = "1"
@@ -91,6 +92,8 @@ def serve(
         env["EVIDENTIA_API_DEV"] = "1"
     if security_headers:
         env["EVIDENTIA_API_SECURITY_HEADERS"] = "1"
+    if auth_token_file:
+        env["EVIDENTIA_API_AUTH_TOKEN_FILE"] = auth_token_file
 
     cmd = [
         sys.executable,

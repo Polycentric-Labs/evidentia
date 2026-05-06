@@ -299,8 +299,10 @@ def _mount_spa(app: FastAPI) -> None:
 
 
 # Read env-var flags set by ``evidentia serve`` subprocess launch.
-# EVIDENTIA_API_OFFLINE=1 -> offline mode
-# EVIDENTIA_API_DEV=1     -> permissive CORS for Vite dev server
+# EVIDENTIA_API_OFFLINE=1     -> offline mode
+# EVIDENTIA_API_DEV=1         -> permissive CORS for Vite dev server
+# EVIDENTIA_API_AUTH_TOKEN_FILE -> path to token file for the
+#                                 LocalTokenAuthProvider (v0.8.1 P3.3)
 _env_offline = os.environ.get("EVIDENTIA_API_OFFLINE", "").strip().lower() in {
     "1",
     "true",
@@ -312,5 +314,39 @@ _env_dev = os.environ.get("EVIDENTIA_API_DEV", "").strip().lower() in {
     "yes",
 }
 
+# v0.8.1 P3.3: env-driven AuthProvider construction. When the
+# operator sets EVIDENTIA_API_AUTH_TOKEN_FILE (typically via
+# the new `evidentia serve --auth-token-file <path>` flag),
+# construct a LocalTokenAuthProvider + thread it into create_app.
+# The fallback (env var unset) preserves v0.8.0 behavior — no
+# auth gating; localhost-only deployments work unchanged.
+_env_auth_token_file = os.environ.get(
+    "EVIDENTIA_API_AUTH_TOKEN_FILE", ""
+).strip()
+_auth_provider: AuthProvider | None = None
+if _env_auth_token_file:
+    try:
+        from evidentia_core.plugins.auth.local_token import (
+            LocalTokenAuthProvider,
+        )
+
+        _auth_provider = LocalTokenAuthProvider(
+            token_file=_env_auth_token_file
+        )
+    except (FileNotFoundError, ValueError) as _exc:
+        # Fail loud at module load — operator passed --auth-token-file
+        # but the file is missing/empty/symlinked. Don't silently
+        # fall back to no-auth.
+        logger.error(
+            "AuthProvider construction failed (token file %s): %s",
+            _env_auth_token_file,
+            _exc,
+        )
+        raise
+
 # Default instance for `uvicorn evidentia_api.app:app` usage.
-app = create_app(offline=_env_offline, dev_mode=_env_dev)
+app = create_app(
+    offline=_env_offline,
+    dev_mode=_env_dev,
+    auth_provider=_auth_provider,
+)

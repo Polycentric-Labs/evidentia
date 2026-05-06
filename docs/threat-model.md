@@ -1080,6 +1080,114 @@ All v0.7.x mitigations remain in force:
 
 ---
 
+## v0.8.1 attack-surface delta — review-deferral close-out + LLM richness + network surfaces
+
+v0.8.1 closes ALL 12 v0.8.0-bucketed review findings + adds
+three new public surfaces (DFAH risk-determinism CLI, MCP
+HTTP/SSE transport, FastAPI AuthProvider middleware). The
+threat-model delta:
+
+### Surface 5: MCP HTTP/SSE transport (P3.1)
+
+`evidentia mcp serve --transport <sse|http>` exposes the
+v0.8.0 4-tool surface to non-local MCP clients. v0.8.0's
+stdio-only trust model (operator-trusted client; same UID;
+same filesystem) doesn't apply.
+
+- **Adversary**: anonymous attacker on the same network as
+  a non-loopback-bound `evidentia mcp serve --host 0.0.0.0`
+  invocation. Calls `gap_analyze` / `gap_diff` with paths
+  outside the operator's intended evidence directory; reads
+  any file the operator's UID can read.
+- **Mitigation (v0.8.1 ship)**: bind defaults to `127.0.0.1`
+  (loopback-only). Non-loopback bind warns at startup
+  pointing at the reverse-proxy auth requirement.
+  `SERVER_INSTRUCTIONS` carries the trust-model paragraph
+  visible in MCP-client tool-pickers.
+- **Residual risk**: file-path tool inputs not gated against
+  an operator-configured allow-root. Bucketed as v0.8.2
+  finding F-V81-S1 — v0.8.2 adds `validate_within(path,
+  allow_root)` gating with `--allow-root` operator flag.
+
+### Surface 6: FastAPI AuthProvider middleware (P3.3)
+
+`create_app(auth_provider=...)` + `evidentia serve
+--auth-token-file <path>` gate every `/api/*` route on a
+valid Bearer token. Closes the v0.8.0 F-V08-S3 MEDIUM
+finding (`/api/metrics` not auth-gated).
+
+- **Adversary**: same as v0.8.0 — anonymous attacker
+  scraping `/api/metrics` on a non-loopback-bound
+  deployment. v0.8.1 wires the AuthProvider middleware as
+  the canonical gating mechanism.
+- **Mitigation**: when `auth_provider` is non-None, every
+  `/api/*` request requires `Authorization: Bearer <token>`.
+  `LocalTokenAuthProvider` reads the token from a file at
+  construction time; `hmac.compare_digest` for constant-
+  time comparison. UNAUTHENTICATED_PATHS allowlist for
+  liveness probes (Kubernetes / load-balancer readiness).
+- **Residual risk**: module-load AuthProvider construction
+  (F-V81-S2 LOW) — race window narrow; v0.8.2 switches to
+  FastAPI `lifespan` event for cleaner wiring.
+
+### Surface 7: DFAH risk-determinism CLI (P2.1)
+
+`evidentia eval risk-determinism` runs the v0.8.0 DFAHarness
+against the live `RiskStatementGenerator`. Emits per-prompt
+sample-hash JSON suitable for Sigstore signing.
+
+- **Adversary**: same as v0.8.0 — an attacker who can
+  modify the eval output post-emit could fabricate
+  determinism passes. v0.8.1 doesn't change the threat
+  model; CI pipelines should pipe `evidentia eval` output
+  through Sigstore signing.
+- **Mitigation**: canonical-JSON `model_dump_json` of
+  `EvalResult` is SHA-256 hashable. `run_id` is a ULID;
+  same-run-id replay attacks are detectable via the audit
+  log. The new CLI verb inherits the v0.8.0 audit-event
+  posture (`AI_EVAL_STARTED` / `_DETERMINISM_VIOLATION` /
+  `_COMPLETED`).
+- **Residual risk**: same as v0.8.0 — operators wanting
+  end-to-end signing today pipe the output through `cosign
+  sign-blob` manually. v0.8.x adds first-class Sigstore
+  signing for eval results.
+
+### PRT LLM-driven (P2.2) attack-surface notes
+
+PRT trace authoring shifts from v0.8.0 stub (single
+foundational claim, hard-coded confidence=0.5) to LLM-driven
+per-claim decomposition. New observability:
+
+- `evidentia.trace_kind` audit-log field distinguishes
+  `v0.8.1-llm` (LLM-derived; meaningful confidence values)
+  from `v0.8.0-stub` (fallback; ignore for confidence
+  filtering).
+- Auditors filter on `trace_kind` to scope reviews to LLM-
+  derived traces with operator-trusted confidence values.
+
+Inherited mitigations from v0.8.0: SHA-256-hashed back-
+matter resource binds canonical JSON; tampering fails
+`evidentia oscal verify`.
+
+### v0.8.0 mitigation reinforcements (review-deferral close-out)
+
+All 12 v0.8.0 review findings closed in v0.8.1 strengthen
+the existing posture:
+
+- F-V08-CR-1 + F-V08-CR-2: counter-aggregator integrity +
+  outcome-contract enforcement.
+- F-V08-CR-3: collector observability for non-conformant
+  upstream API responses.
+- F-V08-CR-4: FastMCP public-API switch (robustness against
+  SDK minor-version internal renames).
+- F-V08-S2: LocalTokenAuthProvider symlink-rejection (TOCTOU
+  hardening).
+- F-V08-CR-8: PYTHONOPTIMIZE-resistant invariant checks.
+- F-V08-S5: LocalDirectoryMarketplace observability for
+  manifest-parse failures.
+
+---
+
 ## Review cadence
 
 This doc is reviewed at every release per

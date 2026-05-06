@@ -7,6 +7,150 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-05-06
+
+**The v0.8.0 review-deferral close-out + LLM-driven richness +
+network surfaces.** Aggressive ~4-week scope (per Allen's
+v0.8.1 cycle-open lock-in) executed in a single focused
+session: ALL 12 v0.8.0 review-bucketed findings closed, the
+LLM-driven richness for two of the four v0.8.0 P0 surfaces
+(DFAH + PRT), and the FastAPI AuthProvider middleware
+integration that closes the v0.8.0 F-V08-S3 ``/api/metrics``
+auth gate. Three Phase 4 infra primitives (G4 Dockerfile
+``--require-hashes``, G1 mutmut, G2 hypothesis) deferred to
+v0.8.2 per §24.6 R6 — they benefit from a thoughtful
+integration plan rather than rushing at cycle-end.
+
+### Added
+
+- **DFAH risk-determinism CLI verb (Phase 2.1)** —
+  ``evidentia eval risk-determinism --context X --gaps Y``
+  runs the v0.8.0 DFAHarness against the live
+  :class:`RiskStatementGenerator`. Loads system context YAML
+  + gap report JSON (same shape as ``evidentia risk
+  generate``); fires N samples per gap; exits 1 if the
+  overall determinism rate falls below the CI-gate threshold
+  (default 0.95 per arXiv 2601.15322). Supports ``--gap-id``,
+  ``--limit``, ``--samples-per-prompt``,
+  ``--fail-on-determinism-rate-below``, ``--output``,
+  ``--model``, ``--temperature``, ``--check-replay``.
+- **PRT LLM-driven per-claim decomposition (Phase 2.2)** —
+  ``RISK_STATEMENT_TRACE_PROMPT`` augments the system prompt
+  when ``emit_trace=True``. Instructor's structured-output
+  extraction populates the ``reasoning_trace`` field with
+  3-7 atomic claims, per-claim policy clause citations, and
+  self-introspected confidence. Fallback to v0.8.0 stub trace
+  when the LLM omits the trace. Audit log distinguishes via
+  ``trace_kind=v0.8.1-llm`` vs ``trace_kind=v0.8.0-stub``.
+- **MCP HTTP/SSE transport (Phase 3.1)** — ``evidentia mcp
+  serve --transport <stdio|sse|http>`` with ``--host`` +
+  ``--port`` flags. New ``run_sse(host, port)`` +
+  ``run_http(host, port)`` helpers in
+  ``evidentia_mcp.server``. Backward-compat
+  ``--no-stdio`` flag retained as a deprecated alias with
+  migration hint. Default bind is 127.0.0.1; non-loopback
+  warns about reverse-proxy auth requirement.
+- **FastAPI AuthProvider middleware (Phase 3.3)** — new
+  ``evidentia_api.auth_middleware.AuthProviderMiddleware``
+  Starlette middleware. Wired via ``create_app(auth_provider=...)``.
+  Closes the v0.8.0 F-V08-S3 MEDIUM finding —
+  ``/api/metrics`` + ``/api/risks`` + all data-bearing
+  ``/api/*`` routes inherit the auth requirement.
+  ``UNAUTHENTICATED_PATHS`` allowlist for liveness probes
+  (``/api/health``, ``/api/version``, ``/api/openapi.json``,
+  ``/api/docs``, ``/api/redoc``). Static SPA paths bypass at
+  the API layer (SPA enforces in browser).
+- **``evidentia serve --auth-token-file <path>``** flag
+  exposes the AuthProvider plumbing ergonomically. Sets
+  ``EVIDENTIA_API_AUTH_TOKEN_FILE`` env var; module-level
+  ``app`` reads it + constructs LocalTokenAuthProvider on
+  module load. When unset, no auth gating fires (v0.8.0
+  backward compat for localhost-only deployments).
+
+### Changed
+
+- **F-V08-CR-1 (HIGH)**: ``EvidentiaLogger._emit`` now gates
+  the Prometheus counter increment on
+  ``self._stdlib.isEnabledFor(stdlib_level)``. Counters and
+  log-stream stay in sync regardless of operator log-level
+  filtering. Lifted ``record_event`` import from lazy to
+  module level.
+- **F-V08-CR-2 (HIGH)**: ``evidentia_core.audit.metrics``
+  counters encapsulated in a thread-safe
+  :class:`MetricsRegistry` class. ``record_event`` now
+  enforces the outcome contract via
+  ``_VALID_OUTCOMES = {"success", "failure", "unknown"}`` —
+  unknown values raise ``ValueError`` rather than silently
+  miscount.
+- **F-V08-CR-3 (MEDIUM)**: ``BaseSaaSCollector._get`` now
+  raises ``QUERY_ERROR_CLASS`` on non-dict JSON responses
+  rather than wrapping as ``{"items": data}``. The wrap
+  silently masked non-conformant API responses; the new
+  raise surfaces them.
+- **F-V08-CR-4 (MEDIUM)**: ``evidentia mcp doctor`` +
+  ``test_four_core_tools_registered`` /
+  ``test_each_tool_has_a_description`` switched from
+  FastMCP private API (``_tool_manager._tools``) to the
+  public ``list_tools()`` async method. Robust against SDK
+  minor-version internal renames.
+- **F-V08-CR-11 (LOW)**: ``discover_plugins()`` gains an
+  optional ``of_type`` kwarg that narrows the result to
+  subclasses of a specific ABC. Eliminates the
+  ``isinstance + issubclass`` boilerplate every operator
+  was writing.
+
+### Fixed
+
+- **F-V08-S2 (LOW)**: ``LocalTokenAuthProvider`` rejects
+  symlinks at construction time via ``os.lstat`` +
+  ``stat.S_ISLNK``. Closes the construction-time TOCTOU
+  window where a non-operator user with shared parent-dir
+  write could swap the symlink target mid-construction.
+- **F-V08-CR-5 (LOW)**: ``evidentia mcp doctor``
+  initializes report variables at function top so the
+  report block is unconditionally safe.
+- **F-V08-CR-8 (LOW)**: replaced ``assert`` statements in
+  ``oscal/exporter.py`` and ``bitsight/collector.py`` with
+  explicit ``if x is None: raise ValueError(...)`` so
+  invariants survive PYTHONOPTIMIZE=1 / -O deployments.
+- **F-V08-CR-12 (LOW)**: tests in
+  ``test_plugins/test_contracts.py`` defensively check
+  ``result.reason is not None`` before ``.lower()`` /
+  substring access.
+- **F-V08-S5 (INFO)**: ``LocalDirectoryMarketplaceProvider``
+  manifest parse failure now emits a ``COLLECT_FAILED``
+  audit warning rather than silently falling back. Operators
+  see misconfigurations in their SIEM.
+
+### Notes
+
+- v0.8.0 review F-V08-CR-10 (LOW): documents why
+  ``BaseSaaSCollector`` does NOT use a PEP 695 generic
+  ``collect()`` return type (polymorphic shapes:
+  ``list[SecurityFinding]`` OR ``tuple[list, manifest]``).
+  Inline rationale; no behavior change.
+- v0.8.0 review F-V08-S4 (INFO): documents the resource-
+  bounds posture in ``DFAHarness`` docstring — the harness
+  is a library API; operators own per-call timeouts +
+  aggregate budgets via ``concurrent.futures`` wrappers +
+  LLM provider config. Future v0.8.x may add
+  ``max_total_calls`` + ``per_call_timeout_seconds``
+  first-class kwargs.
+- **Phase 3.2 deferred to v0.8.2**: MCP CIMD richness (Client
+  ID Metadata Document) is best explored against real MCP-
+  client deployments than guessed at without empirical
+  signals. v0.8.1 HTTP/SSE transports unblock this future
+  work; CIMD-aware multi-tenant features iterate against
+  actual operator demand.
+- **Phase 4.1 + 4.2 + 4.3 deferred to v0.8.2** per §24.6
+  R6: G4 Dockerfile ``--require-hashes`` flip needs CI
+  release-workflow coordination + build-twice
+  sha256sum-match validation; G1 mutmut needs careful per-
+  module baseline tuning; G2 hypothesis needs ≥ 5 well-
+  designed property tests. These infra primitives benefit
+  from shipping together with a thoughtful integration
+  plan rather than rushed at cycle-end.
+
 ## [0.8.0] - 2026-05-05
 
 **The OSS-native AI moat.** First minor release after the

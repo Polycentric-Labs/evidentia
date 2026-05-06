@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from pathlib import Path
 
 import typer
 from rich.console import Console
@@ -474,6 +475,24 @@ def serve(
             "these headers and you don't want duplicates)."
         ),
     ),
+    auth_token_file: Path | None = typer.Option(
+        None,
+        "--auth-token-file",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help=(
+            "v0.8.1 P3.3: path to a file containing the bearer token "
+            "for the LocalTokenAuthProvider. When set, every /api/* "
+            "route requires `Authorization: Bearer <token>` from the "
+            "file. Liveness probes (/api/health, /api/version, "
+            "/api/openapi.json, /api/docs, /api/redoc) bypass auth "
+            "for Kubernetes / load-balancer readiness checks. When "
+            "omitted (default), no auth gating fires — preserves "
+            "v0.8.0 backward compat for localhost-only deployments."
+        ),
+    ),
 ) -> None:
     """Start the Evidentia web UI (REST API + React SPA).
 
@@ -506,6 +525,7 @@ def serve(
         open_browser=not no_browser,
         reload=reload,
         security_headers=security_headers,
+        auth_token_file=str(auth_token_file) if auth_token_file else None,
     )
     if exit_code != 0:
         raise typer.Exit(code=exit_code)

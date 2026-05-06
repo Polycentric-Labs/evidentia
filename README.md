@@ -148,6 +148,24 @@ Evidentia is built on four principles:
 
 ### Recent releases
 
+**v0.8.1 (May 2026)** — *Review-deferral close-out + LLM richness
++ network surfaces*. Aggressive ~4-week cycle compressed to a
+single focused session. Closes ALL 12 v0.8.0-bucketed review
+findings (2 HIGH + 4 MEDIUM + 6 LOW polish + 2 INFO). Ships the
+LLM-driven richness for the v0.8.0 P0 surfaces:
+``evidentia eval risk-determinism --context X --gaps Y`` runs
+the DFAHarness against the live RiskStatementGenerator;
+PRT LLM-driven per-claim decomposition replaces the v0.8.0
+stub (``trace_kind=v0.8.1-llm`` vs ``=v0.8.0-stub`` audit-log
+discriminator). Network surfaces: ``evidentia mcp serve
+--transport sse|http`` + FastAPI AuthProvider middleware
+(``evidentia serve --auth-token-file <path>``). Closes the
+v0.8.0 F-V08-S3 ``/api/metrics`` auth gate. Eighth consecutive
+PROCEED-CLEAN of the v0.7.x → v0.8.x line. Three Phase 4 infra
+primitives (G4 Dockerfile ``--require-hashes``, G1 mutmut, G2
+hypothesis) deferred to v0.8.2 per §24.6 R6. **2240 tests
+passing across 211 source files; mypy strict 0/0; ruff clean.**
+
 **v0.8.0 (May 2026)** — *The OSS-native AI moat*. First minor
 after the v0.7.x cycle close. Lands four AI-quality features
 that distinguish a Vanta-class dashboard from a compliance-

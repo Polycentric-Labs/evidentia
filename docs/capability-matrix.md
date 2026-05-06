@@ -13,6 +13,62 @@
 
 ---
 
+## Re-validation snapshot — 2026-05-06 (v0.8.1 pre-tag)
+
+v0.8.1 (in progress on `main`; not yet tagged) closes the v0.8.0
+review backlog + ships LLM-driven richness for the AI surfaces +
+adds network-transport options for MCP + closes the v0.8.0
+``/api/metrics`` auth gate via FastAPI AuthProvider middleware.
+
+**New public surfaces tested this cycle**:
+
+| Surface | Test path | Coverage |
+|---|---|---|
+| `evidentia eval risk-determinism --context X --gaps Y` (P2.1) | `tests/unit/test_eval/test_harness.py` (TestRiskDeterminismCLI; 2 tests) | Determinism check against mocked RiskStatementGenerator; --gap-id missing-id error path |
+| PRT LLM-driven (P2.2) | `tests/unit/test_ai/test_risk_statements.py` (test_generate_with_emit_trace_uses_llm_trace_when_present) | Generator preserves LLM-derived trace over v0.8.0 stub; trace_kind audit-log field |
+| `evidentia mcp serve --transport sse\|http` (P3.1) | `tests/unit/test_mcp/test_server.py` (test_serve_help_shows_transport_choices + _host_port; 2 tests) | --transport flag documented + offers stdio/sse/http; --host + --port documented |
+| FastAPI AuthProvider middleware (P3.3) | `tests/unit/test_api/test_auth_middleware.py` (TestAuthMiddleware; 6 tests) | No-provider backward compat; /api/metrics gating (no header / wrong token / right token); /api/health bypass; /api/version bypass; /api/openapi.json bypass; static SPA bypass |
+
+**Inherited surface re-validation** (carry-forward from v0.8.0
+— no functional changes; v0.8.1 review-deferral closures
+strengthen existing surfaces without changing user-facing
+contracts).
+
+**Adversarial probing (DAST per v4 G11)**:
+
+- `/api/metrics` auth gating: validated end-to-end via
+  TestClient — 401 on missing/wrong token; 200 on valid
+  bearer. WWW-Authenticate header per RFC 7235 §4.1.
+- MCP HTTP/SSE transport file-path tool inputs: F-V81-S1
+  bucketed to v0.8.2 (acceptable for v0.8.1 ship per documented
+  trust model — bind defaults to 127.0.0.1; non-loopback
+  bindings warn at startup).
+- `evidentia eval risk-determinism` LLM credentials: never
+  in CLI args; read from env vars by RiskStatementGenerator's
+  existing LiteLLM-handshake.
+
+**Quality gates at pre-tag**: 2240 tests passing / 13 skipped
+(was 2240 / 13 at v0.8.0 close — same total because v0.8.1
+adds 12 new tests but the symlink test skips on Windows + 1
+existing test was generalized to opt-in to INFO logging).
+mypy strict 0/0 across 211 source files (was 210; +1 new
+auth_middleware module). ruff clean. Standing-rule sweep
+clean across all v0.8.1-cycle commits.
+
+**Pre-release-review v4 Pre-tag deliverables**:
+
+- `docs/security-review-v0.8.1.md` (5th canonical Pre-tag
+  deliverable per v4 §G7) — Continuous variant for the
+  review-deferral-cycle shape; 12 v0.8.0 findings closed; 2
+  new v0.8.1 findings bucketed to v0.8.2; 0 CRITICAL/HIGH
+  unfixed.
+- `docs/threat-model.md` extended with v0.8.1 attack-surface
+  delta covering Surfaces 5-7 (MCP HTTP/SSE, FastAPI
+  AuthProvider, DFAH risk-determinism CLI) + PRT LLM-driven
+  notes + v0.8.0 mitigation reinforcements.
+
+---
+
 ## Re-validation snapshot — 2026-05-05 (v0.8.0 pre-tag)
 
 v0.8.0 (in progress on `main`; not yet tagged) ships **the

@@ -1,18 +1,21 @@
 # Evidentia roadmap
 
-**Last updated: v0.8.0 (May 2026).**
+**Last updated: v0.8.1 (May 2026).**
 
 This roadmap synthesizes community feedback with the architecture plan
-at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0 have
-shipped. **v0.8.0 is the first minor of the v0.8.x line — "the
-OSS-native AI moat"** — landing four AI-quality features
+at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0 +
+v0.8.1 have shipped. **v0.8.0 is the first minor of the v0.8.x
+line — "the OSS-native AI moat"** — landing four AI-quality features
 (DFAH determinism harness + Policy Reasoning Traces + MCP server +
 plugin-contract scaffolding) that distinguish a Vanta-class dashboard
-from a compliance-engineering tool. v0.8.1 plan opens
-post-ship to address review-bucketed deferrals + the LLM-driven
-richness for each P0 surface. Anything beyond v0.8.x is
-forward-looking — the exact shape will depend on real-world usage
-patterns and the bigger v0.8+ direction documented in
+from a compliance-engineering tool. v0.8.1 closes ALL 12 v0.8.0
+review-bucketed findings, adds LLM-driven richness (DFAH
+risk-determinism CLI + PRT LLM-driven decomposition), MCP HTTP/SSE
+transport, and FastAPI AuthProvider middleware (closes the v0.8.0
+`/api/metrics` auth gate). v0.8.2 plan opens post-ship to address
+the deferred infra primitives. Anything beyond v0.8.x is forward-
+looking — the exact shape will depend on real-world usage patterns
+and the bigger v0.8+ direction documented in
 [`positioning-and-value.md`](positioning-and-value.md) §13.
 
 ## v0.3.0 — Compliance-as-code — SHIPPED
@@ -601,25 +604,101 @@ Two recurring code-scanning false positives dismissed
 (`py/partial-ssrf` on BaseSaaSCollector; `Pinned-Dependencies`
 on Dockerfile); 0 open code-scanning alerts at close.
 
-## v0.8.1 — PLANNED
+## v0.8.1 — Review-deferral close-out + LLM richness + network surfaces — SHIPPED
 
-The v0.8.0 review surfaced 12 findings bucketed for v0.8.1
-follow-up: 2 HIGH (logger record_event level filter, metrics
-counter encapsulation), 4 MEDIUM (collector `_get` non-dict
-wrap, FastMCP private API in doctor, LocalDirectoryMarketplace
-silent manifest swallow, LocalTokenAuthProvider symlink window),
-6 LOW polish. Plus the deferred richness for each P0 surface:
-**DFAH risk-determinism CLI verb** (live LLM-driven; faithfulness
-scoring follow-up); **PRT LLM-driven per-claim decomposition**
-(replacing the v0.8.0 stub); **MCP HTTP/SSE transport** + CIMD
-(Client ID Metadata Document) richness; **FastAPI AuthProvider
-middleware integration** (closes the `/api/metrics` auth gate +
-gates other endpoints). Plus the v0.8.0 P1 deferrals: G1 mutmut
-mutation-testing CI gate, G2 hypothesis property-based tests on
-crosswalk + normaliser, G4 Dockerfile `--require-hashes` flip +
-reproducible-build verification (consumes the v0.7.14 P1.5 hash-
-pinned `docker/requirements.txt` foundation). Ship target ~6-8
-weeks; plan file lands at cycle open.
+See [`docs/security-review-v0.8.1.md`](security-review-v0.8.1.md)
+for the full Pre-tag review. Aggressive ~4-week scope (Allen's
+v0.8.1 cycle-open lock-in 2026-05-05) executed in a single
+focused session.
+
+**ALL 12 v0.8.0-bucketed review findings closed** — 2 HIGH
+(logger record_event level filter, MetricsRegistry
+encapsulation), 4 MEDIUM (collector `_get` non-dict raise,
+FastMCP private API → public, F-V08-S3 `/api/metrics` auth
+gate via Phase 3.3 AuthProvider middleware, LocalDirectoryMarketplace
+manifest warning), 6 LOW (LocalTokenAuthProvider symlink-
+rejection, doctor unbound vars, assert→ValueError under
+PYTHONOPTIMIZE, BaseSaaSCollector PEP-695 generic rationale,
+discover_plugins of_type kwarg, test defensive None checks).
+
+**LLM-driven richness landed**:
+
+- **DFAH risk-determinism CLI verb** —
+  `evidentia eval risk-determinism --context X --gaps Y`
+  runs the v0.8.0 DFAHarness against the live
+  RiskStatementGenerator. CI-gateable via
+  `--fail-on-determinism-rate-below 0.95`.
+- **PRT LLM-driven per-claim decomposition** —
+  `RISK_STATEMENT_TRACE_PROMPT` augments the system prompt
+  when `emit_trace=True`. Instructor extracts 3-7 atomic
+  claims with per-claim policy clause citations + self-
+  introspected confidence. v0.8.0 stub trace remains as
+  defensive fallback. Audit-log `trace_kind=v0.8.1-llm`
+  vs `v0.8.0-stub` for auditor filtering.
+
+**Network surfaces**:
+
+- **MCP HTTP/SSE transport** — `evidentia mcp serve
+  --transport <stdio|sse|http>` with `--host` + `--port`
+  flags. Loopback-default; non-loopback warns at startup.
+- **FastAPI AuthProvider middleware** — `create_app(auth_provider=...)`
+  + `evidentia serve --auth-token-file <path>` ergonomic
+  wiring. Closes v0.8.0 F-V08-S3 MEDIUM finding —
+  `/api/metrics` + all data-bearing routes inherit the auth
+  requirement. UNAUTHENTICATED_PATHS allowlist for liveness
+  probes.
+
+**Deferred to v0.8.2** per §24.6 R6 (infra primitives benefit
+from a thoughtful integration plan, not rushed at cycle-end):
+
+- G4 Dockerfile `--require-hashes` flip + reproducible-build
+  verification (consumes v0.7.14 P1.5 hash-pinned
+  `docker/requirements.txt`).
+- G1 mutmut mutation-testing baseline ≥ 65%.
+- G2 hypothesis property-based tests on crosswalk + normaliser.
+- MCP CIMD richness (best explored against real MCP-client
+  deployments).
+- 2 NEW v0.8.1 findings: F-V81-S1 MEDIUM (HTTP/SSE file-path
+  tool input gating), F-V81-S2 LOW (module-load AuthProvider
+  → FastAPI `lifespan`).
+
+**Pre-release-review v4 Continuous variant PROCEED-CLEAN** —
+8th consecutive across v0.7.{11,12,13,14,15,16} + v0.8.0 +
+v0.8.1. 0 CRITICAL/HIGH unfixed at ship. 2240 tests / 13
+skipped, mypy strict 0/0 across 211 source files, ruff clean.
+
+## v0.8.2 — PLANNED
+
+Carries forward the v0.8.1 deferrals + 2 new v0.8.1 review
+findings:
+
+- **G4 Dockerfile `--require-hashes`** flip — closes the
+  recurring Scorecard PinnedDependencies false-positive
+  structurally; consumes the v0.7.14 P1.5 hash-pinned
+  `docker/requirements.txt` foundation. Needs CI release-
+  workflow coordination + build-twice sha256sum-match
+  validation.
+- **G1 mutmut mutation-testing CI gate** — baseline ≥ 65%
+  via per-module tuning.
+- **G2 hypothesis property-based tests** — ≥ 5 well-designed
+  property tests on crosswalk + control-id normaliser.
+- **MCP CIMD richness** — Client ID Metadata Document
+  support for multi-tenant MCP deployments. Iterates against
+  empirical operator demand from v0.8.1 HTTP/SSE adoption.
+- **F-V81-S1 MEDIUM**: HTTP/SSE file-path tool input gating
+  via `validate_within(path, allow_root)` + operator-
+  configured `--allow-root` flag.
+- **F-V81-S2 LOW**: switch module-level AuthProvider
+  construction to FastAPI `lifespan` event for cleaner
+  wiring.
+- **DFAH faithfulness scoring** — the second arXiv-2601.15322
+  metric. Measures whether generated claims trace back to
+  the input control + system context (not hallucinated).
+- **First-class Sigstore signing for `evidentia eval`
+  output** — closes the F-V81-S* signal that operators
+  currently pipe through `cosign sign-blob` manually.
+
+Ship target ~4-6 weeks; plan file lands at cycle open.
 
 ## v0.9.0 — Federal compliance — RESERVED
 
