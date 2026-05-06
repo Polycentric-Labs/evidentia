@@ -1198,6 +1198,138 @@ not just diff scope) runs at every minor release per pre-
 release-review v4 §G5 + on a quarterly cadence regardless of
 release activity per Step 11.
 
+## v0.8.2 attack-surface delta — review-deferral closure + supply-chain hardening + test-quality + DFAH faithfulness
+
+> Status: 2026-05-06. v0.8.2 SHIPPED. Closes 8 reservations
+> carried out of v0.8.1 (F-V81-S1 + F-V81-S2 + G4 + G1 + G2 +
+> faithfulness + Sigstore eval signing); CIMD richness deferred
+> further to v0.8.3.
+
+### F-V81-S1 closure: MCP file-path tool input gating
+
+**Surface change**: `evidentia mcp serve --allow-root <path>`
+gates the file-path tool inputs (`gap_analyze.inventory_path`,
+`gap_diff.{base,head}_report_path`) via
+`evidentia_core.security.paths.validate_within`. Out-of-root
+paths surface as `PathTraversalError` (a `ValueError` subclass);
+the FastMCP runtime converts them to MCP tool errors rather than
+crashing the server.
+
+**Threat coverage**: closes the v0.8.1 trust-model gap where
+HTTP/SSE-bound MCP servers could read any path the server's UID
+had access to. The default (no `--allow-root`) preserves the
+v0.8.1 stdio behavior — appropriate for stdio + loopback HTTP/SSE
+where the client process runs as the operator's UID. Non-loopback
+HTTP/SSE bindings without `--allow-root` now emit an additional
+startup warning recommending the flag.
+
+**Residual risk**: operators who deploy non-loopback HTTP/SSE
+without setting `--allow-root` get the warning but the server
+still starts. Defensive choice — Evidentia doesn't refuse a
+deployment shape that may be acceptable behind a properly-
+configured reverse proxy. v0.8.3 may revisit + escalate to a
+hard refusal pending operator feedback.
+
+### F-V81-S2 closure: AuthProvider construction at FastAPI lifespan
+
+**Surface change**: `EVIDENTIA_API_AUTH_TOKEN_FILE` env var is
+now read at FastAPI app STARTUP (lifespan event) instead of
+module import time. Importing `evidentia_api.app` is side-
+effect-free (no filesystem I/O); explicit injection via
+`create_app(auth_provider=...)` continues to take precedence.
+
+**Threat coverage**: closes the v0.8.1 trust-model gap where
+tooling that imports `evidentia_api.app` for OpenAPI generation
+or mypy plugin discovery would trigger token-file reads + raise
+on missing/empty files. Now imports are clean; only actual app
+startup (uvicorn, TestClient context-manager) reads the env var.
+
+**Residual risk**: none new. Fail-loud contract preserved (broken
+token file → lifespan startup raises → uvicorn fails to start
+with a clear error).
+
+### G4 closure: Dockerfile `--require-hashes`
+
+**Surface change**: Dockerfile install line flips from
+`pip install evidentia[gui]==X.Y.Z` (exact-version, partially
+pinned) to `pip install --require-hashes -r /tmp/requirements.txt`
+(every transitive dep pinned to a SHA256 hash from a pip-compile-
+generated file).
+
+**Threat coverage**: closes the supply-chain gap where a
+compromised PyPI mirror could serve a tampered transitive
+dependency without the build catching it. Hash verification
+enforces byte-for-byte integrity at install time. Closes the
+recurring Scorecard PinnedDependencies false-positive cycle
+(alerts #100 / #101 / #102 / #103 / #107 / #108 across v0.7.12 →
+v0.8.1) structurally — the alert pattern's regex no longer
+matches the install line.
+
+**Residual risk**: regeneration tooling (`pip-compile` via
+`scripts/bump_version.py --regenerate-requirements`) must run
+inside the Linux base image (uvloop is Linux-only; pip-compile
+on Windows hosts misses it). Documented in `docs/dockerfile-
+pinning.md`. Bucketed as F-V82-S1 LOW for v0.8.3+ enhancement.
+
+### Test-quality hardening (G1 + G2)
+
+**Surface change**: not a runtime surface — internal CI hardening:
+
+- `[tool.mutmut]` config + `.github/workflows/mutmut.yml`
+  (weekly + workflow_dispatch) targets `gap_analyzer` +
+  `risk_statements` modules for mutation testing.
+- 8 new hypothesis property-based tests in `tests/property/`
+  cover canonical invariants on the normalizer + crosswalk
+  engine (idempotence, case-folding, prefix-stripping, type-
+  stability).
+
+**Threat coverage**: complement existing statement-coverage
+gating (Codecov ≥ 80% MUST per OpenSSF Silver). Mutation testing
+catches gaps in test ASSERTIONS (not just LINE coverage);
+property-based tests catch input-shape regressions hand-written
+test corpora miss.
+
+**Residual risk**: no new attack surface. Future work: raise
+mutmut baseline + expand `paths_to_mutate` to OSCAL exporter +
+plugin contracts.
+
+### DFAH faithfulness scoring (P3.1)
+
+**Surface change**: new `evidentia_ai.eval.faithfulness` module
++ `FaithfulnessResult` Pydantic model + `faithfulness_score()`
+function. Stdlib Jaccard token-overlap baseline; default
+threshold 0.3.
+
+**Threat coverage**: addresses the v0.7.0 §11.3 risk register
+risk #3 ("AI hallucination incident in Evidentia's risk-statement
+output") via a third audit metric alongside determinism + replay
+equivalence. Operators can now measure how grounded each
+generated claim is in the input policy clauses.
+
+**Residual risk**: stdlib Jaccard is conservative — catches gross
+hallucinations, misses paraphrases. Bucketed as F-V82-S2 LOW for
+v0.8.3 sentence-transformers semantic-similarity enhancement.
+Operators wanting paraphrase-tolerant scoring can wire their own
+similarity function in the meantime.
+
+### First-class Sigstore signing for `evidentia eval` output (P3.2)
+
+**Surface change**: new `evidentia_ai.eval.signing` module +
+CLI flags (`--sign / --no-sign` on stub-smoke + risk-determinism;
+new `evidentia eval verify` subcommand). Eval output JSON +
+sibling `.sigstore.json` bundle; tri-state default auto-detects
+via `GITHUB_ACTIONS` env var.
+
+**Threat coverage**: closes the v0.8.0 §24.4 acceptance criterion
+("Sigstore-signed eval output (audit-grade evidence)"). Eval
+output is now provenance-bound to a specific OIDC identity at a
+specific time via Fulcio cert + Rekor log inclusion proof.
+
+**Residual risk**: requires network to Fulcio + Rekor (no air-gap
+support — operators in air-gap deployments use GPG signing
+instead). The `verify` CLI surface catches `Exception` broadly;
+bucketed as F-V82-S3 LOW for v0.8.3 except-clause tightening.
+
 ---
 
 *First published v0.7.7 (2026-05). Origin: promoted from a

@@ -1,28 +1,71 @@
 # Dockerfile dependency pinning policy
 
-> Status (v0.8.2): **STRUCTURAL FIX LANDED.** The Dockerfile now
-> uses `pip install --require-hashes -r /tmp/requirements.txt`
-> against a generated `docker/requirements.txt` (every transitive
-> dep pinned to a specific SHA256 hash). The recurring Scorecard
-> PinnedDependencies false-positive cycle (alerts #100 → #108
-> across v0.7.12 → v0.8.1) is closed. The historical narrative
-> below is preserved for context; jump to "v0.8.2 G4 closure"
-> for the current state.
+> Status (v0.8.2): **STRUCTURAL FOUNDATION LANDED; ACTIVATION
+> DEFERRED to v0.8.3.** The hash-pinned `docker/requirements.txt`
+> regeneration tooling is in place (`bump_version.py
+> --regenerate-requirements`) + the file is regenerated at every
+> version bump. The Dockerfile install line activation
+> (`--require-hashes -r /tmp/requirements.txt`) is deferred per
+> §25.6 R1 because release.yml's `uv build` is not byte-identical
+> across build hosts (no SOURCE_DATE_EPOCH wired yet), so the
+> SHA256 hashes computed pre-tag don't match what release.yml
+> uploads to PyPI. v0.8.3 closes this via either build-time
+> reproducibility OR a release-pipeline-integrated regeneration
+> step. The historical narrative below is preserved for context.
 
-## v0.8.2 G4 closure (current)
+## v0.8.2 G4 deferred-activation status
 
-The Dockerfile install line is now:
+The Dockerfile install line currently reads:
 
 ```dockerfile
-COPY docker/requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir --user --require-hashes -r /tmp/requirements.txt
+RUN pip install --no-cache-dir --user "evidentia[gui]==0.8.2"
 ```
 
-`docker/requirements.txt` is generated via
-`pip-compile --generate-hashes --output-file=docker/requirements.txt
-docker/requirements.in`, with `requirements.in` containing
-`evidentia[gui]==X.Y.Z`. The file pins ~140 transitive deps with
-SHA256 hashes per platform tag.
+The structural foundation IS in place:
+
+- `docker/requirements.in` pins `evidentia[gui]==0.8.2`
+- `docker/requirements.txt` is regenerated against the v0.8.2 dep
+  tree (~140 transitive deps with SHA256 hashes per platform tag)
+  via `pip-compile --generate-hashes`
+- `scripts/bump_version.py --regenerate-requirements` wraps
+  `pip-compile` invocation atomically with the version bump
+
+When the v0.8.3 cycle adds release-pipeline support for hash-
+pin alignment (see "v0.8.3 closure plan" below), flipping the
+Dockerfile install line is a single-line change.
+
+## v0.8.3 closure plan
+
+Two equivalent paths under evaluation:
+
+1. **SOURCE_DATE_EPOCH-driven reproducible builds**: set
+   `SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)` in
+   release.yml before `uv build` so the wheels' embedded
+   timestamps are derived from the tag, not the build host's
+   clock. Local builds at the same tagged commit produce
+   byte-identical wheels → byte-identical SHA256 hashes →
+   pre-tag-generated requirements.txt's hashes match PyPI's
+   published wheels.
+2. **Post-PyPI regeneration**: add a release.yml step in the
+   `publish-container` job that runs after Wait-for-PyPI but
+   before `docker build`. The step regenerates
+   `docker/requirements.txt` against PyPI's just-published
+   X.Y.Z wheels via `pip-compile`. The repo stays at the
+   pre-tag requirements.txt; the container build uses the
+   freshly-regenerated file ephemerally.
+
+Path 1 is more invasive but cleaner long-term (the same
+reproducible-builds work pays dividends across other supply-
+chain assertions). Path 2 is a smaller release.yml change
+that ships the activation immediately. v0.8.3 plan-mode
+session decides which path to land.
+
+## Historical narrative (v0.7.13 → v0.8.1; preserved for context)
+
+The `Dockerfile` at the repo root used to pin the `evidentia[gui]`
+install to the exact current release version (e.g.,
+`evidentia[gui]==0.7.12`), **not** a full hash-pinned requirements
+file. This was a deliberate trade-off rather than an oversight.
 
 **Regeneration**: `scripts/bump_version.py --regenerate-requirements
 --to A.B.C` updates the pin in `requirements.in` + invokes

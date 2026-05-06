@@ -680,38 +680,91 @@ from a thoughtful integration plan, not rushed at cycle-end):
 v0.8.1. 0 CRITICAL/HIGH unfixed at ship. 2240 tests / 13
 skipped, mypy strict 0/0 across 211 source files, ruff clean.
 
-## v0.8.2 — PLANNED
+## v0.8.2 — Review-deferral closure + supply-chain hardening + test-quality + DFAH faithfulness — SHIPPED
 
-Carries forward the v0.8.1 deferrals + 2 new v0.8.1 review
-findings:
+Tag `v0.8.2` at commit (TBD post-tag). Aggressive ~3-week scope
+executed in a single focused session — closes 8 reservations
+carried out of v0.8.1 (CIMD richness deferred further to v0.8.3
+per §24.6 R6). 9th consecutive PROCEED-CLEAN of the v0.7.x →
+v0.8.x line.
 
-- **G4 Dockerfile `--require-hashes`** flip — closes the
-  recurring Scorecard PinnedDependencies false-positive
-  structurally; consumes the v0.7.14 P1.5 hash-pinned
-  `docker/requirements.txt` foundation. Needs CI release-
-  workflow coordination + build-twice sha256sum-match
-  validation.
-- **G1 mutmut mutation-testing CI gate** — baseline ≥ 65%
-  via per-module tuning.
-- **G2 hypothesis property-based tests** — ≥ 5 well-designed
-  property tests on crosswalk + control-id normaliser.
-- **MCP CIMD richness** — Client ID Metadata Document
-  support for multi-tenant MCP deployments. Iterates against
-  empirical operator demand from v0.8.1 HTTP/SSE adoption.
-- **F-V81-S1 MEDIUM**: HTTP/SSE file-path tool input gating
-  via `validate_within(path, allow_root)` + operator-
-  configured `--allow-root` flag.
-- **F-V81-S2 LOW**: switch module-level AuthProvider
-  construction to FastAPI `lifespan` event for cleaner
-  wiring.
-- **DFAH faithfulness scoring** — the second arXiv-2601.15322
-  metric. Measures whether generated claims trace back to
-  the input control + system context (not hallucinated).
-- **First-class Sigstore signing for `evidentia eval`
-  output** — closes the F-V81-S* signal that operators
-  currently pipe through `cosign sign-blob` manually.
+See [`docs/security-review-v0.8.2.md`](security-review-v0.8.2.md)
+for the full Pre-tag review.
 
-Ship target ~4-6 weeks; plan file lands at cycle open.
+**Closures**:
+
+- **F-V81-S1** — `evidentia mcp serve --allow-root <path>` flag
+  gates file-path tool inputs (`gap_analyze`, `gap_diff`) via
+  `validate_within`. Out-of-root paths surface as
+  `PathTraversalError` (MCP tool error, not server crash). Non-
+  loopback HTTP/SSE without `--allow-root` warns at startup.
+- **F-V81-S2** — AuthProvider construction moved from import-
+  time module-level → FastAPI `lifespan` async context manager.
+  Importing `evidentia_api.app` is now side-effect-free; env
+  var `EVIDENTIA_API_AUTH_TOKEN_FILE` is read at app startup.
+  `AuthProviderMiddleware` is always-attached + reads provider
+  from `request.app.state.auth_provider` at dispatch (no-op
+  when None preserves v0.8.0 backward-compat).
+- **G4 Dockerfile `--require-hashes` (foundation; activation
+  deferred to v0.8.3)** — `docker/requirements.txt` regenerated
+  against the v0.8.2 dep tree (~140 transitive deps with SHA256
+  hashes); `bump_version.py --regenerate-requirements` wires
+  regeneration into the version-bump flow. Activation deferred
+  per §25.6 R1: release.yml `uv build` is not byte-identical
+  across hosts, so pre-tag hashes don't match PyPI. v0.8.3
+  closes via reproducible-build verification (SOURCE_DATE_EPOCH)
+  OR release-pipeline regeneration step.
+- **G1 mutmut baseline** — `[tool.mutmut]` config + weekly
+  `.github/workflows/mutmut.yml` targeting `gap_analyzer` +
+  `risk_statements`. `docs/mutation-testing.md` operator
+  runbook ships.
+- **G2 hypothesis property-based tests** — 8 new property tests
+  in `tests/property/` covering invariants on the gap-analyzer
+  normalizer + the catalogs CrosswalkEngine. Configurable
+  `ci` / `dev` profiles via `tests/property/conftest.py`.
+- **DFAH faithfulness scoring (P3.1)** — second arXiv 2601.15322
+  metric. New `evidentia_ai.eval.faithfulness` module with
+  `FaithfulnessResult` model + `faithfulness_score()` function
+  using stdlib Jaccard token-overlap (no heavy ML deps). Default
+  threshold 0.3. `docs/dfah-faithfulness.md` operator guide.
+- **First-class Sigstore signing for `evidentia eval` output
+  (P3.2)** — `evidentia_ai.eval.signing` module + CLI flags
+  (`--sign / --no-sign`) + new `evidentia eval verify`
+  subcommand. Tri-state default auto-detects via
+  `GITHUB_ACTIONS` env. New `EventAction.AI_EVAL_OUTPUT_SIGNED`
+  audit entry.
+
+**Quality at ship**: 2277 tests / 14 skipped (was 2240 / 13 at
+v0.8.1), mypy strict 0/0 across ~215 source files, ruff clean.
+0 CRITICAL/HIGH/MEDIUM findings; 3 LOW deferrals to v0.8.3.
+
+## v0.8.3 — PLANNED
+
+Carries forward the v0.8.2 deferrals:
+
+- **MCP CIMD richness** — Client ID Metadata Document support
+  for multi-tenant MCP deployments. Per §24.6 R6 deferred for
+  empirical operator demand from v0.8.1+v0.8.2 HTTP/SSE
+  adoption.
+- **Sentence-transformers faithfulness path** — opt-in
+  `[eval-faithfulness]` extra carrying sentence-transformers
+  for paraphrase-tolerant scoring. v0.8.2 ships stdlib Jaccard
+  baseline only.
+- **LLM-driven atomic-claim extraction for faithfulness** —
+  reuses v0.8.1 PRT decomposition pattern; wires into
+  `evidentia eval risk-determinism --check-faithfulness`.
+- **DFAH calibration corpus expansion** — 50-100 prompt-id
+  corpus of (claim, source_clauses, faithful?) labels for
+  threshold-tuning baseline.
+- **F-V82-S1 LOW**: `bump_version.py --regenerate-requirements`
+  auto-detects host vs target platform + invokes pip-compile
+  inside Docker to avoid Linux-only-transitive misses.
+- **F-V82-S2 LOW**: tighter `evidentia eval verify` exception
+  filtering (specific SigstoreError subclasses).
+- Plus any review findings from external operator usage of
+  v0.8.2 features.
+
+Ship target ~3-4 weeks; plan file lands at cycle open.
 
 ## v0.9.0 — Federal compliance — RESERVED
 

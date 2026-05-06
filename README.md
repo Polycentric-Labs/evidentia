@@ -148,6 +148,28 @@ Evidentia is built on four principles:
 
 ### Recent releases
 
+**v0.8.2 (May 2026)** — *Review-deferral closure + supply-chain
+hardening + test-quality + DFAH faithfulness*. Aggressive ~3-week
+cycle executed in a single focused session. Closes 8 reservations
+carried out of v0.8.1. **F-V81-S1**: `evidentia mcp serve
+--allow-root <path>` gates file-path tool inputs via
+`validate_within`. **F-V81-S2**: AuthProvider construction moved
+from import-time module-level → FastAPI `lifespan` event;
+imports are side-effect-free. **G4 Dockerfile foundation**:
+`docker/requirements.txt` regenerated against the v0.8.2 dep
+tree with SHA256 hashes per transitive (activation deferred to
+v0.8.3 per §25.6 R1 build-determinism). **G1 mutmut + G2
+hypothesis**: mutation-testing baseline + 8 property-based
+tests on normalizer + crosswalk. **DFAH faithfulness scoring**:
+second arXiv 2601.15322 metric via stdlib Jaccard token-overlap
+(threshold 0.3 default). **First-class Sigstore signing for
+`evidentia eval`**: `--sign / --no-sign` flag + `evidentia
+eval verify` subcommand. Ninth consecutive PROCEED-CLEAN of
+the v0.7.x → v0.8.x line. **2277 tests passing across ~215
+source files; mypy strict 0/0; ruff clean.** CIMD richness +
+sentence-transformers faithfulness + DFAH calibration corpus
+deferred to v0.8.3.
+
 **v0.8.1 (May 2026)** — *Review-deferral close-out + LLM richness
 + network surfaces*. Aggressive ~4-week cycle compressed to a
 single focused session. Closes ALL 12 v0.8.0-bucketed review

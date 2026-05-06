@@ -7,6 +7,110 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-05-06
+
+**Review-deferral closure + supply-chain hardening + test-quality
++ DFAH faithfulness.** Aggressive ~3-week scope executed in a
+single focused session — closes the 8 reservations carried out
+of v0.8.1: F-V81-S1 + F-V81-S2 review deferrals + G4 Dockerfile
+hash-pinning + G1 mutmut baseline infrastructure + G2 hypothesis
+property-tests + DFAH faithfulness scoring + first-class Sigstore
+signing for `evidentia eval` output. CIMD richness deferred
+further to v0.8.3 per §24.6 R6 (best explored against real
+operator demand from v0.8.1 HTTP/SSE adoption). Continues the
+v0.7.11 → v0.8.1 PROCEED-CLEAN streak (9 consecutive at close).
+
+### Added
+
+- **F-V81-S1** — `evidentia mcp serve --allow-root <path>` flag
+  gates file-path tool inputs (`gap_analyze.inventory_path`,
+  `gap_diff.{base,head}_report_path`) via
+  `evidentia_core.security.paths.validate_within`. Out-of-root
+  paths surface as `PathTraversalError` (a `ValueError`
+  subclass); FastMCP runtime converts to MCP tool error rather
+  than crashing the server. Non-loopback HTTP/SSE bindings
+  without `--allow-root` emit an additional startup warning
+  recommending the flag.
+- **G4 Dockerfile `--require-hashes` (foundation-only; activation
+  deferred to v0.8.3)** — `docker/requirements.txt` is regenerated
+  against the v0.8.2 dep tree (~140 transitive deps with SHA256
+  hashes); `bump_version.py --regenerate-requirements` wires the
+  regeneration into the version-bump flow. Activation of the
+  Dockerfile install-line flip (`pip install --require-hashes -r
+  /tmp/requirements.txt`) deferred per §25.6 R1: release.yml
+  `uv build` is not byte-identical across build hosts (no
+  SOURCE_DATE_EPOCH yet), so SHA256 hashes computed pre-tag don't
+  match what release.yml uploads to PyPI. v0.8.3 closes this via
+  either reproducible-build verification OR release-pipeline-
+  integrated regeneration. The recurring Scorecard
+  PinnedDependencies false-positive cycle (alerts #100 → #108)
+  remains under the dismissal-per-release runbook in
+  `docs/dockerfile-pinning.md` until v0.8.3 activation.
+- **G1 mutmut mutation-testing baseline** — `[tool.mutmut]`
+  config in root `pyproject.toml` targets `gap_analyzer` +
+  `risk_statements` modules. New `.github/workflows/mutmut.yml`
+  runs weekly + on workflow_dispatch. New
+  `docs/mutation-testing.md` operator runbook.
+- **G2 hypothesis property-based tests** — 8 new property
+  tests in `tests/property/` covering invariants on the
+  gap-analyzer normalizer + the catalogs CrosswalkEngine.
+  `tests/property/conftest.py` registers `ci` (default,
+  derandomized, 200ms deadline) + `dev` (random, 1000ms
+  deadline) profiles.
+- **DFAH faithfulness scoring (P3.1)** — second arXiv 2601.15322
+  metric. New `evidentia_ai.eval.faithfulness` module with
+  `FaithfulnessResult` Pydantic model + `faithfulness_score()`
+  function using stdlib Jaccard token-overlap. Default
+  threshold 0.3; conservative — catches gross hallucinations,
+  misses paraphrases. v0.8.3 sentence-transformers semantic-
+  similarity path planned. `EventAction.AI_EVAL_FAITHFULNESS_VIOLATION`
+  (reserved in v0.8.0) now wired. `docs/dfah-faithfulness.md`
+  operator guide.
+- **First-class Sigstore signing for `evidentia eval` output
+  (P3.2)** — `evidentia_ai.eval.signing` wraps the v0.7.x
+  OSCAL Sigstore helpers with eval-output-specific surface.
+  CLI: `--sign / --no-sign` flag on `stub-smoke` +
+  `risk-determinism` (tri-state default auto-detects via
+  `GITHUB_ACTIONS` env); new `evidentia eval verify <output>`
+  subcommand. New `EventAction.AI_EVAL_OUTPUT_SIGNED` audit entry.
+
+### Changed
+
+- **F-V81-S2** — AuthProvider construction moved from import-
+  time module-level → FastAPI `lifespan` async context
+  manager. Importing `evidentia_api.app` is now side-effect-
+  free (no filesystem I/O); env var
+  `EVIDENTIA_API_AUTH_TOKEN_FILE` is read at app startup
+  instead. Explicit injection via
+  `create_app(auth_provider=...)` continues to take precedence.
+  `AuthProviderMiddleware` is now always-attached + reads
+  provider from `request.app.state.auth_provider` at dispatch
+  — no-op when None preserves v0.8.0 backward-compat.
+
+### Fixed
+
+- **MCP `serve --help` tests stable on Windows CI** (post-
+  v0.8.1 follow-up) — switched the assertion path from
+  Rich/Typer-rendered help output (terminal-width-detection
+  driven; ANSI escape codes vary by environment) to direct
+  introspection of the underlying Click command's `.params`
+  list via `typer.main.get_command()`. Deterministic across
+  ubuntu / macos / windows runners.
+
+### Deferrals to v0.8.3
+
+- **MCP CIMD richness** — Client ID Metadata Document support
+  for multi-tenant deployments. Per §24.6 R6 deferred for
+  empirical operator demand from v0.8.1+v0.8.2 HTTP/SSE
+  adoption.
+- **Sentence-transformers faithfulness path** — opt-in
+  `[eval-faithfulness]` extra carrying sentence-transformers
+  for paraphrase-tolerant scoring.
+- **LLM-driven atomic-claim extraction for faithfulness**
+  pipeline — reuses v0.8.1 PRT decomposition pattern.
+- **DFAH calibration corpus expansion** — >50 prompt-id corpus
+  for faithfulness baseline tuning.
+
 ## [0.8.1] - 2026-05-06
 
 **The v0.8.0 review-deferral close-out + LLM-driven richness +
