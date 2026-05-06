@@ -29,12 +29,18 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import datetime
+from typing import Any
 
 from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.audit.provenance import GenerationContext, new_run_id
 from evidentia_core.models.common import EvidentiaModel, current_version, utc_now
 from pydantic import Field
 
+from evidentia_ai.eval.faithfulness import (
+    DEFAULT_FAITHFULNESS_THRESHOLD,
+    PromptFaithfulnessResult,
+    faithfulness_score,
+)
 from evidentia_ai.eval.metrics import (
     DeterminismResult,
     ReplayResult,
@@ -66,6 +72,22 @@ class EvalSample(EvidentiaModel):
             "The prompt text fed to the generator. Surfaces in "
             "the audit log so an auditor reviewing a CI failure "
             "can re-run the violating prompt by hand."
+        ),
+    )
+    source_clauses: list[str] | None = Field(
+        default=None,
+        description=(
+            "v0.8.4 P1: optional list of policy clauses the "
+            "prompt's generated output should trace back to. "
+            "Required for the harness's ``check_faithfulness=True`` "
+            "path; the harness extracts atomic claims from the "
+            "modal output via :func:`evidentia_ai.eval.claim_extraction.extract_claims` "
+            "+ scores each claim against these source_clauses "
+            "via :func:`evidentia_ai.eval.faithfulness.faithfulness_score`. "
+            "When ``None``, the faithfulness check is skipped "
+            "for this sample even if the harness was asked to "
+            "run it. Backward-compatible: existing samples "
+            "without source_clauses continue to work."
         ),
     )
 
@@ -112,6 +134,19 @@ class EvalResult(EvidentiaModel):
         description=(
             "Optional :class:`ReplayResult` per prompt. Empty "
             "when the harness was run without --check-replay."
+        ),
+    )
+    faithfulness_results: list[PromptFaithfulnessResult] = Field(
+        default_factory=list,
+        description=(
+            "v0.8.4 P1 wiring: optional per-prompt "
+            ":class:`PromptFaithfulnessResult`. Empty when the "
+            "harness was run without ``check_faithfulness=True`` "
+            "OR no samples had ``source_clauses`` populated. "
+            "When non-empty, contains one entry per sample "
+            "whose source_clauses was set (samples without "
+            "source_clauses are skipped per the harness "
+            "contract)."
         ),
     )
 
@@ -200,6 +235,11 @@ class DFAHarness:
         samples: list[EvalSample],
         context_factory: Callable[[str], GenerationContext],
         check_replay: bool = False,
+        check_faithfulness: bool = False,
+        faithfulness_threshold: float = DEFAULT_FAITHFULNESS_THRESHOLD,
+        faithfulness_method: str = "jaccard",
+        claim_extraction_fn: Callable[[str], list[str]] | None = None,
+        faithfulness_score_fn: Callable[[str, list[str], float], object] | None = None,
     ) -> EvalResult:
         """Run the harness across all prompts.
 
@@ -243,6 +283,61 @@ class DFAHarness:
 
         determinism_results: list[DeterminismResult] = []
         replay_results: list[ReplayResult] = []
+        faithfulness_results: list[PromptFaithfulnessResult] = []
+
+        # v0.8.4 P1: resolve the claim-extraction + faithfulness-
+        # scoring callables ONCE up front. Tests inject mocks via
+        # the kwargs; production resolves to the canonical library
+        # functions.
+        if check_faithfulness:
+            from evidentia_ai.eval.claim_extraction import (
+                extract_claims as _real_extract_claims,
+            )
+
+            resolved_extract: Callable[[str], list[str]]
+            if claim_extraction_fn is None:
+                # Default: use the real LLM-driven extraction.
+                # Tests inject a mock to avoid LLM token burn.
+                def _default_extract(text: str) -> list[str]:
+                    return _real_extract_claims(text)
+
+                resolved_extract = _default_extract
+            else:
+                resolved_extract = claim_extraction_fn
+
+            if faithfulness_score_fn is None:
+                if faithfulness_method == "semantic":
+                    from evidentia_ai.eval.faithfulness_semantic import (
+                        faithfulness_score_semantic as _semantic_fn,
+                    )
+
+                    def _default_score(
+                        claim: str,
+                        clauses: list[str],
+                        threshold: float,
+                    ) -> object:
+                        return _semantic_fn(
+                            claim, clauses, threshold=threshold
+                        )
+
+                    resolved_score: Callable[..., object] = (
+                        _default_score
+                    )
+                else:
+                    # Default: stdlib Jaccard.
+                    def _default_score_jaccard(
+                        claim: str,
+                        clauses: list[str],
+                        threshold: float,
+                    ) -> object:
+                        return faithfulness_score(
+                            claim, clauses, threshold=threshold
+                        )
+
+                    resolved_score = _default_score_jaccard
+            else:
+                resolved_score = faithfulness_score_fn
+
         for sample in samples:
             outputs: list[str] = []
             ctx = context_factory(sample.prompt_id)
@@ -287,6 +382,86 @@ class DFAHarness:
                 )
                 replay_results.append(replay_result)
 
+            # v0.8.4 P1: faithfulness check. Skips samples
+            # without source_clauses (backward-compat). Uses the
+            # MODAL output (post-determinism) so we score the
+            # canonical generation, not a noise sample.
+            if check_faithfulness and sample.source_clauses:
+                # Find the modal output by re-using the modal_hash
+                # → matching the first sample whose hash equals
+                # det_result.modal_hash. (Same modal-tied logic
+                # as check_replay above.)
+                modal_output = next(
+                    (
+                        o
+                        for o in outputs
+                        if hash_output(o) == det_result.modal_hash
+                    ),
+                    outputs[0],
+                )
+                claims = resolved_extract(modal_output)
+                claim_results: list[Any] = []
+                for claim in claims:
+                    cr = resolved_score(
+                        claim,
+                        sample.source_clauses,
+                        faithfulness_threshold,
+                    )
+                    claim_results.append(cr)
+                    # Per-claim violation event.
+                    if not cr.passed:  # type: ignore[attr-defined]
+                        _log.warning(
+                            action=EventAction.AI_EVAL_FAITHFULNESS_VIOLATION,
+                            outcome=EventOutcome.FAILURE,
+                            message=(
+                                f"Faithfulness violation on prompt "
+                                f"{sample.prompt_id!r}, claim "
+                                f"{claim!r}: score "
+                                f"{cr.score:.3f} < threshold "  # type: ignore[attr-defined]
+                                f"{faithfulness_threshold:.3f}"
+                            ),
+                            evidentia={
+                                "run_id": run_id,
+                                "prompt_id": sample.prompt_id,
+                                "claim": claim,
+                                "score": cr.score,  # type: ignore[attr-defined]
+                                "threshold": faithfulness_threshold,
+                                "method": faithfulness_method,
+                            },
+                        )
+                pfr = PromptFaithfulnessResult(
+                    prompt_id=sample.prompt_id,
+                    claims=claim_results,
+                )
+                faithfulness_results.append(pfr)
+                # Per-prompt CHECKED event (fired even when all
+                # claims pass — distinguishes "we ran the check"
+                # from "we found a violation").
+                _log.info(
+                    action=EventAction.AI_EVAL_FAITHFULNESS_CHECKED,
+                    outcome=(
+                        EventOutcome.SUCCESS
+                        if pfr.overall_faithful
+                        else EventOutcome.FAILURE
+                    ),
+                    message=(
+                        f"Faithfulness check completed on prompt "
+                        f"{sample.prompt_id!r}: "
+                        f"{pfr.passed_count}/{len(pfr.claims)} "
+                        f"claims passed (method "
+                        f"{faithfulness_method})"
+                    ),
+                    evidentia={
+                        "run_id": run_id,
+                        "prompt_id": sample.prompt_id,
+                        "claim_count": len(pfr.claims),
+                        "passed_count": pfr.passed_count,
+                        "failed_count": pfr.failed_count,
+                        "overall_faithful": pfr.overall_faithful,
+                        "method": faithfulness_method,
+                    },
+                )
+
         completed_at = utc_now()
         result = EvalResult(
             run_id=run_id,
@@ -297,6 +472,7 @@ class DFAHarness:
             samples=samples,
             determinism_results=determinism_results,
             replay_results=replay_results,
+            faithfulness_results=faithfulness_results,
         )
 
         violations = result.determinism_violations

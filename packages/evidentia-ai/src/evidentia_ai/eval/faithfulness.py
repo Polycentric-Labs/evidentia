@@ -123,6 +123,62 @@ class FaithfulnessResult(EvidentiaModel):
         return self.score >= self.threshold
 
 
+class PromptFaithfulnessResult(EvidentiaModel):
+    """Per-prompt faithfulness aggregation (v0.8.4 P1 wiring).
+
+    Carries the per-claim FaithfulnessResult list for one prompt
+    plus pass/fail aggregations. Auditors filter by
+    :attr:`overall_faithful` for fast triage; auditors digging
+    into a low-score case use :attr:`claims` to see exactly
+    which atomic claim failed + what evidence clauses were
+    closest.
+
+    Populated by :meth:`evidentia_ai.eval.harness.DFAHarness.run`
+    when ``check_faithfulness=True`` and the corresponding
+    :class:`EvalSample` has ``source_clauses`` set. Pairs with
+    the v0.8.0-reserved + v0.8.4-activated audit events:
+    ``AI_EVAL_FAITHFULNESS_CHECKED`` (per-prompt; fired even
+    when all claims pass) + ``AI_EVAL_FAITHFULNESS_VIOLATION``
+    (per below-threshold claim).
+    """
+
+    prompt_id: str = Field(
+        description=(
+            "Caller-supplied identifier for the prompt under "
+            "test (matches :class:`EvalSample.prompt_id`)."
+        ),
+    )
+    claims: list[FaithfulnessResult] = Field(
+        description=(
+            "One :class:`FaithfulnessResult` per atomic claim "
+            "extracted from the prompt's modal output. Empty "
+            "when claim extraction returned no claims (empty "
+            "input or LLM returned empty response)."
+        ),
+    )
+
+    @property
+    def overall_faithful(self) -> bool:
+        """True iff every claim passed its threshold.
+
+        Empty-claims case (no atomic claims extracted) treats
+        as ``True`` (vacuously faithful — there's nothing to
+        contradict the source). Operators wanting stricter
+        semantics filter on ``len(claims) > 0`` separately.
+        """
+        return all(c.passed for c in self.claims)
+
+    @property
+    def passed_count(self) -> int:
+        """Number of claims that passed their threshold."""
+        return sum(1 for c in self.claims if c.passed)
+
+    @property
+    def failed_count(self) -> int:
+        """Number of claims that failed their threshold."""
+        return sum(1 for c in self.claims if not c.passed)
+
+
 def _tokenize(text: str) -> set[str]:
     """Extract a lowercase token set from ``text``.
 

@@ -57,6 +57,7 @@ from evidentia_ai.eval.claim_extraction import (
 from evidentia_ai.eval.faithfulness import (
     DEFAULT_FAITHFULNESS_THRESHOLD,
     FaithfulnessResult,
+    PromptFaithfulnessResult,
     faithfulness_score,
 )
 from evidentia_ai.eval.faithfulness_semantic import (
@@ -88,6 +89,7 @@ __all__ = [
     "EvalResult",
     "EvalSample",
     "FaithfulnessResult",
+    "PromptFaithfulnessResult",
     "ReplayResult",
     "SemanticFaithfulnessNotAvailableError",
     "determinism_score",
