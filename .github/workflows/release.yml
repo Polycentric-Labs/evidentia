@@ -384,6 +384,53 @@ jobs:
           echo "All 6 packages list ${VERSION}; sleeping 20s for mirror catch-up"
           sleep 20
 
+      # v0.8.4 G4 Path 2: regenerate docker/requirements.txt against
+      # PyPI's just-published wheels. Replaces the v0.8.3 Path 1
+      # (SOURCE_DATE_EPOCH-driven cross-platform reproducibility)
+      # which failed at first-fire because uv build is NOT byte-
+      # identical across host platforms (Windows local vs Linux
+      # CI). Path 2 sidesteps this by computing hashes FROM PyPI's
+      # bytes — pip downloads the wheels, computes SHA256 of the
+      # bytes pip will use at container-build time, writes them to
+      # requirements.txt. Both pip-compile + the docker build's
+      # pip install run inside the same Linux runner against the
+      # same PyPI bytes → hashes match by construction.
+      #
+      # Retry loop (R2 mitigation): pip-compile up to 3x with 30s
+      # sleeps. The Wait-for-PyPI step above polls the package
+      # index endpoint, but PyPI's CDN can lag a few seconds before
+      # the wheel files themselves are fetchable.
+      - name: Regenerate hash-pinned requirements.txt against PyPI
+        env:
+          VERSION: ${{ steps.version.outputs.semver }}
+        run: |
+          # Pin requirements.in to the just-published version. The
+          # committed file may pin to an older version (regenerated
+          # at any prior cycle's bump_version.py invocation); we
+          # overwrite ephemerally so pip-compile resolves the v0.8.4
+          # release we just uploaded.
+          echo "evidentia[gui]==${VERSION}" > docker/requirements.in
+          pip install -q pip-tools
+          attempts=0
+          max_attempts=3
+          until pip-compile --generate-hashes \
+                            --no-emit-find-links \
+                            --output-file=docker/requirements.txt \
+                            docker/requirements.in
+          do
+            attempts=$((attempts + 1))
+            if [ "${attempts}" -ge "${max_attempts}" ]; then
+              echo "::error::pip-compile against PyPI failed after ${max_attempts} attempts"
+              exit 1
+            fi
+            echo "  pip-compile attempt ${attempts}/${max_attempts} failed, sleeping 30s"
+            sleep 30
+          done
+          # Surface the regenerated hash for the umbrella wheel so
+          # the release pipeline log records what we pinned.
+          echo "Regenerated docker/requirements.txt; evidentia[gui]==${VERSION} hashes:"
+          grep -A2 "^evidentia\[gui\]==" docker/requirements.txt | head -4
+
       - name: Build and push image to ghcr.io
         id: build
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f  # v7.1.0

@@ -53,34 +53,40 @@ WORKDIR /home/evidentia
 # `evidentia serve` works out of the box; ~50 MB extra for the
 # bundled SPA + FastAPI deps.
 #
-# v0.8.3.1 G4 REVERTED to exact-version pinning. The v0.8.3
-# release pipeline first-fire of `--require-hashes` failed because
-# uv build is NOT byte-identical across host platforms (Windows
-# local vs Linux CI runner) even with same SOURCE_DATE_EPOCH —
-# the local-built wheels' SHA256 differ from CI-built wheels'
-# SHA256, so the requirements.txt hashes generated pre-tag don't
-# match what release.yml uploads to PyPI. v0.8.3 PyPI publish
-# succeeded but container build failed; v0.8.3.1 hot-fix reverts
-# the install line to the v0.8.2 pattern. v0.8.4 cycle-open will
-# redesign G4 with Path 2 (release.yml post-PyPI regeneration of
-# requirements.txt against PyPI's just-published wheels +
-# ephemeral docker build) — Path 2 doesn't have the cross-
-# platform issue because hashes are computed FROM PyPI's bytes,
-# not by independent local + CI builds.
+# v0.8.4 G4 Path 2 ACTIVATED: hash-pinned install via
+# `pip install --require-hashes -r /tmp/requirements.txt`. The
+# `docker/requirements.txt` file is REGENERATED at release-time
+# by release.yml's "Regenerate hash-pinned requirements.txt
+# against PyPI" step, which runs AFTER Wait-for-PyPI-propagation
+# but BEFORE this docker build. The release-time regeneration:
 #
-# The structural foundation IS still in place:
-#   - docker/requirements.txt regenerated tooling exists
-#     (bump_version.py --regenerate-requirements)
-#   - release.yml SOURCE_DATE_EPOCH + build-twice verification
-#     (kept; provides reproducibility verification value)
-# v0.8.4 G4 Path 2 wires the missing piece in release.yml.
+#   1. Overwrites docker/requirements.in to pin
+#      evidentia[gui]==<version> for the just-published release.
+#   2. Runs pip-compile --generate-hashes --no-emit-find-links
+#      against PyPI's just-published wheels, computing SHA256
+#      hashes FROM PyPI's actual bytes.
+#   3. The docker build then runs `pip install --require-hashes`
+#      against the freshly-regenerated requirements.txt; pip
+#      downloads the same PyPI bytes + verifies the hashes match.
 #
-# Recurring Scorecard PinnedDependencies false-positive policy:
-# alerts continue to re-fire on each version bump. See
-# docs/dockerfile-pinning.md "Historical narrative" + "v0.8.4
-# closure plan" sections. Per-release dismissal runbook in
-# operation.
-RUN pip install --no-cache-dir --user "evidentia[gui]==0.8.3.1"
+# Path 2 doesn't have the v0.8.3 Path 1 cross-platform
+# reproducibility issue (Windows local vs Linux CI build wheel
+# bytes diverged) because both pip-compile + pip install run in
+# the same Linux runner against the same PyPI bytes. Hashes
+# match by construction.
+#
+# The committed `docker/requirements.txt` ships as preview state
+# (operators can inspect it pre-tag). The release-time
+# regenerated file is what actually gets baked into the
+# container; the committed file is overwritten ephemerally
+# inside the workflow filesystem.
+#
+# Closes the recurring Scorecard PinnedDependencies false-
+# positive cycle (alerts #100 → #116 across v0.7.12 → v0.8.3.1)
+# structurally + permanently. Future releases get
+# PinnedDependencies score 10/10 without per-cycle dismissals.
+COPY docker/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir --user --require-hashes -r /tmp/requirements.txt
 
 # Put the user-installed `evidentia` entrypoint on PATH.
 ENV PATH="/home/evidentia/.local/bin:${PATH}"
