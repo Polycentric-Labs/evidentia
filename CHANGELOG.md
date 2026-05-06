@@ -7,6 +7,110 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-05-06
+
+**Supply-chain G4 activation + AI-quality completion.** Aggressive
+~3-week scope executed in a single focused session — closes 6 of
+8 v0.8.2 carry-overs (G4 Dockerfile `--require-hashes` activation
+via SOURCE_DATE_EPOCH-driven reproducible builds + 3 LOWs +
+sentence-transformers faithfulness + LLM atomic-claim extraction
++ DFAH calibration corpus). MCP CIMD richness deferred to v0.8.4
+(4th cycle-deferral; per §24.6 R6 still gated on empirical
+operator demand). DFAHarness `check_faithfulness=True` wiring
+also deferred to v0.8.4 polish — the `extract_claims()` standalone
+function is the v0.8.3 ship; operators wire it manually until the
+harness integration lands. Continues the v0.7.11 → v0.8.2
+PROCEED-CLEAN streak (10 consecutive at close).
+
+### Added
+
+- **G4 Dockerfile `--require-hashes` ACTIVATED** (closes the
+  recurring Scorecard PinnedDependencies false-positive cycle —
+  alerts #100 → #115 across v0.7.12 → v0.8.2 — structurally +
+  permanently). The Dockerfile install line flips to
+  `pip install --require-hashes -r /tmp/requirements.txt`
+  against `docker/requirements.txt` (every transitive pinned to
+  a SHA256 hash). `release.yml` exports `SOURCE_DATE_EPOCH=$(git
+  log -1 --format=%ct HEAD)` before `uv build` → byte-identical
+  wheels across hosts → SHA256 hashes match between local pre-
+  tag pip-compile + PyPI uploads. New `release.yml` "Verify
+  reproducible build" step builds wheels twice + asserts
+  `sha256sum` matches before publish-pypi proceeds. Locally
+  pre-flight verified: 7 wheels matched byte-for-byte across
+  two runs with same SOURCE_DATE_EPOCH.
+- **Sentence-transformers semantic faithfulness path (P1.1)**
+  — new `evidentia_ai.eval.faithfulness_semantic` module +
+  `faithfulness_score_semantic()` function. Opt-in via
+  `pip install evidentia-ai[eval-faithfulness]`. Default model
+  `sentence-transformers/all-MiniLM-L6-v2` (~90 MB; cached at
+  `~/.cache/huggingface/`). Default threshold 0.7 (calibrated
+  for natural-language policy clauses per arXiv 2601.15322).
+  Catches paraphrases that the v0.8.2 Jaccard baseline
+  (default 0.3 threshold) misses. Result.method =
+  `"sentence-transformers"` distinguishes from the stdlib
+  path's `"jaccard-stdlib"`.
+- **LLM atomic-claim extraction (P1.2)** — new
+  `evidentia_ai.eval.claim_extraction` module + `extract_claims()`
+  function. Decomposes any AI-generated artifact into atomic
+  verifiable claims via LLM call (LiteLLM-driven). Defensive
+  parsing: strips bullet/numbering prefixes; drops empty lines;
+  caps at `max_claims`. Empty input returns `[]` without firing
+  an LLM call (cost-aware). Tests inject `completion_fn=mock`
+  so CI runs without LLM provider creds. New
+  `EventAction.AI_EVAL_FAITHFULNESS_CHECKED` reserved (firing
+  path lands in v0.8.4 DFAHarness wiring).
+- **DFAH calibration corpus + threshold-tuning script (P1.3)**
+  — `tests/data/dfah-calibration/corpus.jsonl` (50 entries; 4
+  categories: verbatim faithful / paraphrase faithful /
+  semi-related unfaithful / hallucination unfaithful). New
+  `scripts/tune_faithfulness_threshold.py` measures FPR/FNR
+  across thresholds 0.0-1.0 in 0.05 increments + recommends
+  optimum via Youden's J. Operators tune per-corpus via
+  `--method jaccard|semantic` + optional `--by-category`.
+  Methodology + extension recipe in
+  `tests/data/dfah-calibration/README.md`.
+
+### Changed
+
+- **F-V82-S1 LOW**: `bump_version.py --regenerate-requirements`
+  auto-detects host platform vs target. On non-Linux hosts
+  (Windows, macOS), the script auto-invokes pip-compile inside
+  the pinned `python:3.14-slim` base image so Linux-only
+  transitives (uvloop) resolve correctly. Removes the v0.8.2
+  Windows-host caveat.
+- **F-V82-S2 LOW**: `evidentia eval verify` CLI replaces broad
+  `except Exception` with specific `SigstoreError` subclass
+  catches:
+  - `SigstoreNotAvailableError` → exit 2 + install hint
+  - `SigstoreAirGapError` → exit 2 + GPG-fallback hint
+  - `SigstoreVerifyError` → exit 1 (cryptographic failure)
+  - `(FileNotFoundError, OSError)` → exit 1 (filesystem issue)
+  CI gates can now distinguish "install extra + retry" from
+  "real verification failure".
+- **F-V82-S3 LOW** (transitive): faithfulness paraphrase
+  precision concern from v0.8.2 closes via the P1.1
+  sentence-transformers path. Stdlib Jaccard remains the floor;
+  semantic is opt-in for paraphrase-tolerant scoring.
+
+### Deferrals to v0.8.4
+
+- **MCP CIMD richness** (4th cycle-deferral) — Client ID
+  Metadata Document support for multi-tenant deployments.
+  Per §24.6 R6 still gated on empirical operator demand from
+  v0.8.1+v0.8.2 HTTP/SSE adoption; no signal observed yet to
+  drive the spec design. v0.8.4 cycle-open re-evaluates.
+- **DFAHarness `check_faithfulness=True` wiring** — the
+  standalone `extract_claims()` ships in v0.8.3; the harness
+  integration (`EvalSample.source_clauses` field; per-prompt
+  faithfulness aggregation; `AI_EVAL_FAITHFULNESS_CHECKED`
+  event firing) lands in v0.8.4 with real-LLM integration
+  tests.
+- **DFAH calibration corpus expansion** to 100-200 entries +
+  multi-rater labeling + per-framework subsets.
+- **Real-LLM integration tests** for atomic-claim extraction +
+  DFAHarness faithfulness path. Gated by
+  `EVIDENTIA_LLM_INTEGRATION=1` env var.
+
 ## [0.8.2] - 2026-05-06
 
 **Review-deferral closure + supply-chain hardening + test-quality

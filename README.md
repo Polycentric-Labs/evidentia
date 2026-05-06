@@ -148,6 +148,36 @@ Evidentia is built on four principles:
 
 ### Recent releases
 
+**v0.8.3 (May 2026)** — *Supply-chain G4 activation + AI-quality
+completion*. Aggressive ~3-week cycle executed in a single
+focused session. Closes 6 of 8 v0.8.2 carry-overs. **G4
+ACTIVATED**: Dockerfile flips from exact-version pinning to
+`pip install --require-hashes -r /tmp/requirements.txt` against
+hash-pinned `docker/requirements.txt`; `release.yml` exports
+`SOURCE_DATE_EPOCH` for byte-identical reproducible builds with
+build-twice CI verification gate; closes recurring Scorecard
+PinnedDependencies false-positive cycle (alerts #100 → #115
+across v0.7.12 → v0.8.2) structurally + permanently. **F-V82-S1**:
+`bump_version.py --regenerate-requirements` auto-detects host
+platform; on non-Linux hosts auto-invokes pip-compile inside
+Linux base image. **F-V82-S2**: `evidentia eval verify` CLI
+replaces broad `except Exception` with specific `SigstoreError`
+subclass catches mapped to distinct exit codes. **DFAH
+sentence-transformers path (P1.1)**: opt-in
+`[eval-faithfulness]` extra; default model `all-MiniLM-L6-v2`
+(~90 MB); catches paraphrases that the v0.8.2 Jaccard baseline
+misses. **LLM atomic-claim extraction (P1.2)**: new
+`extract_claims()` function decomposes AI-generated artifacts
+into atomic verifiable claims for faithfulness scoring.
+**Calibration corpus (P1.3)**: 50-entry corpus + threshold-
+tuning script empirically guide operators on per-corpus
+threshold selection. Tenth consecutive PROCEED-CLEAN of the
+v0.7.x → v0.8.x line. **2299 tests passing across 220+ source
+files; mypy strict 0/0; ruff clean.** MCP CIMD richness
+deferred to v0.8.4 (4th cycle-deferral; gated on empirical
+operator demand) + DFAHarness `check_faithfulness=True` wiring
+deferred to v0.8.4 polish.
+
 **v0.8.2 (May 2026)** — *Review-deferral closure + supply-chain
 hardening + test-quality + DFAH faithfulness*. Aggressive ~3-week
 cycle executed in a single focused session. Closes 8 reservations

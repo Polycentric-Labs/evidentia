@@ -1330,6 +1330,131 @@ support — operators in air-gap deployments use GPG signing
 instead). The `verify` CLI surface catches `Exception` broadly;
 bucketed as F-V82-S3 LOW for v0.8.3 except-clause tightening.
 
+## v0.8.3 attack-surface delta — supply-chain G4 activation + AI-quality completion
+
+> Status: 2026-05-06. v0.8.3 SHIPPED. Closes 6 of 8
+> reservations carried out of v0.8.2 (G4 + 3 LOWs + P1.1 +
+> P1.2 + P1.3); MCP CIMD richness deferred 4th time to v0.8.4
+> (gated on empirical operator demand); DFAHarness
+> `check_faithfulness=True` wiring deferred to v0.8.4 polish.
+
+### G4 Dockerfile `--require-hashes` ACTIVATED
+
+**Surface change**: Dockerfile install line flips from
+`pip install evidentia[gui]==X.Y.Z` (exact-version) to
+`pip install --require-hashes -r /tmp/requirements.txt` (every
+transitive pinned to a SHA256 hash). `release.yml` exports
+`SOURCE_DATE_EPOCH=$(git log -1 --format=%ct HEAD)` before
+`uv build` → byte-identical wheels across hosts → SHA256
+hashes match between local pre-tag pip-compile + PyPI uploads.
+New `release.yml` build-twice verification step asserts
+`sha256sum` matches before publish.
+
+**Threat coverage**: closes the supply-chain gap structurally +
+permanently. A compromised PyPI mirror cannot serve a tampered
+transitive without the build catching it (hash verification at
+install time). Closes the recurring Scorecard PinnedDependencies
+false-positive cycle (alerts #100 → #115 across v0.7.12 →
+v0.8.2) — the install line no longer matches the alert
+pattern's regex.
+
+**Residual risk**: build determinism depends on uv's
+SOURCE_DATE_EPOCH support remaining stable. Locally verified
+end-to-end; release.yml first-fire happens at v0.8.3 ship-time.
+If uv ever stops honoring SOURCE_DATE_EPOCH, the build-twice
+verification step fails fast + blocks the ship, surfacing the
+issue immediately rather than letting silent drift propagate.
+
+### F-V82-S1 LOW: bump_version.py platform auto-detect
+
+**Surface change**: `--regenerate-requirements` auto-detects host
+platform; on non-Linux hosts auto-invokes pip-compile inside
+the pinned `python:3.14-slim` base image so Linux-only
+transitives (uvloop) resolve correctly.
+
+**Threat coverage**: removes the v0.8.2 Windows-host caveat
+that operators had to manually invoke Docker. Reduces operator
+friction; eliminates a foot-gun where a Windows-host
+regeneration would silently miss uvloop and produce a Dockerfile
+build failure later.
+
+**Residual risk**: requires Docker installed + running on
+non-Linux hosts. Documented in `docs/dockerfile-pinning.md`.
+
+### F-V82-S2 LOW: `evidentia eval verify` exception filtering
+
+**Surface change**: replaces broad `except Exception` with
+specific `SigstoreError` subclass catches mapped to distinct
+exit codes (2 = infrastructure missing; 1 = cryptographic
+failure).
+
+**Threat coverage**: reduces info-disclosure surface (broad
+except echoed unfiltered exception messages including
+potentially-sensitive paths). Lets CI gates distinguish
+"install extra + retry" from "real verification failure".
+
+**Residual risk**: none new. The specific catches remain on
+documented public exception hierarchy; future SigstoreError
+subclasses inherit the broad-failure path until explicitly
+added.
+
+### Sentence-transformers semantic faithfulness (P1.1)
+
+**Surface change**: new `evidentia_ai.eval.faithfulness_semantic`
+module + `faithfulness_score_semantic()` function. Opt-in via
+`pip install evidentia-ai[eval-faithfulness]` carrying
+sentence-transformers + numpy. Default model
+`all-MiniLM-L6-v2` (~90 MB on first use; cached at
+`~/.cache/huggingface/`). Default threshold 0.7.
+
+**Threat coverage**: addresses the v0.7.0 §11.3 risk register
+risk #3 ("AI hallucination incident in Evidentia's risk-
+statement output") more precisely than the v0.8.2 stdlib
+Jaccard baseline. Catches paraphrases (different vocabulary,
+same meaning) that token-overlap scoring misses.
+
+**Residual risk**: model download from huggingface.co happens
+on first use; air-gap deployments must pre-cache the model in
+their build pipeline. Documented in `docs/dfah-faithfulness.md`.
+
+### LLM atomic-claim extraction (P1.2)
+
+**Surface change**: new `evidentia_ai.eval.claim_extraction`
+module + `extract_claims()` function decomposes any AI-generated
+artifact into atomic verifiable claims via LiteLLM-driven LLM
+call. Empty input returns `[]` cost-aware (no LLM call fires).
+
+**Threat coverage**: provides the missing piece between the
+generation harness (DFAH) + the faithfulness scorer — operators
+can now decompose generated text into atomic claims AND score
+each claim independently. Wires the full DFAH pipeline.
+
+**Residual risk**: LLM atomic-claim extraction is non-
+deterministic across runs (different LLM responses → different
+claim splits). Tests use mocked completion; real-LLM
+integration tests gated by `EVIDENTIA_LLM_INTEGRATION=1` env
+var. Per the secret-handling protocol, the function never
+accepts credentials in arguments — LLM provider creds are
+read from LiteLLM env vars by `_guarded_completion`.
+
+### DFAH calibration corpus + threshold tuning (P1.3)
+
+**Surface change**: new `tests/data/dfah-calibration/corpus.jsonl`
+(50 entries × 4 categories) + `scripts/tune_faithfulness_threshold.py`
+(threshold sweep + Youden's J recommendation).
+
+**Threat coverage**: not a runtime surface — internal
+calibration tooling. Empirically demonstrates the v0.8.2 R3
+mitigation: the bundled corpus's optimal Jaccard threshold is
+0.85 (vs default 0.3). Operators have data-driven guidance for
+threshold-tuning.
+
+**Residual risk**: no new attack surface. The corpus is
+hand-crafted (single-rater = Allen) for v0.8.3; v0.8.4
+multi-rater expansion improves label quality.
+
+---
+
 ---
 
 *First published v0.7.7 (2026-05). Origin: promoted from a

@@ -738,31 +738,94 @@ for the full Pre-tag review.
 v0.8.1), mypy strict 0/0 across ~215 source files, ruff clean.
 0 CRITICAL/HIGH/MEDIUM findings; 3 LOW deferrals to v0.8.3.
 
-## v0.8.3 — PLANNED
+## v0.8.3 — Supply-chain G4 activation + AI-quality completion — SHIPPED
 
-Carries forward the v0.8.2 deferrals:
+Tag `v0.8.3` at commit (TBD post-tag). Aggressive ~3-week scope
+executed in a single focused session — closes 6 of 8 v0.8.2
+carry-overs; MCP CIMD richness deferred to v0.8.4 (4th
+cycle-deferral; per §24.6 R6 gated on empirical operator demand);
+DFAHarness `check_faithfulness=True` wiring deferred to v0.8.4
+polish. **10th consecutive PROCEED-CLEAN** of the v0.7.x →
+v0.8.x line.
 
-- **MCP CIMD richness** — Client ID Metadata Document support
-  for multi-tenant MCP deployments. Per §24.6 R6 deferred for
-  empirical operator demand from v0.8.1+v0.8.2 HTTP/SSE
-  adoption.
-- **Sentence-transformers faithfulness path** — opt-in
-  `[eval-faithfulness]` extra carrying sentence-transformers
-  for paraphrase-tolerant scoring. v0.8.2 ships stdlib Jaccard
-  baseline only.
-- **LLM-driven atomic-claim extraction for faithfulness** —
-  reuses v0.8.1 PRT decomposition pattern; wires into
-  `evidentia eval risk-determinism --check-faithfulness`.
-- **DFAH calibration corpus expansion** — 50-100 prompt-id
-  corpus of (claim, source_clauses, faithful?) labels for
-  threshold-tuning baseline.
+See [`docs/security-review-v0.8.3.md`](security-review-v0.8.3.md)
+for the full Pre-tag review.
+
+**Closures**:
+
+- **G4 Dockerfile `--require-hashes` ACTIVATED** — Path 1
+  (SOURCE_DATE_EPOCH-driven reproducible builds) per §26.D.
+  `release.yml` exports `SOURCE_DATE_EPOCH=$(git log -1
+  --format=%ct HEAD)` before `uv build` → byte-identical
+  wheels across hosts → SHA256 hashes match between local
+  pre-tag pip-compile + PyPI uploads. New `release.yml`
+  build-twice verification step asserts `sha256sum` matches
+  before publish. `bump_version.py --regenerate-requirements`
+  wraps `uv build` (with SOURCE_DATE_EPOCH from HEAD) +
+  pip-compile against locally-built wheels via
+  `--find-links=./dist/`. Closes recurring Scorecard
+  PinnedDependencies false-positive cycle (alerts #100 →
+  #115 across v0.7.12 → v0.8.2) structurally + permanently.
 - **F-V82-S1 LOW**: `bump_version.py --regenerate-requirements`
-  auto-detects host vs target platform + invokes pip-compile
-  inside Docker to avoid Linux-only-transitive misses.
-- **F-V82-S2 LOW**: tighter `evidentia eval verify` exception
-  filtering (specific SigstoreError subclasses).
+  auto-detects host platform; on non-Linux hosts auto-invokes
+  pip-compile inside the pinned `python:3.14-slim` base image
+  so Linux-only transitives (uvloop) resolve correctly.
+- **F-V82-S2 LOW**: `evidentia eval verify` CLI replaces broad
+  `except Exception` with specific `SigstoreError` subclass
+  catches mapped to distinct exit codes (2 = infrastructure
+  missing; 1 = cryptographic failure).
+- **F-V82-S3 LOW** (transitive): paraphrase precision via P1.1.
+- **DFAH faithfulness sentence-transformers path (P1.1)** —
+  new `evidentia_ai.eval.faithfulness_semantic` module + opt-in
+  `[eval-faithfulness]` extra carrying sentence-transformers.
+  Default model `all-MiniLM-L6-v2` (~90 MB); default threshold
+  0.7. Catches paraphrases that the v0.8.2 stdlib Jaccard
+  baseline misses.
+- **LLM atomic-claim extraction (P1.2)** — new
+  `evidentia_ai.eval.claim_extraction` module + `extract_claims()`
+  function decomposes any AI-generated artifact into atomic
+  verifiable claims via LiteLLM-driven LLM call. Defensive
+  parsing (strip bullets/numbering; drop empties). Empty input
+  returns `[]` cost-aware. New
+  `EventAction.AI_EVAL_FAITHFULNESS_CHECKED` reserved for v0.8.4
+  DFAHarness wiring.
+- **DFAH calibration corpus + threshold-tuning script (P1.3)**
+  — 50-entry corpus at
+  `tests/data/dfah-calibration/corpus.jsonl` (4 categories;
+  verbatim / paraphrase / semi-related / hallucination). New
+  `scripts/tune_faithfulness_threshold.py` measures FPR/FNR
+  across thresholds + recommends optimum via Youden's J.
+  Empirically demonstrates the v0.8.2 Jaccard limitation: the
+  bundled corpus's optimal Jaccard threshold is 0.85 (vs default
+  0.3) — paraphrase-heavy corpora drag the optimum upward.
+
+**Quality at ship**: 2299 tests / 14 skipped (was 2277 / 14 at
+v0.8.2; +22 new tests across P1.1 + P1.2 + reproducible-build
+self-tests). mypy strict 0/0 across 220+ source files; ruff
+clean. 0 CRITICAL/HIGH/MEDIUM findings; 0 LOW unfixed.
+
+## v0.8.4 — PLANNED
+
+Carries forward the v0.8.3 deferrals:
+
+- **MCP CIMD richness** (5th cycle-deferral pending v0.8.4
+  cycle-open decision). Re-evaluate per §24.6 R6 — operator
+  demand signal from v0.8.1+v0.8.2+v0.8.3 HTTP/SSE adoption.
+  May be re-prioritized OR formally retired if no demand
+  surfaces.
+- **DFAHarness `check_faithfulness=True` wiring** — operator-
+  facing CLI flag + per-prompt faithfulness aggregation +
+  `AI_EVAL_FAITHFULNESS_CHECKED` audit event firing path.
+  v0.8.3 ships the standalone `extract_claims()` + reserved
+  EventAction; v0.8.4 closes the harness integration with
+  real-LLM integration tests gated by
+  `EVIDENTIA_LLM_INTEGRATION=1` env var.
+- **DFAH calibration corpus expansion** to 100-200 entries +
+  multi-rater labeling + Cohen's Kappa agreement metric +
+  per-framework subsets (NIST-only / FFIEC-only /
+  ISO-27001-only).
 - Plus any review findings from external operator usage of
-  v0.8.2 features.
+  v0.8.3 features.
 
 Ship target ~3-4 weeks; plan file lands at cycle open.
 

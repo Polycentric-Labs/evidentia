@@ -1,9 +1,12 @@
-# DFAH faithfulness scoring (v0.8.2 P3.1)
+# DFAH faithfulness scoring (v0.8.2 P3.1 → v0.8.3 P1)
 
-> Status: v0.8.2 stdlib baseline. Library API:
-> `evidentia_ai.eval.faithfulness.faithfulness_score()`. Sister
-> docs: `docs/eval-harness.md` (determinism + replay), §25 plan
-> P3.1 (cycle context).
+> Status: v0.8.3 ships sentence-transformers semantic path
+> (P1.1) + LLM atomic-claim extraction (P1.2) + 50-entry
+> calibration corpus + threshold-tuning script (P1.3) on top of
+> the v0.8.2 stdlib Jaccard baseline. Library APIs:
+> `evidentia_ai.eval.{faithfulness, faithfulness_semantic,
+> claim_extraction}`. Sister docs: `docs/eval-harness.md`
+> (determinism + replay), §25/§26 plan (cycle context).
 
 ## What faithfulness scoring measures
 
@@ -117,22 +120,138 @@ label 20-50 known-faithful + known-unfaithful claims, then
 choose the threshold that minimizes false-positives on
 known-faithful + false-negatives on known-unfaithful.
 
-## Future work (v0.8.3+)
+## v0.8.3 additions
 
-- **Sentence-transformers semantic similarity**: install
-  `evidentia-ai[eval-faithfulness]` to opt into a sentence-
-  embeddings-based score. Higher precision on paraphrases at
-  the cost of ~400 MB model download.
-- **LLM-driven atomic-claim extraction**: reuse the v0.8.1 PRT
-  decomposition prompt to split a generated risk statement
-  into claims automatically + score each.
-- **Calibration corpus expansion**: ship a 50-100 prompt-id
-  corpus of (claim, source_clauses, faithful?) labels so
-  operators can tune their threshold against a published
-  baseline.
-- **CI gate wiring**: extend `evidentia eval risk-determinism
-  --check-faithfulness --faithfulness-threshold N` to fire the
-  full faithfulness check inline alongside determinism.
+### Sentence-transformers semantic path (P1.1)
+
+Opt-in via the `[eval-faithfulness]` extra:
+
+```bash
+pip install 'evidentia-ai[eval-faithfulness]'
+```
+
+Library API mirrors the stdlib Jaccard baseline:
+
+```python
+from evidentia_ai.eval import faithfulness_score_semantic
+
+result = faithfulness_score_semantic(
+    claim="MFA is required for admin accounts",
+    source_clauses=[
+        "AC-2 mandates two-factor authentication for privileged users",
+        "Account management procedures enforce least privilege",
+    ],
+    threshold=0.7,  # higher than stdlib default (0.3)
+)
+print(result.score)            # e.g., 0.83
+print(result.passed)           # True
+print(result.method)           # "sentence-transformers"
+```
+
+Default model: `sentence-transformers/all-MiniLM-L6-v2` (~90 MB
+on first use; cached at `~/.cache/huggingface/`). Operators
+override via `model_name=` argument.
+
+The semantic path catches paraphrases that the Jaccard baseline
+misses — same claim with different vocabulary scores 0.83 via
+embeddings vs ~0.05 via token-overlap.
+
+### LLM atomic-claim extraction (P1.2)
+
+```python
+from evidentia_ai.eval import extract_claims
+
+claims = extract_claims(
+    "The system enforces account management procedures + "
+    "requires MFA for admin accounts. Audit logs are retained "
+    "for 90 days.",
+    model="gpt-4o",
+    temperature=0.0,
+)
+# → ["The system enforces account management procedures.",
+#    "MFA is required for admin accounts.",
+#    "Audit logs are retained for 90 days."]
+```
+
+Operators wire this into their own loop alongside
+`faithfulness_score()` (or `faithfulness_score_semantic()`):
+
+```python
+from evidentia_ai.eval import extract_claims, faithfulness_score
+
+claims = extract_claims(generated_text)
+results = [
+    faithfulness_score(claim, source_clauses, threshold=0.3)
+    for claim in claims
+]
+# Per-claim faithfulness; operator-side aggregation
+```
+
+DFAHarness wiring (v0.8.4): `DFAHarness.run(check_faithfulness=
+True, source_clauses=...)` will close this loop automatically +
+fire `EventAction.AI_EVAL_FAITHFULNESS_CHECKED` per-prompt +
+`AI_EVAL_FAITHFULNESS_VIOLATION` per below-threshold claim.
+The `_CHECKED` event is reserved in v0.8.3 (events.py); the
+harness firing path lands in v0.8.4.
+
+### Calibration corpus + threshold tuning (P1.3)
+
+50-entry starter corpus at
+`tests/data/dfah-calibration/corpus.jsonl`. Four categories
+(verbatim faithful, paraphrase faithful, semi-related
+unfaithful, hallucination unfaithful). Methodology in
+`tests/data/dfah-calibration/README.md`.
+
+Threshold-tuning script:
+
+```bash
+# Default — Jaccard scorer, bundled corpus
+uv run python scripts/tune_faithfulness_threshold.py
+
+# Sentence-transformers (requires extra)
+uv run python scripts/tune_faithfulness_threshold.py \
+    --method semantic
+
+# Per-category breakdown
+uv run python scripts/tune_faithfulness_threshold.py \
+    --by-category
+
+# Custom corpus
+uv run python scripts/tune_faithfulness_threshold.py \
+    --corpus path/to/your-corpus.jsonl
+```
+
+Reports false-positive rate (FPR) + false-negative rate (FNR)
+across thresholds 0.0-1.0 in 0.05 increments + recommends the
+threshold that maximizes Youden's J statistic
+(`sensitivity + specificity − 1`).
+
+Empirical findings against the bundled corpus (v0.8.3 ship):
+Jaccard scorer's optimum is **0.85** (vs the v0.8.2 default
+of 0.3) — paraphrase entries drag the optimum upward. This
+empirically demonstrates the v0.8.2 R3 mitigation: the Jaccard
+baseline is conservative on paraphrases. Operators tuning for
+paraphrase-heavy corpora should either raise the Jaccard
+threshold or install `[eval-faithfulness]` for semantic scoring.
+
+The script does NOT auto-update the source defaults — operators
+update their explicit `threshold=` parameter at call sites.
+
+## Future work (v0.8.4+)
+
+- **DFAHarness CI gate wiring**: extend `evidentia eval
+  risk-determinism --check-faithfulness --faithfulness-threshold
+  N --source-clauses-file <yaml>` to fire the full faithfulness
+  check inline alongside determinism. Reserved
+  `EventAction.AI_EVAL_FAITHFULNESS_CHECKED` event lands here.
+- **Calibration corpus expansion**: 100-200 entries with wider
+  paraphrase difficulty distribution + multi-rater labeling +
+  Cohen's Kappa agreement metric.
+- **Real-LLM integration tests**: gated by
+  `EVIDENTIA_LLM_INTEGRATION=1` env var. Use the calibration
+  corpus as ground truth.
+- **Per-framework subsets** (NIST-only, FFIEC-only,
+  ISO-27001-only) for operators tuning per-framework.
 
 ## References
 
