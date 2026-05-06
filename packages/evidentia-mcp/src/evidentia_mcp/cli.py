@@ -1,12 +1,14 @@
-"""``evidentia mcp`` Typer subcommand group (v0.8.0 P0.3 + v0.8.1 P3.1).
+"""``evidentia mcp`` Typer subcommand group (v0.8.0 P0.3 + v0.8.1 P3.1 + v0.8.2 F-V81-S1).
 
 Wires two CLI verbs:
 
-- ``evidentia mcp serve --transport <stdio|sse|http> [--host ...] [--port ...]``
+- ``evidentia mcp serve --transport <stdio|sse|http> [--host ...] [--port ...] [--allow-root <path>]``
   — run the MCP server. v0.8.0 shipped stdio only; v0.8.1 P3.1
   adds HTTP (streamable-http) + SSE (server-sent events)
   transports for non-local MCP clients (browser-based agents,
-  remote workers, multi-tenant deployments).
+  remote workers, multi-tenant deployments). v0.8.2 F-V81-S1
+  adds ``--allow-root`` to gate file-path tool inputs against
+  an operator-configured bound directory.
 - ``evidentia mcp doctor`` — health check. Verifies the MCP
   SDK imports cleanly + that the bundled catalog registry
   loads + that the FastMCP server can be constructed without
@@ -16,23 +18,23 @@ Wires two CLI verbs:
 The server lifecycle stays in :mod:`evidentia_mcp.server`;
 this module is purely the user-facing CLI shim.
 
-NETWORK-TRANSPORT TRUST MODEL (v0.8.1 P3.1):
+NETWORK-TRANSPORT TRUST MODEL (v0.8.2 F-V81-S1):
 HTTP + SSE transports expose the server to non-local MCP
-clients. Operators MUST front the server with reverse-proxy
-auth or restrict the bind address — file-path tool inputs
-(e.g., ``gap_analyze``'s ``inventory_path``) are NOT
-gated against an allow-root in v0.8.1. The Phase 3.3
-FastAPI AuthProvider middleware integration is the canonical
-path for non-loopback deployments; standalone MCP HTTP/SSE
-operators should bind to 127.0.0.1 + use a sidecar reverse
-proxy for cross-network access. Documented in the
-``--host`` / ``--port`` flag help below.
+clients. Operators SHOULD pass ``--allow-root <path>`` so
+file-path tool inputs (e.g., ``gap_analyze``'s
+``inventory_path``) are gated against the bound directory
+via ``evidentia_core.security.paths.validate_within``. The
+canonical deployment pattern for non-loopback HTTP/SSE
+remains: bind to 127.0.0.1 + sidecar reverse-proxy for
+cross-network access + AuthProvider middleware (v0.8.1 P3.3)
+for token auth + ``--allow-root`` for filesystem authority.
 """
 
 from __future__ import annotations
 
 import sys
 from enum import Enum
+from pathlib import Path
 
 import typer
 
@@ -104,6 +106,23 @@ def serve(
             "Will be removed in v1.0."
         ),
     ),
+    # v0.8.2 F-V81-S1: file-path tool input gating.
+    allow_root: Path | None = typer.Option(
+        None,
+        "--allow-root",
+        help=(
+            "Bound directory for file-path tool inputs (v0.8.2 "
+            "F-V81-S1). When set, ``gap_analyze`` + ``gap_diff`` "
+            "validate their path inputs against this root via "
+            "``evidentia_core.security.paths.validate_within`` — "
+            "out-of-root paths surface as ``PathTraversalError`` "
+            "(MCP tool error, not server crash). Strongly "
+            "RECOMMENDED for non-loopback HTTP / SSE deployments. "
+            "When unset, file-path tools accept any path the "
+            "server's UID can read (preserves v0.8.1 behavior; "
+            "appropriate for stdio + loopback HTTP/SSE)."
+        ),
+    ),
 ) -> None:
     """Run the MCP server (blocks until the client disconnects)."""
     # Backward-compat: --no-stdio was the v0.8.0 way to surface
@@ -131,32 +150,41 @@ def serve(
         run_stdio,
     )
 
+    # v0.8.2 F-V81-S1: extra warning when binding non-loopback
+    # WITHOUT --allow-root. Pairs with the existing reverse-proxy
+    # auth warning to surface BOTH defenses to operators.
+    def _warn_non_loopback(transport_name: str) -> None:
+        typer.echo(
+            f"WARNING: binding {transport_name} to non-loopback "
+            f"{host}. Front with a reverse-proxy auth layer or "
+            f"use the FastAPI AuthProvider middleware (v0.8.1 "
+            f"P3.3).",
+            err=True,
+        )
+        if allow_root is None:
+            typer.echo(
+                "WARNING: --allow-root not set on a non-loopback "
+                "bind. File-path tool inputs (gap_analyze, "
+                "gap_diff) will accept any path the server's UID "
+                "can read. STRONGLY RECOMMENDED to set "
+                "--allow-root <path> for v0.8.2 F-V81-S1 gating.",
+                err=True,
+            )
+
     if transport == _Transport.STDIO:
-        run_stdio()
+        run_stdio(allow_root=allow_root)
     elif transport == _Transport.SSE:
         # SSE transport — the legacy MCP HTTP transport. Some
         # older MCP clients still expect this.
         if host != "127.0.0.1":
-            typer.echo(
-                f"WARNING: binding SSE to non-loopback {host}. "
-                f"Front with a reverse-proxy auth layer or use "
-                f"the FastAPI AuthProvider middleware (Phase "
-                f"3.3 follow-up).",
-                err=True,
-            )
-        run_sse(host=host, port=port)
+            _warn_non_loopback("SSE")
+        run_sse(host=host, port=port, allow_root=allow_root)
     elif transport == _Transport.HTTP:
         # Streamable-http transport — the modern MCP HTTP
         # transport supporting bi-directional streaming.
         if host != "127.0.0.1":
-            typer.echo(
-                f"WARNING: binding HTTP to non-loopback {host}. "
-                f"Front with a reverse-proxy auth layer or use "
-                f"the FastAPI AuthProvider middleware (Phase "
-                f"3.3 follow-up).",
-                err=True,
-            )
-        run_http(host=host, port=port)
+            _warn_non_loopback("HTTP")
+        run_http(host=host, port=port, allow_root=allow_root)
     else:  # pragma: no cover — exhaustive Enum
         typer.echo(f"Unknown transport: {transport}", err=True)
         raise typer.Exit(code=2)

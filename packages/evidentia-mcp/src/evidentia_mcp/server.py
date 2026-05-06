@@ -47,6 +47,7 @@ from evidentia_core.gap_analyzer.analyzer import GapAnalyzer
 from evidentia_core.gap_analyzer.inventory import load_inventory
 from evidentia_core.gap_diff import compute_gap_diff
 from evidentia_core.models.gap import GapAnalysisReport
+from evidentia_core.security.paths import validate_within
 from mcp.server.fastmcp import FastMCP
 
 SERVER_NAME = "evidentia"
@@ -62,39 +63,62 @@ SERVER_INSTRUCTIONS = (
     "remote data unless an explicit collector tool is invoked. "
     "Use list_frameworks first to discover the 89 bundled "
     "catalogs, then gap_analyze + gap_diff to surface findings. "
-    "TRUST MODEL: v0.8.0 ships stdio transport only — the "
-    "client process runs as the operator's UID and the server "
-    "inherits the client's filesystem authority, so file-path "
-    "tool inputs aren't gated against an allow-root. v0.8.1 "
-    "HTTP/SSE transports will require explicit path-traversal "
-    "gating against an operator-configured allow-root."
+    "TRUST MODEL: stdio transport runs as the client's UID and "
+    "inherits the client's filesystem authority. HTTP/SSE "
+    "transports SHOULD pass --allow-root <path> at server start "
+    "(v0.8.2 F-V81-S1) to gate file-path tool inputs (e.g., "
+    "gap_analyze.inventory_path) against the bound directory. "
+    "When --allow-root is unset, file-path tools accept any path "
+    "the server's UID can read; this matches v0.8.1 stdio "
+    "behavior but is risky for non-loopback HTTP/SSE deployments."
 )
 
 
-def build_server() -> FastMCP:
+def build_server(*, allow_root: Path | None = None) -> FastMCP:
     """Construct the FastMCP server with all tools registered.
+
+    Args:
+        allow_root: Optional bound directory. When set, the
+            file-path tools (``gap_analyze``, ``gap_diff``) gate
+            their path inputs via
+            :func:`evidentia_core.security.paths.validate_within`
+            against this root — out-of-root inputs surface as
+            ``PathTraversalError`` (subclass of ``ValueError``).
+            When ``None`` (default), tools preserve the v0.8.1
+            behavior of accepting any path the server's UID can
+            read (appropriate for stdio + loopback HTTP/SSE).
 
     Returns:
         A :class:`mcp.server.fastmcp.FastMCP` instance ready to
-        be run over any MCP transport. Use :func:`run_stdio` for
-        the canonical stdio transport.
+        be run over any MCP transport. Use :func:`run_stdio` /
+        :func:`run_sse` / :func:`run_http` to launch the
+        appropriate transport.
     """
     server = FastMCP(name=SERVER_NAME, instructions=SERVER_INSTRUCTIONS)
-    _register_tools(server)
+    _register_tools(server, allow_root=allow_root)
     return server
 
 
-def run_stdio() -> None:
+def run_stdio(*, allow_root: Path | None = None) -> None:
     """Run the MCP server over stdio (the canonical transport).
 
     Blocks until the client disconnects (or the operator presses
     Ctrl-C). Used by ``evidentia mcp serve``.
+
+    Args:
+        allow_root: See :func:`build_server`. Defaults to ``None``
+            (no path gating) for stdio — the client process runs
+            as the operator's UID, so an extra gate adds little
+            value. Operators concerned about a malicious LLM
+            client can still set the flag.
     """
-    server = build_server()
+    server = build_server(allow_root=allow_root)
     server.run(transport="stdio")
 
 
-def run_sse(*, host: str, port: int) -> None:
+def run_sse(
+    *, host: str, port: int, allow_root: Path | None = None
+) -> None:
     """Run the MCP server over SSE (Server-Sent Events).
 
     v0.8.1 P3.1: legacy HTTP transport for older MCP clients.
@@ -104,13 +128,16 @@ def run_sse(*, host: str, port: int) -> None:
     Args:
         host: Bind address (default in caller is ``127.0.0.1``).
         port: Bind port.
+        allow_root: See :func:`build_server`. v0.8.2 F-V81-S1:
+            non-loopback ``host`` SHOULD pair with a non-``None``
+            ``allow_root`` so file-path tool inputs are gated
+            against the bound directory.
 
-    Operators binding to non-loopback addresses MUST front the
-    server with reverse-proxy auth — the v0.8.1 MCP server
-    doesn't gate file-path tool inputs against an allow-root.
-    See ``docs/threat-model.md`` Surface 2 for the full posture.
+    Operators binding to non-loopback addresses MUST also front
+    the server with reverse-proxy auth. See
+    ``docs/threat-model.md`` Surface 2 for the full posture.
     """
-    server = build_server()
+    server = build_server(allow_root=allow_root)
     # FastMCP exposes ``settings.host`` + ``settings.port`` as
     # the canonical knobs for the HTTP transports. Mutate before
     # ``server.run(transport="sse")`` so the bind address takes
@@ -120,7 +147,9 @@ def run_sse(*, host: str, port: int) -> None:
     server.run(transport="sse")
 
 
-def run_http(*, host: str, port: int) -> None:
+def run_http(
+    *, host: str, port: int, allow_root: Path | None = None
+) -> None:
     """Run the MCP server over streamable-http.
 
     v0.8.1 P3.1: modern MCP HTTP transport supporting bi-
@@ -129,9 +158,9 @@ def run_http(*, host: str, port: int) -> None:
 
     Same security posture as :func:`run_sse` — operators
     binding to non-loopback MUST front with reverse-proxy
-    auth.
+    auth AND set ``allow_root`` (v0.8.2 F-V81-S1).
     """
-    server = build_server()
+    server = build_server(allow_root=allow_root)
     server.settings.host = host
     server.settings.port = port
     server.run(transport="streamable-http")
@@ -140,7 +169,9 @@ def run_http(*, host: str, port: int) -> None:
 # ── Tool implementations ──────────────────────────────────────────
 
 
-def _register_tools(server: FastMCP) -> None:
+def _register_tools(
+    server: FastMCP, *, allow_root: Path | None = None
+) -> None:
     """Wire the tool surface onto the server.
 
     Each tool is a regular Python function with a structured
@@ -148,7 +179,21 @@ def _register_tools(server: FastMCP) -> None:
     description in the MCP tool-picker). The function's type
     annotations drive the JSONSchema for the tool's input
     parameters.
+
+    The ``allow_root`` argument is captured in the closure of
+    the file-path tools (``gap_analyze``, ``gap_diff``). When
+    set, those tools gate their path inputs via
+    :func:`evidentia_core.security.paths.validate_within`
+    before any filesystem I/O.
     """
+    # v0.8.2 F-V81-S1: the bound allow-root is captured here
+    # via closure + resolved once at server-build time so per-
+    # tool-call resolution is cheap. The resolved root is what
+    # ``validate_within`` will compare ``candidate.resolve()``
+    # against.
+    resolved_allow_root: Path | None = (
+        allow_root.resolve(strict=False) if allow_root is not None else None
+    )
 
     @server.tool()
     def list_frameworks() -> list[dict[str, str]]:
@@ -236,9 +281,20 @@ def _register_tools(server: FastMCP) -> None:
         Raises:
             FileNotFoundError: inventory_path does not exist.
             ValueError: a framework id is not recognised by the
-                bundled catalog registry.
+                bundled catalog registry. Or — when the server
+                was started with ``--allow-root`` — the inventory
+                path resolves outside the bound directory
+                (``PathTraversalError``, a ``ValueError`` subclass).
         """
-        path = Path(inventory_path).expanduser().resolve()
+        # v0.8.2 F-V81-S1: when --allow-root is set, gate the
+        # input path against it via validate_within. When unset
+        # (stdio default), preserve v0.8.1 behavior of resolving
+        # to absolute form without bound-directory checking.
+        candidate = Path(inventory_path).expanduser()
+        if resolved_allow_root is not None:
+            path = validate_within(candidate, resolved_allow_root)
+        else:
+            path = candidate.resolve(strict=False)
         if not path.exists():
             raise FileNotFoundError(
                 f"Inventory file not found: {path}"
@@ -278,10 +334,24 @@ def _register_tools(server: FastMCP) -> None:
         Raises:
             FileNotFoundError: either path does not exist.
             ValueError: a path's contents cannot be parsed as a
-                ``GapAnalysisReport``.
+                ``GapAnalysisReport``. Or — when the server was
+                started with ``--allow-root`` — either path
+                resolves outside the bound directory
+                (``PathTraversalError``, a ``ValueError`` subclass).
         """
-        base_path = Path(base_report_path).expanduser().resolve()
-        head_path = Path(head_report_path).expanduser().resolve()
+        # v0.8.2 F-V81-S1: same path-gating as gap_analyze.
+        base_candidate = Path(base_report_path).expanduser()
+        head_candidate = Path(head_report_path).expanduser()
+        if resolved_allow_root is not None:
+            base_path = validate_within(
+                base_candidate, resolved_allow_root
+            )
+            head_path = validate_within(
+                head_candidate, resolved_allow_root
+            )
+        else:
+            base_path = base_candidate.resolve(strict=False)
+            head_path = head_candidate.resolve(strict=False)
         if not base_path.exists():
             raise FileNotFoundError(
                 f"Base report not found: {base_path}"

@@ -17,6 +17,7 @@ Three test classes mirroring the three layers of the MCP package:
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +29,7 @@ from evidentia_core.models.control import (
     ControlInventory,
     ControlStatus,
 )
+from evidentia_core.security.paths import PathTraversalError
 from evidentia_mcp.cli import app as mcp_cli_app
 from evidentia_mcp.server import build_server
 from typer.testing import CliRunner
@@ -274,6 +276,163 @@ class TestGapDiff:
             )
 
 
+# ── 2.5 v0.8.2 F-V81-S1 path-input gating ─────────────────────────
+
+
+class TestGapAnalyzePathGating:
+    """v0.8.2 F-V81-S1: file-path input gating via --allow-root.
+
+    Mirrors the existing path-traversal patterns in
+    ``tests/unit/test_security_paths.py`` to enforce the same
+    rejections at the MCP tool boundary.
+    """
+
+    def test_allow_root_none_preserves_v081_behavior(
+        self, tiny_inventory: Path
+    ) -> None:
+        """No --allow-root → file-path tools accept any readable path
+        (backward-compat with v0.8.1 stdio default)."""
+        server = build_server(allow_root=None)
+        # tiny_inventory lives in pytest's tmp_path; with allow_root=None
+        # the gating short-circuits and the call succeeds as before.
+        result = _invoke_tool(
+            server,
+            "gap_analyze",
+            inventory_path=str(tiny_inventory),
+            frameworks=["nist-800-53-rev5-moderate"],
+        )
+        assert isinstance(result, dict)
+        assert "gaps" in result
+
+    def test_allow_root_accepts_inside(
+        self, tiny_inventory: Path, tmp_path: Path
+    ) -> None:
+        """Inventory path inside --allow-root → call succeeds."""
+        # tiny_inventory is created under tmp_path; bind allow_root to tmp_path.
+        server = build_server(allow_root=tmp_path)
+        result = _invoke_tool(
+            server,
+            "gap_analyze",
+            inventory_path=str(tiny_inventory),
+            frameworks=["nist-800-53-rev5-moderate"],
+        )
+        assert isinstance(result, dict)
+        assert "gaps" in result
+
+    def test_allow_root_rejects_dotdot_traversal(
+        self, tmp_path: Path
+    ) -> None:
+        """``..`` segments escaping --allow-root → PathTraversalError."""
+        safe_root = tmp_path / "store"
+        safe_root.mkdir()
+        sibling = tmp_path / "outside.json"
+        sibling.write_text("{}", encoding="utf-8")
+        candidate = safe_root / ".." / "outside.json"
+
+        server = build_server(allow_root=safe_root)
+        # PathTraversalError is a ValueError subclass; assert the
+        # specific subclass to lock in the contract.
+        with pytest.raises(PathTraversalError):
+            _invoke_tool(
+                server,
+                "gap_analyze",
+                inventory_path=str(candidate),
+                frameworks=["nist-800-53-rev5-moderate"],
+            )
+
+    def test_allow_root_rejects_absolute_outside(
+        self, tmp_path: Path
+    ) -> None:
+        """Absolute path outside --allow-root → PathTraversalError."""
+        safe_root = tmp_path / "store"
+        safe_root.mkdir()
+        elsewhere = tmp_path / "elsewhere.json"
+        elsewhere.write_text("{}", encoding="utf-8")
+
+        server = build_server(allow_root=safe_root)
+        with pytest.raises(PathTraversalError):
+            _invoke_tool(
+                server,
+                "gap_analyze",
+                inventory_path=str(elsewhere),
+                frameworks=["nist-800-53-rev5-moderate"],
+            )
+
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="symlink creation requires elevated privileges on Windows",
+    )
+    def test_allow_root_rejects_symlink_escape(
+        self, tmp_path: Path
+    ) -> None:
+        """Symlink inside --allow-root pointing outside → rejected."""
+        import os
+
+        safe_root = tmp_path / "store"
+        safe_root.mkdir()
+        target = tmp_path / "outside.json"
+        target.write_text("{}", encoding="utf-8")
+        link = safe_root / "trojan.json"
+        os.symlink(target, link)
+
+        server = build_server(allow_root=safe_root)
+        with pytest.raises(PathTraversalError):
+            _invoke_tool(
+                server,
+                "gap_analyze",
+                inventory_path=str(link),
+                frameworks=["nist-800-53-rev5-moderate"],
+            )
+
+
+class TestGapDiffPathGating:
+    """v0.8.2 F-V81-S1: gap_diff has 2 path inputs; both must gate."""
+
+    def test_allow_root_rejects_base_outside(
+        self,
+        tmp_path: Path,
+        tiny_report_paths: tuple[Path, Path],
+    ) -> None:
+        """base_report_path outside --allow-root → PathTraversalError."""
+        _base, head_path = tiny_report_paths
+        # Bind allow_root to a sub-directory that does NOT contain
+        # the existing tiny_report_paths fixture.
+        safe_root = tmp_path / "isolated"
+        safe_root.mkdir()
+        elsewhere = tmp_path / "elsewhere-base.json"
+        elsewhere.write_text(json.dumps({}), encoding="utf-8")
+
+        server = build_server(allow_root=safe_root)
+        with pytest.raises(PathTraversalError):
+            _invoke_tool(
+                server,
+                "gap_diff",
+                base_report_path=str(elsewhere),
+                head_report_path=str(head_path),
+            )
+
+    def test_allow_root_rejects_head_outside(
+        self,
+        tmp_path: Path,
+        tiny_report_paths: tuple[Path, Path],
+    ) -> None:
+        """head_report_path outside --allow-root → PathTraversalError."""
+        base_path, _head = tiny_report_paths
+        safe_root = tmp_path / "isolated"
+        safe_root.mkdir()
+        elsewhere = tmp_path / "elsewhere-head.json"
+        elsewhere.write_text(json.dumps({}), encoding="utf-8")
+
+        server = build_server(allow_root=safe_root)
+        with pytest.raises(PathTraversalError):
+            _invoke_tool(
+                server,
+                "gap_diff",
+                base_report_path=str(base_path),
+                head_report_path=str(elsewhere),
+            )
+
+
 # ── 3. CLI doctor ──────────────────────────────────────────────────
 
 
@@ -347,3 +506,16 @@ class TestCLI:
         opt_flags = {opt for p in serve_cmd.params for opt in p.opts}
         assert "--host" in opt_flags
         assert "--port" in opt_flags
+
+    def test_serve_help_shows_allow_root(self) -> None:
+        """v0.8.2 F-V81-S1: --allow-root flag is documented."""
+        import click
+        from typer.main import get_command
+
+        click_app = get_command(mcp_cli_app)
+        assert isinstance(click_app, click.Group)
+        serve_cmd = click_app.get_command(None, "serve")  # type: ignore[arg-type]
+        assert serve_cmd is not None, "serve subcommand missing"
+
+        opt_flags = {opt for p in serve_cmd.params for opt in p.opts}
+        assert "--allow-root" in opt_flags
