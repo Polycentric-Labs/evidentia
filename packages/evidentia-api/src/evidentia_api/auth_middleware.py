@@ -1,12 +1,13 @@
-"""FastAPI AuthProvider middleware integration (v0.8.1 P3.3).
+"""FastAPI AuthProvider middleware integration (v0.8.1 P3.3 + v0.8.2 F-V81-S2).
 
 Wires the v0.8.0 P0.4 :class:`AuthProvider` plugin contract
 into FastAPI's dependency-injection stack. Operators construct
 an ``AuthProvider`` (e.g.,
 :class:`evidentia_core.plugins.auth.local_token.LocalTokenAuthProvider`)
 and pass it via :func:`create_app(auth_provider=...)`. When
-present, every request is gated through the provider's
-:meth:`authenticate` method before any router handler runs.
+present on ``app.state.auth_provider``, every request is gated
+through the provider's :meth:`authenticate` method before any
+router handler runs.
 
 Closes the v0.8.0 review F-V08-S3 MEDIUM finding (``/api/metrics``
 not auth-gated). Once wired, ``/api/metrics`` + ``/api/risks``
@@ -18,13 +19,23 @@ allowlist for liveness probes (``/api/health``,
 remain reachable without a token for Kubernetes / load-balancer
 readiness checks.
 
+v0.8.2 F-V81-S2: the middleware reads its provider from
+``request.app.state.auth_provider`` at dispatch time rather
+than capturing it at construction. This decouples the middleware
+attachment (which must happen at app build time per Starlette
+constraints) from provider construction (which can defer to
+the FastAPI ``lifespan`` event when sourced from env vars).
+When ``app.state.auth_provider`` is None at dispatch (the
+v0.8.0 backward-compat default), the middleware is a no-op
+that calls through to the next handler unchanged.
+
 Design note: this is FastAPI middleware (``BaseHTTPMiddleware``
 subclass), not a per-route dependency. Middleware runs for
 EVERY request including non-router paths (``/api/openapi.json``,
 ``/api/docs``, the SPA static mount). The allowlist gates
 which surfaces are public.
 
-Operator wiring:
+Operator wiring (explicit-injection path — v0.8.1):
 
     from evidentia_api.app import create_app
     from evidentia_core.plugins.auth.local_token import (
@@ -35,14 +46,20 @@ Operator wiring:
         auth_provider=LocalTokenAuthProvider(
             token_file="/etc/evidentia/api-token",
         ),
-        bind_host="0.0.0.0",  # auth required when non-loopback
     )
 
-When ``auth_provider`` is None (the default, matching v0.8.0
-behavior), no auth gating fires — preserves backward compat
-for localhost-only deployments. When non-None, the middleware
-is attached + requests without a valid Bearer token return
-401.
+Operator wiring (env-driven path — v0.8.1 + v0.8.2 F-V81-S2):
+
+    EVIDENTIA_API_AUTH_TOKEN_FILE=/etc/evidentia/api-token \\
+        uvicorn evidentia_api.app:app
+
+The env-driven path now constructs the provider in the FastAPI
+lifespan at startup (not at module import time). Operators get
+the same end-state — ``app.state.auth_provider`` populated +
+``/api/metrics`` gated — but module imports remain side-effect-
+free, which is critical for tooling that imports the module
+without intending to start the server (e.g., OpenAPI schema
+generation, mypy plugin discovery).
 """
 
 from __future__ import annotations
@@ -83,12 +100,15 @@ class AuthProviderMiddleware(BaseHTTPMiddleware):
     1. Request arrives.
     2. If the request path is in :data:`UNAUTHENTICATED_PATHS`,
        skip auth + dispatch the request directly.
-    3. Otherwise, extract the ``Authorization`` header and pass
-       it to ``self._provider.authenticate(...)``.
-    4. On ``AuthResult(authenticated=True)``: attach the
+    3. Read ``request.app.state.auth_provider`` (v0.8.2 F-V81-S2).
+       If None, the middleware is a no-op (matches v0.8.0
+       backward-compat for localhost-only deployments).
+    4. Otherwise, extract the ``Authorization`` header and pass
+       it to ``provider.authenticate(...)``.
+    5. On ``AuthResult(authenticated=True)``: attach the
        principal to ``request.state.auth_principal`` and
        dispatch the request.
-    5. On ``AuthResult(authenticated=False)``: return 401 with
+    6. On ``AuthResult(authenticated=False)``: return 401 with
        a JSON body carrying the provider's ``reason``.
 
     The middleware never blocks on the AuthProvider's I/O —
@@ -98,17 +118,22 @@ class AuthProviderMiddleware(BaseHTTPMiddleware):
     on every request inherit that latency on every API call;
     operators should cache verifiable tokens at the AuthProvider
     layer.
+
+    v0.8.2 F-V81-S2: the provider is read from
+    ``request.app.state.auth_provider`` at dispatch time. This
+    lets the lifespan event (in :mod:`evidentia_api.app`)
+    populate the provider at startup from
+    ``EVIDENTIA_API_AUTH_TOKEN_FILE`` without requiring
+    middleware re-attachment (which Starlette doesn't permit
+    after app creation).
     """
 
-    def __init__(
-        self, app: object, *, provider: AuthProvider
-    ) -> None:
+    def __init__(self, app: object) -> None:
         # Match the SecurityHeadersMiddleware pattern: take
         # `app: object` + type-ignore the super() call to
         # satisfy Starlette's overly-strict middleware factory
         # protocol.
         super().__init__(app)  # type: ignore[arg-type]
-        self._provider = provider
 
     async def dispatch(
         self,
@@ -124,8 +149,16 @@ class AuthProviderMiddleware(BaseHTTPMiddleware):
         if not request.url.path.startswith("/api/"):
             return await call_next(request)
 
+        # v0.8.2 F-V81-S2: read provider from app state at
+        # dispatch time. None = no auth gating (v0.8.0 default).
+        provider: AuthProvider | None = getattr(
+            request.app.state, "auth_provider", None
+        )
+        if provider is None:
+            return await call_next(request)
+
         auth_header = request.headers.get("Authorization")
-        result = self._provider.authenticate(
+        result = provider.authenticate(
             authorization_header=auth_header
         )
         if not result.authenticated:
@@ -134,7 +167,7 @@ class AuthProviderMiddleware(BaseHTTPMiddleware):
                 content={
                     "detail": "Authentication required",
                     "reason": result.reason,
-                    "provider": self._provider.name(),
+                    "provider": provider.name(),
                 },
                 headers={
                     # Hint the client which scheme to use. RFC 7235

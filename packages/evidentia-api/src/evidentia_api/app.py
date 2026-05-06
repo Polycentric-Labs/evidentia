@@ -24,6 +24,8 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -42,6 +44,55 @@ if TYPE_CHECKING:
     from evidentia_core.plugins.auth import AuthProvider
 
 logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def _auth_lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """v0.8.2 F-V81-S2: defer env-driven AuthProvider construction.
+
+    Replaces the v0.8.1 module-level construction (which read
+    ``EVIDENTIA_API_AUTH_TOKEN_FILE`` at import time) with a
+    startup-time read. Explicit injection via
+    :func:`create_app(auth_provider=...)` continues to take
+    precedence — this lifespan only constructs a provider when
+    ``app.state.auth_provider`` is ``None`` at startup.
+
+    Importing this module no longer has filesystem side effects;
+    the env var is read only when the FastAPI app is actually
+    started (uvicorn / TestClient context-manager / etc.). This
+    makes the module safer for tooling that imports without
+    running (OpenAPI generation, mypy plugin scans, doc builds).
+
+    Failure mode is preserved: if the env var is set but the
+    token file is missing/empty/symlinked, the lifespan raises
+    so app startup fails loudly. The operator sees a clear
+    error rather than a silent fall-through to no-auth.
+    """
+    if app.state.auth_provider is None:
+        env_token_file = os.environ.get(
+            "EVIDENTIA_API_AUTH_TOKEN_FILE", ""
+        ).strip()
+        if env_token_file:
+            from evidentia_core.plugins.auth.local_token import (
+                LocalTokenAuthProvider,
+            )
+
+            try:
+                app.state.auth_provider = LocalTokenAuthProvider(
+                    token_file=env_token_file
+                )
+            except (FileNotFoundError, ValueError):
+                # Fail loud at startup — operator passed
+                # --auth-token-file but the file is missing /
+                # empty / symlinked. Don't silently fall back to
+                # no-auth.
+                logger.error(
+                    "AuthProvider construction failed at startup "
+                    "(token file %s)",
+                    env_token_file,
+                )
+                raise
+    yield
 
 STATIC_DIR = Path(__file__).parent / "static"
 """Absolute path to the bundled SPA assets (populated at build time)."""
@@ -108,7 +159,20 @@ def create_app(
         docs_url="/api/docs",
         redoc_url="/api/redoc",
         openapi_url="/api/openapi.json",
+        # v0.8.2 F-V81-S2: env-driven AuthProvider construction
+        # happens at startup, not import time. The lifespan
+        # reads EVIDENTIA_API_AUTH_TOKEN_FILE iff
+        # app.state.auth_provider is None at startup (i.e.,
+        # the explicit-injection path didn't pre-populate it).
+        lifespan=_auth_lifespan,
     )
+
+    # v0.8.2 F-V81-S2: pre-populate app.state.auth_provider with
+    # the explicit-injection value (if any). The lifespan only
+    # falls back to env-var construction when this is None at
+    # startup. Set BEFORE middleware add so the dispatch path
+    # reads a consistent state during cold-start.
+    app.state.auth_provider = auth_provider
 
     # CORS: dev_mode is permissive for Vite HMR; prod is localhost-only.
     if cors_origins is None:
@@ -138,26 +202,29 @@ def create_app(
 
         app.add_middleware(SecurityHeadersMiddleware)
 
-    # v0.8.1 P3.3: AuthProvider middleware. Attaches BEFORE the
+    # v0.8.1 P3.3 + v0.8.2 F-V81-S2: AuthProvider middleware.
+    # Always attaches now — the middleware reads
+    # ``request.app.state.auth_provider`` at dispatch and is a
+    # no-op when None. This decouples middleware attachment
+    # (must happen at app build time per Starlette) from
+    # provider construction (which can defer to the lifespan
+    # event for the env-var-driven path). Attaches BEFORE the
     # security-headers middleware in the FastAPI middleware
     # stack (Starlette runs middleware in reverse-add order, so
     # this becomes the OUTER ring — auth check fires before
-    # any security-header logic). Closes the v0.8.0 review
-    # F-V08-S3 finding when populated.
-    if auth_provider is not None:
-        from evidentia_api.auth_middleware import (
-            AuthProviderMiddleware,
-        )
+    # any security-header logic).
+    from evidentia_api.auth_middleware import (
+        AuthProviderMiddleware,
+    )
 
-        app.add_middleware(
-            AuthProviderMiddleware, provider=auth_provider
-        )
+    app.add_middleware(AuthProviderMiddleware)
 
     # Attach flags to app state so every router dep can consult them.
+    # NOTE: app.state.auth_provider was set above (pre-FastAPI-init
+    # path) so the dispatch path is consistent during cold start.
     app.state.offline = offline
     app.state.dev_mode = dev_mode
     app.state.security_headers = security_headers
-    app.state.auth_provider = auth_provider
 
     # Register routers. Each router is a focused module — see routers/*.py.
     # Imports are deferred so module-load errors in one router don't take
@@ -302,7 +369,9 @@ def _mount_spa(app: FastAPI) -> None:
 # EVIDENTIA_API_OFFLINE=1     -> offline mode
 # EVIDENTIA_API_DEV=1         -> permissive CORS for Vite dev server
 # EVIDENTIA_API_AUTH_TOKEN_FILE -> path to token file for the
-#                                 LocalTokenAuthProvider (v0.8.1 P3.3)
+#     LocalTokenAuthProvider. v0.8.2 F-V81-S2: read at app
+#     STARTUP (FastAPI lifespan), not at module import. See
+#     ``_auth_lifespan`` above.
 _env_offline = os.environ.get("EVIDENTIA_API_OFFLINE", "").strip().lower() in {
     "1",
     "true",
@@ -314,39 +383,13 @@ _env_dev = os.environ.get("EVIDENTIA_API_DEV", "").strip().lower() in {
     "yes",
 }
 
-# v0.8.1 P3.3: env-driven AuthProvider construction. When the
-# operator sets EVIDENTIA_API_AUTH_TOKEN_FILE (typically via
-# the new `evidentia serve --auth-token-file <path>` flag),
-# construct a LocalTokenAuthProvider + thread it into create_app.
-# The fallback (env var unset) preserves v0.8.0 behavior — no
-# auth gating; localhost-only deployments work unchanged.
-_env_auth_token_file = os.environ.get(
-    "EVIDENTIA_API_AUTH_TOKEN_FILE", ""
-).strip()
-_auth_provider: AuthProvider | None = None
-if _env_auth_token_file:
-    try:
-        from evidentia_core.plugins.auth.local_token import (
-            LocalTokenAuthProvider,
-        )
-
-        _auth_provider = LocalTokenAuthProvider(
-            token_file=_env_auth_token_file
-        )
-    except (FileNotFoundError, ValueError) as _exc:
-        # Fail loud at module load — operator passed --auth-token-file
-        # but the file is missing/empty/symlinked. Don't silently
-        # fall back to no-auth.
-        logger.error(
-            "AuthProvider construction failed (token file %s): %s",
-            _env_auth_token_file,
-            _exc,
-        )
-        raise
-
 # Default instance for `uvicorn evidentia_api.app:app` usage.
+# v0.8.2 F-V81-S2: auth_provider is left None here; the
+# lifespan reads EVIDENTIA_API_AUTH_TOKEN_FILE at startup if
+# present. Module import is now side-effect-free (no filesystem
+# I/O) — safe for tooling that imports for OpenAPI generation,
+# mypy plugin scans, or doc builds.
 app = create_app(
     offline=_env_offline,
     dev_mode=_env_dev,
-    auth_provider=_auth_provider,
 )
