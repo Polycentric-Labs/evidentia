@@ -7,6 +7,92 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.4] - 2026-05-06
+
+**Supply-chain G4 Path 2 ACTIVATED + DFAHarness check_faithfulness
+wiring.** Closes the v0.8.3 ship-failure root cause + the v0.8.3
+P1.2 deferred wiring. Aggressive ~3-week scope compressed to a
+single focused session. Continues the v0.7.11 → v0.8.3.1
+PROCEED-CLEAN streak (11 consecutive at close).
+
+### Added
+
+- **G4 Dockerfile `--require-hashes` ACTIVATED via Path 2**
+  (closes the recurring Scorecard PinnedDependencies false-
+  positive cycle — alerts #100 → #116 across v0.7.12 → v0.8.3.1
+  — structurally + permanently). New `release.yml` step
+  "Regenerate hash-pinned requirements.txt against PyPI" runs
+  AFTER Wait-for-PyPI-propagation + BEFORE the docker build:
+  - Overwrites `docker/requirements.in` to pin
+    `evidentia[gui]==<release-version>`.
+  - Runs `pip-compile --generate-hashes --no-emit-find-links`
+    against PyPI's just-published wheels, computing SHA256
+    hashes FROM PyPI's actual bytes.
+  - Retry loop (3 × 30s) handles CDN propagation lag.
+  - The committed `docker/requirements.txt` ships as preview
+    state; release.yml overwrites it ephemerally for the
+    container build.
+
+  Path 2 sidesteps the v0.8.3 Path 1 cross-platform
+  reproducibility issue (Windows local vs Linux CI uv build
+  byte-divergence) because both pip-compile + pip install run
+  inside the same Linux runner against the same PyPI bytes.
+  Hashes match by construction.
+
+- **DFAHarness `check_faithfulness=True` wiring (P1)** — closes
+  the v0.8.3 P1.2 deferred wiring. New schema:
+  - `EvalSample.source_clauses: list[str] | None = None` field
+  - New `PromptFaithfulnessResult` Pydantic model with
+    `prompt_id` + `claims` + `overall_faithful` /
+    `passed_count` / `failed_count` properties
+  - `EvalResult.faithfulness_results: list[PromptFaithfulnessResult]`
+    field (default empty)
+  - `DFAHarness.run(check_faithfulness=False,
+    faithfulness_threshold=0.3, faithfulness_method="jaccard")`
+    new kwargs; harness extracts atomic claims from MODAL
+    output (post-determinism) + scores each claim against
+    `sample.source_clauses` via stdlib Jaccard or semantic path
+  - **`EventAction.AI_EVAL_FAITHFULNESS_CHECKED`** (v0.8.3-
+    reserved) and **`AI_EVAL_FAITHFULNESS_VIOLATION`** (v0.8.0-
+    reserved) audit events finally ACTIVATED with structured
+    log fields (run_id + prompt_id + claim_count + passed_count
+    + method)
+  - 14 new tests in
+    `tests/unit/test_eval/test_harness_faithfulness.py` cover
+    default-False / sample-skipping / claim-result aggregation
+    / audit-event firing / method-selection / model
+    JSON-roundtrip
+
+### Changed
+
+- **`docs/dockerfile-pinning.md`** — v0.8.3.1 narrative
+  preserved as historical context; new "v0.8.4 G4 Path 2
+  activation (current)" section documents the release-time
+  regeneration pipeline + verification recipe + Scorecard
+  impact.
+
+### Deferrals to v0.8.5
+
+- **`evidentia eval risk-determinism --check-faithfulness` CLI
+  flags** — `--check-faithfulness`, `--faithfulness-threshold N`,
+  `--faithfulness-method {jaccard,semantic}`,
+  `--source-clauses-file <yaml>`. The library API ships in
+  v0.8.4; the CLI surface lands in v0.8.5 polish. Operators
+  wire DFAHarness directly via library calls in the meantime.
+  Matches the v0.8.3 P1.2 "library ships first; CLI follows"
+  pattern.
+- **DFAH calibration corpus expansion** to 100-200 entries +
+  multi-rater labeling + per-framework subsets (NIST / FFIEC /
+  ISO 27001).
+- **Real-LLM integration tests** for atomic-claim extraction +
+  DFAHarness faithfulness path. Gated by
+  `EVIDENTIA_LLM_INTEGRATION=1` env var; uses calibration
+  corpus as ground truth.
+- **MCP CIMD richness** (5th cycle-deferral; per §24.6 R6
+  still gated on empirical operator demand). v0.8.5 cycle-open
+  re-evaluates with potential "formally retire" decision if no
+  demand signal materializes.
+
 ## [0.8.3.1] - 2026-05-06
 
 **Same-day hot-fix tag for v0.8.3**: reverts G4 Dockerfile

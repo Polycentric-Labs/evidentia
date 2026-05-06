@@ -804,30 +804,101 @@ v0.8.2; +22 new tests across P1.1 + P1.2 + reproducible-build
 self-tests). mypy strict 0/0 across 220+ source files; ruff
 clean. 0 CRITICAL/HIGH/MEDIUM findings; 0 LOW unfixed.
 
-## v0.8.4 — PLANNED
+## v0.8.4 — G4 Path 2 + DFAHarness wiring — SHIPPED
 
-Carries forward the v0.8.3 deferrals:
+Tag `v0.8.4` at commit (TBD post-tag). Aggressive ~2-3 week
+focused scope (executed in single session compression matching
+v0.8.3 cadence). Closes the v0.8.3 ship-failure root cause via
+G4 Path 2 (post-PyPI regeneration in `release.yml` —
+sidesteps cross-platform reproducibility entirely) + the
+v0.8.3 P1.2 deferred wiring (`check_faithfulness=True`
+first-class on `DFAHarness`). MCP CIMD richness deferred 5th
+time to v0.8.5; CLI flags + corpus expansion + real-LLM
+integration tests deferred to v0.8.5.
 
-- **MCP CIMD richness** (5th cycle-deferral pending v0.8.4
-  cycle-open decision). Re-evaluate per §24.6 R6 — operator
-  demand signal from v0.8.1+v0.8.2+v0.8.3 HTTP/SSE adoption.
-  May be re-prioritized OR formally retired if no demand
-  surfaces.
-- **DFAHarness `check_faithfulness=True` wiring** — operator-
-  facing CLI flag + per-prompt faithfulness aggregation +
-  `AI_EVAL_FAITHFULNESS_CHECKED` audit event firing path.
-  v0.8.3 ships the standalone `extract_claims()` + reserved
-  EventAction; v0.8.4 closes the harness integration with
-  real-LLM integration tests gated by
-  `EVIDENTIA_LLM_INTEGRATION=1` env var.
+See [`docs/security-review-v0.8.4.md`](security-review-v0.8.4.md)
+for the v4 Pre-tag-style closeout (PROCEED-CLEAN; 11th
+consecutive of v0.7.x → v0.8.x line).
+
+### Closed in v0.8.4
+
+- **G4 Dockerfile `--require-hashes` ACTIVATED via Path 2** —
+  closes the recurring Scorecard PinnedDependencies false-
+  positive cycle (alerts #100 → #116 across v0.7.12 →
+  v0.8.3.1) structurally + permanently. `release.yml`'s
+  publish-container job now regenerates `docker/requirements.txt`
+  against PyPI's just-published wheels via
+  `pip-compile --generate-hashes --no-emit-find-links` BETWEEN
+  the existing Wait-for-PyPI step + the docker build step.
+  Hashes match because pip-compile downloads from PyPI's bytes
+  in the Linux CI runner — same source as the container
+  build's pip install. Cross-platform reproducibility no longer
+  required. Built-in 3-attempt retry loop with 30s sleeps
+  absorbs PyPI propagation lag. The committed
+  `docker/requirements.txt` is preview state for operators
+  reading the repo; release-time regeneration overwrites it
+  ephemerally. Defense-in-depth: hash verification fires at
+  pip-compile time + at install time (two distinct points in
+  the supply chain).
+- **DFAHarness `check_faithfulness=True` wiring** — closes
+  the v0.8.3 P1.2 deferral. `EvalSample` schema gains optional
+  `source_clauses: list[str] | None = None` field; `EvalResult`
+  schema gains `faithfulness_results: list[PromptFaithfulnessResult]`
+  list; `DFAHarness.run()` gains 5 new kwargs:
+  `check_faithfulness`, `faithfulness_threshold`,
+  `faithfulness_method` (jaccard | semantic),
+  `claim_extraction_fn` (mock-callable injection point),
+  `faithfulness_score_fn` (mock-callable injection point).
+  `EventAction.AI_EVAL_FAITHFULNESS_CHECKED` (reserved-but-
+  inactive in v0.8.0; ACTIVATED in v0.8.4) +
+  `EventAction.AI_EVAL_FAITHFULNESS_VIOLATION` (reserved-but-
+  inactive in v0.8.0; ACTIVATED in v0.8.4). Mock-callable
+  injection points keep harness tests cost-zero (no LLM /
+  sentence-transformers token burn in CI) while exercising
+  real production code paths. Default callable resolution
+  falls back to v0.8.3-shipped `extract_claims` +
+  v0.8.2/v0.8.3-shipped `faithfulness_score` /
+  `faithfulness_score_semantic` when callers don't inject
+  mocks. 14 new unit tests across 5 test classes. Library +
+  harness integration first-class; CLI flags
+  (`--check-faithfulness --source-clauses-file <yaml>`)
+  deferred to v0.8.5.
+
+### Test count + quality gates
+
+- pytest 100% green: 2313 passed / 14 skipped (was 2299 / 14
+  at v0.8.3.1 ship)
+- mypy strict 0/0 across 220+ source files
+- ruff clean
+- Standing-rule keyword sweep clean across both v0.8.4-cycle
+  commits
+
+## v0.8.5 — PLANNED
+
+Carries forward the v0.8.4 deferrals + 5th-cycle CIMD
+re-evaluation:
+
+- **MCP CIMD richness** — 5th cycle-deferral. v0.8.5 cycle-
+  open re-evaluates per §24.6 R6 with potential "formally
+  retire" decision if no demand signal materializes from
+  external operators of v0.8.1+ HTTP/SSE adoption.
+- **DFAH faithfulness CLI flags** —
+  `evidentia eval risk-determinism --check-faithfulness
+  --faithfulness-threshold N --faithfulness-method
+  {jaccard,semantic} --source-clauses-file <yaml>` operator-
+  facing surface. v0.8.4 ships the library + harness
+  integration; v0.8.5 closes the CLI surface.
 - **DFAH calibration corpus expansion** to 100-200 entries +
-  multi-rater labeling + Cohen's Kappa agreement metric +
-  per-framework subsets (NIST-only / FFIEC-only /
-  ISO-27001-only).
+  multi-rater labeling (Allen + LLM-assisted with manual
+  spot-checks; Cohen's Kappa agreement metric) + per-framework
+  subsets (NIST-only / FFIEC-only / ISO-27001-only).
+- **Real-LLM integration tests** for `extract_claims()` +
+  `DFAHarness.run(check_faithfulness=True)` end-to-end —
+  opt-in via `EVIDENTIA_LLM_INTEGRATION=1` env var.
 - Plus any review findings from external operator usage of
-  v0.8.3 features.
+  v0.8.4 features.
 
-Ship target ~3-4 weeks; plan file lands at cycle open.
+Ship target ~2-3 weeks; plan file lands at cycle open.
 
 ## v0.9.0 — Federal compliance — RESERVED
 

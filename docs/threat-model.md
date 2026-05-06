@@ -1455,6 +1455,155 @@ multi-rater expansion improves label quality.
 
 ---
 
+## v0.8.4 attack-surface delta — G4 Path 2 + DFAHarness wiring
+
+> Status: 2026-05-06. v0.8.4 SHIPPED. Closes the v0.8.3
+> ship-failure root cause (G4 Path 1 cross-platform
+> reproducibility limitation) via Path 2 (post-PyPI
+> regeneration) + the v0.8.3 P1.2 deferred wiring
+> (`check_faithfulness=True` first-class on `DFAHarness`).
+> CLI flags + corpus expansion + real-LLM integration tests
+> deferred to v0.8.5; MCP CIMD richness deferred 5th time to
+> v0.8.5 (re-evaluate or formally retire).
+
+### Historical context — v0.8.3.1 hot-fix (G4 Path 1 reverted)
+
+**Surface change**: v0.8.3 attempted G4 via Path 1
+(SOURCE_DATE_EPOCH-driven `uv build` → byte-identical wheels
+across hosts → matching SHA256 hashes between local pre-tag
+pip-compile + PyPI uploads). v0.8.3 release.yml first-fire
+revealed `uv build` is NOT byte-identical between Windows local
++ Linux CI runner even with same SOURCE_DATE_EPOCH (file-
+ordering / timestamp-precision drift). PyPI publish succeeded
+but container build's `pip install --require-hashes` failed:
+local-computed hashes ≠ Linux-CI-built wheel hashes. Hot-fix
+v0.8.3.1 reverted Dockerfile to exact-version pinning
+(`pip install evidentia[gui]==X.Y.Z`) — same v0.8.2 surface,
+no regression; container ship recovered same-day.
+
+**Threat coverage**: zero net new surface vs v0.8.2 baseline
+during the v0.8.3.1 → v0.8.4 window. Recurring Scorecard
+PinnedDependencies false-positive cycle continued (alerts #100
+through #116) but is operationally benign per the dismissal
+runbook in `docs/dockerfile-pinning.md`.
+
+### G4 Path 2 ACTIVATED — release.yml post-PyPI regeneration
+
+**Surface change**: `release.yml`'s publish-container job adds
+a NEW step BETWEEN the existing Wait-for-PyPI step + the docker
+build step. The new step writes `docker/requirements.in`
+containing `evidentia[gui]==<tag-version>`, then runs
+`pip-compile --generate-hashes --no-emit-find-links` against
+PyPI's just-published wheels → ephemeral `docker/requirements.txt`
+overwrite → docker build picks it up. The Dockerfile install
+line re-flips to `pip install --no-cache-dir --user
+--require-hashes -r /tmp/requirements.txt`. Cross-platform
+reproducibility no longer required because the SHA256 hashes
+are computed FROM PyPI's bytes (downloaded by pip-compile in
+the Linux CI runner), not from independent local + CI builds.
+The committed `docker/requirements.txt` is preview state for
+operators reading the repo; release-time regeneration overwrites
+it ephemerally before the docker build picks it up. Built-in
+3-attempt retry loop with 30s sleeps absorbs PyPI propagation
+lag through the CDN.
+
+**Threat coverage**: closes the recurring Scorecard
+PinnedDependencies false-positive cycle structurally + permanently
+(alerts #100 → #116 across v0.7.12 → v0.8.3.1 all dismissed as
+recurring FPs; v0.8.4 expects 0 new related alerts). Closes the
+v0.8.3 ship-failure root cause; the G4 supply-chain gap is now
+shippable end-to-end. A compromised PyPI mirror cannot serve a
+tampered transitive into the v0.8.4+ container — pip-compile
+catches the hash mismatch at regeneration time + the container
+build's `pip install --require-hashes` catches it again at
+install time (defense-in-depth: the hash check fires at two
+distinct points in the supply chain).
+
+**Residual risk**: `release.yml` regeneration step is NEW + has
+not yet first-fired in production at planning time. Mitigation:
+pre-tag workflow_dispatch test against throwaway pre-release
+tag recommended per the v3-prototyped pattern — not enforced
+this cycle (operator-discretion). PyPI propagation lag through
+the CDN is absorbed by the 3-attempt retry; if propagation
+exceeds 90 seconds (3 × 30s), the step fails fast + blocks the
+ship, surfacing the issue immediately rather than letting silent
+drift propagate. Hot-fix tag pattern (v0.8.4.1 mirroring
+v0.7.4 / v0.7.7.1 / v0.8.3.1 precedent) available as last
+resort.
+
+### DFAHarness `check_faithfulness=True` wiring (P1)
+
+**Surface change**: `EvalSample` schema gains optional
+`source_clauses: list[str] | None = None` field; `EvalResult`
+schema gains `faithfulness_results: list[PromptFaithfulnessResult]`
+list (default empty). `DFAHarness.run()` gains 5 new kwargs:
+`check_faithfulness: bool = False`,
+`faithfulness_threshold: float = DEFAULT_FAITHFULNESS_THRESHOLD`,
+`faithfulness_method: Literal["jaccard", "semantic"] = "jaccard"`,
+`claim_extraction_fn: Callable[[str], list[str]] | None = None`,
+`faithfulness_score_fn: Callable[..., FaithfulnessResult] | None = None`.
+When `check_faithfulness=True`, the harness — for each sample
+whose `source_clauses` is set — extracts atomic claims from the
+post-determinism modal output (matches v0.8.0 P0.1 review fix F7
+canonical replay logic), scores each claim against the
+sample's source_clauses via the chosen method, fires
+`EventAction.AI_EVAL_FAITHFULNESS_CHECKED` per-prompt
+(reserved-but-inactive in v0.8.0; ACTIVATED in v0.8.4) +
+`EventAction.AI_EVAL_FAITHFULNESS_VIOLATION` per below-threshold
+claim (reserved-but-inactive in v0.8.0; ACTIVATED in v0.8.4),
+appends `PromptFaithfulnessResult` to `EvalResult.faithfulness_results`.
+The mock-callable injection points (`claim_extraction_fn` +
+`faithfulness_score_fn`) keep harness tests cost-zero (no LLM
+or sentence-transformers token burn in CI) while exercising
+real production code paths. Default callable resolution falls
+back to v0.8.3-shipped `extract_claims` + v0.8.2-shipped
+`faithfulness_score` / v0.8.3-shipped `faithfulness_score_semantic`
+when callers don't inject mocks.
+
+**Threat coverage**: closes the v0.8.3 P1.2 deferral. The DFAH
+harness loop now first-class supports the second arXiv
+2601.15322 metric (faithfulness scoring) alongside the v0.8.0-
+shipped first metric (decision determinism) + replay
+equivalence. Operators can now run a single CLI invocation
+that produces auditor-defensible artifacts proving (a) the
+risk-statement generator is deterministic AND (b) generated
+claims trace back to the input control + system context. The
+audit-event activation (`AI_EVAL_FAITHFULNESS_CHECKED` +
+`AI_EVAL_FAITHFULNESS_VIOLATION`) gives auditors the same
+audit-trail granularity for faithfulness violations that the
+v0.8.0 baseline gave for determinism violations.
+
+**Residual risk**: per-sample latency multiplier when
+`check_faithfulness=True` — extracting claims is an extra LLM
+call per sample + per-claim scoring is N additional Jaccard /
+semantic-embedding computations. Documented operator guidance
+in `docs/dfah-faithfulness.md`; recommend running determinism
++ faithfulness checks separately for cost-sensitive deployments.
+Source-clauses-file CLI plumbing deferred to v0.8.5 (operator-
+facing CLI flag `--check-faithfulness --source-clauses-file
+<yaml>` not yet wired); v0.8.4 ships the library + harness
+integration to allow programmatic callers to exercise the path
+immediately. v0.8.5 closes the CLI surface.
+
+### MCP CIMD richness — 5th deferral
+
+**Surface change**: none. The Client ID Metadata Document
+(CIMD) richness for multi-tenant MCP deployments was reserved
+in v0.8.0, deferred to v0.8.1, deferred again to v0.8.2,
+deferred again to v0.8.3, deferred again to v0.8.4, and
+deferred again to v0.8.5 — pattern consistent across 5 cycles.
+Per §24.6 R6 ("infra primitives best explored against real
+operator deployments vs guessed at"), v0.8.5 cycle-open
+re-evaluates with potential "formally retire" decision if no
+demand signal materializes from external operators of v0.8.1+
+HTTP/SSE adoption.
+
+**Threat coverage**: not applicable — surface unchanged.
+
+**Residual risk**: not applicable.
+
+---
+
 ---
 
 *First published v0.7.7 (2026-05). Origin: promoted from a

@@ -148,16 +148,58 @@ Evidentia is built on four principles:
 
 ### Recent releases
 
-**v0.8.3 (May 2026)** — *Supply-chain G4 activation + AI-quality
-completion*. Aggressive ~3-week cycle executed in a single
-focused session. Closes 6 of 8 v0.8.2 carry-overs. **G4
-ACTIVATED**: Dockerfile flips from exact-version pinning to
+**v0.8.4 (May 2026)** — *G4 Path 2 + DFAHarness wiring*.
+Aggressive ~2-3 week focused scope (single-session compression
+matching v0.8.3 cadence). Closes the v0.8.3 ship-failure root
+cause via **G4 Path 2** (post-PyPI regeneration in
+`release.yml` — sidesteps cross-platform reproducibility
+entirely). New regeneration step BETWEEN Wait-for-PyPI + docker
+build runs `pip-compile --generate-hashes --no-emit-find-links`
+against PyPI's just-published wheels → ephemeral
+`docker/requirements.txt` overwrite → docker build picks it
+up. Hashes match because pip-compile downloads from PyPI's
+bytes in the Linux CI runner — same source as the container
+build's pip install. Built-in 3-attempt retry loop with 30s
+sleeps absorbs PyPI propagation lag. **DFAHarness
+`check_faithfulness=True` wiring** closes the v0.8.3 P1.2
+deferral: `EvalSample.source_clauses` field +
+`EvalResult.faithfulness_results` list +
+`DFAHarness.run(check_faithfulness=, faithfulness_threshold=,
+faithfulness_method=, claim_extraction_fn=,
+faithfulness_score_fn=)` kwargs.
+`EventAction.AI_EVAL_FAITHFULNESS_CHECKED` +
+`AI_EVAL_FAITHFULNESS_VIOLATION` (reserved-but-inactive in
+v0.8.0) ACTIVATED. Mock-callable injection points keep harness
+tests cost-zero while exercising real production code paths.
+14 new unit tests across 5 test classes. Eleventh consecutive
+PROCEED-CLEAN of the v0.7.x → v0.8.x line. **2313 tests passing
+across 220+ source files; mypy strict 0/0; ruff clean.** MCP
+CIMD richness deferred to v0.8.5 (5th cycle-deferral; v0.8.5
+re-evaluates with potential formal retirement) + CLI flags +
+calibration corpus expansion + real-LLM integration tests
+deferred to v0.8.5.
+
+**v0.8.3 + v0.8.3.1 hot-fix (May 2026)** — *Supply-chain G4
+attempt + AI-quality completion*. Aggressive ~3-week cycle
+executed in a single focused session. Closes 5 of 8 v0.8.2
+carry-overs (G4 attempt failed first-fire + reverted in
+same-day hot-fix). **G4 Path 1 ATTEMPTED**: Dockerfile flipped
+from exact-version pinning to
 `pip install --require-hashes -r /tmp/requirements.txt` against
-hash-pinned `docker/requirements.txt`; `release.yml` exports
-`SOURCE_DATE_EPOCH` for byte-identical reproducible builds with
-build-twice CI verification gate; closes recurring Scorecard
-PinnedDependencies false-positive cycle (alerts #100 → #115
-across v0.7.12 → v0.8.2) structurally + permanently. **F-V82-S1**:
+hash-pinned `docker/requirements.txt`; `release.yml` exported
+`SOURCE_DATE_EPOCH` for SOURCE_DATE_EPOCH-driven `uv build`
+reproducibility. **First-fire revealed `uv build` is NOT
+byte-identical between Windows local + Linux CI runner** even
+with same SOURCE_DATE_EPOCH (file-ordering / timestamp-precision
+drift). PyPI publish succeeded but container build's
+`pip install --require-hashes` failed: local-computed hashes ≠
+Linux-CI-built wheel hashes. **v0.8.3.1 hot-fix REVERTED** the
+Dockerfile to exact-version pinning (same v0.8.2 surface; no
+regression); container ship recovered same-day. Recurring
+Scorecard PinnedDependencies false-positive cycle continued
+(alerts dismissed per the runbook). G4 closure deferred to
+v0.8.4 with Path 2 (post-PyPI regeneration; sidesteps cross-
+platform reproducibility entirely). **F-V82-S1**:
 `bump_version.py --regenerate-requirements` auto-detects host
 platform; on non-Linux hosts auto-invokes pip-compile inside
 Linux base image. **F-V82-S2**: `evidentia eval verify` CLI
