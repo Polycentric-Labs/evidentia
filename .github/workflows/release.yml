@@ -79,11 +79,60 @@ jobs:
       - name: Sync workspace
         run: uv sync --all-packages
 
+      # v0.8.3 G4: SOURCE_DATE_EPOCH-driven reproducible builds.
+      # Sets the wheel-timestamp source from the tagged commit's
+      # author timestamp so `uv build` produces byte-identical
+      # wheels across hosts (verified locally pre-tag: same
+      # SOURCE_DATE_EPOCH → same SHA256 across two clean builds).
+      # This makes pre-tag-generated docker/requirements.txt
+      # SHA256 hashes match what this workflow uploads to PyPI,
+      # which unblocks the Dockerfile `--require-hashes`
+      # activation. Foundation laid in v0.8.2; activated in
+      # v0.8.3 per §26 G4 Path 1.
+      - name: Set SOURCE_DATE_EPOCH from tag commit
+        id: source_date_epoch
+        run: |
+          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct HEAD)
+          echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH" >> $GITHUB_ENV
+          echo "value=$SOURCE_DATE_EPOCH" >> $GITHUB_OUTPUT
+          echo "Reproducible-build timestamp: $SOURCE_DATE_EPOCH"
+
       - name: Build all workspace packages
         # uv build triggers the hatchling frontend-bundle hook for
         # evidentia-api, which runs npm ci + npm run build in the UI
         # directory and copies dist/* into src/evidentia_api/static/.
+        # SOURCE_DATE_EPOCH (set above) drives wheel timestamps for
+        # byte-identical output across hosts.
         run: uv build --all-packages
+
+      # v0.8.3 G4 build-twice verification: re-build into a separate
+      # output dir + assert SHA256 hashes match. Catches any
+      # non-determinism in uv's build pipeline or the npm bundle
+      # step (the SPA bundle landed inside evidentia-api's wheel
+      # would surface as a hash mismatch if npm ever produces
+      # non-deterministic output).
+      - name: Verify reproducible build (build twice + sha256 match)
+        run: |
+          mkdir -p dist-verify
+          uv build --all-packages -o dist-verify
+          mismatch=0
+          for whl in dist/*.whl; do
+            name=$(basename "$whl")
+            h1=$(sha256sum "dist/$name" | cut -d' ' -f1)
+            h2=$(sha256sum "dist-verify/$name" | cut -d' ' -f1)
+            if [ "$h1" = "$h2" ]; then
+              echo "MATCH  $name  $h1"
+            else
+              echo "DIFFER $name  ($h1 vs $h2)"
+              mismatch=1
+            fi
+          done
+          rm -rf dist-verify
+          if [ "$mismatch" -ne 0 ]; then
+            echo "::error::Reproducible-build verification FAILED: wheel hashes diverged across two builds with same SOURCE_DATE_EPOCH"
+            exit 1
+          fi
+          echo "Reproducible-build verification PASSED: all wheels byte-identical across two builds"
 
       - name: Check distributions
         run: |

@@ -115,18 +115,20 @@ def main() -> int:
         "--regenerate-requirements",
         action="store_true",
         help=(
-            "v0.7.14 P1.5 (foundation) → v0.8.2 G4 (production): "
-            "regenerate docker/requirements.txt via pip-compile "
-            "--generate-hashes against evidentia[gui]==<--to>. The "
-            "Dockerfile install line uses --require-hashes -r "
-            "/tmp/requirements.txt as of v0.8.2, so this regeneration "
-            "is REQUIRED on every release that touches Dockerfile "
-            "deps. Requires pip-tools installed (pip install pip-tools). "
-            "PLATFORM CAVEAT: pip-compile resolves transitives for the "
-            "HOST platform — Linux-only deps (uvloop) are missed when "
-            "run on Windows. For correct results, run inside the "
-            "pinned Linux base image: see docs/dockerfile-pinning.md "
-            "Regeneration section."
+            "v0.7.14 P1.5 (foundation) → v0.8.2 (staged) → v0.8.3 G4 "
+            "(activated): regenerate docker/requirements.txt with "
+            "SHA256 hashes that match release.yml's reproducible "
+            "uv build output. Wraps `uv build --all-packages` (with "
+            "SOURCE_DATE_EPOCH from HEAD's commit timestamp) → "
+            "pip-compile --find-links=./dist/ against the locally-"
+            "built wheels for evidentia[gui]==<--to>. Requires "
+            "pip-tools (`pip install pip-tools`) + uv installed. "
+            "F-V82-S1 (v0.8.3 LOW): host platform auto-detection "
+            "— on non-Linux hosts, pip-compile runs inside the "
+            "pinned python:3.14-slim base image so Linux-only "
+            "transitives (uvloop) resolve correctly. See "
+            "docs/dockerfile-pinning.md for the full regeneration "
+            "narrative."
         ),
     )
     args = ap.parse_args()
@@ -137,8 +139,21 @@ def main() -> int:
     if not VERSION_RE.fullmatch(current):
         sys.exit(f"--from must be X.Y.Z, got {current!r}")
     if current == args.to:
-        print(f"Already at {args.to} - nothing to do.")
-        return 0
+        if args.regenerate_requirements:
+            # v0.8.3 G4: allow --regenerate-requirements to fire
+            # even when the version doesn't change. Operators may
+            # want to refresh requirements.txt hashes after a
+            # transitive-dep CVE OR to test the regeneration
+            # pipeline without bumping. Skip the substitution loop
+            # but proceed to the regeneration block below.
+            print(
+                f"Already at {args.to} — skipping version "
+                "substitutions; proceeding with "
+                "--regenerate-requirements."
+            )
+        else:
+            print(f"Already at {args.to} - nothing to do.")
+            return 0
 
     cur_pin_pattern, tgt_pin = bump_pin_range(current, args.to)
     # Replacements are (regex_pattern, replacement_text). Using regex
@@ -202,57 +217,187 @@ def main() -> int:
         f"Summary: {files_changed} file(s), {total_subs} substitution(s){suffix}"
     )
 
-    # v0.7.14 P1.5: optional regeneration of docker/requirements.txt
-    # via pip-compile. Runs AFTER the version-bump substitutions so
-    # the requirements.in pin is updated to the new version before
-    # pip-compile resolves the transitive closure.
+    # v0.7.14 P1.5 (foundation) → v0.8.2 (production-staged) → v0.8.3 G4
+    # (production-activated): regenerate docker/requirements.txt with
+    # SHA256 hashes that match what release.yml will upload to PyPI.
+    #
+    # v0.8.3 G4 path — local-wheels via SOURCE_DATE_EPOCH:
+    #
+    #   1. Build local wheels with SOURCE_DATE_EPOCH derived from the
+    #      target version's intended tag commit. Same env var is used
+    #      by release.yml when it builds wheels for PyPI publish, so
+    #      the wheels are byte-identical → SHA256 hashes match → the
+    #      requirements.txt's hashes match what pip downloads from
+    #      PyPI at container-build time.
+    #   2. Run pip-compile --find-links=./dist/ so the resolver sees
+    #      the locally-built wheels for evidentia[gui]==X.Y.Z (which
+    #      isn't on PyPI yet because we haven't tagged).
+    #   3. The output has hashes for the local wheels; release.yml
+    #      will upload those exact bytes to PyPI; pip downloads them
+    #      at container-build time + verifies hashes match.
+    #
+    # F-V82-S1 (v0.8.3 LOW): when host platform != Linux + the user
+    # explicitly opts in to --regenerate-requirements, auto-invoke
+    # pip-compile inside Docker so Linux-only transitives (uvloop)
+    # resolve correctly. Still uses --find-links pointed at the
+    # locally-built dist/.
     if args.regenerate_requirements:
         print()
-        print("Regenerating docker/requirements.txt (P1.5 preview)...")
+        print("Regenerating docker/requirements.txt (v0.8.3 G4)...")
         if args.dry_run:
-            print("  (dry run; would have run pip-compile)")
+            print("  (dry run; would have run uv build + pip-compile)")
         else:
+            import os
             import subprocess
             from pathlib import Path
 
             repo_root = Path(__file__).resolve().parent.parent
             docker_dir = repo_root / "docker"
+            dist_dir = repo_root / "dist"
             req_in = docker_dir / "requirements.in"
             req_out = docker_dir / "requirements.txt"
-            if not req_in.exists():
-                docker_dir.mkdir(exist_ok=True)
-                req_in.write_text(
-                    f"evidentia[gui]=={args.to}\n",
-                    encoding="utf-8",
+
+            # Ensure requirements.in pins the new version.
+            docker_dir.mkdir(exist_ok=True)
+            req_in.write_text(
+                f"evidentia[gui]=={args.to}\n",
+                encoding="utf-8",
+            )
+
+            # Step 1 — build local wheels with SOURCE_DATE_EPOCH
+            # derived from HEAD's commit timestamp. Matches the
+            # release.yml step in v0.8.3 G4.
+            sde_proc = subprocess.run(
+                ["git", "log", "-1", "--format=%ct", "HEAD"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            source_date_epoch = sde_proc.stdout.strip()
+            print(
+                f"  SOURCE_DATE_EPOCH={source_date_epoch} "
+                "(from HEAD commit timestamp)"
+            )
+
+            # Clean dist/ so we don't pull in stale wheels from a
+            # prior bump.
+            if dist_dir.exists():
+                import shutil
+
+                shutil.rmtree(dist_dir)
+
+            build_env = os.environ.copy()
+            build_env["SOURCE_DATE_EPOCH"] = source_date_epoch
+            build_proc = subprocess.run(
+                ["uv", "build", "--all-packages"],
+                capture_output=True,
+                text=True,
+                env=build_env,
+                check=False,
+            )
+            if build_proc.returncode != 0:
+                print(
+                    "  uv build FAILED:",
+                    build_proc.stderr[-500:],
                 )
+                print(
+                    "  (regeneration skipped; ensure `uv` is "
+                    "installed + the workspace builds cleanly)"
+                )
+                # Continue with version-bump completion; just skip
+                # the regeneration. Operator can re-run.
             else:
-                # Update the pin in requirements.in to match the
-                # new version (single-line file).
-                req_in.write_text(
-                    f"evidentia[gui]=={args.to}\n",
-                    encoding="utf-8",
+                wheel_count = len(list(dist_dir.glob("*.whl")))
+                print(
+                    f"  uv build OK: {wheel_count} wheels in dist/"
                 )
-            try:
-                result = subprocess.run(
-                    [
+
+                # Step 2 — invoke pip-compile against local wheels
+                # via --find-links. Auto-detect host platform: on
+                # non-Linux, run inside Docker so Linux-only deps
+                # (uvloop) resolve.
+                is_linux_host = sys.platform.startswith("linux")
+                if is_linux_host:
+                    print(
+                        "  Host is Linux; running pip-compile "
+                        "directly"
+                    )
+                    # --no-emit-find-links keeps the local-wheels
+                    # path out of the generated requirements.txt
+                    # so the file is portable to environments
+                    # that don't have dist/ available (the
+                    # production container, downstream
+                    # consumers).
+                    compile_cmd = [
                         "pip-compile",
                         "--generate-hashes",
+                        f"--find-links={dist_dir}",
+                        "--no-emit-find-links",
                         "--output-file",
                         str(req_out),
                         str(req_in),
-                    ],
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-                if result.returncode != 0:
+                    ]
+                    compile_proc = subprocess.run(
+                        compile_cmd,
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
+                else:
+                    # F-V82-S1: invoke pip-compile inside the
+                    # pinned Linux base image.
                     print(
-                        "  pip-compile FAILED; check output:",
-                        result.stderr[-500:],
+                        f"  Host is {sys.platform}; invoking "
+                        "pip-compile inside Docker (Linux base)"
+                    )
+                    base_image = (
+                        "python:3.14-slim@sha256:"
+                        "5b3879b6f3cb77e712644d50262d05a7c"
+                        "146b7312d784a18eff7ff5462e77033"
+                    )
+                    docker_path = subprocess.run(
+                        ["pwd", "-W"],
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    ).stdout.strip() or str(repo_root)
+                    compile_cmd = [
+                        "docker",
+                        "run",
+                        "--rm",
+                        "-v",
+                        f"{docker_path}/docker:/work",
+                        "-v",
+                        f"{docker_path}/dist:/wheels",
+                        "-w",
+                        "//work",
+                        base_image,
+                        "sh",
+                        "-c",
+                        (
+                            "pip install -q pip-tools && "
+                            "pip-compile --generate-hashes "
+                            "--find-links=/wheels "
+                            "--no-emit-find-links "
+                            "--output-file=requirements.txt "
+                            "requirements.in"
+                        ),
+                    ]
+                    compile_proc = subprocess.run(
+                        compile_cmd,
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
+
+                if compile_proc.returncode != 0:
+                    print(
+                        "  pip-compile FAILED:",
+                        compile_proc.stderr[-500:],
                     )
                     print(
-                        "  (regeneration skipped; install pip-tools "
-                        "via `pip install pip-tools` then re-run)"
+                        "  (regeneration skipped; verify pip-tools "
+                        "+ Docker (if non-Linux host) installed)"
                     )
                 else:
                     pkg_count = sum(
@@ -266,11 +411,6 @@ def main() -> int:
                         f"  docker/requirements.txt regenerated: "
                         f"{pkg_count} packages with SHA256 hashes"
                     )
-            except FileNotFoundError:
-                print(
-                    "  pip-compile not found; install via "
-                    "`pip install pip-tools` (regeneration skipped)"
-                )
 
     if not args.dry_run and files_changed > 0:
         print()
