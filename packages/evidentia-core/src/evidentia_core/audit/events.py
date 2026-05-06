@@ -127,6 +127,15 @@ class EventAction(str, Enum):
     # the bundle path lands in evidentia.bundle_path so an auditor
     # can correlate the EvalResult JSON with its Sigstore proof.
     AI_EVAL_OUTPUT_SIGNED = "evidentia.ai.eval_output_signed"
+    # v0.8.3 P1.2: faithfulness-check completion. Fired per-prompt
+    # when the harness ran the faithfulness check (DFAHarness.run
+    # with check_faithfulness=True). Distinct from the per-claim
+    # AI_EVAL_FAITHFULNESS_VIOLATION events — _CHECKED is the
+    # "we ran the check" record; _VIOLATION fires only on actual
+    # below-threshold per-claim failures. Pairs with the v0.8.1
+    # AI_RISK_TRACE_EMITTED event in the audit-stream for the
+    # full DFAH narrative.
+    AI_EVAL_FAITHFULNESS_CHECKED = "evidentia.ai.eval_faithfulness_checked"
 
     # v0.8.0 P0.2: Policy Reasoning Trace emit (arXiv 2509.23291).
     # Fired once per RiskStatement (or future trace-bearing

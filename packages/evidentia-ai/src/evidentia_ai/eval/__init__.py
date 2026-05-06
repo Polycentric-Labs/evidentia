@@ -50,6 +50,10 @@ fake generator; live operator runs wire in
 
 from __future__ import annotations
 
+from evidentia_ai.eval.claim_extraction import (
+    CLAIM_EXTRACTION_PROMPT,
+    extract_claims,
+)
 from evidentia_ai.eval.faithfulness import (
     DEFAULT_FAITHFULNESS_THRESHOLD,
     FaithfulnessResult,
@@ -75,6 +79,7 @@ from evidentia_ai.eval.signing import (
 )
 
 __all__ = [
+    "CLAIM_EXTRACTION_PROMPT",
     "DEFAULT_FAITHFULNESS_THRESHOLD",
     "DEFAULT_SEMANTIC_MODEL",
     "DEFAULT_SEMANTIC_THRESHOLD",
@@ -86,6 +91,7 @@ __all__ = [
     "ReplayResult",
     "SemanticFaithfulnessNotAvailableError",
     "determinism_score",
+    "extract_claims",
     "faithfulness_score",
     "faithfulness_score_semantic",
     "hash_output",
