@@ -53,23 +53,37 @@ def _resolve_sign(
     """v0.8.2 P3.2 — resolve the tri-state ``--sign / --no-sign``.
 
     When ``sign_flag`` is None (the default), Sigstore signing
-    fires iff:
-      - ``output`` is set (signing has a target), AND
-      - GITHUB_ACTIONS env var is "true" (CI release context
-        with OIDC token available).
+    fires iff ALL of:
+
+    1. ``output`` is set (signing has a target).
+    2. GITHUB_ACTIONS env var is "true" (CI release context with
+       OIDC token available).
+    3. ``sigstore`` Python package is importable (i.e., the
+       optional ``[sigstore]`` extra is installed). Without
+       this, sign_file would raise SigstoreNotAvailableError
+       and we'd rather degrade gracefully than crash the CLI.
 
     Operators running locally without OIDC get the eval JSON
     written to ``output`` but no ``.sigstore.json`` bundle. Pass
-    ``--sign`` explicitly to force signing (raises if no OIDC
-    credential is detectable); pass ``--no-sign`` to suppress
-    signing even in CI (e.g., dry-runs).
+    ``--sign`` explicitly to force signing (raises with a clear
+    message if sigstore isn't importable or no OIDC credential
+    is detectable); pass ``--no-sign`` to suppress signing even
+    in CI (e.g., dry-runs).
     """
     if output is None:
         # No output target → nothing to sign.
         return False
     if sign_flag is not None:
         return sign_flag
-    return os.environ.get("GITHUB_ACTIONS", "").lower() == "true"
+    # Auto-detect: only sign when ALL preconditions hold.
+    if os.environ.get("GITHUB_ACTIONS", "").lower() != "true":
+        return False
+    # Check sigstore importability without actually importing
+    # at module-load time — keeps `evidentia eval --help` fast
+    # for operators who don't need signing.
+    from evidentia_core.oscal.sigstore import sigstore_available
+
+    return sigstore_available()
 
 app = typer.Typer(
     name="eval",
