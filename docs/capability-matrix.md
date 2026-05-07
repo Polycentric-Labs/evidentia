@@ -13,6 +13,126 @@
 
 ---
 
+## Re-validation snapshot — 2026-05-06 (v0.8.4 SHIPPED)
+
+v0.8.4 SHIPPED (tag `v0.8.4` at commit `5d366af`; container
+digest `sha256:59f8305874177c09dbd3ab36e458b87b4454c0ae2d7ac016eeb49d66009ccb9d`).
+Aggressive ~2-3 week focused scope (single-session compression
+matching v0.8.3 cadence). Closes the v0.8.3 ship-failure root
+cause (G4 Path 1 cross-platform reproducibility limitation) via
+**Path 2** (post-PyPI regeneration in `release.yml` — sidesteps
+cross-platform reproducibility entirely) + the v0.8.3 P1.2
+deferred wiring (DFAHarness `check_faithfulness=True`
+first-class on the harness loop). 11th consecutive
+PROCEED-CLEAN of v0.7.x → v0.8.x line.
+
+**New public surfaces tested this cycle**:
+
+| Surface | Test path | Coverage |
+|---|---|---|
+| `EvalSample.source_clauses: list[str] \| None = None` | `tests/unit/test_eval/test_harness_faithfulness.py` (test_eval_sample_source_clauses_optional + test_eval_sample_with_source_clauses) | Schema gains optional field; backward-compatible default None |
+| `EvalResult.faithfulness_results: list[PromptFaithfulnessResult]` | `tests/unit/test_eval/test_harness_faithfulness.py` (TestPromptFaithfulnessResultModel × 4) | Default empty list; populated only when harness ran with check_faithfulness=True; JSON-serializable; computed properties (overall_faithful / passed_count / failed_count) |
+| `DFAHarness.run(check_faithfulness=, faithfulness_threshold=, faithfulness_method=, claim_extraction_fn=, faithfulness_score_fn=)` | `tests/unit/test_eval/test_harness_faithfulness.py` (TestCheckFaithfulnessKwargDefault + TestCheckFaithfulnessJaccardPath + TestCheckFaithfulnessSemanticPath × 14 tests) | Default check_faithfulness=False (no-op path); samples without source_clauses skipped; jaccard method (default); semantic method opt-in; mock-callable injection points keep tests cost-zero |
+| `EventAction.AI_EVAL_FAITHFULNESS_CHECKED` ACTIVATED | `tests/unit/test_eval/test_harness_faithfulness.py` (TestAuditEventFiring; test_check_faithfulness_fires_checked_event_per_prompt) | Reserved-but-inactive in v0.8.0; ACTIVATED in v0.8.4; per-prompt event with run_id + prompt_id + claim_count + passed_count + failed_count |
+| `EventAction.AI_EVAL_FAITHFULNESS_VIOLATION` ACTIVATED | `tests/unit/test_eval/test_harness_faithfulness.py` (TestAuditEventFiring; test_check_faithfulness_fires_violation_per_below_threshold_claim) | Reserved-but-inactive in v0.8.0; ACTIVATED in v0.8.4; per-claim below-threshold event with run_id + prompt_id + claim + score + threshold + method |
+| `release.yml` G4 Path 2 regen step | First-fire end-to-end validated on v0.8.4 tag-push (release.yml run completed PASS) + ahead-of-tag validated on `5d366af` push (container-build smoke test parallel run completed PASS) | New step "Regenerate hash-pinned requirements.txt against PyPI" runs BETWEEN Wait-for-PyPI + docker build; pip-compile against just-published PyPI wheels; 3-attempt retry loop; ephemeral docker/requirements.txt overwrite |
+| `Dockerfile` `--require-hashes` install | First-fire validated on v0.8.4 tag-push (release.yml publish-container completed PASS at digest sha256:59f8305...) | Install line uses `pip install --no-cache-dir --user --require-hashes -r /tmp/requirements.txt`; defense-in-depth (hash verification at pip-compile time + at install time) |
+
+**Inherited surface re-validation** (carry-forward from v0.8.3
+— no functional changes to inherited surfaces; v0.8.4 closes
+v0.8.3 deferrals + activates events without changing user-
+facing contracts on TPRM / model-risk / governance / cloud-WORM
+/ Sigstore eval / DFAH determinism / DFAH faithfulness / PRT /
+MCP / plugin-contract scaffolding).
+
+**Adversarial probing (DAST per v4 G11)**:
+
+- G4 Path 2 first-fire on production tag: release.yml's new
+  regeneration step PASSED end-to-end with no retry needed;
+  PyPI propagation < 30s; container build's
+  `pip install --require-hashes` succeeded against the
+  ephemerally-regenerated docker/requirements.txt.
+- DFAHarness `check_faithfulness=True` end-to-end: mock-
+  callable injection points exercise the full harness loop
+  including audit-event firing + result aggregation; default
+  jaccard scorer + reserved semantic path both validated.
+- Modal-output extraction: claim extraction runs on the
+  post-determinism modal output (matches v0.8.0 P0.1 review
+  fix F7 canonical replay logic); per-sample test confirms
+  claims come from the canonical replay, not arbitrary
+  per-sample variants.
+- Smoke-test cycle validation: container-build.yml smoke test
+  on `main` push exercises the same Path 2 regeneration code
+  path that release.yml's publish-container job runs on tag
+  — high confidence that future releases inherit a working
+  baseline.
+
+**Quality gates at ship**: 2313 tests passing / 14 skipped
+(was 2299 / 14 at v0.8.3.1 close; +14 new from P1 DFAHarness
+wiring tests). mypy strict 0/0 across 215 source files (was
+216; -1 because evidentia-mcp/src/evidentia_mcp/cli.py has no
+public surface change requiring strict re-check while the rest
+of the codebase contracted slightly via the `Any` typing fix).
+ruff clean. Standing-rule sweep clean across all v0.8.4-cycle
+commits (6 commits: G4 Path 2 + DFAHarness wiring + version
+bump + 3 ship-cycle hardening commits).
+
+**Pre-release-review v4 Pre-tag deliverables**:
+
+- `docs/security-review-v0.8.4.md` (5th canonical Pre-tag
+  deliverable per v4 §G7) — Continuous variant; 0 unfixed
+  CRITICAL/HIGH/MEDIUM/LOW findings; 11th consecutive
+  PROCEED-CLEAN of v0.7.x → v0.8.x line.
+- `docs/threat-model.md` extended with v0.8.4 attack-surface
+  delta covering G4 Path 2 release-pipeline change +
+  DFAHarness wiring + AI_EVAL_FAITHFULNESS_CHECKED +
+  AI_EVAL_FAITHFULNESS_VIOLATION ACTIVATED + v0.8.3.1 hot-fix
+  historical context + MCP CIMD 5th cycle-deferral note.
+
+**Step 7 post-tag verification ALL PASS**:
+
+- G1 PEP 740 verify all 7 wheels OK
+  (`pypi-attestations verify pypi --repository
+  https://github.com/allenfbyrd/evidentia ...`)
+- G2 cosign verify SLSA Provenance v1 (matching cert + Rekor
+  inclusion proof) at digest
+  `sha256:59f8305874177c09dbd3ab36e458b87b4454c0ae2d7ac016eeb49d66009ccb9d`
+- G3 osv-scanner --sbom: 169 packages / 0 issues
+- G4 docker run "Evidentia v0.8.4" / Python 3.14.4 + 89
+  frameworks via `catalog list`
+- G5 fresh-venv install: 5 packages all at 0.8.4 first-attempt
+  — **11th consecutive pin-trap fix validation**
+- G7 Scorecard delta: 0 open code-scanning alerts at close
+  (CodeQL #119 + #120 dismissed per recurring-FP runbook for
+  the new pip-tools install step — same FP cycle as Dockerfile
+  alerts dismissed v0.7.12 → v0.8.3.1)
+- G16 release-body 5484 bytes — **10th consecutive
+  auto-populate-from-CHANGELOG**
+
+**Ship-cycle 3-stage hardening** (post-tag follow-throughs on
+the new G4 Path 2 surface):
+
+1. Container-build smoke test broke on the v0.8.4 push because
+   the smoke test grepped Dockerfile for the old
+   `evidentia[gui]==X.Y.Z` pattern. Fixed by `27fc974` (smoke
+   test reads pin from `docker/requirements.txt` + adds same
+   Path 2 regeneration step before docker build).
+2. YAML mapping-key parse error in commit `27fc974`'s step
+   name (unquoted colon at column 42 → 0 jobs scheduled).
+   Fixed by `5d366af` (em-dash separator). This is the v0.8.4
+   tag commit.
+3. Two new CodeQL PinnedDependenciesID alerts (#117 + #118 →
+   re-numbered #119 + #120 after pip-tools pin re-fired the
+   alert) on the new pip-tools install step. Fixed by `8cf372e`
+   (pin pip-tools==7.5.3) + dismissed alerts per the
+   recurring-FP runbook.
+
+The 3-stage hardening cycle is the cost of activating a new
+release-pipeline step. Future v0.8.x cycles inherit a working
+baseline.
+
+---
+
 ## Re-validation snapshot — 2026-05-06 (v0.8.1 pre-tag)
 
 v0.8.1 (in progress on `main`; not yet tagged) closes the v0.8.0
