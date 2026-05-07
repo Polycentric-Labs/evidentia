@@ -123,6 +123,22 @@ def serve(
             "appropriate for stdio + loopback HTTP/SSE)."
         ),
     ),
+    cimd_registry_path: Path | None = typer.Option(
+        None,
+        "--cimd-registry",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help=(
+            "v0.8.5 P4: path to a CIMD (Client ID Metadata "
+            "Document) registry JSON file. When set, the server "
+            "loads + attaches the registry; future per-client "
+            "scope-gating logic consults it via "
+            "``server.evidentia_cimd``. Optional. See "
+            "``evidentia_mcp.cimd`` for the file format."
+        ),
+    ),
 ) -> None:
     """Run the MCP server (blocks until the client disconnects)."""
     # Backward-compat: --no-stdio was the v0.8.0 way to surface
@@ -143,12 +159,31 @@ def serve(
     # Import lazily so `evidentia mcp doctor` works even when the
     # MCP SDK has a transient init issue (the doctor command
     # tells the operator what's wrong).
+    from evidentia_mcp.cimd import CIMDRegistry
     from evidentia_mcp.server import (
         build_server,
         run_http,
         run_sse,
         run_stdio,
     )
+
+    # v0.8.5 P4: load CIMD registry if requested.
+    cimd_registry: CIMDRegistry | None = None
+    if cimd_registry_path is not None:
+        try:
+            cimd_registry = CIMDRegistry.from_file(cimd_registry_path)
+        except (ValueError, FileNotFoundError) as exc:
+            typer.echo(
+                f"Error loading --cimd-registry at "
+                f"{cimd_registry_path}: {exc}",
+                err=True,
+            )
+            raise typer.Exit(code=2) from exc
+        typer.echo(
+            f"Loaded CIMD registry from {cimd_registry_path}: "
+            f"{len(cimd_registry.clients)} client(s) registered.",
+            err=True,
+        )
 
     # v0.8.2 F-V81-S1: extra warning when binding non-loopback
     # WITHOUT --allow-root. Pairs with the existing reverse-proxy
@@ -172,19 +207,29 @@ def serve(
             )
 
     if transport == _Transport.STDIO:
-        run_stdio(allow_root=allow_root)
+        run_stdio(allow_root=allow_root, cimd_registry=cimd_registry)
     elif transport == _Transport.SSE:
         # SSE transport — the legacy MCP HTTP transport. Some
         # older MCP clients still expect this.
         if host != "127.0.0.1":
             _warn_non_loopback("SSE")
-        run_sse(host=host, port=port, allow_root=allow_root)
+        run_sse(
+            host=host,
+            port=port,
+            allow_root=allow_root,
+            cimd_registry=cimd_registry,
+        )
     elif transport == _Transport.HTTP:
         # Streamable-http transport — the modern MCP HTTP
         # transport supporting bi-directional streaming.
         if host != "127.0.0.1":
             _warn_non_loopback("HTTP")
-        run_http(host=host, port=port, allow_root=allow_root)
+        run_http(
+            host=host,
+            port=port,
+            allow_root=allow_root,
+            cimd_registry=cimd_registry,
+        )
     else:  # pragma: no cover — exhaustive Enum
         typer.echo(f"Unknown transport: {transport}", err=True)
         raise typer.Exit(code=2)

@@ -50,6 +50,8 @@ from evidentia_core.models.gap import GapAnalysisReport
 from evidentia_core.security.paths import validate_within
 from mcp.server.fastmcp import FastMCP
 
+from evidentia_mcp.cimd import CIMDRegistry
+
 SERVER_NAME = "evidentia"
 
 # v0.8.0 P0.3: keep the user-facing instructions short — MCP
@@ -74,7 +76,11 @@ SERVER_INSTRUCTIONS = (
 )
 
 
-def build_server(*, allow_root: Path | None = None) -> FastMCP:
+def build_server(
+    *,
+    allow_root: Path | None = None,
+    cimd_registry: CIMDRegistry | None = None,
+) -> FastMCP:
     """Construct the FastMCP server with all tools registered.
 
     Args:
@@ -87,6 +93,17 @@ def build_server(*, allow_root: Path | None = None) -> FastMCP:
             When ``None`` (default), tools preserve the v0.8.1
             behavior of accepting any path the server's UID can
             read (appropriate for stdio + loopback HTTP/SSE).
+        cimd_registry: v0.8.5 P4. Optional Client ID Metadata
+            Document registry. When set, the server attaches the
+            registry to its instance so future per-client
+            scope-gating logic can consult it. v0.8.5 ships the
+            registry-loading + attachment infrastructure;
+            per-tool scope enforcement at MCP-protocol level is
+            a v0.8.6 polish item. The registry IS visible to
+            tool implementations via ``server.evidentia_cimd``
+            attribute (custom-attached; not a FastMCP standard
+            field) for callers that want to opt into manual
+            scope checks.
 
     Returns:
         A :class:`mcp.server.fastmcp.FastMCP` instance ready to
@@ -95,11 +112,21 @@ def build_server(*, allow_root: Path | None = None) -> FastMCP:
         appropriate transport.
     """
     server = FastMCP(name=SERVER_NAME, instructions=SERVER_INSTRUCTIONS)
+    # v0.8.5 P4: attach CIMD registry as a server-side attribute
+    # so audit-trail consumers + future scope-gating logic can
+    # consult it. FastMCP doesn't reserve this attribute name; we
+    # use the ``evidentia_*`` prefix convention to avoid future
+    # collisions.
+    server.evidentia_cimd = cimd_registry  # type: ignore[attr-defined]
     _register_tools(server, allow_root=allow_root)
     return server
 
 
-def run_stdio(*, allow_root: Path | None = None) -> None:
+def run_stdio(
+    *,
+    allow_root: Path | None = None,
+    cimd_registry: CIMDRegistry | None = None,
+) -> None:
     """Run the MCP server over stdio (the canonical transport).
 
     Blocks until the client disconnects (or the operator presses
@@ -111,13 +138,18 @@ def run_stdio(*, allow_root: Path | None = None) -> None:
             as the operator's UID, so an extra gate adds little
             value. Operators concerned about a malicious LLM
             client can still set the flag.
+        cimd_registry: v0.8.5 P4. See :func:`build_server`.
     """
-    server = build_server(allow_root=allow_root)
+    server = build_server(allow_root=allow_root, cimd_registry=cimd_registry)
     server.run(transport="stdio")
 
 
 def run_sse(
-    *, host: str, port: int, allow_root: Path | None = None
+    *,
+    host: str,
+    port: int,
+    allow_root: Path | None = None,
+    cimd_registry: CIMDRegistry | None = None,
 ) -> None:
     """Run the MCP server over SSE (Server-Sent Events).
 
@@ -132,12 +164,15 @@ def run_sse(
             non-loopback ``host`` SHOULD pair with a non-``None``
             ``allow_root`` so file-path tool inputs are gated
             against the bound directory.
+        cimd_registry: v0.8.5 P4. See :func:`build_server`.
+            Especially relevant for non-loopback HTTP/SSE
+            deployments where multiple clients may connect.
 
     Operators binding to non-loopback addresses MUST also front
     the server with reverse-proxy auth. See
     ``docs/threat-model.md`` Surface 2 for the full posture.
     """
-    server = build_server(allow_root=allow_root)
+    server = build_server(allow_root=allow_root, cimd_registry=cimd_registry)
     # FastMCP exposes ``settings.host`` + ``settings.port`` as
     # the canonical knobs for the HTTP transports. Mutate before
     # ``server.run(transport="sse")`` so the bind address takes
@@ -148,7 +183,11 @@ def run_sse(
 
 
 def run_http(
-    *, host: str, port: int, allow_root: Path | None = None
+    *,
+    host: str,
+    port: int,
+    allow_root: Path | None = None,
+    cimd_registry: CIMDRegistry | None = None,
 ) -> None:
     """Run the MCP server over streamable-http.
 
@@ -159,8 +198,14 @@ def run_http(
     Same security posture as :func:`run_sse` — operators
     binding to non-loopback MUST front with reverse-proxy
     auth AND set ``allow_root`` (v0.8.2 F-V81-S1).
+
+    Args:
+        host: Bind address.
+        port: Bind port.
+        allow_root: See :func:`build_server`.
+        cimd_registry: v0.8.5 P4. See :func:`build_server`.
     """
-    server = build_server(allow_root=allow_root)
+    server = build_server(allow_root=allow_root, cimd_registry=cimd_registry)
     server.settings.host = host
     server.settings.port = port
     server.run(transport="streamable-http")

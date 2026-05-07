@@ -20,6 +20,11 @@ the top-level ``evidentia`` Typer app.
 
 from __future__ import annotations
 
+from evidentia_mcp.cimd import (
+    CIMD_REGISTRY_VERSION,
+    CIMDDocument,
+    CIMDRegistry,
+)
 from evidentia_mcp.server import (
     build_server,
     run_http,
@@ -28,6 +33,9 @@ from evidentia_mcp.server import (
 )
 
 __all__ = [
+    "CIMD_REGISTRY_VERSION",
+    "CIMDDocument",
+    "CIMDRegistry",
     "build_server",
     "run_http",
     "run_sse",
