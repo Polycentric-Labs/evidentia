@@ -873,30 +873,74 @@ consecutive of v0.7.x → v0.8.x line).
 - Standing-rule keyword sweep clean across both v0.8.4-cycle
   commits
 
-## v0.8.5 — PLANNED
+## v0.8.5 — DFAH CLI flags + corpus + real-LLM tests + CIMD — SHIPPED
 
-Carries forward the v0.8.4 deferrals + 5th-cycle CIMD
-re-evaluation:
+Tag `v0.8.5` at commit (TBD post-tag). Aggressive ~2-3 week
+focused scope (single-session compression matching v0.8.3 +
+v0.8.4 cadence). Closes ALL 4 v0.8.4 carry-overs per Allen's
+explicit Comprehensive scope + Implement-CIMD-now lock-in
+(§28). 12th consecutive PROCEED-CLEAN of v0.7.x → v0.8.x line.
 
-- **MCP CIMD richness** — 5th cycle-deferral. v0.8.5 cycle-
-  open re-evaluates per §24.6 R6 with potential "formally
-  retire" decision if no demand signal materializes from
-  external operators of v0.8.1+ HTTP/SSE adoption.
+See [`docs/security-review-v0.8.5.md`](security-review-v0.8.5.md)
+for the v4 Pre-tag-style closeout (PROCEED-CLEAN; 12th
+consecutive of v0.7.x → v0.8.x line).
+
+### Closed in v0.8.5
+
 - **DFAH faithfulness CLI flags** —
   `evidentia eval risk-determinism --check-faithfulness
   --faithfulness-threshold N --faithfulness-method
   {jaccard,semantic} --source-clauses-file <yaml>` operator-
-  facing surface. v0.8.4 ships the library + harness
-  integration; v0.8.5 closes the CLI surface.
-- **DFAH calibration corpus expansion** to 100-200 entries +
-  multi-rater labeling (Allen + LLM-assisted with manual
-  spot-checks; Cohen's Kappa agreement metric) + per-framework
-  subsets (NIST-only / FFIEC-only / ISO-27001-only).
+  facing surface. Closes the v0.8.4 P1.2 CLI-surface
+  deferral. Pre-condition validation rejects malformed inputs
+  BEFORE any LLM call fires.
+- **DFAH calibration corpus expansion to 123 entries** +
+  per-framework subsets (`corpus_nist.jsonl` /
+  `corpus_ffiec.jsonl` / `corpus_iso27001.jsonl`, 24 entries
+  each across the 4 categories). `tune_faithfulness_threshold.py
+  --corpus-pattern <glob>` for per-framework sweep. Empirical
+  per-framework recommended thresholds documented.
 - **Real-LLM integration tests** for `extract_claims()` +
-  `DFAHarness.run(check_faithfulness=True)` end-to-end —
-  opt-in via `EVIDENTIA_LLM_INTEGRATION=1` env var.
-- Plus any review findings from external operator usage of
-  v0.8.4 features.
+  `DFAHarness.run(check_faithfulness=True)` end-to-end at
+  `tests/integration/test_eval/test_real_llm_extraction.py`.
+  Opt-in via `EVIDENTIA_LLM_INTEGRATION=1` env var.
+- **MCP CIMD richness** — implemented after 5 deferral cycles
+  per Allen's "implement now" directive. New module
+  `evidentia_mcp.cimd` with `CIMDDocument` (per RFC 7591) +
+  `CIMDRegistry` (JSON-file-backed, version-tagged).
+  `evidentia mcp serve --cimd-registry <path>` flag.
+  Server-side attribute `server.evidentia_cimd` exposed for
+  tool implementations. v0.8.5 ships the registry-loading +
+  attachment infrastructure; per-tool scope enforcement at
+  MCP-protocol level deferred to v0.8.6.
+
+### Test count + quality gates
+
+- pytest 100% green: 2338 passed / 17 skipped (was 2313/14
+  at v0.8.4 ship; +25 new across P1 + P3 + P4)
+- mypy strict 0/0 across 216 source files
+- ruff clean
+- Standing-rule keyword sweep clean across all 4 v0.8.5-cycle
+  commits
+
+## v0.8.6 — PLANNED
+
+Carries forward 3 reservations from v0.8.5:
+
+- **Per-tool scope enforcement at MCP-protocol level** —
+  `CIMDDocument.has_scope()` shipped in v0.8.5; FastMCP
+  middleware hook to actually reject tool calls when the
+  requesting `client_id` lacks scope is the v0.8.6 polish.
+- **Multi-rater corpus labeling pass + Cohen's Kappa** over
+  the disagreement subset. v0.8.5 ships single-rater (Allen)
+  baseline; v0.8.6 brings in a second rater + computes
+  Cohen's Kappa over the disagreement subset.
+- **Per-claim confidence scoring** + per-corpus threshold
+  defaults adjustment based on operator feedback from v0.8.5
+  CLI flag adoption.
+
+Plus any review findings from external operator usage of
+v0.8.5 features.
 
 Ship target ~2-3 weeks; plan file lands at cycle open.
 

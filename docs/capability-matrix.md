@@ -13,6 +13,91 @@
 
 ---
 
+## Re-validation snapshot — 2026-05-06 (v0.8.5 SHIPPED)
+
+v0.8.5 SHIPPED (tag `v0.8.5` at commit TBD post-tag).
+Aggressive ~2-3 week comprehensive scope (single-session
+compression matching v0.8.3 + v0.8.4 cadence). Closes ALL
+4 v0.8.4 carry-overs in one focused session per Allen's
+explicit Comprehensive scope + Implement-CIMD-now lock-in
+(§28). 12th consecutive PROCEED-CLEAN of v0.7.x → v0.8.x
+line.
+
+**New public surfaces tested this cycle**:
+
+| Surface | Test path | Coverage |
+|---|---|---|
+| `evidentia eval risk-determinism --check-faithfulness` | `tests/unit/test_eval/test_harness.py::TestRiskDeterminismFaithfulnessCLI` (5 tests) | Pre-condition validation (no source-clauses-file → exit 2; invalid method → exit 2; malformed YAML → exit 2; non-list[str] entry → exit 2); happy path with mocked claim_extraction + faithfulness_score → harness wiring + stdout summary + JSON dump faithfulness_results array |
+| `--faithfulness-threshold N` CLI flag | same module | Threshold passed through to harness; default 0.3; appears in stdout summary |
+| `--faithfulness-method {jaccard,semantic}` CLI flag | same module | Allowlist validation (jaccard / semantic only); jaccard default; method label appears in stdout summary |
+| `--source-clauses-file <yaml>` CLI flag | same module | YAML map prompt_id → list[str]; pre-condition required when --check-faithfulness; loaded into source_clauses_by_prompt + attached to EvalSample.source_clauses |
+| DFAH calibration corpus expansion | data files exercised by `tune_faithfulness_threshold.py --corpus-pattern` | corpus_nist.jsonl + corpus_ffiec.jsonl + corpus_iso27001.jsonl loaded; per-framework Youden's J reported |
+| `tune_faithfulness_threshold.py --corpus-pattern <glob>` | self-tested via cycle commit | Per-framework sweep reports per-file recommended threshold |
+| Real-LLM integration tests | `tests/integration/test_eval/test_real_llm_extraction.py` (4 tests; 3 LLM-gated + 1 ungated) | extract_claims() ≥ 2 claims for 3-claim input; DFAHarness end-to-end; score-distribution trend (faithful > unfaithful); empty-input short-circuit |
+| `evidentia_mcp.cimd.CIMDDocument` Pydantic model | `tests/unit/test_mcp/test_cimd.py::TestCIMDDocumentModel` (6 tests) | Minimum valid doc; full doc round-trip; has_scope deny-all on empty scope; has_scope allowlist semantics; max-length client_id rejection; empty client_id rejection |
+| `evidentia_mcp.cimd.CIMDRegistry.from_file()` | `TestCIMDRegistryFromFile` (7 tests) | Two-client load; empty clients; malformed JSON → ValueError; top-level list → ValueError; unsupported version → ValueError; per-CIMDDocument validation failure → ValueError; missing file → FileNotFoundError |
+| `CIMDRegistry.get(client_id)` | `TestCIMDRegistryLookup` (2 tests) | Registered get returns CIMDDocument; unregistered returns None |
+| `build_server(cimd_registry=)` + `server.evidentia_cimd` | `TestCIMDInBuildServer` (2 tests) | Without CIMD attaches None; with CIMD attaches the registry; tool implementations can read it |
+| `evidentia mcp serve --cimd-registry <path>` CLI flag | `TestCIMDCLIFlag` (2 tests) | Flag advertised in Click introspection; invalid path → exit 2 (Typer's exists=True parse-time gate) |
+
+**Inherited surface re-validation** (carry-forward from v0.8.4
+— no functional changes; v0.8.5 closes v0.8.4 carry-overs +
+adds CIMD without modifying TPRM / model-risk / governance /
+cloud-WORM / Sigstore eval / DFAH determinism / DFAH
+faithfulness library + harness / PRT / MCP HTTP/SSE /
+plugin-contract scaffolding surfaces).
+
+**Adversarial probing (DAST per v4 G11)**:
+
+- Pre-condition validation on the 4 new CLI flags exercised
+  end-to-end via 5 CLI tests; malformed inputs reject BEFORE
+  any LLM call fires (cost-aware design).
+- CIMD registry version check rejects unsupported versions
+  at load time; Pydantic validation rejects malformed
+  CIMDDocument entries with operator-friendly error messages.
+- `CIMDDocument.has_scope` deny-by-default semantics
+  validated — empty scope = deny-all; only tools listed in
+  the space-separated scope are allowlisted.
+- Real-LLM integration tests use STRUCTURAL assertions
+  (claim count, per-claim token count, score distribution
+  trend) — not exact-match strings; resilient to
+  model-version drift.
+
+**Quality gates at ship**: 2338 tests passing / 17 skipped
+(was 2313 / 14 at v0.8.4 close; +25 new this cycle: 5 CLI
+faithfulness + 4 real-LLM integration + 19 CIMD; -3 LLM-
+gated counted as skipped without env var). mypy strict 0/0
+across 216 source files (was 215; +1 new
+`evidentia_mcp/cimd.py`). ruff clean. Standing-rule sweep
+clean across all v0.8.5-cycle commits (4 commits).
+
+**Pre-release-review v4 Pre-tag deliverables**:
+
+- `docs/security-review-v0.8.5.md` (5th canonical Pre-tag
+  deliverable per v4 §G7) — Continuous variant; 0 unfixed
+  CRITICAL/HIGH/MEDIUM/LOW findings; 12th consecutive
+  PROCEED-CLEAN of v0.7.x → v0.8.x line.
+- `docs/threat-model.md` extended with v0.8.5 attack-surface
+  delta covering all 4 phases (DFAH CLI flags + corpus
+  expansion + real-LLM integration tests + MCP CIMD richness)
+  + threat-model for CIMD ("CIMD is NOT authentication" —
+  prominently documented).
+
+**Step 7 post-tag verification expected ALL PASS** (run
+post-tag-publish):
+
+- G1 PEP 740 verify all 7 wheels OK
+- G2 cosign verify SLSA Provenance v1
+- G3 osv-scanner --sbom clean
+- G4 docker run "Evidentia v0.8.5" + 89 frameworks
+- G5 fresh-venv install — **12th consecutive pin-trap fix
+  validation**
+- G7 Scorecard delta no regression (G4 Path 2 stable)
+- G16 release-body substantiveness — **11th consecutive auto-
+  populate-from-CHANGELOG**
+
+---
+
 ## Re-validation snapshot — 2026-05-06 (v0.8.4 SHIPPED)
 
 v0.8.4 SHIPPED (tag `v0.8.4` at commit `5d366af`; container

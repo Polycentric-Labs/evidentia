@@ -1604,6 +1604,143 @@ HTTP/SSE adoption.
 
 ---
 
+## v0.8.5 attack-surface delta — DFAH CLI flags + corpus expansion + real-LLM integration tests + MCP CIMD richness
+
+> Status: 2026-05-06. v0.8.5 SHIPPED. Closes ALL 4 v0.8.4
+> carry-overs in a single focused session per Allen's
+> Comprehensive scope + Implement-CIMD-now lock-in
+> (§28). 12th consecutive PROCEED-CLEAN of v0.7.x →
+> v0.8.x line.
+
+### DFAH `evidentia eval risk-determinism` faithfulness CLI flags (P1)
+
+**Surface change**: 4 new CLI flags surface the v0.8.4-shipped
+DFAHarness `check_faithfulness=True` path to operators.
+`--check-faithfulness` enables the path; `--faithfulness-threshold N`
+sets the per-claim score threshold; `--faithfulness-method
+{jaccard,semantic}` selects the scorer; `--source-clauses-file
+<yaml>` loads a YAML mapping `prompt_id → list[str]` of
+source clauses. Pre-condition validation rejects malformed
+YAML, non-list entries, and `--check-faithfulness` without a
+source-clauses file BEFORE any LLM call fires. Stdout summary
+on completion adds a faithfulness section (method + threshold
++ total claims scored + violations + per-prompt violation
+count). Output JSON includes `faithfulness_results` array per
+the v0.8.4-shipped `EvalResult` schema.
+
+**Threat coverage**: closes the v0.8.4 P1.2 CLI-surface
+deferral. Operators no longer need to write Python to
+exercise the DFAH faithfulness path — `evidentia eval
+risk-determinism --check-faithfulness ...` is a single CLI
+invocation that produces auditor-defensible faithfulness
+artifacts. Pre-condition validation cost-aware: malformed
+inputs surface BEFORE LLM calls fire, avoiding wasted token
+spend.
+
+**Residual risk**: per-sample latency multiplier when
+`--check-faithfulness` is set (extracting claims is an extra
+LLM call per sample + per-claim scoring is N additional
+Jaccard / semantic-embedding computations). Documented
+operator guidance in `docs/dfah-faithfulness.md` recommends
+running determinism + faithfulness checks separately for
+cost-sensitive deployments. Source-clauses-file format is
+human-editable YAML; threats from a malicious source-clauses
+file are bounded — worst case is a misleading faithfulness
+report, not RCE or data exfiltration (the YAML is parsed via
+`yaml.safe_load` + Pydantic-validated as `dict[str, list[str]]`).
+
+### DFAH calibration corpus expansion (P2)
+
+**Surface change**: corpus growth 51 → 123 entries via 3 new
+JSONL files (`corpus_nist.jsonl` + `corpus_ffiec.jsonl` +
+`corpus_iso27001.jsonl`) with 24 entries each across 4
+categories (verbatim faithful / paraphrase faithful /
+semi-related unfaithful / hallucination). Each new entry
+carries a `framework` field for downstream filtering.
+`scripts/tune_faithfulness_threshold.py` extended with
+`--corpus-pattern <glob>` flag for per-framework sweep —
+operators tune thresholds per framework family.
+Multi-rater methodology section added to corpus README:
+single-rater (Allen) baseline + LLM-assisted generation +
+manual spot-check on ~20% of new entries.
+
+**Threat coverage**: closes the v0.8.4 P1.3-extension
+reservation. Empirically demonstrates per-framework threshold
+divergence (NIST 0.60 vs ISO27001 0.30 vs FFIEC 0.35 with
+jaccard scorer) — operators avoid one-size-fits-all
+threshold-tuning mistakes.
+
+**Residual risk**: corpus is hand-crafted (single-rater =
+Allen) for v0.8.5; v0.8.6 expansion brings in a second rater
++ Cohen's Kappa agreement metric. Single-rater corpus should
+not be used to judge edge cases without a second opinion —
+documented in the corpus README.
+
+### Real-LLM integration tests (P3)
+
+**Surface change**: new test suite at
+`tests/integration/test_eval/test_real_llm_extraction.py`
+with 4 tests (3 LLM-burning + 1 ungated empty-input edge
+case). LLM-burning tests gated by `EVIDENTIA_LLM_INTEGRATION=1`
+env var; CI never runs them automatically. The empty-input
+edge case runs always (verifies the cost-aware short-circuit
+without consuming credits). Tests assert STRUCTURAL properties
+(claim count, per-claim token count, score distribution
+trend) rather than exact-match strings — different LLM models
+produce different splits.
+
+**Threat coverage**: catches behavioral drift between mocked
+LLMs (used in unit tests) + actual LLM responses. The
+score-distribution trend test is the canonical "scorer works"
+sanity check — if faithful entries score BELOW unfaithful
+entries, something is fundamentally broken. Operators who
+opt in get an early-warning system for LLM-provider regressions.
+
+**Residual risk**: real-LLM tests depend on the LiteLLM
+provider stack + the operator's API credentials being
+correctly configured. Per the secret-handling protocol, tests
+NEVER accept credentials in arguments — provider env vars
+are read by `_guarded_completion`. Cost expectation
+documented: ~5-10 LLM calls × ~$0.001/call ≈ $0.005-$0.05
+per full integration run with gpt-4o-mini.
+
+### MCP CIMD richness (P4)
+
+**Surface change**: new `evidentia_mcp.cimd` module ships
+`CIMDDocument` (one client's metadata per RFC 7591 + MCP
+conventions) + `CIMDRegistry` (version-tagged registry
+loaded from JSON via `CIMDRegistry.from_file()`). MCP
+server's `build_server()` + `run_*()` accept optional
+`cimd_registry=` kwarg; attached as `server.evidentia_cimd`
+for tool implementations. CLI: `evidentia mcp serve
+--cimd-registry <path>` flag. Loader errors surface as
+exit 2 with explicit messages.
+
+**Threat coverage**: enables multi-tenant MCP deployments
+where different clients have different scope allowlists.
+`CIMDDocument.has_scope(tool_name)` implements
+deny-by-default semantics — empty scope = deny-all.
+Per-client audit trails distinguish "Client A invoked
+gap_analyze" from "Client B invoked the same tool" once
+v0.8.6 wires the FastMCP middleware hook.
+
+**Residual risk**: **CIMD is NOT authentication** —
+documented prominently in the `cimd.py` docstring + this
+threat-model section. CIMD is a metadata + scope layer
+running ON TOP of whatever authentication the transport
+provides (reverse-proxy auth for HTTP/SSE; UID-based trust
+for stdio). A malicious client that bypasses transport auth
+can claim any `client_id` it wants. Operators deploying
+CIMD MUST also wire transport auth (reverse-proxy mTLS or
+bearer tokens) so clients cannot impersonate each other's
+CIMD entries. v0.8.5 ships the metadata registry; per-tool
+scope enforcement at the MCP-protocol level (rejecting tool
+calls when client_id lacks scope) is a v0.8.6 polish.
+Cryptographic CIMD signatures (per the Webscale OIDC profile)
+are reserved for future cycles.
+
+---
+
 ---
 
 *First published v0.7.7 (2026-05). Origin: promoted from a

@@ -7,6 +7,141 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.5] - 2026-05-06
+
+**DFAH faithfulness CLI flags + corpus expansion + real-LLM
+integration tests + MCP CIMD richness.** Comprehensive scope
+closing all 4 v0.8.4 carry-overs in a single focused session.
+**MCP CIMD implemented** after 5 deferral cycles per Allen's
+explicit "implement now" directive. 12th consecutive
+PROCEED-CLEAN of v0.7.x → v0.8.x line.
+
+### Added
+
+- **`evidentia eval risk-determinism` faithfulness CLI flags**
+  (P1):
+  - `--check-faithfulness` enables faithfulness scoring on
+    each sample's modal output. Default off.
+  - `--faithfulness-threshold N` minimum claim-score below
+    which `AI_EVAL_FAITHFULNESS_VIOLATION` fires. Default
+    0.3 for jaccard; 0.7 recommended for semantic. Per-corpus
+    calibration via `scripts/tune_faithfulness_threshold.py`.
+  - `--faithfulness-method {jaccard,semantic}` scoring method.
+    `jaccard` (default) is stdlib token-overlap; `semantic`
+    requires `pip install evidentia-ai[eval-faithfulness]`.
+  - `--source-clauses-file <yaml>` path to YAML mapping
+    `prompt_id → list[str]` of source clauses. Required when
+    `--check-faithfulness` is set; pre-condition validated
+    before any LLM calls fire.
+
+  Stdout summary on completion adds: faithfulness method +
+  threshold; total claims scored + prompt count;
+  faithfulness violations + per-prompt violation count.
+  Closes the v0.8.4 P1.2 CLI-surface deferral.
+
+- **DFAH calibration corpus expansion** to 123 entries (P2):
+  - `corpus.jsonl` unchanged (51 framework-agnostic entries
+    from v0.8.3 P1.3).
+  - **NEW** `corpus_nist.jsonl` (24 entries) — NIST 800-53
+    control text shapes.
+  - **NEW** `corpus_ffiec.jsonl` (24 entries) — FFIEC IT
+    Examination Handbook + OCC bulletin shapes.
+  - **NEW** `corpus_iso27001.jsonl` (24 entries) — ISO
+    27001:2022 Annex A shapes.
+
+  Each framework-tagged entry carries a `framework` field
+  (`"nist-800-53"` / `"ffiec-it-handbook"` / `"iso-27001"`)
+  for downstream filtering.
+
+- **`scripts/tune_faithfulness_threshold.py --corpus-pattern
+  <glob>`** (P2): new flag for per-framework sweep. Loads
+  each matching JSONL file separately and reports per-file
+  recommended threshold + Youden's J. Empirical per-framework
+  sweep (jaccard scorer, default 0.05 step):
+  - `corpus_ffiec.jsonl`: threshold=0.35, J=0.417
+  - `corpus_iso27001.jsonl`: threshold=0.30, J=0.417
+  - `corpus_nist.jsonl`: threshold=0.60, J=0.417
+
+- **Real-LLM integration tests** (P3):
+  `tests/integration/test_eval/test_real_llm_extraction.py`
+  with 4 tests gated by `EVIDENTIA_LLM_INTEGRATION=1` env
+  var (3 LLM-burning + 1 ungated empty-input edge case).
+  Tests validate `extract_claims()` + DFAHarness end-to-end +
+  score-distribution trend (faithful entries score higher
+  than unfaithful) against the calibration corpus.
+  Cost-aware: ~5-10 LLM calls × ~$0.001/call ≈ $0.005-$0.05
+  per full integration run with gpt-4o-mini.
+
+- **MCP CIMD richness** (P4) — Client ID Metadata Document
+  support for multi-tenant MCP deployments. Implements after
+  5 deferral cycles (v0.8.0 → v0.8.4). New module
+  `evidentia_mcp.cimd`:
+  - `CIMDDocument` Pydantic model — one client's metadata
+    per OAuth Dynamic Client Registration spec (RFC 7591) +
+    MCP authentication conventions. Fields: `client_id`,
+    `client_name`, `scope` (space-separated tool allowlist),
+    `redirect_uris`, `policy_uri`, `tos_uri`. `has_scope()`
+    method implements deny-by-default allowlist semantics.
+  - `CIMDRegistry` — version-tagged registry of CIMDDocuments
+    loaded from JSON via `CIMDRegistry.from_file()`.
+    Validates top-level JSON object + version match +
+    per-CIMDDocument Pydantic validation.
+
+  Wired into MCP server: `build_server()` + `run_stdio()` +
+  `run_sse()` + `run_http()` all accept optional
+  `cimd_registry=` kwarg. Server attaches the registry as
+  `server.evidentia_cimd` for tool implementations that opt
+  into manual scope checks.
+
+  Wired into CLI: `evidentia mcp serve --cimd-registry
+  <path>` flag. Loader errors surface as exit 2 with explicit
+  error messages.
+
+  v0.8.5 ships the registry-loading + attachment infrastructure;
+  per-tool scope enforcement at the MCP-protocol level
+  (rejecting tool calls when client_id lacks scope) is a
+  v0.8.6 polish item.
+
+  Threat model (in `cimd.py` docstring): CIMD is NOT
+  authentication — it's a metadata + scope layer that runs
+  ON TOP of whatever authentication the transport provides.
+  Operators deploying CIMD MUST also wire transport auth
+  (reverse-proxy mTLS or bearer tokens) so clients cannot
+  impersonate each other's CIMD entries.
+
+### Changed
+
+- `EvalSample.source_clauses` field surfaced via the new
+  `--source-clauses-file` CLI flag. Field itself shipped in
+  v0.8.4 P1; v0.8.5 closes the operator-facing surface.
+- `tests/data/dfah-calibration/README.md` extended with
+  multi-rater methodology section + Cohen's Kappa target
+  (≥ 0.80 for inter-rater agreement once a second rater is
+  brought in; deferred to v0.8.6) + per-framework tuning
+  recipe.
+
+### Deferred to v0.8.6
+
+- Per-tool scope enforcement at MCP-protocol level
+  (`CIMDDocument.has_scope()` shipped; FastMCP middleware
+  hook to actually reject tool calls based on requesting
+  `client_id` is the v0.8.6 polish).
+- Multi-rater corpus labeling pass + Cohen's Kappa over the
+  disagreement subset.
+- Per-claim confidence scoring + per-corpus threshold
+  defaults adjustment based on operator feedback.
+
+### Quality gates
+
+- pytest 100% green: 2338 passed / 17 skipped (was 2313/14
+  at v0.8.4 ship; +25 from P1 + P4 unit tests + P3 real-LLM
+  ungated edge case)
+- mypy strict 0/0 across 216 source files (was 215; +1
+  evidentia-mcp/src/evidentia_mcp/cimd.py)
+- ruff clean
+- Standing-rule keyword sweep clean across all 4 v0.8.5-cycle
+  commits
+
 ## [0.8.4] - 2026-05-06
 
 **Supply-chain G4 Path 2 ACTIVATED + DFAHarness check_faithfulness

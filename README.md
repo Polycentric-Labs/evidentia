@@ -148,6 +148,34 @@ Evidentia is built on four principles:
 
 ### Recent releases
 
+**v0.8.5 (May 2026)** — *DFAH CLI flags + corpus expansion +
+real-LLM integration tests + MCP CIMD richness*. Aggressive
+~2-3 week comprehensive scope (single-session compression
+matching v0.8.3 + v0.8.4 cadence). Closes ALL 4 v0.8.4
+carry-overs in one focused session per Allen's explicit
+"implement CIMD now" directive — ending the 5-cycle CIMD
+deferral pattern. **DFAH faithfulness CLI flags**:
+`evidentia eval risk-determinism --check-faithfulness
+--faithfulness-threshold N --faithfulness-method
+{jaccard,semantic} --source-clauses-file <yaml>`. Closes the
+v0.8.4 P1.2 CLI-surface deferral; pre-condition validation
+rejects malformed inputs BEFORE any LLM call fires. **DFAH
+corpus expansion** to 123 entries with per-framework subsets
+(NIST 24 / FFIEC 24 / ISO 27001 24). `tune_faithfulness_threshold.py
+--corpus-pattern <glob>` for per-framework sweep; empirical
+per-framework recommended thresholds documented. **Real-LLM
+integration tests** at `tests/integration/test_eval/` opt-in
+via `EVIDENTIA_LLM_INTEGRATION=1`. **MCP CIMD richness**:
+new `evidentia_mcp.cimd` module ships `CIMDDocument` (per
+RFC 7591 + MCP conventions) + `CIMDRegistry` (JSON-file-
+backed, version-tagged). `evidentia mcp serve --cimd-registry
+<path>` flag wires it through stdio + SSE + HTTP transports.
+Twelfth consecutive PROCEED-CLEAN of v0.7.x → v0.8.x line.
+**2338 tests passing across 216 source files; mypy strict
+0/0; ruff clean.** v0.8.6 reservations: per-tool scope
+enforcement at MCP-protocol level + multi-rater corpus pass
++ per-claim confidence scoring.
+
 **v0.8.4 (May 2026)** — *G4 Path 2 + DFAHarness wiring*.
 Aggressive ~2-3 week focused scope (single-session compression
 matching v0.8.3 cadence). Closes the v0.8.3 ship-failure root
