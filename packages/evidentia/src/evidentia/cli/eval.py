@@ -364,6 +364,53 @@ def risk_determinism(
             "time — auditor-defensible evidence."
         ),
     ),
+    check_faithfulness: bool = typer.Option(
+        False,
+        "--check-faithfulness",
+        help=(
+            "v0.8.5 P1: also score each sample's modal output for "
+            "faithfulness — the second arXiv 2601.15322 metric. "
+            "Decomposes each generation into atomic claims "
+            "(via LLM extraction) + scores each claim against the "
+            "sample's source clauses. Requires "
+            "--source-clauses-file."
+        ),
+    ),
+    faithfulness_threshold: float = typer.Option(
+        0.3,
+        "--faithfulness-threshold",
+        help=(
+            "Minimum claim-score below which a "
+            "FAITHFULNESS_VIOLATION fires. Default 0.3 for jaccard "
+            "(stdlib token-overlap); 0.7 recommended for semantic "
+            "(sentence-transformers). Per-corpus calibration via "
+            "scripts/tune_faithfulness_threshold.py."
+        ),
+    ),
+    faithfulness_method: str = typer.Option(
+        "jaccard",
+        "--faithfulness-method",
+        help=(
+            "Scoring method: 'jaccard' (stdlib; default) or "
+            "'semantic' (requires `pip install "
+            "evidentia-ai[eval-faithfulness]`)."
+        ),
+    ),
+    source_clauses_file: Path | None = typer.Option(
+        None,
+        "--source-clauses-file",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help=(
+            "Path to YAML mapping prompt_id → list[str] of source "
+            "clauses. prompt_id matches the gap's "
+            "'<framework>:<control_id>' (or '<framework>:<control_id>#N' "
+            "for gap-disambiguation). Required when "
+            "--check-faithfulness is set."
+        ),
+    ),
 ) -> None:
     """Run the DFAH harness against the live RiskStatementGenerator.
 
@@ -401,6 +448,55 @@ def risk_determinism(
         SystemContext,
     )
     from evidentia_core.models.gap import ControlGap, GapAnalysisReport
+
+    # v0.8.5 P1: validate --check-faithfulness pre-condition.
+    if check_faithfulness and source_clauses_file is None:
+        typer.echo(
+            "--check-faithfulness requires --source-clauses-file "
+            "(YAML mapping prompt_id → list[str] of source clauses).",
+            err=True,
+        )
+        raise typer.Exit(code=2)
+    if faithfulness_method not in {"jaccard", "semantic"}:
+        typer.echo(
+            f"--faithfulness-method must be 'jaccard' or 'semantic'; "
+            f"got {faithfulness_method!r}.",
+            err=True,
+        )
+        raise typer.Exit(code=2)
+
+    # Load source clauses if requested.
+    source_clauses_by_prompt: dict[str, list[str]] = {}
+    if source_clauses_file is not None:
+        try:
+            import yaml as _yaml
+
+            raw = _yaml.safe_load(
+                source_clauses_file.read_text(encoding="utf-8")
+            )
+            if not isinstance(raw, dict):
+                raise ValueError(
+                    "--source-clauses-file YAML must be a mapping at "
+                    "the top level (prompt_id → list[str])."
+                )
+            for prompt_id_key, clauses in raw.items():
+                if not isinstance(clauses, list) or not all(
+                    isinstance(c, str) for c in clauses
+                ):
+                    raise ValueError(
+                        f"--source-clauses-file entry for "
+                        f"{prompt_id_key!r} must be list[str]."
+                    )
+                source_clauses_by_prompt[str(prompt_id_key)] = list(
+                    clauses
+                )
+        except Exception as exc:
+            typer.echo(
+                f"Error loading --source-clauses-file at "
+                f"{source_clauses_file}: {exc}",
+                err=True,
+            )
+            raise typer.Exit(code=2) from exc
 
     # Load the gap report.
     try:
@@ -453,8 +549,13 @@ def risk_determinism(
         # EvalSample.prompt = prompt_id; the harness uses prompt
         # as a hash-comparison key + as the lookup index for
         # this generator wrapper (see _live_generator below).
+        # v0.8.5 P1: attach source_clauses if loaded.
         eval_samples.append(
-            EvalSample(prompt_id=candidate, prompt=candidate)
+            EvalSample(
+                prompt_id=candidate,
+                prompt=candidate,
+                source_clauses=source_clauses_by_prompt.get(candidate),
+            )
         )
 
     # Build the live generator. RiskStatementGenerator() reads
@@ -517,6 +618,9 @@ def risk_determinism(
         samples=eval_samples,
         context_factory=_make_ctx,
         check_replay=check_replay,
+        check_faithfulness=check_faithfulness,
+        faithfulness_threshold=faithfulness_threshold,
+        faithfulness_method=faithfulness_method,
     )
 
     if output is not None:
@@ -549,6 +653,34 @@ def risk_determinism(
         typer.echo(
             f"  • replay violations: "
             f"{len(result.replay_violations)}"
+        )
+    if check_faithfulness:
+        # v0.8.5 P1: aggregate per-prompt faithfulness results.
+        # Each PromptFaithfulnessResult is one prompt; per-prompt
+        # passed_count + failed_count are claim-level counts.
+        total_claims = sum(
+            len(pfr.claims) for pfr in result.faithfulness_results
+        )
+        total_failed = sum(
+            pfr.failed_count for pfr in result.faithfulness_results
+        )
+        prompts_with_violations = sum(
+            1
+            for pfr in result.faithfulness_results
+            if pfr.failed_count > 0
+        )
+        typer.echo(
+            f"  • faithfulness method: {faithfulness_method} "
+            f"(threshold {faithfulness_threshold:.2f})"
+        )
+        typer.echo(
+            f"  • faithfulness claims scored: {total_claims} "
+            f"across {len(result.faithfulness_results)} prompt(s)"
+        )
+        typer.echo(
+            f"  • faithfulness violations: {total_failed} "
+            f"({prompts_with_violations} prompt(s) with at "
+            f"least one below-threshold claim)"
         )
     _exit_per_threshold(
         result.overall_determinism_rate,

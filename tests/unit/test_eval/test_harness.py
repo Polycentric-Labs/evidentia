@@ -495,3 +495,309 @@ class TestRiskDeterminismCLI:
         # convention); message tells operator the gap-id wasn't
         # found.
         assert result.exit_code == 2
+
+
+# ── 7. v0.8.5 P1 faithfulness CLI flags ──────────────────────────
+
+
+class TestRiskDeterminismFaithfulnessCLI:
+    """v0.8.5 P1: --check-faithfulness + --faithfulness-threshold +
+    --faithfulness-method + --source-clauses-file CLI flags.
+
+    Validates the operator-facing surface added in v0.8.5 P1.
+    The harness library + integration shipped in v0.8.4; v0.8.5
+    closes the CLI surface so operators can run faithfulness
+    scoring without writing Python.
+    """
+
+    def _make_minimal_fixture(
+        self, tmp_path: Path
+    ) -> tuple[Path, Path]:
+        """Returns (gaps.json, context.yaml) on disk."""
+        from evidentia_core.models.gap import (
+            ControlGap,
+            GapAnalysisReport,
+            GapSeverity,
+            ImplementationEffort,
+        )
+
+        gap = ControlGap(
+            framework="nist-800-53-rev5",
+            control_id="AC-2",
+            control_title="Account Management",
+            control_description="Manage accounts",
+            gap_severity=GapSeverity.HIGH,
+            gap_description="No automated deactivation",
+            implementation_status="missing",
+            cross_framework_value=[],
+            remediation_guidance="Enable IAM Access Analyzer",
+            implementation_effort=ImplementationEffort.MEDIUM,
+        )
+        report = GapAnalysisReport(
+            organization="Test Co",
+            frameworks_analyzed=["nist-800-53-rev5"],
+            analyzed_at=datetime(2026, 5, 6, tzinfo=UTC),
+            total_controls_required=10,
+            total_controls_in_inventory=5,
+            total_gaps=1,
+            critical_gaps=0,
+            high_gaps=1,
+            medium_gaps=0,
+            low_gaps=0,
+            informational_gaps=0,
+            coverage_percentage=50.0,
+            gaps=[gap],
+            efficiency_opportunities=[],
+            prioritized_roadmap=[],
+            evidentia_version="0.8.5",
+        )
+        gaps_file = tmp_path / "gaps.json"
+        gaps_file.write_text(report.model_dump_json(), encoding="utf-8")
+
+        ctx_file = tmp_path / "context.yaml"
+        ctx_file.write_text(
+            "organization: Test Co\n"
+            "system_name: Test System\n"
+            "system_description: minimal\n"
+            "data_classification: [internal]\n"
+            "hosting: cloud\n"
+            "components: []\n"
+            "threat_actors: []\n"
+            "existing_controls: []\n"
+            "frameworks: [nist-800-53-rev5]\n",
+            encoding="utf-8",
+        )
+        return gaps_file, ctx_file
+
+    def test_check_faithfulness_without_source_clauses_file_exits_2(
+        self, tmp_path: Path
+    ) -> None:
+        """--check-faithfulness without --source-clauses-file →
+        exit 2 with clear error message before LLM calls fire.
+        """
+        gaps_file, ctx_file = self._make_minimal_fixture(tmp_path)
+        runner = CliRunner()
+        result = runner.invoke(
+            eval_cli_app,
+            [
+                "risk-determinism",
+                "--context",
+                str(ctx_file),
+                "--gaps",
+                str(gaps_file),
+                "--check-faithfulness",
+            ],
+        )
+        assert result.exit_code == 2
+        # CliRunner default merges stderr into stdout.
+        assert "--source-clauses-file" in (result.stdout or "")
+
+    def test_invalid_faithfulness_method_exits_2(
+        self, tmp_path: Path
+    ) -> None:
+        """Unknown --faithfulness-method (not 'jaccard' or
+        'semantic') → exit 2.
+        """
+        gaps_file, ctx_file = self._make_minimal_fixture(tmp_path)
+        runner = CliRunner()
+        result = runner.invoke(
+            eval_cli_app,
+            [
+                "risk-determinism",
+                "--context",
+                str(ctx_file),
+                "--gaps",
+                str(gaps_file),
+                "--faithfulness-method",
+                "tfidf",
+            ],
+        )
+        assert result.exit_code == 2
+
+    def test_source_clauses_file_malformed_yaml_exits_2(
+        self, tmp_path: Path
+    ) -> None:
+        """--source-clauses-file with non-mapping top-level YAML
+        → exit 2.
+        """
+        gaps_file, ctx_file = self._make_minimal_fixture(tmp_path)
+        bad_yaml = tmp_path / "clauses.yaml"
+        # Top-level list, not a mapping.
+        bad_yaml.write_text(
+            "- a\n- b\n", encoding="utf-8"
+        )
+        runner = CliRunner()
+        result = runner.invoke(
+            eval_cli_app,
+            [
+                "risk-determinism",
+                "--context",
+                str(ctx_file),
+                "--gaps",
+                str(gaps_file),
+                "--check-faithfulness",
+                "--source-clauses-file",
+                str(bad_yaml),
+            ],
+        )
+        assert result.exit_code == 2
+
+    def test_source_clauses_file_non_string_clauses_exits_2(
+        self, tmp_path: Path
+    ) -> None:
+        """--source-clauses-file entry value not list[str] → exit 2."""
+        gaps_file, ctx_file = self._make_minimal_fixture(tmp_path)
+        bad_yaml = tmp_path / "clauses.yaml"
+        # Map value is a dict, not list[str].
+        bad_yaml.write_text(
+            'nist-800-53-rev5:AC-2:\n  not: a-list\n',
+            encoding="utf-8",
+        )
+        runner = CliRunner()
+        result = runner.invoke(
+            eval_cli_app,
+            [
+                "risk-determinism",
+                "--context",
+                str(ctx_file),
+                "--gaps",
+                str(gaps_file),
+                "--check-faithfulness",
+                "--source-clauses-file",
+                str(bad_yaml),
+            ],
+        )
+        assert result.exit_code == 2
+
+    def test_check_faithfulness_passes_with_mocked_scoring(
+        self, tmp_path: Path
+    ) -> None:
+        """Happy path: --check-faithfulness + --source-clauses-file
+        + mocked claim_extraction + mocked faithfulness scoring →
+        harness completes; faithfulness summary surfaces in stdout.
+
+        Mocks are at the harness-internal injection points (which
+        the v0.8.4 P1 wiring exposes via DFAHarness.run kwargs).
+        The CLI doesn't expose those injection points directly —
+        but it goes through harness.run() with default callable
+        resolution, which falls back to extract_claims +
+        faithfulness_score from the v0.8.3/v0.8.2 modules. We
+        patch THOSE module-level functions to keep tests cost-zero.
+        """
+        from unittest.mock import patch
+
+        from evidentia_ai.eval.faithfulness import FaithfulnessResult
+        from evidentia_ai.risk_statements import RiskStatementGenerator
+        from evidentia_core.models.risk import (
+            ImpactRating,
+            LikelihoodRating,
+            RiskLevel,
+            RiskStatement,
+            RiskTreatment,
+        )
+
+        gaps_file, ctx_file = self._make_minimal_fixture(tmp_path)
+        clauses_file = tmp_path / "clauses.yaml"
+        clauses_file.write_text(
+            'nist-800-53-rev5:AC-2:\n'
+            '  - "The information system enforces approved authorizations."\n'
+            '  - "Account management procedures cover provisioning."\n',
+            encoding="utf-8",
+        )
+        out_path = tmp_path / "result.json"
+
+        canonical_risk = RiskStatement(
+            id="determ-test-002",
+            asset="user-database",
+            threat_source="external-attacker",
+            threat_event="unauthorized-access",
+            vulnerability="weak-acct-management",
+            likelihood=LikelihoodRating.HIGH,
+            likelihood_rationale="Dormant accounts.",
+            impact=ImpactRating.HIGH,
+            impact_rationale="PII exposure.",
+            risk_level=RiskLevel.HIGH,
+            risk_description="Risk description.",
+            recommended_controls=["AC-2"],
+            remediation_priority=2,
+            treatment=RiskTreatment.MITIGATE,
+        )
+
+        def _mock_extract(text: str) -> list[str]:
+            # 2 atomic claims that should match the source clauses.
+            return [
+                "The information system enforces approved authorizations.",
+                "Account management procedures cover provisioning.",
+            ]
+
+        def _mock_score(
+            claim: str,
+            clauses: list[str],
+            *,
+            threshold: float,
+        ) -> FaithfulnessResult:
+            # Both claims pass at the given threshold.
+            return FaithfulnessResult(
+                claim=claim,
+                score=0.9,
+                threshold=threshold,
+                method="jaccard-stdlib",
+                evidence_clauses=clauses[:3],
+            )
+
+        with (
+            patch(
+                "evidentia_ai.eval.claim_extraction.extract_claims",
+                side_effect=_mock_extract,
+            ),
+            patch(
+                "evidentia_ai.eval.faithfulness.faithfulness_score",
+                side_effect=_mock_score,
+            ),
+            patch.object(
+                RiskStatementGenerator,
+                "generate",
+                return_value=canonical_risk,
+            ),
+        ):
+            runner = CliRunner()
+            result = runner.invoke(
+                eval_cli_app,
+                [
+                    "risk-determinism",
+                    "--context",
+                    str(ctx_file),
+                    "--gaps",
+                    str(gaps_file),
+                    "--samples-per-prompt",
+                    "2",
+                    "--output",
+                    str(out_path),
+                    "--model",
+                    "test-stub",
+                    "--check-faithfulness",
+                    "--faithfulness-threshold",
+                    "0.5",
+                    "--source-clauses-file",
+                    str(clauses_file),
+                ],
+            )
+
+        assert result.exit_code == 0, result.stdout
+        assert "faithfulness method: jaccard" in result.stdout
+        assert "faithfulness claims scored" in result.stdout
+        assert out_path.exists()
+        # passed_count + failed_count are computed properties on
+        # PromptFaithfulnessResult (not fields), so they don't
+        # appear in the JSON dump. Reconstruct the model + assert
+        # via the property + against the serialized claims array.
+        loaded = json.loads(out_path.read_text(encoding="utf-8"))
+        assert "faithfulness_results" in loaded
+        assert len(loaded["faithfulness_results"]) == 1
+        pfr_dict = loaded["faithfulness_results"][0]
+        assert pfr_dict["prompt_id"] == "nist-800-53-rev5:AC-2"
+        assert len(pfr_dict["claims"]) == 2
+        # passed is a computed property; assert score >= threshold
+        # directly. Both claims scored 0.9 ≥ 0.5 → both pass.
+        for c in pfr_dict["claims"]:
+            assert c["score"] >= c["threshold"]
