@@ -142,6 +142,48 @@ def _print_per_step(
         )
 
 
+def _resolve_score_fn(
+    method: str,
+) -> Callable[[str, list[str]], float] | None:
+    """v0.8.5 P2: resolve scorer function for a given method.
+
+    Returns None on failure (with stderr message already printed).
+    Centralized so both the single-corpus path AND the
+    --corpus-pattern multi-corpus path use one resolution
+    pipeline.
+    """
+    if method == "jaccard":
+        from evidentia_ai.eval.faithfulness import faithfulness_score
+
+        def jaccard_score(claim: str, clauses: list[str]) -> float:
+            return faithfulness_score(claim, clauses).score
+
+        return jaccard_score
+    elif method == "semantic":
+        try:
+            from evidentia_ai.eval.faithfulness_semantic import (
+                faithfulness_score_semantic,
+            )
+
+            def semantic_score(claim: str, clauses: list[str]) -> float:
+                return faithfulness_score_semantic(claim, clauses).score
+
+            return semantic_score
+        except ImportError as exc:
+            print(
+                f"Semantic scorer unavailable: {exc}", file=sys.stderr
+            )
+            print(
+                "Install via "
+                "`pip install evidentia-ai[eval-faithfulness]`",
+                file=sys.stderr,
+            )
+            return None
+    else:  # pragma: no cover — exhaustive choice
+        print(f"Unknown method: {method}", file=sys.stderr)
+        return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -151,7 +193,19 @@ def main() -> int:
         "--corpus",
         type=Path,
         default=Path("tests/data/dfah-calibration/corpus.jsonl"),
-        help="Path to JSONL calibration corpus",
+        help="Path to JSONL calibration corpus (default: bundled "
+        "framework-agnostic corpus)",
+    )
+    parser.add_argument(
+        "--corpus-pattern",
+        type=str,
+        default=None,
+        help="v0.8.5: glob pattern matching multiple corpus JSONL "
+        "files. When set, sweeps each matching file separately + "
+        "reports per-file recommended thresholds. Useful for "
+        "per-framework calibration: "
+        "'tests/data/dfah-calibration/corpus_*.jsonl'. "
+        "Mutually exclusive with --corpus + --by-category.",
     )
     parser.add_argument(
         "--method",
@@ -169,9 +223,50 @@ def main() -> int:
     parser.add_argument(
         "--by-category",
         action="store_true",
-        help="Also report optimum threshold per-category",
+        help="Also report optimum threshold per-category. Ignored "
+        "when --corpus-pattern is used.",
     )
     args = parser.parse_args()
+
+    # v0.8.5 P2: --corpus-pattern path — sweep multiple files.
+    if args.corpus_pattern is not None:
+        import glob as _glob
+
+        matches = sorted(_glob.glob(args.corpus_pattern))
+        if not matches:
+            print(
+                f"--corpus-pattern matched 0 files: "
+                f"{args.corpus_pattern}",
+                file=sys.stderr,
+            )
+            return 2
+        print(
+            f"Sweeping {len(matches)} corpus file(s) matched by "
+            f"pattern '{args.corpus_pattern}':"
+        )
+        print()
+        # Wire up scorer once.
+        score_fn = _resolve_score_fn(args.method)
+        if score_fn is None:
+            return 2
+        for match in matches:
+            match_path = Path(match)
+            sub_corpus = _load_corpus(match_path)
+            if not sub_corpus:
+                print(f"  {match_path}: empty; skipping")
+                continue
+            sub_best_t, sub_best_j, _ = _tune_threshold(
+                sub_corpus, score_fn, step=args.step
+            )
+            n_faithful = sum(1 for e in sub_corpus if e["faithful"])
+            n_unfaithful = len(sub_corpus) - n_faithful
+            print(
+                f"  {match_path.name:>30} "
+                f"({len(sub_corpus):>3} entries; "
+                f"{n_faithful} faithful, {n_unfaithful} unfaithful) "
+                f"-> threshold={sub_best_t:.2f}, J={sub_best_j:.3f}"
+            )
+        return 0
 
     if not args.corpus.is_file():
         print(
@@ -191,32 +286,8 @@ def main() -> int:
     print()
 
     # Wire up the scorer.
-    if args.method == "jaccard":
-        from evidentia_ai.eval.faithfulness import faithfulness_score
-
-        def score_fn(claim: str, clauses: list[str]) -> float:
-            return faithfulness_score(claim, clauses).score
-
-    elif args.method == "semantic":
-        try:
-            from evidentia_ai.eval.faithfulness_semantic import (
-                faithfulness_score_semantic,
-            )
-
-            def score_fn(claim: str, clauses: list[str]) -> float:
-                return faithfulness_score_semantic(claim, clauses).score
-
-        except ImportError as exc:
-            print(
-                f"Semantic scorer unavailable: {exc}", file=sys.stderr
-            )
-            print(
-                "Install via `pip install evidentia-ai[eval-faithfulness]`",
-                file=sys.stderr,
-            )
-            return 2
-    else:  # pragma: no cover — exhaustive choice
-        print(f"Unknown method: {args.method}", file=sys.stderr)
+    score_fn = _resolve_score_fn(args.method)
+    if score_fn is None:
         return 2
 
     # Overall sweep.

@@ -97,21 +97,106 @@ uv run python scripts/tune_faithfulness_threshold.py \\
     --method jaccard
 ```
 
-## v0.8.4 expansion
+## v0.8.5 expansion
 
-Reservations carried forward:
+Lands in v0.8.5 P2:
 
-- Expand to 100-200 entries with a wider distribution of
-  paraphrase difficulty
-- Multi-rater labeling + Cohen's Kappa agreement metric
-- Per-framework subsets (NIST-only, FFIEC-only, ISO-27001-only)
-  for operators who want framework-specific tuning
-- Real-LLM atomic-claim extraction integration tests using the
-  corpus as ground truth
+- **Corpus growth 51 → 123 entries** distributed across
+  4 jsonl files. The original `corpus.jsonl` keeps its 51
+  framework-agnostic entries; three new framework-tagged
+  subsets bring the total to 123 (within the 100-200 target).
+- **Per-framework subsets**:
+  - `corpus_nist.jsonl` (24 entries) — NIST 800-53 control
+    text shapes (account review cadence, audit retention,
+    cryptographic key management, vulnerability scanning,
+    session timeout, backup recovery)
+  - `corpus_ffiec.jsonl` (24 entries) — FFIEC IT Examination
+    Handbook + OCC bulletin shapes (board oversight,
+    independent audit, third-party risk management, business
+    continuity, customer authentication, encryption in
+    transit, incident reporting)
+  - `corpus_iso27001.jsonl` (24 entries) — ISO 27001:2022
+    Annex A shapes (security objectives, risk treatment,
+    personnel screening, removable media, supplier
+    relationships, cryptographic review, performance
+    evaluation)
+- Operators tune thresholds per framework family via
+  `scripts/tune_faithfulness_threshold.py --corpus-pattern
+  'tests/data/dfah-calibration/corpus_*.jsonl'`.
+- Each framework-tagged entry carries a `framework` field
+  (`"nist-800-53"` / `"ffiec-it-handbook"` / `"iso-27001"`)
+  for downstream filtering.
+
+## Multi-rater methodology
+
+The v0.8.5 expansion remains primarily single-rater (Allen)
+with **LLM-assisted generation followed by manual spot-check**
+on ~20% of new entries. The hand-craft + LLM-assist split:
+
+1. Allen authored representative anchor entries per category
+   per framework (the "verbatim" entries especially).
+2. LLM-assist generated paraphrase + semi-related entries
+   modeled on the verbatim anchors. Each LLM-generated entry
+   was reviewed for category fit before commit.
+3. Hallucination entries are hand-crafted only — they require
+   creative non-sequiturs that don't pattern-match policy text.
+
+**Cohen's Kappa target**: ≥ 0.80 for inter-rater agreement
+once a second rater is brought in. Single-rater corpus
+should not be used to judge edge cases without a second
+opinion. v0.8.5 ships single-rater (Allen) + flags this as
+a known limitation; a future cycle introduces a second
+domain-expert rater + computes Cohen's Kappa over the
+disagreement subset.
+
+## Per-framework tuning
+
+To tune the threshold for a specific framework family:
+
+```bash
+# NIST 800-53 only
+uv run python scripts/tune_faithfulness_threshold.py \
+    --corpus tests/data/dfah-calibration/corpus_nist.jsonl \
+    --method jaccard
+
+# FFIEC IT Handbook only
+uv run python scripts/tune_faithfulness_threshold.py \
+    --corpus tests/data/dfah-calibration/corpus_ffiec.jsonl \
+    --method jaccard
+
+# ISO 27001:2022 only
+uv run python scripts/tune_faithfulness_threshold.py \
+    --corpus tests/data/dfah-calibration/corpus_iso27001.jsonl \
+    --method jaccard
+```
+
+Or sweep all framework files at once via
+`--corpus-pattern`:
+
+```bash
+uv run python scripts/tune_faithfulness_threshold.py \
+    --corpus-pattern 'tests/data/dfah-calibration/corpus_*.jsonl' \
+    --method jaccard
+```
+
+The per-framework recommended thresholds appear in
+`docs/dfah-faithfulness.md` operator guide.
+
+## v0.8.6 reservations
+
+- Multi-rater labeling pass + Cohen's Kappa over the
+  disagreement subset
+- Real-LLM atomic-claim extraction integration tests using
+  the corpus as ground truth (gated by
+  `EVIDENTIA_LLM_INTEGRATION=1`)
 
 ## References
 
 - §26.2 P1.3 / §26.3 step 8 (v0.8.3 cycle plan)
+- §27 v0.8.4 plan (DFAHarness `check_faithfulness=True`
+  wiring; CLI flags deferred to v0.8.5)
+- §28 v0.8.5 plan (CLI flags + corpus expansion +
+  real-LLM tests + CIMD)
 - `scripts/tune_faithfulness_threshold.py` — tuning script
 - `docs/dfah-faithfulness.md` — operator guide
 - arXiv 2601.15322 — DFAH framework
