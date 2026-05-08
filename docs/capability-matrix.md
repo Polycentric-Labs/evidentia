@@ -13,6 +13,93 @@
 
 ---
 
+## Re-validation snapshot — 2026-05-07 (v0.8.6 SHIPPED)
+
+v0.8.6 SHIPPED (tag `v0.8.6` at commit `eb0f331`; container
+digest `sha256:583d3849b5997edd2557530c48a32f085fa22ebbc2441bbeb2e7fcf7db8799a5`).
+Aggressive ~2-3 week comprehensive scope; single-session
+compression. 13th consecutive PROCEED-CLEAN of v0.7.x →
+v0.8.x line.
+
+**New public surfaces tested this cycle**:
+
+| Surface | Test path | Coverage |
+|---|---|---|
+| `evidentia mcp serve --default-client-id <slug>` | `tests/unit/test_mcp/test_server.py` (TestCIMDCLIFlag carry-forward) + integration via test_scope.py | CLI flag plumbing through stdio + SSE + HTTP transports; validation warnings (no --cimd-registry → ignore; --cimd-registry without --default-client-id on stdio → every call denies) |
+| `evidentia_mcp.scope.enforce_cimd_scope` | `tests/unit/test_mcp/test_scope.py` (8 tests across 7 classes) | Pass-through when registry None; deny-no-client_id; deny-unregistered; deny-out-of-scope; allow-in-scope (2 incl default_client_id fallback); idempotency double-wire raises; per-call UUID4 run_id distinct |
+| `EventAction.AI_MCP_TOOL_AUTHORIZED` ACTIVATED | per-call event verified via caplog ecs_record assertion | Fires on registered+in-scope; carries run_id + client_id + tool_name + scope_allowlist |
+| `EventAction.AI_MCP_TOOL_DENIED` ACTIVATED | per-call event verified via caplog ecs_record assertion | Fires on ambiguous-caller + unregistered + out-of-scope; raises McpError -32602 to MCP client |
+| `scripts/compute_inter_rater_kappa.py` | `tests/unit/test_scripts/test_compute_inter_rater_kappa.py` (25 tests) | Cohen's Kappa formula edge cases (perfect agreement / disagreement / random / 90% / all-positive / mismatched-length / empty); Landis-Koch boundary table (12 parametrized); rule-based jaccard rater (verbatim / hallucination / empty / paraphrase-weakness) |
+| `FaithfulnessResult.confidence` field | `tests/unit/test_eval/test_faithfulness.py::TestConfidence` (4 tests) | Default None (cost-aware off); high confidence on consistent verbatim match (seed=42); zero on empty clauses; zero on empty claim |
+| `FaithfulnessResult.framework` field | `TestFrameworkField` (2 tests) | Default None; persisted when set |
+| `resolve_threshold(framework, method)` helper | `TestResolveThreshold` (4 tests) | Known framework returns mapped threshold (NIST 0.60 / FFIEC 0.35 / ISO27001 0.30); unknown framework falls back; None framework returns default; non-jaccard method returns default |
+| `DEFAULT_THRESHOLDS_BY_FRAMEWORK_JACCARD` map | exercised via TestResolveThreshold | Empirical per-framework thresholds from v0.8.5 P2 sweep |
+| `inter-rater-agreement.md` doc + κ probe results | data file + companion doc | Best κ = 0.4848 (moderate) at threshold 0.85; ships as "single-rater + κ probe inconclusive" per §29 R3 |
+| `examples/mcp/cimd-registry-readonly.json` + `cimd-registry-power.json` | operator-facing examples | Two registries with different scope allowlist patterns |
+| `docs/v0.7.x-retrospective.md` (NEW) | docs-only narrative | 18-release narrative; per-release highlights; carries-into-v0.8.x section |
+| `docs/v1.0-transition.md` DRAFT (NEW) | docs-only narrative | v1.0 theme candidates; what v1.0 will NOT do; deprecation cycle policy; acceptance gates |
+
+**Inherited surface re-validation** (carry-forward from
+v0.8.5 — no functional changes; v0.8.6 closes v0.8.5
+deferrals + adds new surfaces without modifying TPRM /
+model-risk / governance / cloud-WORM / Sigstore eval / DFAH
+determinism / DFAH faithfulness library + harness / PRT /
+MCP HTTP/SSE / plugin-contract scaffolding / DFAH CLI flags
+surfaces).
+
+**Adversarial probing (DAST per v4 G11)**:
+
+- CIMD scope-enforcement gate exercised end-to-end via 8
+  unit tests covering all 5 decision paths (pass-through,
+  deny-ambiguous, deny-unregistered, deny-out-of-scope,
+  allow-in-scope) + idempotency guard + per-call run_id
+  uniqueness.
+- McpError code -32602 (Invalid Params) verification: deny
+  paths raise the expected MCP-protocol error; MCP clients
+  see structured errors not server crashes.
+- Default `evidentia_cimd is None` behavior verified
+  preserved (v0.8.5 callers who don't configure CIMD see
+  zero behavior change).
+- Rule-based jaccard rater determinism: same corpus + same
+  threshold produce same κ across runs (used in CI gate).
+- Bootstrap confidence determinism: same claim + clauses +
+  seed produce same confidence value (used in TestConfidence
+  for verbatim match assertion).
+
+**Quality gates at ship**: 2383 tests passing / 17 skipped
+(was 2338 / 17 at v0.8.5 close; +45 new this cycle: 8 scope
++ 25 kappa + 10 confidence/framework + 2 docs-only). mypy
+strict 0/0 across 217 source files (was 216; +1 new
+`evidentia_mcp/scope.py`). ruff clean. Standing-rule sweep
+clean across all v0.8.6-cycle commits.
+
+**Pre-release-review v4 Pre-tag deliverables** (backfilled
+2026-05-08 per §30 P1):
+
+- `docs/security-review-v0.8.6.md` (5th canonical Pre-tag
+  deliverable per v4 §G7) — Continuous variant; 0 unfixed
+  CRITICAL/HIGH/MEDIUM/LOW findings; 13th consecutive
+  PROCEED-CLEAN of v0.7.x → v0.8.x line.
+- `docs/v0.8.6-plan.md` — public-safe re-statement of §29
+  scope.
+- `docs/threat-model.md` v0.8.6 attack-surface delta.
+
+**Step 7 post-tag verification ALL PASS** (executed at
+ship-time 2026-05-07):
+
+- G1 PEP 740 verify all 7 wheels OK
+- G2 cosign verify SLSA Provenance v1 at digest
+  `sha256:583d3849...8799a5`
+- G3 osv-scanner --sbom: 169 packages / 0 issues
+- G4 docker run "Evidentia v0.8.6"
+- G5 fresh-venv install — **13th consecutive pin-trap fix
+  validation**
+- G7 Scorecard delta: 0 open code-scanning alerts
+- G16 release-body 6837 bytes — **12th consecutive auto-
+  populate-from-CHANGELOG**
+
+---
+
 ## Re-validation snapshot — 2026-05-06 (v0.8.5 SHIPPED)
 
 v0.8.5 SHIPPED (tag `v0.8.5` at commit TBD post-tag).

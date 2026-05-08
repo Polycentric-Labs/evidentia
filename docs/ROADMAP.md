@@ -923,28 +923,91 @@ consecutive of v0.7.x → v0.8.x line).
 - Standing-rule keyword sweep clean across all 4 v0.8.5-cycle
   commits
 
-## v0.8.6 — PLANNED
+## v0.8.6 — CIMD scope enforcement + Cohen's Kappa + per-claim confidence + retrospectives — SHIPPED
 
-Carries forward 3 reservations from v0.8.5:
+Tag `v0.8.6` at commit `eb0f331`. Container digest
+`sha256:583d3849b5997edd2557530c48a32f085fa22ebbc2441bbeb2e7fcf7db8799a5`.
+Aggressive ~2-3 week comprehensive scope (single-session
+compression matching v0.8.3 + v0.8.4 + v0.8.5 cadence).
+Closes ALL 3 v0.8.5 carry-overs + 3 cycle-additions per
+Allen's explicit Comprehensive scope + CIMD-first sequencing
++ v0.7.x-retrospective / v1.0-transition / audit-trail-layer
+additions lock-in (§29). 13th consecutive PROCEED-CLEAN of
+v0.7.x → v0.8.x line.
 
-- **Per-tool scope enforcement at MCP-protocol level** —
-  `CIMDDocument.has_scope()` shipped in v0.8.5; FastMCP
-  middleware hook to actually reject tool calls when the
-  requesting `client_id` lacks scope is the v0.8.6 polish.
-- **Multi-rater corpus labeling pass + Cohen's Kappa** over
-  the disagreement subset. v0.8.5 ships single-rater (Allen)
-  baseline; v0.8.6 brings in a second rater + computes
-  Cohen's Kappa over the disagreement subset.
-- **Per-claim confidence scoring** + per-corpus threshold
-  defaults adjustment based on operator feedback from v0.8.5
-  CLI flag adoption.
+See [`docs/security-review-v0.8.6.md`](security-review-v0.8.6.md)
+for the v4 Pre-tag-style closeout (PROCEED-CLEAN; 13th
+consecutive).
 
-Plus any review findings from external operator usage of
-v0.8.5 features.
+### Closed in v0.8.6
 
-Ship target ~2-3 weeks; plan file lands at cycle open.
+- **CIMD scope enforcement at MCP-protocol level + per-call
+  audit trail** (P1) — closes the v0.8.5 P4 deferral. NEW
+  `evidentia_mcp.scope` module monkey-binds `FastMCP.call_tool`
+  with idempotency guard; per-call `AI_MCP_TOOL_AUTHORIZED` /
+  `AI_MCP_TOOL_DENIED` audit events; `--default-client-id`
+  CLI flag; deny paths raise `McpError` code -32602.
+  Pass-through preserves v0.8.5 default no-gating behavior.
+- **Cohen's Kappa rater agreement script** (P2) — closes the
+  v0.8.5 P2 multi-rater methodology reservation. NEW
+  `scripts/compute_inter_rater_kappa.py` ships κ formula +
+  Landis-Koch interpretation + CI-gateable exit codes;
+  rule-based jaccard rater mode probe → best κ = 0.4848
+  (moderate) at threshold 0.85 → ships as "single-rater + κ
+  probe inconclusive" per §29 R3 mitigation; empirically
+  demonstrates v0.8.3 sentence-transformers semantic path's
+  necessity. Real LLM-assisted second rater + human second
+  rater both reserved for v0.9.0 walk-through.
+- **Per-claim bootstrap-resampled confidence + framework-
+  aware threshold defaults** (P3) — `FaithfulnessResult.confidence`
+  + `framework` fields; `DEFAULT_THRESHOLDS_BY_FRAMEWORK_JACCARD`
+  map (NIST 0.60 / FFIEC 0.35 / ISO27001 0.30 per v0.8.5 P2
+  empirical sweep); `resolve_threshold(framework, method)`
+  helper. CLI flag `--faithfulness-threshold-mode {framework-
+  aware,fixed}` deferred to v0.8.7.
+- **`docs/v0.7.x-retrospective.md`** (P4) — 18-release
+  narrative (v0.7.0 → v0.7.16 over ~12 days).
+- **`docs/v1.0-transition.md` DRAFT** (P5) — v1.0 theme
+  candidates + acceptance gates.
 
-## v0.9.0 — Federal compliance — RESERVED
+### Test count + quality gates
+
+- pytest 100% green: 2383 passed / 17 skipped (was 2338/17
+  at v0.8.5 ship; +45 new across P1 + P2 + P3)
+- mypy strict 0/0 across 217 source files
+- ruff clean
+- Standing-rule keyword sweep clean across all 4 v0.8.6-cycle
+  commits
+
+## v0.8.7 — Final v0.8.x wrap-up — PLANNED
+
+Backfills the 6 v0.8.6 cycle-close artifacts deferred during
+single-session compression + closes the v0.8.6 P3 CLI
+deferral. FINAL v0.8.x patch; v0.9.0 opens with a clean
+slate.
+
+### Plans
+
+- Backfill `docs/security-review-v0.8.6.md` +
+  `docs/v0.8.6-plan.md` + `docs/threat-model.md` v0.8.6
+  delta + `docs/capability-matrix.md` v0.8.6 snapshot +
+  `README.md` Recent Releases v0.8.6 entry + this section.
+- Wire `--faithfulness-threshold-mode {framework-aware,fixed}`
+  CLI flag through `evidentia eval risk-determinism`. Library
+  + `resolve_threshold()` helper shipped v0.8.6 P3; CLI
+  surface lands here.
+- Standard cycle-close artifacts for v0.8.7 itself
+  (`security-review-v0.8.7.md` + `v0.8.7-plan.md` + threat-
+  model + capability-matrix + README + ROADMAP transition +
+  CHANGELOG).
+- Pre-release-review v4 Continuous + ship.
+
+Ship target: single focused session.
+
+## v0.9.0 — Federal compliance — PLANNED
+
+After v0.8.7 ships, the v0.9.0 cycle opens with the federal-
+compliance theme per the 2026-04-28 §10 Q4 lock-in.
 
 Theme reserved for federal-compliance capability work informed by
 domain-expert input on FedRAMP / FISMA / NIST 800-53 (CA-5 / CA-7 /

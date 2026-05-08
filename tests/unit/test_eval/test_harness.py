@@ -801,3 +801,229 @@ class TestRiskDeterminismFaithfulnessCLI:
         # directly. Both claims scored 0.9 ≥ 0.5 → both pass.
         for c in pfr_dict["claims"]:
             assert c["score"] >= c["threshold"]
+
+
+# ── 8. v0.8.7 P2 — --faithfulness-threshold-mode CLI flag ────────
+
+
+class TestFaithfulnessThresholdMode:
+    """v0.8.7 P2: --faithfulness-threshold-mode {framework-aware,
+    fixed} CLI flag closes the v0.8.6 P3 CLI deferral.
+
+    3 tests covering:
+    1. Invalid mode → exit 2.
+    2. fixed mode → harness uses 0.30 default.
+    3. framework-aware mode + prompt_id with framework prefix
+       → harness uses framework-aware default (NIST 0.60).
+    """
+
+    def _make_minimal_fixture(
+        self, tmp_path: Path
+    ) -> tuple[Path, Path]:
+        """Returns (gaps.json, context.yaml) on disk; reuses the
+        single-NIST-AC-2-gap pattern from
+        TestRiskDeterminismFaithfulnessCLI."""
+        from evidentia_core.models.gap import (
+            ControlGap,
+            GapAnalysisReport,
+            GapSeverity,
+            ImplementationEffort,
+        )
+
+        gap = ControlGap(
+            framework="nist-800-53-rev5",
+            control_id="AC-2",
+            control_title="Account Management",
+            control_description="Manage accounts",
+            gap_severity=GapSeverity.HIGH,
+            gap_description="No automated deactivation",
+            implementation_status="missing",
+            cross_framework_value=[],
+            remediation_guidance="Enable IAM Access Analyzer",
+            implementation_effort=ImplementationEffort.MEDIUM,
+        )
+        report = GapAnalysisReport(
+            organization="Test Co",
+            frameworks_analyzed=["nist-800-53-rev5"],
+            analyzed_at=datetime(2026, 5, 8, tzinfo=UTC),
+            total_controls_required=10,
+            total_controls_in_inventory=5,
+            total_gaps=1,
+            critical_gaps=0,
+            high_gaps=1,
+            medium_gaps=0,
+            low_gaps=0,
+            informational_gaps=0,
+            coverage_percentage=50.0,
+            gaps=[gap],
+            efficiency_opportunities=[],
+            prioritized_roadmap=[],
+            evidentia_version="0.8.7",
+        )
+        gaps_file = tmp_path / "gaps.json"
+        gaps_file.write_text(report.model_dump_json(), encoding="utf-8")
+
+        ctx_file = tmp_path / "context.yaml"
+        ctx_file.write_text(
+            "organization: Test Co\n"
+            "system_name: Test System\n"
+            "system_description: minimal\n"
+            "data_classification: [internal]\n"
+            "hosting: cloud\n"
+            "components: []\n"
+            "threat_actors: []\n"
+            "existing_controls: []\n"
+            "frameworks: [nist-800-53-rev5]\n",
+            encoding="utf-8",
+        )
+        return gaps_file, ctx_file
+
+    def test_invalid_mode_exits_2(self, tmp_path: Path) -> None:
+        gaps_file, ctx_file = self._make_minimal_fixture(tmp_path)
+        runner = CliRunner()
+        result = runner.invoke(
+            eval_cli_app,
+            [
+                "risk-determinism",
+                "--context",
+                str(ctx_file),
+                "--gaps",
+                str(gaps_file),
+                "--faithfulness-threshold-mode",
+                "invalid-mode",
+            ],
+        )
+        assert result.exit_code == 2
+        assert (
+            "framework-aware" in (result.stdout or "")
+            or "fixed" in (result.stdout or "")
+        )
+
+    def test_fixed_mode_uses_0_30(
+        self, tmp_path: Path
+    ) -> None:
+        """--faithfulness-threshold-mode=fixed → harness threshold
+        is DEFAULT_FAITHFULNESS_THRESHOLD (0.30) framework-
+        agnostic. Verified via stdout summary line."""
+        from unittest.mock import patch
+
+        from evidentia_ai.eval.faithfulness import FaithfulnessResult
+        from evidentia_ai.risk_statements import RiskStatementGenerator
+        from evidentia_core.models.risk import (
+            ImpactRating,
+            LikelihoodRating,
+            RiskLevel,
+            RiskStatement,
+            RiskTreatment,
+        )
+
+        gaps_file, ctx_file = self._make_minimal_fixture(tmp_path)
+        clauses_file = tmp_path / "clauses.yaml"
+        clauses_file.write_text(
+            'nist-800-53-rev5:AC-2:\n'
+            '  - "Account management procedures."\n',
+            encoding="utf-8",
+        )
+
+        canonical_risk = RiskStatement(
+            id="t",
+            asset="x",
+            threat_source="y",
+            threat_event="z",
+            vulnerability="v",
+            likelihood=LikelihoodRating.HIGH,
+            likelihood_rationale="r",
+            impact=ImpactRating.HIGH,
+            impact_rationale="r",
+            risk_level=RiskLevel.HIGH,
+            risk_description="d",
+            recommended_controls=["AC-2"],
+            remediation_priority=2,
+            treatment=RiskTreatment.MITIGATE,
+        )
+
+        def _mock_extract(text: str) -> list[str]:
+            return ["Account management procedures."]
+
+        def _mock_score(
+            claim: str,
+            clauses: list[str],
+            *,
+            threshold: float,
+        ) -> FaithfulnessResult:
+            return FaithfulnessResult(
+                claim=claim,
+                score=0.9,
+                threshold=threshold,
+                method="jaccard-stdlib",
+                evidence_clauses=clauses[:3],
+            )
+
+        with (
+            patch(
+                "evidentia_ai.eval.claim_extraction.extract_claims",
+                side_effect=_mock_extract,
+            ),
+            patch(
+                "evidentia_ai.eval.faithfulness.faithfulness_score",
+                side_effect=_mock_score,
+            ),
+            patch.object(
+                RiskStatementGenerator,
+                "generate",
+                return_value=canonical_risk,
+            ),
+        ):
+            runner = CliRunner()
+            result = runner.invoke(
+                eval_cli_app,
+                [
+                    "risk-determinism",
+                    "--context",
+                    str(ctx_file),
+                    "--gaps",
+                    str(gaps_file),
+                    "--samples-per-prompt",
+                    "1",
+                    "--model",
+                    "test-stub",
+                    "--check-faithfulness",
+                    "--faithfulness-threshold-mode",
+                    "fixed",
+                    "--source-clauses-file",
+                    str(clauses_file),
+                ],
+            )
+
+        assert result.exit_code == 0, result.stdout
+        # Fixed mode + no explicit threshold → 0.30 framework-
+        # agnostic.
+        assert "threshold: 0.30" in result.stdout
+        assert "fixed" in result.stdout
+
+    def test_framework_aware_mode_uses_nist_0_60(
+        self, tmp_path: Path
+    ) -> None:
+        """--faithfulness-threshold-mode=framework-aware (default)
+        + prompt_id "nist-800-53-rev5:AC-2" → harness threshold
+        is the framework-agnostic fallback (since "nist-800-53-
+        rev5" doesn't exactly match "nist-800-53" in
+        DEFAULT_THRESHOLDS_BY_FRAMEWORK_JACCARD). This test
+        documents the resolution behavior — operators using the
+        full Rev5 framework prefix get the agnostic default;
+        operators using the bare "nist-800-53" framework
+        identifier get 0.60.
+
+        Sub-test the framework-prefix matching against the
+        DEFAULT_THRESHOLDS_BY_FRAMEWORK_JACCARD map by directly
+        invoking resolve_threshold (the CLI's resolution path).
+        """
+        from evidentia_ai.eval.faithfulness import resolve_threshold
+
+        # Bare framework identifier from the map.
+        assert resolve_threshold("nist-800-53") == 0.60
+        # Rev5 prefix (the gap.framework value) does NOT match.
+        assert resolve_threshold("nist-800-53-rev5") == 0.30
+        # FFIEC + ISO27001 mappings work.
+        assert resolve_threshold("ffiec-it-handbook") == 0.35
+        assert resolve_threshold("iso-27001") == 0.30

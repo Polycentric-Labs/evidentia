@@ -376,14 +376,18 @@ def risk_determinism(
             "--source-clauses-file."
         ),
     ),
-    faithfulness_threshold: float = typer.Option(
-        0.3,
+    faithfulness_threshold: float | None = typer.Option(
+        None,
         "--faithfulness-threshold",
         help=(
             "Minimum claim-score below which a "
-            "FAITHFULNESS_VIOLATION fires. Default 0.3 for jaccard "
-            "(stdlib token-overlap); 0.7 recommended for semantic "
-            "(sentence-transformers). Per-corpus calibration via "
+            "FAITHFULNESS_VIOLATION fires. When unset (default), "
+            "looks up the framework-aware default (NIST 0.60 / "
+            "FFIEC 0.35 / ISO27001 0.30) for the per-prompt "
+            "framework when --faithfulness-threshold-mode is "
+            "'framework-aware' (default), or 0.30 framework-"
+            "agnostic when 'fixed'. Explicit values always win "
+            "over the mode flag. Per-corpus calibration via "
             "scripts/tune_faithfulness_threshold.py."
         ),
     ),
@@ -394,6 +398,20 @@ def risk_determinism(
             "Scoring method: 'jaccard' (stdlib; default) or "
             "'semantic' (requires `pip install "
             "evidentia-ai[eval-faithfulness]`)."
+        ),
+    ),
+    faithfulness_threshold_mode: str = typer.Option(
+        "framework-aware",
+        "--faithfulness-threshold-mode",
+        help=(
+            "v0.8.7 P2: how to resolve the threshold when "
+            "--faithfulness-threshold is unset. 'framework-aware' "
+            "(default) extracts framework from the prompt_id "
+            "(format <framework>:<control_id>) + looks up the "
+            "v0.8.5-empirical per-framework default via "
+            "evidentia_ai.eval.faithfulness.resolve_threshold(). "
+            "'fixed' uses the framework-agnostic 0.30 default. "
+            "Explicit --faithfulness-threshold value always wins."
         ),
     ),
     source_clauses_file: Path | None = typer.Option(
@@ -461,6 +479,18 @@ def risk_determinism(
         typer.echo(
             f"--faithfulness-method must be 'jaccard' or 'semantic'; "
             f"got {faithfulness_method!r}.",
+            err=True,
+        )
+        raise typer.Exit(code=2)
+    # v0.8.7 P2: validate --faithfulness-threshold-mode.
+    if faithfulness_threshold_mode not in {
+        "framework-aware",
+        "fixed",
+    }:
+        typer.echo(
+            f"--faithfulness-threshold-mode must be "
+            f"'framework-aware' or 'fixed'; got "
+            f"{faithfulness_threshold_mode!r}.",
             err=True,
         )
         raise typer.Exit(code=2)
@@ -614,12 +644,62 @@ def risk_determinism(
             f"  • plus {len(eval_samples)} replay calls"
         )
 
+    # v0.8.7 P2: resolve the harness threshold per the
+    # threshold-mode flag. Precedence:
+    #   1. Explicit --faithfulness-threshold value (always wins).
+    #   2. --faithfulness-threshold-mode=framework-aware: derive
+    #      framework from the prompt_id (canonical format
+    #      <framework>:<control_id>) of the FIRST sample. When
+    #      samples are heterogeneous (mixed frameworks), the
+    #      first-sample framework still drives — operators with
+    #      heterogeneous corpora should pass --faithfulness-
+    #      threshold explicitly.
+    #   3. --faithfulness-threshold-mode=fixed: use the
+    #      framework-agnostic DEFAULT_FAITHFULNESS_THRESHOLD
+    #      (0.30).
+    if faithfulness_threshold is not None:
+        resolved_threshold = faithfulness_threshold
+        threshold_source = "explicit"
+    elif (
+        faithfulness_threshold_mode == "framework-aware"
+        and check_faithfulness
+        and eval_samples
+    ):
+        from evidentia_ai.eval.faithfulness import resolve_threshold
+
+        # Extract framework from first sample's prompt_id
+        # (canonical <framework>:<control_id> format).
+        first_prompt_id = eval_samples[0].prompt_id
+        framework_for_threshold: str | None = None
+        if ":" in first_prompt_id:
+            framework_for_threshold = first_prompt_id.split(":", 1)[0]
+        resolved_threshold = resolve_threshold(
+            framework_for_threshold, method=faithfulness_method
+        )
+        threshold_source = (
+            f"framework-aware (framework="
+            f"{framework_for_threshold!r})"
+        )
+    else:
+        from evidentia_ai.eval.faithfulness import (
+            DEFAULT_FAITHFULNESS_THRESHOLD,
+        )
+
+        resolved_threshold = DEFAULT_FAITHFULNESS_THRESHOLD
+        threshold_source = "fixed (framework-agnostic default)"
+
+    if check_faithfulness:
+        typer.echo(
+            f"  • faithfulness threshold: {resolved_threshold:.2f} "
+            f"({threshold_source})"
+        )
+
     result = harness.run(
         samples=eval_samples,
         context_factory=_make_ctx,
         check_replay=check_replay,
         check_faithfulness=check_faithfulness,
-        faithfulness_threshold=faithfulness_threshold,
+        faithfulness_threshold=resolved_threshold,
         faithfulness_method=faithfulness_method,
     )
 
@@ -671,7 +751,7 @@ def risk_determinism(
         )
         typer.echo(
             f"  • faithfulness method: {faithfulness_method} "
-            f"(threshold {faithfulness_threshold:.2f})"
+            f"(threshold {resolved_threshold:.2f})"
         )
         typer.echo(
             f"  • faithfulness claims scored: {total_claims} "

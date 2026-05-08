@@ -1741,6 +1741,150 @@ are reserved for future cycles.
 
 ---
 
+## v0.8.6 attack-surface delta — CIMD scope enforcement at MCP-protocol level + Cohen's Kappa probe + per-claim confidence
+
+> Status: 2026-05-07. v0.8.6 SHIPPED. Closes ALL 3 v0.8.5
+> carry-overs (CIMD enforcement + multi-rater corpus probe +
+> per-claim confidence/framework-aware thresholds) + 3 cycle-
+> additions (v0.7.x retrospective + v1.0 transition narrative
+> DRAFT + per-tool scope enforcement audit-trail layer) per
+> Allen's Comprehensive scope + CIMD-first sequencing lock-in
+> (§29). 13th consecutive PROCEED-CLEAN of v0.7.x → v0.8.x line.
+
+### CIMD scope enforcement at MCP-protocol level (P1)
+
+**Surface change**: NEW `evidentia_mcp.scope` module (~250
+LOC) ships `enforce_cimd_scope(server, default_client_id)`
+that monkey-binds a wrapper to `FastMCP.call_tool` (mcp Python
+SDK 1.27 has no public middleware hook). Every tool dispatch
+routes through one authorization choke-point.
+
+`build_server()` + `run_*()` accept `default_client_id=`
+kwarg threaded to `enforce_cimd_scope` AFTER `_register_tools`.
+New `--default-client-id <slug>` CLI flag wired through stdio +
+SSE + HTTP transports. Validation warnings: when set without
+`--cimd-registry` (no scope to enforce); when `--cimd-registry`
+set without `--default-client-id` on stdio (every call denies
+per ambiguous-caller policy).
+
+Per-call audit trail: `EventAction.AI_MCP_TOOL_AUTHORIZED` +
+`AI_MCP_TOOL_DENIED` (NEW); both carry `evidentia.run_id`
+(per-call UUID4) + `evidentia.client_id` +
+`evidentia.tool_name` + `evidentia.scope_allowlist`. Pass-
+through path (when `evidentia_cimd is None`) emits no audit
+event — preserves v0.8.5 default no-gating behavior; absence
+of events is itself an audit signal.
+
+Denial paths: ambiguous-caller (no client_id resolvable) +
+unregistered client_id + out-of-scope tool → emit DENY +
+raise `McpError` code -32602 (Invalid Params per JSON-RPC 2.0).
+
+Operator-friendly examples: `examples/mcp/cimd-registry-readonly.json`
++ `cimd-registry-power.json`.
+
+**Threat coverage**: closes the v0.8.5 P4 deferral. Per-tool
+scope enforcement at the MCP protocol level — unauthorized
+tool calls are rejected back to the MCP client. Auditors get
+per-call structured evidence of authorize / deny decisions.
+
+**Residual risk**: **CIMD is NOT authentication** — re-asserted
+prominently. Documented in both `cimd.py` (v0.8.5 P4) +
+`scope.py` (v0.8.6 P1) docstrings. CIMD is a metadata + scope
+layer running ON TOP of whatever authentication the transport
+provides. A malicious client that bypasses transport auth can
+claim any `client_id` it wants. Operators deploying CIMD MUST
+wire transport-level authentication (reverse-proxy mTLS or
+bearer tokens). Per-transport client_id resolution: stdio =
+`--default-client-id` IS the client_id (documented as
+INFORMATIONAL audit-trail granularity, NOT a security boundary
+on stdio); HTTP/SSE = `Context.client_id` from request meta
+with `--default-client-id` fallback. Cryptographic CIMD
+signatures (per the Webscale OIDC profile) deferred to v1.0
+per `v1.0-transition.md`.
+
+### Cohen's Kappa rater agreement script (P2)
+
+**Surface change**: NEW `scripts/compute_inter_rater_kappa.py`
+ships Cohen's Kappa formula κ = (po - pe) / (1 - pe) +
+Landis-Koch 1977 verbal interpretation + CI-gateable exit
+codes. Two operating modes: two-rater file mode + rule-based-
+rater mode (deterministic; no LLM tokens / human time).
+Internal tooling — not a runtime surface.
+
+NEW `tests/data/dfah-calibration/inter-rater-agreement.md`
+documents the v0.8.6 P2 κ probe: best κ = 0.4848 (moderate)
+at jaccard threshold 0.85 — below the ≥ 0.80 acceptance
+target. Per §29 R3 mitigation, the corpus ships as "single-
+rater + κ probe inconclusive" with documented rationale that
+the substantial moderate-to-poor agreement empirically
+demonstrates the v0.8.3 sentence-transformers semantic path's
+necessity.
+
+**Threat coverage**: not a runtime attack surface; pure label-
+quality probe + reproducibility infrastructure.
+
+**Residual risk**: rule-based rater 2 is NOT a human rater.
+High κ would mean "the rule mostly agrees with Allen", NOT
+"Allen's labels are correct". Low κ surfaces the known +
+intended gap on paraphrase + semi-related entries. Real
+LLM-assisted second rater + human second rater both reserved
+for v0.9.0 walk-through cycle.
+
+### Per-claim bootstrap-resampled confidence + framework-aware threshold defaults (P3)
+
+**Surface change**: 2 new optional Pydantic fields on
+`FaithfulnessResult`:
+- `confidence: float | None = None` — bootstrap-resampled
+  stddev (default-off cost-aware ~100ms/claim; opt-in via
+  `compute_confidence=True` kwarg).
+- `framework: str | None = None` — persisted on result for
+  audit-trail re-derivation.
+
+NEW constants + helper:
+- `DEFAULT_THRESHOLDS_BY_FRAMEWORK_JACCARD: dict[str, float]`
+  (NIST 0.60 / FFIEC 0.35 / ISO27001 0.30 per v0.8.5 P2 sweep)
+- `DEFAULT_CONFIDENCE_RESAMPLES: int = 100`
+- `resolve_threshold(framework, method)` — framework-aware
+  default lookup with fallback to
+  `DEFAULT_FAITHFULNESS_THRESHOLD` (0.30) for unknown
+  frameworks / non-jaccard methods
+
+`faithfulness_score()` extended with 4 backward-compatible
+kwargs: `framework=`, `compute_confidence=`, `n_resamples=`,
+`confidence_seed=`. Backward compatible: all 4 default such
+that existing callers behave identically to v0.8.5 (no
+confidence computed, no framework persisted, confidence field
+is None on the result).
+
+**Threat coverage**: surfaces model confidence on each
+FaithfulnessResult so operators can filter low-confidence
+below-threshold claims separately from high-confidence ones.
+Improves auditor triage for borderline edge cases.
+
+**Residual risk**: bootstrap confidence uses Python stdlib
+`random.Random` with optional seed (test-only; production
+callers leave None). The `_bootstrap_confidence` helper does
+not use cryptographic randomness — that's appropriate for
+this use case (statistical stability estimation, not security
+purposes). Per-framework threshold map references the v0.8.5
+empirical sweep; if the corpus expands materially, operators
+should re-run `tune_faithfulness_threshold.py` to verify the
+defaults haven't drifted.
+
+### v0.7.x retrospective + v1.0 transition narrative DRAFT (P4 + P5)
+
+**Surface change**: 2 new public docs at `docs/v0.7.x-
+retrospective.md` + `docs/v1.0-transition.md`. No code; no
+runtime surface.
+
+**Threat coverage**: not applicable — narrative docs.
+
+**Residual risk**: standing-rule keyword sweep ran clean on
+both docs; no commercialization vocabulary or personal names
+leaked.
+
+---
+
 ---
 
 *First published v0.7.7 (2026-05). Origin: promoted from a

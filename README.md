@@ -148,6 +148,40 @@ Evidentia is built on four principles:
 
 ### Recent releases
 
+**v0.8.6 (May 2026)** — *CIMD scope enforcement at MCP-
+protocol level + Cohen's Kappa rater agreement + per-claim
+confidence + framework-aware threshold defaults + v0.7.x
+retrospective + v1.0 transition narrative DRAFT*. Aggressive
+~2-3 week comprehensive scope (single-session compression
+matching v0.8.3 + v0.8.4 + v0.8.5 cadence). Closes ALL 3
+v0.8.5 carry-overs + 3 cycle-additions. **MCP CIMD scope
+enforcement at MCP-protocol level**: NEW `evidentia_mcp.scope`
+module monkey-binds `FastMCP.call_tool` (mcp Python SDK 1.27
+has no public middleware hook); `--default-client-id <slug>`
+CLI flag; pass-through preserves v0.8.5 default no-gating
+behavior; per-call `AI_MCP_TOOL_AUTHORIZED` /
+`AI_MCP_TOOL_DENIED` audit events; deny paths raise
+`McpError` code -32602. **Cohen's Kappa rater agreement
+script** (`scripts/compute_inter_rater_kappa.py`): two-rater
+file mode + rule-based-rater mode; CI-gateable exit codes;
+empirical κ = 0.4848 (moderate) at jaccard threshold 0.85
+ships as "single-rater + κ probe inconclusive" per the
+documented R3 mitigation. **Per-claim bootstrap-resampled
+confidence**: `FaithfulnessResult.confidence` field
+(default-off cost-aware ~100ms/claim; opt-in via
+`compute_confidence=True`); **framework-aware threshold
+defaults**: `DEFAULT_THRESHOLDS_BY_FRAMEWORK_JACCARD` map
+(NIST 0.60 / FFIEC 0.35 / ISO27001 0.30) +
+`resolve_threshold(framework, method)` helper +
+`FaithfulnessResult.framework` field. **`docs/v0.7.x-
+retrospective.md`** publishes the 18-release v0.7.x cycle
+narrative; **`docs/v1.0-transition.md` DRAFT** captures v1.0
+theme candidates + acceptance gates + open questions for
+v0.9.0 cycle-open. Thirteenth consecutive PROCEED-CLEAN of
+the v0.7.x → v0.8.x line. **2383 tests passing across 217
+source files; mypy strict 0/0; ruff clean.** v0.8.7 wrap-up
+release closes the v0.8.6 P3 CLI deferral.
+
 **v0.8.5 (May 2026)** — *DFAH CLI flags + corpus expansion +
 real-LLM integration tests + MCP CIMD richness*. Aggressive
 ~2-3 week comprehensive scope (single-session compression
