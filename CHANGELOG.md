@@ -7,6 +7,148 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+**Theme**: *Federal compliance — POA&M lifecycle + CONMON cycle
+calendar + walk-through-as-validation.* First minor of the
+v0.9.x line. Opens the federal-compliance theme reserved at
+v0.8.7 cycle-close. Lands operator-facing surfaces auditors
+expect in any regulated-industry GRC tool: Plan-of-Action-and-
+Milestones tracking + Continuous Monitoring cycle calendar.
+
+### Added — Phase 1: POA&M data layer + state model
+
+- **`evidentia_core.models.gap.POAMState`** — 5-state enum
+  (`planned` / `in_progress` / `overdue` / `completed` /
+  `verified`) aligned to FedRAMP POA&M Template Completion
+  Guide v3.0 + NIST SP 800-53A Rev 5 Appendix F. Forward-only
+  state transitions; backward transitions programmatically
+  blocked to preserve auditor-defensible monotonic progress.
+- **`evidentia_core.models.gap.Milestone`** — Pydantic record
+  carrying `target_date` + `description` + `status` +
+  optional `evidence_ref` + `created_at` + `updated_at`. UUID
+  v4 stamp for OSCAL POA&M back-matter cross-reference.
+- **`ControlGap.poam_milestones: list[Milestone]`** optional
+  field with default-empty for backward-compat with v0.7.x +
+  v0.8.x serialized gap reports.
+- **`evidentia_core.poam`** sub-package: `state.py`
+  (transition rules + `derive_overdue` predicate) +
+  `milestone.py` (sort + group + upcoming + attention
+  bucketing helpers).
+- **`evidentia_core.poam_store`** — JSON file-store mirroring
+  v0.7.9 P0.1.2 vendor_store: atomic-write + UUID-shape ID
+  gate + `validate_within` path-traversal defense +
+  `EVIDENTIA_POAM_STORE_DIR` env override + platformdirs
+  default. Refreshes `Milestone.updated_at` on persisted
+  state changes vs the on-disk version.
+- **6 new EventActions** in `evidentia_core.audit.events`:
+  `POAM_CREATED` / `POAM_UPDATED` / `POAM_MILESTONE_REACHED`
+  / `POAM_OVERDUE` / `POAM_CLOSED` / `POAM_VERIFIED`.
+- `docs/log-schema.md` — new `evidentia.poam.*` section
+  documenting all 6 actions + common evidentia-extension
+  fields per the AU-3 contract.
+
+### Added — Phase 2: POA&M CLI + REST + OSCAL emit
+
+- **`evidentia poam` Typer subcommand group** (7 verbs):
+  - `create --from-gap-report <path>` — auto-materialize
+    POA&M items. Default: CRITICAL + HIGH severity only per
+    FedRAMP §3.1; `--all` opts into the full set;
+    `--overwrite` replaces existing records.
+  - `list [--all] [--severity csv] [--json]` — canonical
+    sort (severity rank → has-open-milestones → earliest-
+    open-target-date → control_id).
+  - `show <poam-id> [--json]` — human-readable detail view.
+  - `update <poam-id> --status / --assigned-to /
+    --remediation-guidance / --add-tag / --remove-tag` —
+    top-level field edits; `--status=remediated`
+    additionally fires `POAM_CLOSED` audit event.
+  - `milestone add <poam-id>` — append milestone.
+  - `milestone update <poam-id> <ms-id>` — backward
+    transitions blocked with "file a NEW milestone" hint.
+  - `delete <poam-id> [--yes]` — interactive prompt by
+    default.
+  - `calendar [--window-days N] [--today YYYY-MM-DD]
+    [--json]` — attention-state surface across all POA&Ms.
+- **`/api/poam/*` FastAPI router** (8 endpoints): items
+  CRUD + paginate + filter + milestones POST/PATCH +
+  calendar. Mirrors v0.7.9 TPRM router shape + inherits
+  v0.7.8 F-V08-DAST-3 error-normalization (400 for runtime
+  body-content; 404 for shape-violation + not-found IDs).
+  State-machine violations on milestone PATCH surface as
+  400.
+- **`evidentia_core.oscal.poam_exporter.gap_report_to_oscal_poam`**
+  — emit OSCAL 1.1.2 plan-of-action-and-milestones JSON.
+  Each `ControlGap` → one (observation, risk, poam-item)
+  triple with UUID cross-references resolved via `gap.id`.
+  Milestones emit as `tracking-entries` under
+  `risks[].remediations[]`. Evidentia-namespaced status +
+  target-date + evidence-ref props live under
+  `ns=https://evidentia.dev/oscal`. Back-matter integrity:
+  canonical JSON in `base64.value` + SHA-256 in
+  `rlinks[].hashes[]` — mirrors v0.7.0 finding-resource
+  embedding so tampering fails the chain-of-custody check.
+
+### Added — Phase 3: CONMON cycle calendar (read-only)
+
+- **`evidentia_core.conmon`** pure-function library:
+  - `ConmonCadence` Pydantic model (slug + framework +
+    activity + frequency + description + citation). Slugs
+    stable across releases, append-only.
+  - `CadenceFrequency` enum (`monthly` / `quarterly` /
+    `annual` / `biennial` / `triennial`) + month-delta map.
+  - `CycleAttentionState` enum (`current` / `due_soon` /
+    `overdue`) — mirrors v0.9.0 P1 POA&M attention
+    vocabulary so operator UIs render both signals through
+    the same widgets.
+  - **7 bundled cadences**: NIST 800-53 CA-7 (monthly) +
+    FedRAMP ConMon × 3 (monthly POA&M + monthly scans +
+    annual SAR) + CMMC L2 triennial + DoD RMF annual + OCC
+    2026-13a model-risk annual. Each carries regulatory
+    citation.
+  - `next_due()` — calendar-aware + last-day-clamping
+    month arithmetic (e.g., `2026-01-31 + 1 month →
+    2026-02-28`); never produces invalid dates.
+  - `derive_status()` — 3-state attention bucketing.
+  - `register_cadence()` — process-local runtime extension
+    for organization-specific cycles.
+- **`evidentia conmon` CLI** (3 verbs): `list` (catalog
+  browse) + `next` (compute single next-due) + `check`
+  (state-file YAML → due-soon + overdue surfacing with
+  audit-event emit).
+- **2 new EventActions**: `CONMON_CYCLE_DUE` +
+  `CONMON_CYCLE_OVERDUE`. Audit emit happens at the query
+  layer, not in the library — current cycles do NOT emit
+  (absence-of-events invariant).
+- **NEW operator runbooks**:
+  - [`docs/poam-runbook.md`](docs/poam-runbook.md) — end-
+    to-end POA&M workflow (bootstrap → milestones →
+    attention checks → close-out → OSCAL emit → audit-trail
+    interpretation).
+  - [`docs/conmon-runbook.md`](docs/conmon-runbook.md) —
+    CONMON workflow (discover → compute next-due → state-
+    file polling → CI integration → operator-extensible
+    cadences → audit interpretation).
+
+### Changed
+
+- CLI JSON output across `cli/conmon.py` + `cli/poam.py`
+  now goes through `typer.echo()` rather than `rich`'s
+  `Console.print()` — fixes terminal-width wrapping that
+  corrupted JSON in CliRunner output.
+
+### Notes
+
+- Phase 4 (walk-through-as-validation) is operator-driven.
+  If it runs before ship, federal-SI scenario rows
+  materialize in `capability-matrix.md` + Cohen's Kappa
+  recomputes on the v0.8.5 DFAH corpus (closes the v0.8.6
+  §29 P2 R3 mitigation acceptance). If deferred, walk-
+  through becomes a v0.9.1 reservation per §31.A POA&M-
+  first / walk-through-as-validation triage.
+- v1.0 carries-forward unchanged: CONMON live-trigger
+  daemon (`evidentia conmon watch`); cryptographic CIMD
+  signatures; API-stability commitment; OpenSSF Best
+  Practices Gold tier (blocked on ≥ 2 contributors).
+
 ## [0.8.7] - 2026-05-08
 
 **Final v0.8.x wrap-up.** Single focused session closing the

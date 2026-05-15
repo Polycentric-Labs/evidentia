@@ -1959,6 +1959,193 @@ or personal names leaked.
 
 ---
 
+## v0.9.0 attack-surface delta — Federal compliance (POA&M + CONMON)
+
+> Status: 2026-05-08. v0.9.0 SHIPPED. First minor of the v0.9.x
+> line. Opens the federal-compliance theme reserved at v0.8.7
+> cycle-close. Plan-of-Action-and-Milestones tracking +
+> Continuous Monitoring cycle calendar are auditor-expected
+> surfaces in any regulated-industry GRC tool; v0.9.0 lands both.
+
+### POA&M data layer + state model (P1)
+
+**Surface change**: NEW `evidentia_core.models.gap.POAMState`
+enum + `Milestone` Pydantic record + optional
+`ControlGap.poam_milestones` list field (default-empty for
+backward-compat with v0.7.x + v0.8.x serialized reports). NEW
+`evidentia_core.poam` package with `state.py` (transition rules
++ derived-overdue predicate) + `milestone.py` (cycle helpers).
+NEW `evidentia_core.poam_store` JSON file-store mirroring
+v0.7.9 P0.1.2 vendor_store pattern (atomic-write +
+UUID-shape-validation + `EVIDENTIA_POAM_STORE_DIR` env override
++ platformdirs default). NEW 6 EventActions
+(`POAM_CREATED` / `_UPDATED` / `_MILESTONE_REACHED` /
+`_OVERDUE` / `_CLOSED` / `_VERIFIED`).
+
+**Threat coverage**:
+
+- *State-machine integrity*: backward state transitions (e.g.,
+  `COMPLETED → IN_PROGRESS`) are programmatically blocked by
+  `is_valid_transition`. An auditor reading the lifecycle expects
+  monotonic forward progress; backward rewinds would corrupt the
+  audit-trail interpretation. The CLI + REST surfaces (v0.9.0 P2)
+  consult the predicate before persisting any state change. To
+  re-open work, operators file a NEW milestone with a fresh
+  `target_date` — captured as a fresh `POAM_UPDATED` event, never
+  an in-place rewind.
+- *Path-traversal defense on the store*: belt-and-suspenders. The
+  UUID-shape ID gate rejects anything that isn't canonical UUID
+  hex form (including the v0.7.x canonical `../etc/passwd`
+  attack); the `validate_within` check provides defense-in-depth
+  if the shape gate is ever bypassed via refactor. Mirrors the
+  v0.7.9 vendor_store + v0.7.10 model_risk_store pattern.
+- *Optional-field backward-compat*: `ControlGap.poam_milestones`
+  defaults to `[]` via Pydantic `default_factory=list`. v0.7.x +
+  v0.8.x serialized gap reports re-parse cleanly under v0.9.0
+  without migration steps — Pydantic adds the empty list on
+  parse. No silent data loss on backward-compat reads.
+
+**Residual risk**: minimal. Pure data-layer + state-machine work
+with no new I/O surfaces beyond the JSON file-store (which
+inherits the well-validated v0.7.9 vendor_store posture). The
+6 new EventActions are additive; no existing audit-event shapes
+change.
+
+### POA&M CLI + REST + OSCAL emit (P2)
+
+**Surface change**: NEW `evidentia poam` Typer subcommand group
+(7 verbs: `create` / `list` / `show` / `update` / `milestone
+add|update` / `delete` / `calendar`). NEW `/api/poam/*` FastAPI
+router (8 endpoints). NEW
+`evidentia_core.oscal.poam_exporter.gap_report_to_oscal_poam()`
+emitting OSCAL 1.1.2 plan-of-action-and-milestones JSON with
+back-matter SHA-256 integrity protection.
+
+**Threat coverage**:
+
+- *Auto-generation severity-filter default*: `evidentia poam
+  create --from-gap-report` materializes only CRITICAL + HIGH
+  severity gaps by default per FedRAMP POA&M Template
+  Completion Guide v3.0 §3.1. Auditor-defensible: POA&M items
+  track material findings; lower-severity gaps are documented
+  in the SSP risk register without ceremony. Operators opt into
+  the full set via `--all`. The filter is a deliberate
+  attack-surface bound — over-materialization (every LOW gap
+  becomes a POA&M) would inflate operator workload and dilute
+  auditor attention on actual material findings.
+- *Idempotency on POST*: `POST /api/poam/items` overwrites an
+  existing record with the same `id`. Documented as idempotent
+  (re-POST safe). PUT is the explicit-replace verb with `id` +
+  `created_at` server-pinned. The path-parameter authority
+  matches the v0.7.9 TPRM convention.
+- *Error normalization*: 400 for runtime body-content
+  validation (per v0.7.8 F-V08-DAST-3 normalization); 404 for
+  shape-violation + not-found IDs (per v0.7.9 P0.1 H-3
+  widening). Backward-state-transition violations on milestone
+  PATCH surface as 400 with a clear "file a NEW milestone"
+  remediation hint — operators can't silently corrupt the
+  audit-trail interpretation via a malformed PATCH.
+- *OSCAL back-matter integrity*: each POA&M record's canonical
+  JSON is base64-encoded in
+  `back-matter.resources[].base64.value` with SHA-256 in
+  `rlinks[].hashes[]`. Mirrors the v0.7.0 finding-resource
+  embedding pattern — tampering with an embedded record
+  changes the hash and fails the v0.7.0
+  `verify_ar_file` chain-of-custody check when the artifact
+  reaches the auditor. The
+  Evidentia-namespaced extension props
+  (`ns=https://evidentia.dev/oscal`) preserve milestone status
+  + target-date + evidence-ref through trestle-conformance
+  round-trips as opaque extensions (preserved but not
+  interpreted by upstream tools).
+- *OSCAL emit determinism*: same input → same back-matter hash
+  across emits. The top-level POA&M document UUID + per-element
+  UUIDs are freshly generated each emit (per OSCAL convention),
+  but the back-matter resource hash is integrity-bound to the
+  record content only.
+
+**Residual risk**:
+
+- *POA&M item over-disclosure via REST*: open by default,
+  matching existing endpoints. The v0.8.0 P0.5 FastAPI
+  AuthProvider middleware applies optional token-file auth at
+  the app layer — operators wire that for non-loopback
+  deployment per the existing pattern. Documented in the
+  `poam-runbook.md`.
+- *OSCAL POA&M loader (v0.9.0 not in scope)*: the v0.9.0 emit
+  is one-way (gap report → OSCAL JSON). The reverse loader
+  (OSCAL → ControlGap reconstruction) lands in v0.9.1 if
+  operator demand surfaces. Until then, operators producing
+  OSCAL outside Evidentia cannot re-import; the trestle-
+  conformance round-trip property is the import path.
+
+### CONMON cycle calendar (P3)
+
+**Surface change**: NEW `evidentia_core.conmon` pure-function
+read-only library with 7 bundled cadences (NIST 800-53 CA-7
+monthly + 3 FedRAMP ConMon + CMMC L2 triennial + DoD RMF annual
++ OCC 2026-13a model-risk annual). NEW `evidentia conmon` CLI
+(3 verbs: `list` / `next` / `check`). NEW 2 EventActions
+(`CONMON_CYCLE_DUE` + `CONMON_CYCLE_OVERDUE`).
+
+**Threat coverage**:
+
+- *No daemon → no long-running process surface*: operators poll
+  via the `check` verb. The CONMON live-trigger daemon
+  (`evidentia conmon watch`) is reserved for v1.0 — a daemon
+  surface introduces a long-running process + state-file watch
+  surface that v0.9.0 explicitly out-of-scopes per the §31.C
+  read-only-library-only decision. v0.9.0 ships the math + the
+  query CLI; v1.0 ships the daemon when the design has had
+  more time to bake.
+- *Cadence-slug stability*: slugs are append-only across
+  releases — never renamed, never repurposed. Audit-trail
+  integrity property: an auditor reviewing six months of CONMON
+  events can rely on the slug to consistently identify the
+  cycle even as the bundled catalog grows. Slug changes
+  require a new entry alongside the old.
+- *Absence-of-events invariant*: current cycles (next_due >
+  today + window_days) do NOT emit events. The absence IS the
+  auditor signal (no attention needed). This avoids audit-log
+  inflation — operators querying daily don't multiply event
+  records for cycles that aren't actually due.
+- *State-file YAML parse hardening*: the `check` verb's YAML
+  loader uses `yaml.safe_load` (no arbitrary Python object
+  instantiation). Date-format validation surfaces parse errors
+  at file-load time with clear messages. Unknown cadence slugs
+  warn (don't error) — operators can keep deprecated entries
+  during transitions without breaking the check.
+- *Calendar arithmetic correctness*: month-add uses the same
+  calendar-aware + last-day-clamping pattern as
+  `Vendor.compute_next_review_due` (`2026-01-31 + 1 month →
+  2026-02-28`, never an invalid date). Leap-year regressions
+  covered by unit tests.
+
+**Residual risk**:
+
+- *Runtime-extension shadowing*: `register_cadence()` is
+  process-local. A bundled slug can be shadowed by a runtime
+  registration with conflicting frequency. Documented as a
+  feature (operators tailor org-specific cycles); audit-trail
+  records the shadowed cadence's actual frequency at query
+  time, so reconstruction is unambiguous. Durable extensions
+  via the v0.8.0 P0.4 plugin-contract surface defer to v0.9.1
+  if walk-through identifies demand.
+
+### Phase 4 (walk-through-as-validation) — operator-driven
+
+Walk-through scheduling is operator-driven; not Claude-blocking.
+If it runs before ship, the capability-matrix snapshot
+materializes 3-5 federal-SI scenario rows + the DFAH
+calibration corpus gets a Cohen's Kappa recompute with a domain-
+expert second rater (closes the v0.8.6 §29 P2 R3 mitigation
+acceptance). If deferred, v0.9.0 ships with the v0.8.6 "single-
+rater κ probe inconclusive" carry-forward acknowledged; the
+walk-through becomes a v0.9.1 reservation per §31.A.
+
+No new attack surface from Phase 4 either way (the walk-through
+produces docs + data-corpus entries, not code).
+
 ---
 
 *First published v0.7.7 (2026-05). Origin: promoted from a

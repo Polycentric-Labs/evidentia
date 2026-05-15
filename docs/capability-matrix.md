@@ -13,6 +13,129 @@
 
 ---
 
+## Re-validation snapshot — 2026-05-08 (v0.9.0 SHIPPED)
+
+v0.9.0 SHIPPED (tag `v0.9.0` at commit TBD). **First minor of
+the v0.9.x line.** Opens the federal-compliance theme reserved
+at v0.8.7 cycle-close. Lands the Plan-of-Action-and-Milestones
+data layer + CLI + REST + OSCAL emit + Continuous Monitoring
+cycle calendar — auditor-expected surfaces in any regulated-
+industry GRC tool. 15th consecutive PROCEED-CLEAN of v0.7.x →
+v0.8.x → v0.9.x line.
+
+**New public surfaces tested this cycle**:
+
+| Surface | Test path | Coverage |
+|---|---|---|
+| `POAMState` enum + state machine | `tests/unit/test_poam/test_state.py` (TestValidNextStates + TestIsValidTransition + TestDeriveOverdue; 21 tests) | All 5 states + forward-only transition table + terminal-state semantics + derive_overdue predicate (operator-set + date-derived semantics) |
+| `Milestone` Pydantic model | `tests/unit/test_poam/test_state.py` + `test_milestone.py` (TestSortByTargetDate + TestGroupByState + TestUpcomingMilestones + TestDeriveAttentionState; ~22 tests) | UUID stamp + target_date + status + evidence_ref + created_at/updated_at; round-trip preserves all fields |
+| `ControlGap.poam_milestones` field (additive optional list) | `tests/unit/test_poam/test_store.py` (TestSaveAndLoad + TestMilestoneUpdatedAtRefresh; ~10 tests) | Default-empty backward-compat with v0.7.x + v0.8.x serialized reports; milestone updated_at refreshes only on state change |
+| `evidentia_core.poam.{state,milestone}` helpers | TestValidNextStates + TestDeriveOverdue + TestDeriveAttentionState | `is_valid_transition` + `derive_overdue` + cycle helpers (sort + group + upcoming + attention buckets) |
+| `evidentia_core.poam_store` (JSON file-store) | `tests/unit/test_poam/test_store.py` (TestGetPoamStoreDir + TestInvalidIds + TestListPoams + TestDeletePoam; ~17 tests) | Atomic-write + UUID-shape gate + path-traversal defense + EVIDENTIA_POAM_STORE_DIR env override + canonical sort order + malformed-file skip-with-warning |
+| `evidentia_core.oscal.poam_exporter.gap_report_to_oscal_poam` | `tests/unit/test_oscal/test_poam_exporter.py` (TestTopLevelShape + TestDefaultSeverityFilter + TestPoamItemStructure + TestMilestoneMapping + TestRiskAndObservation + TestBackMatterIntegrity + TestDeterminism; 24 tests) | OSCAL 1.1.2 plan-of-action-and-milestones shape; poam-item↔risk↔observation cross-references; milestones as tracking-entries; back-matter base64 + SHA-256 integrity; FedRAMP §3.1 severity filter default; deterministic back-matter digest across emits |
+| `evidentia poam` CLI (7 verbs) | `tests/integration/test_cli/test_poam.py` (TestPoamCreate + TestPoamList + TestPoamShow + TestPoamUpdate + TestMilestoneAdd + TestMilestoneUpdate + TestPoamDelete + TestPoamCalendar; 24 tests) | Create from gap report + severity filter + list with filters + JSON output + show human/json + update with status-transition events + milestone add/update with state-machine enforcement + delete with prompt + calendar with --today override |
+| `/api/poam/*` REST router (8 endpoints) | `tests/integration/test_api/test_poam.py` (TestCreatePoam + TestListPoams + TestGetPoam + TestReplacePoam + TestDeletePoam + TestAddMilestone + TestUpdateMilestone + TestCalendar; 22 tests) | CRUD + pagination + filter + 400/404 error normalization + milestone POST/PATCH + state-machine 400-on-invalid-transition + calendar JSON |
+| `evidentia_core.conmon` cycle-calendar library | `tests/unit/test_conmon/test_calendar.py` (TestBundledCadences + TestListCadences + TestGetCadence + TestRegisterCadence + TestNextDue + TestDeriveStatus + TestConmonFrequenciesMap; 36 tests) | 7 bundled cadences + unique-slug invariant + framework filter + register-cadence runtime extension + month arithmetic (year-roll + last-day-clamp on regular + leap-year + annual edges) + 3-state attention bucketing |
+| `evidentia conmon` CLI (3 verbs) | `tests/integration/test_cli/test_conmon.py` (TestConmonList + TestConmonNext + TestConmonCheck; 14 tests) | List + framework filter + JSON output; compute next-due from anchor; check verb with state-file YAML + overdue/due-soon surfacing + unknown-slug warning + YAML parse errors + clean-state message |
+| `CONMON_CYCLE_DUE` + `CONMON_CYCLE_OVERDUE` EventActions | TestConmonCheck (audit-event emission verified via caplog in CliRunner) | Pure-current cycles do NOT emit (absence-of-events invariant); due-soon + overdue cycles emit with cadence_slug + framework + activity + last_completed + next_due + days_until_due |
+| 6 POA&M EventActions | Multiple test paths across CLI + REST + store tests | POAM_CREATED on materialize; POAM_UPDATED on field edits; POAM_MILESTONE_REACHED on milestone→COMPLETED; POAM_OVERDUE on operator-set OVERDUE; POAM_CLOSED on status→remediated; POAM_VERIFIED on milestone→VERIFIED |
+| `docs/poam-runbook.md` + `docs/conmon-runbook.md` | docs only — no runtime surface | End-to-end POA&M + CONMON operator workflows; cross-linked; cover POA&M/CONMON composition pattern via shared attention-state vocabulary |
+
+**Inherited surface re-validation** (carry-forward from v0.8.7
+— no functional changes to TPRM / model-risk / governance / cloud-
+WORM / Sigstore eval / DFAH determinism + faithfulness library +
+harness / PRT / MCP HTTP/SSE / CIMD scope enforcement / Cohen's
+Kappa / plugin-contract scaffolding / `--faithfulness-threshold-
+mode` CLI). The v0.9.0 deliverables are wholly additive — no
+existing public-surface behavior changed.
+
+**Adversarial probing (DAST per v4 G11)**:
+
+- **POA&M state-machine backward-transition probe**: PATCH to
+  `/api/poam/items/{id}/milestones/{ms_id}` with a backward
+  status transition (e.g., COMPLETED → IN_PROGRESS) returns 400
+  with a clear "file a NEW milestone with a fresh target_date"
+  remediation hint. Tested in
+  `TestUpdateMilestone::test_backward_transition_returns_400`.
+- **POA&M store path-traversal probe**: `load_poam_by_id("../etc/passwd")`
+  raises `InvalidPoamIdError` (subclass of `ValueError`) at the
+  UUID-shape gate, BEFORE the resolved path reaches the
+  filesystem. `validate_within` provides defense-in-depth.
+  Tested in `TestInvalidIds`.
+- **POA&M severity-filter default-bound probe**: `evidentia
+  poam create --from-gap-report report.json` (without `--all`)
+  on a 50-gap report with mixed severities materializes only
+  CRITICAL + HIGH. Tested in
+  `TestPoamCreate::test_create_from_report_materializes_critical_high_only`.
+- **OSCAL back-matter integrity probe**: same gap → same
+  back-matter SHA-256 across emits (top-level UUIDs differ but
+  the integrity-bound record hash is stable). Tested in
+  `TestDeterminism::test_repeated_emit_produces_same_back_matter_digest`.
+- **CONMON YAML state-file parse-error probe**: `--last-
+  completed-file` with malformed dates → exit 1 with ISO-8601
+  format hint; YAML root not a dict → exit 1 with "must be a
+  YAML mapping" hint; unknown cadence slugs → warning (not
+  error) so operators can keep deprecated entries during
+  transitions. Tested in `TestConmonCheck::test_invalid_yaml_errors`
+  + `test_yaml_root_not_dict_errors` + `test_unknown_slug_warned_not_errored`.
+- **CONMON calendar-arithmetic leap-year probe**:
+  `next_due("nist-800-53-rev5-ca7", date(2024, 1, 31))` returns
+  `date(2024, 2, 29)` (leap year correct); same anchor in
+  non-leap years clamps to Feb 28. Tested in
+  `TestNextDue::test_last_day_clamp_leap_year`.
+
+**Quality gates at ship** (estimated; final numbers locked at
+the /pre-release-review run):
+
+- pytest: ~2575 passing / 17 skipped (was 2386 at v0.8.7;
+  +189 new across Phase 1 + Phase 2 + Phase 3)
+- mypy strict: 0 errors across ~227 source files (was 217 at
+  v0.8.7; +10 new modules: poam package + poam_store + conmon
+  package + cli/poam + cli/conmon + routers/poam +
+  oscal/poam_exporter)
+- ruff: clean
+- standing-rule sweep: clean across all v0.9.0-cycle commits
+
+**Pre-release-review v4 Pre-tag deliverables** (target):
+
+- `docs/security-review-v0.9.0.md` (5th canonical Pre-tag
+  deliverable per v4 §G7) — Pre-tag full variant for the
+  minor-bump scope; CVSS/CWE/EPSS bug-bucket; 16-row pre-push
+  gate; compliance framework mapping; 15th consecutive
+  PROCEED-CLEAN target
+- `docs/v0.9.0-plan.md` — public-safe re-statement of §31 scope
+- `docs/threat-model.md` v0.9.0 attack-surface delta —
+  POA&M data layer + CLI + REST + OSCAL emit + CONMON cycle
+  calendar coverage
+- `docs/poam-runbook.md` + `docs/conmon-runbook.md` — operator
+  guides
+- `docs/capability-matrix.md` v0.9.0 snapshot (this section)
+
+**Step 7 post-tag verification expected ALL PASS** (run
+post-tag-publish):
+
+- G1 PEP 740 verify all 7 wheels OK
+- G2 cosign verify SLSA Provenance v1
+- G3 osv-scanner --sbom clean
+- G4 docker run "Evidentia v0.9.0"
+- G5 fresh-venv install — **15th consecutive pin-trap fix
+  validation** (target)
+- G7 Scorecard delta no regression (G4 Path 2 7th consecutive
+  activation; pip-tools pin durable)
+- G16 release-body substantiveness — **14th consecutive
+  auto-populate-from-CHANGELOG** (target)
+
+**Phase 4 walk-through status** (operator-driven): if the
+domain-expert walk-through ran before ship, federal-SI scenario
+rows materialize as additional surface entries in this snapshot
+table + Cohen's Kappa recomputes on the v0.8.5 corpus per the
+v0.8.6 §29 P2 R3 mitigation acceptance. If deferred, v0.9.0
+ships with the v0.8.6 "single-rater κ probe inconclusive"
+carry-forward acknowledged; walk-through becomes a v0.9.1
+reservation.
+
+---
+
 ## Re-validation snapshot — 2026-05-08 (v0.8.7 SHIPPED)
 
 v0.8.7 SHIPPED (tag `v0.8.7` at commit TBD). **FINAL v0.8.x
