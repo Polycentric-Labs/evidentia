@@ -427,6 +427,19 @@ introduced this practice retroactively.
       docker run --rm ghcr.io/polycentric-labs/evidentia:vX.Y.Z version
       docker run --rm ghcr.io/polycentric-labs/evidentia:vX.Y.Z catalog list | head -5
       ```
+- [ ] **(v0.9.3+) GHCR package visibility is PUBLIC** — the first
+      container push to a new GitHub org defaults to **private**
+      visibility. This bit us at v0.9.1 (org migration to
+      Polycentric-Labs) and again at v0.9.2. One-time manual fix:
+      1. Go to `https://github.com/orgs/Polycentric-Labs/packages/container/evidentia/settings`
+      2. Scroll to "Danger Zone" → "Change package visibility"
+      3. Select "Public" → confirm by typing the package name
+      4. Verify: `docker pull ghcr.io/polycentric-labs/evidentia:vX.Y.Z`
+         succeeds from an unauthenticated context (e.g., incognito
+         `docker pull` without `gh auth setup-git`).
+      After the one-time flip, subsequent pushes to the same package
+      inherit public visibility. Only re-check if the org is
+      recreated or the package is deleted and re-pushed.
 - [ ] **(v0.7.5+) Verify cosign keyless signature on the image** —
       validates the OIDC identity binding (release.yml@refs/tags/v*):
       ```bash
