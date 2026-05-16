@@ -40,7 +40,7 @@ places to contribute right now:
 ## Development setup
 
 ```bash
-git clone https://github.com/allenfbyrd/evidentia.git
+git clone https://github.com/polycentric-labs/evidentia.git
 cd evidentia
 uv sync --all-packages
 uv run pytest tests/ -q          # expected: full test suite passes (1259+ tests as of v0.7.8)

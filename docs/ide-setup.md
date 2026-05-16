@@ -16,7 +16,7 @@
 
 1. **Clone + sync deps**:
    ```bash
-   git clone https://github.com/allenfbyrd/evidentia
+   git clone https://github.com/polycentric-labs/evidentia
    cd evidentia
    uv sync --all-extras --all-packages
    ```

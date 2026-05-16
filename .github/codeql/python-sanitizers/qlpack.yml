@@ -12,7 +12,7 @@
 # - https://codeql.github.com/docs/codeql-language-guides/customizing-library-models-for-python/
 # - https://github.com/github/codeql/blob/main/python/ql/lib/semmle/python/security/dataflow/PathInjectionCustomizations.qll
 
-name: allenfbyrd/evidentia-python-sanitizers
+name: polycentric-labs/evidentia-python-sanitizers
 version: 0.0.2
 library: true
 

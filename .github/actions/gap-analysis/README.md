@@ -33,7 +33,7 @@ jobs:
         with:
           fetch-depth: 2  # baseline cache restore needs HEAD~1 reachable
 
-      - uses: allenfbyrd/evidentia/.github/actions/gap-analysis@v0
+      - uses: polycentric-labs/evidentia/.github/actions/gap-analysis@v0
         with:
           inventory: inventory.yaml
           frameworks: nist-800-53-rev5-moderate,soc2-tsc
@@ -49,7 +49,7 @@ trailing comment. Dependabot will keep both the SHA and the comment in
 sync via PRs.
 
 ```yaml
-- uses: allenfbyrd/evidentia/.github/actions/gap-analysis@<40-char-sha>  # v0.7.0
+- uses: polycentric-labs/evidentia/.github/actions/gap-analysis@<40-char-sha>  # v0.7.0
   with:
     inventory: inventory.yaml
     frameworks: nist-800-53-rev5-moderate,soc2-tsc
@@ -76,7 +76,7 @@ jobs:
         with:
           fetch-depth: 2
 
-      - uses: allenfbyrd/evidentia/.github/actions/gap-analysis@v0
+      - uses: polycentric-labs/evidentia/.github/actions/gap-analysis@v0
         with:
           inventory: inventory.yaml
           frameworks: nist-800-53-rev5-moderate,soc2-tsc
@@ -152,7 +152,7 @@ receive updates.
 ### After (consolidated subpath, active development)
 
 ```yaml
-- uses: allenfbyrd/evidentia/.github/actions/gap-analysis@v0
+- uses: polycentric-labs/evidentia/.github/actions/gap-analysis@v0
   with:
     inventory: inventory.yaml
     frameworks: soc2-tsc

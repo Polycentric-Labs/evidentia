@@ -90,21 +90,21 @@ Sigstore-signed PEP 740 publish attestation. Verify locally:
 ```bash
 pip install pypi-attestations
 pypi-attestations verify pypi \\
-  --repository https://github.com/allenfbyrd/evidentia \\
+  --repository https://github.com/polycentric-labs/evidentia \\
   "pypi:evidentia=={version}"
 ```
 
 Verification confirms the wheel was built + published from
-``allenfbyrd/evidentia/release.yml@refs/tags/v{version}``
+``polycentric-labs/evidentia/release.yml@refs/tags/v{version}``
 under GitHub Actions OIDC — i.e., a malicious mirror cannot
 serve a tampered wheel without the verification failing.
 
-See [docs/sigstore-quickstart.md](https://github.com/allenfbyrd/evidentia/blob/main/docs/sigstore-quickstart.md)
+See [docs/sigstore-quickstart.md](https://github.com/polycentric-labs/evidentia/blob/main/docs/sigstore-quickstart.md)
 for the full verification narrative + supply-chain framing.
 
 ### CHANGELOG
 
-Full changelog (every release): [CHANGELOG.md](https://github.com/allenfbyrd/evidentia/blob/v{version}/CHANGELOG.md)
+Full changelog (every release): [CHANGELOG.md](https://github.com/polycentric-labs/evidentia/blob/v{version}/CHANGELOG.md)
 """
 
 

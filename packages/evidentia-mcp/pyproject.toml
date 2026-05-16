@@ -29,10 +29,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/allenfbyrd/evidentia"
-Repository = "https://github.com/allenfbyrd/evidentia"
-Issues = "https://github.com/allenfbyrd/evidentia/issues"
-Changelog = "https://github.com/allenfbyrd/evidentia/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/polycentric-labs/evidentia"
+Repository = "https://github.com/polycentric-labs/evidentia"
+Issues = "https://github.com/polycentric-labs/evidentia/issues"
+Changelog = "https://github.com/polycentric-labs/evidentia/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["hatchling"]

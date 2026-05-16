@@ -29,7 +29,7 @@ abstract: >-
   integrates AI risk-statement generation under the NIST SP
   800-30 structure. Apache 2.0 licensed; air-gap capable; CI
   native.
-repository-code: 'https://github.com/allenfbyrd/evidentia'
+repository-code: 'https://github.com/polycentric-labs/evidentia'
 url: 'https://pypi.org/project/evidentia/'
 keywords:
   - grc

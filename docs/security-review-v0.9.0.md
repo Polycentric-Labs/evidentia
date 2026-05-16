@@ -120,7 +120,7 @@ All 13 evaluated rows PASS; 3 SKIPPED with rationale per v4 graceful-degradation
 
 | Gate | Result |
 |---|---|
-| G1 PEP 740 verify | PASS — all 7 wheels OK via `pypi-attestations verify pypi --repository https://github.com/allenfbyrd/evidentia` |
+| G1 PEP 740 verify | PASS — all 7 wheels OK via `pypi-attestations verify pypi --repository https://github.com/polycentric-labs/evidentia` |
 | G2 cosign verify | PASS — keyless OIDC + Rekor inclusion proof + SLSA Provenance v1 in-toto attestation matches v0.9.0 + commit `4a72048` |
 | G3 osv-scanner --sbom | 169 packages / 1 LOW finding (paramiko 4.0.0 GHSA-r374-rxx8-8654 — acknowledged) |
 | G4 docker run smoke | PASS — `Evidentia v0.9.0` reports correctly + 89 catalogs bundled + `poam` + `conmon` CLI surfaces both live |
@@ -130,12 +130,12 @@ All 13 evaluated rows PASS; 3 SKIPPED with rationale per v4 graceful-degradation
 
 ## Image digest + provenance
 
-- **Container**: `ghcr.io/allenfbyrd/evidentia:v0.9.0`
+- **Container**: `ghcr.io/polycentric-labs/evidentia:v0.9.0`
 - **SHA-256 digest**: `sha256:28f8dc21684bda77e49a7e34f68d34d55a374481ee13c01d0eb5628c6c3f6b45`
 - **Git commit**: `4a72048a142d7dfb8a0c804e29d4d59879258 94b` (per cosign SLSA v1 attestation)
 - **Build workflow**: `.github/workflows/release.yml@refs/tags/v0.9.0`
-- **Builder ID**: `https://github.com/allenfbyrd/evidentia/.github/workflows/release.yml@refs/tags/v0.9.0`
-- **Invocation**: `https://github.com/allenfbyrd/evidentia/actions/runs/25942605088/attempts/1`
+- **Builder ID**: `https://github.com/polycentric-labs/evidentia/.github/workflows/release.yml@refs/tags/v0.9.0`
+- **Invocation**: `https://github.com/polycentric-labs/evidentia/actions/runs/25942605088/attempts/1`
 
 ## Compliance framework mapping (per v4 G15)
 

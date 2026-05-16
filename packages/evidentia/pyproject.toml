@@ -50,10 +50,10 @@ evidentia = "evidentia.cli.main:app"
 cb = "evidentia.cli.main:app"
 
 [project.urls]
-Homepage = "https://github.com/allenfbyrd/evidentia"
+Homepage = "https://github.com/polycentric-labs/evidentia"
 Documentation = "https://evidentia.dev"
-Repository = "https://github.com/allenfbyrd/evidentia"
-Changelog = "https://github.com/allenfbyrd/evidentia/blob/main/CHANGELOG.md"
+Repository = "https://github.com/polycentric-labs/evidentia"
+Changelog = "https://github.com/polycentric-labs/evidentia/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["hatchling"]

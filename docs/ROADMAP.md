@@ -1148,7 +1148,7 @@ PyPI Trusted Publisher (OIDC) migration: **DONE in v0.7.0** for the
 6 published evidentia-* packages. The legacy `PYPI_API_TOKEN` was
 deleted from the `pypi` GitHub environment during v0.7.0 ship-day
 housekeeping (verified absent post-v0.7.1 via
-`gh secret list --env=pypi --repo allenfbyrd/evidentia` — zero
+`gh secret list --env=pypi --repo polycentric-labs/evidentia` — zero
 secrets remain at the repo or env level). The originally-queued
 v0.7.1 deletion-verification step is therefore a no-op carried into
 v0.7.2 only as a bookkeeping line in `docs/v0.7.2-plan.md`.

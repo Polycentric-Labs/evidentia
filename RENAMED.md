@@ -3,7 +3,7 @@
 **Rename effective:** April 2026 (v0.6.0 release).
 **Old name:** ControlBridge
 **New name:** Evidentia
-**New repo:** `github.com/allenfbyrd/evidentia` (same URL tree; see "Redirect behaviour" below)
+**New repo:** `github.com/polycentric-labs/evidentia` (same URL tree; see "Redirect behaviour" below)
 
 ## Why we renamed
 
@@ -108,5 +108,5 @@ GitHub Releases are preserved under the new repo. Rename operations use
 
 ## Questions
 
-File an issue at `github.com/allenfbyrd/evidentia/issues` with the label
+File an issue at `github.com/polycentric-labs/evidentia/issues` with the label
 `rename-question`.

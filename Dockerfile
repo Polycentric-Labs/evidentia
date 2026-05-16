@@ -19,7 +19,7 @@
 #
 # CI builds the image on every PR touching the Dockerfile (smoke
 # test only — not published) per `.github/workflows/container-build.yml`.
-# Publishing to `ghcr.io/allenfbyrd/evidentia` is gated to a future
+# Publishing to `ghcr.io/polycentric-labs/evidentia` is gated to a future
 # release that explicitly opts in.
 
 FROM python:3.14-slim@sha256:5b3879b6f3cb77e712644d50262d05a7c146b7312d784a18eff7ff5462e77033
@@ -127,8 +127,8 @@ CMD ["serve", "--host", "0.0.0.0", "--port", "8000"]
 # OCI image labels for downstream registries + tooling.
 LABEL org.opencontainers.image.title="Evidentia"
 LABEL org.opencontainers.image.description="Open-source GRC infrastructure: OSCAL-native gap analysis, AI risk-statement generation, Sigstore-signed evidence. 82 frameworks bundled."
-LABEL org.opencontainers.image.source="https://github.com/allenfbyrd/evidentia"
-LABEL org.opencontainers.image.url="https://github.com/allenfbyrd/evidentia"
-LABEL org.opencontainers.image.documentation="https://github.com/allenfbyrd/evidentia/blob/main/README.md"
+LABEL org.opencontainers.image.source="https://github.com/polycentric-labs/evidentia"
+LABEL org.opencontainers.image.url="https://github.com/polycentric-labs/evidentia"
+LABEL org.opencontainers.image.documentation="https://github.com/polycentric-labs/evidentia/blob/main/README.md"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
-LABEL org.opencontainers.image.vendor="allenfbyrd"
+LABEL org.opencontainers.image.vendor="polycentric-labs"

@@ -79,8 +79,8 @@ inside the workflow filesystem.
 gh run list --branch main --workflow release --limit 1
 
 # Pull the image + verify it ran the hash-pinned install
-docker pull ghcr.io/allenfbyrd/evidentia:vX.Y.Z
-docker run --rm ghcr.io/allenfbyrd/evidentia:vX.Y.Z version
+docker pull ghcr.io/polycentric-labs/evidentia:vX.Y.Z
+docker run --rm ghcr.io/polycentric-labs/evidentia:vX.Y.Z version
 # → "Evidentia vX.Y.Z"
 ```
 
@@ -135,7 +135,7 @@ first-fire FAILED at the `--require-hashes` install: uv build
 is NOT byte-identical across host platforms (Windows local
 regeneration vs Linux CI build runner) even with the same
 SOURCE_DATE_EPOCH. PyPI publish at v0.8.3 succeeded; container
-build failed; no `ghcr.io/allenfbyrd/evidentia:v0.8.3` image
+build failed; no `ghcr.io/polycentric-labs/evidentia:v0.8.3` image
 was published. v0.8.3.1 hot-fix reverts the Dockerfile install
 line to the v0.8.2 pattern (`evidentia[gui]==X.Y.Z` exact-
 version pinning) for one cycle while v0.8.4 designs Path 2.
@@ -206,7 +206,7 @@ For Evidentia today the trade-off lands on exact-version because:
 1. **PEP 740 attestations cover the integrity story.** Every wheel
    pushed to PyPI from this repo carries a Sigstore-signed PEP 740
    publish attestation. The release-pipeline OIDC binding
-   (`allenfbyrd/evidentia/release.yml@refs/tags/v*`) is verifiable via
+   (`polycentric-labs/evidentia/release.yml@refs/tags/v*`) is verifiable via
    `pypi-attestations verify pypi`. A compromised mirror cannot serve
    a tampered `evidentia==0.7.12` wheel without the verification
    failing.
@@ -218,7 +218,7 @@ For Evidentia today the trade-off lands on exact-version because:
    `bump_version.py`, the file rots within days.
 3. **Container image already carries an end-to-end signature.** The
    image is cosign-signed (keyless OIDC) at
-   `ghcr.io/allenfbyrd/evidentia:vX.Y.Z` and carries a SLSA L3 build
+   `ghcr.io/polycentric-labs/evidentia:vX.Y.Z` and carries a SLSA L3 build
    provenance attestation against its `sha256:` digest. Operators
    verifying the image digest are already confirming that the
    `pip install` produced the expected bytes inside this specific
@@ -295,7 +295,7 @@ post-tag verification):
 1. Confirm only the recurring Dockerfile alert is open, not a new
    real finding. Run:
    ```
-   gh api repos/allenfbyrd/evidentia/code-scanning/alerts \
+   gh api repos/polycentric-labs/evidentia/code-scanning/alerts \
      -q '[.[] | select(.state=="open")] | .[] | {number, file: .most_recent_instance.location.path, line: .most_recent_instance.location.start_line, rule: .rule.id}'
    ```
    Expected: one entry pointing at `Dockerfile` line 62 with rule
@@ -303,7 +303,7 @@ post-tag verification):
 2. Surface the dismissal command to Allen for explicit per-action
    approval (publishing-authority gated). Sample command:
    ```
-   gh api -X PATCH repos/allenfbyrd/evidentia/code-scanning/alerts/<N> \
+   gh api -X PATCH repos/polycentric-labs/evidentia/code-scanning/alerts/<N> \
      -F state=dismissed \
      -F dismissed_reason="won't fix" \
      -F dismissed_comment="Recurring Scorecard PinnedDependencies false-positive on Dockerfile pip install. See docs/dockerfile-pinning.md. Full hash-pinning deferred to v0.8.0+."

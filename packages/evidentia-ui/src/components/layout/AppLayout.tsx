@@ -122,7 +122,7 @@ export function AppLayout() {
       <footer className="border-t py-4 text-center text-xs text-muted-foreground">
         Evidentia is open source. &nbsp;
         <a
-          href="https://github.com/allenfbyrd/evidentia"
+          href="https://github.com/polycentric-labs/evidentia"
           className="underline-offset-4 hover:underline"
           target="_blank"
           rel="noreferrer"

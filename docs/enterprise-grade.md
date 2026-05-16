@@ -78,7 +78,7 @@ Priority tiers:
 
 | # | Item | v0.7.0 status |
 |---|---|---|
-| L1 | Container image (Docker Hub / ECR / ghcr) | ✅ Published to `ghcr.io/allenfbyrd/evidentia` per release with cosign keyless OIDC signing + SLSA L3 build provenance attestation against the image digest (v0.7.5+). Verifiable via `cosign verify ghcr.io/allenfbyrd/evidentia:vX.Y.Z` (PEP 740-equivalent for OCI) and `gh attestation verify oci://ghcr.io/allenfbyrd/evidentia:vX.Y.Z` (SLSA path). Repo-root `Dockerfile` + CI smoke test on every Dockerfile-touching PR (`.github/workflows/container-build.yml`) provides an early-warning signal independent of release cadence. |
+| L1 | Container image (Docker Hub / ECR / ghcr) | ✅ Published to `ghcr.io/polycentric-labs/evidentia` per release with cosign keyless OIDC signing + SLSA L3 build provenance attestation against the image digest (v0.7.5+). Verifiable via `cosign verify ghcr.io/polycentric-labs/evidentia:vX.Y.Z` (PEP 740-equivalent for OCI) and `gh attestation verify oci://ghcr.io/polycentric-labs/evidentia:vX.Y.Z` (SLSA path). Repo-root `Dockerfile` + CI smoke test on every Dockerfile-touching PR (`.github/workflows/container-build.yml`) provides an early-warning signal independent of release cadence. |
 | L2 | SLA documentation | ❌ Not currently documented |
 | L3 | Terraform / CloudFormation templates | ❌ Not currently provided |
 | L4 | Pre-built compliance profile library | ⚠️ 82 frameworks bundled (v0.2+); not OSCAL Profile format |

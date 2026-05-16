@@ -147,7 +147,7 @@ class BaseSaaSCollector(ABC):
         return (
             f"evidentia-collectors/{__version__} "
             f"({type(self).__name__}; "
-            f"https://github.com/allenfbyrd/evidentia)"
+            f"https://github.com/polycentric-labs/evidentia)"
         )
 
     def _auth_header(self) -> str:

@@ -1,6 +1,6 @@
 # evidentia-collectors
 
-Evidence collection agents for [Evidentia](https://github.com/allenfbyrd/evidentia). **Phase 2 — under construction.**
+Evidence collection agents for [Evidentia](https://github.com/polycentric-labs/evidentia). **Phase 2 — under construction.**
 
 Pulls compliance evidence from cloud providers and SaaS systems and maps it to specific framework controls.
 

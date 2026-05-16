@@ -115,7 +115,7 @@ to `0.0.0.0` only behind a reverse proxy.
 For Docker:
 
 ```bash
-docker run --rm -p 8000:8000 ghcr.io/allenfbyrd/evidentia:v0.7.5
+docker run --rm -p 8000:8000 ghcr.io/polycentric-labs/evidentia:v0.7.5
 ```
 
 The image is cosign-signed + SLSA L3 attested per release. See
@@ -126,7 +126,7 @@ for verification one-liners.
 
 ## Where to go next
 
-- **Use as a GitHub Action**: [README §Use as a GitHub Action](../README.md#use-as-a-github-action) — drop in `uses: allenfbyrd/evidentia/.github/actions/gap-analysis@v0` for PR-time gap regressions.
+- **Use as a GitHub Action**: [README §Use as a GitHub Action](../README.md#use-as-a-github-action) — drop in `uses: polycentric-labs/evidentia/.github/actions/gap-analysis@v0` for PR-time gap regressions.
 - **Generate AI risk statements**: [README §Generate AI risk statements](../README.md#generate-ai-risk-statements) — turn gaps into stakeholder-ready risk-register entries via any LLM provider.
 - **Bundle in your own project**: `from evidentia_core import GapAnalyzer; report = GapAnalyzer().analyze(inventory, frameworks)` — Evidentia is library-first; the CLI + REST API are thin wrappers.
 - **Run in air-gap**: [`air-gapped.md`](air-gapped.md) covers the offline paths for FedRAMP High / CMMC Level 2 / EU sovereign-cloud deployments.

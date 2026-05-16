@@ -195,9 +195,9 @@ jobs:
       # AFTER both `uv build` (the wheels + sdists in dist/) and the
       # CycloneDX SBOM step so a single attestation covers all release
       # artifacts. Stored under
-      # https://github.com/allenfbyrd/evidentia/attestations and
+      # https://github.com/polycentric-labs/evidentia/attestations and
       # verified by consumers via:
-      #   gh attestation verify dist/<wheel> -R allenfbyrd/evidentia
+      #   gh attestation verify dist/<wheel> -R Polycentric-Labs/evidentia
       # This is the SLSA path; the PEP 740 path
       # (`pypi-attestations verify pypi`) continues to work
       # independently via pypa/gh-action-pypi-publish below.
@@ -219,7 +219,7 @@ jobs:
         # All 6 packages (evidentia, evidentia-core, evidentia-collectors,
         # evidentia-ai, evidentia-api, evidentia-integrations) must be
         # registered with the same claims:
-        #   Owner=allenfbyrd, Repository=evidentia,
+        #   Owner=polycentric-labs, Repository=evidentia,
         #   Workflow=release.yml, Environment=pypi
         # `attestations: true` is the action's default since v1.11+
         # (Nov 2024) when Trusted Publisher mode is detected, so PEP 740
@@ -283,7 +283,7 @@ jobs:
   # OIDC signing + SLSA L3 build provenance attestation for the image
   # digest. Mirrors the publish-pypi pattern above so a single release
   # workflow run covers wheels + SBOM + image under one OIDC identity
-  # binding (allenfbyrd/evidentia/release.yml@refs/tags/v*) and one
+  # binding (Polycentric-Labs/evidentia/release.yml@refs/tags/v*) and one
   # GitHub Release.
   #
   # Design choice (Option A): the v0.7.5-plan.md C1 row originally
@@ -299,7 +299,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ghcr
-      url: https://ghcr.io/allenfbyrd/evidentia
+      url: https://ghcr.io/polycentric-labs/evidentia
     permissions:
       # contents: write — append the image digest + verify-cmd snippet to
       #   the GitHub Release alongside the wheels + SBOM.
@@ -308,7 +308,7 @@ jobs:
       #   token exchange for actions/attest-build-provenance.
       id-token: write
       # attestations: write — store the SLSA build-provenance attestation
-      #   under repos/allenfbyrd/evidentia/attestations so consumers can
+      #   under repos/Polycentric-Labs/evidentia/attestations so consumers can
       #   verify via `gh attestation verify oci://ghcr.io/...`.
       attestations: write
       # packages: write — push to ghcr.io under the github.repository_owner
@@ -444,8 +444,8 @@ jobs:
           # documentation recommends NOT using in production deployments
           # (see docs/sigstore-quickstart.md "Pinning by digest" section).
           tags: |
-            ghcr.io/allenfbyrd/evidentia:${{ steps.version.outputs.tag }}
-            ghcr.io/allenfbyrd/evidentia:latest
+            ghcr.io/polycentric-labs/evidentia:${{ steps.version.outputs.tag }}
+            ghcr.io/polycentric-labs/evidentia:latest
           labels: |
             org.opencontainers.image.version=${{ steps.version.outputs.semver }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -484,17 +484,17 @@ jobs:
           # at sha256-<digest>.sig, so v0.7.5 and :latest both inherit
           # the same signature via their shared digest.
           cosign sign --yes \
-            ghcr.io/allenfbyrd/evidentia@${{ steps.build.outputs.digest }}
+            ghcr.io/polycentric-labs/evidentia@${{ steps.build.outputs.digest }}
 
       - name: Generate SLSA build provenance attestation for image
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32  # v4.1.0
         with:
           # subject-name MUST be the registry-qualified image without a
           # tag; subject-digest is the sha256 from the build step. The
-          # attestation lands at repos/allenfbyrd/evidentia/attestations
+          # attestation lands at repos/Polycentric-Labs/evidentia/attestations
           # keyed on this digest, which `gh attestation verify oci://...`
           # then resolves on the consumer side.
-          subject-name: ghcr.io/allenfbyrd/evidentia
+          subject-name: ghcr.io/polycentric-labs/evidentia
           subject-digest: ${{ steps.build.outputs.digest }}
           # push-to-registry: true also embeds the attestation as an
           # OCI referrer artifact so cosign tooling can find it without
@@ -512,24 +512,24 @@ jobs:
 
             ### Container image
 
-            - `ghcr.io/allenfbyrd/evidentia:${{ steps.version.outputs.tag }}`
-            - `ghcr.io/allenfbyrd/evidentia:latest`
+            - `ghcr.io/polycentric-labs/evidentia:${{ steps.version.outputs.tag }}`
+            - `ghcr.io/polycentric-labs/evidentia:latest`
             - Digest: `${{ steps.build.outputs.digest }}`
 
             **Verify (cosign keyless OIDC):**
 
             ```bash
-            cosign verify ghcr.io/allenfbyrd/evidentia:${{ steps.version.outputs.tag }} \
-              --certificate-identity-regexp 'https://github\.com/allenfbyrd/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
+            cosign verify ghcr.io/polycentric-labs/evidentia:${{ steps.version.outputs.tag }} \
+              --certificate-identity-regexp 'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
               --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
             ```
 
             **Verify (SLSA build provenance):**
 
             ```bash
-            gh attestation verify oci://ghcr.io/allenfbyrd/evidentia:${{ steps.version.outputs.tag }} \
-              -R allenfbyrd/evidentia
+            gh attestation verify oci://ghcr.io/polycentric-labs/evidentia:${{ steps.version.outputs.tag }} \
+              -R Polycentric-Labs/evidentia
             ```
 
-            See [docs/sigstore-quickstart.md](https://github.com/allenfbyrd/evidentia/blob/main/docs/sigstore-quickstart.md)
+            See [docs/sigstore-quickstart.md](https://github.com/polycentric-labs/evidentia/blob/main/docs/sigstore-quickstart.md)
             for the full verification narrative.

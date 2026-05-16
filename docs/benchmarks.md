@@ -195,7 +195,7 @@ To re-run these benchmarks on your own hardware:
 
 ```bash
 # Install
-git clone https://github.com/allenfbyrd/evidentia
+git clone https://github.com/polycentric-labs/evidentia
 cd evidentia
 uv sync --all-packages
 

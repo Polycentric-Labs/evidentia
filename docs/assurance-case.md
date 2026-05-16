@@ -188,7 +188,7 @@ An auditor or successor verifying the assurance case should:
    [`docs/enterprise-grade-accepted-findings.md`](enterprise-grade-accepted-findings.md)
    and verify each accepted finding's rationale against the GitHub
    code-scanning alert queue at
-   [`https://github.com/allenfbyrd/evidentia/security/code-scanning`](https://github.com/allenfbyrd/evidentia/security/code-scanning).
+   [`https://github.com/polycentric-labs/evidentia/security/code-scanning`](https://github.com/polycentric-labs/evidentia/security/code-scanning).
 5. Open [`docs/access-continuity.md`](access-continuity.md) and
    verify the operational SLA + recovery procedure are concrete
    + executable.
@@ -198,7 +198,7 @@ An auditor or successor verifying the assurance case should:
    confirm the secure-release infrastructure is operational.
 
 If any verification step fails, file an issue on
-[`https://github.com/allenfbyrd/evidentia/issues`](https://github.com/allenfbyrd/evidentia/issues)
+[`https://github.com/polycentric-labs/evidentia/issues`](https://github.com/polycentric-labs/evidentia/issues)
 or contact the maintainer per
 [`SECURITY.md`](../SECURITY.md).
 

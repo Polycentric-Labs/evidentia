@@ -5,7 +5,7 @@
 **Tag**: `v0.7.9` (pending push)
 **Diff range**: `v0.7.8..v0.7.9` (24 commits)
 **Reviewer**: pre-release-review v4 skill (
-[`~/.claude/skills/pre-release-review/SKILL.md`](https://github.com/allenfbyrd/evidentia)
+[`~/.claude/skills/pre-release-review/SKILL.md`](https://github.com/polycentric-labs/evidentia)
 ), four Continuous-variant runs + final Pre-tag run.
 
 This is the 5th canonical pre-release-review deliverable per
@@ -19,11 +19,11 @@ satisfaction of:
 
 | Framework | Control / requirement | How v0.7.9 satisfies |
 |---|---|---|
-| **NIST SSDF v1.1** | PS.3.1 — protect software releases from unauthorized changes | Sigstore PEP 740 attestations on all 7 PyPI wheels + cosign keyless OIDC on `ghcr.io/allenfbyrd/evidentia:v0.7.9` + SLSA L3 build provenance + CycloneDX SBOM |
+| **NIST SSDF v1.1** | PS.3.1 — protect software releases from unauthorized changes | Sigstore PEP 740 attestations on all 7 PyPI wheels + cosign keyless OIDC on `ghcr.io/polycentric-labs/evidentia:v0.7.9` + SLSA L3 build provenance + CycloneDX SBOM |
 | **NIST SSDF v1.1** | RV.1.1 — identify + confirm vulnerabilities prior to release | Continuous-variant /security-review at 3 boundaries (P0.1 close, P0.3+P0.2-first close, P0.4-quartet+P0.5+P0.2-second-slice close) + Pre-tag /security-review on the 2 newest commits + the v4 G6 verification gates at every step boundary |
 | **NIST SSDF v1.1** | RV.1.3 — analyze vulnerabilities + identify root causes | All 6 inline-fixed HIGH + LOW findings have CWE classification + CVSS estimates + remediation links to specific commits in this document |
-| **SLSA Level 3** | Build provenance | `actions/attest-build-provenance@v2.4.0` emits provenance for every release wheel; verifiable via `gh attestation verify <wheel> --owner allenfbyrd` |
-| **SLSA Level 3** | Build platform isolation | GitHub Actions ephemeral runners + Trusted Publisher OIDC (no long-lived secrets); container build via `cosign verify ghcr.io/allenfbyrd/evidentia:v0.7.9 --certificate-identity-regexp=...` |
+| **SLSA Level 3** | Build provenance | `actions/attest-build-provenance@v2.4.0` emits provenance for every release wheel; verifiable via `gh attestation verify <wheel> --owner polycentric-labs` |
+| **SLSA Level 3** | Build platform isolation | GitHub Actions ephemeral runners + Trusted Publisher OIDC (no long-lived secrets); container build via `cosign verify ghcr.io/Polycentric-Labs/evidentia:v0.7.9 --certificate-identity-regexp=...` |
 | **ISO 27001:2022** | Annex A 8.25 — secure development lifecycle | pre-release-review v4 skill formalizes a 7-step gated process; per-run JSON persistence at `.local/pre-release-review/runs/*.json` provides audit-trail evidence |
 | **ISO 27001:2022** | Annex A 8.28 — secure coding | ruff + mypy strict + CodeQL + standing-rule keyword sweep + Claude-attribution sweep at every commit boundary |
 | **ISO 27001:2022** | Annex A 8.30 — outsourced development | n/a — solo project. Documented in OpenSSF Best Practices Silver-tier `bus_factor` field (mitigated by keyless infrastructure + Trusted Publisher OIDC bound to repo) |
@@ -78,16 +78,16 @@ Per v4 G1 — runs after `git push origin v0.7.9` triggers
 
 1. **PEP 740 verify**: download wheel from PyPI in fresh venv,
    hash-match vs `dist/`; run `pypi-attestations verify pypi
-   --repository https://github.com/allenfbyrd/evidentia
+   --repository https://github.com/polycentric-labs/evidentia
    "pypi:evidentia-0.7.9-py3-none-any.whl"`
 2. **Cosign verify** on container: `cosign verify
-   ghcr.io/allenfbyrd/evidentia:v0.7.9
-   --certificate-identity-regexp='https://github.com/allenfbyrd/evidentia/.github/workflows/.+'
+   ghcr.io/polycentric-labs/evidentia:v0.7.9
+   --certificate-identity-regexp='https://github.com/Polycentric-Labs/evidentia/.github/workflows/.+'
    --certificate-oidc-issuer=https://token.actions.githubusercontent.com`
 3. **osv-scanner --sbom** on the released SBOM; expect 0 CVEs
    (or, if any surface, document the disposition)
 4. **docker run smoke**: `docker run --rm
-   ghcr.io/allenfbyrd/evidentia:v0.7.9 version` returns
+   ghcr.io/polycentric-labs/evidentia:v0.7.9 version` returns
    `Evidentia v0.7.9` (NOT a substring like v0.7.8 — closes the
    v0.7.7 → v0.7.7.1 hot-fix lesson)
 5. **Scorecard delta**: re-run OpenSSF Scorecard; score must

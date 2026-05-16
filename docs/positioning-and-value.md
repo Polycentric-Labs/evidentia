@@ -143,7 +143,7 @@ Meanwhile, the compliance workload keeps growing. A single fintech or healthcare
 > bundled crosswalks, four output formats including OSCAL Assessment
 > Results with embedded SHA-256 evidence digests + Sigstore/Rekor or
 > GPG signing, cosign-signed container image at
-> `ghcr.io/allenfbyrd/evidentia` with SLSA L3 build provenance
+> `ghcr.io/polycentric-labs/evidentia` with SLSA L3 build provenance
 > against image digest. All 10 BLOCKER items in the enterprise-grade
 > credibility checklist remain closed; v0.7.5 added cosign container
 > publish (closing L1); v0.7.7 added 5 SQL collectors + Okta +
@@ -254,7 +254,7 @@ The v0.7.0 release closed all 10 BLOCKER items in the [enterprise-grade credibil
 - **Build provenance** (v0.7.0; tightened v0.7.3): GitHub Actions workflow with OIDC identity; SLSA L3 build provenance via `actions/attest-build-provenance@v2.4.0` (v0.7.3) — restores `gh attestation verify` as a working verifier alongside `pypi-attestations verify pypi`
 - **Signed publish**: PyPI Trusted Publisher (OIDC) on all 6 packages — no long-lived API tokens
 - **Per-artifact attestations**: PEP 740 Sigstore attestations on every wheel + sdist, logged to Rekor
-- **Container image** (v0.7.5; `ghcr.io/allenfbyrd/evidentia`): cosign keyless OIDC signing + SLSA L3 build provenance against image digest. Closes enterprise-grade L1 (was the last LOW-bucket external-artifact gap). v0.7.6+ added `Wait-for-PyPI` step to prevent propagation-race re-fires.
+- **Container image** (v0.7.5; `ghcr.io/polycentric-labs/evidentia`): cosign keyless OIDC signing + SLSA L3 build provenance against image digest. Closes enterprise-grade L1 (was the last LOW-bucket external-artifact gap). v0.7.6+ added `Wait-for-PyPI` step to prevent propagation-race re-fires.
 - **Software bill of materials**: CycloneDX 1.6 SBOM attached to every GitHub Release
 - **Schema conformance**: `compliance-trestle>=4.0` round-trip in CI catches unknown-field bugs NIST's JSON Schema misses
 - **Structured logs**: ECS 8.11 + NIST AU-3 + OpenTelemetry via `--json-logs` flag
@@ -957,7 +957,7 @@ All 5: shipped content in last 90 days (verified Feb-Apr 2026 activity); cover O
 - ✓ Tightened LiteLLM pin (v0.7.0)
 - ✓ SLSA L3 build provenance via `actions/attest-build-provenance@v2.4.0` (v0.7.3)
 - ✓ OpenSSF Scorecard weekly run live (v0.7.2)
-- ✓ Container image publish to `ghcr.io/allenfbyrd/evidentia` with cosign keyless OIDC (v0.7.5)
+- ✓ Container image publish to `ghcr.io/polycentric-labs/evidentia` with cosign keyless OIDC (v0.7.5)
 - ✓ 5 SQL DB collectors (v0.7.7)
 - ✓ Okta + ServiceNow integrations (v0.7.7)
 - ✓ Databricks + Snowflake collectors (v0.7.8)

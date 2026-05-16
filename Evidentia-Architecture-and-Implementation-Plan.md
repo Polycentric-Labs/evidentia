@@ -812,10 +812,10 @@ evidentia = "evidentia.cli.main:app"
 cb = "evidentia.cli.main:app"
 
 [project.urls]
-Homepage = "https://github.com/allenfbyrd/evidentia"
+Homepage = "https://github.com/polycentric-labs/evidentia"
 Documentation = "https://evidentia.dev"
-Repository = "https://github.com/allenfbyrd/evidentia"
-Changelog = "https://github.com/allenfbyrd/evidentia/blob/main/CHANGELOG.md"
+Repository = "https://github.com/polycentric-labs/evidentia"
+Changelog = "https://github.com/polycentric-labs/evidentia/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["hatchling"]
@@ -7013,7 +7013,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Labels
 LABEL org.opencontainers.image.title="Evidentia"
 LABEL org.opencontainers.image.description="Open-source GRC tool"
-LABEL org.opencontainers.image.source="https://github.com/allenfbyrd/evidentia"
+LABEL org.opencontainers.image.source="https://github.com/polycentric-labs/evidentia"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 ```
 
@@ -7691,7 +7691,7 @@ def test_generate_batch(sample_gap, sample_context):
 | **Project name** | Evidentia |
 | **PyPI package** | `evidentia` (meta), `evidentia-core`, `evidentia-ai`, `evidentia-collectors`, `evidentia-integrations` |
 | **Docker image** | `ghcr.io/evidentia/evidentia` |
-| **GitHub org/repo** | `allenfbyrd/evidentia` |
+| **GitHub org/repo** | `polycentric-labs/evidentia` |
 | **CLI command** | `evidentia` (primary), `cb` (alias) |
 | **Config file** | `evidentia.yaml` |
 | **License** | Apache 2.0 (OSI approved, enterprise-friendly, no copyleft) |

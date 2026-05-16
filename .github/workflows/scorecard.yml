@@ -3,7 +3,7 @@
 # Runs the ossf/scorecard-action against the Evidentia repo every
 # Monday at 06:00 UTC and on push to main. Surfaces results to the
 # OpenSSF Scorecard dashboard at https://securityscorecards.dev/
-# viewer/?uri=github.com/allenfbyrd/evidentia and as a SARIF artifact
+# viewer/?uri=github.com/polycentric-labs/evidentia and as a SARIF artifact
 # in the GitHub Security tab.
 #
 # What it scores (~20 supply-chain checks):

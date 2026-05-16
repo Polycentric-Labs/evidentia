@@ -68,7 +68,7 @@ ships with a one-flag toggle:
 
 ```yaml
 - name: Run Evidentia gap analysis + sign AR
-  uses: allenfbyrd/evidentia/.github/actions/gap-analysis@v0
+  uses: polycentric-labs/evidentia/.github/actions/gap-analysis@v0
   with:
     inventory: my-controls.yaml
     frameworks: nist-800-53-rev5-moderate,soc2-tsc
@@ -141,7 +141,7 @@ verification succeeds; 1 otherwise.
 ```bash
 evidentia oscal verify ar.oscal.json \
     --require-signature \
-    --expected-identity 'https://github.com/allenfbyrd/evidentia/.github/workflows/release.yml@refs/heads/main' \
+    --expected-identity 'https://github.com/polycentric-labs/evidentia/.github/workflows/release.yml@refs/heads/main' \
     --expected-issuer 'https://token.actions.githubusercontent.com'
 ```
 
@@ -236,7 +236,7 @@ spec. The relevant fields:
 ## Verifying the published container image (v0.7.5+)
 
 Evidentia v0.7.5+ ships a signed container image to
-`ghcr.io/allenfbyrd/evidentia` on every release tag. Two independent
+`ghcr.io/polycentric-labs/evidentia` on every release tag. Two independent
 verification paths cover the image — cosign keyless (PEP 740-equivalent
 for OCI artifacts) and SLSA L3 build provenance — mirroring the
 dual-path coverage on the published wheels.
@@ -247,8 +247,8 @@ Verifies the signature against the OIDC identity binding the GitHub
 Actions workflow used to sign:
 
 ```bash
-cosign verify ghcr.io/allenfbyrd/evidentia:v0.7.5 \
-  --certificate-identity-regexp 'https://github\.com/allenfbyrd/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
+cosign verify ghcr.io/polycentric-labs/evidentia:v0.7.5 \
+  --certificate-identity-regexp 'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
 ```
 
@@ -261,12 +261,12 @@ above is `v0.7.5`); use `:latest` only for development.
 
 Independent of cosign, the same image carries an
 `actions/attest-build-provenance@v2` SLSA L3 attestation stored under
-`https://github.com/allenfbyrd/evidentia/attestations` and resolvable
+`https://github.com/polycentric-labs/evidentia/attestations` and resolvable
 via:
 
 ```bash
-gh attestation verify oci://ghcr.io/allenfbyrd/evidentia:v0.7.5 \
-  -R allenfbyrd/evidentia
+gh attestation verify oci://ghcr.io/polycentric-labs/evidentia:v0.7.5 \
+  -R Polycentric-Labs/evidentia
 ```
 
 This validates the build provenance predicate (workflow run id,
@@ -280,9 +280,9 @@ Tags are mutable; digests are not. For production GitOps / k8s
 manifests, pin to the digest emitted in the GitHub Release notes:
 
 ```bash
-docker buildx imagetools inspect ghcr.io/allenfbyrd/evidentia:v0.7.5
+docker buildx imagetools inspect ghcr.io/polycentric-labs/evidentia:v0.7.5
 # prints sha256:<64-hex>; copy it into your k8s manifest like so:
-#   image: ghcr.io/allenfbyrd/evidentia@sha256:abc123...
+#   image: ghcr.io/polycentric-labs/evidentia@sha256:abc123...
 ```
 
 Both `cosign verify` and `gh attestation verify` accept a digest
@@ -303,7 +303,7 @@ binding is digest-based, not tag-based.
   v0.7.5 flipped L1 (container image distribution) to ✅
 - [`docs/troubleshooting.md`](troubleshooting.md) — Sigstore TUF
   fetch failures + air-gap fallback
-- [GitHub Container Registry — `evidentia` package](https://github.com/allenfbyrd/evidentia/pkgs/container/evidentia)
+- [GitHub Container Registry — `evidentia` package](https://github.com/polycentric-labs/evidentia/pkgs/container/evidentia)
 - [Sigstore project docs](https://docs.sigstore.dev/)
 - [RFC 8785 — JSON Canonicalization Scheme](https://datatracker.ietf.org/doc/html/rfc8785)
 

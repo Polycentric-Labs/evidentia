@@ -194,7 +194,7 @@ class OktaCollector:
                 "Accept": "application/json",
                 "User-Agent": (
                     f"evidentia-collectors/{current_version()} "
-                    f"(+https://github.com/allenfbyrd/evidentia)"
+                    f"(+https://github.com/polycentric-labs/evidentia)"
                 ),
             },
             timeout=30.0,

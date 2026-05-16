@@ -8,8 +8,8 @@ problem. It provides composable building blocks for control gap analysis,
 AI-generated risk statements, automated evidence collection, and compliance
 reporting — all usable from a Python library, a CLI, or a REST API.
 
-[![tests](https://github.com/allenfbyrd/evidentia/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/allenfbyrd/evidentia/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/allenfbyrd/evidentia/branch/main/graph/badge.svg)](https://codecov.io/gh/allenfbyrd/evidentia)
+[![tests](https://github.com/polycentric-labs/evidentia/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/polycentric-labs/evidentia/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/polycentric-labs/evidentia/branch/main/graph/badge.svg)](https://codecov.io/gh/polycentric-labs/evidentia)
 [![PyPI version](https://img.shields.io/pypi/v/evidentia.svg)](https://pypi.org/project/evidentia/)
 ![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)
 ![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-green.svg)
@@ -65,7 +65,7 @@ It's the only OSS tool today that combines **all** of the following in one packa
   deterministic. No leakage of sensitive evidence to third-party AI APIs
   unless you explicitly opt in.
 - **CI-native via composite GitHub Action** — drop in
-  `uses: allenfbyrd/evidentia/.github/actions/gap-analysis@v0` and every
+  `uses: polycentric-labs/evidentia/.github/actions/gap-analysis@v0` and every
   PR runs gap analysis, posts a sticky compliance comment, and blocks
   merge on regression. No commercial GRC tool does this at the PR level.
 
@@ -668,7 +668,7 @@ sub-packages as transitive dependencies (`evidentia-core`, `evidentia-ai`,
 ### Install from source (for contributors)
 
 ```bash
-git clone https://github.com/allenfbyrd/evidentia.git
+git clone https://github.com/polycentric-labs/evidentia.git
 cd evidentia
 uv sync --all-packages
 ```
@@ -768,7 +768,7 @@ jobs:
       - uses: actions/checkout@v5
         with: { fetch-depth: 2 }
 
-      - uses: allenfbyrd/evidentia/.github/actions/gap-analysis@v0
+      - uses: polycentric-labs/evidentia/.github/actions/gap-analysis@v0
         with:
           inventory: inventory.yaml
           frameworks: nist-800-53-rev5-moderate,soc2-tsc
@@ -1066,7 +1066,7 @@ supply-chain provenance verification.
 Every release ships with cryptographic provenance: PEP 740
 attestations on every wheel + sdist (Sigstore + Rekor), CycloneDX
 1.6 SBOM attached to each [GitHub
-Release](https://github.com/allenfbyrd/evidentia/releases).
+Release](https://github.com/polycentric-labs/evidentia/releases).
 Verification command in [`SECURITY.md`](SECURITY.md).
 
 ---

@@ -460,7 +460,7 @@ bump + 3 ship-cycle hardening commits).
 
 - G1 PEP 740 verify all 7 wheels OK
   (`pypi-attestations verify pypi --repository
-  https://github.com/allenfbyrd/evidentia ...`)
+  https://github.com/polycentric-labs/evidentia ...`)
 - G2 cosign verify SLSA Provenance v1 (matching cert + Rekor
   inclusion proof) at digest
   `sha256:59f8305874177c09dbd3ab36e458b87b4454c0ae2d7ac016eeb49d66009ccb9d`

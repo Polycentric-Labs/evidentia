@@ -14,7 +14,7 @@ Public surface::
     from evidentia_collectors.github import GitHubCollector
 
     collector = GitHubCollector(
-        owner="allenfbyrd",
+        owner="polycentric-labs",
         repo="evidentia",
         token=os.environ["GITHUB_TOKEN"],
     )

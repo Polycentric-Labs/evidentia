@@ -213,7 +213,7 @@ was a false positive masking real API failures. Fixed in v0.7.5.
 **Fix**: pull the v0.7.5 image:
 
 ```bash
-docker pull ghcr.io/allenfbyrd/evidentia:v0.7.5
+docker pull ghcr.io/polycentric-labs/evidentia:v0.7.5
 ```
 
 Or build locally from a v0.7.5 `Dockerfile` (the path is corrected
@@ -258,5 +258,5 @@ satisfy the operation:
   output of `evidentia doctor` attached.
 
 If you hit something that isn't on this page, please open an issue
-at <https://github.com/allenfbyrd/evidentia/issues> with the output
+at <https://github.com/polycentric-labs/evidentia/issues> with the output
 of `evidentia doctor` and your platform / Python version.

@@ -35,7 +35,7 @@ project commits to **resuming normal operations within 7 calendar
 days of confirmation** of the loss of support, where "normal
 operations" means:
 
-1. **Create and close GitHub issues** on `allenfbyrd/evidentia`
+1. **Create and close GitHub issues** on `polycentric-labs/evidentia`
    (triage backlog; respond to security reports filed via the
    private vulnerability-reporting channel).
 2. **Accept proposed changes** (review and merge incoming PRs;
@@ -52,7 +52,7 @@ that **no offline private signing keys exist** that could be lost
 with the maintainer:
 
 - **PyPI publishing**: via OIDC Trusted Publisher binding
-  (`allenfbyrd/evidentia` repo + `release.yml` workflow + `pypi`
+  (`polycentric-labs/evidentia` repo + `release.yml` workflow + `pypi`
   environment). Any maintainer with repo write access can run the
   release workflow + publish to PyPI. **No long-lived API token
   exists** to be lost.
@@ -107,7 +107,7 @@ The successor contacts GitHub Support
 - The successor's identity verification.
 - Documentation of the loss of support (Step 1).
 - Reference to this document
-  (`https://github.com/allenfbyrd/evidentia/blob/main/docs/access-continuity.md`)
+  (`https://github.com/polycentric-labs/evidentia/blob/main/docs/access-continuity.md`)
   as a public, version-controlled declaration of the continuity
   plan.
 - Reference to GitHub's
@@ -115,7 +115,7 @@ The successor contacts GitHub Support
   if the loss-of-support reason is death.
 
 GitHub's documented procedure transfers ownership of the
-`allenfbyrd/evidentia` repo (or a fork) to the successor's
+`polycentric-labs/evidentia` repo (or a fork) to the successor's
 account. Typical turnaround: 2-7 business days based on
 publicly-documented support response times.
 
@@ -123,7 +123,7 @@ publicly-documented support response times.
 
 If GitHub Support transfer is delayed, the successor can:
 
-1. Fork `allenfbyrd/evidentia` to `<successor-account>/evidentia`.
+1. Fork `polycentric-labs/evidentia` to `<successor-account>/evidentia`.
 2. Update PyPI Trusted Publisher entries (Step 3) to point at
    the fork.
 3. Open an issue on the original repo declaring the fork as the
@@ -164,7 +164,7 @@ to refresh the binding under the new owner account.
 
 GHCR is part of the GitHub repo's package set. Repo-write access
 (established in Step 2) automatically grants push access to
-`ghcr.io/allenfbyrd/evidentia` (or
+`ghcr.io/polycentric-labs/evidentia` (or
 `ghcr.io/<successor-account>/evidentia` on the fork path).
 
 No separate transfer step required. The cosign keyless OIDC

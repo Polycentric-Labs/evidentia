@@ -1,6 +1,6 @@
 # evidentia-integrations
 
-Output integrations for [Evidentia](https://github.com/allenfbyrd/evidentia). Push gaps to ticketing systems and export reports to industry-standard formats.
+Output integrations for [Evidentia](https://github.com/polycentric-labs/evidentia). Push gaps to ticketing systems and export reports to industry-standard formats.
 
 ## Provides
 

@@ -257,11 +257,11 @@ git log --all --format="%ae" | sort -u | grep "@allenfbyrd.com$" || echo "OK: ze
 ## Step 7 — External repo + service review
 
 ```bash
-gh repo view allenfbyrd/evidentia --json name,description,isArchived,defaultBranchRef
-gh secret list --env pypi --repo allenfbyrd/evidentia
-gh api repos/allenfbyrd/evidentia/environments/pypi --jq '{name, url, deployment_branch_policy}'
-gh api repos/allenfbyrd/evidentia/branches/main/protection --jq '{required_status_checks, required_pull_request_reviews, enforce_admins, allow_force_pushes, allow_deletions}'
-gh search commits --author-email allen@allenfbyrd.com --owner allenfbyrd  # zero hits
+gh repo view polycentric-labs/evidentia --json name,description,isArchived,defaultBranchRef
+gh secret list --env pypi --repo polycentric-labs/evidentia
+gh api repos/polycentric-labs/evidentia/environments/pypi --jq '{name, url, deployment_branch_policy}'
+gh api repos/polycentric-labs/evidentia/branches/main/protection --jq '{required_status_checks, required_pull_request_reviews, enforce_admins, allow_force_pushes, allow_deletions}'
+gh search commits --author-email allen@allenfbyrd.com --owner polycentric-labs  # zero hits
 ```
 
 - [ ] Repo About description is current (no stale "Previously: ..." text).
@@ -358,7 +358,7 @@ contains:
 - [ ] CHANGELOG `[X.Y.Z]` block content matches the release body
       (or release body summarizes correctly)
 - [ ] Container image stanza (post-v0.7.5; the Dockerfile-
-      published releases) — `ghcr.io/allenfbyrd/evidentia:vX.Y.Z`
+      published releases) — `ghcr.io/polycentric-labs/evidentia:vX.Y.Z`
       with image digest
 - [ ] PEP 740 verification stanza — pypi-attestations verify
       command line that an operator can copy-paste
@@ -390,7 +390,7 @@ introduced this practice retroactively.
       that PyPA's publish action uploads alongside each wheel/sdist:
       ```bash
       uvx pypi-attestations verify pypi \
-          --repository https://github.com/allenfbyrd/evidentia \
+          --repository https://github.com/polycentric-labs/evidentia \
           "pypi:evidentia_core-X.Y.Z-py3-none-any.whl"
       ```
       Repeat for the other 5 wheels. Expect `OK: <wheel>`.
@@ -405,11 +405,11 @@ introduced this practice retroactively.
       [`docs/v0.7.3-plan.md`](v0.7.3-plan.md)):
       ```bash
       gh attestation verify dist/evidentia_core-X.Y.Z-py3-none-any.whl \
-          -R allenfbyrd/evidentia
+          -R Polycentric-Labs/evidentia
       ```
       Expect `Loaded digest sha256:... ` and `OK`. The same command
       also validates the CycloneDX SBOM's attestation
-      (`gh attestation verify evidentia-sbom.cdx.json -R allenfbyrd/evidentia`).
+      (`gh attestation verify evidentia-sbom.cdx.json -R Polycentric-Labs/evidentia`).
       Pre-v0.7.3 releases (v0.7.0/v0.7.1/v0.7.2) return HTTP 404
       because they emit only the PEP 740 publish predicate; only
       v0.7.3+ releases carry the SLSA build-provenance predicate
@@ -423,30 +423,30 @@ introduced this practice retroactively.
 - [ ] **(v0.7.5+) Container image published to ghcr.io** — pulls
       successfully and the in-image CLI works:
       ```bash
-      docker pull ghcr.io/allenfbyrd/evidentia:vX.Y.Z
-      docker run --rm ghcr.io/allenfbyrd/evidentia:vX.Y.Z version
-      docker run --rm ghcr.io/allenfbyrd/evidentia:vX.Y.Z catalog list | head -5
+      docker pull ghcr.io/polycentric-labs/evidentia:vX.Y.Z
+      docker run --rm ghcr.io/polycentric-labs/evidentia:vX.Y.Z version
+      docker run --rm ghcr.io/polycentric-labs/evidentia:vX.Y.Z catalog list | head -5
       ```
 - [ ] **(v0.7.5+) Verify cosign keyless signature on the image** —
       validates the OIDC identity binding (release.yml@refs/tags/v*):
       ```bash
-      cosign verify ghcr.io/allenfbyrd/evidentia:vX.Y.Z \
-          --certificate-identity-regexp 'https://github\.com/allenfbyrd/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
+      cosign verify ghcr.io/polycentric-labs/evidentia:vX.Y.Z \
+          --certificate-identity-regexp 'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
           --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
       ```
       Expect "Verified OK" + the certificate identity URL printed.
 - [ ] **(v0.7.5+) Verify SLSA build provenance on the image digest**
       — independent of cosign, validates the build-provenance predicate:
       ```bash
-      gh attestation verify oci://ghcr.io/allenfbyrd/evidentia:vX.Y.Z \
-          -R allenfbyrd/evidentia
+      gh attestation verify oci://ghcr.io/polycentric-labs/evidentia:vX.Y.Z \
+          -R Polycentric-Labs/evidentia
       ```
       Expect "verified" + the workflow run id matching the release.
 - [ ] **(v0.7.5+) Tag and `:latest` resolve to same digest** — sanity
       check the rolling-pointer is up to date:
       ```bash
-      docker buildx imagetools inspect ghcr.io/allenfbyrd/evidentia:vX.Y.Z --raw | grep -i digest
-      docker buildx imagetools inspect ghcr.io/allenfbyrd/evidentia:latest --raw | grep -i digest
+      docker buildx imagetools inspect ghcr.io/polycentric-labs/evidentia:vX.Y.Z --raw | grep -i digest
+      docker buildx imagetools inspect ghcr.io/polycentric-labs/evidentia:latest --raw | grep -i digest
       # both should print the same sha256:... line
       ```
 

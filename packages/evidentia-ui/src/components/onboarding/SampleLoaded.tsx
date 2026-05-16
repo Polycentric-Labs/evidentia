@@ -44,7 +44,7 @@ export function SampleLoaded() {
         <CardContent>
           <pre className="overflow-auto rounded bg-muted p-3 text-xs">
             <code>{`curl -o my-controls.yaml \\
-  https://raw.githubusercontent.com/allenfbyrd/evidentia/main/examples/meridian-fintech-v2/my-controls.yaml`}</code>
+  https://raw.githubusercontent.com/polycentric-labs/evidentia/main/examples/meridian-fintech-v2/my-controls.yaml`}</code>
           </pre>
         </CardContent>
       </Card>

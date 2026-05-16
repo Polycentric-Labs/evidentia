@@ -77,7 +77,7 @@ jobs:
           fail_ci_if_error: false
           flags: python
           name: evidentia-python
-          slug: allenfbyrd/evidentia
+          slug: polycentric-labs/evidentia
           verbose: true
 
   lint:

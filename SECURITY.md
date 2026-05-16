@@ -4,7 +4,7 @@ Thanks for taking the time to report a security concern. Evidentia
 takes its supply-chain posture seriously — see the per-release
 hardening in [`docs/enterprise-grade.md`](docs/enterprise-grade.md)
 and the supply-chain provenance section of every release on
-[GitHub Releases](https://github.com/allenfbyrd/evidentia/releases).
+[GitHub Releases](https://github.com/polycentric-labs/evidentia/releases).
 
 ## Reporting a vulnerability
 
@@ -13,7 +13,7 @@ and the supply-chain provenance section of every release on
 Two private channels:
 
 1. **Preferred — GitHub Private Vulnerability Reporting**:
-   <https://github.com/allenfbyrd/evidentia/security/advisories/new>.
+   <https://github.com/polycentric-labs/evidentia/security/advisories/new>.
    This routes through GitHub's coordinated-disclosure flow (private
    discussion thread, advisory drafting, optional CVE assignment).
 2. **Backup — email**: `allen@allenfbyrd.com` with subject
@@ -79,7 +79,7 @@ agreement — for example:
 - **Shorter**: if the upstream library has already published a fix
   and we just need to bump our pin, we can ship + disclose within
   days. The v0.7.2 supply-chain follow-up
-  ([commit 8baa93d](https://github.com/allenfbyrd/evidentia/commit/8baa93d))
+  ([commit 8baa93d](https://github.com/polycentric-labs/evidentia/commit/8baa93d))
   is the canonical pattern: 4 disclosed advisories in upstream
   packages → bumped pins → shipped + documented within hours of
   internal alerts firing.
@@ -116,7 +116,7 @@ Out of scope:
   ([`.github/dependabot.yml`](.github/dependabot.yml)) opens an
   auto-PR within the next weekly cycle, or sooner for critical
   advisories. Recent example:
-  [PR #8](https://github.com/allenfbyrd/evidentia/pull/8) closed
+  [PR #8](https://github.com/polycentric-labs/evidentia/pull/8) closed
   4 upstream advisories within hours of disclosure.
 - **AWS canonical-example placeholders** in test files
   (`AKIAIOSFODNN7EXAMPLE`, `ASIAIOSFODNN7EXAMPLE` —
@@ -158,7 +158,7 @@ Verify a release wheel:
 ```bash
 pip install pypi-attestations
 pypi-attestations verify pypi \
-  --repository https://github.com/allenfbyrd/evidentia \
+  --repository https://github.com/polycentric-labs/evidentia \
   "pypi:evidentia-0.7.9-py3-none-any.whl"
 ```
 

@@ -1,6 +1,6 @@
 # evidentia-ai
 
-LLM-powered features for [Evidentia](https://github.com/allenfbyrd/evidentia): risk statement generation and (in Phase 3) evidence validation.
+LLM-powered features for [Evidentia](https://github.com/polycentric-labs/evidentia): risk statement generation and (in Phase 3) evidence validation.
 
 Uses **LiteLLM** for provider-agnostic LLM calls and **Instructor** for structured output extraction into Pydantic models.
 

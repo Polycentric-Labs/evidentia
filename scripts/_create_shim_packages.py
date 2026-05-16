@@ -146,10 +146,10 @@ dependencies = [
 ]
 {scripts_block}
 [project.urls]
-Homepage = "https://github.com/allenfbyrd/evidentia"
-Repository = "https://github.com/allenfbyrd/evidentia"
-Issues = "https://github.com/allenfbyrd/evidentia/issues"
-Changelog = "https://github.com/allenfbyrd/evidentia/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/polycentric-labs/evidentia"
+Repository = "https://github.com/polycentric-labs/evidentia"
+Issues = "https://github.com/polycentric-labs/evidentia/issues"
+Changelog = "https://github.com/polycentric-labs/evidentia/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["hatchling"]
@@ -198,7 +198,7 @@ _warnings.warn(
     "collision with an unrelated commercial product. Install the replacement "
     f"with `pip install {{_NEW_PYPI}}` and update imports from "
     f"`{{_OLD_MODULE}}` to `{{_NEW_MODULE}}`. This shim will be removed in "
-    "v0.7.0. See https://github.com/allenfbyrd/evidentia/blob/main/CHANGELOG.md",
+    "v0.7.0. See https://github.com/polycentric-labs/evidentia/blob/main/CHANGELOG.md",
     DeprecationWarning,
     stacklevel=2,
 )
@@ -268,7 +268,7 @@ from {row["new_module"]}.submodule import Thing
 
 ## Why
 
-See the [v0.6.0 CHANGELOG entry](https://github.com/allenfbyrd/evidentia/blob/main/CHANGELOG.md)
+See the [v0.6.0 CHANGELOG entry](https://github.com/polycentric-labs/evidentia/blob/main/CHANGELOG.md)
 for the full rename rationale.
 '''
     )

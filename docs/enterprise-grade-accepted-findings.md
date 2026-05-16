@@ -42,7 +42,7 @@ docs on extending CodeQL data flow](https://docs.github.com/en/code-security/cod
 | **#71** | `packages/evidentia-core/src/evidentia_core/gap_store.py:182` | `path.is_file()` check on a user-controlled path. | Same `validate_within` upstream as #72. The `is_file()` check itself doesn't read content; even if it did, the path is sanitized. |
 
 **Action**: dismiss as `false_positive` with the above rationale via
-`gh api repos/allenfbyrd/evidentia/code-scanning/alerts/<n> -X PATCH`.
+`gh api repos/polycentric-labs/evidentia/code-scanning/alerts/<n> -X PATCH`.
 Each dismissal is publish-authority gated.
 
 ---

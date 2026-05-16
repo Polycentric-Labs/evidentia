@@ -89,11 +89,11 @@ Plus visual checks:
 gh repo view allenfbyrd/evidentia-action
 
 # Confirm PyPI environment + secrets
-gh secret list --env pypi --repo allenfbyrd/evidentia
-gh api repos/allenfbyrd/evidentia/environments/pypi
+gh secret list --env pypi --repo polycentric-labs/evidentia
+gh api repos/polycentric-labs/evidentia/environments/pypi
 
 # Confirm zero email leaks
-gh search commits --author-email allen@allenfbyrd.com --owner allenfbyrd
+gh search commits --author-email allen@allenfbyrd.com --owner polycentric-labs
 ```
 
 Plus PyPI publisher check: visit each of 6 packages'

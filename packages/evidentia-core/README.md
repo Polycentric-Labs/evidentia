@@ -1,6 +1,6 @@
 # evidentia-core
 
-Core data models, OSCAL catalog loaders, and the gap analysis engine for [Evidentia](https://github.com/allenfbyrd/evidentia).
+Core data models, OSCAL catalog loaders, and the gap analysis engine for [Evidentia](https://github.com/polycentric-labs/evidentia).
 
 This package has no AI dependencies and can be installed standalone for environments that need only the gap analysis functionality.
 

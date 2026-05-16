@@ -7,7 +7,7 @@
 # evidentia wheel from PyPI.
 #
 # This workflow does NOT publish the built image — publishing to
-# `ghcr.io/allenfbyrd/evidentia` is gated to a future release that
+# `ghcr.io/polycentric-labs/evidentia` is gated to a future release that
 # explicitly opts in (likely v0.7.4 with cosign signing wired in).
 # Runs in PR context so any breaking change to the Dockerfile or
 # to the published evidentia wheel surfaces here, not at consumer-

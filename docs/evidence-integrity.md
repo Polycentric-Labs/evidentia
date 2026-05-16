@@ -165,14 +165,14 @@ attestation:
 
 ### 3.3 Container image cosign-signed
 
-`ghcr.io/allenfbyrd/evidentia:vX.Y.Z` is signed via cosign
+`ghcr.io/polycentric-labs/evidentia:vX.Y.Z` is signed via cosign
 keyless OIDC. The signature binds to the same GitHub
 identity as the SLSA provenance. Operators verifying the
 image:
 
 ```bash
-cosign verify ghcr.io/allenfbyrd/evidentia:v0.8.0 \
-  --certificate-identity-regexp='^https://github.com/allenfbyrd/evidentia/' \
+cosign verify ghcr.io/polycentric-labs/evidentia:v0.8.0 \
+  --certificate-identity-regexp='^https://github.com/Polycentric-Labs/evidentia/' \
   --certificate-oidc-issuer=https://token.actions.githubusercontent.com
 ```
 
@@ -246,12 +246,12 @@ After deploying, verify the end-to-end posture:
 ```bash
 # Verify the installed wheels
 pypi-attestations verify pypi --repository \
-  https://github.com/allenfbyrd/evidentia \
+  https://github.com/polycentric-labs/evidentia \
   "pypi:evidentia-0.8.0-py3-none-any.whl"
 
 # Verify the container image
-cosign verify ghcr.io/allenfbyrd/evidentia:v0.8.0 \
-  --certificate-identity-regexp='^https://github.com/allenfbyrd/evidentia/' \
+cosign verify ghcr.io/polycentric-labs/evidentia:v0.8.0 \
+  --certificate-identity-regexp='^https://github.com/Polycentric-Labs/evidentia/' \
   --certificate-oidc-issuer=https://token.actions.githubusercontent.com
 
 # Verify a Sigstore-signed AR

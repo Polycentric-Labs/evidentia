@@ -48,8 +48,8 @@ class GitHubClient:
     Usage::
 
         with GitHubClient(token="ghp_...") as gh:
-            repo = gh.get_repo("allenfbyrd", "evidentia")
-            protection = gh.get_branch_protection("allenfbyrd", "evidentia", "main")
+            repo = gh.get_repo("polycentric-labs", "evidentia")
+            protection = gh.get_branch_protection("polycentric-labs", "evidentia", "main")
     """
 
     BASE_URL = "https://api.github.com"

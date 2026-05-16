@@ -34,8 +34,8 @@ Decisions are made openly, in writing, in places that anyone can read
 and search:
 
 - **Technical decisions** — proposed and discussed in
-  [GitHub Issues](https://github.com/allenfbyrd/evidentia/issues) and
-  [Pull Requests](https://github.com/allenfbyrd/evidentia/pulls).
+  [GitHub Issues](https://github.com/polycentric-labs/evidentia/issues) and
+  [Pull Requests](https://github.com/polycentric-labs/evidentia/pulls).
   Significant design decisions also land in
   [`docs/`](docs/) as version-controlled records (e.g., the per-release
   plan files at `docs/v0.7.x-plan.md`).
@@ -64,7 +64,7 @@ The project currently has one role:
   by virtue of being the project originator. Maintains:
   - GitHub repo write + admin access.
   - PyPI Trusted Publisher binding for the 6 `evidentia*` packages.
-  - GHCR push access for `ghcr.io/allenfbyrd/evidentia`.
+  - GHCR push access for `ghcr.io/polycentric-labs/evidentia`.
   - Domain ownership for any future `evidentia.*` web surface.
 
 When a second maintainer joins, the following roles will be defined:

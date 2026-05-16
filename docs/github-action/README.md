@@ -7,7 +7,7 @@ that turns every pull request into a compliance check. The standalone
 consolidated subpath action.
 
 ```yaml
-- uses: allenfbyrd/evidentia/.github/actions/gap-analysis@v0
+- uses: polycentric-labs/evidentia/.github/actions/gap-analysis@v0
   with:
     inventory: inventory.yaml
     frameworks: nist-800-53-rev5-moderate,soc2-tsc
@@ -176,7 +176,7 @@ v0.7.0 ships the consolidated composite action at
 The full ~80-line workflow above collapses to:
 
 ```yaml
-      - uses: allenfbyrd/evidentia/.github/actions/gap-analysis@v0
+      - uses: polycentric-labs/evidentia/.github/actions/gap-analysis@v0
         with:
           inventory: inventory.yaml
           frameworks: nist-800-53-rev5-moderate,soc2-tsc

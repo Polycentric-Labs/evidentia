@@ -56,8 +56,8 @@ def _make_alert(**overrides: Any) -> dict[str, Any]:
         "dismissed_comment": None,
         "fixed_at": None,
         "auto_dismissed_at": None,
-        "url": "https://api.github.com/repos/allenfbyrd/evidentia/dependabot/alerts/42",
-        "html_url": "https://github.com/allenfbyrd/evidentia/security/dependabot/42",
+        "url": "https://api.github.com/repos/polycentric-labs/evidentia/dependabot/alerts/42",
+        "html_url": "https://github.com/polycentric-labs/evidentia/security/dependabot/42",
     }
     for key, value in overrides.items():
         defaults[key] = value
@@ -78,7 +78,7 @@ def _make_collector(
         client.request.return_value = alerts or []
 
     return DependabotCollector(
-        owner="allenfbyrd",
+        owner="polycentric-labs",
         repo="evidentia",
         client=client,
         dismissal_policy=dismissal_policy,
@@ -93,7 +93,7 @@ def test_constructor_rejects_empty_owner_or_repo() -> None:
         DependabotCollector(owner="", repo="evidentia", client=MagicMock())
     with pytest.raises(DependabotCollectorError, match="owner \\+ repo"):
         DependabotCollector(
-            owner="allenfbyrd", repo="", client=MagicMock()
+            owner="polycentric-labs", repo="", client=MagicMock()
         )
 
 
@@ -354,7 +354,7 @@ def test_collection_context_populated_on_findings() -> None:
     ctx = findings[0].collection_context
     assert ctx.collector_id == COLLECTOR_ID
     assert ctx.run_id == manifest.run_id
-    assert "allenfbyrd/evidentia" in ctx.source_system_id
+    assert "polycentric-labs/evidentia" in ctx.source_system_id
     # Dismissal policy captured in filter_applied for audit traceability.
     assert "dismissal_policy" in ctx.filter_applied
 
@@ -402,7 +402,7 @@ def test_finding_description_includes_dismissal_reason_when_dismissed() -> None:
 def test_dry_run_returns_empty_without_api_calls() -> None:
     client = MagicMock()
     collector = DependabotCollector(
-        owner="allenfbyrd", repo="evidentia", client=client,
+        owner="polycentric-labs", repo="evidentia", client=client,
     )
     findings = collector.collect(dry_run=True)
     assert findings == []
