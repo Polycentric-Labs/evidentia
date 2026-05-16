@@ -7,6 +7,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-05-16
+
+**Theme**: *Organization migration to Polycentric Labs.* Patch
+release completing the transfer of `allenfbyrd/evidentia` to the
+`Polycentric-Labs` GitHub Organization for enterprise credibility
+signaling. All supply-chain identity surfaces updated atomically.
+
+### Changed — GitHub Organization migration
+
+- **Repository URL**: `github.com/allenfbyrd/evidentia` →
+  `github.com/Polycentric-Labs/evidentia`. GitHub permanent
+  redirect ensures all existing links, stars, and forks
+  continue to resolve.
+- **PyPI project URLs**: Homepage, Repository, Issues, and
+  Changelog URLs across all 7 published packages now point to
+  `Polycentric-Labs/evidentia`.
+- **Container registry path**: GHCR images now publish to
+  `ghcr.io/polycentric-labs/evidentia` (lowercase per OCI spec).
+- **Cosign certificate identity**: `--certificate-identity-regexp`
+  updated to `Polycentric-Labs` (canonical GitHub org casing)
+  matching the OIDC token identity issued by GitHub Actions.
+- **SLSA build provenance**: attestation subject and verification
+  paths updated to the new org namespace.
+- **CodeQL pack**: `allenfbyrd/evidentia-python-sanitizers` →
+  `polycentric-labs/evidentia-python-sanitizers`.
+- **Dockerfile OCI labels**: `org.opencontainers.image.source`,
+  `org.opencontainers.image.url`, `org.opencontainers.image.documentation`,
+  and `org.opencontainers.image.vendor` updated.
+- **CITATION.cff**: `repository-code` URL updated.
+- **PyPI Trusted Publishers**: all 7 packages re-registered with
+  `owner: Polycentric-Labs` (OIDC binding validated via RC tag).
+- **Test fixtures**: `owner="polycentric-labs"` in Dependabot
+  collector tests and TPRM vendor store fixtures.
+- **Living docs**: `docs/release-checklist.md`,
+  `docs/sigstore-quickstart.md`, `docs/evidence-integrity.md`,
+  `docs/testing-playbook.md`, and security review documents
+  updated with new org references and `Polycentric-Labs` casing
+  in attestation verification commands.
+
+### Unchanged (intentionally preserved)
+
+- `allen@allenfbyrd.com` — personal author email (not repo
+  ownership; git attribution unchanged).
+- `allenfbyrd/evidentia-action` — separate archived repository.
+- `CHANGELOG.md` historical link references — GitHub redirects
+  handle `allenfbyrd/evidentia` → `Polycentric-Labs/evidentia`.
+- `allenfbyrd/controlbridge` predecessor references.
+- `bestpractices.dev` project URL updated out-of-band (Allen
+  manual step).
+
+### Fixed
+
+- **OIDC casing mismatch**: GitHub's OIDC token embeds the
+  canonical org login `Polycentric-Labs` (mixed case). Cosign
+  `--certificate-identity-regexp` and `gh attestation verify -R`
+  flags now use `Polycentric-Labs` (not `polycentric-labs`) to
+  match. GHCR paths remain lowercase per OCI spec. Without this
+  fix, post-release cosign verification would fail silently.
+
+### Infrastructure
+
+- 2583 tests passing, 17 skipped. mypy strict 0/0 across 227
+  source files. ruff clean.
+- RC tag `v0.9.1-rc1` validated PyPI OIDC Trusted Publisher
+  authentication under the new `Polycentric-Labs` org identity.
+  All 7 wheels + 7 sdists uploaded successfully with PEP 740
+  attestations.
+- SLSA build provenance attestation uploaded to Rekor
+  transparency log and GitHub repository attestations.
+
 ## [0.9.0] - 2026-05-15
 
 **Theme**: *Federal compliance — POA&M lifecycle + CONMON cycle
