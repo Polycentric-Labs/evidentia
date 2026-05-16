@@ -1,7 +1,9 @@
 """`evidentia conmon` — Continuous Monitoring cycle-calendar commands.
 
-v0.9.0 P3 read-only library surface. Operators consult the bundled
-cadence catalog + compute next-due dates from a known anchor.
+v0.9.0 P3 read-only library + v0.9.3 P1.1 poll-mode daemon.
+Operators consult the bundled cadence catalog, compute next-due
+dates from a known anchor, and (v0.9.3+) optionally run a long-
+lived daemon to poll cycle state on a fixed interval.
 
 Subcommand structure:
 
@@ -17,25 +19,43 @@ Subcommand structure:
         # Fires CONMON_CYCLE_DUE / CONMON_CYCLE_OVERDUE events for
         # each cycle that surfaces.
 
-No daemon — operators poll. The CONMON live-trigger daemon
-(``evidentia conmon watch``) is reserved for v1.0 per the
-absolute-secrecy posture (out of v0.9.0 scope).
+    evidentia conmon watch --state-file <path> [--poll-interval N] [--window-days N]
+        # v0.9.3 P1.1: long-running poll daemon. Re-reads the state
+        # file at each poll interval and fires CONMON_CYCLE_DUE /
+        # CONMON_CYCLE_OVERDUE events on state transitions.
+        # SIGINT/SIGTERM trigger graceful shutdown.
+
+    evidentia conmon mark-completed <slug> --when YYYY-MM-DD --state-file <path>
+        # v0.9.3 P1.1: record a cycle completion in the state file.
+        # Emits CONMON_CYCLE_MARKED_COMPLETED with previous + new
+        # last_completed values for auditor reconciliation.
+
+The CONMON live-trigger daemon (event-driven, vs the v0.9.3 poll
+mode) remains reserved for v1.0.
 """
 
 from __future__ import annotations
 
 import json
+import signal
+import sys
+import threading
 from datetime import date
 from pathlib import Path
 
 import typer
 from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.conmon import (
+    DEFAULT_POLL_INTERVAL_SECONDS,
+    MIN_POLL_INTERVAL_SECONDS,
     CycleAttentionState,
+    DaemonConfig,
     derive_status,
     get_cadence,
     list_cadences,
+    mark_completed,
     next_due,
+    run_daemon,
 )
 from rich.console import Console
 from rich.table import Table
@@ -413,3 +433,156 @@ def conmon_check(
                 row["days_until_due"],
             )
         console.print(table)
+
+
+# ── watch (v0.9.3 P1.1 — poll daemon) ─────────────────────────────
+
+
+@app.command("watch")
+def conmon_watch(
+    state_file: Path = typer.Option(
+        ...,
+        "--state-file",
+        exists=False,  # daemon tolerates missing file (retries)
+        file_okay=True,
+        dir_okay=False,
+        help=(
+            "YAML mapping {cadence_slug: ISO-8601-date} of last-"
+            "completed dates. Re-read each poll cycle so operators "
+            "can mark cycles completed without daemon restart. "
+            "Missing file is tolerated — the daemon logs + retries."
+        ),
+    ),
+    poll_interval_seconds: int = typer.Option(
+        DEFAULT_POLL_INTERVAL_SECONDS,
+        "--poll-interval",
+        min=MIN_POLL_INTERVAL_SECONDS,
+        help=(
+            f"Seconds between poll cycles. Default: "
+            f"{DEFAULT_POLL_INTERVAL_SECONDS}s (1 hour). "
+            f"Minimum: {MIN_POLL_INTERVAL_SECONDS}s — sub-minute "
+            f"polling adds no signal for daily/weekly/monthly "
+            f"CONMON cadences."
+        ),
+    ),
+    window_days: int = typer.Option(
+        14,
+        "--window-days",
+        min=0,
+        help=(
+            "Due-soon window (days from today). Default: 14 days. "
+            "Overdue cycles always surface regardless of this window."
+        ),
+    ),
+) -> None:
+    """Long-running poll daemon for CONMON cycle attention-state.
+
+    Reads ``--state-file`` on each poll cycle and emits
+    :attr:`EventAction.CONMON_CYCLE_DUE` /
+    :attr:`EventAction.CONMON_CYCLE_OVERDUE` audit events when
+    cycles enter due-soon or overdue states.
+
+    Lifecycle audit events bracket the run:
+    :attr:`EventAction.CONMON_DAEMON_STARTED` at boot,
+    :attr:`EventAction.CONMON_DAEMON_STOPPED` at graceful shutdown.
+
+    Graceful shutdown: SIGINT (Ctrl+C) and SIGTERM trigger the
+    shutdown event. The daemon finishes the current poll cycle,
+    fires CONMON_DAEMON_STOPPED, and exits 0.
+
+    Operator deployment guidance in
+    ``docs/conmon-daemon-deployment.md``.
+    """
+    config = DaemonConfig(
+        state_file=state_file,
+        poll_interval_seconds=poll_interval_seconds,
+        window_days=window_days,
+    )
+
+    shutdown = threading.Event()
+
+    def _handle_signal(signum: int, _frame: object) -> None:
+        sig_name = signal.Signals(signum).name
+        console.print(
+            f"\n[yellow]Received {sig_name}; "
+            f"finishing current poll cycle...[/yellow]"
+        )
+        shutdown.set()
+
+    signal.signal(signal.SIGINT, _handle_signal)
+    if sys.platform != "win32":
+        # SIGTERM is POSIX-only; Windows uses other mechanisms.
+        signal.signal(signal.SIGTERM, _handle_signal)
+
+    console.print(
+        f"[green]CONMON daemon starting[/green] (poll every "
+        f"{poll_interval_seconds}s; window={window_days}d; "
+        f"state-file={state_file})"
+    )
+    console.print("[dim]Press Ctrl+C for graceful shutdown.[/dim]")
+
+    run_daemon(config, shutdown_event=shutdown)
+
+    console.print("[green]CONMON daemon stopped cleanly.[/green]")
+
+
+# ── mark-completed (v0.9.3 P1.1) ──────────────────────────────────
+
+
+@app.command("mark-completed")
+def conmon_mark_completed(
+    slug: str = typer.Argument(
+        ...,
+        help="Cadence slug (e.g., 'nist-800-53-rev5-ca7').",
+    ),
+    when: str = typer.Option(
+        ...,
+        "--when",
+        help="ISO-8601 date of cycle completion (YYYY-MM-DD).",
+    ),
+    state_file: Path = typer.Option(
+        ...,
+        "--state-file",
+        file_okay=True,
+        dir_okay=False,
+        help=(
+            "Path to the YAML state file the daemon polls. Created "
+            "if it does not exist."
+        ),
+    ),
+) -> None:
+    """Record a CONMON cycle completion in the state file.
+
+    Emits :attr:`EventAction.CONMON_CYCLE_MARKED_COMPLETED` with
+    both the previous and new ``last_completed`` values. The audit
+    event is the auditor's primary evidence that the cycle was
+    actually performed, NOT just scheduled.
+    """
+    parsed_when = _parse_date_or_exit(when, "--when")
+    assert parsed_when is not None
+
+    try:
+        previous = mark_completed(state_file, slug, parsed_when)
+    except ValueError as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        console.print(
+            "[dim]Run `evidentia conmon list` to see available cadences.[/dim]"
+        )
+        raise typer.Exit(code=1) from exc
+
+    cadence = get_cadence(slug)
+    assert cadence is not None  # validated by mark_completed
+
+    if previous is None:
+        console.print(
+            f"[green]Marked[/green] [bold]{slug}[/bold] completed on "
+            f"{parsed_when.isoformat()} (first recorded completion)"
+        )
+    else:
+        console.print(
+            f"[green]Marked[/green] [bold]{slug}[/bold] completed on "
+            f"{parsed_when.isoformat()} "
+            f"(previous: {previous.isoformat()})"
+        )
+    if cadence.citation:
+        console.print(f"  [dim]Citation: {cadence.citation}[/dim]")

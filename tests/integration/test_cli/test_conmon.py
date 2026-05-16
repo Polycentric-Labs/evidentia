@@ -348,3 +348,102 @@ class TestConmonCheck:
         )
         assert result.exit_code == 0
         assert "No CONMON cycles overdue" in result.output
+
+
+# ── mark-completed (v0.9.3 P1.1) ──────────────────────────────────
+
+
+class TestConmonMarkCompleted:
+    """`evidentia conmon mark-completed` CLI verb."""
+
+    def test_first_mark_creates_state_file(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        state_file = tmp_path / "state.yaml"
+        result = runner.invoke(
+            app,
+            [
+                "conmon",
+                "mark-completed",
+                "nist-800-53-rev5-ca7",
+                "--when",
+                "2026-05-01",
+                "--state-file",
+                str(state_file),
+            ],
+        )
+        assert result.exit_code == 0
+        assert "first recorded completion" in result.output
+        assert state_file.is_file()
+
+    def test_second_mark_surfaces_previous(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        state_file = tmp_path / "state.yaml"
+        # First mark
+        runner.invoke(
+            app,
+            [
+                "conmon",
+                "mark-completed",
+                "nist-800-53-rev5-ca7",
+                "--when",
+                "2026-04-01",
+                "--state-file",
+                str(state_file),
+            ],
+        )
+        # Second mark
+        result = runner.invoke(
+            app,
+            [
+                "conmon",
+                "mark-completed",
+                "nist-800-53-rev5-ca7",
+                "--when",
+                "2026-05-01",
+                "--state-file",
+                str(state_file),
+            ],
+        )
+        assert result.exit_code == 0
+        assert "previous: 2026-04-01" in result.output
+
+    def test_unknown_slug_errors_with_helpful_message(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        state_file = tmp_path / "state.yaml"
+        result = runner.invoke(
+            app,
+            [
+                "conmon",
+                "mark-completed",
+                "no-such-cadence",
+                "--when",
+                "2026-05-01",
+                "--state-file",
+                str(state_file),
+            ],
+        )
+        assert result.exit_code == 1
+        assert "unknown cadence slug" in result.output
+        assert "evidentia conmon list" in result.output
+
+    def test_invalid_date_errors_cleanly(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        state_file = tmp_path / "state.yaml"
+        result = runner.invoke(
+            app,
+            [
+                "conmon",
+                "mark-completed",
+                "nist-800-53-rev5-ca7",
+                "--when",
+                "not-a-date",
+                "--state-file",
+                str(state_file),
+            ],
+        )
+        assert result.exit_code == 1
+        assert "--when" in result.output

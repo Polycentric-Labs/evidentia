@@ -1,4 +1,4 @@
-"""Continuous Monitoring (CONMON) cycle-calendar primitives (v0.9.0 P3).
+"""Continuous Monitoring (CONMON) cycle-calendar primitives (v0.9.0 P3 + v0.9.3 P1).
 
 Read-only library for surfacing assessment + reporting cycles per
 the major federal-compliance frameworks. Operators consume this via:
@@ -10,12 +10,15 @@ the major federal-compliance frameworks. Operators consume this via:
 - :func:`evidentia_core.conmon.calendar.derive_status` — bucket a
   pending cycle into ``due_soon`` / ``overdue`` / ``current`` at
   query time against a reference date
+- :func:`evidentia_core.conmon.daemon.run_daemon` (v0.9.3 P1.1) —
+  long-running poll loop with operator-supplied callbacks for
+  due-soon / overdue cycles. Wired into the CLI via
+  ``evidentia conmon watch --poll``.
 
 The `evidentia conmon` CLI (v0.9.0 P2-adjacent; ships in the same
 release cycle) wires these primitives into the operator workflow.
-No daemon — operators poll. The CONMON live-trigger daemon
-(``evidentia conmon watch``) is reserved for v1.0 per §31.1 OUT-of-
-scope.
+The CONMON live-trigger daemon (event-driven, vs the v0.9.3 poll
+mode) remains reserved for v1.0.
 
 Bundled cadences (v0.9.0 P3 baseline; operator-extensible via
 :func:`register_cadence`):
@@ -50,16 +53,40 @@ from evidentia_core.conmon.calendar import (
     next_due,
     register_cadence,
 )
+from evidentia_core.conmon.daemon import (
+    DEFAULT_POLL_INTERVAL_SECONDS,
+    MIN_POLL_INTERVAL_SECONDS,
+    CycleHandler,
+    CycleObservation,
+    DaemonConfig,
+    PollResult,
+    load_state_file,
+    mark_completed,
+    poll_once,
+    run_daemon,
+    save_state_file,
+)
 
 __all__ = [
     "BUNDLED_CADENCES",
     "CONMON_FREQUENCIES",
+    "DEFAULT_POLL_INTERVAL_SECONDS",
+    "MIN_POLL_INTERVAL_SECONDS",
     "CadenceFrequency",
     "ConmonCadence",
     "CycleAttentionState",
+    "CycleHandler",
+    "CycleObservation",
+    "DaemonConfig",
+    "PollResult",
     "derive_status",
     "get_cadence",
     "list_cadences",
+    "load_state_file",
+    "mark_completed",
     "next_due",
+    "poll_once",
     "register_cadence",
+    "run_daemon",
+    "save_state_file",
 ]
