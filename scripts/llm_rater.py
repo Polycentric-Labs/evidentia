@@ -30,7 +30,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-
 _SYSTEM_PROMPT = """\
 You are a compliance-engineering faithfulness evaluator. Your task is to \
 determine whether a CLAIM is faithfully supported by the provided SOURCE \
@@ -65,10 +64,7 @@ Is this claim faithfully supported by the source clauses above?"""
 
 def _build_user_prompt(entry: dict[str, Any]) -> str:
     clauses = entry.get("source_clauses", [])
-    if isinstance(clauses, list):
-        formatted = "\n".join(f"- {c}" for c in clauses)
-    else:
-        formatted = str(clauses)
+    formatted = "\n".join(f"- {c}" for c in clauses) if isinstance(clauses, list) else str(clauses)
     claim = str(entry.get("claim", ""))
     return _USER_PROMPT_TEMPLATE.format(
         source_clauses=formatted, claim=claim
@@ -98,9 +94,7 @@ def _call_llm(
         return bool(parsed.get("faithful", False))
     except (json.JSONDecodeError, AttributeError):
         lower = text.lower()
-        if "true" in lower or '"faithful": true' in lower:
-            return True
-        return False
+        return bool("true" in lower or '"faithful": true' in lower)
 
 
 def rate_corpus(
@@ -223,7 +217,7 @@ def main() -> int:
         print(f"Corpus file not found: {args.corpus}", file=sys.stderr)
         return 2
 
-    print(f"LLM rater starting")
+    print("LLM rater starting")
     print(f"  Corpus: {args.corpus}")
     print(f"  Model: {args.model or os.environ.get('EVIDENTIA_LLM_MODEL', 'gpt-4o')}")
     print(f"  Output: {args.output}")

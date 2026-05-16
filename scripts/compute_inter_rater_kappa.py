@@ -244,7 +244,7 @@ def _llm_rate_entries(
 
     # Import the LLM rater's call function
     sys.path.insert(0, str(Path(__file__).parent))
-    from llm_rater import _build_user_prompt, _call_llm, _SYSTEM_PROMPT
+    from llm_rater import _SYSTEM_PROMPT, _build_user_prompt, _call_llm
 
     labels: list[bool] = []
     output_lines: list[str] = []

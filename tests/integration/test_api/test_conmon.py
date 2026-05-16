@@ -6,7 +6,6 @@ Reuses the project-wide ``api_client`` fixture from conftest.
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 
