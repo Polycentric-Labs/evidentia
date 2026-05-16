@@ -1410,6 +1410,51 @@ features:
 
 ---
 
+## Federal-SI walk-through scenarios (v0.9.1 P4)
+
+Defines the concrete use cases the domain-expert walk-through will
+exercise. Each scenario identifies a persona, goal, Evidentia surfaces
+exercised, and expected outcomes. These serve as the walk-through script
+and acceptance criteria for v0.9.1 + v1.0 gate.
+
+| # | Persona | Goal | Evidentia surfaces | Expected outcome |
+|---|---------|------|--------------------|------------------|
+| FS-1 | CSP compliance engineer | Prepare monthly ConMon deliverables for the AO | `evidentia conmon check`, `evidentia poam list --status in_progress`, `GET /api/conmon/check`, `GET /api/poam/items` | Overdue + due-soon cadences surfaced; POA&M items with updated status ready for submission |
+| FS-2 | CSP compliance engineer | Generate OSCAL POA&M from gap analysis | `evidentia gap-analyze --framework nist-800-53-rev5`, `evidentia poam create --from-gap-report`, `gap_report_to_oscal_poam()` | OSCAL 1.1.2 plan-of-action-and-milestones JSON with SHA-256 back-matter integrity; CRITICAL + HIGH findings materialized |
+| FS-3 | 3PAO assessor | Verify evidence integrity for annual assessment | `evidentia oscal verify`, `evidentia eval verify`, Sigstore signature validation | Cryptographic chain from gap-report through risk-statement through OSCAL export is verifiable; tamper-evidence working |
+| FS-4 | ISSO (Information System Security Officer) | Track POA&M lifecycle through remediation | `evidentia poam update`, `evidentia poam milestone add/update`, POA&M state machine (planned→in_progress→completed→verified) | Forward-only state transitions enforced; milestones track incremental progress; attention-state bucketing (overdue/due-soon) surfaces urgency |
+| FS-5 | AO (Authorizing Official) reviewer | Review control compliance posture across frameworks | `evidentia gap-analyze --all-frameworks`, `evidentia conmon list`, `/api/conmon/cadences` + `/api/gaps/` | Framework-level compliance view; cadence schedule showing which assessments are current vs overdue |
+| FS-6 | DevSecOps engineer (CI/CD) | Integrate compliance gate into deployment pipeline | `evidentia gap-analyze --fail-on-severity critical`, `evidentia eval risk-determinism --fail-on-determinism-rate-below 0.95`, GitHub Action workflow | Pipeline fails on critical gaps or non-deterministic AI output; deterministic blocking of non-compliant deployments |
+| FS-7 | CSP compliance engineer | Manage inherited vs system-specific controls | `evidentia gap-analyze` with framework overlay filtering, OSCAL POA&M control-id scoping | Only system-specific + hybrid controls materialize as POA&M items; inherited controls (CSP responsibility) are excluded from tenant POA&M |
+| FS-8 | ISSO | Respond to new vulnerability scan findings | `evidentia poam create` (single finding), `evidentia poam milestone add`, `POST /api/poam/items` | New POA&M item created with appropriate severity; milestone tracks first-response SLA; CONMON cadence alignment verified |
+| FS-9 | Compliance program manager | Generate executive compliance summary | `evidentia gap-analyze --json` + `evidentia conmon check --json` + `evidentia poam list --json` | Machine-readable JSON output suitable for dashboard consumption; overdue counts + gap severity distribution + cadence health |
+| FS-10 | Federal auditor (external) | Validate POA&M against ConMon schedule alignment | `evidentia conmon check`, `evidentia poam list`, OSCAL POA&M export | POA&M update cadence matches ConMon monthly schedule; no stale POA&M items without corresponding ConMon check |
+
+### Walk-through execution protocol
+
+1. Domain expert receives scenarios FS-1 through FS-10 as a script
+2. For each scenario, expert runs the specified commands/APIs against
+   a pre-populated test dataset (synthetic federal-SI data)
+3. Expert documents: what worked, what was confusing, what's missing,
+   what doesn't match real-world workflow
+4. Findings classified as: (a) code fix needed, (b) documentation
+   gap, (c) feature gap for future release, (d) acceptable as-is
+5. Code fixes land in v0.9.1; documentation gaps land in v0.9.1;
+   feature gaps carry into v0.9.2+ per ROADMAP
+
+### Walk-through test dataset (to be prepared)
+
+- Synthetic gap-analysis report: 50 gaps across NIST 800-53 (mixed
+  severity: 5 CRITICAL, 10 HIGH, 20 MEDIUM, 15 LOW)
+- Pre-populated POA&M store: 15 items in various states (3 planned,
+  5 in_progress, 3 overdue, 2 completed, 2 verified)
+- ConMon state file: 7 cadences with realistic last-completed dates
+  (2 overdue, 3 due-soon, 2 current)
+- Evidence artifacts: 5 signed OSCAL exports + 3 eval results with
+  Sigstore signatures
+
+---
+
 *End of capability-matrix.md. Compiled 2026-04-25 as Step 4 deliverable
 from the v0.7.0 comprehensive pre-tag review. Will be re-validated
 on each future release per the [testing-playbook.md](testing-playbook.md)

@@ -1073,17 +1073,27 @@ v0.8.6 §29 P2 R3 single-rater κ probe inconclusive carry-
 forward acknowledged; domain-expert walk-through becomes the
 v0.9.1 reservation. v0.9.0 ships regardless.
 
-## v0.9.1 — Walk-through-driven refinement — PLANNED
+## v0.9.1 — Walk-through-driven refinement — IN PROGRESS
 
-After v0.9.0 ships, the v0.9.1 cycle opens with the deferred
-Phase 4 walk-through (`docs/v0.9.0-plan.md` §"Phase 4 — Walk-
-through-as-validation"). Scope candidates: federal-SI scenario
-rows in `capability-matrix.md`; Cohen's Kappa recompute on the
-v0.8.5 DFAH calibration corpus with a domain-expert second
-rater (closes the v0.8.6 §29 P2 R3 mitigation acceptance); any
-walk-through-surfaced POA&M / CONMON shape adjustments; CONMON
-REST router parity with the POA&M router pattern if operator
-demand surfaces. Plan file lands at v0.9.1 cycle-open.
+Cycle opened 2026-05-15 after v0.9.0 ship. Plan file:
+[`docs/v0.9.1-plan.md`](v0.9.1-plan.md).
+
+- **Phase 1**: CONMON REST router — 4 endpoints under
+  `/api/conmon/` (list, get, next, check) matching CLI parity.
+  17 integration tests.
+- **Phase 2**: LLM-assisted second rater — `scripts/llm_rater.py`
+  + `--rule llm` mode in `compute_inter_rater_kappa.py`.
+  Temperature-0 deterministic labeling with JSONL sidecar
+  persistence.
+- **Phase 3**: Federal-compliance calibration corpus —
+  `corpus_federal.jsonl` (24 entries; FedRAMP ConMon + POA&M +
+  NIST 800-53 CA-7). Total corpus now 147 entries.
+- **Phase 4**: Federal-SI walk-through scenarios — 10 scenarios
+  (FS-1 through FS-10) in `capability-matrix.md` with persona,
+  goal, surfaces exercised, expected outcome.
+- **Phase 5 (pending)**: Domain-expert walk-through execution
+  (requires federal partner scheduling).
+- **Phase 6 (pending)**: Pre-release-review + version bump + ship.
 
 ## v0.9.2 — AI governance foundation — PROPOSED
 

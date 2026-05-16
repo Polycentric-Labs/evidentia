@@ -220,6 +220,60 @@ def landis_koch_label(kappa: float) -> str:
     return "almost-perfect"
 
 
+def _llm_rate_entries(
+    corpus: dict[str, dict[str, Any]],
+    ids: list[str],
+    model: str | None,
+    output_path: Path | None,
+    rater1_path: Path,
+) -> list[bool]:
+    """Rate corpus entries using the LLM rater (v0.9.1 P2).
+
+    Imports the llm_rater module and calls _call_llm for each entry.
+    Persists results to a JSONL sidecar for reproducibility.
+    """
+    import os
+    import time
+
+    # Resolve output path
+    if output_path is None:
+        output_path = rater1_path.parent / "labels-llm-rater.jsonl"
+
+    resolved_model = model or os.environ.get("EVIDENTIA_LLM_MODEL", "gpt-4o")
+    print(f"LLM rater: model={resolved_model}, entries={len(ids)}")
+
+    # Import the LLM rater's call function
+    sys.path.insert(0, str(Path(__file__).parent))
+    from llm_rater import _build_user_prompt, _call_llm, _SYSTEM_PROMPT
+
+    labels: list[bool] = []
+    output_lines: list[str] = []
+
+    for i, entry_id in enumerate(ids):
+        entry = corpus[entry_id]
+        user_prompt = _build_user_prompt(entry)
+        try:
+            label = _call_llm(resolved_model, _SYSTEM_PROMPT, user_prompt)
+        except Exception as exc:
+            print(
+                f"  [{i + 1}/{len(ids)}] {entry_id}: ERROR ({exc}); "
+                f"defaulting to unfaithful",
+                file=sys.stderr,
+            )
+            label = False
+        labels.append(label)
+        output_lines.append(json.dumps({"id": entry_id, "faithful": label}))
+        if i < len(ids) - 1:
+            time.sleep(0.3)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8") as fh:
+        fh.write("\n".join(output_lines) + "\n")
+    print(f"  LLM labels persisted to: {output_path}")
+
+    return labels
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -242,17 +296,34 @@ def main() -> int:
     )
     parser.add_argument(
         "--rule",
-        choices=["jaccard"],
+        choices=["jaccard", "llm"],
         default=None,
         help="Rule-based rater 2: deterministically compute "
-        "labels from the corpus entries themselves. Useful as "
-        "a label-quality probe with no human / LLM cost.",
+        "labels from the corpus entries themselves. 'jaccard' is "
+        "a zero-cost token-overlap heuristic; 'llm' calls the "
+        "configured LLM (requires EVIDENTIA_LLM_MODEL or "
+        "defaults to gpt-4o; incurs API cost).",
     )
     parser.add_argument(
         "--rule-threshold",
         type=float,
         default=0.5,
-        help="Threshold for rule-based rater (default 0.5).",
+        help="Threshold for jaccard rule-based rater (default 0.5).",
+    )
+    parser.add_argument(
+        "--llm-model",
+        type=str,
+        default=None,
+        help="LLM model for --rule llm (default: $EVIDENTIA_LLM_MODEL "
+        "or gpt-4o). Only used when --rule llm.",
+    )
+    parser.add_argument(
+        "--llm-output",
+        type=Path,
+        default=None,
+        help="Path to persist LLM-rater labels as JSONL sidecar. "
+        "Default: <rater1-dir>/labels-llm-rater.jsonl. Only "
+        "used when --rule llm.",
     )
     parser.add_argument(
         "--target",
@@ -330,10 +401,18 @@ def main() -> int:
             bool(rater1_corpus[i]["faithful"])
             for i in common_ids
         ]
-        r2_labels = [
-            _jaccard_label(rater1_corpus[i], args.rule_threshold)
-            for i in common_ids
-        ]
+        if args.rule == "jaccard":
+            r2_labels = [
+                _jaccard_label(rater1_corpus[i], args.rule_threshold)
+                for i in common_ids
+            ]
+        elif args.rule == "llm":
+            r2_labels = _llm_rate_entries(
+                rater1_corpus, common_ids, args.llm_model, args.llm_output, args.rater1
+            )
+        else:
+            print(f"Unknown rule: {args.rule}", file=sys.stderr)
+            return 2
 
     # Compute kappa.
     kappa, po, pe = cohens_kappa(r1_labels, r2_labels)
