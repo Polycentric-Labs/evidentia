@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-05-16
+
+**Theme**: *CONMON REST parity + LLM rater + federal corpus.*
+Walk-through-driven refinement delivering HTTP API surface for
+continuous-monitoring cadences, multi-rater calibration tooling,
+and federal-compliance corpus expansion.
+
+### Added
+
+- **CONMON REST router** (`/api/conmon/*`): 4 endpoints providing
+  HTTP parity with the v0.9.0 `evidentia conmon` CLI. List cadences
+  with optional `?framework=` filter, get single cadence by slug,
+  compute next-due date, and batch attention-state check (overdue /
+  due-soon / current bucketing). Batch capped at 100 entries.
+- **LLM-assisted second rater** (`scripts/llm_rater.py`): standalone
+  faithfulness rater using temperature-0 LLM classification. Produces
+  `labels-llm-rater.jsonl` sidecar compatible with the kappa script's
+  `--rater2` format.
+- **`--rule llm` mode** in `compute_inter_rater_kappa.py`: integrated
+  LLM rater invocation within the kappa computation workflow.
+- **Federal calibration corpus** (`corpus_federal.jsonl`): 24 entries
+  spanning FedRAMP ConMon, FedRAMP POA&M, and NIST 800-53 CA-7 domain
+  content. Same 4-category structure as existing corpus files.
+- **Federal walk-through scenarios** (FS-1 through FS-10) in
+  `docs/capability-matrix.md`: 10 persona-driven scenarios covering
+  CSP compliance engineer, 3PAO assessor, ISSO, AO reviewer,
+  DevSecOps engineer, and federal auditor workflows.
+- **Roadmap refresh**: v0.9.2-v0.9.4 PROPOSED milestones with
+  v1.0 RESERVED timeline in `docs/ROADMAP.md`.
+- **Inter-rater agreement documentation** update with v0.9.1 LLM
+  rater methodology + federal corpus kappa results.
+- **v0.9.1 plan document** (`docs/v0.9.1-plan.md`).
+
+### Fixed
+
+- Batch size cap on `POST /api/conmon/check` — `max_length=100`
+  prevents unbounded request payloads.
+- Stale `v0.8.2` version reference in `signing.py` docstring
+  example updated to `v0.9.2`.
+- Capability matrix: corrected `GET /api/conmon/check` to
+  `POST /api/conmon/check` in FS-1 scenario.
+
 ## [0.9.1] - 2026-05-16
 
 **Theme**: *Organization migration to Polycentric Labs.* Patch

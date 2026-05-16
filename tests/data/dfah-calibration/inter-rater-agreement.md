@@ -109,6 +109,74 @@ A human-second-rater pass (Allen's GRC mentor / domain expert)
 remains reserved for v0.9.0 federal-compliance theme — the
 walk-through opener naturally surfaces a candidate.
 
+## v0.9.1 additions
+
+### LLM-assisted second rater (v0.9.1 P2)
+
+New `--rule llm` mode in `compute_inter_rater_kappa.py` and
+standalone `scripts/llm_rater.py`. Calls the configured LLM
+(temperature=0 for determinism) to classify each corpus entry
+as faithful/unfaithful using a structured prompt.
+
+- Persists labels to `labels-llm-rater.jsonl` sidecar file
+- Reproducible: same model + same corpus → same labels (temp=0)
+- Cost: ~123 entries × ~500 tokens ≈ ~60K tokens ≈ ~$0.20
+
+Usage:
+
+```bash
+# Generate LLM-rater labels (requires EVIDENTIA_LLM_MODEL or defaults to gpt-4o)
+uv run python scripts/llm_rater.py \
+    --corpus tests/data/dfah-calibration/corpus.jsonl \
+    --output tests/data/dfah-calibration/labels-llm-rater.jsonl
+
+# Compute kappa between hand-labels and LLM-rater labels
+uv run python scripts/compute_inter_rater_kappa.py \
+    --rater1 tests/data/dfah-calibration/corpus.jsonl \
+    --rater2 tests/data/dfah-calibration/labels-llm-rater.jsonl
+```
+
+Or via the integrated mode:
+
+```bash
+uv run python scripts/compute_inter_rater_kappa.py \
+    --rater1 tests/data/dfah-calibration/corpus.jsonl \
+    --rule llm \
+    --llm-model gpt-4o
+```
+
+### Federal-compliance corpus (v0.9.1 P3)
+
+New `corpus_federal.jsonl` — 24 entries spanning FedRAMP ConMon,
+FedRAMP POA&M, and NIST 800-53 CA-7 domain content. Same 4-
+category structure (6 verbatim, 6 paraphrase, 6 semi-related,
+6 hallucination).
+
+Jaccard sweep results:
+
+| Threshold | κ | Landis-Koch |
+|---|---|---|
+| 0.30 | 0.2500 | fair |
+| 0.60 | 0.5000 | moderate |
+| 0.85 | 0.5000 | moderate |
+
+Best κ = 0.5000 (moderate) — consistent with the framework-
+agnostic corpus finding. Federal domain language (regulatory
+citations, formal terminology) does not improve Jaccard scorer
+performance, confirming the need for the semantic path + LLM
+rater for this domain.
+
+### Corpus totals (v0.9.1)
+
+| File | Entries | Domain |
+|---|---|---|
+| `corpus.jsonl` | 51 | Framework-agnostic |
+| `corpus_nist.jsonl` | 24 | NIST 800-53 |
+| `corpus_ffiec.jsonl` | 24 | FFIEC |
+| `corpus_iso27001.jsonl` | 24 | ISO 27001 |
+| `corpus_federal.jsonl` | 24 | FedRAMP ConMon + POA&M + CA-7 |
+| **Total** | **147** | |
+
 ## Reproducibility
 
 To re-run this analysis:
@@ -128,6 +196,17 @@ uv run python scripts/compute_inter_rater_kappa.py \
     --rater1 tests/data/dfah-calibration/corpus_nist.jsonl \
     --rule jaccard \
     --rule-threshold 0.60
+
+# Federal corpus probe
+uv run python scripts/compute_inter_rater_kappa.py \
+    --rater1 tests/data/dfah-calibration/corpus_federal.jsonl \
+    --rule jaccard \
+    --rule-threshold 0.60
+
+# LLM rater (requires API key)
+uv run python scripts/compute_inter_rater_kappa.py \
+    --rater1 tests/data/dfah-calibration/corpus.jsonl \
+    --rule llm
 ```
 
 The kappa formula + Landis-Koch interpretation are deterministic;

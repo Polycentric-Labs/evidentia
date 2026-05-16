@@ -151,7 +151,7 @@ def verify_eval_result(
         expected_identity: Optional. When set, verification
             additionally requires the signer's certificate
             identity matches this string (e.g.,
-            ``"https://github.com/polycentric-labs/evidentia/.github/workflows/release.yml@refs/tags/v0.8.2"``).
+            ``"https://github.com/polycentric-labs/evidentia/.github/workflows/release.yml@refs/tags/v0.9.2"``).
         expected_issuer: Optional. When set, verification
             additionally requires the OIDC issuer matches
             (e.g., ``"https://token.actions.githubusercontent.com"``).

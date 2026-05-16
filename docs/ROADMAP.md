@@ -1,22 +1,16 @@
 # Evidentia roadmap
 
-**Last updated: v0.8.1 (May 2026).**
+**Last updated: v0.9.0 (May 2026).**
 
 This roadmap synthesizes community feedback with the architecture plan
-at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0 +
-v0.8.1 have shipped. **v0.8.0 is the first minor of the v0.8.x
-line — "the OSS-native AI moat"** — landing four AI-quality features
-(DFAH determinism harness + Policy Reasoning Traces + MCP server +
-plugin-contract scaffolding) that distinguish a Vanta-class dashboard
-from a compliance-engineering tool. v0.8.1 closes ALL 12 v0.8.0
-review-bucketed findings, adds LLM-driven richness (DFAH
-risk-determinism CLI + PRT LLM-driven decomposition), MCP HTTP/SSE
-transport, and FastAPI AuthProvider middleware (closes the v0.8.0
-`/api/metrics` auth gate). v0.8.2 plan opens post-ship to address
-the deferred infra primitives. Anything beyond v0.8.x is forward-
-looking — the exact shape will depend on real-world usage patterns
-and the bigger v0.8+ direction documented in
-[`positioning-and-value.md`](positioning-and-value.md) §13.
+at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0-v0.8.7
++ v0.9.0 have shipped. **v0.9.0 is the first minor of the v0.9.x
+line — "federal compliance"** — landing POA&M lifecycle management,
+CONMON cycle calendar, and OSCAL POA&M emit. The v0.9.x line continues
+with AI governance (v0.9.2), continuous monitoring (v0.9.3), and
+collaboration primitives (v0.9.4) before the v1.0 API-stability
+milestone. See [`v1.0-transition.md`](v1.0-transition.md) for the
+v1.0 narrative and acceptance gates.
 
 ## v0.3.0 — Compliance-as-code — SHIPPED
 
@@ -1079,17 +1073,106 @@ v0.8.6 §29 P2 R3 single-rater κ probe inconclusive carry-
 forward acknowledged; domain-expert walk-through becomes the
 v0.9.1 reservation. v0.9.0 ships regardless.
 
-## v0.9.1 — Walk-through-driven refinement — PLANNED
+## v0.9.1 — Walk-through-driven refinement — IN PROGRESS
 
-After v0.9.0 ships, the v0.9.1 cycle opens with the deferred
-Phase 4 walk-through (`docs/v0.9.0-plan.md` §"Phase 4 — Walk-
-through-as-validation"). Scope candidates: federal-SI scenario
-rows in `capability-matrix.md`; Cohen's Kappa recompute on the
-v0.8.5 DFAH calibration corpus with a domain-expert second
-rater (closes the v0.8.6 §29 P2 R3 mitigation acceptance); any
-walk-through-surfaced POA&M / CONMON shape adjustments; CONMON
-REST router parity with the POA&M router pattern if operator
-demand surfaces. Plan file lands at v0.9.1 cycle-open.
+Cycle opened 2026-05-15 after v0.9.0 ship. Plan file:
+[`docs/v0.9.1-plan.md`](v0.9.1-plan.md).
+
+- **Phase 1**: CONMON REST router — 4 endpoints under
+  `/api/conmon/` (list, get, next, check) matching CLI parity.
+  17 integration tests.
+- **Phase 2**: LLM-assisted second rater — `scripts/llm_rater.py`
+  + `--rule llm` mode in `compute_inter_rater_kappa.py`.
+  Temperature-0 deterministic labeling with JSONL sidecar
+  persistence.
+- **Phase 3**: Federal-compliance calibration corpus —
+  `corpus_federal.jsonl` (24 entries; FedRAMP ConMon + POA&M +
+  NIST 800-53 CA-7). Total corpus now 147 entries.
+- **Phase 4**: Federal-SI walk-through scenarios — 10 scenarios
+  (FS-1 through FS-10) in `capability-matrix.md` with persona,
+  goal, surfaces exercised, expected outcome.
+- **Phase 5 (pending)**: Domain-expert walk-through execution
+  (requires federal partner scheduling).
+- **Phase 6 (pending)**: Pre-release-review + version bump + ship.
+
+## v0.9.2 — AI governance foundation — PROPOSED
+
+Positions Evidentia at the intersection of compliance-engineering
+and AI governance. Existing catalog stubs (`eu-ai-act.json` Tier-D,
+`nist-ai-rmf-1.0.json` Tier-A, `iso-42001-2023.json` Tier-C stub)
+provide the foundation; this release enriches them and adds
+AI-specific primitives.
+
+- **EU AI Act catalog enrichment** — expand from article-level to
+  sub-article granularity; add risk-tier annotations per Annex III
+  high-risk categories; link to harmonised-standard references as
+  they stabilize (EU AI Act high-risk obligations apply Aug 2026).
+- **NIST AI RMF crosswalk authoring** — human-reviewed mappings
+  from AI RMF subcategories to EU AI Act articles and ISO 42001
+  Annex A controls (same crosswalk pattern as the existing
+  `data/mappings/` files).
+- **AI risk classification module** — new
+  `evidentia_core.ai_governance.classification` module: classify
+  AI systems into EU AI Act tiers (unacceptable / high / limited /
+  minimal-risk) based on use-case attributes and Annex III criteria.
+- **AI system inventory primitives** — data model for registering
+  AI systems (model ID, provider, risk tier, deployment status,
+  responsible person, linked controls). Extends the v0.7.10
+  model-risk inventory pattern to general-purpose AI governance.
+- **`evidentia ai-gov classify` CLI verb** — interactive or
+  batch classification of AI systems against EU AI Act + NIST AI
+  RMF risk categories; outputs OSCAL-compatible assessment results.
+
+Timing aligned with EU AI Act high-risk obligations (Aug 2026) and
+growing market demand for ISO 42001 + NIST AI RMF tooling.
+
+## v0.9.3 — Continuous monitoring daemon — PROPOSED
+
+Ships the CONMON daemon in poll mode as OSS (the real-time event-
+driven mode and orchestration features are reserved for future
+commercial tiers per the Grafana/Prometheus/Prowler open-core
+pattern).
+
+- **`evidentia conmon watch --poll`** — long-running daemon that
+  executes configured control checks on a cadence (cron-like
+  schedule per check or per framework).
+- **Basic alerting** — threshold/condition-based alerts (control
+  drifted, overdue, failed) delivered via email + generic webhook.
+- **Control health scoring** — aggregate pass/fail/stale metrics
+  per framework, per project; CLI + JSON output.
+- **Integration framework** — plugin interface for continuous
+  evidence ingestion from external sources (cloud APIs, SIEM
+  feeds, ticketing status); reference impl for 1-2 existing
+  collectors.
+
+## v0.9.4 — Collaboration primitives — PROPOSED
+
+Lays the data-model foundation for team-based compliance
+workflows. These primitives enable future Pro/Enterprise multi-
+user features without introducing authentication or hosting
+complexity in the OSS release.
+
+- **Multi-user evidence store** — file-backed, sharable evidence
+  repository with conflict-free append semantics.
+- **Assignment/workflow primitives** — owner, reviewer, due date,
+  status fields on gaps, POA&Ms, and findings.
+- **Evidence versioning** — append-only with diff (builds on the
+  v0.7.11 WORM + retention-metadata foundation).
+- **Basic RBAC model** — reader/editor/admin role definitions in
+  config; enforcement at CLI + API layer.
+
+## v1.0 — Federal compliance shipped + API stability — RESERVED
+
+See [`docs/v1.0-transition.md`](v1.0-transition.md) for the full
+narrative. v1.0 combines Candidate A (federal-compliance theme
+accepted by domain expert) and Candidate B (public API contract
+frozen). Acceptance gates include: domain-expert walk-through
+completed, 1+ external operator validation, API stability docs
+published, deprecation calendar, OpenSSF Gold tier (if achievable),
+cryptographic CIMD signatures, and pre-release-review PROCEED-CLEAN.
+Commercial packages (evidentia-pro, evidentia-enterprise,
+evidentia-federal) launch post-v1.0 as separate PyPI packages with
+proprietary licenses.
 
 ## v0.7.0+ — Quality signals, more integrations, UI polish
 
