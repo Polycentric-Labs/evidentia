@@ -301,6 +301,32 @@ class EventAction(str, Enum):
     reconstruct the operator's CONMON posture at any historical
     point from the audit log alone."""
 
+    # AI governance events (v0.9.3 P2) — emitted by the
+    # `evidentia ai-gov` CLI + `/api/ai-gov/*` REST surfaces when
+    # operators classify, register, update, or retire AI systems in
+    # the inventory. Auditors trace EU AI Act compliance posture +
+    # NIST AI RMF function coverage via these events.
+    #   evidentia.ai_system payload:
+    #   - system_id: UUID
+    #   - eu_ai_act_tier: "unacceptable" | "high" | "limited" | "minimal"
+    #   - deployment_status: "proposed" | ... | "retired"
+    AI_SYSTEM_CLASSIFIED = "evidentia.ai_governance.system_classified"
+    """Fired when `evidentia ai-gov classify` produces a
+    classification (whether persisted or one-shot)."""
+
+    AI_SYSTEM_REGISTERED = "evidentia.ai_governance.system_registered"
+    """Fired on first-time registration of an AI system in the
+    inventory. Tier + provider + owner captured in payload."""
+
+    AI_SYSTEM_UPDATED = "evidentia.ai_governance.system_updated"
+    """Fired when an existing registry entry's descriptor,
+    classification, or deployment_status is updated."""
+
+    AI_SYSTEM_RETIRED = "evidentia.ai_governance.system_retired"
+    """Fired when an AI system's deployment_status transitions to
+    RETIRED. Distinct from deletion — retired records are kept for
+    audit history."""
+
     # Retention + WORM lifecycle events (v0.7.12 P1) — audit-trail
     # actions on records under retention metadata. The PURGED variant
     # serves as the canonical legal-counsel-defensible artifact for
