@@ -2148,6 +2148,136 @@ produces docs + data-corpus entries, not code).
 
 ---
 
+## v0.9.3 attack-surface delta — CONMON daemon + AI governance (SHIPPED 2026-05-17 at tag `v0.9.3`)
+
+### Theme A — CONMON daemon (Phase 1)
+
+**New trust boundaries**:
+
+- *Daemon state file* (operator-supplied YAML; CLI `--state-file`):
+  read on every poll cycle; written atomically on `mark-completed`.
+  Single-writer contract documented (per v0.9.3 F-V93-Q3 review
+  note); operators wanting multi-writer semantics defer to v0.9.4
+  file-locking helper. `safe_load` enforced.
+- *Alert-dedup state file* (`alerting.AlertDeduper.state_file`):
+  per-(slug, state) timestamp store. JSON; same atomic-replace
+  pattern. v0.9.3 F-V93-Q10 review fix: corrupted state backs up
+  to `.json.corrupt-<utc-iso>` with WARNING audit event before
+  reset (was silent reset previously).
+- *SMTP relay* (outbound network): operator-supplied host + port.
+  STARTTLS-only enforced via `SMTPConfig.__post_init__` reject of
+  `use_starttls=False` AND runtime `has_extn("STARTTLS")` check
+  before sending credentials (v0.9.3 F-V93-S1 fix; was silent
+  plaintext fallback risk under MITM strip). Explicit
+  `ssl.create_default_context()` passed to `starttls()`.
+- *Webhook endpoint* (outbound network): operator-supplied URL.
+  Both `http://` + `https://` accepted in v0.9.3 (F-V93-S2 SSRF
+  mitigation deferred to v0.9.4 — needs opt-in flag for legitimate
+  internal-network deployments; current operator guidance in
+  `docs/conmon-daemon-deployment.md` recommends HTTPS + public
+  URLs). HMAC-SHA256 signature over `f"{timestamp}.{body}"`
+  (v0.9.3 F-V93-S3 fix added timestamp for capture-replay
+  defense per Slack/Stripe webhook convention). Receivers MUST
+  enforce a 5-minute staleness window via the new
+  `X-Evidentia-Timestamp` header.
+
+**Sanitization layers**:
+
+- *Credential resolution*: centralized `resolve_secret(file_arg,
+  env_var, purpose)` enforces file > env > error precedence. CLI
+  `--smtp-password` / `--webhook-secret` VALUE flags are explicitly
+  REJECTED (not just discouraged — Typer parser raises "no such
+  option"; test `test_no_password_value_flag` locks the behavior).
+  Secrets never transit through argv, env-dump, or audit-event
+  payload.
+- *Poll-interval floor*: `MIN_POLL_INTERVAL_SECONDS = 60` enforced
+  in both `DaemonConfig.__post_init__` and the Typer
+  `--poll-interval min=60` constraint (double-enforced).
+- *Audit-event vocabulary*: 6 new EventActions
+  (CONMON_DAEMON_STARTED / STOPPED / POLL_FAILED /
+  CYCLE_MARKED_COMPLETED / ALERT_DISPATCHED / SUPPRESSED /
+  HEALTH_REPORT_GENERATED). POLL_FAILED is distinct from
+  CYCLE_OVERDUE so SIEMs separate daemon-health from
+  control-attention signals (v0.9.3 F-V93-Q5 fix).
+
+**Residual risk (deferred to v0.9.4)**:
+
+- Webhook SSRF + cloud-metadata-service exfiltration (F-V93-S2
+  MEDIUM CWE-918): operators must currently self-enforce HTTPS-
+  only + public-internet URLs.
+- Multi-writer state-file races (F-V93-Q3 HIGH CWE-362):
+  documented single-writer contract; file-locking helper reserved.
+- Register endpoint rate-limit (F-V93-S10 LOW CWE-770): defer to
+  middleware rate-limiter design in v0.9.4 P1.3.
+
+### Theme B — AI governance (Phase 2)
+
+**New trust boundaries**:
+
+- *AI system registry store* (`AIRegistryStore`; JSON file-store
+  at `EVIDENTIA_AI_REGISTRY_DIR` or platformdirs default): mirrors
+  v0.9.0 `poam_store` + v0.7.9 `vendor_store` pattern. UUID
+  validation gate (`InvalidAISystemIdError`) on every load/delete.
+  `validate_within(candidate, root)` path-traversal guard. Atomic
+  `os.replace()` write. Operator-set env var is a trust boundary
+  (per the same posture as the predecessor stores; F-V93-S5 LOW
+  acknowledged).
+- *AI gov REST router* (`/api/ai-gov/classify`, `/register`,
+  `/systems`, `/systems/{id}` GET/DELETE): inherits the v0.8.1
+  AuthProviderMiddleware gate at the app layer. v0.9.3 F-V93-Q2
+  fix wires audit events on all mutating endpoints
+  (AI_SYSTEM_CLASSIFIED / REGISTERED / RETIRED) at parity with
+  CLI surface.
+
+**Sanitization layers**:
+
+- *EU AI Act tier classifier* (`classify()`): pure rule-based
+  function on `AISystemDescriptor` attributes; no external network
+  calls; no LLM inference. Deterministic per-input.
+- *Pydantic validation*: `AISystemDescriptor` rejects unknown
+  fields (`extra="forbid"`); `EUAIActTier` + `AnnexIIIDomain` +
+  `DeploymentStatus` are str-enums with constrained value sets.
+  Enum-tier comparison robust to model-config changes (v0.9.3
+  F-V93-Q7 fix drops brittle `str()` wrappers).
+- *CLI deployment-status validation*: upfront `DeploymentStatus(
+  deployment_status)` matching `--tier` pattern (v0.9.3 F-V93-Q8
+  fix; was Pydantic mid-construction error).
+
+**Residual risk (deferred to v0.9.4)**:
+
+- AI gov register endpoint rate-limit + duplicate-name handling
+  (F-V93-S10 LOW): same mitigation as the CONMON register surface.
+- AI gov REST integration test failure-path coverage (F-V93-Q17
+  INFO): 3-4 negative tests in v0.9.4.
+
+### Phase-cross sanitization additions
+
+- *Health-score dead code removal* (F-V93-Q1 MEDIUM): the
+  `per_fw_unknown` dict + `FrameworkHealth.unknown` field were
+  dead code (always 0); removal eliminates silent-false-OK
+  regression vector if a future refactor revived them.
+- *Catalog model additive Optional fields* (v0.9.3 P2.1/P2.2):
+  `CatalogControl.risk_tier` + `applies_to_annex_iii`,
+  `ControlCatalog.annex_iii_risk_categories`,
+  `CrosswalkDefinition.confidence_rubric`,
+  `FrameworkMapping.confidence`. All Optional with default=None;
+  v0.9.2 catalogs deserialize cleanly. `extra="forbid"` posture
+  preserved.
+
+### v0.9.3 review-cycle summary
+
+| Bucket | Count | Status |
+|---|---|---|
+| CRITICAL | 0 | — |
+| HIGH | 1 | Closed via doc (F-V93-Q3 single-writer contract) |
+| MEDIUM | 10 | 8 fixed inline + 1 deferred (S2 SSRF) + 1 doc (Q6) |
+| LOW | 11 | Accepted with rationale |
+| INFO | 6 | Documented |
+
+18th consecutive PROCEED-CLEAN of v0.7.x → v0.8.x → v0.9.x line.
+
+---
+
 *First published v0.7.7 (2026-05). Origin: promoted from a
 project-internal deep-pass note to a public-surface doc to
 satisfy pre-release-review v4 G5 (threat-model existence gate)
