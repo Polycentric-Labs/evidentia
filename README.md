@@ -148,6 +148,35 @@ Evidentia is built on four principles:
 
 ### Recent releases
 
+**v0.9.4 (May 2026)** — *Daemon hardening + operator polish +
+federal-SI walk-through*. Consolidation pass closing v0.9.3
+deferred review items. **Phase 1 daemon hardening**: cross-platform
+file-lock helper (POSIX `fcntl.flock` + Windows `msvcrt.locking`)
+wrapping `mark_completed` + `AlertDeduper.mark_dispatched` behind
+opt-in `--state-lock` flag — closes F-V93-Q3 HIGH race-condition;
+webhook SSRF mitigation (default-deny `http://` + loopback/RFC1918/
+link-local/reserved IPs; opt-in `--webhook-allow-plaintext` +
+`--webhook-allow-private-network`) — closes F-V93-S2 MEDIUM
+(CWE-918, blocks cloud-metadata-service IAM exfiltration);
+per-client-IP token-bucket rate-limit middleware on
+POST /api/ai-gov/register + /classify + `X-Idempotency-Key` header
+support on register — closes F-V93-S10 LOW; polish batch
+(F-V93-Q11 dynamic User-Agent + Q12 Windows latency doc + Q14
+narrow except + S9 path-disclosure doc). **Phase 2 operator
+polish**: `GET /api/conmon/daemon-status` endpoint + status
+sidecar; `evidentia conmon dedup-list` CLI verb; `evidentia ai-gov
+update` + `retire` CLI verbs wiring the `AI_SYSTEM_UPDATED` +
+`AI_SYSTEM_RETIRED` EventActions. **Phase 3 federal-SI
+walk-through** (reserved since v0.9.0): synthetic fixtures +
+7-step recipe + smoke test; 3 walk-through-surfaced refinements
+applied. **Phase 4 hygiene**: workflow_dispatch on test.yml,
+token-rotation doc fix, flaky-Jira-test real fix (root cause was
+0.7%-probability assertion-collision with random request_id, NOT
+fixture leak). **19th consecutive PROCEED-CLEAN** of v0.7.x →
+v0.8.x → v0.9.x line. **2798 tests passing / 17 skipped across
+219 source files; mypy strict 0/0; ruff clean.** PyPI: 7 packages
+at 0.9.4.
+
 **v0.9.3 (May 2026)** — *CONMON daemon + AI governance + carry-overs*.
 The largest minor release of the v0.9.x line so far. Combines two
 originally-PROPOSED themes into a single ship: **Theme A (CONMON

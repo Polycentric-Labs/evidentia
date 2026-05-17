@@ -2278,6 +2278,95 @@ produces docs + data-corpus entries, not code).
 
 ---
 
+## v0.9.4 attack-surface delta — Daemon hardening + operator polish (SHIPPED 2026-05-17 at tag `v0.9.4`)
+
+### Phase 1 — Daemon hardening (closes v0.9.3 deferred items)
+
+**Closures**:
+
+- **F-V93-Q3 HIGH** (CWE-362 race-condition): closed via opt-in
+  `FileLock` (POSIX `fcntl.flock` / Windows `msvcrt.locking`)
+  wrapping `mark_completed` + `AlertDeduper.mark_dispatched`
+  read-modify-write. Cross-process 4-writer test confirms no
+  last-writer-wins clobbering. Default off (`--state-lock` opt-in)
+  preserves v0.9.3 single-writer perf path.
+- **F-V93-S2 MEDIUM** (CWE-918 SSRF): closed via default-deny in
+  `WebhookConfig.__post_init__`. `http://` rejected without
+  `allow_plaintext=True`; loopback/RFC1918/link-local/reserved
+  IPs rejected without `allow_private_network=True`. Blocks the
+  cloud-metadata-service IAM-credential exfiltration vector
+  (POST to 169.254.169.254). DNS resolution at config-construction
+  time; DNS-rebinding caveat documented for adversarial-DNS
+  environments.
+- **F-V93-S10 LOW** (CWE-770 resource allocation): closed via
+  per-client-IP token-bucket rate-limit middleware on POST
+  /api/ai-gov/register + /classify. Default 60/min + burst 10.
+  Plus `X-Idempotency-Key` header support — replay returns prior
+  system_id (no duplicate); conflict returns 409.
+
+**New trust boundaries** (all gracefully degrade):
+
+- *Status sidecar JSON file* (`--status-file` operator-supplied):
+  daemon writes after each poll cycle; REST endpoint reads via
+  `EVIDENTIA_CONMON_DAEMON_STATUS_FILE` env var (server-side).
+  Default off. Corrupt-file reads return 404 not 500.
+- *Idempotency-store JSON file* (`_idempotency.json` in
+  `EVIDENTIA_AI_REGISTRY_DIR`): FileLock-serialized
+  read-modify-write; SHA-256 of canonical request-body for collision
+  detection; same posture as registry-store atomic-write pattern.
+
+### Phase 2 — Operator polish
+
+**New endpoint surface**: `GET /api/conmon/daemon-status` — read-
+only; inherits AuthProviderMiddleware gate at the app layer;
+emits `CONMON_DAEMON_STATUS_QUERIED` audit event per query.
+
+**New CLI verbs**:
+- `evidentia conmon dedup-list` — read-only inspection of dedup
+  state. No new attack surface; reuses existing AlertDeduper
+  load path.
+- `evidentia ai-gov update` + `retire` — wire previously-reserved
+  AI_SYSTEM_UPDATED + AI_SYSTEM_RETIRED EventActions to the CLI
+  surface. Retire preserves the registry entry (no hard delete)
+  so historical audits retain ownership + classification.
+
+### Phase 3 — Federal-SI walk-through
+
+No new attack surface. Synthetic test data + recipe doc + smoke
+test only. P3.2 surfaced 3 fixture/test refinements (invalid
+cadence slugs, terminal-truncate-fragile assertions, invalid
+enum value); all fixed pre-ship.
+
+### Residual risks (deferred to v0.9.5)
+
+- F-V93-S4 LOW (CWE-295 implicit cert verify) — Python 3.12
+  stdlib defaults verify; explicit context is polish.
+- F-V93-S5 LOW (CWE-22 env-var trust boundary) — matches
+  v0.7.9/v0.9.0 store posture.
+- F-V93-S6 LOW (CWE-362 dedup SIGINT race) — orphan .tmp is
+  fail-safe.
+- F-V93-S7 LOW (CWE-400 unbounded state file) — operator-
+  controlled trust boundary.
+- F-V93-S8 LOW (CWE-93 RFC 5321 recipient validation edge) —
+  EmailMessage policy enforces CRLF guard.
+- F-V93-S11 INFO (CWE-209 exception URL host disclosure) —
+  non-credential.
+
+### v0.9.4 review-cycle summary
+
+| Bucket | Count | Status |
+|---|---|---|
+| CRITICAL | 0 | — |
+| HIGH | 0 | (F-V93-Q3 closed) |
+| MEDIUM | 0 | (F-V93-S2 closed) |
+| LOW | 0 NEW | (F-V93-S10 + 4 polish closed; 7 deferred to v0.9.5) |
+| INFO | 0 NEW | (F-V93-S9 closed; 4 deferred to v0.9.5) |
+
+**Zero new findings in v0.9.4 source code.** 19th consecutive
+PROCEED-CLEAN of v0.7.x → v0.8.x → v0.9.x line.
+
+---
+
 *First published v0.7.7 (2026-05). Origin: promoted from a
 project-internal deep-pass note to a public-surface doc to
 satisfy pre-release-review v4 G5 (threat-model existence gate)

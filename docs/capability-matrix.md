@@ -1512,6 +1512,52 @@ behavior changed beyond the Step 5.A pre-release-review batch
 
 ---
 
+## Re-validation snapshot — 2026-05-17 (v0.9.4 SHIPPED)
+
+v0.9.4 SHIPPED (tag `v0.9.4` at commit TBD). **Consolidation pass
+closing v0.9.3 deferred review items + landing the federal-SI
+walk-through reserved since v0.9.0.** 19th consecutive
+PROCEED-CLEAN of v0.7.x → v0.8.x → v0.9.x line.
+
+**New public surfaces tested this cycle**:
+
+| Surface | Test path | Coverage |
+|---|---|---|
+| `evidentia_core.security.FileLock` | `tests/unit/test_security_file_lock.py` (8 tests) | POSIX `fcntl.flock` + Windows `msvcrt.locking`; 4-writer concurrent test confirms no last-writer-wins; FileLockTimeout on contended acquire; exception-path cleanup |
+| `--state-lock` CLI flag (watch + mark-completed) | Existing CLI tests + smoke verification | Opt-in lock wrapping mark_completed + AlertDeduper.mark_dispatched read-modify-write |
+| `WebhookConfig` SSRF guard | `tests/unit/test_integrations/test_alerting/test_webhook.py` (8 new tests) | Default-deny http:// + loopback + RFC1918 + cloud-metadata; opt-in passthrough for legitimate cases; unresolvable hostname raises clearly |
+| `TokenBucketRateLimiter` + `RateLimitMiddleware` | `tests/unit/test_rate_limit.py` (10 tests) + `tests/integration/test_api/test_ai_gov.py::TestRateLimit` | Constructor validation; burst + refill + per-client isolation; LRU eviction; reset; real-time smoke; HTTP 429 + Retry-After header |
+| `X-Idempotency-Key` on POST /api/ai-gov/register | `tests/integration/test_api/test_ai_gov.py::TestIdempotency` (3 tests) | Same key + body returns prior system_id; same key + different body returns 409; no key creates fresh entries |
+| `GET /api/conmon/daemon-status` + status sidecar | `tests/integration/test_api/test_conmon.py::TestDaemonStatusEndpoint` + `TestDaemonStatusUnitHelpers` (7 tests) | 404 when env unset or file missing; 200 with payload; 404 on corrupt JSON; write/read round-trip; atomic write |
+| `evidentia conmon dedup-list` CLI verb | `tests/integration/test_cli/test_conmon.py::TestConmonDedupList` (4 tests) | Missing-file empty; rich table output with multiple entries; slug filter; JSON output shape |
+| `evidentia ai-gov update` + `retire` CLI verbs | `tests/integration/test_cli/test_ai_gov.py::TestUpdate` + `TestRetire` (7 tests) | Partial update (owner-only); deployment-status validation; no-fields error; missing-id error; retire preserves entry; idempotent re-retire |
+| Federal-SI walk-through smoke | `tests/integration/test_walkthrough_federal_si.py` (6 tests) | fixture-existence; steps 2-7 end-to-end against synthetic data; high vs minimal tier classification |
+| 1 new CONMON EventAction | `tests/unit/test_audit/test_events.py` (naming convention) | `CONMON_DAEMON_STATUS_QUERIED` |
+
+**Adversarial probe coverage** for v0.9.4 surfaces averages
+~6.0 / 7 applicable vectors. Highlights:
+
+- **bad-input**: webhook SSRF guard rejects malformed schemes;
+  rate-limit middleware rejects unauthenticated path with 429
+- **race-condition**: FileLock cross-process 4-writer test confirms
+  serialization; idempotency-store FileLock-wrapped
+- **DoS**: rate-limit middleware caps register/classify; status-
+  file mid-write tolerance returns 404 not 500
+
+**Inherited surface re-validation** (carry-forward from v0.9.3):
+no functional changes to TPRM / model-risk / governance /
+cloud-WORM / Sigstore eval / DFAH / PRT / MCP / POA&M / CONMON
+read-only + REST router / AI governance core + classification +
+catalog enrichment. The v0.9.4 deliverables are wholly additive
+or backward-compat (default-off `--state-lock`, default-deny
+webhook with opt-in flags, idempotency only when header supplied).
+
+**Net test trajectory**: 2742 (v0.9.3) → 2798 (v0.9.4): +56 tests
+across 12 new test classes. **Source files**: 217 → 219 (+2:
+`security/file_lock.py` + `api/rate_limit.py`).
+
+---
+
 *End of capability-matrix.md. Compiled 2026-04-25 as Step 4 deliverable
 from the v0.7.0 comprehensive pre-tag review. Will be re-validated
 on each future release per the [testing-playbook.md](testing-playbook.md)

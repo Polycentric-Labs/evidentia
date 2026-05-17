@@ -7,6 +7,108 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.4] - 2026-05-17
+
+**Theme**: *Daemon hardening + operator polish + federal-SI walk-through.*
+Consolidation pass closing v0.9.3 deferred review items + landing
+the federal-SI walk-through reserved since v0.9.0. **19th
+consecutive PROCEED-CLEAN** of the v0.7.x → v0.8.x → v0.9.x line.
+
+### Added
+
+- **Cross-platform file-locking helper** (`evidentia_core.security.
+  FileLock`): POSIX `fcntl.flock` / Windows `msvcrt.locking`
+  advisory locking with polling timeout. Pairs with the new
+  `--state-lock` CLI flag on `evidentia conmon watch` and
+  `mark-completed` to serialize multi-writer state-file access.
+  Closes v0.9.3 F-V93-Q3 HIGH (CWE-362 race-condition).
+- **Webhook SSRF mitigation** (`WebhookConfig.__post_init__`):
+  default-deny `http://` schemes + loopback/RFC1918/link-local/
+  reserved IP destinations. Opt-in flags `allow_plaintext` +
+  `allow_private_network` (CLI: `--webhook-allow-plaintext` +
+  `--webhook-allow-private-network`) for legitimate internal-
+  network deployments. Blocks cloud-metadata-service IAM-
+  credential exfiltration. Closes v0.9.3 F-V93-S2 MEDIUM
+  (CWE-918).
+- **Rate-limit middleware** (`evidentia_api.rate_limit.
+  TokenBucketRateLimiter` + `RateLimitMiddleware`): stdlib-only
+  per-client-IP token bucket (default 60/min + burst 10) on
+  POST /api/ai-gov/register + /classify. Returns 429 with
+  Retry-After: 5 header on bucket exhaustion. Closes v0.9.3
+  F-V93-S10 LOW (CWE-770).
+- **AI gov register idempotency**: `X-Idempotency-Key` header on
+  POST /api/ai-gov/register. Replay with same key + body returns
+  prior `system_id` (no duplicate); same key + different body
+  returns 409. Sidecar `_idempotency.json` in
+  `EVIDENTIA_AI_REGISTRY_DIR`; FileLock-serialized.
+- **Daemon health endpoint** (v0.9.4 P2.1): NEW
+  `GET /api/conmon/daemon-status` reads a JSON sidecar that the
+  daemon writes after each poll cycle. CLI flag `--status-file`
+  on `evidentia conmon watch`; env var
+  `EVIDENTIA_CONMON_DAEMON_STATUS_FILE` on the server. Payload:
+  last_poll_at, outcome, error, tracked_cadence_count,
+  daemon_uptime_seconds. NEW `CONMON_DAEMON_STATUS_QUERIED`
+  EventAction.
+- **`evidentia conmon dedup-list` CLI verb**: inspects the
+  alert-dedup state file. Shows per-(slug, state) last-dispatched
+  timestamps + suppression-window remaining. `--slug` filter +
+  `--json` output. NEW `AlertDeduper.list_entries()` public API.
+- **`evidentia ai-gov update` + `retire` CLI verbs**: wires the
+  `AI_SYSTEM_UPDATED` + `AI_SYSTEM_RETIRED` EventActions from
+  the CLI (v0.9.3 reserved both in enum; only REST DELETE fired
+  RETIRED). Update: partial field-level patch via
+  `model_copy(update={...})`. Retire: sets
+  `deployment_status=RETIRED` but PRESERVES the entry for audit.
+- **Federal-SI walk-through** (v0.9.4 P3.1): new
+  `tests/data/walkthrough-federal-si/` synthetic fixtures
+  (state.yaml, ai-systems.yaml, ai-systems-low-risk.yaml) +
+  `docs/walkthrough-federal-si.md` 7-step operator recipe + smoke
+  test `tests/integration/test_walkthrough_federal_si.py`.
+  Validates end-to-end SI workflow against real bundled cadences
+  + EU AI Act tier classifier + AI registry lifecycle. Reserved
+  since v0.9.0; P3.2 captured 3 refinements (real slug fix,
+  truncate-tolerant assertions, valid enum value) from running it.
+- **`workflow_dispatch` trigger on `.github/workflows/test.yml`**:
+  operators can `gh workflow run test.yml --ref main` for manual
+  re-runs (was HTTP 422 before; surfaced during v0.9.3 ship
+  cycle).
+
+### Fixed
+
+- **F-V93-Q11**: Webhook User-Agent now `evidentia-conmon-daemon/
+  {evidentia_core.__version__}` (was hardcoded "v0.9.3" string).
+- **F-V93-Q12**: Windows shutdown-latency note added to
+  `docs/conmon-daemon-deployment.md`.
+- **F-V93-Q14**: Narrowed `except Exception` to
+  `(ValidationError, ValueError)` in `cli/ai_gov.py::_load_descriptor`.
+- **F-V93-S9**: Path-disclosure caveat added to
+  `docs/log-schema.md` with SIEM-layer redaction guidance.
+- **Flaky `TestJiraStatus::test_returns_auth_error_when_credentials_reject`**
+  (v0.9.4 P4.4): root cause was a 0.7% probability assertion-
+  collision with the random 12-char request_id, NOT fixture leak.
+  Scoped the `"401" not in r.text` substring check to
+  `payload["error"]` — precisely targets the user-visible error
+  field that should not leak the upstream status. More durable
+  fix than the planned `pytest-randomly` + fixture-tightening
+  approach.
+- **`gh secret set` token-rotation doc** (`docs/release-checklist.md`
+  Step 7): added correct flag forms (`-f <dotenv-file>` or
+  `Get-Content | gh secret set`); explicit note that
+  `--body-file` doesn't exist.
+
+### Deferred to v0.9.5
+
+- F-V93 LOW polish residuals (S4, S5, S6, S7, S8, Q4, Q13)
+- `pytest-randomly` dev dep + test-ordering audit
+- DAST tools (schemathesis + playwright) in dev-tool pre-flight
+- Real federal-SI domain-expert walk-through review
+- Collaboration primitives (multi-user evidence store, owner/
+  reviewer fields, basic RBAC)
+- Daemon health REST surface expansion (history endpoint +
+  Prometheus gauges)
+
+See `docs/v0.9.5-plan.md` for the full forward scope.
+
 ## [0.9.3] - 2026-05-17
 
 **Theme**: *CONMON daemon (A) + AI governance (B) + carry-over closure.*

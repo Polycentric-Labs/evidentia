@@ -1,6 +1,6 @@
 # Evidentia roadmap
 
-**Last updated: v0.9.3 (May 2026).**
+**Last updated: v0.9.4 (May 2026).**
 
 This roadmap synthesizes community feedback with the architecture plan
 at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0-v0.8.7
@@ -1161,28 +1161,59 @@ slots.
 - GHCR public-flip release-checklist item.
 - API-stability.md DRAFT (v1.0 NORMATIVE commitment scope).
 
-## v0.9.4 — Daemon hardening + operator polish + walk-through — PLANNED
+## v0.9.4 — Daemon hardening + operator polish + walk-through — SHIPPED
 
 Consolidation pass after v0.9.3's aggressive single-session
-compression. Conservative ~2-3 week pacing with operator-feedback
-collection between phases. Closes the 2 deferred MEDIUMs + 1 HIGH
-from the v0.9.3 review + the LOW polish batch + the federal-SI
-walk-through that's been reserved since v0.9.0. See
-`docs/v0.9.4-plan.md` for the full scope.
+compression. Despite the originally-planned conservative pacing,
+shipped via the same aggressive single-session pattern. Closed
+the 2 deferred MEDIUMs + 1 HIGH from the v0.9.3 review + the
+LOW polish batch + the federal-SI walk-through reserved since
+v0.9.0. **19th consecutive PROCEED-CLEAN**.
 
-- **Phase 1**: Daemon hardening — file-locking helper (F-V93-Q3),
-  webhook SSRF mitigation (F-V93-S2), AI gov register rate-limit
-  (F-V93-S10), polish batch (F-V93-Q11/Q12/Q14/S9).
-- **Phase 2**: Operator polish — daemon health endpoint, dedup-state
-  inspection CLI, AI gov update + retire CLI verbs.
-- **Phase 3**: Walk-through scenarios — federal-SI execution
-  (deferred from v0.9.0).
-- **Phase 4**: Hygiene + supply chain — backfill missing
-  security-review-v0.9.1.md + v0.9.2.md docs; Codecov polycentric-
-  labs activation; DAST tools in dev-tool pre-flight.
-- **Phase 5**: Pre-release-review + ship (standard v4 7-step flow).
+**Phase 1 — Daemon hardening**:
+- P1.1 `evidentia_core.security.FileLock` (POSIX `fcntl.flock` /
+  Windows `msvcrt.locking`) + `--state-lock` CLI flag wiring →
+  closes F-V93-Q3 HIGH (CWE-362 race-condition).
+- P1.2 webhook SSRF mitigation: default-deny `http://` +
+  loopback/RFC1918/link-local/reserved IPs; opt-in
+  `--webhook-allow-plaintext` + `--webhook-allow-private-network`
+  → closes F-V93-S2 MEDIUM (CWE-918).
+- P1.3 token-bucket rate-limit middleware on POST /api/ai-gov/
+  register + /classify + `X-Idempotency-Key` header support →
+  closes F-V93-S10 LOW (CWE-770).
+- P1.4 polish batch (F-V93-Q11 User-Agent + Q12 Windows latency
+  doc + Q14 narrow except + S9 path-disclosure doc).
 
-## v0.9.5 — Collaboration primitives — PROPOSED (was v0.9.4)
+**Phase 2 — Operator polish**:
+- P2.1 `GET /api/conmon/daemon-status` + sidecar JSON +
+  `--status-file` CLI + `CONMON_DAEMON_STATUS_QUERIED` action.
+- P2.2 `evidentia conmon dedup-list` CLI verb +
+  `AlertDeduper.list_entries()` API.
+- P2.3 `evidentia ai-gov update` + `retire` verbs wiring
+  `AI_SYSTEM_UPDATED` + `AI_SYSTEM_RETIRED`.
+
+**Phase 3 — Federal-SI walk-through**:
+- P3.1 synthetic fixtures + recipe doc + smoke test.
+- P3.2 3 walk-through-surfaced refinements (real cadence slugs,
+  truncate-tolerant assertions, valid `decision_role` enum).
+
+**Phase 4 — Hygiene** (P4.1 backfill skipped per cycle-open
+lock-in; P4.2 Codecov operator-completed; P4.3 DAST deferred
+to v0.9.5):
+- P4.4 fixed flaky TestJiraStatus (real fix: assertion-scoping,
+  NOT fixture leak as initially classified).
+- P4.5 added `workflow_dispatch` to `.github/workflows/test.yml`.
+- P4.6 token-rotation doc fix in `docs/release-checklist.md`.
+
+**2798 tests / 17 skipped / mypy strict 0 / 219 source files /
+ruff clean.**
+
+## v0.9.5 — Walk-through-driven refinement + collaboration primitives — PLANNED
+
+Renamed from "Collaboration primitives" to reflect the actual
+v0.9.4 carry-over scope: walk-through-driven refinement +
+v0.9.3/v0.9.4 LOW-bucket residuals + collaboration-primitives
+groundwork. See `docs/v0.9.5-plan.md` for the full scope.
 
 Lays the data-model foundation for team-based compliance
 workflows. Bumped from v0.9.4 to make room for the daemon-hardening
