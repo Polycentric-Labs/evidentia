@@ -7,13 +7,49 @@
 
 ## Summary
 
-- **Total findings**: 0 (zero new findings in v0.9.4 source code)
-- **Inherited findings closed in v0.9.4**: 4 (1 HIGH + 1 MEDIUM + 1 LOW + 4 LOW polish)
-- **Inherited findings still deferred**: 2 LOW + 4 INFO (carry-forward
-  to v0.9.5 documentation)
+- **Total v0.9.4 findings** (formal /pre-release-review run):
+  - **/security-review proxy** (3 invocations combined): 4 LOW + 2 INFO
+  - **/code-review proxy** (4 auto-fire triggers fired): 2 HIGH (1 re-bucketed to MEDIUM) + 5 MEDIUM + 5 LOW
+  - **Total**: 1 HIGH + 6 MEDIUM + 9 LOW + 2 INFO = 18 findings
+- **Findings closed in Step 5.A formal-review batch (commit `ebe09d4`)**: 8
+  (Q1 HIGH + Q3/Q4/Q5/Q6/Q7 MEDIUM + Q12 LOW + S4 LOW)
+- **Findings deferred to v0.9.5**: 8 LOWs (S1 + S2 + S3 + Q2 +
+  Q8 + Q9 + Q10 + Q11) + 2 INFO (carry-forward)
+- **Inherited v0.9.3 closures**: 4 (Q3 HIGH + S2 MEDIUM + S10 LOW
+  + Q11/Q12/Q14/S9 polish batch)
 - **Compliance posture**: PROCEED-CLEAN
 - **19th consecutive PROCEED-CLEAN** of the v0.7.x → v0.8.x →
   v0.9.x line.
+
+## v0.9.4 formal-review findings
+
+### Closed in Step 5.A batch (commit `ebe09d4`)
+
+| ID | Severity | CWE | Closure |
+|---|---|---|---|
+| F-V94-Q1 | HIGH | CWE-400 | Idempotency-store TTL (24h) + max-entries cap (10k FIFO) + `_prune_idempotency_store` helper + 4 unit tests. Closes the "unbounded growth → multi-GB JSON over months" bug. |
+| F-V94-Q3 | MEDIUM | CWE-404 | `.tmp` orphan cleanup at 4 atomic-write call sites (try/except OSError + unlink). Shared helper refactor deferred to v0.9.5. |
+| F-V94-Q4 | MEDIUM | n/a | `tracked_cadence_count` → `recognized_cadence_count` + new `unknown_cadence_count` field. Operator visibility fixed. |
+| F-V94-Q5 | MEDIUM | CWE-362 | `AlertDeduper._load_state` corruption-rename gated on rename success; concurrent racers see quiet OSError + skip audit event. |
+| F-V94-Q6 | MEDIUM | n/a | Swapped orphaned docstring between `CONMON_DAEMON_STATUS_QUERIED` + `CONMON_HEALTH_REPORT_GENERATED` enum members. |
+| F-V94-Q7 | MEDIUM | n/a | `AlertDeduper.use_lock` + `lock_timeout_seconds` marked `kw_only=True`. Closes positional-binding footgun. |
+| F-V94-Q12 | LOW | n/a | New `AI_SYSTEM_DELETED` EventAction. DELETE endpoint fires DELETED (not RETIRED). Audit-action semantic disambiguated. |
+| F-V94-S4 | LOW | CWE-1188 | `rate_limit.py` docstring rewritten — operators MUST wire ProxyHeadersMiddleware themselves; v0.9.5 will auto-wire when EVIDENTIA_TRUST_PROXY_HEADERS=1 is set. |
+
+### Deferred to v0.9.5
+
+| ID | Severity | Category | Rationale |
+|---|---|---|---|
+| F-V94-S1 | LOW | CWE-404 fd leak | Edge case (non-BlockingIOError exception during flock) — operator-stability concern under sustained signal interruption. Polish for v0.9.5. |
+| F-V94-S2 | LOW | CWE-662 docstring | POSIX fcntl is per-fd not per-process; docstring overstates in-thread protection. Doc-only fix for v0.9.5. |
+| F-V94-S3 | LOW | CWE-400 LRU eviction | Rate-limiter LRU can be IPv6-sprayed to evict legitimate clients. v0.9.5 fix: eviction predicate ignores entries idle < burst-refill time. |
+| F-V94-Q2 | MEDIUM (re-bucketed) | test-gap | Idempotency-replay-after-target-deleted returns `entry: null` gracefully today; needs regression test + docstring note in v0.9.5. |
+| F-V94-Q8 | LOW | type-safety | `sleep_fn: object` → `Callable[[float], None]`. Drop type: ignore. v0.9.5 polish. |
+| F-V94-Q9 | LOW | docstring | Rate-limiter GIL claim is misleading; tighten to "absence of await in check() makes asyncio race-free." v0.9.5 doc fix. |
+| F-V94-Q10 | LOW | test-coverage | FileLock cross-process subprocess.Popen test — production code path not directly tested (only in-thread via existing tests). v0.9.5 test addition. |
+| F-V94-Q11 | LOW | correctness | IPv6 scope-id sort ordering. Doesn't affect security (loop iterates all entries). v0.9.5 polish. |
+| F-V94-S11 (INFO) | INFO | Pydantic-version-dependent canonical form | Idempotency body-hash uses Pydantic JSON-mode; future Pydantic version bump could change serialization (datetime precision, enum casing). Doc-only flag at Pydantic upgrade time. |
+| F-V94-S12 (INFO) | INFO | `model_copy(update={...})` skips validators | CLI partial update via model_copy doesn't re-run Pydantic validators; min_length=1 enforcement bypassed for owner/provider fields. Optional re-validate via `model_validate({**dump, **updates})` in v0.9.5. |
 
 ## v0.9.3 findings disposition
 
