@@ -31,12 +31,14 @@ State file format (YAML, matching the existing v0.9.0 P3
 
 from __future__ import annotations
 
+import contextlib
+import json
 import threading
 import time
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol
 
 from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.conmon.calendar import (
@@ -97,6 +99,11 @@ class DaemonConfig:
     state_file: Path
     poll_interval_seconds: int = DEFAULT_POLL_INTERVAL_SECONDS
     window_days: int = 14
+    status_file: Path | None = None
+    """v0.9.4 P2.1: optional sidecar JSON path the daemon writes
+    after every poll cycle. Pairs with ``GET /api/conmon/daemon-
+    status`` REST endpoint for operator health-check visibility.
+    None disables status-file emission (backward-compat default)."""
 
     def __post_init__(self) -> None:
         if self.poll_interval_seconds < MIN_POLL_INTERVAL_SECONDS:
@@ -109,6 +116,66 @@ class DaemonConfig:
             raise ValueError(
                 f"window_days must be >= 0; got {self.window_days}"
             )
+
+
+def write_daemon_status(
+    status_file: Path,
+    *,
+    started_at: datetime,
+    last_poll_at: datetime,
+    last_poll_outcome: str,  # "success" | "failed"
+    last_poll_error: str | None,
+    tracked_cadence_count: int,
+    poll_interval_seconds: int,
+    state_file: Path,
+    window_days: int,
+) -> None:
+    """Atomically write a daemon-status JSON sidecar (v0.9.4 P2.1).
+
+    Same atomic-write pattern as the state-file (write-to-temp +
+    replace). Operators reading via ``GET /api/conmon/daemon-status``
+    never see a half-written status.
+    """
+    payload: dict[str, Any] = {
+        "started_at": started_at.isoformat(),
+        "last_poll_at": last_poll_at.isoformat(),
+        "last_poll_outcome": last_poll_outcome,
+        "last_poll_error": last_poll_error,
+        "tracked_cadence_count": tracked_cadence_count,
+        "poll_interval_seconds": poll_interval_seconds,
+        "state_file": str(state_file),
+        "window_days": window_days,
+        "daemon_uptime_seconds": int(
+            (last_poll_at - started_at).total_seconds()
+        ),
+    }
+    status_file.parent.mkdir(parents=True, exist_ok=True)
+    tmp = status_file.with_suffix(status_file.suffix + ".tmp")
+    tmp.write_text(
+        json.dumps(payload, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    tmp.replace(status_file)
+
+
+def read_daemon_status(status_file: Path) -> dict[str, Any] | None:
+    """Read a daemon-status JSON sidecar (v0.9.4 P2.1).
+
+    Returns the parsed payload or ``None`` if the file doesn't
+    exist (daemon hasn't started, or operator hasn't configured
+    ``--status-file``). Returns ``None`` also on parse failure
+    (file is mid-write or corrupted) so the REST endpoint surfaces
+    a graceful "no status available" instead of a 500.
+    """
+    if not status_file.is_file():
+        return None
+    try:
+        raw = json.loads(status_file.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(raw, dict):
+        return None
+    return raw
 
 
 @dataclass
@@ -435,6 +502,8 @@ def run_daemon(
     if shutdown_event is None:
         shutdown_event = threading.Event()
 
+    started_at = datetime.now(tz=UTC)
+
     _log.info(
         action=EventAction.CONMON_DAEMON_STARTED,
         outcome=EventOutcome.SUCCESS,
@@ -448,14 +517,28 @@ def run_daemon(
             "poll_interval_seconds": config.poll_interval_seconds,
             "state_file": str(config.state_file),
             "window_days": config.window_days,
+            "status_file": (
+                str(config.status_file)
+                if config.status_file is not None
+                else None
+            ),
         },
     )
 
     try:
         while not shutdown_event.is_set():
+            poll_at = datetime.now(tz=UTC)
+            cycle_count = 0
+            outcome = "success"
+            error_msg: str | None = None
             try:
                 result = poll_once(config)
                 _emit_and_dispatch(result, on_due_soon, on_overdue)
+                cycle_count = (
+                    len(result.overdue)
+                    + len(result.due_soon)
+                    + len(result.current)
+                )
             except (ValueError, OSError) as exc:
                 # State file errors are operator-actionable: we log
                 # but keep polling so a transient FS issue doesn't
@@ -464,6 +547,8 @@ def run_daemon(
                 # action so SIEM filters separate daemon-health
                 # problems from genuine CYCLE_OVERDUE signals
                 # (v0.9.3 F-V93-Q5 review fix).
+                outcome = "failed"
+                error_msg = f"{exc.__class__.__name__}: {exc}"
                 _log.warning(
                     action=EventAction.CONMON_DAEMON_POLL_FAILED,
                     outcome=EventOutcome.FAILURE,
@@ -472,6 +557,25 @@ def run_daemon(
                         f"next interval"
                     ),
                 )
+
+            # v0.9.4 P2.1: write status sidecar after each poll
+            # (success or failure) so the REST endpoint can serve
+            # operator health-check queries. Best-effort: a status-
+            # file write failure is logged but does not crash the
+            # daemon (status visibility is auxiliary, not critical).
+            if config.status_file is not None:
+                with contextlib.suppress(OSError):
+                    write_daemon_status(
+                        config.status_file,
+                        started_at=started_at,
+                        last_poll_at=poll_at,
+                        last_poll_outcome=outcome,
+                        last_poll_error=error_msg,
+                        tracked_cadence_count=cycle_count,
+                        poll_interval_seconds=config.poll_interval_seconds,
+                        state_file=config.state_file,
+                        window_days=config.window_days,
+                    )
 
             # shutdown_event.wait() respects sleep interruption —
             # operators get sub-poll-interval shutdown latency.

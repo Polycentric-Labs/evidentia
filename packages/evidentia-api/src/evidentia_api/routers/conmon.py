@@ -17,6 +17,8 @@ Endpoints:
     returns overdue + due-soon arrays
   - ``POST   /api/conmon/health`` — aggregate framework health
     scoring from a slug→last-completed payload (v0.9.3 P1.3)
+  - ``GET    /api/conmon/daemon-status`` — daemon health-check
+    snapshot read from a sidecar JSON file (v0.9.4 P2.1)
 
 Auth posture: open (matches v0.9.0 POA&M router; transport auth
 applied at the app layer via AuthProviderMiddleware).
@@ -24,9 +26,12 @@ applied at the app layer via AuthProviderMiddleware).
 
 from __future__ import annotations
 
+import os
 from datetime import date
+from pathlib import Path
 from typing import Any
 
+from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.conmon import (
     CycleAttentionState,
     compute_health,
@@ -35,10 +40,12 @@ from evidentia_core.conmon import (
     list_cadences,
     next_due,
 )
+from evidentia_core.conmon.daemon import read_daemon_status
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 router = APIRouter()
+_log = get_logger("evidentia_api.routers.conmon")
 
 
 # ── request / response models ─────────────────────────────────────
@@ -273,3 +280,69 @@ async def conmon_health_endpoint(body: HealthRequest) -> dict[str, Any]:
         framework_filter=body.framework,
     )
     return report.to_dict()
+
+
+# ── daemon-status (v0.9.4 P2.1) ───────────────────────────────────
+
+
+@router.get("/conmon/daemon-status")
+async def conmon_daemon_status_endpoint() -> dict[str, Any]:
+    """Return the running daemon's last-poll status snapshot.
+
+    Reads a JSON sidecar file the daemon writes after every poll
+    cycle. Operator configures both processes to share the path via
+    the ``EVIDENTIA_CONMON_DAEMON_STATUS_FILE`` env var (daemon
+    writes; this endpoint reads).
+
+    Returns:
+        200 with the status payload when the file is present + parseable.
+        404 when the env var is unset OR the file doesn't exist
+        (daemon not yet started, status-file not configured).
+        500 reserved for unexpected I/O errors only — corrupt-file
+        reads return 404 + a graceful "no status available" message.
+
+    Audit emit: :attr:`EventAction.CONMON_DAEMON_STATUS_QUERIED`.
+    Pairs with the v0.9.3 P1.1 :attr:`EventAction.CONMON_DAEMON_STARTED`
+    + :attr:`EventAction.CONMON_DAEMON_POLL_FAILED` events for
+    end-to-end auditor visibility into daemon health.
+    """
+    status_file_env = os.environ.get(
+        "EVIDENTIA_CONMON_DAEMON_STATUS_FILE", ""
+    ).strip()
+    if not status_file_env:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "No daemon-status file configured. Set "
+                "EVIDENTIA_CONMON_DAEMON_STATUS_FILE on the server + "
+                "pass --status-file=<same path> to evidentia conmon "
+                "watch on the daemon side."
+            ),
+        )
+
+    status_file = Path(status_file_env)
+    payload = read_daemon_status(status_file)
+    if payload is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"Daemon status not available: {status_file} missing "
+                "or unparseable. Daemon may not have started yet, or "
+                "the file is mid-write — retry after one poll cycle."
+            ),
+        )
+
+    _log.info(
+        action=EventAction.CONMON_DAEMON_STATUS_QUERIED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"Daemon status queried (last_poll_at="
+            f"{payload.get('last_poll_at')}, outcome="
+            f"{payload.get('last_poll_outcome')})"
+        ),
+        evidentia={
+            "status_file": str(status_file),
+            "last_poll_outcome": payload.get("last_poll_outcome"),
+        },
+    )
+    return payload

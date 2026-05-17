@@ -676,6 +676,21 @@ def conmon_watch(
             "shared state) may race. Closes v0.9.3 F-V93-Q3 HIGH."
         ),
     ),
+    # ── Daemon health visibility (v0.9.4 P2.1) ────────────────────
+    status_file: Path | None = typer.Option(
+        None,
+        "--status-file",
+        file_okay=True,
+        dir_okay=False,
+        help=(
+            "JSON sidecar path the daemon writes after each poll "
+            "cycle (last_poll_at, outcome, tracked_cadence_count, "
+            "uptime). Pairs with GET /api/conmon/daemon-status "
+            "for operator health-check visibility. Configure the "
+            "server with EVIDENTIA_CONMON_DAEMON_STATUS_FILE=<same "
+            "path>. Default off."
+        ),
+    ),
 ) -> None:
     """Long-running poll daemon for CONMON cycle attention-state.
 
@@ -704,6 +719,7 @@ def conmon_watch(
         state_file=state_file,
         poll_interval_seconds=poll_interval_seconds,
         window_days=window_days,
+        status_file=status_file,
     )
 
     # Construct alerting channels. Errors here surface as

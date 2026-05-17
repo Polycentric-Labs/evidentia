@@ -6,6 +6,9 @@ Reuses the project-wide ``api_client`` fixture from conftest.
 
 from __future__ import annotations
 
+from pathlib import Path
+
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -361,3 +364,156 @@ class TestHealth:
         body = resp.json()
         assert body["total_cycles"] == 0
         assert body["overall_health_score"] == 1.0
+
+
+# ── v0.9.4 P2.1: daemon-status endpoint ─────────────────────────────
+
+
+class TestDaemonStatusEndpoint:
+    """GET /api/conmon/daemon-status reads a sidecar JSON written by
+    the daemon after each poll cycle. Configured via the
+    EVIDENTIA_CONMON_DAEMON_STATUS_FILE env var."""
+
+    def test_returns_404_when_env_unset(
+        self,
+        api_client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.delenv(
+            "EVIDENTIA_CONMON_DAEMON_STATUS_FILE", raising=False
+        )
+        resp = api_client.get("/api/conmon/daemon-status")
+        assert resp.status_code == 404
+        assert (
+            "EVIDENTIA_CONMON_DAEMON_STATUS_FILE" in resp.json()["detail"]
+        )
+
+    def test_returns_404_when_file_missing(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        status_file = tmp_path / "nonexistent.json"
+        monkeypatch.setenv(
+            "EVIDENTIA_CONMON_DAEMON_STATUS_FILE", str(status_file)
+        )
+        resp = api_client.get("/api/conmon/daemon-status")
+        assert resp.status_code == 404
+        assert "missing" in resp.json()["detail"]
+
+    def test_returns_payload_when_file_present(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        import json as _json
+
+        status_file = tmp_path / "daemon.status.json"
+        payload = {
+            "started_at": "2026-05-18T12:00:00+00:00",
+            "last_poll_at": "2026-05-18T13:00:00+00:00",
+            "last_poll_outcome": "success",
+            "last_poll_error": None,
+            "tracked_cadence_count": 7,
+            "poll_interval_seconds": 3600,
+            "state_file": "/etc/evidentia/state.yaml",
+            "window_days": 14,
+            "daemon_uptime_seconds": 3600,
+        }
+        status_file.write_text(_json.dumps(payload))
+        monkeypatch.setenv(
+            "EVIDENTIA_CONMON_DAEMON_STATUS_FILE", str(status_file)
+        )
+
+        resp = api_client.get("/api/conmon/daemon-status")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["last_poll_outcome"] == "success"
+        assert body["tracked_cadence_count"] == 7
+        assert body["daemon_uptime_seconds"] == 3600
+
+    def test_returns_404_on_corrupt_json(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Corrupt-file reads return 404 (mid-write tolerance), NOT 500."""
+        status_file = tmp_path / "daemon.status.json"
+        status_file.write_text("{ not valid json")
+        monkeypatch.setenv(
+            "EVIDENTIA_CONMON_DAEMON_STATUS_FILE", str(status_file)
+        )
+        resp = api_client.get("/api/conmon/daemon-status")
+        assert resp.status_code == 404
+
+
+class TestDaemonStatusUnitHelpers:
+    """write_daemon_status + read_daemon_status round-trip + edge
+    cases. Validates the file-format contract independent of HTTP."""
+
+    def test_write_then_read_round_trip(self, tmp_path: Path) -> None:
+        from datetime import UTC, datetime
+
+        from evidentia_core.conmon.daemon import (
+            read_daemon_status,
+            write_daemon_status,
+        )
+
+        status_file = tmp_path / "daemon.status.json"
+        started = datetime(2026, 5, 18, 12, 0, 0, tzinfo=UTC)
+        polled = datetime(2026, 5, 18, 13, 30, 0, tzinfo=UTC)
+        write_daemon_status(
+            status_file,
+            started_at=started,
+            last_poll_at=polled,
+            last_poll_outcome="success",
+            last_poll_error=None,
+            tracked_cadence_count=5,
+            poll_interval_seconds=1800,
+            state_file=Path("/etc/evidentia/state.yaml"),
+            window_days=14,
+        )
+
+        payload = read_daemon_status(status_file)
+        assert payload is not None
+        assert payload["last_poll_outcome"] == "success"
+        assert payload["tracked_cadence_count"] == 5
+        assert payload["poll_interval_seconds"] == 1800
+        # daemon_uptime_seconds = polled - started = 5400s (90 min)
+        assert payload["daemon_uptime_seconds"] == 5400
+
+    def test_read_returns_none_for_missing_file(
+        self, tmp_path: Path
+    ) -> None:
+        from evidentia_core.conmon.daemon import read_daemon_status
+
+        assert read_daemon_status(tmp_path / "missing.json") is None
+
+    def test_atomic_write_uses_tmp_then_replace(
+        self, tmp_path: Path
+    ) -> None:
+        """Verify write goes through .tmp + replace (no half-written
+        files visible to a concurrent reader)."""
+        from datetime import UTC, datetime
+
+        from evidentia_core.conmon.daemon import write_daemon_status
+
+        status_file = tmp_path / "daemon.status.json"
+        now = datetime(2026, 5, 18, 12, 0, 0, tzinfo=UTC)
+        write_daemon_status(
+            status_file,
+            started_at=now,
+            last_poll_at=now,
+            last_poll_outcome="failed",
+            last_poll_error="ValueError: bad state",
+            tracked_cadence_count=0,
+            poll_interval_seconds=60,
+            state_file=Path("/tmp/x.yaml"),
+            window_days=14,
+        )
+        # No .tmp file left behind.
+        assert not (tmp_path / "daemon.status.json.tmp").exists()
+        assert status_file.exists()

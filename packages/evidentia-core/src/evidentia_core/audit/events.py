@@ -302,6 +302,15 @@ class EventAction(str, Enum):
     transitions."""
 
     CONMON_HEALTH_REPORT_GENERATED = "evidentia.conmon.health_report_generated"
+
+    CONMON_DAEMON_STATUS_QUERIED = "evidentia.conmon.daemon_status_queried"
+    """Fired when an operator queries ``GET /api/conmon/daemon-status``
+    (v0.9.4 P2.1). The endpoint returns a JSON snapshot of the
+    daemon's runtime state (last poll timestamp, outcome, tracked
+    cadence count, etc.) by reading a sidecar status file the
+    daemon writes after each poll cycle. Audit event records the
+    query so SIEM operators can detect unusual polling-of-the-
+    monitor patterns."""
     """Fired when ``evidentia conmon health`` or
     ``GET /api/conmon/health`` produces a report. Payload includes
     the overall health score + per-framework counts so auditors can
