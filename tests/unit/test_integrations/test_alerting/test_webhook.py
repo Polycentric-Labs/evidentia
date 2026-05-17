@@ -73,12 +73,22 @@ class TestWebhookAlertChannel:
         assert request_arg.method == "POST"
         assert request_arg.full_url == "https://hooks.example.com/in"
 
+        # v0.9.3 F-V93-S3 review fix: signed material is
+        # f"{timestamp}.{body}", not body alone. The receiver
+        # reads X-Evidentia-Timestamp + reconstructs the signed
+        # material for verification.
         body = request_arg.data
+        timestamp = request_arg.headers["X-evidentia-timestamp"]
         signature_header = request_arg.headers["X-evidentia-signature"]
+        signed_material = f"{timestamp}.".encode("utf-8") + body
         expected = hmac.new(
-            b"shared-secret", body, hashlib.sha256
+            b"shared-secret", signed_material, hashlib.sha256
         ).hexdigest()
         assert signature_header == f"sha256={expected}"
+        # Timestamp is a unix-epoch integer string (≤ 11 chars
+        # until year 5138 — sanity range).
+        assert timestamp.isdigit()
+        assert 10 <= len(timestamp) <= 11
 
     def test_payload_shape(
         self, sample_observation: CycleObservation

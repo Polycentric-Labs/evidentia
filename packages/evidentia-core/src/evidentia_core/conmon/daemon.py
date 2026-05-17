@@ -199,6 +199,19 @@ def mark_completed(
 
     Raises :class:`ValueError` if the slug is not a registered
     cadence (operators should only mark cadences that exist).
+
+    Single-writer contract (v0.9.3 F-V93-Q3 review note): this
+    function does a non-atomic read-modify-write on the state file
+    (``load_state_file`` → mutate dict → ``save_state_file``). The
+    ``os.replace`` in ``save_state_file`` is atomic, but the read-
+    modify cycle is not. Concurrent ``mark_completed`` calls — e.g.,
+    two CI jobs marking different slugs, or a human + automation
+    racing — may clobber each other's entries (last-writer-wins).
+    The expected deployment model is one writer per state file,
+    matching the precedent set by ``poam_store`` (v0.9.0) and
+    ``vendor_store`` (v0.7.9). Operators needing multi-writer
+    semantics should wire a higher-level lock (or partition by
+    slug-prefix into separate state files).
     """
     cadence = get_cadence(slug)
     if cadence is None:
@@ -413,9 +426,12 @@ def run_daemon(
                 # State file errors are operator-actionable: we log
                 # but keep polling so a transient FS issue doesn't
                 # kill the daemon (e.g., file briefly absent during
-                # operator edit).
+                # operator edit). Use the dedicated POLL_FAILED
+                # action so SIEM filters separate daemon-health
+                # problems from genuine CYCLE_OVERDUE signals
+                # (v0.9.3 F-V93-Q5 review fix).
                 _log.warning(
-                    action=EventAction.CONMON_CYCLE_OVERDUE,
+                    action=EventAction.CONMON_DAEMON_POLL_FAILED,
                     outcome=EventOutcome.FAILURE,
                     message=(
                         f"poll cycle skipped: {exc}; will retry at "

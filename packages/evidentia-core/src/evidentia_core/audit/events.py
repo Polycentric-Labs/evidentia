@@ -264,6 +264,13 @@ class EventAction(str, Enum):
     of this event after a STARTED is itself an auditor signal — the
     daemon either crashed or was killed."""
 
+    CONMON_DAEMON_POLL_FAILED = "evidentia.conmon.daemon_poll_failed"
+    """Fired (with outcome=failure) when a poll cycle skipped due to
+    a state-file read/parse error or a derive-status exception. The
+    daemon retries at the next interval; emitting this distinct
+    action lets SIEM filters separate daemon-health problems from
+    genuine CONMON_CYCLE_OVERDUE signals."""
+
     CONMON_CYCLE_MARKED_COMPLETED = "evidentia.conmon.cycle_marked_completed"
     """Fired when an operator runs `evidentia conmon mark-completed
     <slug> --when YYYY-MM-DD` to record cycle completion. The

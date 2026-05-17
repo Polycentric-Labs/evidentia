@@ -31,10 +31,15 @@ from evidentia_core.ai_governance import (
 from evidentia_core.ai_governance.registry_store import (
     InvalidAISystemIdError,
 )
+from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 router = APIRouter()
+# v0.9.3 F-V93-Q2 review fix: REST surface emits audit events at
+# parity with the CLI surface (cli/ai_gov.py). Auditors filtering on
+# event.action:evidentia.ai_governance.* see both surfaces.
+_log = get_logger("evidentia_api.routers.ai_gov")
 
 
 # ── request / response models ─────────────────────────────────────
@@ -57,7 +62,20 @@ async def ai_gov_classify(
     descriptor: AISystemDescriptor,
 ) -> AISystemClassification:
     """One-shot AI system classification. No persistence."""
-    return classify(descriptor)
+    classification = classify(descriptor)
+    _log.info(
+        action=EventAction.AI_SYSTEM_CLASSIFIED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"AI system {descriptor.name!r} classified "
+            f"(tier={classification.eu_ai_act_tier})"
+        ),
+        evidentia={
+            "descriptor_name": descriptor.name,
+            "eu_ai_act_tier": str(classification.eu_ai_act_tier),
+        },
+    )
+    return classification
 
 
 # ── register ──────────────────────────────────────────────────────
@@ -75,6 +93,22 @@ async def ai_gov_register(body: RegisterRequest) -> dict[str, Any]:
         deployment_status=body.deployment_status,
     )
     AIRegistryStore().save(entry)
+    _log.info(
+        action=EventAction.AI_SYSTEM_REGISTERED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"AI system {entry.descriptor.name!r} registered "
+            f"(system_id={entry.system_id})"
+        ),
+        evidentia={
+            "system_id": entry.system_id,
+            "descriptor_name": entry.descriptor.name,
+            "eu_ai_act_tier": str(entry.classification.eu_ai_act_tier),
+            "provider": entry.provider,
+            "owner": entry.owner,
+            "deployment_status": str(entry.deployment_status),
+        },
+    )
     return {
         "system_id": entry.system_id,
         "entry": entry.model_dump(mode="json"),
@@ -107,10 +141,14 @@ async def ai_gov_list_systems(
                     f"{', '.join(t.value for t in EUAIActTier)}"
                 ),
             ) from exc
+        # v0.9.3 F-V93-Q7 review fix: drop redundant str() — Pydantic
+        # round-trips eu_ai_act_tier as the raw string value (the model
+        # sets use_enum_values=True), so direct equality is correct and
+        # robust to future model-config changes.
         entries = [
             e
             for e in entries
-            if str(e.classification.eu_ai_act_tier) == tier_enum.value
+            if e.classification.eu_ai_act_tier == tier_enum.value
         ]
     return [e.model_dump(mode="json") for e in entries]
 
@@ -144,4 +182,16 @@ async def ai_gov_delete_system(system_id: str) -> dict[str, Any]:
         removed = AIRegistryStore().delete(system_id)
     except InvalidAISystemIdError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if removed:
+        # Deletion is semantically end-of-life for an AI system entry;
+        # use the AI_SYSTEM_RETIRED action so auditors filtering on
+        # `evidentia.ai_governance.system_retired` see both lifecycle
+        # exit paths (operator-set DeploymentStatus=RETIRED + hard
+        # delete of the registry entry).
+        _log.info(
+            action=EventAction.AI_SYSTEM_RETIRED,
+            outcome=EventOutcome.SUCCESS,
+            message=f"AI system registry entry {system_id!r} deleted",
+            evidentia={"system_id": system_id, "deletion_kind": "delete"},
+        )
     return {"system_id": system_id, "removed": removed}

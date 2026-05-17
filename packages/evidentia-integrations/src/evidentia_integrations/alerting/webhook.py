@@ -16,12 +16,19 @@ Payload shape:
       "next_due":      "2026-02-01"
     }
 
-Signature header:
+Signature headers (v0.9.3 F-V93-S3 review fix — adds replay
+protection per Slack/Stripe convention):
 
+    X-Evidentia-Timestamp: <unix-epoch-seconds>
     X-Evidentia-Signature: sha256=<hex digest>
 
-Receivers compute ``HMAC-SHA256(shared_secret, raw_body_bytes)``
-and compare to the header value.
+Receivers compute ``HMAC-SHA256(shared_secret, f"{timestamp}.{body}")``
+and compare to the signature header. Additionally, receivers MUST
+reject requests where ``abs(now - X-Evidentia-Timestamp) > 300``
+seconds (5-minute window) to defeat capture-replay attacks. Without
+the staleness check, an attacker who captures a valid POST can
+replay it indefinitely since CONMON observation payloads are
+otherwise stable.
 
 Secrets per the v0.9.3 cycle-open sign-off:
 
@@ -34,6 +41,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import time
 import urllib.request
 from dataclasses import dataclass
 from urllib.error import HTTPError, URLError
@@ -86,9 +94,13 @@ class WebhookAlertChannel:
             "next_due": obs.next_due.isoformat(),
         }
         body = json.dumps(payload, sort_keys=True).encode("utf-8")
+        # v0.9.3 F-V93-S3 review fix: include unix-epoch timestamp in
+        # the signed material so receivers can detect capture-replay.
+        timestamp = str(int(time.time()))
+        signed_material = f"{timestamp}.".encode() + body
         signature = hmac.new(
             self._config.secret.encode("utf-8"),
-            body,
+            signed_material,
             hashlib.sha256,
         ).hexdigest()
 
@@ -99,6 +111,7 @@ class WebhookAlertChannel:
             headers={
                 "Content-Type": "application/json",
                 "User-Agent": "evidentia-conmon-daemon/v0.9.3",
+                "X-Evidentia-Timestamp": timestamp,
                 "X-Evidentia-Signature": f"sha256={signature}",
             },
         )

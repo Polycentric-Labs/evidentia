@@ -40,18 +40,11 @@ class TestFrameworkHealth:
         )
         assert fh.health_score == 1.0
 
-    def test_unknown_excluded_from_denominator(self) -> None:
-        # 2 current + 1 unknown — denominator is 2 (current only),
-        # numerator 2 → 1.0
-        fh = FrameworkHealth(
-            framework="x",
-            total=3,
-            current=2,
-            due_soon=0,
-            overdue=0,
-            unknown=1,
-        )
-        assert fh.health_score == 1.0
+    # v0.9.3 F-V93-Q1 review fix: removed test_unknown_excluded_from_
+    # denominator because the per-framework `unknown` field was dead
+    # code (never populated by compute_health). Unknown-slug rollup is
+    # tested at the HealthReport level via
+    # test_unknown_slugs_collected_not_counted below.
 
 
 class TestComputeHealth:

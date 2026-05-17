@@ -47,6 +47,7 @@ from evidentia_core.ai_governance import (
     AISystemClassification,
     AISystemDescriptor,
     AISystemRegistryEntry,
+    DeploymentStatus,
     EUAIActTier,
     classify,
 )
@@ -207,13 +208,27 @@ def ai_gov_register(
     descriptor = _load_descriptor(descriptor_file)
     classification = classify(descriptor)
 
+    # v0.9.3 F-V93-Q8 review fix: validate --deployment-status upfront
+    # with a friendly error matching the --tier pattern in `list`,
+    # instead of falling through to a Pydantic ValidationError mid-
+    # construction.
+    try:
+        deployment_status_enum = DeploymentStatus(deployment_status)
+    except ValueError:
+        console.print(
+            f"[red]Error:[/red] unknown deployment-status "
+            f"{deployment_status!r}. Valid: "
+            f"{', '.join(s.value for s in DeploymentStatus)}"
+        )
+        raise typer.Exit(code=1) from None
+
     try:
         entry = AISystemRegistryEntry(
             descriptor=descriptor,
             classification=classification,
             provider=provider,
             owner=owner,
-            deployment_status=deployment_status,
+            deployment_status=deployment_status_enum,
         )
     except Exception as exc:
         console.print(f"[red]Error:[/red] {exc}")
@@ -281,10 +296,11 @@ def ai_gov_list(
                 f"{', '.join(t.value for t in EUAIActTier)}"
             )
             raise typer.Exit(code=1) from None
+        # v0.9.3 F-V93-Q7 review fix: drop redundant str() wrapper.
         entries = [
             e
             for e in entries
-            if str(e.classification.eu_ai_act_tier) == tier_enum.value
+            if e.classification.eu_ai_act_tier == tier_enum.value
         ]
 
     if output_json:

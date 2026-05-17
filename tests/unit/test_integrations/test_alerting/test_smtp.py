@@ -93,17 +93,41 @@ class TestSMTPAlertChannel:
 
         with patch("smtplib.SMTP") as smtp_class:
             smtp_instance = MagicMock()
+            smtp_instance.has_extn.return_value = True
             smtp_class.return_value.__enter__.return_value = smtp_instance
             channel.dispatch(sample_observation)
 
         smtp_class.assert_called_once_with(
             host="smtp.example.com", port=587, timeout=10.0
         )
+        smtp_instance.has_extn.assert_called_with("STARTTLS")
         smtp_instance.starttls.assert_called_once()
         smtp_instance.login.assert_called_once_with(
             "alerter", "resolved-password"
         )
         smtp_instance.send_message.assert_called_once()
+
+    def test_dispatch_refuses_when_starttls_stripped(
+        self,
+        valid_config: SMTPConfig,
+        sample_observation: CycleObservation,
+    ) -> None:
+        """v0.9.3 F-V93-S1 regression: a MITM stripping STARTTLS from
+        the server EHLO advertisement (or a misconfigured server)
+        must NOT cause plaintext credential transmission. The channel
+        raises RuntimeError before login() is reached."""
+        channel = SMTPAlertChannel(valid_config)
+
+        with patch("smtplib.SMTP") as smtp_class:
+            smtp_instance = MagicMock()
+            smtp_instance.has_extn.return_value = False
+            smtp_class.return_value.__enter__.return_value = smtp_instance
+            with pytest.raises(RuntimeError, match="STARTTLS"):
+                channel.dispatch(sample_observation)
+
+        smtp_instance.starttls.assert_not_called()
+        smtp_instance.login.assert_not_called()
+        smtp_instance.send_message.assert_not_called()
 
     def test_subject_includes_slug_and_state(
         self,

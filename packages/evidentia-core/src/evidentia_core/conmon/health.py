@@ -33,15 +33,21 @@ from evidentia_core.conmon.daemon import load_state_file
 
 @dataclass(frozen=True)
 class FrameworkHealth:
-    """Per-framework attention-bucket counts."""
+    """Per-framework attention-bucket counts.
+
+    Note: there is no ``unknown`` per-framework count by design —
+    unknown slugs (cadences in the state file with no registered
+    cadence) have no framework attribution, so they roll up to
+    :attr:`HealthReport.unknown_slugs` instead (a flat list at the
+    report level). v0.9.3 F-V93-Q1 review fix removed a dead-code
+    ``per_fw_unknown`` dict that was always empty.
+    """
 
     framework: str
     total: int
     current: int
     due_soon: int
     overdue: int
-    unknown: int = 0
-    """Cadences in the state file whose slug isn't currently registered."""
 
     @property
     def health_score(self) -> float:
@@ -51,9 +57,6 @@ class FrameworkHealth:
         Due-soon is counted as healthy because it's still in the
         operator's window of action; overdue is the auditor-visible
         failure mode.
-
-        Excludes ``unknown`` from the denominator (operator
-        misconfiguration; not a CONMON failure).
         """
         denom = self.current + self.due_soon + self.overdue
         if denom == 0:
@@ -144,7 +147,6 @@ def compute_health(
     per_fw_current: dict[str, int] = {}
     per_fw_due_soon: dict[str, int] = {}
     per_fw_overdue: dict[str, int] = {}
-    per_fw_unknown: dict[str, int] = {}
     unknown_slugs: list[str] = []
 
     for slug, last_completed in state.items():
@@ -165,25 +167,18 @@ def compute_health(
             per_fw_current[fw] = per_fw_current.get(fw, 0) + 1
 
     frameworks: list[FrameworkHealth] = []
-    all_fws = (
-        set(per_fw_current)
-        | set(per_fw_due_soon)
-        | set(per_fw_overdue)
-        | set(per_fw_unknown)
-    )
+    all_fws = set(per_fw_current) | set(per_fw_due_soon) | set(per_fw_overdue)
     for fw in sorted(all_fws):
         current = per_fw_current.get(fw, 0)
         due_soon = per_fw_due_soon.get(fw, 0)
         overdue = per_fw_overdue.get(fw, 0)
-        unknown = per_fw_unknown.get(fw, 0)
         frameworks.append(
             FrameworkHealth(
                 framework=fw,
-                total=current + due_soon + overdue + unknown,
+                total=current + due_soon + overdue,
                 current=current,
                 due_soon=due_soon,
                 overdue=overdue,
-                unknown=unknown,
             )
         )
 

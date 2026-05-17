@@ -15,6 +15,7 @@ Credentials per the v0.9.3 cycle-open sign-off:
 from __future__ import annotations
 
 import smtplib
+import ssl
 from dataclasses import dataclass
 from email.message import EmailMessage
 
@@ -81,7 +82,19 @@ class SMTPAlertChannel:
             timeout=self._config.timeout_seconds,
         ) as client:
             client.ehlo()
-            client.starttls()
+            # v0.9.3 F-V93-S1 review fix: refuse to send if the
+            # server (or a MITM stripping the STARTTLS advertisement)
+            # doesn't offer STARTTLS. Explicit ssl context is passed
+            # so cert verification doesn't depend on stdlib defaults
+            # being unchanged by process-wide monkey-patches.
+            if not client.has_extn("STARTTLS"):
+                raise RuntimeError(
+                    f"SMTP server {self._config.host}:{self._config.port} "
+                    "did not advertise STARTTLS; refusing to send "
+                    "credentials over plaintext (set use_starttls=False "
+                    "is unsupported; configure a TLS-capable relay)"
+                )
+            client.starttls(context=ssl.create_default_context())
             client.ehlo()
             if self._config.username:
                 client.login(self._config.username, self._config.password)

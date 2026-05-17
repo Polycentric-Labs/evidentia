@@ -24,6 +24,7 @@ matching the Protocol signature.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 from dataclasses import dataclass
@@ -154,9 +155,30 @@ class AlertDeduper:
             return {}
         try:
             raw = json.loads(self.state_file.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            # Corrupted dedup state shouldn't block alerting —
-            # alert + reset the file.
+        except (OSError, json.JSONDecodeError) as exc:
+            # v0.9.3 F-V93-Q10 review fix: corrupted dedup state
+            # shouldn't block alerting (fail-open), but the original
+            # file is preserved as `.json.corrupt-<utc-iso>` and a
+            # WARNING audit event fires so operators see the loss of
+            # suppression history. Best-effort: if backup fails (e.g.,
+            # permission denied), fall through to the alert-anyway
+            # behavior so the daemon stays useful.
+            backup_ts = datetime.now(tz=UTC).strftime("%Y%m%dT%H%M%SZ")
+            backup_path = self.state_file.with_suffix(
+                f"{self.state_file.suffix}.corrupt-{backup_ts}"
+            )
+            with contextlib.suppress(OSError):
+                self.state_file.rename(backup_path)
+            _log.warning(
+                action=EventAction.CONMON_ALERT_SUPPRESSED,
+                outcome=EventOutcome.FAILURE,
+                message=(
+                    f"alert dedup state {self.state_file} corrupted "
+                    f"({exc.__class__.__name__}); reset (backup: "
+                    f"{backup_path.name}). Suppression history lost; "
+                    f"next poll may re-alert on already-handled cycles."
+                ),
+            )
             return {}
         out: dict[str, datetime] = {}
         for key, ts_str in raw.items():
@@ -202,7 +224,18 @@ class AlertDeduper:
         self, obs: CycleObservation, now: datetime | None = None
     ) -> None:
         """Record that an alert was dispatched for this (slug, state).
-        Caller invokes this AFTER a successful channel.dispatch()."""
+        Caller invokes this AFTER a successful channel.dispatch().
+
+        Single-writer contract (v0.9.3 F-V93-Q3 review note): this
+        method does a read-modify-write on the dedup state file
+        without taking a file lock. Concurrent callers may clobber
+        each other's mark entries (last-writer-wins). The expected
+        deployment model is one daemon process per state file —
+        matches the precedent set by ``poam_store`` (v0.9.0) and
+        ``vendor_store`` (v0.7.9). Operators running multiple
+        daemons against shared state should partition by slug
+        prefix or wire a higher-level lock.
+        """
         state = self._load_state()
         state[self._key(obs)] = (
             now if now is not None else datetime.now(tz=UTC)
