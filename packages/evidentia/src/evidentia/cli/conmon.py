@@ -453,6 +453,8 @@ def _build_alert_channels(
     smtp_recipients: list[str] | None,
     webhook_url: str | None,
     webhook_secret_file: Path | None,
+    webhook_allow_plaintext: bool = False,
+    webhook_allow_private_network: bool = False,
 ) -> list[AlertChannel]:
     """Construct AlertChannel instances from operator-supplied flags.
 
@@ -506,7 +508,12 @@ def _build_alert_channels(
 
         channels.append(
             WebhookAlertChannel(
-                WebhookConfig(url=webhook_url, secret=secret)
+                WebhookConfig(
+                    url=webhook_url,
+                    secret=secret,
+                    allow_plaintext=webhook_allow_plaintext,
+                    allow_private_network=webhook_allow_private_network,
+                )
             )
         )
 
@@ -634,6 +641,28 @@ def conmon_watch(
             "secrets are not accepted."
         ),
     ),
+    webhook_allow_plaintext: bool = typer.Option(
+        False,
+        "--webhook-allow-plaintext",
+        help=(
+            "Permit http:// (cleartext) webhook URLs. Default off "
+            "rejects cleartext to prevent payload + HMAC-header "
+            "leakage to on-path attackers. v0.9.4 P1.2 closes "
+            "F-V93-S2 MEDIUM (CWE-918 SSRF)."
+        ),
+    ),
+    webhook_allow_private_network: bool = typer.Option(
+        False,
+        "--webhook-allow-private-network",
+        help=(
+            "Permit webhook URLs resolving to loopback / RFC1918 / "
+            "link-local / reserved IP ranges. Default off prevents "
+            "SSRF + cloud-metadata-service exfiltration "
+            "(169.254.169.254 IAM-credential leak vector). Opt in for "
+            "legitimate on-host proxies or on-cluster receivers. "
+            "v0.9.4 P1.2 closes F-V93-S2 MEDIUM (CWE-918)."
+        ),
+    ),
     # ── Concurrency hardening (v0.9.4 P1.1) ───────────────────────
     state_lock: bool = typer.Option(
         False,
@@ -689,6 +718,8 @@ def conmon_watch(
             smtp_recipients=smtp_recipients,
             webhook_url=webhook_url,
             webhook_secret_file=webhook_secret_file,
+            webhook_allow_plaintext=webhook_allow_plaintext,
+            webhook_allow_private_network=webhook_allow_private_network,
         )
     except ValueError as exc:
         console.print(f"[red]Error:[/red] {exc}")

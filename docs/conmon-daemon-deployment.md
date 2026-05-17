@@ -249,6 +249,49 @@ follow these credential-handling rules:
   `C:\ProgramData\Evidentia\secrets\` with ACL restricted to the
   service account, and pass via `--*-file`.
 
+## Webhook SSRF threat model (v0.9.4 P1.2)
+
+`evidentia conmon watch --webhook-url <URL>` POSTs HMAC-signed JSON
+to the operator-supplied URL on every alert. Without guard rails,
+an attacker who can influence the URL (via operator-config
+injection, supply-chain catalog poisoning, environment-variable
+manipulation, etc.) can force the daemon to POST CONMON state to
+internal-only endpoints — most notably the cloud-metadata service
+at `169.254.169.254`, which would leak the IAM role credentials
+assigned to the daemon's runtime environment.
+
+v0.9.4 P1.2 closes this vector (F-V93-S2, CWE-918) with default-
+deny construction-time validation:
+
+- **`http://` schemes are REJECTED** unless `--webhook-allow-plaintext`
+  is set. Cleartext exposes the HMAC-signed payload + headers to
+  on-path attackers.
+- **Loopback / RFC1918 / link-local / reserved IP destinations are
+  REJECTED** unless `--webhook-allow-private-network` is set. Includes
+  `127.0.0.1`, `10/8`, `172.16/12`, `192.168/16`, `169.254/16`
+  (cloud metadata), `fe80::/10`, and IPv4/IPv6 reserved ranges.
+
+Both opt-ins exist because legitimate operator setups exist:
+
+- Cleartext: closed networks where TLS termination happens at the
+  ingress proxy upstream of the receiver
+- Private network: on-host service-mesh bridge (e.g., local
+  PagerDuty proxy), on-cluster Slack-bridge, or RFC1918-internal
+  webhook endpoint
+
+**DNS rebinding caveat**: the SSRF guard resolves the hostname at
+config-construction time. If the IP changes after daemon start
+(intentional DNS rebinding), the underlying `urlopen` hits the new
+IP and bypasses the guard. Operators in adversarial-DNS
+environments should pin the host to a known IP in `/etc/hosts` or
+configure their resolver to reject TTL-0 responses for non-local
+hostnames.
+
+**Diagnostic**: rejection raises `ValueError` at daemon startup
+(BEFORE the poll loop), with a message naming the rejected IP and
+the opt-in flag that would permit it. The daemon exits with code 1
+and the operator sees the actionable error.
+
 ## Lifecycle audit events
 
 The daemon emits these `EventAction` values (auditor-visible):

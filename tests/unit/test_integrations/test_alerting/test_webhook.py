@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import socket
 from datetime import date
 from unittest.mock import MagicMock, patch
 
@@ -15,6 +16,38 @@ from evidentia_integrations.alerting import (
     WebhookAlertChannel,
     WebhookConfig,
 )
+
+
+# v0.9.4 P1.2: WebhookConfig.__post_init__ now resolves the URL
+# hostname to check for SSRF (loopback/RFC1918/etc). Tests must
+# monkeypatch socket.getaddrinfo so they don't depend on real DNS
+# (slow + flaky on offline CI runners + cross-platform variance).
+@pytest.fixture(autouse=True)
+def _mock_dns(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Default DNS mock: any hostname → public IP 93.184.215.14
+    (the real example.com IP). Tests that need different behavior
+    (loopback, RFC1918, etc.) re-monkeypatch within the test."""
+
+    def _fake_getaddrinfo(
+        host: str,
+        port: int | None,
+        *args: object,
+        **kwargs: object,
+    ) -> list[tuple[int, int, int, str, tuple[str, int]]]:
+        # Literal IPs bypass the mock — return as-is so SSRF tests
+        # using 127.0.0.1 / 192.168.x.x / 169.254.169.254 are
+        # classified correctly by ipaddress.ip_address().
+        try:
+            socket.inet_pton(socket.AF_INET, host)
+            return [(socket.AF_INET, socket.SOCK_STREAM, 0, "", (host, port or 0))]
+        except OSError:
+            pass
+        # Fake DNS: hostnames map to a public IP unless test overrides.
+        return [
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("93.184.215.14", port or 0))
+        ]
+
+    monkeypatch.setattr(socket, "getaddrinfo", _fake_getaddrinfo)
 
 
 @pytest.fixture()
@@ -45,11 +78,86 @@ class TestWebhookConfig:
                 url="https://hooks.example.com/in", secret=""
             )
 
-    def test_accepts_http_url(self) -> None:
-        # http:// is allowed (internal networks); operator
-        # responsibility to use https in production.
-        cfg = WebhookConfig(url="http://hooks.internal", secret="s")
-        assert cfg.url == "http://hooks.internal"
+    def test_accepts_public_https(self) -> None:
+        """Public HTTPS URL is the default-allowed shape (no opt-ins)."""
+        cfg = WebhookConfig(
+            url="https://hooks.example.com/in", secret="s"
+        )
+        assert cfg.url == "https://hooks.example.com/in"
+
+    # v0.9.4 P1.2 SSRF mitigation — default-deny tests.
+
+    def test_rejects_http_plaintext_by_default(self) -> None:
+        """v0.9.4 F-V93-S2: http:// rejected without explicit opt-in."""
+        with pytest.raises(ValueError, match=r"plaintext|allow_plaintext"):
+            WebhookConfig(url="http://hooks.example.com/in", secret="s")
+
+    def test_accepts_http_with_allow_plaintext(self) -> None:
+        """v0.9.4 F-V93-S2: http:// permitted with opt-in."""
+        cfg = WebhookConfig(
+            url="http://hooks.example.com/in",
+            secret="s",
+            allow_plaintext=True,
+        )
+        assert cfg.url == "http://hooks.example.com/in"
+
+    def test_rejects_loopback_by_default(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """v0.9.4 F-V93-S2: 127.0.0.1 rejected without opt-in."""
+        with pytest.raises(ValueError, match=r"non-public|loopback|private"):
+            WebhookConfig(url="https://127.0.0.1/hook", secret="s")
+
+    def test_rejects_rfc1918_by_default(self) -> None:
+        """v0.9.4 F-V93-S2: 192.168.x.x rejected without opt-in."""
+        with pytest.raises(ValueError, match=r"non-public|loopback|private"):
+            WebhookConfig(url="https://192.168.1.1/hook", secret="s")
+
+    def test_rejects_cloud_metadata_service(self) -> None:
+        """v0.9.4 F-V93-S2: 169.254.169.254 (cloud metadata) rejected.
+        This is the cloud-IAM-credential-exfiltration vector that
+        motivated default-deny."""
+        with pytest.raises(
+            ValueError, match=r"non-public|link-local|reserved"
+        ):
+            WebhookConfig(
+                url="https://169.254.169.254/latest/meta-data/iam/security-credentials/",
+                secret="s",
+            )
+
+    def test_accepts_loopback_with_allow_private_network(self) -> None:
+        """v0.9.4 F-V93-S2: loopback permitted with explicit opt-in
+        (legitimate use case: local proxy/bridge on-host)."""
+        cfg = WebhookConfig(
+            url="https://127.0.0.1/hook",
+            secret="s",
+            allow_private_network=True,
+        )
+        assert cfg.url == "https://127.0.0.1/hook"
+
+    def test_accepts_rfc1918_with_allow_private_network(self) -> None:
+        """v0.9.4 F-V93-S2: RFC1918 permitted with explicit opt-in
+        (legitimate use case: on-cluster Slack proxy, on-prem PD bridge)."""
+        cfg = WebhookConfig(
+            url="https://10.0.0.5/hook",
+            secret="s",
+            allow_private_network=True,
+        )
+        assert cfg.url == "https://10.0.0.5/hook"
+
+    def test_rejects_unresolvable_hostname(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """v0.9.4 F-V93-S2: hostname resolution failure raises clearly."""
+
+        def _fail_resolve(*args: object, **kwargs: object) -> None:
+            raise socket.gaierror("Name or service not known")
+
+        monkeypatch.setattr(socket, "getaddrinfo", _fail_resolve)
+        with pytest.raises(ValueError, match="did not resolve"):
+            WebhookConfig(
+                url="https://does-not-exist.invalid/hook", secret="s"
+            )
 
 
 class TestWebhookAlertChannel:

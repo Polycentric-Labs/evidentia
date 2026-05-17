@@ -553,7 +553,7 @@ class TestConmonWatchAlertingFlags:
                 "--alert-dedup-file",
                 str(dedup_file),
                 "--webhook-url",
-                "https://hooks.example.com/in",
+                "https://1.1.1.1/in",
             ],
         )
         assert result.exit_code != 0
@@ -575,7 +575,7 @@ class TestConmonWatchAlertingFlags:
                 "--state-file",
                 str(state_file),
                 "--webhook-url",
-                "https://hooks.example.com/in",
+                "https://1.1.1.1/in",
                 # Missing --alert-dedup-file
             ],
         )
