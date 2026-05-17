@@ -295,6 +295,28 @@ gh search commits --author-email allen@allenfbyrd.com --owner polycentric-labs  
       single-supported-patch policy as of this release. If a CVE
       shipped between releases, ensure its handling is documented.
 
+### Repo secret rotation (v0.9.4 P4.6)
+
+If rotating `CODECOV_TOKEN` (or any other repo secret) during the
+ship cycle, use one of these two forms — `gh secret set` does NOT
+have a `--body-file` flag (common mis-recall; only `-b/--body
+string`, `-f/--env-file file`, or stdin work):
+
+```bash
+# Option A — dotenv format (file has KEY=value lines)
+gh secret set -R polycentric-labs/evidentia \
+    -f C:\Users\allen\.secrets\codecov-polycentric-labs-evidentia.env
+
+# Option B — stdin pipe (file has bare value only)
+Get-Content C:\Users\allen\.secrets\codecov-token-raw.txt \
+  | gh secret set CODECOV_TOKEN -R polycentric-labs/evidentia
+```
+
+After rotation, the Codecov badge cache may take ~15-30 min to
+clear (Fastly edge). Operators can append `?v=<release-tag>` to
+the README badge URL to bust the cache (same workaround as v0.8.2
+`?v=silver` for the OpenSSF tier upgrade).
+
 ---
 
 ## Step 8 — Tag and push (the irreversible step)

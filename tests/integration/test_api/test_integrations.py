@@ -118,8 +118,15 @@ class TestJiraStatus:
             "Jira API call failed; check server logs with the request_id."
         )
         assert len(payload["request_id"]) == 12
-        assert "401" not in r.text
-        assert "Bad credentials" not in r.text
+        # v0.9.4 P4.4: previously these asserted against r.text which
+        # also covered the random 12-char request_id field; ~0.7% of
+        # runs had the literal "401" as a substring of the random
+        # request_id (root cause of the ubuntu-only flake seen on
+        # v0.9.3 merge commit a5a6c02). Scope the substring check
+        # to the user-visible error field — that's the actual
+        # info-disclosure surface the test is guarding.
+        assert "401" not in payload["error"]
+        assert "Bad credentials" not in payload["error"]
         assert "secret-never-in-response" not in r.text
 
 

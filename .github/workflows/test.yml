@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # v0.9.4 P4.5: allow operator-triggered manual re-runs so the
+  # post-merge "is the merge flake really a flake?" debug loop
+  # doesn't require pushing an empty commit. Surfaced during the
+  # v0.9.3 ship-cycle investigation of the F-V93-Q4 flaky
+  # TestJiraStatus test (gh workflow run had returned HTTP 422).
+  workflow_dispatch:
 
 # Default to read-only at the workflow level so each individual job
 # follows the principle of least privilege. Jobs that need additional
