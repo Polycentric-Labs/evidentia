@@ -3,11 +3,28 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
 from evidentia.cli.main import app
 from typer.testing import CliRunner
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _normalize(output: str) -> str:
+    """Strip ANSI escapes + collapse whitespace.
+
+    Rich-rendered Typer error panels wrap content based on the
+    detected terminal width. CI runners default to ~80 cols which
+    can wrap long option-name tokens (e.g., ``--smtp-sender``)
+    across panel rows; local terminals are typically wider and
+    render on one line. Tests that assert on option-name substrings
+    in panel-rendered errors must normalize first to be portable
+    across the local/CI environment boundary (v0.9.3 CI fix).
+    """
+    return " ".join(_ANSI_RE.sub("", output).split())
 
 
 @pytest.fixture()
@@ -485,7 +502,7 @@ class TestConmonWatchAlertingFlags:
             ],
         )
         assert result.exit_code != 0
-        assert "--smtp-sender" in result.output
+        assert "--smtp-sender" in _normalize(result.output)
 
     def test_smtp_host_without_password_errors(
         self,
@@ -515,7 +532,7 @@ class TestConmonWatchAlertingFlags:
             ],
         )
         assert result.exit_code != 0
-        assert "SMTP password" in result.output
+        assert "SMTP password" in _normalize(result.output)
 
     def test_webhook_without_secret_errors(
         self,
@@ -540,7 +557,7 @@ class TestConmonWatchAlertingFlags:
             ],
         )
         assert result.exit_code != 0
-        assert "webhook" in result.output.lower()
+        assert "webhook" in _normalize(result.output).lower()
 
     def test_alerting_without_dedup_file_errors(
         self,
@@ -563,7 +580,7 @@ class TestConmonWatchAlertingFlags:
             ],
         )
         assert result.exit_code != 0
-        assert "--alert-dedup-file" in result.output
+        assert "--alert-dedup-file" in _normalize(result.output)
 
     def test_no_password_value_flag(self, runner: CliRunner) -> None:
         # Defense in depth — verify that --smtp-password / --webhook-
