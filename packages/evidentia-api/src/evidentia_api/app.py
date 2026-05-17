@@ -219,6 +219,18 @@ def create_app(
 
     app.add_middleware(AuthProviderMiddleware)
 
+    # v0.9.4 P1.3: per-client-IP token-bucket rate limiter on the
+    # AI gov mutating endpoints (POST /classify + POST /register).
+    # Closes v0.9.3 F-V93-S10 LOW (no rate limit + unbounded
+    # registry growth from a single authenticated client). Default
+    # 60 req/min/client + burst of 10 — comfortably above any
+    # legitimate interactive UI pattern, restrictive enough to
+    # blunt a register-flood. Process-local; multi-worker
+    # deployments share-nothing (acceptable for v0.9.4 OSS).
+    from evidentia_api.rate_limit import RateLimitMiddleware
+
+    app.add_middleware(RateLimitMiddleware)
+
     # Attach flags to app state so every router dep can consult them.
     # NOTE: app.state.auth_provider was set above (pre-FastAPI-init
     # path) so the dispatch path is consistent during cold start.
