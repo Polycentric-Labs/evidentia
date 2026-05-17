@@ -136,18 +136,37 @@ class AlertDeduper:
 
     Operators can inspect the state file directly; the daemon
     re-reads it each call so external edits propagate.
+
+    Concurrency (v0.9.4 P1.1 closes F-V93-Q3 HIGH): by default
+    (``use_lock=False``) ``mark_dispatched`` does a non-atomic
+    read-modify-write on the state file. Pass ``use_lock=True`` to
+    serialize concurrent dispatchers via
+    :class:`evidentia_core.security.FileLock` on a sidecar
+    ``<state_file>.lock`` file. ``should_suppress`` is a read-only
+    check and remains unlocked (eventual consistency is acceptable
+    for "should I bother dispatching?" decisions).
     """
 
     state_file: Path
     suppression: timedelta
+    use_lock: bool = False
+    lock_timeout_seconds: float = 5.0
 
     @classmethod
-    def from_hours(cls, state_file: Path, hours: float) -> AlertDeduper:
+    def from_hours(
+        cls,
+        state_file: Path,
+        hours: float,
+        use_lock: bool = False,
+        lock_timeout_seconds: float = 5.0,
+    ) -> AlertDeduper:
         if hours < 0:
             raise ValueError(f"suppression hours must be >= 0; got {hours}")
         return cls(
             state_file=state_file,
             suppression=timedelta(hours=hours),
+            use_lock=use_lock,
+            lock_timeout_seconds=lock_timeout_seconds,
         )
 
     def _load_state(self) -> dict[str, datetime]:
@@ -226,21 +245,43 @@ class AlertDeduper:
         """Record that an alert was dispatched for this (slug, state).
         Caller invokes this AFTER a successful channel.dispatch().
 
-        Single-writer contract (v0.9.3 F-V93-Q3 review note): this
-        method does a read-modify-write on the dedup state file
-        without taking a file lock. Concurrent callers may clobber
-        each other's mark entries (last-writer-wins). The expected
-        deployment model is one daemon process per state file —
-        matches the precedent set by ``poam_store`` (v0.9.0) and
-        ``vendor_store`` (v0.7.9). Operators running multiple
-        daemons against shared state should partition by slug
-        prefix or wire a higher-level lock.
+        Concurrency (v0.9.4 P1.1 closes F-V93-Q3 HIGH):
+
+        By default (``use_lock=False`` on the AlertDeduper instance)
+        this method does a non-atomic read-modify-write on the dedup
+        state file. Concurrent dispatchers may clobber each other's
+        mark entries (last-writer-wins). The expected deployment
+        model is one daemon process per state file — matches the
+        precedent set by ``poam_store`` (v0.9.0) and ``vendor_store``
+        (v0.7.9).
+
+        When the operator constructs ``AlertDeduper(..., use_lock=
+        True)`` (typically via the CLI ``--state-lock`` flag), the
+        read-modify-write is wrapped in a
+        :class:`evidentia_core.security.FileLock` on a sidecar
+        ``<state_file>.lock`` file. Concurrent dispatchers serialize
+        cleanly.
         """
-        state = self._load_state()
-        state[self._key(obs)] = (
-            now if now is not None else datetime.now(tz=UTC)
-        )
-        self._save_state(state)
+
+        def _do_mark() -> None:
+            state = self._load_state()
+            state[self._key(obs)] = (
+                now if now is not None else datetime.now(tz=UTC)
+            )
+            self._save_state(state)
+
+        if self.use_lock:
+            from evidentia_core.security import FileLock
+
+            lock_path = self.state_file.with_suffix(
+                self.state_file.suffix + ".lock"
+            )
+            with FileLock(
+                lock_path, timeout_seconds=self.lock_timeout_seconds
+            ):
+                _do_mark()
+        else:
+            _do_mark()
 
 
 # ── handler factory ───────────────────────────────────────────────

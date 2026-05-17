@@ -634,6 +634,19 @@ def conmon_watch(
             "secrets are not accepted."
         ),
     ),
+    # ── Concurrency hardening (v0.9.4 P1.1) ───────────────────────
+    state_lock: bool = typer.Option(
+        False,
+        "--state-lock",
+        help=(
+            "Acquire sidecar file locks (<state-file>.lock and "
+            "<alert-dedup-file>.lock) around read-modify-write "
+            "cycles. Opt-in (default off) preserves v0.9.3 "
+            "single-writer perf path. Use when multiple processes "
+            "(automation + human; multiple daemon instances against "
+            "shared state) may race. Closes v0.9.3 F-V93-Q3 HIGH."
+        ),
+    ),
 ) -> None:
     """Long-running poll daemon for CONMON cycle attention-state.
 
@@ -691,7 +704,9 @@ def conmon_watch(
             )
             raise typer.Exit(code=1)
         deduper = AlertDeduper.from_hours(
-            alert_dedup_file, alert_suppression_hours
+            alert_dedup_file,
+            alert_suppression_hours,
+            use_lock=state_lock,
         )
         handler = make_alert_handler(channels, deduper=deduper)
 
@@ -757,6 +772,18 @@ def conmon_mark_completed(
             "if it does not exist."
         ),
     ),
+    state_lock: bool = typer.Option(
+        False,
+        "--state-lock",
+        help=(
+            "Acquire a sidecar file lock on <state-file>.lock around "
+            "the read-modify-write cycle. Opt-in (default off) preserves "
+            "v0.9.3 single-writer perf path. Use when multiple "
+            "processes (automation + human; multiple CI jobs) may mark "
+            "completion against the same state file. Closes "
+            "v0.9.3 F-V93-Q3 HIGH (race-condition)."
+        ),
+    ),
 ) -> None:
     """Record a CONMON cycle completion in the state file.
 
@@ -769,7 +796,9 @@ def conmon_mark_completed(
     assert parsed_when is not None
 
     try:
-        previous = mark_completed(state_file, slug, parsed_when)
+        previous = mark_completed(
+            state_file, slug, parsed_when, use_lock=state_lock
+        )
     except ValueError as exc:
         console.print(f"[red]Error:[/red] {exc}")
         console.print(

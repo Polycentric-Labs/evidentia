@@ -189,6 +189,8 @@ def mark_completed(
     state_file: Path,
     slug: str,
     when: date,
+    use_lock: bool = False,
+    lock_timeout_seconds: float = 5.0,
 ) -> date | None:
     """Record a cycle completion in the state file. Returns the
     previous ``last_completed`` value (or ``None`` if first mark).
@@ -200,18 +202,39 @@ def mark_completed(
     Raises :class:`ValueError` if the slug is not a registered
     cadence (operators should only mark cadences that exist).
 
-    Single-writer contract (v0.9.3 F-V93-Q3 review note): this
-    function does a non-atomic read-modify-write on the state file
-    (``load_state_file`` → mutate dict → ``save_state_file``). The
-    ``os.replace`` in ``save_state_file`` is atomic, but the read-
-    modify cycle is not. Concurrent ``mark_completed`` calls — e.g.,
-    two CI jobs marking different slugs, or a human + automation
-    racing — may clobber each other's entries (last-writer-wins).
-    The expected deployment model is one writer per state file,
-    matching the precedent set by ``poam_store`` (v0.9.0) and
-    ``vendor_store`` (v0.7.9). Operators needing multi-writer
-    semantics should wire a higher-level lock (or partition by
-    slug-prefix into separate state files).
+    Concurrency (v0.9.4 P1.1 closes F-V93-Q3 HIGH):
+
+    By default (``use_lock=False``) this function does a non-atomic
+    read-modify-write on the state file (``load_state_file`` →
+    mutate dict → ``save_state_file``). The ``os.replace`` in
+    ``save_state_file`` is atomic, but the read-modify cycle is
+    not. Concurrent ``mark_completed`` calls — e.g., two CI jobs
+    marking different slugs, or a human + automation racing — may
+    clobber each other's entries (last-writer-wins). The expected
+    single-writer deployment model matches the precedent set by
+    ``poam_store`` (v0.9.0) and ``vendor_store`` (v0.7.9).
+
+    Pass ``use_lock=True`` to wrap the read-modify-write in a
+    :class:`evidentia_core.security.FileLock` on a sidecar
+    ``<state_file>.lock`` file. The lock serializes concurrent
+    writers via ``fcntl.flock`` (POSIX) or ``msvcrt.locking``
+    (Windows). Default off preserves v0.9.3 backward-compat perf
+    path (no lock-file I/O); opt-in surfaces via the CLI
+    ``--state-lock`` flag.
+
+    Args:
+        state_file: Path to the YAML state file.
+        slug: Cadence slug to mark completed.
+        when: ISO-8601 completion date.
+        use_lock: Enable cross-process locking on the read-modify-
+            write critical section. Default ``False``.
+        lock_timeout_seconds: Maximum wait when ``use_lock=True``.
+            Raises :class:`FileLockTimeout` if the lock isn't
+            acquired within this window.
+
+    Raises:
+        ValueError: unknown cadence slug.
+        FileLockTimeout: ``use_lock=True`` and lock unavailable.
     """
     cadence = get_cadence(slug)
     if cadence is None:
@@ -219,11 +242,21 @@ def mark_completed(
             f"unknown cadence slug {slug!r}; cannot mark completed"
         )
 
-    state = load_state_file(state_file) if state_file.is_file() else {}
+    def _do_mark() -> date | None:
+        state = load_state_file(state_file) if state_file.is_file() else {}
+        previous = state.get(slug)
+        state[slug] = when
+        save_state_file(state_file, state)
+        return previous
 
-    previous = state.get(slug)
-    state[slug] = when
-    save_state_file(state_file, state)
+    if use_lock:
+        from evidentia_core.security import FileLock
+
+        lock_path = state_file.with_suffix(state_file.suffix + ".lock")
+        with FileLock(lock_path, timeout_seconds=lock_timeout_seconds):
+            previous = _do_mark()
+    else:
+        previous = _do_mark()
 
     _log.info(
         action=EventAction.CONMON_CYCLE_MARKED_COMPLETED,
@@ -240,6 +273,7 @@ def mark_completed(
                 previous.isoformat() if previous is not None else None
             ),
             "new_last_completed": when.isoformat(),
+            "used_lock": use_lock,
         },
     )
     return previous
