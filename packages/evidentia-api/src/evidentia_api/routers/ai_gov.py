@@ -17,8 +17,10 @@ AuthProviderMiddleware).
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -59,10 +61,23 @@ class RegisterRequest(BaseModel):
     )
 
 
-# ── idempotency (v0.9.4 P1.3) ─────────────────────────────────────
+# ── idempotency (v0.9.4 P1.3 + v0.9.4 Step 5.A F-V94-Q1 closure) ──
 
 
 _IDEMPOTENCY_STORE_FILENAME = "_idempotency.json"
+
+IDEMPOTENCY_TTL_HOURS = 24.0
+"""TTL on idempotency entries (v0.9.4 Step 5.A F-V94-Q1 closure).
+Entries older than this are dropped at next write. 24h matches the
+operator workday + the AlertDeduper default suppression window."""
+
+IDEMPOTENCY_MAX_ENTRIES = 10_000
+"""Hard cap on idempotency-store entry count. When exceeded, the
+oldest entries are FIFO-evicted at write time. Matches the
+``TokenBucketRateLimiter`` LRU bound. With the default 60req/min
+rate-limit, this caps the store at ~2.8 hours of sustained-burst
+register traffic — well above any legitimate retry pattern but
+below the file-size regression threshold."""
 
 
 def _idempotency_store_path() -> Path:
@@ -93,7 +108,9 @@ def _load_idempotency_store() -> dict[str, dict[str, str]]:
         return {}
     if not isinstance(raw, dict):
         return {}
-    # Each entry: {key: {"body_hash": str, "system_id": str}}
+    # Each entry: {key: {"body_hash": str, "system_id": str,
+    # "recorded_at": isoformat-str}}. Legacy entries without
+    # recorded_at are treated as epoch (will be pruned first by TTL).
     out: dict[str, dict[str, str]] = {}
     for k, v in raw.items():
         if (
@@ -102,18 +119,79 @@ def _load_idempotency_store() -> dict[str, dict[str, str]]:
             and isinstance(v.get("body_hash"), str)
             and isinstance(v.get("system_id"), str)
         ):
-            out[k] = {"body_hash": v["body_hash"], "system_id": v["system_id"]}
+            entry = {
+                "body_hash": v["body_hash"],
+                "system_id": v["system_id"],
+                "recorded_at": v.get("recorded_at", "1970-01-01T00:00:00+00:00"),
+            }
+            out[k] = entry
     return out
 
 
+def _prune_idempotency_store(
+    store: dict[str, dict[str, str]],
+    *,
+    now: datetime | None = None,
+) -> dict[str, dict[str, str]]:
+    """Apply TTL + max-entries caps to the idempotency store.
+
+    v0.9.4 Step 5.A F-V94-Q1 closure: previously the store grew
+    unbounded, accumulating ~600k entries/week at the default
+    60req/min rate limit. This helper:
+
+    1. Drops entries whose ``recorded_at`` is older than
+       :data:`IDEMPOTENCY_TTL_HOURS` (default 24h).
+    2. If still over :data:`IDEMPOTENCY_MAX_ENTRIES`, FIFO-evicts
+       the oldest entries (by ``recorded_at`` ascending) until at
+       cap.
+
+    Pure function; returns a new dict. Called from
+    :func:`_save_idempotency_store` so the on-disk file is always
+    bounded.
+    """
+    if not store:
+        return store
+    now = now if now is not None else datetime.now(tz=UTC)
+    ttl_cutoff = now - timedelta(hours=IDEMPOTENCY_TTL_HOURS)
+    cutoff_iso = ttl_cutoff.isoformat()
+
+    # Drop entries older than the TTL.
+    fresh = {
+        k: v for k, v in store.items() if v.get("recorded_at", "") >= cutoff_iso
+    }
+
+    # If still over cap, FIFO-evict oldest by recorded_at ascending.
+    if len(fresh) > IDEMPOTENCY_MAX_ENTRIES:
+        sorted_keys = sorted(
+            fresh.keys(), key=lambda k: fresh[k].get("recorded_at", "")
+        )
+        keep_keys = set(sorted_keys[-IDEMPOTENCY_MAX_ENTRIES:])
+        fresh = {k: v for k, v in fresh.items() if k in keep_keys}
+
+    return fresh
+
+
 def _save_idempotency_store(store: dict[str, dict[str, str]]) -> None:
+    """Atomically write the idempotency store, pruning TTL + cap first."""
+    pruned = _prune_idempotency_store(store)
     path = _idempotency_store_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(
-        json.dumps(store, indent=2, sort_keys=True), encoding="utf-8"
-    )
-    tmp.replace(path)
+    try:
+        tmp.write_text(
+            json.dumps(pruned, indent=2, sort_keys=True), encoding="utf-8"
+        )
+        tmp.replace(path)
+    except OSError:
+        # v0.9.4 Step 5.A F-V94-Q3 partial closure: clean up the
+        # orphaned .tmp on write failure so disk-full / permission
+        # errors don't accumulate sidecar artifacts. Note: the
+        # shared atomic_write_text helper is a v0.9.5 follow-up;
+        # this is the inline mitigation for the idempotency-store
+        # call site specifically.
+        with contextlib.suppress(OSError):
+            tmp.unlink(missing_ok=True)
+        raise
 
 
 # ── classify ──────────────────────────────────────────────────────
@@ -217,6 +295,7 @@ async def ai_gov_register(
             store[x_idempotency_key] = {
                 "body_hash": body_hash,
                 "system_id": entry.system_id,
+                "recorded_at": datetime.now(tz=UTC).isoformat(),
             }
             _save_idempotency_store(store)
     else:
@@ -322,15 +401,14 @@ async def ai_gov_delete_system(system_id: str) -> dict[str, Any]:
     except InvalidAISystemIdError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     if removed:
-        # Deletion is semantically end-of-life for an AI system entry;
-        # use the AI_SYSTEM_RETIRED action so auditors filtering on
-        # `evidentia.ai_governance.system_retired` see both lifecycle
-        # exit paths (operator-set DeploymentStatus=RETIRED + hard
-        # delete of the registry entry).
+        # v0.9.4 Step 5.A F-V94-Q12 closure: emit the new
+        # AI_SYSTEM_DELETED action (instead of overloading
+        # AI_SYSTEM_RETIRED) so auditors can distinguish hard-delete
+        # from lifecycle-retirement by event.action alone.
         _log.info(
-            action=EventAction.AI_SYSTEM_RETIRED,
+            action=EventAction.AI_SYSTEM_DELETED,
             outcome=EventOutcome.SUCCESS,
-            message=f"AI system registry entry {system_id!r} deleted",
-            evidentia={"system_id": system_id, "deletion_kind": "delete"},
+            message=f"AI system registry entry {system_id!r} hard-deleted",
+            evidentia={"system_id": system_id},
         )
     return {"system_id": system_id, "removed": removed}

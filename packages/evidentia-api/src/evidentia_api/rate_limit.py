@@ -30,11 +30,15 @@ practically harmless. Operators wanting hard guarantees can wrap
 
 Threat model note: source-IP is the rate-limit identity. Operators
 behind a reverse proxy MUST configure FastAPI to honor the
-``X-Forwarded-For`` header (e.g., via Starlette's ProxyHeaders
-middleware) — otherwise all requests appear to come from the proxy
-itself and share a single bucket. The middleware in
-``evidentia_api.app`` does this correctly when ``EVIDENTIA_TRUST_
-PROXY_HEADERS=1`` is set.
+``X-Forwarded-For`` header by wiring Starlette's
+``ProxyHeadersMiddleware`` themselves — otherwise all requests
+appear to come from the proxy itself and share a single bucket.
+``evidentia_api.app`` does NOT currently wire ProxyHeaders
+middleware automatically; operators are responsible for adding it
+to their deployment ASGI stack if they sit behind a reverse proxy.
+A future v0.9.5 ``EVIDENTIA_TRUST_PROXY_HEADERS=1`` env var
++ auto-wired ProxyHeadersMiddleware integration is tracked as a
+v0.9.5 polish item.
 """
 
 from __future__ import annotations

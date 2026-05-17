@@ -416,7 +416,7 @@ class TestDaemonStatusEndpoint:
             "last_poll_at": "2026-05-18T13:00:00+00:00",
             "last_poll_outcome": "success",
             "last_poll_error": None,
-            "tracked_cadence_count": 7,
+            "recognized_cadence_count": 7,
             "poll_interval_seconds": 3600,
             "state_file": "/etc/evidentia/state.yaml",
             "window_days": 14,
@@ -431,7 +431,7 @@ class TestDaemonStatusEndpoint:
         assert resp.status_code == 200
         body = resp.json()
         assert body["last_poll_outcome"] == "success"
-        assert body["tracked_cadence_count"] == 7
+        assert body["recognized_cadence_count"] == 7
         assert body["daemon_uptime_seconds"] == 3600
 
     def test_returns_404_on_corrupt_json(
@@ -471,7 +471,7 @@ class TestDaemonStatusUnitHelpers:
             last_poll_at=polled,
             last_poll_outcome="success",
             last_poll_error=None,
-            tracked_cadence_count=5,
+            recognized_cadence_count=5,
             poll_interval_seconds=1800,
             state_file=Path("/etc/evidentia/state.yaml"),
             window_days=14,
@@ -480,7 +480,7 @@ class TestDaemonStatusUnitHelpers:
         payload = read_daemon_status(status_file)
         assert payload is not None
         assert payload["last_poll_outcome"] == "success"
-        assert payload["tracked_cadence_count"] == 5
+        assert payload["recognized_cadence_count"] == 5
         assert payload["poll_interval_seconds"] == 1800
         # daemon_uptime_seconds = polled - started = 5400s (90 min)
         assert payload["daemon_uptime_seconds"] == 5400
@@ -509,7 +509,7 @@ class TestDaemonStatusUnitHelpers:
             last_poll_at=now,
             last_poll_outcome="failed",
             last_poll_error="ValueError: bad state",
-            tracked_cadence_count=0,
+            recognized_cadence_count=0,
             poll_interval_seconds=60,
             state_file=Path("/tmp/x.yaml"),
             window_days=14,

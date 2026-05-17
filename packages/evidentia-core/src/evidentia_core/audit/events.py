@@ -302,6 +302,11 @@ class EventAction(str, Enum):
     transitions."""
 
     CONMON_HEALTH_REPORT_GENERATED = "evidentia.conmon.health_report_generated"
+    """Fired when ``evidentia conmon health`` or
+    ``GET /api/conmon/health`` produces a report. Payload includes
+    the overall health score + per-framework counts so auditors can
+    reconstruct the operator's CONMON posture at any historical
+    point from the audit log alone."""
 
     CONMON_DAEMON_STATUS_QUERIED = "evidentia.conmon.daemon_status_queried"
     """Fired when an operator queries ``GET /api/conmon/daemon-status``
@@ -311,11 +316,6 @@ class EventAction(str, Enum):
     daemon writes after each poll cycle. Audit event records the
     query so SIEM operators can detect unusual polling-of-the-
     monitor patterns."""
-    """Fired when ``evidentia conmon health`` or
-    ``GET /api/conmon/health`` produces a report. Payload includes
-    the overall health score + per-framework counts so auditors can
-    reconstruct the operator's CONMON posture at any historical
-    point from the audit log alone."""
 
     # AI governance events (v0.9.3 P2) — emitted by the
     # `evidentia ai-gov` CLI + `/api/ai-gov/*` REST surfaces when
@@ -340,8 +340,21 @@ class EventAction(str, Enum):
 
     AI_SYSTEM_RETIRED = "evidentia.ai_governance.system_retired"
     """Fired when an AI system's deployment_status transitions to
-    RETIRED. Distinct from deletion — retired records are kept for
-    audit history."""
+    RETIRED via the ``evidentia ai-gov retire`` CLI verb or
+    ``ai-gov update --deployment-status retired``. Distinct from
+    deletion (see AI_SYSTEM_DELETED) — retired records are kept
+    for audit history with the operator + timestamp + reason
+    preserved."""
+
+    AI_SYSTEM_DELETED = "evidentia.ai_governance.system_deleted"
+    """Fired when an AI system registry entry is HARD-deleted via
+    ``DELETE /api/ai-gov/systems/{id}``. Distinct from retirement
+    (see AI_SYSTEM_RETIRED) — the entry is removed from the
+    registry, breaking historical audit-trail continuity for that
+    system_id. Auditors filtering on ``event.action:evidentia.ai_
+    governance.system_deleted`` see hard-delete events; the audit
+    log itself is the only remaining record. Added v0.9.4 Step 5.A
+    (F-V94-Q12) to disambiguate from the retire semantic."""
 
     # Retention + WORM lifecycle events (v0.7.12 P1) — audit-trail
     # actions on records under retention metadata. The PURGED variant

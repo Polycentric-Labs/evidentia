@@ -125,7 +125,8 @@ def write_daemon_status(
     last_poll_at: datetime,
     last_poll_outcome: str,  # "success" | "failed"
     last_poll_error: str | None,
-    tracked_cadence_count: int,
+    recognized_cadence_count: int,
+    unknown_cadence_count: int = 0,
     poll_interval_seconds: int,
     state_file: Path,
     window_days: int,
@@ -135,13 +136,21 @@ def write_daemon_status(
     Same atomic-write pattern as the state-file (write-to-temp +
     replace). Operators reading via ``GET /api/conmon/daemon-status``
     never see a half-written status.
+
+    v0.9.4 Step 5.A F-V94-Q4 closure: renamed ``tracked_cadence_count``
+    → ``recognized_cadence_count`` to accurately reflect the count
+    semantic (excludes state-file slugs with no registered cadence).
+    Operators inspecting the sidecar see both ``recognized_cadence_
+    count`` + ``unknown_cadence_count`` so the totals reconcile with
+    the raw state-file slug count.
     """
     payload: dict[str, Any] = {
         "started_at": started_at.isoformat(),
         "last_poll_at": last_poll_at.isoformat(),
         "last_poll_outcome": last_poll_outcome,
         "last_poll_error": last_poll_error,
-        "tracked_cadence_count": tracked_cadence_count,
+        "recognized_cadence_count": recognized_cadence_count,
+        "unknown_cadence_count": unknown_cadence_count,
         "poll_interval_seconds": poll_interval_seconds,
         "state_file": str(state_file),
         "window_days": window_days,
@@ -151,11 +160,19 @@ def write_daemon_status(
     }
     status_file.parent.mkdir(parents=True, exist_ok=True)
     tmp = status_file.with_suffix(status_file.suffix + ".tmp")
-    tmp.write_text(
-        json.dumps(payload, indent=2, sort_keys=True),
-        encoding="utf-8",
-    )
-    tmp.replace(status_file)
+    try:
+        tmp.write_text(
+            json.dumps(payload, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+        tmp.replace(status_file)
+    except OSError:
+        # v0.9.4 Step 5.A F-V94-Q3 closure: clean up the orphaned
+        # .tmp on write failure so disk-full / permission errors
+        # don't accumulate sidecar artifacts over time.
+        with contextlib.suppress(OSError):
+            tmp.unlink(missing_ok=True)
+        raise
 
 
 def read_daemon_status(status_file: Path) -> dict[str, Any] | None:
@@ -245,11 +262,17 @@ def save_state_file(path: Path, state: dict[str, date]) -> None:
     serializable = {slug: when.isoformat() for slug, when in state.items()}
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(
-        yaml_mod.safe_dump(serializable, sort_keys=True),
-        encoding="utf-8",
-    )
-    tmp.replace(path)
+    try:
+        tmp.write_text(
+            yaml_mod.safe_dump(serializable, sort_keys=True),
+            encoding="utf-8",
+        )
+        tmp.replace(path)
+    except OSError:
+        # v0.9.4 Step 5.A F-V94-Q3 closure: clean up orphaned .tmp.
+        with contextlib.suppress(OSError):
+            tmp.unlink(missing_ok=True)
+        raise
 
 
 def mark_completed(
@@ -528,17 +551,19 @@ def run_daemon(
     try:
         while not shutdown_event.is_set():
             poll_at = datetime.now(tz=UTC)
-            cycle_count = 0
+            recognized_count = 0
+            unknown_count = 0
             outcome = "success"
             error_msg: str | None = None
             try:
                 result = poll_once(config)
                 _emit_and_dispatch(result, on_due_soon, on_overdue)
-                cycle_count = (
+                recognized_count = (
                     len(result.overdue)
                     + len(result.due_soon)
                     + len(result.current)
                 )
+                unknown_count = len(result.unknown_slugs)
             except (ValueError, OSError) as exc:
                 # State file errors are operator-actionable: we log
                 # but keep polling so a transient FS issue doesn't
@@ -571,7 +596,8 @@ def run_daemon(
                         last_poll_at=poll_at,
                         last_poll_outcome=outcome,
                         last_poll_error=error_msg,
-                        tracked_cadence_count=cycle_count,
+                        recognized_cadence_count=recognized_count,
+                        unknown_cadence_count=unknown_count,
                         poll_interval_seconds=config.poll_interval_seconds,
                         state_file=config.state_file,
                         window_days=config.window_days,
