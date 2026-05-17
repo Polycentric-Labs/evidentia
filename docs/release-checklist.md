@@ -353,6 +353,48 @@ If the release.yml workflow fails:
   the failing publisher then re-run; `skip-existing: true` in
   `release.yml` makes retries idempotent.
 
+### Direct push vs PR workflow (post-v0.9.4 clarification)
+
+For solo-developer cycles, **direct push to `main` is the preferred
+shipping pattern** (matches the v0.7.x + v0.8.x direct-to-main
+ship workflow Allen used historically). Branch protection on
+`main` has `enforce_admins: False`, allowing admin pushes to
+bypass required-status-checks gating — useful when the local
+pre-push gate has already validated the same checks the CI would
+run.
+
+PR-based workflow remains available for collaboration scenarios
+(when contributors are added to the repo) or when the user
+explicitly requests it (e.g., wanting GitHub's UI diff view for a
+high-stakes change before merge).
+
+The v0.9.1-v0.9.4 PR ceremony was self-imposed by Claude during
+the session-driven ship pattern; it doubled the CI surface area
+(PR-head run + merge-commit run + release.yml = 3+ events vs 2 in
+the old workflow) + surfaced transient flakes that direct-push
+wouldn't have (v0.9.3 Jira request_id collision; v0.9.4 Windows
+cache-save). Future Claude sessions should default to direct-push
+for solo-dev work unless the user signals a preference for PR
+review.
+
+How to execute direct-push:
+
+```bash
+git checkout main
+git pull origin main
+# ... make changes ...
+git add <paths>
+git commit -m "..."  # NO Claude attribution per global rules
+git push origin main
+# Tag a release if applicable:
+git tag vX.Y.Z && git push origin vX.Y.Z
+```
+
+The first `git push origin main` is the only Claude-publishing-
+authority gate that needs the user's explicit "yes" — once the
+commit is staged locally + the user approves the push, no PR
+ceremony is required.
+
 ---
 
 ## Step 9 — Post-release verification

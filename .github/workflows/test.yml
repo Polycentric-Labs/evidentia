@@ -43,7 +43,13 @@ jobs:
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
         with:
           version: "latest"
-          enable-cache: true
+          # v0.9.5: disable cache on Windows runners — the Post Install
+          # uv cache-save step has shown intermittent tar/zstd failures
+          # on Windows that mark the whole job red despite all tests
+          # passing (surfaced post-v0.9.4 merge commit a8e061c). uv
+          # install itself is fast enough on Windows without the cache;
+          # the marginal speedup isn't worth the false-failure noise.
+          enable-cache: ${{ matrix.os != 'windows-latest' }}
 
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
