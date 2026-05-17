@@ -152,16 +152,62 @@ single-writer contract.
 
 ## Step 7 post-tag verification outcome
 
-DEFERRED until Step 6 runs and tag is pushed. Will be appended to
-this doc post-tag per the v4 G1 closure pattern. Expected checks:
+**SHIPPED 2026-05-17 05:21 UTC — ALL Step 7 GATES PASS.**
 
-- G1 PEP 740 attestations verify 7/7 packages
-- G2 cosign SLSA Provenance v1 verify on container image
-- G3 osv-scanner clean (or LOWs ack'd)
-- G4 docker run smoke (banner + 89 catalogs)
-- G5 fresh-venv install pin-trap validation (19th consecutive)
-- G16 release-body auto-populate from CHANGELOG (18th consecutive)
-- Container image digest captured + appended
+Tag: `v0.9.3` at commit `a5a6c027e886cbc39a26918394c68afa3afe3aa5`
+(PR #39 merge commit). Container digest:
+`sha256:08d7e26fa4fdc3255149b9199bc4ca4c1978bf571f190d6e8bb19e2f85a5d2c5`.
+
+| Gate | Result | Notes |
+|---|---|---|
+| G1 PEP 740 attestations | **7/7 OK** | All wheels verified against `https://github.com/Polycentric-Labs/evidentia` (canonical casing per v0.9.1 fix). Initial verify attempt failed with lowercase `polycentric-labs` (case-sensitive); fixed by using canonical casing — same as the v0.9.1 OIDC identity-pattern lesson. |
+| G2 cosign SLSA Provenance v1 | **OK** | Keyless OIDC verify + transparency-log offline check both PASS on container image |
+| G3 osv-scanner on published SBOM | **169 / 1 LOW** | paramiko 4.0.0 `GHSA-r374-rxx8-8654` CVSS 3.4 — **4th consecutive carry-forward** of the upstream-unpatched LOW (was first acked v0.9.0; upstream `first_patched=null`) |
+| G4 docker run smoke | **"Evidentia v0.9.3" + 89 catalogs** | Matches v0.9.0 / v0.9.2 baseline; no catalog drift |
+| G5 fresh-venv install pin-trap | **19th consecutive PASS** | `pip install evidentia==0.9.3` + `evidentia version` returns "Evidentia v0.9.3" cleanly |
+| G16 release-body auto-populate | **18th consecutive auto-populate** | 8527 bytes from CHANGELOG [0.9.3] section; SBOM attached (220 KB CycloneDX JSON) |
+| Code-scanning delta | **0 NEW** | Only pre-existing #38 unchanged (16th consecutive carry-forward of the meta-alert; auto-closes at next scan per established pattern) |
+
+**Time-to-publish**: 4 minutes (tag-push 05:17:22 UTC → release.yml
+complete 05:21:25 UTC).
+
+**Ship-cycle hardening (2 in-cycle CI fixes between PR open + merge)**:
+
+1. `cc88a59` — `fix(tests): make conmon-watch alerting-flag
+   assertions terminal-width-independent`. Pytest failed on all 3
+   OS in PR #39's first CI run because rich-rendered Typer error
+   panels wrap content to detected terminal width; CI runners
+   default ~80 cols where the `--smtp-sender` token gets line-
+   wrapped, breaking the substring check. Local terminals were
+   wider. Fixed via a `_normalize(output)` helper that strips ANSI
+   escapes + collapses whitespace. 5 sibling assertions wrapped
+   through it; all PASS on both default + COLUMNS=80 simulation.
+2. `a2eb525` — `fix(tests): drop redundant utf-8 encoding arg in
+   webhook timestamp test (ruff UP012)`. My Step 5.A F-V93-S3 test
+   update introduced `f"{timestamp}.".encode("utf-8")` — the same
+   ruff UP012 fix I applied to the production `webhook.py` was
+   missed in the test file. Local ruff at Step 5.A scoped to
+   `packages/` only (per the gate command in the skill); CI runs
+   `uv run ruff check .` from repo root.
+
+Both fixes closed the local/CI environment-divergence gap.
+
+**Post-tag discovered (NOT a v0.9.3 issue; carries to v0.9.4)**:
+
+- **Flaky `TestJiraStatus::test_returns_auth_error_when_credentials_reject`**
+  on ubuntu-latest only in the v0.9.3 merge-commit CI run. Pre-
+  existing test (added v0.5.0); v0.9.3 didn't touch the relevant
+  code. Passes locally + on macos/windows. Likely test-isolation/
+  ordering race where a sibling test's httpx mock leaks state into
+  this one. Logged as v0.9.4 P4.4 with reproduction + remediation
+  plan.
+- **Codecov badge still "unknown"** (carries from F-V93-Codecov-
+  Stale-Org-Activation). Activation + token rotation is operator-
+  manual per secret-handling protocol. Token-rotation CLI flag
+  gotcha (`--body-file` doesn't exist on `gh secret set`; use `-f`
+  for dotenv or stdin pipe) logged as v0.9.4 P4.6 doc-fix.
+- **`test.yml` missing `workflow_dispatch` trigger**: blocks manual
+  CI re-trigger. Logged as v0.9.4 P4.5 trivial fix.
 
 ## Cross-references
 
