@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-api"
-version = "0.9.2"
+version = "0.9.3"
 description = "FastAPI REST server + bundled React web UI for Evidentia"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
@@ -19,8 +19,8 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "evidentia-core>=0.9.2,<0.10.0",
-    "evidentia-ai>=0.9.2,<0.10.0",
+    "evidentia-core>=0.9.3,<0.10.0",
+    "evidentia-ai>=0.9.3,<0.10.0",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     # v0.7.2 supply-chain follow-up: floor bumped from >=0.0.9 to

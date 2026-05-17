@@ -48,13 +48,21 @@ from __future__ import annotations
 
 from evidentia_core.plugins.auth import AuthProvider
 from evidentia_core.plugins.collectors import BaseSaaSCollector
+from evidentia_core.plugins.continuous import (
+    ContinuousEvidenceSource,
+    EvidenceRecord,
+    NoopContinuousSource,
+)
 from evidentia_core.plugins.marketplace import MarketplaceProvider
 from evidentia_core.plugins.storage import StorageBackend
 
 __all__ = [
     "AuthProvider",
     "BaseSaaSCollector",
+    "ContinuousEvidenceSource",
+    "EvidenceRecord",
     "MarketplaceProvider",
+    "NoopContinuousSource",
     "StorageBackend",
 ]
 

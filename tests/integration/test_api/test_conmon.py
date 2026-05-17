@@ -272,3 +272,92 @@ class TestCheck:
             json={"entries": entries, "today": "2026-05-15"},
         )
         assert resp.status_code == 422
+
+
+# ── health (v0.9.3 P1.3) ──────────────────────────────────────────
+
+
+class TestHealth:
+    """POST /api/conmon/health."""
+
+    def test_overall_health_with_overdue(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            "/api/conmon/health",
+            json={
+                "state": {
+                    "nist-800-53-rev5-ca7": "2025-01-01",
+                    "fedramp-conmon-poam": "2026-05-10",
+                },
+                "today": "2026-05-15",
+                "window_days": 14,
+            },
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["total_cycles"] == 2
+        assert body["total_overdue"] == 1
+        assert body["total_current"] == 1
+        assert 0.0 < body["overall_health_score"] < 1.0
+
+    def test_framework_filter(self, api_client: TestClient) -> None:
+        resp = api_client.post(
+            "/api/conmon/health",
+            json={
+                "state": {
+                    "nist-800-53-rev5-ca7": "2025-01-01",
+                    "fedramp-conmon-poam": "2026-05-10",
+                },
+                "today": "2026-05-15",
+                "framework": "nist-800-53-rev5",
+            },
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert len(body["frameworks"]) == 1
+        assert body["frameworks"][0]["framework"] == "nist-800-53-rev5"
+
+    def test_unknown_slugs_collected(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            "/api/conmon/health",
+            json={
+                "state": {
+                    "nist-800-53-rev5-ca7": "2026-05-10",
+                    "no-such-cadence": "2026-05-10",
+                },
+                "today": "2026-05-15",
+            },
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert "no-such-cadence" in body["unknown_slugs"]
+        assert body["total_cycles"] == 1
+
+    def test_default_today_uses_real_date(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            "/api/conmon/health",
+            json={
+                "state": {
+                    "nist-800-53-rev5-ca7": "2025-01-01",
+                },
+            },
+        )
+        assert resp.status_code == 200
+        assert resp.json()["today"] is not None
+
+    def test_empty_state_returns_perfect_health(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            "/api/conmon/health",
+            json={"state": {}, "today": "2026-05-15"},
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["total_cycles"] == 0
+        assert body["overall_health_score"] == 1.0

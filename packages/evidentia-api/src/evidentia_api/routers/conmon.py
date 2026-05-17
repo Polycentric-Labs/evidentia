@@ -15,6 +15,8 @@ Endpoints:
     slug + last_completed payload
   - ``POST   /api/conmon/check`` — batch attention-state check;
     returns overdue + due-soon arrays
+  - ``POST   /api/conmon/health`` — aggregate framework health
+    scoring from a slug→last-completed payload (v0.9.3 P1.3)
 
 Auth posture: open (matches v0.9.0 POA&M router; transport auth
 applied at the app layer via AuthProviderMiddleware).
@@ -23,9 +25,11 @@ applied at the app layer via AuthProviderMiddleware).
 from __future__ import annotations
 
 from datetime import date
+from typing import Any
 
 from evidentia_core.conmon import (
     CycleAttentionState,
+    compute_health,
     derive_status,
     get_cadence,
     list_cadences,
@@ -221,3 +225,51 @@ async def check_conmon_cycles(body: CheckRequest) -> CheckResponse:
         current=current,
         unknown_slugs=unknown_slugs,
     )
+
+
+# ── health (v0.9.3 P1.3) ──────────────────────────────────────────
+
+
+class HealthRequest(BaseModel):
+    state: dict[str, date] = Field(
+        max_length=10000,
+        description=(
+            "Slug→last-completed-date mapping. Capped at 10,000 "
+            "entries per request."
+        ),
+    )
+    today: date | None = Field(
+        default=None,
+        description=(
+            "Override 'today' for deterministic snapshots. Omit "
+            "for real-time reports."
+        ),
+    )
+    window_days: int = Field(
+        default=14,
+        ge=0,
+        description="Due-soon window in days (default 14).",
+    )
+    framework: str | None = Field(
+        default=None,
+        description=(
+            "Optional framework identifier to restrict the report."
+        ),
+    )
+
+
+@router.post("/conmon/health")
+async def conmon_health_endpoint(body: HealthRequest) -> dict[str, Any]:
+    """Aggregate CONMON framework health from a state payload.
+
+    Mirrors the v0.9.3 P1.3 ``evidentia conmon health`` CLI output
+    shape via :meth:`HealthReport.to_dict`.
+    """
+    today = body.today if body.today is not None else date.today()
+    report = compute_health(
+        state=body.state,
+        today=today,
+        window_days=body.window_days,
+        framework_filter=body.framework,
+    )
+    return report.to_dict()

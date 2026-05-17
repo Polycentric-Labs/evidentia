@@ -14,6 +14,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from evidentia.cli import ai_gov as ai_gov_cmd
 from evidentia.cli import catalog as catalog_cmd
 from evidentia.cli import collect as collect_cmd
 from evidentia.cli import conmon as conmon_cmd
@@ -98,6 +99,14 @@ app.add_typer(
     help=(
         "Continuous Monitoring cycle calendar — read-only "
         "library for assessment + reporting cadences (v0.9.0 P3)."
+    ),
+)
+app.add_typer(
+    ai_gov_cmd.app,
+    name="ai-gov",
+    help=(
+        "AI governance — EU AI Act + NIST AI RMF classification "
+        "+ AI system inventory (v0.9.3 P2)."
     ),
 )
 app.add_typer(

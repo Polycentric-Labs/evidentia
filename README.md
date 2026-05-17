@@ -148,6 +148,56 @@ Evidentia is built on four principles:
 
 ### Recent releases
 
+**v0.9.3 (May 2026)** — *CONMON daemon + AI governance + carry-overs*.
+The largest minor release of the v0.9.x line so far. Combines two
+originally-PROPOSED themes into a single ship: **Theme A (CONMON
+daemon)** — `evidentia conmon watch --poll` long-running daemon
+with state-file-driven slug→last_completed tracking, configurable
+poll interval (default 3600s; min 60s), graceful SIGINT/SIGTERM
+shutdown, SMTP + generic-webhook alerting channels (STARTTLS-only
+with `has_extn` assertion + capture-replay-protected HMAC signing
+with `X-Evidentia-Timestamp` header), control health scoring CLI +
+REST endpoint, ContinuousEvidenceSource plugin Protocol. **Theme B
+(AI governance)** — EU AI Act catalog enrichment (risk_tier +
+applies_to_annex_iii on every Article 9-15 control; tier promoted
+D→A), NIST AI RMF crosswalks to EU AI Act + ISO 42001,
+`evidentia_core.ai_governance` classification + registry +
+file-backed store, `evidentia ai-gov` CLI (5 verbs) + `/api/ai-gov/*`
+REST router (5 endpoints with audit-event parity). **Plus**
+carry-overs: LLM-rater κ recompute on full 147-entry corpus
+(framework-agnostic κ = 0.8820; NIST κ = 1.0000; overall κ = 0.7956;
+3 of 5 subsets PASS κ≥0.80); docker/requirements drift CI gate;
+GHCR public-flip release-checklist; api-stability.md DRAFT.
+**Step 5.A pre-release-review batch** closes 8 of 10 MEDIUM
+findings inline (F-V93-S1 SMTP STARTTLS hardening + F-V93-S3
+webhook HMAC replay protection + F-V93-Q1 dead `unknown` field
+removal + F-V93-Q2 AI gov REST router audit-event wiring + F-V93-Q5
+new `CONMON_DAEMON_POLL_FAILED` action + F-V93-Q7 enum compare +
+F-V93-Q8 upfront `--deployment-status` validation + F-V93-Q10
+dedup-state corruption backup). The 1 HIGH (F-V93-Q3 race-condition)
+closed via documented single-writer contract matching v0.9.0
+poam_store / v0.7.9 vendor_store precedent. **18th consecutive
+PROCEED-CLEAN** of v0.7.x → v0.8.x → v0.9.x line. **2742 tests
+passing / 17 skipped across 217 source files; mypy strict 0/0;
+ruff clean.** PyPI: 7 packages all at 0.9.3 with PEP 740
+attestations.
+
+**v0.9.2 (May 2026)** — *CONMON REST parity + LLM rater + federal
+corpus*. Walk-through-driven refinement delivering HTTP API surface
+for continuous-monitoring cadences (4 endpoints under `/api/conmon/*`
+matching CLI parity), LLM-assisted second rater (`scripts/llm_rater.py`
+with temperature-0 deterministic labeling + `--rule llm` mode in the
+κ script), federal calibration corpus (`corpus_federal.jsonl` —
+24 entries spanning FedRAMP ConMon + POA&M + NIST 800-53 CA-7;
+total corpus 147 entries), and 10 federal-SI walk-through scenarios
+in `capability-matrix.md`. **17th consecutive PROCEED-CLEAN**.
+
+**v0.9.1 (May 2026)** — *Polycentric Labs org migration*. Repo
+transferred from `allenfbyrd/evidentia` to `polycentric-labs/
+evidentia` to unblock the org's GitHub Team plan + future federal-
+SaaS shipping context. All 7 PyPI Trusted Publisher entries
+re-registered. **16th consecutive PROCEED-CLEAN**.
+
 **v0.9.0 (May 2026)** — *Federal compliance — POA&M lifecycle +
 CONMON cycle calendar + walk-through-as-validation*. First minor
 of the v0.9.x line. Opens the federal-compliance theme reserved

@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-ai"
-version = "0.9.2"
+version = "0.9.3"
 description = "LLM-powered risk statement generator and evidence validator for Evidentia"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
@@ -17,7 +17,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "evidentia-core>=0.9.2,<0.10.0",
+    "evidentia-core>=0.9.3,<0.10.0",
     # v0.7.0 Step-3 review: pin LiteLLM above the compromised
     # 1.82.7 / 1.82.8 versions from the March 24, 2026 PyPI supply
     # chain incident (~40-min compromise window before quarantine).

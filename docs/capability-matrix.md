@@ -1455,6 +1455,63 @@ and acceptance criteria for v0.9.1 + v1.0 gate.
 
 ---
 
+## Re-validation snapshot — 2026-05-17 (v0.9.3 SHIPPED)
+
+v0.9.3 SHIPPED (tag `v0.9.3` at commit TBD). **Largest minor of
+the v0.9.x line so far.** Combines two originally-PROPOSED themes
+(CONMON daemon Theme A + AI governance Theme B) into a single ship
+plus 4 carry-overs (LLM-rater κ recompute, drift gate, GHCR docs,
+api-stability draft). 18th consecutive PROCEED-CLEAN of v0.7.x →
+v0.8.x → v0.9.x line.
+
+**New public surfaces tested this cycle (Theme A — CONMON daemon)**:
+
+| Surface | Test path | Coverage |
+|---|---|---|
+| `evidentia conmon watch --poll` daemon | `tests/unit/test_conmon/test_daemon.py` + `tests/integration/test_cli/test_conmon.py` | Daemon lifecycle (STARTED → poll → STOPPED via SIGINT/SIGTERM); state-file YAML `safe_load`; min-60s poll-interval double-enforce; `--state-file` atomic write; PollResult attention-bucket classification; on_due_soon / on_overdue callback dispatch |
+| `evidentia conmon mark-completed <slug> --when YYYY-MM-DD` | `tests/integration/test_cli/test_conmon.py` | First-mark (previous=None) + subsequent-mark (previous=prior date); CONMON_CYCLE_MARKED_COMPLETED audit emit with both previous + new values; ValueError on unknown slug |
+| `SMTPAlertChannel` + `WebhookAlertChannel` | `tests/unit/test_integrations/test_alerting/test_smtp.py` (8 tests including new STARTTLS-strip regression) + `test_webhook.py` (timestamp + HMAC verification) | STARTTLS-only with `has_extn` assertion (Step 5.A F-V93-S1 fix); credential rejection of CLI value flags; HMAC-SHA256 over `f"{timestamp}.{body}"` (Step 5.A F-V93-S3 fix); HTTPError + URLError mapped to typed RuntimeError |
+| `AlertDeduper` (file-backed dedup state) | `tests/unit/test_conmon/test_alerting.py` | Per-(slug, state) 24h suppression; corrupted-state backup to `.json.corrupt-<utc-iso>` (Step 5.A F-V93-Q10 fix); single-writer contract documented |
+| `evidentia conmon health` + `GET /api/conmon/health` | `tests/unit/test_conmon/test_health.py` + `tests/integration/test_api/test_conmon.py` | Per-framework attention-bucket counts; cross-framework overall health score; REST 10000-entry cap; framework-filter; dead `unknown` field removal (Step 5.A F-V93-Q1 fix) |
+| `ContinuousEvidenceSource` Protocol + `NoopContinuousSource` | `tests/unit/test_plugins/test_continuous.py` (107 LOC; 10 tests) | Protocol-only contract; Noop reference exercises the surface; production refs deferred to v0.9.4 per documented scope-cut |
+| 6 new CONMON EventActions | `tests/unit/test_audit/test_events.py` (naming convention) + various integration tests | DAEMON_STARTED / STOPPED / POLL_FAILED (Step 5.A F-V93-Q5 addition) / CYCLE_MARKED_COMPLETED / ALERT_DISPATCHED / SUPPRESSED / HEALTH_REPORT_GENERATED |
+
+**New public surfaces tested this cycle (Theme B — AI governance)**:
+
+| Surface | Test path | Coverage |
+|---|---|---|
+| EU AI Act tier classifier (`classify()`) | `tests/unit/test_ai_governance/test_classification.py` | 4 tier outputs (unacceptable / high / limited / minimal); Annex III domain detection; deterministic per-input |
+| `AISystemRegistryEntry` + `AIRegistryStore` (file-backed JSON store) | `tests/unit/test_ai_governance/test_registry_store.py` | UUID validation (InvalidAISystemIdError); validate_within path-traversal guard; atomic os.replace; EVIDENTIA_AI_REGISTRY_DIR env override; list_all malformed-file skip-with-warning (matches poam_store / vendor_store precedent) |
+| `evidentia ai-gov` CLI (5 verbs: classify/register/list/get/delete) | `tests/integration/test_cli/test_ai_gov.py` | Classify happy-path + register persist + list with tier filter (Step 5.A F-V93-Q7 fix drops brittle `str()` wrapper) + get by UUID + delete idempotent; upfront `--deployment-status` validation (Step 5.A F-V93-Q8 fix) |
+| `/api/ai-gov/*` REST router (5 endpoints) | `tests/integration/test_api/test_ai_gov.py` | classify / register / list with optional `?tier=` filter / get by UUID / delete; AI_SYSTEM_CLASSIFIED / REGISTERED / RETIRED audit events on mutating endpoints (Step 5.A F-V93-Q2 fix); InvalidAISystemIdError → 400; not-found → 404 |
+| EU AI Act catalog enrichment (risk_tier + applies_to_annex_iii on Article 9-15) | Catalog round-trip + load tests | Tier promoted D→A; 8 Annex III risk categories; backward-compat with v0.9.2 catalogs (additive Optional fields with default=None) |
+| NIST AI RMF crosswalks (→ EU AI Act 26 mappings; → ISO 42001 23 mappings) | Crosswalk integrity tests | Bidirectional; confidence + confidence_rubric per mapping; FrameworkMapping extension fields Optional |
+| 4 new AI governance EventActions | `tests/unit/test_audit/test_events.py` | AI_SYSTEM_CLASSIFIED / REGISTERED / UPDATED / RETIRED — UPDATED + RETIRED CLI verbs reserved for v0.9.4 |
+
+**Adversarial probe coverage** (per-surface ≥6 of 7 attack vectors;
+bad-input / missing-dep / network-failure / expired-credential /
+malformed-config / concurrent-race / large-input-DoS): average
+5.7 / 7 applicable vectors; gaps map to findings already bucketed
+in Step 3 of the v0.9.3 review.
+
+**DAST runtime probing (G11)**: documented skip — Schemathesis +
+Playwright missing from dev-tool pre-flight. Manual `/security-
+review` invocations #1 + #2 compensate. v0.9.4 P4.3 adds DAST
+tools to the pre-flight install list.
+
+**Inherited surface re-validation** (carry-forward from v0.9.2 — no
+functional changes to TPRM / model-risk / governance / cloud-WORM /
+Sigstore eval / DFAH determinism + faithfulness library + harness /
+PRT / MCP HTTP/SSE / CIMD scope enforcement / Cohen's Kappa / POA&M
+data layer + CLI + REST + OSCAL emit / CONMON read-only library +
+v0.9.0 calendar + v0.9.2 REST endpoints / plugin-contract
+scaffolding / `--faithfulness-threshold-mode` CLI). The v0.9.3
+deliverables are wholly additive — no existing public-surface
+behavior changed beyond the Step 5.A pre-release-review batch
+(8 MEDIUM + 1 HIGH-via-doc fixes + 1 dead-code removal).
+
+---
+
 *End of capability-matrix.md. Compiled 2026-04-25 as Step 4 deliverable
 from the v0.7.0 comprehensive pre-tag review. Will be re-validated
 on each future release per the [testing-playbook.md](testing-playbook.md)

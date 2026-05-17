@@ -243,6 +243,97 @@ class EventAction(str, Enum):
     relative to the query date. Auditor-visible signal that an
     organization is behind on its monitoring obligations."""
 
+    # CONMON daemon lifecycle events (v0.9.3 P1.1) — emitted by the
+    # `evidentia conmon watch --poll` long-running daemon as it
+    # transitions through its lifecycle. STARTED captures
+    # daemon-config attestation at boot; STOPPED captures graceful
+    # exit. Together with CONMON_CYCLE_DUE/OVERDUE they form the
+    # auditor-visible monitoring-of-the-monitor signal: if there's
+    # a STARTED with no matching STOPPED, the daemon crashed.
+    #   evidentia.daemon payload:
+    #   - poll_interval_seconds: int
+    #   - state_file: str (operator-supplied path)
+    #   - window_days: int
+    #   - cadences_tracked: int (count of slugs in the state file)
+    CONMON_DAEMON_STARTED = "evidentia.conmon.daemon_started"
+    """Fired at daemon boot. Captures the operator-supplied config
+    so auditors can verify the poll cadence matches policy."""
+
+    CONMON_DAEMON_STOPPED = "evidentia.conmon.daemon_stopped"
+    """Fired at graceful shutdown (SIGINT/SIGTERM handler). Absence
+    of this event after a STARTED is itself an auditor signal — the
+    daemon either crashed or was killed."""
+
+    CONMON_DAEMON_POLL_FAILED = "evidentia.conmon.daemon_poll_failed"
+    """Fired (with outcome=failure) when a poll cycle skipped due to
+    a state-file read/parse error or a derive-status exception. The
+    daemon retries at the next interval; emitting this distinct
+    action lets SIEM filters separate daemon-health problems from
+    genuine CONMON_CYCLE_OVERDUE signals."""
+
+    CONMON_CYCLE_MARKED_COMPLETED = "evidentia.conmon.cycle_marked_completed"
+    """Fired when an operator runs `evidentia conmon mark-completed
+    <slug> --when YYYY-MM-DD` to record cycle completion. The
+    audit-event is the auditor's primary evidence that the cycle
+    was actually performed, NOT just scheduled. Payload includes
+    the previous last_completed value (or null on first mark) to
+    enable cycle-by-cycle reconciliation."""
+
+    # CONMON alerting events (v0.9.3 P1.2) — emitted when the daemon
+    # dispatches or suppresses an alert via the operator-configured
+    # alerting channels (SMTP + webhook reference impls in
+    # evidentia_integrations.alerting). Dedup state lives in the
+    # daemon's state file under a reserved key so operators
+    # inspecting one file see both anchor dates + dedup history.
+    #   evidentia.alert payload:
+    #   - cadence_slug: ConmonCadence.slug
+    #   - state: "due_soon" | "overdue"
+    #   - channel: "smtp" | "webhook" | custom-name
+    #   - suppression_window_hours: int (for SUPPRESSED only)
+    CONMON_ALERT_DISPATCHED = "evidentia.conmon.alert_dispatched"
+    """Fired per (channel, cycle) pair when an alert is successfully
+    dispatched. Auditors can reconstruct the alert flow from the
+    audit log alone — no need to inspect the channel's outbox."""
+
+    CONMON_ALERT_SUPPRESSED = "evidentia.conmon.alert_suppressed"
+    """Fired when an alert would have been dispatched but the
+    deduplication window suppressed it. Auditors can verify the
+    daemon isn't spamming operators without missing genuine
+    transitions."""
+
+    CONMON_HEALTH_REPORT_GENERATED = "evidentia.conmon.health_report_generated"
+    """Fired when ``evidentia conmon health`` or
+    ``GET /api/conmon/health`` produces a report. Payload includes
+    the overall health score + per-framework counts so auditors can
+    reconstruct the operator's CONMON posture at any historical
+    point from the audit log alone."""
+
+    # AI governance events (v0.9.3 P2) — emitted by the
+    # `evidentia ai-gov` CLI + `/api/ai-gov/*` REST surfaces when
+    # operators classify, register, update, or retire AI systems in
+    # the inventory. Auditors trace EU AI Act compliance posture +
+    # NIST AI RMF function coverage via these events.
+    #   evidentia.ai_system payload:
+    #   - system_id: UUID
+    #   - eu_ai_act_tier: "unacceptable" | "high" | "limited" | "minimal"
+    #   - deployment_status: "proposed" | ... | "retired"
+    AI_SYSTEM_CLASSIFIED = "evidentia.ai_governance.system_classified"
+    """Fired when `evidentia ai-gov classify` produces a
+    classification (whether persisted or one-shot)."""
+
+    AI_SYSTEM_REGISTERED = "evidentia.ai_governance.system_registered"
+    """Fired on first-time registration of an AI system in the
+    inventory. Tier + provider + owner captured in payload."""
+
+    AI_SYSTEM_UPDATED = "evidentia.ai_governance.system_updated"
+    """Fired when an existing registry entry's descriptor,
+    classification, or deployment_status is updated."""
+
+    AI_SYSTEM_RETIRED = "evidentia.ai_governance.system_retired"
+    """Fired when an AI system's deployment_status transitions to
+    RETIRED. Distinct from deletion — retired records are kept for
+    audit history."""
+
     # Retention + WORM lifecycle events (v0.7.12 P1) — audit-trail
     # actions on records under retention metadata. The PURGED variant
     # serves as the canonical legal-counsel-defensible artifact for

@@ -1,6 +1,6 @@
 [project]
 name = "evidentia"
-version = "0.9.2"
+version = "0.9.3"
 description = "Open-source GRC tool: gap analysis, risk statements, evidence collection, web UI, and compliance automation"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
@@ -17,10 +17,10 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "evidentia-core>=0.9.2,<0.10.0",
-    "evidentia-ai>=0.9.2,<0.10.0",
-    "evidentia-collectors>=0.9.2,<0.10.0",
-    "evidentia-integrations>=0.9.2,<0.10.0",
+    "evidentia-core>=0.9.3,<0.10.0",
+    "evidentia-ai>=0.9.3,<0.10.0",
+    "evidentia-collectors>=0.9.3,<0.10.0",
+    "evidentia-integrations>=0.9.3,<0.10.0",
     "typer>=0.14",
     "rich>=13.0",
 ]
@@ -29,21 +29,21 @@ dependencies = [
 # Web UI — installs the FastAPI server + bundled React SPA.
 # Usage: `pip install "evidentia[gui]"` or `uv tool install "evidentia[gui]"`,
 # then `evidentia serve` to open the local web UI.
-gui = ["evidentia-api>=0.9.2,<0.10.0"]
+gui = ["evidentia-api>=0.9.3,<0.10.0"]
 # v0.7.12 P0: cloud-backed WORM storage adapters. Each extra
 # pulls in the cloud SDK + maps to the matching evidentia-core
 # extra so the WORM impl module imports cleanly. Operators
 # typically install only the extra matching their cloud.
-worm-s3 = ["evidentia-core[worm-s3]>=0.9.2,<0.10.0"]
-worm-azure = ["evidentia-core[worm-azure]>=0.9.2,<0.10.0"]
-worm-gcs = ["evidentia-core[worm-gcs]>=0.9.2,<0.10.0"]
+worm-s3 = ["evidentia-core[worm-s3]>=0.9.3,<0.10.0"]
+worm-azure = ["evidentia-core[worm-azure]>=0.9.3,<0.10.0"]
+worm-gcs = ["evidentia-core[worm-gcs]>=0.9.3,<0.10.0"]
 # v0.8.0 P0.3: Model Context Protocol (MCP) server. Exposes
 # Evidentia's gap-analysis, control-lookup, and gap-diff
 # surfaces to MCP-aware AI clients (Claude Desktop, Claude
 # Code, ChatGPT Desktop, custom clients) over stdio.
 # Usage: `pip install "evidentia[mcp]"`, then `evidentia mcp
 # serve`.
-mcp = ["evidentia-mcp>=0.9.2,<0.10.0"]
+mcp = ["evidentia-mcp>=0.9.3,<0.10.0"]
 
 [project.scripts]
 evidentia = "evidentia.cli.main:app"

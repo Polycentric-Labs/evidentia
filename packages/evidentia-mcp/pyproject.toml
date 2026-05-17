@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-mcp"
-version = "0.9.2"
+version = "0.9.3"
 description = "Model Context Protocol (MCP) server for Evidentia — exposes gap analysis, risk generation, explanation, and OSCAL emit to MCP-aware AI clients (Claude Desktop, Claude Code, ChatGPT, etc.)"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
@@ -17,9 +17,9 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "evidentia-core>=0.9.2,<0.10.0",
-    "evidentia-ai>=0.9.2,<0.10.0",
-    "evidentia-collectors>=0.9.2,<0.10.0",
+    "evidentia-core>=0.9.3,<0.10.0",
+    "evidentia-ai>=0.9.3,<0.10.0",
+    "evidentia-collectors>=0.9.3,<0.10.0",
     # MCP Python SDK. Includes FastMCP server scaffolding +
     # protocol types. Floor pinned to 1.27 (the version Evidentia
     # was tested against during v0.8.0 P0.3 development);

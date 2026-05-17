@@ -230,6 +230,9 @@ def create_app(
     # Imports are deferred so module-load errors in one router don't take
     # down the whole server.
     from evidentia_api.routers import (
+        ai_gov as ai_gov_router,
+    )
+    from evidentia_api.routers import (
         collectors as collectors_router,
     )
     from evidentia_api.routers import (
@@ -304,6 +307,7 @@ def create_app(
     )
     app.include_router(poam_router.router, prefix="/api", tags=["poam"])
     app.include_router(conmon_router.router, prefix="/api", tags=["conmon"])
+    app.include_router(ai_gov_router.router, prefix="/api", tags=["ai-gov"])
 
     # Static SPA mount — everything that isn't /api/* falls through to index.html.
     _mount_spa(app)

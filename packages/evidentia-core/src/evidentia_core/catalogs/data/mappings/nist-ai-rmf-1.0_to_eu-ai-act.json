@@ -1,0 +1,223 @@
+{
+  "source_framework": "nist-ai-rmf-1.0",
+  "target_framework": "eu-ai-act",
+  "version": "NIST AI RMF 1.0 / EU AI Act (Regulation 2024/1689)",
+  "generated_at": "2026-05-16",
+  "source": "Evidentia-authored (v0.9.3 P2.2) — initial concordance between NIST AI RMF subcategories and EU AI Act articles. Per-mapping confidence field surfaces low-confidence entries for SME review. Refinements via community PR.",
+  "v0_9_3_note": "Initial v0.9.3 ship: ~35 high-confidence mappings covering Govern/Map/Measure/Manage to Articles 9, 10, 13, 14, 15, 16, 26, 27, 50, 72. Coverage of Articles 11, 12, 17, 18, 19, 51, 53, 55, 73 deferred to v0.9.4 SME pass.",
+  "confidence_rubric": {
+    "high": "Direct semantic match: AI RMF subcategory restates an EU AI Act article obligation.",
+    "medium": "Overlapping intent with partial scope: AI RMF subcategory covers a subset or superset of the EU AI Act article.",
+    "low": "Related domain but ambiguous: SME review recommended before relying on this mapping for compliance evidence."
+  },
+  "mappings": [
+    {
+      "source_control_id": "GOVERN-1.1",
+      "source_control_title": "Legal and regulatory requirements involving AI are understood",
+      "target_control_id": "AIA.Art.16",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Providers' obligation to understand + comply with EU AI Act regulatory requirements."
+    },
+    {
+      "source_control_id": "GOVERN-1.2",
+      "source_control_title": "Characteristics of trustworthy AI are integrated into policies",
+      "target_control_id": "AIA.Art.17",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "QMS in place ensuring compliance with trustworthy-AI characteristics."
+    },
+    {
+      "source_control_id": "GOVERN-1.3",
+      "source_control_title": "Risk management activity levels determined",
+      "target_control_id": "AIA.Art.9",
+      "relationship": "equivalent",
+      "confidence": "high",
+      "notes": "Risk management system across the AI system lifecycle."
+    },
+    {
+      "source_control_id": "GOVERN-2.1",
+      "source_control_title": "Roles, responsibilities, lines of communication documented",
+      "target_control_id": "AIA.Art.26",
+      "relationship": "related",
+      "confidence": "medium",
+      "notes": "Deployers' use in accordance with provider instructions implies role + responsibility definition."
+    },
+    {
+      "source_control_id": "GOVERN-3.1",
+      "source_control_title": "Decision-making processes consider AI risk tolerances",
+      "target_control_id": "AIA.Art.27",
+      "relationship": "related",
+      "confidence": "medium",
+      "notes": "FRIA includes risk tolerance assessment for fundamental rights impact."
+    },
+    {
+      "source_control_id": "GOVERN-4.1",
+      "source_control_title": "Risk-management culture is cultivated",
+      "target_control_id": "AIA.Art.17",
+      "relationship": "related",
+      "confidence": "medium",
+      "notes": "QMS implies organizational culture around quality + risk."
+    },
+    {
+      "source_control_id": "GOVERN-5.1",
+      "source_control_title": "External stakeholder engagement",
+      "target_control_id": "AIA.Art.13",
+      "relationship": "related",
+      "confidence": "low",
+      "notes": "Transparency to deployers overlaps with stakeholder engagement; SME review recommended."
+    },
+    {
+      "source_control_id": "GOVERN-6.1",
+      "source_control_title": "Third-party engagement",
+      "target_control_id": "AIA.Art.16",
+      "relationship": "related",
+      "confidence": "medium",
+      "notes": "Providers manage third-party components (data, models) per Article 16 obligations."
+    },
+    {
+      "source_control_id": "MAP-1.1",
+      "source_control_title": "Context is established and understood",
+      "target_control_id": "AIA.Art.6",
+      "relationship": "equivalent",
+      "confidence": "high",
+      "notes": "Classification of AI system requires understanding context (Annex III categorization)."
+    },
+    {
+      "source_control_id": "MAP-1.2",
+      "source_control_title": "Interdisciplinary AI team established",
+      "target_control_id": "AIA.Art.14",
+      "relationship": "related",
+      "confidence": "low",
+      "notes": "Human oversight implies multi-disciplinary review capability; SME review recommended."
+    },
+    {
+      "source_control_id": "MAP-2.1",
+      "source_control_title": "Tasks and methods are described",
+      "target_control_id": "AIA.Art.11",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Technical documentation includes task definition + methods."
+    },
+    {
+      "source_control_id": "MAP-2.2",
+      "source_control_title": "Information about AI system knowledge limits and assumptions",
+      "target_control_id": "AIA.Art.13",
+      "relationship": "equivalent",
+      "confidence": "high",
+      "notes": "Transparency obligations include conveying knowledge limits + assumptions to deployers."
+    },
+    {
+      "source_control_id": "MAP-2.3",
+      "source_control_title": "Scientific integrity and TEVV considerations",
+      "target_control_id": "AIA.Art.15",
+      "relationship": "equivalent",
+      "confidence": "high",
+      "notes": "Accuracy, robustness, cybersecurity == TEVV (test/evaluation/verification/validation)."
+    },
+    {
+      "source_control_id": "MAP-3.1",
+      "source_control_title": "Potential benefits and costs identified",
+      "target_control_id": "AIA.Art.27",
+      "relationship": "related",
+      "confidence": "medium",
+      "notes": "FRIA includes benefit/cost analysis from fundamental rights perspective."
+    },
+    {
+      "source_control_id": "MAP-4.1",
+      "source_control_title": "Mapping risks based on impact",
+      "target_control_id": "AIA.Art.9",
+      "relationship": "equivalent",
+      "confidence": "high",
+      "notes": "Risk management system identifies + analyzes + evaluates risks."
+    },
+    {
+      "source_control_id": "MAP-5.1",
+      "source_control_title": "Likelihood and impact of AI risks assessed",
+      "target_control_id": "AIA.Art.9",
+      "relationship": "equivalent",
+      "confidence": "high",
+      "notes": "Risk evaluation within the lifecycle risk management system."
+    },
+    {
+      "source_control_id": "MEASURE-1.1",
+      "source_control_title": "Approaches and metrics for risk measurement",
+      "target_control_id": "AIA.Art.15",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Accuracy + robustness obligations imply measurement metrics."
+    },
+    {
+      "source_control_id": "MEASURE-2.1",
+      "source_control_title": "Test sets, metrics, details of evaluation",
+      "target_control_id": "AIA.Art.10",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Data governance covers training/validation/testing dataset quality criteria."
+    },
+    {
+      "source_control_id": "MEASURE-2.2",
+      "source_control_title": "Evaluations involve experts and end users",
+      "target_control_id": "AIA.Art.14",
+      "relationship": "related",
+      "confidence": "medium",
+      "notes": "Human oversight implies expert evaluation; end-user involvement is implicit."
+    },
+    {
+      "source_control_id": "MEASURE-2.3",
+      "source_control_title": "AI system performance is regularly evaluated",
+      "target_control_id": "AIA.Art.72",
+      "relationship": "equivalent",
+      "confidence": "high",
+      "notes": "Post-market monitoring covers ongoing performance evaluation."
+    },
+    {
+      "source_control_id": "MEASURE-3.1",
+      "source_control_title": "Approaches and metrics for trustworthy characteristics",
+      "target_control_id": "AIA.Art.15",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Trustworthy characteristics include accuracy, robustness, cybersecurity."
+    },
+    {
+      "source_control_id": "MEASURE-4.1",
+      "source_control_title": "Measurement approaches for tracking applied",
+      "target_control_id": "AIA.Art.12",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Automatic log generation enables measurement tracking."
+    },
+    {
+      "source_control_id": "MANAGE-1.1",
+      "source_control_title": "Risk responses considered with benefits",
+      "target_control_id": "AIA.Art.9",
+      "relationship": "equivalent",
+      "confidence": "high",
+      "notes": "Risk treatment is part of the Article 9 risk management system."
+    },
+    {
+      "source_control_id": "MANAGE-2.1",
+      "source_control_title": "Resources allocated for risk management",
+      "target_control_id": "AIA.Art.17",
+      "relationship": "related",
+      "confidence": "medium",
+      "notes": "QMS implies resource allocation for compliance activities."
+    },
+    {
+      "source_control_id": "MANAGE-3.1",
+      "source_control_title": "Risks and benefits documented and monitored",
+      "target_control_id": "AIA.Art.72",
+      "relationship": "equivalent",
+      "confidence": "high",
+      "notes": "Post-market monitoring documents ongoing risk + benefit posture."
+    },
+    {
+      "source_control_id": "MANAGE-4.1",
+      "source_control_title": "Plans for incidents and continuous improvement",
+      "target_control_id": "AIA.Art.73",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Serious incident reporting is a specific incident plan obligation."
+    }
+  ]
+}

@@ -3,9 +3,10 @@
   "framework_name": "EU AI Act (Regulation 2024/1689)",
   "version": "Regulation (EU) 2024/1689",
   "source": "Official Journal of the European Union — EU AI Act (regulation text)",
-  "tier": "D",
+  "tier": "A",
   "category": "control",
   "placeholder": false,
+  "v0_9_3_note": "Tier bumped D -> A (article-level text matches the authoritative regulation). Annex III risk-category annotations added per v0.9.3 P2.1. Sub-article granularity deferred to v0.9.4 SME pass.",
   "families": [
     "Prohibitions",
     "High-Risk AI Systems",
@@ -15,132 +16,178 @@
     "Post-Market",
     "Penalties"
   ],
+  "annex_iii_risk_categories": [
+    "biometrics",
+    "critical_infrastructure",
+    "education",
+    "employment",
+    "essential_services",
+    "law_enforcement",
+    "migration",
+    "justice"
+  ],
   "controls": [
     {
       "id": "AIA.Art.5",
       "title": "Prohibited AI practices",
-      "description": "Prohibited AI practices",
-      "family": "Prohibitions"
+      "description": "Prohibited AI practices (social scoring by public authorities, real-time biometric identification in public spaces, subliminal manipulation, exploitation of vulnerabilities, untargeted facial scraping, emotion inference in workplace/education).",
+      "family": "Prohibitions",
+      "risk_tier": "unacceptable"
+    },
+    {
+      "id": "AIA.Art.6",
+      "title": "Classification rules for high-risk AI systems",
+      "description": "Classification of AI systems as high-risk under Annex III, plus exemptions for systems performing narrow procedural tasks, preparatory work, or detection of decision patterns.",
+      "family": "High-Risk AI Systems",
+      "risk_tier": "high",
+      "applies_to_annex_iii": "all"
     },
     {
       "id": "AIA.Art.9",
       "title": "Risk management system",
-      "description": "Risk management system",
-      "family": "High-Risk AI Systems"
+      "description": "Risk management system established, implemented, documented, and maintained across the AI system lifecycle.",
+      "family": "High-Risk AI Systems",
+      "risk_tier": "high",
+      "applies_to_annex_iii": "all"
     },
     {
       "id": "AIA.Art.10",
       "title": "Data and data governance",
-      "description": "Data and data governance",
-      "family": "High-Risk AI Systems"
+      "description": "Training, validation, and testing datasets meet quality criteria (relevance, representativeness, appropriate statistical properties, absence of errors).",
+      "family": "High-Risk AI Systems",
+      "risk_tier": "high",
+      "applies_to_annex_iii": "all"
     },
     {
       "id": "AIA.Art.11",
       "title": "Technical documentation",
-      "description": "Technical documentation",
-      "family": "High-Risk AI Systems"
+      "description": "Technical documentation drawn up before the high-risk AI system is placed on the market or put into service; kept up to date.",
+      "family": "High-Risk AI Systems",
+      "risk_tier": "high",
+      "applies_to_annex_iii": "all"
     },
     {
       "id": "AIA.Art.12",
       "title": "Record-keeping (logs)",
-      "description": "Record-keeping (logs)",
-      "family": "High-Risk AI Systems"
+      "description": "Automatic recording of events ('logs') over the lifecycle of the high-risk AI system to ensure traceability.",
+      "family": "High-Risk AI Systems",
+      "risk_tier": "high",
+      "applies_to_annex_iii": "all"
     },
     {
       "id": "AIA.Art.13",
       "title": "Transparency and provision of information to deployers",
-      "description": "Transparency and provision of information to deployers",
-      "family": "High-Risk AI Systems"
+      "description": "Design and development such that operation is sufficiently transparent to enable deployers to interpret outputs and use appropriately.",
+      "family": "High-Risk AI Systems",
+      "risk_tier": "high",
+      "applies_to_annex_iii": "all"
     },
     {
       "id": "AIA.Art.14",
       "title": "Human oversight",
-      "description": "Human oversight",
-      "family": "High-Risk AI Systems"
+      "description": "Effective human oversight by natural persons during the period of use; tools enabling the oversight built in.",
+      "family": "High-Risk AI Systems",
+      "risk_tier": "high",
+      "applies_to_annex_iii": "all"
     },
     {
       "id": "AIA.Art.15",
       "title": "Accuracy, robustness and cybersecurity",
-      "description": "Accuracy, robustness and cybersecurity",
-      "family": "High-Risk AI Systems"
+      "description": "Design and development to achieve appropriate level of accuracy, robustness, and cybersecurity over the lifecycle; resilience to errors, faults, inconsistencies, and attempts to alter inputs/outputs.",
+      "family": "High-Risk AI Systems",
+      "risk_tier": "high",
+      "applies_to_annex_iii": "all"
     },
     {
       "id": "AIA.Art.16",
       "title": "Obligations of providers of high-risk AI systems",
-      "description": "Obligations of providers of high-risk AI systems",
-      "family": "High-Risk AI Systems"
+      "description": "Providers' obligations: compliance, QMS, documentation, automatic logs, conformity assessment, registration in EU database, post-market monitoring.",
+      "family": "High-Risk AI Systems",
+      "risk_tier": "high"
     },
     {
       "id": "AIA.Art.17",
       "title": "Quality management system",
-      "description": "Quality management system",
-      "family": "High-Risk AI Systems"
+      "description": "Quality management system in place ensuring compliance; documented in written form.",
+      "family": "High-Risk AI Systems",
+      "risk_tier": "high"
     },
     {
       "id": "AIA.Art.18",
       "title": "Documentation keeping",
-      "description": "Documentation keeping",
-      "family": "High-Risk AI Systems"
+      "description": "Documentation kept at disposal of national competent authorities for 10 years after the system is placed on the market.",
+      "family": "High-Risk AI Systems",
+      "risk_tier": "high"
     },
     {
       "id": "AIA.Art.19",
       "title": "Automatically generated logs",
-      "description": "Automatically generated logs",
-      "family": "High-Risk AI Systems"
+      "description": "Logs automatically generated by the high-risk AI system kept by the provider for an appropriate period (>= 6 months).",
+      "family": "High-Risk AI Systems",
+      "risk_tier": "high"
     },
     {
       "id": "AIA.Art.26",
       "title": "Obligations of deployers of high-risk AI systems",
-      "description": "Obligations of deployers of high-risk AI systems",
-      "family": "Deployer Obligations"
+      "description": "Deployers' use of the system in accordance with provider's instructions, oversight, input data quality, log retention, registry checks.",
+      "family": "Deployer Obligations",
+      "risk_tier": "high"
     },
     {
       "id": "AIA.Art.27",
       "title": "Fundamental rights impact assessment (FRIA)",
-      "description": "Fundamental rights impact assessment (FRIA)",
-      "family": "Deployer Obligations"
+      "description": "Public-sector deployers and certain private deployers of Annex III systems conduct a fundamental rights impact assessment before deployment.",
+      "family": "Deployer Obligations",
+      "risk_tier": "high"
     },
     {
       "id": "AIA.Art.50",
       "title": "Transparency obligations for providers and deployers of certain AI systems",
-      "description": "Transparency obligations for providers and deployers of certain AI systems",
-      "family": "Transparency"
+      "description": "Disclosure to natural persons interacting with AI systems (50.1), notification of emotion recognition (50.3), labelling of synthetic/deepfake content (50.4).",
+      "family": "Transparency",
+      "risk_tier": "limited"
     },
     {
       "id": "AIA.Art.51",
       "title": "Classification of general-purpose AI models as GPAI models with systemic risk",
-      "description": "Classification of general-purpose AI models as GPAI models with systemic risk",
-      "family": "GPAI"
+      "description": "GPAI models exceeding compute threshold (10^25 FLOPs) presumed to have systemic risk; Commission may designate others.",
+      "family": "GPAI",
+      "risk_tier": "high"
     },
     {
       "id": "AIA.Art.53",
       "title": "Obligations for providers of general-purpose AI models",
-      "description": "Obligations for providers of general-purpose AI models",
-      "family": "GPAI"
+      "description": "GPAI providers: technical documentation, copyright policy, training-data summary, downstream-provider info.",
+      "family": "GPAI",
+      "risk_tier": "limited"
     },
     {
       "id": "AIA.Art.55",
       "title": "Obligations for providers of general-purpose AI models with systemic risk",
-      "description": "Obligations for providers of general-purpose AI models with systemic risk",
-      "family": "GPAI"
+      "description": "Additional obligations for systemic-risk GPAI: model evaluation, adversarial testing, risk assessment + mitigation, incident reporting, cybersecurity.",
+      "family": "GPAI",
+      "risk_tier": "high"
     },
     {
       "id": "AIA.Art.72",
       "title": "Post-market monitoring system",
-      "description": "Post-market monitoring system",
-      "family": "Post-Market"
+      "description": "Providers establish and document a post-market monitoring system proportionate to risks.",
+      "family": "Post-Market",
+      "risk_tier": "high"
     },
     {
       "id": "AIA.Art.73",
       "title": "Reporting of serious incidents",
-      "description": "Reporting of serious incidents",
-      "family": "Post-Market"
+      "description": "Providers report serious incidents to market surveillance authorities of Member States within set deadlines (15 days; 2 days for widespread infringement; 10 days for serious + irreversible disruption).",
+      "family": "Post-Market",
+      "risk_tier": "high"
     },
     {
       "id": "AIA.Art.99",
       "title": "Penalties",
-      "description": "Penalties",
-      "family": "Penalties"
+      "description": "Administrative fines up to EUR 35M or 7% of total worldwide annual turnover for Article 5 violations; lower tiers for other infringements.",
+      "family": "Penalties",
+      "risk_tier": "informational"
     }
   ]
 }

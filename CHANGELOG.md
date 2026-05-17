@@ -7,6 +7,135 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-05-17
+
+**Theme**: *CONMON daemon (A) + AI governance (B) + carry-over closure.*
+The largest minor release of the v0.9.x line so far. Combines two
+originally-PROPOSED themes — CONMON daemon (Theme A; builds on v0.9.0
+read-only library + v0.9.2 REST router) and AI governance (Theme B;
+time-aligned with EU AI Act high-risk obligations Aug 2026) — plus
+4 carry-over deliverables (LLM-rater κ recompute on 147-entry corpus,
+docker/requirements drift CI gate, GHCR public-flip release-checklist,
+api-stability.md DRAFT).
+
+### Added
+
+- **`evidentia conmon watch --poll` long-running daemon**: actor-
+  pattern transition from the v0.9.0 read-only library + v0.9.2 REST
+  router. State-file-driven slug→last_completed tracking,
+  configurable poll interval (default 3600s; min 60s double-enforced),
+  graceful SIGINT/SIGTERM shutdown. New `evidentia conmon
+  mark-completed <slug> --when YYYY-MM-DD` records cycle completion
+  atomically. Operator deployment guide at
+  `docs/conmon-daemon-deployment.md` with systemd / launchd /
+  Windows-service reference configs.
+- **CONMON alerting** (SMTP + generic webhook channels): plug-point
+  for daemon `on_due_soon` / `on_overdue` callbacks. STARTTLS-only
+  SMTP (Step 5.A F-V93-S1 fix adds `has_extn` assertion + explicit
+  `ssl.create_default_context()`). Webhook HMAC-SHA256 signing with
+  timestamp-included signed material (Step 5.A F-V93-S3 fix adds
+  `X-Evidentia-Timestamp` header for capture-replay defense). File-
+  backed dedup state with per-(slug, state) suppression (default
+  24h). Reference impls in
+  `evidentia_integrations.alerting.{smtp,webhook}`.
+- **Secret-handling protocol enforced**: file > env > error
+  resolution precedence via centralized `resolve_secret()` helper.
+  CLI `--smtp-password` / `--webhook-secret` value flags are
+  explicitly REJECTED (would leak via shell history + process
+  lists). Operators MUST use `--*-password-file` / `--*-secret-file`
+  or the corresponding env var. Test
+  `test_no_password_value_flag` locks the behavior.
+- **CONMON control health scoring**: `evidentia conmon health`
+  CLI + `GET /api/conmon/health` REST endpoint produce per-
+  framework attention-bucket counts (current / due_soon / overdue)
+  plus a cross-framework overall health score. REST payload
+  capped at 10000 state entries.
+- **ContinuousEvidenceSource plugin Protocol** +
+  `NoopContinuousSource` reference impl. The Protocol contract
+  ships; production refs (AWS CloudTrail wrapper) deferred to
+  v0.9.4 per the documented scope-cut in commit `f6e9ab7`.
+- **AI governance suite** (Theme B): NEW `evidentia_core.
+  ai_governance` package with `classify()` rule-based EU AI Act
+  tier classifier (4 tiers: unacceptable / high / limited /
+  minimal), `AISystemDescriptor` + `AISystemClassification` +
+  `AISystemRegistryEntry` Pydantic models, file-backed
+  `AIRegistryStore` (UUID validation + path-traversal guard +
+  atomic write — matches v0.9.0 poam_store / v0.7.9 vendor_store
+  pattern).
+- **`evidentia ai-gov` CLI** (classify / register / list / get /
+  delete verbs). Friendly upfront `--tier` and
+  `--deployment-status` validation (Step 5.A F-V93-Q8 fix adds the
+  `--deployment-status` upfront-validate matching `--tier`).
+- **`/api/ai-gov/*` REST router** (5 endpoints) with audit events
+  at parity with the CLI surface (Step 5.A F-V93-Q2 fix wires
+  `AI_SYSTEM_CLASSIFIED` / `REGISTERED` / `RETIRED` to the
+  mutating endpoints).
+- **EU AI Act catalog enrichment**: every Article 9-15 control
+  gains `risk_tier` + `applies_to_annex_iii` fields. Tier
+  promoted D → A (statutory uncopyrightable + Evidentia primary
+  maintainer ownership). 8 Annex III risk categories enumerated.
+- **NIST AI RMF crosswalks**: bidirectional mappings to EU AI Act
+  (26 entries) and ISO 42001 (23 entries). Catalog model gains
+  `confidence` + `confidence_rubric` fields supporting per-
+  mapping certainty.
+- **LLM-assisted κ recompute** on the full 147-entry corpus:
+  framework-agnostic κ = 0.8820; NIST κ = 1.0000; FFIEC κ =
+  0.6667; ISO 27001 κ = 0.5000; FedRAMP/CA-7 κ = 0.8333; overall
+  κ = 0.7956 (Δ = 0.0044 vs prior). Acceptance MET on 3 of 5
+  subsets.
+- **Docker/requirements drift CI gate**: new
+  `requirements-drift` job in `.github/workflows/test.yml` runs
+  `scripts/check_requirements_drift.py` to flag security-sensitive
+  package drift between root `pyproject.toml` and
+  `docker/requirements.txt`. Covers 8 packages (urllib3, requests,
+  cryptography, paramiko, aiohttp, httpx, certifi, pyopenssl).
+- **GHCR public-flip release-checklist** item under
+  `docs/release-checklist.md` capturing the v0.9.1/v0.9.2 lessons
+  about GHCR repo-visibility transitions.
+- **API stability DRAFT** at `docs/api-stability.md` (360 LOC)
+  scoping the v1.0 NORMATIVE commitment surface.
+- **6 new CONMON EventActions**: `CONMON_DAEMON_STARTED`,
+  `CONMON_DAEMON_STOPPED`, `CONMON_DAEMON_POLL_FAILED` (Step 5.A
+  addition), `CONMON_CYCLE_MARKED_COMPLETED`,
+  `CONMON_ALERT_DISPATCHED`, `CONMON_ALERT_SUPPRESSED`,
+  `CONMON_HEALTH_REPORT_GENERATED`.
+- **4 new AI governance EventActions**: `AI_SYSTEM_CLASSIFIED`,
+  `AI_SYSTEM_REGISTERED`, `AI_SYSTEM_UPDATED`, `AI_SYSTEM_RETIRED`.
+
+### Fixed (Step 5.A pre-release-review batch `d813f34`)
+
+- **F-V93-S1** (CWE-319): SMTP STARTTLS-stripping vulnerability.
+  `SMTPAlertChannel.dispatch` now asserts `client.has_extn(
+  "STARTTLS")` BEFORE calling `starttls()`, refusing to send if a
+  MITM strips the EHLO advertisement. Regression test added.
+- **F-V93-S3** (CWE-294): Webhook HMAC capture-replay
+  vulnerability closed. Signed material now includes a unix-epoch
+  timestamp; new `X-Evidentia-Timestamp` header carries it.
+- **F-V93-Q1**: Dead `per_fw_unknown` dict + `unknown` field on
+  `FrameworkHealth` removed (was never populated; silent-false-OK
+  vector).
+- **F-V93-Q2**: AI governance REST router audit-trail gap closed.
+- **F-V93-Q3** (HIGH; docs-only): Single-writer contract on
+  `mark_completed` + `AlertDeduper.mark_dispatched` documented
+  matching v0.9.0 poam_store + v0.7.9 vendor_store precedent.
+  File-locking helper reserved for v0.9.4.
+- **F-V93-Q5**: Daemon poll-loop error now emits the new
+  `CONMON_DAEMON_POLL_FAILED` action.
+- **F-V93-Q7**: Drop brittle `str()` wrapper on enum comparison.
+- **F-V93-Q8**: Upfront validation of `--deployment-status`.
+- **F-V93-Q10**: Corrupted alert-dedup state file backed up to
+  `.json.corrupt-<utc-iso>` with WARNING audit event before reset.
+
+### Deferred to v0.9.4
+
+- F-V93-S2 (CWE-918): Webhook SSRF + plaintext HTTP mitigation
+- F-V93-Q3 file-locking helper (HIGH; design-decision-laden)
+- F-V93-S10: AI gov register endpoint rate-limit
+- F-V93-Q11/Q12/Q14/S9: LOW polish batch
+- Federal-SI walk-through (originally deferred from v0.9.0)
+
+See `docs/v0.9.4-plan.md` for the forward scope.
+
 ## [0.9.2] - 2026-05-16
 
 **Theme**: *CONMON REST parity + LLM rater + federal corpus.*

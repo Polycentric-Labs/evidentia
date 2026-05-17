@@ -97,6 +97,24 @@ class CatalogControl(EvidentiaModel):
         description="OSCAL `part.name=objective` prose — concise statement of "
         "what the control aims to achieve",
     )
+    risk_tier: str | None = Field(
+        default=None,
+        description=(
+            "v0.9.3 P2.1: optional EU-AI-Act-style risk tier annotation "
+            "('unacceptable', 'high', 'limited', 'minimal', "
+            "'informational'). Used by AI-governance catalogs to "
+            "express per-control regulatory weight. Optional for "
+            "backward-compat with pre-v0.9.3 catalogs."
+        ),
+    )
+    applies_to_annex_iii: str | None = Field(
+        default=None,
+        description=(
+            "v0.9.3 P2.1: optional EU AI Act Annex III scope marker "
+            "('all' = applies to every high-risk domain; a specific "
+            "domain string = applies only to that one). Optional."
+        ),
+    )
     guidance: str | None = Field(
         default=None,
         description="OSCAL `part.name=guidance` prose — implementation guidance "
@@ -177,6 +195,21 @@ class ControlCatalog(EvidentiaModel):
         default=None,
         description="Redistribution tier: 'A', 'B', 'C', 'D' (see CatalogControl.tier)",
     )
+    v0_9_3_note: str | None = Field(
+        default=None,
+        description=(
+            "v0.9.3 P2.1: optional cycle-note documenting catalog "
+            "enrichment scope. Free-form."
+        ),
+    )
+    annex_iii_risk_categories: list[str] | None = Field(
+        default=None,
+        description=(
+            "v0.9.3 P2.1: optional EU AI Act Annex III high-risk "
+            "category list. Set on the eu-ai-act catalog; None "
+            "elsewhere."
+        ),
+    )
     license_required: bool = Field(
         default=False,
         description="True if this catalog is a stub whose authoritative control text "
@@ -249,6 +282,15 @@ class FrameworkMapping(EvidentiaModel):
         default=None,
         description="Notes about this mapping relationship",
     )
+    confidence: str | None = Field(
+        default=None,
+        description=(
+            "v0.9.3 P2.2: per-mapping confidence — 'high', 'medium', "
+            "'low'. Surfaces SME-review priority for mappings authored "
+            "without domain expertise. Optional for backward-compat with "
+            "pre-v0.9.3 crosswalks."
+        ),
+    )
 
 
 class CrosswalkDefinition(EvidentiaModel):
@@ -265,6 +307,21 @@ class CrosswalkDefinition(EvidentiaModel):
         description="Authority source for this crosswalk",
     )
     mappings: list[FrameworkMapping]
+    v0_9_3_note: str | None = Field(
+        default=None,
+        description=(
+            "v0.9.3 P2.2: optional cycle-note documenting authoring "
+            "scope + planned refinements. Free-form."
+        ),
+    )
+    confidence_rubric: dict[str, str] | None = Field(
+        default=None,
+        description=(
+            "v0.9.3 P2.2: optional dict explaining the confidence "
+            "field's vocabulary (e.g., {'high': '...', 'medium': "
+            "'...', 'low': '...'}). Optional for backward-compat."
+        ),
+    )
 
     def get_target_controls(self, source_control_id: str) -> list[FrameworkMapping]:
         """Get all target controls mapped from a source control."""
