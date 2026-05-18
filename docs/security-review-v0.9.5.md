@@ -125,12 +125,53 @@ publishing-authority approval gates.
 - **SCR Form auto-emit on AI-system lifecycle transitions**
 - **OMB M-24-10 Rights-Impacting / Safety-Impacting / Neither as first-class AI-gov field**
 - **CLI flag-name normalization**: `conmon check --last-completed-file` vs `conmon health --state-file` vs `conmon watch --state-file` → single `--state-file` with 6-month deprecation window
+- **F-V95-F4: mypy strict coverage extension** to `evidentia-ai` (19 source files) + `evidentia-mcp` (5 source files). Currently EXCLUDED from the strict mypy gate in `.github/workflows/test.yml` (only `evidentia-core` + `evidentia` + `evidentia-api` + `evidentia-integrations` + `evidentia-collectors` covered = 223 source files of 247 total). v0.9.6 should run mypy strict on the excluded packages, fix any surfaced type errors, then extend the CI gate. Surfaced by the v0.9.5 formal pre-release-review Stream 7 redo (direct codebase walk).
+- **F-V95-F5: OSCAL 1.1.2 → 1.2.1 upgrade**. The upstream `compliance-trestle` library moved to OSCAL 1.2.1 in v4.0.2 (April 17 2026). Evidentia is still on 1.1.2. v0.9.6 upgrade target; coordinate with `compliance-trestle` validation step. Surfaced by Stream 2 OSS-ecosystem research.
+
+## Step 5.A inline-fix batch (v0.9.5 pre-release-review formal session)
+
+The v4 formal pre-release-review session (commit 94ffc5e onwards)
+applied 3 MEDIUM inline-fixes per Allen's stricter Step 5 bug-fix
+policy ("CRIT + HIGH inline; MEDIUM defer with rationale; LOW
+accept" — with explicit MEDIUM-bump for the 3 operator-visible
+accuracy items):
+
+- **F-V95-F1 MEDIUM (inline-fixed)**: `docs/walkthrough-federal-si.md`
+  references to the FedRAMP RFC-0024 Sept 30 2026 deadline updated
+  to Nov 1 2027 + scope narrowed to Class D / High-impact per
+  NOTICE-0009 (March 25 2026). Also surfaces the **FedRAMP CR26**
+  consolidated rules (effective July 1 2026; mandatory Jan 1
+  2027), **CMMC Phase 2** (Nov 10 2026), and the **EU AI Act
+  Annex III deferral to Dec 2 2027** per the Omnibus political
+  agreement May 7 2026 (was Aug 2 2026). Source: Stream 3
+  regulatory research (NOTICE-0009 March 25 2026; Omnibus May 7
+  2026 Council + Parliament agreement).
+- **F-V95-F2 MEDIUM (inline-fixed)**: `docs/positioning-and-value.md`
+  §5.5 commercial-landscape table — Eramba row corrected. The
+  v0.7.8 baseline claim that "Eramba shifted to closed-source
+  application Q1 2026" verified INCORRECT via direct WebFetch of
+  eramba.org on 2026-05-18. Eramba still offers Community Edition
+  (free forever, on-premise) + paid Enterprise tier. Source:
+  Stream 2 OSS-ecosystem research + direct verification.
+- **F-V95-F3 MEDIUM (inline-fixed)**: `docs/positioning-and-value.md`
+  §12.1 voices table — Phil Venables affiliation corrected from
+  "Google Cloud strategic security advisor" to "Partner at
+  Ballistic Ventures (departed Google Cloud CISO role March 2025;
+  continues to contribute the Cloud CISO Perspectives newsletter
+  as a Google Cloud contributor)". Affiliation verified via
+  direct LinkedIn WebFetch on 2026-05-18. Source: Stream 4 +
+  Stream 6 cross-reference + direct verification.
 
 ## PROCEED-CLEAN gate verdict
 
 **PROCEED-CLEAN** for v0.9.5 ship. All gate criteria satisfied; zero
 unfixed CRITICAL / HIGH / MEDIUM findings; the 3 NEW INFO/LOW
-findings are documented within the v0.9.5 surfaces themselves
-(threat-model + module docstrings). Tag + container publish via the
-direct-push workflow with explicit per-action publishing-authority
-approvals.
+findings (from in-cycle review) + 3 MEDIUM operator-visible
+accuracy fixes (from formal pre-release-review Step 5.A batch) are
+documented within the v0.9.5 surfaces themselves (threat-model +
+module docstrings + walkthrough doc + positioning-and-value
+corrections). Tag + container publish via the direct-push workflow
+with explicit per-action publishing-authority approvals.
+
+20th consecutive PROCEED-CLEAN of the v0.7.x → v0.8.x → v0.9.x
+line.

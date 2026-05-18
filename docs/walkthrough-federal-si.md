@@ -35,11 +35,19 @@ cosign verify ghcr.io/polycentric-labs/evidentia:v0.9.4 \
 #    your SBOM aggregator: Dependency-Track / Trivy / etc.).
 ```
 
-All three are required artifacts under FedRAMP RFC-0024 (machine-
-readable authorization packages, Sept 30 2026 initial-compliance
-deadline) and the CISA Secure Software Self-Attestation Form. If
-the verify steps fail, file a v0.9.5 supply-chain incident ticket
-against the repo — that's a stop-ship.
+All three are required artifacts under FedRAMP RFC-0024
+(machine-readable authorization packages, **Nov 1 2027 initial-
+compliance deadline** for Class D / High-impact CSPs per NOTICE-
+0009 published March 25 2026 — the original Sept 30 2026 deadline
+was superseded + scope was narrowed) and the CISA Secure Software
+Self-Attestation Form. The companion **FedRAMP CR26** consolidated
+rules (public preview May 4 2026; effective July 1 2026;
+mandatory Jan 1 2027) replace the patchwork of post-FedRAMP-
+Authorization-Act memos with a declarative-rule format published
+in GitHub/FedRAMP/rules. Classes A/B/C only need "semi-structured
+text-based" data; Class D needs comprehensive machine-readable.
+If the verify steps fail, file a v0.9.5 supply-chain incident
+ticket against the repo — that's a stop-ship.
 
 ## Why this walk-through exists
 
@@ -53,9 +61,11 @@ artifacts this persona produces:
 2. **Agency AO (authorizing official)** — reviews POA&M status +
    residual-risk justifications before re-authorization signature.
 3. **FedRAMP PMO / DoD CCSP** — ingests machine-readable
-   authorization packages per RFC-0024 (Sept 30 2026 deadline);
-   grades against the FedRAMP POA&M Template Completion Guide
-   v3.0.
+   authorization packages per RFC-0024 (Class D / High-impact:
+   Nov 1 2027 initial-compliance deadline per NOTICE-0009 March 25
+   2026; superseded the original Sept 30 2026 program-wide
+   deadline); grades against the FedRAMP POA&M Template Completion
+   Guide v3.0.
 
 The persona has TWO surfaces that overlap heavily for an SI
 shipping AI-powered systems into regulated environments:
@@ -75,11 +85,18 @@ shipping AI-powered systems into regulated environments:
    SECONDARY — useful when the same AI system also serves EU
    customers, but not the headline lens at a federal AO desk.
 
-Both surfaces have hard deadlines (monthly POA&M attestation,
+Both surfaces have hard deadlines (monthly POA&M attestation;
 NIST AI RMF / AI Executive Order obligations on federal AI use
-cases, FedRAMP 20x / RFC-0024 machine-readable authorization
-deadline Sept 30 2026, EU AI Act Article 50 prohibitions
-August 2 2026 for EU-exporting SIs).
+cases; **FedRAMP CR26 effective July 1 2026 / mandatory Jan 1
+2027** — the most consequential FedRAMP structural change in a
+decade; **FedRAMP RFC-0024 machine-readable Class D / High-impact
+authorization packages: Nov 1 2027** per NOTICE-0009 March 25
+2026 — the original Sept 30 2026 deadline was superseded + scope
+narrowed; **CMMC Phase 2 Nov 10 2026** for DoD solicitations;
+**EU AI Act Article 50** transparency Aug 2 2026 + watermarking
+Dec 2 2026 + Annex III high-risk **deferred to Dec 2 2027** per
+the May 7 2026 Omnibus political agreement, NOT Aug 2 2026; **PCAOB
+QC 1000 / AS 2901** Dec 15 2026).
 
 The walk-through demonstrates Evidentia's end-to-end coverage of
 the SI's typical day-to-day in 8 steps. Each step has expected
@@ -112,7 +129,10 @@ exercises.
 NIST 800-53 **Rev 5** is current as of mid-2026; **Rev 6** is
 still in NIST's IPD/FPD pipeline (not bundled). FedRAMP Rev 5
 baselines are the operative target for new authorizations and
-the Sept 30 2026 RFC-0024 machine-readable deadline.
+the **Nov 1 2027 RFC-0024 machine-readable deadline for Class D /
+High-impact CSPs** per NOTICE-0009 March 25 2026 (the original
+Sept 30 2026 program-wide deadline was superseded + scope was
+narrowed; Classes A/B/C only need semi-structured text-based data).
 
 ## Step 2 — Run CONMON cycle check
 
@@ -332,8 +352,12 @@ Detection Source, POA&M Items Open, Original Detection Date,
 Risk Adjustment, Deviation Request, etc.) that Evidentia's
 OSCAL emit preserves via OSCAL's prop+annotation mechanism. The
 v3.0 template's MS Excel form remains the FedRAMP PMO ingest
-channel until the RFC-0024 full deadline (Sept 30 2027); OSCAL
-1.1.2 emit interoperates with both.
+channel; FedRAMP CR26 + RFC-0024 (Class D / High-impact: Nov 1
+2027 initial-compliance; Sept 30 2027 full final) transitions the
+PMO to machine-readable JSON. OSCAL 1.1.2 emit interoperates with
+both. (Note: Evidentia is on OSCAL 1.1.2; the upstream
+compliance-trestle library moved to OSCAL 1.2.1 in April 2026 —
+v0.9.6 upgrade target.)
 
 ## What this walk-through validates
 
@@ -372,8 +396,11 @@ addressed:
   `--state-file` for `conmon check` (which actually uses
   `--last-completed-file`). Fixed in v0.9.5.
 - **No FedRAMP 20x / RFC-0024 framing**: the v0.9.4 doc didn't
-  acknowledge the Sept 30 2026 machine-readable deadline. v0.9.5
-  added Step 8 (OSCAL POA&M emit) + RFC-0024 context.
+  acknowledge the machine-readable deadline. v0.9.5 added Step 8
+  (OSCAL POA&M emit) + RFC-0024 context. (Note: the RFC-0024
+  deadline moved from Sept 30 2026 to Nov 1 2027 + scope narrowed
+  to Class D / High-impact per NOTICE-0009 March 25 2026 —
+  v0.9.5 Step 5.A refresh corrected the date references.)
 - **CA-7-as-monthly-task framing**: clarified CA-7 is the policy
   umbrella, not an operational monthly check.
 - **Health score conflation**: the 0.857 metric is internal
