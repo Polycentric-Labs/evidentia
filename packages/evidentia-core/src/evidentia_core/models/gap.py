@@ -184,6 +184,35 @@ class Milestone(EvidentiaModel):
             "on every persist call."
         ),
     )
+    # ── Collaboration primitives (v0.9.5 P3.1) ───────────────────────
+    # All Optional + backward-compat with v0.9.4-shipped milestones
+    # (deserializing a v0.9.4 milestone JSON / OSCAL POA&M emit with
+    # no owner/reviewer fields populates them as None).
+    owner: str | None = Field(
+        default=None,
+        max_length=256,
+        description=(
+            "v0.9.5 P3.1: optional owner identifier — the person or "
+            "team responsible for driving this milestone to closure. "
+            "Free-form string; conventions vary (email, Slack handle, "
+            "Jira username, AD group name). The CLI ``poam list "
+            "--owner X`` + REST ``GET /api/poam?owner=X`` filters on "
+            "exact-match equality. Federal-SI deployments typically "
+            "use the same identifier as the FedRAMP POA&M Template "
+            "'Point of Contact' column."
+        ),
+    )
+    reviewer: str | None = Field(
+        default=None,
+        max_length=256,
+        description=(
+            "v0.9.5 P3.1: optional reviewer identifier — the person "
+            "or team responsible for validating that the milestone is "
+            "genuinely closed before the status transitions to "
+            "``VERIFIED``. Separate from ``owner`` so the two-eyes "
+            "principle is enforceable at the data-model layer."
+        ),
+    )
 
 
 class ControlGap(EvidentiaModel):

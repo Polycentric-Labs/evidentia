@@ -105,6 +105,7 @@ def create_app(
     cors_origins: list[str] | None = None,
     security_headers: bool | None = None,
     auth_provider: AuthProvider | None = None,
+    trust_proxy_headers: bool | None = None,
 ) -> FastAPI:
     """Build and return a FastAPI application.
 
@@ -137,6 +138,25 @@ def create_app(
         UNAUTHENTICATED_PATHS allowlist. Default ``None`` matches
         v0.8.0 behavior (no auth gating). Closes v0.8.0 review
         F-V08-S3 ``/api/metrics`` MEDIUM finding when populated.
+    trust_proxy_headers
+        v0.9.5 P1.6: when True, auto-wires uvicorn's
+        :class:`ProxyHeadersMiddleware` so ``X-Forwarded-For`` is
+        honored when determining the client IP. Use when Evidentia
+        sits behind a reverse proxy / ingress controller that
+        terminates TLS and forwards the client IP via the standard
+        ``X-Forwarded-*`` headers (NGINX, Traefik, Envoy, AWS ALB,
+        GCP HTTPS LB, Cloudflare). When None (default), reads the
+        ``EVIDENTIA_TRUST_PROXY_HEADERS`` env var (``"1"`` → on; any
+        other value → off). Default off MUST be honored when there
+        is no proxy in front, because honoring ``X-Forwarded-For``
+        in that scenario lets clients spoof their IP for rate-limit
+        bypass + audit-log evasion. Closes the v0.9.4 docstring
+        deferral noted in ``rate_limit.py``.
+
+        ``forwarded_allow_ips``: trusted as ``"*"`` when enabled;
+        operators wanting tighter control should configure their
+        proxy to strip + re-add ``X-Forwarded-For`` so the Evidentia
+        process only sees trusted values.
     """
     if offline:
         from evidentia_core.network_guard import set_offline
@@ -147,6 +167,33 @@ def create_app(
         security_headers = (
             os.environ.get("EVIDENTIA_API_SECURITY_HEADERS") == "1"
         )
+
+    if trust_proxy_headers is None:
+        trust_proxy_headers = (
+            os.environ.get("EVIDENTIA_TRUST_PROXY_HEADERS") == "1"
+        )
+
+    # v0.9.5 P3.3: optional RBAC policy. When
+    # EVIDENTIA_RBAC_POLICY_FILE is set, load the policy at app-
+    # construction time and stash on app.state.rbac_policy so the
+    # require_role() dependency can resolve it. When unset, the
+    # default permissive policy (everyone=admin) preserves v0.9.4
+    # backward-compat.
+    from evidentia_core.rbac import DEFAULT_POLICY, load_policy_from_file
+
+    rbac_policy = DEFAULT_POLICY
+    rbac_policy_file_env = os.environ.get(
+        "EVIDENTIA_RBAC_POLICY_FILE", ""
+    ).strip()
+    if rbac_policy_file_env:
+        try:
+            rbac_policy = load_policy_from_file(Path(rbac_policy_file_env))
+        except (FileNotFoundError, ValueError) as exc:
+            logger.error(
+                "RBAC policy load failed (%s); falling back to default "
+                "permissive policy",
+                exc,
+            )
 
     app = FastAPI(
         title="Evidentia API",
@@ -231,12 +278,42 @@ def create_app(
 
     app.add_middleware(RateLimitMiddleware)
 
+    # v0.9.5 P1.6: auto-wire uvicorn's ProxyHeadersMiddleware so
+    # rate-limit + audit-log identification use the real client IP
+    # when behind a reverse proxy. MUST be added AFTER the rate-
+    # limit middleware (Starlette runs middleware in reverse-add
+    # order, so this becomes the OUTER ring and runs FIRST on the
+    # request path — replacing scope["client"] with the forwarded
+    # IP before any downstream middleware reads it).
+    #
+    # Default off because honoring X-Forwarded-For without a proxy
+    # in front lets clients spoof their IP. Operators opt in via
+    # ``trust_proxy_headers=True`` (programmatic) or
+    # ``EVIDENTIA_TRUST_PROXY_HEADERS=1`` (env-var).
+    #
+    # Closes the v0.9.4 docstring deferral noted in
+    # ``rate_limit.py`` module docstring. Reference: uvicorn
+    # implementation honors X-Forwarded-For + X-Forwarded-Proto +
+    # X-Forwarded-Host. `forwarded_allow_ips="*"` trusts ANY
+    # upstream — operators wanting tighter control should
+    # configure their proxy to strip + re-add the headers so the
+    # Evidentia process only sees trusted values, or set the env
+    # var only in proxy-fronted deployments.
+    if trust_proxy_headers:
+        from uvicorn.middleware.proxy_headers import (
+            ProxyHeadersMiddleware,
+        )
+
+        app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
+
     # Attach flags to app state so every router dep can consult them.
     # NOTE: app.state.auth_provider was set above (pre-FastAPI-init
     # path) so the dispatch path is consistent during cold start.
     app.state.offline = offline
     app.state.dev_mode = dev_mode
     app.state.security_headers = security_headers
+    app.state.trust_proxy_headers = trust_proxy_headers
+    app.state.rbac_policy = rbac_policy
 
     # Register routers. Each router is a focused module — see routers/*.py.
     # Imports are deferred so module-load errors in one router don't take

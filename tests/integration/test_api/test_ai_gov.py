@@ -230,6 +230,41 @@ class TestIdempotency:
         assert second.status_code == 200
         assert first.json()["system_id"] != second.json()["system_id"]
 
+    def test_register_replay_after_delete_returns_null_entry(
+        self, api_client: TestClient
+    ) -> None:
+        """v0.9.5 F-V94-Q2 regression test: idempotency replay after
+        the target system_id has been deleted returns the original
+        ``system_id`` with ``entry: null`` (not a 500, not a re-
+        create). Documents the "same key = same result, even after
+        backing entry deletion" guarantee from the docstring."""
+        # First register with idempotency key.
+        first = api_client.post(
+            "/api/ai-gov/register",
+            json=self._SAMPLE_BODY,
+            headers={"X-Idempotency-Key": "replay-after-delete-key"},
+        )
+        assert first.status_code == 200
+        system_id = first.json()["system_id"]
+        assert first.json()["entry"] is not None
+
+        # Delete the target.
+        del_resp = api_client.delete(f"/api/ai-gov/systems/{system_id}")
+        assert del_resp.status_code == 200
+
+        # Replay with the same key + same body.
+        replay = api_client.post(
+            "/api/ai-gov/register",
+            json=self._SAMPLE_BODY,
+            headers={"X-Idempotency-Key": "replay-after-delete-key"},
+        )
+        # Returns 200 with the prior system_id, entry: null, idempotent_replay: True.
+        assert replay.status_code == 200
+        replay_body = replay.json()
+        assert replay_body["system_id"] == system_id
+        assert replay_body["entry"] is None
+        assert replay_body.get("idempotent_replay") is True
+
 
 class TestRateLimit:
     """v0.9.4 P1.3 — token-bucket rate limit on POST /classify +

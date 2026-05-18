@@ -691,6 +691,33 @@ def conmon_watch(
             "path>. Default off."
         ),
     ),
+    # ── Daemon history (v0.9.5 P2.3) ──────────────────────────────
+    history_file: Path | None = typer.Option(
+        None,
+        "--history-file",
+        file_okay=True,
+        dir_okay=False,
+        help=(
+            "JSONL rolling-history path the daemon appends to after "
+            "each poll cycle. Pairs with GET /api/conmon/daemon-"
+            "history for operator flap-detection visibility. "
+            "Configure the server with EVIDENTIA_CONMON_DAEMON_"
+            "HISTORY_FILE=<same path>. Trimmed to --history-max-"
+            "entries entries on each append. Default off."
+        ),
+    ),
+    history_max_entries: int = typer.Option(
+        100,
+        "--history-max-entries",
+        min=1,
+        max=10000,
+        help=(
+            "Cap on retained history entries. 100 × 1-hour poll "
+            "interval = ~4 days of flap-detection visibility. "
+            "Operators with shorter intervals or wanting longer "
+            "history can raise this."
+        ),
+    ),
 ) -> None:
     """Long-running poll daemon for CONMON cycle attention-state.
 
@@ -712,6 +739,19 @@ def conmon_watch(
     shutdown event. The daemon finishes the current poll cycle,
     fires CONMON_DAEMON_STOPPED, and exits 0.
 
+    **SIGINT race window** (v0.9.5 F-V93-S6 documentation): a
+    very narrow window exists between the `_handle_signal`
+    function being installed and the `shutdown.set()` call inside
+    it. If SIGINT arrives BEFORE `signal.signal(SIGINT, ...)`
+    completes its registration on line 770, the default SIGINT
+    handler runs (KeyboardInterrupt). In practice the gap is
+    sub-microsecond — operators piping a signal that fast must
+    expect the default behavior; this is the documented limit of
+    Python's signal model. Operators wanting deterministic
+    shutdown should send a second signal which the installed
+    handler then catches, OR wrap the daemon in a service
+    manager (systemd, launchd) that handles the race upstream.
+
     Operator deployment guidance in
     ``docs/conmon-daemon-deployment.md``.
     """
@@ -720,6 +760,8 @@ def conmon_watch(
         poll_interval_seconds=poll_interval_seconds,
         window_days=window_days,
         status_file=status_file,
+        history_file=history_file,
+        history_max_entries=history_max_entries,
     )
 
     # Construct alerting channels. Errors here surface as

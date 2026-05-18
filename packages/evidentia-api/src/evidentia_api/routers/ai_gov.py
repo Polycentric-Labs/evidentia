@@ -17,7 +17,6 @@ AuthProviderMiddleware).
 
 from __future__ import annotations
 
-import contextlib
 import hashlib
 import json
 from datetime import UTC, datetime, timedelta
@@ -38,7 +37,7 @@ from evidentia_core.ai_governance.registry_store import (
     get_ai_registry_dir,
 )
 from evidentia_core.audit import EventAction, EventOutcome, get_logger
-from evidentia_core.security import FileLock
+from evidentia_core.security import FileLock, atomic_write_text
 from fastapi import APIRouter, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
@@ -175,23 +174,13 @@ def _save_idempotency_store(store: dict[str, dict[str, str]]) -> None:
     """Atomically write the idempotency store, pruning TTL + cap first."""
     pruned = _prune_idempotency_store(store)
     path = _idempotency_store_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    try:
-        tmp.write_text(
-            json.dumps(pruned, indent=2, sort_keys=True), encoding="utf-8"
-        )
-        tmp.replace(path)
-    except OSError:
-        # v0.9.4 Step 5.A F-V94-Q3 partial closure: clean up the
-        # orphaned .tmp on write failure so disk-full / permission
-        # errors don't accumulate sidecar artifacts. Note: the
-        # shared atomic_write_text helper is a v0.9.5 follow-up;
-        # this is the inline mitigation for the idempotency-store
-        # call site specifically.
-        with contextlib.suppress(OSError):
-            tmp.unlink(missing_ok=True)
-        raise
+    # v0.9.5 P1.5: now uses the shared atomic_write_text helper
+    # (previously inline at this call site per v0.9.4 Step 5.A
+    # F-V94-Q3 closure). Helper centralizes .tmp cleanup behavior.
+    atomic_write_text(
+        path,
+        json.dumps(pruned, indent=2, sort_keys=True),
+    )
 
 
 # ── classify ──────────────────────────────────────────────────────
@@ -245,6 +234,19 @@ async def ai_gov_register(
     creation). Replay with the same key + different body returns
     ``409 Conflict``. Closes v0.9.3 F-V93-S10 LOW (no duplicate-
     name detection).
+
+    **Replay-after-target-deleted semantics** (v0.9.5 F-V94-Q2
+    documentation): if the original ``system_id`` has been deleted
+    from the registry between the original request and a replay,
+    the replay still returns the original ``system_id`` plus
+    ``entry: null`` (the prior entry no longer exists). Operators
+    treating the absence of ``entry`` as authoritative will detect
+    the deletion; operators treating the response as "request
+    accepted, ok to retire idempotency-key" will continue using
+    the same key. We deliberately do NOT auto-create a new entry
+    on this code path — that would mask the deletion + violate the
+    "same key = same result" guarantee. Test coverage:
+    ``test_register_replay_after_delete_returns_null_entry``.
     """
     body_hash = _hash_request_body(body)
 

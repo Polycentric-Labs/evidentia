@@ -369,6 +369,23 @@ def poam_list(
             f"{', '.join(s.value for s in GapSeverity)}."
         ),
     ),
+    owner: str | None = typer.Option(
+        None,
+        "--owner",
+        help=(
+            "v0.9.5 P3.1: filter to POA&M items where at least one "
+            "milestone's `owner` matches (exact-equality). Combine "
+            "with --severity for owner-scoped triage views."
+        ),
+    ),
+    reviewer: str | None = typer.Option(
+        None,
+        "--reviewer",
+        help=(
+            "v0.9.5 P3.1: filter to POA&M items where at least one "
+            "milestone's `reviewer` matches (exact-equality)."
+        ),
+    ),
     output_json: bool = typer.Option(
         False,
         "--json",
@@ -398,6 +415,18 @@ def poam_list(
             )
             raise typer.Exit(code=1)
         poams = [p for p in poams if p.gap_severity in wanted]
+
+    # v0.9.5 P3.1: owner / reviewer filtering across milestone collection
+    if owner is not None:
+        poams = [
+            p for p in poams
+            if any(m.owner == owner for m in p.poam_milestones)
+        ]
+    if reviewer is not None:
+        poams = [
+            p for p in poams
+            if any(m.reviewer == reviewer for m in p.poam_milestones)
+        ]
 
     if output_json:
         typer.echo(

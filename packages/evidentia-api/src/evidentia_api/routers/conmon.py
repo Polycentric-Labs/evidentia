@@ -19,6 +19,10 @@ Endpoints:
     scoring from a slug→last-completed payload (v0.9.3 P1.3)
   - ``GET    /api/conmon/daemon-status`` — daemon health-check
     snapshot read from a sidecar JSON file (v0.9.4 P2.1)
+  - ``GET    /api/conmon/daemon-history`` — last N status
+    snapshots from a rolling JSONL history file. Lets operators
+    detect flapping daemons that the point-in-time status
+    sidecar can't reveal (v0.9.5 P2.3)
 
 Auth posture: open (matches v0.9.0 POA&M router; transport auth
 applied at the app layer via AuthProviderMiddleware).
@@ -40,7 +44,10 @@ from evidentia_core.conmon import (
     list_cadences,
     next_due,
 )
-from evidentia_core.conmon.daemon import read_daemon_status
+from evidentia_core.conmon.daemon import (
+    read_daemon_history,
+    read_daemon_status,
+)
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
@@ -346,3 +353,92 @@ async def conmon_daemon_status_endpoint() -> dict[str, Any]:
         },
     )
     return payload
+
+
+# ── daemon-history (v0.9.5 P2.3) ──────────────────────────────────
+
+
+@router.get("/conmon/daemon-history")
+async def conmon_daemon_history_endpoint(
+    limit: int = Query(
+        default=50,
+        ge=1,
+        le=1000,
+        description=(
+            "Maximum number of recent snapshots to return. Default "
+            "50 covers ~2 days at the 1-hour default poll interval. "
+            "Capped at 1000."
+        ),
+    ),
+) -> dict[str, Any]:
+    """Return recent daemon-status snapshots from the rolling history.
+
+    Returns up to ``limit`` most recent entries from the JSONL
+    history file the daemon appends to after each poll. Lets
+    operators detect flapping daemons that the point-in-time
+    status sidecar can't reveal (rapid success → failure → success
+    oscillation).
+
+    Reads ``EVIDENTIA_CONMON_DAEMON_HISTORY_FILE`` env var for the
+    file path. Pair with ``--history-file`` on the daemon side so
+    both processes share the path.
+
+    Returns:
+        200 with ``{"snapshots": [...]}`` (chronological, oldest
+        first within the limited window) when the history file
+        exists. Empty list if the file exists but no poll cycles
+        have completed yet.
+
+        404 when the env var is unset OR the file doesn't exist
+        (daemon not yet started, history-file not configured).
+
+    Audit emit: :attr:`EventAction.CONMON_DAEMON_STATUS_QUERIED`
+    with ``query_type=history`` to differentiate from point-in-
+    time snapshot queries.
+    """
+    history_file_env = os.environ.get(
+        "EVIDENTIA_CONMON_DAEMON_HISTORY_FILE", ""
+    ).strip()
+    if not history_file_env:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "No daemon-history file configured. Set "
+                "EVIDENTIA_CONMON_DAEMON_HISTORY_FILE on the server + "
+                "pass --history-file=<same path> to evidentia conmon "
+                "watch on the daemon side."
+            ),
+        )
+
+    history_file = Path(history_file_env)
+    if not history_file.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"Daemon history not available: {history_file} "
+                "missing. Daemon may not have completed its first "
+                "poll cycle yet."
+            ),
+        )
+
+    snapshots = read_daemon_history(history_file, limit=limit)
+
+    _log.info(
+        action=EventAction.CONMON_DAEMON_STATUS_QUERIED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"Daemon history queried "
+            f"(returned={len(snapshots)} snapshots, limit={limit})"
+        ),
+        evidentia={
+            "history_file": str(history_file),
+            "query_type": "history",
+            "returned_count": len(snapshots),
+            "limit": limit,
+        },
+    )
+    return {
+        "snapshots": snapshots,
+        "count": len(snapshots),
+        "limit": limit,
+    }

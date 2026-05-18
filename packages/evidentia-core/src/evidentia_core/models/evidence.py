@@ -144,6 +144,107 @@ class EvidenceArtifact(EvidentiaModel):
         default_factory=dict,
         description="Collector-specific metadata (region, account ID, etc.)",
     )
+    # ── Append-only versioning (v0.9.5 P3.2) ─────────────────────────
+    # All three fields Optional + backward-compat with v0.7.x → v0.9.4
+    # artifacts (deserializing legacy JSON populates them as
+    # ``version=1`` + ``lineage_id=None`` + ``predecessor_id=None``).
+    # The lineage chain semantics:
+    #
+    # - **First version of an artifact**: ``version=1``,
+    #   ``lineage_id=self.id`` OR ``None`` (both equivalent — the
+    #   artifact IS the root). ``predecessor_id=None``.
+    # - **Subsequent versions**: NEW ``id`` (fresh UUID), same
+    #   ``lineage_id`` as the root, ``predecessor_id=`` the prior
+    #   version's ``id``, ``version=N+1``.
+    #
+    # The :func:`new_version` factory helper constructs N+1 from N
+    # in one call. Stores should treat lineage-chained artifacts as
+    # IMMUTABLE: once a version is persisted, its content cannot
+    # change. Edits create N+1; deletes mark the lineage tombstoned
+    # via a follow-up sentinel artifact (deferred to v0.9.6
+    # store-side enforcement). For v0.9.5, the fields are present
+    # on the model + a helper ships; the actual append-only
+    # store-side enforcement (WORM integration) lands in v0.9.6.
+    version: int = Field(
+        default=1,
+        ge=1,
+        description=(
+            "v0.9.5 P3.2: sequence number within the artifact's "
+            "lineage chain. First version = 1; each subsequent edit "
+            "creates a new artifact with version=N+1. Backward-"
+            "compat default of 1 means v0.7.x → v0.9.4 artifacts "
+            "load as version 1 of their own (single-element) chain."
+        ),
+    )
+    lineage_id: str | None = Field(
+        default=None,
+        description=(
+            "v0.9.5 P3.2: UUID identifying the lineage chain across "
+            "versions. When ``None`` (default), the artifact IS the "
+            "lineage root + the ``id`` field serves as the implicit "
+            "lineage_id. Set explicitly on versions > 1 to point at "
+            "the chain root."
+        ),
+    )
+    predecessor_id: str | None = Field(
+        default=None,
+        description=(
+            "v0.9.5 P3.2: ``id`` of the prior version in the lineage "
+            "chain. ``None`` for the lineage root (version 1). "
+            "Allows ``evidentia evidence show <lineage_id> --version "
+            "N`` to walk the chain to the target version."
+        ),
+    )
+
+    @property
+    def effective_lineage_id(self) -> str:
+        """Return the canonical lineage identifier.
+
+        v0.9.5 P3.2: when ``lineage_id`` is explicitly set, it's the
+        canonical chain ID. Otherwise the artifact's own ``id`` IS
+        the lineage root + serves as the implicit lineage_id.
+        Centralizes the "chain root resolution" logic so callers
+        don't repeat the ``lineage_id or id`` ternary at every use.
+        """
+        return self.lineage_id if self.lineage_id is not None else self.id
+
+    def new_version(self, **field_updates: object) -> EvidenceArtifact:
+        """Construct the next version in this artifact's lineage chain.
+
+        v0.9.5 P3.2 helper. Returns a NEW :class:`EvidenceArtifact`
+        with:
+
+        - ``version = self.version + 1``
+        - ``lineage_id = self.effective_lineage_id``
+        - ``predecessor_id = self.id``
+        - ``id`` = fresh UUID (always a new artifact)
+        - All other fields copy from ``self``, then ``field_updates``
+          override (validated through Pydantic's ``model_validate``
+          so field validators run on the new version — matches the
+          v0.9.5 F-V94-S12 model-copy-validator pattern).
+
+        Example::
+
+            v1 = EvidenceArtifact(...)
+            store.save(v1)
+            v2 = v1.new_version(
+                content={"updated": "payload"},
+                collected_at=utc_now(),
+            )
+            store.save(v2)  # store enforces append-only: cannot overwrite v1
+        """
+        base = self.model_dump(mode="python")
+        # Force a fresh UUID for the new version — DO NOT carry the
+        # prior ``id`` over.
+        base.pop("id", None)
+        base.update(field_updates)
+        base["version"] = self.version + 1
+        base["lineage_id"] = self.effective_lineage_id
+        base["predecessor_id"] = self.id
+        # collected_at default-refreshes via the default_factory; the
+        # caller can override via field_updates if they want to
+        # preserve the original collection time.
+        return type(self).model_validate(base)
 
     def compute_hash(self) -> str:
         """Compute SHA-256 hash of content for tamper detection."""

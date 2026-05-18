@@ -19,6 +19,24 @@ Both backends do *advisory* locking — cooperating callers respect
 the lock; rogue processes ignoring it can still write. This matches
 PostgreSQL's ``pg_lock_file`` + git's ``index.lock`` conventions.
 
+**Scope of protection** (v0.9.5 F-V94-S2 doc-clarification):
+
+- POSIX ``fcntl.flock`` is a **per-fd** advisory lock, NOT per-
+  process. Two threads in the same process opening the lock file
+  via separate ``open()`` calls each acquire their own fd; the
+  second ``flock()`` call BLOCKS on the first, providing intra-
+  process serialization at the cost of an extra syscall. (Linux
+  ``flock(2)`` documents this; macOS BSD ``flock`` matches.)
+- Windows ``msvcrt.locking`` operates on (fd, byte-range) pairs.
+  Two fds in the same process acquiring the same range on the
+  same file collide as expected.
+
+In both cases, two CALL SITES in the same process sharing the
+same ``FileLock`` instance must serialize externally — the lock
+is a per-fd primitive, not a re-entrant mutex. If you need re-
+entrant in-process serialization, wrap ``FileLock`` in a
+``threading.Lock()`` at the call-site layer.
+
 The lock file is created if missing. It is NOT removed on release
 (deliberate: removing it races with the next acquirer). Operators
 wanting periodic cleanup should rely on ``rm /path/*.lock`` from
@@ -97,19 +115,32 @@ class FileLock:
         # Append-binary mode: don't truncate; create if missing.
         fd: IO[bytes] = self._path.open("a+b")
         deadline = time.monotonic() + self._timeout
-        while True:
-            try:
-                self._acquire(fd)
-                self._fd = fd
-                return self
-            except BlockingIOError:
-                if time.monotonic() >= deadline:
-                    fd.close()
-                    raise FileLockTimeout(
-                        f"could not acquire lock on {self._path} within "
-                        f"{self._timeout}s"
-                    ) from None
-                time.sleep(self._poll_interval)
+        try:
+            while True:
+                try:
+                    self._acquire(fd)
+                    self._fd = fd
+                    return self
+                except BlockingIOError:
+                    if time.monotonic() >= deadline:
+                        raise FileLockTimeout(
+                            f"could not acquire lock on {self._path} "
+                            f"within {self._timeout}s"
+                        ) from None
+                    time.sleep(self._poll_interval)
+        except BaseException:
+            # v0.9.5 F-V94-S1 closure (CWE-404): close the fd on
+            # ANY exception path during acquisition. The v0.9.4
+            # implementation only closed on the BlockingIOError →
+            # FileLockTimeout transition; if ``flock()`` raised
+            # something else (POSIX EINTR on signal, or
+            # KeyboardInterrupt mid-poll, or an OSError outside
+            # the BlockingIOError remap), the fd leaked. Catching
+            # BaseException ensures cleanup on SystemExit /
+            # KeyboardInterrupt as well — the original exception
+            # propagates after the close.
+            fd.close()
+            raise
 
     def __exit__(
         self,

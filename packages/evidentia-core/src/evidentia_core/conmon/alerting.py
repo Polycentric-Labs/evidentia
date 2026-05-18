@@ -24,7 +24,6 @@ matching the Protocol signature.
 
 from __future__ import annotations
 
-import contextlib
 import json
 import os
 from dataclasses import dataclass, field
@@ -34,6 +33,7 @@ from typing import Protocol
 
 from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.conmon.daemon import CycleHandler, CycleObservation
+from evidentia_core.security.atomic_write import atomic_write_text
 
 _log = get_logger("evidentia_core.conmon.alerting")
 
@@ -156,6 +156,20 @@ class AlertDeduper:
     # kw_only field support.
     use_lock: bool = field(default=False, kw_only=True)
     lock_timeout_seconds: float = field(default=5.0, kw_only=True)
+    # v0.9.5 F-V93-Q4 closure: cache the parsed state dict + the
+    # underlying file's mtime_ns. On the hot path
+    # (should_suppress + mark_dispatched fire ~once per cycle, per
+    # cadence, per channel; a 7-cadence/3-channel daemon = 21
+    # _load_state calls per poll), re-reading + re-parsing the
+    # JSON every call is wasteful. The cache returns the prior
+    # dict iff the file's mtime hasn't changed. The cache is
+    # invalidated on file-not-found OR on mtime advance. NOT
+    # frozen at first load — a subprocess editing the state file
+    # advances mtime + we re-read.
+    _cache_mtime_ns: int | None = field(default=None, init=False, repr=False)
+    _cache_state: dict[str, datetime] | None = field(
+        default=None, init=False, repr=False
+    )
 
     @classmethod
     def from_hours(
@@ -177,7 +191,23 @@ class AlertDeduper:
 
     def _load_state(self) -> dict[str, datetime]:
         if not self.state_file.is_file():
+            # File missing: invalidate any cached state + return empty.
+            self._cache_mtime_ns = None
+            self._cache_state = None
             return {}
+        # v0.9.5 F-V93-Q4: cache hit when mtime unchanged.
+        try:
+            mtime_ns = self.state_file.stat().st_mtime_ns
+        except OSError:
+            mtime_ns = None
+        if (
+            mtime_ns is not None
+            and self._cache_mtime_ns == mtime_ns
+            and self._cache_state is not None
+        ):
+            # Cache valid: return a copy so callers mutating the dict
+            # don't corrupt the cache.
+            return dict(self._cache_state)
         try:
             raw = json.loads(self.state_file.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
@@ -225,23 +255,35 @@ class AlertDeduper:
                 out[key] = datetime.fromisoformat(ts_str)
             except ValueError:
                 continue
+        # v0.9.5 F-V93-Q4: prime the cache. Subsequent calls return
+        # this dict as long as the mtime is unchanged.
+        if mtime_ns is not None:
+            self._cache_mtime_ns = mtime_ns
+            self._cache_state = dict(out)
         return out
 
     def _save_state(self, state: dict[str, datetime]) -> None:
-        self.state_file.parent.mkdir(parents=True, exist_ok=True)
-        tmp = self.state_file.with_suffix(self.state_file.suffix + ".tmp")
+        # v0.9.5 P1.5: delegates atomic-write + .tmp cleanup to the
+        # shared helper (see daemon.write_daemon_status for the same
+        # migration). Functionally identical to the v0.9.4 inline
+        # pattern.
         serializable = {k: v.isoformat() for k, v in state.items()}
+        atomic_write_text(
+            self.state_file,
+            json.dumps(serializable, indent=2, sort_keys=True),
+        )
+        # v0.9.5 F-V93-Q4: refresh cache from the just-written state.
+        # We could let the next _load_state re-stat + re-parse, but
+        # priming directly avoids a redundant disk read after every
+        # mark_dispatched.
         try:
-            tmp.write_text(
-                json.dumps(serializable, indent=2, sort_keys=True),
-                encoding="utf-8",
-            )
-            tmp.replace(self.state_file)
+            self._cache_mtime_ns = self.state_file.stat().st_mtime_ns
+            self._cache_state = dict(state)
         except OSError:
-            # v0.9.4 Step 5.A F-V94-Q3 closure: clean up orphaned .tmp.
-            with contextlib.suppress(OSError):
-                tmp.unlink(missing_ok=True)
-            raise
+            # If we can't stat the file we just wrote, drop the cache
+            # to force a fresh read next time.
+            self._cache_mtime_ns = None
+            self._cache_state = None
 
     @staticmethod
     def _key(obs: CycleObservation) -> str:

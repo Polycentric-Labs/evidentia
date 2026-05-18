@@ -239,3 +239,77 @@ class TestFileLockExceptionPath:
         # Lock must be released — next acquire should succeed.
         with FileLock(lock_path, timeout_seconds=1.0):
             pass
+
+
+class TestFileLockSubprocessPopen:
+    """v0.9.5 F-V94-Q10 closure: cross-process FileLock validation
+    via subprocess.Popen (a fresh Python interpreter, not a fork
+    or multiprocessing-spawn worker). Models the actual production
+    contention case: two separate CLI invocations or two separate
+    daemon-supervisor restarts contending for the same lock.
+
+    The multiprocessing-based test (above) is a useful smoke test
+    but shares process state via the parent's import system; the
+    subprocess test exercises the fully-independent-interpreter
+    path which is what operators actually see in deployment.
+    """
+
+    _HOLDER_SCRIPT = (
+        "import sys, time\n"
+        "from pathlib import Path\n"
+        "from evidentia_core.security import FileLock\n"
+        "lock_path, signal_path, hold_seconds = sys.argv[1:4]\n"
+        "with FileLock(Path(lock_path), timeout_seconds=10.0):\n"
+        "    Path(signal_path).touch()\n"
+        "    time.sleep(float(hold_seconds))\n"
+    )
+
+    def test_subprocess_holder_blocks_in_process_acquirer(
+        self, tmp_path: Path
+    ) -> None:
+        """Launch a subprocess that holds the lock for 3s. The in-
+        process acquirer with a 0.5s timeout should raise
+        FileLockTimeout. Validates that the lock primitive is
+        honored across separate Python interpreters (i.e., across
+        true OS-level processes — not just multiprocessing
+        workers which can share state via fork)."""
+        import subprocess
+
+        lock_path = tmp_path / "subprocess.lock"
+        acquired_signal = tmp_path / "subprocess_acquired.signal"
+
+        proc = subprocess.Popen(
+            [
+                sys.executable,
+                "-c",
+                self._HOLDER_SCRIPT,
+                str(lock_path),
+                str(acquired_signal),
+                "3.0",
+            ],
+        )
+        try:
+            # Wait for the subprocess to signal it has the lock.
+            deadline = time.monotonic() + 10.0
+            while not acquired_signal.exists():
+                if time.monotonic() >= deadline:
+                    pytest.fail(
+                        "subprocess never acquired the lock — startup "
+                        "issue or import failure in the child"
+                    )
+                time.sleep(0.05)
+
+            # In-process acquire with short timeout should fail.
+            t0 = time.monotonic()
+            with (
+                pytest.raises(FileLockTimeout, match="could not acquire"),
+                FileLock(lock_path, timeout_seconds=0.5),
+            ):
+                pass
+            elapsed = time.monotonic() - t0
+            assert 0.4 <= elapsed <= 1.5, (
+                f"timeout was {elapsed}s; expected ~0.5s"
+            )
+        finally:
+            proc.wait(timeout=8.0)
+            assert proc.returncode == 0

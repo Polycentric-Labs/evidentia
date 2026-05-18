@@ -14,6 +14,27 @@ Path-traversal protection + UUID-shape validation match
 poam_store exactly. Single-writer per record is the documented
 mode; multi-writer deployments must serialize at the application
 layer.
+
+**Trust boundary** (v0.9.5 F-V93-S5 documentation): the directory
+named by ``EVIDENTIA_AI_REGISTRY_DIR`` is a **trusted boundary** —
+files within are treated as authoritative entries Evidentia
+itself wrote. Operators MUST NOT point this env var at a directory
+where untrusted writers can drop files (e.g., a world-writable
+``/tmp`` subdir, a shared NFS export with promiscuous ACLs).
+Untrusted JSON files in this directory would be loaded by
+:meth:`AIRegistryStore.load_all` as if they were valid registry
+entries, allowing an attacker who can write to the directory to
+forge registry membership. Mitigations baked in:
+
+- Filenames MUST match the canonical UUID shape (rejecting
+  ``../../etc/passwd`` style payloads).
+- Pydantic validation rejects schema-mismatched JSON at load time
+  (errors are logged + the file is skipped rather than treated as
+  authoritative).
+
+Operator guidance: deploy with ``chmod 0700`` on the registry
+directory + a dedicated service user; treat the directory like
+the database it represents.
 """
 
 from __future__ import annotations

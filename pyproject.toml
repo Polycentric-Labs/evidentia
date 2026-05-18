@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-workspace"
-version = "0.9.4"
+version = "0.9.5"
 requires-python = ">=3.12"
 description = "Workspace root for the Evidentia GRC tool monorepo"
 
@@ -84,6 +84,23 @@ dev = [
     # math. Sentence-transformers itself is NOT in dev deps —
     # tests mock it to validate the missing-extra failure mode.
     "numpy>=1.26",
+    # v0.9.5 P1.1: random test ordering surfaces test-isolation
+    # bugs that the default alphabetical ordering masks. Pinned
+    # opt-out per test invocation: ``pytest -p no:randomly``
+    # restores legacy ordering when bisecting a regression. The
+    # daily CI pytest run uses a fresh random seed; PRs use the
+    # seed of the prior main-branch CI run so reviewers can
+    # reproduce the exact ordering that triggered any failure.
+    "pytest-randomly>=3.16",
+    # v0.9.5 P1.2: DAST tools for the Step 4 capability-matrix
+    # DAST sub-step. Tests live under ``tests/dast/``; they're
+    # NOT part of the default pytest run (collected only when
+    # ``--dast`` is passed). schemathesis fuzzes the FastAPI
+    # OpenAPI spec; playwright drives the React UI for end-to-
+    # end probing. Both ride in dev-deps so a fresh dev/CI venv
+    # can run the DAST suite without separate install steps.
+    "schemathesis>=3.39",
+    "playwright>=1.50",
 ]
 
 [tool.uv.sources]

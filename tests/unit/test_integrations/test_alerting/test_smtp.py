@@ -78,7 +78,11 @@ class TestSMTPConfig:
                 username="u",
                 password="p",
                 sender="s",
-                recipients=["r"],
+                # v0.9.5 F-V93-S8: recipients now RFC 5321-validated;
+                # use a real address so this test exercises the
+                # STARTTLS-required branch (not the recipient
+                # validation that runs first).
+                recipients=["alerts@example.com"],
                 use_starttls=False,
             )
 

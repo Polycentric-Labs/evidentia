@@ -70,27 +70,65 @@ class TestTokenConsumption:
 
 
 class TestLRUEviction:
-    def test_lru_eviction_at_max_tracked(self) -> None:
-        """When tracked_client_count exceeds max_tracked, the LRU
-        client is evicted. The evicted client gets a fresh bucket
-        on next check (full burst again)."""
+    def test_lru_eviction_at_max_tracked_after_idle(self) -> None:
+        """v0.9.5 F-V94-S3 closure: eviction is idle-aware. The LRU
+        entry is evicted ONLY when its bucket has had time to refill
+        to the burst capacity (idle_seconds >= refill_to_full).
+        Entries that recently consumed tokens are NOT evictable
+        even when the cap is exceeded — this defeats the IPv6-spray
+        LRU-eviction attack."""
+        # rate=60/min=1/sec, burst=2 → refill-to-full = 2 seconds.
         limiter = TokenBucketRateLimiter(
             rate_per_minute=60, burst=2, max_tracked_clients=3
         )
-        with patch("evidentia_api.rate_limit.time.monotonic", return_value=0.0):
-            # Fill 3 clients, each drains burst.
+        clock = {"now": 0.0}
+        with patch(
+            "evidentia_api.rate_limit.time.monotonic",
+            side_effect=lambda: clock["now"],
+        ):
+            # Fill 3 clients, each drains burst at t=0.
             for client in ("A", "B", "C"):
                 limiter.check(client)
                 limiter.check(client)
-                assert limiter.check(client) is False  # drained
+                assert limiter.check(client) is False
             assert limiter.tracked_client_count == 3
 
-            # 4th client triggers eviction (A is LRU since most-
-            # recently touched is C → B → A).
+            # Advance time past the refill window so A/B/C are
+            # eligible for eviction (their buckets have refilled).
+            clock["now"] = 3.0
+
+            # 4th client at t=3 triggers idle-aware eviction (A
+            # has been idle 3s ≥ refill-to-full 2s).
             limiter.check("D")
             assert limiter.tracked_client_count == 3
-            # A has been evicted → fresh bucket on next check.
-            assert limiter.check("A") is True  # was drained, now fresh
+            # A was evicted → fresh bucket on next check.
+            assert limiter.check("A") is True
+
+    def test_lru_eviction_skipped_under_spray(self) -> None:
+        """v0.9.5 F-V94-S3: the spray-protection guarantee. When all
+        existing entries are active (their buckets haven't had time
+        to refill), a new entry does NOT evict them — transient
+        overage above max_tracked is accepted so the limiter
+        preserves the active clients' rate-limit state."""
+        limiter = TokenBucketRateLimiter(
+            rate_per_minute=60, burst=2, max_tracked_clients=3
+        )
+        with patch(
+            "evidentia_api.rate_limit.time.monotonic", return_value=0.0
+        ):
+            # Fill 3 clients at t=0.
+            for client in ("A", "B", "C"):
+                limiter.check(client)
+            assert limiter.tracked_client_count == 3
+
+            # 4th client at t=0 → no entries are evictable
+            # (idle_seconds=0 < refill-to-full=2). The limiter
+            # accepts the transient overage.
+            limiter.check("attacker-spray-1")
+            assert limiter.tracked_client_count == 4
+
+            # A's state is preserved — not evicted.
+            assert limiter.check("A") is True  # consumes 2nd token
 
 
 class TestReset:

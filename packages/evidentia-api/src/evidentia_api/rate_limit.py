@@ -23,22 +23,29 @@ This caps memory growth from observation-only clients without
 breaking the rate-limit guarantee for active ones.
 
 NOT thread-safe by design — the FastAPI middleware wires this into
-the request handler path which is async-cooperative; the GIL plus
-the short critical sections (dict lookup + arithmetic) keep races
-practically harmless. Operators wanting hard guarantees can wrap
-``check()`` in an asyncio.Lock at the middleware layer.
+the request handler path which is async-cooperative. The reader-
+writer pattern (per-bucket lookup + arithmetic) has no awaits
+between read and write, so the active coroutine cannot be
+preempted mid-check on a single event loop. Hard guarantees under
+multi-event-loop deployments (e.g., Granian, multiple uvicorn
+workers) require an ``asyncio.Lock`` at the middleware layer OR a
+shared Redis-backed limiter. v0.9.4 ships single-event-loop
+deployments; multi-worker is documented in
+``docs/conmon-daemon-deployment.md`` with the
+"share-nothing per worker" caveat.
 
 Threat model note: source-IP is the rate-limit identity. Operators
-behind a reverse proxy MUST configure FastAPI to honor the
-``X-Forwarded-For`` header by wiring Starlette's
-``ProxyHeadersMiddleware`` themselves — otherwise all requests
-appear to come from the proxy itself and share a single bucket.
-``evidentia_api.app`` does NOT currently wire ProxyHeaders
-middleware automatically; operators are responsible for adding it
-to their deployment ASGI stack if they sit behind a reverse proxy.
-A future v0.9.5 ``EVIDENTIA_TRUST_PROXY_HEADERS=1`` env var
-+ auto-wired ProxyHeadersMiddleware integration is tracked as a
-v0.9.5 polish item.
+behind a reverse proxy MUST honor ``X-Forwarded-For`` to identify
+the real client IP — otherwise every request appears to come from
+the proxy itself and shares a single bucket, defeating the limiter.
+
+v0.9.5 P1.6: ``evidentia_api.app.create_app(trust_proxy_headers=
+True)`` (or the equivalent ``EVIDENTIA_TRUST_PROXY_HEADERS=1`` env
+var) auto-wires uvicorn's ``ProxyHeadersMiddleware`` so the rate
+limiter + audit-log middleware see the forwarded IP. Default off
+because honoring the header without a proxy in front lets clients
+spoof their IP for rate-limit bypass + audit-log evasion. Closes
+the v0.9.4 deferral noted in this module's docstring.
 """
 
 from __future__ import annotations
@@ -121,10 +128,22 @@ class TokenBucketRateLimiter:
             # First request from this client: full bucket + refill anchor.
             state = _BucketState(tokens=self._burst, last_refill_monotonic=now)
             self._buckets[client_id] = state
-            # Evict LRU if we exceeded the cap (do this after insert so
-            # the just-inserted entry isn't first to evict).
-            while len(self._buckets) > self._max_tracked:
-                self._buckets.popitem(last=False)
+            # v0.9.5 F-V94-S3 closure (CWE-400): the v0.9.4 LRU
+            # evicted the oldest entry on overflow unconditionally.
+            # An attacker can spray distinct IPv6 source IPs (the
+            # /64 prefix delegates ~18.4 quintillion addresses to
+            # a single client) to evict legitimate active clients
+            # from the bucket, resetting their rate limit to a
+            # fresh burst window. Fix: only evict entries that
+            # have been idle long enough that their bucket is
+            # already fully refilled (idle > burst-refill-time);
+            # newly-active entries with partial buckets are not
+            # candidates for eviction. Under heavy spray the
+            # bucket cap is exceeded transiently, but legitimate
+            # clients keep their state. (The transient overage is
+            # bounded by the spray rate; in steady state the
+            # eviction predicate catches up.)
+            self._evict_idle()
         else:
             # Mark as recently used (move-to-end for LRU ordering).
             self._buckets.move_to_end(client_id)
@@ -144,6 +163,47 @@ class TokenBucketRateLimiter:
     def reset(self) -> None:
         """Discard all bucket state. Intended for tests."""
         self._buckets.clear()
+
+    def _evict_idle(self) -> None:
+        """Evict idle entries to keep ``len(buckets) <= max_tracked``.
+
+        Only entries idle long enough for the bucket to have refilled
+        to its burst capacity are eviction candidates — newly-active
+        clients with partial buckets are preserved. Closes the IPv6-
+        spray LRU-eviction attack noted in v0.9.5 F-V94-S3.
+
+        If the rate is zero (``rate_per_second == 0``), every entry's
+        bucket stays at its initial value and the idle-refill
+        threshold is meaningless; in that mode we still evict the
+        LRU entry to bound memory, accepting that a spray attack
+        could evict legitimate clients (but a zero-rate limiter is
+        an operator config error anyway — rate 0 means "no requests
+        allowed for anyone", which would already be a deployment
+        misuse).
+        """
+        if len(self._buckets) <= self._max_tracked:
+            return
+        # Refill-to-full time = (burst tokens) / (rate per second).
+        # Below this idle threshold, the bucket is still refilling
+        # and the entry represents an active client.
+        if self._rate_per_second <= 0:
+            # Zero-rate edge case: just LRU-evict to keep the cap.
+            while len(self._buckets) > self._max_tracked:
+                self._buckets.popitem(last=False)
+            return
+        refill_to_full = self._burst / self._rate_per_second
+        now = time.monotonic()
+        # Walk from LRU end forward, evicting entries that have been
+        # idle long enough that their bucket is back to full. Stop
+        # when we hit an entry that's still active OR we've trimmed
+        # back under the cap.
+        for client_id in list(self._buckets.keys()):
+            if len(self._buckets) <= self._max_tracked:
+                return
+            entry = self._buckets[client_id]
+            idle_seconds = now - entry.last_refill_monotonic
+            if idle_seconds >= refill_to_full:
+                del self._buckets[client_id]
 
     @property
     def tracked_client_count(self) -> int:

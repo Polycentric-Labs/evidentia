@@ -448,7 +448,16 @@ def ai_gov_update(
         )
         raise typer.Exit(code=1)
 
-    updated = entry.model_copy(update=updates)
+    # v0.9.5 F-V94-S12 closure: re-validate the merged dict through
+    # ``model_validate`` so field validators run on the partial-
+    # update path. ``model_copy(update={...})`` bypasses validators
+    # — an operator passing an invalid owner string (e.g., empty)
+    # would silently land in the registry. Validating via
+    # ``model_validate({**entry.model_dump(), **updates})`` runs
+    # all field validators on the merged input AND catches type-
+    # coercion edge cases (DeploymentStatus enum vs. raw string).
+    merged = {**entry.model_dump(mode="python"), **updates}
+    updated = type(entry).model_validate(merged)
     store.save(updated)
 
     _log.info(

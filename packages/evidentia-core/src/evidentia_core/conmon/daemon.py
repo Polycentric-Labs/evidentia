@@ -35,6 +35,7 @@ import contextlib
 import json
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -48,6 +49,7 @@ from evidentia_core.conmon.calendar import (
     get_cadence,
     next_due,
 )
+from evidentia_core.security.atomic_write import atomic_write_text
 
 _log = get_logger("evidentia_core.conmon.daemon")
 
@@ -104,6 +106,21 @@ class DaemonConfig:
     after every poll cycle. Pairs with ``GET /api/conmon/daemon-
     status`` REST endpoint for operator health-check visibility.
     None disables status-file emission (backward-compat default)."""
+    history_file: Path | None = None
+    """v0.9.5 P2.3: optional JSONL history path the daemon appends
+    to after every poll cycle. Pairs with ``GET /api/conmon/daemon-
+    history`` REST endpoint so operators can detect flapping
+    daemons (rapid success → failure → success oscillation that the
+    point-in-time status sidecar can't reveal). Trimmed to the
+    last :data:`DAEMON_HISTORY_MAX_ENTRIES` entries on each append
+    so the file size is bounded. None disables history-file
+    emission (backward-compat default; pair with status_file when
+    enabling)."""
+    history_max_entries: int = 100
+    """v0.9.5 P2.3: rolling cap on history file length. 100 entries
+    × 1-hour poll interval = ~4 days of flapping-detection
+    visibility. Operators with shorter poll intervals or wanting
+    more history can raise this."""
 
     def __post_init__(self) -> None:
         if self.poll_interval_seconds < MIN_POLL_INTERVAL_SECONDS:
@@ -158,21 +175,97 @@ def write_daemon_status(
             (last_poll_at - started_at).total_seconds()
         ),
     }
-    status_file.parent.mkdir(parents=True, exist_ok=True)
-    tmp = status_file.with_suffix(status_file.suffix + ".tmp")
+    # v0.9.5 P1.5: delegates atomic-write + .tmp cleanup to the
+    # shared helper. Behavior is identical to the v0.9.4 inline
+    # pattern (write-tmp → os.replace → cleanup-on-OSError); the
+    # helper centralizes maintenance so future atomic-write sites
+    # inherit the cleanup behavior for free.
+    atomic_write_text(
+        status_file,
+        json.dumps(payload, indent=2, sort_keys=True),
+    )
+
+
+def append_daemon_history(
+    history_file: Path,
+    snapshot: dict[str, Any],
+    *,
+    max_entries: int = 100,
+) -> None:
+    """Append one snapshot to a JSONL rolling history file (v0.9.5 P2.3).
+
+    Read-truncate-append-write pattern: the file is read in full,
+    the new snapshot appended, the result trimmed to the last
+    ``max_entries`` lines, then atomically written back. This is
+    the simplest implementation that bounds the file size; for
+    high-frequency poll intervals (< 5 min), operators should
+    consider an external log rotator or downstream metrics
+    pipeline instead.
+
+    Args:
+        history_file: JSONL output path. Created if missing.
+        snapshot: Same payload shape as :func:`write_daemon_status`.
+            One JSON object per line; one line per poll cycle.
+        max_entries: Cap on retained entries. Defaults to 100,
+            matching :attr:`DaemonConfig.history_max_entries`.
+
+    Failure mode: on OSError the existing history file is
+    untouched + the exception propagates. The atomic-write helper
+    (:func:`atomic_write_text`) handles `.tmp` cleanup.
+    """
+    existing: list[str] = []
+    if history_file.is_file():
+        try:
+            existing = history_file.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            # Treat read failure as "history corrupted; start fresh"
+            # rather than crashing the daemon poll loop.
+            existing = []
+    existing.append(json.dumps(snapshot, sort_keys=True))
+    if len(existing) > max_entries:
+        existing = existing[-max_entries:]
+    atomic_write_text(history_file, "\n".join(existing) + "\n")
+
+
+def read_daemon_history(
+    history_file: Path, *, limit: int | None = None
+) -> list[dict[str, Any]]:
+    """Read recent daemon-status snapshots from the history file.
+
+    Args:
+        history_file: JSONL path the daemon has been appending to.
+        limit: Optional cap on returned entries; default ``None``
+            returns every entry. Always returns the MOST RECENT
+            entries (file tail) first sorted by file order (oldest
+            at index 0, newest at index -1).
+
+    Returns:
+        List of parsed JSON payloads. Empty list if the file
+        doesn't exist OR cannot be read. Individual lines that
+        fail to parse are SKIPPED (the file may be mid-write or
+        partially corrupted; remaining valid lines are still
+        useful for flap detection).
+    """
+    if not history_file.is_file():
+        return []
     try:
-        tmp.write_text(
-            json.dumps(payload, indent=2, sort_keys=True),
-            encoding="utf-8",
-        )
-        tmp.replace(status_file)
+        lines = history_file.read_text(encoding="utf-8").splitlines()
     except OSError:
-        # v0.9.4 Step 5.A F-V94-Q3 closure: clean up the orphaned
-        # .tmp on write failure so disk-full / permission errors
-        # don't accumulate sidecar artifacts over time.
-        with contextlib.suppress(OSError):
-            tmp.unlink(missing_ok=True)
-        raise
+        return []
+    if limit is not None and limit > 0 and len(lines) > limit:
+        lines = lines[-limit:]
+    out: list[dict[str, Any]] = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            parsed = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            out.append(parsed)
+    return out
 
 
 def read_daemon_status(status_file: Path) -> dict[str, Any] | None:
@@ -206,15 +299,51 @@ class PollResult:
     unknown_slugs: list[str] = field(default_factory=list)
 
 
-def load_state_file(path: Path) -> dict[str, date]:
+#: Maximum permitted on-disk size for a conmon state file (v0.9.5
+#: F-V93-S7 closure). A YAML mapping of slug → ISO-8601 date is
+#: small by construction; even with a maximal 200-cadence registry
+#: + 30-char slugs + ISO dates, the serialized file is well under
+#: 16 KiB. The 1 MiB cap accommodates a 100× safety factor while
+#: refusing to load operator-misconfigured or attacker-crafted
+#: huge files that would consume excess memory in yaml.safe_load.
+#: Operators with legitimate need can override via the
+#: ``state_file_max_bytes`` parameter on :func:`load_state_file`.
+DEFAULT_STATE_FILE_MAX_BYTES = 1 * 1024 * 1024  # 1 MiB
+
+
+def load_state_file(
+    path: Path,
+    *,
+    state_file_max_bytes: int = DEFAULT_STATE_FILE_MAX_BYTES,
+) -> dict[str, date]:
     """Load a slug -> last_completed YAML state file.
 
     Schema matches :func:`evidentia.cli.conmon._load_last_completed_map`;
     duplicated here so the daemon library has no CLI-layer dependency.
     Raises :class:`ValueError` (not ``typer.Exit``) on parse failure
     so callers can decide their own error-handling posture.
+
+    v0.9.5 F-V93-S7 closure: enforces a configurable size cap
+    BEFORE invoking yaml.safe_load. Files exceeding
+    ``state_file_max_bytes`` raise :class:`ValueError` without
+    being parsed. Defends against a DoS where an attacker (or
+    operator misconfiguration) replaces the state file with a
+    multi-GB blob the daemon then tries to load into memory.
     """
     import yaml as yaml_mod
+
+    try:
+        size = path.stat().st_size
+    except OSError as exc:
+        raise ValueError(f"could not stat {path}: {exc}") from exc
+    if size > state_file_max_bytes:
+        raise ValueError(
+            f"{path} size {size} bytes exceeds the "
+            f"{state_file_max_bytes} byte cap; refusing to load. "
+            f"Override with state_file_max_bytes= if the legitimate "
+            f"state file is genuinely larger (an operator with "
+            f"hundreds of cadences may need to raise this)."
+        )
 
     try:
         raw = yaml_mod.safe_load(path.read_text(encoding="utf-8")) or {}
@@ -260,19 +389,12 @@ def save_state_file(path: Path, state: dict[str, date]) -> None:
     import yaml as yaml_mod
 
     serializable = {slug: when.isoformat() for slug, when in state.items()}
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    try:
-        tmp.write_text(
-            yaml_mod.safe_dump(serializable, sort_keys=True),
-            encoding="utf-8",
-        )
-        tmp.replace(path)
-    except OSError:
-        # v0.9.4 Step 5.A F-V94-Q3 closure: clean up orphaned .tmp.
-        with contextlib.suppress(OSError):
-            tmp.unlink(missing_ok=True)
-        raise
+    # v0.9.5 P1.5: delegates atomic-write + .tmp cleanup to the
+    # shared helper (see write_daemon_status for the same migration).
+    atomic_write_text(
+        path,
+        yaml_mod.safe_dump(serializable, sort_keys=True),
+    )
 
 
 def mark_completed(
@@ -494,7 +616,7 @@ def run_daemon(
     on_due_soon: CycleHandler | None = None,
     on_overdue: CycleHandler | None = None,
     shutdown_event: threading.Event | None = None,
-    sleep_fn: object = time.sleep,
+    sleep_fn: Callable[[float], None] = time.sleep,
 ) -> None:
     """Run the poll loop until ``shutdown_event`` is set.
 
@@ -588,7 +710,28 @@ def run_daemon(
             # operator health-check queries. Best-effort: a status-
             # file write failure is logged but does not crash the
             # daemon (status visibility is auxiliary, not critical).
+            #
+            # v0.9.5 P2.3: in addition to the point-in-time status
+            # sidecar, append the same payload to a rolling history
+            # JSONL file (capped at config.history_max_entries) so
+            # the GET /api/conmon/daemon-history endpoint can detect
+            # flapping daemons that the status sidecar's point-in-
+            # time view can't reveal.
             if config.status_file is not None:
+                snapshot: dict[str, Any] = {
+                    "started_at": started_at.isoformat(),
+                    "last_poll_at": poll_at.isoformat(),
+                    "last_poll_outcome": outcome,
+                    "last_poll_error": error_msg,
+                    "recognized_cadence_count": recognized_count,
+                    "unknown_cadence_count": unknown_count,
+                    "poll_interval_seconds": config.poll_interval_seconds,
+                    "state_file": str(config.state_file),
+                    "window_days": config.window_days,
+                    "daemon_uptime_seconds": int(
+                        (poll_at - started_at).total_seconds()
+                    ),
+                }
                 with contextlib.suppress(OSError):
                     write_daemon_status(
                         config.status_file,
@@ -602,6 +745,13 @@ def run_daemon(
                         state_file=config.state_file,
                         window_days=config.window_days,
                     )
+                if config.history_file is not None:
+                    with contextlib.suppress(OSError):
+                        append_daemon_history(
+                            config.history_file,
+                            snapshot,
+                            max_entries=config.history_max_entries,
+                        )
 
             # shutdown_event.wait() respects sleep interruption —
             # operators get sub-poll-interval shutdown latency.
@@ -611,7 +761,10 @@ def run_daemon(
                 shutdown_event.wait(timeout=config.poll_interval_seconds)
             else:
                 # Test injection: call the mock + check shutdown.
-                sleep_fn(config.poll_interval_seconds)  # type: ignore[operator]
+                # v0.9.5 F-V94-Q8 closure: sleep_fn is now typed as
+                # Callable[[float], None] so the type: ignore is
+                # no longer required.
+                sleep_fn(config.poll_interval_seconds)
     finally:
         _log.info(
             action=EventAction.CONMON_DAEMON_STOPPED,

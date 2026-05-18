@@ -43,6 +43,7 @@ import hmac
 import ipaddress
 import json
 import socket
+import ssl
 import time
 import urllib.request
 from dataclasses import dataclass, field
@@ -135,7 +136,42 @@ class WebhookConfig:
                 f"resolve: {exc}"
             ) from exc
 
-        resolved_ips = tuple(sorted({ai[4][0] for ai in addrinfo}))
+        # v0.9.5 F-V94-Q11 closure (correctness): the v0.9.4
+        # implementation sorted resolved IPs lexicographically by
+        # string, which produces wrong ordering for IPv6 scope-id
+        # suffixes ("fe80::1%eth0" sorts before "fe80::1%lo" purely
+        # by ASCII; "10.0.0.2" sorts before "10.0.0.10"). Sort by
+        # the parsed IP address (stripping any "%scope" suffix) so
+        # the resolved-IPs ordering is stable + comparable across
+        # interface names. Fallback to string sort if the address
+        # parse fails so we never raise from a sort step.
+        def _ip_sort_key(ip_str: str) -> tuple[int, str]:
+            try:
+                # Parse to validate + normalize, then sort by the
+                # parsed address's string representation. Avoids
+                # ``tuple[int, object]`` which mypy can't compare.
+                parsed = ipaddress.ip_address(ip_str.split("%")[0])
+                # Zero-pad IPv4 + use compressed IPv6 so lexicographic
+                # sort matches numeric / canonical order.
+                if isinstance(parsed, ipaddress.IPv4Address):
+                    octets = [
+                        f"{o:03d}" for o in parsed.packed
+                    ]
+                    return (0, "v4:" + ".".join(octets))
+                return (0, "v6:" + parsed.compressed)
+            except ValueError:
+                return (1, ip_str)
+
+        # mypy: socket.getaddrinfo's stubs type ``ai[4][0]`` as
+        # ``str | int`` (IPv6 includes scope-id as int in some
+        # positions); in practice the host is always a string. Cast
+        # to set[str] at the call boundary for the sort.
+        resolved_str_ips: set[str] = {
+            str(ai[4][0]) for ai in addrinfo
+        }
+        resolved_ips = tuple(
+            sorted(resolved_str_ips, key=_ip_sort_key)
+        )
         # Cannot use object.__setattr__ trick for tuple of mutable
         # default; dataclass(frozen=True) requires it. The field's
         # ``default_factory`` initialized it to (); replace via the
@@ -215,10 +251,20 @@ class WebhookAlertChannel:
                 "X-Evidentia-Signature": f"sha256={signature}",
             },
         )
+        # v0.9.5 F-V93-S4 closure: explicit SSL context.
+        # ``urllib.request.urlopen`` defaults to ``ssl._create_stdlib_
+        # context()`` on https URLs which has historically had
+        # different defaults from ``ssl.create_default_context()``
+        # (e.g., hostname verification, default CA bundle). Pass an
+        # explicit default context so the verify behavior is
+        # documented + auditable + identical across Python versions.
+        # For http:// URLs the context is silently ignored.
+        ssl_context = ssl.create_default_context()
         try:
             with urllib.request.urlopen(
                 request,
                 timeout=self._config.timeout_seconds,
+                context=ssl_context,
             ) as response:
                 if response.status >= 400:
                     raise RuntimeError(

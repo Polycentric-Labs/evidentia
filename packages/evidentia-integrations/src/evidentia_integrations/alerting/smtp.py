@@ -50,6 +50,42 @@ class SMTPConfig:
             )
         if not self.recipients:
             raise ValueError("at least one recipient required")
+        # v0.9.5 F-V93-S8 closure: validate each recipient against
+        # the RFC 5321 / RFC 5322 ``local@domain`` shape using
+        # stdlib's email.utils parser. Rejects malformed entries
+        # (no ``@``, multi-``@``, control chars, leading/trailing
+        # whitespace) at config-construction time so the daemon
+        # fails loud at boot rather than silently dropping alerts
+        # at smtp.send() time. This is light-touch validation —
+        # it does NOT verify MX records or mailbox existence;
+        # operators wanting that should configure SMTP-level
+        # recipient verification at the relay.
+        from email.utils import parseaddr
+
+        for recipient in self.recipients:
+            _name, addr = parseaddr(recipient)
+            if not addr or "@" not in addr or addr.count("@") != 1:
+                raise ValueError(
+                    f"recipient {recipient!r} is not a valid RFC 5321 "
+                    f"address (expected local@domain); parsed addr="
+                    f"{addr!r}"
+                )
+            local, _, domain = addr.partition("@")
+            if not local or not domain or "." not in domain:
+                raise ValueError(
+                    f"recipient {recipient!r} missing local-part or "
+                    f"domain-with-dot (got local={local!r} "
+                    f"domain={domain!r})"
+                )
+            # Reject control characters + whitespace embedded in
+            # the address — RFC 5321 forbids these in the wire
+            # form and they're a common SMTP-injection vector.
+            if any(ch.isspace() or ord(ch) < 32 for ch in addr):
+                raise ValueError(
+                    f"recipient {recipient!r} contains whitespace "
+                    f"or control characters; not a valid RFC 5321 "
+                    f"address"
+                )
         if not self.use_starttls:
             # Plaintext SMTP is unsupported by design.
             raise ValueError(

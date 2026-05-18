@@ -65,11 +65,26 @@ def _filter_poams(
     poams: list[ControlGap],
     severity: str | None,
     status: str | None,
+    owner: str | None = None,
+    reviewer: str | None = None,
 ) -> list[ControlGap]:
     if severity:
         poams = [p for p in poams if p.gap_severity == severity]
     if status:
         poams = [p for p in poams if p.status == status]
+    # v0.9.5 P3.1: owner / reviewer filtering — match against any
+    # milestone on the POA&M item. The "any-match" semantics mirror
+    # the CLI poam list --owner X behavior.
+    if owner is not None:
+        poams = [
+            p for p in poams
+            if any(m.owner == owner for m in p.poam_milestones)
+        ]
+    if reviewer is not None:
+        poams = [
+            p for p in poams
+            if any(m.reviewer == reviewer for m in p.poam_milestones)
+        ]
     return poams
 
 
@@ -99,6 +114,20 @@ async def list_poam_items(
             "accepted / not_applicable."
         ),
     ),
+    owner: str | None = Query(
+        None,
+        description=(
+            "v0.9.5 P3.1: filter to POA&M items with at least one "
+            "milestone where owner == this value (exact-equality)."
+        ),
+    ),
+    reviewer: str | None = Query(
+        None,
+        description=(
+            "v0.9.5 P3.1: filter to POA&M items with at least one "
+            "milestone where reviewer == this value (exact-equality)."
+        ),
+    ),
 ) -> dict[str, object]:
     """List POA&M items in canonical sort order.
 
@@ -124,7 +153,9 @@ async def list_poam_items(
         )
 
     all_poams = list_poams()
-    filtered = _filter_poams(all_poams, severity, status)
+    filtered = _filter_poams(
+        all_poams, severity, status, owner=owner, reviewer=reviewer
+    )
     total = len(filtered)
     page = filtered[skip : skip + limit]
     return {
