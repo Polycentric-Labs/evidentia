@@ -1,18 +1,20 @@
 # Evidentia roadmap
 
-**Last updated: v0.9.4 (May 2026).**
+**Last updated: v0.9.5 (May 2026).**
 
 This roadmap synthesizes community feedback with the architecture plan
 at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0-v0.8.7
-+ v0.9.0 + v0.9.1 + v0.9.2 + v0.9.3 have shipped. **v0.9.0 opened
-the v0.9.x "federal compliance" line** with POA&M + CONMON read-only
-library; v0.9.1 landed the Polycentric Labs org migration; v0.9.2
-added the CONMON REST router + federal corpus + LLM rater + federal
-walk-through scenarios. **v0.9.3 is the largest minor of the line so
-far** — CONMON daemon (Theme A) + AI governance (Theme B) shipped
-together. **v0.9.4 (PLANNED) is the consolidation pass** closing
-deferred review items + the operator-feedback walk-through.
-See [`v1.0-transition.md`](v1.0-transition.md) for the v1.0
++ v0.9.0-v0.9.5 have shipped. **v0.9.0 opened the v0.9.x "federal
+compliance" line** with POA&M + CONMON read-only library; v0.9.1
+landed the Polycentric Labs org migration; v0.9.2 added the CONMON
+REST router + federal corpus + LLM rater + federal walk-through
+scenarios; v0.9.3 was the largest minor of the line — CONMON daemon
+(Theme A) + AI governance (Theme B); v0.9.4 was the consolidation
+pass closing deferred review items + the federal-SI walk-through
+opener. **v0.9.5 lands walk-through refinement (AI-persona-driven)
++ collaboration-primitives groundwork** (POA&M ownership fields +
+append-only evidence versioning + RBAC). See
+[`v1.0-transition.md`](v1.0-transition.md) for the v1.0
 narrative and acceptance gates.
 
 ## v0.3.0 — Compliance-as-code — SHIPPED
@@ -1208,25 +1210,110 @@ to v0.9.5):
 **2798 tests / 17 skipped / mypy strict 0 / 219 source files /
 ruff clean.**
 
-## v0.9.5 — Walk-through-driven refinement + collaboration primitives — PLANNED
+## v0.9.5 — Walk-through-driven refinement + collaboration primitives — SHIPPED
 
-Renamed from "Collaboration primitives" to reflect the actual
-v0.9.4 carry-over scope: walk-through-driven refinement +
-v0.9.3/v0.9.4 LOW-bucket residuals + collaboration-primitives
-groundwork. See `docs/v0.9.5-plan.md` for the full scope.
+**Theme**: *Walk-through-driven refinement + collaboration
+primitives + carry-over closure.*
 
-Lays the data-model foundation for team-based compliance
-workflows. Bumped from v0.9.4 to make room for the daemon-hardening
-+ walk-through consolidation pass.
+**Phase 1 — Carry-over closure** (6 sub-items):
+- P1.1: pytest-randomly added to dev deps + random-order test
+  sweep clean.
+- P1.2: DAST tools (schemathesis + playwright) in dev deps;
+  `tests/dast/` scaffold with `test_openapi_fuzz.py` +
+  `playwright.config.ts`.
+- P1.3: 7 v0.9.3 LOW-bucket residuals closed (F-V93-S4 SSL
+  context, S5 trust-boundary doc, S6 SIGINT race doc, S7
+  state-file size cap, S8 RFC 5321 recipient validation, Q4
+  dedup-state mtime cache, Q13 sleep_fn typing).
+- P1.4: 8 v0.9.4 formal-review LOWs + 2 INFOs closed (FileLock
+  fd leak / fcntl per-fd doc / rate-limit LRU spray / sleep_fn
+  type / rate-limit GIL docstring / IPv6 scope-id sort / cross-
+  process FileLock test / model_copy validator skip / Pydantic
+  upgrade body-hash doc / replay-after-target-deleted regression).
+- P1.5: shared `evidentia_core.security.atomic_write_text`
+  helper + 4 v0.9.4 inline call sites refactored.
+- P1.6: `EVIDENTIA_TRUST_PROXY_HEADERS=1` auto-wires uvicorn's
+  ProxyHeadersMiddleware in `create_app()`.
 
-- **Multi-user evidence store** — file-backed, sharable evidence
-  repository with conflict-free append semantics.
-- **Assignment/workflow primitives** — owner, reviewer, due date,
-  status fields on gaps, POA&Ms, and findings.
-- **Evidence versioning** — append-only with diff (builds on the
-  v0.7.11 WORM + retention-metadata foundation).
-- **Basic RBAC model** — reader/editor/admin role definitions in
-  config; enforcement at CLI + API layer.
+**Phase 2 — Operator polish**:
+- P2.1: AI-persona federal-SI walk-through validation (driven
+  by Perplexity + WebSearch + training corpus on FedRAMP 20x,
+  RFC-0024, OMB M-24-10, NIST AI RMF). 10 refinement findings
+  closed; `docs/walkthrough-validation-v0.9.5.md` captures the
+  artifact.
+- P2.2: POA&M emit + OSCAL 1.1.2 plan-of-action-and-milestones
+  added as Step 8 of the federal-SI walk-through.
+- P2.3: daemon-status REST expansion — `GET /api/conmon/
+  daemon-history?limit=N` rolling-history endpoint + Prometheus
+  `evidentia_conmon_daemon_*` gauges at `/api/metrics`. New
+  daemon CLI flags `--history-file` + `--history-max-entries`.
+
+**Phase 3 — Collaboration primitives** (groundwork):
+- P3.1: POA&M ownership fields — `Milestone.owner` +
+  `Milestone.reviewer` + `evidentia poam list --owner X
+  --reviewer Y` CLI + REST `?owner=X&reviewer=Y` filter.
+- P3.2: Append-only evidence versioning — `EvidenceArtifact.
+  version` + `lineage_id` + `predecessor_id` fields +
+  `new_version()` factory helper. Data-model + helper only at
+  v0.9.5; WORM store-side enforcement lands v0.9.6.
+- P3.3: Basic RBAC primitives — `evidentia_core.rbac` package
+  with `Role` enum / `RBACPolicy` / `check_permission` +
+  FastAPI `require_role(action)` dependency factory.
+  `EVIDENTIA_RBAC_POLICY_FILE` env var loads policy at
+  `create_app()`. Default permissive policy preserves v0.9.4
+  behavior. CLI-side RBAC enforcement deferred to v0.9.6.
+
+**Phase 4 — Hygiene**: P4.1 backfill deferred (the v0.9.3 +
+v0.9.4 docs are the canonical pattern; backfill is portfolio
+polish, not blocking). P4.2 Codecov at 84.26% (vs 80% target).
+P4.3 uv.lock regenerated atomically at version bump.
+
+**2862 tests / 17 skipped / mypy strict 0 / ~225 source files /
+ruff clean / pytest-randomly seed-sweep clean.**
+
+## v0.9.6 — Real-operator walk-through + WORM evidence versioning + CLI RBAC — PLANNED
+
+Closes the v0.9.5 deferred-for-v0.9.6 items. Estimated 2-3 week
+focused session matching the v0.9.4 cadence.
+
+**Carry-over from v0.9.5 validation report**:
+- Real federal-SI domain-expert walk-through review (the v0.9.5
+  validation was AI-persona-driven; real-operator findings
+  layer on top).
+- FIPS 199 categorization + ATO-linkage + SSP-reference fields
+  on `AISystemRegistryEntry` (per OMB M-24-10 §5(a)
+  inventory format).
+- SCR (Significant Change Request) form emit on AI-system
+  lifecycle transitions (`evidentia ai-gov update`).
+- OMB M-24-10 Rights-Impacting / Safety-Impacting / Neither
+  categorization as first-class AI-gov field.
+
+**Append-only enforcement** (v0.9.5 P3.2 follow-up):
+- Evidence-store WORM integration enforcing append-only at the
+  store layer (refusing to overwrite a persisted artifact;
+  emits a new version automatically when an "update" is
+  attempted).
+- `evidentia evidence history <lineage_id>` CLI verb.
+- `evidentia evidence show <lineage_id> --version N` CLI verb.
+
+**CLI RBAC enforcement** (v0.9.5 P3.3 follow-up):
+- Mirror the FastAPI `require_role()` enforcement at the CLI
+  layer via a Typer dependency / shared decorator. Operators
+  configure `EVIDENTIA_RBAC_POLICY_FILE` + `EVIDENTIA_RBAC_
+  IDENTITY` (env-var-based identity for CLI) and the policy is
+  enforced before any verb dispatches.
+
+**CLI flag naming normalization**:
+- The `conmon check --last-completed-file` vs
+  `conmon health --state-file` vs `conmon watch --state-file`
+  inconsistency normalizes to a single `--state-file` flag
+  with a 6-month deprecation window on `--last-completed-file`.
+
+**Hygiene + supply chain**:
+- Backfill v0.9.1 + v0.9.2 security review docs if portfolio
+  polish remains valuable.
+- Codecov target audit + threshold confirmation.
+- uv.lock + Dependabot scheduled review.
 
 ## v1.0 — Federal compliance shipped + API stability — RESERVED
 

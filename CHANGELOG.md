@@ -7,6 +7,174 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.5] - 2026-05-18
+
+**Theme**: *Walk-through-driven refinement + collaboration primitives + carry-over closure.*
+
+Closes 18 deferred review findings from v0.9.3 + v0.9.4
+(7 v0.9.3 LOWs + 8 v0.9.4 LOWs + 2 INFOs + 1 rebucketed Q),
+adds 3 collaboration-primitive surfaces (POA&M ownership
+fields + append-only evidence versioning + RBAC), validates
+the federal-SI walk-through against an AI-persona reviewer
+with FedRAMP 20x / RFC-0024 framing, and ships P2.3
+daemon-status REST expansion + Prometheus daemon gauges.
+Direct-push ship workflow per the post-v0.9.4 lesson.
+
+### Added
+
+- **Collaboration primitives (P3.1)**: POA&M `Milestone.owner` +
+  `Milestone.reviewer` Optional string fields. `evidentia poam
+  list --owner X --reviewer Y` CLI filter; `GET /api/poam/
+  items?owner=X&reviewer=Y` REST filter. Backward-compat with
+  v0.9.4 milestones (deserialize as `owner=None` /
+  `reviewer=None`).
+- **Append-only evidence versioning (P3.2)**:
+  `EvidenceArtifact.version` + `lineage_id` + `predecessor_id`
+  Optional fields. `EvidenceArtifact.new_version(**updates)`
+  helper for the canonical N+1 construction. Data-model + helper
+  only at v0.9.5; WORM store-side append-only enforcement lands
+  in v0.9.6.
+- **Basic RBAC primitives (P3.3)**: `evidentia_core.rbac` package
+  with `Role` enum (reader / editor / admin / deny), `RBACPolicy`
+  Pydantic model, `check_permission(identity, action, policy)`
+  decision helper, `load_policy_from_file(path)` for YAML
+  policies. FastAPI `require_role(action)` dependency factory
+  for opt-in router-level enforcement.
+  `EVIDENTIA_RBAC_POLICY_FILE` env var loads at `create_app()`.
+  Default permissive policy preserves v0.9.4 behavior.
+- **Daemon-history endpoint (P2.3)**:
+  `GET /api/conmon/daemon-history?limit=N` reads a rolling
+  JSONL history file the daemon appends to via the new
+  `--history-file` CLI flag.
+  `EVIDENTIA_CONMON_DAEMON_HISTORY_FILE` env var on the API
+  server side. Operators detect flapping daemons that the
+  point-in-time status sidecar can't reveal.
+- **Prometheus conmon-daemon gauges (P2.3)**: when
+  `EVIDENTIA_CONMON_DAEMON_STATUS_FILE` is set, `/api/metrics`
+  emits `evidentia_conmon_daemon_last_poll_age_seconds`,
+  `evidentia_conmon_daemon_last_poll_success`,
+  `evidentia_conmon_daemon_recognized_cadence_count`,
+  `evidentia_conmon_daemon_unknown_cadence_count`,
+  `evidentia_conmon_daemon_uptime_seconds` gauges.
+- **`evidentia_core.security.atomic_write_text` helper (P1.5)**:
+  shared write-tmp → os.replace → cleanup-on-OSError helper.
+  Refactored 4 v0.9.4 inline call sites
+  (`write_daemon_status`, `save_state_file`,
+  `AlertDeduper._save_state`, `_save_idempotency_store`).
+- **ProxyHeadersMiddleware auto-wire (P1.6)**:
+  `create_app(trust_proxy_headers=True)` or
+  `EVIDENTIA_TRUST_PROXY_HEADERS=1` env var auto-wires
+  uvicorn's `ProxyHeadersMiddleware` so the rate-limit + audit-
+  log middleware see the real client IP behind a reverse
+  proxy. Closes the v0.9.4 docstring deferral.
+- **pytest-randomly + DAST baseline (P1.1 + P1.2)**:
+  `pytest-randomly` + `schemathesis` + `playwright` added to
+  `[dev]` deps. `tests/dast/` scaffold with
+  `test_openapi_fuzz.py` (Schemathesis baseline) +
+  `playwright.config.ts`. Opt-in suite — not part of default
+  `pytest tests/` collection.
+
+### Changed
+
+- **Walk-through refinement (P2.1 + P2.2)**: AI-persona
+  validation (a simulated senior federal-SI procurement officer)
+  drove 10 refinement recommendations:
+  - FIXED CLI flag bug in Step 2 (`--state-file` →
+    `--last-completed-file` for `conmon check`).
+  - REFRAMED AI lens around OMB M-24-10 + NIST AI RMF as
+    primary, EU AI Act as secondary.
+  - ADDED FedRAMP 20x / RFC-0024 / OSCAL machine-readable
+    framing (Sept 30 2026 deadline).
+  - ADDED Step 8: OSCAL POA&M emit demonstration (the
+    federal-SI headline artifact).
+  - ADDED "Trustworthiness of Evidentia itself" section
+    (sigstore / PEP 740 / SBOM under EO 14028 + CISA SbD).
+  - ADDED 3PAO / AO downstream-consumer perspective.
+  - CLARIFIED CA-7 as meta-control (not a monthly task).
+  - CLARIFIED health-score as internal dashboard (NOT
+    PMO-grade).
+  - DOCUMENTED SCR Form adjacency on lifecycle transitions.
+  - FLAGGED FIPS 199 + ATO-linkage as v0.9.6 surfacing
+    targets.
+  Captured in `docs/walkthrough-validation-v0.9.5.md`.
+- **`conmon daemon` accepts `--history-file` + `--history-max-
+  entries`** for the v0.9.5 P2.3 history-rolling output.
+- **`AlertDeduper` caches state-file reads** with mtime-based
+  invalidation (F-V93-Q4 closure). Reduces per-poll I/O on
+  multi-cadence / multi-channel daemons.
+- **`load_state_file` enforces a configurable size cap**
+  (1 MiB default; F-V93-S7 closure). Refuses to parse
+  attacker-crafted or operator-misconfigured huge files.
+- **SMTP recipient validation against RFC 5321 / RFC 5322
+  syntax** (F-V93-S8 closure). Malformed recipients fail loud
+  at config-construction time rather than silently dropping
+  alerts at `smtp.send()`.
+- **Webhook urlopen passes explicit `ssl.create_default_
+  context()`** (F-V93-S4 closure). Verify behavior is now
+  documented + auditable + identical across Python versions.
+- **AI-gov CLI `update` re-validates merged dict via
+  `model_validate`** (F-V94-S12 INFO closure). Partial CLI
+  updates no longer bypass field validators.
+- **Rate-limiter LRU eviction is idle-aware** (F-V94-S3
+  closure / CWE-400). IPv6-spray attack on the bucket cap
+  no longer evicts legitimate active clients.
+- **FileLock closes fd on ANY exception path** (F-V94-S1
+  closure / CWE-404). Previously leaked on non-
+  BlockingIOError paths (signal-EINTR / KeyboardInterrupt).
+- **Webhook resolved-IP sort by parsed `ipaddress`**
+  (F-V94-Q11 closure). Stable across IPv6 scope-id suffixes
+  + numeric-vs-lexicographic IPv4 ordering.
+- **`sleep_fn` typed as `Callable[[float], None]`**
+  (F-V94-Q8 closure). Drops the v0.9.4 `type: ignore[operator]`.
+
+### Fixed
+
+- **CLI flag bug in `docs/walkthrough-federal-si.md` Step 2**
+  (P2.1 R1): `--state-file` → `--last-completed-file` per the
+  actual `conmon check` flag.
+- **Stale "GIL keeps races harmless" claim in rate-limit
+  docstring** (F-V94-Q9 closure). Replaced with the actual
+  guarantee ("absence of await in check()").
+
+### Security
+
+- **CWE-404 FileLock fd leak** (F-V94-S1) — fixed via try/except
+  BaseException wrapping the acquire loop.
+- **CWE-400 rate-limit LRU spray eviction** (F-V94-S3) — fixed
+  by idle-aware eviction predicate.
+- **CWE-662 fcntl per-fd semantics doc** (F-V94-S2) — fixed by
+  clarifying FileLock's intra-process protection scope.
+
+### Documentation
+
+- **New canonical doc `docs/walkthrough-validation-v0.9.5.md`**:
+  AI-persona report driving the P2.1 + P2.2 refinements.
+- **`docs/release-checklist.md` Step 2**: added Pydantic-upgrade
+  body-hash audit guidance (F-V94-S11 INFO closure).
+- **`docs/walkthrough-federal-si.md`**: full refresh per the
+  AI-persona report (HIGH/MEDIUM/LOW findings closed; v0.9.6
+  follow-ups documented in "Known limitations").
+- **Trust-boundary doc on `EVIDENTIA_AI_REGISTRY_DIR`**
+  (F-V93-S5 closure) — registry-store module docstring now
+  explicitly names the trust assumption.
+- **SIGINT race window documented** (F-V93-S6 closure) in
+  `evidentia conmon watch` CLI docstring.
+
+### Deprecated
+
+- **N/A** at v0.9.5.
+
+### Removed
+
+- **N/A** at v0.9.5.
+
+### Test count + supply chain
+
+- **2862 tests** passing (was 2802 at v0.9.4 ship; +60 new).
+- mypy strict 0/0 across **~225 source files** (was 219).
+- ruff full-repo clean.
+- pytest-randomly random-seed sweep clean.
+
 ## [0.9.4] - 2026-05-17
 
 **Theme**: *Daemon hardening + operator polish + federal-SI walk-through.*

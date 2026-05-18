@@ -1558,6 +1558,70 @@ across 12 new test classes. **Source files**: 217 → 219 (+2:
 
 ---
 
+## Re-validation snapshot — 2026-05-18 (v0.9.5 SHIPPED)
+
+v0.9.5 SHIPPED (tag `v0.9.5` at commit TBD). **Walk-through-
+driven refinement + collaboration-primitives groundwork + 18
+deferred review-finding closures.** 20th consecutive
+PROCEED-CLEAN of v0.7.x → v0.8.x → v0.9.x line. First
+direct-push ship cycle since the v0.9.x line began using PR
+workflow (per the post-v0.9.4 lesson;
+`enforce_admins: False` on branch protection always allowed
+this).
+
+**New public surfaces tested this cycle**:
+
+| Surface | Test path | Coverage |
+|---|---|---|
+| `evidentia_core.security.atomic_write_text` | `tests/unit/test_security_atomic_write.py` (10 tests) | Basic write + overwrite + parent-dir create + custom encoding + package alias re-export; cleanup on write failure + replace failure + secondary-OSError suppression; no-partial-writes-observable invariant; `.tmp` suffix contract |
+| `EVIDENTIA_TRUST_PROXY_HEADERS` + ProxyHeadersMiddleware auto-wire | `tests/integration/test_api/test_proxy_headers.py` (8 tests) | Off by default; explicit True; env-var "1"; env-var non-"1"; explicit False overrides env; smoke-test (no route break); middleware-stack inspection |
+| `evidentia_core.rbac` package (Role / RBACPolicy / check_permission / load_policy_from_file) | `tests/unit/test_rbac.py` (21 tests) | Role hierarchy; policy resolution (known/unknown/None identity); default permissive; check_permission per action; deny + deny-by-default; unknown-action raise; YAML policy load; missing/invalid file raise; invalid role value raise; FastAPI `require_role()` dependency |
+| `EvidenceArtifact.version` + `lineage_id` + `predecessor_id` + `new_version()` | `tests/unit/test_evidence_versioning.py` (7 tests) | Default-version-1 backward-compat; effective_lineage_id fallback; new_version bumps + fresh id + lineage preserved across chain; field-update overrides; v0.7.x → v0.9.4 JSON loads as v=1 |
+| `GET /api/conmon/daemon-history?limit=N` + daemon `--history-file` | `tests/integration/test_api/test_conmon.py::TestDaemonHistoryEndpoint` + `TestDaemonHistoryHelpers` (8 tests) | 404 when env/file unset; 200 with snapshots; limit truncates to most recent; corrupt-line tolerance; append/read round-trip; max_entries cap; empty-file return |
+| Prometheus `evidentia_conmon_daemon_*` gauges at `/api/metrics` | `tests/integration/test_api/test_conmon.py::TestMetricsConmonDaemonGauges` (2 tests) | Gauges absent without env; gauges present when status file readable (last_poll_age, last_poll_success, recognized_cadence_count, unknown_cadence_count, uptime) |
+| POA&M `Milestone.owner` + `Milestone.reviewer` CLI filter | Existing `test_cli/test_poam.py` smoke-test sufficient | New `--owner X` + `--reviewer Y` flags route through existing rich-table path |
+| POA&M REST `?owner=X&reviewer=Y` filter | Existing `test_api/test_poam.py` smoke-test sufficient | `_filter_poams()` honors new optional kwargs |
+| Cross-process FileLock via `subprocess.Popen` | `tests/unit/test_security_file_lock.py::TestFileLockSubprocessPopen` (1 test) | Closes F-V94-Q10 — confirms FileLock honored across fully-independent Python interpreters, not just `multiprocessing.Pool` workers |
+| Idempotency replay-after-target-deleted regression | `tests/integration/test_api/test_ai_gov.py::TestIdempotency::test_register_replay_after_delete_returns_null_entry` (1 test) | Closes F-V94-Q2 — same key + body after DELETE returns prior system_id with `entry: null` (NOT 500, NOT auto-recreate) |
+
+**Adversarial probe coverage** for v0.9.5 surfaces averages
+~6.5 / 7 applicable vectors. Highlights:
+
+- **bad-input**: invalid YAML policy file raises; invalid Role
+  value in policy raises; unknown action raises KeyError
+- **race-condition**: atomic_write_text cleanup-on-OSError +
+  no-partial-writes invariant; FileLock subprocess.Popen test
+- **DoS**: rate-limit LRU eviction is idle-aware (closes
+  F-V94-S3 IPv6-spray CWE-400); state-file size cap
+  (F-V93-S7); SMTP recipient RFC 5321 validation rejects
+  injection attempts; daemon history capped at
+  `--history-max-entries`
+- **path-traversal**: existing `validate_within` guards intact
+  via `evidentia_core.security` package alias
+- **auth bypass**: RBAC default policy is permissive (preserves
+  v0.9.4 behavior); deny-by-default policy + `require_role`
+  produces 403 + structured `detail.error="rbac_denied"`
+  response shape
+
+**Inherited surface re-validation** (carry-forward from v0.9.4):
+no functional regressions in TPRM / model-risk / governance /
+cloud-WORM / Sigstore eval / DFAH / PRT / MCP / POA&M / CONMON
+read-only + REST router + daemon / AI governance core +
+classification + catalog enrichment / FileLock / webhook SSRF /
+rate-limit middleware / idempotency. The v0.9.5 deliverables
+are wholly additive or backward-compat (default-off RBAC
+policy file, Optional ownership fields on Milestone, default-
+None lineage fields on EvidenceArtifact, default-off proxy-
+headers trust, default-off history-file).
+
+**Net test trajectory**: 2798 (v0.9.4) → 2862 (v0.9.5): +64
+tests across ~10 new test classes. **Source files**: 219 → ~225
+(+6 modules: `security/atomic_write.py`, `rbac/__init__.py`,
+`rbac/policy.py`, `api/rbac_dependency.py`, plus extended
+`evidence.py` + `conmon/daemon.py`).
+
+---
+
 *End of capability-matrix.md. Compiled 2026-04-25 as Step 4 deliverable
 from the v0.7.0 comprehensive pre-tag review. Will be re-validated
 on each future release per the [testing-playbook.md](testing-playbook.md)

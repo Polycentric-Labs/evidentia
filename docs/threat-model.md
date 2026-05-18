@@ -2367,6 +2367,146 @@ PROCEED-CLEAN of v0.7.x → v0.8.x → v0.9.x line.
 
 ---
 
+## v0.9.5 attack-surface delta — Walk-through refinement + collaboration primitives (SHIPPED 2026-05-18 at tag `v0.9.5`)
+
+**Theme**: walk-through-driven refinement + collaboration
+primitives + 18 deferred review-finding closures.
+
+### Net delta: 4 NEW security improvements; 0 NEW HIGH+ findings
+
+**1. `evidentia_core.security.atomic_write_text` helper (P1.5)**
+
+Lifts the v0.9.4 inline `write-tmp → os.replace → cleanup-on-
+OSError` pattern into a shared helper. Threat model impact:
+**zero new attack surface**; previously-4-copies of the pattern
+are now 1 + maintained centrally. Future atomic-write sites
+inherit the cleanup behavior for free. Cleans up `.tmp` sidecars
+on failure paths preventing artifact accumulation that an
+attacker could exploit for disk-fill DoS amplification.
+
+**2. RBAC primitives (P3.3, `evidentia_core.rbac` package)**
+
+NEW trust boundary surface:
+
+- Default permissive policy (everyone-is-admin) preserves
+  v0.9.4 single-tenant deployments unchanged.
+- Operators opt in via `EVIDENTIA_RBAC_POLICY_FILE=<YAML>` env
+  var loaded at `create_app()`. Policy file load happens ONCE
+  per process; reloading requires restart.
+- FastAPI `require_role(action)` dependency factory enforces
+  per-route. Action taxonomy: `read` / `write` / `admin`.
+- Identity resolution feeds from the v0.8.1 AuthProvider layer
+  (`request.state.identity`); anonymous requests resolve to
+  the policy's `default_role` (default `admin` for backward-
+  compat; operators choose `deny` for hard deny-by-default).
+
+Threat-model assumptions:
+
+- RBAC is NOT authentication. Identity arrives from the
+  AuthProvider; RBAC consumes it. Missing AuthProvider →
+  anonymous requests → permissive default policy → v0.9.4
+  behavior preserved.
+- Policy file is a TRUSTED input. Operators MUST deploy with
+  `chmod 0600` on the policy file + a dedicated service user.
+- v0.9.5 ships data-model + REST dependency only. CLI-side
+  enforcement deferred to v0.9.6 with mirrored
+  `EVIDENTIA_RBAC_IDENTITY` env var.
+
+**3. Append-only evidence versioning (P3.2 data-model)**
+
+NEW EvidenceArtifact fields (`version`, `lineage_id`,
+`predecessor_id`) + `new_version()` helper. Threat model:
+
+- Data-model only at v0.9.5; the STORE-SIDE append-only
+  enforcement (refusing to overwrite a persisted artifact) is
+  deferred to v0.9.6 where it integrates with the v0.7.11 WORM
+  retention foundation.
+- v0.9.5 → v0.9.6 transition risk: operators who start using
+  `new_version()` chains expecting WORM enforcement get the
+  data-model lineage tracking but NOT the store-side refuse-
+  overwrite guarantee. Operators wanting append-only TODAY
+  should use the existing WORM backends directly + treat
+  `new_version()` as descriptive metadata.
+
+**4. Proxy-headers auto-wire (P1.6)**
+
+`EVIDENTIA_TRUST_PROXY_HEADERS=1` or
+`create_app(trust_proxy_headers=True)` auto-wires uvicorn's
+`ProxyHeadersMiddleware`. Threat model impact:
+
+- **Default off** because honoring `X-Forwarded-For` without a
+  proxy in front lets clients spoof source IP for rate-limit
+  bypass + audit-log evasion (CWE-345 source-validation
+  weakness). Operators MUST only enable behind a proxy that
+  strips + re-adds the headers.
+- When enabled, `ProxyHeadersMiddleware` runs as the OUTER
+  ring (Starlette middleware reverse-add order), replacing
+  `scope["client"]` BEFORE rate-limit + audit-log middleware
+  read it. Identity-spoof attack surface is now the
+  reverse-proxy configuration, not Evidentia itself.
+- Documentation in `rate_limit.py` module docstring (formerly
+  TODO-deferred from v0.9.4).
+
+### Closures of v0.9.3 + v0.9.4 deferred findings
+
+7 v0.9.3 LOW residuals + 8 v0.9.4 LOWs + 2 INFOs + 1
+rebucketed Q closed. Notable security-relevant closures:
+
+- **F-V94-S1 CWE-404 FileLock fd leak**: closed by try/except
+  BaseException wrapping the acquire loop. Previously leaked
+  on signal-EINTR / KeyboardInterrupt paths.
+- **F-V94-S3 CWE-400 rate-limit LRU spray**: closed by idle-
+  aware eviction predicate. IPv6 spray attacker can no longer
+  evict legitimate active clients from the bucket cap.
+- **F-V94-S2 CWE-662 fcntl per-fd semantics doc**: clarified
+  intra-process protection scope of FileLock.
+- **F-V93-S4 explicit SSL context on webhook urlopen**:
+  verify behavior is now documented + auditable + identical
+  across Python versions.
+- **F-V93-S7 state-file size cap (1 MiB default)**: refuses
+  to parse attacker-crafted or operator-misconfigured huge
+  state files; defends against `yaml.safe_load` memory DoS.
+- **F-V93-S8 RFC 5321 recipient validation**: SMTP recipient
+  injection vector closed at config-construction time.
+- **F-V93-S5 trust boundary doc on `EVIDENTIA_AI_REGISTRY_DIR`**:
+  operators reminded the directory is a TRUSTED input;
+  promiscuous ACLs would allow registry-entry forgery.
+
+### Documentation-only deltas
+
+- `docs/walkthrough-validation-v0.9.5.md` (new canonical doc)
+  captures the AI-persona federal-SI procurement-officer
+  validation that drove the P2.1 + P2.2 refinements. Includes
+  honest scope statement that AI-persona validation is NOT a
+  substitute for real-operator review (the latter is a v0.9.6
+  follow-up).
+- CISA Secure by Design + NIST SP 800-218 SSDF PS.3.1
+  verification recipe added at the top of
+  `docs/walkthrough-federal-si.md` so federal-SI buyers can
+  self-attest before installing Evidentia.
+
+### Static + adversarial probing
+
+Trivy (container scan), osv-scanner (Python deps),
+pip-audit, ruff lint scope on the full repo, mypy strict —
+all clean. pytest-randomly random-seed sweep clean (no
+test-isolation bugs surfaced by the v0.9.5 P1.1 audit).
+
+**SAR-style v0.9.5 review-finding bucket**:
+
+| Severity | Count | Notes |
+|---|---|---|
+| CRITICAL | 0 | |
+| HIGH | 0 | (8 v0.9.4 HIGHs all closed in v0.9.4 + v0.9.5) |
+| MEDIUM | 0 NEW | (all v0.9.4 MEDIUMs closed; 0 new in v0.9.5 source) |
+| LOW | 0 NEW | (8 v0.9.4 LOWs + 7 v0.9.3 LOWs all closed) |
+| INFO | 0 NEW | (2 v0.9.4 INFOs closed via release-checklist + CLI re-validate) |
+
+**Zero new findings in v0.9.5 source code.** 20th consecutive
+PROCEED-CLEAN of v0.7.x → v0.8.x → v0.9.x line.
+
+---
+
 *First published v0.7.7 (2026-05). Origin: promoted from a
 project-internal deep-pass note to a public-surface doc to
 satisfy pre-release-review v4 G5 (threat-model existence gate)

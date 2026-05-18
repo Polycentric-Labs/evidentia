@@ -148,6 +148,56 @@ Evidentia is built on four principles:
 
 ### Recent releases
 
+**v0.9.5 (May 2026)** — *Walk-through refinement + collaboration
+primitives + carry-over closure*. Closes 18 deferred review
+findings (7 v0.9.3 LOWs + 8 v0.9.4 LOWs + 2 INFOs + 1
+rebucketed Q-finding), adds 3 collaboration-primitive surfaces,
+validates the federal-SI walk-through against an AI-persona
+reviewer with FedRAMP 20x / RFC-0024 framing, and ships
+daemon-status REST expansion. **Phase 1 carry-over closure**:
+new `evidentia_core.security.atomic_write_text` helper (lifts
+the v0.9.4 inline `.tmp` cleanup across 4 call sites); auto-
+wired `ProxyHeadersMiddleware` via
+`EVIDENTIA_TRUST_PROXY_HEADERS=1` env var or
+`create_app(trust_proxy_headers=True)`; `pytest-randomly` +
+`schemathesis` + `playwright` in `[dev]` deps with
+`tests/dast/` scaffold; 7 v0.9.3 LOWs (explicit SSL context on
+webhook urlopen, trust-boundary doc on `EVIDENTIA_AI_REGISTRY_
+DIR`, SIGINT race window doc, state-file size cap, RFC 5321
+recipient validation, dedup-state mtime cache, sleep_fn
+typing); 8 v0.9.4 LOWs (FileLock fd-leak fix CWE-404, fcntl
+per-fd doc CWE-662, rate-limit LRU spray protection CWE-400,
+idempotency replay-after-delete regression test, IPv6 scope-id
+correct sort, sleep_fn `Callable` typing, cross-process
+FileLock test, rate-limit docstring tightening); 2 INFO
+closures (Pydantic-upgrade body-hash audit guidance + `model_
+copy` validator re-validate pattern). **Phase 2 operator
+polish**: AI-persona walk-through validation (10 refinement
+recommendations: CLI flag bug fix, OMB M-24-10 / NIST AI RMF
+reframe, FedRAMP 20x framing, Step 8 OSCAL POA&M emit, CISA
+Secure-by-Design framing, CA-7 meta-control clarification,
+SCR Form adjacency, FIPS 199 + ATO-linkage as v0.9.6 targets);
+`GET /api/conmon/daemon-history?limit=N` rolling-history
+endpoint + `--history-file` daemon CLI flag; Prometheus
+`evidentia_conmon_daemon_*` gauges at `/api/metrics`. **Phase 3
+collaboration primitives**: POA&M `Milestone.owner` +
+`Milestone.reviewer` Optional fields with CLI + REST filters;
+`EvidenceArtifact.version` + `lineage_id` + `predecessor_id` +
+`new_version()` factory helper (data-model + helper at v0.9.5;
+WORM store-side append-only lands v0.9.6); `evidentia_core.
+rbac` package with `Role` enum / `RBACPolicy` / `check_
+permission` / FastAPI `require_role(action)` dependency
+factory + `EVIDENTIA_RBAC_POLICY_FILE` env-var policy loading
+(default permissive policy preserves v0.9.4 behavior; CLI-side
+enforcement deferred to v0.9.6). **2862 tests passing / 17
+skipped across ~225 source files; mypy strict 0/0; ruff
+clean.** PyPI: 7 packages at 0.9.5. First **direct-push**
+ship-cycle since the v0.9.x line started using PR-based
+workflow (per the post-v0.9.4 lesson;
+`enforce_admins: False` on branch protection always allowed
+this; PR ceremony was self-imposed not branch-protection-
+required).
+
 **v0.9.4 (May 2026)** — *Daemon hardening + operator polish +
 federal-SI walk-through*. Consolidation pass closing v0.9.3
 deferred review items. **Phase 1 daemon hardening**: cross-platform

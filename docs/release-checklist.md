@@ -75,6 +75,20 @@ For every release (patch / minor / major):
 - [ ] Run `uv sync --all-extras --all-packages` to regenerate `uv.lock`.
 - [ ] Verify with `git diff packages/*/pyproject.toml` that 9 pin
       lines changed (not just 7 version lines).
+- [ ] **At Pydantic major-version upgrades** (v0.9.5 F-V94-S11 INFO):
+      audit the AI-gov idempotency body-hash. The hash is computed
+      via `hashlib.sha256(json.dumps(model.model_dump(mode="json"),
+      sort_keys=True))` in `evidentia_api.routers.ai_gov`. Pydantic
+      changes the canonical form across some majors (e.g., default
+      datetime serializer, enum dump shape), which would make
+      previously-stored idempotency keys produce different hashes
+      and silently appear as "different body" → 409 Conflict on
+      legitimate replays after upgrade. Mitigation: at the
+      Pydantic-upgrade commit, snapshot the existing idempotency
+      store via `mv _idempotency.json _idempotency.pre-pydantic-N.json`
+      so the new key/hash mapping starts fresh + the prior state is
+      preserved for audit. Document the version transition in the
+      CHANGELOG.
 
 ---
 
