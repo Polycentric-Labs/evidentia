@@ -1,17 +1,29 @@
-# API stability commitments — DRAFT
+# API stability commitments — NORMATIVE
 
-> **Status**: DRAFT — subject to revision until v1.0 cycle-open.
-> Authored during v0.9.3 P5 per the v1.0-transition.md Candidate B
-> framing. This document will become normative at v1.0.0.
+> **Status**: NORMATIVE as of v0.9.7 (2026-05-19). Promoted from
+> DRAFT during the v0.9.7 P2.1 v1.0-prep cycle per the
+> `docs/v1.0-transition.md` Candidate B framing. Promoted ahead of
+> v1.0 so the v0.9.x → v1.0.0 transition does not require any
+> additional API-contract changes — the contract is set and
+> tested over the remaining v0.9.x line.
 >
 > **Scope**: defines which surfaces carry semantic-versioning
-> guarantees once v1.0 ships, and which surfaces remain free to
-> change without a major-version bump.
+> guarantees, and which surfaces remain free to change without
+> a major-version bump. Operators MAY rely on the frozen surfaces;
+> integrators MAY build against them with confidence that
+> Evidentia will not break them without a deprecation cycle.
+>
+> **Pre-v1.0 vs post-v1.0 semantics**: this NORMATIVE document is
+> already binding — Evidentia will not knowingly break a frozen
+> surface listed below in any v0.9.x release. The v1.0.0 release
+> itself does not add new constraints; it ratifies the contract
+> already in force.
 >
 > **Canonical location**: `docs/api-stability.md`
 > **Cross-references**: [v1.0-transition.md](v1.0-transition.md),
 > [enterprise-grade.md](enterprise-grade.md),
-> [release-checklist.md](release-checklist.md)
+> [release-checklist.md](release-checklist.md),
+> [deprecation-calendar.md](deprecation-calendar.md)
 
 ---
 
@@ -26,10 +38,16 @@ with the following interpretation:
 | **Minor** (1.X.0) | New functionality, additive-only changes to frozen surfaces | New EventAction, new CLI command, new optional model field |
 | **Patch** (1.0.X) | Bug fixes, security patches, doc updates, catalog content refreshes | CVE fix, threshold default adjustment, typo |
 
-**Pre-v1.0 (current)**: minor bumps may contain breaking changes
-to any surface. The v0.9.x line is the "stabilization window"
-where we identify and document the public contract without yet
-committing to it.
+**Pre-v1.0 (v0.9.7 onward — this document NORMATIVE)**: the
+contract listed in this document is binding. Breaking changes to
+frozen surfaces require a deprecation cycle per the policy in §
+"Deprecation policy" below. The v1.0.0 release ratifies (does not
+expand) the contract already in force.
+
+**Earlier pre-v1.0 (v0.9.0 – v0.9.6)**: minor bumps may have
+contained breaking changes to any surface. The v0.9.x line was
+the "stabilization window" where the public contract was
+identified and documented in DRAFT form.
 
 ---
 
@@ -47,15 +65,14 @@ Adding optional fields (with defaults) is a minor-bump change.
 Renaming, removing, or changing the type of an existing field
 is a major-bump trigger.
 
-Frozen models (37 classes across 15 modules):
+Frozen models (45+ classes across 17 modules; v0.9.7-confirmed):
 
 | Module | Key models |
 |--------|-----------|
-| `common.py` | `FrameworkMetadata` |
-| `control.py` | `Control`, `ControlFamily` |
-| `evidence.py` | `EvidenceRecord`, `EvidenceStatus` |
-| `gap.py` | `GapFinding`, `GapSeverity` |
-| `control_gap.py` | `ControlGap` |
+| `common.py` | `FrameworkMetadata`, `ControlMapping`, `EvidentiaModel` |
+| `control.py` | `Control`, `ControlFamily`, `ControlImplementation`, `ControlInventory`, `ControlStatus` |
+| `evidence.py` | `EvidenceArtifact`, `EvidenceBundle`, `EvidenceType`, `EvidenceSufficiency`. v0.9.5+ adds `EvidenceArtifact.version` / `lineage_id` / `predecessor_id` Optional fields + `new_version()` factory helper; these are now frozen. |
+| `gap.py` | `GapFinding`, `GapSeverity`, `GapAnalysisReport`, `ControlGap`, `Milestone`, `POAMState`. v0.9.5 adds `Milestone.owner` / `Milestone.reviewer` Optional fields; these are now frozen. |
 | `vendor.py` | `VendorProfile`, `VendorRiskTier` |
 | `vendor_finding.py` | `VendorFinding` |
 | `vendor_manifest.py` | `VendorManifest` |
@@ -63,9 +80,16 @@ Frozen models (37 classes across 15 modules):
 | `claim.py` | `TraceClaim`, `ReasoningTrace` |
 | `oscal_profile.py` | `OSCALProfile` |
 | `crosswalk.py` | `CrosswalkMapping` |
-| `catalog.py` | `CatalogEntry` |
+| `catalog.py` | `CatalogEntry`, `CatalogControl`, `ControlCatalog` |
 | `tprm.py` | `TPRMAssessment`, `TPRMFinding` |
 | `governance.py` | `AISystem`, `AIRiskClassification`, `GovernanceRecord` |
+| `ai_governance/classification.py` (v0.9.3+) | `AISystemDescriptor`, `AISystemClassification`, `EUAIActTier`, `NISTAIRMFFunction`, `AnnexIIIDomain` |
+| `ai_governance/registry.py` (v0.9.3+; v0.9.6 federal expansion) | `AISystemRegistryEntry`, `DeploymentStatus`, `ATOReference` (v0.9.6) |
+| `ai_governance/fips199.py` (v0.9.6+) | `FIPS199Categorization`, `FIPS199Impact` |
+| `ai_governance/omb_m_24_10.py` (v0.9.6+) | `OMBImpactCategory` |
+| `ai_governance/scr.py` (v0.9.6+) | `SCRForm`, `SCRCategory` |
+| `rbac/policy.py` (v0.9.5+) | `Role`, `RBACPolicy`. `check_permission(identity, action, policy)` + `load_policy_from_file(path)` callables also frozen. |
+| `retention/metadata.py` (v0.7.11+) | `RetentionMetadata`, `RetentionClassification`, `RetentionLifecycleStage` |
 
 **Serialization guarantee**: JSON-serialized output of any frozen
 model at version N must be deserializable by version N+1 within
@@ -79,7 +103,7 @@ The `EventAction` enum is an append-only contract. Existing
 values are never removed or renamed post-v1.0. New values may
 be added in any minor release.
 
-Current namespaces (50+ values):
+Current namespaces (60+ values as of v0.9.7):
 
 | Prefix | Domain | Example values |
 |--------|--------|----------------|
@@ -90,10 +114,12 @@ Current namespaces (50+ values):
 | `VERIFY_*` | Verification | `VERIFY_EVIDENCE`, `VERIFY_MANIFEST` |
 | `MANIFEST_*` | Manifest operations | `MANIFEST_CREATED`, `MANIFEST_ROTATED` |
 | `AI_*` | AI/LLM operations | `AI_RISK_GENERATED`, `AI_EVAL_FAITHFULNESS_CHECKED` |
-| `MCP_*` | MCP server operations | `AI_MCP_TOOL_AUTHORIZED`, `AI_MCP_TOOL_DENIED` |
+| `AI_SYSTEM_*` (v0.9.3+) | AI system inventory | `AI_SYSTEM_CLASSIFIED`, `AI_SYSTEM_REGISTERED`, `AI_SYSTEM_UPDATED`, `AI_SYSTEM_RETIRED`, `AI_SYSTEM_DELETED`, `AI_SYSTEM_FIPS_CATEGORIZED` (v0.9.6), `AI_SYSTEM_OMB_CLASSIFIED` (v0.9.6), `AI_SYSTEM_SCR_EMITTED` (v0.9.6) |
+| `AI_MCP_*` | MCP server operations | `AI_MCP_TOOL_AUTHORIZED`, `AI_MCP_TOOL_DENIED` |
 | `POAM_*` | POA&M lifecycle | `POAM_CREATED`, `POAM_STATE_TRANSITION` |
-| `CONMON_*` | Continuous monitoring | `CONMON_DAEMON_STARTED`, `CONMON_ALERT_DISPATCHED` |
-| `RETENTION_*` | Data retention | `RETENTION_POLICY_APPLIED` |
+| `CONMON_*` | Continuous monitoring | `CONMON_DAEMON_STARTED`, `CONMON_ALERT_DISPATCHED`, `CONMON_CYCLE_DUE`, `CONMON_CYCLE_OVERDUE`, `CONMON_CYCLE_MARKED_COMPLETED` |
+| `EVIDENCE_*` (v0.9.6+) | Evidence WORM lineage | `EVIDENCE_VERSION_PERSISTED`, `EVIDENCE_WORM_VIOLATION_BLOCKED`, `EVIDENCE_LINEAGE_QUERIED` |
+| `RETENTION_*` | Data retention | `RETENTION_RECORD_PUT`, `RETENTION_RECORD_EXTENDED`, `RETENTION_LEGAL_HOLD_APPLIED`, `RETENTION_LEGAL_HOLD_RELEASED`, `RETENTION_LIFECYCLE_TRANSITIONED`, `RETENTION_RECORD_PURGED`, `RETENTION_GDPR_PURGE` |
 
 Operators building alerting / SIEM integrations on top of the
 audit log can depend on these values being stable.
@@ -102,7 +128,7 @@ audit log can depend on these values being stable.
 
 **Package**: `evidentia` (the CLI entry point)
 
-Top-level command groups (14+):
+Top-level command groups (18+ as of v0.9.7):
 
 ```
 evidentia gap          evidentia catalog      evidentia risk
@@ -110,8 +136,17 @@ evidentia explain      evidentia integrations evidentia collect
 evidentia oscal        evidentia tprm         evidentia model-risk
 evidentia governance   evidentia retention    evidentia poam
 evidentia conmon       evidentia ai-gov       evidentia eval
-evidentia mcp          evidentia serve
+evidentia mcp          evidentia serve        evidentia evidence (v0.9.6)
 ```
+
+**Global flags (frozen across all commands)**:
+
+- `--verbose` / `-v` — DEBUG-level logging
+- `--quiet` / `-q` — ERROR-level only
+- `--config <path>` — explicit `evidentia.yaml` override
+- `--offline` — air-gap guard (v0.4.0)
+- `--json-logs` — ECS 8.11 JSON output (v0.7.0)
+- `--rbac-identity <id>` — per-invocation RBAC identity override (v0.9.6)
 
 **Stability contract**:
 
@@ -157,27 +192,60 @@ frozen: `AuthResult`, `CatalogManifest`, `EvidenceRecord`.
 Public importable paths that operators and integrators use:
 
 ```python
+# Core analysis + data models
 from evidentia_core.gap_analyzer import GapAnalyzer
 from evidentia_core.models import ControlGap, GapFinding, ...
 from evidentia_core.audit.events import EventAction
-from evidentia_core.catalogs.registry import FRAMEWORK_METADATA
+from evidentia_core.catalogs.registry import FrameworkRegistry
 from evidentia_core.conmon import derive_status, BUNDLED_CADENCES
 from evidentia_core.poam import POAMState, Milestone
+from evidentia_core.poam_store import save_poam, load_poam_by_id
 from evidentia_core.plugins import AuthProvider, StorageBackend, ...
 
+# v0.9.5+ RBAC + collaboration primitives
+from evidentia_core.rbac import (
+    Role, RBACPolicy, check_permission, load_policy_from_file,
+)
+
+# v0.9.6+ evidence WORM store + cloud mirror
+from evidentia_core.evidence_store import (
+    save_evidence, list_lineage, load_evidence_version,
+    list_lineages, get_evidence_store_dir,
+    EvidenceWORMViolation, InvalidEvidenceIdError,
+    EVIDENCE_STORE_ENV_VAR,
+)
+from evidentia_core.evidence_store_worm import (
+    mirror_to_worm, fetch_from_worm,
+)
+
+# v0.9.6+ AI-gov federal expansion
+from evidentia_core.ai_governance import (
+    FIPS199Categorization, FIPS199Impact,
+    OMBImpactCategory, triggers_minimum_practices,
+    ATOReference, AISystemRegistryEntry, DeploymentStatus,
+)
+from evidentia_core.ai_governance.scr import (
+    SCRForm, SCRCategory, emit_scr_form, classify_change,
+)
+
+# v0.9.6+ OSCAL schema version constant
+from evidentia_core.oscal import OSCAL_SCHEMA_VERSION
+
+# AI features
 from evidentia_ai.risk_statements import RiskStatementGenerator
 from evidentia_ai.eval import DFAHarness, faithfulness_score
-from evidentia_ai.governance import AIRiskClassifier, AISystemInventory
 
+# Collectors + integrations
 from evidentia_collectors.vendor_risk import (
     BitSightCollector, SecurityScorecardCollector,
     RiskReconCollector, UpGuardCollector,
 )
-
 from evidentia_integrations.alerting import SmtpChannel, WebhookChannel
 
+# API + MCP entry points
 from evidentia_api.app import create_app
-from evidentia_mcp.server import create_mcp_server
+from evidentia_api.rbac_dependency import require_role
+from evidentia_mcp.server import build_server  # v0.8.0+ name
 ```
 
 **Stability contract**: these import paths are frozen. Moving a
@@ -353,8 +421,61 @@ surfaces of Evidentia. It does NOT cover:
 
 ---
 
+## MCP tool contract
+
+**Package**: `evidentia_mcp.server`
+
+MCP tool names are frozen — they are part of the contract with AI
+clients (Claude Desktop, Claude Code, custom MCP clients). Renaming
+a tool is a major-bump trigger; adding new tools is non-breaking.
+
+Frozen tool surface (as of v0.9.7):
+
+| Tool | Since | Purpose |
+|---|---|---|
+| `list_frameworks` | v0.8.0 | Enumerate bundled catalogs |
+| `get_control` | v0.8.0 | Single-control lookup |
+| `gap_analyze` | v0.8.0 | Run gap analysis |
+| `gap_diff` | v0.8.0 | Compare two gap reports |
+| `conmon_list_cadences` | v0.9.6 | List CONMON cadences |
+| `conmon_next_due` | v0.9.6 | Compute next-due date |
+| `conmon_check_state` | v0.9.6 | Read state file → attention buckets |
+| `conmon_health` | v0.9.6 | Health report wrapper |
+
+Tool *parameter names* are frozen. Tool *descriptions* may be
+refined for clarity without constituting a breaking change.
+
+CIMD scope-grant semantics (v0.8.5+) are NOT frozen: operators
+adding new tools through CIMD registry updates (via
+`evidentia mcp cimd-migrate` in v0.9.7+) is a deployment-time
+concern, not an API contract.
+
+---
+
+## Env-var public contract (v0.9.7 NEW)
+
+Operators rely on certain env vars to configure Evidentia at
+runtime. The names + semantics of these vars are frozen with the
+same guarantees as CLI flags. Removal requires a deprecation
+cycle.
+
+| Env var | Since | Purpose |
+|---|---|---|
+| `EVIDENTIA_POAM_STORE_DIR` | v0.9.0 | POA&M JSON store directory |
+| `EVIDENTIA_AI_REGISTRY_DIR` | v0.9.3 | AI-gov registry directory |
+| `EVIDENTIA_TRUST_PROXY_HEADERS` | v0.9.5 | `X-Forwarded-For` ingest gate |
+| `EVIDENTIA_RBAC_POLICY_FILE` | v0.9.5 (FastAPI), v0.9.6 (CLI) | RBAC policy YAML path |
+| `EVIDENTIA_RBAC_IDENTITY` | v0.9.6 | CLI RBAC identity |
+| `EVIDENTIA_EVIDENCE_STORE_DIR` | v0.9.6 | Evidence store root directory |
+| `EVIDENTIA_EVIDENCE_AUTO_MIRROR_WORM` | v0.9.7 | Gate auto-mirror to cloud WORM |
+| `EVIDENTIA_EVIDENCE_WORM_BACKEND_FACTORY` | v0.9.7 | Dotted-path factory for auto-mirror backend |
+
+---
+
 ## Revision history
 
 | Version | Date | Change |
 |---------|------|--------|
 | DRAFT | 2026-05-16 | Initial authoring during v0.9.3 P5 |
+| DRAFT | 2026-05-18 | v0.9.4 – v0.9.5 surfaces inventoried (no doc edits yet) |
+| **NORMATIVE** | **2026-05-19** | **Promoted from DRAFT during v0.9.7 P2.1. v0.9.4 – v0.9.6 surfaces backfilled: evidence WORM store, AI-gov federal fields, FIPS 199 + OMB + SCR models, CONMON MCP tools, OSCAL_SCHEMA_VERSION constant, RBAC primitives, evidence_store env vars. MCP tool contract section + env-var public-contract section added. Pre-v1.0 binding semantics in force.** |

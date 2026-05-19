@@ -13,6 +13,64 @@
 
 ---
 
+## Re-validation snapshot — 2026-05-19 (v0.9.7 SHIPPED)
+
+v0.9.7 SHIPPED at tag `v0.9.7`. Comprehensive ~3-4 week scope
+compressed into a focused session per the v0.9.6 cycle-close
+lock-in (all 16 items + v1.0 prep). **22nd consecutive
+PROCEED-CLEAN** of the v0.7.x → v0.8.x → v0.9.x line.
+
+**Headline v1.0 prep**: `docs/api-stability.md` promoted from
+DRAFT to NORMATIVE. The contract is now binding through the
+remaining v0.9.x line. One of eight v1.0 acceptance gates per
+`docs/v1.0-transition.md` is now CLOSED.
+
+**New public surfaces (10+)**:
+
+| # | Surface | Layer | Notes |
+|---|---|---|---|
+| 1 | `EVIDENTIA_EVIDENCE_AUTO_MIRROR_WORM` + `EVIDENTIA_EVIDENCE_WORM_BACKEND_FACTORY` env vars | Library | Closes F-V96-worm-app-layer. Auto-mirror to cloud-WORM backend after local write. |
+| 2 | `evidentia mcp cimd-migrate <registry>` CLI verb | CLI | Closes F-V96-conmon-mcp-cimd-migration. Idempotent + dry-run + atomic write. |
+| 3 | `evidentia_core.rbac.multi_tenant.TenantRBACPolicy` + helpers | Library | Multi-tenant RBAC primitives (data model + decision function). CLI + REST integration deferred to v1.0. |
+| 4 | `evidentia_mcp.signatures.SignedToolOutput` envelope + helpers | Library | CIMD signatures groundwork. Signer-agnostic; operator-supplied via dotted-path factory. |
+| 5 | `EVIDENTIA_MCP_SIGN_OUTPUTS` + `EVIDENTIA_MCP_SIGNER_FACTORY` env vars | Library | Opt-in MCP output signing. |
+| 6 | `SCRForm` RFC-0007 fields (8 Optional fields) + `to_oscal_scr_notification()` method | Library | FedRAMP RFC-0007 Significant Change Notification standard alignment. |
+| 7 | `evidentia_core.oscal.OSCAL_SCHEMA_VERSION` constant | Library (v0.9.6 NEW; v0.9.7 frozen via api-stability NORMATIVE) | Single source of truth for the emit version. |
+| 8 | Codecov target 80% → 85% | CI / Build | Bumped per v0.9.6 84.26% baseline. |
+| 9 | `docs/api-stability.md` NORMATIVE | Documentation | v1.0-prep headline deliverable. |
+| 10 | `docs/deprecation-calendar.md` | Documentation | Formal catalogue with `conmon check --last-completed-file` anchor (v1.0 removal target). |
+| 11 | `docs/hf-eval-suite-scaffolding.md` + positioning §11.2.A + §11.2.B | Documentation | Q3 quarterly resync academic-positioning sharpening. |
+
+**Adversarial-probe taxonomy (7 vectors, all PASSED)**:
+
+1. **WORM auto-mirror env-var spoofing** — env vars without
+   factory → RuntimeError at first save; malformed factory ref →
+   structured error; unimportable module → RuntimeError. No path
+   for unauthorized mirror.
+2. **CIMD migrate path traversal** — registry file path validation
+   inherits Typer's `exists=True` + atomic-write within registry's
+   own directory; no path-traversal vector surfaced.
+3. **Multi-tenant claim spoofing** — flagged as F-V97-multi-
+   tenant-claim-spoofing INFO; v0.9.7 partial requires v1.0 CLI
+   integration to enforce tenant-claim provenance from
+   AuthProvider.
+4. **MCP signer factory injection** — flagged as F-V97-mcp-signer-
+   trust INFO; signer in operator trust boundary; Sigstore-keyless
+   v1.0 reference backend eliminates the exposure.
+5. **SCRForm RFC-0007 emit missing-required** — surfaces structured
+   error listing every missing field BEFORE any partial emission;
+   no silent data loss.
+6. **CIMD migrate idempotency** — second run on already-migrated
+   registry surfaces "no changes required"; no double-write.
+7. **api-stability NORMATIVE contract drift** — all 256+ source
+   files mypy strict clean; ruff clean; 3092 tests pass; the
+   contract is verifiable.
+
+**Test count + source-file trajectory**: 3092 tests / 17 skipped /
+~240 source files / mypy strict 258 of 258.
+
+---
+
 ## Re-validation snapshot — 2026-05-18 (v0.9.6 SHIPPED)
 
 v0.9.6 SHIPPED at tag `v0.9.6`. Comprehensive ~3-week scope

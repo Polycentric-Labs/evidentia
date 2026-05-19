@@ -74,6 +74,33 @@ from evidentia_core.security.paths import (
 logger = logging.getLogger(__name__)
 
 EVIDENCE_STORE_ENV_VAR = "EVIDENTIA_EVIDENCE_STORE_DIR"
+EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR = "EVIDENTIA_EVIDENCE_AUTO_MIRROR_WORM"
+"""v0.9.7 P1.1: closes F-V96-worm-app-layer. When set to a
+non-empty value, :func:`save_evidence` calls
+:func:`evidentia_core.evidence_store_worm.mirror_to_worm` AFTER
+the local-store write succeeds. The mirror backend is provided
+by the caller via a dotted-path module reference (e.g.,
+``my_project.worm_backend:make_backend``) — see
+:func:`_resolve_auto_mirror_backend` for the import + retention-
+metadata resolution. Default unset → no auto-mirror (preserves
+v0.9.6 behavior).
+"""
+
+EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR = "EVIDENTIA_EVIDENCE_WORM_BACKEND_FACTORY"
+"""v0.9.7 P1.1: dotted-path reference to a callable returning a
+``(backend, retention_metadata)`` tuple. Format:
+``module.submodule:callable_name``. Required when
+:data:`EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR` is set; otherwise the
+auto-mirror raises a configuration error at first save.
+
+The callable signature::
+
+    def make_backend() -> tuple[WORMBackend, RetentionMetadata]: ...
+
+Operators wire this to their site-specific cloud-WORM backend +
+the retention policy classification appropriate for their
+evidence (SOX 7yr / HIPAA 6yr / FedRAMP 5yr / etc.).
+"""
 
 
 class InvalidEvidenceIdError(ValueError):
@@ -192,6 +219,57 @@ def _version_path(
     return validate_within(candidate, store_root)
 
 
+def _resolve_auto_mirror_backend() -> (
+    tuple[object, object] | None
+):
+    """Resolve the auto-mirror backend factory from env vars (v0.9.7 P1.1).
+
+    Returns ``None`` when :data:`EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR`
+    is unset / empty → no auto-mirror should run. Returns
+    ``(backend, retention_metadata)`` otherwise.
+
+    Raises:
+        RuntimeError: If the auto-mirror env var is set but the
+            factory env var is unset / unresolvable. The error
+            surfaces at first save (not server-start) so that
+            operators who never save evidence don't hit a
+            spurious config error.
+    """
+    if not os.environ.get(EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR):
+        return None
+    factory_ref = os.environ.get(EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR)
+    if not factory_ref:
+        raise RuntimeError(
+            f"{EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR} is set but "
+            f"{EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR} is empty. "
+            f"Format: 'module.submodule:callable_name'. The callable "
+            f"must return (backend, retention_metadata)."
+        )
+    if ":" not in factory_ref:
+        raise RuntimeError(
+            f"{EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR}={factory_ref!r} "
+            f"must be of the form 'module.submodule:callable_name'"
+        )
+    import importlib
+
+    module_path, _, attr = factory_ref.partition(":")
+    try:
+        module = importlib.import_module(module_path)
+    except ImportError as exc:
+        raise RuntimeError(
+            f"Could not import {module_path!r} for auto-mirror "
+            f"backend factory: {exc}"
+        ) from exc
+    factory = getattr(module, attr, None)
+    if factory is None or not callable(factory):
+        raise RuntimeError(
+            f"{factory_ref!r} did not resolve to a callable in "
+            f"{module_path!r}"
+        )
+    result: tuple[object, object] = factory()
+    return result
+
+
 def save_evidence(
     artifact: EvidenceArtifact,
     evidence_store_dir: Path | None = None,
@@ -203,6 +281,18 @@ def save_evidence(
     :class:`EvidenceWORMViolation`. The recovery path is to call
     :meth:`EvidenceArtifact.new_version` on the conflicting
     artifact and save the resulting v<N+1> version.
+
+    v0.9.7 P1.1 auto-mirror: when
+    :data:`EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR` is set + a backend
+    factory is configured via
+    :data:`EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR`, this function
+    also pushes the persisted version to the cloud-WORM backend
+    via :func:`evidentia_core.evidence_store_worm.mirror_to_worm`.
+    The mirror runs AFTER the local-store write succeeds; mirror
+    failure surfaces as a non-fatal warning by default (the local
+    file is already in place + WORM-protected at the application
+    layer). Operators wanting fail-fast on mirror failure raise
+    the exception in their factory.
 
     Atomic-write semantics (mirrors poam_store v0.9.0 +
     vendor_store v0.7.9): writes to ``v<N>.json.tmp`` then
@@ -262,6 +352,38 @@ def save_evidence(
         canonical_lineage,
         out_path,
     )
+
+    # v0.9.7 P1.1: auto-mirror to cloud-WORM backend if configured.
+    # Runs AFTER the local write succeeds, so a mirror failure
+    # never leaves the local store in an inconsistent state. The
+    # local-store version is the source-of-truth; the mirror is
+    # a regulator-grade durability layer composed on top.
+    mirror_config = _resolve_auto_mirror_backend()
+    if mirror_config is not None:
+        backend, retention_metadata = mirror_config
+        try:
+            from evidentia_core.evidence_store_worm import mirror_to_worm
+
+            mirror_to_worm(artifact, backend, retention_metadata)  # type: ignore[arg-type]
+            logger.debug(
+                "Auto-mirrored evidence v%d for lineage %s to WORM backend",
+                artifact.version,
+                canonical_lineage,
+            )
+        except Exception:
+            # Non-fatal: the local-store write already succeeded
+            # + the WORM record is the optional durability layer.
+            # Operators wanting fail-fast on mirror failure raise
+            # the exception in their factory function rather than
+            # catching it here.
+            logger.warning(
+                "Auto-mirror to WORM backend failed for lineage %s "
+                "v%d; local-store write succeeded.",
+                canonical_lineage,
+                artifact.version,
+                exc_info=True,
+            )
+
     return out_path
 
 

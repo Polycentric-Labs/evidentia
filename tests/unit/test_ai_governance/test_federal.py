@@ -428,3 +428,174 @@ class TestEmitSCRForm:
         loaded = SCRForm.model_validate_json(blob)
         assert loaded.scr_id == form.scr_id
         assert loaded.category == form.category
+
+
+# ── RFC-0007 alignment (v0.9.7 P3) ─────────────────────────────────
+
+
+class TestRFC0007Alignment:
+    """v0.9.7 P3: SCRForm carries RFC-0007 SCN required fields +
+    emits the canonical structured format via
+    :meth:`SCRForm.to_oscal_scr_notification`.
+    """
+
+    def test_new_optional_fields_default_none(self) -> None:
+        entry = _make_entry()
+        form = emit_scr_form(entry, entry)
+        assert form.service_offering_fedramp_id is None
+        assert form.three_pao_name is None
+        assert form.type_of_change is None
+        assert form.related_poam is None
+        assert form.reason_for_change is None
+        assert form.components_and_controls_affected is None
+        assert form.business_security_impact_analysis is None
+        assert form.approver_name_and_title is None
+
+    def test_to_oscal_scr_notification_missing_required_raises(
+        self,
+    ) -> None:
+        entry = _make_entry()
+        form = emit_scr_form(entry, entry)
+        with pytest.raises(ValueError, match="required fields are None"):
+            form.to_oscal_scr_notification()
+
+    def test_to_oscal_scr_notification_lists_all_missing(self) -> None:
+        entry = _make_entry()
+        form = emit_scr_form(entry, entry)
+        # Only populate one field; all others are missing.
+        form_with_partial = form.model_copy(
+            update={
+                "service_offering_fedramp_id": "FR-12345",
+            }
+        )
+        try:
+            form_with_partial.to_oscal_scr_notification()
+            raise AssertionError("should have raised")
+        except ValueError as exc:
+            msg = str(exc)
+            # 5 required fields still missing.
+            assert "type_of_change" in msg
+            assert "reason_for_change" in msg
+            assert "approver_name_and_title" in msg
+
+    def test_to_oscal_scr_notification_happy_path(self) -> None:
+        entry = _make_entry()
+        form = emit_scr_form(entry, entry)
+        populated = form.model_copy(
+            update={
+                "service_offering_fedramp_id": "FR-12345",
+                "type_of_change": "AI system inventory entry",
+                "reason_for_change": "New AI use case approval.",
+                "components_and_controls_affected": (
+                    "AC-3, AC-6 — access enforcement scope"
+                ),
+                "business_security_impact_analysis": (
+                    "Low business impact; rights-impacting per OMB §5(b)(i)."
+                ),
+                "approver_name_and_title": "Jane Doe, CISO",
+            }
+        )
+        notif = populated.to_oscal_scr_notification()
+        assert notif["service_offering_fedramp_id"] == "FR-12345"
+        assert notif["type_of_change"] == "AI system inventory entry"
+        assert notif["approver_name_and_title"] == "Jane Doe, CISO"
+        # Routine recurring → no Adaptive / Transformative extras.
+        assert "date_of_change" not in notif
+        assert "planned_change_date" not in notif
+
+    def test_to_oscal_scr_notification_adaptive_adds_date(self) -> None:
+        prior = _make_entry()
+        new = prior.model_copy(update={"provider": "different-vendor"})
+        form = emit_scr_form(prior, new)
+        populated = form.model_copy(
+            update={
+                "service_offering_fedramp_id": "FR-12345",
+                "type_of_change": "Provider change",
+                "reason_for_change": "Vendor reorganization.",
+                "components_and_controls_affected": "AC-3",
+                "business_security_impact_analysis": "Low.",
+                "approver_name_and_title": "Jane, CISO",
+            }
+        )
+        notif = populated.to_oscal_scr_notification()
+        assert notif["evidentia_category"] == SCRCategory.ADAPTIVE.value
+        assert "date_of_change" in notif
+        assert "verification_and_assessment_steps_summary" in notif
+
+    def test_to_oscal_scr_notification_transformative_adds_rollback(
+        self,
+    ) -> None:
+        prior = _make_entry(deployment_status=DeploymentStatus.PILOT)
+        new = prior.model_copy(
+            update={"deployment_status": DeploymentStatus.PRODUCTION}
+        )
+        form = emit_scr_form(
+            prior,
+            new,
+            rollback_plan="Roll back via git revert + redeploy.",
+        )
+        populated = form.model_copy(
+            update={
+                "service_offering_fedramp_id": "FR-12345",
+                "type_of_change": "Deployment promotion",
+                "reason_for_change": "Pilot validation complete.",
+                "components_and_controls_affected": "All system components",
+                "business_security_impact_analysis": "Moderate; new control gates apply.",
+                "approver_name_and_title": "Jane, CISO",
+            }
+        )
+        notif = populated.to_oscal_scr_notification()
+        assert notif["evidentia_category"] == SCRCategory.TRANSFORMATIVE.value
+        assert "planned_change_date" in notif
+        assert "control_verification_steps" in notif
+        assert "rollback_plan" in notif
+        assert "git revert" in notif["rollback_plan"]  # type: ignore[operator]
+
+    def test_to_oscal_scr_notification_three_pao_conditional(self) -> None:
+        prior = _make_entry(deployment_status=DeploymentStatus.PILOT)
+        new = prior.model_copy(
+            update={"deployment_status": DeploymentStatus.PRODUCTION}
+        )
+        form = emit_scr_form(prior, new)
+        # Without three_pao_name set, it should NOT appear in the
+        # notification.
+        populated = form.model_copy(
+            update={
+                "service_offering_fedramp_id": "FR-12345",
+                "type_of_change": "Promotion",
+                "reason_for_change": "Pilot done.",
+                "components_and_controls_affected": "All",
+                "business_security_impact_analysis": "Moderate.",
+                "approver_name_and_title": "Jane, CISO",
+            }
+        )
+        notif = populated.to_oscal_scr_notification()
+        assert "three_pao_name" not in notif
+        # With three_pao_name set, it appears.
+        with_3pao = populated.model_copy(
+            update={"three_pao_name": "Acme 3PAO LLC"}
+        )
+        notif_with = with_3pao.to_oscal_scr_notification()
+        assert notif_with["three_pao_name"] == "Acme 3PAO LLC"
+
+    def test_oscal_scr_json_serializable(self) -> None:
+        import json
+
+        entry = _make_entry()
+        form = emit_scr_form(entry, entry)
+        populated = form.model_copy(
+            update={
+                "service_offering_fedramp_id": "FR-12345",
+                "type_of_change": "Test",
+                "reason_for_change": "Test.",
+                "components_and_controls_affected": "All",
+                "business_security_impact_analysis": "None.",
+                "approver_name_and_title": "Jane, CISO",
+            }
+        )
+        notif = populated.to_oscal_scr_notification()
+        # Must be JSON-serializable directly (every value is a
+        # primitive type or stringified enum).
+        blob = json.dumps(notif)
+        round_tripped = json.loads(blob)
+        assert round_tripped == notif

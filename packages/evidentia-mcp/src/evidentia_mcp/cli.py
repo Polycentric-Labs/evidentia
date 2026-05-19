@@ -368,3 +368,170 @@ def doctor() -> None:
     typer.echo("  • MCP SDK: importable")
     typer.echo(f"  • Catalog registry: {len(fws)} frameworks loaded")
     typer.echo(f"  • FastMCP server: {len(registered)} tools registered")
+
+
+#: v0.9.7 P1.2: tools newly added in v0.9.6 that pre-v0.9.6 CIMD
+#: registries don't grant by default. Operators running the
+#: migrate verb get these added to each client's scope (idempotent
+#: — clients already listing them are not modified).
+V0_9_6_NEW_TOOLS = (
+    "conmon_list_cadences",
+    "conmon_next_due",
+    "conmon_check_state",
+    "conmon_health",
+)
+
+
+@app.command("cimd-migrate")
+def cimd_migrate(
+    registry_file: Path = typer.Argument(
+        ...,
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        writable=True,
+        help=(
+            "Path to a CIMD registry JSON file. Operators ran this "
+            "from `evidentia mcp serve --cimd-registry <path>` in "
+            "v0.8.5+; the file is rewritten in place after the "
+            "migration."
+        ),
+    ),
+    client_id: str | None = typer.Option(
+        None,
+        "--client-id",
+        help=(
+            "When set, apply the migration only to this client. "
+            "Default: apply to every client in the registry."
+        ),
+    ),
+    tools: str | None = typer.Option(
+        None,
+        "--tools",
+        help=(
+            "Space-separated tool names to add (overrides the "
+            "default v0.9.6 tool set). Use to migrate other "
+            "future tool additions: "
+            "--tools 'tool_a tool_b'."
+        ),
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help=(
+            "Print the diff without writing. Use to preview the "
+            "changes before committing."
+        ),
+    ),
+) -> None:
+    """Migrate a CIMD registry to grant the v0.9.6 ``conmon_*`` MCP tools.
+
+    Closes F-V96-conmon-mcp-cimd-migration (v0.9.6 cycle-close
+    follow-up). The v0.9.6 CONMON MCP first-mover surface added
+    four new tools (``conmon_list_cadences`` / ``conmon_next_due``
+    / ``conmon_check_state`` / ``conmon_health``). Operators on
+    v0.9.5 CIMD registries see these tools default-rejected at
+    dispatch until per-client ``scope`` grants them.
+
+    This verb adds the v0.9.6 tools to each client's ``scope``
+    field. Idempotent: a tool already in a client's scope is
+    skipped (the diff output flags it as ``no-change``).
+
+    Args:
+        registry_file: Path to the CIMD registry JSON. Rewritten
+            in place after migration (atomic via .tmp + replace).
+            Use ``--dry-run`` to preview without writing.
+        client_id: Restrict migration to a single client.
+        tools: Override the default v0.9.6 tool set. Use to
+            migrate future tool additions.
+        dry_run: Preview the diff; do NOT write.
+
+    Exit codes:
+        0 — migration succeeded (or dry-run completed)
+        1 — registry parse failure or client_id not found
+        2 — CLI usage error (invalid combo of options)
+    """
+    import json
+    import os
+
+    from evidentia_mcp.cimd import CIMDRegistry
+
+    new_tools = tuple(tools.split()) if tools else V0_9_6_NEW_TOOLS
+    if not new_tools:
+        typer.echo(
+            "ERROR: --tools resolved to an empty set", err=True
+        )
+        raise typer.Exit(code=2)
+
+    try:
+        registry = CIMDRegistry.from_file(registry_file)
+    except (FileNotFoundError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    target_clients = (
+        [client_id] if client_id is not None else list(registry.clients.keys())
+    )
+    if client_id is not None and client_id not in registry.clients:
+        typer.echo(
+            f"ERROR: client_id {client_id!r} not in registry "
+            f"({len(registry.clients)} clients present)",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    changes: list[tuple[str, list[str], list[str]]] = []
+    for cid in target_clients:
+        doc = registry.clients[cid]
+        existing = set(doc.scope.split()) if doc.scope else set()
+        added = [t for t in new_tools if t not in existing]
+        if not added:
+            changes.append((cid, [], list(existing)))
+            continue
+        updated_scope = " ".join(sorted(existing | set(added)))
+        doc_dict = doc.model_dump()
+        doc_dict["scope"] = updated_scope
+        registry.clients[cid] = type(doc).model_validate(doc_dict)
+        changes.append((cid, added, sorted(existing | set(added))))
+
+    # Print the diff before any write so operators see exactly
+    # what landed.
+    any_added = any(added for _, added, _ in changes)
+    typer.echo(
+        f"CIMD migration plan ({'DRY RUN' if dry_run else 'APPLY'}) "
+        f"for {registry_file}:"
+    )
+    for cid, added, final in changes:
+        if added:
+            typer.echo(
+                f"  + {cid}: adding {sorted(added)} "
+                f"(final scope: {final})"
+            )
+        else:
+            typer.echo(
+                f"  = {cid}: no change "
+                f"(already grants {sorted(new_tools)})"
+            )
+    if not any_added:
+        typer.echo("No changes required; registry is already up-to-date.")
+        return
+    if dry_run:
+        typer.echo(
+            "Dry run: registry file NOT modified. "
+            "Re-run without --dry-run to apply."
+        )
+        return
+
+    # Atomic write: temp file then os.replace.
+    payload = registry.model_dump(mode="json")
+    tmp_path = registry_file.with_suffix(
+        registry_file.suffix + ".tmp"
+    )
+    tmp_path.write_text(
+        json.dumps(payload, indent=2), encoding="utf-8"
+    )
+    os.replace(tmp_path, registry_file)
+    typer.echo(
+        f"Migration applied: {registry_file} updated atomically."
+    )

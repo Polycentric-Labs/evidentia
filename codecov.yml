@@ -13,9 +13,15 @@ coverage:
   status:
     project:
       default:
-        # OpenSSF Silver `test_statement_coverage80` floor. Locked
-        # at 80% so a regression in coverage fails the build.
-        target: 80%
+        # v0.9.7 P1.3: target bumped from 80% to 85% per the v0.9.6
+        # cycle-close audit. v0.9.5 baseline was 84.26%; the v0.9.6
+        # work added ~156 net new tests against ~9 new source files
+        # (high test density per new module), pushing the actual
+        # coverage above 85%. The OpenSSF Silver
+        # `test_statement_coverage80` MUST floor is still met with
+        # 5% headroom; raising the bar prevents accidental
+        # regression below the new working baseline.
+        target: 85%
         # Per-PR threshold: a PR may drop coverage by at most 1%
         # before it fails the project gate. Buys headroom for
         # legitimate refactors while still flagging large dips.
@@ -24,9 +30,10 @@ coverage:
         only_pulls: false
     patch:
       default:
-        # New code in a PR must hit ≥ 80% itself — prevents the
-        # project gate from being a "diluted-by-old-code" pass.
-        target: 80%
+        # New code in a PR must hit ≥ 85% itself — keeps the
+        # project gate's tightened standard applied uniformly to
+        # newly-introduced surfaces.
+        target: 85%
         if_no_uploads: error
         only_pulls: true
 

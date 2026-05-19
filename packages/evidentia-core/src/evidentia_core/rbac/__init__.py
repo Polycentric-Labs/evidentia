@@ -34,6 +34,13 @@ Cross-references:
   implications of opt-in RBAC.
 """
 
+from evidentia_core.rbac.multi_tenant import (
+    TENANT_CLAIM_SEPARATOR,
+    TenantRBACPolicy,
+    check_permission_multi_tenant,
+    load_multi_tenant_policy_from_file,
+    resolve_tenant_from_identity,
+)
 from evidentia_core.rbac.policy import (
     DEFAULT_POLICY,
     RBACPolicy,
@@ -44,8 +51,13 @@ from evidentia_core.rbac.policy import (
 
 __all__ = [
     "DEFAULT_POLICY",
+    "TENANT_CLAIM_SEPARATOR",
     "RBACPolicy",
     "Role",
+    "TenantRBACPolicy",
     "check_permission",
+    "check_permission_multi_tenant",
+    "load_multi_tenant_policy_from_file",
     "load_policy_from_file",
+    "resolve_tenant_from_identity",
 ]

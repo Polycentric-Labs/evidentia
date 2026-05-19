@@ -1352,36 +1352,113 @@ re-resolution.
 **3018 tests / 17 skipped / mypy strict 256 of 256 source files /
 ruff clean / pytest-randomly seed-sweep clean.**
 
-## v0.9.7 — Real-operator walk-through + supply-chain hardening + carry-over closure — PLANNED
+## v0.9.7 — Comprehensive v0.9.x close-out + v1.0 prep — SHIPPED
 
-Estimated 2-3 week focused session matching the v0.9.4 / v0.9.6
-cadence. Closes the v0.9.6 deferrals + the v0.9.5 walk-through
-deferral.
+Tag `v0.9.7` (2026-05-19). Comprehensive ~3-4 week scope
+compressed into a focused session per the v0.9.6 cycle-close
+lock-in (Allen's "comprehensive + walk-through deferred + api-
+stability NORMATIVE + multi-tenant RBAC partial + CIMD signatures
+groundwork" choices). **22nd consecutive PROCEED-CLEAN** of the
+v0.7.x → v0.8.x → v0.9.x line.
 
-**Carry-over from v0.9.6**:
-- Real federal-SI domain-expert walk-through review (no operator
-  sourced at v0.9.6 cycle-close; v0.9.5 AI-persona validation
-  remains baseline).
-- OSCAL Significant Change Notification standard alignment
-  (RFC-0007 / NOTICE-0009 March 2026 surfaced post-Phase 0.1).
-- CIMD scope-migration tooling for the new `conmon_*` MCP tools
-  (operator-facing helper closing F-V96-conmon-mcp-cimd-migration).
-- F-V96-worm-app-layer opt-in `EVIDENTIA_EVIDENCE_AUTO_MIRROR_WORM`
-  env var (closes the "operator forgot to wire mirroring" gap).
+**Phase 0 — pre-cycle verification (all PASSED)**: paramiko
+upstream still unpatched (carry-forward); RFC-0007 SCN required-
+field set captured; api-stability.md surface enumerated for
+NORMATIVE promotion.
 
-**Walk-through scope** (v0.9.7-P2):
-- Apply the v0.9.5 AI-persona walk-through to FIPS 199 + OMB
-  + SCR surfaces shipped in v0.9.6 P3.
-- Source a real federal-SI procurement officer / domain expert
-  to walk through `docs/walkthrough-federal-si.md` extended with
-  Phase 6-8 (POA&M emit + OSCAL emit + SCR submission).
-- Capture findings in `docs/walkthrough-validation-v0.9.7.md`
-  per the v0.9.5 precedent.
+**Phase 1 — v0.9.6 carry-overs**:
+- **P1.1 WORM auto-mirror** (closes F-V96-worm-app-layer): NEW
+  `EVIDENTIA_EVIDENCE_AUTO_MIRROR_WORM` + `EVIDENTIA_EVIDENCE_
+  WORM_BACKEND_FACTORY` env vars. `save_evidence()` calls
+  `mirror_to_worm()` after local-store write succeeds. Mirror
+  failure non-fatal. 7 new tests.
+- **P1.2 CIMD scope-migration CLI verb** (closes F-V96-conmon-
+  mcp-cimd-migration): NEW `evidentia mcp cimd-migrate <registry-
+  path>` verb. Adds v0.9.6 `conmon_*` MCP tools to each client's
+  scope. Idempotent + atomic-write + `--dry-run` + `--client-id`
+  filter. 9 new tests.
+- **P1.3 Codecov target bump**: 80% → 85%.
+
+**Phase 2 — v1.0 prep (headline)**:
+- **P2.1 api-stability.md → NORMATIVE**: status flipped from
+  DRAFT. v0.9.4-v0.9.6 surfaces backfilled (45+ models / 60+
+  EventActions / 18+ CLI commands / 8 MCP tools / 8 env vars).
+  NEW "MCP tool contract" section + "Env-var public contract"
+  section. Pre-v1.0 binding semantics now in force.
+- **P2.2 Deprecation calendar** (NEW `docs/deprecation-calendar.md`):
+  formal catalogue with `conmon check --last-completed-file` as
+  anchor entry (target removal v1.0).
+- **P2.3 Multi-tenant RBAC primitives**: NEW
+  `evidentia_core.rbac.multi_tenant` module — `TenantRBACPolicy`,
+  `resolve_tenant_from_identity`, `check_permission_multi_tenant`,
+  `load_multi_tenant_policy_from_file`, `from_single_tenant_policy`
+  backward-compat. 31 tests. CLI + REST integration deferred to v1.0.
+- **P2.4 CIMD signatures groundwork**: NEW `evidentia_mcp.signatures`
+  module — `SignedToolOutput` envelope, `sign_tool_output`,
+  `verify_tool_output`, env-var-driven signer factory. 19 tests.
+  FastMCP dispatch-layer auto-wrap deferred to v1.0.
+
+**Phase 3 — OSCAL SCR notification standard alignment (RFC-0007)**:
+- `SCRForm` extended with 8 Optional RFC-0007 fields.
+- NEW `SCRForm.to_oscal_scr_notification()` emitter — raises
+  `ValueError` listing missing required fields. Per-category extras
+  (Adaptive + Transformative pre-impl) auto-emitted.
+- 8 new tests.
+
+**Phase 4 — Q3 quarterly resync follow-ups**:
+- **P4.1 Academic positioning** sharpened: NEW §11.2.A "OSS-native
+  reference implementation for computational compliance" frame
+  citing Marino & Lane (arXiv 2601.04474), de la Chica & Martí-
+  González (arXiv 2605.14744), FedRAMP CR26 + RFC-0024 readiness.
+- **P4.2 HF Hub GRC LLM eval-suite scaffolding** (NEW
+  `docs/hf-eval-suite-scaffolding.md`): documented planned dataset
+  structure + publication path. Full publish deferred to v0.9.8+.
+- **P4.3 Conference outreach** DEFERRED to v0.9.8+ (needs human-
+  reviewed talk abstracts).
+
+**Phase 5 — Hygiene + ship**:
+- Walk-through deferred indefinitely per scope lock-in.
+- `docs/v0.9.7-plan.md` + `docs/security-review-v0.9.7.md` shipped.
+- `scripts/bump_version.py --to 0.9.7` + uv.lock regen.
+- Backfill v0.9.1 + v0.9.2 security-review docs deferred.
+
+**3092 tests / 17 skipped / mypy strict 258 of 258 source files /
+ruff clean.**
+
+## v0.9.8 — Walk-through validation + v0.9.7 deferral closure — PLANNED
+
+Estimated 2-3 week focused session. Closes the v0.9.7 deferrals
++ runs the multi-reviewer walk-through pass before v1.0 cycle-open.
+
+**Carry-over from v0.9.7**:
+- **Real federal-SI domain-expert walk-throughs** (multiple
+  reviewers per Allen's pre-v1.0 plan). Captured findings in
+  `docs/walkthrough-validation-v0.9.8.md`.
+- **Conference outreach prep** — DEF CON 34 AI Village (CFP open),
+  GovForward FedRAMP Summit (July 23 2026), Billington (Sept 8-10).
+  Talk-abstract drafts shipped in `docs/conference-outreach-2026.md`
+  for human review.
+- **HF Hub eval-suite publish** — promote scaffolding to actual HF
+  dataset card + loading script + expanded FedRAMP Rev 5 High +
+  CMMC L2 subsets.
+- **Backfill v0.9.1 + v0.9.2 security-review docs**.
+
+**v1.0 partial-prep wiring**:
+- **FastMCP dispatch-layer auto-wrap of SignedToolOutput** (wires
+  the v0.9.7 P2.4 primitives at the tool-dispatch layer).
+- **Sigstore-keyless reference signer backend**
+  (`evidentia_mcp.signatures.sigstore_signer`).
+- **Multi-tenant RBAC CLI integration** — `--rbac-tenant` global
+  flag + tenant-aware policy loader auto-detection.
+- **Multi-tenant RBAC FastAPI integration** — tenant claim
+  extraction from AuthProvider + per-request tenant-policy
+  resolution.
 
 **Hygiene + supply chain**:
-- Backfill v0.9.1 + v0.9.2 security review docs (portfolio polish).
-- Codecov target audit + threshold confirmation.
+- Codecov audit at v0.9.8 baseline + bump to 87% if comfortably
+  above (v0.9.7 baseline was 85%+).
 - uv.lock + Dependabot scheduled review.
+- paramiko upstream patch re-check.
 
 ## v1.0 — Federal compliance shipped + API stability — RESERVED
 

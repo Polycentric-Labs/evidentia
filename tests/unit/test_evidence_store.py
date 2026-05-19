@@ -11,6 +11,7 @@ Covers:
 
 from __future__ import annotations
 
+import logging
 from datetime import date
 from pathlib import Path
 from uuid import uuid4
@@ -471,3 +472,214 @@ class TestAtomicWrite:
         tmp_files = list(lineage_dir.glob("*.tmp"))
         assert tmp_files == []
         assert (lineage_dir / "v1.json").exists()
+
+
+# ── v0.9.7 P1.1 auto-mirror env-var path ──────────────────────────
+
+
+class TestAutoMirrorEnvVar:
+    """v0.9.7 P1.1: closes F-V96-worm-app-layer.
+
+    The auto-mirror path consults two env vars at save time:
+    EVIDENTIA_EVIDENCE_AUTO_MIRROR_WORM (gating) +
+    EVIDENTIA_EVIDENCE_WORM_BACKEND_FACTORY (factory ref).
+    """
+
+    def test_no_auto_mirror_when_env_unset(
+        self,
+        store_dir: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        from evidentia_core.evidence_store import (
+            EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR,
+            _resolve_auto_mirror_backend,
+        )
+
+        monkeypatch.delenv(
+            EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR, raising=False
+        )
+        # save proceeds without invoking the mirror; resolver
+        # returns None signaling "no mirror".
+        assert _resolve_auto_mirror_backend() is None
+        artifact = _make_artifact()
+        save_evidence(artifact, evidence_store_dir=store_dir)
+
+    def test_auto_mirror_set_without_factory_errors(
+        self,
+        store_dir: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        from evidentia_core.evidence_store import (
+            EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR,
+            EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR,
+        )
+
+        monkeypatch.setenv(EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR, "1")
+        monkeypatch.delenv(
+            EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR, raising=False
+        )
+        artifact = _make_artifact()
+        with pytest.raises(RuntimeError, match="BACKEND_FACTORY"):
+            save_evidence(artifact, evidence_store_dir=store_dir)
+
+    def test_malformed_factory_ref_errors(
+        self,
+        store_dir: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        from evidentia_core.evidence_store import (
+            EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR,
+            EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR,
+        )
+
+        monkeypatch.setenv(EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR, "1")
+        # Missing the ':' separator.
+        monkeypatch.setenv(
+            EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR,
+            "module.without.callable.ref",
+        )
+        artifact = _make_artifact()
+        with pytest.raises(RuntimeError, match=r"'module.submodule:callable_name'"):
+            save_evidence(artifact, evidence_store_dir=store_dir)
+
+    def test_unimportable_module_errors(
+        self,
+        store_dir: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        from evidentia_core.evidence_store import (
+            EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR,
+            EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR,
+        )
+
+        monkeypatch.setenv(EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR, "1")
+        monkeypatch.setenv(
+            EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR,
+            "no_such_module_xyz_abc:make_backend",
+        )
+        artifact = _make_artifact()
+        with pytest.raises(RuntimeError, match="Could not import"):
+            save_evidence(artifact, evidence_store_dir=store_dir)
+
+    def test_callable_attr_missing_errors(
+        self,
+        store_dir: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        from evidentia_core.evidence_store import (
+            EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR,
+            EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR,
+        )
+
+        monkeypatch.setenv(EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR, "1")
+        monkeypatch.setenv(
+            EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR,
+            "evidentia_core.evidence_store:no_such_callable",
+        )
+        artifact = _make_artifact()
+        with pytest.raises(RuntimeError, match="did not resolve to a callable"):
+            save_evidence(artifact, evidence_store_dir=store_dir)
+
+    def test_auto_mirror_invokes_factory_and_pushes(
+        self,
+        tmp_path: Path,
+        store_dir: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """End-to-end: factory is invoked + mirror writes to WORM root."""
+        import sys
+        import types
+
+        # Build a synthetic module exposing make_backend() that
+        # returns a LocalFilesystemWORM backend + retention metadata.
+        worm_root = tmp_path / "worm_root"
+        module = types.ModuleType("test_auto_mirror_factory_mod")
+        backend = LocalFilesystemWORM(root=worm_root)
+
+        def make_backend() -> (
+            tuple[LocalFilesystemWORM, RetentionMetadata]
+        ):
+            return backend, RetentionMetadata(
+                classification=RetentionClassification.IRS_TAX.value,
+                retention_period_days=2555,
+                lock_until=date(2033, 5, 18),
+                legal_hold=False,
+                lifecycle_stage=RetentionLifecycleStage.ACTIVE.value,
+            )
+
+        module.make_backend = make_backend  # type: ignore[attr-defined]
+        sys.modules["test_auto_mirror_factory_mod"] = module
+        try:
+            from evidentia_core.evidence_store import (
+                EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR,
+                EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR,
+            )
+
+            monkeypatch.setenv(EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR, "1")
+            monkeypatch.setenv(
+                EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR,
+                "test_auto_mirror_factory_mod:make_backend",
+            )
+            artifact = _make_artifact()
+            save_evidence(artifact, evidence_store_dir=store_dir)
+            # Mirror record_id = <lineage>_v1; backend stores it as
+            # <root>/<record_id>.bin sidecar.
+            expected_record = (
+                worm_root / f"{artifact.effective_lineage_id}_v1.bin"
+            )
+            assert expected_record.exists()
+        finally:
+            sys.modules.pop("test_auto_mirror_factory_mod", None)
+
+    def test_mirror_failure_non_fatal(
+        self,
+        tmp_path: Path,
+        store_dir: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Mirror failure logs a warning but the save still succeeds."""
+        import sys
+        import types
+
+        module = types.ModuleType("test_failing_mirror_mod")
+
+        def make_backend() -> (
+            tuple[LocalFilesystemWORM, RetentionMetadata]
+        ):
+            class BrokenBackend(LocalFilesystemWORM):
+                def put(self, *args: object, **kwargs: object) -> None:
+                    raise WORMBackendError("simulated failure")
+
+            return BrokenBackend(root=tmp_path / "broken_worm"), RetentionMetadata(
+                classification=RetentionClassification.IRS_TAX.value,
+                retention_period_days=2555,
+                lock_until=date(2033, 5, 18),
+                legal_hold=False,
+                lifecycle_stage=RetentionLifecycleStage.ACTIVE.value,
+            )
+
+        module.make_backend = make_backend  # type: ignore[attr-defined]
+        sys.modules["test_failing_mirror_mod"] = module
+        try:
+            from evidentia_core.evidence_store import (
+                EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR,
+                EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR,
+            )
+
+            monkeypatch.setenv(EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR, "1")
+            monkeypatch.setenv(
+                EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR,
+                "test_failing_mirror_mod:make_backend",
+            )
+            artifact = _make_artifact()
+            # Should NOT raise — local-store write succeeds; mirror
+            # failure is logged as a warning.
+            with caplog.at_level(logging.WARNING):
+                path = save_evidence(
+                    artifact, evidence_store_dir=store_dir
+                )
+            assert path.exists()
+            assert "Auto-mirror to WORM backend failed" in caplog.text
+        finally:
+            sys.modules.pop("test_failing_mirror_mod", None)

@@ -7,6 +7,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.7] - 2026-05-19
+
+**Theme**: *Comprehensive v0.9.x close-out + v1.0 prep* — v0.9.6
+carry-overs + headline v1.0-prep deliverables (api-stability
+NORMATIVE + multi-tenant RBAC primitives + CIMD signatures
+groundwork) + RFC-0007 SCR alignment + Q3 quarterly resync
+academic-positioning sharpening + HF Hub eval scaffolding.
+Walk-through deferred indefinitely per Allen's pre-v1.0 multi-
+reviewer plan.
+
+### Added
+
+- **WORM auto-mirror (v0.9.7 P1.1)**: closes F-V96-worm-app-layer.
+  NEW `EVIDENTIA_EVIDENCE_AUTO_MIRROR_WORM` (gate) +
+  `EVIDENTIA_EVIDENCE_WORM_BACKEND_FACTORY` (dotted-path factory)
+  env vars. `save_evidence()` calls
+  `evidence_store_worm.mirror_to_worm()` after the local-store
+  write succeeds. Mirror failure non-fatal (logged warning).
+- **`evidentia mcp cimd-migrate` CLI verb (v0.9.7 P1.2)**: closes
+  F-V96-conmon-mcp-cimd-migration. Adds the v0.9.6 `conmon_*` MCP
+  tools to each client's `scope` field in an existing CIMD
+  registry. Idempotent + atomic-write + `--dry-run` + `--client-id`
+  filter + `--tools` override. Removes the operator hand-edit
+  burden for v0.9.5 → v0.9.6 CIMD migrations.
+- **Multi-tenant RBAC primitives (v0.9.7 P2.3)**: NEW
+  `evidentia_core.rbac.multi_tenant` module —
+  `TenantRBACPolicy` Pydantic model + `resolve_tenant_from_identity()`
+  parser (the `@@<tenant>` claim convention) +
+  `check_permission_multi_tenant()` decision helper +
+  `load_multi_tenant_policy_from_file()` YAML loader +
+  `from_single_tenant_policy()` backward-compat wrapper.
+  Single-tenant v0.9.5 surface untouched. CLI + REST integration
+  deferred to v1.0.
+- **CIMD signatures groundwork (v0.9.7 P2.4)**: NEW
+  `evidentia_mcp.signatures` module — `SignedToolOutput` Pydantic
+  envelope (NORMATIVE) + `sign_tool_output()` /
+  `verify_tool_output()` helpers + env-var-driven signer factory
+  (`EVIDENTIA_MCP_SIGN_OUTPUTS` + `EVIDENTIA_MCP_SIGNER_FACTORY`).
+  Signing failure is non-fatal. FastMCP dispatch-layer auto-wrap
+  deferred to v1.0.
+- **RFC-0007 SCR notification alignment (v0.9.7 P3)**: `SCRForm`
+  extended with 8 Optional RFC-0007 fields
+  (`service_offering_fedramp_id`, `three_pao_name`,
+  `type_of_change`, `related_poam`, `reason_for_change`,
+  `components_and_controls_affected`,
+  `business_security_impact_analysis`, `approver_name_and_title`).
+  NEW `SCRForm.to_oscal_scr_notification()` emitter raises
+  `ValueError` listing every missing required field. Per-category
+  structural extras auto-emitted.
+- **`docs/deprecation-calendar.md` (v0.9.7 P2.2)**: NEW formal
+  catalogue of every active deprecation with target removal
+  release. Anchor entry: `conmon check --last-completed-file`
+  → removal at v1.0.
+- **`docs/hf-eval-suite-scaffolding.md` (v0.9.7 P4.2)**: NEW.
+  Documents the planned HF Hub GRC LLM eval-suite structure
+  (4 single-framework subsets in-repo + 5 expansion targets).
+  Full publish deferred to v0.9.8+.
+
+### Changed
+
+- **`docs/api-stability.md` → NORMATIVE (v0.9.7 P2.1)**: HEADLINE
+  v1.0-prep deliverable. Status flipped from DRAFT. v0.9.4-v0.9.6
+  surfaces backfilled (45+ models / 60+ EventActions / 18+ CLI
+  commands / 8 MCP tools / 8 env vars). NEW "MCP tool contract"
+  section + "Env-var public contract" section. Pre-v1.0 binding
+  semantics now in force.
+- **Codecov target 80% → 85% (v0.9.7 P1.3)**: per the v0.9.6
+  84.26% baseline. OpenSSF Silver `test_statement_coverage80`
+  MUST floor still met with 5% headroom.
+- **`docs/positioning-and-value.md` (v0.9.7 P4.1)**: NEW
+  §11.2.A "OSS-native reference implementation for computational
+  compliance" frame citing Marino & Lane (arXiv 2601.04474), de
+  la Chica & Martí-González (arXiv 2605.14744), FedRAMP CR26 +
+  RFC-0024 readiness. NEW §11.2.B eval-suite scaffolding pointer.
+
 ## [0.9.6] - 2026-05-18
 
 **Theme**: *Federal expansion + WORM evidence versioning + CLI RBAC mirror

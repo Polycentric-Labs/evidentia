@@ -2612,6 +2612,111 @@ consecutive PROCEED-CLEAN of v0.7.x → v0.8.x → v0.9.x line.
   v0.9.6 positioning sharpening (moat trinity + counter-positioning).
 - `docs/ROADMAP.md` — v0.9.6 SHIPPED + v0.9.7 PLANNED transitions.
 
+## v0.9.7 attack-surface delta — Comprehensive close-out + v1.0 prep (SHIPPED 2026-05-19 at tag `v0.9.7`)
+
+v0.9.7 closes the v0.9.6 INFO/LOW deferrals, promotes
+`docs/api-stability.md` from DRAFT to NORMATIVE, and ships
+partial primitives for two v1.0-reserved surfaces (multi-tenant
+RBAC + cryptographic CIMD signatures). Net change: **2 NEW INFO
+findings** (operator-visible trust-boundary docs); **zero NEW
+LOW / MEDIUM / HIGH / CRITICAL**.
+
+### Surface 1: WORM auto-mirror env var (NEW v0.9.7 P1.1)
+
+Closes the v0.9.6 F-V96-worm-app-layer LOW. The
+`save_evidence()` path now calls `mirror_to_worm()` after the
+local-store write succeeds, when both
+`EVIDENTIA_EVIDENCE_AUTO_MIRROR_WORM` (gate) +
+`EVIDENTIA_EVIDENCE_WORM_BACKEND_FACTORY` (dotted-path factory)
+env vars are set. Mirror failure is non-fatal (logged warning);
+the local-store write is the source-of-truth.
+
+### Surface 2: CIMD scope-migration CLI verb (NEW v0.9.7 P1.2)
+
+Closes the v0.9.6 F-V96-conmon-mcp-cimd-migration INFO. NEW
+`evidentia mcp cimd-migrate <registry-path>` verb adds the
+v0.9.6 `conmon_*` MCP tools to each client's `scope` field.
+Idempotent + atomic-write (`.tmp` + `os.replace`) + `--dry-run`
+preview + `--client-id` filter.
+
+### Surface 3: Multi-tenant RBAC primitives (NEW v0.9.7 P2.3)
+
+NEW `evidentia_core.rbac.multi_tenant` module — `TenantRBACPolicy`
+Pydantic model, `resolve_tenant_from_identity()` parser (the
+`@@<tenant>` claim convention), `check_permission_multi_tenant()`
+decision helper, `load_multi_tenant_policy_from_file()` YAML
+loader. Single-tenant v0.9.5 surface untouched (frozen per
+api-stability.md NORMATIVE).
+
+**F-V97-multi-tenant-claim-spoofing** (INFO, NEW): The `@@<tenant>`
+claim in the identity string is operator-asserted. v0.9.7 PARTIAL:
+data model + decision function are ready; CLI integration (v1.0)
+MUST enforce tenant-claim provenance from the authenticated
+AuthProvider, NOT from arbitrary env-var input. Documented in
+`evidentia_core.rbac.multi_tenant` module docstring.
+
+### Surface 4: Cryptographic CIMD signatures groundwork (NEW v0.9.7 P2.4)
+
+NEW `evidentia_mcp.signatures` module — `SignedToolOutput`
+Pydantic envelope, `sign_tool_output()` / `verify_tool_output()`
+helpers, env-var-driven signer factory
+(`EVIDENTIA_MCP_SIGN_OUTPUTS` + `EVIDENTIA_MCP_SIGNER_FACTORY`).
+Signing failure is non-fatal (envelope carries `signing_error`
+populated).
+
+**F-V97-mcp-signer-trust** (INFO, NEW): The signer factory is an
+operator-supplied dotted-path callable. The signer is in the
+operator's trust boundary. Sigstore-keyless reference backend
+(v1.0) reduces this exposure by removing operator-managed key
+material entirely. Documented in `evidentia_mcp.signatures`
+module docstring.
+
+### Surface 5: RFC-0007 SCR notification alignment (NEW v0.9.7 P3)
+
+`SCRForm` extended with 8 Optional RFC-0007 universal /
+conditional fields. NEW `SCRForm.to_oscal_scr_notification()`
+method emits the canonical RFC-0007 wire format with
+per-category structural extras. Required-field validation
+raises `ValueError` listing every missing field so operators
+can populate in one fix cycle. Aligns Evidentia ahead of CR26
+mandatory adoption Jan 1 2027.
+
+### Surface 6: api-stability.md NORMATIVE (NEW v0.9.7 P2.1)
+
+Status flipped from DRAFT. The api-stability contract is now
+binding through the remaining v0.9.x line — Evidentia will not
+knowingly break a frozen surface listed in the doc without a
+deprecation cycle. Threat-model implication: operators relying
+on the listed surfaces (45+ Pydantic models, 60+ EventActions,
+18+ CLI commands, 8 MCP tools, 8 env vars) have semver
+guarantees from v0.9.7 forward — Evidentia's surface attack
+surface is now contractually frozen (additions only) until
+v1.0 ratification.
+
+### Findings ledger summary
+
+| Severity | Count | Notes |
+|---|---|---|
+| CRITICAL | 0 | (no v0.9.7 source changes raised this severity) |
+| HIGH | 0 | (no v0.9.7 source changes raised this severity) |
+| MEDIUM | 0 NEW | (all v0.9.6 MEDIUMs already closed; 0 new in v0.9.7 source) |
+| LOW | 0 NEW | (F-V96-worm-app-layer CLOSED via P1.1; no new LOWs) |
+| INFO | 2 NEW | F-V97-mcp-signer-trust + F-V97-multi-tenant-claim-spoofing (both operator-trust-boundary docs) |
+
+**Zero new MEDIUM / HIGH / CRITICAL in v0.9.7 source code.** 22nd
+consecutive PROCEED-CLEAN of v0.7.x → v0.8.x → v0.9.x line.
+
+### Cross-references
+
+- `docs/security-review-v0.9.7.md` — formal review artifact.
+- `docs/v0.9.7-plan.md` — phase-by-phase scope.
+- `docs/api-stability.md` — NORMATIVE as of v0.9.7.
+- `docs/deprecation-calendar.md` — NEW v0.9.7.
+- `docs/hf-eval-suite-scaffolding.md` — NEW v0.9.7.
+- `docs/positioning-and-value.md` §11.2.A + §11.2.B — Q3
+  quarterly-resync academic positioning sharpening.
+- `docs/ROADMAP.md` — v0.9.7 SHIPPED + v0.9.8 PLANNED transitions.
+
 ---
 
 *First published v0.7.7 (2026-05). Origin: promoted from a

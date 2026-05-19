@@ -216,12 +216,14 @@ def classify_change(
 
 
 class SCRForm(EvidentiaModel):
-    """FedRAMP Significant Change Request form (v0.9.6 P3).
+    """FedRAMP Significant Change Request form (v0.9.6 P3 + v0.9.7 P3).
 
     Pydantic representation of the published FedRAMP Significant
-    Change Form Template. Mirrors the template's field structure
-    so operators can render the form to JSON / Markdown and paste
-    into the AO submission package without re-keying.
+    Change Form Template + v0.9.7 P3 alignment with RFC-0007
+    Significant Change Notification Standard required fields.
+    Mirrors the template's field structure so operators can render
+    the form to JSON / Markdown / OSCAL-SCN structured format and
+    paste into the AO submission package without re-keying.
 
     Three categories of fields:
 
@@ -232,9 +234,15 @@ class SCRForm(EvidentiaModel):
     3. **Verification plan**: which controls are impacted + how the
        operator will validate after the change.
 
-    The :meth:`to_markdown` and :meth:`to_json` writers render the
-    form for AO submission packages. CI consumers parse the JSON
-    form for automated change-control tracking.
+    v0.9.7 P3 added 8 RFC-0007-aligned Optional fields (all
+    backward-compat with v0.9.6 emissions) + a
+    :meth:`to_oscal_scr_notification` method emitting the canonical
+    RFC-0007 wire format. The existing :meth:`to_markdown` writer
+    is unchanged.
+
+    The :meth:`to_markdown` + :meth:`to_oscal_scr_notification` +
+    ``model_dump_json()`` writers cover the three operator-facing
+    emit paths.
     """
 
     scr_id: str = Field(
@@ -318,6 +326,169 @@ class SCRForm(EvidentiaModel):
         default_factory=lambda: utc_now().date(),
         description="Date the SCR was submitted.",
     )
+
+    # ── RFC-0007 alignment (v0.9.7 P3) — all Optional, non-breaking ──
+    # Per https://www.fedramp.gov/rfcs/0007/. Universal required
+    # fields per the standard are modeled as Optional here so
+    # backward-compat is preserved for v0.9.6 SCRForms that didn't
+    # carry them. The :meth:`to_oscal_scr_notification` emitter
+    # raises if any required-by-RFC-0007 field is missing.
+    service_offering_fedramp_id: str | None = Field(
+        default=None,
+        max_length=256,
+        description=(
+            "RFC-0007 universal required field. Unique FedRAMP "
+            "identifier for the authorized service offering. "
+            "Operators supply from their FedRAMP marketplace "
+            "listing."
+        ),
+    )
+    three_pao_name: str | None = Field(
+        default=None,
+        max_length=256,
+        description=(
+            "RFC-0007 conditional field. Third-party assessment "
+            "organization conducting review. Required for "
+            "Transformative changes."
+        ),
+    )
+    type_of_change: str | None = Field(
+        default=None,
+        max_length=512,
+        description=(
+            "RFC-0007 universal required field. CSP-defined "
+            "category label for the change. Distinct from the "
+            "Evidentia-classified :class:`SCRCategory` (Routine "
+            "/ Adaptive / Transformative) — this is the "
+            "operator's free-text label that appears in the "
+            "FedRAMP submission. Examples: 'AWS region addition', "
+            "'TLS library upgrade', 'New AI-system inventory entry'."
+        ),
+    )
+    related_poam: str | None = Field(
+        default=None,
+        max_length=256,
+        description=(
+            "RFC-0007 conditional field. POA&M item ID associated "
+            "with this change. Required when the change addresses "
+            "an open POA&M finding."
+        ),
+    )
+    reason_for_change: str | None = Field(
+        default=None,
+        max_length=8000,
+        description=(
+            "RFC-0007 universal required field. Business or "
+            "security justification distinct from the change "
+            "summary itself. Operators populate this with the "
+            "'why now' rationale."
+        ),
+    )
+    components_and_controls_affected: str | None = Field(
+        default=None,
+        max_length=8000,
+        description=(
+            "RFC-0007 universal required field. Summary of "
+            "service components + controls touched. Operators "
+            "supply or auto-populate from impacted_controls + "
+            "system-architecture inventory."
+        ),
+    )
+    business_security_impact_analysis: str | None = Field(
+        default=None,
+        max_length=16000,
+        description=(
+            "RFC-0007 universal required field. Detailed risk "
+            "assessment with 3PAO concurrence for Transformative "
+            "changes. Operators supply the analysis text or a "
+            "URI / handle pointing at the assessment document."
+        ),
+    )
+    approver_name_and_title: str | None = Field(
+        default=None,
+        max_length=512,
+        description=(
+            "RFC-0007 universal required field. Name + title of "
+            "the authorizing official who signed off on the "
+            "change. Format: 'Name, Title'."
+        ),
+    )
+
+    def to_oscal_scr_notification(self) -> dict[str, object]:
+        """Emit the SCR in RFC-0007 Significant Change Notification format.
+
+        Returns a JSON-serializable dict matching the field structure
+        documented at https://www.fedramp.gov/rfcs/0007/. Operators
+        submit this dict (or its JSON serialization) to the FedRAMP
+        Significant Change Notification endpoint when CR26's
+        machine-readable submission path is active (mandatory
+        Jan 1 2027 per CR26 effective dates).
+
+        Universal required fields per RFC-0007:
+        - service_offering_fedramp_id
+        - type_of_change
+        - reason_for_change
+        - components_and_controls_affected
+        - business_security_impact_analysis
+        - approver_name_and_title
+
+        Raises:
+            ValueError: When any universal required field is None.
+                The error message lists every missing field so the
+                operator can populate in one fix cycle.
+        """
+        missing: list[str] = []
+        required_fields = [
+            "service_offering_fedramp_id",
+            "type_of_change",
+            "reason_for_change",
+            "components_and_controls_affected",
+            "business_security_impact_analysis",
+            "approver_name_and_title",
+        ]
+        for field in required_fields:
+            if getattr(self, field) is None:
+                missing.append(field)
+        if missing:
+            raise ValueError(
+                f"Cannot emit RFC-0007 SCR notification: required "
+                f"fields are None: {missing}. Populate via "
+                f"emit_scr_form(...) overrides or set on the "
+                f"SCRForm directly before emit."
+            )
+        out: dict[str, object] = {
+            "scr_id": self.scr_id,
+            "service_offering_fedramp_id": self.service_offering_fedramp_id,
+            "type_of_change": self.type_of_change,
+            "evidentia_category": self.category,  # Routine/Adaptive/Transformative
+            "short_description": self.summary,
+            "reason_for_change": self.reason_for_change,
+            "components_and_controls_affected": self.components_and_controls_affected,
+            "business_security_impact_analysis": self.business_security_impact_analysis,
+            "approver_name_and_title": self.approver_name_and_title,
+            "submitted_at": self.submitted_at.isoformat(),
+        }
+        # Conditional fields surfaced when populated.
+        if self.three_pao_name:
+            out["three_pao_name"] = self.three_pao_name
+        if self.related_poam:
+            out["related_poam"] = self.related_poam
+        if self.submitted_by:
+            out["submitted_by"] = self.submitted_by
+        # Adaptive-specific fields per RFC-0007 (subset of what
+        # Evidentia carries).
+        if self.category == SCRCategory.ADAPTIVE.value:
+            out["date_of_change"] = self.proposed_date.isoformat()
+            out["verification_and_assessment_steps_summary"] = (
+                self.plan_and_timeline
+            )
+        # Transformative pre-implementation fields per RFC-0007.
+        elif self.category == SCRCategory.TRANSFORMATIVE.value:
+            out["planned_change_date"] = self.proposed_date.isoformat()
+            out["control_verification_steps"] = self.plan_and_timeline
+            if self.rollback_plan:
+                out["rollback_plan"] = self.rollback_plan
+        return out
 
     def to_markdown(self) -> str:
         """Render the form as Markdown for AO submission packages."""
