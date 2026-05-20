@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+from datetime import UTC
 
 import pytest
 from evidentia_mcp.signatures import (
@@ -243,3 +244,67 @@ class TestSignerEnvVar:
         )
         with pytest.raises(RuntimeError, match="did not resolve to a callable"):
             sign_tool_output({"x": 1})
+
+
+class TestCanonicalJSONEncoding:
+    """v0.9.8 P2.3 (CR-V97-4): non-JSON-primitive payload encoding.
+
+    v0.9.7 used ``json.dumps`` without a ``default=`` fallback, which
+    raised ``TypeError`` if the payload contained any value not in the
+    JSON primitive set (str/int/float/bool/None/list/dict). MCP tool
+    outputs in production typically go through Pydantic
+    ``.model_dump(mode="json")`` first, so the gap only surfaced for
+    raw-dict callers — but the signing path SHOULD still produce a
+    well-formed envelope rather than a TypeError when handed such input.
+    """
+
+    def test_datetime_payload_signs_cleanly(self) -> None:
+        """A datetime in the payload no longer raises TypeError."""
+        from datetime import datetime
+
+        signer = make_hmac_signer()
+        payload = {
+            "tool": "list_frameworks",
+            "ran_at": datetime(2026, 5, 19, 12, 0, 0, tzinfo=UTC),
+        }
+        env = sign_tool_output(payload, signer=signer)
+        assert env.signature is not None
+        assert env.signing_error is None
+
+    def test_path_payload_signs_cleanly(self) -> None:
+        """A pathlib.Path in the payload no longer raises TypeError."""
+        from pathlib import Path
+
+        signer = make_hmac_signer()
+        payload = {"catalog_path": Path("/var/lib/evidentia/catalogs")}
+        env = sign_tool_output(payload, signer=signer)
+        assert env.signature is not None
+        assert env.signing_error is None
+
+    def test_uuid_payload_signs_cleanly(self) -> None:
+        """A UUID in the payload no longer raises TypeError."""
+        from uuid import UUID
+
+        signer = make_hmac_signer()
+        payload = {"run_id": UUID("01234567-89ab-cdef-0123-456789abcdef")}
+        env = sign_tool_output(payload, signer=signer)
+        assert env.signature is not None
+        assert env.signing_error is None
+
+    def test_round_trip_with_non_primitive_payload(self) -> None:
+        """Sign + verify with the same datetime payload succeeds.
+
+        Both sides use ``default=str`` in v0.9.8, so the canonical
+        encoding is identical at sign-time and verify-time even when
+        the payload contains a datetime.
+        """
+        from datetime import datetime
+
+        signer = make_hmac_signer()
+        verifier = make_hmac_verifier()
+        payload = {
+            "ts": datetime(2026, 5, 19, 12, 0, 0, tzinfo=UTC),
+            "value": 42,
+        }
+        env = sign_tool_output(payload, signer=signer)
+        assert verify_tool_output(env, verifier=verifier) is True

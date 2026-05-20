@@ -47,7 +47,6 @@ keyless OIDC avoids the key-material problem entirely).
 
 from __future__ import annotations
 
-import os
 from collections.abc import Callable
 from datetime import datetime
 from typing import Any
@@ -154,52 +153,34 @@ class SignedToolOutput(EvidentiaModel):
 
 
 def _resolve_signer_factory() -> SignerCallable | None:
-    """Resolve the signer factory from env vars.
+    """Resolve the signer factory from env vars (v0.9.7; v0.9.8 P2.2 delegates to factory_resolver).
 
     Returns ``None`` when :data:`EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR`
     is unset / empty → tools should emit raw payloads (no signing).
     Returns a :class:`SignerCallable` otherwise.
 
+    v0.9.8 P2.2 (CR-V97-3): delegates the dotted-path resolution to
+    :func:`evidentia_core.factory_resolver.resolve_factory`, which
+    de-duplicates the pattern with the parallel WORM auto-mirror
+    resolver and caches the result keyed on the env-var values.
+
     Raises:
         RuntimeError: If the sign-outputs env var is set but the
-            factory env var is unresolvable.
+            factory env var is unresolvable / returns a non-callable.
     """
-    if not os.environ.get(EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR):
-        return None
-    factory_ref = os.environ.get(EVIDENCE_MCP_SIGNER_FACTORY_ENV_VAR)
-    if not factory_ref:
-        raise RuntimeError(
-            f"{EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR} is set but "
-            f"{EVIDENCE_MCP_SIGNER_FACTORY_ENV_VAR} is empty. "
-            f"Format: 'module.submodule:callable_name'. The callable "
-            f"must return a Callable[[bytes], dict[str, str]] signer."
-        )
-    if ":" not in factory_ref:
-        raise RuntimeError(
-            f"{EVIDENCE_MCP_SIGNER_FACTORY_ENV_VAR}={factory_ref!r} "
-            f"must be of the form 'module.submodule:callable_name'"
-        )
-    import importlib
+    from evidentia_core.factory_resolver import resolve_factory
 
-    module_path, _, attr = factory_ref.partition(":")
-    try:
-        module = importlib.import_module(module_path)
-    except ImportError as exc:
-        raise RuntimeError(
-            f"Could not import {module_path!r} for MCP signer "
-            f"factory: {exc}"
-        ) from exc
-    factory = getattr(module, attr, None)
-    if factory is None or not callable(factory):
-        raise RuntimeError(
-            f"{factory_ref!r} did not resolve to a callable in "
-            f"{module_path!r}"
-        )
-    signer = factory()
+    signer = resolve_factory(
+        EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR,
+        EVIDENCE_MCP_SIGNER_FACTORY_ENV_VAR,
+        purpose="MCP signer",
+    )
+    if signer is None:
+        return None
     if not callable(signer):
         raise RuntimeError(
-            f"{factory_ref!r}() returned a non-callable; expected "
-            f"Callable[[bytes], dict[str, str]]"
+            "MCP signer factory returned a non-callable; expected "
+            "Callable[[bytes], dict[str, str]]"
         )
     return signer  # type: ignore[no-any-return]
 
@@ -241,8 +222,16 @@ def sign_tool_output(
     # Canonical JSON for stable signature. Sort keys + no
     # whitespace = byte-identical bytes for the same payload
     # across Python sessions / hosts.
+    #
+    # v0.9.8 P2.3 (CR-V97-4): ``default=str`` is the fallback for
+    # non-JSON-primitive payloads (datetime, Path, UUID, custom
+    # classes). Upstream callers SHOULD canonicalize via Pydantic's
+    # ``.model_dump(mode="json")`` before invoking this function
+    # (preferred — preserves Pydantic's deterministic serialization
+    # rules); the ``default=str`` fallback is defense-in-depth so a
+    # raw-dict caller doesn't trigger a TypeError mid-signing.
     canonical = json.dumps(
-        payload, sort_keys=True, separators=(",", ":")
+        payload, sort_keys=True, separators=(",", ":"), default=str
     ).encode("utf-8")
     try:
         sig_dict = resolved_signer(canonical)
@@ -282,8 +271,11 @@ def verify_tool_output(
 
     if envelope.signature is None:
         return False
+    # ``default=str`` mirrors the sign-side encoding (v0.9.8 P2.3 /
+    # CR-V97-4) so a payload that round-tripped through stringification
+    # at sign-time canonicalizes identically at verify-time.
     canonical = json.dumps(
-        envelope.payload, sort_keys=True, separators=(",", ":")
+        envelope.payload, sort_keys=True, separators=(",", ":"), default=str
     ).encode("utf-8")
     try:
         return verifier(canonical, envelope.signature)

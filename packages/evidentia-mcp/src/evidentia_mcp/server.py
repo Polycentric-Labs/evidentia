@@ -133,6 +133,15 @@ def build_server(
     from evidentia_mcp.scope import enforce_cimd_scope
 
     enforce_cimd_scope(server, default_client_id=default_client_id)
+
+    # v0.9.8 P1.1: wire the SignedToolOutput auto-wrap LAST so it
+    # composes outside the scope gate — authorization happens first,
+    # then signing wraps the authorized result. Pass-through when the
+    # operator hasn't set EVIDENTIA_MCP_SIGN_OUTPUTS, so the v0.9.7
+    # default wire format is preserved.
+    from evidentia_mcp.signed_dispatch import wrap_signed_output
+
+    wrap_signed_output(server)
     return server
 
 
