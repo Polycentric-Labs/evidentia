@@ -103,22 +103,25 @@ The `EventAction` enum is an append-only contract. Existing
 values are never removed or renamed post-v1.0. New values may
 be added in any minor release.
 
-Current namespaces (60+ values as of v0.9.7):
+Current namespaces (80+ values as of v0.9.8). Example values below
+are real members of `evidentia_core.audit.events.EventAction` — the
+enum module is the authoritative source:
 
 | Prefix | Domain | Example values |
 |--------|--------|----------------|
-| `COLLECT_*` | Evidence collection | `COLLECT_STARTED`, `COLLECT_COMPLETED` |
-| `AUTH_*` | Authentication | `AUTH_SUCCESS`, `AUTH_FAILURE` |
-| `CONFIG_*` | Configuration | `CONFIG_LOADED`, `CONFIG_VALIDATED` |
-| `SIGN_*` | Cryptographic signing | `SIGN_EVIDENCE`, `SIGN_MANIFEST` |
-| `VERIFY_*` | Verification | `VERIFY_EVIDENCE`, `VERIFY_MANIFEST` |
-| `MANIFEST_*` | Manifest operations | `MANIFEST_CREATED`, `MANIFEST_ROTATED` |
+| `COLLECT_*` | Evidence collection | `COLLECT_STARTED`, `COLLECT_COMPLETED`, `COLLECT_FAILED` |
+| `AUTH_*` | Authentication | `AUTH_CREDENTIAL_RESOLVED`, `AUTH_CREDENTIAL_FAILED` |
+| `CONFIG_*` | Configuration | `CONFIG_LOADED`, `CONFIG_RESOLVED`, `CONFIG_INVALID` |
+| `SIGN_*` | Cryptographic signing | `SIGN_GPG_SIGNED`, `SIGN_SIGSTORE_SIGNED`, `SIGN_FAILED` |
+| `VERIFY_*` | Verification | `VERIFY_DIGEST_PASSED`, `VERIFY_SIGNATURE_PASSED`, `VERIFY_COMPLETED` |
+| `MANIFEST_*` | Manifest operations | `MANIFEST_GENERATED`, `MANIFEST_EMPTY_SET_ATTESTED`, `MANIFEST_INCOMPLETE` |
 | `AI_*` | AI/LLM operations | `AI_RISK_GENERATED`, `AI_EVAL_FAITHFULNESS_CHECKED` |
 | `AI_SYSTEM_*` (v0.9.3+) | AI system inventory | `AI_SYSTEM_CLASSIFIED`, `AI_SYSTEM_REGISTERED`, `AI_SYSTEM_UPDATED`, `AI_SYSTEM_RETIRED`, `AI_SYSTEM_DELETED`, `AI_SYSTEM_FIPS_CATEGORIZED` (v0.9.6), `AI_SYSTEM_OMB_CLASSIFIED` (v0.9.6), `AI_SYSTEM_SCR_EMITTED` (v0.9.6) |
 | `AI_MCP_*` | MCP server operations | `AI_MCP_TOOL_AUTHORIZED`, `AI_MCP_TOOL_DENIED` |
-| `POAM_*` | POA&M lifecycle | `POAM_CREATED`, `POAM_STATE_TRANSITION` |
+| `POAM_*` | POA&M lifecycle | `POAM_CREATED`, `POAM_MILESTONE_REACHED`, `POAM_VERIFIED` |
 | `CONMON_*` | Continuous monitoring | `CONMON_DAEMON_STARTED`, `CONMON_ALERT_DISPATCHED`, `CONMON_CYCLE_DUE`, `CONMON_CYCLE_OVERDUE`, `CONMON_CYCLE_MARKED_COMPLETED` |
 | `EVIDENCE_*` (v0.9.6+) | Evidence WORM lineage | `EVIDENCE_VERSION_PERSISTED`, `EVIDENCE_WORM_VIOLATION_BLOCKED`, `EVIDENCE_LINEAGE_QUERIED` |
+| `RBAC_*` (v0.9.8+) | Multi-tenant RBAC | `RBAC_TENANT_BOUNDARY_CROSSED` |
 | `RETENTION_*` | Data retention | `RETENTION_RECORD_PUT`, `RETENTION_RECORD_EXTENDED`, `RETENTION_LEGAL_HOLD_APPLIED`, `RETENTION_LEGAL_HOLD_RELEASED`, `RETENTION_LIFECYCLE_TRANSITIONED`, `RETENTION_RECORD_PURGED`, `RETENTION_GDPR_PURGE` |
 
 Operators building alerting / SIEM integrations on top of the

@@ -1,9 +1,58 @@
-# Evidentia GRC LLM eval suite — HF Hub publication scaffolding
+# Evidentia GRC LLM eval suite — HF Hub publication
 
-> **Status**: SCAFFOLDING (v0.9.7 P4). Full publish deferred to
-> v0.9.8 or v1.0 depending on dataset-curation cadence.
+> **Status**: ARTIFACTS BUILT (v0.9.8 P1.9). All local artifacts —
+> corpus subsets, dataset card, publish script — are complete + tested.
+> The single remaining step is the operator-run upload (needs an
+> `HF_TOKEN` + is a publishing action). See "Publication status"
+> below.
 >
 > **Canonical location**: `docs/hf-eval-suite-scaffolding.md`.
+
+## v0.9.8 P1.9 — what shipped
+
+The v0.9.7 scaffolding is now realized:
+
+- **Two expansion subsets added** — `corpus_fedramp_high.jsonl`
+  (FedRAMP Rev 5 High, 24 entries) + `corpus_cmmc_l2.jsonl`
+  (CMMC Level 2, 24 entries). Total corpus is now **195 entries**
+  across 7 subsets.
+- **Dataset card** — `tests/data/dfah-calibration/hf-dataset-card.md`,
+  with HF dataset-card YAML frontmatter (`configs:` mapping each
+  subset to its JSONL file — the modern no-loading-script approach,
+  so the published repo ships zero executable code).
+- **Publish script** — `scripts/publish_hf_eval.py`. Two-phase:
+  `--dry-run` validates + assembles with no token / no network;
+  the real upload reads `HF_TOKEN` from the env (never a CLI flag)
+  + creates/updates the dataset repo.
+- **Tests** — `tests/unit/test_publish_hf_eval.py` (33 tests:
+  schema validation, combined-corpus rebuild, upload-set assembly,
+  CLI dry-run + missing-token guard, mocked-`HfApi` publish path).
+
+## Publication status
+
+The upload is intentionally NOT performed by the build. Per the
+secret-handling + publishing-authority protocols:
+
+1. **`HF_TOKEN` is a secret** — it is read only from the environment
+   by the publish script, never passed as an argument.
+2. **Publishing a public dataset repo is a publishing action** —
+   the operator runs it deliberately.
+
+**Operator publish steps**:
+
+```bash
+# 1. Validate everything (safe; no token, no network):
+uv run python scripts/publish_hf_eval.py --dry-run
+
+# 2. Set the HF write token in your shell (NOT as a flag):
+export HF_TOKEN=<your-hf-write-token>
+
+# 3. Publish:
+uv run python scripts/publish_hf_eval.py
+```
+
+The script targets `Polycentric-Labs/evidentia-grc-eval` by default
+(override with `--repo-id`).
 
 ---
 
@@ -89,17 +138,25 @@ The eval suite ships with Evidentia's `evidentia eval` CLI verbs
 4. **Versioning**: HF Hub supports dataset revisions; each Evidentia
    release that touches the corpus tags a corresponding revision.
 
-## Scaffolding status (v0.9.7)
+## Build status
 
 - ✅ Single-framework subsets exist at
   `tests/data/dfah-calibration/corpus_{nist,ffiec,iso27001}.jsonl`
-  (v0.8.5 ship).
+  (v0.8.5 ship) + `corpus_federal.jsonl` (v0.9.2 ship).
 - ✅ Eval methodology documented in `docs/v0.8.6-plan.md` § P3 +
   `docs/security-review-v0.8.6.md`.
-- ⏳ Dataset card draft (this doc).
-- ⏳ HF Hub repository creation (operator action — not in v0.9.7 scope).
-- ⏳ Loading script (v0.9.8 candidate).
-- ⏳ Expansion to FedRAMP Rev 5 High + CMMC L2 (v0.9.8+ candidate).
+- ✅ Dataset card — `tests/data/dfah-calibration/hf-dataset-card.md`
+  (v0.9.8 P1.9).
+- ✅ Loading config — HF `configs:` frontmatter in the dataset card;
+  no loading script needed (modern no-script `datasets` path).
+- ✅ Expansion to FedRAMP Rev 5 High + CMMC L2 — `corpus_fedramp_high.jsonl`
+  + `corpus_cmmc_l2.jsonl` (v0.9.8 P1.9; 24 entries each).
+- ✅ Publish script — `scripts/publish_hf_eval.py` (v0.9.8 P1.9).
+- ⏳ HF Hub repository creation + upload — **operator action**;
+  see "Publication status" above.
+- 🔭 Further expansion toward 100+ entries per framework with
+  expert annotation — ongoing curation; not blocking the v0.9.8
+  publish.
 
 ## Cross-references
 
