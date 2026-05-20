@@ -35,6 +35,9 @@ CORPUS_FILES = [
     ("corpus_ffiec.jsonl", "FFIEC", 24),
     ("corpus_iso27001.jsonl", "ISO 27001", 24),
     ("corpus_federal.jsonl", "FedRAMP/CA-7", 24),
+    # v0.9.8 P1.9 — HF eval-suite expansion subsets.
+    ("corpus_fedramp_high.jsonl", "FedRAMP Rev 5 High", 24),
+    ("corpus_cmmc_l2.jsonl", "CMMC L2", 24),
 ]
 
 
@@ -174,13 +177,17 @@ def main() -> int:
         all_corpus_path.write_text(
             "\n".join(all_corpus_lines) + "\n", encoding="utf-8"
         )
-        print("\n--- Overall (all 147 entries) ---")
+        total = len(all_corpus_lines)
+        print(f"\n--- Overall (all {total} entries) ---")
         outcome = run_kappa("corpus-all.jsonl", "labels-llm-all.jsonl")
         if outcome:
             kappa, label, _ = outcome
             passed = kappa >= 0.80
             status = "PASS" if passed else "FAIL"
-            print(f"\n| Overall (all) | 147 | {kappa:.4f} | {label} | {status} |")
+            print(
+                f"\n| Overall (all) | {total} | {kappa:.4f} "
+                f"| {label} | {status} |"
+            )
 
     return 0 if any_pass else 1
 
