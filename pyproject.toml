@@ -29,8 +29,8 @@ dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
     "pytest-cov>=5.0",
-    "ruff>=0.15.12",
-    "mypy>=1.20.2",
+    "ruff>=0.15.13",
+    "mypy>=2.1.0",
     # v0.3.0: flipped mypy CI job from advisory to strict. types-PyYAML is
     # needed to silence "Library stubs not installed for yaml" across every
     # module that parses catalog JSON / frameworks.yaml / user-dir manifests.
@@ -42,12 +42,12 @@ dev = [
     # `boto3` is the runtime dependency (also in evidentia-collectors
     # [aws] extra); having it in dev deps means collector tests run
     # without an extra install step.
-    "boto3>=1.43.3",
-    "moto[all]>=5.2.0",
+    "boto3>=1.43.12",
+    "moto[all]>=5.2.1",
     # v0.7.12 P0: cloud-WORM backend SDKs (gated as evidentia[worm-X]
     # extras for end-users; in dev-deps so the dev/CI venv runs the
     # backend tests without needing the extra activated).
-    "azure-storage-blob>=12.19.0",
+    "azure-storage-blob>=12.29.0",
     "azure-identity>=1.16.0",
     "google-cloud-storage>=2.18.0",
     # v0.7.0: BLOCKER B7 (docs/enterprise-grade.md). Validates that our
@@ -58,15 +58,15 @@ dev = [
     # additionalProperties). Custom `ns="https://evidentia.dev/oscal"`
     # props in back-matter are accepted unchanged. Guarded with
     # pytest.importorskip so the test suite runs on minimal installs.
-    "compliance-trestle>=4.0,<5.0",
-    "mcp>=1.27.0",
+    "compliance-trestle>=4.0.3,<5.0",
+    "mcp>=1.27.1",
     # v0.8.2 G2: property-based tests on the gap-analyzer
     # normalizer + the catalogs crosswalk engine. Generates
     # randomized inputs against canonical invariants (idempotence,
     # case-folding, prefix-stripping, mapping cardinality) to
     # catch regressions hand-written tests would miss. Tests live
     # in tests/property/.
-    "hypothesis>=6.110",
+    "hypothesis>=6.152.9",
     # v0.8.2 G1: mutation testing baseline on the gap_analyzer +
     # risk_statements modules. Mutmut introduces small random
     # mutations to source code + re-runs the test suite — surviving
@@ -83,7 +83,7 @@ dev = [
     # sentence-transformers half while exercising the real numpy
     # math. Sentence-transformers itself is NOT in dev deps —
     # tests mock it to validate the missing-extra failure mode.
-    "numpy>=1.26",
+    "numpy>=2.4.6",
     # v0.9.5 P1.1: random test ordering surfaces test-isolation
     # bugs that the default alphabetical ordering masks. Pinned
     # opt-out per test invocation: ``pytest -p no:randomly``
@@ -99,7 +99,7 @@ dev = [
     # OpenAPI spec; playwright drives the React UI for end-to-
     # end probing. Both ride in dev-deps so a fresh dev/CI venv
     # can run the DAST suite without separate install steps.
-    "schemathesis>=3.39",
+    "schemathesis>=4.19.0",
     "playwright>=1.50",
 ]
 
