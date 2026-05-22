@@ -262,3 +262,86 @@ class TestRepoReadErrors:
             client.get_repo("acme", "platform")
 
         assert "MUST_NOT_APPEAR" not in str(excinfo.value)
+
+
+# ── v0.10.0: compliance_status + OCSF round-trip ─────────────────────────
+
+
+def _full_handler(
+    *, private: bool = True, codeowners: bool = True
+) -> Callable[[httpx.Request], httpx.Response]:
+    """A handler serving a repo + full protection + (optional) CODEOWNERS."""
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        if req.url.path == "/repos/acme/platform":
+            return httpx.Response(200, json=_repo(private=private))
+        if req.url.path.endswith("/protection"):
+            return httpx.Response(200, json=_protection_full())
+        if "/contents/" in req.url.path:
+            if codeowners and req.url.path.endswith(".github/CODEOWNERS"):
+                return httpx.Response(
+                    200, json={"path": ".github/CODEOWNERS"}
+                )
+            return httpx.Response(404)
+        return httpx.Response(404)
+
+    return handler
+
+
+def test_private_repo_compliance_status_is_pass() -> None:
+    from evidentia_core.models.finding import ComplianceStatus
+
+    with _make_collector(_full_handler(private=True)) as c:
+        findings = c.collect()
+    vis = next(
+        f for f in findings if f.source_finding_id == "acme/platform:visibility"
+    )
+    assert vis.compliance_status == ComplianceStatus.PASS
+
+
+def test_public_repo_compliance_status_is_warning() -> None:
+    from evidentia_core.models.finding import ComplianceStatus
+
+    with _make_collector(_full_handler(private=False)) as c:
+        findings = c.collect()
+    vis = next(
+        f for f in findings if f.source_finding_id == "acme/platform:visibility"
+    )
+    assert vis.compliance_status == ComplianceStatus.WARNING
+
+
+def test_protected_branch_subfinding_compliance_status_is_pass() -> None:
+    from evidentia_core.models.finding import ComplianceStatus
+
+    with _make_collector(_full_handler()) as c:
+        findings = c.collect()
+    pr_review = next(
+        f
+        for f in findings
+        if f.source_finding_id == "acme/platform:main:pr_review"
+    )
+    assert pr_review.compliance_status == ComplianceStatus.PASS
+
+
+def test_missing_codeowners_compliance_status_is_fail() -> None:
+    from evidentia_core.models.finding import ComplianceStatus
+
+    with _make_collector(_full_handler(codeowners=False)) as c:
+        findings = c.collect()
+    co = next(
+        f
+        for f in findings
+        if f.source_finding_id == "acme/platform:codeowners-missing"
+    )
+    assert co.compliance_status == ComplianceStatus.FAIL
+
+
+def test_github_findings_ocsf_round_trip() -> None:
+    pytest.importorskip("py_ocsf_models")
+    from evidentia_core.ocsf import finding_from_ocsf, finding_to_ocsf
+
+    with _make_collector(_full_handler()) as c:
+        findings = c.collect()
+    assert findings
+    for f in findings:
+        assert finding_from_ocsf(finding_to_ocsf(f)) == f

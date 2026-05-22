@@ -67,7 +67,11 @@ from evidentia_core.models.common import (
     current_version,
     utc_now,
 )
-from evidentia_core.models.finding import FindingStatus, SecurityFinding
+from evidentia_core.models.finding import (
+    ComplianceStatus,
+    FindingStatus,
+    SecurityFinding,
+)
 
 from evidentia_collectors.github.client import (
     GitHubApiError,
@@ -571,6 +575,25 @@ class DependabotCollector:
         pkg_name = str(package.get("name") or "")
         pkg_ecosystem = str(package.get("ecosystem") or "")
 
+        # v0.10.0: OCSF compliance status + remediation. An open (or
+        # policy-treated-as-open) alert is a failed check; a fixed or
+        # resolved-dismissal alert passes. GitHub supplies the first
+        # patched version — that is the remediation.
+        compliance_status = (
+            ComplianceStatus.FAIL
+            if status == FindingStatus.ACTIVE
+            else ComplianceStatus.PASS
+        )
+        patched = (vulnerability.get("first_patched_version") or {}).get(
+            "identifier"
+        )
+        pkg_label = f"{pkg_ecosystem}/{pkg_name}" if pkg_ecosystem else pkg_name
+        remediation = (
+            f"Upgrade {pkg_label} to {patched} or later."
+            if patched and pkg_name
+            else None
+        )
+
         title_parts = [ghsa_id or cve_id or f"Dependabot alert #{alert.get('number')}"]
         if pkg_name:
             title_parts.append(pkg_name)
@@ -598,6 +621,8 @@ class DependabotCollector:
             description=description,
             severity=severity,
             status=status,
+            compliance_status=compliance_status,
+            remediation=remediation,
             source_system="github-dependabot",
             source_finding_id=str(alert.get("number") or ""),
             resource_type="GitHub::Dependabot::Alert",

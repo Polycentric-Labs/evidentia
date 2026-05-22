@@ -62,7 +62,11 @@ from evidentia_core.models.common import (
     current_version,
     utc_now,
 )
-from evidentia_core.models.finding import FindingStatus, SecurityFinding
+from evidentia_core.models.finding import (
+    ComplianceStatus,
+    FindingStatus,
+    SecurityFinding,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     pass
@@ -627,6 +631,10 @@ class AccessAnalyzerCollector:
             description=description,
             severity=severity,
             status=status_enum,
+            # v0.10.0: every Access Analyzer finding is an access-control
+            # concern (external access, unused credentials, or an overly
+            # permissive policy) — a failed check.
+            compliance_status=ComplianceStatus.FAIL,
             source_system="aws-access-analyzer",
             source_finding_id=finding_id,
             resource_type=resource_type or None,

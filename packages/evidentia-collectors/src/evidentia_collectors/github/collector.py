@@ -37,7 +37,11 @@ from evidentia_core.models.common import (
     current_version,
     utc_now,
 )
-from evidentia_core.models.finding import FindingStatus, SecurityFinding
+from evidentia_core.models.finding import (
+    ComplianceStatus,
+    FindingStatus,
+    SecurityFinding,
+)
 
 from evidentia_collectors.github.client import (
     GitHubApiError,
@@ -377,6 +381,9 @@ class GitHubCollector:
                     ),
                     severity=Severity.INFORMATIONAL,
                     status=FindingStatus.RESOLVED,
+                    # v0.10.0: a private repo satisfies the visibility
+                    # access-control posture this finding evidences.
+                    compliance_status=ComplianceStatus.PASS,
                     source_system="github",
                     source_finding_id=f"{self.slug}:visibility",
                     resource_type="GitHub::Repository",
@@ -396,6 +403,9 @@ class GitHubCollector:
                 ),
                 severity=Severity.MEDIUM,
                 status=FindingStatus.ACTIVE,
+                # v0.10.0: a public repo is not a hard failure, but
+                # warrants review against the org's open-source policy.
+                compliance_status=ComplianceStatus.WARNING,
                 source_system="github",
                 source_finding_id=f"{self.slug}:visibility",
                 resource_type="GitHub::Repository",
@@ -421,6 +431,9 @@ class GitHubCollector:
                     description=str(e),
                     severity=Severity.LOW,
                     status=FindingStatus.ACTIVE,
+                    # v0.10.0: branch-protection state could not be read
+                    # — the check result is indeterminate, not failed.
+                    compliance_status=ComplianceStatus.UNKNOWN,
                     source_system="github",
                     source_finding_id=f"{self.slug}:{default_branch}:protection-error",
                     resource_type="GitHub::Branch",
@@ -444,6 +457,9 @@ class GitHubCollector:
                     ),
                     severity=Severity.HIGH,
                     status=FindingStatus.ACTIVE,
+                    # v0.10.0: no branch protection on the default branch
+                    # is a failed access-enforcement / change-control check.
+                    compliance_status=ComplianceStatus.FAIL,
                     source_system="github",
                     source_finding_id=f"{self.slug}:{default_branch}:unprotected",
                     resource_type="GitHub::Branch",
@@ -472,6 +488,9 @@ class GitHubCollector:
                 ),
                 severity=Severity.INFORMATIONAL if reviewers > 0 else Severity.HIGH,
                 status=FindingStatus.RESOLVED if reviewers > 0 else FindingStatus.ACTIVE,
+                compliance_status=ComplianceStatus.PASS
+                if reviewers > 0
+                else ComplianceStatus.FAIL,
                 control_mappings=_PR_REVIEW_MAPPINGS,
                 collection_context=context,
                 raw=pr_review,
@@ -496,6 +515,9 @@ class GitHubCollector:
                 ),
                 severity=Severity.INFORMATIONAL if contexts else Severity.MEDIUM,
                 status=FindingStatus.RESOLVED if contexts else FindingStatus.ACTIVE,
+                compliance_status=ComplianceStatus.PASS
+                if contexts
+                else ComplianceStatus.FAIL,
                 control_mappings=_STATUS_CHECK_MAPPINGS,
                 collection_context=context,
                 raw=status_checks,
@@ -520,6 +542,9 @@ class GitHubCollector:
                 ),
                 severity=Severity.INFORMATIONAL if enforce_admins else Severity.MEDIUM,
                 status=FindingStatus.RESOLVED if enforce_admins else FindingStatus.ACTIVE,
+                compliance_status=ComplianceStatus.PASS
+                if enforce_admins
+                else ComplianceStatus.FAIL,
                 control_mappings=_ENFORCE_ADMINS_MAPPINGS,
                 collection_context=context,
                 raw={"enforce_admins": enforce_admins},
@@ -545,6 +570,9 @@ class GitHubCollector:
                         ),
                         severity=Severity.INFORMATIONAL,
                         status=FindingStatus.RESOLVED,
+                        # v0.10.0: a present CODEOWNERS file satisfies
+                        # the reviewer-ownership check.
+                        compliance_status=ComplianceStatus.PASS,
                         source_system="github",
                         source_finding_id=f"{self.slug}:codeowners",
                         resource_type="GitHub::Repository",
@@ -563,6 +591,9 @@ class GitHubCollector:
                 ),
                 severity=Severity.MEDIUM,
                 status=FindingStatus.ACTIVE,
+                # v0.10.0: a missing CODEOWNERS file is a failed
+                # reviewer-ownership check.
+                compliance_status=ComplianceStatus.FAIL,
                 source_system="github",
                 source_finding_id=f"{self.slug}:codeowners-missing",
                 resource_type="GitHub::Repository",
@@ -582,6 +613,7 @@ def _finding(
     description: str,
     severity: Severity,
     status: FindingStatus,
+    compliance_status: ComplianceStatus,
     control_mappings: list[ControlMapping],
     collection_context: CollectionContext,
     raw: Any,
@@ -591,6 +623,7 @@ def _finding(
         description=description[:2000],
         severity=severity,
         status=status,
+        compliance_status=compliance_status,
         source_system="github",
         source_finding_id=f"{slug}:{branch}:{rule}",
         resource_type="GitHub::Branch",

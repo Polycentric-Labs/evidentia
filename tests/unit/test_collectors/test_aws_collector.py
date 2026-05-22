@@ -417,3 +417,122 @@ class TestCollectAll:
         assert any(
             "AWS Config collector failed" in r.message for r in caplog.records
         )
+
+
+# ── v0.10.0: compliance_status + remediation + OCSF round-trip ───────────
+
+
+def _config_collector() -> AwsCollector:
+    """An AwsCollector whose Config client yields one non-compliant rule."""
+    from unittest.mock import MagicMock
+
+    describe = MagicMock()
+    describe.paginate.return_value = iter(
+        [
+            {
+                "ComplianceByConfigRules": [
+                    {
+                        "ConfigRuleName": "s3-bucket-public-read-prohibited",
+                        "Compliance": {"ComplianceType": "NON_COMPLIANT"},
+                    }
+                ]
+            }
+        ]
+    )
+    details = MagicMock()
+    details.paginate.return_value = iter(
+        [
+            {
+                "EvaluationResults": [
+                    {
+                        "EvaluationResultIdentifier": {
+                            "EvaluationResultQualifier": {
+                                "ResourceType": "AWS::S3::Bucket",
+                                "ResourceId": "bucket-one",
+                            }
+                        },
+                        "Annotation": "Public read ACL.",
+                    }
+                ]
+            }
+        ]
+    )
+    mock_config = MagicMock()
+    mock_config.get_paginator.side_effect = lambda name: (
+        describe
+        if name == "describe_compliance_by_config_rule"
+        else details
+    )
+    return AwsCollector(region="us-east-1", _clients={"config": mock_config})
+
+
+def _sh_collector(raw_finding: dict[str, Any]) -> AwsCollector:
+    """An AwsCollector whose Security Hub client yields one finding."""
+    from unittest.mock import MagicMock
+
+    paginator = MagicMock()
+    paginator.paginate.return_value = iter([{"Findings": [raw_finding]}])
+    mock_sh = MagicMock()
+    mock_sh.get_paginator.return_value = paginator
+    return AwsCollector(region="us-east-1", _clients={"securityhub": mock_sh})
+
+
+def test_config_findings_have_fail_compliance_status() -> None:
+    from evidentia_core.models.finding import ComplianceStatus
+
+    findings = _config_collector().collect_config_findings()
+    assert findings
+    assert all(
+        f.compliance_status == ComplianceStatus.FAIL for f in findings
+    )
+
+
+def test_security_hub_failed_status_maps_to_fail_with_remediation() -> None:
+    from evidentia_core.models.finding import ComplianceStatus
+
+    raw = {
+        "Id": "f-fail",
+        "Title": "S3 bucket public",
+        "Description": "x",
+        "Severity": {"Label": "HIGH"},
+        "Workflow": {"Status": "NEW"},
+        "Compliance": {"Status": "FAILED", "SecurityControlId": "S3.3"},
+        "Remediation": {
+            "Recommendation": {
+                "Text": "Enable S3 Block Public Access.",
+                "Url": "https://docs.aws.amazon.com/console/securityhub/S3.3",
+            }
+        },
+        "Resources": [
+            {"Id": "arn:aws:s3:::b", "Type": "AwsS3Bucket", "Region": "us-east-1"}
+        ],
+    }
+    finding = _sh_collector(raw).collect_security_hub_findings()[0]
+    assert finding.compliance_status == ComplianceStatus.FAIL
+    assert finding.remediation == "Enable S3 Block Public Access."
+
+
+def test_security_hub_passed_status_maps_to_pass() -> None:
+    from evidentia_core.models.finding import ComplianceStatus
+
+    raw = {
+        "Id": "f-pass",
+        "Title": "S3 bucket OK",
+        "Description": "x",
+        "Severity": {"Label": "INFORMATIONAL"},
+        "Workflow": {"Status": "NEW"},
+        "Compliance": {"Status": "PASSED", "SecurityControlId": "S3.3"},
+        "Resources": [
+            {"Id": "arn:aws:s3:::b", "Type": "AwsS3Bucket", "Region": "us-east-1"}
+        ],
+    }
+    finding = _sh_collector(raw).collect_security_hub_findings()[0]
+    assert finding.compliance_status == ComplianceStatus.PASS
+
+
+def test_aws_finding_ocsf_round_trips() -> None:
+    pytest.importorskip("py_ocsf_models")
+    from evidentia_core.ocsf import finding_from_ocsf, finding_to_ocsf
+
+    finding = _config_collector().collect_config_findings()[0]
+    assert finding_from_ocsf(finding_to_ocsf(finding)) == finding

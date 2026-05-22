@@ -293,3 +293,65 @@ class TestLifecycle:
             assert collector is not None
         # Same as above — injected connection is not owned
         assert conn.closed is False
+
+
+# ── v0.10.0: compliance_status + OCSF round-trip ─────────────────────────
+
+
+class TestComplianceStatus:
+    def test_clean_baseline_audit_and_crypto_pass(self) -> None:
+        from evidentia_core.models.finding import ComplianceStatus
+
+        findings, _ = PostgresCollector(
+            connection=_MockConnection(_baseline_responses())
+        ).collect_v2()
+        audit = next(
+            f for f in findings if "audit-log" in (f.source_finding_id or "")
+        )
+        crypto = next(
+            f for f in findings if "crypto-config" in (f.source_finding_id or "")
+        )
+        assert audit.compliance_status == ComplianceStatus.PASS
+        assert crypto.compliance_status == ComplianceStatus.PASS
+
+    def test_audit_log_gap_compliance_status_is_fail(self) -> None:
+        from evidentia_core.models.finding import ComplianceStatus
+
+        responses = _baseline_responses()
+        responses["pg_settings"] = [
+            ("log_connections", "off"),
+            ("log_disconnections", "off"),
+            ("log_statement", "none"),
+            ("password_encryption", "scram-sha-256"),
+            ("ssl", "on"),
+            ("max_connections", "100"),
+        ]
+        findings, _ = PostgresCollector(
+            connection=_MockConnection(responses)
+        ).collect_v2()
+        audit = next(
+            f for f in findings if "audit-log" in (f.source_finding_id or "")
+        )
+        assert audit.compliance_status == ComplianceStatus.FAIL
+
+    def test_role_inventory_compliance_status_is_unknown(self) -> None:
+        from evidentia_core.models.finding import ComplianceStatus
+
+        findings, _ = PostgresCollector(
+            connection=_MockConnection(_baseline_responses())
+        ).collect_v2()
+        role_inv = next(
+            f for f in findings if "role-inventory" in (f.source_finding_id or "")
+        )
+        assert role_inv.compliance_status == ComplianceStatus.UNKNOWN
+
+    def test_postgres_findings_ocsf_round_trip(self) -> None:
+        pytest.importorskip("py_ocsf_models")
+        from evidentia_core.ocsf import finding_from_ocsf, finding_to_ocsf
+
+        findings, _ = PostgresCollector(
+            connection=_MockConnection(_baseline_responses())
+        ).collect_v2()
+        assert findings
+        for f in findings:
+            assert finding_from_ocsf(finding_to_ocsf(f)) == f

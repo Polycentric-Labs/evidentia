@@ -47,7 +47,11 @@ from evidentia_core.models.common import (
     current_version,
     utc_now,
 )
-from evidentia_core.models.finding import FindingStatus, SecurityFinding
+from evidentia_core.models.finding import (
+    ComplianceStatus,
+    FindingStatus,
+    SecurityFinding,
+)
 
 from evidentia_collectors.aws.mapping import (
     map_config_rule_to_control_mappings,
@@ -241,6 +245,9 @@ class AwsCollector:
                     "description": description[:2000],
                     "severity": Severity.MEDIUM,
                     "status": FindingStatus.ACTIVE,
+                    # v0.10.0: a non-compliant Config rule evaluation
+                    # is, by definition, a failed control check.
+                    "compliance_status": ComplianceStatus.FAIL,
                     "source_system": "aws-config",
                     "source_finding_id": f"{rule_name}:{resource_id}",
                     "resource_type": resource_type or None,
@@ -358,6 +365,21 @@ class AwsCollector:
             or ""
         )
 
+        # v0.10.0: OCSF compliance status from Security Hub's
+        # Compliance.Status, plus remediation text from the finding's
+        # Remediation.Recommendation block when the source supplies it.
+        sh_status = str(compliance.get("Status") or "").upper()
+        compliance_status = {
+            "PASSED": ComplianceStatus.PASS,
+            "FAILED": ComplianceStatus.FAIL,
+            "WARNING": ComplianceStatus.WARNING,
+            "NOT_AVAILABLE": ComplianceStatus.UNKNOWN,
+        }.get(sh_status, ComplianceStatus.FAIL)
+        recommendation = (raw.get("Remediation") or {}).get(
+            "Recommendation"
+        ) or {}
+        remediation = str(recommendation.get("Text") or "") or None
+
         finding_kwargs: dict[str, Any] = {
             "title": title,
             "description": description,
@@ -365,6 +387,8 @@ class AwsCollector:
             "status": FindingStatus.ACTIVE
             if str((raw.get("Workflow") or {}).get("Status") or "NEW") != "RESOLVED"
             else FindingStatus.RESOLVED,
+            "compliance_status": compliance_status,
+            "remediation": remediation,
             "source_system": "aws-security-hub",
             "source_finding_id": source_id,
             "resource_type": resource_type or None,

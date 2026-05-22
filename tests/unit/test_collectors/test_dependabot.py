@@ -423,3 +423,35 @@ def test_default_dismissal_policy_keys_match_github_spec() -> None:
         "tolerable_risk",
     }
     assert set(DEFAULT_DISMISSAL_POLICY.keys()) == github_reasons
+
+
+# ── v0.10.0: compliance_status + remediation + OCSF round-trip ───────────
+
+
+def test_open_alert_compliance_status_is_fail() -> None:
+    from evidentia_core.models.finding import ComplianceStatus
+
+    finding = _make_collector(alerts=[_make_alert(state="open")]).collect()[0]
+    assert finding.compliance_status == ComplianceStatus.FAIL
+
+
+def test_fixed_alert_compliance_status_is_pass() -> None:
+    from evidentia_core.models.finding import ComplianceStatus
+
+    finding = _make_collector(alerts=[_make_alert(state="fixed")]).collect()[0]
+    assert finding.compliance_status == ComplianceStatus.PASS
+
+
+def test_remediation_populated_from_first_patched_version() -> None:
+    finding = _make_collector(alerts=[_make_alert()]).collect()[0]
+    assert finding.remediation is not None
+    assert "2.31.0" in finding.remediation
+    assert "requests" in finding.remediation
+
+
+def test_dependabot_finding_ocsf_round_trips() -> None:
+    pytest.importorskip("py_ocsf_models")
+    from evidentia_core.ocsf import finding_from_ocsf, finding_to_ocsf
+
+    finding = _make_collector(alerts=[_make_alert()]).collect()[0]
+    assert finding_from_ocsf(finding_to_ocsf(finding)) == finding

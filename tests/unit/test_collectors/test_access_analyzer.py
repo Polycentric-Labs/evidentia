@@ -306,3 +306,25 @@ def test_blind_spots_cover_known_coverage_gaps() -> None:
         "finding-latency",
     }
     assert required.issubset(ids)
+
+
+# ── v0.10.0: compliance_status + OCSF round-trip ─────────────────────────
+
+
+def test_access_analyzer_findings_are_fail() -> None:
+    """Every Access Analyzer finding is an access-control concern."""
+    from evidentia_core.models.finding import ComplianceStatus
+
+    for finding_type in ("ExternalAccess", "UnusedIAMRole", "UnusedPermission"):
+        raw = _make_raw_finding(findingType=finding_type)
+        finding = _make_collector(findings_pages=[[raw]]).collect()[0]
+        assert finding.compliance_status == ComplianceStatus.FAIL
+
+
+def test_access_analyzer_finding_ocsf_round_trips() -> None:
+    pytest.importorskip("py_ocsf_models")
+    from evidentia_core.ocsf import finding_from_ocsf, finding_to_ocsf
+
+    raw = _make_raw_finding(findingType="ExternalAccess", isPublic=True)
+    finding = _make_collector(findings_pages=[[raw]]).collect()[0]
+    assert finding_from_ocsf(finding_to_ocsf(finding)) == finding

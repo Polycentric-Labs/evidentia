@@ -41,7 +41,11 @@ from evidentia_core.models.common import (
     current_version,
     utc_now,
 )
-from evidentia_core.models.finding import FindingStatus, SecurityFinding
+from evidentia_core.models.finding import (
+    ComplianceStatus,
+    FindingStatus,
+    SecurityFinding,
+)
 
 from evidentia_collectors.sql.postgres.mapping import (
     AUDIT_LOG_MAPPINGS,
@@ -526,6 +530,9 @@ class PostgresCollector:
             ),
             severity=Severity.MEDIUM,
             status=FindingStatus.ACTIVE,
+            # v0.10.0: write privilege on the audit principal is a
+            # failed least-privilege check.
+            compliance_status=ComplianceStatus.FAIL,
             source_system="postgres",
             source_finding_id=(
                 f"EVIDENTIA-WRITE-PRIV-DETECTED:{self._cached_user}@"
@@ -584,6 +591,9 @@ class PostgresCollector:
                         else Severity.INFORMATIONAL
                     ),
                     status=FindingStatus.ACTIVE,
+                    # v0.10.0: a role inventory is informational
+                    # evidence, not a pass/fail check.
+                    compliance_status=ComplianceStatus.UNKNOWN,
                     source_system="postgres",
                     source_finding_id=(
                         f"role-inventory:{self._cached_db}"
@@ -622,7 +632,9 @@ class PostgresCollector:
                     f"Could not enumerate information_schema.table_privileges: {e}"
                 ) from e
 
-            top_grantees = [(r[0], int(r[1])) for r in rows]
+            # JSON-native (list, not tuple) so raw_data round-trips
+            # cleanly through serialization and the OCSF mapping layer.
+            top_grantees = [[r[0], int(r[1])] for r in rows]
             return [
                 SecurityFinding(
                     title=(
@@ -642,6 +654,9 @@ class PostgresCollector:
                     ),
                     severity=Severity.INFORMATIONAL,
                     status=FindingStatus.ACTIVE,
+                    # v0.10.0: a privilege-grant inventory is
+                    # informational evidence, not a pass/fail check.
+                    compliance_status=ComplianceStatus.UNKNOWN,
                     source_system="postgres",
                     source_finding_id=(
                         f"privilege-grants:{self._cached_db}"
@@ -714,6 +729,11 @@ class PostgresCollector:
                 ),
                 severity=severity,
                 status=status,
+                # v0.10.0: audit-log gaps fail the AU-2/AU-3 check;
+                # a clean baseline passes.
+                compliance_status=ComplianceStatus.FAIL
+                if gaps
+                else ComplianceStatus.PASS,
                 source_system="postgres",
                 source_finding_id=f"audit-log:{self._cached_db}",
                 resource_type="Postgres::Database",
@@ -781,6 +801,11 @@ class PostgresCollector:
                 ),
                 severity=severity,
                 status=status,
+                # v0.10.0: crypto-config gaps fail the SC-12 check;
+                # a clean baseline passes.
+                compliance_status=ComplianceStatus.FAIL
+                if gaps
+                else ComplianceStatus.PASS,
                 source_system="postgres",
                 source_finding_id=f"crypto-config:{self._cached_db}",
                 resource_type="Postgres::Database",
@@ -817,6 +842,9 @@ class PostgresCollector:
                 ),
                 severity=Severity.INFORMATIONAL,
                 status=FindingStatus.ACTIVE,
+                # v0.10.0: encryption-at-rest cannot be attested from
+                # inside Postgres (a documented blind spot) — UNKNOWN.
+                compliance_status=ComplianceStatus.UNKNOWN,
                 source_system="postgres",
                 source_finding_id=(
                     f"encryption-at-rest-blind-spot:{self._cached_db}"
@@ -863,6 +891,9 @@ class PostgresCollector:
                 ),
                 severity=Severity.INFORMATIONAL,
                 status=FindingStatus.ACTIVE,
+                # v0.10.0: connection-limit settings are informational
+                # evidence, not a pass/fail check.
+                compliance_status=ComplianceStatus.UNKNOWN,
                 source_system="postgres",
                 source_finding_id=f"connection-limits:{self._cached_db}",
                 resource_type="Postgres::Database",
