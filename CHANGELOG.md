@@ -7,7 +7,117 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes yet on the v0.10.3 development branch._
+_No changes yet on the v0.10.4 development branch._
+
+## [0.10.3] - 2026-05-23
+
+**Theme**: *YAML-format catalog support + OpenSSF Gemara reference-
+model mapping*. **Fourth release of the v0.10.x line on the same
+calendar day** as v0.10.0 + v0.10.1 + v0.10.2 — closes Candidates C
++ D from `docs/v0.10.3-plan.md` (Allen's "C, then D, both under
+v0.10.3" cycle-entry directive). Phase 1 lowers the contributor
+barrier for new framework catalogs (YAML alongside JSON); Phase 2
+positions Evidentia surfaces onto the OpenSSF Gemara taxonomy so
+FINOS Common Cloud Controls + OpenSSF Security Baseline adopters can
+read Evidentia outputs through the same lens.
+
+### Added
+
+- **YAML-format catalog support (Phase 1, Candidate C)**: catalog
+  files can now be authored in YAML in addition to JSON. New
+  `evidentia_core.catalogs.loader._load_catalog_data` helper at the
+  choke point of every catalog load — dispatches by file extension
+  (`.json` → `json.loads`; `.yaml` / `.yml` → `yaml.safe_load`).
+  Closed allowlist + non-mapping-root rejection with clear errors.
+  All downstream loaders (`load_oscal_catalog`, `load_evidentia_catalog`,
+  `load_non_control_catalog`, `load_catalog`, `load_any_catalog`)
+  refactored to use the helper — uniform JSON/YAML acceptance
+  throughout. **Existing JSON catalogs stay JSON**; no auto-migration.
+- **`iso-27017-2015.yaml` proof catalog**: the smallest Tier-C stub
+  (7 controls) converted from the equivalent JSON. Demonstrates
+  round-trip equivalence; first YAML catalog in the bundled set.
+  Bundled-catalog count unchanged (89).
+- **`scripts/catalogs/regenerate_manifest.py` extended**: scanner
+  globs `*.json` + `*.yaml` + `*.yml` in each tier directory;
+  manifest entries record the actual file extension in the `path`
+  field so the loader's auto-dispatch finds the right parser.
+- **`docs/contributing-a-catalog.md` NEW**: the 3-file PR recipe
+  for new framework catalogs. When to use YAML vs JSON, required
+  schema, tier conventions. Lowers the contributor barrier.
+- **`docs/gemara-mapping.md` NEW** (NORMATIVE positioning material):
+  comprehensive component-by-component mapping of every OpenSSF
+  Gemara reference-model component (Catalogs / Logs / Documents /
+  Entities / Collections per Gemara v1.1.0, 2026-05-12) onto the
+  Evidentia surface that satisfies it. 13-row mapping table.
+  "Mapping, not conformance claim" framing — Evidentia does not
+  yet emit Gemara-shape artifacts directly; CUE-constraint emit is
+  a v0.11+ candidate. Adopters cited: FINOS Common Cloud Controls
+  + OpenSSF Security Baseline.
+- **`docs/v0.10.4-plan.md` NEW**: forward-looking plan for the
+  next patch. Carries the 4 polish-class `/code-review` suggestions
+  from v0.10.3 (loader.py choke-point docstring; no-extension
+  error-message polish; regenerate_manifest `framework_id`
+  collision guard; multi-line YAML round-trip test coverage) +
+  placeholder for the operator-deep-dive findings Allen will
+  surface after the v0.10.x line completes.
+
+### Changed
+
+- **`docs/positioning-and-value.md` §8.3** Gemara bullet corrected:
+  Gemara is a machine-readable data model authored in CUE, not a
+  "layered reference architecture." Cross-links to the new
+  `docs/gemara-mapping.md`. v0.10.3 skip-by-reuse row added to §16
+  Version history (4th release of 2026-05-23).
+- **`docs/capability-matrix.md`** gains v0.10.3 PRE-TAG re-validation
+  snapshot: 5 new surfaces (loader helper + YAML data files + the
+  iso-27017-2015.yaml proof + the contributing-a-catalog.md +
+  gemara-mapping.md) + 8-vector adversarial-probe taxonomy on the
+  YAML loader. Step 4 disposition PROCEED-CLEAN.
+- **`docs/v0.10.3-plan.md` §6 retro**: records what shipped per
+  Allen's Candidates C + D selection. `/security-review` 0 findings;
+  `/code-review` 4 polish suggestions deferred to v0.10.4.
+
+### Tests
+
+- **+7 new tests** in `tests/unit/test_catalogs/test_yaml_loader.py`
+  covering: `_load_catalog_data` extension dispatch (`.json` /
+  `.yaml` / `.yml`); unsupported-extension rejection with clear
+  error; non-mapping YAML root rejection; bundled `iso-27017-2015`
+  YAML loads end-to-end via `FrameworkRegistry`; round-trip
+  equivalence asserting identical content via JSON or YAML produces
+  the SAME `ControlCatalog` (the architectural claim that YAML
+  support is a pure format addition, not a semantic change).
+- **3355 → 3369 total pytest cases** (3352 pass + 17 environmental
+  skip in this baseline run; full count stable vs v0.10.2's
+  3348 + 21 = 3369; the 3-case skip drift is GnuPG / Windows
+  symlink elevation / real-LLM opt-in, unchanged behavior).
+
+### Security review
+
+- **16th consecutive PROCEED-CLEAN** of the v0.7.x → v0.8.x →
+  v0.9.x → v0.10.x line (every Evidentia release since v0.7.0).
+- `/security-review` on `v0.10.2..HEAD` delta returned **0 findings
+  ≥ confidence 8**. `yaml.safe_load` (not `yaml.load`) chosen
+  deliberately — no YAML-deserialization-RCE surface introduced.
+  Closed-allowlist extension dispatch + non-mapping-root rejection
+  shut the small attack surface YAML parsing could expose.
+- `/code-review --effort high` returned **0 critical, 4
+  polish-class suggestions** — all deferred to v0.10.4 (see
+  `docs/v0.10.4-plan.md`).
+- **All v0.10.x findings remain closed**: F-V100-L1 + F-V100-M1
+  + F-V100-S1 + F-V101-L1 (zero unfixed CRITICAL/HIGH/MEDIUM/LOW
+  across the v0.10.x line).
+
+### Release mechanics
+
+- `bump_version.py --to 0.10.3`: 24 substitutions across 10 files.
+  **Third consecutive bump preserves the `py-ocsf-models` pin**
+  (`>=0.9.0,<0.10.0`) — closes-out and live-verifies F-V100-M1
+  (workspace-allowlist hardening shipped in v0.10.1 Phase 5).
+- pytest 3352 / 3369 / mypy strict 267 of 267 source files / ruff
+  clean / osv-scanner 184 packages clean / 0 open code-scanning
+  alerts / `test.yml` baseline green on `origin/main`.
+- 16-row pre-push gate: **16/16 PASS** (1 N/A → post-tag container).
 
 ## [0.10.2] - 2026-05-23
 
