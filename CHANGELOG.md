@@ -7,7 +7,89 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes yet on the v0.10.2 development branch._
+_No changes yet on the v0.10.3 development branch._
+
+## [0.10.2] - 2026-05-23
+
+**Theme**: *MCP-as-backend tool surface expansion + GRC Engineering
+Club marketplace plugin (staged) + close v0.10.1 F-V101-L1 SSRF
+surface*. Third release of the v0.10.x line on the same calendar
+day as v0.10.0 + v0.10.1 ships. Brings the v0.10.x integration
+foundation into AI clients (Claude Desktop, Claude Code) via 4 new
+MCP tools, stages a marketplace plugin for community discovery via
+the GRC Engineering Club, and closes the v0.10.1 SSRF finding with
+a default-on private-IP block on `evidentia collect ocsf` URL mode.
+
+### Added
+
+- **4 new MCP tools (v0.10.2)**: `gap_analyze_sarif` (wraps
+  `gap_report_to_sarif` so AI clients emit SARIF 2.1.0 for a CI
+  gate directly), `collect_ocsf` (file-mode-only OCSF ingestion;
+  URL ingest deliberately omitted at the MCP layer to harden out
+  the SSRF surface by construction), `tprm_vendor_list` (read-only
+  vendor enumeration), `poam_list` (read-only POA&M enumeration).
+  Append-only per the §MCP tool contract in `docs/api-stability.md`
+  — non-breaking; the 8 prior tools stay frozen. MCP surface
+  expands 8 → 12 tools.
+- **GRC Engineering Club marketplace plugin** staged in
+  `marketplace/grc-engineering-suite/plugins/evidentia/`. Plugin
+  manifest matches upstream `plugin.json` schema (cross-checked
+  against `plugins/grc-auditor/.claude-plugin/plugin.json` via raw
+  GitHub fetch). Two **generalist OSS** Claude Code skills:
+  `gap-analyze-sarif` (gap-as-CI-gate workflow) and `ingest-ocsf`
+  (Prowler / AWS Security Hub ingestion + optional framework
+  crosswalk). **OSS-vs-paid scope decision locked**: persona-tied
+  skills (TPRM / federal / model-risk) reserved for the future
+  Evidentia Pro / Federal commercial tier. **Upstream PR not yet
+  submitted** — see `docs/v0.10.2-marketplace.md` for the
+  engage-first → fork-and-branch → PR plan.
+- **`collect_ocsf_url(..., block_private_ips: bool = True)`**:
+  additive Optional kwarg on the v0.10.1 ingest function. Default
+  True. Non-breaking per api-stability §1.
+- **`evidentia collect ocsf --block-private-ips/--allow-private-ips`**:
+  new Typer flag, default `--block-private-ips`. Closes F-V101-L1
+  (see Security section).
+- **`docs/v0.10.3-plan.md`**: forward-looking next-release scope
+  ranking 5 candidates (upstream the marketplace plugin, persona
+  modes, YAML catalogs, Gemara mapping, operator deep-dive).
+- **`docs/security-review-v0.10.2.md`**: 5th canonical
+  pre-release-review deliverable.
+- **`docs/v0.10.2-marketplace.md`**: marketplace plugin staging
+  doc + upstream PR plan + standing OSS-vs-paid policy for future
+  v0.10.x / v0.11.x scope decisions.
+
+### Changed
+
+- **`docs/api-stability.md`** §MCP tool contract: 4 new rows for
+  v0.10.2 tools (append-only); revision-history row added.
+
+### Fixed
+
+- **F-V101-L1 (LOW, SSRF surface)**: closed by Phase 3's
+  `--block-private-ips` default-True flag. Pre-resolves the URL's
+  host via `socket.getaddrinfo` (covers IPv4 + IPv6 + literal IPs
+  + DNS records) and rejects if ANY returned address falls into
+  is_private (RFC1918), is_loopback, is_link_local (covers AWS /
+  GCP / Azure metadata endpoints — 169.254.169.254 etc.),
+  is_multicast, is_reserved, or is_unspecified ranges — BEFORE
+  opening any socket. Adversarial close-out test
+  (`test_block_private_ips_rejects_aws_metadata_endpoint`)
+  confirms 169.254.169.254 is rejected. Operators with trusted
+  internal endpoints flip to `--allow-private-ips` explicitly.
+
+### Security
+
+- 0 NEW findings in v0.10.2 pre-release-review (26th → 27th
+  consecutive PROCEED-CLEAN across the v0.7.x → v0.10.x line).
+- F-V101-L1 (v0.10.1 LOW) CLOSED inline.
+- **All v0.10.x findings now closed** (F-V100-L1 + F-V100-M1 +
+  F-V100-S1 closed at v0.10.1 ship; F-V101-L1 closed at v0.10.2
+  ship). Zero unfixed CRITICAL / HIGH / MEDIUM / LOW.
+- Known threat-model limitation (NOT a finding): the SSRF check
+  is single-resolve at pre-fetch time; DNS rebinding between
+  check and fetch is out of scope of v0.10.2's threat model
+  (operator-typo case). Mitigation (IP-pin + Host header)
+  deferred if the threat model expands.
 
 ## [0.10.1] - 2026-05-23
 

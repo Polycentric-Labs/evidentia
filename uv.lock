@@ -948,7 +948,7 @@ wheels = [
 
 [[package]]
 name = "evidentia"
-version = "0.10.1"
+version = "0.10.2"
 source = { editable = "packages/evidentia" }
 dependencies = [
     { name = "evidentia-ai" },
@@ -994,7 +994,7 @@ provides-extras = ["gui", "worm-s3", "worm-azure", "worm-gcs", "mcp"]
 
 [[package]]
 name = "evidentia-ai"
-version = "0.10.1"
+version = "0.10.2"
 source = { editable = "packages/evidentia-ai" }
 dependencies = [
     { name = "evidentia-core" },
@@ -1022,7 +1022,7 @@ provides-extras = ["eval-faithfulness"]
 
 [[package]]
 name = "evidentia-api"
-version = "0.10.1"
+version = "0.10.2"
 source = { editable = "packages/evidentia-api" }
 dependencies = [
     { name = "evidentia-ai" },
@@ -1045,7 +1045,7 @@ requires-dist = [
 
 [[package]]
 name = "evidentia-collectors"
-version = "0.10.1"
+version = "0.10.2"
 source = { editable = "packages/evidentia-collectors" }
 dependencies = [
     { name = "evidentia-core" },
@@ -1135,7 +1135,7 @@ provides-extras = ["aws", "github", "okta", "sql-postgres", "sql-mysql", "sql-sq
 
 [[package]]
 name = "evidentia-core"
-version = "0.10.1"
+version = "0.10.2"
 source = { editable = "packages/evidentia-core" }
 dependencies = [
     { name = "platformdirs" },
@@ -1191,7 +1191,7 @@ provides-extras = ["sigstore", "xlsx", "worm-s3", "worm-azure", "worm-gcs", "ocs
 
 [[package]]
 name = "evidentia-integrations"
-version = "0.10.1"
+version = "0.10.2"
 source = { editable = "packages/evidentia-integrations" }
 dependencies = [
     { name = "evidentia-core" },
@@ -1235,7 +1235,7 @@ provides-extras = ["jira", "servicenow", "tableau", "powerbi", "all"]
 
 [[package]]
 name = "evidentia-mcp"
-version = "0.10.1"
+version = "0.10.2"
 source = { editable = "packages/evidentia-mcp" }
 dependencies = [
     { name = "evidentia-ai" },
@@ -1254,7 +1254,7 @@ requires-dist = [
 
 [[package]]
 name = "evidentia-workspace"
-version = "0.10.1"
+version = "0.10.2"
 source = { virtual = "." }
 
 [package.dev-dependencies]

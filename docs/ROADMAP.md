@@ -1,11 +1,12 @@
 # Evidentia roadmap
 
-**Last updated: v0.10.1 (May 2026).**
+**Last updated: v0.10.2 (May 2026).**
 
 This roadmap synthesizes community feedback with the architecture plan
 at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0-v0.8.7
-+ v0.9.0-v0.9.9 + v0.10.0 have shipped; v0.10.1 ships now (a same-day
-patch on v0.10.0 — both shipped 2026-05-23). **v0.9.0 opened the
++ v0.9.0-v0.9.9 + v0.10.0 + v0.10.1 have shipped; v0.10.2 ships now
+(third release of the v0.10.x line in a single calendar day —
+2026-05-23: v0.10.0 + v0.10.1 + v0.10.2). **v0.9.0 opened the
 v0.9.x "federal compliance" line** with POA&M + CONMON read-only
 library; v0.9.1 landed the Polycentric Labs org migration; v0.9.2
 added the CONMON REST router + federal corpus + LLM rater + federal
@@ -38,7 +39,17 @@ allowlist), ships the deferred third-party OCSF *ingestion*
 collector with a Detection Finding path for Prowler / AWS Security
 Hub, extends `compliance_status` population to the remaining 11
 collectors, and introduces the `Finding` class-name alias plus
-`evidentia collect convert --format ocsf`. Per the v1.0 master-plan
+`evidentia collect convert --format ocsf`. **v0.10.2 brings the
+integration line into AI clients**: 4 new MCP tools
+(`gap_analyze_sarif`, `collect_ocsf`, `tprm_vendor_list`,
+`poam_list`) expand the §MCP tool contract from 8 → 12; a
+GRC Engineering Club marketplace plugin is staged in-repo
+(`marketplace/grc-engineering-suite/plugins/evidentia/` —
+generalist OSS scope per the **first concrete v0.10.x OSS-vs-paid
+scope decision**, with persona-tied skills reserved for a future
+Pro / Federal commercial tier); and F-V101-L1 (the v0.10.1
+SSRF surface on `collect ocsf` URL mode) is closed via a new
+default-on `--block-private-ips` flag. Per the v1.0 master-plan
 resequencing (2026-05-21), the v0.9.x and v0.10.x lines iterate as
 many times as needed toward a solid product — the operator
 self-test and demo/pitch recording precede the walk-throughs and

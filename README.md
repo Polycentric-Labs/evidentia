@@ -157,6 +157,27 @@ Evidentia is built on four principles:
 
 ### Recent releases
 
+**v0.10.2 (May 2026)** — *MCP-as-backend tool surface expansion +
+GRC Engineering Club marketplace plugin (staged) + close v0.10.1
+F-V101-L1 SSRF surface*. Third release of the v0.10.x line on the
+same calendar day as v0.10.0 + v0.10.1 ships. **4 new MCP tools**
+(`gap_analyze_sarif`, `collect_ocsf`, `tprm_vendor_list`,
+`poam_list`) expand the §MCP tool contract from 8 → 12, bringing
+the v0.10.x OCSF / SARIF / TPRM / POA&M surface into Claude
+Desktop, Claude Code, and other MCP-aware AI clients.
+**GRC Engineering Club marketplace plugin** staged in
+`marketplace/grc-engineering-suite/plugins/evidentia/` — first
+concrete OSS-vs-paid scope decision locked at generalist OSS only
+(persona-tied skills reserved for the future Evidentia Pro /
+Federal commercial tier). **F-V101-L1 SSRF surface CLOSED** via a
+new default-on `--block-private-ips` flag on `evidentia collect
+ocsf` URL mode (rejects RFC1918 + link-local incl. AWS metadata
+`169.254.169.254` + loopback + multicast + reserved ranges via
+`socket.getaddrinfo` pre-resolution). All v0.10.x findings now
+closed (zero unfixed CRITICAL / HIGH / MEDIUM / LOW). **3348 tests
+passing / 14 skipped across 267 source files; mypy strict 0/0;
+ruff clean.** PyPI: 7 packages at 0.10.2.
+
 **v0.10.1 (May 2026)** — *OCSF integration consolidation + close
 both v0.10.0 review findings*. Same-day patch on v0.10.0 (v0.10.0
 published 03:07 UTC, v0.10.1 ships ~the same day). Closes
