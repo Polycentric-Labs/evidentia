@@ -1520,6 +1520,53 @@ the operator self-test + demo/pitch phase.
 **3250 tests / 14 skipped / mypy strict 261 of 261 source files /
 ruff clean.**
 
+## v0.10.x — Research-driven integration & AI-governance line — PLANNED
+
+Opened 2026-05-21 following a competitive/integration research pass
+(see [`docs/integration-survey.md`](integration-survey.md) and
+[`docs/positioning-and-value.md`](positioning-and-value.md) §5.5 /
+§5.6.A). The v0.10.x line is the home for the research-driven feature
+surface: because it brings meaningful new feature surface, it is a
+minor bump from v0.9.9 rather than a continuation of v0.9.x patches.
+
+**Themes** (precise per-release boundaries are set per release plan):
+
+- **OCSF normalized findings schema** — the keystone, and where v0.10.0
+  begins. Refactor evidence collectors to emit a canonical,
+  framework-neutral finding aligned to the Open Cybersecurity Schema
+  Framework, mapping into control gaps downstream. Decouples collector
+  count from framework count and unlocks the integrations below.
+- **SARIF emit** — `evidentia gap` emits SARIF 2.1.0 so gap analysis is
+  a blocking PR check in GitHub / GitLab security dashboards.
+- **OCSF-based collectors** — Prowler, AWS Security Hub, Trivy / Checkov
+  ingestion, near-free once the normalized schema lands.
+- **MCP-as-backend + GRC Engineering Club interop** — deepen the MCP
+  tool/resource surface; publish a thin Evidentia MCP plugin into the
+  GRC Engineering Club's `grc-engineering-suite` marketplace.
+- **Persona modes** (auditor / engineer / TPRM) and **YAML-driven
+  catalog / control-tier definitions** to broaden UX and contribution.
+- **AI-governance regulatory packs** (EU AI Act Annex IV technical
+  documentation, ISO/IEC 42001) and **agentic-governance primitives**
+  (agent cards, tool-use permissioning) on the existing MCP / CIMD
+  substrate.
+- **Map Evidentia onto the OpenSSF Gemara reference model** in
+  positioning material.
+
+The full prioritized integration list and sequencing rationale are in
+[`docs/integration-survey.md`](integration-survey.md) §7.
+
+### Operator deep-dive & product-validation phase — PLANNED (after the v0.10.x feature surface)
+
+A dedicated phase sequenced after the v0.10.x research-driven feature
+surface is built: the maintainer works through the entire product
+hands-on to fully understand it end-to-end — exercising every CLI verb,
+REST endpoint, evidence collector, MCP tool, and UI surface — builds out
+project documentation / a project wiki, and produces demo recordings.
+This formalizes and expands the "operator self-test + demo phase"
+referenced in the v0.9.9 entry above; it runs before the v1.0
+domain-expert walk-through, and any gaps it surfaces feed back into the
+backlog.
+
 ## v1.0 — Federal compliance shipped + API stability — RESERVED
 
 See [`docs/v1.0-transition.md`](v1.0-transition.md) for the full

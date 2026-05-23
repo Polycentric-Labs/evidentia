@@ -108,6 +108,13 @@ evidentia-sbom.cdx.json
 # .vscode/ split: ignore the whole directory by default; un-ignore
 # specific files only if they're meant to be shared across the team.
 .local/
+
+# Private competitive-strategy / market-research working docs. The repo
+# is public (Polycentric-Labs/evidentia); strategy material naming
+# specific competitor-feature adoption decisions or commercial
+# positioning stays out of the public tree. Neutral landscape analysis
+# lives in docs/ (e.g. docs/positioning-and-value.md) and IS tracked.
+/private/
 *.swp
 *.swo
 *~
