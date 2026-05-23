@@ -13,6 +13,52 @@
 
 ---
 
+## Re-validation snapshot — 2026-05-22 (v0.10.0 PRE-TAG)
+
+v0.10.0 opens the v0.10.x research-driven integration line. **Three
+new public surfaces** (the OCSF Compliance Finding mapping layer,
+SARIF 2.1.0 emit on `evidentia gap`, additive `compliance_status` +
+`remediation` fields on `SecurityFinding`); **three pilot collectors**
+(AWS, GitHub, Postgres) refactored to populate the new fields; the
+~11 other collectors untouched (additive-only schema evolution; full
+migration deferred to v0.10.1).
+
+**New public surfaces**:
+
+| # | Surface | Layer | Notes |
+|---|---|---|---|
+| 1 | `evidentia_core.ocsf` package — `finding_to_ocsf` / `finding_from_ocsf` / `OCSFMappingError` | Library | Bidirectional Evidentia `SecurityFinding` ↔ OCSF Compliance Finding (`class_uid` 2003) mapping. Pure functions; lazy-imports `py-ocsf-models` from the new `[ocsf]` extra; lossless round-trip for Evidentia-produced findings via the OCSF-standard `unmapped["evidentia"]` block. See [`docs/ocsf-mapping.md`](ocsf-mapping.md). |
+| 2 | `evidentia gap analyze --format sarif` + `evidentia_core.gap_analyzer.sarif.gap_report_to_sarif` | CLI + Library | SARIF 2.1.0 output format. Each `ControlGap` → a SARIF result; each distinct control → a rule; stable `partialFingerprints` track gaps across runs; physical + logical locations keep results from being misattributed to source code. Surfaces in GitHub code scanning + GitLab security dashboards. |
+| 3 | `SecurityFinding.compliance_status` + `SecurityFinding.remediation` + `ComplianceStatus` enum | Library | Additive Optional Pydantic fields (defaults `UNKNOWN` + `None`). Mirror OCSF `compliance.status` + `remediation.desc`. `finding.py` joins the [`docs/api-stability.md`](api-stability.md) frozen-models table. |
+| 4 | `[ocsf]` extra (new optional dependency on `py-ocsf-models>=0.9.0,<0.10.0`) | Packaging | Apache-2.0; Prowler-team-maintained; isolated to the mapping layer so default install stays slim and the core is insulated from OCSF schema churn. |
+
+**Modified surfaces** (additive only — existing tests still pass):
+
+| # | Surface | Change |
+|---|---|---|
+| 5 | `aws/collector.py` + `aws/access_analyzer.py` + `github/collector.py` + `github/dependabot.py` + `sql/postgres/collector.py` | Each `SecurityFinding(...)` site now sets `compliance_status` explicitly (FAIL / PASS / WARNING / UNKNOWN per finding semantics); AWS Security Hub + GitHub Dependabot also populate `remediation` from source-system text. 5 new test files cover the new fields. |
+
+**Adversarial-probe taxonomy** (10 probes run against the 2 new surfaces; the 8 unchanged subsystems re-validated via the full 3292-test suite which retains every prior adversarial test):
+
+| # | Vector | OCSF mapping | SARIF emit |
+|---|---|---|---|
+| 1 | Minimal positive round-trip | ✅ id+title preserved | covered by `test_sarif.py` |
+| 2 | Bad input (malformed dict) | ✅ → typed `OCSFMappingError` | n/a |
+| 3 | Empty input | ✅ → typed `OCSFMappingError` | ✅ empty results + empty rules |
+| 4 | Tampered field types (deserialization) | ✅ Pydantic re-validates fail-safe | ✅ `json.dumps`-safe (no enum/datetime leak) |
+| 5 | Full-field round-trip incl. OLIR relationship + justification | ✅ exact preservation via unmapped block | n/a |
+| 6 | Encoding / special chars / unicode in IDs | n/a | ✅ ruleId survives JSON serialization |
+| 7 | Large-input DoS bound | n/a | ✅ 500 gaps → 500 results in 0.002s |
+| 8 | Missing-field safe defaults | ✅ best-effort native-OCSF path | ✅ missing `inventory_source` → `"evidentia-gap-analysis"` fallback |
+
+**Vectors not applicable**: concurrent/race (pure functions, no global state); network failure (no I/O in either surface); expired credential (no auth surface). **DAST skipped** per Step 4 G11 — no new API or UI surface; the only CLI surface change (`--format sarif`) is covered end-to-end by `tests/integration/test_cli/test_gap_cli.py`.
+
+**Test count + source-file trajectory**: 3292 tests pass / 17 skipped / 265 source files / mypy strict 265 of 265 (7 packages); ruff clean. **+42 tests** vs the v0.9.9 baseline (3250 / 261); +4 source files (`gap_analyzer/sarif.py`, `ocsf/__init__.py`, `ocsf/finding_mapping.py`, plus 1 incidental).
+
+**Step 4 disposition**: **PROCEED-CLEAN**. 0 CRITICAL / 0 HIGH / 0 MEDIUM / 1 LOW carried from Step 3 (**F-V100-L1** — trust-boundary note on `unmapped["evidentia"]`; not exploitable at v0.10.0 because the ingestion collector that would expose third-party OCSF input is deferred to v0.10.1; accepted with documented design follow-up).
+
+---
+
 ## Re-validation snapshot — 2026-05-21 (v0.9.9 SHIPPED)
 
 v0.9.9 SHIPPED at tag `v0.9.9`. A focused supply-chain hygiene +

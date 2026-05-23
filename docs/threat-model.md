@@ -2849,6 +2849,98 @@ deserialization sink.
 - `docs/capability-matrix.md` — v0.9.9 SHIPPED snapshot.
 - `docs/ROADMAP.md` — v0.9.9 SHIPPED transition.
 
+## v0.10.0 attack-surface delta — OCSF-aligned findings schema + SARIF CI-gate (PRE-TAG 2026-05-22)
+
+v0.10.0 opens the v0.10.x research-driven integration line. **Three
+new public surfaces**, all additive-only at the existing trust
+boundaries; one new optional supply-chain dependency. Net change:
+**0 new CRITICAL / HIGH / MEDIUM findings; 1 NEW LOW** (trust-
+boundary note documented for v0.10.1 ingestion-collector design).
+
+### New attack surface
+
+- **`evidentia_core.ocsf` mapping layer** (library; new) — pure
+  functions converting `SecurityFinding` to / from the OCSF
+  Compliance Finding class (`class_uid` 2003). Lazy-imports
+  `py-ocsf-models` from a new optional `[ocsf]` extra. Lossless
+  round-trip for Evidentia-produced findings via the OCSF-standard
+  `unmapped["evidentia"]` block. v0.10.0 only round-trips Evidentia
+  output — no third-party OCSF *ingestion* in this release (deferred
+  to v0.10.1).
+- **`evidentia gap analyze --format sarif`** + the
+  `gap_report_to_sarif` library function (CLI + library; new) —
+  SARIF 2.1.0 serializer. Pure transform; sha256 used for stable
+  `partialFingerprints` (de-dup keying, not crypto identity).
+  Output consumed by trusted CI / IDE / SARIF viewers.
+- **`SecurityFinding.compliance_status` + `remediation`** + the
+  `ComplianceStatus` enum (library; additive Optional fields with
+  safe defaults) — mirror OCSF `compliance.status` and
+  `remediation.desc`. Re-parsing pre-v0.10.0 serialized findings
+  works cleanly (Pydantic fills defaults).
+- **`[ocsf]` extra** (packaging; new optional dependency on
+  `py-ocsf-models>=0.9.0,<0.10.0`) — Apache-2.0, Prowler-team-
+  maintained, narrow pre-1.0 pin. Isolated to the mapping module;
+  the core `SecurityFinding` model never imports it, so the default
+  install stays slim and the core is insulated from OCSF schema
+  churn.
+
+### Modified attack surface
+
+- **3 pilot collectors** (AWS Config + Security Hub + IAM Access
+  Analyzer; GitHub branch protection + Dependabot; SQL/Postgres) —
+  each `SecurityFinding(...)` site now sets `compliance_status`
+  explicitly and populates `remediation` where the source system
+  supplies it. **No new collector — no new outbound network egress,
+  no new credential handling, no new auth surface.** The trust
+  boundary between Evidentia and the collected system is unchanged.
+
+### New LOW finding
+
+- **F-V100-L1 — trust-boundary note on `unmapped["evidentia"]`** —
+  `finding_from_ocsf` reconstructs the original `SecurityFinding`
+  from the `unmapped["evidentia"]` block when present, trusting it
+  as authoritative. v0.10.0 only round-trips Evidentia-produced
+  findings, so the trust boundary is internal — not exploitable.
+  The deferred v0.10.1 OCSF-ingestion collector will accept
+  third-party input; at that point the design must either verify
+  the OCSF doc's origin (signature / digest) before honoring the
+  block, or strip the block on untrusted input. Pydantic
+  re-validates the reconstructed model either way, so corrupted
+  blocks fail safely; the residual risk is identity / attribution
+  forging by a *valid* but malicious OCSF producer. Tracked in
+  `docs/v0.10.1-plan.md`. CWE-345 (Insufficient Verification of
+  Data Authenticity, proxy).
+
+### Supply-chain note
+
+`py-ocsf-models` is loaded only when `finding_to_ocsf` /
+`finding_from_ocsf` is called. Operators who do not enable the OCSF
+extra never load it. The lazy-import surface raises a typed
+`OCSFMappingError` with an actionable install hint when called
+without the extra installed.
+
+### Findings ledger summary
+
+| Severity | Count | Notes |
+|---|---|---|
+| CRITICAL / HIGH / MEDIUM | 0 | All new surfaces are pure transforms with no I/O / auth / crypto / secret handling. |
+| LOW | 1 NEW | F-V100-L1 — trust-boundary note; accepted for v0.10.0, design tracked for v0.10.1. |
+| INFO | 0 | — |
+
+**Zero unfixed CRITICAL / HIGH / MEDIUM at v0.10.0 pre-tag.**
+
+### Cross-references
+
+- `docs/security-review-v0.10.0.md` — formal review artifact.
+- `docs/v0.10.0-plan.md` — phase-by-phase scope.
+- `docs/v0.10.1-plan.md` — forward-looking next-release scope incl.
+  F-V100-L1 design follow-up.
+- `docs/ocsf-mapping.md` — NORMATIVE OCSF Compliance Finding field
+  map.
+- `docs/capability-matrix.md` — v0.10.0 PRE-TAG snapshot.
+- `docs/integration-survey.md` — competitive/integration research
+  that recommended the OCSF + SARIF moves.
+
 ---
 
 *First published v0.7.7 (2026-05). Origin: promoted from a
