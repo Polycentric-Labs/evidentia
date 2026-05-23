@@ -43,7 +43,7 @@ precedent.
 |---|---|---|
 | 3 — commit re-test + 1-hop closure | 4 unpushed commits (3 v0.10.2 phases + 1 positioning skip-by-reuse). 7 importer files inspected via 1-hop closure on `evidentia_mcp.server` + `collect_ocsf_url`. | PROCEED-CLEAN |
 | 4 — capability matrix (REUSE + delta) | v0.10.0 + v0.10.1 matrices reused for unchanged subsystems; v0.10.2 PRE-TAG section added with 7 new + 1 modified surface + 10-vector adversarial probe table. | PROCEED-CLEAN |
-| 6.C — final pre-tag pass | Pending (see §"16-row pre-push gate" below — filled at Step 6 entry). | TBD |
+| 6.C — final pre-tag pass | Full HEAD vs `v0.10.1` direct delta inspection; 16-row pre-push gate (filled below); 0 new findings; F-V101-L1 close-out live-verified by the v0.10.2 chore(release) bump (py-ocsf-models pin untouched, second consecutive bump). | PROCEED-CLEAN |
 
 ## Findings ledger
 
@@ -93,10 +93,52 @@ Direct delta inspection per the v0.10.0 / v0.10.1 precedent. Of the
 | 3 — >500 LOC delta | **YES** | 924 LOC total — dominated by Phase 2's 378 LOC of marketplace docs (pure markdown / JSON) + Phase 1's 357 LOC (4 MCP tools + 11 tests). Code-only LOC ~493. Direct inspection covered every code-bearing change. |
 | 4 — security subsystem touched | NO | No paths matching `security/ | network_guard | oscal/(signing|sigstore) | secret | audit`. Phase 3's SSRF hardening touches `collectors/ocsf/collector.py` which isn't in those paths but IS the F-V101-L1 close-out — reviewed thoroughly nonetheless. |
 
-## 16-row pre-push gate (Step 6.C — filled at Step 6 entry)
+## 16-row pre-push gate (Step 6.C)
 
-_Filled by Step 6 when the 16-row gate runs against the final
-release-prep state (post-version-bump, post-CHANGELOG-rename)._
+| # | Check | v0.10.2 outcome |
+|---|---|---|
+| 1 | Credential pattern sweep of `v0.10.1..HEAD` diff | PASS — 0 hits |
+| 2 | Claude-attribution sweep of diff content | PASS — 0 hits |
+| 3 | Commit-message attribution sweep | PASS — 0 hits |
+| 4 | `.gitignore` secret-store coverage | PASS (unchanged from v0.10.1) |
+| 5 | Tracked secret-shape files | PASS — only pre-existing `.env.example` placeholder |
+| 6 | Test gate | PASS — 3348 passed / 14 skipped (+16 vs v0.10.1) |
+| 7 | Type/lint gate | PASS — mypy strict 0/0 across 267 source files; ruff clean |
+| 8 | Build sanity | PASS — 7 wheels + 7 sdists at 0.10.2; `twine check` all PASSED |
+| 9 | Identity | PASS — `Allen Byrd <125306425+allenfbyrd@users.noreply.github.com>` |
+| 10 | Branch sanity | PASS — on `main`, 6 commits ahead of `origin/main` at chore(release) time |
+| 11 | Legacy long-lived secrets | PASS — only `CODECOV_TOKEN`; no `PYPI_API_TOKEN` |
+| 12 | Code-scanning alert delta since v0.10.1 | PASS — 0 new HIGH alerts |
+| 13 | Container CVE scan (Trivy) | WARN-SKIP — `trivy` not installed; v0.10.2 made no Dockerfile changes |
+| 14 | Vulnerability aging SLO (`osv-scanner --sbom`) | PASS — clean; 225 packages |
+| 15 | License / SCA enforcement | WARN-SKIP — `pip-licenses` not installed; **zero new third-party deps in v0.10.2** |
+| 16 | Secret-rotation cadence | PASS — `CODECOV_TOKEN` 6 days old (<90) |
+
+Rows 13/15 degrade gracefully on absent optional tooling — same
+disposition as the prior 26 PROCEED-CLEAN cycles. Zero blocking
+findings. F-V100-M1 close-out live-verified by THIS RELEASE's own
+version bump: 23 substitutions across 9 files, `py-ocsf-models`
+pin untouched (second consecutive bump exercising the v0.10.1
+Phase 5 fix).
+
+## Step 7 post-tag verification
+
+| Sub-step | Outcome |
+|---|---|
+| 7.1 `release.yml` run | ✅ **success** in 248s (~4:08 tag-to-publish); run id `26325963120` |
+| 7.3 PEP 740 attestation verify (7 wheels) | ✅ **7/7 OK** via `pypi-attestations verify pypi --repository https://github.com/Polycentric-Labs/evidentia "pypi:<wheel-name>"` |
+| 7.5 Cosign container verify | ✅ **VERIFIED** — SLSA Provenance v1; image digest `sha256:2533cdd80273b0b60e9a384b556114b05d538bc1242bf853c67a0eb1eb12bbeb` |
+| 7.5 Docker smoke | ✅ `docker run … version` → `Evidentia v0.10.2 / Python 3.14.5` |
+| 7.6 Published SBOM osv-scan | ✅ **CLEAN** — 183 packages |
+| 7.7 Scorecard | ✅ **success** for `2533d44` (v0.10.2 commit); 0 open HIGH code-scanning alerts |
+| 7.8 Fresh-venv install smoke | ✅ `python -m venv` + `pip install "evidentia==0.10.2" "evidentia-mcp==0.10.2"` → `Evidentia v0.10.2 / Python 3.14.2`. **Live api-stability §MCP tool contract verification**: `build_server()._tool_manager._tools` confirms all 4 new v0.10.2 tools (`gap_analyze_sarif`, `collect_ocsf`, `tprm_vendor_list`, `poam_list`) are registered in the fresh PyPI install — the §2 append-only contract is binding. |
+| 7.9 Release notes audit | ✅ CHANGELOG-style summary auto-extracted from `[0.10.2]` block; SBOM attached |
+| 7.10 Memory + audit-log update | this section; plus a fresh entry appended to `MEMORY.md` for v0.10.2 SHIPPED |
+
+**Verdict**: PROCEED-CLEAN confirmed post-tag — **27th consecutive**
+of the v0.7.x → v0.8.x → v0.9.x → v0.10.x line. v0.10.2 SHIPPED.
+All v0.10.x findings now closed; v0.10.x line at zero unfixed
+findings.
 
 ## Standards alignment
 
