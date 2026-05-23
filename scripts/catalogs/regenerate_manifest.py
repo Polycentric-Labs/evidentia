@@ -108,6 +108,28 @@ def scan_dir(subdir: str) -> list[dict]:
         entry["refresh"] = infer_refresh(entry["tier"], entry["category"])
         entries.append(entry)
 
+    # v0.10.4 P3 collision guard: assert no two entries in the same
+    # tier directory share a framework_id. The realistic failure mode
+    # is a contributor converting `foo.json` -> `foo.yaml` for the
+    # YAML-format affordance (v0.10.3+) without deleting the JSON
+    # — both would land here, both would resolve to the same
+    # framework_id at load time, and the resulting manifest would
+    # carry a duplicate row that confuses the loader's path-resolution
+    # precedence. Fail loud at manifest-regen time so the drift is
+    # caught before frameworks.yaml ships.
+    seen: dict[str, str] = {}
+    for entry in entries:
+        fid = entry["id"]
+        if fid in seen:
+            raise ValueError(
+                f"framework_id collision in {subdir}/: {fid!r} appears in "
+                f"both {seen[fid]} and {entry['path']}. "
+                f"Most likely cause: a JSON -> YAML conversion left the "
+                f"original JSON in place. Delete the older format file "
+                f"and re-run the script."
+            )
+        seen[fid] = entry["path"]
+
     return entries
 
 

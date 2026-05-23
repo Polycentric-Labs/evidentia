@@ -10,6 +10,15 @@ Supported catalog formats:
   variant, friendlier for hand-authoring (comments, multi-line
   strings, no escape headaches). The loader auto-detects JSON vs
   YAML by file extension via :func:`_load_catalog_data`.
+
+**IMPORTANT — choke-point invariant (v0.10.4+)**: ALL catalog file
+reads in this module MUST go through :func:`_load_catalog_data`.
+Never add a sibling ``json.loads`` / ``yaml.safe_load`` call
+elsewhere — the helper centralizes extension dispatch + non-mapping-
+root rejection, and breaking the invariant would let unsafe input
+patterns slip in past the choke point. New loaders (e.g., for new
+catalog categories) should accept a ``Path`` and call
+``_load_catalog_data`` first, then build their typed model.
 """
 
 from __future__ import annotations
@@ -54,6 +63,18 @@ def _load_catalog_data(catalog_path: Path) -> dict[str, Any]:
     elif suffix == ".json":
         data = json.loads(text)
     else:
+        # v0.10.4 P2 polish: when the suffix is empty (operator
+        # drag-and-drop or scripted file with no extension), the
+        # default {suffix!r} = '' is opaque. Name the case explicitly
+        # and tell the operator the fix — rename to .yaml / .yml /
+        # .json — so the error is self-resolving.
+        if suffix == "":
+            raise ValueError(
+                f"Catalog file {catalog_path.name} has no file "
+                f"extension; expected .json, .yaml, or .yml. Rename "
+                f"the file (e.g. mv {catalog_path.name} "
+                f"{catalog_path.name}.yaml) and retry."
+            )
         raise ValueError(
             f"Unsupported catalog file extension {suffix!r} for "
             f"{catalog_path.name}; expected .json, .yaml, or .yml"

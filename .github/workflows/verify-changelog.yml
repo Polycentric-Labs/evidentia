@@ -1,0 +1,108 @@
+# Pre-tag CHANGELOG-presence gate.
+#
+# v0.10.4 P5 — added 2026-05-23 as the workflow-layer mitigation for
+# the v0.10.3 ship incident. release.yml runs the same check via
+# `extract_changelog_block.py` AT TAG TIME, but by then PyPI publish
+# has already fired and is IRREVERSIBLE — the version slot is
+# consumed; recovery requires a move-tag re-fire to land the
+# GitHub Release + container.
+#
+# This workflow runs the same check WHENEVER the workspace
+# `pyproject.toml` version OR `CHANGELOG.md` changes on `main` or in
+# a PR targeting `main`. Failing here is cheap: re-author the
+# `[X.Y.Z]` CHANGELOG block in a follow-up commit; no tag pointer
+# drift in the audit trail.
+#
+# Skip rule: the check is a no-op when the version's CHANGELOG block
+# already exists (the common case for non-release commits); it only
+# fails when the bumped-version-in-pyproject.toml has no matching
+# `## [X.Y.Z]` heading in CHANGELOG.md (the exact failure mode of
+# v0.10.3 commit 487e0ac before the c0ed3ad CHANGELOG backfill).
+#
+# See docs/security-review-v0.10.3.md §"Step 6 ship incident + recovery"
+# for the canonical incident this gate prevents.
+
+name: verify-changelog
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "pyproject.toml"
+      - "CHANGELOG.md"
+      - "scripts/extract_changelog_block.py"
+      - ".github/workflows/verify-changelog.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "pyproject.toml"
+      - "CHANGELOG.md"
+      - "scripts/extract_changelog_block.py"
+      - ".github/workflows/verify-changelog.yml"
+  # Allow manual re-runs from the Actions UI for diagnostic purposes.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Extract workspace version from pyproject.toml
+        id: workspace-version
+        run: |
+          # Read the root meta-package [project] version. This is the
+          # version that `scripts/bump_version.py --to X.Y.Z` writes;
+          # it is the version that release.yml will publish on the
+          # next `git tag vX.Y.Z`.
+          version="$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')"
+          echo "Workspace version: $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Verify CHANGELOG block presence + size
+        run: |
+          version="${{ steps.workspace-version.outputs.version }}"
+          if ! python scripts/extract_changelog_block.py "$version" \
+              > extracted-body.md 2>/tmp/extract-err.txt; then
+            echo "::error::extract_changelog_block.py failed for [$version]"
+            echo "::group::stderr"
+            cat /tmp/extract-err.txt
+            echo "::endgroup::"
+            echo ""
+            echo "------------------------------------------------------------"
+            echo "WHAT TO DO: Add a '## [$version] - YYYY-MM-DD' block to"
+            echo "CHANGELOG.md (the workspace 'pyproject.toml [project]"
+            echo "version' field is currently $version). The block should"
+            echo "summarize what shipped at this version — release.yml will"
+            echo "use the same script to populate the GitHub Release body."
+            echo ""
+            echo "WHY THIS GATE EXISTS: the same script runs in release.yml"
+            echo "AFTER PyPI publish. PyPI publish is irreversible; failing"
+            echo "this check at tag-time forces a move-tag re-fire. See the"
+            echo "Evidentia v0.10.3 ship incident:"
+            echo "  docs/security-review-v0.10.3.md §Step 6 ship incident"
+            echo "------------------------------------------------------------"
+            exit 1
+          fi
+          body_size=$(wc -c < extracted-body.md)
+          echo "Extracted body: $body_size bytes"
+          # Same 1500-byte gate release.yml enforces — keep in sync.
+          if [ "$body_size" -lt 1500 ]; then
+            echo "::error::CHANGELOG block for [$version] is suspiciously small ($body_size bytes < 1500)"
+            echo "::group::extracted-body.md"
+            cat extracted-body.md
+            echo "::endgroup::"
+            echo ""
+            echo "Flesh out the [$version] block in CHANGELOG.md before tagging."
+            exit 1
+          fi
+          echo "::notice::CHANGELOG block for [$version] looks healthy ($body_size bytes)."
