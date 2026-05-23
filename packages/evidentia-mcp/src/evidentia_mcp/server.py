@@ -678,3 +678,153 @@ def _register_tools(
         # dataclasses.asdict for JSON-serializable output (mirrors
         # the conmon-health CLI verb's JSON serialization path).
         return dataclasses.asdict(report)
+
+    # v0.10.2 Phase 1 — MCP tool surface expansion. These four
+    # additions cover the highest-leverage gaps identified in the
+    # 2026-05-21 integration research pass: gap-as-CI-gate (SARIF)
+    # + third-party OCSF ingestion + TPRM read + POA&M read. All
+    # read-only; write-mode tools (poam_create, vendor mutation)
+    # deferred. See docs/v0.10.2-plan.md §2.
+
+    @server.tool()
+    def gap_analyze_sarif(
+        inventory_path: str,
+        frameworks: list[str],
+        show_efficiency: bool = True,
+    ) -> dict[str, Any]:
+        """Run gap analysis + return the report as a SARIF 2.1.0 log.
+
+        Same inputs and analysis pipeline as ``gap_analyze``, but the
+        return is a SARIF 2.1.0 dict instead of the native
+        :class:`GapAnalysisReport`. Use this when the AI client needs
+        to publish the result into a SARIF consumer (GitHub code
+        scanning, GitLab security dashboards, IDE SARIF viewers) or
+        gate a CI pipeline on it.
+
+        Args:
+            inventory_path: Filesystem path to a control inventory
+                file (JSON / YAML / CSV — the loader auto-detects).
+            frameworks: List of catalog IDs to assess against.
+            show_efficiency: Whether to compute cross-framework
+                efficiency metrics (consumed by the underlying gap
+                analyzer; not rendered in the SARIF output).
+
+        Returns:
+            A SARIF 2.1.0 log dict with one ``result`` per ``ControlGap``
+            and stable ``partialFingerprints`` so consumers can track
+            findings across runs. See
+            :func:`evidentia_core.gap_analyzer.sarif.gap_report_to_sarif`.
+
+        Raises:
+            FileNotFoundError: ``inventory_path`` does not exist.
+            ValueError: framework id is not recognised (or the path
+                resolves outside the bound ``--allow-root``).
+        """
+        from evidentia_core.gap_analyzer.sarif import gap_report_to_sarif
+
+        candidate = Path(inventory_path).expanduser()
+        if resolved_allow_root is not None:
+            path = validate_within(candidate, resolved_allow_root)
+        else:
+            path = candidate.resolve(strict=False)
+        if not path.exists():
+            raise FileNotFoundError(
+                f"Inventory file not found: {path}"
+            )
+        inventory = load_inventory(path)
+        report = GapAnalyzer().analyze(
+            inventory=inventory,
+            frameworks=frameworks,
+            show_efficiency=show_efficiency,
+        )
+        return gap_report_to_sarif(report)
+
+    @server.tool()
+    def collect_ocsf(input_path: str) -> list[dict[str, Any]]:
+        """Ingest OCSF JSON from a local file -> SecurityFinding list.
+
+        Wraps :func:`evidentia_collectors.ocsf.collect_ocsf_file`
+        (v0.10.1). Supports both OCSF Compliance Finding
+        (``class_uid`` 2003 — Evidentia's own output) and Detection
+        Finding (``class_uid`` 2004 — Prowler, AWS Security Hub).
+        Trust-boundary aware: third-party input is NEVER allowed to
+        control Evidentia-native fields via the OCSF ``unmapped``
+        block (``trust_unmapped=False`` per the v0.10.1 collector).
+
+        File mode only — the MCP server intentionally does NOT expose
+        the URL ingest mode (`evidentia_collectors.ocsf.collect_ocsf_url`).
+        URL ingest carries an SSRF surface (F-V101-L1) that operators
+        can accept at the CLI but the MCP server hardens out by
+        construction.
+
+        Args:
+            input_path: Filesystem path to a JSON file containing a
+                single OCSF finding object OR a list of them.
+
+        Returns:
+            ``list[dict]`` of converted ``SecurityFinding`` records
+            (each ``model_dump(mode="json")``).
+
+        Raises:
+            FileNotFoundError: ``input_path`` does not exist.
+            ValueError: file is not valid JSON, contains an
+                unsupported ``class_uid``, or resolves outside the
+                bound ``--allow-root`` directory.
+        """
+        from evidentia_collectors.ocsf import collect_ocsf_file
+
+        candidate = Path(input_path).expanduser()
+        if resolved_allow_root is not None:
+            path = validate_within(candidate, resolved_allow_root)
+        else:
+            path = candidate.resolve(strict=False)
+        if not path.exists():
+            raise FileNotFoundError(
+                f"OCSF input file not found: {path}"
+            )
+        findings = collect_ocsf_file(path)
+        return [f.model_dump(mode="json") for f in findings]
+
+    @server.tool()
+    def tprm_vendor_list() -> list[dict[str, Any]]:
+        """List every vendor in the local TPRM store.
+
+        Reads from the user-data vendor store directory (override via
+        ``EVIDENTIA_VENDOR_STORE_DIR`` env var). Returns the canonical
+        ordering: criticality tier (critical → high → medium → low),
+        then name case-insensitive.
+
+        Read-only — vendor mutation tools are deferred to a future
+        release per docs/v0.10.2-plan.md §2.
+
+        Returns:
+            ``list[dict]`` of ``Vendor`` records as JSON-serializable
+            dicts. Empty list if the store directory doesn't exist
+            or contains no records.
+        """
+        from evidentia_core.vendor_store import list_vendors
+
+        return [v.model_dump(mode="json") for v in list_vendors()]
+
+    @server.tool()
+    def poam_list() -> list[dict[str, Any]]:
+        """List every POA&M in the local store.
+
+        Reads from the user-data POA&M store directory (override via
+        ``EVIDENTIA_POAM_STORE_DIR`` env var). Returns the canonical
+        ordering: gap severity (critical → high → medium → low →
+        info), then has-open-milestones flag, then earliest-open-
+        milestone target date, then control id.
+
+        Read-only — POA&M creation + milestone transitions are
+        deferred to a future release per docs/v0.10.2-plan.md §2.
+
+        Returns:
+            ``list[dict]`` of ``ControlGap`` records (POA&Ms are
+            stored as gaps with milestone history) as JSON-
+            serializable dicts. Empty list if the store directory
+            doesn't exist or contains no records.
+        """
+        from evidentia_core.poam_store import list_poams
+
+        return [p.model_dump(mode="json") for p in list_poams()]

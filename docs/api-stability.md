@@ -450,6 +450,10 @@ Frozen tool surface (as of v0.9.7):
 | `conmon_next_due` | v0.9.6 | Compute next-due date |
 | `conmon_check_state` | v0.9.6 | Read state file → attention buckets |
 | `conmon_health` | v0.9.6 | Health report wrapper |
+| `gap_analyze_sarif` | v0.10.2 | Gap analysis + SARIF 2.1.0 output (CI-gate use) |
+| `collect_ocsf` | v0.10.2 | OCSF ingestion (file mode only — URL ingest deliberately omitted to harden out the F-V101-L1 SSRF surface) |
+| `tprm_vendor_list` | v0.10.2 | List vendors from the local TPRM store (read-only) |
+| `poam_list` | v0.10.2 | List POA&Ms from the local store (read-only) |
 
 Tool *parameter names* are frozen. Tool *descriptions* may be
 refined for clarity without constituting a breaking change.
@@ -490,3 +494,4 @@ cycle.
 | **NORMATIVE** | **2026-05-19** | **Promoted from DRAFT during v0.9.7 P2.1. v0.9.4 – v0.9.6 surfaces backfilled: evidence WORM store, AI-gov federal fields, FIPS 199 + OMB + SCR models, CONMON MCP tools, OSCAL_SCHEMA_VERSION constant, RBAC primitives, evidence_store env vars. MCP tool contract section + env-var public-contract section added. Pre-v1.0 binding semantics in force.** |
 | **NORMATIVE** | **2026-05-22** | **v0.10.0: `models/finding.py` joins the frozen-models table (`SecurityFinding`, `FindingStatus`, `ComplianceStatus`) following its additive OCSF-alignment evolution. New `evidentia_core.ocsf` library entry point (`finding_to_ocsf` / `finding_from_ocsf` / `OCSFMappingError`) added to §5. SARIF is a new `evidentia gap` output format — non-breaking per §3. See [ocsf-mapping.md](ocsf-mapping.md).** |
 | **NORMATIVE** | **2026-05-23** | **v0.10.1: `finding_from_ocsf` gains an additive `trust_unmapped: bool = True` keyword-only parameter (closes F-V100-L1 from the v0.10.0 review). Non-breaking under §1 — additive optional parameter with default. See [ocsf-mapping.md §5.1](ocsf-mapping.md).** |
+| **NORMATIVE** | **2026-05-23** | **v0.10.2: 4 new MCP tools added (`gap_analyze_sarif`, `collect_ocsf`, `tprm_vendor_list`, `poam_list`) per the MCP-as-backend theme. Append-only per the §MCP tool contract — non-breaking for existing AI clients; the 8 prior tools stay frozen.** |
