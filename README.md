@@ -763,54 +763,59 @@ moat — DFAH + PRT + MCP + plugin contracts) and
   `--offline` (air-gap mode), `--json-logs` (ECS 8.11 structured output
   for SIEM ingestion), `--config <path>`, `--verbose`, `--quiet`.
 
-- **965 tests passing + 8 environmental skips** (Windows-local; full
-  suite of 973 passes on Linux CI per the v0.7.0 baseline) covering models, catalog loading (with a
-  parametric smoke test per bundled framework), recursive enhancement
-  flattener for NIST Rev 5 3-level IDs, tier invariants, OSCAL profile
-  resolution, user-import directory precedence, crosswalk bidirectionality,
-  multi-format inventory parsing, severity calculation, all four report
-  exporters, Jira integration push/sync, AWS Config + Security Hub +
-  IAM Access Analyzer + GitHub branch protection + CODEOWNERS +
-  Dependabot evidence collection, FastAPI `/api/*` endpoints, air-gap
-  mode, OSCAL AR digest + GPG + Sigstore round-trip verification, and
-  3 trestle conformance tests against the NIST OSCAL reference impl.
+- **3292 tests passing + 17 environmental skips** (verified locally on
+  Windows; full suite runs on Linux CI per the v0.9.9 baseline) covering
+  models, catalog loading (with a parametric smoke test per bundled
+  framework), recursive enhancement flattener for NIST Rev 5 3-level
+  IDs, tier invariants, OSCAL profile resolution, user-import directory
+  precedence, crosswalk bidirectionality, multi-format inventory
+  parsing, severity calculation, all five report exporters (incl. OSCAL
+  Assessment Results + SARIF 2.1.0), Jira + ServiceNow + Tableau +
+  Power BI push/sync, the full evidence-collector surface (AWS Config
+  + Security Hub + IAM Access Analyzer + GitHub branch protection +
+  CODEOWNERS + Dependabot + Okta + Vanta + Drata + BitSight +
+  SecurityScorecard + Databricks + Snowflake + SQL family), FastAPI
+  `/api/*` endpoints, air-gap mode, OSCAL AR digest + GPG + Sigstore
+  round-trip verification, POA&M state-machine transitions, CONMON
+  cadence enforcement (incl. the CONMON daemon), DFAH faithfulness
+  scoring (Jaccard + sentence-transformers semantic + LLM atomic-claim
+  extraction), multi-tenant RBAC, WORM evidence-store invariants, MCP
+  CIMD scope gating, OCSF mapping, the federal-SI walk-through
+  scenarios, Hypothesis property tests, and 3 trestle conformance
+  tests against the NIST OSCAL reference impl.
 
-### What's not yet included (as of v0.7.2)
+### What's not yet included (as of v0.9.9)
 
-Setting expectations matters. v0.7.0 shipped a substantial enterprise
-hardening pass, v0.7.1 closed the AI features carry-over (typed
-`EvidentiaAIError` hierarchy, `GenerationContext` metadata, bounded
-retry, ECS structured logging across `risk_statements/` + `explain/`),
-and v0.7.2 added supply-chain visibility via OpenSSF Scorecard +
-contributor-experience IDE config + a catalog-drift detector fix.
-See [`CHANGELOG.md`](CHANGELOG.md) for the full v0.7.0 + v0.7.1 +
-v0.7.2 deltas. The following are still on the roadmap but not yet
-shipped:
+Setting expectations matters. v0.7.x → v0.9.x has been a steady
+cadence of enterprise hardening (SLSA L3 build provenance + cosign
+keyless signing + PEP 740 attestations + OpenSSF Scorecard / OSV
+gates + Silver-tier badge), AI features (DFAH faithfulness scoring,
+AI governance, MCP CIMD scope enforcement), federal compliance
+(POA&M state machine + CONMON cadences + CONMON daemon + WORM
+evidence store + multi-tenant RBAC + OSCAL 1.2.1), and
+integration-surface expansion (Okta, Vanta, Drata, ServiceNow,
+BitSight, SecurityScorecard, Databricks, Snowflake, SQL-family,
+Tableau, Power BI). v0.10.0 added the OCSF-aligned findings schema
++ SARIF 2.1.0 CI-gate export. See [`CHANGELOG.md`](CHANGELOG.md)
+and [`docs/ROADMAP.md`](docs/ROADMAP.md) for the full per-release
+history. The following are still on the roadmap but not yet shipped:
 
-- **Composite action hardening** (v0.7.3) — SHA-pin third-party
-  actions in `.github/actions/gap-analysis/action.yml`, composite
-  action E2E smoke test, SLSA L3 build provenance via
-  `actions/attest-build-provenance@v2`. See
-  [`docs/v0.7.3-plan.md`](docs/v0.7.3-plan.md) for the full plan;
-  2-4 week ship target.
-- **LLM-based evidence validation** (Phase 3 / v0.8+) — "is this
-  screenshot actually proof of MFA?" scoring, freshness detection,
-  multi-modal validation via Document Screenshot Embedding (DSE).
-  Currently academic-only; tracked in
+- **Multi-modal LLM evidence validation** (Phase 3 / v1.x) — "is
+  this screenshot actually proof of MFA?" scoring, freshness
+  detection, multi-modal validation via Document Screenshot
+  Embedding (DSE). DFAH textual-claim faithfulness scoring shipped
+  in v0.8.2–v0.8.6 (Jaccard + sentence-transformers semantic + LLM
+  atomic-claim extraction + Cohen's Kappa rater agreement); DSE
+  itself remains academic-only and is tracked in
   [`docs/positioning-and-value.md`](docs/positioning-and-value.md) §13.
-- **Additional collectors / integrations** — Okta (MFA, inactive users,
-  privileged-account counts), ServiceNow (`sn_compliance_task` push),
-  Vanta + Drata (push test results via their public APIs), Azure + GCP
-  evidence collectors. Carried forward to v0.7.3 as
-  optional/community-driven items per
-  [`docs/v0.7.3-plan.md`](docs/v0.7.3-plan.md) §"P2 — Optional /
-  community-driven".
-- **Multi-user auth / RBAC** — the web UI is localhost-only today;
-  network-deployment token auth is queued for v0.7.x+.
+- **Additional cloud collectors** — Azure + GCP evidence collectors.
+  Carried forward as optional / community-driven items.
 - **Authoritative control text for copyrighted frameworks** (ISO
-  27001/27002, SOC 2 TSC, PCI DSS, HITRUST CSF, etc.) — ship as
+  27001/27002, SOC 2 TSC, PCI DSS, HITRUST CSF, etc.) — ships as
   **Tier-C stubs** with public clause numbering only. Use
-  `evidentia catalog import` to load your own licensed copy.
+  `evidentia catalog import` to load your own licensed copy. (Design
+  decision, not a roadmap item — the project will never bundle
+  copyrighted text.)
 
 ---
 
