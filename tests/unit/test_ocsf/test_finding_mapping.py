@@ -131,3 +131,78 @@ def test_from_ocsf_ingests_third_party_compliance_finding() -> None:
 def test_from_ocsf_rejects_invalid_input() -> None:
     with pytest.raises(OCSFMappingError):
         finding_from_ocsf({"not": "an ocsf compliance finding"})
+
+
+# v0.10.1 — trust_unmapped parameter (closes F-V100-L1)
+
+
+def test_from_ocsf_default_trust_uses_unmapped_block() -> None:
+    """Default `trust_unmapped=True` honors the block — lossless round-trip."""
+    original = _rich_finding()
+    ocsf = finding_to_ocsf(original)
+    # The block is present (finding_to_ocsf always emits it for round-trip).
+    assert ocsf["unmapped"]["evidentia"]
+    # Default path uses it -> exact equality.
+    assert finding_from_ocsf(ocsf) == original
+
+
+def test_from_ocsf_trust_unmapped_false_ignores_block() -> None:
+    """Even when the block is present, `trust_unmapped=False` bypasses it
+    and reconstructs from native OCSF fields only. This is the v0.10.1
+    OCSF-ingestion-collector call path (where the OCSF doc's origin is
+    not cryptographically verified)."""
+    original = _rich_finding()
+    ocsf = finding_to_ocsf(original)
+    restored = finding_from_ocsf(ocsf, trust_unmapped=False)
+    # The native-fields path keeps the visible OCSF state (title, severity,
+    # compliance_status, control mappings) but cannot recover Evidentia-
+    # native fields that have no OCSF home (source_finding_id,
+    # CollectionContext, OLIR relationship + justification).
+    assert restored.title == original.title
+    assert restored.severity == original.severity
+    assert restored.compliance_status == original.compliance_status
+    # OLIR relationship + justification rode in the unmapped block;
+    # bypassing it falls back to the RELATED_TO default with an
+    # OCSF-import justification.
+    assert restored.control_mappings[0].relationship == OLIRRelationship.RELATED_TO
+    assert "Ingested from OCSF" in restored.control_mappings[0].justification
+
+
+def test_from_ocsf_trust_unmapped_false_blocks_unmapped_forgery() -> None:
+    """A malicious OCSF producer could craft an `unmapped["evidentia"]`
+    block to control the reconstructed SecurityFinding (identity /
+    attribution forgery — CWE-345). With `trust_unmapped=False`, the
+    forged block is ignored entirely — the native OCSF fields are the
+    only source of truth. This is the close-out test for F-V100-L1."""
+    forged = {
+        "activity_id": 1,
+        "category_uid": 2,
+        "class_uid": 2003,
+        "type_uid": 200301,
+        "time": 1_700_000_000_000,
+        "severity_id": 2,  # native says LOW
+        "metadata": {
+            "version": "1.5.0",
+            "product": {"name": "MaliciousScanner", "vendor_name": "Attacker"},
+        },
+        "finding_info": {"title": "Native title", "uid": "native-uid"},
+        "compliance": {"status_id": 3, "standards": ["cis-aws"]},
+        # The forged block tries to impersonate an Evidentia finding
+        # with elevated severity + a different source_system + a
+        # different id. With trust_unmapped=False it MUST be ignored.
+        "unmapped": {
+            "evidentia": {
+                "id": "ATTACKER-CONTROLLED-ID",
+                "title": "Forged Evidentia title",
+                "description": "d",
+                "severity": "critical",
+                "source_system": "aws-config",  # trusted source impersonation
+            }
+        },
+    }
+    restored = finding_from_ocsf(forged, trust_unmapped=False)
+    # The native OCSF fields win; the forged block is dropped.
+    assert restored.id != "ATTACKER-CONTROLLED-ID"
+    assert restored.title == "Native title"
+    assert restored.severity == Severity.LOW
+    assert restored.source_system == "MaliciousScanner"

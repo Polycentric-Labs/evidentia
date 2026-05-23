@@ -235,16 +235,54 @@ def finding_to_ocsf(finding: SecurityFinding) -> dict[str, Any]:
     return result
 
 
-def finding_from_ocsf(ocsf_finding: dict[str, Any]) -> SecurityFinding:
+def finding_from_ocsf(
+    ocsf_finding: dict[str, Any],
+    *,
+    trust_unmapped: bool = True,
+) -> SecurityFinding:
     """Convert an OCSF Compliance Finding ``dict`` back to a SecurityFinding.
 
-    If the input carries an ``unmapped["evidentia"]`` block (i.e. it was
-    produced by :func:`finding_to_ocsf`), the original
-    :class:`SecurityFinding` is reconstructed exactly. Otherwise the
-    finding is rebuilt best-effort from the native OCSF fields.
+    Parameters
+    ----------
+    ocsf_finding:
+        The OCSF Compliance Finding ``dict`` to convert. Re-validated via
+        ``py_ocsf_models.ComplianceFinding.model_validate`` before any
+        field is read; malformed input raises :class:`OCSFMappingError`.
+    trust_unmapped:
+        Whether to honor an ``unmapped["evidentia"]`` block as
+        authoritative. Default ``True`` — for Evidentia-internal call
+        paths where the OCSF doc was produced by :func:`finding_to_ocsf`,
+        this gives a *lossless* round-trip (the block carries the
+        complete original finding, including OLIR control mappings and
+        ``CollectionContext`` provenance that have no native OCSF home).
 
-    Raises :class:`OCSFMappingError` if the ``ocsf`` extra is absent or
-    the input does not validate as an OCSF Compliance Finding.
+        **Set to ``False`` when ingesting third-party OCSF input whose
+        origin you do not cryptographically verify.** The block is then
+        ignored entirely and the finding is rebuilt best-effort from
+        native OCSF fields only. A *valid but malicious* OCSF producer
+        could otherwise inject a forged block to control the
+        reconstructed ``SecurityFinding`` — Pydantic still re-validates
+        the model so corrupted blocks fail safely, but the residual
+        identity / attribution-forgery risk is real.
+
+        Added v0.10.1 to close pre-release-review finding **F-V100-L1**
+        (CWE-345 Insufficient Verification of Data Authenticity, proxy).
+        The OCSF *ingestion* collector — shipped in v0.10.1 alongside
+        this parameter — passes ``trust_unmapped=False``; all internal
+        round-trip call sites stay on the default.
+
+    Returns
+    -------
+    SecurityFinding
+        Reconstructed from the unmapped block when present and
+        ``trust_unmapped=True``; otherwise rebuilt from native OCSF
+        fields.
+
+    Raises
+    ------
+    OCSFMappingError
+        If the ``ocsf`` extra is absent or the input does not validate
+        as an OCSF Compliance Finding.
     """
     ocsf = _load_ocsf()
 
@@ -255,9 +293,10 @@ def finding_from_ocsf(ocsf_finding: dict[str, Any]) -> SecurityFinding:
             f"input does not validate as an OCSF Compliance Finding: {exc}"
         ) from exc
 
-    unmapped = compliance_finding.unmapped
-    if isinstance(unmapped, dict) and isinstance(unmapped.get("evidentia"), dict):
-        return SecurityFinding.model_validate(unmapped["evidentia"])
+    if trust_unmapped:
+        unmapped = compliance_finding.unmapped
+        if isinstance(unmapped, dict) and isinstance(unmapped.get("evidentia"), dict):
+            return SecurityFinding.model_validate(unmapped["evidentia"])
 
     return _security_finding_from_native_ocsf(compliance_finding)
 

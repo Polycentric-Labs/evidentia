@@ -146,23 +146,42 @@ losslessly via the `unmapped` block.
 
 ## 5. Field mapping — OCSF → `SecurityFinding`
 
-`finding_from_ocsf(ocsf_dict)` is the inverse. It first validates the
-input as an OCSF Compliance Finding (`OCSFMappingError` on failure),
-then takes one of two paths:
+`finding_from_ocsf(ocsf_dict, *, trust_unmapped=True)` is the inverse.
+It first validates the input as an OCSF Compliance Finding
+(`OCSFMappingError` on failure), then takes one of two paths:
 
-1. **Evidentia-produced input** — the `dict` carries an
-   `unmapped["evidentia"]` block. The original `SecurityFinding` is
-   reconstructed *exactly* from it (see §6).
-2. **Third-party input** — no `unmapped["evidentia"]` block. The
-   finding is rebuilt **best-effort** from native OCSF fields:
-   `finding_info` → id/title/description, `severity_id` → severity,
-   `compliance.status_id` → compliance_status, `compliance.standards` +
-   `compliance.requirements` → control mappings (with an
-   `OLIRRelationship.RELATED_TO` default and a justification noting the
-   OCSF provenance), `remediation.desc` → remediation.
+1. **Evidentia-produced input** (`trust_unmapped=True`, default) — the
+   `dict` carries an `unmapped["evidentia"]` block; the original
+   `SecurityFinding` is reconstructed *exactly* from it (see §6).
+2. **Third-party input** — no `unmapped["evidentia"]` block **OR**
+   `trust_unmapped=False`. The finding is rebuilt **best-effort** from
+   native OCSF fields: `finding_info` → id/title/description,
+   `severity_id` → severity, `compliance.status_id` → compliance_status,
+   `compliance.standards` + `compliance.requirements` → control mappings
+   (with an `OLIRRelationship.RELATED_TO` default and a justification
+   noting the OCSF provenance), `remediation.desc` → remediation.
 
-The v0.10.1 OCSF-ingestion collector refines path 2, including
-Detection Finding support.
+### 5.1 `trust_unmapped=False` — the third-party ingestion path (v0.10.1)
+
+A valid-but-malicious OCSF producer could craft an
+`unmapped["evidentia"]` block to control the reconstructed
+`SecurityFinding` — id / title / source_system / control_mappings all
+attacker-chosen. Pydantic still re-validates the model so corrupted
+blocks fail safely, but the residual identity / attribution-forgery
+risk is real (CWE-345 *Insufficient Verification of Data
+Authenticity*, proxy).
+
+The v0.10.1 OCSF-ingestion collector passes `trust_unmapped=False`
+when reading third-party input whose origin it does not verify; the
+block is then ignored entirely and the finding is rebuilt from
+native OCSF fields only. Operators integrating
+`finding_from_ocsf` into their own ingestion pipelines should adopt
+the same pattern unless they verify the OCSF doc's origin
+cryptographically (Sigstore bundle, signed envelope, trusted SaaS
+source allowlist).
+
+This parameter closes pre-release-review finding **F-V100-L1**
+identified during the v0.10.0 ship.
 
 ## 6. Round-trip fidelity
 
