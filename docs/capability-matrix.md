@@ -13,6 +13,60 @@
 
 ---
 
+## Re-validation snapshot — 2026-05-23 (v0.10.3 PRE-TAG)
+
+v0.10.3 lowers the contributor barrier for new framework catalogs
+(YAML alongside JSON) and adds a NORMATIVE positioning piece
+(OpenSSF Gemara reference-model mapping). Per v4 §4.5 patch-release
+allowance, v0.10.0 + v0.10.1 + v0.10.2 matrices REUSED for all
+unchanged subsystems; the section below covers only the new +
+modified surfaces.
+
+**New public surfaces**:
+
+| # | Surface | Layer | Notes |
+|---|---|---|---|
+| 1 | `evidentia_core.catalogs.loader._load_catalog_data(catalog_path)` | Library (private; internal helper) | Closed-allowlist extension dispatch (`.json` → `json.loads`; `.yaml` / `.yml` → `yaml.safe_load`); rejects unsupported extensions + non-mapping YAML roots with clear `ValueError`. All catalog loaders now flow through this choke point. |
+| 2 | YAML-format catalog files | Data | The bundled `data/<tier>/` directories now accept `.yaml` / `.yml` alongside `.json`. The `regenerate_manifest.py` scanner globs all three; `data/frameworks.yaml` `path` field carries the actual extension so the loader auto-dispatches. |
+| 3 | `iso-27017-2015.yaml` (proof) | Data | First YAML catalog in the bundled set — 7-control Tier-C ISO/IEC 27017:2015 cloud-services stub; converted from the equivalent JSON. Both formats produce identical `ControlCatalog` objects (round-trip equivalence test). |
+| 4 | `docs/contributing-a-catalog.md` | Docs | The 3-file PR recipe + YAML-vs-JSON comparison + required schema + tier conventions. Lowers the barrier for new framework contributions. |
+| 5 | `docs/gemara-mapping.md` | Docs (NORMATIVE positioning) | 13-row mapping table — every OpenSSF Gemara reference-model component (Catalog: Control/Capability/Principle/Risk/Threat/Vector/Guidance/Lexicon + Log: Audit/Enforcement/Evaluation + Document: Mapping/Policy + Entity + Collection) → the Evidentia surface that satisfies it. "Mapping, not conformance claim" framing. Cites Gemara v1.1.0 (2026-05-12), CUE schemas, Go SDK at gemaraproj/go-gemara, adopters FINOS CCC + OpenSSF Security Baseline. |
+
+**Modified surfaces** (additive only): `load_oscal_catalog`,
+`load_evidentia_catalog`, `load_non_control_catalog`, `load_catalog`,
+`load_any_catalog` all refactored to call `_load_catalog_data` — no
+public-API change. `scripts/catalogs/regenerate_manifest.py` extended
+to scan YAML extensions; same maintenance-script role.
+
+**Adversarial-probe taxonomy** (focused on the new loader helper;
+unchanged subsystems re-validated via the full 3355-test suite):
+
+| # | Vector | YAML loader |
+|---|---|---|
+| 1 | Minimal positive | ✅ `.json` / `.yaml` / `.yml` all dispatch + parse |
+| 2 | Bad input — unsupported extension (`.toml`) | ✅ Rejected with clear `ValueError("Unsupported catalog file extension")` |
+| 3 | Bad input — non-mapping YAML root (list) | ✅ Rejected with clear `ValueError("top-level must be a mapping")` |
+| 4 | Bad input — malformed YAML | ✅ Propagated as `yaml.YAMLError` (caught + WARN-logged in regenerate_manifest scanner) |
+| 5 | Round-trip equivalence (JSON ↔ YAML same content) | ✅ Asserted via `test_yaml_and_json_load_to_identical_catalogs` |
+| 6 | Bundled YAML loads via registry | ✅ `iso-27017-2015` end-to-end via `FrameworkRegistry.get_catalog` |
+| 7 | Trust boundary (`yaml.load` deserialization RCE) | ✅ N/A — `yaml.safe_load` only constructs basic Python types |
+| 8 | Case confusion (`.YAML`, `.YML`, `.JSON`) | ✅ Normalized via `suffix.lower()` |
+
+**Vectors not applicable**: concurrent / race (pure-read loader);
+SSRF (no URL input); DAST (no new REST/UI surface).
+
+**Test count + source-file trajectory**: 3355 tests pass / 14
+skipped / 267 source files / mypy strict 267 of 267 (7 packages);
+ruff clean. **+7 tests** vs the v0.10.2 baseline (3348 / 14).
+
+**Step 4 disposition**: **PROCEED-CLEAN**. 0 CRITICAL / 0 HIGH /
+0 MEDIUM / 0 NEW LOW. Code-review surfaced 4 polish-class
+suggestions (docstring choke-point note, error-message polish,
+manifest framework_id collision guard, multi-line round-trip test
+coverage) — all deferred to v0.10.4 polish batch; none block ship.
+
+---
+
 ## Re-validation snapshot — 2026-05-23 (v0.10.2 PRE-TAG)
 
 v0.10.2 consolidates the v0.10.x line further — 4 new MCP tools that
