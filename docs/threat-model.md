@@ -3036,6 +3036,84 @@ findings CLOSED**.
   Detection Finding mapping.
 - `docs/capability-matrix.md` — v0.10.1 PRE-TAG snapshot.
 
+## v0.10.2 attack-surface delta — MCP-as-backend + close F-V101-L1 (PRE-TAG 2026-05-23)
+
+v0.10.2 expands the MCP tool surface (8 → 12) so AI clients can
+drive the v0.10.x integration line end-to-end without leaving the
+chat, stages the GRC Engineering Club marketplace plugin (not yet
+upstream-submitted), and closes the v0.10.1 F-V101-L1 SSRF surface.
+Net change: **0 new CRITICAL / HIGH / MEDIUM / LOW findings; 1
+prior LOW (F-V101-L1) CLOSED**.
+
+### New attack surface
+
+- **4 new MCP tools** in `evidentia_mcp.server`:
+  - `gap_analyze_sarif` — wraps `gap_report_to_sarif`; SARIF output
+    consumed by trusted CI surfaces (GitHub code scanning, etc.).
+  - `collect_ocsf` — **file mode only**. The URL ingest mode is
+    intentionally NOT exposed at the MCP layer, hardening out the
+    F-V101-L1 SSRF surface by construction at the AI-client
+    boundary.
+  - `tprm_vendor_list` + `poam_list` — read-only enumeration of
+    local TPRM / POA&M stores. Reads from
+    `EVIDENTIA_VENDOR_STORE_DIR` / `EVIDENTIA_POAM_STORE_DIR`
+    respectively.
+  - All 4 tools inherit the v0.8.2 `--allow-root` path-validation
+    closure when set (path-traversal-safe). Default behavior
+    unchanged from the existing 8 tools.
+
+### Surface-closing change (F-V101-L1)
+
+- **F-V101-L1 (LOW, SSRF) CLOSED**. `evidentia collect ocsf` URL
+  mode gains a `--block-private-ips` flag (default True) +
+  `collect_ocsf_url(..., block_private_ips=True)` library kwarg.
+  Pre-resolves the URL's host via `socket.getaddrinfo` and rejects
+  RFC1918 (10/8, 172.16/12, 192.168/16), link-local (169.254/16 —
+  covers AWS / GCP / Azure metadata endpoints), loopback (127/8 +
+  ::1), multicast, reserved, and unspecified ranges before any
+  socket opens. Resolves ALL addresses (v4 + v6) and rejects if
+  ANY is non-public (prevents the multi-address "first is public,
+  second is private" trick). Operators with trusted internal
+  endpoints flip to `--allow-private-ips` explicitly.
+
+### Staged-not-published attack surface
+
+- **GRC Engineering Club marketplace plugin**
+  (`marketplace/grc-engineering-suite/plugins/evidentia/`) — staged
+  in our repo. **Not yet submitted upstream** (separate publishing
+  action). When submitted + merged, the attack surface = the same
+  MCP server (`evidentia mcp serve`) operators already register —
+  no new attack surface introduced by the marketplace entry itself;
+  the manifest just points at the MCP server.
+
+### Known limitation (NOT a finding)
+
+- **DNS rebinding** on the `--block-private-ips` check is out of
+  scope of v0.10.2's threat model. The check is single-resolve at
+  pre-fetch time; the actual `urlopen()` re-resolves. An attacker
+  controlling both the DNS server AND the URL the operator types
+  could in principle rebind between checks. Mitigation would
+  require IP-pinning + a Host header; deferred to v0.11.0+ if the
+  threat model expands.
+
+### Findings ledger summary
+
+| Severity | Count | Notes |
+|---|---|---|
+| CRITICAL / HIGH / MEDIUM / LOW | 0 NEW | F-V101-L1 CLOSED inline. |
+| INFO | 0 | — |
+
+**Zero unfixed CRITICAL / HIGH / MEDIUM / LOW at v0.10.2 pre-tag.**
+
+### Cross-references
+
+- `docs/security-review-v0.10.2.md` — formal review artifact.
+- `docs/v0.10.2-plan.md` — phase-by-phase scope.
+- `docs/v0.10.2-marketplace.md` — marketplace plugin staging + the
+  upstream PR plan.
+- `docs/v0.10.3-plan.md` — forward-looking next-release scope.
+- `docs/capability-matrix.md` — v0.10.2 PRE-TAG snapshot.
+
 ---
 
 *First published v0.7.7 (2026-05). Origin: promoted from a

@@ -13,6 +13,74 @@
 
 ---
 
+## Re-validation snapshot — 2026-05-23 (v0.10.2 PRE-TAG)
+
+v0.10.2 consolidates the v0.10.x line further — 4 new MCP tools that
+expose the v0.10.0 + v0.10.1 OCSF / SARIF / TPRM / POA&M
+functionality to AI clients (Claude Desktop, Claude Code) end-to-end;
+a GRC Engineering Club marketplace plugin staged in-repo (NOT yet
+upstream-submitted — separate approval); and a `--block-private-ips`
+flag on `evidentia collect ocsf` URL mode closing the v0.10.1
+F-V101-L1 SSRF surface. Per v4 §4.5 patch-release allowance, v0.10.0
++ v0.10.1 matrices REUSED for unchanged subsystems; the section below
+covers only the new + modified surfaces.
+
+**New public surfaces**:
+
+| # | Surface | Layer | Notes |
+|---|---|---|---|
+| 1 | `gap_analyze_sarif(inventory_path, frameworks, show_efficiency)` MCP tool | MCP | Wraps v0.10.0's `gap_report_to_sarif` so AI clients emit SARIF 2.1.0 for a CI gate directly. Path safety via the existing `resolved_allow_root` closure. |
+| 2 | `collect_ocsf(input_path)` MCP tool | MCP | Wraps v0.10.1's `collect_ocsf_file`. **File mode only** — URL ingest deliberately NOT exposed at the MCP layer to harden out the F-V101-L1 SSRF surface by construction. |
+| 3 | `tprm_vendor_list()` MCP tool | MCP | Read-only vendor enumeration. Reads from `EVIDENTIA_VENDOR_STORE_DIR`. |
+| 4 | `poam_list()` MCP tool | MCP | Read-only POA&M enumeration. Reads from `EVIDENTIA_POAM_STORE_DIR`. |
+| 5 | `evidentia collect ocsf --block-private-ips/--allow-private-ips` | CLI | Default True. Rejects RFC1918 + link-local + loopback + multicast + reserved address ranges via `socket.getaddrinfo` pre-resolution before opening the socket. Closes **F-V101-L1**. |
+| 6 | `collect_ocsf_url(..., block_private_ips: bool = True)` | Library | New kwarg on the v0.10.1 ingest function; default True. |
+| 7 | GRC Engineering Club marketplace plugin (staged) | Plugin | `marketplace/grc-engineering-suite/plugins/evidentia/` — manifest matches upstream `plugin.json` schema; 2 generalist OSS commands (`gap-analyze-sarif`, `ingest-ocsf`). NOT yet upstream-submitted. |
+
+**Modified surfaces** (additive only): MCP `_register_tools()` registers
+4 additional tools; collector module gains `_refuse_private_host`
+helper + the kwarg.
+
+**Adversarial-probe taxonomy** (focused on new surfaces; unchanged
+subsystems re-validated via the full 3348-test suite which retains
+every prior adversarial test):
+
+| # | Vector | New MCP tools | SSRF hardening (`--block-private-ips`) |
+|---|---|---|---|
+| 1 | Minimal positive | ✅ All 4 tools end-to-end against fixtures | ✅ Default behavior allows public-IP URLs through |
+| 2 | Bad input | ✅ Missing inventory file / OCSF file → `FileNotFoundError`; invalid OCSF class_uid → `OCSFIngestError` | n/a |
+| 3 | Empty input | ✅ Empty vendor / POA&M stores return `[]` | n/a |
+| 4 | Path traversal | ✅ Path safety via `resolved_allow_root` closure when `--allow-root` set | n/a |
+| 5 | Trust boundary | ✅ Forged unmapped block ignored via inherited `trust_unmapped=False` | n/a |
+| 6 | URL host = AWS metadata `169.254.169.254` | n/a | ✅ Rejected pre-socket-open |
+| 7 | URL host = RFC1918 (10/8, 172.16/12, 192.168/16) | n/a | ✅ All ranges rejected |
+| 8 | URL host = loopback (127.0.0.1, ::1) | n/a | ✅ Rejected |
+| 9 | `--allow-private-ips` bypass | n/a | ✅ Bypasses private-IP check; check confirmed skipped |
+| 10 | URL with missing hostname | n/a | ✅ Rejected with clear message |
+
+**Vectors not applicable**: concurrent/race (pure-transform MCP
+tools, single-resolve SSRF check); large-input DoS (URL ingest
+unchanged from v0.10.1 — still 50 MB capped). **DAST skipped** per
+Step 4 G11 — no new REST/UI surface; MCP tools covered by 11 new
+direct unit tests; SSRF hardening covered by 5 new unit tests.
+
+**Known limitation (NOT a finding)**: the SSRF check is a single
+DNS pre-resolution; an attacker controlling both the DNS server
+AND the URL the operator types could in principle do DNS rebinding
+between check time and fetch time. Out of scope of v0.10.2's threat
+model (operator-typo case); mitigation would require IP pinning +
+Host header, deferred to a future release if the threat model
+expands.
+
+**Test count + source-file trajectory**: 3348 tests pass / 14
+skipped / 267 source files / mypy strict 267 of 267 (7 packages);
+ruff clean. **+16 tests** vs the v0.10.1 baseline (3332 / 14).
+
+**Step 4 disposition**: **PROCEED-CLEAN**. 0 CRITICAL / 0 HIGH / 0
+MEDIUM / 0 NEW LOW. **F-V101-L1 CLOSED by Phase 3.**
+
+---
+
 ## Re-validation snapshot — 2026-05-23 (v0.10.1 PRE-TAG)
 
 v0.10.1 consolidates the v0.10.x integration line: closes the two
