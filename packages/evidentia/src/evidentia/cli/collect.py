@@ -1149,6 +1149,83 @@ def collect_securityscorecard(
     )
 
 
+# v0.10.1 ─────────────────────────────────────────────────────────────────
+
+
+@app.command("ocsf")
+def collect_ocsf(
+    input_source: str = typer.Option(
+        ...,
+        "--input",
+        "-i",
+        help=(
+            "OCSF JSON source — path to a local file OR an https:// URL. "
+            "Accepts either a single OCSF finding or a JSON list."
+        ),
+    ),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Where to write the converted SecurityFinding JSON. Default: stdout.",
+    ),
+    url_timeout: float = typer.Option(
+        10.0,
+        "--url-timeout",
+        help="HTTP connect/read timeout in seconds (URL mode only). Default 10s.",
+    ),
+    url_max_bytes: int = typer.Option(
+        50 * 1024 * 1024,
+        "--url-max-bytes",
+        help="HTTP response body cap in bytes (URL mode only). Default 50 MB.",
+    ),
+) -> None:
+    """Ingest OCSF Compliance / Detection Finding JSON (v0.10.1).
+
+    Supports OCSF 1.x Compliance Finding (``class_uid`` 2003 — what
+    Evidentia itself emits) and Detection Finding (``class_uid`` 2004
+    — what Prowler and AWS Security Hub emit). Trust-boundary aware:
+    third-party OCSF input never controls Evidentia-native fields via
+    the OCSF ``unmapped`` block. URL mode is HTTPS-only with no
+    redirects + size + timeout caps — prefer file mode whenever the
+    OCSF output can be written to disk first.
+    """
+    try:
+        from evidentia_collectors.ocsf import (
+            OCSFIngestError,
+            collect_ocsf_file,
+            collect_ocsf_url,
+        )
+    except ImportError as e:
+        console.print(
+            "[red]Error:[/red] OCSF ingestion needs the optional ocsf extra. "
+            "Run [cyan]pip install 'evidentia-core[ocsf]'[/cyan]."
+        )
+        raise typer.Exit(code=1) from e
+
+    is_url = input_source.lower().startswith(("http://", "https://"))
+    console.print(
+        f"[dim]Ingesting OCSF from "
+        f"{'URL' if is_url else 'file'} [bold]{input_source}[/bold]...[/dim]"
+    )
+
+    try:
+        if is_url:
+            findings = collect_ocsf_url(
+                input_source,
+                timeout=url_timeout,
+                max_bytes=url_max_bytes,
+            )
+        else:
+            findings = collect_ocsf_file(input_source)
+    except OCSFIngestError as e:
+        console.print(f"[red]OCSF ingestion failed:[/red] {e}")
+        raise typer.Exit(code=1) from e
+
+    _render_summary(findings, title="OCSF ingest")
+    _write_findings(findings, output, title="OCSF ingest")
+
+
 # ── rendering ────────────────────────────────────────────────────────────
 
 

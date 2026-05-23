@@ -1,0 +1,42 @@
+{
+  "activity_id": 1,
+  "activity_name": "Create",
+  "category_uid": 2,
+  "category_name": "Findings",
+  "class_uid": 2004,
+  "class_name": "Detection Finding",
+  "type_uid": 200401,
+  "type_name": "Detection Finding: Create",
+  "time": 1716422400000,
+  "severity_id": 4,
+  "severity": "High",
+  "status_id": 1,
+  "status": "New",
+  "message": "S3 bucket allows public read access via bucket policy.",
+  "metadata": {
+    "version": "1.5.0",
+    "product": {
+      "name": "Prowler",
+      "vendor_name": "Prowler",
+      "version": "5.2.0"
+    }
+  },
+  "finding_info": {
+    "title": "S3 Bucket Public Read",
+    "uid": "prowler-s3_bucket_public_access-synthetic-001",
+    "desc": "The S3 bucket grants `s3:GetObject` to the AllUsers group via its bucket policy.",
+    "first_seen_time_dt": "2026-05-22T12:00:00Z",
+    "last_seen_time_dt": "2026-05-22T12:00:00Z",
+    "data_sources": ["aws.s3.get_bucket_policy"]
+  },
+  "remediation": {
+    "desc": "Remove the AllUsers grant from the bucket policy; enable Block Public Access on the bucket and on the account."
+  },
+  "resources": [
+    {
+      "type": "AwsS3Bucket",
+      "uid": "arn:aws:s3:::example-public-readme-bucket",
+      "region": "us-east-1"
+    }
+  ]
+}

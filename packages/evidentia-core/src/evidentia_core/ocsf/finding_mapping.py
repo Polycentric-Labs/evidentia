@@ -47,13 +47,39 @@ from evidentia_core.models.finding import (
     SecurityFinding,
 )
 
-__all__ = ["OCSFMappingError", "finding_from_ocsf", "finding_to_ocsf"]
+__all__ = [
+    "OCSFMappingError",
+    "finding_from_ocsf",
+    "finding_from_ocsf_detection",
+    "finding_to_ocsf",
+]
 
 # OCSF Compliance Finding class identifiers (OCSF Findings category).
 _OCSF_CLASS_UID = 2003
 _OCSF_CATEGORY_UID = 2
 _OCSF_CLASS_NAME = "Compliance Finding"
 _OCSF_CATEGORY_NAME = "Findings"
+
+# OCSF Detection Finding (v0.10.1) — what Prowler and AWS Security Hub
+# emit. Same Findings category as Compliance Finding.
+_OCSF_DETECTION_CLASS_UID = 2004
+_OCSF_DETECTION_CLASS_NAME = "Detection Finding"
+
+# Detection Finding has no `compliance` object, so `compliance_status`
+# must be synthesized from `severity_id`. The heuristic: a detection
+# finding represents an observed problem (default FAIL/WARNING), except
+# INFORMATIONAL/UNKNOWN where the source is publishing context, not a
+# check result.
+_DETECTION_SEVERITY_TO_COMPLIANCE: dict[int, ComplianceStatus] = {
+    5: ComplianceStatus.FAIL,        # Critical
+    4: ComplianceStatus.FAIL,        # High
+    3: ComplianceStatus.FAIL,        # Medium
+    2: ComplianceStatus.WARNING,     # Low
+    1: ComplianceStatus.UNKNOWN,     # Informational
+    0: ComplianceStatus.UNKNOWN,     # Unknown
+    6: ComplianceStatus.FAIL,        # Fatal
+    99: ComplianceStatus.UNKNOWN,    # Other
+}
 
 # Evidentia Severity -> OCSF SeverityID value (py-ocsf-models SeverityID:
 # Unknown 0 / Informational 1 / Low 2 / Medium 3 / High 4 / Critical 5 /
@@ -123,6 +149,9 @@ def _load_ocsf() -> Any:
         from py_ocsf_models.events.findings.compliance_finding_type_id import (
             ComplianceFindingTypeID,
         )
+        from py_ocsf_models.events.findings.detection_finding import (
+            DetectionFinding,
+        )
         from py_ocsf_models.events.findings.severity_id import SeverityID
         from py_ocsf_models.events.findings.status_id import StatusID
         from py_ocsf_models.objects.compliance import Compliance
@@ -144,6 +173,7 @@ def _load_ocsf() -> Any:
         ActivityID=ActivityID,
         ComplianceFinding=ComplianceFinding,
         ComplianceFindingTypeID=ComplianceFindingTypeID,
+        DetectionFinding=DetectionFinding,
         SeverityID=SeverityID,
         StatusID=StatusID,
         Compliance=Compliance,
@@ -299,6 +329,130 @@ def finding_from_ocsf(
             return SecurityFinding.model_validate(unmapped["evidentia"])
 
     return _security_finding_from_native_ocsf(compliance_finding)
+
+
+def finding_from_ocsf_detection(
+    ocsf_finding: dict[str, Any],
+    *,
+    trust_unmapped: bool = False,
+) -> SecurityFinding:
+    """Convert an OCSF Detection Finding ``dict`` to a SecurityFinding.
+
+    OCSF Detection Finding (``class_uid`` 2004) is what Prowler and
+    AWS Security Hub emit. v0.10.1 — the third-party-ingestion
+    companion to :func:`finding_from_ocsf` (which handles Compliance
+    Finding, ``class_uid`` 2003).
+
+    Detection Finding has **no native ``compliance`` object**, so
+    ``compliance_status`` and ``control_mappings`` cannot be read
+    directly. The conversion:
+
+    - ``compliance_status`` is synthesized from ``severity_id`` per
+      the conservative heuristic in ``_DETECTION_SEVERITY_TO_COMPLIANCE``:
+      CRITICAL/HIGH/MEDIUM/FATAL → FAIL, LOW → WARNING,
+      INFORMATIONAL/UNKNOWN/OTHER → UNKNOWN. Rationale: a detection
+      finding represents an observed problem, so non-informational
+      severities map to a non-passing compliance state.
+    - ``control_mappings`` starts **empty**. Downstream collectors that
+      know the framework mapping for their specific detector ruleset
+      (e.g., a Prowler check ID → NIST 800-53 control) can enrich the
+      finding after this function returns.
+
+    All other fields (``finding_info``, ``severity_id``, ``status_id``,
+    ``remediation``, ``resources``, time fields) map identically to
+    :func:`finding_from_ocsf`.
+
+    Parameters
+    ----------
+    ocsf_finding:
+        The OCSF Detection Finding ``dict`` to convert.
+    trust_unmapped:
+        Whether to honor an ``unmapped["evidentia"]`` block. **Default
+        ``False``** for Detection Finding — the typical input source
+        (Prowler, AWS Security Hub) is third-party and not Evidentia-
+        produced. Operators who DO produce their own Detection Finding
+        round-trip artifacts can flip to ``True`` for lossless
+        reconstruction. Same trust-boundary semantics as
+        :func:`finding_from_ocsf` (CWE-345); see ``docs/ocsf-mapping.md``
+        §5.1.
+
+    Raises
+    ------
+    OCSFMappingError
+        If the ``ocsf`` extra is absent or the input does not validate
+        as an OCSF Detection Finding.
+    """
+    ocsf = _load_ocsf()
+
+    try:
+        detection_finding = ocsf.DetectionFinding.model_validate(ocsf_finding)
+    except Exception as exc:  # pydantic ValidationError (and any related parse error)
+        raise OCSFMappingError(
+            f"input does not validate as an OCSF Detection Finding: {exc}"
+        ) from exc
+
+    if trust_unmapped:
+        unmapped = detection_finding.unmapped
+        if isinstance(unmapped, dict) and isinstance(unmapped.get("evidentia"), dict):
+            return SecurityFinding.model_validate(unmapped["evidentia"])
+
+    return _security_finding_from_native_detection_ocsf(detection_finding)
+
+
+def _security_finding_from_native_detection_ocsf(
+    detection_finding: Any,
+) -> SecurityFinding:
+    """Best-effort :class:`SecurityFinding` from an OCSF Detection Finding.
+
+    See :func:`finding_from_ocsf_detection` for the conversion rules.
+    Internal helper; called when the unmapped block is absent or
+    bypassed via ``trust_unmapped=False``.
+    """
+    info = detection_finding.finding_info
+
+    severity_id_value = int(detection_finding.severity_id)
+    severity = _OCSF_TO_SEVERITY.get(severity_id_value, Severity.MEDIUM)
+    compliance_status = _DETECTION_SEVERITY_TO_COMPLIANCE.get(
+        severity_id_value, ComplianceStatus.UNKNOWN
+    )
+
+    product = getattr(detection_finding.metadata, "product", None)
+    source_system = getattr(product, "name", None) or "ocsf-detection-import"
+    remediation = (
+        detection_finding.remediation.desc
+        if detection_finding.remediation is not None
+        else None
+    )
+
+    resource = None
+    if detection_finding.resources:
+        resource = detection_finding.resources[0]
+
+    kwargs: dict[str, Any] = {
+        "id": info.uid,
+        "title": info.title,
+        "description": info.desc or detection_finding.message or info.title,
+        "severity": severity,
+        "compliance_status": compliance_status,
+        "remediation": remediation,
+        "source_system": source_system,
+        # Detection Finding has no compliance.standards/requirements, so
+        # control_mappings starts empty. Downstream collector enrichment
+        # can populate based on its knowledge of the detector ruleset.
+        "control_mappings": [],
+    }
+    if resource is not None:
+        if resource.type:
+            kwargs["resource_type"] = resource.type
+        if resource.uid:
+            kwargs["resource_id"] = resource.uid
+        if resource.region:
+            kwargs["resource_region"] = resource.region
+    if info.first_seen_time_dt is not None:
+        kwargs["first_observed"] = info.first_seen_time_dt
+    if info.last_seen_time_dt is not None:
+        kwargs["last_observed"] = info.last_seen_time_dt
+    return SecurityFinding(**kwargs)
 
 
 def _security_finding_from_native_ocsf(compliance_finding: Any) -> SecurityFinding:

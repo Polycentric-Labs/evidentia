@@ -1059,6 +1059,7 @@ all = [
     { name = "okta" },
     { name = "oracledb" },
     { name = "psycopg", extra = ["binary"] },
+    { name = "py-ocsf-models" },
     { name = "pygithub" },
     { name = "pymysql" },
     { name = "pyodbc" },
@@ -1072,6 +1073,9 @@ databricks = [
 ]
 github = [
     { name = "pygithub" },
+]
+ocsf = [
+    { name = "py-ocsf-models" },
 ]
 okta = [
     { name = "okta" },
@@ -1114,6 +1118,8 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"], marker = "extra == 'all'", specifier = ">=3.1" },
     { name = "psycopg", extras = ["binary"], marker = "extra == 'sql'", specifier = ">=3.1" },
     { name = "psycopg", extras = ["binary"], marker = "extra == 'sql-postgres'", specifier = ">=3.1" },
+    { name = "py-ocsf-models", marker = "extra == 'all'", specifier = ">=0.9.0,<0.10.0" },
+    { name = "py-ocsf-models", marker = "extra == 'ocsf'", specifier = ">=0.9.0,<0.10.0" },
     { name = "pygithub", marker = "extra == 'all'", specifier = ">=2.4" },
     { name = "pygithub", marker = "extra == 'github'", specifier = ">=2.4" },
     { name = "pymysql", marker = "extra == 'all'", specifier = ">=1.1" },
@@ -1125,7 +1131,7 @@ requires-dist = [
     { name = "snowflake-connector-python", marker = "extra == 'all'", specifier = ">=3.10" },
     { name = "snowflake-connector-python", marker = "extra == 'snowflake'", specifier = ">=3.10" },
 ]
-provides-extras = ["aws", "github", "okta", "sql-postgres", "sql-mysql", "sql-sqlite", "sql-mssql", "sql-oracle", "sql", "databricks", "snowflake", "all"]
+provides-extras = ["aws", "github", "okta", "sql-postgres", "sql-mysql", "sql-sqlite", "sql-mssql", "sql-oracle", "sql", "databricks", "snowflake", "ocsf", "all"]
 
 [[package]]
 name = "evidentia-core"

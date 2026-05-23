@@ -1,0 +1,43 @@
+[
+  {
+    "activity_id": 1,
+    "category_uid": 2,
+    "category_name": "Findings",
+    "class_uid": 2003,
+    "class_name": "Compliance Finding",
+    "type_uid": 200301,
+    "time": 1716422400000,
+    "severity_id": 5,
+    "metadata": {
+      "version": "1.5.0",
+      "product": {"name": "ThirdPartyComplianceScanner", "vendor_name": "Acme"}
+    },
+    "finding_info": {
+      "title": "Encryption at rest disabled",
+      "uid": "ext-compliance-001"
+    },
+    "compliance": {
+      "status_id": 3,
+      "standards": ["cis-aws"],
+      "requirements": ["2.1.1"]
+    }
+  },
+  {
+    "activity_id": 1,
+    "category_uid": 2,
+    "category_name": "Findings",
+    "class_uid": 2004,
+    "class_name": "Detection Finding",
+    "type_uid": 200401,
+    "time": 1716422400000,
+    "severity_id": 2,
+    "metadata": {
+      "version": "1.5.0",
+      "product": {"name": "Prowler", "vendor_name": "Prowler"}
+    },
+    "finding_info": {
+      "title": "CloudTrail not multi-region",
+      "uid": "prowler-cloudtrail-multi-region-synthetic"
+    }
+  }
+]

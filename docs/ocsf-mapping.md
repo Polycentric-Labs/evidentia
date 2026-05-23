@@ -210,15 +210,83 @@ third-party OCSF consumer simply ignores `unmapped["evidentia"]`.
 
 ```python
 from evidentia_core.ocsf import (
-    finding_to_ocsf,    # SecurityFinding -> OCSF Compliance Finding dict
-    finding_from_ocsf,  # OCSF Compliance Finding dict -> SecurityFinding
-    OCSFMappingError,   # raised when the `ocsf` extra is absent or input is invalid
+    finding_to_ocsf,              # SecurityFinding -> OCSF Compliance Finding dict
+    finding_from_ocsf,            # OCSF Compliance Finding dict -> SecurityFinding
+    finding_from_ocsf_detection,  # v0.10.1: OCSF Detection Finding dict -> SecurityFinding
+    OCSFMappingError,             # raised when the `ocsf` extra is absent or input is invalid
 )
 ```
 
-Both functions are pure — no I/O, no global state. `finding_to_ocsf`
-returns a JSON-ready `dict` (serialize it however you like);
-`finding_from_ocsf` accepts a `dict` parsed from JSON.
+All three mapping functions are pure — no I/O, no global state.
+`finding_to_ocsf` returns a JSON-ready `dict` (serialize however);
+`finding_from_ocsf` and `finding_from_ocsf_detection` accept dicts
+parsed from JSON.
+
+v0.10.1 also ships an **ingestion collector** that wraps these for
+file + URL input:
+
+```python
+from evidentia_collectors.ocsf import (
+    collect_ocsf_file,   # path-or-Path  -> list[SecurityFinding]
+    collect_ocsf_url,    # https:// URL  -> list[SecurityFinding]
+    OCSFIngestError,     # malformed JSON / unsupported class_uid / URL policy
+)
+```
+
+Or use the CLI: `evidentia collect ocsf --input <file-or-url>
+[--output findings.json]`. URL mode is HTTPS-only with no redirects,
+a 10s connect/read timeout, and a 50 MB body cap — see the
+collector module's docstring for the rationale.
+
+## 7.A. Detection Finding mapping (v0.10.1)
+
+OCSF **Detection Finding** (`class_uid` 2004) is what Prowler and
+AWS Security Hub emit — *not* Compliance Finding. The
+`finding_from_ocsf_detection(ocsf_dict, *, trust_unmapped=False)`
+function handles it.
+
+The key delta vs. Compliance Finding: **Detection Finding has no
+native `compliance` object**, so `compliance_status` and
+`control_mappings` cannot be read from the OCSF doc directly.
+The conversion:
+
+| `SecurityFinding` field | Source on Detection Finding |
+|---|---|
+| `id` | `finding_info.uid` |
+| `title` | `finding_info.title` |
+| `description` | `finding_info.desc` ∥ `message` ∥ `finding_info.title` |
+| `severity` | `severity_id` (same mapping as Compliance Finding) |
+| `status` | `status_id` (same `FindingStatus` mapping) |
+| `compliance_status` | **synthesized from `severity_id`** — see table below |
+| `remediation` | `remediation.desc` |
+| `source_system` | `metadata.product.name` (fallback `"ocsf-detection-import"`) |
+| `resource_type` / `_id` / `_region` | `resources[0]` |
+| `first_observed` / `last_observed` | `finding_info.first_seen_time_dt` / `last_seen_time_dt` |
+| `control_mappings` | **empty** — downstream collectors enrich based on detector-ruleset knowledge |
+
+**Synthesized `compliance_status` from `severity_id`** (the v0.10.1
+heuristic in `_DETECTION_SEVERITY_TO_COMPLIANCE`):
+
+| `severity_id` | OCSF name | → `compliance_status` |
+|---|---|---|
+| 5 | Critical | `FAIL` |
+| 4 | High | `FAIL` |
+| 3 | Medium | `FAIL` |
+| 2 | Low | `WARNING` |
+| 1 | Informational | `UNKNOWN` |
+| 0 | Unknown | `UNKNOWN` |
+| 6 | Fatal | `FAIL` |
+| 99 | Other | `UNKNOWN` |
+
+Rationale: a detection finding represents an observed problem, so
+non-informational severities map to a non-passing compliance state.
+INFORMATIONAL is treated as `UNKNOWN` because the source is publishing
+context, not a check result.
+
+**Default `trust_unmapped=False`** for Detection Finding — the typical
+input source (Prowler, AWS Security Hub) is third-party and not
+Evidentia-produced. Operators who produce their own Detection Finding
+round-trip artifacts can flip to `True` for lossless reconstruction.
 
 ## 8. Deferred to v0.10.1+
 

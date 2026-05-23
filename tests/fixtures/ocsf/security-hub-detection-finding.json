@@ -1,0 +1,40 @@
+{
+  "activity_id": 1,
+  "activity_name": "Create",
+  "category_uid": 2,
+  "category_name": "Findings",
+  "class_uid": 2004,
+  "class_name": "Detection Finding",
+  "type_uid": 200401,
+  "type_name": "Detection Finding: Create",
+  "time": 1716422400000,
+  "severity_id": 3,
+  "severity": "Medium",
+  "status_id": 1,
+  "status": "New",
+  "message": "IAM password policy does not require uppercase letters.",
+  "metadata": {
+    "version": "1.5.0",
+    "product": {
+      "name": "AWS Security Hub",
+      "vendor_name": "AWS",
+      "version": "2.0.0"
+    }
+  },
+  "finding_info": {
+    "title": "IAM password policy missing uppercase requirement",
+    "uid": "arn:aws:securityhub:us-east-1:000000000000:finding/synthetic-fixture-uppercase",
+    "desc": "Ensures IAM password policy requires at least one uppercase letter.",
+    "data_sources": ["aws.iam.get_account_password_policy"]
+  },
+  "remediation": {
+    "desc": "Update the IAM password policy: set RequireUppercaseCharacters=true."
+  },
+  "resources": [
+    {
+      "type": "AwsIamAccount",
+      "uid": "AWS::IAM::Account:000000000000",
+      "region": "global"
+    }
+  ]
+}

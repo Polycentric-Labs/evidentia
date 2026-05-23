@@ -19,6 +19,7 @@ from evidentia_core.models.finding import (
 from evidentia_core.ocsf import (
     OCSFMappingError,
     finding_from_ocsf,
+    finding_from_ocsf_detection,
     finding_to_ocsf,
 )
 
@@ -166,6 +167,111 @@ def test_from_ocsf_trust_unmapped_false_ignores_block() -> None:
     # OCSF-import justification.
     assert restored.control_mappings[0].relationship == OLIRRelationship.RELATED_TO
     assert "Ingested from OCSF" in restored.control_mappings[0].justification
+
+
+# v0.10.1 — finding_from_ocsf_detection (Detection Finding ingestion)
+
+
+def _detection_finding_dict(
+    *,
+    severity_id: int = 4,
+    product_name: str = "Prowler",
+    title: str = "S3 bucket public read",
+    uid: str = "test-detection-001",
+) -> dict[str, object]:
+    """Build a minimal valid OCSF Detection Finding dict (class_uid 2004)."""
+    return {
+        "activity_id": 1,
+        "category_uid": 2,
+        "category_name": "Findings",
+        "class_uid": 2004,
+        "type_uid": 200401,
+        "time": 1_716_422_400_000,
+        "severity_id": severity_id,
+        "metadata": {
+            "version": "1.5.0",
+            "product": {"name": product_name, "vendor_name": "Acme"},
+        },
+        "finding_info": {"title": title, "uid": uid},
+        "remediation": {"desc": "Apply the recommended fix."},
+        "resources": [{"type": "AwsS3Bucket", "uid": "arn:aws:s3:::test", "region": "us-east-1"}],
+    }
+
+
+def test_from_ocsf_detection_basic() -> None:
+    """Detection Finding maps title, severity, source_system, resource_*."""
+    finding = finding_from_ocsf_detection(_detection_finding_dict())
+    assert finding.title == "S3 bucket public read"
+    assert finding.severity == Severity.HIGH
+    assert finding.source_system == "Prowler"
+    assert finding.resource_type == "AwsS3Bucket"
+    assert finding.resource_id == "arn:aws:s3:::test"
+    assert finding.resource_region == "us-east-1"
+    assert finding.remediation == "Apply the recommended fix."
+
+
+def test_from_ocsf_detection_synthesizes_compliance_status_from_severity() -> None:
+    """Detection Finding has no `compliance` object — `compliance_status`
+    comes from severity_id per the heuristic in
+    `_DETECTION_SEVERITY_TO_COMPLIANCE`."""
+    cases = [
+        (5, ComplianceStatus.FAIL),         # Critical
+        (4, ComplianceStatus.FAIL),         # High
+        (3, ComplianceStatus.FAIL),         # Medium
+        (2, ComplianceStatus.WARNING),      # Low
+        (1, ComplianceStatus.UNKNOWN),      # Informational
+        (0, ComplianceStatus.UNKNOWN),      # Unknown
+    ]
+    for sev_id, expected in cases:
+        finding = finding_from_ocsf_detection(_detection_finding_dict(severity_id=sev_id))
+        assert finding.compliance_status == expected, f"severity_id={sev_id}"
+
+
+def test_from_ocsf_detection_starts_with_empty_control_mappings() -> None:
+    """Detection Finding has no compliance.standards/requirements;
+    control_mappings is empty (downstream collectors enrich)."""
+    finding = finding_from_ocsf_detection(_detection_finding_dict())
+    assert finding.control_mappings == []
+
+
+def test_from_ocsf_detection_default_does_not_trust_unmapped() -> None:
+    """Default `trust_unmapped=False` for Detection Finding — third-party
+    is the expected source. A forged unmapped block must be ignored."""
+    forged = _detection_finding_dict(severity_id=2)
+    forged["unmapped"] = {
+        "evidentia": {
+            "id": "ATTACKER-FORGED-ID",
+            "title": "Forged Evidentia title",
+            "description": "d",
+            "severity": "critical",
+            "source_system": "aws-config",
+        }
+    }
+    finding = finding_from_ocsf_detection(forged)
+    # Native fields win.
+    assert finding.id != "ATTACKER-FORGED-ID"
+    assert finding.title == "S3 bucket public read"
+    assert finding.severity == Severity.LOW
+
+
+def test_from_ocsf_detection_trust_unmapped_true_honors_block() -> None:
+    """When the operator IS producing the round-trip and flips
+    trust_unmapped=True, the block is honored."""
+    minimal = SecurityFinding(
+        title="round-trip subject", description="d",
+        severity=Severity.LOW, source_system="evidentia-detection-test",
+    )
+    detection_with_block = _detection_finding_dict()
+    detection_with_block["unmapped"] = {"evidentia": minimal.model_dump(mode="json")}
+    restored = finding_from_ocsf_detection(
+        detection_with_block, trust_unmapped=True
+    )
+    assert restored == minimal
+
+
+def test_from_ocsf_detection_rejects_invalid_input() -> None:
+    with pytest.raises(OCSFMappingError):
+        finding_from_ocsf_detection({"not": "a detection finding"})
 
 
 def test_from_ocsf_trust_unmapped_false_blocks_unmapped_forgery() -> None:
