@@ -2953,6 +2953,89 @@ without the extra installed.
 - `docs/integration-survey.md` — competitive/integration research
   that recommended the OCSF + SARIF moves.
 
+## v0.10.1 attack-surface delta — OCSF ingestion consolidation (PRE-TAG 2026-05-23)
+
+v0.10.1 closes both v0.10.0 findings and ships the deferred
+third-party OCSF *ingestion* collector. Net change: **0 new CRITICAL
+/ HIGH / MEDIUM findings; 1 NEW LOW (F-V101-L1 SSRF surface on URL
+ingest; operator-driven, not attacker-controlled); 2 v0.10.0
+findings CLOSED**.
+
+### New attack surface
+
+- **`evidentia_collectors.ocsf` package** (library; new) — file +
+  URL ingestion of OCSF JSON. The collector passes
+  `trust_unmapped=False` to both mapping functions, so a malicious
+  OCSF producer cannot impersonate Evidentia-native fields via the
+  `unmapped["evidentia"]` block (this is the v0.10.1 close-out of
+  F-V100-L1).
+- **URL ingest** (`collect_ocsf_url`) — HTTPS-only, no redirects,
+  10s timeout, 50 MB body cap. **NEW LOW finding**: no private-IP
+  block (F-V101-L1, CWE-918). Risk: an operator typos an internal
+  URL (e.g. `https://169.254.169.254/...` AWS metadata, or
+  `https://127.0.0.1:8080/...`) and gets back data they shouldn't.
+  NOT exploitable by a remote attacker — there is no untrusted URL
+  input path in the CLI surface. Hardening tracked in
+  `docs/v0.10.2-plan.md` as an optional `--block-private-ips` flag.
+- **`finding_from_ocsf_detection`** (library; new) — OCSF Detection
+  Finding (`class_uid` 2004) ingestion path. Default `trust_unmapped=
+  False`. Synthesizes `compliance_status` from `severity_id` via a
+  documented heuristic.
+- **`evidentia collect ocsf`** + **`evidentia collect convert`** CLI
+  verbs (new) — both surface their respective error types
+  (`OCSFIngestError` / `OCSFMappingError`) as non-zero exit + clear
+  message.
+
+### Surface-closing changes (v0.10.0 findings closed)
+
+- **F-V100-L1 (LOW, trust-boundary)** — CLOSED. `finding_from_ocsf`
+  gained an additive `trust_unmapped: bool = True` keyword-only
+  parameter (non-breaking under api-stability §1). Default `True`
+  preserves the lossless Evidentia round-trip; `False` (used by the
+  new ingestion collector + recommended for any third-party
+  ingestion pipeline) ignores the block and rebuilds from native
+  OCSF fields only.
+- **F-V100-M1 (MEDIUM, release tooling)** — CLOSED. `scripts/
+  bump_version.py` now reads `[tool.uv.sources]` from the root
+  `pyproject.toml` as the workspace allowlist; the inter-package
+  pin substitution regex requires a workspace package name to
+  precede the version range, so third-party pins with the same
+  range shape (`py-ocsf-models>=0.9.0,<0.10.0`) are left untouched
+  on the next minor bump.
+
+### Modified attack surface — additive only
+
+- 11 collectors (okta + 4 SQL adapters + databricks + snowflake + 4
+  vendor-risk SaaS) — each `SecurityFinding(...)` site now sets
+  `compliance_status` explicitly. No new outbound network egress,
+  no new credential handling, no new auth surface. The trust
+  boundary between Evidentia and each collected system is unchanged.
+- `SecurityFinding` → `Finding` rename — `Finding = SecurityFinding`
+  alias. Both names refer to the same class object; no runtime or
+  trust-model difference. Target removal of the `SecurityFinding`
+  alias: v1.0.0.
+
+### Findings ledger summary
+
+| Severity | Count | Notes |
+|---|---|---|
+| CRITICAL / HIGH | 0 | — |
+| MEDIUM | 0 | Both v0.10.0 MEDIUMs (F-V100-M1 + F-V100-S1) closed pre-ship; no new MEDIUM. |
+| LOW | 1 NEW | F-V101-L1 SSRF surface on URL ingest; accepted operator-driven; v0.10.2 hardening optional. |
+| INFO | 0 | — |
+
+**Zero unfixed CRITICAL / HIGH / MEDIUM at v0.10.1 pre-tag.**
+
+### Cross-references
+
+- `docs/security-review-v0.10.1.md` — formal review artifact.
+- `docs/v0.10.1-plan.md` — phase-by-phase scope.
+- `docs/v0.10.2-plan.md` — F-V101-L1 SSRF hardening (optional) +
+  MCP-as-backend + GRC Engineering Club marketplace plugin.
+- `docs/ocsf-mapping.md` §5.1 + §7.A — trust_unmapped semantics +
+  Detection Finding mapping.
+- `docs/capability-matrix.md` — v0.10.1 PRE-TAG snapshot.
+
 ---
 
 *First published v0.7.7 (2026-05). Origin: promoted from a

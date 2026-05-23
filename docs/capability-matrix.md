@@ -13,6 +13,68 @@
 
 ---
 
+## Re-validation snapshot — 2026-05-23 (v0.10.1 PRE-TAG)
+
+v0.10.1 consolidates the v0.10.x integration line: closes the two
+v0.10.0 review findings (F-V100-L1 trust-boundary + F-V100-M1
+release-tooling), ships the deferred third-party OCSF ingestion
+collector + Detection Finding path (Prowler / AWS Security Hub), and
+extends the v0.10.0 pilot pattern (`compliance_status` field) to the
+remaining 11 collectors. Per v4 §4.5, v0.10.1 (a patch bump) REUSES
+the v0.10.0 capability matrix for the 8 unchanged subsystems and
+adds the section below for the new surfaces only.
+
+**New public surfaces**:
+
+| # | Surface | Layer | Notes |
+|---|---|---|---|
+| 1 | `evidentia_core.ocsf.finding_from_ocsf` — additive `trust_unmapped: bool = True` kwarg | Library | Closes F-V100-L1. Default `True` preserves the lossless Evidentia round-trip; `False` ignores the `unmapped["evidentia"]` block and rebuilds from native OCSF fields only. Non-breaking under api-stability §1. |
+| 2 | `evidentia_core.ocsf.finding_from_ocsf_detection` | Library | OCSF Detection Finding (`class_uid` 2004) → SecurityFinding. Synthesizes `compliance_status` from `severity_id` per a conservative heuristic (CRITICAL/HIGH/MEDIUM/FATAL → FAIL, LOW → WARNING, INFORMATIONAL/UNKNOWN/OTHER → UNKNOWN). Default `trust_unmapped=False`. |
+| 3 | `evidentia_collectors.ocsf` package — `collect_ocsf_file(path)` + `collect_ocsf_url(url)` + `OCSFIngestError` | Library | Third-party OCSF JSON ingestion. Dispatches by `class_uid`; passes `trust_unmapped=False` to both mapping functions. URL mode is HTTPS-only, no redirects, 10s timeout, 50 MB body cap. |
+| 4 | `evidentia collect ocsf --input <file-or-url>` | CLI | New verb. Surfaces `OCSFIngestError` as non-zero exit + clear message. |
+| 5 | `evidentia collect convert --input X --format ocsf [--output Y]` | CLI | New verb — SecurityFinding JSON → OCSF Compliance Finding bundle. Emits `EventAction.COLLECT_OCSF_EMITTED` after a successful write. |
+| 6 | `evidentia_core.models.finding.Finding` (alias of `SecurityFinding`) | Library | v0.10.1 rename — both names refer to the same class. `SecurityFinding` retained ≥ 1 minor cycle per the deprecation policy. Target removal: v1.0.0. See [`deprecation-calendar.md`](deprecation-calendar.md). |
+| 7 | `EventAction.COLLECT_OCSF_EMITTED` | Library | Append-only enum addition per §2 stability contract. Emitted by `collect convert --format ocsf`. |
+| 8 | `[ocsf]` extra on `evidentia-collectors` | Packaging | Mirrors `evidentia-core[ocsf]` so `pip install 'evidentia-collectors[ocsf]'` Just Works. |
+
+**Modified surfaces** (additive only):
+
+| # | Surface | Change |
+|---|---|---|
+| 9 | 11 collectors (okta, sql/{mysql,mssql,sqlite,oracle}, databricks, snowflake, vanta, drata, bitsight, securityscorecard) — 67 sites | Each `SecurityFinding(...)` call now sets `compliance_status` explicitly per finding semantics — closing the v0.10.0 pilot pattern's extension to the full collector surface. No `remediation` populated (none of these collectors carry structured remediation text). 420 existing collector tests pass unchanged. |
+| 10 | `scripts/bump_version.py` — `bump_pin_range(current, target, packages)` | Closes F-V100-M1. Reads `[tool.uv.sources]` as the workspace allowlist; regex now requires a workspace package name to precede the version range. 6 new tests + 1 pre-existing test file aligned. |
+
+**Adversarial-probe taxonomy** (focused on new surfaces; unchanged
+subsystems re-validated via the full 3332-test suite which retains
+every prior adversarial test):
+
+| # | Vector | OCSF ingestion (file) | OCSF ingestion (URL) | Detection Finding mapping | `Finding` alias / CLI verbs |
+|---|---|---|---|---|---|
+| 1 | Minimal positive | ✅ Prowler + Security Hub fixtures | ✅ HTTPS-only check | ✅ severity → compliance_status heuristic table | ✅ `Finding is SecurityFinding`; both CLI verbs end-to-end |
+| 2 | Bad input | ✅ → `OCSFIngestError`; unsupported `class_uid` rejected | ✅ ftp/file/javascript schemes rejected | ✅ → `OCSFMappingError` | ✅ non-list input / bad format rejected |
+| 3 | Empty input | ✅ empty list returns empty | n/a | ✅ → `OCSFMappingError` | ✅ |
+| 4 | Tampered (forged unmapped) | ✅ collector passes `trust_unmapped=False`; forged block ignored | n/a | ✅ default `trust_unmapped=False`; close-out adversarial test | ✅ alias is identity-equal |
+| 5 | Encoding / special chars | ✅ JSON Unicode survives | ✅ scheme check is case-insensitive | n/a | ✅ |
+| 6 | Large-input DoS | bounded by Python json.loads (no explicit cap on file mode) | ✅ 50 MB body cap raises mid-stream | n/a | n/a |
+| 7 | Trust-boundary (F-V100-L1 close-out) | ✅ `trust_unmapped=False` wired through dispatch | ✅ same dispatch | ✅ default `trust_unmapped=False` | n/a |
+| 8 | **SSRF (NEW)** | n/a | ⚠️ **F-V101-L1 LOW** — no private-IP block; accepted operator-driven, v0.10.2 hardening optional | n/a | n/a |
+
+**Vectors not applicable**: concurrent/race (pure transforms);
+expired credential (no auth surface). **DAST skipped** per Step 4
+G11 — no new REST/UI surface; the new CLI surfaces are covered
+end-to-end by the integration tests under `tests/integration/test_cli/`.
+
+**Test count + source-file trajectory**: 3332 tests pass / 14 skipped
+/ 267 source files / mypy strict 267 of 267 (7 packages); ruff clean.
+**+37 tests** vs the v0.10.0 baseline (3295 / 265).
+
+**Step 4 disposition**: **PROCEED-CLEAN**. 0 CRITICAL / 0 HIGH / 0
+MEDIUM / 1 NEW LOW (F-V101-L1 — SSRF surface on URL ingest;
+accepted with documented v0.10.2 follow-up). Both v0.10.0 findings
+(F-V100-L1 + F-V100-M1) closed inline.
+
+---
+
 ## Re-validation snapshot — 2026-05-22 (v0.10.0 PRE-TAG)
 
 v0.10.0 opens the v0.10.x research-driven integration line. **Three
