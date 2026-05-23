@@ -6,6 +6,10 @@ and parses them into indexed ControlCatalog objects.
 Supported catalog formats:
 - OSCAL Catalog JSON (NIST 800-53, CSF 2.0)
 - Evidentia framework JSON (SOC 2, ISO 27001, CIS, CMMC, PCI DSS)
+- **Evidentia framework YAML** (v0.10.3+) — same fields as the JSON
+  variant, friendlier for hand-authoring (comments, multi-line
+  strings, no escape headaches). The loader auto-detects JSON vs
+  YAML by file extension via :func:`_load_catalog_data`.
 """
 
 from __future__ import annotations
@@ -14,6 +18,8 @@ import json
 import logging
 from pathlib import Path
 from typing import Any
+
+import yaml
 
 from evidentia_core.catalogs.manifest import load_manifest
 from evidentia_core.models.catalog import CatalogControl, ControlCatalog
@@ -24,13 +30,50 @@ logger = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent / "data"
 
 
+def _load_catalog_data(catalog_path: Path) -> dict[str, Any]:
+    """Read a catalog file and return its parsed dict.
+
+    Dispatches on file extension: ``.json`` → :func:`json.load`,
+    ``.yaml`` / ``.yml`` → :func:`yaml.safe_load`. Both formats
+    produce the same dict shape, so all downstream loaders
+    (``load_oscal_catalog``, ``load_evidentia_catalog``,
+    ``load_non_control_catalog``) work unchanged from v0.10.3+.
+
+    Added v0.10.3 Phase 1 to lower the contributor barrier for
+    new framework catalogs — YAML supports comments + multi-line
+    strings + no comma/escape headaches that hand-edited JSON
+    catalogs trip on.
+
+    Raises ``ValueError`` for unsupported extensions, ``yaml.YAMLError``
+    or ``json.JSONDecodeError`` for malformed content.
+    """
+    suffix = catalog_path.suffix.lower()
+    text = catalog_path.read_text(encoding="utf-8")
+    if suffix in (".yaml", ".yml"):
+        data = yaml.safe_load(text)
+    elif suffix == ".json":
+        data = json.loads(text)
+    else:
+        raise ValueError(
+            f"Unsupported catalog file extension {suffix!r} for "
+            f"{catalog_path.name}; expected .json, .yaml, or .yml"
+        )
+    if not isinstance(data, dict):
+        raise ValueError(
+            f"{suffix} catalog {catalog_path.name} top-level must be a "
+            f"mapping (got {type(data).__name__})"
+        )
+    return data
+
+
 def load_oscal_catalog(catalog_path: Path) -> ControlCatalog:
     """Load an OSCAL Catalog JSON file into a ControlCatalog.
 
     Parses the OSCAL catalog structure with groups → controls → enhancements.
+    Accepts JSON or YAML (v0.10.3+) — file extension dispatches via
+    :func:`_load_catalog_data`.
     """
-    with open(catalog_path, encoding="utf-8") as f:
-        data = json.load(f)
+    data = _load_catalog_data(catalog_path)
 
     catalog_data = data.get("catalog", data)
     metadata = catalog_data.get("metadata", {})
@@ -169,10 +212,10 @@ def load_evidentia_catalog(catalog_path: Path) -> ControlCatalog:
 
     Used for frameworks that don't have OSCAL catalogs published by NIST
     (SOC 2, ISO 27001, CIS, CMMC, PCI DSS). These are stored as
-    Evidentia JSON format with a simplified structure.
+    Evidentia format with a simplified structure. Accepts JSON or YAML
+    (v0.10.3+) — file extension dispatches via :func:`_load_catalog_data`.
     """
-    with open(catalog_path, encoding="utf-8") as f:
-        data = json.load(f)
+    data = _load_catalog_data(catalog_path)
 
     controls = [CatalogControl(**c) for c in data.get("controls", [])]
 
@@ -198,12 +241,13 @@ def load_evidentia_catalog(catalog_path: Path) -> ControlCatalog:
 def load_non_control_catalog(catalog_path: Path) -> object:
     """Load a non-control-type catalog (technique, vulnerability, obligation).
 
-    Returns the appropriate Pydantic model type based on the JSON's
+    Returns the appropriate Pydantic model type based on the catalog's
     ``category`` field. These types don't subclass ControlCatalog; callers
     that expect a ControlCatalog should check ``catalog.category`` first.
+    Accepts JSON or YAML (v0.10.3+) — file extension dispatches via
+    :func:`_load_catalog_data`.
     """
-    with open(catalog_path, encoding="utf-8") as f:
-        data = json.load(f)
+    data = _load_catalog_data(catalog_path)
 
     category = data.get("category", "control")
     if category == "technique":
@@ -246,11 +290,10 @@ def load_catalog(framework_id: str, custom_path: Path | None = None) -> ControlC
     if not path.exists():
         raise FileNotFoundError(f"Catalog file not found: {path}")
 
-    with open(path, encoding="utf-8") as f:
-        data = json.load(f)
+    data = _load_catalog_data(path)
 
-    # Auto-detect format: OSCAL (control-only) vs. Evidentia JSON.
-    # Evidentia JSON has a top-level ``category`` field telling us
+    # Auto-detect format: OSCAL (control-only) vs. Evidentia.
+    # Evidentia catalogs have a top-level ``category`` field telling us
     # whether this is a control/technique/vulnerability/obligation catalog;
     # non-control categories need a different loader and return type.
     if "catalog" in data:
@@ -296,8 +339,7 @@ def load_any_catalog(
     if not path.exists():
         raise FileNotFoundError(f"Catalog file not found: {path}")
 
-    with open(path, encoding="utf-8") as f:
-        data = json.load(f)
+    data = _load_catalog_data(path)
 
     if "catalog" in data:
         return load_oscal_catalog(path)

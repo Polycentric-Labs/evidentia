@@ -1,0 +1,87 @@
+# ISO/IEC 27017:2015 — Cloud services control set (Tier-C stub).
+#
+# v0.10.3+ — first proof-of-concept YAML catalog. Same schema as the
+# pre-v0.10.3 iso-27017-2015.json (which this file replaces) and the
+# rest of the Tier-C stubs; YAML format is opt-in per catalog and was
+# added to lower the contribution barrier (comments, multi-line
+# strings, no escape/comma headaches).
+#
+# Control TEXT is copyrighted by ISO/IEC — stub stays placeholder-only.
+# Operators with a licensed copy: `evidentia catalog import` to load it.
+# See ATTRIBUTION.md + the license_terms field below for redistribution
+# rationale.
+framework_id: iso-27017-2015
+framework_name: "ISO/IEC 27017:2015 — Cloud services"
+version: "2015"
+source: "ISO/IEC — ISO/IEC 27017:2015"
+tier: C
+category: control
+placeholder: true
+license_required: true
+license_terms: "© ISO/IEC. Control text copyrighted."
+license_url: "https://www.iso.org/standard/43757"
+families:
+  - "Cloud-specific enhancements"
+controls:
+  - id: CLD.6.3.1
+    title: "Shared roles and responsibilities within a cloud computing environment"
+    description: "[Licensed content — see license_url for authoritative text.]"
+    family: "Cloud-specific enhancements"
+    placeholder: true
+    tier: C
+    license_required: true
+    license_url: "https://www.iso.org/standard/43757"
+
+  - id: CLD.8.1.5
+    title: "Removal of cloud service customer assets"
+    description: "[Licensed content — see license_url for authoritative text.]"
+    family: "Cloud-specific enhancements"
+    placeholder: true
+    tier: C
+    license_required: true
+    license_url: "https://www.iso.org/standard/43757"
+
+  - id: CLD.9.5.1
+    title: "Segregation in virtual computing environments"
+    description: "[Licensed content — see license_url for authoritative text.]"
+    family: "Cloud-specific enhancements"
+    placeholder: true
+    tier: C
+    license_required: true
+    license_url: "https://www.iso.org/standard/43757"
+
+  - id: CLD.9.5.2
+    title: "Virtual machine hardening"
+    description: "[Licensed content — see license_url for authoritative text.]"
+    family: "Cloud-specific enhancements"
+    placeholder: true
+    tier: C
+    license_required: true
+    license_url: "https://www.iso.org/standard/43757"
+
+  - id: CLD.12.1.5
+    title: "Administrator's operational security"
+    description: "[Licensed content — see license_url for authoritative text.]"
+    family: "Cloud-specific enhancements"
+    placeholder: true
+    tier: C
+    license_required: true
+    license_url: "https://www.iso.org/standard/43757"
+
+  - id: CLD.12.4.5
+    title: "Monitoring of cloud services"
+    description: "[Licensed content — see license_url for authoritative text.]"
+    family: "Cloud-specific enhancements"
+    placeholder: true
+    tier: C
+    license_required: true
+    license_url: "https://www.iso.org/standard/43757"
+
+  - id: CLD.13.1.4
+    title: "Alignment of security management for virtual and physical networks"
+    description: "[Licensed content — see license_url for authoritative text.]"
+    family: "Cloud-specific enhancements"
+    placeholder: true
+    tier: C
+    license_required: true
+    license_url: "https://www.iso.org/standard/43757"

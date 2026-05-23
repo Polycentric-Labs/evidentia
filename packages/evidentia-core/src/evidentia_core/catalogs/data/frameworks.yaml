@@ -729,7 +729,7 @@ frameworks:
   version: '2015'
   tier: C
   category: control
-  path: stubs/iso-27017-2015.json
+  path: stubs/iso-27017-2015.yaml
   source_url: ISO/IEC — ISO/IEC 27017:2015
   license: © ISO/IEC. Control text copyrighted.
   license_url: https://www.iso.org/standard/43757

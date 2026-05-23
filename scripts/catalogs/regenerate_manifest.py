@@ -10,12 +10,9 @@ from __future__ import annotations
 
 import json
 import sys
-from pathlib import Path
 
 import yaml
-
 from _generators import DATA_ROOT  # type: ignore[import-not-found]
-
 
 TIER_DIRS: dict[str, tuple[str, str]] = {
     # dir_name: (default_tier_guess, default_category_guess)
@@ -44,18 +41,37 @@ def infer_refresh(tier: str, category: str) -> str:
 
 
 def scan_dir(subdir: str) -> list[dict]:
-    """Return manifest entries for all JSON catalogs in DATA_ROOT/subdir."""
+    """Return manifest entries for all catalog files in DATA_ROOT/subdir.
+
+    Accepts both JSON (``.json``) and YAML (``.yaml`` / ``.yml``) catalog
+    files (v0.10.3+). Both formats produce the same dict shape; the
+    extension is preserved in the manifest's ``path`` field so the
+    loader knows which parser to dispatch.
+    """
     dir_path = DATA_ROOT / subdir
     if not dir_path.exists():
         return []
     tier_default, category_default = TIER_DIRS[subdir]
     entries: list[dict] = []
 
-    for path in sorted(dir_path.glob("*.json")):
+    candidates = sorted(
+        list(dir_path.glob("*.json"))
+        + list(dir_path.glob("*.yaml"))
+        + list(dir_path.glob("*.yml"))
+    )
+    for path in candidates:
         try:
-            with open(path, encoding="utf-8") as f:
-                data = json.load(f)
-        except (OSError, json.JSONDecodeError) as exc:
+            text = path.read_text(encoding="utf-8")
+            if path.suffix.lower() in (".yaml", ".yml"):
+                data = yaml.safe_load(text)
+                if not isinstance(data, dict):
+                    raise ValueError(
+                        f"YAML top-level must be a mapping, got "
+                        f"{type(data).__name__}"
+                    )
+            else:
+                data = json.loads(text)
+        except (OSError, json.JSONDecodeError, yaml.YAMLError, ValueError) as exc:
             # Surface the skip explicitly (stderr, not stdout, so it
             # doesn't pollute the manifest summary going to a pipe).
             # Silent drops would otherwise produce a smaller frameworks.yaml
