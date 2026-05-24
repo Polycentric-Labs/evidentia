@@ -1597,6 +1597,131 @@ referenced in the v0.9.9 entry above; it runs before the v1.0
 domain-expert walk-through, and any gaps it surfaces feed back into the
 backlog.
 
+### v0.10.5 — OSS first-mover artifacts — PLANNED (added 2026-05-24)
+
+Sourced from the Phase B audit re-run + 6-stream Evidentia-integration
+research synthesis (`~/.claude/skills/pre-release-review/_audits/evidentia-integration-plan-2026-05-24.md`).
+Full plan at [`docs/v0.10.5-plan.md`](v0.10.5-plan.md). Headline:
+Evidentia ships **4 first-of-its-kind OSS artifacts**, each currently
+absent from the public ecosystem (confirmed via `gh api search/code` +
+ecosystem scan):
+
+1. **First public OSCAL serialization of OpenSSF OSPS Baseline**
+   (zero prior in `usnistgov/oscal-content` / `oscal-club/awesome-oscal`
+   / `IBM/compliance-trestle` / `lula-tool` / OpenSCAP).
+2. **First public `OSPS-CONFORMANCE.md` self-attestation**
+   (`gh api search/code "OSPS-CONFORMANCE.md"` returns 0).
+3. **First Tier-A OSPS-Baseline bundled control catalog set** in any
+   GRC tool (3 maturity files matching existing
+   `fedramp-rev5-{low,moderate,high}` + `cmmc-2-{l1,l2,l3}` precedent).
+4. **First Apache-2.0 machine-readable EU AI Act ↔ ISO/IEC 42001
+   crosswalk** (deferred to v0.11 per RF4; v0.10.5 sets up the
+   bundled OSPS Baseline crosswalk infrastructure that v0.11 reuses).
+
+v0.10.5 phases: (1) OSPS Baseline 3-maturity catalog set; (2) OSCAL
+conversion + upstream PR to `oscal-club/awesome-oscal` (separate
+publishing approval); (3) `OSPS-CONFORMANCE.md` + machine-readable
+companion + CI gate; (4) `SECURITY.md` + `security.txt` + GitHub
+Security Advisories enablement (separate `gh api` approval); (5)
+`EOL.md` + `docs/verification.md` consumer-side cosign + PEP 740
+recipes; (6) positioning §16 skip-by-reuse note. ~2 weeks scope.
+
+### v0.10.6 — OSPS crosswalks + GitHub collector extension — PLANNED
+
+5 OSPS-Baseline crosswalks for free (osps-baseline →
+nist-ssdf-800-218, nist-csf-2.0, eu-cra, pci-dss-4.0, nist-800-161)
+auto-generated from the upstream OSPS `guidelines[]` array — one
+crosswalk per OSPS family with ~10 external references each.
+GitHub-collector extension for ~15 OSPS controls across the AC + BR
++ GV + VM families (reuses existing Dependabot SLA infrastructure
+for OSPS-VM-05). Workflow `permissions:` audit for OSPS-AC-04.01/02
+partial closure.
+
+### v0.11 — Federal-compliance theme + AI governance — PLANNED (post-deep-dive)
+
+Sourced from Phase B audit v3 + integration plan §"Per-release
+detailed integration plan" §v0.11. Substantive minor (~6-8 weeks):
+
+- **KSI (Key Security Indicators) emission** as continuous OSCAL
+  evidence feeds — wires as third output mode on `evidentia conmon`
+  alongside the 7 bundled cadences shipped v0.9.0. Aligns to
+  **FedRAMP 20x March 2026 pilot → Q3 2026 public rollout** (NIST +
+  GSA expectations harden Q3 2026; this is the v0.10.x integration-
+  survey OCSF/MCP positioning advantage made concrete for the
+  federal lane). Evidentia's natural slot per Phase B Stream E4: OSS
+  engine for the audit-quality middle layer between Trestle (raw
+  OSCAL SDK) and RegScale (commercial FedRAMP package generator).
+- **`evidentia incident emit --format dora-art-17`** (DoraIncident
+  Pydantic record + `classify_dora()` per RTS 2024/1772 Art. 8 +
+  Art. 9; auto-POA&M creation for 4h/24h/72h/1-month reporting
+  clocks). **First Apache-2.0 OSS DORA Art. 17 reference emitter**
+  (closed-source GRC vendors embed this inside paid platforms; no
+  public OSS implementation exists). CIR 2025/302 Annex I/II/III/IV
+  template alignment.
+- **`nist-sp-800-218a-ai-coding` Tier-B bundled catalog** — 11
+  controls covering the AI-assisted-code-production subset of NIST
+  SP 800-218A (vs the broader AI-model-development scope). Pair
+  with `docs/ai-coding-policy.md` template (CLAUDE.md /
+  .cursorrules / copilot-instructions.md skeleton ready for clients
+  to fork). Strong dogfood narrative: Evidentia uses Claude Code to
+  develop itself.
+- **AI-governance crosswalk enrichment** 4-phase: (Phase 1) ISO
+  27001:2022 Amendment 1:2024 Climate as in-catalog addendum to
+  `iso-27001-2022.yaml`; (Phase 2) NIST AI 600-1 GenAI Profile +
+  ISO/IEC 23894 as Tier-B catalogs; (Phase 3) **first Apache-2.0
+  machine-readable EU AI Act ↔ ISO/IEC 42001 crosswalk** —
+  `docs/crosswalks/eu-ai-act-to-iso-42001.yaml` clean-room from EU
+  AI Act Annex III + ISO 42001 Clauses 4-10 + Annex A controls
+  (zero public OSS equivalent); (Phase 4) Council of Europe AI
+  Convention (CETS 225) Tier-C stub.
+- **`evidentia vex publish --rekor`** — Sigstore Rekor attestation
+  via `cosign attest --type openvex`. Closes OSPS-VM-04 maturity-3
+  control + CISA SbD Goal 6 alignment.
+- **VSA (Verification Summary Attestation) emit** per SLSA v1.2 —
+  `evidentia oscal vsa <ar.json>` → consumer-facing verification
+  policy. Closes SLSA Source Track L2 claim path.
+- **Auto-generate `docs/security-review-vX.Y.Z.md`** from per-run
+  JSON via skill v5.1 Q9 mechanism.
+- **DORA-metrics extractor** `scripts/extract_dora_metrics.py` —
+  passive collection across 30+ Evidentia releases reading per-run
+  JSONs → MTTR / lead-time / change-failure-rate / bypass-rate.
+  Enables ESEM 2027 SEIP short-paper submission.
+- **arXiv preprint authored**: "Evidentia: OSS Reference
+  Implementation of Computational Compliance for Multi-Framework
+  Regulatory Assurance" — 6-8pp, cites Marino & Lane (arXiv:2601.04474)
+  blueprint, establishes priority before another impl beats Evidentia
+  to the generalist-GRC-OSCAL niche.
+- **Refresh `docs/integration-survey.md` competitive section**
+  post-operator-deep-dive (incorporate AWS OSCAL MCP / Vanta MCP /
+  ComplianceCow MCP / Snyk AI Trust Platform shifts).
+
+### v1.1+ — Commercial-tier launch + remaining audit items — RESERVED (added 2026-05-24)
+
+Items deferred from Phase B audit v3 + integration plan §"v1.1+":
+
+- Multi-tenant RBAC full CLI/REST wire (commercial Pro tier per
+  v0.10.2 OSS-vs-paid lock-in; primitives shipped v0.9.7).
+- PR-time auto-blocking workflow (OSS, NOT Pro carve-out per
+  RF3 — closes OSPS-VM-05 + VM-06 maturity-3 controls; per
+  Phase B audit, this is a 100-LOC workflow YAML that should
+  stay OSS to preserve open-core moat integrity).
+- AIReg-Bench adapter (`evidentia_eval/aireg_bench.py`) — scores
+  Evidentia against Marino & Lane benchmark; establishes
+  computational-compliance reference-implementation priority.
+- Auto-redaction script for per-run JSON publication
+  (`scripts/redact_for_publication.py`) — strips client-PII;
+  enables public dataset release alongside ESEM 2027 paper +
+  pairs with MSR 2027 Mining Challenge candidacy.
+- ESEM 2027 SEIP short-paper submission (~May 2027 deadline)
+  OR ICSE 2027 Demonstrations track (4-6pp tool demo).
+- Persona modes full UX (auditor / engineer / TPRM) for Pro tier.
+- Hosted federal-cloud variant (Federal tier).
+- **OpenSSF Best Practices Badge Gold tier** — unblocked only
+  when Polycentric-Labs has ≥2 active core maintainers (tied to
+  commercial-tier hiring milestone per `evidentia_commercial_strategy.md`).
+- Architectural Tier 3 items from Phase B audit v3 (control-chart
+  script ships skill-side; dynamic-install eBPF scan; etc.).
+
 ## v1.0 — Federal compliance shipped + API stability — RESERVED
 
 See [`docs/v1.0-transition.md`](v1.0-transition.md) for the full

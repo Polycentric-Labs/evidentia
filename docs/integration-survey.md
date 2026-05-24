@@ -258,7 +258,114 @@ everything after it cheap, and defers the items (enterprise GRC
 interchange, hosted marketplace) whose value depends on customer pull
 that does not yet exist.
 
-## 8. Sources
+## 8. v0.10.5 research-pass additions (2026-05-24)
+
+The Phase B audit research pass (6 parallel streams; HF MCP `paper_search`
++ Perplexity ask + targeted WebFetch) surfaced four high-leverage
+integration moves Evidentia can ship as **first-of-its-kind OSS
+artifacts**. Each becomes a citable claim in its own right because no
+other OSS project has shipped it. Sequenced into v0.10.5 — see
+[`v0.10.5-plan.md`](v0.10.5-plan.md).
+
+### 8.1 OpenSSF OSPS Baseline OSCAL conversion (FIRST-MOVER)
+
+The OpenSSF **OSPS Baseline v2026.02.19** ships as Markdown only — 41
+controls × 3 maturity levels × 8 control families (AC / BR / DO / GV /
+LE / QA / SA / VM). **No OSCAL conversion exists in the OSS ecosystem.**
+v0.10.5 Phase 2 ships the conversion as an OSCAL catalog + profile pair
+(Apache-2.0) and submits the catalog upstream to
+`ossf/security-baseline`. Evidentia becomes the canonical OSCAL surface
+for the baseline that defines OSS-project security hygiene — directly
+adjacent to where Evidentia sits in the §5.5 OSS GRC tier.
+
+### 8.2 FedRAMP 20x readiness — KSI emission posture
+
+FedRAMP **20x** (the "machine-readable continuous-monitoring" pillar of
+the FedRAMP modernization) entered its **Moderate pilot through
+2026-03-31** and the **public rollout lands Q3 2026**. The central
+artifact is **KSIs — Key Security Indicators** delivered as continuous
+OSCAL feeds (a structural extension to assessment-results + POA&M).
+Evidentia's existing OSCAL emit + CONMON daemon (v0.9.6 first-mover) +
+SCR notification surface (v0.9.7) compose into a near-direct KSI
+emitter. v0.11 schedules the KSI binding as a first-mover claim — the
+public rollout coincides with Evidentia's federal-compliance theme
+window. Sources: GSA FedRAMP 20x announcement; CISA CSAW; RegScale
+OSCAL Hub.
+
+### 8.3 OpenVEX 0.2.0 emit (FIRST-MOVER among GRC engines)
+
+**OpenVEX v0.2.0** (CNCF; JSON-LD; status enum
+`{not_affected, affected, fixed, under_investigation}`) is the emerging
+VEX format for vulnerability-exploitability statements. **Dependency-
+Track does NOT consume OpenVEX (only CycloneDX VEX)**; GUAC is the only
+mature OSS consumer. Evidentia's planned **`evidentia vex emit`** verb
+(v0.11) makes it the first OSS GRC engine to emit OpenVEX statements
+alongside its CycloneDX SBOM — the natural bridge between Evidentia's
+supply-chain artifacts (§2) and the wider supply-chain-VEX ecosystem.
+Coupled with a Grype subprocess wrapper (Grype emits neither `-o vex`
+nor `-o ocsf` natively — needs a thin wrapper) this closes the
+"vulnerability triage as compliance evidence" loop.
+
+### 8.4 CISA Secure by Design (SbD) Pledge — first OSS signatory
+
+The CISA **Secure by Design Pledge** (~100 signatories as of May 2026,
+**all commercial vendors**) has seven goals. **No OSS project has
+signed.** Evidentia is uniquely positioned to be the first — every goal
+maps onto existing Evidentia work (MFA-by-default, default deny on the
+MCP surface, vulnerability disclosure, evidence of patching cadence,
+etc.). v0.10.5 Phase 4 ships **SECURITY.md** + a **security.txt** + the
+**SbD pledge SELFATTEST** (Markdown form per CISA template) — the first
+OSS project to do so. Cross-stream signal: also closes 4 of the 8
+templates in skill v5.1's "compliance closure bundle".
+
+### 8.5 SLSA Verification Summary Attestation (VSA) emit
+
+SLSA v1.0 introduces **VSAs** as the auditable third-party verification
+artifact (distinct from build provenance). The reference OSS emitter
+(`slsa-framework/slsa-verifier --emit-vsa`) exists but is rare in
+practice. v0.11 schedules `evidentia vsa emit` so each release ships a
+VSA alongside its SLSA Provenance v1 + PEP 740 attestations — the
+verification-loop closure for high-trust operators. Cross-cite with
+NIST SSDF v1.2 IPD (Dec 17 2025 draft) PS.4 ("Robust and Reliable
+Updates") which formalizes update-attestation as a normative
+expectation.
+
+### 8.6 Cross-reference table — first-mover claims
+
+| Artifact | First-mover scope | Phase | Ships |
+|---|---|---|---|
+| OSPS Baseline OSCAL conversion + upstream PR | First OSCAL conversion of the OpenSSF OSPS Baseline | v0.10.5 P2 | OSCAL catalog + profile in `marketplace/oscal/` |
+| OSPS-CONFORMANCE.md + CI gate | First OSS project to publish a self-conformance statement against OSPS Baseline | v0.10.5 P3 | `docs/OSPS-CONFORMANCE.md` + `.github/workflows/osps-conformance.yml` |
+| CISA SbD Pledge SELFATTEST | First OSS signatory of the CISA Secure by Design Pledge | v0.10.5 P4 | `docs/SECURE-BY-DESIGN-PLEDGE.md` + signal upstream |
+| OpenVEX emit | First OSS GRC engine to emit OpenVEX 0.2.0 | v0.11 P3 | `evidentia vex emit` CLI verb |
+| FedRAMP 20x KSI emit | First OSS engine to emit Key Security Indicators as continuous OSCAL | v0.11 P5 | `evidentia conmon ksi-emit` CLI verb |
+| SLSA VSA emit | First OSS GRC engine to emit SLSA VSAs alongside provenance | v0.11 P4 | `evidentia vsa emit` CLI verb |
+
+### 8.7 AWS OSCAL MCP cross-reference
+
+`awslabs/oscal-mcp-server` (Apache-2.0; `samples/` archived shape — not
+a service) is the only other OSCAL-aware MCP server in the OSS
+ecosystem as of May 2026. Its scope is **knowledge-tool only** —
+answers OSCAL schema + 800-53 / 800-171 catalog questions via embedded
+references; does **not** emit OSCAL artifacts. Evidentia's MCP server
+(§4.3) goes structurally further: emits component-definition / SSP /
+assessment-results / POA&M / VEX / VSA. Worth cross-citing as the only
+OSCAL-MCP precedent; not a competitor. See [positioning-and-value.md
+§5.5](positioning-and-value.md) for the same cross-reference in the OSS
+GRC tier table.
+
+### 8.8 ComplianceCow MCP cross-reference
+
+`compliancecow/cowmcp` (Apache-2.0 server; ComplianceCow backend
+proprietary) is the **only other OSS GRC MCP server besides Evidentia's
+`evidentia mcp serve`**. The shape difference: ComplianceCow MCP is a
+thin facade over a SaaS backend (14 tools, all hitting the
+ComplianceCow API), whereas Evidentia is a self-contained runtime
+engine. Worth cross-citing as the only other OSS GRC MCP — and as the
+honest-landscape entry "two OSS GRC MCP servers exist as of May 2026,
+both Apache-2.0".
+
+## 9. Sources
 
 - [OCSF — Open Cybersecurity Schema Framework](https://ocsf.io/)
 - [OCSF achieves ITU support (AWS Open Source Blog)](https://aws.amazon.com/blogs/opensource/ocsf-achieves-itu-support-powering-ai-ready-security-operations/)
@@ -276,6 +383,20 @@ that does not yet exist.
 - [OpenSSF — introducing the Gemara model](https://openssf.org/blog/2026/03/09/introducing-the-gemara-model/)
 - [GRCEngClub/claude-grc-engineering](https://github.com/GRCEngClub/claude-grc-engineering)
 - [NIST AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework)
+
+**Added 2026-05-24 (v0.10.5 research-pass sources):**
+
+- [OpenSSF OSPS Baseline](https://github.com/ossf/security-baseline) (v2026.02.19; Apache-2.0)
+- [CISA Secure by Design Pledge](https://www.cisa.gov/securebydesign/pledge) (7 goals; ~100 signatories May 2026; zero OSS)
+- [OpenVEX v0.2.0 specification](https://github.com/openvex/spec) (JSON-LD)
+- [SLSA v1.0 Verification Summary Attestation (VSA)](https://slsa.dev/spec/v1.0/verification_summary)
+- [NIST SSDF v1.2 IPD](https://csrc.nist.gov/pubs/sp/800/218/r1/ipd) (Dec 17 2025 initial public draft; PS.4 + PO.6 + RV.1.2)
+- [NIST SP 800-218A — AI Profile](https://csrc.nist.gov/pubs/sp/800/218/a/final) (FINAL July 26 2024)
+- [FedRAMP 20x announcement (GSA)](https://www.fedramp.gov/blog/2025-02-27-introducing-fedramp-20x/)
+- [awslabs/oscal-mcp-server](https://github.com/awslabs/oscal-mcp-server) (Apache-2.0; knowledge tool)
+- [compliancecow/cowmcp](https://github.com/compliancecow/cowmcp) (Apache-2.0 MCP server)
+- [Marino & Lane — Computational Compliance for AI Regulation (arXiv 2601.04474)](https://arxiv.org/abs/2601.04474)
+- [Khatchadourian — DFAH v2 (arXiv 2601.15322v2)](https://arxiv.org/abs/2601.15322v2)
 
 ---
 

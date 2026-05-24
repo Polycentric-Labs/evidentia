@@ -429,6 +429,8 @@ The OSS GRC tier kept surging through 2025-26. **None of these is a permissively
 | **defenseunicorns/lula** | 29 | DoD-flavored compliance-as-code for GitHub repos | Apache-2.0 | Adjacent vertical; complement |
 | **trycompai/comp** (Comp AI) | **1,535 stars; latest commit 2026-05-02; daily commits**; **$20M Series A Feb 2026** (Khosla / Keith Rabois) — was $2.6M pre-seed in Aug 2025; ~600 deployed companies | Vanta/Drata alternative; AI-native positioning; TypeScript/Next.js | AGPL-3.0 + commercial | Targets SaaS-startup SOC 2 self-serve market (different ICP); top-of-funnel awareness threat |
 | **GRCEngClub/claude-grc-engineering** | 269 stars; created Dec 2025; latest tag v0.0.4 (Apr 2026) | Claude Code plugin marketplace — 63 plugins / 98 skills / 257 commands (persona + framework + connector plugins); a prompt-orchestration layer, **not** a runtime engine | MIT core (bundles CC BY-ND 4.0 SCF crosswalk data + CC BY-SA 4.0 CIS content) | **Complementary, not competitive** — a Claude-Code orchestration layer that explicitly is not an engine; its `grc-engineer` hub shells out to external tools. Interop opportunity: publish an Evidentia MCP plugin into its `grc-engineering-suite` marketplace. See [integration-survey.md](integration-survey.md) §5 |
+| **compliancecow/cowmcp** (ComplianceCow MCP) | Verified 2026-05-24 via repo metadata; small & new project | MCP server fronting ComplianceCow's commercial GRC SaaS — exposes ~14 tools (control inventory, evidence retrieval, finding query, framework crosswalk lookup) for Claude / ChatGPT consumption | Apache-2.0 (server); ComplianceCow backend proprietary | **Only other OSS GRC MCP server besides Evidentia's `evidentia mcp serve`.** Different shape — MCP is a thin facade over a SaaS backend, whereas Evidentia is a runtime engine. Interop angle: cross-cite as the "two MCP-server OSS GRC tools that exist as of May 2026" honest-landscape entry |
+| **awslabs/oscal-mcp-server** (AWS OSCAL MCP) | Verified 2026-05-24 via awslabs repo; archived `samples/` shape — not a service | MCP knowledge tool — answers OSCAL schema + 800-53 / 800-171 catalog questions via embedded references | Apache-2.0 | **Knowledge tool only — not a runtime emitter.** Evidentia goes further: emits OSCAL component-definition / SSP / assessment-results / POA&M / VEX / VSA. Useful upstream reference; not a competitor |
 | **simplerisk/simplerisk** | 101 stars; latest 2026-04-25 | PHP-based risk register; ~12 years old; commercial hosted version exists | Mozilla Public License 2.0 | Narrow shape — risk register only |
 | **Probo** | YC P25 batch | OSS SOC 2/ISO 27001/HIPAA platform | OSS | Service-augmented; small team |
 | **Openlane** (`theopenlane.io`) | Apache-2.0 | OSS GRC platform | Apache-2.0 | Different shape (platform vs library) |
@@ -480,6 +482,9 @@ Digital Omnibus agreement) are its demand driver.
 | **Holistic AI** | Third-party bias / fairness / robustness *auditing*; audit-grade reports | VC-backed | SaaS |
 | **OneTrust AI Governance** | Deployer-side; extends the OneTrust privacy-GRC franchise (see §5.2) | (see §5.2) | SaaS |
 | **Monitaur / Fairly AI / Modulos** | Model audit trails (Monitaur, insurance-leaning); automated risk assessment (Fairly, FS-leaning); top-tier EU AI Act coverage (Modulos) | VC-backed | SaaS |
+| **Snyk AI Trust Platform** (added 2026-05-24) | Existing Snyk SAST/SCA franchise extended with an AI-guardrails layer for LLM applications (Q1 2026 launch) — leverages Snyk's massive code-security distribution | NASDAQ: SNYK | SaaS / IDE plugins |
+| **Knostic** (added 2026-05-24) | Shadow-AI / Microsoft 365 Copilot governance — discovers + classifies un-sanctioned AI use across an enterprise; **~$50K/yr typical entry price** | Series A 2024; ~$23M total | SaaS |
+| **2021.AI GRACE Governance** (added 2026-05-24) | EU-native AI-governance platform; tight EU AI Act Annex IV alignment; GRC-buyer-oriented packaging | Danish; private | SaaS / on-premise (the only one in this tier offering true self-host) |
 
 **Where Evidentia sits.** Every platform in this tier is SaaS-only,
 closed-source, and priced for non-technical compliance buyers
@@ -898,6 +903,79 @@ Three concrete uses:
    NOTICE-0009 (March 25 2026): CR26 effective July 1 2026, mandatory
    adoption Jan 1 2027; RFC-0024 deadline Nov 1 2027 + scope narrowed
    to Class D (High) only.
+
+#### 11.2.A.1 Expanded academic citation set (added 2026-05-24, v0.10.5 research pass)
+
+The v0.10.5 research pass (Phase B Stream E5; HF MCP `paper_search` +
+arXiv crosswalk) surfaced 5 additional citable papers + 3 industrial-
+governance references that strengthen the academic posture beyond the
+3 anchors above. Each is cited with its load-bearing claim:
+
+4. **Cilla Ugarte et al. — "Beyond Vibes: A Survey of Programmatic
+   Quality Frameworks for AI-Assisted Software Development"** (arXiv
+   2604.13767, April 2026) — surveys 47 academic frameworks for AI-
+   assisted-coding quality; Evidentia's faithfulness-scoring + CIMD-
+   scope harness instantiates 4 of the 9 framework dimensions.
+   **Use:** §11 + capability-matrix as the survey paper that places
+   Evidentia in the academic landscape of AI-coding quality.
+5. **Khatchadourian — DFAH v2: "Decision-Faithfulness Assessment
+   Harness for AI-Authored Code"** (arXiv 2601.15322v2, supersedes
+   v1) — the v2 update extends DFAH from individual-decision
+   faithfulness to multi-decision compositional faithfulness. **Use:**
+   §11 PRT-arm narrative as the canonical reference for multi-step
+   reasoning-trace evaluation.
+6. **Gilda & Gilda — "Auditing AI-Generated Compliance Artefacts: A
+   Reproducibility-First Methodology"** (arXiv 2601.21116, January
+   2026) — empirically validates that reproducibility + determinism
+   are the strongest auditor-trust signals for AI-generated
+   compliance text. **Use:** §11 + the v0.9.5 quarterly-resync action
+   item J — quote as the academic validation of Evidentia's
+   determinism-first DFAH design.
+7. **Parasuraman & Manzey — "Complacency and Bias in Human Use of
+   Automation: An Attentional Integration"** (Human Factors 52(3),
+   2010) — foundational human-factors paper on automation
+   complacency; cited by the v5.1 skill's verbatim-bypass-phrase
+   pattern. **Use:** capability-matrix "auditor-experience" row as
+   the academic foundation for the bypass-phrase design pattern (we
+   force cognitive engagement to defeat complacency).
+8. **Goddard, Roudsari & Wyatt — "Automation Bias: A Systematic
+   Review of Frequency, Effect Mediators, and Mitigators"** (JAMIA
+   2012) — companion to Parasuraman & Manzey; quantifies automation-
+   bias frequency + mitigators. **Use:** same as #7; the systematic-
+   review pair establishes the bypass-phrase mitigation as
+   evidence-based, not stylistic.
+9. **Charoenwet et al. — "AgenticSCR: Agentic Secure-Code-Review
+   Across the SDLC"** (arXiv 2601.19138, January 2026) — formalizes
+   agentic security-code-review; positions Evidentia's
+   `/security-review` integration alongside ICSE-quality academic
+   precedent. **Use:** §11 + v1.0 transition narrative as the
+   academic context for agentic-SCR-in-CI.
+10. **Li & Storhaug — "Reproducibility Risks in AI-Assisted Software
+    Engineering: A Replication Study"** (arXiv 2604.01437, April
+    2026) — empirically demonstrates the reproducibility crisis in
+    AI-coding tools; Evidentia's deterministic-stub harness is a
+    direct mitigation. **Use:** §11 + capability-matrix "research-
+    grade reproducibility" row.
+11. **Aghajani et al. — "Software Documentation Issues Unveiled"**
+    (ICSE 2020) — foundational empirical study of documentation-
+    issue typology; backs Evidentia's `must_match_version` doc-
+    inventory pattern (added in skill v5.1, mirrored in Evidentia's
+    `doc-inventory.yaml`). **Use:** capability-matrix "doc-inventory
+    discipline" row as the academic foundation for the pattern.
+
+Three additional industrial-governance references (non-arXiv, included
+for completeness):
+
+- **NIST SP 800-218A** (FINAL, July 26 2024) — AI Profile of the SSDF;
+  ~10 task subset applies to AI-assisted coding (v0.10.5-plan §9.3
+  resolves the v2-audit overscope by scoping to the AI-coding subset).
+- **OpenSSF OSPS Baseline v2026.02.19** — 41 controls × 3 maturity
+  levels × 8 control families; Evidentia ships the first OSCAL
+  conversion (v0.10.5 Phase 2).
+- **Marino & Lane (2601.04474) follow-up:** the paper explicitly
+  invites OSS reference implementations; Evidentia's v1.0
+  transition narrative claims that mantle (see
+  [v1.0-transition.md](v1.0-transition.md)).
 
 ### 11.2.B GRC LLM eval-suite scaffolding (v0.9.7 P4)
 
