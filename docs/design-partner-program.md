@@ -19,7 +19,9 @@
 
 ## 1. The offer (DRAFT — Allen-review required)
 
-**Service name (DRAFT):** Evidentia CMMC L2 / FedRAMP Evidence Pipeline Setup
+**Service name (LOCKED 2026-05-25 per 4-lens triple-validated naming research):** **Evidentia CMMC + FedRAMP Readiness Accelerator**
+
+> *Naming research findings (private/soc2-rfp-outreach-emails.md companion logged 2026-05-25):* 4 independent lenses (GPT-5.5 procurement / Gemini 3.1 Pro CT copywriting / Grok-4.20-MA hostile / Perplexity industry-pattern) converged on the **`[Framework] + Readiness + Accelerator`** formula as the federal-CMMC-acceptable pattern. Industry comparables: A-LIGN "CMMC Readiness Assessment", Schellman "FedRAMP Readiness", Coalfire "FedRAMP Accelerated". "Sprint" and "Bootstrap" were explicitly rejected (agile/dev jargon at odds with federal compliance rigor + startup jargon that doesn't appear in CMMC guidance). The "Foundry" sub-brand under Byrd Foundry LLC is reserved as a candidate for the eventual commercial-tier suite pending trademark verification.
 
 **One-paragraph description:**
 
@@ -46,7 +48,7 @@ size and complexity of the in-scope cloud + SaaS surface.
 | Standard | 2 frameworks (CMMC L2 + NIST 800-171 r3), multi-account AWS, GitHub Enterprise, Okta + ServiceNow, ≤120 controls | $45,000 |
 | Comprehensive | 3+ frameworks (e.g., CMMC L2 + FedRAMP Moderate + ISO 27001), multi-cloud, full SaaS surface, ≤250 controls | $75,000 |
 
-**Above $75K**: custom scoping conversation. Anything that crosses into Pro/Enterprise/Federal commercial-tier feature territory (multi-tenant RBAC, SSO/SAML, FedRAMP 20x machine-readable packages, IL4/IL5 deployment guides) is OUT OF SCOPE for the Setup engagement and deferred to the post-v1.0 commercial tier.
+**Above $75K**: custom scoping conversation. Anything that crosses into Pro/Enterprise/Federal commercial-tier feature territory (multi-tenant RBAC, SSO/SAML, FedRAMP 20x machine-readable packages, IL4/IL5 deployment guides) is OUT OF SCOPE for the Readiness Accelerator engagement and deferred to the post-v1.0 commercial tier.
 
 ## 2. Who this is for (target buyer enumeration)
 
@@ -62,7 +64,7 @@ In order of likely fit-velocity:
 
 ## 3. What's included
 
-The Setup engagement delivers all of the following:
+The Readiness Accelerator engagement delivers all of the following:
 
 1. **Environment provisioning**: install Evidentia container or PyPI in your environment. Wire AWS / GitHub / Okta / ServiceNow / SQL / Databricks / Snowflake collectors against your actual accounts using least-privilege credentials.
 2. **Framework selection + gap-baseline**: walk through Evidentia's 89 bundled catalogs with your team, select the in-scope frameworks, run the first gap analysis. Document the gap baseline.
@@ -76,7 +78,7 @@ The Setup engagement delivers all of the following:
 
 ## 4. What's NOT included
 
-To preserve the OSS-purity-through-v1.0 commitment and the future commercial tier boundaries, the Setup engagement explicitly does NOT include:
+To preserve the OSS-purity-through-v1.0 commitment and the future commercial tier boundaries, the Readiness Accelerator engagement explicitly does NOT include:
 
 - ❌ Hosting Evidentia for you (operator runs Evidentia themselves; no SaaS).
 - ❌ Multi-tenant RBAC / SSO / SAML / SCIM — these are Enterprise-tier features post-v1.0.
@@ -110,15 +112,15 @@ The first 3-5 design partners get:
 
 ## 7. Why this works alongside the pure-OSS v1.0 commitment
 
-The Evidentia repo at [Polycentric-Labs/evidentia](https://github.com/Polycentric-Labs/evidentia) stays Apache-2.0 forever; v1.0 ships as the OSS milestone with the API stability commitment + the federal-compliance primitives + the OSPS Baseline Maturity 2 acceptance. The Setup engagement is a paid services layer that runs on top of the OSS — it doesn't gate any OSS features behind a paywall, doesn't fork the codebase, and doesn't change the v1.0-pure-OSS posture in any way.
+The Evidentia repo at [Polycentric-Labs/evidentia](https://github.com/Polycentric-Labs/evidentia) stays Apache-2.0 forever; v1.0 ships as the OSS milestone with the API stability commitment + the federal-compliance primitives + the OSPS Baseline Maturity 2 acceptance. The Readiness Accelerator engagement is a paid services layer that runs on top of the OSS — it doesn't gate any OSS features behind a paywall, doesn't fork the codebase, and doesn't change the v1.0-pure-OSS posture in any way.
 
-The eventual commercial-tier packages (Pro / Enterprise / Federal) ship post-v1.0 as **separate PyPI packages in separate private repos with proprietary licenses**, per the locked 2026-05-15 commercial strategy decision. The Setup engagement bridges the v0.10.x → v1.0 → v1.1+ commercial-tier timeline by giving the project a paid-revenue + reference-customer foundation that doesn't depend on the OSS source code becoming non-OSS.
+The eventual commercial-tier packages (Pro / Enterprise / Federal) ship post-v1.0 as **separate PyPI packages in separate private repos with proprietary licenses**, per the locked 2026-05-15 commercial strategy decision. The Readiness Accelerator engagement bridges the v0.10.x → v1.0 → v1.1+ commercial-tier timeline by giving the project a paid-revenue + reference-customer foundation that doesn't depend on the OSS source code becoming non-OSS.
 
 ## 8. Open questions for Allen review
 
 Before this doc goes external (private LinkedIn outreach, federal-SI partner conversation, design-partner kickoff), Allen needs to decide:
 
-1. **Naming**: "Evidentia CMMC L2 / FedRAMP Evidence Pipeline Setup" — accept, or rename? Alternative: "Compliance Pipeline Setup", "Evidence Engine Bootstrap", "OSCAL Native Adoption Engagement". Which lands better?
+1. **Naming**: ✅ **LOCKED 2026-05-25** as "Evidentia CMMC + FedRAMP Readiness Accelerator" per 4-lens triple-validated naming research (GPT-5.5 / Gemini 3.1 Pro CT / Grok-4.20-MA / Perplexity industry-pattern). See §1 service-name block for the convergent rationale. The "Evidence Foundry" sub-brand under Byrd Foundry LLC is reserved as a candidate for the eventual commercial-tier suite pending trademark verification.
 
 2. **Price band**: $25K-$75K is research-derived. Is the SMB anchor ($25K) too low to filter out non-buyers / too low to be sustainable? Is $75K too high for a Comprehensive engagement? Should there be a flat-fee Starter / Standard / Comprehensive structure or always custom-scoped?
 
@@ -130,7 +132,7 @@ Before this doc goes external (private LinkedIn outreach, federal-SI partner con
 
 6. **Discovery-call funnel**: who handles inbound interest? Solo founder (Allen) for all calls? At what volume does that become unsustainable?
 
-7. **Conflicts with current employment / income / time**: Allen is investing time + money in this project without revenue yet. The Setup engagement could conflict with primary income / employment. Decision needed on how much engagement bandwidth is realistic for the next 90 days — 1 engagement at a time? 2 in parallel? Maximum of N during the v0.10.x → v1.0 cycle?
+7. **Conflicts with current employment / income / time**: Allen is investing time + money in this project without revenue yet. The Readiness Accelerator engagement could conflict with primary income / employment. Decision needed on how much engagement bandwidth is realistic for the next 90 days — 1 engagement at a time? 2 in parallel? Maximum of N during the v0.10.x → v1.0 cycle?
 
 8. **Partnership / channel layer**: should this be sold direct, or through a federal-SI partner channel (the partner sells; Allen delivers)? Direct gives Allen full margin but slower deal velocity; channel gives faster velocity but ~50% margin to the partner.
 
