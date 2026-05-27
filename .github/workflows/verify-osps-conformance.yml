@@ -100,33 +100,150 @@ jobs:
 
           print(f"::notice::Parsed {len(claims)} PASS-claimed controls; verifying evidence URLs...")
 
+          # The repo coordinates (owner/repo) for translating
+          # html-render URLs into API endpoints. Pinned here rather
+          # than read from $GITHUB_REPOSITORY so the workflow stays
+          # functional if a fork triggers it via PR — evidence URLs
+          # in this doc always point at the upstream repo.
+          OWNER_REPO = "Polycentric-Labs/evidentia"
+
+          # Translate an HTML-render URL like
+          #   https://github.com/OWNER/REPO/blob/main/SECURITY.md
+          # into an API endpoint that returns a clean 404 on missing
+          # files:
+          #   repos/OWNER/REPO/contents/SECURITY.md?ref=main
+          #
+          # WHY: GitHub's HTML renderer can return HTTP 200 with a
+          # "Page Not Found" body for paths under a public repo even
+          # when the file does NOT exist on `main` HEAD (depending on
+          # auth state + caching layer behavior). The contents-API
+          # endpoint is the documented "does this path exist on this
+          # ref" check and returns a clean 404. Same logic applies
+          # to /tree/main/<dir>, /releases/tag/<tag>, and
+          # /commits/main URLs — each has a corresponding API form
+          # that returns true 404 on missing resources.
+          #
+          # URL shapes that DON'T match any translation rule fall
+          # through to the original gh-api-on-html-URL behavior with
+          # a workflow annotation noting the unverified shape, so the
+          # gate remains best-effort for novel URL forms rather than
+          # silently passing them.
+          html_blob_re = re.compile(
+              rf"^https?://github\.com/{re.escape(OWNER_REPO)}/blob/main/(.+)$"
+          )
+          html_tree_re = re.compile(
+              rf"^https?://github\.com/{re.escape(OWNER_REPO)}/tree/main/(.+)$"
+          )
+          html_release_tag_re = re.compile(
+              rf"^https?://github\.com/{re.escape(OWNER_REPO)}/releases/tag/([^/?#]+)$"
+          )
+          html_commits_re = re.compile(
+              rf"^https?://github\.com/{re.escape(OWNER_REPO)}/commits/([^/?#]+)$"
+          )
+          html_repo_root_re = re.compile(
+              rf"^https?://github\.com/{re.escape(OWNER_REPO)}/?$"
+          )
+
+          def translate_url(url: str) -> tuple[str, str]:
+              """Return (api_endpoint, shape_label) for a doc URL.
+
+              The api_endpoint is suitable to pass directly as a `gh
+              api` positional argument (no scheme — gh api prepends
+              api.github.com). The shape_label is for diagnostic
+              annotations.
+              """
+              m = html_blob_re.match(url)
+              if m:
+                  path = m.group(1)
+                  return (
+                      f"repos/{OWNER_REPO}/contents/{path}?ref=main",
+                      "blob",
+                  )
+              m = html_tree_re.match(url)
+              if m:
+                  path = m.group(1).rstrip("/")
+                  return (
+                      f"repos/{OWNER_REPO}/contents/{path}?ref=main",
+                      "tree",
+                  )
+              m = html_release_tag_re.match(url)
+              if m:
+                  tag = m.group(1)
+                  return (
+                      f"repos/{OWNER_REPO}/releases/tags/{tag}",
+                      "release-tag",
+                  )
+              m = html_commits_re.match(url)
+              if m:
+                  ref = m.group(1)
+                  # contents/?ref=<ref> on the repo root tests the
+                  # ref exists. We use the dedicated branches API
+                  # for branch refs since it returns 404 cleanly on
+                  # missing branches (vs. the contents API which
+                  # returns the root tree, which is less specific).
+                  return (
+                      f"repos/{OWNER_REPO}/branches/{ref}",
+                      "commits-ref",
+                  )
+              if html_repo_root_re.match(url):
+                  return (f"repos/{OWNER_REPO}", "repo-root")
+              # No translation rule matched. Fall back to the
+              # original URL — gh api will route through the HTML
+              # renderer, and the response status is best-effort.
+              # Surface as an annotation so future URL shapes are
+              # visible in CI output.
+              return (url, "unmapped")
+
           url_pattern = re.compile(r"\[[^\]]*\]\((https?://[^\s\)]+)\)")
           failures: list[tuple[str, str]] = []
           checked = 0
           for control_id, evidence_cell in claims:
               for url in url_pattern.findall(evidence_cell):
                   checked += 1
-                  # `gh api` with the URL routes through GitHub's API.
-                  # We look for HTTP 200 (or any 2xx); 404 = failure.
-                  # The `-i` flag includes response headers, which we
-                  # parse for the status line. We do NOT pass the URL
-                  # through any shell interpolation — it goes only to
-                  # `subprocess.run` as a positional argument, blocking
-                  # workflow-injection from doc content.
+                  api_endpoint, shape = translate_url(url)
+                  if shape == "unmapped":
+                      print(
+                          f"::warning::Unmapped URL shape for {control_id}: "
+                          f"{url}. Falling back to direct gh-api on the "
+                          f"HTML URL (best-effort 404 detection).",
+                          file=sys.stderr,
+                      )
+                  # `gh api` routes through GitHub's REST API for
+                  # the translated endpoint. We look for HTTP 404
+                  # explicitly (any 2xx/3xx = pass). The `-i` flag
+                  # includes response headers, which we parse for
+                  # the status line. We do NOT pass the URL through
+                  # any shell interpolation — it goes only to
+                  # `subprocess.run` as a positional argument,
+                  # blocking workflow-injection from doc content.
                   result = subprocess.run(
-                      ["gh", "api", "-i", "-H", "Accept: application/vnd.github+json", url],
+                      [
+                          "gh",
+                          "api",
+                          "-i",
+                          "-H",
+                          "Accept: application/vnd.github+json",
+                          api_endpoint,
+                      ],
                       capture_output=True,
                       text=True,
                       check=False,
                   )
+                  # `gh api` writes the headers to stderr when the
+                  # underlying call returns a non-2xx status (the
+                  # body lands on stdout regardless). Check both
+                  # streams for 404 to be robust to gh's stream
+                  # routing across versions.
+                  combined = result.stdout + "\n" + result.stderr
                   if (
-                      "HTTP/2.0 404" in result.stdout
-                      or "HTTP/1.1 404" in result.stdout
-                      or "HTTP/2 404" in result.stdout
+                      "HTTP/2.0 404" in combined
+                      or "HTTP/1.1 404" in combined
+                      or "HTTP/2 404" in combined
                   ):
                       failures.append((control_id, url))
                       print(
-                          f"::error::404 on evidence for {control_id}: {url}",
+                          f"::error::404 on evidence for {control_id} "
+                          f"(shape={shape}, endpoint={api_endpoint}): {url}",
                           file=sys.stderr,
                       )
 

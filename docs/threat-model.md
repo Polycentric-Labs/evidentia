@@ -3120,10 +3120,17 @@ v0.10.6 Phase 3 (commit C3) introduces a new CI-Actions surface:
 `.github/workflows/verify-osps-conformance.yml`. The workflow parses
 `OSPS-CONFORMANCE.md` on every push to `main`, every pull-request
 targeting `main`, and weekly on a Monday 03:00 UTC cron; it extracts
-every claimed-PASS evidence URL and probes it via `gh api` for HTTP
-200. If any evidence link 404s, the workflow fails and the doc must
-be updated (fix the link, restore the missing file, or downgrade the
-verdict to HONEST_GAP) before the next release.
+every claimed-PASS evidence URL, translates each to the corresponding
+GitHub REST API endpoint (contents API for blob/tree URLs, releases
+API for release-tag URLs, branches API for `/commits/<ref>` URLs),
+and probes via `gh api` for HTTP 200. Translation to REST endpoints
+is mandatory rather than probing the HTML-render URL directly: the
+HTML renderer can return HTTP 200 with a "Page Not Found" body for
+missing paths under a public repo depending on auth state and caching
+layer behavior, while the REST API endpoints return a clean 404 on
+missing resources. If any evidence link 404s, the workflow fails and
+the doc must be updated (fix the link, restore the missing file, or
+downgrade the verdict to HONEST_GAP) before the next release.
 
 This subsection documents the threat model + mitigations for that
 new surface.
@@ -3152,13 +3159,20 @@ Mitigations:
   evidence URLs = ~57 calls per run, well under cap; even a 100x
   pad would still complete within the 10-minute timeout.
 - **Workflow injection**: the parsed evidence URLs are NEVER passed
-  through `eval`, `bash -c`, or any shell interpolation. They go
-  only to `subprocess.run(["gh", "api", "-i", "-H", "Accept: ...",
-  url])` as a positional argument. There is no `${{ github.event.*
-  }}` expansion of doc content. Even a maliciously-crafted URL like
-  `\`rm -rf /\`` would be passed as a literal positional arg to
-  `gh api`, which would return a malformed-URL 404 (caught by the
-  workflow's 404-handler and reported as a verdict failure).
+  through `eval`, `bash -c`, or any shell interpolation. After
+  translation to a REST API endpoint via the `translate_url()`
+  function (which uses pre-compiled `re.match()` against fixed
+  patterns — no `eval`, no shell), the endpoint goes only to
+  `subprocess.run(["gh", "api", "-i", "-H", "Accept: ...",
+  api_endpoint])` as a positional argument. There is no `${{
+  github.event.* }}` expansion of doc content. Even a maliciously-
+  crafted URL like `` `rm -rf /` `` would either (a) fail to match
+  any translation regex and fall through with a `::warning::Unmapped
+  URL shape` annotation + best-effort direct probe, or (b) match
+  and produce an `api_endpoint` of the form
+  `repos/Polycentric-Labs/evidentia/contents/<arbitrary-path>?ref=main`
+  which `gh api` passes as a single positional arg; either way the
+  embedded shell metacharacters never reach a shell interpreter.
 - **CodeQL coverage**: the workflow's embedded Python script is
   Python code; `.github/workflows/codeql.yml` runs CodeQL `python`
   analysis on every push, so any future workflow-injection or

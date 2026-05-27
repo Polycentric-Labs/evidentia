@@ -56,7 +56,13 @@ ID. Evidence links resolve to Evidentia's `Polycentric-Labs/evidentia`
 repository at `main` HEAD. The
 [`.github/workflows/verify-osps-conformance.yml`](.github/workflows/verify-osps-conformance.yml)
 CI gate re-validates every claimed-PASS evidence link on every push
-to `main` (HTTP 200 check via `gh api`).
+to `main`. Each link is translated to the GitHub REST API endpoint
+that authoritatively answers "does this resource exist on this ref"
+(e.g., `/blob/main/<path>` becomes
+`repos/Polycentric-Labs/evidentia/contents/<path>?ref=main`,
+`/releases/tag/<tag>` becomes
+`repos/Polycentric-Labs/evidentia/releases/tags/<tag>`) and probed
+for HTTP 200 via `gh api`; HTTP 404 on any link fails the workflow.
 
 ### OSPS-AC (Access Control)
 
@@ -187,7 +193,14 @@ This conformance claim is re-validated automatically on every push to
 `main` by
 [`.github/workflows/verify-osps-conformance.yml`](.github/workflows/verify-osps-conformance.yml).
 Every claimed-PASS evidence link in the per-control evidence tables
-above is checked via `gh api` for HTTP 200. The workflow also runs:
+above is translated to its corresponding GitHub REST API endpoint
+(contents API for blob/tree URLs, releases API for release-tag URLs,
+branches API for `/commits/<ref>` URLs) and probed via `gh api` for
+HTTP 200. The contents-API path is used rather than the HTML-render
+URL because the HTML renderer can return HTTP 200 with a "Page Not
+Found" body for missing paths under a public repo depending on auth
+state and caching, while the REST API endpoints return a clean 404
+on missing resources. The workflow also runs:
 
 - **on pull_request to main** — catches regression PRs that would
   break a claimed-PASS link before the PR can merge.
