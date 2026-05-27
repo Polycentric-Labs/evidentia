@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# .githooks/commit-msg — blocks tier vocabulary in commit messages.
+#
+# Per Allen's 2026-05-27 directive: commit messages, like all
+# publicly-facing surfaces, must not name Evidentia paid-tier specifics.
+# When fixing tier-related content, describe obliquely in the commit
+# message (e.g., "removed tier-strategy phrasing" instead of naming
+# specific tier names).
+#
+# Activation (one-time per clone):
+#   git config core.hooksPath .githooks
+#
+# Or run scripts/setup-githooks.sh which sets the config + chmod's the
+# hook in one step.
+#
+# Bypass (rare; use sparingly + with rationale logged elsewhere):
+#   EVIDENTIA_ALLOW_TIER_VOCAB_IN_COMMIT=1 git commit -m "..."
+#
+# The hook delegates to scripts/check_docs_health.py --check-commit-msg
+# so the forbidden-pattern set stays in one place.
+
+set -euo pipefail
+
+if [ -n "${EVIDENTIA_ALLOW_TIER_VOCAB_IN_COMMIT:-}" ]; then
+    echo "commit-msg: bypass active (EVIDENTIA_ALLOW_TIER_VOCAB_IN_COMMIT=1); skipping tier-vocab check." >&2
+    exit 0
+fi
+
+# Path to the message file is passed as $1 by git.
+MESSAGE_FILE="$1"
+
+# Locate the project root (where .git/ lives).
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+SCRIPT="${REPO_ROOT}/scripts/check_docs_health.py"
+
+if [ ! -f "${SCRIPT}" ]; then
+    echo "commit-msg: ${SCRIPT} not found; skipping tier-vocab check." >&2
+    exit 0
+fi
+
+# Prefer `uv run` if available; fall back to plain python.
+if command -v uv >/dev/null 2>&1; then
+    uv run python "${SCRIPT}" --check-commit-msg "${MESSAGE_FILE}"
+else
+    python "${SCRIPT}" --check-commit-msg "${MESSAGE_FILE}"
+fi

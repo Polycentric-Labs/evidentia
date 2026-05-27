@@ -2,25 +2,52 @@
 """Comprehensive doc-health check for Evidentia.
 
 Run BEFORE any version-update push. Invoked by `/pre-release-review`
-Step 5.D.3 in --strict mode (blocks tag if FAIL); also runnable in
---advisory mode (default) during development.
+Step 5.D.3 (doc-health) + 5.D.4 (commit-message audit) in --strict
+mode (blocks tag if FAIL); also runnable in --advisory mode (default)
+during development.
 
-5 core checks (v0.10.7 MVP):
+8 checks total (5 doc + 3 publicly-facing-surface):
 
-1. **parse_validity**     — every tracked .md loads as valid UTF-8.
-2. **cross_link_resolve** — every relative markdown link in every
-                            tracked .md resolves to a tracked file
-                            (or a real directory, for the wiki's
-                            section-index pattern).
-3. **readme_size_guard**  — README.md is at or below the
-                            ``--readme-max`` byte budget (default
-                            10,000; canonical OSS benchmark ~6-8KB).
-4. **tier_vocab_audit**   — no Pro/Enterprise/Federal commercial-tier
-                            vocabulary leaks into tracked public files
-                            outside the per-line allowlist.
-5. **private_path_leak**  — no tracked public .md file links to a
-                            ``private/`` path (the gitignored
-                            commercial-strategy directory).
+DOC HEALTH (--strict gates these on FAIL):
+
+1. **parse_validity**       — every tracked .md loads as valid UTF-8.
+2. **cross_link_resolve**   — every relative markdown link in every
+                              tracked .md resolves to a tracked file
+                              (or a real directory, for the wiki's
+                              section-index pattern).
+3. **readme_size_guard**    — README.md is at or below the
+                              ``--readme-max`` byte budget (default
+                              10,000; canonical OSS benchmark ~6-8KB).
+4. **tier_vocab_audit**     — no Pro/Enterprise/Federal commercial-tier
+                              vocabulary leaks into tracked public files
+                              outside the per-line allowlist.
+5. **private_path_leak**    — no tracked public .md file links to a
+                              ``private/`` path (the gitignored
+                              commercial-strategy directory).
+
+PUBLICLY-FACING SURFACES (Allen 2026-05-27 directive):
+
+6. **commit_msg_audit**     — no tier vocabulary in commit messages
+                              AFTER the allowlist cutoff SHA (default
+                              ``32df7fa``; everything before is
+                              accepted as immutable historical).
+                              `git log <cutoff>..HEAD` is the scan range.
+7. **tag_msg_audit**        — no tier vocabulary in annotated tag
+                              messages for tags created AFTER the
+                              cutoff. v0.10.5 + earlier tags are
+                              allowlisted (immutable; force-update
+                              would break cosign signatures).
+8. **release_body_audit**   — no tier vocabulary in the latest
+                              GitHub Release body (uses ``gh api``;
+                              requires gh auth in the env).
+
+SPECIAL MODE for the commit-msg git hook:
+
+    python scripts/check_docs_health.py --check-commit-msg <file>
+
+    Reads the message file, runs ONLY the tier-vocab regex set, exits
+    2 if any forbidden phrase matches. The .githooks/commit-msg hook
+    invokes this before letting `git commit` complete.
 
 Exit codes:
 
@@ -29,9 +56,11 @@ Exit codes:
 
 Usage:
 
-    uv run python scripts/check_docs_health.py                # advisory
-    uv run python scripts/check_docs_health.py --strict       # blocking
-    uv run python scripts/check_docs_health.py --json         # machine-readable
+    uv run python scripts/check_docs_health.py                       # advisory
+    uv run python scripts/check_docs_health.py --strict              # blocking
+    uv run python scripts/check_docs_health.py --json                # machine-readable
+    uv run python scripts/check_docs_health.py --commit-cutoff <sha> # explicit cutoff
+    uv run python scripts/check_docs_health.py --check-commit-msg <file>  # hook mode
 """
 
 from __future__ import annotations
@@ -46,6 +75,24 @@ from enum import Enum
 from pathlib import Path
 
 REPO_ROOT = Path.cwd().resolve()
+
+# Default commit-message allowlist cutoff: everything up to + including
+# this SHA is treated as immutable history (Allen 2026-05-27 decision).
+# Per the historical audit, the leaked-commit-message remediation is
+# accept + prevent-future because the cosign chain + PEP 740 attestations
+# + the awesome-oscal PR URL are bound to specific commit SHAs.
+DEFAULT_COMMIT_CUTOFF = "32df7fa"
+
+# Tag names allowlisted (immutable per convention; force-update would
+# break cosign signatures + GitHub Release bindings).
+TAG_AUDIT_ALLOWLIST: set[str] = {
+    "v0.10.5",  # contains "commercial-tier hiring" reference
+    # v0.10.4 + earlier predate the tier-erasure directive
+    "v0.10.4", "v0.10.3", "v0.10.2", "v0.10.1", "v0.10.0",
+    "v0.9.9", "v0.9.8", "v0.9.7", "v0.9.6", "v0.9.5", "v0.9.4",
+    "v0.9.3", "v0.9.2", "v0.9.1", "v0.9.0",
+    # Older v0.7.x / v0.8.x tags also predate the directive
+}
 
 # Forbidden tier-vocab regex patterns. Per the v0.10.7 audit, these are
 # the specific phrases that leak Evidentia paid-plan specifics into
@@ -316,6 +363,169 @@ def check_tier_vocab_audit(md_paths: list[Path], result: CheckResult) -> None:
                 ))
 
 
+def _scan_text_for_tier_vocab(
+    text: str, source: str, line_offset: int = 0
+) -> list[Finding]:
+    """Apply TIER_VOCAB_FORBIDDEN regex set to a blob of text.
+
+    Returns Finding records with check name prefixed by 'commit_msg_audit',
+    'tag_msg_audit', or 'release_body_audit' based on caller.
+    """
+    findings: list[Finding] = []
+    for check_name, pattern in TIER_VOCAB_FORBIDDEN:
+        for match in pattern.finditer(text):
+            line = text[: match.start()].count("\n") + 1 + line_offset
+            findings.append(Finding(
+                Severity.FAIL, f"tier_vocab:{check_name}", source, line,
+                f"forbidden tier vocabulary: {match.group(0)!r}",
+            ))
+    return findings
+
+
+def check_git_commit_message_audit(
+    cutoff_sha: str, result: CheckResult
+) -> None:
+    """Scan commit messages for tier vocab in the range cutoff_sha..HEAD.
+
+    Commits up to + including cutoff_sha are treated as immutable
+    historical (Allen 2026-05-27 decision). Commits after the cutoff
+    are subject to the tier-vocab regex set.
+    """
+    # First, confirm the cutoff SHA exists. If not, fail open (skip the
+    # check rather than reporting noise).
+    rev_parse = subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", cutoff_sha],
+        capture_output=True, text=True, check=False,
+    )
+    if rev_parse.returncode != 0:
+        result.add(Finding(
+            Severity.WARN, "commit_msg_audit", "<git>", None,
+            f"cutoff SHA {cutoff_sha!r} not found in repo; check skipped",
+        ))
+        return
+
+    # Get commits in (cutoff..HEAD] with their full messages.
+    log = subprocess.run(
+        [
+            "git", "log",
+            "--format=__COMMIT__%n%H%n%B%n__END__",
+            f"{cutoff_sha}..HEAD",
+        ],
+        capture_output=True, text=True, check=False,
+    )
+    if log.returncode != 0:
+        result.add(Finding(
+            Severity.WARN, "commit_msg_audit", "<git>", None,
+            f"git log failed: {log.stderr.strip()}",
+        ))
+        return
+
+    # Parse out (sha, message) per commit.
+    blocks = log.stdout.split("__COMMIT__\n")
+    for block in blocks:
+        if not block.strip():
+            continue
+        lines = block.split("\n", 1)
+        if len(lines) < 2:
+            continue
+        sha = lines[0].strip()
+        body = lines[1].rsplit("__END__", 1)[0]
+        findings = _scan_text_for_tier_vocab(body, source=f"commit:{sha[:7]}")
+        for f in findings:
+            # Re-tag with commit_msg_audit prefix
+            f.check = f.check.replace("tier_vocab:", "commit_msg_audit:")
+            result.add(f)
+
+
+def check_git_tag_message_audit(result: CheckResult) -> None:
+    """Scan annotated tag messages for tier vocab.
+
+    Tags in TAG_AUDIT_ALLOWLIST are skipped (immutable; force-update
+    would break cosign chain + GitHub Release binding).
+    """
+    tag_list = subprocess.run(
+        ["git", "tag", "-l"],
+        capture_output=True, text=True, check=False,
+    )
+    if tag_list.returncode != 0:
+        result.add(Finding(
+            Severity.WARN, "tag_msg_audit", "<git>", None,
+            "git tag -l failed; tag check skipped",
+        ))
+        return
+
+    tags = [t.strip() for t in tag_list.stdout.splitlines() if t.strip()]
+    for tag in tags:
+        if tag in TAG_AUDIT_ALLOWLIST:
+            continue
+        body = subprocess.run(
+            ["git", "tag", "-l", "--format=%(contents)", tag],
+            capture_output=True, text=True, check=False,
+        )
+        body_text = (body.stdout or "").strip()
+        if body.returncode != 0 or not body_text:
+            continue
+        findings = _scan_text_for_tier_vocab(body_text, source=f"tag:{tag}")
+        for f in findings:
+            f.check = f.check.replace("tier_vocab:", "tag_msg_audit:")
+            result.add(f)
+
+
+def check_github_release_body_audit(result: CheckResult) -> None:
+    """Scan the latest GitHub Release body for tier vocab.
+
+    Uses `gh api`. If gh is unavailable or unauthenticated, the check
+    emits a single WARN finding and moves on (doesn't block --strict).
+    """
+    # Check gh is on PATH + authenticated
+    auth_status = subprocess.run(
+        ["gh", "auth", "status"],
+        capture_output=True, text=True, check=False,
+    )
+    if auth_status.returncode != 0:
+        result.add(Finding(
+            Severity.WARN, "release_body_audit", "<gh>", None,
+            "gh CLI not available or unauthenticated; check skipped",
+        ))
+        return
+
+    # Get the latest release body
+    latest = subprocess.run(
+        ["gh", "release", "view", "--json", "tagName,body"],
+        capture_output=True, text=True, check=False,
+    )
+    if latest.returncode != 0:
+        result.add(Finding(
+            Severity.WARN, "release_body_audit", "<gh>", None,
+            f"gh release view failed: {(latest.stderr or '').strip()[:200]}",
+        ))
+        return
+
+    stdout_text = latest.stdout or ""
+    if not stdout_text.strip():
+        result.add(Finding(
+            Severity.WARN, "release_body_audit", "<gh>", None,
+            "gh release view returned empty output",
+        ))
+        return
+
+    try:
+        data = json.loads(stdout_text)
+        tag = data.get("tagName", "<unknown>")
+        body = data.get("body", "")
+    except json.JSONDecodeError:
+        result.add(Finding(
+            Severity.WARN, "release_body_audit", "<gh>", None,
+            "gh release view returned invalid JSON",
+        ))
+        return
+
+    findings = _scan_text_for_tier_vocab(body, source=f"release:{tag}")
+    for f in findings:
+        f.check = f.check.replace("tier_vocab:", "release_body_audit:")
+        result.add(f)
+
+
 def check_private_path_leak(md_paths: list[Path], result: CheckResult) -> None:
     private_re = re.compile(r"\[([^\]\n]+)\]\(([^)\n]*\bprivate/[^)\n]*)\)")
     for path in md_paths:
@@ -355,11 +565,49 @@ def render_findings_text(result: CheckResult) -> str:
     return "\n".join(lines)
 
 
+def run_commit_msg_hook_check(message_file: str) -> int:
+    """Hook mode: read a single message file, scan for tier vocab.
+
+    Invoked by .githooks/commit-msg as
+    `python scripts/check_docs_health.py --check-commit-msg "$1"`.
+    Exits 0 if clean, 2 if forbidden vocab found.
+    """
+    try:
+        text = Path(message_file).read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError) as e:
+        print(f"check_commit_msg: cannot read {message_file}: {e}", file=sys.stderr)
+        return 2
+
+    # Strip git's commented lines (lines starting with # are not part of the message)
+    text_no_comments = "\n".join(
+        line for line in text.splitlines() if not line.startswith("#")
+    )
+
+    findings = _scan_text_for_tier_vocab(text_no_comments, source=message_file)
+    if not findings:
+        return 0
+
+    print(
+        "\n*** commit-msg hook BLOCKED: forbidden tier vocabulary in commit message ***\n",
+        file=sys.stderr,
+    )
+    for f in findings:
+        print(f"  [{f.check}] line {f.line}: {f.message}", file=sys.stderr)
+    print(
+        "\nFix: rephrase the commit message obliquely "
+        "(e.g., 'removed tier-strategy phrasing' instead of naming specific tiers).\n"
+        "Bypass (rare; use sparingly): "
+        "EVIDENTIA_ALLOW_TIER_VOCAB_IN_COMMIT=1 git commit ...\n",
+        file=sys.stderr,
+    )
+    return 2
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Evidentia comprehensive doc-health check.")
     parser.add_argument(
         "--strict", action="store_true",
-        help="Exit 2 on any FAIL finding (used by /pre-release-review Step 5.D.3 pre-tag).",
+        help="Exit 2 on any FAIL finding (used by /pre-release-review Step 5.D.3 + 5.D.4 pre-tag).",
     )
     parser.add_argument(
         "--json", action="store_true",
@@ -369,7 +617,31 @@ def main() -> int:
         "--readme-max", type=int, default=10_000,
         help="README.md max byte budget (default 10000; canonical OSS ~6-8KB).",
     )
+    parser.add_argument(
+        "--commit-cutoff", default=DEFAULT_COMMIT_CUTOFF,
+        help=(
+            "Allowlist cutoff SHA for commit_msg_audit. Commits up to + "
+            f"including this SHA are treated as immutable historical. "
+            f"Default: {DEFAULT_COMMIT_CUTOFF} (Allen 2026-05-27 decision)."
+        ),
+    )
+    parser.add_argument(
+        "--check-commit-msg", metavar="FILE",
+        help=(
+            "Hook mode: scan a single message file for tier vocab. Used by "
+            ".githooks/commit-msg before letting git commit complete. "
+            "Exits 0 if clean, 2 if forbidden vocab found."
+        ),
+    )
+    parser.add_argument(
+        "--skip-release-body", action="store_true",
+        help="Skip the gh-api release-body check (faster; for local dev).",
+    )
     args = parser.parse_args()
+
+    # Hook mode: short-circuit the full check; just scan the one file.
+    if args.check_commit_msg:
+        return run_commit_msg_hook_check(args.check_commit_msg)
 
     md_paths = sorted(list_tracked_files(suffix=".md"))
     all_tracked = list_tracked_files()
@@ -380,6 +652,10 @@ def main() -> int:
     check_readme_size_guard(args.readme_max, result)
     check_tier_vocab_audit(md_paths, result)
     check_private_path_leak(md_paths, result)
+    check_git_commit_message_audit(args.commit_cutoff, result)
+    check_git_tag_message_audit(result)
+    if not args.skip_release_body:
+        check_github_release_body_audit(result)
 
     if args.json:
         print(json.dumps({
