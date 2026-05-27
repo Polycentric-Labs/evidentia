@@ -1631,16 +1631,57 @@ gap installs of the production runtime no longer transitively pull
 the dev-time eval stack; `evidentia_ai.eval.*` retained as
 deprecation shim through v0.11.x, removal in v0.12.0). ~2 weeks scope.
 
-### v0.10.6 — OSPS crosswalks + GitHub collector extension — PLANNED
+### v0.10.6 — OSS first-mover artifacts + OSPS crosswalks + GitHub collector extension + hygiene — SHIPPED
 
-5 OSPS-Baseline crosswalks for free (osps-baseline →
-nist-ssdf-800-218, nist-csf-2.0, eu-cra, pci-dss-4.0, nist-800-161)
-auto-generated from the upstream OSPS `guidelines[]` array — one
-crosswalk per OSPS family with ~10 external references each.
-GitHub-collector extension for ~15 OSPS controls across the AC + BR
-+ GV + VM families (reuses existing Dependabot SLA infrastructure
-for OSPS-VM-05). Workflow `permissions:` audit for OSPS-AC-04.01/02
-partial closure.
+Patch on v0.10.5 (released 2026-05-26). 17 cycle commits authored
+2026-05-27. Tag `v0.10.6`. **Carried out the v0.10.5
+deferred Phases 1-5 OSS first-mover artifacts theme** plus downstream
+OSPS crosswalks + GitHub collector extension + post-v0.10.5 hygiene.
+Headline shipments: OSPS Baseline 3-catalog bundle + first public
+OSCAL Catalog 1.2.1 serialization of the OpenSSF OSPS Baseline (first-
+mover claim verified via `gh api search`); `OSPS-CONFORMANCE.md` self-
+attestation + `verify-osps-conformance.yml` CI gate that re-validates
+every evidence link on push/PR/cron (first public open-source project
+to ship this artifact); `SECURITY.md` refresh + `.well-known/security.txt`
++ GHSA private vulnerability reporting (closes OSPS-VM-01/02/03 + CISA
+SbD Pledge Goal 5); `EOL.md` + `docs/verification.md` consumer-facing
+lifecycle + cosign + PEP 740 + osv-scanner + SLSA Provenance v1
+verification recipes; 5 OSPS-Baseline crosswalks (NIST SSDF / NIST CSF
+2.0 / EU CRA / PCI DSS 4.0 / NIST 800-161) shipped raw with upstream-
+attested provenance disclaimer per the 2026-05-26 brainstorm rigor
+decision (hand-verification deferred to v0.10.7); `CrosswalkDefinition`
+extended additively with 3 optional `provenance`/`verification`/
+`verification_note` fields; `evidentia_collectors.github.osps` module
+with 16 `populate_osps_*` helpers covering AC/BR/DO/GV/LE/QA/VM families
++ 4 additive `GitHubClient` methods; workflow-permissions audit
+(advisory; v0.10.7 promotes to blocking); Scorecard 6.2 → 6.5+
+restoration via `verify-changelog.yml` SHA pinning. Release-checklist
+Step 2.A captures the v0.10.5 LL-V105-1 partial-publish prevention
+(new-PyPI-project pending-publisher check before tagging). Workspace
+ships 8 PyPI packages unchanged from v0.10.5 (no new packages this
+cycle, no LL-V105-1 recurrence risk). 3536 tests pass / 14 skipped /
+3550 collected across 279 source files (was 268 v0.10.5); mypy strict
+0/0; ruff clean. Four §12 corrections-log entries this cycle (see
+`docs/v0.10.6-plan.md` §12). OSCAL upstream contribution PR at
+https://github.com/oscal-club/awesome-oscal/pull/59.
+
+### v0.10.7 — Polish + hand-verification + automation debt — PLANNED
+
+Carried out of v0.10.6 cycle reviews. Targets:
+
+- **Crosswalk hand-verification** — pass over the 5 OSPS crosswalks shipped raw in v0.10.6 (currently `verification: "self-attested-via-upstream"`); upgrade to `"hand-checked"` where SME confirms accuracy. See `docs/v0.10.6-plan.md` §12.3 maintenance follow-up.
+- **OSPS crosswalk regeneration script** — `scripts/catalogs/gen_osps_crosswalks.py` to deterministically rebuild the 5 OSPS JSONs from the pinned upstream YAMLs (reduces manual sweep burden on next OSPS bump). C5 code-quality reviewer Important #1.
+- **Hardcoded SHA reduction** in crosswalk JSONs — multi-occurrence SHA references in the 5 OSPS crosswalks (~15 total) create version-sweep burden on upstream bumps. C5 code-quality reviewer Important #2.
+- **GitHub OSPS collector DRY pass** — `_unknown_finding()` factory to dedupe ~280 lines of UNKNOWN-branch boilerplate across 12 helpers. C6 code-quality reviewer Important #1.
+- **`_file_present_at_any` asymmetric error handling** — 5xx errors currently silently convert to FAIL; should surface UNKNOWN on all-probes-failed. C6 code-quality reviewer Important #2.
+- **`scripts/audit_workflow_permissions.py`** promotion to blocking CI gate — currently advisory; v0.10.6 baseline = 8 OK / 3 FAIL (legitimate write scopes for PR/issue comments). Three FAIL workflows need a `JUSTIFIED` status category before promotion: `action-smoke-test.yml`, `catalog-refresh.yml`, `evidentia.yml`. C7 code-quality reviewer bonus finding.
+- **`yaml.safe_load` None-handling** in `audit_workflow_permissions.py` — empty workflow files currently `AttributeError`. Add a guard. C7 code-quality reviewer Minor #1.
+- **`translate_url()` unit-test extraction** from `verify-osps-conformance.yml` to `scripts/verify_osps_conformance.py` + unit tests. TODO marker already in workflow at lines 135-140.
+- **OSPS-LE-01.01 DCO sign-off** — needs GOVERNANCE.md + second-contributor onboarding.
+- **OSPS-VM-04.02 VEX emit CLI verb** — `evidentia vex emit` (target v0.11.x).
+- **OSPS-VM-05.03 `osv-scanner` CI gate** — `verify-osv-scan.yml` workflow.
+- **capability-matrix.md stale absolute-path** cleanup — pre-existing reference from v0.10.4 snapshot (C8 reviewer Minor #2).
+- **README v0.10.4 entry style polish** — verify the bold-key-feature pattern matches v0.10.5 + v0.10.2 precedent exactly (low priority).
 
 ### v0.11 — Federal-compliance theme + AI governance — PLANNED (post-deep-dive)
 

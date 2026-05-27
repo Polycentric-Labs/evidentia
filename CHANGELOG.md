@@ -7,7 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes yet on the v0.10.6 development branch._
+_No changes yet on the v0.10.7 development branch._
+
+## [0.10.6] - 2026-05-27
+
+**Theme**: *v0.10.6 — OSS first-mover artifacts (carried from v0.10.5 deferred Phases 1-5) + downstream OSPS crosswalks + post-v0.10.5 hygiene*. Patch bump (v0.10.5 → v0.10.6).
+
+**Release summary**: 17 cycle commits between v0.10.5 (tagged 2026-05-26) and this 2026-05-27 tag. **3536 tests pass / 14 skipped / 3550 collected across 279 source files (was 268 v0.10.5); mypy strict 0/0; ruff clean.** Workspace ships **8 PyPI packages** unchanged from v0.10.5; no new workspace packages this cycle (no LL-V105-1 recurrence risk).
+
+### Added
+
+- OSPS Baseline 3-catalog bundle (Maturity 1/2/3 YAMLs) + first public OSCAL Catalog 1.2.1 serialization (`osps-baseline.oscal.json`). Pinned at `ossf/security-baseline@ac6bbec8aecf51dce41f62712745f7949ab6bdeb`. See commit `ea9f117`.
+- `SECURITY.md` refresh + `.well-known/security.txt` + GHSA private vulnerability reporting enabled. Closes OSPS-VM-01/02/03 + CISA SbD Pledge Goal 5. See commit `4d50627`.
+- `OSPS-CONFORMANCE.md` self-attestation + `verify-osps-conformance.yml` CI gate (re-validates every evidence link on push/PR/cron). First public open-source project to ship this artifact. See commits `04e9e1e`, `77499ba`, `b55d83a`.
+- `EOL.md` (root) + `docs/verification.md` — consumer-side end-of-life policy + cosign + PEP 740 + osv-scanner + SLSA Provenance v1 verification recipes. Closes OSPS-DO-03 + OSPS-DO-05. See commit `d44d899`.
+- 5 OSPS-Baseline crosswalks in `catalogs/data/mappings/`: OSPS↔NIST-SSDF, OSPS↔NIST-CSF-2.0, OSPS↔EU-CRA, OSPS↔PCI-DSS-4.0, OSPS↔NIST-800-161. Shipped raw with upstream-attested provenance disclaimer per the 2026-05-26 brainstorm rigor decision; hand-verification deferred to v0.10.7. See commit `e443fa5`.
+- `CrosswalkDefinition` Pydantic model extended ADDITIVELY with 3 optional fields (`provenance`, `verification`, `verification_note`). Existing 8 crosswalks load unchanged. See commit `e443fa5`.
+- `evidentia_collectors.github.osps` module — 16 `populate_osps_*` helpers covering OSPS AC/BR/DO/GV/LE/QA/VM family assessment-requirements via GitHub API. Plus 4 new additive `GitHubClient` methods (`list_releases`, `are_vulnerability_alerts_enabled`, `is_code_scanning_enabled`, `list_security_advisories`). See commit `09bf498`.
+- `scripts/audit_workflow_permissions.py` — advisory-mode workflow permissions audit (v0.10.7 will promote to blocking gate). See commit `e9e0865`.
+- `docs/release-checklist.md` Step 2.A — pre-publish credential readiness check (LL-V105-1 prevention for new-PyPI-project pending-publisher verification). See commit `0acd843`.
+
+### Changed
+
+- `.github/workflows/verify-changelog.yml` action references SHA-pinned (closes Scorecard alerts #121 + #122 PinnedDependenciesID; restores Scorecard 6.2 → 6.5+ baseline). See commit `e9e0865`.
+- `README.md` "Recent releases" section backfilled with v0.10.3 + v0.10.4 entries (deferred during v0.10.5 cycle). See commit `0acd843`.
+- `docs/capability-matrix.md` updated with v0.10.6 snapshot (89→92 catalogs, 8→13 crosswalks, +16 OSPS collector controls, +1 workflow, +2 scripts). See commit `0acd843`.
+- `docs/api-stability.md` revision-history rows for the 3 additive surface additions (CrosswalkDefinition fields, github.osps module, GitHubClient methods). See commits `e443fa5` + `09bf498`.
+
+### Fixed
+
+- v0.10.5 Scorecard regression (6.2 ← 6.5) via verify-changelog.yml SHA pinning. See commit `e9e0865`.
+
+### §12 corrections-log entries this cycle
+
+Four instances of the §12 pattern caught and documented in `docs/v0.10.6-plan.md` §12:
+- §12.1: crosswalk format/path (JSON in existing `catalogs/data/mappings/`, NOT YAML in new `crosswalks/` dir)
+- §12.2: OSPS Baseline counts (25/42/63 assessment-requirements, NOT plan's 21/38/58)
+- §12.3: crosswalk source data (upstream per-family YAMLs at pinned SHA, NOT C1-flattened bundle)
+- §12.4: OSPS control-ID granularity (OSPS-XX-YY.ZZ assessment-requirement, NOT OSPS-XX-YY family)
+
+See commits `d755aed`, `ab85654`, `164426a` for §12.2, §12.3, §12.4 entries respectively.
 
 ## [0.10.5] - 2026-05-26
 

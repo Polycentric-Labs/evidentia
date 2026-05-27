@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-collectors"
-version = "0.10.5"
+version = "0.10.6"
 description = "Evidence collection agents for AWS, Databricks, GitHub, Okta, Snowflake, SQL databases, and vendor-risk APIs (Vanta, Drata, BitSight, SecurityScorecard)"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
@@ -17,7 +17,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "evidentia-core>=0.10.5,<0.11.0",
+    "evidentia-core>=0.10.6,<0.11.0",
     "httpx>=0.27",
 ]
 
