@@ -1,0 +1,54 @@
+# Sync docs/wiki/ to the repo's GitHub wiki on push to main.
+#
+# Dual-source design (Phase 2 plan §Deliverable 2): docs/wiki/ in this
+# repo is the SOURCE OF TRUTH for the wiki. The GitHub wiki at
+# https://github.com/Polycentric-Labs/evidentia/wiki is auto-generated
+# downstream by this workflow on every push that touches docs/wiki/**.
+# Wiki edits go through normal PR review against docs/wiki/; direct
+# wiki edits are restricted to collaborators via Settings -> Features.
+#
+# Triggered when any file under docs/wiki/ changes on main (plus the
+# sync script + this workflow itself, so config-only updates re-fire).
+# Authenticated via the workflow's GITHUB_TOKEN. The token's
+# contents: write scope authorizes the push to <repo>.wiki.git
+# (same-repo wiki push uses the same token, no PAT needed).
+#
+# First-run prerequisite: Wiki feature must be enabled in
+# Settings -> Features -> Wikis. The sync script gracefully fails
+# (exit 1) with a helpful message if the wiki repo cannot be cloned.
+#
+# SHA pinning per the v0.10.6 C7 pattern; same SHAs as
+# verify-changelog.yml for consistency.
+
+name: sync-wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/wiki/**"
+      - "scripts/sync_wiki_to_github.py"
+      - ".github/workflows/sync-wiki.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write  # JUSTIFIED: push to <repo>.wiki.git uses the same-repo GITHUB_TOKEN
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
+        with:
+          python-version: "3.12"
+
+      - name: Run wiki sync
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: python scripts/sync_wiki_to_github.py

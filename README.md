@@ -37,7 +37,7 @@ pip install 'evidentia[ai,api,collectors,mcp]'
 
 Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.10.6` (cosign keyless OIDC + SLSA Provenance v1 verified).
 
-See [`docs/wiki/1-getting-started/installation.md`](docs/wiki/1-getting-started/installation.md) for air-gapped install, virtualenv setup, and full extras matrix.
+See the [Getting Started wiki section](https://github.com/Polycentric-Labs/evidentia/wiki/Getting-Started) for air-gapped install, virtualenv setup, and full extras matrix.
 
 ## Quickstart (60 seconds)
 
@@ -52,7 +52,7 @@ evidentia gap analyze --framework=nist-800-53-rev5 --evidence-dir=./evidence/
 evidentia gap analyze --framework=nist-800-53-rev5 --evidence-dir=./evidence/ --format=oscal > assessment-results.json
 ```
 
-Full 5-minute walk-through: [`docs/wiki/1-getting-started/quickstart.md`](docs/wiki/1-getting-started/quickstart.md).
+Full 5-minute walk-through: [Quickstart wiki page](https://github.com/Polycentric-Labs/evidentia/wiki/Quickstart).
 
 ## Features
 
@@ -79,7 +79,7 @@ Full 5-minute walk-through: [`docs/wiki/1-getting-started/quickstart.md`](docs/w
 
 ## Documentation
 
-- [`docs/wiki/`](docs/wiki/) — Getting Started, Guides, Concepts, Reference, Compliance, Project meta
+- [**Wiki**](https://github.com/Polycentric-Labs/evidentia/wiki) — Getting Started, Guides, Concepts, Reference, Compliance, Project meta (auto-synced from `docs/wiki/` on every push to main)
 - [`docs/api-stability.md`](docs/api-stability.md) — append-only contract; what's frozen vs evolving
 - [`docs/architecture/`](docs/architecture/) — system design + extension points
 - [`OSPS-CONFORMANCE.md`](OSPS-CONFORMANCE.md) — OpenSSF OSPS Baseline self-attestation + CI gate
@@ -102,7 +102,7 @@ Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https:/
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to contribute (issues, PRs, catalogs)
 - [`SECURITY.md`](SECURITY.md) — vulnerability reporting policy (private via [GHSA](https://github.com/Polycentric-Labs/evidentia/security/advisories/new))
 - [Code of Conduct](CODE_OF_CONDUCT.md)
-- [`docs/wiki/6-project/faq.md`](docs/wiki/6-project/faq.md) — frequent operator questions
+- [FAQ (wiki)](https://github.com/Polycentric-Labs/evidentia/wiki/Project) — frequent operator questions
 
 ## AI assistance
 
