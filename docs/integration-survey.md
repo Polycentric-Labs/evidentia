@@ -373,6 +373,37 @@ engine. Worth cross-citing as the only other OSS GRC MCP — and as the
 honest-landscape entry "two OSS GRC MCP servers exist as of May 2026,
 both Apache-2.0".
 
+## 8.9 OSPS Baseline crosswalks (v0.10.6 Phase 5)
+
+v0.10.6 commit C5 lands 5 new OSPS-Baseline crosswalks in
+`packages/evidentia-core/src/evidentia_core/catalogs/data/mappings/`,
+joining the 8 pre-existing in-tree crosswalks. Mappings are
+auto-extracted from the OpenSSF OSPS Baseline `guidelines[]` array at
+upstream commit `ac6bbec8aecf51dce41f62712745f7949ab6bdeb` and carry
+the new `provenance="upstream-osps-guidelines"` +
+`verification="self-attested-via-upstream"` posture fields introduced
+in the same commit (see `docs/api-stability.md` v0.10.6 revision-
+history row). The crosswalks ship raw — consumers requiring
+independent verification should plan a hand-check pass; the
+`verification_note` field on each file names the path to upgrading the
+posture to `hand-checked`.
+
+| Crosswalk | Mappings | Provenance |
+|-----------|----------|------------|
+| `osps-baseline_to_nist-ssdf-800-218.json` | 115 rows | Auto-extracted from upstream OSPS `SSDF` guidelines[] entries; self-attested (not hand-verified against NIST SSDF SP 800-218). |
+| `osps-baseline_to_nist-csf-2.0.json` | 52 rows | Auto-extracted from upstream OSPS `CSF` guidelines[] entries; self-attested (not hand-verified against NIST CSF 2.0). |
+| `osps-baseline_to_eu-cra.json` | 107 rows | Auto-extracted from upstream OSPS `CRA` guidelines[] entries; self-attested (not hand-verified against the EU Cyber Resilience Act). |
+| `osps-baseline_to_pci-dss-4.0.json` | 200 rows | Auto-extracted from upstream OSPS `PCIDSS` guidelines[] entries; self-attested (not hand-verified against PCI DSS 4.0). |
+| `osps-baseline_to_nist-800-161.json` | 200 rows | Auto-extracted from upstream OSPS `800-161` guidelines[] entries; self-attested (not hand-verified against NIST SP 800-161). |
+
+Rationale: the 2026-05-26 brainstorm (recorded in
+`docs/v0.10.6-plan.md` §4.5 + §12.1) chose to ship the OSPS guidelines
+mappings raw with an explicit upstream-attested disclaimer rather than
+defer the entire crosswalk surface to a future hand-verification
+window. The extended `CrosswalkDefinition` posture fields make the
+honest-claim explicit at the data layer + give consumers a documented
+verification-upgrade path.
+
 ## 9. Sources
 
 - [OCSF — Open Cybersecurity Schema Framework](https://ocsf.io/)

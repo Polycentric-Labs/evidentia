@@ -322,6 +322,33 @@ class CrosswalkDefinition(EvidentiaModel):
             "'...', 'low': '...'}). Optional for backward-compat."
         ),
     )
+    provenance: str | None = Field(
+        default=None,
+        description=(
+            "v0.10.6: optional provenance tag for crosswalks shipped "
+            "raw + auto-extracted from upstream sources (e.g., "
+            "'upstream-osps-guidelines'). Additive — None for "
+            "crosswalks predating v0.10.6."
+        ),
+    )
+    verification: Literal["self-attested-via-upstream", "hand-checked"] | None = Field(
+        default=None,
+        description=(
+            "v0.10.6: verification posture. 'self-attested-via-upstream' "
+            "= mappings auto-extracted from upstream guidelines[] "
+            "arrays, NOT independently audit-verified. 'hand-checked' "
+            "= SME-reviewed."
+        ),
+    )
+    verification_note: str | None = Field(
+        default=None,
+        description=(
+            "v0.10.6: free-form note explaining the verification "
+            "posture's scope + the path to upgrading "
+            "'self-attested-via-upstream' → 'hand-checked' if a "
+            "consumer requires independent verification."
+        ),
+    )
 
     def get_target_controls(self, source_control_id: str) -> list[FrameworkMapping]:
         """Get all target controls mapped from a source control."""

@@ -1,0 +1,868 @@
+{
+  "source_framework": "osps-baseline-2026.02.19",
+  "target_framework": "eu-cra",
+  "version": "OSPS Baseline v2026.02.19 / EU Cyber Resilience Act",
+  "generated_at": "2026-05-27",
+  "source": "Auto-extracted from OpenSSF OSPS Baseline guidelines[] array at upstream commit ac6bbec8aecf51dce41f62712745f7949ab6bdeb",
+  "provenance": "upstream-osps-guidelines",
+  "verification": "self-attested-via-upstream",
+  "verification_note": "Mappings auto-extracted from the OpenSSF OSPS Baseline guidelines[] array at upstream commit ac6bbec8aecf51dce41f62712745f7949ab6bdeb. Not independently verified against EU Cyber Resilience Act. Consumers requiring independent verification should plan a hand-check pass.",
+  "mappings": [
+    {
+      "source_control_id": "OSPS-AC-01",
+      "source_control_title": "Use MFA for Sensitive Actions",
+      "target_control_id": "1.2d",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-AC-01",
+      "source_control_title": "Use MFA for Sensitive Actions",
+      "target_control_id": "1.2e",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-AC-01",
+      "source_control_title": "Use MFA for Sensitive Actions",
+      "target_control_id": "1.2f",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-AC-02",
+      "source_control_title": "Restrict Collaborator Permissions",
+      "target_control_id": "1.2f",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-AC-03",
+      "source_control_title": "Protect the Primary Branch from Accidental Modification",
+      "target_control_id": "1.2f",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-AC-04",
+      "source_control_title": "Enforce Least Privilege on CI/CD Pipelines",
+      "target_control_id": "1.2d",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-AC-04",
+      "source_control_title": "Enforce Least Privilege on CI/CD Pipelines",
+      "target_control_id": "1.2e",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-AC-04",
+      "source_control_title": "Enforce Least Privilege on CI/CD Pipelines",
+      "target_control_id": "1.2f",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-01",
+      "source_control_title": "Prevent Untrusted Input When Building & Releasing",
+      "target_control_id": "1.2f",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-02",
+      "source_control_title": "Assign Unique Version Identifiers",
+      "target_control_id": "1.2f",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-03",
+      "source_control_title": "Use Encrypted Channels for Development & Release Activity",
+      "target_control_id": "1.2d",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-03",
+      "source_control_title": "Use Encrypted Channels for Development & Release Activity",
+      "target_control_id": "1.2e",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-03",
+      "source_control_title": "Use Encrypted Channels for Development & Release Activity",
+      "target_control_id": "1.2f",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-03",
+      "source_control_title": "Use Encrypted Channels for Development & Release Activity",
+      "target_control_id": "1.2i",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-03",
+      "source_control_title": "Use Encrypted Channels for Development & Release Activity",
+      "target_control_id": "1.2j",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-03",
+      "source_control_title": "Use Encrypted Channels for Development & Release Activity",
+      "target_control_id": "1.2k",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-04",
+      "source_control_title": "Publish Change Log With Release",
+      "target_control_id": "1.2d",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-04",
+      "source_control_title": "Publish Change Log With Release",
+      "target_control_id": "1.2f",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-04",
+      "source_control_title": "Publish Change Log With Release",
+      "target_control_id": "1.2h",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-04",
+      "source_control_title": "Publish Change Log With Release",
+      "target_control_id": "1.2j",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-04",
+      "source_control_title": "Publish Change Log With Release",
+      "target_control_id": "1.2l",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-04",
+      "source_control_title": "Publish Change Log With Release",
+      "target_control_id": "2.5",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-05",
+      "source_control_title": "Use Standardized Dependency Management Tools",
+      "target_control_id": "1.2b",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-05",
+      "source_control_title": "Use Standardized Dependency Management Tools",
+      "target_control_id": "1.2d",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-05",
+      "source_control_title": "Use Standardized Dependency Management Tools",
+      "target_control_id": "1.2f",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-05",
+      "source_control_title": "Use Standardized Dependency Management Tools",
+      "target_control_id": "1.2h",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-05",
+      "source_control_title": "Use Standardized Dependency Management Tools",
+      "target_control_id": "1.2j",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-05",
+      "source_control_title": "Use Standardized Dependency Management Tools",
+      "target_control_id": "2.1",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-05",
+      "source_control_title": "Use Standardized Dependency Management Tools",
+      "target_control_id": "2.2",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-05",
+      "source_control_title": "Use Standardized Dependency Management Tools",
+      "target_control_id": "2.3",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-01",
+      "source_control_title": "Publish User Guides for Basic Functionality",
+      "target_control_id": "1.2b",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-01",
+      "source_control_title": "Publish User Guides for Basic Functionality",
+      "target_control_id": "1.2j",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-01",
+      "source_control_title": "Publish User Guides for Basic Functionality",
+      "target_control_id": "1.2k",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-02",
+      "source_control_title": "Provide Mechanisms for Reporting Defects",
+      "target_control_id": "1.2c",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-02",
+      "source_control_title": "Provide Mechanisms for Reporting Defects",
+      "target_control_id": "1.2l",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-02",
+      "source_control_title": "Provide Mechanisms for Reporting Defects",
+      "target_control_id": "2.1",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-02",
+      "source_control_title": "Provide Mechanisms for Reporting Defects",
+      "target_control_id": "2.2",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-02",
+      "source_control_title": "Provide Mechanisms for Reporting Defects",
+      "target_control_id": "2.5",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-02",
+      "source_control_title": "Provide Mechanisms for Reporting Defects",
+      "target_control_id": "2.6",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-03",
+      "source_control_title": "Publish Provenance Verification Instructions",
+      "target_control_id": "1.2d",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-05",
+      "source_control_title": "Document Security Update Scope and Duration",
+      "target_control_id": "1.2c",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-05",
+      "source_control_title": "Document Security Update Scope and Duration",
+      "target_control_id": "2.6",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-06",
+      "source_control_title": "Publish Dependency Management Policy",
+      "target_control_id": "2.1",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-06 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-GV-02",
+      "source_control_title": "Provide Public Discussion Mechanisms",
+      "target_control_id": "1.2l",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-GV-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-GV-02",
+      "source_control_title": "Provide Public Discussion Mechanisms",
+      "target_control_id": "2.3",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-GV-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-GV-02",
+      "source_control_title": "Provide Public Discussion Mechanisms",
+      "target_control_id": "2.4",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-GV-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-GV-02",
+      "source_control_title": "Provide Public Discussion Mechanisms",
+      "target_control_id": "2.6",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-GV-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-GV-03",
+      "source_control_title": "Publish Contribution Guide",
+      "target_control_id": "1.2l",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-GV-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-GV-03",
+      "source_control_title": "Publish Contribution Guide",
+      "target_control_id": "2.4",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-GV-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-GV-04",
+      "source_control_title": "Require Formal Review of Permission Grants",
+      "target_control_id": "1.2d",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-GV-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-GV-04",
+      "source_control_title": "Require Formal Review of Permission Grants",
+      "target_control_id": "1.2l",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-GV-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-GV-04",
+      "source_control_title": "Require Formal Review of Permission Grants",
+      "target_control_id": "2.1",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-GV-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-GV-04",
+      "source_control_title": "Require Formal Review of Permission Grants",
+      "target_control_id": "2.2",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-GV-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-GV-04",
+      "source_control_title": "Require Formal Review of Permission Grants",
+      "target_control_id": "2.5",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-GV-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-GV-04",
+      "source_control_title": "Require Formal Review of Permission Grants",
+      "target_control_id": "2.6",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-GV-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-LE-01",
+      "source_control_title": "Require Code Contributors to Assert Right to Commit",
+      "target_control_id": "1.2b",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-LE-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-LE-01",
+      "source_control_title": "Require Code Contributors to Assert Right to Commit",
+      "target_control_id": "1.2f",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-LE-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-LE-02",
+      "source_control_title": "Ensure Project Licenses are Fully Open Source",
+      "target_control_id": "1.2b",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-LE-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-LE-03",
+      "source_control_title": "Maintain and Release Licenses in a Well Known Location",
+      "target_control_id": "1.2b",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-LE-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-01",
+      "source_control_title": "Publish Source Code and Change History",
+      "target_control_id": "1.2b",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-01",
+      "source_control_title": "Publish Source Code and Change History",
+      "target_control_id": "1.2f",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-01",
+      "source_control_title": "Publish Source Code and Change History",
+      "target_control_id": "1.2j",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-02",
+      "source_control_title": "Publish Software Dependencies",
+      "target_control_id": "2.1",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-02",
+      "source_control_title": "Publish Software Dependencies",
+      "target_control_id": "2.2",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-02",
+      "source_control_title": "Publish Software Dependencies",
+      "target_control_id": "2.3",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-03",
+      "source_control_title": "Address Pass/Fail Checks Before Accepting Changes",
+      "target_control_id": "1.2f",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-03",
+      "source_control_title": "Address Pass/Fail Checks Before Accepting Changes",
+      "target_control_id": "1.2k",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-04",
+      "source_control_title": "Enforce Security Requirements on All Codebases",
+      "target_control_id": "1.2b",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-04",
+      "source_control_title": "Enforce Security Requirements on All Codebases",
+      "target_control_id": "1.2f",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-05",
+      "source_control_title": "Prevent Executables in the Codebase",
+      "target_control_id": "1.2b",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-06",
+      "source_control_title": "Use Automated Testing in CI/CD Pipelines",
+      "target_control_id": "2.3",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-06 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-SA-01",
+      "source_control_title": "Publish Design Descriptions of System Actors and Actions",
+      "target_control_id": "1.2a",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-SA-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-SA-01",
+      "source_control_title": "Publish Design Descriptions of System Actors and Actions",
+      "target_control_id": "1.2b",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-SA-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-SA-02",
+      "source_control_title": "Publish External Interface Descriptions",
+      "target_control_id": "1.2a",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-SA-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-SA-02",
+      "source_control_title": "Publish External Interface Descriptions",
+      "target_control_id": "1.2b",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-SA-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-SA-03",
+      "source_control_title": "Maintain a Project Security Assessment",
+      "target_control_id": "1.1",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-SA-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-SA-03",
+      "source_control_title": "Maintain a Project Security Assessment",
+      "target_control_id": "1.2j",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-SA-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-SA-03",
+      "source_control_title": "Maintain a Project Security Assessment",
+      "target_control_id": "1.2k",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-SA-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-SA-03",
+      "source_control_title": "Maintain a Project Security Assessment",
+      "target_control_id": "2.2",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-SA-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-01",
+      "source_control_title": "Publish Coordinated Vulnerability Disclosure Policy",
+      "target_control_id": "2.1",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-01",
+      "source_control_title": "Publish Coordinated Vulnerability Disclosure Policy",
+      "target_control_id": "2.2",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-01",
+      "source_control_title": "Publish Coordinated Vulnerability Disclosure Policy",
+      "target_control_id": "2.3",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-01",
+      "source_control_title": "Publish Coordinated Vulnerability Disclosure Policy",
+      "target_control_id": "2.6",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-01",
+      "source_control_title": "Publish Coordinated Vulnerability Disclosure Policy",
+      "target_control_id": "2.7",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-01",
+      "source_control_title": "Publish Coordinated Vulnerability Disclosure Policy",
+      "target_control_id": "2.8",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-01 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-02",
+      "source_control_title": "Publish Contacts and Process for Reporting Vulnerabilities.",
+      "target_control_id": "2.5",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-02 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-03",
+      "source_control_title": "Maintain Private Vulnerability Reporting Process",
+      "target_control_id": "2.5",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-03",
+      "source_control_title": "Maintain Private Vulnerability Reporting Process",
+      "target_control_id": "2.6",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-03 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-04",
+      "source_control_title": "Publish Discovered Vulnerabilities",
+      "target_control_id": "1.2a",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-04",
+      "source_control_title": "Publish Discovered Vulnerabilities",
+      "target_control_id": "1.2b",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-04",
+      "source_control_title": "Publish Discovered Vulnerabilities",
+      "target_control_id": "2.1",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-04",
+      "source_control_title": "Publish Discovered Vulnerabilities",
+      "target_control_id": "2.4",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-04",
+      "source_control_title": "Publish Discovered Vulnerabilities",
+      "target_control_id": "2.6",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-04 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-05",
+      "source_control_title": "Publish and Enforce a Dependency Remediation Policy",
+      "target_control_id": "1.2a",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-05",
+      "source_control_title": "Publish and Enforce a Dependency Remediation Policy",
+      "target_control_id": "1.2b",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-05",
+      "source_control_title": "Publish and Enforce a Dependency Remediation Policy",
+      "target_control_id": "1.2c",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-05",
+      "source_control_title": "Publish and Enforce a Dependency Remediation Policy",
+      "target_control_id": "2.1",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-05",
+      "source_control_title": "Publish and Enforce a Dependency Remediation Policy",
+      "target_control_id": "2.2",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-05",
+      "source_control_title": "Publish and Enforce a Dependency Remediation Policy",
+      "target_control_id": "2.3",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-05",
+      "source_control_title": "Publish and Enforce a Dependency Remediation Policy",
+      "target_control_id": "2.4",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-05 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-06",
+      "source_control_title": "Publish and Enforce an Application Security Testing Policy",
+      "target_control_id": "1.2a",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-06 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-06",
+      "source_control_title": "Publish and Enforce an Application Security Testing Policy",
+      "target_control_id": "1.2b",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-06 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-06",
+      "source_control_title": "Publish and Enforce an Application Security Testing Policy",
+      "target_control_id": "1.2c",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-06 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-06",
+      "source_control_title": "Publish and Enforce an Application Security Testing Policy",
+      "target_control_id": "2.1",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-06 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-06",
+      "source_control_title": "Publish and Enforce an Application Security Testing Policy",
+      "target_control_id": "2.2",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-06 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-06",
+      "source_control_title": "Publish and Enforce an Application Security Testing Policy",
+      "target_control_id": "2.3",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-06 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-06",
+      "source_control_title": "Publish and Enforce an Application Security Testing Policy",
+      "target_control_id": "2.4",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-06 guidelines[]; verify against EU Cyber Resilience Act before relying on for audit."
+    }
+  ]
+}

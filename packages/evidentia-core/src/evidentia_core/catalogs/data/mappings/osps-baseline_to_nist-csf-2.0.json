@@ -1,0 +1,428 @@
+{
+  "source_framework": "osps-baseline-2026.02.19",
+  "target_framework": "nist-csf-2.0",
+  "version": "OSPS Baseline v2026.02.19 / NIST CSF 2.0",
+  "generated_at": "2026-05-27",
+  "source": "Auto-extracted from OpenSSF OSPS Baseline guidelines[] array at upstream commit ac6bbec8aecf51dce41f62712745f7949ab6bdeb",
+  "provenance": "upstream-osps-guidelines",
+  "verification": "self-attested-via-upstream",
+  "verification_note": "Mappings auto-extracted from the OpenSSF OSPS Baseline guidelines[] array at upstream commit ac6bbec8aecf51dce41f62712745f7949ab6bdeb. Not independently verified against NIST CSF 2.0. Consumers requiring independent verification should plan a hand-check pass.",
+  "mappings": [
+    {
+      "source_control_id": "OSPS-AC-01",
+      "source_control_title": "Use MFA for Sensitive Actions",
+      "target_control_id": "PR.A-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-01 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-AC-01",
+      "source_control_title": "Use MFA for Sensitive Actions",
+      "target_control_id": "PR.A-05",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-01 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-AC-02",
+      "source_control_title": "Restrict Collaborator Permissions",
+      "target_control_id": "PR.AA-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-02 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-AC-02",
+      "source_control_title": "Restrict Collaborator Permissions",
+      "target_control_id": "PR.AA-05",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-02 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-AC-03",
+      "source_control_title": "Protect the Primary Branch from Accidental Modification",
+      "target_control_id": "PR.A-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-03 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-AC-03",
+      "source_control_title": "Protect the Primary Branch from Accidental Modification",
+      "target_control_id": "PR.A-05",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-03 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-AC-04",
+      "source_control_title": "Enforce Least Privilege on CI/CD Pipelines",
+      "target_control_id": "PR.AA-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-04 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-AC-04",
+      "source_control_title": "Enforce Least Privilege on CI/CD Pipelines",
+      "target_control_id": "PR.AA-05",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-AC-04 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-BR-01",
+      "source_control_title": "Prevent Untrusted Input When Building & Releasing",
+      "target_control_id": "PR.AA-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-BR-01 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-01",
+      "source_control_title": "Publish User Guides for Basic Functionality",
+      "target_control_id": "GV.OC-04",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-01 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-01",
+      "source_control_title": "Publish User Guides for Basic Functionality",
+      "target_control_id": "GV.OC-05",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-01 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-02",
+      "source_control_title": "Provide Mechanisms for Reporting Defects",
+      "target_control_id": "RS.MA-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-02 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-DO-02",
+      "source_control_title": "Provide Mechanisms for Reporting Defects",
+      "target_control_id": "GV.RM-05",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-DO-02 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-GV-04",
+      "source_control_title": "Require Formal Review of Permission Grants",
+      "target_control_id": "PR.AA-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-GV-04 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-GV-04",
+      "source_control_title": "Require Formal Review of Permission Grants",
+      "target_control_id": "PR.AA-05",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-GV-04 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-LE-02",
+      "source_control_title": "Ensure Project Licenses are Fully Open Source",
+      "target_control_id": "GV.OC-03",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-LE-02 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-01",
+      "source_control_title": "Publish Source Code and Change History",
+      "target_control_id": "ID.AM-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-01 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-01",
+      "source_control_title": "Publish Source Code and Change History",
+      "target_control_id": "ID.RA-01",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-01 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-01",
+      "source_control_title": "Publish Source Code and Change History",
+      "target_control_id": "ID.RA-08",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-01 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-02",
+      "source_control_title": "Publish Software Dependencies",
+      "target_control_id": "ID.AM.01",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-02 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-02",
+      "source_control_title": "Publish Software Dependencies",
+      "target_control_id": "ID.AM-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-02 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-03",
+      "source_control_title": "Address Pass/Fail Checks Before Accepting Changes",
+      "target_control_id": "ID.IM-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-03 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-QA-06",
+      "source_control_title": "Use Automated Testing in CI/CD Pipelines",
+      "target_control_id": "ID.AM-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-QA-06 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-SA-01",
+      "source_control_title": "Publish Design Descriptions of System Actors and Actions",
+      "target_control_id": "ID.AM-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-SA-01 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-SA-02",
+      "source_control_title": "Publish External Interface Descriptions",
+      "target_control_id": "GV.OC-05",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-SA-02 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-SA-02",
+      "source_control_title": "Publish External Interface Descriptions",
+      "target_control_id": "ID.AM-01",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-SA-02 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-SA-03",
+      "source_control_title": "Maintain a Project Security Assessment",
+      "target_control_id": "ID.RA-01",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-SA-03 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-SA-03",
+      "source_control_title": "Maintain a Project Security Assessment",
+      "target_control_id": "ID.RA-04",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-SA-03 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-SA-03",
+      "source_control_title": "Maintain a Project Security Assessment",
+      "target_control_id": "ID.RA-05",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-SA-03 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-SA-03",
+      "source_control_title": "Maintain a Project Security Assessment",
+      "target_control_id": "DE.AE-07",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-SA-03 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-01",
+      "source_control_title": "Publish Coordinated Vulnerability Disclosure Policy",
+      "target_control_id": "GV.PO-01",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-01 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-01",
+      "source_control_title": "Publish Coordinated Vulnerability Disclosure Policy",
+      "target_control_id": "GV.PO-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-01 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-01",
+      "source_control_title": "Publish Coordinated Vulnerability Disclosure Policy",
+      "target_control_id": "ID.RA-01",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-01 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-01",
+      "source_control_title": "Publish Coordinated Vulnerability Disclosure Policy",
+      "target_control_id": "ID.RA-08",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-01 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-02",
+      "source_control_title": "Publish Contacts and Process for Reporting Vulnerabilities.",
+      "target_control_id": "GV.PO-01",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-02 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-02",
+      "source_control_title": "Publish Contacts and Process for Reporting Vulnerabilities.",
+      "target_control_id": "GV.PO-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-02 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-02",
+      "source_control_title": "Publish Contacts and Process for Reporting Vulnerabilities.",
+      "target_control_id": "ID.RA-01",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-02 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-04",
+      "source_control_title": "Publish Discovered Vulnerabilities",
+      "target_control_id": "ID.RA-01",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-04 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-05",
+      "source_control_title": "Publish and Enforce a Dependency Remediation Policy",
+      "target_control_id": "GV.RM-05",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-05 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-05",
+      "source_control_title": "Publish and Enforce a Dependency Remediation Policy",
+      "target_control_id": "GV.RM-06",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-05 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-05",
+      "source_control_title": "Publish and Enforce a Dependency Remediation Policy",
+      "target_control_id": "GV.PO-01",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-05 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-05",
+      "source_control_title": "Publish and Enforce a Dependency Remediation Policy",
+      "target_control_id": "GV.PO-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-05 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-05",
+      "source_control_title": "Publish and Enforce a Dependency Remediation Policy",
+      "target_control_id": "ID.RA-01",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-05 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-05",
+      "source_control_title": "Publish and Enforce a Dependency Remediation Policy",
+      "target_control_id": "ID.RA-08",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-05 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-05",
+      "source_control_title": "Publish and Enforce a Dependency Remediation Policy",
+      "target_control_id": "ID.IM-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-05 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-06",
+      "source_control_title": "Publish and Enforce an Application Security Testing Policy",
+      "target_control_id": "GV.RM-05",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-06 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-06",
+      "source_control_title": "Publish and Enforce an Application Security Testing Policy",
+      "target_control_id": "GV.RM-06",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-06 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-06",
+      "source_control_title": "Publish and Enforce an Application Security Testing Policy",
+      "target_control_id": "GV.PO-01",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-06 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-06",
+      "source_control_title": "Publish and Enforce an Application Security Testing Policy",
+      "target_control_id": "GV.PO-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-06 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-06",
+      "source_control_title": "Publish and Enforce an Application Security Testing Policy",
+      "target_control_id": "ID.RA-01",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-06 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-06",
+      "source_control_title": "Publish and Enforce an Application Security Testing Policy",
+      "target_control_id": "ID.RA-08",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-06 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    },
+    {
+      "source_control_id": "OSPS-VM-06",
+      "source_control_title": "Publish and Enforce an Application Security Testing Policy",
+      "target_control_id": "ID.IM-02",
+      "target_control_title": "",
+      "relationship": "related",
+      "notes": "Auto-extracted from upstream OSPS-VM-06 guidelines[]; verify against NIST CSF 2.0 before relying on for audit."
+    }
+  ]
+}
