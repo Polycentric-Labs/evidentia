@@ -197,6 +197,58 @@ verification-recipe) deferred to v0.10.6 without scope loss.
 source files; mypy strict 0/0; ruff clean.** PyPI: 8 packages at
 0.10.5 (was 7; `evidentia-eval` added).
 
+**v0.10.4 (May 2026)** — *OCSF symmetry-loop close + 13th MCP
+tool + CHANGELOG-presence pre-tag CI gate*. First Evidentia ship
+under the `/pre-release-review` skill v5.1 (2026.05.24-v5.1;
+v0.10.0 → v0.10.3 all ran under v4). **OCSF symmetry loop closed**:
+new `evidentia gap analyze --format ocsf` emits OCSF Compliance
+Finding (`class_uid` 2003) JSON arrays — the symmetric counterpart
+to v0.10.0's SARIF emit and v0.10.1's third-party OCSF ingest path,
+completing the bidirectional Evidentia ↔ OCSF interop story.
+`OutputFormat` literal extended additively; existing emits
+(`json` / `csv` / `markdown` / `oscal-ar` / `sarif`) unchanged.
+**13th MCP tool `verify_signed_artifact`** (append-only per the
+§MCP tool contract) — thin wrapper exposing `verify_ar_file` to
+Claude Desktop / Claude Code and other MCP-aware clients;
+path-gated via `validate_within(candidate, --allow-root)`; auto-
+routed through the CIMD scope gate. **CHANGELOG-presence pre-tag
+CI gate** (`.github/workflows/verify-changelog.yml`) — lesson from
+the v0.10.3 move-tag re-fire: fires on every push / PR that
+touches `pyproject.toml` / `CHANGELOG.md`, reads the workspace
+meta-package version, and asserts the matching `[X.Y.Z]` block
+exists with the same 1500-byte size gate `release.yml` enforces.
+Closes the v0.10.3 incident class at PR-time rather than tag-time.
+Also lands 4 polish items from the v0.10.3 `/code-review` (P1-P4)
+plus 3 property tests on the OCSF round-trip. **3370 tests passing
+/ 17 skipped across 268 source files; mypy strict 0/0; ruff
+clean.** PyPI: 7 packages at 0.10.4. **17th consecutive PROCEED-
+CLEAN** of the v0.7.x → v0.10.x line.
+
+**v0.10.3 (May 2026)** — *YAML-driven catalogs + OpenSSF Gemara
+reference-model mapping*. Third patch on the v0.10.x line and the
+4th ship of 2026-05-23. Lowers the contributor barrier for new
+framework catalogs (Candidate C): the bundled `data/<tier>/`
+directories now accept `.yaml` / `.yml` alongside `.json`;
+`evidentia_core.catalogs.loader._load_catalog_data` is the new
+choke point doing closed-allowlist extension dispatch (`.json` →
+`json.loads`; `.yaml` / `.yml` → `yaml.safe_load`); rejects
+unsupported extensions + non-mapping YAML roots with clear
+`ValueError`. First YAML proof in the bundled set:
+`iso-27017-2015.yaml` (7-control Tier-C ISO/IEC 27017:2015
+cloud-services stub). Ships **`docs/gemara-mapping.md` NORMATIVE
+positioning piece** (Candidate D) — 13-row mapping table showing
+how every OpenSSF Gemara reference-model component (Catalog,
+Log, Document, Entity, Collection) lands in an Evidentia surface;
+"mapping, not conformance claim" framing; cites Gemara v1.1.0
+(2026-05-12), CUE schemas, the `gemaraproj/go-gemara` SDK, and
+adopters FINOS CCC + OpenSSF Security Baseline. Tag `v0.10.3 @
+c0ed3ad` — move-tag re-fire after the original tag missed the
+CHANGELOG block (lesson source for the v0.10.4
+`verify-changelog.yml` gate). **3352 tests passing / 17 skipped
+across 267 source files; mypy strict 0/0; ruff clean.** PyPI: 7
+packages at 0.10.3. **16th consecutive PROCEED-CLEAN** of the
+v0.7.x → v0.10.x line.
+
 **v0.10.2 (May 2026)** — *MCP-as-backend tool surface expansion +
 GRC Engineering Club marketplace plugin (staged) + close v0.10.1
 F-V101-L1 SSRF surface*. Third release of the v0.10.x line on the

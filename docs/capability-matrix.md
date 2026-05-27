@@ -13,6 +13,60 @@
 
 ---
 
+## Re-validation snapshot — 2026-05-27 (v0.10.6 PRE-TAG) — OSPS Baseline first-mover
+
+v0.10.6 lands the OpenSSF OSPS Baseline conformance bundle reserved at the
+v0.10.5 cycle close: 3 maturity-tier YAML catalogs + OSCAL 1.2.1 conversion
+(first-mover) + 5 upstream-sourced crosswalks + 16 GitHub-collector OSPS
+controls + an OSPS-CONFORMANCE.md doc + a `verify-osps-conformance.yml` CI
+gate verifying the conformance claim. Also lands SECURITY.md refresh +
+.well-known/security.txt + GHSA enablement (C2); EOL.md + docs/verification.md
+consumer-side recipes (C4); Scorecard restoration via verify-changelog.yml
+SHA pins (C7) — reverses the v0.10.5 -0.3 regression by closing alerts
+#121 + #122; and an advisory-only workflow-permissions audit (C7) flagging
+3-of-11 workflows for v0.10.7 narrowing follow-up. Per skill v5.1 §4.5
+patch-release allowance, all unchanged subsystems are REUSED from the
+v0.10.0 → v0.10.5 matrices; this snapshot covers the v0.10.5 → v0.10.6
+delta.
+
+### Surface delta vs v0.10.5
+
+| Surface | v0.10.5 | v0.10.6 | Delta |
+|---|---|---|---|
+| Bundled catalogs | 89 | 92 | +3 (OSPS Baseline maturity-1/2/3 YAMLs) |
+| OSCAL conversions | 0 | 1 | +1 (osps-baseline.oscal.json) |
+| Bundled crosswalks | 8 | 13 | +5 (OSPS → NIST-SSDF, NIST-CSF-2.0, EU-CRA, PCI-DSS-4.0, NIST-800-161) |
+| GitHub collector OSPS controls | 0 | 16 | +16 (AC + BR + DO + GV + LE + QA + VM family assessment-requirements) |
+| Workflows | 10 | 11 | +1 (verify-osps-conformance.yml; C3) |
+| Helper scripts | 12 | 14 | +2 (validate_osps_conformance_yaml.py from C3, audit_workflow_permissions.py from C7) |
+| Public API surface additions | — | +3 fields + 16 helpers | CrosswalkDefinition provenance/verification/verification_note (additive) + 16 populate_osps_* helpers |
+| OSPS Baseline conformance | not claimed | SHIPPED (Maturity 2 + partial Maturity 3 via OSPS-CONFORMANCE.md + CI gate) | — |
+
+### Highlights
+
+- First Evidentia ship of OpenSSF OSPS Baseline conformance artifacts
+  (3-catalog bundle + OSCAL conversion + 5 crosswalks + 16 GitHub-
+  collector helpers + conformance gate).
+- SECURITY.md refresh + .well-known/security.txt + GHSA enablement (C2).
+- EOL.md + docs/verification.md (C4) — consumer-side cosign + PEP 740 +
+  osv-scanner + SLSA Provenance v1 recipes.
+- Scorecard restoration via verify-changelog.yml SHA pins (C7) — reverses
+  the v0.10.5 -0.3 regression by closing alerts #121 + #122.
+- Workflow-permissions audit (C7) — advisory only this cycle; 3 of 11
+  workflows flagged FAIL (legitimate write scopes for PR/issue comments),
+  all justified, v0.10.7 backlog story.
+
+### §12 corrections-log entries added this cycle
+
+4-of-4, per [v0.10.6-plan.md §12](v0.10.6-plan.md):
+
+- §12.1: crosswalk format/path (JSON in catalogs/data/mappings/, NOT YAML in new dir)
+- §12.2: OSPS Baseline counts (25/42/63 assessment-requirements, NOT plan's 21/38/58)
+- §12.3: crosswalk source data location (upstream per-family YAMLs at pinned SHA, NOT the C1-flattened per-maturity bundle)
+- §12.4: OSPS control-ID granularity (OSPS-XX-YY.ZZ assessment-requirement, NOT OSPS-XX-YY family)
+
+---
+
 ## Re-validation snapshot — 2026-05-24 (v0.10.4 PRE-TAG) — first run under skill v5.1
 
 v0.10.4 closes the **OCSF symmetry loop** (v0.10.0 SARIF emit + v0.10.1 OCSF

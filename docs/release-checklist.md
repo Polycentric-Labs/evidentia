@@ -30,6 +30,8 @@ If the project has changed materially since the last release (new
 package, new collector, new top-level config, new workflow), add
 the corresponding new checklist items here.
 
+**Last self-update**: 2026-05-27 — added Step 2.A (LL-V105-1 prevention).
+
 ---
 
 ## Step 1 — Pre-release scope confirmation
@@ -90,6 +92,40 @@ For every release (patch / minor / major):
       so the new key/hash mapping starts fresh + the prior state is
       preserved for audit. Document the version transition in the
       CHANGELOG.
+
+---
+
+## Step 2.A — Pre-publish credential readiness check (LL-V105-1)
+
+> Added v0.10.6 per the v0.10.5 partial-publish lesson-learned
+> (LL-V105-1). For every release that introduces a new PyPI-published
+> workspace package, the pending publisher MUST be configured on PyPI
+> BEFORE tagging — Trusted Publishers cannot create new projects.
+
+For every release:
+
+- [ ] Identify any workspace packages new to this release:
+  ```bash
+  diff <(git ls-tree HEAD packages/ --name-only) <(git ls-tree <prev-tag> packages/ --name-only)
+  ```
+- [ ] For each new package, check whether it exists on PyPI:
+  ```bash
+  for pkg in $new_packages; do
+    curl -sI "https://pypi.org/pypi/${pkg}/json" -o /dev/null -w "${pkg}: %{http_code}\n"
+  done
+  ```
+- [ ] If any package returns 404, the release MUST NOT tag until a pending publisher is configured at:
+  https://pypi.org/manage/account/publishing/
+  Configure with: PyPI Project Name = `<package>`, Owner = `Polycentric-Labs`,
+  Repository name = `evidentia`, Workflow name = `release.yml`,
+  Environment name = `pypi`.
+- [ ] After configuring, re-check via the curl loop above; only proceed when all packages return 200.
+
+**Failure mode this prevents**: partial PyPI publish chain halt. v0.10.5's
+publish step bailed at `evidentia-eval-0.10.5-py3-none-any.whl` because
+no pending publisher existed for the new package, leaving 3 of 8
+packages unpublished. Recovery required PyPI dashboard work + workflow
+re-run. See `.local/pre-release-review/lessons-learned.yaml` LL-V105-1.
 
 ---
 
