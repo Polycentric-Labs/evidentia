@@ -35,6 +35,29 @@ Initial acknowledgment within **3 business days**. Triage assessment
 within **10 business days**. See **Disclosure timeline** below for
 the full coordination window.
 
+## Safe harbor
+
+Evidentia commits to the following safe-harbor terms for good-faith security
+researchers (CISA / FTC sample VDP language):
+
+- We will not initiate legal action against researchers who comply with this policy.
+- We consider security research conducted under this policy to be authorized
+  conduct under the Computer Fraud and Abuse Act and similar laws.
+- We waive any DMCA claims against you for circumventing technological
+  measures to perform research under this policy.
+- We will work with you to understand and resolve issues quickly.
+- We will recognize your contribution if you are the first to report the
+  issue and we make a code or configuration change.
+
+In return, we ask that you:
+
+- Make good-faith effort to avoid privacy violations, destruction of data,
+  and interruption of service.
+- Only use exploits to the extent necessary to confirm a vulnerability.
+- Do not exfiltrate data, pivot to other systems, or use the vulnerability
+  to access additional systems.
+- Provide a reasonable amount of time for us to respond before public disclosure.
+
 ## Supported versions
 
 Evidentia is pre-1.0 and ships from a **single supported patch
@@ -47,25 +70,15 @@ a vulnerability in Evidentia's own code.
 
 | Version | Status | Reason |
 |---------|--------|--------|
-| **`0.7.9`** | ✅ **Supported** | Latest patch. TPRM module (vendor inventory + DD-questionnaire + concentration-report + OSCAL TPRM emit) + 4 vendor-risk-API collectors (Vanta + Drata + BitSight + SecurityScorecard). 0 CVEs at ship per `docs/security-review-v0.7.9.md`. |
-| `0.7.8` | ❌ Deprecated | Cloud DW collectors + BI publish integrations. Superseded by `0.7.9`. Upgrade to `0.7.9`. |
-| `0.7.7.1` | ❌ Deprecated | Same-day Dockerfile-pin hot-fix to `0.7.7`. Superseded by `0.7.9`. Upgrade to `0.7.9`. |
-| `0.7.7` | ❌ Deprecated | Container image pinned a stale `evidentia[gui]` version inside (CRITICAL F-007); upgrade to `0.7.9`. |
-| `0.7.6` and earlier | ❌ Deprecated | Predates the v0.7.7 SQL collectors + v0.7.8 cloud DW + BI + v0.7.9 TPRM. Patches in this range may carry pin floors that allow installation of upstream-vulnerable transitive versions disclosed since their ship date. Upgrade to `0.7.9`. |
-| `0.6.x` | ❌ Deprecated | Predates the `enterprise-grade` supply-chain hardening (Sigstore signing, PEP 740 attestations, OIDC publisher) that landed in `0.7.0`. Upgrade to `0.7.9`. |
-| `0.5.x` and earlier | ❌ Unsupported | Pre-rename codebase + missing AI-features hardening + missing supply-chain hardening. Upgrade to `0.7.9`. |
+| **`0.10.6`** | ✅ **Supported** | Latest patch. OSS first-mover artifacts (OSPS Baseline catalog + OSCAL + OSPS-CONFORMANCE.md) + 5 OSPS crosswalks + GitHub OSPS collector extension. 0 CVEs at ship per `docs/security-review-v0.10.6.md`. |
+| `0.10.5` and earlier | ❌ Deprecated | Pre-v1.0 single-supported-patch policy; upgrade to `0.10.6`. |
 | Legacy `controlbridge*` packages | ❌ Yanked from PyPI | Every version of every legacy package was yanked at the v0.6.0 rename. Upgrade path documented in [`RENAMED.md`](RENAMED.md). |
 
-**Read this strictly**: an older patch — even `0.7.1` shipped less
-than 24 hours before `0.7.2` — is deprecated the moment a successor
+**Read this strictly**: an older patch — even one shipped less than
+24 hours before its successor — is deprecated the moment a successor
 ships if disclosed advisories make the older patch's resolved
 dependency tree exploitable. Pre-1.0, there are no backports. The
 single supported patch is always the answer.
-
-When `v0.8.0` ships, the same single-supported-patch policy applies
-to `0.8.x`. `v0.7.9` will move to a brief maintenance window
-(security-only patches for the period documented in the v0.8.0
-release notes), then deprecation.
 
 Once `v1.0` ships, the supported-version policy will tighten to
 explicit semver guarantees (latest patch of each supported minor).
@@ -130,8 +143,8 @@ Out of scope:
   is intentionally non-authoritative. Use
   `evidentia catalog import` to load your licensed copy.
 - **Findings against unsupported versions** (see Supported versions
-  table above). If a vulnerability exists in `0.6.x` but not in
-  `0.7.x`, the remediation is to upgrade.
+  table above). If a vulnerability exists in an older patch but not
+  in the current supported patch, the remediation is to upgrade.
 - **Self-XSS, social engineering, or attacks requiring physical
   access to the user's machine.**
 - **Theoretical issues without a reproducible exploit path**
@@ -159,7 +172,7 @@ Verify a release wheel:
 pip install pypi-attestations
 pypi-attestations verify pypi \
   --repository https://github.com/polycentric-labs/evidentia \
-  "pypi:evidentia-0.7.9-py3-none-any.whl"
+  "pypi:evidentia-0.10.6-py3-none-any.whl"
 ```
 
 If verification fails, **stop and report immediately** via the
@@ -170,8 +183,8 @@ artifact is itself a security incident.
 
 Coordinated security reports — once disclosed and fixed — are
 credited in the corresponding release notes and in the GitHub
-Security Advisory. If you'd like a place on a future
-`SECURITY-HALL-OF-FAME.md`-style page, that's planned for v0.8.x;
-for now, recognition is in-release-only.
+Security Advisory. A future `SECURITY-HALL-OF-FAME.md`-style page is
+planned for the post-v1.0 line; for now, recognition is
+in-release-only.
 
 Thank you in advance for helping keep Evidentia and its users safe.
