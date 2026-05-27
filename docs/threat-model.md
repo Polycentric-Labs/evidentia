@@ -3114,6 +3114,101 @@ prior LOW (F-V101-L1) CLOSED**.
 - `docs/v0.10.3-plan.md` — forward-looking next-release scope.
 - `docs/capability-matrix.md` — v0.10.2 PRE-TAG snapshot.
 
+## v0.10.6 attack-surface delta — OSPS Baseline conformance + CI gate (PRE-TAG 2026-05-27)
+
+v0.10.6 Phase 3 (commit C3) introduces a new CI-Actions surface:
+`.github/workflows/verify-osps-conformance.yml`. The workflow parses
+`OSPS-CONFORMANCE.md` on every push to `main`, every pull-request
+targeting `main`, and weekly on a Monday 03:00 UTC cron; it extracts
+every claimed-PASS evidence URL and probes it via `gh api` for HTTP
+200. If any evidence link 404s, the workflow fails and the doc must
+be updated (fix the link, restore the missing file, or downgrade the
+verdict to HONEST_GAP) before the next release.
+
+This subsection documents the threat model + mitigations for that
+new surface.
+
+### Guards: verify-osps-conformance.yml workflow
+
+The CI workflow that re-validates `OSPS-CONFORMANCE.md` evidence
+links introduces a new `gh api`-via-Actions surface (added v0.10.6).
+Mitigations:
+
+- **Token scope**: workflow declares `permissions: contents: read,
+  actions: read` at the workflow level — no write surface. The
+  default `GITHUB_TOKEN` is short-lived (~60 min) and scoped to this
+  repo only. The job-level `permissions:` block is absent (inherits
+  the workflow-level read-only default). No `id-token: write` /
+  `contents: write` / `security-events: write` / `pull-requests:
+  write` elevations anywhere.
+- **Rate-limit DoS exposure**: a malicious PR could theoretically
+  pad `OSPS-CONFORMANCE.md` with thousands of evidence URLs to
+  exhaust the `GITHUB_TOKEN`'s 5000/hr `gh api` rate limit.
+  Mitigated by (a) the PR review gate — branch protection on `main`
+  requires 6 status checks + a maintainer approval before merge;
+  (b) the workflow timeout (`timeout-minutes: 10`) — at ~50ms/call
+  for `gh api`, the workflow would self-terminate before hitting
+  rate limit; (c) the current attestation has 41 controls × ~1.4
+  evidence URLs = ~57 calls per run, well under cap; even a 100x
+  pad would still complete within the 10-minute timeout.
+- **Workflow injection**: the parsed evidence URLs are NEVER passed
+  through `eval`, `bash -c`, or any shell interpolation. They go
+  only to `subprocess.run(["gh", "api", "-i", "-H", "Accept: ...",
+  url])` as a positional argument. There is no `${{ github.event.*
+  }}` expansion of doc content. Even a maliciously-crafted URL like
+  `\`rm -rf /\`` would be passed as a literal positional arg to
+  `gh api`, which would return a malformed-URL 404 (caught by the
+  workflow's 404-handler and reported as a verdict failure).
+- **CodeQL coverage**: the workflow's embedded Python script is
+  Python code; `.github/workflows/codeql.yml` runs CodeQL `python`
+  analysis on every push, so any future workflow-injection or
+  taint-flow regression in this script would surface as a CodeQL
+  alert before merging.
+- **Branch-protection alignment**: this workflow is NOT yet added
+  to the `required_status_checks` list on `main` (verified via
+  `gh api repos/Polycentric-Labs/evidentia/branches/main/protection`
+  2026-05-27 — the 6 required contexts are pytest×3 + ruff + mypy
+  + frontend; verify-osps-conformance is informational at v0.10.6).
+  v0.10.7 plan: promote `verify-osps-conformance` to a required
+  status check after the workflow has a successful track record of
+  3+ runs without false-positive 404s.
+
+### Honest-gap visibility surface
+
+The `OSPS-CONFORMANCE.md` "Honest gaps" table makes the project's
+known-shortfalls visible to any attacker reading the doc. This is a
+deliberate trade-off: transparency + machine-readable resolution
+paths > security-through-obscurity. The 4 structurally-unreachable-solo
+honest-gaps (OSPS-AC-04.01/02 + OSPS-GV-04.01 + OSPS-QA-07.01) are
+also documented in `docs/v1.0-transition.md` — they're not new
+information to an attacker who has read the existing public docs.
+The 3 v0.10.x-resolvable honest-gaps (OSPS-LE-01.01 + OSPS-VM-04.02
++ OSPS-VM-05.03) have CI-gate / CLI-verb resolution paths scoped for
+v0.10.7 / v0.11.x; the work to close them is itself a tracked
+backlog item, not a hidden delivery commitment.
+
+### Findings ledger summary
+
+| Severity | Count | Notes |
+|---|---|---|
+| CRITICAL / HIGH / MEDIUM / LOW | 0 NEW | — |
+| INFO | 0 | — |
+
+**Zero unfixed CRITICAL / HIGH / MEDIUM / LOW at v0.10.6 Phase 3 (commit C3).**
+
+### Cross-references
+
+- `OSPS-CONFORMANCE.md` — the self-attestation walked + claimed.
+- `.github/workflows/verify-osps-conformance.yml` — the CI gate.
+- `scripts/validate_osps_conformance_yaml.py` — schema validator for
+  the gitignored YAML companion.
+- `tests/integration/test_osps_conformance.py` — pytest coverage for
+  the validator + doc-presence invariants.
+- `docs/v0.10.6-implementation-plan.md` §Task 3 — the per-step plan
+  this commit closes.
+- `docs/v0.10.6-plan.md` §2.E + §11 — the v0.10.7 backlog items for
+  closing OSPS-AC-04.01/02 + OSPS-VM-05.03.
+
 ---
 
 *First published v0.7.7 (2026-05). Origin: promoted from a

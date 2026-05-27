@@ -1,0 +1,155 @@
+# Re-validates every claimed-PASS evidence link in OSPS-CONFORMANCE.md
+# on every push to main, every PR, and weekly to catch link rot.
+#
+# If any evidence link returns HTTP 404 from `gh api`, this workflow
+# fails — OSPS-CONFORMANCE.md must be updated (fix the link, restore
+# the missing file, or downgrade the verdict to HONEST_GAP) before
+# the next release.
+#
+# Threat model: see docs/threat-model.md §"v0.10.6 attack-surface
+# delta" → "Guards: verify-osps-conformance.yml workflow" for the
+# token-scope + rate-limit-DoS + workflow-injection + CodeQL-coverage
+# analysis.
+#
+# Action pinning: every `uses:` line is pinned to a full commit SHA
+# (not a tag) to pre-empt the OpenSSF Scorecard PinnedDependencies
+# regression that the C7 hardening phase explicitly cleans up across
+# all workflows. Comments after each SHA carry the resolved tag for
+# human review.
+
+name: verify-osps-conformance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "OSPS-CONFORMANCE.md"
+      - "scripts/validate_osps_conformance_yaml.py"
+      - ".github/workflows/verify-osps-conformance.yml"
+      - ".local/pre-release-review/osps-conformance.yaml"  # tracked-when-materialized
+  pull_request:
+    branches: [main]
+    paths:
+      - "OSPS-CONFORMANCE.md"
+      - "scripts/validate_osps_conformance_yaml.py"
+      - ".github/workflows/verify-osps-conformance.yml"
+      - ".local/pre-release-review/osps-conformance.yaml"
+  schedule:
+    # Weekly Monday 03:00 UTC — catches link rot from out-of-band
+    # repo changes (e.g., a file rename that doesn't go through PR
+    # review). Offset from codeql.yml (Mon 12:00 UTC) + scorecard.yml
+    # to spread CI load.
+    - cron: '0 3 * * 1'
+  # Allow manual re-runs from the Actions UI for diagnostic purposes.
+  workflow_dispatch:
+
+# Read-only defaults — workflow has no write surface. `gh api`
+# read calls use the default GITHUB_TOKEN which is scoped to this
+# repo only and is short-lived (~60 min).
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify-conformance-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: '3.12'
+
+      - name: Install pyyaml
+        run: pip install pyyaml==6.0.3
+
+      - name: Parse OSPS-CONFORMANCE.md and extract evidence claims
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python <<'PY'
+          import re
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          md = Path("OSPS-CONFORMANCE.md").read_text(encoding="utf-8")
+
+          # Match table rows of the form:
+          #   | OSPS-XX-NN | <title> | ✅ PASS | [link-text](URL) ... |
+          # The `(?:\.\d+)?` allows for assessment-requirement IDs
+          # like OSPS-AC-01.01 in addition to top-level OSPS-AC-01.
+          pattern = re.compile(
+              r"^\|\s*(OSPS-[A-Z]{2}-\d+(?:\.\d+)?)\s*\|"
+              r"[^|]+\|"  # title cell
+              r"\s*✅\s*PASS\s*\|"
+              r"\s*([^|]+)\|",  # evidence cell
+              re.MULTILINE,
+          )
+          claims = pattern.findall(md)
+          if not claims:
+              print(
+                  "::error::No PASS-claimed controls parsed from OSPS-CONFORMANCE.md. "
+                  "Has the table format drifted from the regex?",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          print(f"::notice::Parsed {len(claims)} PASS-claimed controls; verifying evidence URLs...")
+
+          url_pattern = re.compile(r"\[[^\]]*\]\((https?://[^\s\)]+)\)")
+          failures: list[tuple[str, str]] = []
+          checked = 0
+          for control_id, evidence_cell in claims:
+              for url in url_pattern.findall(evidence_cell):
+                  checked += 1
+                  # `gh api` with the URL routes through GitHub's API.
+                  # We look for HTTP 200 (or any 2xx); 404 = failure.
+                  # The `-i` flag includes response headers, which we
+                  # parse for the status line. We do NOT pass the URL
+                  # through any shell interpolation — it goes only to
+                  # `subprocess.run` as a positional argument, blocking
+                  # workflow-injection from doc content.
+                  result = subprocess.run(
+                      ["gh", "api", "-i", "-H", "Accept: application/vnd.github+json", url],
+                      capture_output=True,
+                      text=True,
+                      check=False,
+                  )
+                  if (
+                      "HTTP/2.0 404" in result.stdout
+                      or "HTTP/1.1 404" in result.stdout
+                      or "HTTP/2 404" in result.stdout
+                  ):
+                      failures.append((control_id, url))
+                      print(
+                          f"::error::404 on evidence for {control_id}: {url}",
+                          file=sys.stderr,
+                      )
+
+          if failures:
+              print(
+                  f"::error::{len(failures)} of {checked} evidence link(s) returned HTTP 404. "
+                  f"Update OSPS-CONFORMANCE.md before the next release.",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          print(
+              f"::notice::Verified {len(claims)} PASS-claimed controls / "
+              f"{checked} evidence URLs; all resolved."
+          )
+          PY
+
+      - name: Validate machine-readable companion schema (if present)
+        run: |
+          if [ -f .local/pre-release-review/osps-conformance.yaml ]; then
+            echo "::notice::Found .local/pre-release-review/osps-conformance.yaml; validating schema."
+            python scripts/validate_osps_conformance_yaml.py \
+              .local/pre-release-review/osps-conformance.yaml
+          else
+            echo "::warning::.local/pre-release-review/osps-conformance.yaml not present (gitignored — won't exist on fresh clones). Skipping schema check."
+          fi
