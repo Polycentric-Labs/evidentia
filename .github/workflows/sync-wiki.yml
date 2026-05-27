@@ -31,13 +31,21 @@ on:
       - ".github/workflows/sync-wiki.yml"
   workflow_dispatch:
 
+# Top-level defaults: read-only. The push to <repo>.wiki.git needs
+# contents:write — scoped to the `sync` job only per Scorecard
+# TokenPermissionsID alert #124 (v0.10.6 → v0.10.7 hygiene).
 permissions:
-  contents: write  # JUSTIFIED: push to <repo>.wiki.git uses the same-repo GITHUB_TOKEN
+  contents: read
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # JUSTIFIED: push to <repo>.wiki.git uses the same-repo GITHUB_TOKEN.
+    # Scoped at job level (vs top-level) so the workflow's read-only
+    # default applies to any future jobs that don't need write access.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5
 

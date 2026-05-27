@@ -26,6 +26,12 @@ def audit_workflow(path: Path) -> tuple[str, str]:
     except yaml.YAMLError as exc:
         return ("ERROR", f"YAML parse: {exc}")
 
+    # yaml.safe_load returns None for empty files or files containing
+    # only comments. The subsequent .get() would AttributeError; guard
+    # explicitly so the audit surfaces a clear error message instead.
+    if data is None:
+        return ("ERROR", "empty YAML file (no top-level mapping)")
+
     top_level_perms = data.get("permissions")
     if top_level_perms is None:
         # Check per-job

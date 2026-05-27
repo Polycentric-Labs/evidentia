@@ -1,0 +1,20 @@
+# Hash-pinned dependencies for verify-osps-conformance.yml.
+#
+# Closes Scorecard alert #123 (PinnedDependenciesID) on
+# verify-osps-conformance.yml — the previous `pip install pyyaml==6.0.3`
+# was version-pinned but not hash-pinned. Installing via this file with
+# `--require-hashes` forces pip to verify each downloaded artifact's
+# sha256 matches one of the listed hashes before installation.
+#
+# Hashes sourced from PyPI's pypi.org/pypi/pyyaml/6.0.3/json on
+# 2026-05-27 and cross-verified by SHA-256 against the downloaded
+# artifacts.
+#
+# When bumping the pyyaml version, re-fetch hashes from PyPI:
+#   curl -s https://pypi.org/pypi/pyyaml/<version>/json | jq '.urls[] |
+#     select(.filename | endswith(".tar.gz") or
+#       contains("cp312-cp312-manylinux_2_17_x86_64")) |
+#     {filename, sha256: .digests.sha256}'
+pyyaml==6.0.3 \
+    --hash=sha256:ba1cc08a7ccde2d2ec775841541641e4548226580ab850948cbfda66a1befcdc \
+    --hash=sha256:d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f

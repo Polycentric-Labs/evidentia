@@ -63,7 +63,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install pyyaml
-        run: pip install pyyaml==6.0.3
+        run: pip install -r .github/workflows/requirements/verify-osps-conformance.txt --require-hashes
 
       - name: Parse OSPS-CONFORMANCE.md and extract evidence claims
         env:
