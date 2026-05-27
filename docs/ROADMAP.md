@@ -1741,16 +1741,14 @@ detailed integration plan" §v0.11. Substantive minor (~6-8 weeks):
   post-operator-deep-dive (incorporate AWS OSCAL MCP / Vanta MCP /
   ComplianceCow MCP / Snyk AI Trust Platform shifts).
 
-### v1.1+ — Commercial-tier launch + remaining audit items — RESERVED (added 2026-05-24)
+### v1.1+ — Post-v1.0 direction + remaining audit items — RESERVED (added 2026-05-24)
 
 Items deferred from Phase B audit v3 + integration plan §"v1.1+":
 
-- Multi-tenant RBAC full CLI/REST wire (commercial Pro tier per
-  v0.10.2 OSS-vs-paid lock-in; primitives shipped v0.9.7).
-- PR-time auto-blocking workflow (OSS, NOT Pro carve-out per
-  RF3 — closes OSPS-VM-05 + VM-06 maturity-3 controls; per
-  Phase B audit, this is a 100-LOC workflow YAML that should
-  stay OSS to preserve open-core moat integrity).
+- Multi-tenant RBAC full CLI/REST wire (v0.11+ scope; primitives
+  shipped v0.9.7).
+- PR-time auto-blocking workflow (closes OSPS-VM-05 + VM-06
+  maturity-3 controls; 100-LOC workflow YAML).
 - AIReg-Bench adapter (`evidentia_eval/aireg_bench.py`) — scores
   Evidentia against Marino & Lane benchmark; establishes
   computational-compliance reference-implementation priority.
@@ -1760,11 +1758,13 @@ Items deferred from Phase B audit v3 + integration plan §"v1.1+":
   pairs with MSR 2027 Mining Challenge candidacy.
 - ESEM 2027 SEIP short-paper submission (~May 2027 deadline)
   OR ICSE 2027 Demonstrations track (4-6pp tool demo).
-- Persona modes full UX (auditor / engineer / TPRM) for Pro tier.
-- Hosted federal-cloud variant (Federal tier).
+- Persona modes full UX (auditor / engineer / TPRM specialists) —
+  scope post-v1.0.
+- Hosted federal-cloud variant — scope post-v1.0.
 - **OpenSSF Best Practices Badge Gold tier** — unblocked only
   when Polycentric-Labs has ≥2 active core maintainers (tied to
-  commercial-tier hiring milestone per `evidentia_commercial_strategy.md`).
+  organizational-onboarding milestone; specifics out of scope
+  pre-v1.0).
 - Architectural Tier 3 items from Phase B audit v3 (control-chart
   script ships skill-side; dynamic-install eBPF scan; etc.).
 

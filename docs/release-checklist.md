@@ -157,7 +157,7 @@ re-run. See `.local/pre-release-review/lessons-learned.yaml` LL-V105-1.
 - [ ] Verify `README.md` "Current status" section reflects the new
       version. Update version-callout banners.
 - [ ] If a `docs/positioning-and-value.md` re-sync is due (quarterly
-      cadence — see [`MEMORY.md` pointer](pointer_evidentia_positioning_and_value.md)):
+      cadence — see the `evidentia_positioning_and_value` MEMORY entry):
   - Re-run the 7 research streams per the recipe in MEMORY.md
   - Snapshot the prior version as `docs/positioning-and-value-YYYY-Q[N].md`
   - Promote new synthesis to canonical `docs/positioning-and-value.md`
@@ -623,9 +623,8 @@ Within 1-3 days:
 Run quarterly regardless of release schedule:
 
 - [ ] Re-sync `docs/positioning-and-value.md` per the
-      [`research_resync_automation_pattern.md`](pointer_research_resync_automation_pattern.md)
-      MEMORY pointer. Snapshot to dated file; review diff; promote
-      to canonical.
+      `research_resync_automation_pattern` MEMORY entry. Snapshot to
+      dated file; review diff; promote to canonical.
 - [ ] Refresh `docs/enterprise-grade.md` if standards have evolved
       (NIST SSDF v1.X, FedRAMP RFC-NNNN, EU regulation enforcement
       timelines).

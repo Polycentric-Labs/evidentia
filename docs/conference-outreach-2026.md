@@ -79,7 +79,7 @@ This talk covers the playbook we used to ship v1.0 of Evidentia, an open-source 
 Practical content:
 - How we identified each frozen surface from real-operator workflows (vs. inventing a public/private split top-down). The walk-throughs that revealed which surfaces operators actually depend on.
 - The pre-release-review v4 methodology that achieved 22+ consecutive PROCEED-CLEAN ship cycles, with mandatory `/security-review` invocations and conditional `/code-review` auto-fires per release.
-- The threat-modeling regression we still see in our deferred items, and the open-core commercial story that ships post-v1.0 (separate PyPI packages for Pro / Federal / Enterprise tiers).
+- The threat-modeling regression we still see in our deferred items, and the post-v1.0 direction (specifics TBD pre-v1.0).
 - The OpenSSF Best Practices Gold-tier two-contributor threshold and how it shaped our timing.
 
 Audience walks away with the actual pre-release-review checklist, the deprecation calendar template, and the API-stability surface inventory worksheet — all in the public `Polycentric-Labs/evidentia` repo.
