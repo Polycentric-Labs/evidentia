@@ -2,13 +2,12 @@
 """Comprehensive doc-health check for Evidentia.
 
 Run BEFORE any version-update push. Invoked by `/pre-release-review`
-Step 5.D.3 (doc-health) + 5.D.4 (commit-message audit) in --strict
-mode (blocks tag if FAIL); also runnable in --advisory mode (default)
-during development.
+Step 5.D.3 in --strict mode (blocks tag if FAIL); also runnable in
+--advisory mode (default) during development.
 
 8 checks total (5 doc + 3 publicly-facing-surface):
 
-DOC HEALTH (--strict gates these on FAIL):
+DOC HEALTH (always runs):
 
 1. **parse_validity**       — every tracked .md loads as valid UTF-8.
 2. **cross_link_resolve**   — every relative markdown link in every
@@ -18,36 +17,43 @@ DOC HEALTH (--strict gates these on FAIL):
 3. **readme_size_guard**    — README.md is at or below the
                               ``--readme-max`` byte budget (default
                               10,000; canonical OSS benchmark ~6-8KB).
-4. **tier_vocab_audit**     — no Pro/Enterprise/Federal commercial-tier
-                              vocabulary leaks into tracked public files
-                              outside the per-line allowlist.
-5. **private_path_leak**    — no tracked public .md file links to a
+4. **private_path_leak**    — no tracked public .md file links to a
                               ``private/`` path (the gitignored
-                              commercial-strategy directory).
+                              strategy directory).
 
-PUBLICLY-FACING SURFACES (Allen 2026-05-27 directive):
+PHRASE AUDIT (config-driven; runs only if private config present):
 
-6. **commit_msg_audit**     — no tier vocabulary in commit messages
-                              AFTER the allowlist cutoff SHA (default
-                              ``32df7fa``; everything before is
-                              accepted as immutable historical).
-                              `git log <cutoff>..HEAD` is the scan range.
-7. **tag_msg_audit**        — no tier vocabulary in annotated tag
-                              messages for tags created AFTER the
-                              cutoff. v0.10.5 + earlier tags are
-                              allowlisted (immutable; force-update
-                              would break cosign signatures).
-8. **release_body_audit**   — no tier vocabulary in the latest
-                              GitHub Release body (uses ``gh api``;
-                              requires gh auth in the env).
+5. **phrase_audit**         — no forbidden phrases (per the project's
+                              private phrase config) in tracked public
+                              files outside the per-file allowlist.
+6. **commit_msg_audit**     — same forbidden-phrase set, applied to
+                              commit messages in the range
+                              ``cutoff..HEAD`` (cutoff loaded from
+                              config; everything before is allowlisted
+                              as immutable history).
+7. **tag_msg_audit**        — same forbidden-phrase set, applied to
+                              annotated tag bodies. Tags listed in the
+                              config's tag_allowlist are skipped
+                              (immutable; force-update would break
+                              cosign signatures bound to those SHAs).
+8. **release_body_audit**   — uses ``gh api`` to inspect the latest
+                              GitHub Release body. Advisory mode
+                              (gracefully WARNs if gh is unauthenticated
+                              or returns empty).
+
+Config: ``private/check-docs-health-patterns.yaml`` (gitignored).
+If absent, the 4 phrase-related checks emit one WARN and skip; the
+4 doc-health checks still run. See ``private/README.md`` for the
+config schema + setup.
 
 SPECIAL MODE for the commit-msg git hook:
 
     python scripts/check_docs_health.py --check-commit-msg <file>
 
-    Reads the message file, runs ONLY the tier-vocab regex set, exits
-    2 if any forbidden phrase matches. The .githooks/commit-msg hook
-    invokes this before letting `git commit` complete.
+    Reads the message file, applies the loaded forbidden-phrase set,
+    exits 2 if any pattern matches. If the phrase config is absent,
+    the hook passes silently (no enforcement). The .githooks/commit-msg
+    hook invokes this before letting ``git commit`` complete.
 
 Exit codes:
 
@@ -56,11 +62,10 @@ Exit codes:
 
 Usage:
 
-    uv run python scripts/check_docs_health.py                       # advisory
-    uv run python scripts/check_docs_health.py --strict              # blocking
-    uv run python scripts/check_docs_health.py --json                # machine-readable
-    uv run python scripts/check_docs_health.py --commit-cutoff <sha> # explicit cutoff
-    uv run python scripts/check_docs_health.py --check-commit-msg <file>  # hook mode
+    uv run python scripts/check_docs_health.py                  # advisory
+    uv run python scripts/check_docs_health.py --strict         # blocking
+    uv run python scripts/check_docs_health.py --json           # machine-readable
+    uv run python scripts/check_docs_health.py --check-commit-msg <file>
 """
 
 from __future__ import annotations
@@ -75,44 +80,7 @@ from enum import Enum
 from pathlib import Path
 
 REPO_ROOT = Path.cwd().resolve()
-
-# Default commit-message allowlist cutoff: everything up to + including
-# this SHA is treated as immutable history (Allen 2026-05-27 decision).
-# Per the historical audit, the leaked-commit-message remediation is
-# accept + prevent-future because the cosign chain + PEP 740 attestations
-# + the awesome-oscal PR URL are bound to specific commit SHAs.
-DEFAULT_COMMIT_CUTOFF = "32df7fa"
-
-# Tag names allowlisted (immutable per convention; force-update would
-# break cosign signatures + GitHub Release bindings).
-TAG_AUDIT_ALLOWLIST: set[str] = {
-    "v0.10.5",  # contains "commercial-tier hiring" reference
-    # v0.10.4 + earlier predate the tier-erasure directive
-    "v0.10.4", "v0.10.3", "v0.10.2", "v0.10.1", "v0.10.0",
-    "v0.9.9", "v0.9.8", "v0.9.7", "v0.9.6", "v0.9.5", "v0.9.4",
-    "v0.9.3", "v0.9.2", "v0.9.1", "v0.9.0",
-    # Older v0.7.x / v0.8.x tags also predate the directive
-}
-
-# Forbidden tier-vocab regex patterns. Per the v0.10.7 audit, these are
-# the specific phrases that leak Evidentia paid-plan specifics into
-# public docs. The intentionally narrow set; competitor-pricing
-# references in market research are LEGITIMATE and not caught here
-# (they're news/comparison content, not Evidentia's own tiers).
-TIER_VOCAB_FORBIDDEN: list[tuple[str, re.Pattern[str]]] = [
-    ("paid-commercial-tier", re.compile(r"\bpaid\s+(?:commercial|services)\b", re.IGNORECASE)),
-    ("commercial-tier-phrase", re.compile(r"\bcommercial[- ]tier(?!s\b)", re.IGNORECASE)),
-    ("pro-federal-pair", re.compile(r"\b[Pp]ro\s*/\s*[Ff]ederal\b")),
-    ("pro-enterprise-pair", re.compile(r"\b[Pp]ro\s*/\s*[Ee]nterprise\b")),
-    ("federal-tier-candidate", re.compile(r"\bfederal[- ]tier\s+candidate\b", re.IGNORECASE)),
-    ("enterprise-tier-candidate", re.compile(r"\benterprise[- ]tier\s+candidate\b", re.IGNORECASE)),
-]
-
-# Per-line allowlist (file:line). Use sparingly + with inline rationale.
-TIER_VOCAB_LINE_ALLOWLIST: dict[str, set[int]] = {
-    # No active per-line exceptions; file-glob allowlist below covers
-    # legitimate cases.
-}
+PHRASE_CONFIG_PATH = Path("private/check-docs-health-patterns.yaml")
 
 # Per-line cross-link allowlist. False-positives that aren't worth the
 # complexity of inline-code-aware regex skipping (the fenced-code-aware
@@ -125,45 +93,106 @@ CROSS_LINK_LINE_ALLOWLIST: dict[str, set[int]] = {
 }
 
 # Files exempt from cross-link broken-target FAILs:
-# - CHANGELOG.md has known link-rot from the v0.10.6 design-partner-program.md
-#   move; historical entries are not edited per append-only convention.
-# - security-review-v*.md docs use a `file.py:42`-style annotation that looks
-#   like a broken markdown link to the resolver but is in fact a security
-#   review's evidence pointer (audit-trail; not actionable).
+# - CHANGELOG.md has known link-rot from the prior file-relocation
+#   cleanup; historical entries are not edited per append-only convention.
+# - security-review-v*.md docs use a `file.py:42`-style annotation that
+#   looks like a broken markdown link to the resolver but is in fact a
+#   security review's evidence pointer (audit-trail; not actionable).
 CROSS_LINK_FILE_ALLOWLIST_GLOBS: list[str] = [
     "CHANGELOG.md",
     "docs/security-review-v[0-9]*.md",
 ]
 
-# File globs exempt from tier_vocab_audit. These are:
-# 1. Research/landscape docs where tier vocabulary refers to market
-#    segmentation, NOT Evidentia's paid plans.
-# 2. Historical per-cycle records (plan docs, security reviews,
-#    marketplace decision-logs) that pre-date the v0.10.6+ tier-
-#    erasure directive and remain as factual history.
-TIER_VOCAB_FILE_ALLOWLIST_GLOBS: list[str] = [
-    "docs/positioning-and-value.md",
-    "docs/integration-survey.md",
-    "docs/capability-matrix.md",
-    "docs/threat-model.md",
-    "docs/financial-sector-overlay.md",
-    "docs/enterprise-grade.md",
-    "docs/enterprise-grade-accepted-findings.md",
-    "docs/dfah-faithfulness.md",
-    "docs/v1.0-transition.md",
-    "docs/hf-eval-suite-scaffolding.md",
-    "docs/walkthrough-*.md",
-    "docs/governance-metrics.md",      # KRI market-pricing comparison
-    "docs/quickstart.md",              # Vanta/Drata cost comparison
-    "docs/risk-quantification.md",     # RiskLens/ProcessUnity comparison
-    "CHANGELOG.md",
-    "docs/v[0-9]*-plan.md",
-    "docs/v[0-9]*-implementation-plan.md",
-    "docs/v[0-9]*-shipped.md",
-    "docs/v[0-9]*-marketplace.md",
-    "docs/v[0-9]*.x-retrospective.md",
-    "docs/security-review-v[0-9]*.md",
-]
+
+@dataclass
+class PhraseConfig:
+    """Loaded forbidden-phrase config (or empty placeholder if absent)."""
+
+    forbidden_patterns: list[tuple[str, re.Pattern[str]]]
+    file_allowlist_globs: list[str]
+    line_allowlist: dict[str, set[int]]
+    tag_allowlist: set[str]
+    commit_cutoff_sha: str
+    is_loaded: bool  # False if config file absent / unreadable
+
+    @classmethod
+    def empty(cls) -> PhraseConfig:
+        return cls(
+            forbidden_patterns=[],
+            file_allowlist_globs=[],
+            line_allowlist={},
+            tag_allowlist=set(),
+            commit_cutoff_sha="",
+            is_loaded=False,
+        )
+
+
+def load_phrase_config() -> tuple[PhraseConfig, str | None]:
+    """Load the private phrase-audit config.
+
+    Returns (config, error_message). If config is absent or unparseable,
+    the returned config is the empty placeholder and error_message
+    describes why phrase checks are disabled.
+    """
+    config_path = REPO_ROOT / PHRASE_CONFIG_PATH
+    if not config_path.exists():
+        return PhraseConfig.empty(), (
+            f"phrase config not found at {PHRASE_CONFIG_PATH.as_posix()}; "
+            f"phrase checks disabled (see private/README.md for setup)"
+        )
+
+    try:
+        import yaml  # type: ignore[import-untyped]
+    except ImportError:
+        return PhraseConfig.empty(), (
+            "PyYAML not available; phrase checks disabled "
+            "(install with `uv sync --all-groups`)"
+        )
+
+    try:
+        data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    except (yaml.YAMLError, OSError) as e:
+        return PhraseConfig.empty(), (
+            f"phrase config at {PHRASE_CONFIG_PATH.as_posix()} unparseable: {e}"
+        )
+
+    if not isinstance(data, dict):
+        return PhraseConfig.empty(), (
+            f"phrase config at {PHRASE_CONFIG_PATH.as_posix()} not a dict"
+        )
+
+    raw_patterns = data.get("forbidden_patterns", []) or []
+    compiled: list[tuple[str, re.Pattern[str]]] = []
+    for entry in raw_patterns:
+        if not isinstance(entry, dict):
+            continue
+        name = entry.get("name")
+        regex = entry.get("regex")
+        if not name or not regex:
+            continue
+        flags = 0
+        for flag_name in entry.get("flags", []) or []:
+            flags |= getattr(re, flag_name, 0)
+        try:
+            compiled.append((name, re.compile(regex, flags)))
+        except re.error:
+            continue
+
+    raw_line_allow = data.get("line_allowlist", {}) or {}
+    line_allow: dict[str, set[int]] = {}
+    if isinstance(raw_line_allow, dict):
+        for path_key, lines in raw_line_allow.items():
+            if isinstance(lines, list):
+                line_allow[str(path_key)] = {int(n) for n in lines if isinstance(n, int)}
+
+    return PhraseConfig(
+        forbidden_patterns=compiled,
+        file_allowlist_globs=list(data.get("file_allowlist", []) or []),
+        line_allowlist=line_allow,
+        tag_allowlist=set(data.get("tag_allowlist", []) or []),
+        commit_cutoff_sha=str(data.get("commit_cutoff_sha", "")),
+        is_loaded=True,
+    ), None
 
 
 def matches_allowlist(path: Path, globs: list[str]) -> bool:
@@ -219,7 +248,7 @@ def list_tracked_files(suffix: str | None = None) -> set[Path]:
     if suffix is not None:
         args.append(f"*{suffix}")
     result = subprocess.run(args, capture_output=True, text=True, check=True)
-    return {Path(p) for p in result.stdout.splitlines() if p}
+    return {Path(p) for p in (result.stdout or "").splitlines() if p}
 
 
 def check_parse_validity(md_paths: list[Path], result: CheckResult) -> None:
@@ -294,11 +323,23 @@ def check_cross_link_resolve(
             target = target.split("#", 1)[0].rstrip("/")
             if not target:
                 continue
+            if target.endswith("/"):
+                target = target + "index.md"
             try:
                 abs_target = (path.parent / target).resolve()
-                rel_to_repo = abs_target.relative_to(REPO_ROOT)
             except (ValueError, OSError):
-                line = content[:match.start()].count("\n") + 1
+                result.add(Finding(
+                    Severity.WARN, "cross_link_resolve", path.as_posix(), line,
+                    f"link target outside repo or unresolvable: {target}",
+                ))
+                continue
+            if abs_target.is_dir():
+                candidate = abs_target / "index.md"
+                if candidate.exists():
+                    abs_target = candidate
+            try:
+                rel_to_repo = abs_target.relative_to(REPO_ROOT)
+            except ValueError:
                 result.add(Finding(
                     Severity.WARN, "cross_link_resolve", path.as_posix(), line,
                     f"link target outside repo or unresolvable: {target}",
@@ -307,12 +348,10 @@ def check_cross_link_resolve(
             if abs_target.is_dir():
                 continue
             if rel_to_repo not in all_tracked:
-                line = content[:match.start()].count("\n") + 1
                 # Downgrade to WARN for any broken link under docs/wiki/.
                 # The wiki is scaffolded in v0.10.7; per-page files fill
                 # in over upcoming cycles. Section indexes legitimately
-                # reference future stubs (including reference/api/ subdir
-                # entries that don't have parent dirs yet).
+                # reference future stubs.
                 under_wiki = rel_to_repo.parts[:2] == ("docs", "wiki")
                 severity = Severity.WARN if under_wiki else Severity.FAIL
                 result.add(Finding(
@@ -342,86 +381,110 @@ def check_readme_size_guard(max_bytes: int, result: CheckResult) -> None:
         ))
 
 
-def check_tier_vocab_audit(md_paths: list[Path], result: CheckResult) -> None:
+def check_private_path_leak(md_paths: list[Path], result: CheckResult) -> None:
+    private_re = re.compile(r"\[([^\]\n]+)\]\(([^)\n]*\bprivate/[^)\n]*)\)")
     for path in md_paths:
-        posix = path.as_posix()
-        if matches_allowlist(path, TIER_VOCAB_FILE_ALLOWLIST_GLOBS):
+        if path.parts[0] == "private":
             continue
         try:
             content = path.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
-        line_allow = TIER_VOCAB_LINE_ALLOWLIST.get(posix, set())
-        for check_name, pattern in TIER_VOCAB_FORBIDDEN:
+        for match in private_re.finditer(content):
+            target = match.group(2)
+            if "/private/" not in target and not target.startswith("private/"):
+                continue
+            line = content[:match.start()].count("\n") + 1
+            result.add(Finding(
+                Severity.FAIL, "private_path_leak", path.as_posix(), line,
+                f"public file links to private/ path: {target}",
+            ))
+
+
+def _scan_text_for_forbidden(
+    text: str,
+    source: str,
+    config: PhraseConfig,
+    check_prefix: str = "phrase_audit",
+) -> list[Finding]:
+    """Apply the loaded forbidden-pattern set to a blob of text."""
+    findings: list[Finding] = []
+    for pattern_name, pattern in config.forbidden_patterns:
+        for match in pattern.finditer(text):
+            line = text[: match.start()].count("\n") + 1
+            findings.append(Finding(
+                Severity.FAIL, f"{check_prefix}:{pattern_name}",
+                source, line,
+                f"forbidden phrase match (pattern {pattern_name}): "
+                f"{match.group(0)!r}",
+            ))
+    return findings
+
+
+def check_phrase_audit(
+    md_paths: list[Path], config: PhraseConfig, result: CheckResult
+) -> None:
+    """Scan tracked .md files for forbidden phrases (config-driven)."""
+    for path in md_paths:
+        if matches_allowlist(path, config.file_allowlist_globs):
+            continue
+        try:
+            content = path.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        line_allow = config.line_allowlist.get(path.as_posix(), set())
+        for pattern_name, pattern in config.forbidden_patterns:
             for match in pattern.finditer(content):
                 line = content[:match.start()].count("\n") + 1
                 if line in line_allow:
                     continue
                 result.add(Finding(
-                    Severity.FAIL, f"tier_vocab_audit:{check_name}", posix, line,
-                    f"forbidden tier vocabulary: {match.group(0)!r}",
+                    Severity.FAIL, f"phrase_audit:{pattern_name}",
+                    path.as_posix(), line,
+                    f"forbidden phrase match (pattern {pattern_name}): "
+                    f"{match.group(0)!r}",
                 ))
 
 
-def _scan_text_for_tier_vocab(
-    text: str, source: str, line_offset: int = 0
-) -> list[Finding]:
-    """Apply TIER_VOCAB_FORBIDDEN regex set to a blob of text.
-
-    Returns Finding records with check name prefixed by 'commit_msg_audit',
-    'tag_msg_audit', or 'release_body_audit' based on caller.
-    """
-    findings: list[Finding] = []
-    for check_name, pattern in TIER_VOCAB_FORBIDDEN:
-        for match in pattern.finditer(text):
-            line = text[: match.start()].count("\n") + 1 + line_offset
-            findings.append(Finding(
-                Severity.FAIL, f"tier_vocab:{check_name}", source, line,
-                f"forbidden tier vocabulary: {match.group(0)!r}",
-            ))
-    return findings
-
-
 def check_git_commit_message_audit(
-    cutoff_sha: str, result: CheckResult
+    config: PhraseConfig, result: CheckResult
 ) -> None:
-    """Scan commit messages for tier vocab in the range cutoff_sha..HEAD.
+    """Scan commit messages for forbidden phrases in cutoff..HEAD."""
+    cutoff = config.commit_cutoff_sha
+    if not cutoff:
+        result.add(Finding(
+            Severity.WARN, "commit_msg_audit", "<config>", None,
+            "no commit_cutoff_sha in phrase config; check skipped",
+        ))
+        return
 
-    Commits up to + including cutoff_sha are treated as immutable
-    historical (Allen 2026-05-27 decision). Commits after the cutoff
-    are subject to the tier-vocab regex set.
-    """
-    # First, confirm the cutoff SHA exists. If not, fail open (skip the
-    # check rather than reporting noise).
     rev_parse = subprocess.run(
-        ["git", "rev-parse", "--verify", "--quiet", cutoff_sha],
+        ["git", "rev-parse", "--verify", "--quiet", cutoff],
         capture_output=True, text=True, check=False,
     )
     if rev_parse.returncode != 0:
         result.add(Finding(
             Severity.WARN, "commit_msg_audit", "<git>", None,
-            f"cutoff SHA {cutoff_sha!r} not found in repo; check skipped",
+            f"cutoff SHA {cutoff!r} not found in repo; check skipped",
         ))
         return
 
-    # Get commits in (cutoff..HEAD] with their full messages.
     log = subprocess.run(
         [
             "git", "log",
             "--format=__COMMIT__%n%H%n%B%n__END__",
-            f"{cutoff_sha}..HEAD",
+            f"{cutoff}..HEAD",
         ],
         capture_output=True, text=True, check=False,
     )
     if log.returncode != 0:
         result.add(Finding(
             Severity.WARN, "commit_msg_audit", "<git>", None,
-            f"git log failed: {log.stderr.strip()}",
+            f"git log failed: {(log.stderr or '').strip()}",
         ))
         return
 
-    # Parse out (sha, message) per commit.
-    blocks = log.stdout.split("__COMMIT__\n")
+    blocks = (log.stdout or "").split("__COMMIT__\n")
     for block in blocks:
         if not block.strip():
             continue
@@ -430,19 +493,18 @@ def check_git_commit_message_audit(
             continue
         sha = lines[0].strip()
         body = lines[1].rsplit("__END__", 1)[0]
-        findings = _scan_text_for_tier_vocab(body, source=f"commit:{sha[:7]}")
+        findings = _scan_text_for_forbidden(
+            body, source=f"commit:{sha[:7]}", config=config,
+            check_prefix="commit_msg_audit",
+        )
         for f in findings:
-            # Re-tag with commit_msg_audit prefix
-            f.check = f.check.replace("tier_vocab:", "commit_msg_audit:")
             result.add(f)
 
 
-def check_git_tag_message_audit(result: CheckResult) -> None:
-    """Scan annotated tag messages for tier vocab.
-
-    Tags in TAG_AUDIT_ALLOWLIST are skipped (immutable; force-update
-    would break cosign chain + GitHub Release binding).
-    """
+def check_git_tag_message_audit(
+    config: PhraseConfig, result: CheckResult
+) -> None:
+    """Scan annotated tag messages for forbidden phrases."""
     tag_list = subprocess.run(
         ["git", "tag", "-l"],
         capture_output=True, text=True, check=False,
@@ -454,9 +516,9 @@ def check_git_tag_message_audit(result: CheckResult) -> None:
         ))
         return
 
-    tags = [t.strip() for t in tag_list.stdout.splitlines() if t.strip()]
+    tags = [t.strip() for t in (tag_list.stdout or "").splitlines() if t.strip()]
     for tag in tags:
-        if tag in TAG_AUDIT_ALLOWLIST:
+        if tag in config.tag_allowlist:
             continue
         body = subprocess.run(
             ["git", "tag", "-l", "--format=%(contents)", tag],
@@ -465,19 +527,22 @@ def check_git_tag_message_audit(result: CheckResult) -> None:
         body_text = (body.stdout or "").strip()
         if body.returncode != 0 or not body_text:
             continue
-        findings = _scan_text_for_tier_vocab(body_text, source=f"tag:{tag}")
+        findings = _scan_text_for_forbidden(
+            body_text, source=f"tag:{tag}", config=config,
+            check_prefix="tag_msg_audit",
+        )
         for f in findings:
-            f.check = f.check.replace("tier_vocab:", "tag_msg_audit:")
             result.add(f)
 
 
-def check_github_release_body_audit(result: CheckResult) -> None:
-    """Scan the latest GitHub Release body for tier vocab.
+def check_github_release_body_audit(
+    config: PhraseConfig, result: CheckResult
+) -> None:
+    """Scan the latest GitHub Release body for forbidden phrases.
 
-    Uses `gh api`. If gh is unavailable or unauthenticated, the check
-    emits a single WARN finding and moves on (doesn't block --strict).
+    Uses ``gh api``. Advisory: WARNs if gh is unavailable/unauthenticated
+    or the release body is empty.
     """
-    # Check gh is on PATH + authenticated
     auth_status = subprocess.run(
         ["gh", "auth", "status"],
         capture_output=True, text=True, check=False,
@@ -489,7 +554,6 @@ def check_github_release_body_audit(result: CheckResult) -> None:
         ))
         return
 
-    # Get the latest release body
     latest = subprocess.run(
         ["gh", "release", "view", "--json", "tagName,body"],
         capture_output=True, text=True, check=False,
@@ -520,36 +584,20 @@ def check_github_release_body_audit(result: CheckResult) -> None:
         ))
         return
 
-    findings = _scan_text_for_tier_vocab(body, source=f"release:{tag}")
+    findings = _scan_text_for_forbidden(
+        body, source=f"release:{tag}", config=config,
+        check_prefix="release_body_audit",
+    )
     for f in findings:
-        f.check = f.check.replace("tier_vocab:", "release_body_audit:")
         result.add(f)
-
-
-def check_private_path_leak(md_paths: list[Path], result: CheckResult) -> None:
-    private_re = re.compile(r"\[([^\]\n]+)\]\(([^)\n]*\bprivate/[^)\n]*)\)")
-    for path in md_paths:
-        if path.parts[0] == "private":
-            continue
-        try:
-            content = path.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
-            continue
-        for match in private_re.finditer(content):
-            target = match.group(2)
-            if "/private/" not in target and not target.startswith("private/"):
-                continue
-            line = content[:match.start()].count("\n") + 1
-            result.add(Finding(
-                Severity.FAIL, "private_path_leak", path.as_posix(), line,
-                f"public file links to private/ path: {target}",
-            ))
 
 
 def render_findings_text(result: CheckResult) -> str:
     if not result.findings:
         return "All docs-health checks PASS."
-    grouped: dict[Severity, list[Finding]] = {Severity.FAIL: [], Severity.WARN: [], Severity.PASS: []}
+    grouped: dict[Severity, list[Finding]] = {
+        Severity.FAIL: [], Severity.WARN: [], Severity.PASS: [],
+    }
     for f in result.findings:
         grouped[f.severity].append(f)
     lines = []
@@ -561,17 +609,27 @@ def render_findings_text(result: CheckResult) -> str:
         for f in items:
             loc = f"{f.path}:{f.line}" if f.line is not None else f.path
             lines.append(f"  [{f.check}] {loc} — {f.message}")
-    lines.append(f"\nTotal: {result.fail_count} FAIL, {result.warn_count} WARN; {result.files_checked} files checked.")
+    lines.append(
+        f"\nTotal: {result.fail_count} FAIL, {result.warn_count} WARN; "
+        f"{result.files_checked} files checked."
+    )
     return "\n".join(lines)
 
 
 def run_commit_msg_hook_check(message_file: str) -> int:
-    """Hook mode: read a single message file, scan for tier vocab.
+    """Hook mode: read a single message file, apply the phrase set.
 
     Invoked by .githooks/commit-msg as
-    `python scripts/check_docs_health.py --check-commit-msg "$1"`.
-    Exits 0 if clean, 2 if forbidden vocab found.
+    ``python scripts/check_docs_health.py --check-commit-msg "$1"``.
+    Exits 0 if clean (or if phrase config is absent), 2 if matched.
     """
+    config, _err = load_phrase_config()
+    if not config.is_loaded:
+        # No config = no enforcement. Silent pass (the audit script's
+        # full run emits the WARN; hook mode stays quiet to avoid
+        # spamming git's commit flow).
+        return 0
+
     try:
         text = Path(message_file).read_text(encoding="utf-8")
     except (UnicodeDecodeError, OSError) as e:
@@ -583,31 +641,36 @@ def run_commit_msg_hook_check(message_file: str) -> int:
         line for line in text.splitlines() if not line.startswith("#")
     )
 
-    findings = _scan_text_for_tier_vocab(text_no_comments, source=message_file)
+    findings = _scan_text_for_forbidden(
+        text_no_comments, source=message_file, config=config,
+        check_prefix="commit_msg_hook",
+    )
     if not findings:
         return 0
 
     print(
-        "\n*** commit-msg hook BLOCKED: forbidden tier vocabulary in commit message ***\n",
+        "\n*** commit-msg hook BLOCKED: forbidden phrase in commit message ***\n",
         file=sys.stderr,
     )
     for f in findings:
         print(f"  [{f.check}] line {f.line}: {f.message}", file=sys.stderr)
     print(
-        "\nFix: rephrase the commit message obliquely "
-        "(e.g., 'removed tier-strategy phrasing' instead of naming specific tiers).\n"
+        "\nFix: rephrase the commit message obliquely. See private/README.md\n"
+        "for the standing rule on publicly-facing surfaces.\n"
         "Bypass (rare; use sparingly): "
-        "EVIDENTIA_ALLOW_TIER_VOCAB_IN_COMMIT=1 git commit ...\n",
+        "EVIDENTIA_ALLOW_PHRASE_BYPASS=1 git commit ...\n",
         file=sys.stderr,
     )
     return 2
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Evidentia comprehensive doc-health check.")
+    parser = argparse.ArgumentParser(
+        description="Evidentia comprehensive doc-health check."
+    )
     parser.add_argument(
         "--strict", action="store_true",
-        help="Exit 2 on any FAIL finding (used by /pre-release-review Step 5.D.3 + 5.D.4 pre-tag).",
+        help="Exit 2 on any FAIL (used by /pre-release-review pre-tag).",
     )
     parser.add_argument(
         "--json", action="store_true",
@@ -618,19 +681,11 @@ def main() -> int:
         help="README.md max byte budget (default 10000; canonical OSS ~6-8KB).",
     )
     parser.add_argument(
-        "--commit-cutoff", default=DEFAULT_COMMIT_CUTOFF,
-        help=(
-            "Allowlist cutoff SHA for commit_msg_audit. Commits up to + "
-            f"including this SHA are treated as immutable historical. "
-            f"Default: {DEFAULT_COMMIT_CUTOFF} (Allen 2026-05-27 decision)."
-        ),
-    )
-    parser.add_argument(
         "--check-commit-msg", metavar="FILE",
         help=(
-            "Hook mode: scan a single message file for tier vocab. Used by "
+            "Hook mode: scan a single message file. Used by "
             ".githooks/commit-msg before letting git commit complete. "
-            "Exits 0 if clean, 2 if forbidden vocab found."
+            "Exits 0 if clean OR if phrase config is absent, 2 if matched."
         ),
     )
     parser.add_argument(
@@ -643,25 +698,39 @@ def main() -> int:
     if args.check_commit_msg:
         return run_commit_msg_hook_check(args.check_commit_msg)
 
+    # Load phrase config (may be absent for fresh clones / collaborators
+    # without it; the 4 doc-health checks still run regardless).
+    config, config_err = load_phrase_config()
+
     md_paths = sorted(list_tracked_files(suffix=".md"))
     all_tracked = list_tracked_files()
     result = CheckResult(files_checked=len(md_paths))
 
+    # Doc-health checks (always run)
     check_parse_validity(md_paths, result)
     check_cross_link_resolve(md_paths, all_tracked, result)
     check_readme_size_guard(args.readme_max, result)
-    check_tier_vocab_audit(md_paths, result)
     check_private_path_leak(md_paths, result)
-    check_git_commit_message_audit(args.commit_cutoff, result)
-    check_git_tag_message_audit(result)
-    if not args.skip_release_body:
-        check_github_release_body_audit(result)
+
+    # Phrase-audit checks (config-gated)
+    if config.is_loaded:
+        check_phrase_audit(md_paths, config, result)
+        check_git_commit_message_audit(config, result)
+        check_git_tag_message_audit(config, result)
+        if not args.skip_release_body:
+            check_github_release_body_audit(config, result)
+    elif config_err:
+        result.add(Finding(
+            Severity.WARN, "phrase_config", "<config>", None,
+            config_err,
+        ))
 
     if args.json:
         print(json.dumps({
             "files_checked": result.files_checked,
             "fail_count": result.fail_count,
             "warn_count": result.warn_count,
+            "phrase_config_loaded": config.is_loaded,
             "findings": [f.to_dict() for f in result.findings],
         }, indent=2))
     else:

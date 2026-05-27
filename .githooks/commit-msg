@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# .githooks/commit-msg — blocks tier vocabulary in commit messages.
+# .githooks/commit-msg — phrase-audit gate for commit messages.
 #
-# Per Allen's 2026-05-27 directive: commit messages, like all
-# publicly-facing surfaces, must not name Evidentia paid-tier specifics.
-# When fixing tier-related content, describe obliquely in the commit
-# message (e.g., "removed tier-strategy phrasing" instead of naming
-# specific tier names).
+# Delegates to scripts/check_docs_health.py --check-commit-msg, which
+# loads its forbidden-phrase regex set from a gitignored config file
+# (private/check-docs-health-patterns.yaml). If the config is absent,
+# the gate silently passes — the public source ships no patterns.
 #
 # Activation (one-time per clone):
 #   git config core.hooksPath .githooks
@@ -14,15 +13,18 @@
 # hook in one step.
 #
 # Bypass (rare; use sparingly + with rationale logged elsewhere):
-#   EVIDENTIA_ALLOW_TIER_VOCAB_IN_COMMIT=1 git commit -m "..."
+#   EVIDENTIA_ALLOW_PHRASE_BYPASS=1 git commit -m "..."
 #
-# The hook delegates to scripts/check_docs_health.py --check-commit-msg
-# so the forbidden-pattern set stays in one place.
+# Legacy bypass var still honored for one cycle for in-flight clones:
+#   EVIDENTIA_ALLOW_TIER_VOCAB_IN_COMMIT=1
+#
+# Both vars do the same thing; new clones should use the new name.
 
 set -euo pipefail
 
-if [ -n "${EVIDENTIA_ALLOW_TIER_VOCAB_IN_COMMIT:-}" ]; then
-    echo "commit-msg: bypass active (EVIDENTIA_ALLOW_TIER_VOCAB_IN_COMMIT=1); skipping tier-vocab check." >&2
+if [ -n "${EVIDENTIA_ALLOW_PHRASE_BYPASS:-}" ] || \
+   [ -n "${EVIDENTIA_ALLOW_TIER_VOCAB_IN_COMMIT:-}" ]; then
+    echo "commit-msg: bypass active; skipping phrase-audit check." >&2
     exit 0
 fi
 
@@ -34,7 +36,7 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 SCRIPT="${REPO_ROOT}/scripts/check_docs_health.py"
 
 if [ ! -f "${SCRIPT}" ]; then
-    echo "commit-msg: ${SCRIPT} not found; skipping tier-vocab check." >&2
+    echo "commit-msg: ${SCRIPT} not found; skipping phrase-audit check." >&2
     exit 0
 fi
 
