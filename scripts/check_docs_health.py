@@ -92,6 +92,13 @@ CROSS_LINK_LINE_ALLOWLIST: dict[str, set[int]] = {
     # shifted from 271 -> 284 in v0.10.7 D4.4 when the Step 5 test-gate
     # block gained the audit_workflow_permissions.py --strict check.)
     "docs/release-checklist.md": {284},
+    # v0.10.7-plan line 688 quotes the same illustrative inline-code
+    # `[link](other.md)` example when describing the very allowlist-
+    # robustness footgun this entry works around (§6 v0.10.8 backlog:
+    # replace absolute-line pins with content-anchored matching). Until
+    # that refactor lands, allowlist the line so the pre-push gate's
+    # check_docs_health step (Phase D5) is green against HEAD.
+    "docs/v0.10.7-plan.md": {688},
 }
 
 # Files exempt from cross-link broken-target FAILs:
@@ -478,6 +485,10 @@ def check_git_commit_message_audit(
             f"{cutoff}..HEAD",
         ],
         capture_output=True, text=True, check=False,
+        # SF-8: commit bodies are UTF-8; without an explicit encoding the
+        # Windows default (cp1252) raises UnicodeDecodeError on non-Latin-1
+        # bytes. errors="replace" keeps the audit running on odd bytes.
+        encoding="utf-8", errors="replace",
     )
     if log.returncode != 0:
         result.add(Finding(
@@ -510,6 +521,7 @@ def check_git_tag_message_audit(
     tag_list = subprocess.run(
         ["git", "tag", "-l"],
         capture_output=True, text=True, check=False,
+        encoding="utf-8", errors="replace",  # SF-8: cp1252-safe on Windows
     )
     if tag_list.returncode != 0:
         result.add(Finding(
@@ -525,6 +537,7 @@ def check_git_tag_message_audit(
         body = subprocess.run(
             ["git", "tag", "-l", "--format=%(contents)", tag],
             capture_output=True, text=True, check=False,
+            encoding="utf-8", errors="replace",  # SF-8: cp1252-safe on Windows
         )
         body_text = (body.stdout or "").strip()
         if body.returncode != 0 or not body_text:
@@ -548,6 +561,7 @@ def check_github_release_body_audit(
     auth_status = subprocess.run(
         ["gh", "auth", "status"],
         capture_output=True, text=True, check=False,
+        encoding="utf-8", errors="replace",  # SF-8: cp1252-safe on Windows
     )
     if auth_status.returncode != 0:
         result.add(Finding(
@@ -559,6 +573,7 @@ def check_github_release_body_audit(
     latest = subprocess.run(
         ["gh", "release", "view", "--json", "tagName,body"],
         capture_output=True, text=True, check=False,
+        encoding="utf-8", errors="replace",  # SF-8: cp1252-safe on Windows
     )
     if latest.returncode != 0:
         result.add(Finding(
