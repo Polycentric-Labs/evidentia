@@ -92,13 +92,6 @@ CROSS_LINK_LINE_ALLOWLIST: dict[str, set[int]] = {
     # shifted from 271 -> 284 in v0.10.7 D4.4 when the Step 5 test-gate
     # block gained the audit_workflow_permissions.py --strict check.)
     "docs/release-checklist.md": {284},
-    # v0.10.7-plan line 688 quotes the same illustrative inline-code
-    # `[link](other.md)` example when describing the very allowlist-
-    # robustness footgun this entry works around (§6 v0.10.8 backlog:
-    # replace absolute-line pins with content-anchored matching). Until
-    # that refactor lands, allowlist the line so the pre-push gate's
-    # check_docs_health step (Phase D5) is green against HEAD.
-    "docs/v0.10.7-plan.md": {688},
 }
 
 # Files exempt from cross-link broken-target FAILs:
