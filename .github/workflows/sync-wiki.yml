@@ -8,10 +8,17 @@
 # wiki edits are restricted to collaborators via Settings -> Features.
 #
 # Triggered when any file under docs/wiki/ changes on main (plus the
-# sync script + this workflow itself, so config-only updates re-fire).
-# Authenticated via the workflow's GITHUB_TOKEN. The token's
+# sync + mirror scripts + this workflow itself, so config-only updates
+# re-fire). Authenticated via the workflow's GITHUB_TOKEN. The token's
 # contents: write scope authorizes the push to <repo>.wiki.git
 # (same-repo wiki push uses the same token, no PAT needed).
+#
+# Before the wiki push, scripts/wiki/sync_mirrors.py regenerates the 13
+# auto-generated mirror pages (docs/wiki/{6-project,5-compliance}/*) from
+# their canonical sources at the repo root / docs/, so the wiki always
+# pushes mirrors that match canonical HEAD. The mirror generator is
+# stdlib-only (no third-party deps), so it runs under the bare `python`
+# set up below -- no uv / project install needed.
 #
 # First-run prerequisite: Wiki feature must be enabled in
 # Settings -> Features -> Wikis. The sync script gracefully fails
@@ -28,6 +35,7 @@ on:
     paths:
       - "docs/wiki/**"
       - "scripts/sync_wiki_to_github.py"
+      - "scripts/wiki/sync_mirrors.py"
       - ".github/workflows/sync-wiki.yml"
   workflow_dispatch:
 
@@ -53,6 +61,12 @@ jobs:
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
         with:
           python-version: "3.12"
+
+      # Regenerate the auto-generated mirror pages from canonical sources
+      # so the wiki push below always reflects canonical HEAD. Stdlib-only
+      # script -> runs under the bare python above (no uv needed).
+      - name: Refresh wiki mirror pages
+        run: python scripts/wiki/sync_mirrors.py
 
       - name: Run wiki sync
         env:
