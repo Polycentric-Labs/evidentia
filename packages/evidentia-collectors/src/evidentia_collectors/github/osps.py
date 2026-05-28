@@ -255,6 +255,60 @@ def _make_finding(
     )
 
 
+def _unknown_finding(
+    *,
+    owner: str,
+    repo: str,
+    control_id: str,
+    reason: str,
+    error: BaseException,
+    justification: str,
+    scope: str | None = None,
+) -> SecurityFinding:
+    """Assemble the ``ComplianceStatus.UNKNOWN`` "indeterminate" finding.
+
+    Centralizes the ~identical UNKNOWN-branch boilerplate that every
+    ``populate_osps_*`` helper emits when a GitHub call fails: a transport
+    or 5xx error means "we don't know", not PASS and not FAIL (see the
+    module-docstring error-handling contract).
+
+    Field derivation matches the prior inline construction exactly:
+
+    - ``title`` → ``"{control_id} indeterminate for {owner}/{repo}"``,
+      with an ``"@{scope}"`` suffix appended iff ``scope`` is set (the
+      branch-scoped probes carry the default branch; repo-level probes
+      pass ``scope=None``).
+    - ``description`` → ``"{reason}: {error}"`` — ``reason`` is the
+      per-callsite diagnostic prefix (e.g. ``"Branch-protection probe
+      failed"``) and ``error`` is the caught exception, whose ``str``
+      carries the ``[HTTP <code>] ...`` detail.
+    - one OSPS-Baseline :class:`ControlMapping` carrying the per-callsite
+      ``justification`` under the ``RELATED_TO`` relationship (the
+      indeterminate verdict is a weaker claim than a SUBSET_OF mapping).
+
+    ``reason`` and ``justification`` are passed per callsite rather than
+    derived so the distinct diagnostic strings the helpers use are
+    preserved verbatim — flattening them would lose operator signal.
+    """
+    suffix = f"@{scope}" if scope else ""
+    return _make_finding(
+        owner=owner,
+        repo=repo,
+        control_id=control_id,
+        scope=scope,
+        title=f"{control_id} indeterminate for {owner}/{repo}{suffix}",
+        description=f"{reason}: {error}",
+        status=ComplianceStatus.UNKNOWN,
+        mappings=[
+            _osps_mapping(
+                control_id,
+                justification,
+                relationship=OLIRRelationship.RELATED_TO,
+            ),
+        ],
+    )
+
+
 def _file_present_at_any(
     client: GitHubClient,
     owner: str,
@@ -295,22 +349,16 @@ def populate_osps_ac_03_01(
     try:
         repo_meta = client.get_repo(owner, repo)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-AC-03.01",
-            scope=None,
-            title=f"OSPS-AC-03.01 indeterminate for {owner}/{repo}",
-            description=f"Could not read repo metadata: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-AC-03.01",
-                    "Default-branch protection cannot be evaluated — "
-                    "repo metadata read failed.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="Could not read repo metadata",
+            error=e,
+            justification=(
+                "Default-branch protection cannot be evaluated — "
+                "repo metadata read failed."
+            ),
         )
 
     default_branch = str(repo_meta.get("default_branch") or "main")
@@ -318,23 +366,14 @@ def populate_osps_ac_03_01(
     try:
         protection = client.get_branch_protection(owner, repo, default_branch)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-AC-03.01",
             scope=default_branch,
-            title=(
-                f"OSPS-AC-03.01 indeterminate for {owner}/{repo}@{default_branch}"
-            ),
-            description=f"Branch-protection probe failed: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-AC-03.01",
-                    "Branch-protection state could not be read.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="Branch-protection probe failed",
+            error=e,
+            justification="Branch-protection state could not be read.",
         )
 
     if protection is None:
@@ -422,21 +461,13 @@ def populate_osps_ac_03_02(
     try:
         repo_meta = client.get_repo(owner, repo)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-AC-03.02",
-            scope=None,
-            title=f"OSPS-AC-03.02 indeterminate for {owner}/{repo}",
-            description=f"Could not read repo metadata: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-AC-03.02",
-                    "Repo metadata read failed.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="Could not read repo metadata",
+            error=e,
+            justification="Repo metadata read failed.",
         )
 
     default_branch = str(repo_meta.get("default_branch") or "main")
@@ -444,23 +475,14 @@ def populate_osps_ac_03_02(
     try:
         protection = client.get_branch_protection(owner, repo, default_branch)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-AC-03.02",
             scope=default_branch,
-            title=(
-                f"OSPS-AC-03.02 indeterminate for {owner}/{repo}@{default_branch}"
-            ),
-            description=f"Branch-protection probe failed: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-AC-03.02",
-                    "Branch-protection state could not be read.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="Branch-protection probe failed",
+            error=e,
+            justification="Branch-protection state could not be read.",
         )
 
     if protection is None:
@@ -532,21 +554,13 @@ def populate_osps_br_06_01(
     try:
         releases = client.list_releases(owner, repo)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-BR-06.01",
-            scope=None,
-            title=f"OSPS-BR-06.01 indeterminate for {owner}/{repo}",
-            description=f"Releases API call failed: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-BR-06.01",
-                    "Could not enumerate releases.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="Releases API call failed",
+            error=e,
+            justification="Could not enumerate releases.",
         )
 
     if not releases:
@@ -671,21 +685,13 @@ def populate_osps_do_02_01(
     try:
         repo_meta = client.get_repo(owner, repo)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-DO-02.01",
-            scope=None,
-            title=f"OSPS-DO-02.01 indeterminate for {owner}/{repo}",
-            description=f"Repo metadata probe failed: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-DO-02.01",
-                    "Could not read repo metadata.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="Repo metadata probe failed",
+            error=e,
+            justification="Could not read repo metadata.",
         )
 
     has_issues = bool(repo_meta.get("has_issues", False))
@@ -787,21 +793,13 @@ def populate_osps_le_02_01(
     try:
         repo_meta = client.get_repo(owner, repo)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-LE-02.01",
-            scope=None,
-            title=f"OSPS-LE-02.01 indeterminate for {owner}/{repo}",
-            description=f"Repo metadata probe failed: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-LE-02.01",
-                    "Could not read repo metadata.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="Repo metadata probe failed",
+            error=e,
+            justification="Could not read repo metadata.",
         )
 
     license_obj = repo_meta.get("license") or {}
@@ -962,21 +960,13 @@ def populate_osps_qa_01_01(
     try:
         repo_meta = client.get_repo(owner, repo)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-QA-01.01",
-            scope=None,
-            title=f"OSPS-QA-01.01 indeterminate for {owner}/{repo}",
-            description=f"Repo metadata probe failed: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-QA-01.01",
-                    "Could not read repo metadata.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="Repo metadata probe failed",
+            error=e,
+            justification="Could not read repo metadata.",
         )
     private = bool(repo_meta.get("private", False))
     status = ComplianceStatus.PASS if not private else ComplianceStatus.FAIL
@@ -1016,21 +1006,13 @@ def populate_osps_qa_01_02(
     try:
         repo_meta = client.get_repo(owner, repo)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-QA-01.02",
-            scope=None,
-            title=f"OSPS-QA-01.02 indeterminate for {owner}/{repo}",
-            description=f"Repo metadata probe failed: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-QA-01.02",
-                    "Could not read repo metadata.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="Repo metadata probe failed",
+            error=e,
+            justification="Could not read repo metadata.",
         )
     private = bool(repo_meta.get("private", False))
     status = ComplianceStatus.PASS if not private else ComplianceStatus.FAIL
@@ -1144,44 +1126,27 @@ def populate_osps_qa_03_01(
     try:
         repo_meta = client.get_repo(owner, repo)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-QA-03.01",
-            scope=None,
-            title=f"OSPS-QA-03.01 indeterminate for {owner}/{repo}",
-            description=f"Repo metadata probe failed: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-QA-03.01",
-                    "Could not read repo metadata.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="Repo metadata probe failed",
+            error=e,
+            justification="Could not read repo metadata.",
         )
     default_branch = str(repo_meta.get("default_branch") or "main")
 
     try:
         protection = client.get_branch_protection(owner, repo, default_branch)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-QA-03.01",
             scope=default_branch,
-            title=(
-                f"OSPS-QA-03.01 indeterminate for {owner}/{repo}@{default_branch}"
-            ),
-            description=f"Branch-protection probe failed: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-QA-03.01",
-                    "Branch-protection state could not be read.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="Branch-protection probe failed",
+            error=e,
+            justification="Branch-protection state could not be read.",
         )
 
     contexts: list[str] = []
@@ -1318,21 +1283,13 @@ def populate_osps_vm_03_01(
     try:
         repo_meta = client.get_repo(owner, repo)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-VM-03.01",
-            scope=None,
-            title=f"OSPS-VM-03.01 indeterminate for {owner}/{repo}",
-            description=f"Repo metadata probe failed: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-VM-03.01",
-                    "Could not read repo metadata.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="Repo metadata probe failed",
+            error=e,
+            justification="Could not read repo metadata.",
         )
 
     saa = repo_meta.get("security_and_analysis") or {}
@@ -1391,21 +1348,13 @@ def populate_osps_vm_04_01(
     try:
         repo_meta = client.get_repo(owner, repo)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-VM-04.01",
-            scope=None,
-            title=f"OSPS-VM-04.01 indeterminate for {owner}/{repo}",
-            description=f"Repo metadata probe failed: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-VM-04.01",
-                    "Could not read repo metadata.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="Repo metadata probe failed",
+            error=e,
+            justification="Could not read repo metadata.",
         )
 
     if bool(repo_meta.get("private", False)):
@@ -1435,21 +1384,13 @@ def populate_osps_vm_04_01(
     try:
         advisories = client.list_security_advisories(owner, repo)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-VM-04.01",
-            scope=None,
-            title=f"OSPS-VM-04.01 indeterminate for {owner}/{repo}",
-            description=f"security-advisories probe failed: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-VM-04.01",
-                    "Could not enumerate security advisories.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="security-advisories probe failed",
+            error=e,
+            justification="Could not enumerate security advisories.",
         )
 
     # PASS even on empty-list: the surface exists. No advisories yet is
@@ -1497,21 +1438,13 @@ def populate_osps_vm_05_03(
     try:
         enabled = client.are_vulnerability_alerts_enabled(owner, repo)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-VM-05.03",
-            scope=None,
-            title=f"OSPS-VM-05.03 indeterminate for {owner}/{repo}",
-            description=f"vulnerability-alerts probe failed: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-VM-05.03",
-                    "Could not probe Dependabot status.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="vulnerability-alerts probe failed",
+            error=e,
+            justification="Could not probe Dependabot status.",
         )
 
     status = ComplianceStatus.PASS if enabled else ComplianceStatus.FAIL
@@ -1568,21 +1501,13 @@ def populate_osps_vm_06_02(
     try:
         enabled = client.is_code_scanning_enabled(owner, repo)
     except GitHubApiError as e:
-        return _make_finding(
+        return _unknown_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-VM-06.02",
-            scope=None,
-            title=f"OSPS-VM-06.02 indeterminate for {owner}/{repo}",
-            description=f"code-scanning probe failed: {e}",
-            status=ComplianceStatus.UNKNOWN,
-            mappings=[
-                _osps_mapping(
-                    "OSPS-VM-06.02",
-                    "Could not probe code-scanning status.",
-                    relationship=OLIRRelationship.RELATED_TO,
-                ),
-            ],
+            reason="code-scanning probe failed",
+            error=e,
+            justification="Could not probe code-scanning status.",
         )
 
     status = ComplianceStatus.PASS if enabled else ComplianceStatus.FAIL
