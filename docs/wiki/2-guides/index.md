@@ -18,7 +18,7 @@ Task-oriented how-tos. Each page solves a specific operational need.
 
 - **[CONMON deployment](conmon-deployment.md)** — CONMON cadence library + CLI; 7 bundled federal cadences; daemon vs read-only deployment patterns.
 
-- **[Sign and verify CIMD](sign-and-verify-cimd.md)** — Cryptographic Integrity Manifest Document (CIMD) signing of evidence; verification recipe; WORM backend integration.
+- **[Sign and verify evidence](sign-and-verify-evidence.md)** — signing + verifying evidence and MCP tool output (`SignedToolOutput` Sigstore keyless) and OSCAL documents (GPG detached); the verification recipe; the append-only / WORM evidence store. (CIMD is the separate OAuth client-scope mechanism, not a signing primitive.)
 
 - **[Air-gapped install](air-gapped-install.md)** — wheelhouse pattern + offline catalog updates; GPG-only fallback for environments without Sigstore reach.
 

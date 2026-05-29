@@ -97,5 +97,5 @@ CIMD is **optional** and is **not authentication**: when no registry is configur
 - [Architecture](architecture.md) — the end-to-end cryptographic chain (evidence → signed envelope → OSCAL → cosign-signed container → PEP 740 wheel → SBOM → SLSA provenance).
 - [Frozen surfaces and stability](frozen-surfaces-and-stability.md) — `SignedToolOutput` and the env-var public contract.
 - [RBAC and multi-tenancy](rbac-and-multi-tenancy.md) — the authorization layer that complements CIMD scope gating.
-- [`2-guides/sign-and-verify-cimd.md`](../2-guides/sign-and-verify-cimd.md) — the operator how-to (later batch).
+- [`2-guides/sign-and-verify-evidence.md`](../2-guides/sign-and-verify-evidence.md) — the operator how-to.
 - [`6-project/verification.md`](../6-project/verification.md) — verifying released artifacts (wheels, container, SBOM).
