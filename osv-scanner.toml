@@ -19,3 +19,8 @@
 id = "PYSEC-2025-183"
 ignoreUntil = 2026-11-21
 reason = "pyjwt CVE-2025-45768: DISPUTED, no fix exists. The pyjwt maintainer disputes the advisory (HMAC key length is the calling application's choice, not a library defect); every pyjwt release is flagged, so there is no first_patched version. pyjwt reaches Evidentia only transitively (sigstore / mcp / msal / okta / pygithub / snowflake-connector-python) and Evidentia exposes no operator-chosen-key JWT-minting surface. Operator-confirmed accept 2026-05-21 (docs/security-review-v0.9.8.md); re-affirmed for v0.9.9. Re-validate by 2026-11-21."
+
+[[IgnoredVulns]]
+id = "GHSA-qp9x-wp8f-qgjj"
+ignoreUntil = 2026-11-29
+reason = "tuf 6.0.0 (CVSS 4.0 MEDIUM, 'platform-dependent delegation path matching'). Newly disclosed 2026-05-28 (v0.10.6 was osv-clean 2026-05-27). FIX (tuf 7.0.0) is UPSTREAM-BLOCKED: the latest sigstore release (4.2.0) pins `tuf~=6.0`, so no resolvable path to tuf 7.x exists until sigstore ships a tuf-7-compatible release (verified: `uv lock --upgrade-package sigstore --upgrade-package tuf` is a no-op; PyPI sigstore 4.2.0 requires `tuf~=6.0`). tuf reaches Evidentia only transitively via sigstore's keyless trust-root fetch (signature verification); Evidentia exposes no operator-controlled tuf delegation/target-path surface, so the platform-dependent path-matching weakness is not reachable from any Evidentia entry point. Operator-confirmed accept 2026-05-29 (v0.10.7 cycle). REMOVE this entry + bump tuf to >=7.0.0 as soon as sigstore releases tuf-7 support (tracked in v0.10.8 backlog). Re-validate by 2026-11-29."

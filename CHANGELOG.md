@@ -45,6 +45,10 @@ _No changes yet on the v0.10.8 development branch._
 - `docs/pre-push-gate.md` NEW — documents the 3-layer pre-push architecture (L1 + L3 marked DEFERRED), per-hook rationale, and the bypass protocol. See commit `11b639c`.
 - `docs/capability-matrix.md` stale absolute-path reference fixed; README recent-releases entry-style polish. See commits `19ed581`, `79cb99e`.
 
+### Security
+
+- Accepted **GHSA-qp9x-wp8f-qgjj** (`tuf` 6.0.0, CVSS 4.0 MEDIUM — platform-dependent delegation-path matching) in `osv-scanner.toml` with a documented rationale + `ignoreUntil = 2026-11-29` re-validation trigger. The advisory was disclosed 2026-05-28 (v0.10.6 was osv-clean the prior day). The fix (tuf 7.0.0) is **upstream-blocked**: the latest `sigstore` (4.2.0) pins `tuf~=6.0`, so no resolvable upgrade path exists until sigstore ships tuf-7 support. `tuf` reaches Evidentia only transitively via sigstore's keyless trust-root fetch; no Evidentia entry point exposes operator-controlled tuf delegation, so the weakness is not reachable. Tracked for removal + tuf bump in v0.10.8 when sigstore updates.
+
 ### §12 corrections-log entries this cycle
 
 Two accuracy corrections were caught by the documentation verify-everything pass and fixed in the canonical surfaces this cycle (full detail in [`docs/v0.10.7-plan.md`](docs/v0.10.7-plan.md) §12):
