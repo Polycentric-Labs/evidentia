@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-ai"
-version = "0.10.6"
+version = "0.10.7"
 description = "LLM-powered risk statement generator and evidence validator for Evidentia"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
@@ -17,7 +17,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "evidentia-core>=0.10.6,<0.11.0",
+    "evidentia-core>=0.10.7,<0.11.0",
     # v0.10.5 P9: the DFAH eval harness was extracted to the
     # ``evidentia-eval`` workspace package so air-gap installs of
     # the production risk-statement runtime no longer pull the
@@ -25,7 +25,7 @@ dependencies = [
     # dependency here so the v0.10.5 deprecation shims (``from
     # evidentia_ai.eval import …``) continue to work through
     # v0.11.x; v0.12.0 removes both the shims and this pin.
-    "evidentia-eval>=0.10.6,<0.11.0",
+    "evidentia-eval>=0.10.7,<0.11.0",
     # v0.7.0 Step-3 review: pin LiteLLM above the compromised
     # 1.82.7 / 1.82.8 versions from the March 24, 2026 PyPI supply
     # chain incident (~40-min compromise window before quarantine).

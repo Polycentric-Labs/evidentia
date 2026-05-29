@@ -1,7 +1,7 @@
 {
   "name": "evidentia",
   "description": "Evidentia GRC engine — OSCAL-first gap analysis, SARIF CI-gate output, OCSF ingestion. Open-source Apache-2.0 (Polycentric Labs). Wraps the evidentia-mcp server so AI clients drive the full product through one tool surface.",
-  "version": "0.10.6",
+  "version": "0.10.7",
   "author": {
     "name": "Polycentric Labs",
     "url": "https://github.com/Polycentric-Labs"

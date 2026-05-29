@@ -1,6 +1,6 @@
 # Evidentia roadmap
 
-**Last updated: v0.10.2 (May 2026).**
+**Last updated: v0.10.7 (May 2026).**
 
 This roadmap synthesizes community feedback with the architecture plan
 at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0-v0.8.7
@@ -1665,23 +1665,109 @@ cycle, no LL-V105-1 recurrence risk). 3536 tests pass / 14 skipped /
 `docs/v0.10.6-plan.md` §12). OSCAL upstream contribution PR at
 https://github.com/oscal-club/awesome-oscal/pull/59.
 
-### v0.10.7 — Polish + hand-verification + automation debt — PLANNED
+### v0.10.7 — Hygiene + automation-debt + pre-push gate L2 + wiki fill + doc-accuracy sweep — SHIPPED
 
-Carried out of v0.10.6 cycle reviews. Targets:
+Patch on v0.10.6 (released 2026-05-27). Tag `v0.10.7` (2026-05-29).
+**A hardening, automation-debt, and documentation cycle — no new
+end-user product features.** Closed the v0.10.6 code-quality reviewer
+backlog (Groups A + D) and the 2 deferred Scorecard alerts, added a
+blocking pre-push gate, filled the in-repo wiki tree, and ran a
+doc-wide CLI-example accuracy sweep. Headline shipments:
 
-- **Crosswalk hand-verification** — pass over the 5 OSPS crosswalks shipped raw in v0.10.6 (currently `verification: "self-attested-via-upstream"`); upgrade to `"hand-checked"` where SME confirms accuracy. See `docs/v0.10.6-plan.md` §12.3 maintenance follow-up.
-- **OSPS crosswalk regeneration script** — `scripts/catalogs/gen_osps_crosswalks.py` to deterministically rebuild the 5 OSPS JSONs from the pinned upstream YAMLs (reduces manual sweep burden on next OSPS bump). C5 code-quality reviewer Important #1.
-- **Hardcoded SHA reduction** in crosswalk JSONs — multi-occurrence SHA references in the 5 OSPS crosswalks (~15 total) create version-sweep burden on upstream bumps. C5 code-quality reviewer Important #2.
-- **GitHub OSPS collector DRY pass** — `_unknown_finding()` factory to dedupe ~280 lines of UNKNOWN-branch boilerplate across 12 helpers. C6 code-quality reviewer Important #1.
-- **`_file_present_at_any` asymmetric error handling** — 5xx errors currently silently convert to FAIL; should surface UNKNOWN on all-probes-failed. C6 code-quality reviewer Important #2.
-- **`scripts/audit_workflow_permissions.py`** promotion to blocking CI gate — currently advisory; v0.10.6 baseline = 8 OK / 3 FAIL (legitimate write scopes for PR/issue comments). Three FAIL workflows need a `JUSTIFIED` status category before promotion: `action-smoke-test.yml`, `catalog-refresh.yml`, `evidentia.yml`. C7 code-quality reviewer bonus finding.
-- **`yaml.safe_load` None-handling** in `audit_workflow_permissions.py` — empty workflow files currently `AttributeError`. Add a guard. C7 code-quality reviewer Minor #1.
-- **`translate_url()` unit-test extraction** from `verify-osps-conformance.yml` to `scripts/verify_osps_conformance.py` + unit tests. TODO marker already in workflow at lines 135-140.
-- **OSPS-LE-01.01 DCO sign-off** — needs GOVERNANCE.md + second-contributor onboarding.
-- **OSPS-VM-04.02 VEX emit CLI verb** — `evidentia vex emit` (target v0.11.x).
-- **OSPS-VM-05.03 `osv-scanner` CI gate** — `verify-osv-scan.yml` workflow.
-- **capability-matrix.md stale absolute-path** cleanup — pre-existing reference from v0.10.4 snapshot (C8 reviewer Minor #2).
-- **README v0.10.4 entry style polish** — verify the bold-key-feature pattern matches v0.10.5 + v0.10.2 precedent exactly (low priority).
+- **Scorecard delta closed** — `verify-osps-conformance.yml` pip
+  install hash-pinned (#123 `PinnedDependenciesID`); `sync-wiki.yml`
+  top-level token scope reduced to `read-all` with `contents: write`
+  pushed down to the wiki-push job (#124 `TokenPermissionsID`).
+- **OSPS crosswalk reproducibility** — `scripts/catalogs/gen_osps_crosswalks.py`
+  deterministically rebuilds the 5 OSPS JSONs byte-for-byte from a
+  single-source upstream-SHA constant (`_osps_upstream.py`) with a
+  `--check` drift mode. The ~15 literal SHAs are now a generated
+  artifact (next upstream bump = one-line constant change + regen).
+  Note: A2 closed-via-reproducibility, not literal-deduplication —
+  JSON can't reference a Python constant (see `docs/v0.10.7-plan.md`
+  §12.2). Crosswalk SME hand-verification remains deferred (v0.11+).
+- **`translate_url()` extraction** from `verify-osps-conformance.yml`
+  into the tested `scripts/verify_osps_conformance.py` module.
+- **GitHub OSPS collector DRY pass** — `_unknown_finding()` factory
+  dedupes the `UNKNOWN`-branch boilerplate; `_file_present_at_any`
+  now surfaces UNKNOWN (not FAIL) on all-5xx probes (honest signal).
+- **Workflow-permissions audit promoted to a blocking CI gate** —
+  `audit_workflow_permissions.py --strict` + `# JUSTIFIED:` parser +
+  `--json`; new `verify-workflow-perms.yml`; 3 workflows carry
+  JUSTIFIED annotations (PR-comment + issue-opening bots).
+- **Pre-push gate Layer 2** — hand-rolled `.githooks/pre-push`
+  orchestrator (consistent with the existing `.githooks/commit-msg`;
+  the pre-commit framework was rejected because it conflicts with
+  this repo's `core.hooksPath` setup — see §12.3) running 7 blocking
+  checks (action-pins, secrets, CHANGELOG-presence, docs-health
+  `--strict`, workflow-perms `--strict`, `uv.lock` third-party
+  pin-drift, OSPS-crosswalk drift) + bypass logging + `docs/pre-push-gate.md`.
+  L1 (local Scorecard sweep) + L3 (warning-only) deferred.
+- **In-repo wiki content fill** (~47 pages) — auto-generated
+  canonical mirrors + reference pages (CLI / MCP tools / config /
+  catalogs / crosswalks) + 7 per-package API pages + hand-authored,
+  triple-validated concept / guide / compliance pages + FAQ;
+  generators wired into `sync-wiki.yml`.
+- **Bundled `evidentia.examples/sample-inventory.yaml`** in the
+  `evidentia` wheel so the quickstart `gap analyze` is runnable for
+  `pip install` users.
+- **Doc-wide CLI-example accuracy sweep** — fixed `gap analyze`
+  examples in README + both quickstarts + air-gapped guide to the
+  real `--inventory`/`--frameworks`/`--output`/`oscal-ar` surface;
+  corrected the federal-SI walkthrough Step-8 CLI.
+
+Two §12 accuracy corrections caught by the doc verify-everything
+pass (see `docs/v0.10.7-plan.md` §12.5/§12.6): the **CIMD
+terminology** misnomer (Client ID Metadata Document, OAuth scope —
+distinct from the `SignedToolOutput` signing mechanism) corrected in
+the wiki + `api-stability.md`; and the **`gap analyze` CLI examples**
+that had never matched the shipped CLI, corrected doc-wide. Workspace
+ships 8 PyPI packages unchanged from v0.10.6 (no new packages this
+cycle). 3666 tests pass / 14 skipped / 3680 collected across 281
+source files (was 279 v0.10.6); mypy strict 0/0; ruff clean.
+
+### v0.10.8 — Deferred-backlog close-out — PLANNED
+
+Carried out of the v0.10.7 cycle (narrow, ~3-5 days). Per
+`docs/v0.10.7-plan.md` §6:
+
+- **CIMD-terminology scrub across the 4 active non-wiki docs** —
+  correct the "Cryptographic CIMD signatures" / "CIMD signing"
+  misnomer in `docs/ROADMAP.md`, `docs/capability-matrix.md`,
+  `docs/positioning-and-value.md`, `docs/threat-model.md` to
+  distinguish `SignedToolOutput` signing (the real crypto feature)
+  from CIMD (OAuth client-scope metadata). Careful per-hit pass, NOT
+  a blind find-replace; append-only historical docs left untouched.
+  Internal memory entries also flagged for correction. (See §12.5.)
+- **`CatalogEntry` phantom in `api-stability.md`** — the `catalog.py`
+  frozen-models row lists `CatalogEntry`, which doesn't exist in
+  code (real models: `FrameworkManifestEntry` / `CatalogControl` /
+  `ControlCatalog` / `FrameworkMapping` / `CrosswalkDefinition`).
+  Correct the NORMATIVE row + regenerate its wiki mirror.
+- **OSPS crosswalk SME hand-verification** — upgrade the 5 OSPS
+  crosswalks from `verification: "self-attested-via-upstream"` to
+  `"hand-checked"` where an SME confirms accuracy (SME-grade work;
+  could fold into the v0.11 cycle).
+- **D2–D6 code-quality MINORs** — `gen_osps_crosswalks` difflib +
+  dynamic-load alignment; `github/osps.py` error-type narrowing +
+  unreachable-fallback cleanup + a qa-02 UNKNOWN test;
+  `check_docs_health.py` content-anchored cross-link allowlist
+  (recurring absolute-line-number footgun); `audit_workflow_permissions.py`
+  CRLF JUSTIFIED-parser test; pre-push L2 bash smoke tests +
+  content-anchored self-exclude; wiki-generator code-span-aware
+  link rewriting.
+- **Deploy MkDocs to GitHub Pages** — the 7 auto-generated API pages
+  link to a not-yet-deployed MkDocs site (mitigated: each also links
+  to live GitHub source). Needs a `pages: write` Pages workflow.
+- **`docs/v0.9.3-plan.md` cross-link WARNs** — 3 self-referential
+  cross-project links in a historical plan doc; fix to plain relative
+  links or accept as historical (low priority).
+- **OSPS-LE-01.01 DCO sign-off** — needs GOVERNANCE.md + a second
+  contributor.
+- **OSPS-VM-05.03 `osv-scanner` CI gate** (`verify-osv-scan.yml`) —
+  small enough to land standalone or fold into v0.11.
+- Pre-push gate L1 / L3 — defer-or-skip; revisit if a new pattern
+  justifies them.
 
 ### v0.11 — Federal-compliance theme + AI governance — PLANNED (post-deep-dive)
 

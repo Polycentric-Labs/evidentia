@@ -7,7 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes yet on the v0.10.7 development branch._
+_No changes yet on the v0.10.8 development branch._
+
+## [0.10.7] - 2026-05-29
+
+**Theme**: *v0.10.7 — hygiene + automation-debt close-out + pre-push gate Layer 2 + full in-repo wiki content fill + doc-accuracy sweep*. Patch bump (v0.10.6 → v0.10.7). Last hygiene cycle on the v0.10.x line before the v0.11 federal-compliance theme.
+
+**Release summary**: This is a hardening, automation-debt, and documentation cycle — **no new end-user product features shipped**. It closes the v0.10.6 code-quality reviewer backlog (Groups A + D), adds a blocking pre-push gate (Layer 2), fills the in-repo wiki tree (~47 pages) with generators wired into CI, and runs a doc-wide CLI-example accuracy sweep that surfaced two multi-cycle naming/usage drifts (see §12 corrections). **3666 tests pass / 14 skipped / 3680 collected across 281 source files (was 279 v0.10.6); mypy strict 0/0; ruff clean.** Workspace ships **8 PyPI packages** unchanged from v0.10.6 (no new packages this cycle, no LL-V105-1 partial-publish recurrence risk). Per-cycle detail in [`docs/v0.10.7-plan.md`](docs/v0.10.7-plan.md).
+
+### Added
+
+- `scripts/catalogs/gen_osps_crosswalks.py` — deterministic regenerator that rebuilds the 5 OSPS-Baseline crosswalk JSONs byte-for-byte from the pinned upstream YAMLs, with a `--check` drift mode. The literal upstream SHAs in the JSONs are now a reproducible generated artifact (a future upstream bump is a one-line constant change + regen, not a ~15-site hand-sweep). See commits `e76ba2d`, `2b537b6`.
+- `packages/evidentia-core/.../catalogs/data/mappings/_osps_upstream.py` — single-source-of-truth module for the OSPS Baseline upstream commit pin (the regenerator reads it). See commit `dbd5403`.
+- `scripts/verify_osps_conformance.py` — `translate_url()` extracted from the embedded Python in `verify-osps-conformance.yml` into a tested module + unit tests covering the URL shapes the workflow translates. See commit `0d89095`.
+- `scripts/audit_workflow_permissions.py` `--strict` mode (exit 2 on un-justified FAIL) + a `# JUSTIFIED: <reason>` annotation parser + `--json` output. Promoted from advisory to a **blocking** CI gate via the new `verify-workflow-perms.yml` workflow; 3 workflows carry JUSTIFIED annotations (PR-comment + issue-opening bots). Release-checklist Step 5 lists the `--strict` gate so CI and the pre-tag checklist stay in lockstep. See commits `ee86687`, `2b79bd5`.
+- Pre-push gate Layer 2 — a hand-rolled `.githooks/pre-push` orchestrator (consistent with the existing `.githooks/commit-msg`, no `core.hooksPath` conflict) running 7 blocking checks: action-pin syntax, secret-pattern scan, CHANGELOG-presence-on-version-bump, docs-health `--strict`, workflow-perms `--strict`, `uv.lock` third-party pin-drift, and OSPS-crosswalk drift. Includes bypass logging to a gitignored JSONL log. See commits `40a9b05`, `13db3e6`, `50ed380`.
+- `evidentia.examples/sample-inventory.yaml` — a control inventory now **bundled in the `evidentia` wheel** (via `importlib.resources`) so the quickstart `gap analyze` is genuinely runnable for `pip install` users (previously only `tests/fixtures/` inventories existed, which don't ship). See commit `20f4344`.
+- In-repo wiki content fill (~47 pages): auto-generated canonical-doc mirrors, auto-generated reference pages (CLI / MCP tools / configuration / catalogs / crosswalks) and 7 per-package API pages, plus hand-authored, triple-validated concept / guide / compliance pages and an FAQ. Generators (`scripts/wiki/sync_mirrors.py`, `sync_reference.py`, per-package API pages) are wired into `sync-wiki.yml` so the wiki auto-refreshes on pushes to the canonical sources. See commits `3463546`, `65b9105`, `65feed6`, `24a47ec`, `cef0a14`, `63f78ea`, `51c13b2`, `366c83b`, `19ed581`, `9c540ec`.
+
+### Changed
+
+- `verify-osps-conformance.yml` — `pip install pyyaml` hash-pinned (`--hash=sha256:...`), closing Scorecard alert #123 (`PinnedDependenciesID`). See commit `f1c41a0`.
+- `sync-wiki.yml` — top-level token scope reduced to `read-all`; the `contents: write` scope moved down to the job that pushes to the wiki remote, closing Scorecard alert #124 (`TokenPermissionsID`). See commit `f1c41a0`.
+- `evidentia_collectors.github.osps` — `_unknown_finding()` factory dedupes the `UNKNOWN`-branch boilerplate across the `populate_osps_*` helpers (public behavior unchanged; internal structure only). See commit `ec0056f`.
+
+### Fixed
+
+- `_file_present_at_any` (github/osps) now surfaces `UNKNOWN` (not `FAIL`) when all file-presence probes fail with 5xx — an honest "we don't know" signal rather than a definitive "absent" on a transient upstream error. Adds 5xx-case regression tests. See commit `62396e1`.
+- `audit_workflow_permissions.py` — `yaml.safe_load` `None`-result guard so an empty workflow file no longer raises `AttributeError`. See commit `f1c41a0`.
+- `check_uv_lock_pin_drift` (pre-push hook) reads the workspace-member allowlist from `pyproject.toml` rather than a hardcoded list, so a new workspace package can't silently evade the third-party-pin-drift check (the v0.10.0 F-V100-M1 pattern). See commit `50ed380`.
+
+### Docs
+
+- Doc-wide CLI-example accuracy sweep: fixed the `gap analyze` examples in `README.md`, both quickstarts, and the air-gapped guide to the real surface (`--inventory <file>` / `--frameworks <list>` / required `--output` / `--format oscal-ar`), and corrected the federal-SI walkthrough's Step-8 CLI to verbs that exist. The corrected `gap analyze` is proven to run end-to-end against the bundled inventory. See commits `1e5f514`, `4e18e70`, `08f2e42`.
+- `docs/pre-push-gate.md` NEW — documents the 3-layer pre-push architecture (L1 + L3 marked DEFERRED), per-hook rationale, and the bypass protocol. See commit `11b639c`.
+- `docs/capability-matrix.md` stale absolute-path reference fixed; README recent-releases entry-style polish. See commits `19ed581`, `79cb99e`.
+
+### §12 corrections-log entries this cycle
+
+Two accuracy corrections were caught by the documentation verify-everything pass and fixed in the canonical surfaces this cycle (full detail in [`docs/v0.10.7-plan.md`](docs/v0.10.7-plan.md) §12):
+
+- §12.5: **CIMD terminology** — `CIMD` is "Client ID Metadata Document" (an OAuth Dynamic Client Registration scope artifact, RFC 7591), **not** "Cryptographic Integrity Manifest Document". It does not sign anything; the actual cryptographic tool-output signing is the separate `SignedToolOutput` (Sigstore keyless) mechanism, and evidentia-core does GPG-detached OSCAL signing. Corrected in the new `evidence-integrity.md`, `architecture.md`, `api-stability.md`, and the regenerated wiki mirror. The broader scrub across the 4 active non-wiki docs is queued for v0.10.8.
+- §12.6: **`gap analyze` CLI examples** — the README + quickstarts had never matched the real CLI (`--framework` vs `--frameworks`; `--evidence-dir <dir>` vs `--inventory <file>` — a conceptual error, not just a rename; missing required `--output`; `oscal` vs `oscal-ar`). Fixed doc-wide, and a runnable bundled inventory was added so the corrected examples execute.
 
 ## [0.10.6] - 2026-05-27
 
