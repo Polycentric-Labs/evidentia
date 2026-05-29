@@ -10,7 +10,7 @@ Evidentia bundles **13 crosswalks** (864 control-to-control mapping rows in tota
 
 ## The CrosswalkDefinition schema
 
-> **A note on where this lives.** Despite the name, `CrosswalkDefinition` is defined in `evidentia_core/models/catalog.py`, *not* in `models/crosswalk.py`. (`models/crosswalk.py` holds a separate, single-mapping `CrosswalkMapping` model.) The two crosswalk-related model files are easy to confuse; the full multi-mapping crosswalk document is the one in `catalog.py`.
+> **A note on where this lives.** Both crosswalk *models* are defined in `evidentia_core/models/catalog.py`: `CrosswalkDefinition` (the full multi-mapping crosswalk document) and its per-row `FrameworkMapping`. There is no `models/crosswalk.py`. The crosswalk *engine* (`CrosswalkEngine`, described below) lives in a separate file — `evidentia_core/catalogs/crosswalk.py` — which is easy to confuse with the models; the schema is in `catalog.py`, the loading/indexing logic is in `catalogs/crosswalk.py`.
 
 `CrosswalkDefinition` (an `EvidentiaModel`, so `extra="forbid"`) is the on-disk shape of a crosswalk file:
 

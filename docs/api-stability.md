@@ -80,8 +80,7 @@ Frozen models (48+ classes across 18 modules; v0.10.0-confirmed):
 | `assessment.py` | `Assessment`, `AssessmentStatus` |
 | `claim.py` | `TraceClaim`, `ReasoningTrace` |
 | `oscal_profile.py` | `OSCALProfile` |
-| `crosswalk.py` | `CrosswalkMapping` |
-| `catalog.py` | `CatalogEntry`, `CatalogControl`, `ControlCatalog` |
+| `catalog.py` | `CatalogEntry`, `CatalogControl`, `ControlCatalog`, `FrameworkMapping`, `CrosswalkDefinition`. v0.10.6 added the `CrosswalkDefinition.provenance` / `verification` / `verification_note` Optional fields (additive-only — backward-compatible, the eight pre-v0.10.6 crosswalks load unchanged). |
 | `tprm.py` | `TPRMAssessment`, `TPRMFinding` |
 | `governance.py` | `AISystem`, `AIRiskClassification`, `GovernanceRecord` |
 | `ai_governance/classification.py` (v0.9.3+) | `AISystemDescriptor`, `AISystemClassification`, `EUAIActTier`, `NISTAIRMFFunction`, `AnnexIIIDomain` |
