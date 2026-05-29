@@ -30,4 +30,4 @@ Project meta: roadmap, changelog, API stability, versioning, governance, securit
 
 This is the "anything that's not user-facing usage but a project-level meta-fact" section. The FAQ is the right place to look first for operational questions; the rest are mirrors of canonical artifacts at the repo root or in `docs/`.
 
-> **Stub status:** as of v0.10.7, mirror pages are stubs; the FAQ is also a stub waiting for first-batch operator questions. Mirror pages will be implemented as MkDocs `--include` directives or via `mkdocs-include-markdown-plugin` so the repo-root source remains canonical and the wiki stays in sync.
+> **Stub status:** as of v0.10.7, the 9 mirror pages (roadmap, changelog, api-stability, deprecation-policy, governance, security, contributing, eol, verification) are live generated mirrors, produced by `scripts/wiki/sync_mirrors.py` and regenerated in CI by `.github/workflows/sync-wiki.yml`; each carries an auto-generated banner plus the canonical repo-root body with absolute-blob-URL links back to the source. Only `versioning.md` and `faq.md` remain stubs — `faq.md` is waiting for its first batch of operator questions.

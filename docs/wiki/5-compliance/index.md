@@ -24,4 +24,4 @@ The compliance-tool differentiator section. What catalogs Evidentia ships, what 
 
 This section is the answer to "does Evidentia cover [framework X]?" + "how do I use Evidentia's mapping outputs in [audit / compliance / SIEM workflow]?" The OSPS Baseline mapping page is the showcase of the v0.10.6 first-mover work.
 
-> **Stub status:** as of v0.10.7, `osps-baseline-mapping.md` is the only fully-detailed compliance page; others are stubs that consolidate existing `docs/<file>.md` content as the wiki migration progresses.
+> **Stub status:** as of v0.10.7, `osps-baseline-mapping.md` remains the fully-detailed showcase page, and the 4 mirror pages (`ocsf-mapping`, `gemara-mapping`, `financial-sector-overlay`, `contributing-a-catalog`) are now live generated mirrors of their `docs/<file>.md` sources, produced by `scripts/wiki/sync_mirrors.py` and regenerated in CI by `.github/workflows/sync-wiki.yml`. The remaining stubs are `catalog-inventory.md`, `framework-conformance.md`, and `crosswalk-index.md`.
