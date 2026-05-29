@@ -5,7 +5,7 @@ This guide gets you from a fresh install to a real OSCAL Assessment Results docu
 ## Prerequisites
 
 - Python 3.12+ (`python --version` to check)
-- A directory of evidence files — for this quickstart, we'll use Evidentia's bundled test fixtures so you can run end-to-end with zero setup
+- No prior setup — this quickstart uses `evidentia init` to scaffold a starter control inventory, so you can run end-to-end from a fresh install
 
 ## Step 1 — Install (30 seconds)
 
@@ -23,48 +23,71 @@ evidentia version
 ## Step 2 — Pick a framework (10 seconds)
 
 ```bash
-evidentia catalog list --maturity=tier-a
+evidentia catalog list --tier=A
 ```
 
 You'll see ~30 Tier-A (production-grade, verbatim-licensed) frameworks. For this quickstart, we'll use NIST 800-53 Rev 5 Low baseline (~149 controls — small enough to inspect by hand).
 
-## Step 3 — Run gap analysis (60 seconds)
+## Step 3 — Scaffold an inventory and run gap analysis (60 seconds)
 
-Using Evidentia's bundled test fixtures:
+`evidentia gap analyze` is inventory-driven: you give it a file describing the
+controls your organization *has* (`--inventory`) and the frameworks to measure
+*against* (`--frameworks`). Scaffold a starter inventory — this writes
+`evidentia.yaml`, `my-controls.yaml`, and `system-context.yaml` into the current
+directory:
+
+```bash
+evidentia init --preset nist-moderate-starter
+```
+
+Then run the analysis against the Low baseline (`--inventory`, `--frameworks`,
+and `--output` are the three flags you need):
 
 ```bash
 evidentia gap analyze \
-  --framework=nist-800-53-rev5-low \
-  --evidence-dir=$(python -c "import evidentia; print(evidentia.__path__[0] + '/test_fixtures/evidence/')")
+  --inventory=my-controls.yaml \
+  --frameworks=nist-800-53-rev5-low \
+  --output=gap-report.json
 ```
 
-Output:
+Evidentia prints a summary table to the console and writes the full report to
+`gap-report.json`:
 
 ```
-Gap analysis complete: nist-800-53-rev5-low
-  ✓ Implemented: 87 controls
-  ⚠ Partial: 21 controls
-  ✗ Gaps: 41 controls
-  ⊘ Not applicable: 0 controls
-
-  Faithfulness score: 0.87 (threshold 0.30; framework-aware)
-  Output: 3,536 lines of finding detail
+                 Gap Analysis Summary
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
+┃ Metric                     ┃     Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
+│ Total controls required    │       149 │
+│ Total gaps                 │       112 │
+│ Critical                   │         6 │
+│ High                       │        24 │
+│ Medium                     │        58 │
+│ Low                        │        24 │
+│ Coverage                   │     24.8% │
+│ Efficiency opportunities   │         3 │
+└────────────────────────────┴───────────┘
 ```
+
+(Counts are illustrative — the starter inventory is intentionally small, so most
+Low-baseline controls show up as gaps. Edit `my-controls.yaml` with your real
+controls to see your true posture.)
 
 ## Step 4 — Emit OSCAL Assessment Results (10 seconds)
 
 ```bash
 evidentia gap analyze \
-  --framework=nist-800-53-rev5-low \
-  --evidence-dir=$(python -c "import evidentia; print(evidentia.__path__[0] + '/test_fixtures/evidence/')") \
-  --format=oscal > my-assessment-results.json
+  --inventory=my-controls.yaml \
+  --frameworks=nist-800-53-rev5-low \
+  --format=oscal-ar \
+  --output=assessment-results.json
 ```
 
 This produces a NIST OSCAL Assessment Results 1.2.1 document. Validate with:
 
 ```bash
 pip install compliance-trestle
-trestle validate --type oscal-ar --file my-assessment-results.json
+trestle validate --type oscal-ar --file assessment-results.json
 # → PASS
 ```
 
@@ -93,7 +116,7 @@ Full verification recipes: see [`docs/verification.md`](../../verification.md).
 
 ## What's next
 
-- **Run against your own evidence**: point `--evidence-dir` at your real evidence directory (see [first-collection.md](first-collection.md) for the collector setup).
+- **Run against your own controls**: point `--inventory` at your real control inventory (YAML/CSV/JSON). To fold in collected evidence, run a collector (see [first-collection.md](first-collection.md)) and pass `--findings` with `--format oscal-ar`.
 - **Wire to a CI gate**: emit SARIF for GitHub Code Scanning ([guide](../2-guides/emit-sarif.md)).
 - **Drive from an AI agent**: enable the MCP server ([guide](../2-guides/run-gap-analysis.md)).
 - **Add a custom framework**: write your own catalog YAML ([guide](../5-compliance/contributing-a-catalog.md)).
