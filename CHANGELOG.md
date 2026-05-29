@@ -36,6 +36,7 @@ _No changes yet on the v0.10.8 development branch._
 - `_file_present_at_any` (github/osps) now surfaces `UNKNOWN` (not `FAIL`) when all file-presence probes fail with 5xx — an honest "we don't know" signal rather than a definitive "absent" on a transient upstream error. Adds 5xx-case regression tests. See commit `62396e1`.
 - `audit_workflow_permissions.py` — `yaml.safe_load` `None`-result guard so an empty workflow file no longer raises `AttributeError`. See commit `f1c41a0`.
 - `check_uv_lock_pin_drift` (pre-push hook) reads the workspace-member allowlist from `pyproject.toml` rather than a hardcoded list, so a new workspace package can't silently evade the third-party-pin-drift check (the v0.10.0 F-V100-M1 pattern). See commit `50ed380`.
+- `check_secrets` (pre-push hook) now value-precisely allowlists the canonical AWS documentation example keys (`AKIAIOSFODNN7EXAMPLE` / `AKIAI44QH8DHBEXAMPLE`), so security docs that teach about AWS keys no longer false-positive the AWS access-key scan; a real `AKIA`+16 token in the same file still blocks (detection intact).
 
 ### Docs
 

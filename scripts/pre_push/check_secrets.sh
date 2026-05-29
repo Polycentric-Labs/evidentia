@@ -12,6 +12,16 @@
 #
 # BLOCK (exit 1) on any match. PASS (exit 0) when clean.
 #
+# Known-placeholder allowlist (AWS-key check only): the AWS access-key
+# pattern is value-precise — a match whose token is one of AWS's published
+# documentation example keys (AKIAIOSFODNN7EXAMPLE / AKIAI44QH8DHBEXAMPLE)
+# is NOT a real credential and does NOT block, so security docs that teach
+# about AWS keys are not false-positived. A real AKIA+16-random key in the
+# SAME file still blocks (the filter removes only the exact placeholder
+# tokens, never the whole AWS-key check). Mirrors what gitleaks /
+# trufflehog / detect-secrets do. The GitHub-PAT + PEM checks have no
+# analogous well-known example, so they remain plain filename-only scans.
+#
 # CRITICAL — secret-handling protocol (~/.claude/CLAUDE.md):
 #   This script MUST NEVER print, echo, or otherwise surface the matched
 #   secret value or the offending file's contents. It reports ONLY the
@@ -111,6 +121,17 @@ CONTENT_SCAN_SELF_EXCLUDE=(
     "docs/pre-push-gate.md"
 )
 
+# Known-placeholder allowlist for the AWS access-key check. These are AWS's
+# own published documentation example keys — they match the AKIA regex but
+# are never valid credentials. A match is suppressed ONLY when its token IS
+# one of these exact values; any other AKIA+16 token still blocks. This is
+# value-precise: detection of real keys is fully intact.
+# Ref: https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html
+AWS_KEY_ALLOWLIST=(
+    "AKIAIOSFODNN7EXAMPLE"
+    "AKIAI44QH8DHBEXAMPLE"
+)
+
 # Patterns: a human label + the ERE. Self-documenting; the label is what
 # the operator sees, the regex never is.
 scan_content() {
@@ -126,6 +147,42 @@ scan_content() {
     return 1  # no hit
 }
 
+# AWS access-key scan WITH a known-placeholder allowlist. Unlike scan_content
+# (filename-only), this must inspect the matched TOKENS to decide whether they
+# are real or documented examples. To preserve the no-echo protocol it uses
+# `grep -o` to extract ONLY the matched AKIA tokens (never the surrounding
+# line / file contents), filters out the allowlisted placeholders, and blocks
+# only if a non-placeholder token remains. The token value itself is NEVER
+# printed — output is still just the filename + the "AWS access key" label.
+scan_aws_key() {
+    local f="$1"
+    local regex='AKIA[0-9A-Z]{16}'
+    # Extract only the matched tokens (-o), binary-safe (-I). No matches -> ok.
+    local matches
+    matches="$(grep -I -o -E -- "${regex}" "${f}" 2>/dev/null || true)"
+    [ -z "${matches}" ] && return 1  # no hit
+
+    # Keep only tokens that are NOT in the placeholder allowlist. A real key
+    # survives this filter; a documented example is dropped.
+    local tok
+    while IFS= read -r tok; do
+        [ -n "${tok}" ] || continue
+        local allowed=0
+        local ex
+        for ex in "${AWS_KEY_ALLOWLIST[@]}"; do
+            if [ "${tok}" = "${ex}" ]; then allowed=1; break; fi
+        done
+        if [ "${allowed}" -eq 0 ]; then
+            # A non-placeholder AWS-key token remains -> block. Report the
+            # FILENAME + label only; never the token value.
+            echo "BLOCK check_secrets: potential AWS access key in ${f}" >&2
+            return 0  # hit
+        fi
+    done <<< "${matches}"
+
+    return 1  # every match was an allowlisted placeholder -> no hit
+}
+
 for f in "${files[@]}"; do
     # Only scan regular files that still exist in the working tree.
     [ -f "${f}" ] || continue
@@ -135,7 +192,7 @@ for f in "${files[@]}"; do
         if [ "${f}" = "${ex}" ]; then skip_self=1; break; fi
     done
     [ "${skip_self}" -eq 1 ] && continue
-    if scan_content "AWS access key" 'AKIA[0-9A-Z]{16}' "${f}"; then found_hit=1; fi
+    if scan_aws_key "${f}"; then found_hit=1; fi
     if scan_content "GitHub personal access token" 'ghp_[A-Za-z0-9]{36}' "${f}"; then found_hit=1; fi
     if scan_content "PEM private key block" '-----BEGIN .*PRIVATE KEY-----' "${f}"; then found_hit=1; fi
 done
