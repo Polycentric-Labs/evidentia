@@ -15,6 +15,10 @@
 secrets/
 credentials.json
 
+# Private per-developer Claude working-memory (instructions/conventions; not shared).
+# Collaborator-facing docs live in docs/; see the global CLAUDE.md doc pattern.
+/CLAUDE.md
+
 # v0.4.0 — frontend build output lands in the Python package's static
 # directory at wheel-assembly time via the hatchling build hook. The
 # .gitkeep file in static/ is tracked; everything else is regenerated
