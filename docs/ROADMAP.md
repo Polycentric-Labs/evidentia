@@ -1742,10 +1742,43 @@ ships 8 PyPI packages unchanged from v0.10.6 (no new packages this
 cycle). 3666 tests pass / 14 skipped / 3680 collected across 281
 source files (was 279 v0.10.6); mypy strict 0/0; ruff clean.
 
-### v0.10.8 — Deferred-backlog close-out — PLANNED
+### v0.10.8 — Release-automation hardening + CLI↔GUI parity + GUI build-out (start) — PLANNED
 
-Carried out of the v0.10.7 cycle (narrow, ~3-5 days). Per
-`docs/v0.10.7-plan.md` §6:
+Full plan: [`docs/v0.10.8-plan.md`](v0.10.8-plan.md). Theme:
+institutionalize the v0.10.7 quality discipline into the *automatic*
+release mechanism, start enforcing CLI↔GUI feature parity, and begin
+closing the GUI gap (the GUI currently reaches ~30% of the CLI). From a
+post-v0.10.7 safeguards sweep (2026-05-31).
+
+**Approved scope (Allen 2026-05-31):**
+
+- **Release-hardening automation** — a tag-time gate job in
+  `release.yml` (pytest / mypy / ruff / version-consistency /
+  docs-health / osv) that blocks the irreversible PyPI publish on a red
+  or stale tree; a CI mirror of the version/doc-staleness guards
+  (currently pre-push-only); auto-regenerate the README on CHANGELOG
+  change; a real CI secret-scan.
+- **Commit-signature enforcement** — a GitHub required-signatures
+  ruleset on `main` with `enforce_admins=true` (server-side, closing
+  the F-V107-1 admin-bypass), with the v0.10.7 local pre-push check as
+  defense-in-depth.
+- **CLI↔GUI parity mechanism** — a `cli-gui-parity.yaml` manifest + a
+  `scripts/check_parity.py` CI gate (completeness + GUI-existence +
+  debt-ratchet so new CLI work must ship its GUI surface). The current
+  OpenAPI drift-gate keeps *types* in sync but enforces no *feature*
+  parity.
+- **GUI build-out (start)** — phased, API-exists-add-screen first
+  (collect / tprm / poam / conmon / model-risk / integrations / ai-gov
+  / explain), then build API+screen for governance / retention /
+  evidence / oscal / eval; this cycle lands the first Tier-B screens.
+- **Operator-walkthrough wiki media** — screenshots and/or video
+  captured live during the self-led operator walkthrough.
+- **README hero refresh** — centered OG title card + centered buttons.
+- **DONE this cycle:** the Framework-detail `.border-dest` fix
+  (validated 3×).
+
+**Carry-over deferred backlog** (from the v0.10.7 cycle, per
+`docs/v0.10.7-plan.md` §6):
 
 - **CIMD-terminology scrub across the 4 active non-wiki docs** —
   correct the "Cryptographic CIMD signatures" / "CIMD signing"
