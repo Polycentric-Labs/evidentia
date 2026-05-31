@@ -23,7 +23,7 @@ export function FrameworkDetailPage() {
   if (!id) {
     return (
       <div className="stack-4">
-        <Card className="border-destructive">
+        <Card className="border-dest">
           <CardHeader>
             <CardTitle className="base">No framework ID</CardTitle>
             <CardDescription>No framework ID in URL.</CardDescription>
@@ -39,7 +39,7 @@ export function FrameworkDetailPage() {
   if (query.isError) {
     return (
       <div className="stack-4">
-        <Card className="border-destructive">
+        <Card className="border-dest">
           <CardHeader>
             <CardTitle className="base">Framework not found</CardTitle>
             <CardDescription>
