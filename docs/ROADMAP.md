@@ -1900,6 +1900,19 @@ detailed integration plan" §v0.11. Substantive minor (~6-8 weeks):
   Regulatory Assurance" — 6-8pp, cites Marino & Lane (arXiv:2601.04474)
   blueprint, establishes priority before another impl beats Evidentia
   to the generalist-GRC-OSCAL niche.
+- **SARIF-ingestion collector** (`evidentia collect sarif`) — the
+  consume-side counterpart to the v0.10.0 SARIF *emit*, and the
+  [`integration-survey.md`](integration-survey.md) §3 #5 candidate. One
+  adapter ingests any SARIF 2.1.0 emitter (Trivy / Checkov / Semgrep /
+  CodeQL, and the Clear Capabilities `agentic-security` scanner — see
+  [`integration-survey.md`](integration-survey.md) §9) into
+  `SecurityFinding`s: maps SARIF `level` → `Severity`, preserves
+  `codeFlows` taint traces + KEV/EPSS `properties` as provenance, and
+  reuses the v0.10.1 OCSF collector's HTTPS/SSRF guard
+  (`--block-private-ips`). Mirrors the `evidentia_collectors.ocsf`
+  module; data-layer interop only (no third-party code dependency — see
+  the [`integration-survey.md`](integration-survey.md) §9 licensing
+  note).
 - **Refresh `docs/integration-survey.md` competitive section**
   post-operator-deep-dive (incorporate AWS OSCAL MCP / Vanta MCP /
   ComplianceCow MCP / Snyk AI Trust Platform shifts).

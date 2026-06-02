@@ -405,7 +405,60 @@ window. The extended `CrosswalkDefinition` posture fields make the
 honest-claim explicit at the data layer + give consumers a documented
 verification-upgrade path.
 
-## 9. Sources
+## 9. agentic-security (Clear Capabilities) — interoperability assessment (2026-06-02)
+
+`Clear-Capabilities/agentic-security` is a **Claude Code plugin + `npx`
+CLI security scanner with auto-remediation** (PolyForm Internal Use
+License 1.0.0; created 2026-05-06; ~85 tags by month-end — a fast-moving
+commercial product, not an OSS library). It runs a 12-pillar scan (SAST,
+SCA, secrets, IaC, LLM-safety, MCP agent-tool audit, authZ, pipeline
+integrity, containers, deploy config, supply chain, trend), prioritizes
+with CISA KEV + EPSS, emits **SARIF 2.1.0 with `codeFlows` taint
+traces**, and ships one-command fixes. It also generates auditor-facing
+compliance attestations against NIST AI 600-1, OWASP ASVS 4.0.3, OWASP
+LLM Top 10, and the EU AI Act, with walkthroughs for NIST CSF 2, GDPR,
+HIPAA, and CCPA.
+
+**Verdict: complementary, not competitive — adjacent layers** (the same
+relationship as the GRC Engineering Club in §5, arrived at for a
+different reason). agentic-security is a **detect-and-fix** engine
+operating on *source code*; Evidentia is the **govern-and-attest** layer
+operating on *controls, evidence, POA&M, and OSCAL*. agentic-security
+answers "is this code safe to ship?"; Evidentia answers "can I prove the
+program meets the controls, and what is the remediation plan?" The thin
+overlap is the compliance-attestation surface — but the two map
+different frameworks (commercial/AI vs. federal 800-53 / FedRAMP /
+CMMC), off a different evidence basis (static code-scan vs.
+control-mapped collectors), into different output (human-readable
+attestation vs. machine-readable OSCAL).
+
+**The integration move — agentic-security → Evidentia (SARIF ingest).**
+agentic-security emits SARIF heavily; Evidentia already *emits* SARIF
+(§3 #4) and *ingests* OCSF (§3 #1). The missing link is the
+**SARIF-ingestion collector already scoped as §3 #5** (Trivy / Checkov)
+— agentic-security is simply another SARIF-emitting upstream the same
+collector serves. Once it lands, agentic-security findings flow into
+Evidentia's evidence store → map to 800-53 / OSCAL controls →
+auto-draft POA&M items for unresolved findings. A thoughtful mapping
+preserves agentic-security's KEV / EPSS prioritization and `codeFlows`
+taint traces as finding provenance. The reverse direction (Evidentia
+OSCAL → agentic-security) is weaker — agentic-security carries a minimal
+OSCAL surface and no OCSF.
+
+**Licensing boundary (hard constraint).** agentic-security is
+**PolyForm Internal Use 1.0.0** — source-available, internal business
+use only, *"you may not distribute the software."* Evidentia is
+Apache-2.0 and must remain freely redistributable. **Evidentia must not
+bundle, vendor, fork, or take a code dependency on agentic-security** —
+that would both violate PolyForm's no-distribute clause and contaminate
+Apache-2.0 cleanliness. The only safe interoperation is **loose coupling
+at the data layer**: Evidentia's collector reads SARIF *output files*
+the operator generates by running agentic-security themselves — no
+shared code in either direction. Any joint artifact should be a neutral
+interop profile (a shared SARIF/OCSF field mapping), not shared source.
+This mirrors the §5 "adopt patterns, not bundled data" stance.
+
+## 10. Sources
 
 - [OCSF — Open Cybersecurity Schema Framework](https://ocsf.io/)
 - [OCSF achieves ITU support (AWS Open Source Blog)](https://aws.amazon.com/blogs/opensource/ocsf-achieves-itu-support-powering-ai-ready-security-operations/)
@@ -437,6 +490,12 @@ verification-upgrade path.
 - [compliancecow/cowmcp](https://github.com/compliancecow/cowmcp) (Apache-2.0 MCP server)
 - [Marino & Lane — Computational Compliance for AI Regulation (arXiv 2601.04474)](https://arxiv.org/abs/2601.04474)
 - [Khatchadourian — DFAH v2 (arXiv 2601.15322v2)](https://arxiv.org/abs/2601.15322v2)
+
+**Added 2026-06-02 (agentic-security interoperability assessment):**
+
+- [Clear-Capabilities/agentic-security](https://github.com/Clear-Capabilities/agentic-security) (Claude Code plugin + `npx` CLI scanner; PolyForm Internal Use 1.0.0; SARIF 2.1.0 emit)
+- [PolyForm Internal Use License 1.0.0](https://polyformproject.org/licenses/internal-use/1.0.0/)
+- [Clear Capabilities](https://www.clearcapabilities.com/)
 
 ---
 
