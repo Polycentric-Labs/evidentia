@@ -57,6 +57,34 @@ multi-reviewer peer review, which complete before v1.0.0. See
 [`v1.0-transition.md`](v1.0-transition.md) for the v1.0
 narrative and acceptance gates.
 
+## Demo & showcase strategy (decided 2026-06-02)
+
+How Evidentia is shown to evaluators, decided after a structured multi-model +
+primary-source review of how comparable open-source GRC / security tools handle demos.
+
+**Principle:** Evidentia is a stateful, credentialed compliance platform, not a stateless
+widget. Its differentiators (OSCAL emit + verify, Sigstore signing, the collector suite,
+the MCP server) live in the CLI / library, which is also air-gap-native. So the showcase
+leads with the CLI.
+
+- **CLI-first assets (now):** a tight README quickstart (`pip install` -> `init` ->
+  `gap analyze` -> OSCAL emit, with the bundled sample inventory), an asciinema cast, and a
+  short walkthrough video. Air-gap-consistent; shows real output and the real differentiators.
+- **Clickable demo (planned):** an in-browser terminal (Killercoda / Instruqt-style) running
+  the *real* `evidentia` CLI in an ephemeral sandbox. The user drives the actual tool;
+  Evidentia hosts no state. Best fit for a CLI / library-shaped tool.
+- **Local writable GUI demo (deferred until CLI<->GUI parity):** a one-command
+  `docker compose -f docker-compose.demo.yml up` with a seeded store + mock collectors.
+  Deferred until the web console reaches CLI parity (it currently surfaces a subset of the
+  CLI); requires a store-seeder.
+- **Not planned:** a public, hosted, *stateful* backend demo. A credentialed GRC backend
+  exposed publicly is a real security surface (SSRF / secret exfiltration / prompt-injection
+  via collected evidence — the class the `--block-private-ips` hardening addresses). A durable
+  hosted experience is reserved for a future managed / commercial edition.
+
+Validated via a structured research pass (multi-model fleet + a primary-source survey of
+comparable tools + a 3-way adversarial validation).
+
 ## v0.3.0 — Compliance-as-code — SHIPPED
 
 - `evidentia gap diff` — compare two gap snapshots, classify every
