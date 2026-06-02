@@ -118,6 +118,11 @@ published-sbom*.cdx.json
 # specific files only if they're meant to be shared across the team.
 .local/
 
+# Superpowers working artifacts (brainstorming specs + implementation
+# plans). Transient tactical docs that drive a build cycle; the canonical
+# strategic plan for each cycle lives in docs/<vX.Y.Z>-plan.md (tracked).
+docs/superpowers/
+
 # Private competitive-strategy / market-research working docs. The repo
 # is public (Polycentric-Labs/evidentia); strategy material naming
 # specific competitor-feature adoption decisions or commercial
