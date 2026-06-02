@@ -1798,12 +1798,31 @@ post-v0.10.7 safeguards sweep (2026-05-31).
 - **GUI build-out (start)** — phased, API-exists-add-screen first
   (collect / tprm / poam / conmon / model-risk / integrations / ai-gov
   / explain), then build API+screen for governance / retention /
-  evidence / oscal / eval; this cycle lands the first Tier-B screens.
+  evidence / oscal / eval. **This cycle lands 4 Tier-B screens** —
+  POA&M / TPRM / ConMon / Explain (scope resolved 2026-06-02); the rest
+  follow across v0.10.9+, driven down by the parity debt-ratchet.
 - **Operator-walkthrough wiki media** — screenshots and/or video
   captured live during the self-led operator walkthrough.
 - **README hero refresh** — centered OG title card + centered buttons.
 - **DONE this cycle:** the Framework-detail `.border-dest` fix
   (validated 3×).
+
+**Resolved via brainstorming (2026-06-02):** GUI scope = moderate (the
+4 Tier-B screens above); the wiki is populated per-screen as built
+(Phase E1 screenshots pulled into each screen's definition-of-done;
+the operator-walkthrough video stays a live capture); execution runs
+as 3 waves — (1) release-hardening + parity mechanism, (2) the 4 GUI
+screens, (3) automation + polish — with a review checkpoint after each
+wave and a consolidated `/pre-release-review` + `/security-review` +
+`/code-review` gate before the (held) single push + tag.
+
+**Phase G — automatic-upkeep (resolved 2026-06-02):** ADOPT this cycle
+— stale-branch-flagging workflow, Dependabot auto-merge (patch/minor,
+post-gate; needs the repo "Allow auto-merge" setting), quarterly
+safeguards re-sweep. DEFER to the automatic-upkeep backlog —
+doc/pointer-rot cadence, session → memory capture, a consolidate-memory
+pass (requires explicit approval; the private MEMORY.md index is over
+its size limit), and research-resync cadence.
 
 **Carry-over deferred backlog** (from the v0.10.7 cycle, per
 `docs/v0.10.7-plan.md` §6):
