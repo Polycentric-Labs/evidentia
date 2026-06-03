@@ -30,10 +30,12 @@
 #   * gui         — packages/evidentia-ui/src/App.tsx routes wired through
 #                   packages/evidentia-ui/src/lib/api.ts.
 #
-# Seed distribution: 6 full / 49 api-only / 43 cli-only / 11 exempt (109).
-# GUI coverage = full / (full + api-only + cli-only) = 6 / 98 = 6.1%.
-# (The ~30% "GUI reaches the CLI" figure is API breadth: 55/98 leaves have an
-#  API; only 6 are surfaced as a dedicated GUI screen today.)
+# Seed distribution (2026-06-02): 6 full / 49 api-only / 43 cli-only / 11 exempt.
+# v0.10.8 Wave 2 flipped 7 leaves api-only -> full (the POA&M / TPRM / ConMon /
+# Explain screens): 13 full / 42 api-only / 43 cli-only / 11 exempt (109).
+# GUI coverage = full / (full + api-only + cli-only) = 13 / 98 = 13.3%.
+# (The "~30% GUI reaches the CLI" figure was API breadth: 55/98 leaves have an
+#  API; 13 are now surfaced as a dedicated GUI screen.)
 version: 1
 
 # Debt-ratchet floor: the count of `cli-only` rows at seed time. check_parity.py
@@ -78,8 +80,8 @@ commands:
     reason: "Onboarding wizard lives at the index route (no path= attr); api-only under the route check."
   - cli: "explain control"
     api: "POST /api/explain/{framework}/{control_id}"
-    gui: null
-    status: api-only
+    gui: "/explain"
+    status: full
   - cli: "collect aws"
     api: "POST /api/collectors/aws/collect"
     gui: null
@@ -127,12 +129,12 @@ commands:
     status: api-only
   - cli: "tprm vendor add"
     api: "POST /api/tprm/vendors"
-    gui: null
-    status: api-only
+    gui: "/tprm"
+    status: full
   - cli: "tprm vendor list"
     api: "GET /api/tprm/vendors"
-    gui: null
-    status: api-only
+    gui: "/tprm"
+    status: full
   - cli: "tprm vendor show"
     api: "GET /api/tprm/vendors/{vendor_id}"
     gui: null
@@ -199,12 +201,12 @@ commands:
     status: api-only
   - cli: "poam list"
     api: "GET /api/poam/items"
-    gui: null
-    status: api-only
+    gui: "/poam"
+    status: full
   - cli: "poam show"
     api: "GET /api/poam/items/{poam_id}"
-    gui: null
-    status: api-only
+    gui: "/poam"
+    status: full
   - cli: "poam update"
     api: "PUT /api/poam/items/{poam_id}"
     gui: null
@@ -223,12 +225,12 @@ commands:
     status: api-only
   - cli: "poam milestone update"
     api: "PATCH /api/poam/items/{poam_id}/milestones/{milestone_id}"
-    gui: null
-    status: api-only
+    gui: "/poam"
+    status: full
   - cli: "conmon list"
     api: "GET /api/conmon/cadences"
-    gui: null
-    status: api-only
+    gui: "/conmon"
+    status: full
   - cli: "conmon next"
     api: "POST /api/conmon/next"
     gui: null
