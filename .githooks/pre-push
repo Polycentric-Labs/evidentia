@@ -297,6 +297,21 @@ run_check "check_version_consistency" \
 run_check "check_commit_signatures" \
     run_py "${SCRIPTS_DIR}/check_commit_signatures.py" "${RANGE_BASE}" "${RANGE_TIP}" || true
 
+# 10. README auto-regen (A3): regenerate the Recent-Releases block from
+#     CHANGELOG; FAIL if it changed in the working tree (commit the regen).
+check_readme_regen() {
+    run_py "${REPO_ROOT}/scripts/gen_readme_releases.py" || return 1
+    if ! git diff --quiet -- README.md; then
+        echo "pre-push: README Recent-Releases block was stale and has been"
+        echo "  regenerated. Review + commit README.md, then re-push."
+        git --no-pager diff --stat -- README.md
+        return 1
+    fi
+    echo "README Recent-Releases block already current."
+    return 0
+}
+run_check "check_readme_regen" check_readme_regen || true
+
 # ---------------------------------------------------------------------------
 # Verdict.
 # ---------------------------------------------------------------------------
