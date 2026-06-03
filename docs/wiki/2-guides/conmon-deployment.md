@@ -87,6 +87,29 @@ For deterministic CI snapshots, pass `--today YYYY-MM-DD` to `check` / `health`
 so the output does not depend on the wall clock. Pipe the `--json` output into
 your alerting or reporting pipeline.
 
+## Viewing continuous-monitoring cadences in the web console
+
+If you run the web console (`evidentia serve`), the **Continuous Monitoring**
+screen is a read-only browser over the same cadence library the CLI exposes —
+the bundled cadences plus any registered at runtime. It is the GUI counterpart
+to `evidentia conmon list`: there is no daemon control and no state-file editing
+here (the `watch` daemon is supervised out-of-band), just the catalog of
+assessment cycles.
+
+Open the console in a browser and select **Continuous Monitoring** from the
+navigation. Each cadence renders as a card showing its frequency and framework,
+its stable slug, and the regulatory citation that establishes it; a cadence with
+no citation shows a muted dash. Type a framework identifier into the filter box
+(for example `fedramp-rev5-mod`) to narrow the list to one framework — the same
+exact-match filter as `evidentia conmon list --framework`.
+
+![The Continuous Monitoring screen](../images/screen-conmon.png)
+
+The cadences shown are read-only: editing review cycles or recording completions
+is still a CLI/state-file operation (`evidentia conmon mark-completed`), and live
+daemon health is surfaced separately via `GET /api/conmon/daemon-status` (see
+[Daemon health visibility](#daemon-health-visibility) below).
+
 ## Daemon deployment — `evidentia conmon watch`
 
 For hands-off monitoring, `evidentia conmon watch` runs as a long-lived process

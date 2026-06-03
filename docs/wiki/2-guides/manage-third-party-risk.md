@@ -377,6 +377,41 @@ to file the response against a different record; `--output-format` is `table`
 > evidence chain-of-custody Sigstore signing — see
 > [Sign and verify evidence](sign-and-verify-evidence.md)).
 
+## Managing vendors in the web console
+
+The list-and-add basics also work in the browser. Start the server with
+`evidentia serve` and open the **TPRM** screen from the sidebar's *Govern*
+group — it reads and writes the same file-backed vendor store the CLI above
+manages, so a vendor added in either place shows up in the other. The screen
+covers browsing the inventory, filtering it, and the atomic add; the full loop —
+concentration-risk reports, due-diligence questionnaires, edits, and deletes —
+stays on the CLI.
+
+![The TPRM vendor screen](../images/screen-tprm.png)
+
+1. **Browse.** The inventory renders one card per vendor, each showing the
+   vendor **name**, a **criticality-tier** badge (`critical` / `high` /
+   `medium` / `low`), a **type** badge (SaaS, Subservice org, Contractor, Data
+   processor, Cloud provider, Open source), the **relationship owner**, and the
+   **next review due** date (*not scheduled* until a DD review is recorded). The
+   header shows a live `N of M vendors` count.
+2. **Filter.** Two chip rows narrow the list without a page reload — one by
+   **criticality tier** and one by **vendor type** — the same two axes
+   `vendor list --criticality-tier` / `--type` filter on. The filters combine;
+   click *All tiers* / *All types* to clear an axis.
+3. **Add a vendor.** The **New vendor** form takes the same five required fields
+   as `vendor add` — **name**, **relationship owner**, **contract start date**
+   (a date picker; easy to miss on the CLI, but the form will not submit without
+   it), and chip pickers for **type** and **criticality tier**. The **Add
+   vendor** button stays disabled until the three text/date fields are filled; a
+   validation error from the server surfaces inline beneath the form rather than
+   clearing it.
+
+Richer fields — region, regulatory classification, fourth parties, the
+residual-risk score, and evidence references — are set through the CLI
+(`evidentia tprm vendor edit`, or a `--from-yaml` load) on the same store; the
+form leaves residual risk at its `0` (unscored) default.
+
 ## What's next
 
 - **Feed the inventory into gap analysis.** `evidentia tprm vendor list --json >

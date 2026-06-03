@@ -150,6 +150,42 @@ deterministic snapshots in CI, and `--json` for machine-readable output. For
 recurring assessment and reporting cadences, see the
 [CONMON deployment](conmon-deployment.md) guide.
 
+## Managing POA&M in the web console
+
+Everything above also works from the browser. Start the server with
+`evidentia serve` and open the **POA&M** screen from the sidebar. The screen is
+a read-and-advance surface: it lists the items materialized by `poam create`
+and lets you walk a milestone through its lifecycle, but item creation,
+milestone *addition*, and deletion stay on the CLI (the auditor-defensible
+authoring path).
+
+![The POA&M screen](../images/screen-poam.png)
+
+1. **List.** The screen loads your POA&M items as cards, each showing the
+   underlying control (`framework` + `control_id` + title), the gap severity,
+   the gap's current status, and how many milestones the item carries. The
+   subheading reports how many of the total items are currently shown.
+2. **Filter.** Two chip rows narrow the list without a page reload: one filters
+   by **gap severity** (critical … informational) and one by the underlying
+   **gap status** (open, in progress, remediated, accepted, not applicable) —
+   the same two axes the `poam list --severity` / `--all` flags control. Click a
+   chip to apply it; click *All …* to clear that axis.
+3. **Select.** Click an item card to open its detail panel in place. The panel
+   repeats the item header and lists the milestone timeline — each milestone's
+   description, target date, owner/reviewer (when set), evidence reference, and
+   current `POAMState`.
+4. **Advance a milestone.** Each milestone offers buttons only for its **legal
+   forward transitions** — the screen mirrors the same forward-only state
+   machine the CLI enforces, so a `planned` milestone offers *In progress*,
+   *Overdue*, and *Completed*; a `completed` one offers only *Verified*; and a
+   `verified` one offers nothing (it is terminal). Clicking a transition issues
+   the same state change as `poam milestone update` and refreshes the list. If
+   the backend rejects the change, the panel surfaces the error inline rather
+   than silently dropping it.
+
+To re-open closed work, file a *new* milestone from the CLI with a fresh target
+date — the console never offers a backward transition, by design.
+
 ## Emitting an OSCAL POA&M
 
 > **Note (verified against the CLI at this release):** there is no `evidentia

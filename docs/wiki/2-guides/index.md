@@ -18,7 +18,9 @@ Task-oriented how-tos. Each page solves a specific operational need.
 
 - **[Generate and quantify risk](generate-and-quantify-risk.md)** — qualitative NIST SP 800-30 risk statements (LLM-backed) + deterministic FAIR / Monte-Carlo quantification (`risk generate` / `risk quantify`).
 
-- **[Manage third-party risk](manage-third-party-risk.md)** — vendor inventory, concentration-risk reporting, and CAIQ / SIG due-diligence questionnaires (`tprm`).
+- **[Explain a control](explain-controls.md)** — stream a plain-English explanation of any control (what it means, why it matters, what to do) in the web console; LLM-backed with on-disk caching (`explain`).
+
+- **[Manage third-party risk](manage-third-party-risk.md)** — vendor inventory, concentration-risk reporting, and CAIQ / SIG due-diligence questionnaires (`tprm`), plus the in-browser TPRM screen for browsing, filtering, and adding vendors.
 
 - **[Manage model risk](manage-model-risk.md)** — SR 11-7 / OCC 2026-13a model inventory, model documentation, and validation reports (`model-risk`).
 
@@ -44,4 +46,4 @@ Task-oriented how-tos. Each page solves a specific operational need.
 
 Jump directly to the page that solves your problem. Each guide is self-contained; cross-references to [Concepts](../3-concepts/) point at the "why" if you need depth.
 
-All eighteen guide pages above are live. New guides land here as new operational surfaces ship; see the [ROADMAP](../6-project/roadmap.md) for the forward cadence.
+All nineteen guide pages above are live. New guides land here as new operational surfaces ship; see the [ROADMAP](../6-project/roadmap.md) for the forward cadence.
