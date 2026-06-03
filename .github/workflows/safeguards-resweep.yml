@@ -1,0 +1,44 @@
+name: safeguards-resweep
+
+# v0.10.8 Phase G: a quarterly reminder to re-run the automated-vs-manual
+# safeguards audit (the post-v0.10.7 sweep that produced the tag-time release
+# gate + the CLI<->GUI parity automation). It opens a tracking issue and never
+# changes code. Scorecard / CodeQL / OSPS-conformance / mutmut already run on
+# their own schedules; this is the meta-audit that catches NEW gaps between
+# them (e.g. a new manual step quietly gating the irreversible publish).
+
+on:
+  schedule:
+    - cron: "0 9 1 1,4,7,10 *" # 09:00 UTC on the 1st of Jan / Apr / Jul / Oct
+  workflow_dispatch:
+
+# JUSTIFIED: the bot opens a quarterly tracking issue for the safeguards re-sweep
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  open-issue:
+    name: Open the quarterly safeguards-resweep issue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open the tracking issue (idempotent per quarter)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          quarter="$(date -u +%Y) Q$(( ($(date -u +%-m) - 1) / 3 + 1 ))"
+          title="Quarterly safeguards re-sweep — ${quarter}"
+          existing=$(gh issue list --repo "$REPO" --search "${title} in:title" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Tracking issue already open (#${existing}); nothing to do."
+            exit 0
+          fi
+          gh issue create --repo "$REPO" --title "$title" --body \
+          "Quarterly reminder to re-run the automated-vs-manual safeguards audit (see \`docs/v0.10.8-plan.md\` Phase G). Re-confirm the tag-time release gate, the CLI<->GUI parity debt-ratchet, and the scheduled safeguards (Scorecard / CodeQL / OSPS-conformance / mutmut) are all still enforced, catch any NEW gap that opened since the last sweep, and adopt any Phase-G backlog item that is now ready. Close this issue once the sweep is complete."
+          echo "Opened tracking issue: ${title}"

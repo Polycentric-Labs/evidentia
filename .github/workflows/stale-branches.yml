@@ -1,0 +1,56 @@
+name: stale-branches
+
+# v0.10.8 Phase G: flag branches with no commit in >30 days as a periodic
+# hygiene reminder. Reports to the run's Job Summary ONLY — it never deletes
+# or modifies anything. Complements the repo's `deleteBranchOnMerge` (which
+# only auto-deletes merged PR head branches, not stale non-PR branches).
+
+on:
+  schedule:
+    - cron: "0 8 * * 1" # Monday 08:00 UTC
+  workflow_dispatch:
+
+# Read-only: the job lists branches via the API and writes a Job Summary.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  flag-stale:
+    name: Flag stale branches (>30d)
+    runs-on: ubuntu-latest
+    steps:
+      - name: List branches and flag stale ones
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          THRESHOLD_DAYS=30
+          now=$(date -u +%s)
+          {
+            echo "## Stale-branch report (>${THRESHOLD_DAYS} days since last commit)"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          stale=0
+          while read -r branch; do
+            [ -z "$branch" ] && continue
+            iso=$(gh api "repos/${REPO}/branches/${branch}" --jq '.commit.commit.committer.date')
+            ts=$(date -u -d "$iso" +%s)
+            age=$(( (now - ts) / 86400 ))
+            if [ "$age" -gt "$THRESHOLD_DAYS" ]; then
+              echo "- \`${branch}\` — ${age} days (last commit ${iso})" >> "$GITHUB_STEP_SUMMARY"
+              stale=$((stale + 1))
+            fi
+          done < <(gh api "repos/${REPO}/branches" --paginate --jq '.[].name' | grep -v '^main$' || true)
+          if [ "$stale" -eq 0 ]; then
+            echo "_No stale branches._" >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo ""
+              echo "**${stale} stale branch(es)** — review for deletion; non-PR branches are not auto-deleted."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

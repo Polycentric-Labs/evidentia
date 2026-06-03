@@ -1,0 +1,37 @@
+name: dependabot-automerge
+
+# v0.10.8 Phase G: auto-merge GREEN patch/minor Dependabot PRs. Major bumps,
+# and any non-Dependabot PR, are left for manual review. This only ENABLES
+# auto-merge (`gh pr merge --auto`) — GitHub merges the PR once every required
+# status check passes (the test / consistency / parity / secret-scan gates),
+# so a red dependency bump can never merge. Grouped Dependabot PRs report
+# their highest update-type via fetch-metadata, so a group containing a major
+# bump is correctly NOT auto-merged.
+#
+# Prerequisite: the repo "Allow auto-merge" setting must be enabled (a Tier-4
+# repo-settings change, tracked separately in the v0.10.8 release steps).
+
+on:
+  pull_request:
+
+# JUSTIFIED: auto-merge needs pull-requests: write (to enable it) + contents: write (the squash-merge on green); the job is gated to the dependabot[bot] actor below, so no human PR is touched.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    name: Auto-merge green patch/minor Dependabot PRs
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+
+      - name: Enable auto-merge for patch/minor updates
+        if: ${{ steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --auto --squash "$PR_URL"
