@@ -1,0 +1,54 @@
+name: consistency
+
+# v0.10.8 A2: mirror the version + docs staleness guards into push/PR CI.
+# These three checks (version_consistency + docs_health + readme_releases)
+# previously ran ONLY in the local .githooks/pre-push hook, so a PR from a
+# clone without the hook configured — or any push that bypassed it — could
+# land a stale version reference, a broken doc cross-link, or a stale README
+# Recent-Releases block undetected. This workflow runs the SAME SSOT gate
+# suite (scripts/run_gate_suite.py --scope consistency) the hook and the
+# tag-time release gate use, so the three surfaces cannot drift (the v0.9.8
+# gate-fidelity lesson).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Workflow-level least-privilege default: this job only reads the tree and
+# runs the staleness guards, so no elevated scope is needed.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  consistency:
+    name: staleness guards (version + docs + README)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync workspace
+        # The guards import bump_version + parse the workspace pyprojects, so
+        # the workspace must be installed. Skip the frontend build hook to
+        # keep this gate Node-free and fast — it runs no TypeScript checks.
+        env:
+          EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
+        run: uv sync --all-packages
+
+      - name: Run consistency gate suite (SSOT)
+        run: uv run python scripts/run_gate_suite.py --scope consistency

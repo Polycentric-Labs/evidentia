@@ -20,8 +20,60 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # v0.10.8 A1: tag-time pre-publish gate. The irreversible PyPI publish
+  # below ran NO gate before this job existed — the version/doc-staleness
+  # guards lived only in .githooks/pre-push (which a force-push or a
+  # mis-configured clone could skip), and pytest/mypy/ruff/osv ran only on
+  # push/PR, never on the tag. This job runs the full SSOT gate suite
+  # (scripts/run_gate_suite.py --scope full) on the exact tagged commit, and
+  # publish-pypi `needs: gate`, so a red or stale tag can no longer publish.
+  # The suite is the single source of truth shared with consistency.yml and
+  # the pre-push hook (the v0.9.8 gate-fidelity lesson — one definition, no
+  # drift). Inherits the workflow-level `permissions: contents: read`.
+  gate:
+    name: Pre-publish gate (full suite on the tag)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync workspace (extras for mypy + osv closure)
+        # --all-extras --all-packages: identical dependency closure to the
+        # standalone `typecheck` + `osv-scan` jobs in test.yml, so the
+        # tag-gate's mypy + osv checks scan the same surface those jobs do.
+        # Skip the frontend build hook — the gate suite is Python-only.
+        env:
+          EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
+        run: uv sync --all-extras --all-packages
+
+      # Copied VERBATIM from the osv-scan job in test.yml (same v2.3.8
+      # binary + SHA256) so run_gate_suite.py's `osv` check finds an
+      # identically-pinned scanner on PATH. Pinned by version + SHA256-
+      # verified for the OpenSSF Scorecard Pinned-Dependencies signal.
+      - name: Install osv-scanner (v2.3.8, checksum-verified)
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.3.8/osv-scanner_linux_amd64 \
+            -o "$HOME/.local/bin/osv-scanner"
+          echo "bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc  $HOME/.local/bin/osv-scanner" | sha256sum -c -
+          chmod +x "$HOME/.local/bin/osv-scanner"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Run full gate suite (SSOT)
+        run: uv run python scripts/run_gate_suite.py --scope full
+
   publish-pypi:
     name: Build and publish to PyPI
+    needs: gate
     runs-on: ubuntu-latest
     environment:
       name: pypi
