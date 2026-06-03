@@ -303,6 +303,8 @@ frozen:
     desc: "Hook config comment referencing the cycle it was added in."
   - path: ".markdownlint.yaml"
     desc: "Lint config comment referencing the cycle it was added in."
+  - path: ".gitleaks.toml"
+    desc: "Secret-scan config; header comment cites 'v0.10.8 A4' (the cycle it was added in)."
   - path: ".githooks/pre-push"
     desc: "Pre-push gate header cites 'Evidentia v0.10.7 Phase D5' + check provenance."
   - path: ".devcontainer/devcontainer.json"
