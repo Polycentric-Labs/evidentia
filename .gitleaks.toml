@@ -1,0 +1,37 @@
+# Gitleaks configuration for Evidentia (v0.10.8 A4).
+#
+# Complements the local pre-push secret scan
+# (scripts/pre_push/check_secrets.sh) with a CI-side gitleaks scan
+# (.github/workflows/secret-scan.yml) so a committed credential is caught
+# on every push/PR, independent of whether a contributor has the local
+# pre-push hook configured.
+#
+# `useDefault = true` inherits the full upstream gitleaks default ruleset
+# (AWS keys, GitHub/GitLab PATs, private keys, Slack/Stripe tokens, generic
+# high-entropy assignments, etc.). We only layer an allowlist on top — no
+# custom detection rules are defined here, so the scan stays in lockstep
+# with upstream rule improvements.
+
+title = "Evidentia gitleaks config"
+
+[extend]
+# Pull in the built-in ruleset shipped with the gitleaks binary. Project
+# rules below (none currently) would be MERGED with the defaults rather
+# than replacing them.
+useDefault = true
+
+# Keep the scan signal-not-noise: test fixtures and example assets carry
+# deliberately fake/sample tokens (e.g. an OCSF ingestion fixture, a sample
+# collector config) that are not real credentials. Allowlisting these paths
+# stops them tripping the generic high-entropy and provider-token rules.
+# `paths` entries are regexes matched against each candidate's file path
+# (forward-slash form, repo-relative). Real source, docker/, packages/,
+# and docs/ are intentionally NOT allowlisted — a secret there is a finding.
+[allowlist]
+description = "Allowlist known-safe test fixtures and example assets"
+paths = [
+    # tests/fixtures/** and any nested tests/<sub>/fixtures/** tree.
+    '''tests/(.*/)?fixtures/.*''',
+    # Example assets shipped under examples/.
+    '''examples/.*''',
+]
