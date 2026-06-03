@@ -1,4 +1,8 @@
 import {
+  Activity,
+  BookOpen,
+  Building2,
+  ClipboardCheck,
   GitCompare,
   Home,
   Layers,
@@ -29,13 +33,18 @@ const NAV_META: Record<string, NavMeta> = {
   "/gap/analyze": { label: "Gap Analyze", description: "Run a gap analysis", crumb: "Run a gap analysis", icon: ScanLine },
   "/gap/diff": { label: "Gap Diff", description: "Compare two reports", crumb: "Compare two reports", icon: GitCompare },
   "/risk/generate": { label: "Risk Generate", description: "AI risk statements", crumb: "AI risk statements", icon: Sparkles },
+  "/explain": { label: "Explain Control", description: "Plain-English control help", crumb: "Explain a control", icon: BookOpen },
+  "/poam": { label: "POA&M", description: "Plan of Action & Milestones", crumb: "Plan of Action & Milestones", icon: ClipboardCheck },
+  "/conmon": { label: "Continuous Monitoring", description: "Monitoring cadences", crumb: "Monitoring cadences", icon: Activity },
+  "/tprm": { label: "TPRM", description: "Third-party risk", crumb: "Third-party risk", icon: Building2 },
   "/settings": { label: "Settings", description: "Config + LLM + air-gap", crumb: "Configuration", icon: Settings },
 };
 
 /** Grouped navigation rail. */
 const NAV_GROUPS: { label: string | null; items: string[] }[] = [
   { label: null, items: ["/"] },
-  { label: "Analyze", items: ["/gap/analyze", "/gap/diff", "/risk/generate"] },
+  { label: "Analyze", items: ["/gap/analyze", "/gap/diff", "/risk/generate", "/explain"] },
+  { label: "Govern", items: ["/poam", "/conmon", "/tprm"] },
   { label: "Library", items: ["/dashboard", "/frameworks"] },
   { label: "Configure", items: ["/settings"] },
 ];

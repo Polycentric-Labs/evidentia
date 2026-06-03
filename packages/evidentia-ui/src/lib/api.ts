@@ -12,6 +12,7 @@
 import { parseContentDispositionFilename } from "@/lib/download";
 import type {
   AirGapCheckResponse,
+  ControlGap,
   GapAnalysisReport,
   GapDiff,
   HealthResponse,
@@ -22,6 +23,7 @@ import type {
 } from "@/types/api";
 import type { ControlCatalog, CatalogControl } from "@/types/catalog";
 import type { EvidentiaConfig } from "@/types/config";
+import type { components } from "@/types/openapi";
 
 export class ApiError extends Error {
   public readonly status: number;
@@ -127,6 +129,51 @@ export interface GapExportResult {
   filename: string;
 }
 
+// ── POA&M types (mirrored from evidentia_core.poam) ────────────────────
+//
+// A POA&M item IS a `ControlGap` (see types/api.ts). The list endpoint
+// returns a paginated envelope of them; detail / create / replace operate
+// on the full ControlGap. Milestone state-transitions use POAMState
+// ("planned" | "in_progress" | "overdue" | "completed" | "verified").
+
+/** POA&M item — full-replace body shape (server fills id / created_at). */
+export type PoamItemInput = components["schemas"]["ControlGap-Input"];
+/** Milestone PATCH body (state-transition). Backward transitions blocked. */
+export type MilestoneUpdatePayload =
+  components["schemas"]["MilestoneUpdatePayload"];
+/** Milestone forward-only state machine. */
+export type PoamState = components["schemas"]["POAMState"];
+
+/** Paginated POA&M list envelope (response is an untyped object server-side). */
+export interface PoamListResponse {
+  total: number;
+  items: ControlGap[];
+}
+
+// ── TPRM types (mirrored from evidentia_core.vendor_store) ──────────────
+
+/** Vendor create body. Required: name, type, criticality_tier,
+ *  relationship_owner, contract_start_date. */
+export type VendorInput = components["schemas"]["Vendor-Input"];
+/** Vendor record as returned by the API. */
+export type Vendor = components["schemas"]["Vendor-Output"];
+export type VendorType = components["schemas"]["VendorType"];
+export type CriticalityTier = components["schemas"]["CriticalityTier"];
+
+/** Paginated vendor list envelope (response is an untyped object server-side). */
+export interface VendorListResponse {
+  total: number;
+  vendors: Vendor[];
+}
+
+// ── ConMon types (mirrored from evidentia_core.conmon) ──────────────────
+
+/**
+ * A bundled / registered continuous-monitoring cadence. The API returns a
+ * flat list of string→(string|null) maps (read-only; no live daemon state).
+ */
+export type ConmonCadence = Record<string, string | null>;
+
 /**
  * Request a gap-report export and return the artifact blob + the
  * server-suggested filename (parsed from `Content-Disposition`).
@@ -228,4 +275,92 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+
+  // ── POA&M ─────────────────────────────────────────────────────────────
+  listPoamItems: (params?: {
+    skip?: number;
+    limit?: number;
+    severity?: string;
+    status?: string;
+    owner?: string;
+    reviewer?: string;
+  }) => {
+    const search = new URLSearchParams();
+    if (params?.skip != null) search.set("skip", String(params.skip));
+    if (params?.limit != null) search.set("limit", String(params.limit));
+    if (params?.severity) search.set("severity", params.severity);
+    if (params?.status) search.set("status", params.status);
+    if (params?.owner) search.set("owner", params.owner);
+    if (params?.reviewer) search.set("reviewer", params.reviewer);
+    const qs = search.toString();
+    return request<PoamListResponse>(`/api/poam/items${qs ? `?${qs}` : ""}`);
+  },
+  getPoamItem: (poamId: string) =>
+    request<ControlGap>(`/api/poam/items/${encodeURIComponent(poamId)}`),
+  replacePoamItem: (poamId: string, item: PoamItemInput) =>
+    request<ControlGap>(`/api/poam/items/${encodeURIComponent(poamId)}`, {
+      method: "PUT",
+      body: JSON.stringify(item),
+    }),
+  updatePoamMilestone: (
+    poamId: string,
+    milestoneId: string,
+    payload: MilestoneUpdatePayload,
+  ) =>
+    request<ControlGap>(
+      `/api/poam/items/${encodeURIComponent(poamId)}/milestones/${encodeURIComponent(
+        milestoneId,
+      )}`,
+      { method: "PATCH", body: JSON.stringify(payload) },
+    ),
+
+  // ── TPRM ──────────────────────────────────────────────────────────────
+  listVendors: (params?: {
+    skip?: number;
+    limit?: number;
+    criticality_tier?: string;
+    type?: string;
+  }) => {
+    const search = new URLSearchParams();
+    if (params?.skip != null) search.set("skip", String(params.skip));
+    if (params?.limit != null) search.set("limit", String(params.limit));
+    if (params?.criticality_tier)
+      search.set("criticality_tier", params.criticality_tier);
+    if (params?.type) search.set("type", params.type);
+    const qs = search.toString();
+    return request<VendorListResponse>(`/api/tprm/vendors${qs ? `?${qs}` : ""}`);
+  },
+  createVendor: (vendor: VendorInput) =>
+    request<Vendor>("/api/tprm/vendors", {
+      method: "POST",
+      body: JSON.stringify(vendor),
+    }),
+
+  // ── ConMon ────────────────────────────────────────────────────────────
+  listConmonCadences: (params?: { framework?: string }) => {
+    const search = new URLSearchParams();
+    if (params?.framework) search.set("framework", params.framework);
+    const qs = search.toString();
+    return request<ConmonCadence[]>(`/api/conmon/cadences${qs ? `?${qs}` : ""}`);
+  },
+
+  // ── Explain ───────────────────────────────────────────────────────────
+  // NOTE: POST /api/explain/{framework}/{control_id} streams the explanation
+  // via Server-Sent Events (text/event-stream), NOT a JSON body — so it is
+  // intentionally NOT a request()-based method. The Explain screen consumes
+  // it with fetch + ReadableStream.getReader() (see RiskGeneratePage.tsx's
+  // readSse pattern). This helper just builds the canonical URL.
+  explainControlUrl: (
+    framework: string,
+    controlId: string,
+    params?: { refresh?: boolean; model?: string },
+  ) => {
+    const search = new URLSearchParams();
+    if (params?.refresh) search.set("refresh", "true");
+    if (params?.model) search.set("model", params.model);
+    const qs = search.toString();
+    return `/api/explain/${encodeURIComponent(framework)}/${encodeURIComponent(
+      controlId,
+    )}${qs ? `?${qs}` : ""}`;
+  },
 };

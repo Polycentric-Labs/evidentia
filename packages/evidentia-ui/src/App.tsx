@@ -1,14 +1,18 @@
 import { Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "@/components/layout/AppLayout";
+import { ConmonPage } from "@/routes/ConmonPage";
 import { DashboardPage } from "@/routes/DashboardPage";
+import { ExplainPage } from "@/routes/ExplainPage";
 import { FrameworkDetailPage } from "@/routes/FrameworkDetailPage";
 import { FrameworksPage } from "@/routes/FrameworksPage";
 import { GapAnalyzePage } from "@/routes/GapAnalyzePage";
 import { GapDiffPage } from "@/routes/GapDiffPage";
 import { HomePage } from "@/routes/HomePage";
+import { PoamPage } from "@/routes/PoamPage";
 import { RiskGeneratePage } from "@/routes/RiskGeneratePage";
 import { SettingsPage } from "@/routes/SettingsPage";
+import { TprmPage } from "@/routes/TprmPage";
 
 /**
  * Evidentia web UI root.
@@ -28,6 +32,10 @@ export function App() {
         <Route path="gap/analyze" element={<GapAnalyzePage />} />
         <Route path="gap/diff" element={<GapDiffPage />} />
         <Route path="risk/generate" element={<RiskGeneratePage />} />
+        <Route path="explain" element={<ExplainPage />} />
+        <Route path="poam" element={<PoamPage />} />
+        <Route path="conmon" element={<ConmonPage />} />
+        <Route path="tprm" element={<TprmPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route
           path="*"
