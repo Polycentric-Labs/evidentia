@@ -1931,7 +1931,11 @@ detailed integration plan" §v0.11. Substantive minor (~6-8 weeks):
   (`--block-private-ips`). Mirrors the `evidentia_collectors.ocsf`
   module; data-layer interop only (no third-party code dependency — see
   the [`integration-survey.md`](integration-survey.md) §9 licensing
-  note).
+  note). Design spec:
+  [`sarif-ingestion-collector-design.md`](sarif-ingestion-collector-design.md)
+  (control-agnostic default + attestation-gated candidate mappings from
+  SARIF-native taxa / operator map / derived; reuses `ControlMapping` +
+  `OLIRRelationship`).
 - **Refresh `docs/integration-survey.md` competitive section**
   post-operator-deep-dive (incorporate AWS OSCAL MCP / Vanta MCP /
   ComplianceCow MCP / Snyk AI Trust Platform shifts).
