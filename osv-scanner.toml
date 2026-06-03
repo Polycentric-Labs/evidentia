@@ -20,6 +20,10 @@ id = "PYSEC-2025-183"
 ignoreUntil = 2026-11-21
 reason = "pyjwt CVE-2025-45768: DISPUTED, no fix exists. The pyjwt maintainer disputes the advisory (HMAC key length is the calling application's choice, not a library defect); every pyjwt release is flagged, so there is no first_patched version. pyjwt reaches Evidentia only transitively (sigstore / mcp / msal / okta / pygithub / snowflake-connector-python) and Evidentia exposes no operator-chosen-key JWT-minting surface. Operator-confirmed accept 2026-05-21 (docs/security-review-v0.9.8.md); re-affirmed for v0.9.9. Re-validate by 2026-11-21."
 
+# Accepted MEDIUM. REMOVAL TRIGGER: drop this entry + bump tuf to >=7.0.0
+# as soon as sigstore ships a release that supports tuf-7 (the fix is
+# upstream-blocked today because sigstore 4.2.0 pins `tuf~=6.0`). Tracked in
+# the v0.10.8 backlog; the `reason` below carries the full disposition.
 [[IgnoredVulns]]
 id = "GHSA-qp9x-wp8f-qgjj"
 ignoreUntil = 2026-11-29
