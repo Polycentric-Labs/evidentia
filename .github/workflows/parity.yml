@@ -1,0 +1,62 @@
+# CLI<->GUI feature-parity gate (v0.10.8 Phase C-3).
+#
+# Runs scripts/check_parity.py against docs/cli-gui-parity.yaml on every push
+# and PR to main: completeness (every live CLI leaf is classified), api- and
+# gui-existence (every `full` row has a real, wired surface), and the
+# cli-only debt-ratchet (new CLI-only debt is blocked).
+#
+# ADVISORY this release: the run step ends with `|| echo "::warning::…"` so a
+# parity regression REPORTS (annotation on the run) but does NOT fail the
+# build. This lets the gate bed in alongside the v0.10.8 GUI build-out without
+# blocking unrelated work. It flips to blocking next release.
+#
+# TODO v0.10.9: drop the advisory '|| echo' below to make this blocking.
+#
+# Action pinning: every `uses:` line is pinned to a full commit SHA (not a
+# tag) to pre-empt the OpenSSF Scorecard PinnedDependencies regression the
+# hardening phase cleans up across all workflows. Comments after each SHA
+# carry the resolved tag for human review; the SHAs match the repo-wide pins
+# in verify-workflow-perms.yml / verify-changelog.yml.
+#
+# This workflow audits as OK: its top-level permissions are read-only
+# (`contents: read`) — the parity job needs no write surface.
+
+name: parity
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Allow manual re-runs from the Actions UI for diagnostic purposes.
+  workflow_dispatch:
+
+# Read-only defaults — the parity job has no write surface.
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    name: CLI<->GUI parity (advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Sync workspace
+        # --all-packages so evidentia.cli.main.app imports for the live leaf walk.
+        env:
+          EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
+        run: uv sync --all-packages
+
+      - name: Run CLI<->GUI parity gate (advisory)
+        # ADVISORY: the `|| echo "::warning::…"` keeps a regression non-blocking
+        # this release. TODO v0.10.9: remove it to make the gate blocking.
+        run: uv run --no-sync python scripts/check_parity.py || echo "::warning::parity advisory — flips to blocking next release"

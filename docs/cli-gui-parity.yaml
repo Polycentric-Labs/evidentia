@@ -1,0 +1,495 @@
+# docs/cli-gui-parity.yaml — CLI<->GUI feature-parity manifest.
+#
+# One row per CLI *leaf* command (the runnable verb, e.g. `gap analyze`, not
+# the `gap` group). The manifest is the declarative source of truth that
+# scripts/check_parity.py gates against and docs/parity-coverage.md renders.
+#
+# status enum:
+#   full      API op exists AND a dedicated App.tsx route surfaces the feature
+#             (route present in App.tsx + wired through lib/api.ts).
+#   api-only  API op exists, but no dedicated GUI route surfaces it yet.
+#   cli-only  No API op and no GUI — a real parity gap that may earn an
+#             API + GUI later. The `baseline` below is the debt-ratchet floor
+#             over this set (it must never grow without an explicit
+#             `--update-baseline`).
+#   exempt    CLI-only *by design* — process/daemon servers, local-only
+#             cache/file management, offline signing/verification, MCP-internal
+#             tooling. Carries a `reason`; never counts against parity.
+#
+# Fields:
+#   cli     the full leaf path (group(s) + verb), space-separated.
+#   api     "METHOD /path" of the backing operation in
+#           packages/evidentia-ui/openapi.json, or null.
+#   gui     the App.tsx route that surfaces it (e.g. "/gap/analyze"), or null.
+#   status  one of the enum values above.
+#   reason  (optional) rationale — required for `exempt`, allowed elsewhere.
+#
+# Seeded 2026-06-02 (v0.10.8 Phase C-1) from LIVE state:
+#   * CLI leaves  — walked from evidentia.cli.main.app (Typer), 109 leaves.
+#   * api         — packages/evidentia-ui/openapi.json (76 operations).
+#   * gui         — packages/evidentia-ui/src/App.tsx routes wired through
+#                   packages/evidentia-ui/src/lib/api.ts.
+#
+# Seed distribution: 6 full / 49 api-only / 43 cli-only / 11 exempt (109).
+# GUI coverage = full / (full + api-only + cli-only) = 6 / 98 = 6.1%.
+# (The ~30% "GUI reaches the CLI" figure is API breadth: 55/98 leaves have an
+#  API; only 6 are surfaced as a dedicated GUI screen today.)
+version: 1
+
+# Debt-ratchet floor: the count of `cli-only` rows at seed time. check_parity.py
+# fails if the live `cli-only` count exceeds this. The controller lowers it with
+# `--update-baseline` whenever a screen ships and a row flips cli-only -> *.
+baseline:
+  cli_only: 43
+commands:
+  - cli: "gap analyze"
+    api: "POST /api/gap/analyze"
+    gui: "/gap/analyze"
+    status: full
+  - cli: "gap diff"
+    api: "POST /api/gap/diff"
+    gui: "/gap/diff"
+    status: full
+  - cli: "risk generate"
+    api: "POST /api/risk/generate"
+    gui: "/risk/generate"
+    status: full
+  - cli: "catalog list"
+    api: "GET /api/frameworks"
+    gui: "/frameworks"
+    status: full
+  - cli: "catalog show"
+    api: "GET /api/frameworks/{framework_id}"
+    gui: "/frameworks/:id"
+    status: full
+  - cli: "doctor"
+    api: "GET /api/doctor"
+    gui: "/settings"
+    status: full
+  - cli: "version"
+    api: "GET /api/version"
+    gui: null
+    status: api-only
+    reason: "Surfaced in the API + UI chrome (sidebar), not a dedicated feature route."
+  - cli: "init"
+    api: "POST /api/init/wizard"
+    gui: null
+    status: api-only
+    reason: "Onboarding wizard lives at the index route (no path= attr); api-only under the route check."
+  - cli: "explain control"
+    api: "POST /api/explain/{framework}/{control_id}"
+    gui: null
+    status: api-only
+  - cli: "collect aws"
+    api: "POST /api/collectors/aws/collect"
+    gui: null
+    status: api-only
+  - cli: "collect github"
+    api: "POST /api/collectors/github/collect"
+    gui: null
+    status: api-only
+  - cli: "collect okta"
+    api: "POST /api/collectors/okta/collect"
+    gui: null
+    status: api-only
+  - cli: "collect sql"
+    api: "POST /api/collectors/sql/postgres/collect"
+    gui: null
+    status: api-only
+    reason: "One CLI verb dispatches by --dialect; the API splits per-dialect (postgres/mysql/oracle/sqlite/mssql)."
+  - cli: "collect databricks"
+    api: "POST /api/collectors/databricks/collect"
+    gui: null
+    status: api-only
+  - cli: "collect snowflake"
+    api: "POST /api/collectors/snowflake/collect"
+    gui: null
+    status: api-only
+  - cli: "collect vanta"
+    api: "POST /api/collectors/vanta/collect"
+    gui: null
+    status: api-only
+  - cli: "collect drata"
+    api: "POST /api/collectors/drata/collect"
+    gui: null
+    status: api-only
+  - cli: "collect bitsight"
+    api: "POST /api/collectors/bitsight/collect"
+    gui: null
+    status: api-only
+  - cli: "collect securityscorecard"
+    api: "POST /api/collectors/securityscorecard/collect"
+    gui: null
+    status: api-only
+  - cli: "tprm concentration-report"
+    api: "GET /api/tprm/concentration"
+    gui: null
+    status: api-only
+  - cli: "tprm vendor add"
+    api: "POST /api/tprm/vendors"
+    gui: null
+    status: api-only
+  - cli: "tprm vendor list"
+    api: "GET /api/tprm/vendors"
+    gui: null
+    status: api-only
+  - cli: "tprm vendor show"
+    api: "GET /api/tprm/vendors/{vendor_id}"
+    gui: null
+    status: api-only
+  - cli: "tprm vendor edit"
+    api: "PUT /api/tprm/vendors/{vendor_id}"
+    gui: null
+    status: api-only
+  - cli: "tprm vendor delete"
+    api: "DELETE /api/tprm/vendors/{vendor_id}"
+    gui: null
+    status: api-only
+  - cli: "tprm dd-questionnaire generate"
+    api: "POST /api/tprm/vendors/{vendor_id}/dd-questionnaire"
+    gui: null
+    status: api-only
+  - cli: "model-risk model add"
+    api: "POST /api/model-risk/models"
+    gui: null
+    status: api-only
+  - cli: "model-risk model list"
+    api: "GET /api/model-risk/models"
+    gui: null
+    status: api-only
+  - cli: "model-risk model show"
+    api: "GET /api/model-risk/models/{model_id}"
+    gui: null
+    status: api-only
+  - cli: "model-risk model edit"
+    api: "PUT /api/model-risk/models/{model_id}"
+    gui: null
+    status: api-only
+  - cli: "model-risk model delete"
+    api: "DELETE /api/model-risk/models/{model_id}"
+    gui: null
+    status: api-only
+  - cli: "model-risk doc generate"
+    api: "GET /api/model-risk/models/{model_id}/documentation"
+    gui: null
+    status: api-only
+  - cli: "model-risk validation-report generate"
+    api: "GET /api/model-risk/models/{model_id}/validation-report"
+    gui: null
+    status: api-only
+  - cli: "ai-gov classify"
+    api: "POST /api/ai-gov/classify"
+    gui: null
+    status: api-only
+  - cli: "ai-gov register"
+    api: "POST /api/ai-gov/register"
+    gui: null
+    status: api-only
+  - cli: "ai-gov list"
+    api: "GET /api/ai-gov/systems"
+    gui: null
+    status: api-only
+  - cli: "ai-gov show"
+    api: "GET /api/ai-gov/systems/{system_id}"
+    gui: null
+    status: api-only
+  - cli: "poam create"
+    api: "POST /api/poam/items"
+    gui: null
+    status: api-only
+  - cli: "poam list"
+    api: "GET /api/poam/items"
+    gui: null
+    status: api-only
+  - cli: "poam show"
+    api: "GET /api/poam/items/{poam_id}"
+    gui: null
+    status: api-only
+  - cli: "poam update"
+    api: "PUT /api/poam/items/{poam_id}"
+    gui: null
+    status: api-only
+  - cli: "poam delete"
+    api: "DELETE /api/poam/items/{poam_id}"
+    gui: null
+    status: api-only
+  - cli: "poam calendar"
+    api: "GET /api/poam/calendar"
+    gui: null
+    status: api-only
+  - cli: "poam milestone add"
+    api: "POST /api/poam/items/{poam_id}/milestones"
+    gui: null
+    status: api-only
+  - cli: "poam milestone update"
+    api: "PATCH /api/poam/items/{poam_id}/milestones/{milestone_id}"
+    gui: null
+    status: api-only
+  - cli: "conmon list"
+    api: "GET /api/conmon/cadences"
+    gui: null
+    status: api-only
+  - cli: "conmon next"
+    api: "POST /api/conmon/next"
+    gui: null
+    status: api-only
+  - cli: "conmon check"
+    api: "POST /api/conmon/check"
+    gui: null
+    status: api-only
+  - cli: "conmon health"
+    api: "POST /api/conmon/health"
+    gui: null
+    status: api-only
+  - cli: "integrations jira push"
+    api: "POST /api/integrations/jira/push/{report_key}"
+    gui: null
+    status: api-only
+  - cli: "integrations jira sync"
+    api: "POST /api/integrations/jira/sync/{report_key}"
+    gui: null
+    status: api-only
+  - cli: "integrations jira status-map"
+    api: "GET /api/integrations/jira/status-map"
+    gui: null
+    status: api-only
+  - cli: "integrations jira test"
+    api: "GET /api/integrations/jira/status"
+    gui: null
+    status: api-only
+    reason: "Connectivity probe; maps to the jira status endpoint."
+  - cli: "integrations tableau publish"
+    api: "POST /api/integrations/tableau/publish/{report_key}"
+    gui: null
+    status: api-only
+  - cli: "integrations powerbi publish"
+    api: "POST /api/integrations/powerbi/publish/{report_key}"
+    gui: null
+    status: api-only
+  - cli: "risk quantify"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "collect ocsf"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "collect convert"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "tprm dd-questionnaire ingest"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "ai-gov retire"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "ai-gov update"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "ai-gov categorize-fips"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "ai-gov set-omb-impact"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "catalog crosswalk"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "catalog import"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "catalog where"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "catalog license-info"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "catalog remove"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "conmon mark-completed"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "conmon dedup-list"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "integrations servicenow push"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "integrations servicenow test"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "retention set"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "retention list"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "retention show"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "retention extend"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "retention transition"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "retention delete"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "retention report"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance lines-report"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance challenge add"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance challenge list"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance challenge show"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance metrics add"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance metrics observe"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance metrics list"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance metrics show"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance metrics delete"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance metrics report"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance workflow run"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance workflow advance"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance workflow status"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance workflow list"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance workflow log"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "governance workflow delete"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "evidence save"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "evidence history"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "evidence show"
+    api: null
+    gui: null
+    status: cli-only
+  - cli: "serve"
+    api: null
+    gui: null
+    status: exempt
+    reason: "Launches the web UI server itself; not a feature surfaced within the UI."
+  - cli: "conmon watch"
+    api: null
+    gui: null
+    status: exempt
+    reason: "Long-running poll daemon; the API exposes read-only daemon-status/history, not a start verb."
+  - cli: "oscal verify"
+    api: null
+    gui: null
+    status: exempt
+    reason: "Offline OSCAL digest/signature verification; air-gap CLI tool, no server surface."
+  - cli: "explain cache clear"
+    api: null
+    gui: null
+    status: exempt
+    reason: "Local explanation-cache management; no server-side surface."
+  - cli: "explain cache where"
+    api: null
+    gui: null
+    status: exempt
+    reason: "Local explanation-cache path introspection; no server-side surface."
+  - cli: "eval stub-smoke"
+    api: null
+    gui: null
+    status: exempt
+    reason: "DFAH determinism harness self-test; dev/CI tool, not an operator feature."
+  - cli: "eval risk-determinism"
+    api: null
+    gui: null
+    status: exempt
+    reason: "DFAH determinism harness; CI/research tool, not an operator feature."
+  - cli: "eval verify"
+    api: null
+    gui: null
+    status: exempt
+    reason: "Verify a signed eval output; offline verification CLI."
+  - cli: "mcp serve"
+    api: null
+    gui: null
+    status: exempt
+    reason: "stdio MCP server; no GUI surface by design."
+  - cli: "mcp doctor"
+    api: null
+    gui: null
+    status: exempt
+    reason: "MCP server readiness check; CLI diagnostic."
+  - cli: "mcp cimd-migrate"
+    api: null
+    gui: null
+    status: exempt
+    reason: "One-off CIMD registry migration; admin CLI."

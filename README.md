@@ -10,6 +10,7 @@
 [![Code of Conduct](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12724/badge?v=silver)](https://www.bestpractices.dev/projects/12724)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Polycentric-Labs/evidentia/badge)](https://scorecard.dev/viewer/?uri=github.com/Polycentric-Labs/evidentia)
+[![CLI↔GUI parity](https://img.shields.io/badge/CLI%E2%86%94GUI%20parity-6.1%25-orange.svg)](docs/parity-coverage.md)
 
 ---
 
