@@ -36,10 +36,23 @@ jobs:
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
           stale=0
+          skipped=0
           while read -r branch; do
             [ -z "$branch" ] && continue
-            iso=$(gh api "repos/${REPO}/branches/${branch}" --jq '.commit.commit.committer.date')
-            ts=$(date -u -d "$iso" +%s)
+            # Per-branch error tolerance: a branch can be deleted between the
+            # list call and this fetch, or hand back an unparseable date. Skip
+            # that one branch with a note and keep going — without this, `set -e`
+            # would abort the whole report on a single bad branch.
+            if ! iso=$(gh api "repos/${REPO}/branches/${branch}" --jq '.commit.commit.committer.date' 2>/dev/null); then
+              echo "- \`${branch}\` — skipped (could not read branch metadata)" >> "$GITHUB_STEP_SUMMARY"
+              skipped=$((skipped + 1))
+              continue
+            fi
+            if ! ts=$(date -u -d "$iso" +%s 2>/dev/null); then
+              echo "- \`${branch}\` — skipped (unparseable commit date \`${iso}\`)" >> "$GITHUB_STEP_SUMMARY"
+              skipped=$((skipped + 1))
+              continue
+            fi
             age=$(( (now - ts) / 86400 ))
             if [ "$age" -gt "$THRESHOLD_DAYS" ]; then
               echo "- \`${branch}\` — ${age} days (last commit ${iso})" >> "$GITHUB_STEP_SUMMARY"
@@ -52,5 +65,11 @@ jobs:
             {
               echo ""
               echo "**${stale} stale branch(es)** — review for deletion; non-PR branches are not auto-deleted."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ "$skipped" -gt 0 ]; then
+            {
+              echo ""
+              echo "_${skipped} branch(es) skipped (transient read error or unparseable date)._"
             } >> "$GITHUB_STEP_SUMMARY"
           fi

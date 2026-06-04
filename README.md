@@ -52,7 +52,7 @@ For the full workspace (AI risk-statements, REST API, all collectors, MCP server
 pip install 'evidentia[ai,api,collectors,mcp]'
 ```
 
-Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.10.7` (cosign keyless OIDC + SLSA Provenance v1 verified).
+Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.10.8` (cosign keyless OIDC + SLSA Provenance v1 verified).
 
 See the [Getting Started wiki section](https://github.com/Polycentric-Labs/evidentia/wiki/Getting-Started) for air-gapped install, virtualenv setup, and full extras matrix.
 
@@ -113,11 +113,11 @@ Full 5-minute walk-through: [Quickstart wiki page](https://github.com/Polycentri
 
 ## Recent Releases
 
+**v0.10.8 (2026-06-04)** — *safeguards automation + CLI↔GUI parity + Tier-B GUI build-out*. **Tag-time release gate.** `release.yml` gains a `gate` job that runs the full SSOT check suite on the tagged commit, and the PyPI/GHCR `publish` jobs now `needs: gate`.
+
 **v0.10.7 (2026-05-30)** — *web console (GUI v2) refresh + gap-report export + hygiene / automation-debt / wiki-fill / doc-accuracy base*. **Web console, GUI v2 visual refresh.** A full design-system pass: federal-blue interactive primary on a warm off-white workspace with deep-navy brand chrome (nav rail + top bar), the CLI-matched severity palette preserved verbatim, self-hosted IBM Plex Sans/Mono + favicons / PWA manifest / Open-Graph brand assets (air-gap clean, no CDN), a wired light/dark toggle (with a no-flash inline theme script), and every route + the onboarding flow restyled.
 
 **v0.10.6 (2026-05-27)** — *OSS first-mover artifacts + downstream OSPS crosswalks + post-v0.10.5 hygiene*. OSPS Baseline 3-catalog bundle (Maturity 1/2/3 YAMLs) + first public OSCAL Catalog 1.2.1 serialization; `SECURITY.md` refresh + `.well-known/security.txt` + GHSA private vulnerability reporting enabled; `OSPS-CONFORMANCE.md` self-attestation + `verify-osps-conformance.yml` CI gate.
-
-**v0.10.5 (2026-05-26)** — *output-format expansion (OCSF Detection Finding + CycloneDX VEX emit) + workspace refactor*. **`evidentia gap analyze --format ocsf-detection`**: gap analysis output emits as an OCSF Detection Finding (`class_uid` 2004) JSON array; **`evidentia gap analyze --format cyclonedx-vex`**: gap analysis output emits as a CycloneDX 1.6 VEX document.
 
 Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https://github.com/Polycentric-Labs/evidentia/releases)
 

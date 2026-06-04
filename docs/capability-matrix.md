@@ -13,6 +13,55 @@
 
 ---
 
+## Re-validation snapshot — 2026-06-04 (v0.10.8 PRE-TAG) — Tier-B GUI build-out + CLI↔GUI parity
+
+v0.10.8 wires the v0.10.7 quality discipline into the **automatic** release
+mechanism and opens the CLI↔GUI parity programme. The Web-UI surface — held at
+"✅ unchanged" through most of the v0.7.x → v0.10.6 line — gains **four
+functional Tier-B screens** (POA&M, TPRM, ConMon, Explain) on top of the
+v0.10.7 GUI-v2 visual refresh, and a new parity manifest + gate makes GUI
+coverage of the CLI a measured, ratcheted figure for the first time. Per skill
+v5.2 G29 right-sizing the 4 screens are localhost-only presentation over
+pre-existing v0.10.7 REST routers (no new backend surface); the MUST-FULL
+surfaces (the 2 write-scoped Phase-G workflows, the `release.yml` gate job, the
+GUI frontend, the pyjwt bump) took the focused-full review. Unchanged subsystems
+are REUSED from the v0.10.0 → v0.10.6 matrices; this snapshot covers the GUI +
+release-automation delta (v0.10.7 added no matrix snapshot — it was a
+hygiene/docs cycle).
+
+### Surface delta — new in v0.10.8
+
+| # | New surface | Kind | Verification |
+|---|---|---|---|
+| 1 | POA&M web screen (`/poam`) — list + severity/status filter chips + in-page detail + forward-only milestone transitions | Web UI | vitest render + interaction; live Playwright DAST (0 console errors); `VALID_NEXT_STATES` mirrors `evidentia_core.poam.state` exactly (G28-verified) |
+| 2 | TPRM web screen (`/tprm`) — vendor list + tier/type filter chips + atomic create form | Web UI | vitest; DAST against the live file-backed vendor store; the 5 required `VendorInput` fields gate submit; `residual_risk_score` defaults 0 |
+| 3 | ConMon web screen (`/conmon`) — read-only cadence browser + exact-match framework filter | Web UI | vitest; DAST; `GET /api/conmon/cadences` returns the 7 bundled cadences (re-verified via `conmon list --json`) |
+| 4 | Explain web screen (`/explain`) — framework + control-id picker + SSE-streamed plain-English explanation with LLM-provider guard | Web UI | vitest; DAST; SSE start-then-terminal frame; same `PlainEnglishExplanation` shape as `evidentia explain control` |
+| 5 | CLI↔GUI parity manifest (`docs/cli-gui-parity.yaml`) + `check_parity.py` gate (completeness + API-existence + GUI-existence + cli-only debt-ratchet) | Tooling/CI | `parity.yml` advisory this cycle (blocking in v0.10.9); **13 full / 42 api-only / 43 cli-only / 11 exempt = 13.3% GUI coverage**; ratchet floor 43 |
+| 6 | Release-hardening automation — tag-time `gate` job (`publish` `needs: gate`), `consistency.yml` CI staleness mirror, pre-push README auto-regen, `secret-scan.yml` (gitleaks) | CI / supply-chain | `run_gate_suite.py` SSOT (one check-list shared by tag-gate + CI + pre-push, per the v0.9.8 gate-fidelity lesson); `audit_workflow_permissions --strict` clean |
+| 7 | Phase-G upkeep automations — stale-branch flagging (read-only), Dependabot patch/minor auto-merge (actor-gated, post-gate), quarterly safeguards re-sweep | CI | least-privilege; the 2 write-scoped workflows carry JUSTIFIED annotations |
+
+### Parity baseline (G27 cross-surface walk)
+
+The unified CLI + API + UI capability inventory (`check_parity --json`) is green
+on all 4 checks. The **42 api-only** (REST exists, no GUI yet) + **43 cli-only**
+(no REST, no GUI) rows are the **known, debt-ratcheted** parity gaps — the
+v0.10.9+ GUI build-out roadmap — not new findings; the cli-only floor holds at
+its 43 baseline. The 7 GUI-covered CLI leaves (`poam list/show/milestone-update`,
+`tprm vendor list/add`, `conmon list`, `explain control`) flipped api-only →
+full this cycle.
+
+### Findings
+
+0 new security findings — 3 review passes CLEAN (`/security-review` on the
+23-commit diff; `/code-review` APPROVE; `/security-review-scoped` on the 6-file
+GUI subsystem, 0 unsafe-HTML sinks). 1 G28 doc-accuracy fix
+(`explain-controls.md` intro over-stated progressive token streaming; corrected
+to the SSE start-then-terminal reality). pyjwt 2.12.1 → 2.13.0 closed
+CVE-2026-48522/48524/48525/48526 (caught by the new osv gate; bumped pre-tag).
+
+---
+
 ## Re-validation snapshot — 2026-05-27 (v0.10.6 PRE-TAG) — OSPS Baseline first-mover
 
 v0.10.6 lands the OpenSSF OSPS Baseline conformance bundle reserved at the

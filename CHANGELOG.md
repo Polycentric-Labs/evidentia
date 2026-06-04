@@ -7,7 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes yet on the v0.10.8 development branch._
+_No changes yet on the v0.10.9 development branch._
+
+## [0.10.8] - 2026-06-04
+
+**Theme**: *v0.10.8 — safeguards automation + CLI↔GUI parity + Tier-B GUI build-out*. Patch bump (v0.10.7 → v0.10.8). Wires the v0.10.7 quality discipline into the **automatic** release mechanism and opens the CLI↔GUI parity programme.
+
+**Release summary**: A release-hardening + parity + GUI-build-out cycle with no new end-user product capability — every item either automates a previously-manual safeguard, measures CLI↔GUI coverage, or surfaces an existing CLI/REST capability in the web console. **Release-hardening:** a tag-time `gate` job now runs the full check suite on the tagged commit and the PyPI/GHCR `publish` jobs `needs: gate`, so the irreversible publish is blocked on a red or stale tree (closing the gap that left the staleness guards pre-push-only); a `consistency.yml` CI job mirrors the version + docs-health + README guards onto every push/PR; the pre-push hook regenerates the README Recent-Releases block and fails if it drifted; and a `secret-scan.yml` (gitleaks) catches a committed credential even on a clone without the local hook. All of these (plus the pre-push hook and the tag-gate) read **one** declarative check-list via `scripts/run_gate_suite.py`, so the surfaces cannot drift (the v0.9.8 gate-fidelity lesson). **CLI↔GUI parity:** a new `docs/cli-gui-parity.yaml` manifest classifies every CLI leaf (full / api-only / cli-only / exempt) and `scripts/check_parity.py` enforces completeness + API-existence + GUI-existence + a cli-only debt-ratchet (catching the coverage gap a passing type-drift gate masks); **GUI coverage rises 6.1% → 13.3%** via four new Tier-B web screens. **Phase-G upkeep:** stale-branch flagging, Dependabot patch/minor auto-merge, and a quarterly safeguards re-sweep. **3869 tests pass / 14 skipped; mypy strict 0/0 across 272 source files; ruff clean.** Workspace ships **8 PyPI packages** unchanged from v0.10.7. Per-cycle detail in [`docs/v0.10.8-plan.md`](docs/v0.10.8-plan.md).
+
+### Added
+
+- **Tag-time release gate.** `release.yml` gains a `gate` job that runs the full SSOT check suite on the tagged commit, and the PyPI/GHCR `publish` jobs now `needs: gate`. A red or stale tree therefore can't reach the irreversible publish — `scripts/run_gate_suite.py --scope full` covers tests + types + lint + version-consistency + docs-health + osv, closing the gap that left those guards pre-push-only while the publish ran ungated. See commit `10efb09`.
+- **CI staleness mirror.** New `consistency.yml` runs the same SSOT gate suite (`--scope consistency`: version-consistency + docs-health + README-releases) on every push/PR to `main`, so a stale version reference, broken doc cross-link, or stale README block fails fast rather than at tag time. See commit `10efb09`.
+- **README Recent-Releases auto-regen in the pre-push gate.** A new pre-push check regenerates the README releases block from `CHANGELOG.md` and fails if it changed, making the v0.10.7-class README staleness mechanically impossible (the `--check` guard was version-only by design). See commit `586c1a3`.
+- **CI secret-scan.** `secret-scan.yml` runs gitleaks on every push/PR to `main` with a shared `.gitleaks.toml` (upstream ruleset + a tests-fixtures/examples allowlist), complementing the local pre-push secret scan so a committed credential is caught even on a clone without the hook. See commit `2ef1fba`.
+- **CLI↔GUI parity manifest + gate.** `docs/cli-gui-parity.yaml` classifies every CLI leaf; `scripts/check_parity.py` enforces completeness + API-existence + GUI-existence (catching the types-only illusion the OpenAPI-drift gate misses) + a cli-only debt-ratchet; `parity.yml` runs it advisory this release (blocking in v0.10.9); `docs/parity-coverage.md` is the generated burndown + the README badge. See commits `34a6c53`, `57bf51f`.
+- **Four Tier-B web screens.** **POA&M** (`/poam`) — list + severity/status filters + in-page detail + forward-only milestone state-transitions; **TPRM** (`/tprm`) — vendor list + tier/type filters + atomic create form; **ConMon** (`/conmon`) — read-only cadence browser; **Explain** (`/explain`) — framework + control-id picker + SSE-streamed plain-English explanation with an LLM-provider guard. Each follows the existing inline-`useQuery` + shadcn/ui patterns; vitest covers render + the primary interaction (29/29). GUI coverage 6.1% → 13.3% as 7 CLI leaves flip api-only → full. See commits `b08ff49`, `7de204e`.
+- **Phase-G upkeep automations.** `stale-branches.yml` flags branches with no commit in >30d to the run summary (read-only, never deletes); `dependabot-automerge.yml` enables auto-merge on green patch/minor Dependabot PRs (gated to the `dependabot[bot]` actor; major bumps stay manual; requires the repo "Allow auto-merge" setting enabled separately); `safeguards-resweep.yml` opens a quarterly tracking issue to re-run the automated-vs-manual safeguards audit. All pass `audit_workflow_permissions --strict` (the 2 write-scoped workflows carry JUSTIFIED annotations). See commit `f5ca9e7`.
+- **Operator-walkthrough wiki media.** A web-console section added to `manage-poam` + `conmon-deployment`, the TPRM GUI walkthrough merged into `manage-third-party-risk`, and a new `explain-controls` guide — each with a captured screenshot under `docs/wiki/images/`. See commit `4318cff`.
+- **README hero refresh.** A centered hero — the 2400×1260 OG brand card + a tight tagline + Get Started / Documentation / PyPI call-to-action buttons + the nine status badges centered beneath (presentation only; the Recent-Releases block + the container-tag version anchor untouched). See commit `87b851a`.
+
+### Changed
+
+- **`pyjwt` 2.12.1 → 2.13.0** — closes CVE-2026-48522 / 48524 / 48525 / 48526 (osv PYSEC-2026-175/177/178/179, up to CVSS 7.4), surfaced by the new osv gate; the bump resolves cleanly (only `pyjwt` moves) and the full suite re-validates green. See commit `7669ed3`.
+- `.gitleaks.toml` is classified `frozen` in the version-tracking manifest — it carries a v0.10.8 audit-trail comment but no project-version literal, so the never-skip version-consistency guard flagged it once committed; classifying it alongside the other root-level config dotfiles resolves that. See commit `d611588`.
+
+### Docs
+
+- `explain-controls.md` intro corrected — the explanation is delivered over a Server-Sent-Events stream (a `start` frame, then a single terminal frame), not progressive token rendering; the prior wording over-stated incremental streaming. A G28 docs-from-verified-facts fix caught by diffing the guide against `ExplainPage.tsx`.
+- The v0.10.5 / v0.10.6 / v0.10.7 in-repo security-review docs were backfilled (v0.10.5/.6 honestly mark ship-telemetry VERIFY-LIMITED where no per-run JSON exists; v0.10.7 is fully verified). See commit `70e8057`.
+- `docs/sarif-ingestion-collector-design.md` NEW — design spec for a v0.11 `evidentia collect sarif` ingestion collector (control-agnostic default + attestation-gated candidate mappings, mirroring the v0.10.1 OCSF ingest path); `docs/integration-survey.md` gains an agentic-security interop assessment (data-layer SARIF handoff; no code reuse across the PolyForm/Apache-2.0 boundary). See commits `10b0a5c`, `a99273a`.
+- `docs/v0.9.3-plan.md` 3 stale cross-link WARNs fixed; the accepted `tuf` 6.0.0 `osv-scanner.toml` ignore gains a removal-trigger note (drop when `sigstore` ships tuf-7 support). See commit `244ec83`.
+
+### Security
+
+- **`pyjwt` four-CVE bump** (see Changed) — the headline supply-chain fix this cycle, caught pre-tag by the new osv gate before publish.
+- The tag-time gate's osv step and the gitleaks CI secret-scan are net-new supply-chain safeguards that now run on the irreversible publish path, not just the local pre-push hook.
 
 ## [0.10.7] - 2026-05-30
 

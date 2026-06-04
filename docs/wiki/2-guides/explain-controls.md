@@ -5,7 +5,8 @@ legal defensibility. The **Explain Control** screen in the web console turns a
 single control into a plain-English brief an engineer or executive can act on:
 what the control actually requires, why it matters (anchored to real attack
 patterns), concrete implementation steps, and an honest effort estimate. The
-explanation streams into the page as the model produces it, and the server
+request streams over Server-Sent Events so the page stays responsive while the
+model works, then renders the explanation as soon as it arrives; the server
 caches the result so the next person asking for the same control gets it
 instantly.
 
