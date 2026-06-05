@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes yet on the v0.10.9 development branch._
+### Fixed
+
+- **CI `secret-scan` workflow** — switched from `gitleaks/gitleaks-action` (which requires a paid `GITLEAKS_LICENSE` for organization-owned repos, so it failed at the license gate on every push without ever scanning) to the MIT-licensed gitleaks CLI binary (pinned v8.30.1, SHA256-verified, matching the osv-scanner pin). Running gitleaks end-to-end for the first time surfaced 7 findings, all verified as deliberately-fake test fixtures (the secret-scrubber test's placeholder credentials + fake 16-hex `report_key` test values) — now allowlisted by module path in `.gitleaks.toml`; no real secrets.
 
 ## [0.10.8] - 2026-06-04
 

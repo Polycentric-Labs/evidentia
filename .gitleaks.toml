@@ -34,4 +34,17 @@ paths = [
     '''tests/(.*/)?fixtures/.*''',
     # Example assets shipped under examples/.
     '''examples/.*''',
+    # Test MODULES that embed deliberately-fake credentials as part of the
+    # test body itself (triaged 2026-06-05 when the gitleaks scan first ran
+    # end-to-end: all placeholders, verified NOT real secrets):
+    #   - test_logger.py is the secret-SCRUBBER test — it intentionally feeds
+    #     AWS-documented placeholder keys + a fake GitHub-PAT-shaped string
+    #     through the scrubber to assert redaction (the module says so and
+    #     splits the AWS literal to dodge scanners).
+    #   - test_gaps.py / test_sse_endpoints.py use fake 16-hex `report_key`
+    #     test values that the generic-api-key high-entropy rule trips on.
+    # Scoped to these exact modules so real source/config stays fully scanned.
+    '''tests/unit/test_audit/test_logger\.py''',
+    '''tests/integration/test_api/test_gaps\.py''',
+    '''tests/integration/test_api/test_sse_endpoints\.py''',
 ]
