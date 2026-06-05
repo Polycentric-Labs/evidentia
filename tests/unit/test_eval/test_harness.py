@@ -39,6 +39,25 @@ from evidentia_eval import (
 )
 from typer.testing import CliRunner
 
+
+@pytest.fixture(autouse=True)
+def _isolate_from_ci_autosign(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep the eval-CLI tests hermetic w.r.t. the ambient CI signing context.
+
+    ``evidentia eval stub-smoke`` / ``risk-determinism`` with ``--output``
+    auto-signs the result via Sigstore when ``GITHUB_ACTIONS == "true"`` AND the
+    ``[sigstore]`` extra is importable (see
+    ``evidentia.cli.eval._resolve_sign``). Inside the release ``gate`` job —
+    which installs ``--all-extras`` (so sigstore IS importable) but runs with
+    only ``contents: read`` (no ``id-token: write``, hence no OIDC token) — that
+    auto-sign raises ``SigstoreSigningError`` and the CLI exits 1. These tests
+    exercise the harness mechanics + determinism, not signing, so clear
+    ``GITHUB_ACTIONS`` to keep them signing-neutral wherever they run
+    (``--no-sign`` is the per-call equivalent). Signing has its own coverage in
+    the eval signing tests.
+    """
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+
 # ── 1. Normalization + hashing ────────────────────────────────────
 
 
