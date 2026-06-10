@@ -34,9 +34,19 @@ jobs:
           set -euo pipefail
           quarter="$(date -u +%Y) Q$(( ($(date -u +%-m) - 1) / 3 + 1 ))"
           title="Quarterly safeguards re-sweep — ${quarter}"
-          existing=$(gh issue list --repo "$REPO" --search "${title} in:title" --state open --json number --jq '.[0].number // empty')
-          if [ -n "$existing" ]; then
-            echo "Tracking issue already open (#${existing}); nothing to do."
+          # Exact-title match across open AND closed issues (v0.10.9 item G):
+          # the old open-only substring probe resurrected a manually closed
+          # quarter's issue on the next scheduled/manual run. The gh search
+          # narrows the candidates; jq enforces the exact-equality filter.
+          matches=$(gh issue list --repo "$REPO" --search "${title} in:title" --state all --json title,state,number)
+          open_num=$(jq -r --arg t "$title" '[.[] | select(.title == $t and .state == "OPEN")][0].number // empty' <<<"$matches")
+          closed_num=$(jq -r --arg t "$title" '[.[] | select(.title == $t and .state == "CLOSED")][0].number // empty' <<<"$matches")
+          if [ -n "$open_num" ]; then
+            echo "Tracking issue already open (#${open_num}); nothing to do."
+            exit 0
+          fi
+          if [ -n "$closed_num" ]; then
+            echo "Tracking issue for ${quarter} was closed (#${closed_num}); deliberately closed — not resurrecting."
             exit 0
           fi
           gh issue create --repo "$REPO" --title "$title" --body \

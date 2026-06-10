@@ -3,12 +3,16 @@
 Pre-push gate L2 check: a workspace-package version bump in ``uv.lock`` must
 NOT drag any third-party (registry-sourced) package's pinned version (the
 v0.10.0 F-V100-M1 pattern). These tests pin the pure parse + diff logic
-against inline ``uv.lock`` fixtures (no git, no network).
+against inline ``uv.lock`` fixtures (no git, no network), plus the
+per-commit attribution path (SF-V108-3, v0.10.9 item B) against a throwaway
+git repo built in ``tmp_path`` (real commits, no network).
 """
 
 from __future__ import annotations
 
 import importlib.util
+import os
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -229,3 +233,113 @@ def test_parse_workspace_packages_handles_glob_members(mod: Any, tmp_path: Path)
 def test_parse_workspace_packages_returns_none_when_missing(mod: Any, tmp_path: Path) -> None:
     """No pyproject.toml -> None so the caller uses the hardcoded fallback."""
     assert mod.parse_workspace_packages(tmp_path) is None
+
+
+# ---------------------------------------------------------------------------
+# Per-commit attribution (SF-V108-3, v0.10.9 item B) — end-to-end main()
+# against a throwaway git repo (real commits, no network). The aggregate
+# base..tip diff misattributed a separately-committed third-party bump to
+# the workspace version bump (the v0.10.8 false positive); the BLOCK
+# condition must now hold within a SINGLE commit.
+# ---------------------------------------------------------------------------
+
+
+def _git(repo: Path, *args: str) -> None:
+    subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True, text=True)
+
+
+def _rev_head(repo: Path) -> str:
+    return subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+    ).stdout.strip()
+
+
+def _commit_lock(repo: Path, lock_text: str, msg: str) -> str:
+    """Write uv.lock, commit it, return the new HEAD sha."""
+    (repo / "uv.lock").write_text(lock_text, encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", msg)
+    return _rev_head(repo)
+
+
+@pytest.fixture()
+def lock_repo(tmp_path: Path) -> Path:
+    """A throwaway git repo with an initial uv.lock commit."""
+    r = tmp_path / "r"
+    r.mkdir()
+    _git(r, "init", "-q")
+    _git(r, "config", "user.email", "t@example.com")
+    _git(r, "config", "user.name", "Test")
+    _commit_lock(r, _lock("0.10.6", "2.7.0"), "base")
+    return r
+
+
+def _run_main_in(mod: Any, repo: Path, argv: list[str]) -> int:
+    """Invoke mod.main(argv) with the process cwd temporarily set to repo."""
+    prev = Path.cwd()
+    try:
+        os.chdir(repo)
+        return int(mod.main(argv))
+    finally:
+        os.chdir(prev)
+
+
+def test_separate_commits_dep_bump_then_version_bump_pass(
+    mod: Any, lock_repo: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The v0.10.8 false positive (SF-V108-3): a third-party dep-bump commit
+    followed by a clean workspace version-bump commit in the same push range
+    must PASS — neither commit alone combines bump + drift."""
+    base = _rev_head(lock_repo)
+    _commit_lock(lock_repo, _lock("0.10.6", "3.0.0"), "Bump urllib3 (dep change only)")
+    tip = _commit_lock(lock_repo, _lock("0.10.7", "3.0.0"), "Bump workspace version only")
+
+    rc = _run_main_in(mod, lock_repo, [base, tip])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "PASS check_uv_lock_pin_drift" in out
+
+
+def test_single_commit_bump_plus_drift_blocks(
+    mod: Any, lock_repo: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """True positive: ONE commit bumping workspace AND moving a third-party
+    pin (the F-V100-M1 signature) stays red, with the commit attributed."""
+    base = _rev_head(lock_repo)
+    tip = _commit_lock(lock_repo, _lock("0.10.7", "3.0.0"), "Bump version and drag urllib3")
+
+    rc = _run_main_in(mod, lock_repo, [base, tip])
+    assert rc == 1
+    captured = capsys.readouterr()
+    assert "BLOCK check_uv_lock_pin_drift" in captured.out
+    assert "urllib3" in captured.err
+    assert f"commit {tip[:12]}" in captured.err
+
+
+def test_working_tree_pair_blocks_on_combined_change(
+    mod: Any, lock_repo: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """No-args invocation (working-tree tip): an uncommitted bump + drift in
+    the HEAD -> working-tree pair must still BLOCK."""
+    _git(lock_repo, "update-ref", "refs/remotes/origin/main", "HEAD")
+    (lock_repo / "uv.lock").write_text(_lock("0.10.7", "3.0.0"), encoding="utf-8")
+
+    rc = _run_main_in(mod, lock_repo, [])
+    assert rc == 1
+    captured = capsys.readouterr()
+    assert "BLOCK check_uv_lock_pin_drift" in captured.out
+    assert "working tree" in captured.err
+
+
+def test_working_tree_clean_bump_passes(
+    mod: Any, lock_repo: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Working-tree pair with a workspace bump but stable pins -> PASS."""
+    _git(lock_repo, "update-ref", "refs/remotes/origin/main", "HEAD")
+    (lock_repo / "uv.lock").write_text(_lock("0.10.7", "2.7.0"), encoding="utf-8")
+
+    rc = _run_main_in(mod, lock_repo, [])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "PASS check_uv_lock_pin_drift" in out
+    assert "evidentia-core 0.10.6->0.10.7" in out

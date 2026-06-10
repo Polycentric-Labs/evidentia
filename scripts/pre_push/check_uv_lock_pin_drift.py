@@ -10,13 +10,22 @@ pin; this check is the structural backstop.
 Trigger condition (all must hold, else SKIP):
 
   1. ``uv.lock`` changed in the push range, AND
-  2. at least one of the 8 workspace packages' versions moved between the
-     base and tip ``uv.lock``.
+  2. at least one of the 8 workspace packages' versions moved within a
+     single evaluated ``uv.lock`` pair (see attribution below).
 
 When triggered, the check diffs the THIRD-PARTY package versions (those
 whose ``uv.lock`` ``source`` is a registry, i.e. NOT ``editable`` /
-``virtual``, and whose name is not one of the workspace members) between
-base and tip. Any third-party version that moved BLOCKS the push.
+``virtual``, and whose name is not one of the workspace members). Any
+third-party version that moved BLOCKS the push.
+
+Attribution is PER COMMIT (SF-V108-3, v0.10.9): each commit in the push
+range that touches ``uv.lock`` (``git rev-list base..tip -- uv.lock``) is
+diffed against its first parent (``C^ -> C``), so a third-party bump
+committed separately from the workspace version bump no longer trips the
+gate (the v0.10.8 false positive). The push BLOCKs only when a SINGLE
+commit both bumps a workspace version and moves a third-party pin. When
+the tip is the working tree, the ``HEAD`` -> working-tree delta is
+evaluated as one extra pair.
 
 Range selection (positional args, supplied by the orchestrator):
 
@@ -305,6 +314,14 @@ def _git_show(rev: str, path: str, repo_root: Path) -> str | None:
     return proc.stdout
 
 
+def _lock_commits_in_range(base: str, tip: str, repo_root: Path) -> list[str]:
+    """Commits in ``base..tip`` that touch ``uv.lock``, oldest first."""
+    proc = _run_git(["rev-list", "--reverse", f"{base}..{tip}", "--", "uv.lock"], repo_root)
+    if proc.returncode != 0:
+        return []
+    return [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+
+
 def resolve_base(base_arg: str | None, repo_root: Path) -> str | None:
     """Resolve the base revision to diff uv.lock against (or None to SKIP)."""
     if (
@@ -351,40 +368,78 @@ def main(argv: list[str] | None = None) -> int:
         print("SKIP check_uv_lock_pin_drift (uv.lock unchanged in range)")
         return 0
 
-    base_text = _git_show(base, "uv.lock", repo_root)
-    if base_text is None:
-        print("SKIP check_uv_lock_pin_drift (no base uv.lock to compare)")
-        return 0
+    # Per-commit attribution (SF-V108-3): build one (label, base_text,
+    # tip_text) pair per commit in range that touches uv.lock, diffing each
+    # commit against its first parent. The v0.10.8 false positive was the
+    # aggregate base..tip diff misattributing a separately-committed
+    # third-party bump to the workspace version bump; the BLOCK condition
+    # must hold within a SINGLE commit.
+    pairs: list[tuple[str, str, str]] = []
+    for sha in _lock_commits_in_range(base, tip, repo_root):
+        parent_text = _git_show(f"{sha}^", "uv.lock", repo_root)
+        commit_text = _git_show(sha, "uv.lock", repo_root)
+        if parent_text is None or commit_text is None:
+            # Lock added/removed in this commit (or a root commit): no
+            # existing pin can have *moved*, so nothing to attribute here.
+            continue
+        pairs.append((f"commit {sha[:12]}", parent_text, commit_text))
 
     if using_worktree:
+        # Tip is the working tree: evaluate HEAD -> working-tree as one
+        # extra pair so uncommitted lock edits are still gated.
+        head_text = _git_show("HEAD", "uv.lock", repo_root)
         try:
-            tip_text: str | None = (repo_root / "uv.lock").read_text(encoding="utf-8")
+            worktree_text: str | None = (repo_root / "uv.lock").read_text(encoding="utf-8")
         except OSError:
-            tip_text = None
-    else:
-        tip_text = _git_show(tip, "uv.lock", repo_root)
-    if tip_text is None:
-        print("SKIP check_uv_lock_pin_drift (no tip uv.lock to compare)")
-        return 0
+            worktree_text = None
+        if head_text is not None and worktree_text is not None:
+            pairs.append(("the working tree", head_text, worktree_text))
 
-    base_pkgs = parse_lock(base_text)
-    tip_pkgs = parse_lock(tip_text)
+    if not pairs:
+        # No per-commit pair could be built (e.g. unusual merge topology, or
+        # an unreadable working-tree lock): degrade to the aggregate
+        # base -> tip diff rather than silently passing.
+        base_text = _git_show(base, "uv.lock", repo_root)
+        if base_text is None:
+            print("SKIP check_uv_lock_pin_drift (no base uv.lock to compare)")
+            return 0
+        if using_worktree:
+            try:
+                tip_text: str | None = (repo_root / "uv.lock").read_text(encoding="utf-8")
+            except OSError:
+                tip_text = None
+        else:
+            tip_text = _git_show(tip, "uv.lock", repo_root)
+        if tip_text is None:
+            print("SKIP check_uv_lock_pin_drift (no tip uv.lock to compare)")
+            return 0
+        pairs.append((f"range {base}..{tip}", base_text, tip_text))
 
-    bumped = workspace_bumped(base_pkgs, tip_pkgs)
-    if not bumped:
-        print("PASS check_uv_lock_pin_drift (no workspace version bump in uv.lock)")
-        return 0
+    all_bumped: list[tuple[str, str, str]] = []
+    violations: list[tuple[str, list[tuple[str, str, str]], list[tuple[str, str, str]]]] = []
+    for label, b_text, t_text in pairs:
+        base_pkgs = parse_lock(b_text)
+        tip_pkgs = parse_lock(t_text)
+        bumped = workspace_bumped(base_pkgs, tip_pkgs)
+        if not bumped:
+            continue
+        for entry in bumped:
+            if entry not in all_bumped:
+                all_bumped.append(entry)
+        drift = third_party_drift(base_pkgs, tip_pkgs)
+        if drift:
+            violations.append((label, bumped, drift))
 
-    drift = third_party_drift(base_pkgs, tip_pkgs)
-    if drift:
-        ws_summary = ", ".join(f"{n} {b}->{t}" for n, b, t in bumped)
-        print(
-            f"BLOCK check_uv_lock_pin_drift: workspace bump ({ws_summary}) "
-            f"moved {len(drift)} third-party pin(s):",
-            file=sys.stderr,
-        )
-        for name, b_ver, t_ver in drift:
-            print(f"  - {name}: {b_ver} -> {t_ver}", file=sys.stderr)
+    if violations:
+        for label, bumped, drift in violations:
+            ws_summary = ", ".join(f"{n} {b}->{t}" for n, b, t in bumped)
+            print(
+                f"BLOCK check_uv_lock_pin_drift: workspace bump ({ws_summary}) "
+                f"moved {len(drift)} third-party pin(s) in {label}:",
+                file=sys.stderr,
+            )
+            for name, b_ver, t_ver in drift:
+                print(f"  - {name}: {b_ver} -> {t_ver}", file=sys.stderr)
         print(
             "\nA workspace version bump must not drag third-party pins (the "
             "v0.10.0 F-V100-M1 pattern). If the dependency change is "
@@ -395,7 +450,11 @@ def main(argv: list[str] | None = None) -> int:
         print("BLOCK check_uv_lock_pin_drift")
         return 1
 
-    ws_summary = ", ".join(f"{n} {b}->{t}" for n, b, t in bumped)
+    if not all_bumped:
+        print("PASS check_uv_lock_pin_drift (no workspace version bump in uv.lock)")
+        return 0
+
+    ws_summary = ", ".join(f"{n} {b}->{t}" for n, b, t in all_bumped)
     print(f"PASS check_uv_lock_pin_drift (workspace bump {ws_summary}; no third-party drift)")
     return 0
 

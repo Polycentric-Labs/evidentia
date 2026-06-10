@@ -56,12 +56,19 @@ def _resolve_sign(
     fires iff ALL of:
 
     1. ``output`` is set (signing has a target).
-    2. GITHUB_ACTIONS env var is "true" (CI release context with
-       OIDC token available).
+    2. GITHUB_ACTIONS env var is "true" (CI release context).
     3. ``sigstore`` Python package is importable (i.e., the
        optional ``[sigstore]`` extra is installed). Without
        this, sign_file would raise SigstoreNotAvailableError
        and we'd rather degrade gracefully than crash the CLI.
+    4. v0.10.9 A: an OIDC token is actually obtainable —
+       GitHub sets ACTIONS_ID_TOKEN_REQUEST_TOKEN +
+       ACTIONS_ID_TOKEN_REQUEST_URL iff the job has
+       ``id-token: write``. Without both, the ambient-credential
+       sign attempt would crash with SigstoreSigningError in any
+       CI job lacking that permission (the v0.10.8 release-gate
+       shape, F-V108-CI1) — degrade to unsigned output and warn
+       on stderr instead.
 
     Operators running locally without OIDC get the eval JSON
     written to ``output`` but no ``.sigstore.json`` bundle. Pass
@@ -74,6 +81,9 @@ def _resolve_sign(
         # No output target → nothing to sign.
         return False
     if sign_flag is not None:
+        # Explicit --sign / --no-sign always wins. Explicit --sign
+        # keeps attempt-and-raise semantics — when the operator
+        # demanded signing, honest failure beats silent degrade.
         return sign_flag
     # Auto-detect: only sign when ALL preconditions hold.
     if os.environ.get("GITHUB_ACTIONS", "").lower() != "true":
@@ -83,7 +93,21 @@ def _resolve_sign(
     # for operators who don't need signing.
     from evidentia_core.oscal.sigstore import sigstore_available
 
-    return sigstore_available()
+    if not sigstore_available():
+        return False
+    # v0.10.9 A: require OIDC-token obtainability, not just CI.
+    if not (
+        os.environ.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN")
+        and os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL")
+    ):
+        typer.echo(
+            "CI detected but no OIDC token (id-token: write "
+            "missing); writing unsigned output; pass --sign to "
+            "force signing.",
+            err=True,
+        )
+        return False
+    return True
 
 app = typer.Typer(
     name="eval",
@@ -162,9 +186,9 @@ def stub_smoke(
             "v0.8.2 P3.2: produce a Sigstore bundle alongside the "
             "JSON output (audit-grade evidence). Default: auto-"
             "detect — sign in CI release context "
-            "(GITHUB_ACTIONS=true), skip otherwise. Requires "
-            "--output to be set; explicit --sign without --output "
-            "is a no-op."
+            "(GITHUB_ACTIONS=true with an OIDC token available), "
+            "skip otherwise. Requires --output to be set; "
+            "explicit --sign without --output is a no-op."
         ),
     ),
 ) -> None:
@@ -358,7 +382,8 @@ def risk_determinism(
         help=(
             "v0.8.2 P3.2: produce a Sigstore bundle alongside the "
             "JSON output. Default: auto-detect — sign in CI "
-            "release context (GITHUB_ACTIONS=true), skip otherwise. "
+            "release context (GITHUB_ACTIONS=true with an OIDC "
+            "token available), skip otherwise. "
             "Requires --output. The bundle proves the eval was "
             "produced by a specific OIDC identity at a specific "
             "time — auditor-defensible evidence."

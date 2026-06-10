@@ -26,8 +26,9 @@ Scopes
   is the set the pre-push hook and the push/PR ``consistency.yml``
   enforce on every change.
 * ``full`` — ``consistency`` PLUS the heavyweight gates
-  (``pytest`` + ``mypy`` + ``ruff`` + ``osv``). This is the set the
-  tag-time ``gate`` job runs before any artifact is published.
+  (``pytest`` + ``mypy`` + ``ruff`` + ``osv`` + ``parity``). This is
+  the set the tag-time ``gate`` job runs before any artifact is
+  published.
 
 ``full`` is a strict superset of ``consistency`` by construction (it is
 the consistency tuple extended with the heavy checks), so a tag that
@@ -112,6 +113,11 @@ _FULL_ONLY_CHECKS: tuple[Check, ...] = (
     Check("mypy", ("mypy", *_MYPY_PACKAGES, "--strict-optional")),
     Check("ruff", ("ruff", "check", ".")),
     Check("osv", ("python", "scripts/run_osv_scan.py")),
+    # The CLI<->GUI parity gate (v0.10.9 item D: advisory -> blocking).
+    # Full-only because it imports the live CLI app for the leaf walk —
+    # too heavy for the pre-push consistency scope, and parity.yml
+    # already gives per-push early signal.
+    Check("parity", ("python", "scripts/check_parity.py")),
 )
 
 # scope name -> ordered checks. ``full`` is ``consistency`` + the heavy
@@ -152,8 +158,8 @@ def main(argv: list[str] | None = None) -> int:
         default="full",
         help=(
             "which set of checks to run: 'consistency' (the staleness "
-            "guards) or 'full' (consistency + pytest/mypy/ruff/osv). "
-            "Default: full."
+            "guards) or 'full' (consistency + pytest/mypy/ruff/osv/"
+            "parity). Default: full."
         ),
     )
     parser.add_argument(
