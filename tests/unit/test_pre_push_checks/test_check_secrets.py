@@ -24,6 +24,7 @@ test's own push). Same discipline as ``tests/unit/test_audit/test_logger.py``.
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -39,9 +40,51 @@ AWS_PLACEHOLDER_SECONDARY = "AKIAI44QH8DHB" + "EXAMPLE"
 # A realistic, non-placeholder permanent AWS access key — must still block.
 REAL_LOOKING_AWS_KEY = "AKIA" + "Z9Q7K3M2X1P4T6BN"
 
-# Skip the whole module when bash is unavailable (the script is bash-only).
-BASH = shutil.which("bash")
-pytestmark = pytest.mark.skipif(BASH is None, reason="bash not available")
+
+def _usable_bash() -> str | None:
+    """A bash that can actually read this repo's paths, or None to skip.
+
+    On Windows, ``shutil.which("bash")`` can resolve to the WSL shim at
+    ``System32\\bash.EXE``, which cannot open Windows-style paths (it needs
+    ``/mnt/c/...``) — the script then fails with exit 127 and the suite goes
+    red for an environmental reason (v0.10.9). Probe each candidate with a
+    ``test -r`` against the script's own path and use the first one that can
+    see it; Git-for-Windows bash (MSYS) handles ``C:/...`` natively, so it is
+    tried first. On POSIX the plain ``which`` result passes the probe.
+    """
+    candidates: list[str] = []
+    for env_var in ("ProgramFiles", "ProgramFiles(x86)"):
+        pf = os.environ.get(env_var)
+        if pf:
+            for sub in ("bin", "usr/bin"):
+                cand = Path(pf) / "Git" / sub / "bash.exe"
+                if cand.is_file():
+                    candidates.append(str(cand))
+    which = shutil.which("bash")
+    if which:
+        candidates.append(which)
+    probe = CHECK_PATH.as_posix()
+    for cand in candidates:
+        try:
+            proc = subprocess.run(
+                [cand, "-c", f'test -r "{probe}"'],
+                capture_output=True,
+                timeout=30,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if proc.returncode == 0:
+            return cand
+    return None
+
+
+# Skip the whole module when no usable bash exists (the script is bash-only).
+BASH = _usable_bash()
+pytestmark = pytest.mark.skipif(
+    BASH is None,
+    reason="no bash that can read repo paths (e.g. only the WSL System32 shim)",
+)
 
 
 def _git(repo: Path, *args: str) -> None:
@@ -66,8 +109,10 @@ def _make_repo(tmp_path: Path, filename: str, content: str) -> Path:
 def _run_check(repo: Path) -> subprocess.CompletedProcess[str]:
     """Run check_secrets.sh inside ``repo`` with no range (scan-all fallback)."""
     assert BASH is not None
+    # POSIX-style path: identical on POSIX, and the form MSYS/git-bash
+    # resolves natively on Windows.
     return subprocess.run(
-        [BASH, str(CHECK_PATH)],
+        [BASH, CHECK_PATH.as_posix()],
         cwd=str(repo),
         capture_output=True,
         text=True,
