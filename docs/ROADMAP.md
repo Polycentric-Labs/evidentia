@@ -1886,9 +1886,9 @@ its size limit), and research-resync cadence.
 ### v0.10.9 — Debt + robustness patch — PLANNED
 
 Theme: close the v0.10.8 ship findings and skill-iteration debt, and
-harden the release machinery that cycle built. Scope (from the
-v0.10.8 ship record + post-ship findings; the cycle plan doc is
-created at cycle open):
+harden the release machinery that cycle built. Full plan:
+[`docs/v0.10.9-plan.md`](v0.10.9-plan.md) (approved 2026-06-10; scope
+= moderate, all eight items). Scope summary:
 
 - **eval CLI `_resolve_sign` OIDC graceful degrade** — the product fix
   behind the v0.10.8 test fix. The eval CLI auto-signs when
