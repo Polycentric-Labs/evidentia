@@ -5,11 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.10.9] - 2026-06-10
+
+**Theme**: *v0.10.9 — debt + robustness patch*. Patch bump (v0.10.8 → v0.10.9). Closes the v0.10.8 ship findings and skill-iteration debt, and hardens the release machinery that cycle built.
+
+**Release summary**: A consolidation cycle with one product-behavior fix and a set of release-machinery, UI-polish, and dependency items — every item traces to a named v0.10.8 finding or deferral. **Product fix:** the eval CLI's auto-sign now checks OIDC-token *obtainability* (not just `GITHUB_ACTIONS`), degrading gracefully to unsigned output with a warning in CI jobs lacking `id-token: write` instead of crashing (the F-V108-CI1 product fix — v0.10.8 only made the tests hermetic). **Release machinery:** the CLI↔GUI parity gate flips advisory → **blocking**, including a new `parity` check in the tag-time gate suite, so a parity regression can no longer reach PyPI; the uv-lock pin-drift pre-push check attributes drift **per commit**, eliminating the v0.10.8 false-positive class (SF-V108-3); the quarterly safeguards-resweep issue probe is idempotent across closed issues. **Dependencies:** the aiohttp accepted-CVE removal trigger fired — litellm 1.88.1 dropped its exact pin, aiohttp floats to 3.14.1, and both `[[IgnoredVulns]]` entries are removed. Alongside the cycle, a verified competitive/market research refresh corrected the positioning + integration-survey docs (every change traceable to a primary-source verification ledger). **3892 tests pass / 8 skipped; mypy strict 0/0 across 272 source files; ruff clean; frontend tsc + build + vitest 35/35.** Workspace ships **8 PyPI packages** unchanged from v0.10.8. Per-cycle detail in [`docs/v0.10.9-plan.md`](docs/v0.10.9-plan.md).
+
+### Added
+
+- **`lib/sse.ts` shared SSE reader** in the web console — one generic `readSse<T>` replaces the functionally identical per-page readers in ExplainPage and RiskGeneratePage, with a 6-case vitest spec locking in the exact streaming semantics (chunk-split frames, multi-`data:` records, keep-alive noise, trailing-partial discard). See commit `91742a3`.
+- **`parity` check in the tag-time gate suite.** `run_gate_suite.py --scope full` now runs `check_parity.py` as its 8th check, so the irreversible publish is blocked on a CLI↔GUI parity regression, not just annotated. See commit `417c912`.
+
+### Changed
+
+- **Eval CLI auto-sign degrades gracefully without an OIDC token.** `_resolve_sign`'s auto-detect branch now additionally requires `ACTIONS_ID_TOKEN_REQUEST_TOKEN` + `ACTIONS_ID_TOKEN_REQUEST_URL` (present only in jobs with `id-token: write`); when CI is detected but no token is obtainable, the eval JSON is written **unsigned** with a stderr warning instead of crashing with `SigstoreSigningError`. An explicit `--sign` keeps attempt-and-raise semantics. 13 new tests cover the tri-state × token matrix. See commit `417c912`.
+- **CLI↔GUI parity gate is blocking.** `parity.yml` propagates `check_parity.py`'s exit code (the v0.10.8 advisory `|| echo` escape is removed), completing the advisory → blocking flip planned at v0.10.8. See commit `417c912`.
+- **`check_uv_lock_pin_drift` attributes pin drift per commit** (SF-V108-3): each commit touching `uv.lock` is diffed against its first parent (plus the working-tree pair), and the push blocks only when a *single commit* both bumps a workspace version and moves a third-party pin — a separately-committed dependency bump in the range no longer trips the gate (the v0.10.8 false-positive replays green; an aggregate-diff fallback preserves the old strictness on unusual topologies). See commit `417c912`.
+- **safeguards-resweep is idempotent across closed issues** — exact-title matching across open *and* closed states; a deliberately closed quarterly tracking issue is no longer resurrected. See commit `417c912`.
+- **`PoamPage` uses the generated OpenAPI `ControlGap-Output` type**, dropping the hand-rolled local widen. See commit `91742a3`.
+- **litellm 1.83.14 → 1.88.1, aiohttp 3.13.4 → 3.14.1.** The documented aiohttp removal trigger fired: litellm 1.88.1 relaxed its exact `aiohttp==3.13.4` pin to `<4.0,>=3.10`, so aiohttp floats past the 3.14.0 fix release and both accepted client-cookie CVE entries (GHSA-hg6j-4rv6-33pg, GHSA-jg22-mg44-37j8) are **removed** from `osv-scanner.toml`. See commit `bd8650f`.
+- The `check_secrets` test module resolves a *usable* bash (Git-for-Windows first) and skips with a precise reason when only the WSL System32 shim is on PATH, instead of failing 6/6 with exit 127 on Windows dev boxes. See commit `316582d`.
 
 ### Fixed
 
-- **CI `secret-scan` workflow** — switched from `gitleaks/gitleaks-action` (which requires a paid `GITLEAKS_LICENSE` for organization-owned repos, so it failed at the license gate on every push without ever scanning) to the MIT-licensed gitleaks CLI binary (pinned v8.30.1, SHA256-verified, matching the osv-scanner pin). Running gitleaks end-to-end for the first time surfaced 7 findings, all verified as deliberately-fake test fixtures (the secret-scrubber test's placeholder credentials + fake 16-hex `report_key` test values) — now allowlisted by module path in `.gitleaks.toml`; no real secrets.
+- **CI `secret-scan` workflow** — switched from `gitleaks/gitleaks-action` (which requires a paid `GITLEAKS_LICENSE` for organization-owned repos, so it failed at the license gate on every push without ever scanning) to the MIT-licensed gitleaks CLI binary (pinned v8.30.1, SHA256-verified, matching the osv-scanner pin). Running gitleaks end-to-end for the first time surfaced 7 findings, all verified as deliberately-fake test fixtures (the secret-scrubber test's placeholder credentials + fake 16-hex `report_key` test values) — now allowlisted by module path in `.gitleaks.toml`; no real secrets. See commit `3d7469a`.
+
+### Docs
+
+- **Verified competitive/market refresh** (quarterly-ish resync; last full pass v0.9.5) applied to `positioning-and-value.md` + `integration-survey.md` + the ROADMAP: the Credo-AI self-host/air-gap reframe, the CISO-Assistant MCP correction, the DFAH claim narrowed to "first/only OSS GRC-toolkit implementation", five fabricated-claim strikes (incl. "NASDAQ: SNYK" and a non-existent arXiv citation), the PCAOB five-capabilities framing corrected to Evidentia's own mapping, and the FedRAMP machine-readable timeline re-based to NTC-0009 (2027-11-01, Class D High). Every correction traces to a primary-source verification ledger; all four kickoff regulatory designators (CR26 / RFC-0024 / SR 26-2 / OCC Bulletin 2026-13) double-verified on .gov sources — the shipped `occ-sr-26-02` catalog stands. See commit `5cfaf06`.
+
+### Security
+
+- **New accepted advisory: GHSA-rrmf-rvhw-rf47** (torch 2.11.0, CVE-2025-3000, GitHub-reviewed severity LOW, local-only `torch.jit.script` memory corruption). GitHub-reviewed into the GHSA database 2026-06-10 (NVD-published 2025-03); **no fixed version exists** (affected through the latest torch); torch is transitive-only via the optional `faithfulness-semantic` eval extra and no Evidentia source references torch. Operator-confirmed accept; re-validate by 2026-12-10. See commit `bd8650f`.
+- The aiohttp accepted-CVE pair is **closed** (not merely re-affirmed): the upstream block lifted and the fixed version now ships in `uv.lock` (see Changed).
 
 ## [0.10.8] - 2026-06-04
 
