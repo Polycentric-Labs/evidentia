@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api";
+import { readSse } from "@/lib/sse";
 import { cn } from "@/lib/utils";
 
 /**
@@ -370,41 +371,4 @@ function ExplanationCard({ explanation }: { explanation: Explanation }) {
       </Card>
     </section>
   );
-}
-
-/**
- * Minimal SSE reader for a POST-initiated `text/event-stream` response.
- * Splits on the SSE record separator (`\n\n`), parses `data:` lines, and
- * dispatches parsed JSON to `onEvent`. Mirrors RiskGeneratePage's `readSse`.
- */
-async function readSse(
-  body: ReadableStream<Uint8Array>,
-  onEvent: (evt: ExplainEvent) => void,
-): Promise<void> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    const parts = buffer.split("\n\n");
-    buffer = parts.pop() ?? "";
-    for (const part of parts) {
-      const dataLines = part
-        .split("\n")
-        .filter((l) => l.startsWith("data:"))
-        .map((l) => l.slice(5).trimStart());
-      if (dataLines.length === 0) continue;
-      try {
-        const parsed = JSON.parse(dataLines.join("\n")) as ExplainEvent;
-        onEvent(parsed);
-      } catch {
-        // Ignore malformed / keep-alive frames (sse-starlette emits comment
-        // pings that aren't JSON `data:` payloads).
-      }
-    }
-  }
 }

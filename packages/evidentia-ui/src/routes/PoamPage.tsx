@@ -14,7 +14,6 @@ import {
 import { api, ApiError, type PoamState } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { severityBadge } from "@/lib/severity";
-import type { ControlGap } from "@/types/api";
 import type { components } from "@/types/openapi";
 
 /**
@@ -38,12 +37,10 @@ import type { components } from "@/types/openapi";
 type Milestone = components["schemas"]["Milestone"];
 
 /**
- * The list/detail endpoints return the full `ControlGap-Output`, which
- * carries `poam_milestones`. The hand-authored `ControlGap` mirror does
- * not yet model that field, so widen it locally rather than editing the
- * seam-owned `@/types/api`.
+ * The list/detail endpoints return the full generated `ControlGap-Output`,
+ * which models `poam_milestones` directly.
  */
-type PoamGap = ControlGap & { poam_milestones?: Milestone[] };
+type PoamGap = components["schemas"]["ControlGap-Output"];
 
 const SEVERITY_OPTIONS: [string | null, string][] = [
   [null, "All severities"],

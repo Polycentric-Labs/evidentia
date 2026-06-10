@@ -20,8 +20,10 @@ vi.mock("@/lib/api", async () => {
   };
 });
 
-// `ControlGap` (hand-authored) does not model `poam_milestones`; the live
-// `ControlGap-Output` does. Widen locally for the fixture, matching the screen.
+// `api.listPoamItems` is still typed against the hand-authored `ControlGap`
+// mirror, which does not model `poam_milestones`; widen locally so the
+// fixture satisfies that seam. (The screen itself now uses the generated
+// `ControlGap-Output`, which models the field directly.)
 type PoamGapFixture = ControlGap & {
   poam_milestones?: Array<{
     id: string;

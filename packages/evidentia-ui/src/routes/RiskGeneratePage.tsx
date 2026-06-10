@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { api } from "@/lib/api";
+import { readSse } from "@/lib/sse";
 import { cn } from "@/lib/utils";
 
 type StreamEvent =
@@ -363,41 +364,4 @@ export function RiskGeneratePage() {
       )}
     </div>
   );
-}
-
-/**
- * Minimal SSE reader for a POST-initiated text/event-stream response.
- * Parses `data: {...}` lines and dispatches parsed JSON to `onEvent`.
- */
-async function readSse(
-  body: ReadableStream<Uint8Array>,
-  onEvent: (evt: StreamEvent) => void,
-): Promise<void> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    const parts = buffer.split("\n\n");
-    buffer = parts.pop() ?? "";
-    for (const part of parts) {
-      const lines = part.split("\n");
-      const dataLines = lines
-        .filter((l) => l.startsWith("data:"))
-        .map((l) => l.slice(5).trimStart());
-      if (dataLines.length === 0) continue;
-      const payload = dataLines.join("\n");
-      try {
-        const parsed = JSON.parse(payload) as StreamEvent;
-        onEvent(parsed);
-      } catch {
-        // Ignore malformed frames — the server occasionally emits
-        // keep-alive comments and other non-JSON lines.
-      }
-    }
-  }
 }
