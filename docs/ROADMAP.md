@@ -1,6 +1,6 @@
 # Evidentia roadmap
 
-**Last updated: v0.10.9 planning (June 2026).**
+**Last updated: v0.10.8 (June 2026).**
 
 This roadmap synthesizes community feedback with the architecture plan
 at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0-v0.8.7
