@@ -292,14 +292,18 @@ adjacent to where Evidentia sits in the §5.5 OSS GRC tier.
 FedRAMP **20x** (the "machine-readable continuous-monitoring" pillar of
 the FedRAMP modernization) entered its **Moderate pilot through
 2026-03-31** and the **public rollout lands Q3 2026**. The central
-artifact is **KSIs — Key Security Indicators** delivered as continuous
-OSCAL feeds (a structural extension to assessment-results + POA&M).
-Evidentia's existing OSCAL emit + CONMON daemon (v0.9.6 first-mover) +
-SCR notification surface (v0.9.7) compose into a near-direct KSI
-emitter. v0.11 schedules the KSI binding as a first-mover claim — the
-public rollout coincides with Evidentia's federal-compliance theme
-window. Sources: GSA FedRAMP 20x announcement; CISA CSAW; RegScale
-OSCAL Hub.
+artifact is **KSIs — Key Security Indicators** delivered per FedRAMP's
+machine-readable schemas (**FRMR JSON** — FedRAMP Machine-Readable
+Documentation; JSON-Schema definitions published in the new
+`FedRAMP/schemas` repo, created 2026-06-09). OSCAL is not displaced —
+it remains the Rev5 / RFC-0024 package format per NTC-0009; FRMR JSON
+is the KSI delivery schema, not an OSCAL extension. Evidentia's
+existing OSCAL emit + CONMON daemon (v0.9.6 first-mover) + SCR
+notification surface (v0.9.7) compose into a near-direct KSI emitter,
+with FRMR JSON as the emission target. v0.11 schedules the KSI binding
+as a first-mover claim — the public rollout coincides with Evidentia's
+federal-compliance theme window. Sources: fedramp.gov 20x pages;
+github.com/FedRAMP/schemas; FedRAMP NTC-0009; RegScale OSCAL Hub.
 
 ### 8.3 OpenVEX 0.2.0 emit (FIRST-MOVER among GRC engines)
 
@@ -347,7 +351,7 @@ expectation.
 | OSPS-CONFORMANCE.md + CI gate | First OSS project to publish a self-conformance statement against OSPS Baseline | v0.10.5 P3 | `docs/OSPS-CONFORMANCE.md` + `.github/workflows/osps-conformance.yml` |
 | CISA SbD Pledge SELFATTEST | First OSS signatory of the CISA Secure by Design Pledge | v0.10.5 P4 | `docs/SECURE-BY-DESIGN-PLEDGE.md` + signal upstream |
 | OpenVEX emit | First OSS GRC engine to emit OpenVEX 0.2.0 | v0.11 P3 | `evidentia vex emit` CLI verb |
-| FedRAMP 20x KSI emit | First OSS engine to emit Key Security Indicators as continuous OSCAL | v0.11 P5 | `evidentia conmon ksi-emit` CLI verb |
+| FedRAMP 20x KSI emit | First OSS engine to emit Key Security Indicators per FedRAMP's machine-readable schemas (FRMR JSON). `kenithphilip/FedPy` (2026-05-28) is an evidence *collector* for KSIs (Ed25519-signed evidence, OSCAL output), not a KSI-submission *emitter* — the first-mover claim survives with that distinction stated | v0.11 P5 | `evidentia conmon ksi-emit` CLI verb |
 | SLSA VSA emit | First OSS GRC engine to emit SLSA VSAs alongside provenance | v0.11 P4 | `evidentia vsa emit` CLI verb |
 
 ### 8.7 AWS OSCAL MCP cross-reference
@@ -409,8 +413,8 @@ verification-upgrade path.
 
 `Clear-Capabilities/agentic-security` is a **Claude Code plugin + `npx`
 CLI security scanner with auto-remediation** (PolyForm Internal Use
-License 1.0.0; created 2026-05-06; ~85 tags by month-end — a fast-moving
-commercial product, not an OSS library). It runs a 12-pillar scan (SAST,
+License 1.0.0; created 2026-05-06; 46 tags, latest v0.85.2 as of
+2026-06-10 — a fast-moving commercial product, not an OSS library). It runs a 12-pillar scan (SAST,
 SCA, secrets, IaC, LLM-safety, MCP agent-tool audit, authZ, pipeline
 integrity, containers, deploy config, supply chain, trend), prioritizes
 with CISA KEV + EPSS, emits **SARIF 2.1.0 with `codeFlows` taint

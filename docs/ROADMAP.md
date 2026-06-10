@@ -1929,15 +1929,19 @@ harden the release machinery that cycle built. Full plan:
 Sourced from Phase B audit v3 + integration plan §"Per-release
 detailed integration plan" §v0.11. Substantive minor (~6-8 weeks):
 
-- **KSI (Key Security Indicators) emission** as continuous OSCAL
-  evidence feeds — wires as third output mode on `evidentia conmon`
-  alongside the 7 bundled cadences shipped v0.9.0. Aligns to
-  **FedRAMP 20x March 2026 pilot → Q3 2026 public rollout** (NIST +
-  GSA expectations harden Q3 2026; this is the v0.10.x integration-
-  survey OCSF/MCP positioning advantage made concrete for the
-  federal lane). Evidentia's natural slot per Phase B Stream E4: OSS
-  engine for the audit-quality middle layer between Trestle (raw
-  OSCAL SDK) and RegScale (commercial FedRAMP package generator).
+- **KSI (Key Security Indicators) emission** per FedRAMP's
+  machine-readable schemas (FRMR JSON; the `FedRAMP/schemas`
+  JSON-Schema repo) — wires as third output mode on `evidentia
+  conmon` alongside the 7 bundled cadences shipped v0.9.0. (Re-based
+  2026-06-10: KSIs are FRMR JSON, not OSCAL feeds — OSCAL remains the
+  Rev5/RFC-0024 package format per NTC-0009; see
+  integration-survey §8.2.) Evidentia's natural slot per Phase B
+  Stream E4: OSS engine for the audit-quality middle layer between
+  Trestle (raw OSCAL SDK) and RegScale (commercial FedRAMP package
+  generator).
+- **Evaluate OSCAL 1.2.1 → 1.2.2** — OSCAL 1.2.2 released
+  2026-04-30; assess the schema delta against the current 1.2.1
+  surface before adopting.
 - **`evidentia incident emit --format dora-art-17`** (DoraIncident
   Pydantic record + `classify_dora()` per RTS 2024/1772 Art. 8 +
   Art. 9; auto-POA&M creation for 4h/24h/72h/1-month reporting
