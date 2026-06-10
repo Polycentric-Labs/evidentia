@@ -29,17 +29,18 @@ id = "GHSA-qp9x-wp8f-qgjj"
 ignoreUntil = 2026-11-29
 reason = "tuf 6.0.0 (CVSS 4.0 MEDIUM, 'platform-dependent delegation path matching'). Newly disclosed 2026-05-28 (v0.10.6 was osv-clean 2026-05-27). FIX (tuf 7.0.0) is UPSTREAM-BLOCKED: the latest sigstore release (4.2.0) pins `tuf~=6.0`, so no resolvable path to tuf 7.x exists until sigstore ships a tuf-7-compatible release (verified: `uv lock --upgrade-package sigstore --upgrade-package tuf` is a no-op; PyPI sigstore 4.2.0 requires `tuf~=6.0`). tuf reaches Evidentia only transitively via sigstore's keyless trust-root fetch (signature verification); Evidentia exposes no operator-controlled tuf delegation/target-path surface, so the platform-dependent path-matching weakness is not reachable from any Evidentia entry point. Operator-confirmed accept 2026-05-29 (v0.10.7 cycle). REMOVE this entry + bump tuf to >=7.0.0 as soon as sigstore releases tuf-7 support (tracked in v0.10.8 backlog). Re-validate by 2026-11-29."
 
-# Accepted MEDIUM x2 (aiohttp client-side cookie CVEs). REMOVAL TRIGGER: drop
-# both entries + let aiohttp float to >=3.14.0 as soon as litellm relaxes its
-# `aiohttp==3.13.4` exact pin (the fix is upstream-blocked today because even the
-# latest litellm 1.87.1 still exact-pins aiohttp==3.13.4). Tracked in the v0.10.9
-# backlog; the `reason` fields below carry the full disposition.
-[[IgnoredVulns]]
-id = "GHSA-hg6j-4rv6-33pg"
-ignoreUntil = 2026-12-04
-reason = "aiohttp 3.13.4 (CVSS 6.6, CWE-346 origin-validation): the aiohttp CLIENT transmits per-request cookies across cross-origin redirects, potentially exposing them to a redirect target. FIXED in aiohttp 3.14.0 but UPSTREAM-BLOCKED: aiohttp reaches Evidentia only transitively, and litellm exact-pins `aiohttp==3.13.4` even in its latest release 1.87.1 (verified: `uv lock --upgrade-package litellm` bumps litellm 1.83.14->1.87.1 yet aiohttp stays 3.13.4; instructor `<4.0,>=3.9.1` and okta `>=3.12.14` both already allow 3.14.0 -- only litellm blocks it). NOT REACHABLE from Evidentia: no direct `import aiohttp` in any Evidentia source, and the transitive aiohttp clients (litellm/instructor/okta) authenticate to operator-configured endpoints via header auth (Bearer / SSWS token / OAuth), not the per-request-`cookies=` + cross-origin-redirect flow this weakness requires. Operator-confirmed accept 2026-06-04 (v0.10.8 cycle, docs/security-review-v0.10.8.md). REMOVE both aiohttp entries + let aiohttp float to >=3.14.0 as soon as litellm relaxes the aiohttp==3.13.4 pin. Re-validate by 2026-12-04."
+# (v0.10.9) The two accepted aiohttp client-cookie CVEs (GHSA-hg6j-4rv6-33pg
+# + GHSA-jg22-mg44-37j8, accepted 2026-06-04 in the v0.10.8 cycle) were
+# REMOVED 2026-06-10: their documented removal trigger fired — litellm 1.88.1
+# relaxed the exact `aiohttp==3.13.4` pin to `aiohttp<4.0,>=3.10`, so aiohttp
+# now floats to 3.14.1 (>= the 3.14.0 fix release) in uv.lock.
 
+# Accepted LOW (GitHub-reviewed severity LOW; CVSS3.1 5.3 AV:L). No fixed
+# version exists (the affected range runs through the latest torch 2.12.0),
+# so there is no upgrade path to clear it. REMOVAL TRIGGER: torch ships a
+# release excluded from GHSA-rrmf-rvhw-rf47's affected range (or the
+# advisory is withdrawn).
 [[IgnoredVulns]]
-id = "GHSA-jg22-mg44-37j8"
-ignoreUntil = 2026-12-04
-reason = "aiohttp 3.13.4 (CVSS 6.4, CWE-502 deserialization): `aiohttp.CookieJar.load()` on untrusted input may allow arbitrary code execution. FIXED in aiohttp 3.14.0 but UPSTREAM-BLOCKED by litellm's exact `aiohttp==3.13.4` pin (see the GHSA-hg6j-4rv6-33pg entry above for the full upstream-block analysis -- the latest litellm 1.87.1 still exact-pins 3.13.4). NOT REACHABLE from Evidentia: no Evidentia source calls `CookieJar.load()` (grep-confirmed 0 `CookieJar` usages across packages/*/src), no Evidentia source imports aiohttp directly, and the transitive aiohttp clients (litellm/instructor/okta) do not load cookie jars from untrusted files in their LLM / Okta API flows -- the deserialization sink is never fed attacker-controlled input. Operator-confirmed accept 2026-06-04 (v0.10.8 cycle, docs/security-review-v0.10.8.md). REMOVE both aiohttp entries + let aiohttp float to >=3.14.0 as soon as litellm relaxes the aiohttp==3.13.4 pin. Re-validate by 2026-12-04."
+id = "GHSA-rrmf-rvhw-rf47"
+ignoreUntil = 2026-12-10
+reason = "torch 2.11.0 (CVE-2025-3000 / PYSEC-2025-194, CVSS3.1 5.3 AV:L, CWE-119): local-only memory corruption in torch.jit.script on attacker-supplied script input (VulDB-sourced, pytorch/pytorch#149623). NVD-published 2025-03-31 but only GitHub-reviewed 2026-06-10 (github_reviewed_at 18:02 UTC), which is why it first surfaces in this scan. NO FIX EXISTS: the affected range covers every torch release through the latest 2.12.0, so no upgrade clears it. NOT REACHABLE from Evidentia: torch is transitive-only (sentence-transformers <- evidentia-eval [faithfulness-semantic] optional extra), zero 'torch' references in any packages/*/src source (grep-confirmed 2026-06-10), Evidentia never invokes torch.jit.script and never compiles TorchScript from untrusted input -- sentence-transformers uses torch for embedding inference on operator-chosen models only; the attack additionally requires local code execution (AV:L), at which point the attacker already runs code locally. Operator-confirmed accept 2026-06-10 (v0.10.9 cycle). Re-validate by 2026-12-10."
