@@ -1,12 +1,13 @@
 # Evidentia roadmap
 
-**Last updated: v0.10.8 (May 2026).**
+**Last updated: v0.10.9 planning (June 2026).**
 
 This roadmap synthesizes community feedback with the architecture plan
 at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0-v0.8.7
-+ v0.9.0-v0.9.9 + v0.10.0-v0.10.6 have shipped; v0.10.7 ships now
-(the web-console refresh + gap-export + last hygiene cycle of the
-v0.10.x line, before the v0.11 federal-compliance theme). **v0.9.0 opened the
++ v0.9.0-v0.9.9 + v0.10.0-v0.10.8 have shipped; v0.10.9 is the current
+dev cycle (a debt + robustness patch closing the v0.10.8 ship findings
+and hardening the release machinery that cycle built, before the v0.11
+federal-compliance theme). **v0.9.0 opened the
 v0.9.x "federal compliance" line** with POA&M + CONMON read-only
 library; v0.9.1 landed the Polycentric Labs org migration; v0.9.2
 added the CONMON REST router + federal corpus + LLM rater + federal
@@ -1770,13 +1771,30 @@ ships 8 PyPI packages unchanged from v0.10.6 (no new packages this
 cycle). 3666 tests pass / 14 skipped / 3680 collected across 281
 source files (was 279 v0.10.6); mypy strict 0/0; ruff clean.
 
-### v0.10.8 — Release-automation hardening + CLI↔GUI parity + GUI build-out (start) — PLANNED
+### v0.10.8 — Release-automation hardening + CLI↔GUI parity + GUI build-out (start) — SHIPPED
 
+Patch on v0.10.7 (released 2026-05-31). Tag `v0.10.8` (2026-06-05).
 Full plan: [`docs/v0.10.8-plan.md`](v0.10.8-plan.md). Theme:
 institutionalize the v0.10.7 quality discipline into the *automatic*
 release mechanism, start enforcing CLI↔GUI feature parity, and begin
-closing the GUI gap (the GUI currently reaches ~30% of the CLI). From a
-post-v0.10.7 safeguards sweep (2026-05-31).
+closing the GUI gap. First ship under `/pre-release-review` v5.2.
+Headline shipments: the tag-time `gate` job in `release.yml` (publish
+jobs blocked on a full gate-suite run, via the `run_gate_suite.py`
+single source of truth) + the `consistency.yml` CI staleness mirror +
+a real CI secret-scan; the `cli-gui-parity.yaml` manifest +
+`check_parity.py` gate (advisory this cycle; GUI coverage 6.1% →
+13.3%); 4 Tier-B GUI screens (POA&M / TPRM / ConMon / Explain); the
+Phase G upkeep workflows (stale-branches, dependabot-automerge,
+safeguards-resweep); 4 wiki guides + README hero refresh. **The new
+tag-gate proved itself on its first release** — it correctly blocked
+the initial publish on 3 real pre-publish issues (a pyjwt CVE wave, an
+accepted-with-rationale aiohttp pair, and an eval-CLI test failure
+only reproducible under the gate's full-extras environment). Post-ship
+fix (no version bump): `secret-scan.yml` switched from the
+license-gated gitleaks *action* to the MIT-licensed gitleaks *binary*.
+Note: the required-signatures ruleset shipped with its admin bypass
+still in place — the bypass removal (closing F-V107-1) moved to the
+v0.10.9 cycle's Tier-4 cleanups.
 
 **Approved scope (Allen 2026-05-31):**
 
@@ -1864,6 +1882,47 @@ its size limit), and research-resync cadence.
   small enough to land standalone or fold into v0.11.
 - Pre-push gate L1 / L3 — defer-or-skip; revisit if a new pattern
   justifies them.
+
+### v0.10.9 — Debt + robustness patch — PLANNED
+
+Theme: close the v0.10.8 ship findings and skill-iteration debt, and
+harden the release machinery that cycle built. Scope (from the
+v0.10.8 ship record + post-ship findings; the cycle plan doc is
+created at cycle open):
+
+- **eval CLI `_resolve_sign` OIDC graceful degrade** — the product fix
+  behind the v0.10.8 test fix. The eval CLI auto-signs when
+  `GITHUB_ACTIONS=true` and sigstore is importable, but never checks
+  OIDC-token *obtainability*, so it crashes (`SigstoreSigningError`)
+  in any CI job lacking `id-token: write`. Check
+  `ACTIONS_ID_TOKEN_REQUEST_TOKEN` and degrade gracefully (write
+  unsigned + warn) instead of crashing.
+- **SF-V108-3** — `check_uv_lock_pin_drift` should diff the
+  bump-commit's `uv.lock` specifically, not the aggregate push range,
+  so a separately-committed dependency bump in the range no longer
+  trips the false positive that forced a logged bypass in v0.10.8.
+- **SF-V108-4** — the `release-safeguards-scaffolder` G4 template
+  defaults to the gitleaks *binary* for organization-owned repos (the
+  gitleaks *action* needs a paid license on org repos — the bug
+  Evidentia hit post-v0.10.8).
+- **`parity.yml` advisory → blocking** — flip the CLI↔GUI parity gate
+  now that a full cycle has run advisory.
+- **Deferred polish from the v0.10.8 review**: widen `PoamGap` →
+  `ControlGap-Output[]`; extract a shared `lib/sse.ts` (ExplainPage +
+  RiskGeneratePage duplicate the SSE reader); safeguards-resweep
+  exact-title idempotency.
+- **Watch-item**: the accepted aiohttp client-cookie CVEs
+  (`osv-scanner.toml` `ignoreUntil` 2026-12-04) — if litellm relaxes
+  its exact `aiohttp==3.13.4` pin so aiohttp can float to ≥ 3.14.0,
+  drop both ignore entries and re-validate.
+- **Tier-4 post-v0.10.8 cleanups folded in**: the Dependabot "Allow
+  auto-merge" repo setting (prerequisite for
+  `dependabot-automerge.yml` to actually merge); the F-V107-1
+  ruleset admin-bypass removal. (The wiki sync proved already
+  automatic — `sync-wiki.yml` carried the v0.10.8 guides on push.)
+- A competitive/market research refresh (the quarterly-ish resync;
+  last full pass at v0.9.5) runs alongside the cycle; outputs land in
+  `docs/positioning-and-value.md`.
 
 ### v0.11 — Federal-compliance theme + AI governance — PLANNED (post-deep-dive)
 
