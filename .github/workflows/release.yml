@@ -453,6 +453,16 @@ jobs:
       # sleeps. The Wait-for-PyPI step above polls the package
       # index endpoint, but PyPI's CDN can lag a few seconds before
       # the wheel files themselves are fetchable.
+      #
+      # --upgrade (F-V109-4): pip-compile treats an existing
+      # --output-file as a set of preferred pins — without --upgrade
+      # it honors the committed preview docker/requirements.txt for
+      # every non-conflicting transitive, so a stale preview (e.g.
+      # 0.9.1-era starlette 1.0.0 / aiohttp 3.13.5) shipped into the
+      # published container despite uv.lock having newer versions.
+      # --upgrade ignores the committed file's pins entirely, so the
+      # regeneration is actually fresh: every dep resolves anew
+      # against PyPI at release time.
       - name: Regenerate hash-pinned requirements.txt against PyPI
         env:
           VERSION: ${{ steps.version.outputs.semver }}
@@ -467,6 +477,7 @@ jobs:
           attempts=0
           max_attempts=3
           until pip-compile --generate-hashes \
+                            --upgrade \
                             --no-emit-find-links \
                             --output-file=docker/requirements.txt \
                             docker/requirements.in

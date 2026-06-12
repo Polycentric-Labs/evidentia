@@ -163,6 +163,16 @@ jobs:
       # whose `uv build` produced different bytes than the
       # PyPI-uploaded Linux-CI build) wouldn't match what pip
       # downloads, breaking the install.
+      #
+      # --upgrade (F-V109-4): pip-compile treats an existing
+      # --output-file as a set of preferred pins — without --upgrade
+      # it honors the committed preview docker/requirements.txt for
+      # every non-conflicting transitive, so a stale preview (e.g.
+      # 0.9.1-era starlette 1.0.0 / aiohttp 3.13.5) shipped into the
+      # published container despite uv.lock having newer versions.
+      # --upgrade ignores the committed file's pins entirely, so the
+      # regeneration is actually fresh: every dep resolves anew
+      # against PyPI at rebuild time.
       - name: Regenerate hash-pinned requirements.txt against PyPI
         env:
           VERSION: ${{ steps.pin.outputs.version }}
@@ -172,6 +182,7 @@ jobs:
           attempts=0
           max_attempts=3
           until pip-compile --generate-hashes \
+                            --upgrade \
                             --no-emit-find-links \
                             --output-file=docker/requirements.txt \
                             docker/requirements.in

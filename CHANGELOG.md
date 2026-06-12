@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+
+- **F-V109-4: the container's release-time dependency regeneration is now genuinely fresh.** Step-7 verification of the v0.10.9 image caught that the release-time `pip-compile` regeneration ran without `--upgrade`, so it honored the committed 0.9.1-era `docker/requirements.txt` pins for every non-conflicting transitive — published containers had been shipping **starlette 1.0.0** (GHSA-86qp-5c8j-p5mr, the Host-header path-bypass remediated in `uv.lock` at v0.10.0) and aiohttp 3.13.5. Fixed by adding `--upgrade` in `release.yml` + `container-build.yml` and refreshing the committed preview lock; the `:v0.10.9` image was rebuilt via `container-build` dispatch (starlette → 1.3.1; new digest, re-signed + re-attested). Known limitation: the container cannot receive aiohttp ≥ 3.14 until litellm supports Python 3.14 (litellm ≥ 1.84 declares `requires-python <3.14`; the image runs `python:3.14-slim`), so the in-container aiohttp 3.13.5 remains covered by the v0.10.8 accepted-with-rationale disposition (no direct aiohttp use; header-auth transitive clients). `bump_version.py`'s own regen path carries the same missing-`--upgrade` bug — queued for v0.10.10.
+
 ## [0.10.9] - 2026-06-10
 
 **Theme**: *v0.10.9 — debt + robustness patch*. Patch bump (v0.10.8 → v0.10.9). Closes the v0.10.8 ship findings and skill-iteration debt, and hardens the release machinery that cycle built.
