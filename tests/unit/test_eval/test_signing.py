@@ -217,6 +217,22 @@ class TestVerifyCli:
     convention as ``test_resolve_sign.py``).
     """
 
+    @pytest.fixture(autouse=True)
+    def _isolate_from_ci_rendering(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Keep the CLI-output assertions hermetic w.r.t. ambient CI env.
+
+        Typer forces rich *terminal* rendering when ``GITHUB_ACTIONS``
+        is set (colored CI logs), so under a real Actions runner the
+        usage-error panel arrives ANSI-styled and box-wrapped and plain
+        substring assertions on ``result.output`` break — the
+        v0.10.9-cycle recurrence of the F-V108-CI1 hermeticity class
+        (these tests passed locally and failed on every CI OS). Same
+        pattern as ``test_harness.py::_isolate_from_ci_autosign``.
+        """
+        monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+
     def _write_output(self, tmp_path: Path) -> Path:
         output = tmp_path / "eval.json"
         output.write_text("{}", encoding="utf-8")
@@ -240,9 +256,10 @@ class TestVerifyCli:
             ],
         )
         assert result.exit_code == 2, result.output
-        # Single tokens only — rich wraps the error panel, so a multi-
-        # word phrase can be split across lines.
-        assert "--expected-issuer" in result.output
+        # Plain single words only — rich styles/wraps option tokens in
+        # the error panel, so flag-token substrings are not stable
+        # across rendering modes; these words are.
+        assert "together" in result.output
         assert "cosign" in result.output
 
     def test_issuer_without_identity_is_usage_error_exit_2(
@@ -261,7 +278,7 @@ class TestVerifyCli:
             ],
         )
         assert result.exit_code == 2, result.output
-        assert "--expected-identity" in result.output
+        assert "together" in result.output
         assert "cosign" in result.output
 
     def test_flagless_verify_warns_identity_not_verified(
