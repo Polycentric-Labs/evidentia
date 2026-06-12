@@ -173,19 +173,29 @@ jobs:
       # --upgrade ignores the committed file's pins entirely, so the
       # regeneration is actually fresh: every dep resolves anew
       # against PyPI at rebuild time.
+      # INTERPRETER PARITY (F-V109-4 follow-up): pip-compile must run
+      # under the SAME Python as the image base (python:3.14-slim) —
+      # on the runner's older Python, `--upgrade` resolves deps whose
+      # requires-python excludes 3.14 (litellm >= 1.84 declares
+      # <3.14), and the in-image `pip install --require-hashes` then
+      # hard-fails on them. Running the compile inside the literal
+      # base image (the bump_version.py F-V82-S1 pattern) keeps the
+      # resolution and the install environment identical by
+      # construction.
       - name: Regenerate hash-pinned requirements.txt against PyPI
         env:
           VERSION: ${{ steps.pin.outputs.version }}
         run: |
           echo "evidentia[gui]==${VERSION}" > docker/requirements.in
-          pip install -q pip-tools==7.5.3  # PinnedDependencies (Scorecard)
           attempts=0
           max_attempts=3
-          until pip-compile --generate-hashes \
-                            --upgrade \
-                            --no-emit-find-links \
-                            --output-file=docker/requirements.txt \
-                            docker/requirements.in
+          until docker run --rm -v "$PWD:/work" -w /work python:3.14-slim \
+                  bash -c "pip install -q pip-tools==7.5.3 && \
+                           pip-compile --generate-hashes \
+                                       --upgrade \
+                                       --no-emit-find-links \
+                                       --output-file=docker/requirements.txt \
+                                       docker/requirements.in"
           do
             attempts=$((attempts + 1))
             if [ "${attempts}" -ge "${max_attempts}" ]; then

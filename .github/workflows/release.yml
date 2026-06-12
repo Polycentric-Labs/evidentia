@@ -473,14 +473,21 @@ jobs:
           # overwrite ephemerally so pip-compile resolves the v0.8.4
           # release we just uploaded.
           echo "evidentia[gui]==${VERSION}" > docker/requirements.in
-          pip install -q pip-tools==7.5.3  # PinnedDependencies (Scorecard)
+          # INTERPRETER PARITY (F-V109-4 follow-up): compile inside the
+          # literal image base (python:3.14-slim) — on the runner's older
+          # Python, --upgrade resolves deps whose requires-python excludes
+          # 3.14 (litellm >= 1.84 declares <3.14) and the in-image
+          # --require-hashes install then hard-fails on them. The
+          # bump_version.py F-V82-S1 pattern.
           attempts=0
           max_attempts=3
-          until pip-compile --generate-hashes \
-                            --upgrade \
-                            --no-emit-find-links \
-                            --output-file=docker/requirements.txt \
-                            docker/requirements.in
+          until docker run --rm -v "$PWD:/work" -w /work python:3.14-slim \
+                  bash -c "pip install -q pip-tools==7.5.3 && \
+                           pip-compile --generate-hashes \
+                                       --upgrade \
+                                       --no-emit-find-links \
+                                       --output-file=docker/requirements.txt \
+                                       docker/requirements.in"
           do
             attempts=$((attempts + 1))
             if [ "${attempts}" -ge "${max_attempts}" ]; then
