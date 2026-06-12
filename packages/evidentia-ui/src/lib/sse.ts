@@ -23,26 +23,37 @@ export async function readSse<T>(
   const decoder = new TextDecoder();
   let buffer = "";
 
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
 
-    const parts = buffer.split("\n\n");
-    buffer = parts.pop() ?? "";
-    for (const part of parts) {
-      const dataLines = part
-        .split("\n")
-        .filter((l) => l.startsWith("data:"))
-        .map((l) => l.slice(5).trimStart());
-      if (dataLines.length === 0) continue;
-      try {
-        const parsed = JSON.parse(dataLines.join("\n")) as T;
+      const parts = buffer.split("\n\n");
+      buffer = parts.pop() ?? "";
+      for (const part of parts) {
+        const dataLines = part
+          .split("\n")
+          .filter((l) => l.startsWith("data:"))
+          .map((l) => l.slice(5).trimStart());
+        if (dataLines.length === 0) continue;
+        let parsed: T;
+        try {
+          parsed = JSON.parse(dataLines.join("\n")) as T;
+        } catch {
+          // Ignore malformed / keep-alive frames (sse-starlette emits comment
+          // pings that aren't JSON `data:` payloads).
+          continue;
+        }
+        // Dispatch OUTSIDE the parse guard: an onEvent throw is the
+        // caller's error and must propagate (the finally below still
+        // releases the reader lock), not be swallowed as a bad frame.
         onEvent(parsed);
-      } catch {
-        // Ignore malformed / keep-alive frames (sse-starlette emits comment
-        // pings that aren't JSON `data:` payloads).
       }
     }
+  } finally {
+    // Release the lock even when onEvent (or a read) throws, so the
+    // caller can still acquire a new reader / cancel the body.
+    reader.releaseLock();
   }
 }

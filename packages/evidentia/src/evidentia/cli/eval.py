@@ -102,8 +102,9 @@ def _resolve_sign(
     ):
         typer.echo(
             "CI detected but no OIDC token (id-token: write "
-            "missing); writing unsigned output; pass --sign to "
-            "force signing.",
+            "missing); writing unsigned output; grant `id-token: "
+            "write` to enable signing, or pass --sign to attempt "
+            "anyway.",
             err=True,
         )
         return False
@@ -821,7 +822,8 @@ def verify(
             "Optional. Require the signer's certificate identity "
             "to match (e.g., the GitHub Actions workflow URL "
             "for a tagged release: 'https://github.com/<owner>/"
-            "<repo>/.github/workflows/release.yml@refs/tags/<tag>')."
+            "<repo>/.github/workflows/release.yml@refs/tags/<tag>'). "
+            "Must be paired with --expected-issuer (cosign model)."
         ),
     ),
     expected_issuer: str | None = typer.Option(
@@ -829,7 +831,8 @@ def verify(
         "--expected-issuer",
         help=(
             "Optional. Require the OIDC issuer to match "
-            "(e.g., 'https://token.actions.githubusercontent.com')."
+            "(e.g., 'https://token.actions.githubusercontent.com'). "
+            "Must be paired with --expected-identity (cosign model)."
         ),
     ),
 ) -> None:
@@ -839,7 +842,14 @@ def verify(
     keyless-OIDC verification against Fulcio + Rekor, and prints
     the verification outcome. Exits 0 on a clean verification +
     1 on any failure mode (invalid signature, missing bundle,
-    transparency-log unreachable).
+    transparency-log unreachable) + 2 on usage / infrastructure
+    errors (a lone --expected-identity / --expected-issuer flag,
+    sigstore not installed, air-gap mode).
+
+    Identity pinning is both-or-neither (F-V109-1, cosign model):
+    pass --expected-identity AND --expected-issuer together, or
+    neither — in which case the signer's identity is NOT checked
+    and a warning is printed (F-V109-2).
 
     Requires network access (Fulcio + Rekor are public services).
     Air-gap deployments cannot use Sigstore-signed eval output;
@@ -892,11 +902,31 @@ def verify(
         # successful check that returned negative.
         typer.echo(f"Verification failed: {exc}", err=True)
         sys.exit(1)
+    except ValueError as exc:
+        # F-V109-1: exactly one of --expected-identity /
+        # --expected-issuer — verify_file fails closed (identity
+        # pinning is both-or-neither, the cosign model) rather than
+        # silently verifying under the any-signer policy. Surface as
+        # a Click usage error (exit 2, the CLI usage-error code).
+        raise typer.BadParameter(str(exc)) from exc
     except (FileNotFoundError, OSError) as exc:
         # File-system errors (output_path missing, bundle_path
         # missing) — the CLI's own filesystem issues, not Sigstore's.
         typer.echo(f"Verification failed: {exc}", err=True)
         sys.exit(1)
+
+    # F-V109-2: flagless verify checks the signature + transparency-
+    # log inclusion only — it asserts nothing about WHO signed.
+    # Surface that loudly on stderr; exit code stays 0 for a
+    # cryptographically-valid bundle (back-compat preserved).
+    if expected_identity is None and expected_issuer is None:
+        typer.echo(
+            "WARNING: signer identity NOT verified — the signature "
+            "and transparency-log inclusion were checked, but ANY "
+            "Sigstore identity would pass. Pass --expected-identity "
+            "+ --expected-issuer to pin the signer.",
+            err=True,
+        )
 
     if verify_result.valid:
         typer.echo(f"VALID — {output_path.name}")

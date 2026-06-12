@@ -36,9 +36,11 @@ jobs:
           title="Quarterly safeguards re-sweep — ${quarter}"
           # Exact-title match across open AND closed issues (v0.10.9 item G):
           # the old open-only substring probe resurrected a manually closed
-          # quarter's issue on the next scheduled/manual run. The gh search
-          # narrows the candidates; jq enforces the exact-equality filter.
-          matches=$(gh issue list --repo "$REPO" --search "${title} in:title" --state all --json title,state,number)
+          # quarter's issue on the next scheduled/manual run. List the full
+          # issue set (no --search — the exact match no longer depends on
+          # search tokenization); --limit 100 comfortably covers the repo's
+          # issue volume; jq enforces the exact-equality filter.
+          matches=$(gh issue list --repo "$REPO" --state all --limit 100 --json title,state,number)
           open_num=$(jq -r --arg t "$title" '[.[] | select(.title == $t and .state == "OPEN")][0].number // empty' <<<"$matches")
           closed_num=$(jq -r --arg t "$title" '[.[] | select(.title == $t and .state == "CLOSED")][0].number // empty' <<<"$matches")
           if [ -n "$open_num" ]; then

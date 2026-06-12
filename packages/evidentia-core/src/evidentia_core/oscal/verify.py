@@ -17,8 +17,10 @@ Assessment Results export:
    (``.sigstore.json``) exists alongside the AR JSON, the bundle is
    verified via :mod:`evidentia_core.oscal.sigstore`. Optional
    ``expected_sigstore_identity`` + ``expected_sigstore_issuer`` enforce
-   a strict identity policy; without both, the verifier falls back to
-   ``UnsafeNoOp`` (accepts any signer) and emits a structured warning.
+   a strict identity policy; they are both-or-neither (F-V109-1 —
+   supplying exactly one fails the report). Without either, the
+   verifier falls back to ``UnsafeNoOp`` (accepts any signer) and
+   emits a structured warning.
 
 A "clean" AR passes every check that's applicable. A "tampered" AR
 fails the digest check (someone rewrote an embedded finding). A
@@ -248,8 +250,10 @@ def verify_ar_file(
         ``expected_sigstore_issuer``.
     expected_sigstore_issuer:
         Required Sigstore identity issuer (e.g.,
-        ``https://token.actions.githubusercontent.com``). Required if
-        ``expected_sigstore_identity`` is set; ignored otherwise.
+        ``https://token.actions.githubusercontent.com``). Both-or-neither
+        with ``expected_sigstore_identity`` (F-V109-1): supplying exactly
+        one of the pair fails the report with an error rather than
+        silently verifying under the any-signer policy.
     """
     ar_path = Path(ar_path)
     report = VerifyReport(ar_path=ar_path)
@@ -328,7 +332,7 @@ def verify_ar_file(
             report.sigstore_signature_valid = False
             return report
 
-        if expected_sigstore_identity is None or expected_sigstore_issuer is None:
+        if expected_sigstore_identity is None and expected_sigstore_issuer is None:
             report.warnings.append(
                 "Sigstore signature found but no --expected-identity / "
                 "--expected-issuer supplied. Using UnsafeNoOp policy "
@@ -349,6 +353,14 @@ def verify_ar_file(
             return report
         except SigstoreError as e:
             report.errors.append(f"Sigstore verification failed: {e}")
+            report.sigstore_signature_valid = False
+            return report
+        except ValueError as e:
+            # F-V109-1: exactly one identity-pinning flag — verify_file
+            # fails closed (usage error) rather than silently dropping
+            # the constraint. Surface as a report error so CLI / MCP
+            # callers render a clean FAIL instead of a stack trace.
+            report.errors.append(f"Sigstore verification rejected: {e}")
             report.sigstore_signature_valid = False
             return report
 

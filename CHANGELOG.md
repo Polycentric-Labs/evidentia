@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`PoamPage` uses the generated OpenAPI `ControlGap-Output` type**, dropping the hand-rolled local widen. See commit `91742a3`.
 - **litellm 1.83.14 → 1.88.1, aiohttp 3.13.4 → 3.14.1.** The documented aiohttp removal trigger fired: litellm 1.88.1 relaxed its exact `aiohttp==3.13.4` pin to `<4.0,>=3.10`, so aiohttp floats past the 3.14.0 fix release and both accepted client-cookie CVE entries (GHSA-hg6j-4rv6-33pg, GHSA-jg22-mg44-37j8) are **removed** from `osv-scanner.toml`. See commit `bd8650f`.
 - The `check_secrets` test module resolves a *usable* bash (Git-for-Windows first) and skips with a precise reason when only the WSL System32 shim is on PATH, instead of failing 6/6 with exit 127 on Windows dev boxes. See commit `316582d`.
+- **`readSse` no longer swallows handler exceptions** — the malformed-frame catch is narrowed to `JSON.parse` only, so an `onEvent` throw propagates to the caller instead of being silently eaten; the reader lock is released on all exits (`try/finally`).
+- The safeguards-resweep issue probe lists `--state all --limit 100` without `--search`, removing the dependence on GitHub search tokenization and the 30-result default page; throwaway git-fixture repos in the pre-push-check tests pin `commit.gpgsign=false` so host signing config can't make them prompt or fail.
 
 ### Fixed
 
@@ -36,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **F-V109-1 (HIGH, found by the in-cycle scoped security review): single-flag verify no longer silently skips identity pinning.** `verify_file` previously built its identity policy only when *both* `--expected-identity` and `--expected-issuer` were supplied — passing exactly one silently discarded the constraint and verified under an any-signer `UnsafeNoOp` policy, so a tampered artifact re-signed under any OIDC identity reported `VALID`. Identity pinning now follows the cosign model (both-or-neither): a single flag is a hard usage error on `evidentia eval verify` (exit 2), a report-level failure on `evidentia oscal verify`, and a structured tool error on the `verify_signed_artifact` MCP tool. Pre-existing since the verify surface shipped; not a v0.10.9 regression.
+- **F-V109-2 (MEDIUM): flag-less verification now warns that signer identity is unverified.** `evidentia eval verify` without pinning flags checks the signature + transparency-log inclusion only — it now prints an explicit stderr warning that ANY Sigstore identity would pass and how to pin the signer (exit code unchanged for valid bundles; the MCP result payload carries the equivalent structured warning).
+- **F-V109-3 (LOW): the verification output's `issuer:` line now shows the real OIDC issuer** (extracted from the Fulcio certificate extension, OID 1.3.6.1.4.1.57264.1.8) instead of the constant Fulcio X.509 DN, so the human cross-check line can actually discriminate identity providers (clearly-labeled DN fallback when the extension is absent).
 - **New accepted advisory: GHSA-rrmf-rvhw-rf47** (torch 2.11.0, CVE-2025-3000, GitHub-reviewed severity LOW, local-only `torch.jit.script` memory corruption). GitHub-reviewed into the GHSA database 2026-06-10 (NVD-published 2025-03); **no fixed version exists** (affected through the latest torch); torch is transitive-only via the optional `faithfulness-semantic` eval extra and no Evidentia source references torch. Operator-confirmed accept; re-validate by 2026-12-10. See commit `bd8650f`.
 - The aiohttp accepted-CVE pair is **closed** (not merely re-affirmed): the upstream block lifted and the fixed version now ships in `uv.lock` (see Changed).
 

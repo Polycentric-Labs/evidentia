@@ -138,7 +138,11 @@ class TestAutoDetect:
         _set_ci_env(monkeypatch)
         _stub_sigstore(monkeypatch, available=True)
         assert _resolve_sign(None, Path("out.json")) is False
-        assert _WARNING_FRAGMENT in capsys.readouterr().err
+        err = capsys.readouterr().err
+        assert _WARNING_FRAGMENT in err
+        # v0.10.9 polish: the remedy is ordered grant-the-permission-
+        # first (the durable fix), then --sign (the override).
+        assert "grant `id-token: write`" in err
 
     def test_ci_with_only_request_token_degrades(
         self,

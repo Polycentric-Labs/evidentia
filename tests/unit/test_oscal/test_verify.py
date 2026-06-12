@@ -457,3 +457,28 @@ def test_verify_ar_file_sigstore_with_expected_identity_no_warning(
         expected_sigstore_issuer="https://token.actions.githubusercontent.com",
     )
     assert not any("UnsafeNoOp" in w for w in report.warnings)
+
+
+def test_verify_ar_file_sigstore_single_flag_fails_with_report_error(
+    tmp_path: Path,
+) -> None:
+    """F-V109-1: exactly one pinning flag → clean report error, no stack trace.
+
+    ``verify_file`` raises ValueError before touching any Sigstore
+    machinery (the guard is a pure usage check), so no mocking is needed
+    — the orchestrator must convert it into a report-level FAIL.
+    """
+    ar_doc = gap_report_to_oscal_ar(_make_report(), findings=[_make_finding()])
+    ar_path = tmp_path / "audit.json"
+    ar_path.write_text(json.dumps(ar_doc), encoding="utf-8")
+    bundle_path = ar_path.with_suffix(ar_path.suffix + ".sigstore.json")
+    bundle_path.write_text("{\"fake\": \"bundle\"}", encoding="utf-8")
+
+    report = verify_ar_file(
+        ar_path, expected_sigstore_identity="ci@example.com"
+    )
+    assert report.sigstore_signature_valid is False
+    assert report.overall_valid is False
+    assert any("provided together" in e for e in report.errors)
+    # The misleading any-signer warning must NOT fire on the error path.
+    assert not any("UnsafeNoOp" in w for w in report.warnings)

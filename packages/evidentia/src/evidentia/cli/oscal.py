@@ -99,9 +99,11 @@ def verify(
         "--expected-identity",
         help=(
             "Expected Sigstore signer identity (email or OIDC subject). "
-            "When omitted, the verifier accepts ANY signer (UnsafeNoOp "
-            "policy) and emits a warning. Production audit pipelines "
-            "should always set this AND --expected-issuer."
+            "When omitted along with --expected-issuer, the verifier "
+            "accepts ANY signer (UnsafeNoOp policy) and emits a warning. "
+            "Both-or-neither with --expected-issuer (cosign model); "
+            "supplying exactly one fails verification. Production audit "
+            "pipelines should always set both."
         ),
     ),
     expected_issuer: str | None = typer.Option(
@@ -110,7 +112,8 @@ def verify(
         help=(
             "Expected Sigstore identity issuer URL "
             "(e.g., 'https://token.actions.githubusercontent.com' for "
-            "GitHub Actions OIDC). Required if --expected-identity is set."
+            "GitHub Actions OIDC). Both-or-neither with "
+            "--expected-identity (cosign model)."
         ),
     ),
     json_output: bool = typer.Option(

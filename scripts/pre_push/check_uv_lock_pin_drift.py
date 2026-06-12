@@ -25,7 +25,12 @@ committed separately from the workspace version bump no longer trips the
 gate (the v0.10.8 false positive). The push BLOCKs only when a SINGLE
 commit both bumps a workspace version and moves a third-party pin. When
 the tip is the working tree, the ``HEAD`` -> working-tree delta is
-evaluated as one extra pair.
+evaluated as one extra pair. Per-commit attribution is also STRICTER than
+the old aggregate diff in one edge: a range where one commit bumps a
+workspace version AND drags a third-party pin while a later commit reverts
+the drag now BLOCKs (the bad commit object persists in history even though
+the aggregate diff is clean; squash/amend the offending commit is the
+clean fix), where the old aggregate base..tip diff passed.
 
 Range selection (positional args, supplied by the orchestrator):
 

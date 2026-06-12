@@ -100,6 +100,7 @@ def _make_repo(tmp_path: Path, filename: str, content: str) -> Path:
     _git(r, "init", "-q")
     _git(r, "config", "user.email", "t@example.com")
     _git(r, "config", "user.name", "Test")
+    _git(r, "config", "commit.gpgsign", "false")
     (r / filename).write_text(content, encoding="utf-8")
     _git(r, "add", "-A")
     _git(r, "commit", "-q", "-m", "fixture")

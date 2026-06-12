@@ -292,6 +292,72 @@ class TestGapDiff:
             )
 
 
+class TestVerifySignedArtifact:
+    """v0.10.9 F-V109-1/2: identity pinning + flagless-warning surfaces."""
+
+    def test_single_flag_identity_raises_valueerror(
+        self, tmp_path: Path
+    ) -> None:
+        """Exactly one expected_sigstore_* arg → a clean ValueError
+        tool error (the schema can't express both-or-neither), not a
+        stack trace from deep inside the verifier."""
+        ar_path = tmp_path / "audit.oscal-ar.json"
+        ar_path.write_text("{}", encoding="utf-8")
+        server = build_server()
+        with pytest.raises(ValueError, match="provided together"):
+            _invoke_tool(
+                server,
+                "verify_signed_artifact",
+                ar_path=str(ar_path),
+                expected_sigstore_identity="ci@example.com",
+            )
+
+    def test_single_flag_issuer_raises_valueerror(
+        self, tmp_path: Path
+    ) -> None:
+        """F-V109-1, other order: a lone issuer is rejected too."""
+        ar_path = tmp_path / "audit.oscal-ar.json"
+        ar_path.write_text("{}", encoding="utf-8")
+        server = build_server()
+        with pytest.raises(ValueError, match="provided together"):
+            _invoke_tool(
+                server,
+                "verify_signed_artifact",
+                ar_path=str(ar_path),
+                expected_sigstore_issuer=(
+                    "https://token.actions.githubusercontent.com"
+                ),
+            )
+
+    def test_flagless_verify_surfaces_any_signer_warning(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """F-V109-2 mirror: flagless verification carries the
+        UnsafeNoOp any-signer warning in the result payload's
+        ``warnings`` list (MCP has no stderr)."""
+        from unittest.mock import MagicMock
+
+        from evidentia_core.oscal import sigstore as sigstore_mod
+        from evidentia_core.oscal.sigstore import SigstoreVerifyResult
+
+        ar_path = tmp_path / "audit.oscal-ar.json"
+        ar_path.write_text("{}", encoding="utf-8")
+        bundle = ar_path.with_suffix(ar_path.suffix + ".sigstore.json")
+        bundle.write_text('{"fake": "bundle"}', encoding="utf-8")
+        monkeypatch.setattr(
+            sigstore_mod,
+            "verify_file",
+            MagicMock(return_value=SigstoreVerifyResult(valid=True)),
+        )
+
+        server = build_server()
+        result = _invoke_tool(
+            server, "verify_signed_artifact", ar_path=str(ar_path)
+        )
+        assert result["sigstore_signature_valid"] is True
+        assert any("UnsafeNoOp" in w for w in result["warnings"])
+
+
 # ── 2.5 v0.8.2 F-V81-S1 path-input gating ─────────────────────────
 
 

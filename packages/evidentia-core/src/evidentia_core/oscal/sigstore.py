@@ -31,11 +31,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from evidentia_core.audit.events import EventAction, EventOutcome
 from evidentia_core.audit.logger import get_logger
 
 _log = get_logger("evidentia.oscal.sigstore")
+
+# Fulcio OIDC-issuer (v2) certificate extension OID. The extension value
+# is a DER-encoded UTF8String per RFC 5280 — see
+# https://github.com/sigstore/fulcio/blob/main/docs/oid-info.md.
+_FULCIO_OIDC_ISSUER_V2_OID = "1.3.6.1.4.1.57264.1.8"
 
 
 class SigstoreError(Exception):
@@ -176,7 +182,23 @@ def verify_file(
     expected_identity: str | None = None,
     expected_issuer: str | None = None,
 ) -> SigstoreVerifyResult:
-    """Verify a Sigstore bundle against its artifact."""
+    """Verify a Sigstore bundle against its artifact.
+
+    Identity pinning follows the cosign model: ``expected_identity``
+    and ``expected_issuer`` are both-or-neither. Supplying exactly one
+    raises :class:`ValueError` (F-V109-1) — the pre-v0.10.9 behavior
+    silently discarded the lone constraint and verified under an
+    any-signer ``UnsafeNoOp`` policy.
+    """
+    # F-V109-1: exactly one identity-pinning kwarg is a usage error —
+    # fail closed rather than silently dropping the supplied constraint.
+    if (expected_identity is None) != (expected_issuer is None):
+        raise ValueError(
+            "--expected-identity and --expected-issuer must be "
+            "provided together; identity pinning requires both "
+            "(cosign model)."
+        )
+
     _ensure_available()
     _ensure_online()
 
@@ -205,6 +227,9 @@ def verify_file(
                 issuer=expected_issuer,
             )
         else:
+            # Neither pinning kwarg (the single-flag case raised above):
+            # signature + transparency-log inclusion only — the CLI layer
+            # warns that ANY Sigstore identity would pass (F-V109-2).
             verify_policy = policy.UnsafeNoOp()
 
         with artifact.open("rb") as fh:
@@ -237,7 +262,7 @@ def verify_file(
 
 
 def _extract_signer_metadata(bundle: object) -> tuple[str | None, str | None]:
-    """Best-effort extraction of signer identity and issuer from a bundle."""
+    """Best-effort extraction of signer identity and OIDC issuer from a bundle."""
     try:
         cert = bundle.signing_certificate  # type: ignore[attr-defined]
         from cryptography import x509
@@ -248,10 +273,44 @@ def _extract_signer_metadata(bundle: object) -> tuple[str | None, str | None]:
         identity = next(
             (str(n.value) for n in sans if hasattr(n, "value")), None
         )
-        issuer = cert.issuer.rfc4514_string()
-        return identity, issuer
+        return identity, _extract_oidc_issuer(cert)
     except Exception:
         return None, None
+
+
+def _extract_oidc_issuer(cert: Any) -> str | None:
+    """Extract the OIDC issuer from a Fulcio signing certificate.
+
+    F-V109-3: pre-v0.10.9 this surface reported
+    ``cert.issuer.rfc4514_string()`` — the Fulcio X.509 issuer DN
+    (``O=sigstore.dev,CN=sigstore-intermediate``), NOT the OIDC issuer
+    the signer authenticated against. The real OIDC issuer lives in the
+    Fulcio v2 certificate extension (OID 1.3.6.1.4.1.57264.1.8) as a
+    DER-encoded UTF8String; decoded here the same way sigstore-python's
+    ``OIDCIssuerV2`` policy does. Falls back to the X.509 DN — clearly
+    labeled so it can't be mistaken for the OIDC issuer — when the
+    extension is absent or undecodable (e.g. a pre-v2 Fulcio cert).
+    """
+    from cryptography import x509
+
+    try:
+        ext = cert.extensions.get_extension_for_oid(
+            x509.ObjectIdentifier(_FULCIO_OIDC_ISSUER_V2_OID)
+        ).value
+        from pyasn1.codec.der.decoder import decode as der_decode
+        from pyasn1.type.char import UTF8String
+
+        # ``.decode()`` mirrors sigstore-python's ``_SingleX509ExtPolicyV2``
+        # — the pyasn1 object is bytes-like, not directly str()-able.
+        return str(der_decode(ext.value, UTF8String)[0].decode())
+    except Exception:
+        try:
+            return (
+                f"{cert.issuer.rfc4514_string()} "
+                f"(X.509 DN; OIDC issuer unavailable)"
+            )
+        except Exception:
+            return None
 
 
 def _extract_rekor_index(bundle: object) -> int | None:

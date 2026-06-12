@@ -50,7 +50,8 @@ jobs:
         # --all-extras --all-packages: identical dependency closure to the
         # standalone `typecheck` + `osv-scan` jobs in test.yml, so the
         # tag-gate's mypy + osv checks scan the same surface those jobs do.
-        # Skip the frontend build hook — the gate suite is Python-only.
+        # Skip the frontend build hook — the gate suite's parity check
+        # reads the UI sources statically, so no frontend build is needed.
         env:
           EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
         run: uv sync --all-extras --all-packages

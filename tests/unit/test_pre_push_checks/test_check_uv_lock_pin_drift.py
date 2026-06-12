@@ -270,6 +270,7 @@ def lock_repo(tmp_path: Path) -> Path:
     _git(r, "init", "-q")
     _git(r, "config", "user.email", "t@example.com")
     _git(r, "config", "user.name", "Test")
+    _git(r, "config", "commit.gpgsign", "false")
     _commit_lock(r, _lock("0.10.6", "2.7.0"), "base")
     return r
 
@@ -343,3 +344,67 @@ def test_working_tree_clean_bump_passes(
     out = capsys.readouterr().out
     assert "PASS check_uv_lock_pin_drift" in out
     assert "evidentia-core 0.10.6->0.10.7" in out
+
+
+# ---------------------------------------------------------------------------
+# Degradation branches (v0.10.9): the parent_text-None continue and the
+# `if not pairs` aggregate-fallback path.
+# ---------------------------------------------------------------------------
+
+
+def _bare_repo(tmp_path: Path) -> Path:
+    """A throwaway git repo seeded with one commit that has NO uv.lock."""
+    r = tmp_path / "r"
+    r.mkdir()
+    _git(r, "init", "-q")
+    _git(r, "config", "user.email", "t@example.com")
+    _git(r, "config", "user.name", "Test")
+    _git(r, "config", "commit.gpgsign", "false")
+    (r / "README.md").write_text("seed\n", encoding="utf-8")
+    _git(r, "add", "-A")
+    _git(r, "commit", "-q", "-m", "seed (no uv.lock)")
+    return r
+
+
+def test_lock_added_commit_skipped_but_later_pair_evaluated(
+    mod: Any, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The commit that ADDs uv.lock has no parent side (parent_text is
+    None -> continue); the later clean workspace-bump commit still builds
+    its own pair, so the run PASSes on that pair's evidence alone."""
+    r = _bare_repo(tmp_path)
+    base = _rev_head(r)
+    _commit_lock(r, _lock("0.10.6", "2.7.0"), "add uv.lock")
+    tip = _commit_lock(r, _lock("0.10.7", "2.7.0"), "bump workspace only")
+
+    rc = _run_main_in(mod, r, [base, tip])
+    assert rc == 0
+    out = capsys.readouterr().out
+    # The bump summary proves the second commit's pair WAS evaluated —
+    # the add-commit was skipped, not the whole range.
+    assert "PASS check_uv_lock_pin_drift (workspace bump" in out
+    assert "evidentia-core 0.10.6->0.10.7" in out
+
+
+def test_aggregate_fallback_when_no_per_commit_pair(
+    mod: Any, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """uv.lock ADDED in the only in-range commit touching it (a branch
+    forked before the lock existed): the per-commit loop builds no pair
+    (parent side missing), so the check degrades to the aggregate
+    base..tip diff labelled 'range <base>..<tip>' instead of silently
+    passing — and still BLOCKs on the combined bump + drift."""
+    r = _bare_repo(tmp_path)
+    fork = _rev_head(r)
+    base = _commit_lock(r, _lock("0.10.6", "2.7.0"), "main: add uv.lock")
+    _git(r, "checkout", "-q", "-b", "feat", fork)
+    tip = _commit_lock(
+        r, _lock("0.10.7", "3.0.0"), "feat: add uv.lock with bump+drift"
+    )
+
+    rc = _run_main_in(mod, r, [base, tip])
+    assert rc == 1
+    captured = capsys.readouterr()
+    assert "BLOCK check_uv_lock_pin_drift" in captured.out
+    assert f"range {base}..{tip}" in captured.err
+    assert "urllib3" in captured.err

@@ -856,7 +856,12 @@ def _register_tools(
           ``expected_sigstore_identity`` AND ``expected_sigstore_issuer``
           to pin signer identity; otherwise the verifier falls back
           to an UnsafeNoOp policy that accepts any signer (with a
-          structured warning surfaced in the returned report).
+          structured warning surfaced in the returned report's
+          ``warnings`` list).
+        - Identity pinning is both-or-neither (F-V109-1, the cosign
+          model): supplying exactly one of the two ``expected_sigstore_*``
+          arguments is rejected with a ``ValueError`` rather than
+          silently verifying under the any-signer policy.
         - Read-only — never mutates the artifact.
 
         Args:
@@ -865,10 +870,11 @@ def _register_tools(
             require_signature: When True (default), absence of any
                 signature is a failure.
             expected_sigstore_identity: Required signer identity (email
-                or OIDC subject) for Sigstore. Pair with
+                or OIDC subject) for Sigstore. Both-or-neither with
                 ``expected_sigstore_issuer``.
             expected_sigstore_issuer: Required Sigstore identity issuer
                 (e.g., ``https://token.actions.githubusercontent.com``).
+                Both-or-neither with ``expected_sigstore_identity``.
 
         Returns:
             JSON-serializable verification report — ``ar_path``,
@@ -880,10 +886,25 @@ def _register_tools(
         Raises:
             FileNotFoundError: ``ar_path`` does not exist (or
                 resolves outside the bound ``--allow-root``).
+            ValueError: exactly one of ``expected_sigstore_identity``
+                / ``expected_sigstore_issuer`` was supplied.
         """
         import dataclasses
 
         from evidentia_core.oscal.verify import verify_ar_file
+
+        # F-V109-1: the tool schema can't express both-or-neither, so
+        # guard here — FastMCP surfaces the raise as a structured tool
+        # error (same pattern as the FileNotFoundError below), not a
+        # stack trace.
+        if (expected_sigstore_identity is None) != (
+            expected_sigstore_issuer is None
+        ):
+            raise ValueError(
+                "expected_sigstore_identity and "
+                "expected_sigstore_issuer must be provided together; "
+                "identity pinning requires both (cosign model)."
+            )
 
         candidate = Path(ar_path).expanduser()
         if resolved_allow_root is not None:

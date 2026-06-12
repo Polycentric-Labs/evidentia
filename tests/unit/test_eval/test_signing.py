@@ -15,6 +15,10 @@ Covers the eval-output signing path:
    canonical OSCAL Sigstore verifier.
 5. **Missing parent directory** — sign_eval_result raises
    FileNotFoundError when the output's parent doesn't exist.
+6. **CLI verify surface (v0.10.9)** — ``evidentia eval verify``
+   rejects a lone --expected-identity / --expected-issuer with a
+   usage error (exit 2, F-V109-1) and warns on stderr when neither
+   is supplied (signer identity not checked, F-V109-2).
 
 Sigstore signing requires a network round-trip to Fulcio + Rekor
 + an OIDC credential. The tests mock those out — exercising the
@@ -28,11 +32,14 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+from evidentia.cli.eval import app as eval_cli_app
+from evidentia_core.oscal.sigstore import SigstoreVerifyResult
 from evidentia_eval.harness import EvalResult
 from evidentia_eval.signing import (
     sign_eval_result,
     verify_eval_result,
 )
+from typer.testing import CliRunner
 
 
 def _make_eval_result() -> EvalResult:
@@ -200,3 +207,101 @@ class TestVerifyEvalResult:
             expected_identity="https://example.com/foo",
             expected_issuer="https://example.com/issuer",
         )
+
+
+class TestVerifyCli:
+    """CLI-level checks for ``evidentia eval verify`` (F-V109-1/2).
+
+    CliRunner mixes stderr into ``.output`` on click < 8.2, so the
+    stderr-warning assertions key off ``result.output`` (same
+    convention as ``test_resolve_sign.py``).
+    """
+
+    def _write_output(self, tmp_path: Path) -> Path:
+        output = tmp_path / "eval.json"
+        output.write_text("{}", encoding="utf-8")
+        return output
+
+    def test_identity_without_issuer_is_usage_error_exit_2(
+        self, tmp_path: Path
+    ) -> None:
+        """F-V109-1: a lone --expected-identity exits 2 with a clean
+        message — the pre-v0.10.9 behavior silently dropped the flag
+        and reported VALID under the any-signer policy."""
+        output = self._write_output(tmp_path)
+        runner = CliRunner()
+        result = runner.invoke(
+            eval_cli_app,
+            [
+                "verify",
+                str(output),
+                "--expected-identity",
+                "ci@example.com",
+            ],
+        )
+        assert result.exit_code == 2, result.output
+        # Single tokens only — rich wraps the error panel, so a multi-
+        # word phrase can be split across lines.
+        assert "--expected-issuer" in result.output
+        assert "cosign" in result.output
+
+    def test_issuer_without_identity_is_usage_error_exit_2(
+        self, tmp_path: Path
+    ) -> None:
+        """F-V109-1, other order: a lone --expected-issuer exits 2."""
+        output = self._write_output(tmp_path)
+        runner = CliRunner()
+        result = runner.invoke(
+            eval_cli_app,
+            [
+                "verify",
+                str(output),
+                "--expected-issuer",
+                "https://token.actions.githubusercontent.com",
+            ],
+        )
+        assert result.exit_code == 2, result.output
+        assert "--expected-identity" in result.output
+        assert "cosign" in result.output
+
+    def test_flagless_verify_warns_identity_not_verified(
+        self, tmp_path: Path
+    ) -> None:
+        """F-V109-2: flagless verify stays exit 0 (back-compat) but
+        warns that ANY Sigstore identity would have passed."""
+        output = self._write_output(tmp_path)
+        runner = CliRunner()
+        with mock.patch(
+            "evidentia_eval.signing.verify_eval_result"
+        ) as mock_verify:
+            mock_verify.return_value = SigstoreVerifyResult(valid=True)
+            result = runner.invoke(eval_cli_app, ["verify", str(output)])
+        assert result.exit_code == 0, result.output
+        assert "signer identity NOT verified" in result.output
+        assert "VALID" in result.output
+
+    def test_both_flags_no_identity_warning(self, tmp_path: Path) -> None:
+        """Pinned verify (both flags) must NOT emit the F-V109-2 warning."""
+        output = self._write_output(tmp_path)
+        runner = CliRunner()
+        with mock.patch(
+            "evidentia_eval.signing.verify_eval_result"
+        ) as mock_verify:
+            mock_verify.return_value = SigstoreVerifyResult(
+                valid=True,
+                signer_identity="ci@example.com",
+                signer_issuer="https://token.actions.githubusercontent.com",
+            )
+            result = runner.invoke(
+                eval_cli_app,
+                [
+                    "verify",
+                    str(output),
+                    "--expected-identity",
+                    "ci@example.com",
+                    "--expected-issuer",
+                    "https://token.actions.githubusercontent.com",
+                ],
+            )
+        assert result.exit_code == 0, result.output
+        assert "signer identity NOT verified" not in result.output

@@ -66,4 +66,16 @@ describe("readSse", () => {
     );
     expect(events).toEqual([{ n: 1 }]);
   });
+
+  it("propagates an onEvent throw and releases the reader lock", async () => {
+    const body = streamOf('data: {"n":1}\n\n');
+    await expect(
+      readSse(body, () => {
+        throw new Error("handler boom");
+      }),
+    ).rejects.toThrow("handler boom");
+    // The finally released the lock — acquiring a fresh reader succeeds
+    // (it would throw a TypeError on a still-locked stream).
+    expect(() => body.getReader()).not.toThrow();
+  });
 });
