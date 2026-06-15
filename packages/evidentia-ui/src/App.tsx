@@ -2,8 +2,10 @@ import { Route, Routes } from "react-router-dom";
 
 import { DemoBanner } from "@/components/common/DemoBanner";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { IS_DEMO } from "@/lib/demo";
 import { ConmonPage } from "@/routes/ConmonPage";
 import { DashboardPage } from "@/routes/DashboardPage";
+import { DemoPage } from "@/routes/DemoPage";
 import { ExplainPage } from "@/routes/ExplainPage";
 import { FrameworkDetailPage } from "@/routes/FrameworkDetailPage";
 import { FrameworksPage } from "@/routes/FrameworksPage";
@@ -30,6 +32,8 @@ export function App() {
       <Routes>
         <Route element={<AppLayout />}>
           <Route index element={<HomePage />} />
+          {/* Tier 0 cast — registered only in the static VITE_DEMO bundle. */}
+          {IS_DEMO && <Route path="demo" element={<DemoPage />} />}
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="frameworks" element={<FrameworksPage />} />
           <Route path="frameworks/:id" element={<FrameworkDetailPage />} />

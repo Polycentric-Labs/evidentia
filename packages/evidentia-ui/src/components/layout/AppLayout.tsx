@@ -10,6 +10,7 @@ import {
   Lock,
   type LucideIcon,
   Moon,
+  PlayCircle,
   ScanLine,
   Settings,
   Sparkles,
@@ -21,6 +22,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 
 import { useTheme } from "@/hooks/use-theme";
 import { api } from "@/lib/api";
+import { IS_DEMO } from "@/lib/demo";
 import { cn } from "@/lib/utils";
 
 type NavMeta = { label: string; description: string; crumb: string; icon: LucideIcon };
@@ -28,6 +30,7 @@ type NavMeta = { label: string; description: string; crumb: string; icon: Lucide
 /** Route metadata — colocated with the layout so adding a route is one edit. */
 const NAV_META: Record<string, NavMeta> = {
   "/": { label: "Home", description: "Welcome + onboarding", crumb: "Welcome to Evidentia", icon: Home },
+  "/demo": { label: "Watch it run", description: "CLI recording (Tier 0 cast)", crumb: "CLI recording", icon: PlayCircle },
   "/dashboard": { label: "Dashboard", description: "Saved gap reports", crumb: "Saved gap reports", icon: LayoutDashboard },
   "/frameworks": { label: "Frameworks", description: "92 bundled catalogs", crumb: "Catalog browser", icon: Layers },
   "/gap/analyze": { label: "Gap Analyze", description: "Run a gap analysis", crumb: "Run a gap analysis", icon: ScanLine },
@@ -40,9 +43,12 @@ const NAV_META: Record<string, NavMeta> = {
   "/settings": { label: "Settings", description: "Config + LLM + air-gap", crumb: "Configuration", icon: Settings },
 };
 
-/** Grouped navigation rail. */
+/**
+ * Grouped navigation rail. The Tier-0 cast (`/demo`) only exists in the static
+ * `VITE_DEMO` bundle, so it joins the top group only when `IS_DEMO`.
+ */
 const NAV_GROUPS: { label: string | null; items: string[] }[] = [
-  { label: null, items: ["/"] },
+  { label: null, items: IS_DEMO ? ["/", "/demo"] : ["/"] },
   { label: "Analyze", items: ["/gap/analyze", "/gap/diff", "/risk/generate", "/explain"] },
   { label: "Govern", items: ["/poam", "/conmon", "/tprm"] },
   { label: "Library", items: ["/dashboard", "/frameworks"] },

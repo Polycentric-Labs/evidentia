@@ -80,6 +80,14 @@ evidentia gap analyze \
 
 Full 5-minute walk-through: [Quickstart wiki page](https://github.com/Polycentric-Labs/evidentia/wiki/Quickstart).
 
+### Watch it run
+
+Prefer to see it first? The hosted demo plays a recording of this exact sequence — `doctor`, `catalog list`, the two `gap analyze` runs, and `oscal verify` — against the Meridian Financial fintech sample inventory, with **no install and no backend**:
+
+[**▶ Watch the CLI demo**](https://evidentia-demo.vercel.app/#/demo) · [**Click through the demo console**](https://evidentia-demo.vercel.app/)
+
+The player is a self-hosted [asciinema](https://asciinema.org/) cast (no CDN, no third-party calls — air-gap-on-brand); the cast artifact lives in-repo at [`packages/evidentia-ui/public/demo.cast`](packages/evidentia-ui/public/demo.cast). GitHub READMEs can't run JavaScript, so the live player lives on the demo page above.
+
 ## Features
 
 - **OSCAL-native end-to-end** — Ingest NIST OSCAL catalogs (Catalog 1.2.1); emit OSCAL Assessment Results + Plan-of-Action-and-Milestones (POA&M). Ready for FedRAMP 20x machine-readable submissions.
