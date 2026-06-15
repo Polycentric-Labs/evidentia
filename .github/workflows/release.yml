@@ -473,15 +473,16 @@ jobs:
           # overwrite ephemerally so pip-compile resolves the v0.8.4
           # release we just uploaded.
           echo "evidentia[gui]==${VERSION}" > docker/requirements.in
-          # INTERPRETER PARITY (F-V109-4 follow-up): compile inside the
-          # literal image base (python:3.14-slim) — on the runner's older
-          # Python, --upgrade resolves deps whose requires-python excludes
-          # 3.14 (litellm >= 1.84 declares <3.14) and the in-image
-          # --require-hashes install then hard-fails on them. The
-          # bump_version.py F-V82-S1 pattern.
+          # INTERPRETER PARITY (F-V109-4): compile inside the literal
+          # image base (python:3.13-slim) so the resolved+hashed closure
+          # is exactly what the image's --require-hashes install gets.
+          # The base is 3.13 (not 3.14) because the AI stack (litellm)
+          # requires-python <3.14; on 3.13 the regen resolves the
+          # CVE-clean set (litellm 1.88.1 etc.) uv.lock pins.
+          # (bump_version.py F-V82-S1 pattern.)
           attempts=0
           max_attempts=3
-          until docker run --rm -v "$PWD:/work" -w /work python:3.14-slim \
+          until docker run --rm -v "$PWD:/work" -w /work python:3.13-slim \
                   bash -c "pip install -q pip-tools==7.5.3 && \
                            pip-compile --generate-hashes \
                                        --upgrade \
@@ -501,6 +502,37 @@ jobs:
           # the release pipeline log records what we pinned.
           echo "Regenerated docker/requirements.txt; evidentia[gui]==${VERSION} hashes:"
           grep -A2 "^evidentia\[gui\]==" docker/requirements.txt | head -4
+
+      # Copied VERBATIM from the osv-scan job in test.yml / the tag-gate
+      # job above (same v2.3.8 binary + SHA256) so this container gate
+      # scans with an identically-pinned scanner. Pinned by version +
+      # SHA256-verified for the OpenSSF Scorecard Pinned-Dependencies
+      # signal.
+      - name: Install osv-scanner (v2.3.8, checksum-verified)
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.3.8/osv-scanner_linux_amd64 \
+            -o "$HOME/.local/bin/osv-scanner"
+          echo "bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc  $HOME/.local/bin/osv-scanner" | sha256sum -c -
+          chmod +x "$HOME/.local/bin/osv-scanner"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # Gate the JUST-REGENERATED docker/requirements.txt before it is
+      # baked into the published image. The tag-gate job's osv-scan
+      # scans the workspace dependency CLOSURE (uv.lock) — but the
+      # container resolves a DIFFERENT closure: the container's
+      # pip-compile resolves against the image base independently of
+      # uv.lock, so it can carry a transitively-held vulnerable dep
+      # that the uv.lock closure never resolves. Without
+      # this gate a vulnerable container dependency ships silently. The
+      # same osv-scanner.toml allowlist applies, so accepted findings
+      # are dispositioned in exactly one place. Exit 1 (vulns found)
+      # fails the publish before the build runs.
+      - name: osv-scan regenerated container requirements
+        run: |
+          osv-scanner scan source \
+            --config osv-scanner.toml \
+            --lockfile docker/requirements.txt
 
       - name: Build and push image to ghcr.io
         id: build

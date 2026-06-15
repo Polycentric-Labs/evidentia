@@ -511,7 +511,7 @@ def main() -> int:
             "pip-tools (`pip install pip-tools`) + uv installed. "
             "F-V82-S1 (v0.8.3 LOW): host platform auto-detection "
             "— on non-Linux hosts, pip-compile runs inside the "
-            "pinned python:3.14-slim base image so Linux-only "
+            "pinned python:3.13-slim base image so Linux-only "
             "transitives (uvloop) resolve correctly. See "
             "docs/dockerfile-pinning.md for the full regeneration "
             "narrative."
@@ -754,9 +754,22 @@ def main() -> int:
                     # that don't have dist/ available (the
                     # production container, downstream
                     # consumers).
+                    #
+                    # --upgrade (F-V109-4): pip-compile treats an
+                    # existing --output-file as a set of preferred
+                    # pins. Without --upgrade it honors the committed
+                    # docker/requirements.txt for every non-conflicting
+                    # transitive, so a stale preview's pins (e.g. an
+                    # older starlette / aiohttp) survive the regen even
+                    # when newer compatible releases exist. --upgrade
+                    # ignores the committed file's pins entirely, so the
+                    # regeneration is genuinely fresh — every dep
+                    # resolves anew. Mirrors the same fix already in
+                    # release.yml + container-build.yml.
                     compile_cmd = [
                         "pip-compile",
                         "--generate-hashes",
+                        "--upgrade",
                         f"--find-links={dist_dir}",
                         "--no-emit-find-links",
                         "--output-file",
@@ -777,9 +790,9 @@ def main() -> int:
                         "pip-compile inside Docker (Linux base)"
                     )
                     base_image = (
-                        "python:3.14-slim@sha256:"
-                        "5b3879b6f3cb77e712644d50262d05a7c"
-                        "146b7312d784a18eff7ff5462e77033"
+                        "python:3.13-slim@sha256:"
+                        "c33f0bc4364a6881bed1ec0cc2665e6c"
+                        "53c87a43e774aaeab88e6f17af105e4f"
                     )
                     docker_path = subprocess.run(
                         ["pwd", "-W"],
@@ -801,8 +814,15 @@ def main() -> int:
                         "sh",
                         "-c",
                         (
+                            # --upgrade (F-V109-4): ignore the committed
+                            # docker/requirements.txt's pins so the
+                            # in-Docker regen is genuinely fresh, not
+                            # anchored to a stale preview. Matches the
+                            # Linux-direct path above + release.yml +
+                            # container-build.yml.
                             "pip install -q pip-tools && "
                             "pip-compile --generate-hashes "
+                            "--upgrade "
                             "--find-links=/wheels "
                             "--no-emit-find-links "
                             "--output-file=requirements.txt "

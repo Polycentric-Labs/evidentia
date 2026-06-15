@@ -173,15 +173,13 @@ jobs:
       # --upgrade ignores the committed file's pins entirely, so the
       # regeneration is actually fresh: every dep resolves anew
       # against PyPI at rebuild time.
-      # INTERPRETER PARITY (F-V109-4 follow-up): pip-compile must run
-      # under the SAME Python as the image base (python:3.14-slim) —
-      # on the runner's older Python, `--upgrade` resolves deps whose
-      # requires-python excludes 3.14 (litellm >= 1.84 declares
-      # <3.14), and the in-image `pip install --require-hashes` then
-      # hard-fails on them. Running the compile inside the literal
-      # base image (the bump_version.py F-V82-S1 pattern) keeps the
-      # resolution and the install environment identical by
-      # construction.
+      # INTERPRETER PARITY (F-V109-4): pip-compile must run under the
+      # SAME Python as the image base (python:3.13-slim) so the
+      # resolved+hashed closure is exactly what `pip install
+      # --require-hashes` installs in the image. The base is 3.13 (not
+      # 3.14) because the AI stack (litellm) requires-python <3.14; on
+      # 3.13 the regen resolves the CVE-clean set (litellm 1.88.1 etc.)
+      # the library's uv.lock pins. (bump_version.py F-V82-S1 pattern.)
       - name: Regenerate hash-pinned requirements.txt against PyPI
         env:
           VERSION: ${{ steps.pin.outputs.version }}
@@ -189,7 +187,7 @@ jobs:
           echo "evidentia[gui]==${VERSION}" > docker/requirements.in
           attempts=0
           max_attempts=3
-          until docker run --rm -v "$PWD:/work" -w /work python:3.14-slim \
+          until docker run --rm -v "$PWD:/work" -w /work python:3.13-slim \
                   bash -c "pip install -q pip-tools==7.5.3 && \
                            pip-compile --generate-hashes \
                                        --upgrade \
@@ -207,6 +205,37 @@ jobs:
           done
           echo "Regenerated docker/requirements.txt; evidentia[gui]==${VERSION} hashes:"
           grep -A2 "^evidentia\[gui\]==" docker/requirements.txt | head -4
+
+      # Copied VERBATIM from the osv-scan job in test.yml / release.yml
+      # (same v2.3.8 binary + SHA256) so this container gate scans with
+      # an identically-pinned scanner. Pinned by version + SHA256-
+      # verified for the OpenSSF Scorecard Pinned-Dependencies signal.
+      - name: Install osv-scanner (v2.3.8, checksum-verified)
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.3.8/osv-scanner_linux_amd64 \
+            -o "$HOME/.local/bin/osv-scanner"
+          echo "bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc  $HOME/.local/bin/osv-scanner" | sha256sum -c -
+          chmod +x "$HOME/.local/bin/osv-scanner"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # Gate the JUST-REGENERATED docker/requirements.txt before it is
+      # baked into the smoke-test image. The workspace osv-scan job (in
+      # test.yml) scans the uv.lock closure — but the container resolves
+      # a DIFFERENT closure: the container's pip-compile resolves
+      # against the image base independently of uv.lock, so it can
+      # carry a transitively-held
+      # vulnerable deps that uv.lock (on a Python that supports newer
+      # litellm) never resolves. Catching it here — on every main push
+      # — surfaces a vulnerable container dependency at PR/push time,
+      # not at consumer-pull time. The same osv-scanner.toml allowlist
+      # applies, so accepted findings are dispositioned in one place.
+      # Exit 1 (vulns found) fails the build.
+      - name: osv-scan regenerated container requirements
+        run: |
+          osv-scanner scan source \
+            --config osv-scanner.toml \
+            --lockfile docker/requirements.txt
 
       - name: Build image (load into local Docker, not pushed)
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f  # v7.1.0

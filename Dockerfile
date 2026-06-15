@@ -22,7 +22,13 @@
 # Publishing to `ghcr.io/polycentric-labs/evidentia` is gated to a future
 # release that explicitly opts in.
 
-FROM python:3.14-slim@sha256:7a500125bc50693f2214e842a621440a1b1b9cbb2188f74ab045d29ed2ea5856
+# Python 3.13 (NOT 3.14): the AI stack (litellm) declares
+# requires-python <3.14, so a 3.14 base caps the resolver at litellm
+# 1.83.7 — the only 3.14-installable release, and the one carrying
+# CVE-2026-40217 (HIGH); the fix and every later patch require <3.14.
+# On 3.13 the container resolves the same CVE-clean set the library's
+# uv.lock pins (litellm 1.88.1, aiohttp 3.14.x, python-dotenv 1.2.2).
+FROM python:3.13-slim@sha256:c33f0bc4364a6881bed1ec0cc2665e6c53c87a43e774aaeab88e6f17af105e4f
 
 # System dependencies kept minimal:
 # - ca-certificates for HTTPS (PyPI, OSCAL catalog mirrors, Sigstore)
