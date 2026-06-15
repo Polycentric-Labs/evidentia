@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, ApiError } from "@/lib/api";
+import { IS_DEMO } from "@/lib/demo";
 import { cn } from "@/lib/utils";
 import { useWizardStore } from "@/lib/wizard-store";
 import type { GapAnalysisReport } from "@/types/api";
@@ -50,6 +51,12 @@ export function GapAnalyzePage() {
 
   const mutation = useMutation({
     mutationFn: async (): Promise<GapAnalysisReport> => {
+      if (IS_DEMO) {
+        // Static demo build: resolve the baked Meridian v2 report from
+        // fixtures — no backend, no network. Mirrors the SSE pages' demo
+        // branch so "Run analysis" tells the same story offline.
+        return api.getGapReport("meridian-fintech-v2:baseline");
+      }
       const payload: {
         frameworks: string[];
         organization?: string;
