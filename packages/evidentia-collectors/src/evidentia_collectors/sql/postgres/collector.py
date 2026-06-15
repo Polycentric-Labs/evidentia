@@ -168,6 +168,7 @@ class PostgresCollector:
         connection_uri: str | None = None,
         password: str | None = None,
         connection: Any | None = None,
+        block_private_ips: bool = True,
     ) -> None:
         if not connection_uri and connection is None:
             raise PostgresCollectorError(
@@ -195,6 +196,11 @@ class PostgresCollector:
         self._password = password
         self._connection = connection
         self._owns_connection = connection is None
+        # SECURE-BY-DEFAULT (threat-model T2): default-on SSRF guard,
+        # enforced at the connect path. Operators auditing a DB on a
+        # private / internal host opt out via block_private_ips=False
+        # (--allow-private-ips on the CLI).
+        self._block_private_ips = block_private_ips
         # Cached on first call to test_connection() — reduces
         # round-trips during a single collect() invocation.
         self._cached_user: str | None = None
@@ -234,6 +240,23 @@ class PostgresCollector:
             kwargs["password"] = self._password
         # __init__ requires a URI unless a connection was injected.
         assert self._connection_uri is not None
+        # SECURE-BY-DEFAULT (threat-model T2): refuse a connection_uri
+        # whose host resolves to a private / loopback / link-local /
+        # metadata address before psycopg opens a socket. A connection-
+        # class refusal surfaces as PostgresConnectionError.
+        from evidentia_core.network_guard import (
+            SSRFBlockedError,
+            enforce_public_host,
+        )
+
+        try:
+            enforce_public_host(
+                self._connection_uri,
+                subsystem=COLLECTOR_ID,
+                block_private=self._block_private_ips,
+            )
+        except SSRFBlockedError as e:
+            raise PostgresConnectionError(str(e)) from e
         try:
             self._connection = psycopg.connect(
                 self._connection_uri,

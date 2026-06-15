@@ -223,12 +223,14 @@ class BitSightCollector(BaseSaaSCollector):
         low_rating_threshold: int = DEFAULT_LOW_RATING_THRESHOLD,
         timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
         client: httpx.Client | None = None,
+        block_private_ips: bool = True,
     ) -> None:
         super().__init__(
             api_token=api_token,
             base_url=base_url,
             timeout_seconds=timeout_seconds,
             client=client,
+            block_private_ips=block_private_ips,
         )
         self._max_companies = max_companies
         self._low_rating_threshold = low_rating_threshold

@@ -156,6 +156,7 @@ class OracleCollector:
         connection_uri: str | None = None,
         password: str | None = None,
         connection: Any | None = None,
+        block_private_ips: bool = True,
     ) -> None:
         if not connection_uri and connection is None:
             raise OracleCollectorError(
@@ -176,6 +177,11 @@ class OracleCollector:
         self._password = password
         self._connection = connection
         self._owns_connection = connection is None
+        # SECURE-BY-DEFAULT (threat-model T2): default-on SSRF guard,
+        # enforced at the connect path. Operators auditing a DB on a
+        # private / internal host opt out via block_private_ips=False
+        # (--allow-private-ips on the CLI).
+        self._block_private_ips = block_private_ips
         self._cached_user: str | None = None
         self._cached_db: str | None = None
         self._cached_version: str | None = None
@@ -227,6 +233,23 @@ class OracleCollector:
             raise OracleCollectorError(
                 "_ensure_connected called without a connection_uri."
             )
+        # SECURE-BY-DEFAULT (threat-model T2): refuse a connection_uri
+        # whose host resolves to a private / loopback / link-local /
+        # metadata address before oracledb opens a socket. A connection-
+        # class refusal surfaces as OracleConnectionError.
+        from evidentia_core.network_guard import (
+            SSRFBlockedError,
+            enforce_public_host,
+        )
+
+        try:
+            enforce_public_host(
+                self._connection_uri,
+                subsystem=COLLECTOR_ID,
+                block_private=self._block_private_ips,
+            )
+        except SSRFBlockedError as e:
+            raise OracleConnectionError(str(e)) from e
         kwargs = self._parse_uri(self._connection_uri)
         if self._password is not None:
             kwargs["password"] = self._password

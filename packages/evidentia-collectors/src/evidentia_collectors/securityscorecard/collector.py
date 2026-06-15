@@ -268,6 +268,7 @@ class SecurityScorecardCollector(BaseSaaSCollector):
         low_score_threshold: int = DEFAULT_LOW_SCORE_THRESHOLD,
         timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
         client: httpx.Client | None = None,
+        block_private_ips: bool = True,
     ) -> None:
         # v0.7.12 P0.6 / CodeQL #92 closure: validate portfolio_id
         # at the trust boundary so any path-traversal attempt is
@@ -282,6 +283,7 @@ class SecurityScorecardCollector(BaseSaaSCollector):
             base_url=base_url,
             timeout_seconds=timeout_seconds,
             client=client,
+            block_private_ips=block_private_ips,
         )
         self._portfolio_id = portfolio_id
         self._max_companies = max_companies

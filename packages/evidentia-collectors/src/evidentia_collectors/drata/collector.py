@@ -221,12 +221,14 @@ class DrataCollector(BaseSaaSCollector):
         max_vendors: int = DEFAULT_MAX_VENDORS,
         timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
         client: httpx.Client | None = None,
+        block_private_ips: bool = True,
     ) -> None:
         super().__init__(
             api_token=api_token,
             base_url=base_url,
             timeout_seconds=timeout_seconds,
             client=client,
+            block_private_ips=block_private_ips,
         )
         self._max_vendors = max_vendors
 

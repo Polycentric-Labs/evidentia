@@ -205,6 +205,8 @@ class GitHubCollector:
         repo: str,
         token: str | None = None,
         client: GitHubClient | None = None,
+        base_url: str | None = None,
+        block_private_ips: bool = True,
     ) -> None:
         if not owner or not repo:
             raise GitHubCollectorError(
@@ -212,7 +214,15 @@ class GitHubCollector:
             )
         self.owner = owner
         self.repo = repo
-        self._client = client or GitHubClient(token=token)
+        # SECURE-BY-DEFAULT (threat-model T2): the default api.github.com
+        # is public; a GitHub Enterprise base_url is the SSRF surface, so
+        # the SSRF guard runs in GitHubClient's constructor (default-on).
+        # Opt out via block_private_ips=False (--allow-private-ips CLI).
+        self._client = client or GitHubClient(
+            token=token,
+            base_url=base_url,
+            block_private_ips=block_private_ips,
+        )
         self._owns_client = client is None
 
     def close(self) -> None:

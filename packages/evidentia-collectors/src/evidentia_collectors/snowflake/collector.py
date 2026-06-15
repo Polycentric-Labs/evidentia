@@ -321,6 +321,7 @@ class SnowflakeCollector:
         role: str | None = None,
         login_history_window_days: int = _LOGIN_HISTORY_DEFAULT_WINDOW_DAYS,
         login_history_max_rows: int = _LOGIN_HISTORY_DEFAULT_MAX_ROWS,
+        block_private_ips: bool = True,
     ) -> None:
         self._account = account
         self._user = user
@@ -330,6 +331,12 @@ class SnowflakeCollector:
         self._role = role
         self._login_history_window_days = login_history_window_days
         self._login_history_max_rows = login_history_max_rows
+        # SECURE-BY-DEFAULT (threat-model T2): default-on SSRF guard. The
+        # account locator resolves to <account>.snowflakecomputing.com;
+        # the guard checks that host before the driver opens a socket.
+        # Operators using a private-link / internal Snowflake endpoint
+        # opt out via block_private_ips=False (--allow-private-ips CLI).
+        self._block_private_ips = block_private_ips
         self._connection: Any | None = None
         self._cached_account_id: str | None = None
         self._cached_role: str | None = None
@@ -350,10 +357,45 @@ class SnowflakeCollector:
                 self._connection.close()
             self._connection = None
 
+    def _account_host(self) -> str:
+        """Derive the hostname the driver will connect to from the locator.
+
+        The snowflake-connector-python driver builds the account host as
+        ``<account>.snowflakecomputing.com`` (lower-casing + dotting any
+        region/cloud segments in the locator) unless the operator already
+        supplied a fully-qualified hostname. We mirror that derivation so
+        the SSRF guard resolves the SAME host the driver will dial.
+        """
+        account = self._account.strip()
+        # An operator-supplied full host (rare, but supported by the
+        # driver via the `host=` style) — use it as-is.
+        if account.endswith(".snowflakecomputing.com") or "://" in account:
+            return account
+        return f"{account}.snowflakecomputing.com"
+
     def _ensure_connected(self) -> Any:
         """Lazy-connect on first use. Returns the connection object."""
         if self._connection is not None:
             return self._connection
+        # SECURE-BY-DEFAULT (threat-model T2): refuse an account locator
+        # that resolves to a private / loopback / link-local / metadata
+        # address before the driver opens a socket. The driver appends
+        # ".snowflakecomputing.com" to the locator unless it already
+        # carries a full hostname, so we mirror that derivation here. A
+        # connection-class refusal surfaces as SnowflakeAuthError.
+        from evidentia_core.network_guard import (
+            SSRFBlockedError,
+            enforce_public_host,
+        )
+
+        try:
+            enforce_public_host(
+                self._account_host(),
+                subsystem=COLLECTOR_ID,
+                block_private=self._block_private_ips,
+            )
+        except SSRFBlockedError as e:
+            raise SnowflakeAuthError(str(e)) from e
         try:
             import snowflake.connector
         except ImportError as e:

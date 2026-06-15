@@ -309,6 +309,7 @@ class DatabricksCollector:
         *,
         host: str | None = None,
         client: Any | None = None,
+        block_private_ips: bool = True,
     ) -> None:
         if not host and client is None:
             raise DatabricksCollectorError(
@@ -318,6 +319,12 @@ class DatabricksCollector:
         self._host = host
         self._client = client
         self._owns_client = client is None
+        # SECURE-BY-DEFAULT (threat-model T2): default-on SSRF guard,
+        # enforced at the client-factory path (_ensure_client) where the
+        # workspace host is bound. Operators on an internal/private
+        # Databricks workspace must opt out via block_private_ips=False
+        # (--allow-private-ips on the CLI).
+        self._block_private_ips = block_private_ips
         # Cached on first call to test_connection() so subsequent
         # sub-checks don't re-probe the SDK.
         self._cached_user_name: str | None = None
@@ -344,6 +351,26 @@ class DatabricksCollector:
     def _ensure_client(self) -> Any:
         if self._client is not None:
             return self._client
+        # SECURE-BY-DEFAULT (threat-model T2): refuse a workspace host
+        # that resolves to a private / loopback / link-local / metadata
+        # address before the SDK client (which would issue outbound
+        # requests) is constructed. Runs only on the owned-client path —
+        # an injected test client skips it. A connection-class refusal
+        # surfaces as DatabricksAuthError per the typed hierarchy.
+        if self._host is not None:
+            from evidentia_core.network_guard import (
+                SSRFBlockedError,
+                enforce_public_host,
+            )
+
+            try:
+                enforce_public_host(
+                    self._host,
+                    subsystem=COLLECTOR_ID,
+                    block_private=self._block_private_ips,
+                )
+            except SSRFBlockedError as exc:
+                raise DatabricksAuthError(str(exc)) from exc
         try:
             # Lazy import — the SDK is in [databricks] optional extra.
             from databricks.sdk import WorkspaceClient

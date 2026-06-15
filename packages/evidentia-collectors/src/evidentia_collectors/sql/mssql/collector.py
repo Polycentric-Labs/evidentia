@@ -140,6 +140,7 @@ class MSSQLCollector:
         driver: str = "{ODBC Driver 18 for SQL Server}",
         encrypt: str = "yes",
         trust_server_certificate: str = "no",
+        block_private_ips: bool = True,
     ) -> None:
         if not connection_uri and connection is None:
             raise MSSQLCollectorError(
@@ -163,6 +164,11 @@ class MSSQLCollector:
         self._trust_server_certificate = trust_server_certificate
         self._connection = connection
         self._owns_connection = connection is None
+        # SECURE-BY-DEFAULT (threat-model T2): default-on SSRF guard,
+        # enforced at the connect path. Operators auditing a DB on a
+        # private / internal host opt out via block_private_ips=False
+        # (--allow-private-ips on the CLI).
+        self._block_private_ips = block_private_ips
         self._cached_user: str | None = None
         self._cached_db: str | None = None
         self._cached_version: str | None = None
@@ -221,6 +227,23 @@ class MSSQLCollector:
             raise MSSQLCollectorError(
                 "_ensure_connected called without a connection_uri."
             )
+        # SECURE-BY-DEFAULT (threat-model T2): refuse a connection_uri
+        # whose host resolves to a private / loopback / link-local /
+        # metadata address before pyodbc opens a socket. A connection-
+        # class refusal surfaces as MSSQLConnectionError.
+        from evidentia_core.network_guard import (
+            SSRFBlockedError,
+            enforce_public_host,
+        )
+
+        try:
+            enforce_public_host(
+                self._connection_uri,
+                subsystem=COLLECTOR_ID,
+                block_private=self._block_private_ips,
+            )
+        except SSRFBlockedError as e:
+            raise MSSQLConnectionError(str(e)) from e
         conn_str = self._build_connection_string(self._connection_uri)
         try:
             self._connection = pyodbc.connect(conn_str, autocommit=True)

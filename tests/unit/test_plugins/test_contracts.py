@@ -444,7 +444,13 @@ class TestBaseSaaSCollectorContract:
         assert c._owns_client is False
 
     def test_context_manager_lifecycle(self) -> None:
-        with _FakeCollector(api_token="abc") as c:
+        # The fake DEFAULT_BASE_URL points at the reserved `.example`
+        # TLD, which does not resolve. The secure-by-default SSRF guard
+        # (threat-model T2) fails closed on an unresolvable host, so this
+        # lifecycle test — which only checks client open/close, never a
+        # real request — opts out (the documented --allow-private-ips
+        # path) to exercise the base-class lifecycle hermetically.
+        with _FakeCollector(api_token="abc", block_private_ips=False) as c:
             # Force client creation.
             client = c._ensure_client()
             assert client is not None

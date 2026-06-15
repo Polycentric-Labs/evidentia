@@ -163,9 +163,13 @@ def test_collector_reads_real_postgres(
     postgres_container: dict[str, str],
 ) -> None:
     """End-to-end smoke: read-only principal, full collect_v2 run."""
+    # The test Postgres runs on 127.0.0.1 (a trusted local container), so
+    # the secure-by-default SSRF guard (threat-model T2) must be opted out
+    # — exactly the --allow-private-ips path operators use for internal DBs.
     with PostgresCollector(
         connection_uri=postgres_container["reader_uri"],
         password=postgres_container["reader_password"],
+        block_private_ips=False,
     ) as collector:
         findings, manifest = collector.collect_v2()
 
@@ -206,6 +210,7 @@ def test_write_priv_principal_emits_finding(
     with PostgresCollector(
         connection_uri=postgres_container["superuser_uri"],
         password=postgres_container["superuser_password"],
+        block_private_ips=False,  # trusted local container (see note above)
     ) as collector:
         findings, _manifest = collector.collect_v2()
 

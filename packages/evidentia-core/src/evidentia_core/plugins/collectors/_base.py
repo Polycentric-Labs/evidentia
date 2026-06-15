@@ -101,6 +101,7 @@ class BaseSaaSCollector(ABC):
         base_url: str | None = None,
         timeout_seconds: float | None = None,
         client: httpx.Client | None = None,
+        block_private_ips: bool = True,
     ) -> None:
         # v0.7.10 P3 closure of v0.7.9 M-1: whitespace-only tokens
         # bypass the truthiness check (`not " "` is False); strip
@@ -124,6 +125,14 @@ class BaseSaaSCollector(ABC):
         )
         self._client = client
         self._owns_client = client is None
+        # SECURE-BY-DEFAULT (threat-model T2): refuse a base_url that
+        # resolves to a private / loopback / link-local / metadata
+        # address before any outbound request. Default-on; operators
+        # collecting from a trusted internal endpoint must opt out via
+        # block_private_ips=False (surfaced as --allow-private-ips on
+        # the CLI). An injected test client skips the check — the
+        # caller owns that client's destination.
+        self._block_private_ips = block_private_ips
 
     def __enter__(self) -> Self:
         return self
@@ -176,6 +185,25 @@ class BaseSaaSCollector(ABC):
             raise self.AUTH_ERROR_CLASS(
                 f"{type(self).__name__}: missing api_token"
             )
+        # SECURE-BY-DEFAULT (threat-model T2): SSRF guard at the
+        # client-factory path. Runs once, before the httpx.Client that
+        # binds base_url is created, so a base_url pointed at a cloud
+        # metadata endpoint or an internal service is refused before any
+        # request goes out. A SaaSConnectionError-class refusal keeps
+        # the failure inside the collector's typed error hierarchy.
+        from evidentia_core.network_guard import (
+            SSRFBlockedError,
+            enforce_public_host,
+        )
+
+        try:
+            enforce_public_host(
+                self._base_url,
+                subsystem=self.COLLECTOR_ID or type(self).__name__,
+                block_private=self._block_private_ips,
+            )
+        except SSRFBlockedError as exc:
+            raise self.CONNECTION_ERROR_CLASS(str(exc)) from exc
         # Lazy-import httpx so the base class doesn't force
         # the import at evidentia_core.plugins level.
         import httpx

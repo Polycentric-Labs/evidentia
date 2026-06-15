@@ -36,6 +36,25 @@ app = typer.Typer(
 console = Console()
 
 
+# SECURE-BY-DEFAULT (threat-model T2): the canonical SSRF opt-out flag,
+# shared verbatim across every outbound `collect` verb so the surface is
+# uniform. Mirrors the OCSF collector's --block-private-ips/--allow-
+# private-ips flag exactly (default block). Internal-endpoint collection
+# now requires the opt-out — a deliberate behavior change.
+SSRF_BLOCK_OPTION = typer.Option(
+    True,
+    "--block-private-ips/--allow-private-ips",
+    help=(
+        "Reject hosts that resolve to RFC1918 / link-local / loopback / "
+        "multicast / reserved ranges before opening the connection. "
+        "Default True — closes the SSRF surface that could otherwise "
+        "expose AWS / GCP / Azure instance-metadata endpoints "
+        "(169.254.169.254) or internal services. Use --allow-private-ips "
+        "to override for trusted internal endpoints."
+    ),
+)
+
+
 @app.command("aws")
 def collect_aws(
     region: str | None = typer.Option(
@@ -111,6 +130,15 @@ def collect_github(
             "Required for private repos and higher rate limits."
         ),
     ),
+    base_url: str | None = typer.Option(
+        None,
+        "--base-url",
+        help=(
+            "GitHub API base URL. Default https://api.github.com. "
+            "Override for GitHub Enterprise."
+        ),
+    ),
+    block_private_ips: bool = SSRF_BLOCK_OPTION,
     output: Path | None = typer.Option(
         None,
         "--output",
@@ -142,7 +170,11 @@ def collect_github(
 
     try:
         with GitHubCollector(
-            owner=owner, repo=repo_name, token=resolved_token
+            owner=owner,
+            repo=repo_name,
+            token=resolved_token,
+            base_url=base_url,
+            block_private_ips=block_private_ips,
         ) as collector:
             findings = collector.collect()
     except (GitHubCollectorError, GitHubApiError) as e:
@@ -176,6 +208,7 @@ def collect_okta(
             "Increase only if your org is genuinely larger."
         ),
     ),
+    block_private_ips: bool = SSRF_BLOCK_OPTION,
     output: Path | None = typer.Option(
         None,
         "--output",
@@ -213,6 +246,7 @@ def collect_okta(
             api_token=api_token,
             inactive_threshold_days=inactive_threshold_days,
             max_users=max_users,
+            block_private_ips=block_private_ips,
         ) as collector:
             findings = collector.collect()
     except OktaCollectorError as e:
@@ -250,6 +284,7 @@ def collect_sql(
             "secret-handling protocol."
         ),
     ),
+    block_private_ips: bool = SSRF_BLOCK_OPTION,
     output: Path | None = typer.Option(
         None,
         "--output",
@@ -298,7 +333,9 @@ def collect_sql(
 
         try:
             with PostgresCollector(
-                connection_uri=connection_uri, password=password
+                connection_uri=connection_uri,
+                password=password,
+                block_private_ips=block_private_ips,
             ) as collector:
                 findings = collector.collect()
         except PostgresCollectorError as e:
@@ -337,7 +374,9 @@ def collect_sql(
 
         try:
             with MySQLCollector(
-                connection_uri=connection_uri, password=password
+                connection_uri=connection_uri,
+                password=password,
+                block_private_ips=block_private_ips,
             ) as collector:
                 findings = collector.collect()
         except MySQLCollectorError as e:
@@ -406,7 +445,9 @@ def collect_sql(
 
         try:
             with MSSQLCollector(
-                connection_uri=connection_uri, password=password
+                connection_uri=connection_uri,
+                password=password,
+                block_private_ips=block_private_ips,
             ) as collector:
                 findings = collector.collect()
         except MSSQLCollectorError as e:
@@ -444,7 +485,9 @@ def collect_sql(
 
         try:
             with OracleCollector(
-                connection_uri=connection_uri, password=password
+                connection_uri=connection_uri,
+                password=password,
+                block_private_ips=block_private_ips,
             ) as collector:
                 findings = collector.collect()
         except OracleCollectorError as e:
@@ -478,6 +521,7 @@ def collect_databricks(
             "via CLI flag per the secret-handling protocol."
         ),
     ),
+    block_private_ips: bool = SSRF_BLOCK_OPTION,
     output: Path | None = typer.Option(
         None,
         "--output",
@@ -524,7 +568,10 @@ def collect_databricks(
         raise typer.Exit(code=1) from e
 
     try:
-        with DatabricksCollector(host=workspace_url) as collector:
+        with DatabricksCollector(
+            host=workspace_url,
+            block_private_ips=block_private_ips,
+        ) as collector:
             findings = collector.collect()
     except DatabricksCollectorError as e:
         console.print(f"[red]Databricks collection failed:[/red] {e}")
@@ -608,6 +655,7 @@ def collect_snowflake(
             "Defaults to 90 (industry-standard window)."
         ),
     ),
+    block_private_ips: bool = SSRF_BLOCK_OPTION,
     output: Path | None = typer.Option(
         None,
         "--output",
@@ -694,6 +742,7 @@ def collect_snowflake(
             warehouse=warehouse,
             role=role,
             login_history_window_days=login_history_window_days,
+            block_private_ips=block_private_ips,
         ) as collector:
             findings = collector.collect()
     except SnowflakeCollectorError as e:
@@ -740,6 +789,7 @@ def collect_vanta(
             "typical orgs without unbounded pagination."
         ),
     ),
+    block_private_ips: bool = SSRF_BLOCK_OPTION,
     output: Path | None = typer.Option(
         None,
         "--output",
@@ -807,6 +857,7 @@ def collect_vanta(
             api_token=api_token,
             base_url=base_url,
             max_vendors=max_vendors,
+            block_private_ips=block_private_ips,
         ) as collector:
             findings = collector.collect()
     except VantaCollectorError as e:
@@ -850,6 +901,7 @@ def collect_drata(
             "typical orgs without unbounded pagination."
         ),
     ),
+    block_private_ips: bool = SSRF_BLOCK_OPTION,
     output: Path | None = typer.Option(
         None,
         "--output",
@@ -906,6 +958,7 @@ def collect_drata(
             api_token=api_token,
             base_url=base_url,
             max_vendors=max_vendors,
+            block_private_ips=block_private_ips,
         ) as collector:
             findings = collector.collect()
     except DrataCollectorError as e:
@@ -957,6 +1010,7 @@ def collect_bitsight(
             "between B and C grades). Range 250-900."
         ),
     ),
+    block_private_ips: bool = SSRF_BLOCK_OPTION,
     output: Path | None = typer.Option(
         None,
         "--output",
@@ -1015,6 +1069,7 @@ def collect_bitsight(
             base_url=base_url,
             max_companies=max_companies,
             low_rating_threshold=rating_threshold,
+            block_private_ips=block_private_ips,
         ) as collector:
             findings = collector.collect()
     except BitSightCollectorError as e:
@@ -1074,6 +1129,7 @@ def collect_securityscorecard(
             "Range 0-100."
         ),
     ),
+    block_private_ips: bool = SSRF_BLOCK_OPTION,
     output: Path | None = typer.Option(
         None,
         "--output",
@@ -1134,6 +1190,7 @@ def collect_securityscorecard(
             base_url=base_url,
             max_companies=max_companies,
             low_score_threshold=score_threshold,
+            block_private_ips=block_private_ips,
         ) as collector:
             findings = collector.collect()
     except SecurityScorecardCollectorError as e:

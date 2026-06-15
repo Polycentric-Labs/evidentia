@@ -14,9 +14,7 @@ looser policies pass explicit values.
 
 from __future__ import annotations
 
-import ipaddress
 import json
-import socket
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -108,7 +106,27 @@ def collect_ocsf_url(
         )
 
     if block_private_ips:
-        _refuse_private_host(url)
+        # SECURE-BY-DEFAULT (threat-model T2): refuse a URL whose host
+        # resolves to a private / loopback / link-local / metadata
+        # address before opening the socket. The private-IP resolution
+        # + refusal lives in the single shared SSRF chokepoint
+        # (evidentia_core.network_guard.enforce_public_host); only the
+        # OCSF-specific hostname-presence check and the SSRFBlockedError
+        # -> OCSFIngestError mapping stay here, preserving the typed-error
+        # contract and the --allow-private-ips / block_private_ips flag.
+        from evidentia_core.network_guard import (
+            SSRFBlockedError,
+            enforce_public_host,
+        )
+
+        if not urlparse(url).hostname:
+            raise OCSFIngestError(f"OCSF URL missing hostname: {url[:60]}")
+        try:
+            enforce_public_host(
+                url, subsystem="ocsf-ingest", block_private=block_private_ips
+            )
+        except SSRFBlockedError as exc:
+            raise OCSFIngestError(str(exc)) from exc
 
     # NoRedirectHandler refuses every 3xx — see the policy note above.
     opener = urllib.request.build_opener(_NoRedirectHandler())
@@ -122,54 +140,6 @@ def collect_ocsf_url(
 
     raw = body.decode("utf-8", errors="strict")
     return _convert_ocsf_payload(raw, source=url)
-
-
-def _refuse_private_host(url: str) -> None:
-    """Refuse the request if the URL's host resolves to a private IP.
-
-    Closes F-V101-L1 (v0.10.2). Resolves the hostname via
-    :func:`socket.getaddrinfo` (covers IPv4 + IPv6 + literal IPs +
-    DNS-based bypass attempts that return private-range addresses),
-    walks every returned address, and raises if ANY of them falls
-    into a non-public range. The "any address" check matters because
-    a malicious DNS record can return multiple addresses and rely on
-    the client picking the public one — we reject the entire host
-    if any record points internal.
-
-    Ranges considered non-public: ``is_private`` (RFC1918), ``is_loopback``,
-    ``is_link_local`` (covers cloud-provider metadata services),
-    ``is_multicast``, ``is_reserved``, ``is_unspecified``.
-    """
-    host = urlparse(url).hostname
-    if not host:
-        raise OCSFIngestError(f"OCSF URL missing hostname: {url[:60]}")
-    try:
-        addrinfos = socket.getaddrinfo(host, None)
-    except socket.gaierror as exc:
-        raise OCSFIngestError(
-            f"OCSF URL hostname resolution failed for {host!r}: {exc}"
-        ) from exc
-    for _family, _type, _proto, _canon, sockaddr in addrinfos:
-        ip_str = sockaddr[0]
-        try:
-            ip = ipaddress.ip_address(ip_str)
-        except ValueError:
-            continue
-        if (
-            ip.is_private
-            or ip.is_loopback
-            or ip.is_link_local
-            or ip.is_multicast
-            or ip.is_reserved
-            or ip.is_unspecified
-        ):
-            raise OCSFIngestError(
-                f"OCSF URL host {host!r} resolves to {ip_str} — "
-                "private / loopback / link-local / multicast / reserved / "
-                "unspecified address rejected per SSRF policy. Pass "
-                "--allow-private-ips (CLI) or block_private_ips=False "
-                "(library) to override for trusted internal endpoints."
-            )
 
 
 class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):

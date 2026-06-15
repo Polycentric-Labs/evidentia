@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import ipaddress
 import logging
+import socket
 from collections.abc import Iterator
 from contextlib import contextmanager
 from urllib.parse import urlparse
@@ -44,11 +45,14 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "LOCAL_LLM_PREFIXES",
     "OfflineViolationError",
+    "SSRFBlockedError",
     "check_llm_model",
     "check_url",
+    "enforce_public_host",
     "is_loopback_or_private",
     "is_offline",
     "offline_mode",
+    "resolve_host_is_private",
     "set_offline",
 ]
 
@@ -275,3 +279,183 @@ def check_llm_model(
             "OpenAI-compatible endpoint."
         ),
     )
+
+
+# ── SSRF guard (default-on, opposite polarity to the offline guard) ────────
+#
+# The offline guard above *allows* loopback / RFC-1918 and *blocks* the public
+# internet — it enforces the air-gap claim. The SSRF guard below is its mirror
+# image: it *blocks* private / loopback / link-local / metadata addresses and
+# *allows* the public internet. It exists because every outbound collector that
+# accepts an operator-supplied host (Okta org_url, Databricks/GitHub base_url,
+# the SQL connection URIs, the four vendor-risk SaaS base_urls) is an SSRF sink
+# that could otherwise be pointed at cloud instance-metadata endpoints
+# (169.254.169.254) or internal services. This consolidates the per-collector
+# refusal that previously lived only in the OCSF URL collector
+# (``_refuse_private_host``) into one reusable, default-on helper so the bar is
+# uniform across every collector + the API collectors router.
+#
+# Unlike the offline guard this is NOT gated by a process-wide flag — it is
+# always active unless the caller explicitly opts out (``block_private=False``,
+# surfaced as the ``--allow-private-ips`` CLI flag), because secure-by-default
+# is the whole point of closing threat-model T2.
+
+
+class SSRFBlockedError(Exception):
+    """Raised when an outbound target resolves to a non-public address.
+
+    The SSRF guard refuses, by default, any host that resolves to a
+    private (RFC-1918), loopback, link-local (covers the AWS / GCP /
+    Azure 169.254.169.254 instance-metadata endpoints), multicast,
+    reserved, or unspecified address — closing the server-side request
+    forgery surface on every outbound collector.
+
+    Attributes
+    ----------
+    subsystem
+        Which collector flagged the violation (``'okta'``,
+        ``'databricks'``, ``'sql-postgres'``, etc.).
+    host
+        The hostname that was resolved.
+    resolved_ip
+        The first disallowed address the host resolved to.
+    """
+
+    def __init__(
+        self, *, subsystem: str, host: str, resolved_ip: str
+    ) -> None:
+        self.subsystem = subsystem
+        self.host = host
+        self.resolved_ip = resolved_ip
+        super().__init__(
+            f"{subsystem}: refusing outbound request — host {host!r} "
+            f"resolves to {resolved_ip} (private / loopback / link-local / "
+            "multicast / reserved / unspecified address rejected per SSRF "
+            "policy). Pass --allow-private-ips (CLI) or block_private=False "
+            "(library) to override for trusted internal endpoints."
+        )
+
+
+def _ip_is_non_public(
+    ip: ipaddress.IPv4Address | ipaddress.IPv6Address,
+) -> bool:
+    """Return True if ``ip`` falls in any non-public range.
+
+    Mirrors the ranges the OCSF URL collector rejected (the v0.10.2
+    F-V101-L1 close-out): RFC-1918 private, loopback, link-local
+    (cloud-metadata services), multicast, reserved, and unspecified.
+    """
+    return bool(
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_multicast
+        or ip.is_reserved
+        or ip.is_unspecified
+    )
+
+
+def resolve_host_is_private(host: str) -> tuple[bool, str]:
+    """Resolve ``host`` and report whether ANY address is non-public.
+
+    Resolves via :func:`socket.getaddrinfo` (covers IPv4 + IPv6 +
+    literal IPs + DNS-rebinding attempts that return private-range
+    addresses), walks every returned address, and returns
+    ``(True, first_bad_ip)`` as soon as one falls in a non-public range.
+    The "any address" check matters because a malicious DNS record can
+    return multiple addresses and rely on the client picking the public
+    one — we treat the entire host as disallowed if any record points
+    internal.
+
+    Returns ``(False, "")`` when every resolved address is public.
+
+    Raises
+    ------
+    socket.gaierror
+        If the hostname cannot be resolved. Callers map this to their
+        own connection-error type.
+    """
+    for *_unused, sockaddr in socket.getaddrinfo(host, None):
+        ip_str = str(sockaddr[0])
+        try:
+            ip = ipaddress.ip_address(ip_str)
+        except ValueError:
+            continue
+        if _ip_is_non_public(ip):
+            return True, ip_str
+    return False, ""
+
+
+def enforce_public_host(
+    url_or_host: str,
+    *,
+    subsystem: str,
+    block_private: bool = True,
+) -> None:
+    """Refuse an outbound request whose host resolves to a private address.
+
+    The single reusable SSRF chokepoint for every outbound collector.
+    Accepts either a full URL (``https://host/path``) or a bare host
+    (``host`` / ``host:port``) and extracts the hostname before
+    resolving. No-op when ``block_private`` is False (the deliberate
+    opt-out, surfaced as ``--allow-private-ips`` on the CLI).
+
+    Parameters
+    ----------
+    url_or_host
+        A full URL or a bare host/host:port string.
+    subsystem
+        Caller label for the error + diagnostics (e.g. ``'okta'``).
+    block_private
+        When True (default), enforce the refusal. When False, the
+        deliberate opt-out for trusted internal endpoints — secure-by-
+        default means internal-endpoint collection now requires this
+        flag (a behavior change).
+
+    Raises
+    ------
+    SSRFBlockedError
+        If ``block_private`` is True and the host resolves to a
+        private / loopback / link-local / multicast / reserved /
+        unspecified address, OR if the host cannot be resolved (a
+        host that does not resolve cannot be proven public, so it is
+        refused fail-closed).
+    """
+    if not block_private:
+        return
+
+    host = _extract_host(url_or_host)
+    if not host:
+        raise SSRFBlockedError(
+            subsystem=subsystem, host=url_or_host, resolved_ip="(no host)"
+        )
+
+    try:
+        is_private, bad_ip = resolve_host_is_private(host)
+    except socket.gaierror as exc:
+        # Fail closed: a host we cannot resolve cannot be proven public.
+        raise SSRFBlockedError(
+            subsystem=subsystem, host=host, resolved_ip="(unresolvable)"
+        ) from exc
+    if is_private:
+        raise SSRFBlockedError(
+            subsystem=subsystem, host=host, resolved_ip=bad_ip
+        )
+
+
+def _extract_host(url_or_host: str) -> str:
+    """Pull the hostname out of a URL or a bare host[:port] string.
+
+    Handles ``https://host/path`` (urlparse), ``host:port``, bare
+    ``host``, and bracketed IPv6 (``[::1]`` / ``https://[::1]:8443``).
+    Returns "" when no host can be extracted.
+    """
+    candidate = url_or_host.strip()
+    if "://" in candidate:
+        parsed_host = urlparse(candidate).hostname
+        return parsed_host or ""
+    # Bare host / host:port. urlparse needs a scheme to populate
+    # .hostname, so synthesize one — this also strips a :port and
+    # unwraps bracketed IPv6 correctly.
+    parsed_host = urlparse(f"//{candidate}").hostname
+    return parsed_host or ""

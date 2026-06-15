@@ -61,6 +61,7 @@ class GitHubClient:
         token: str | None = None,
         http: httpx.Client | None = None,
         base_url: str | None = None,
+        block_private_ips: bool = True,
     ) -> None:
         headers: dict[str, str] = {
             "Accept": "application/vnd.github+json",
@@ -70,8 +71,32 @@ class GitHubClient:
         if token:
             headers["Authorization"] = f"Bearer {token}"
 
+        effective_base_url = base_url or self.BASE_URL
+        # SECURE-BY-DEFAULT (threat-model T2): when the client owns its
+        # own httpx.Client (no injected `http`), refuse a base_url that
+        # resolves to a private / loopback / link-local / metadata
+        # address before binding it. The default api.github.com is
+        # public so this is a no-op for the common path; a GitHub
+        # Enterprise base_url pointed at an internal host must opt out
+        # via block_private_ips=False (--allow-private-ips on the CLI).
+        # An injected `http` client skips the check — the caller owns it.
+        if http is None:
+            from evidentia_core.network_guard import (
+                SSRFBlockedError,
+                enforce_public_host,
+            )
+
+            try:
+                enforce_public_host(
+                    effective_base_url,
+                    subsystem="github-repo-scan",
+                    block_private=block_private_ips,
+                )
+            except SSRFBlockedError as exc:
+                raise GitHubApiError(str(exc), status_code=0) from exc
+
         self._http = http or httpx.Client(
-            base_url=base_url or self.BASE_URL,
+            base_url=effective_base_url,
             headers=headers,
             timeout=20.0,
         )

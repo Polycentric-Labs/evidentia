@@ -140,6 +140,7 @@ class OktaCollector:
         client: httpx.Client | None = None,
         inactive_threshold_days: int = DEFAULT_INACTIVE_THRESHOLD_DAYS,
         max_users: int = DEFAULT_MAX_USERS,
+        block_private_ips: bool = True,
     ) -> None:
         if not org_url and client is None:
             raise OktaCollectorError(
@@ -163,6 +164,11 @@ class OktaCollector:
         self._owns_client = client is None
         self._inactive_threshold_days = inactive_threshold_days
         self._max_users = max_users
+        # SECURE-BY-DEFAULT (threat-model T2): default-on SSRF guard,
+        # enforced at the client-factory path (_ensure_client). Operators
+        # collecting from an internal Okta-compatible endpoint must opt
+        # out via block_private_ips=False (--allow-private-ips on the CLI).
+        self._block_private_ips = block_private_ips
 
     # ── Lifecycle ───────────────────────────────────────────────────
 
@@ -191,6 +197,23 @@ class OktaCollector:
                 "OKTA_API_TOKEN is not set; cannot authenticate "
                 "against the Okta API."
             )
+        # SECURE-BY-DEFAULT (threat-model T2): refuse an org_url that
+        # resolves to a private / loopback / link-local / metadata
+        # address before opening the client. A connection-class refusal
+        # surfaces as OktaConnectionError per the typed hierarchy.
+        from evidentia_core.network_guard import (
+            SSRFBlockedError,
+            enforce_public_host,
+        )
+
+        try:
+            enforce_public_host(
+                self._org_url,
+                subsystem=COLLECTOR_ID,
+                block_private=self._block_private_ips,
+            )
+        except SSRFBlockedError as exc:
+            raise OktaConnectionError(str(exc)) from exc
         self._client = httpx.Client(
             base_url=self._org_url,
             headers={

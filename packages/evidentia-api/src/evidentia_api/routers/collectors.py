@@ -24,6 +24,20 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _block_private_ips(body: dict[str, Any]) -> bool:
+    """Parse the optional ``block_private_ips`` body flag (default True).
+
+    SECURE-BY-DEFAULT (threat-model T2): every networked collector
+    endpoint refuses, by default, a host that resolves to a private /
+    loopback / link-local / metadata address. Callers collecting from a
+    trusted internal endpoint must explicitly send
+    ``{"block_private_ips": false}`` — the deliberate opt-out mirroring
+    the CLI's ``--allow-private-ips`` flag. Any non-false value (missing,
+    None, true) keeps the guard ON.
+    """
+    return body.get("block_private_ips", True) is not False
+
+
 @router.post("/collectors/aws/collect", response_model=list[SecurityFinding])
 async def aws_collect(payload: dict[str, Any] | None = None) -> list[SecurityFinding]:
     """Run the AWS collector (Config + Security Hub).
@@ -100,10 +114,15 @@ async def github_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
         )
     owner, repo_name = repo.split("/", 1)
     token = os.environ.get("GITHUB_TOKEN")
+    base_url = payload.get("base_url") if isinstance(payload.get("base_url"), str) else None
 
     try:
         with GitHubCollector(
-            owner=owner, repo=repo_name, token=token
+            owner=owner,
+            repo=repo_name,
+            token=token,
+            base_url=base_url,
+            block_private_ips=_block_private_ips(payload),
         ) as collector:
             findings = collector.collect()
     except GitHubCollectorError as e:
@@ -164,6 +183,7 @@ async def okta_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             api_token=api_token,
             inactive_threshold_days=inactive_threshold_days,
             max_users=max_users,
+            block_private_ips=_block_private_ips(payload),
         ) as collector:
             findings = collector.collect()
     except OktaCollectorError as e:
@@ -232,7 +252,9 @@ async def postgres_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
     try:
         with PostgresCollector(
-            connection_uri=connection_uri, password=password
+            connection_uri=connection_uri,
+            password=password,
+            block_private_ips=_block_private_ips(payload),
         ) as collector:
             findings = collector.collect()
     except PostgresCollectorError as e:
@@ -301,7 +323,9 @@ async def mysql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
     try:
         with MySQLCollector(
-            connection_uri=connection_uri, password=password
+            connection_uri=connection_uri,
+            password=password,
+            block_private_ips=_block_private_ips(payload),
         ) as collector:
             findings = collector.collect()
     except MySQLCollectorError as e:
@@ -369,7 +393,9 @@ async def mssql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
     try:
         with MSSQLCollector(
-            connection_uri=connection_uri, password=password
+            connection_uri=connection_uri,
+            password=password,
+            block_private_ips=_block_private_ips(payload),
         ) as collector:
             findings = collector.collect()
     except MSSQLCollectorError as e:
@@ -435,7 +461,9 @@ async def oracle_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
     try:
         with OracleCollector(
-            connection_uri=connection_uri, password=password
+            connection_uri=connection_uri,
+            password=password,
+            block_private_ips=_block_private_ips(payload),
         ) as collector:
             findings = collector.collect()
     except OracleCollectorError as e:
@@ -561,7 +589,10 @@ async def databricks_collect(
         )
 
     try:
-        with DatabricksCollector(host=workspace_url) as collector:
+        with DatabricksCollector(
+            host=workspace_url,
+            block_private_ips=_block_private_ips(payload),
+        ) as collector:
             findings = collector.collect()
     except DatabricksCollectorError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
@@ -683,6 +714,7 @@ async def snowflake_collect(
             warehouse=str(warehouse) if warehouse else None,
             role=str(role) if role else None,
             login_history_window_days=login_history_window_days,
+            block_private_ips=_block_private_ips(payload),
         ) as collector:
             findings = collector.collect()
     except SnowflakeCollectorError as e:
@@ -799,6 +831,7 @@ async def vanta_collect(
             api_token=api_token,
             base_url=base_url,
             max_vendors=max_vendors,
+            block_private_ips=_block_private_ips(body),
         ) as collector:
             findings = collector.collect()
     except VantaCollectorError as e:
@@ -913,6 +946,7 @@ async def drata_collect(
             api_token=api_token,
             base_url=base_url,
             max_vendors=max_vendors,
+            block_private_ips=_block_private_ips(body),
         ) as collector:
             findings = collector.collect()
     except DrataCollectorError as e:
@@ -1023,6 +1057,7 @@ async def bitsight_collect(
             base_url=base_url,
             max_companies=max_companies,
             low_rating_threshold=rating_threshold,
+            block_private_ips=_block_private_ips(body),
         ) as collector:
             findings = collector.collect()
     except BitSightCollectorError as e:
@@ -1158,6 +1193,7 @@ async def securityscorecard_collect(
             base_url=base_url,
             max_companies=max_companies,
             low_score_threshold=score_threshold,
+            block_private_ips=_block_private_ips(body),
         ) as collector:
             findings = collector.collect()
     except SecurityScorecardCollectorError as e:
