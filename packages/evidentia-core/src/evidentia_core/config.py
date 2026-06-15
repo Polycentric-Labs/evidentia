@@ -158,17 +158,29 @@ def _expand_env_vars(value: Any) -> Any:
     return value
 
 
-def find_config_file(start: Path | None = None) -> Path | None:
+def find_config_file(
+    start: Path | None = None, stop_at: Path | None = None
+) -> Path | None:
     """Walk upward from ``start`` (default: CWD) looking for ``evidentia.yaml``.
 
     Returns the first match found, or ``None`` if none exists between
     ``start`` and the filesystem root.
+
+    ``stop_at`` bounds the upward walk: when set, no directory *above*
+    ``stop_at`` is searched (``stop_at`` itself is still checked). This
+    is primarily a test-isolation hook — pytest's tmp dirs live under
+    ``$HOME``, so an unbounded walk can pick up a stray ``~/evidentia.yaml``
+    from a developer's environment. Default ``None`` preserves the
+    walk-to-filesystem-root behavior.
     """
     current = (start or Path.cwd()).resolve()
+    boundary = stop_at.resolve() if stop_at is not None else None
     for candidate in [current, *current.parents]:
         cfg_path = candidate / CONFIG_FILENAME
         if cfg_path.is_file():
             return cfg_path
+        if boundary is not None and candidate == boundary:
+            break
     return None
 
 

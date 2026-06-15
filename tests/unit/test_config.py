@@ -46,15 +46,13 @@ def test_find_config_walks_to_parent(tmp_path: Path) -> None:
 
 def test_find_config_returns_none_when_missing(tmp_path: Path) -> None:
     """No config in tree = None, not an exception."""
-    # Use a genuinely empty subtree so we don't hit a config file from a
-    # higher ancestor (like the project's own evidentia.yaml).
     deep = tmp_path / "a" / "b" / "c"
     deep.mkdir(parents=True)
-    # We can't fully prevent parent-walk from hitting an ancestor config,
-    # but tmp_path is typically under /tmp or %TEMP% which has none.
-    result = find_config_file(start=deep)
-    # Must either be None, or pointing inside tmp_path's own hierarchy.
-    assert result is None or tmp_path in result.parents or result == tmp_path / "evidentia.yaml"
+    # stop_at bounds the walk to tmp_path, so a stray ancestor config
+    # (e.g. ~/evidentia.yaml — pytest tmp dirs live under $HOME) can't
+    # leak in and make this non-deterministic.
+    result = find_config_file(start=deep, stop_at=tmp_path)
+    assert result is None
 
 
 # -----------------------------------------------------------------------------
