@@ -71,7 +71,9 @@ packages = ["src/evidentia"]
 # `pip install evidentia` user can run the quickstart with zero setup.
 # Resolved at runtime via `importlib.resources.files("evidentia.examples")`.
 # Explicit so inclusion does not silently depend on VCS-tracking state.
-artifacts = ["src/evidentia/examples/*.yaml"]
+# The Tier-1 demo runner's argv allowlist ships the same way, resolved via
+# `importlib.resources.files("evidentia.demo")` (see demo/runner.py).
+artifacts = ["src/evidentia/examples/*.yaml", "src/evidentia/demo/*.yaml"]
 
 [tool.uv.sources]
 evidentia-core = { workspace = true }

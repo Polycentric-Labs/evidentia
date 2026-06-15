@@ -1,0 +1,56 @@
+# Tier-1 constrained-runner argv allowlist (demo-suite-design.md §5, condition 1).
+#
+# Every entry is an EXACT token sequence the public demo runner will accept as
+# the ``evidentia`` argv. ``runner.is_allowed`` matches the FULL argv against
+# this list token-for-token — there are no free-form arguments, no wildcards,
+# no off-allowlist flags. A request that does not equal one of these vectors
+# verbatim is refused (exit 2).
+#
+# Design constraints baked into the list:
+#   * Only NETWORK-FREE, FIXTURE-ONLY verbs (no collectors, no LLM, no serve).
+#   * ``--output`` targets are pinned to the single fixed temp name
+#     ``$OUT`` (resolved by the runner to a path under a private tmpdir); a
+#     caller-supplied path can never match.
+#   * Excluded from the demo profile entirely (per the threat model — no demo
+#     value, high surface): collect*, integrations*, mcp serve, eval, explain,
+#     risk generate, catalog import, cimd-migrate. They are simply absent here;
+#     any argv beginning with one of those verbs fails the exact-match test.
+#
+# The runner forces ``--offline`` and a scrubbed env on top of every vector, so
+# even an allowlisted verb runs air-gapped with verifiably empty credentials.
+#
+# ``$OUT`` is the ONLY placeholder token; it stands for the fixed scratch
+# output filename and is the only argument the runner rewrites before exec.
+
+vectors:
+  # --- doctor: environment + air-gap posture (read-only) -----------------
+  - ["doctor"]
+  - ["doctor", "--check-air-gap"]
+
+  # --- catalog: list bundled frameworks (read-only) ----------------------
+  - ["catalog", "list"]
+  - ["catalog", "list", "--tier", "A"]
+  - ["catalog", "list", "--category", "control"]
+
+  # --- gap analyze: the two Meridian-v2 hero invocations ------------------
+  # JSON report against the bundled fintech inventory.
+  - ["gap", "analyze",
+     "--inventory", "examples/meridian-fintech-v2/my-controls.yaml",
+     "--frameworks", "nist-800-53-rev5-moderate,soc2-tsc",
+     "--output", "$OUT"]
+  # OSCAL Assessment Results export.
+  - ["gap", "analyze",
+     "--inventory", "examples/meridian-fintech-v2/my-controls.yaml",
+     "--frameworks", "nist-800-53-rev5-moderate,soc2-tsc",
+     "--output", "$OUT",
+     "--format", "oscal-ar"]
+
+  # --- oscal verify: verify the just-produced AR fixture ------------------
+  - ["oscal", "verify", "$OUT"]
+
+  # --- conmon: continuous-monitoring cadences (read-only) ----------------
+  - ["conmon", "list"]
+  - ["conmon", "list", "--json"]
+  - ["conmon", "list", "--framework", "nist-800-53-rev5-moderate"]
+  - ["conmon", "list", "--framework", "soc2-tsc"]
+  - ["conmon", "next", "annual", "--last-completed", "2025-01-15"]
