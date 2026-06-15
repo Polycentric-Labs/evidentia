@@ -52,7 +52,7 @@ For the full workspace (AI risk-statements, REST API, all collectors, MCP server
 pip install 'evidentia[ai,api,collectors,mcp]'
 ```
 
-Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.10.9` (cosign keyless OIDC + SLSA Provenance v1 verified).
+Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.10.10` (cosign keyless OIDC + SLSA Provenance v1 verified).
 
 See the [Getting Started wiki section](https://github.com/Polycentric-Labs/evidentia/wiki/Getting-Started) for air-gapped install, virtualenv setup, and full extras matrix.
 
@@ -113,11 +113,11 @@ Full 5-minute walk-through: [Quickstart wiki page](https://github.com/Polycentri
 
 ## Recent Releases
 
+**v0.10.10 (2026-06-12)** — *supply-chain hardening + collectors SSRF guard*. **`serve` posture hardening doc (threat-model T3)**, `docs/threat-model.md` documents that the container `CMD` defaults to `serve --host 0.0.0.0` (online, no-auth) and recommends 127.0.0.1 binding, `EVIDENTIA_API_AUTH_TOKEN_FILE` for any non-loopback exposure, and `--offline` / `EVIDENTIA_API_OFFLINE=1` when collectors aren't needed.
+
 **v0.10.9 (2026-06-10)** — *debt + robustness patch*. **`lib/sse.ts` shared SSE reader** in the web console, one generic `readSse<T>` replaces the functionally identical per-page readers in ExplainPage and RiskGeneratePage, with a 6-case vitest spec locking in the exact streaming semantics.
 
 **v0.10.8 (2026-06-04)** — *safeguards automation + CLI↔GUI parity + Tier-B GUI build-out*. **Tag-time release gate.** `release.yml` gains a `gate` job that runs the full SSOT check suite on the tagged commit, and the PyPI/GHCR `publish` jobs now `needs: gate`.
-
-**v0.10.7 (2026-05-30)** — *web console (GUI v2) refresh + gap-report export + hygiene / automation-debt / wiki-fill / doc-accuracy base*. **Web console, GUI v2 visual refresh.** A full design-system pass: federal-blue interactive primary on a warm off-white workspace with deep-navy brand chrome (nav rail + top bar), the CLI-matched severity palette preserved verbatim, self-hosted IBM Plex Sans/Mono + favicons / PWA manifest / Open-Graph brand assets (air-gap clean, no CDN), a wired light/dark toggle (with a no-flash inline theme script), and every route + the onboarding flow restyled.
 
 Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https://github.com/Polycentric-Labs/evidentia/releases)
 

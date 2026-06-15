@@ -28,7 +28,7 @@ Verify the install:
 
 ```bash
 evidentia version
-# → Evidentia v0.10.9 / Python 3.12.x
+# → Evidentia v0.10.10 / Python 3.12.x
 ```
 
 If `evidentia` is not found on your PATH after install, your environment's
@@ -82,16 +82,16 @@ Every release publishes a cosign-signed multi-arch image to GitHub Container
 Registry:
 
 ```bash
-docker pull ghcr.io/polycentric-labs/evidentia:v0.10.9
-docker run --rm ghcr.io/polycentric-labs/evidentia:v0.10.9 version
-# → Evidentia v0.10.9 / Python 3.12.x
+docker pull ghcr.io/polycentric-labs/evidentia:v0.10.10
+docker run --rm ghcr.io/polycentric-labs/evidentia:v0.10.10 version
+# → Evidentia v0.10.10 / Python 3.12.x
 ```
 
 To run a gap analysis against a local inventory, mount your working directory:
 
 ```bash
 docker run --rm -v "$PWD:/work" -w /work \
-  ghcr.io/polycentric-labs/evidentia:v0.10.9 \
+  ghcr.io/polycentric-labs/evidentia:v0.10.10 \
   gap analyze --inventory my-controls.yaml \
   --frameworks nist-800-53-rev5-moderate --output gap-report.json
 ```
@@ -99,7 +99,7 @@ docker run --rm -v "$PWD:/work" -w /work \
 The image is keyless-signed via Fulcio + Rekor. Verify it before you trust it:
 
 ```bash
-cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.9 \
+cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.10 \
   --certificate-identity-regexp 'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 # → "The cosign claims were validated"
