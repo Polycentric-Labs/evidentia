@@ -9,6 +9,8 @@
  * from one uvicorn instance). Dev mode: Vite's proxy forwards /api to :8000.
  */
 
+import { demoApi, demoExportGapReport } from "@/lib/demo/demo-api";
+import { IS_DEMO } from "@/lib/demo";
 import { parseContentDispositionFilename } from "@/lib/download";
 import type {
   AirGapCheckResponse,
@@ -111,7 +113,11 @@ export const GAP_EXPORT_FORMATS = [
   { id: "json", label: "JSON", hint: "Full report (native Evidentia schema)" },
   { id: "oscal-ar", label: "OSCAL AR", hint: "OSCAL Assessment Results" },
   { id: "sarif", label: "SARIF", hint: "SARIF 2.1.0 (code-scanning)" },
-  { id: "ocsf", label: "OCSF Compliance", hint: "OCSF Compliance Finding (2003)" },
+  {
+    id: "ocsf",
+    label: "OCSF Compliance",
+    hint: "OCSF Compliance Finding (2003)",
+  },
   {
     id: "ocsf-detection",
     label: "OCSF Detection",
@@ -183,7 +189,7 @@ export type ConmonCadence = Record<string, string | null>;
  * JSON envelope. On a non-2xx response the JSON `{detail}` error body is
  * read and thrown as an `ApiError`.
  */
-export async function exportGapReport(
+async function realExportGapReport(
   report: GapAnalysisReport,
   format: GapExportFormat,
 ): Promise<GapExportResult> {
@@ -218,7 +224,16 @@ export async function exportGapReport(
   return { blob, filename };
 }
 
-export const api = {
+/**
+ * Request a gap-report export. In a `VITE_DEMO` build this serializes the
+ * report client-side (no `/api/gap/export` call); otherwise it round-trips to
+ * the backend exporter.
+ */
+export const exportGapReport = IS_DEMO
+  ? demoExportGapReport
+  : realExportGapReport;
+
+const realApi = {
   // ── Probe / identity ──────────────────────────────────────────────────
   health: () => request<HealthResponse>("/api/health"),
   version: () => request<VersionResponse>("/api/version"),
@@ -226,11 +241,13 @@ export const api = {
 
   // ── Doctor / air-gap ──────────────────────────────────────────────────
   doctor: () =>
-    request<{ subsystems: Array<{ name: string; status: string; detail: string }> }>(
-      "/api/doctor",
-    ),
+    request<{
+      subsystems: Array<{ name: string; status: string; detail: string }>;
+    }>("/api/doctor"),
   doctorCheckAirGap: () =>
-    request<AirGapCheckResponse>("/api/doctor/check-air-gap", { method: "POST" }),
+    request<AirGapCheckResponse>("/api/doctor/check-air-gap", {
+      method: "POST",
+    }),
 
   // ── Config ────────────────────────────────────────────────────────────
   getConfig: () => request<EvidentiaConfig>("/api/config"),
@@ -328,7 +345,9 @@ export const api = {
       search.set("criticality_tier", params.criticality_tier);
     if (params?.type) search.set("type", params.type);
     const qs = search.toString();
-    return request<VendorListResponse>(`/api/tprm/vendors${qs ? `?${qs}` : ""}`);
+    return request<VendorListResponse>(
+      `/api/tprm/vendors${qs ? `?${qs}` : ""}`,
+    );
   },
   createVendor: (vendor: VendorInput) =>
     request<Vendor>("/api/tprm/vendors", {
@@ -341,7 +360,9 @@ export const api = {
     const search = new URLSearchParams();
     if (params?.framework) search.set("framework", params.framework);
     const qs = search.toString();
-    return request<ConmonCadence[]>(`/api/conmon/cadences${qs ? `?${qs}` : ""}`);
+    return request<ConmonCadence[]>(
+      `/api/conmon/cadences${qs ? `?${qs}` : ""}`,
+    );
   },
 
   // ── Explain ───────────────────────────────────────────────────────────
@@ -364,3 +385,11 @@ export const api = {
     )}${qs ? `?${qs}` : ""}`;
   },
 };
+
+/**
+ * The API client the app actually imports. In a `VITE_DEMO` build this is the
+ * fixtures-backed `demoApi` (zero network, baked Meridian v2 data); in every
+ * normal build it is the real fetch-based `realApi`. The swap happens once, at
+ * module load, so no call site needs to know which it is talking to.
+ */
+export const api = IS_DEMO ? demoApi : realApi;
