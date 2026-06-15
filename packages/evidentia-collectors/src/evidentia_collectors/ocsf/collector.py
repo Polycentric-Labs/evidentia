@@ -105,6 +105,15 @@ def collect_ocsf_url(
             f"OCSF URL ingest is HTTPS-only; got: {url[:60]}"
         )
 
+    # F-V1010-S1: the validated public IPs (+ host) so the urllib fetch can
+    # PIN resolution through the connection. urllib re-resolves the hostname
+    # when it opens the socket, so without the pin a DNS-rebind between
+    # validation and connection bypasses the guard. Empty when the guard is
+    # opted out (block_private_ips=False) — then the pin is a no-op.
+    from evidentia_core.network_guard import pin_resolved_host
+
+    validated_ips: list[str] = []
+    host = urlparse(url).hostname or ""
     if block_private_ips:
         # SECURE-BY-DEFAULT (threat-model T2): refuse a URL whose host
         # resolves to a private / loopback / link-local / metadata
@@ -119,10 +128,10 @@ def collect_ocsf_url(
             enforce_public_host,
         )
 
-        if not urlparse(url).hostname:
+        if not host:
             raise OCSFIngestError(f"OCSF URL missing hostname: {url[:60]}")
         try:
-            enforce_public_host(
+            validated_ips = enforce_public_host(
                 url, subsystem="ocsf-ingest", block_private=block_private_ips
             )
         except SSRFBlockedError as exc:
@@ -133,7 +142,10 @@ def collect_ocsf_url(
     request = urllib.request.Request(url, headers={"Accept": "application/json"})
 
     try:
-        with opener.open(request, timeout=timeout) as response:
+        with (
+            pin_resolved_host(host, validated_ips),
+            opener.open(request, timeout=timeout) as response,
+        ):
             body = _read_capped(response, max_bytes)
     except (urllib.error.URLError, TimeoutError) as exc:
         raise OCSFIngestError(f"OCSF URL fetch failed: {exc}") from exc

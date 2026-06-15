@@ -386,11 +386,13 @@ class SnowflakeCollector:
         from evidentia_core.network_guard import (
             SSRFBlockedError,
             enforce_public_host,
+            pin_resolved_host,
         )
 
+        account_host = self._account_host()
         try:
-            enforce_public_host(
-                self._account_host(),
+            validated_ips = enforce_public_host(
+                account_host,
                 subsystem=COLLECTOR_ID,
                 block_private=self._block_private_ips,
             )
@@ -417,8 +419,15 @@ class SnowflakeCollector:
             kwargs["warehouse"] = self._warehouse
         if self._role is not None:
             kwargs["role"] = self._role
+        # F-V1010-S1: pin the validated resolution through the connector's
+        # connect. snowflake-connector-python uses requests/urllib3, which
+        # resolve via socket.getaddrinfo, so the pin holds across the socket
+        # open. The pin is keyed on the SAME derived
+        # <account>.snowflakecomputing.com host the guard validated. No-op
+        # when validated_ips is empty (opt-out).
         try:
-            self._connection = snowflake.connector.connect(**kwargs)
+            with pin_resolved_host(account_host, validated_ips):
+                self._connection = snowflake.connector.connect(**kwargs)
         except Exception as e:
             raise SnowflakeAuthError(
                 f"Could not connect to Snowflake "

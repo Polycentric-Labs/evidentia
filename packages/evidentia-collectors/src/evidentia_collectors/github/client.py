@@ -72,6 +72,13 @@ class GitHubClient:
             headers["Authorization"] = f"Bearer {token}"
 
         effective_base_url = base_url or self.BASE_URL
+        # F-V1010-S1: the host + validated public IPs so the request path
+        # can PIN resolution through the connection (httpx re-resolves the
+        # hostname when it opens a socket — a DNS-rebind between validation
+        # and connection would otherwise bypass the guard). Empty for an
+        # injected `http` client (the caller owns its destination).
+        self._pinned_host: str = ""
+        self._pinned_ips: list[str] = []
         # SECURE-BY-DEFAULT (threat-model T2): when the client owns its
         # own httpx.Client (no injected `http`), refuse a base_url that
         # resolves to a private / loopback / link-local / metadata
@@ -83,17 +90,19 @@ class GitHubClient:
         if http is None:
             from evidentia_core.network_guard import (
                 SSRFBlockedError,
+                _extract_host,
                 enforce_public_host,
             )
 
             try:
-                enforce_public_host(
+                self._pinned_ips = enforce_public_host(
                     effective_base_url,
                     subsystem="github-repo-scan",
                     block_private=block_private_ips,
                 )
             except SSRFBlockedError as exc:
                 raise GitHubApiError(str(exc), status_code=0) from exc
+            self._pinned_host = _extract_host(effective_base_url)
 
         self._http = http or httpx.Client(
             base_url=effective_base_url,
@@ -110,6 +119,29 @@ class GitHubClient:
     def __exit__(self, *_: object) -> None:
         self.close()
 
+    def _pinned_request(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+    ) -> httpx.Response:
+        """Issue an httpx request with the validated resolution pinned.
+
+        F-V1010-S1: httpx re-resolves the hostname when it opens a
+        connection, so a DNS-rebind between the constructor's
+        ``enforce_public_host`` validation and this request could
+        otherwise reach a private address. The pin forces the
+        connection lookup to the IPs already classified as public; it
+        is a no-op when ``_pinned_ips`` is empty (injected client /
+        opt-out), so SNI / Host / cert verification stay on the
+        hostname.
+        """
+        from evidentia_core.network_guard import pin_resolved_host
+
+        with pin_resolved_host(self._pinned_host, self._pinned_ips):
+            return self._http.request(method, path, params=params)
+
     def _request(
         self,
         method: str,
@@ -124,7 +156,7 @@ class GitHubClient:
         those return ``None`` instead of raising.
         """
         try:
-            response = self._http.request(method, path)
+            response = self._pinned_request(method, path)
         except httpx.HTTPError as e:
             raise GitHubApiError(
                 f"GitHub request failed: {e}", status_code=0
@@ -165,7 +197,7 @@ class GitHubClient:
         ``params`` for query-string pagination.
         """
         try:
-            response = self._http.request(method, path, params=params)
+            response = self._pinned_request(method, path, params=params)
         except httpx.HTTPError as e:
             raise GitHubApiError(
                 f"GitHub request failed: {e}", status_code=0
@@ -261,7 +293,7 @@ class GitHubClient:
         :class:`ComplianceStatus.UNKNOWN`.
         """
         try:
-            response = self._http.request(
+            response = self._pinned_request(
                 "GET", f"/repos/{owner}/{repo}/vulnerability-alerts"
             )
         except httpx.HTTPError as e:
@@ -292,7 +324,7 @@ class GitHubClient:
         observable enablement, not the operator's permission scope.
         """
         try:
-            response = self._http.request(
+            response = self._pinned_request(
                 "GET",
                 f"/repos/{owner}/{repo}/code-scanning/alerts",
                 params={"per_page": 1},

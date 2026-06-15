@@ -67,11 +67,21 @@ class TestResolveHostIsPrivate:
         assert is_private is False
         assert bad == ""
 
-    def test_dns_returning_private_is_flagged(
+    def test_dns_returning_private_is_flagged_single_resolution(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """A hostname that DNS-resolves to a private IP is refused
-        (DNS-rebinding-style bypass attempt)."""
+        """A hostname that resolves to a private IP on the SINGLE
+        validation lookup is refused.
+
+        NOTE: this covers only the single-resolution case (the host is
+        private at validation time). It does NOT cover the TOCTOU
+        DNS-rebinding case where the host resolves PUBLIC at validation
+        and PRIVATE at connection time — that bypass is closed by the
+        resolution pin (``pin_resolved_host``) and is exercised in
+        ``tests/unit/test_network_guard_rebind.py`` (and at the
+        per-transport level in
+        ``tests/unit/test_collectors/test_collector_rebind.py``).
+        """
         monkeypatch.setattr(
             socket, "getaddrinfo", _fake_getaddrinfo("169.254.169.254")
         )

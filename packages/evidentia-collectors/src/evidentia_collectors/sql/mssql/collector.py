@@ -188,20 +188,37 @@ class MSSQLCollector:
                 self._connection.close()
             self._connection = None
 
-    def _build_connection_string(self, uri: str) -> str:
+    def _build_connection_string(
+        self, uri: str, *, pinned_ip: str | None = None
+    ) -> str:
         """Convert mssql://user@host:1433/dbname into a pyodbc
         connection string. The password is supplied separately via
         the password= kwarg (NOT via the URI) per the secret protocol.
+
+        F-V1010-S1: the ODBC driver resolves the server name in native
+        code, so the Python-level getaddrinfo resolution pin does NOT
+        reach it. When ``pinned_ip`` is supplied (the IP
+        ``enforce_public_host`` validated as public) we dial that IP
+        directly via ``Server=tcp:<ip>,<port>`` and pin TLS verification
+        to the ORIGINAL hostname via ``HostNameInCertificate=<host>`` —
+        so the certificate is still validated against the hostname (SNI
+        intact) while the connection cannot be rebound to a private
+        address.
         """
         parsed = urllib.parse.urlparse(uri)
         host = parsed.hostname or "127.0.0.1"
         port = parsed.port or 1433
         user = parsed.username or ""
         database = parsed.path.lstrip("/") if parsed.path else ""
+        server_target = pinned_ip or host
         parts = [
             f"Driver={self._driver}",
-            f"Server=tcp:{host},{port}",
+            f"Server=tcp:{server_target},{port}",
         ]
+        if pinned_ip:
+            # Validate the server certificate against the hostname even
+            # though we dialed the IP (keeps cert verification intact).
+            parts.append(f"HostNameInCertificate={host}")
         if database:
             parts.append(f"Database={database}")
         if user:
@@ -233,20 +250,32 @@ class MSSQLCollector:
         # class refusal surfaces as MSSQLConnectionError.
         from evidentia_core.network_guard import (
             SSRFBlockedError,
+            _extract_host,
             enforce_public_host,
+            pin_resolved_host,
         )
 
         try:
-            enforce_public_host(
+            validated_ips = enforce_public_host(
                 self._connection_uri,
                 subsystem=COLLECTOR_ID,
                 block_private=self._block_private_ips,
             )
         except SSRFBlockedError as e:
             raise MSSQLConnectionError(str(e)) from e
-        conn_str = self._build_connection_string(self._connection_uri)
+        host = _extract_host(self._connection_uri)
+        # F-V1010-S1: the ODBC driver resolves natively (the getaddrinfo
+        # pin does NOT reach it), so we pin at the connection-string level
+        # — dial the validated IP directly and verify the cert against the
+        # original hostname (see _build_connection_string). The getaddrinfo
+        # pin is also held as defense-in-depth for any Python-side lookup.
+        pinned_ip = validated_ips[0] if validated_ips else None
+        conn_str = self._build_connection_string(
+            self._connection_uri, pinned_ip=pinned_ip
+        )
         try:
-            self._connection = pyodbc.connect(conn_str, autocommit=True)
+            with pin_resolved_host(host, validated_ips):
+                self._connection = pyodbc.connect(conn_str, autocommit=True)
         except Exception as e:
             raise MSSQLConnectionError(
                 f"Could not connect to MSSQL (driver: {type(e).__name__})"

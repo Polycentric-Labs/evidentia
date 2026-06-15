@@ -246,22 +246,40 @@ class PostgresCollector:
         # class refusal surfaces as PostgresConnectionError.
         from evidentia_core.network_guard import (
             SSRFBlockedError,
+            _extract_host,
             enforce_public_host,
+            pin_resolved_host,
         )
 
         try:
-            enforce_public_host(
+            validated_ips = enforce_public_host(
                 self._connection_uri,
                 subsystem=COLLECTOR_ID,
                 block_private=self._block_private_ips,
             )
         except SSRFBlockedError as e:
             raise PostgresConnectionError(str(e)) from e
+        host = _extract_host(self._connection_uri)
+        # F-V1010-S1: pin the validated resolution through libpq's connect.
+        # libpq honors a `hostaddr` param — it dials that IP directly while
+        # still using `host` for TLS SNI + certificate verification. This is
+        # the *authoritative* pin for Postgres: psycopg's binary libpq
+        # resolves in C and does NOT consult the Python getaddrinfo wrapper,
+        # so the resolution pin below cannot reach it. Every entry in
+        # validated_ips is already proven public, so dialing the first one
+        # is rebind-proof for ANY address count — we pin unconditionally
+        # (the prior `len == 1` guard left a multi-A-record host re-resolving
+        # in libpq, the residual the v0.10.10 review caught). We forgo
+        # libpq's multi-IP failover for that guarantee; `host` still drives
+        # TLS. No-op when the guard is opted out (validated_ips empty).
+        if validated_ips and "hostaddr" not in kwargs:
+            kwargs["hostaddr"] = validated_ips[0]
         try:
-            self._connection = psycopg.connect(
-                self._connection_uri,
-                **kwargs,
-            )
+            with pin_resolved_host(host, validated_ips):
+                self._connection = psycopg.connect(
+                    self._connection_uri,
+                    **kwargs,
+                )
         except Exception as e:
             raise PostgresConnectionError(
                 f"Could not connect to Postgres (driver: {type(e).__name__})"

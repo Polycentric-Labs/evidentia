@@ -325,6 +325,13 @@ class DatabricksCollector:
         # Databricks workspace must opt out via block_private_ips=False
         # (--allow-private-ips on the CLI).
         self._block_private_ips = block_private_ips
+        # F-V1010-S1: the host + validated public IPs so the request paths
+        # (test_connection + every sub-check) can PIN resolution through the
+        # SDK's HTTP calls. The databricks-sdk uses requests/urllib3, which
+        # resolve via socket.getaddrinfo, so the pin holds. Empty for an
+        # injected test client (the caller owns its destination).
+        self._pinned_host: str = ""
+        self._pinned_ips: list[str] = []
         # Cached on first call to test_connection() so subsequent
         # sub-checks don't re-probe the SDK.
         self._cached_user_name: str | None = None
@@ -360,17 +367,19 @@ class DatabricksCollector:
         if self._host is not None:
             from evidentia_core.network_guard import (
                 SSRFBlockedError,
+                _extract_host,
                 enforce_public_host,
             )
 
             try:
-                enforce_public_host(
+                self._pinned_ips = enforce_public_host(
                     self._host,
                     subsystem=COLLECTOR_ID,
                     block_private=self._block_private_ips,
                 )
             except SSRFBlockedError as exc:
                 raise DatabricksAuthError(str(exc)) from exc
+            self._pinned_host = _extract_host(self._host)
         try:
             # Lazy import — the SDK is in [databricks] optional extra.
             from databricks.sdk import WorkspaceClient
@@ -388,11 +397,26 @@ class DatabricksCollector:
             ) from e
         return self._client
 
+    def _resolution_pin(self) -> Any:
+        """Context manager pinning the validated resolution for SDK calls.
+
+        F-V1010-S1: the databricks-sdk re-resolves the workspace host
+        (via requests/urllib3 -> socket.getaddrinfo) on each new
+        connection, so the pin must wrap the request region, not just
+        client construction. No-op when ``_pinned_ips`` is empty
+        (injected client / opt-out), keeping SNI / Host / cert
+        verification on the hostname.
+        """
+        from evidentia_core.network_guard import pin_resolved_host
+
+        return pin_resolved_host(self._pinned_host, self._pinned_ips)
+
     def test_connection(self) -> dict[str, str]:
         """Probe SDK auth + populate cached identity. Idempotent."""
         client = self._ensure_client()
         try:
-            me = client.current_user.me()
+            with self._resolution_pin():
+                me = client.current_user.me()
         except Exception as e:
             raise DatabricksAuthError(
                 f"current_user.me() failed — auth misconfigured? {e}"
@@ -1100,6 +1124,9 @@ class DatabricksCollector:
                 types=[EventType.START],
             )
 
+            # F-V1010-S1: hold the validated-resolution pin across every
+            # sub-check's SDK calls (the SDK re-resolves the host per new
+            # connection). No-op when _pinned_ips is empty.
             for sub_check in (
                 self._pat_inventory_findings,
                 self._cluster_compliance_findings,
@@ -1113,7 +1140,8 @@ class DatabricksCollector:
                 # self._network_policy_findings,
             ):
                 try:
-                    findings.extend(sub_check(client, context))
+                    with self._resolution_pin():
+                        findings.extend(sub_check(client, context))
                 except DatabricksPermissionError as e:
                     errors.append(f"{sub_check.__name__}: {e}")
                     _log.warning(

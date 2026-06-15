@@ -133,6 +133,15 @@ class BaseSaaSCollector(ABC):
         # the CLI). An injected test client skips the check — the
         # caller owns that client's destination.
         self._block_private_ips = block_private_ips
+        # F-V1010-S1: the host + the public IPs enforce_public_host
+        # validated, so _get can PIN resolution through the actual
+        # request (httpx re-resolves the hostname when it opens a
+        # connection — without the pin a DNS-rebind between validation
+        # and connection bypasses the guard). Populated in
+        # _ensure_client; "" / [] when an injected client is used (the
+        # caller owns that client's destination).
+        self._pinned_host: str = ""
+        self._pinned_ips: list[str] = []
 
     def __enter__(self) -> Self:
         return self
@@ -193,17 +202,21 @@ class BaseSaaSCollector(ABC):
         # the failure inside the collector's typed error hierarchy.
         from evidentia_core.network_guard import (
             SSRFBlockedError,
+            _extract_host,
             enforce_public_host,
         )
 
         try:
-            enforce_public_host(
+            self._pinned_ips = enforce_public_host(
                 self._base_url,
                 subsystem=self.COLLECTOR_ID or type(self).__name__,
                 block_private=self._block_private_ips,
             )
         except SSRFBlockedError as exc:
             raise self.CONNECTION_ERROR_CLASS(str(exc)) from exc
+        # Record the validated host so _get can pin the connection's
+        # re-resolution to the IPs we just classified as public.
+        self._pinned_host = _extract_host(self._base_url)
         # Lazy-import httpx so the base class doesn't force
         # the import at evidentia_core.plugins level.
         import httpx
@@ -239,9 +252,16 @@ class BaseSaaSCollector(ABC):
         # Lazy-import httpx (matches _ensure_client).
         import httpx
 
+        from evidentia_core.network_guard import pin_resolved_host
+
         client = self._ensure_client()
+        # F-V1010-S1: pin the validated resolution across the request so
+        # httpx's connection-time re-resolution cannot rebind to a private
+        # address. No-op when self._pinned_ips is empty (injected client or
+        # opt-out), so SNI / Host / cert verification stay on the hostname.
         try:
-            resp = client.get(path, params=params)
+            with pin_resolved_host(self._pinned_host, self._pinned_ips):
+                resp = client.get(path, params=params)
         except httpx.TimeoutException as exc:
             raise self.CONNECTION_ERROR_CLASS(
                 f"{type(self).__name__} API timeout after "

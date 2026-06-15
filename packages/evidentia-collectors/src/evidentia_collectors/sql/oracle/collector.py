@@ -239,22 +239,30 @@ class OracleCollector:
         # class refusal surfaces as OracleConnectionError.
         from evidentia_core.network_guard import (
             SSRFBlockedError,
+            _extract_host,
             enforce_public_host,
+            pin_resolved_host,
         )
 
         try:
-            enforce_public_host(
+            validated_ips = enforce_public_host(
                 self._connection_uri,
                 subsystem=COLLECTOR_ID,
                 block_private=self._block_private_ips,
             )
         except SSRFBlockedError as e:
             raise OracleConnectionError(str(e)) from e
+        host = _extract_host(self._connection_uri)
         kwargs = self._parse_uri(self._connection_uri)
         if self._password is not None:
             kwargs["password"] = self._password
+        # F-V1010-S1: pin the validated resolution through oracledb's
+        # connect. The thin-mode driver (the default — no Oracle Client
+        # install) resolves the host via socket.getaddrinfo when it opens
+        # the socket, so the pin holds. No-op when validated_ips is empty.
         try:
-            self._connection = oracledb.connect(**kwargs)
+            with pin_resolved_host(host, validated_ips):
+                self._connection = oracledb.connect(**kwargs)
         except Exception as e:
             raise OracleConnectionError(
                 f"Could not connect to Oracle (driver: {type(e).__name__})"

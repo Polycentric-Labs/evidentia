@@ -211,23 +211,31 @@ class MySQLCollector:
         # connection-class refusal surfaces as MySQLConnectionError.
         from evidentia_core.network_guard import (
             SSRFBlockedError,
+            _extract_host,
             enforce_public_host,
+            pin_resolved_host,
         )
 
         try:
-            enforce_public_host(
+            validated_ips = enforce_public_host(
                 self._connection_uri,
                 subsystem=COLLECTOR_ID,
                 block_private=self._block_private_ips,
             )
         except SSRFBlockedError as e:
             raise MySQLConnectionError(str(e)) from e
+        host = _extract_host(self._connection_uri)
         kwargs = self._parse_uri(self._connection_uri)
         if self._password is not None:
             kwargs["password"] = self._password
         kwargs["autocommit"] = True
+        # F-V1010-S1: pin the validated resolution through PyMySQL's connect
+        # (it re-resolves the host via socket.getaddrinfo when it opens the
+        # socket — without the pin a DNS-rebind between validation and
+        # connection bypasses the guard). No-op when validated_ips is empty.
         try:
-            self._connection = pymysql.connect(**kwargs)
+            with pin_resolved_host(host, validated_ips):
+                self._connection = pymysql.connect(**kwargs)
         except Exception as e:
             raise MySQLConnectionError(
                 f"Could not connect to MySQL (driver: {type(e).__name__})"

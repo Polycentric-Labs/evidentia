@@ -169,6 +169,13 @@ class OktaCollector:
         # collecting from an internal Okta-compatible endpoint must opt
         # out via block_private_ips=False (--allow-private-ips on the CLI).
         self._block_private_ips = block_private_ips
+        # F-V1010-S1: the host + validated public IPs so the request path
+        # can PIN resolution through the connection (httpx re-resolves the
+        # hostname when it opens a socket — a DNS-rebind between validation
+        # and connection would otherwise bypass the guard). Empty for an
+        # injected test client (the caller owns its destination).
+        self._pinned_host: str = ""
+        self._pinned_ips: list[str] = []
 
     # ── Lifecycle ───────────────────────────────────────────────────
 
@@ -203,17 +210,19 @@ class OktaCollector:
         # surfaces as OktaConnectionError per the typed hierarchy.
         from evidentia_core.network_guard import (
             SSRFBlockedError,
+            _extract_host,
             enforce_public_host,
         )
 
         try:
-            enforce_public_host(
+            self._pinned_ips = enforce_public_host(
                 self._org_url,
                 subsystem=COLLECTOR_ID,
                 block_private=self._block_private_ips,
             )
         except SSRFBlockedError as exc:
             raise OktaConnectionError(str(exc)) from exc
+        self._pinned_host = _extract_host(self._org_url)
         self._client = httpx.Client(
             base_url=self._org_url,
             headers={
@@ -231,9 +240,15 @@ class OktaCollector:
     def _api_get(
         self, path: str, params: dict[str, Any] | None = None
     ) -> Any:
+        from evidentia_core.network_guard import pin_resolved_host
+
         client = self._ensure_client()
+        # F-V1010-S1: pin the validated resolution across the request so
+        # httpx's connection-time re-resolution cannot rebind to a private
+        # address. No-op when _pinned_ips is empty (injected client).
         try:
-            response = client.get(path, params=params)
+            with pin_resolved_host(self._pinned_host, self._pinned_ips):
+                response = client.get(path, params=params)
         except httpx.HTTPError as e:
             raise OktaConnectionError(
                 f"GET {path} failed: {e}"
@@ -410,13 +425,17 @@ class OktaCollector:
 
     def _list_all_users(self) -> list[dict[str, Any]]:
         """Paginate /api/v1/users until exhausted or max_users."""
+        from evidentia_core.network_guard import pin_resolved_host
+
         users: list[dict[str, Any]] = []
         path: str | None = "/api/v1/users"
         params: dict[str, Any] | None = {"limit": 200}
         while path is not None and len(users) < self._max_users:
             client = self._ensure_client()
+            # F-V1010-S1: pin resolution across each paginated request.
             try:
-                response = client.get(path, params=params)
+                with pin_resolved_host(self._pinned_host, self._pinned_ips):
+                    response = client.get(path, params=params)
             except httpx.HTTPError as e:
                 raise OktaConnectionError(
                     f"GET {path} failed: {e}"

@@ -36,8 +36,10 @@ from __future__ import annotations
 import ipaddress
 import logging
 import socket
+import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
+from typing import Any
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
@@ -52,6 +54,7 @@ __all__ = [
     "is_loopback_or_private",
     "is_offline",
     "offline_mode",
+    "pin_resolved_host",
     "resolve_host_is_private",
     "set_offline",
 ]
@@ -375,6 +378,32 @@ def resolve_host_is_private(host: str) -> tuple[bool, str]:
         If the hostname cannot be resolved. Callers map this to their
         own connection-error type.
     """
+    is_private, bad_ip, _public_ips = _resolve_and_classify(host)
+    return is_private, bad_ip
+
+
+def _resolve_and_classify(host: str) -> tuple[bool, str, list[str]]:
+    """Resolve ``host`` once and classify every returned address.
+
+    Returns ``(is_private, first_bad_ip, public_ips)``. The
+    ``public_ips`` list is the de-duplicated set of public addresses the
+    host resolved to (in resolution order) — the validated set the
+    caller pins the subsequent connection to so the connecting library's
+    independent re-resolution cannot return a different (rebound) address.
+
+    The classification short-circuits on the FIRST non-public address
+    (an "any address is bad" policy — see :func:`resolve_host_is_private`),
+    so ``public_ips`` is only meaningful when ``is_private`` is False.
+
+    Calls :func:`socket.getaddrinfo` exactly once — the resolution the
+    pin then locks in.
+
+    Raises
+    ------
+    socket.gaierror
+        If the hostname cannot be resolved.
+    """
+    public_ips: list[str] = []
     for *_unused, sockaddr in socket.getaddrinfo(host, None):
         ip_str = str(sockaddr[0])
         try:
@@ -382,8 +411,10 @@ def resolve_host_is_private(host: str) -> tuple[bool, str]:
         except ValueError:
             continue
         if _ip_is_non_public(ip):
-            return True, ip_str
-    return False, ""
+            return True, ip_str, []
+        if ip_str not in public_ips:
+            public_ips.append(ip_str)
+    return False, "", public_ips
 
 
 def enforce_public_host(
@@ -391,7 +422,7 @@ def enforce_public_host(
     *,
     subsystem: str,
     block_private: bool = True,
-) -> None:
+) -> list[str]:
     """Refuse an outbound request whose host resolves to a private address.
 
     The single reusable SSRF chokepoint for every outbound collector.
@@ -399,6 +430,17 @@ def enforce_public_host(
     (``host`` / ``host:port``) and extracts the hostname before
     resolving. No-op when ``block_private`` is False (the deliberate
     opt-out, surfaced as ``--allow-private-ips`` on the CLI).
+
+    Returns the list of validated public IP addresses the host resolved
+    to (resolution order, de-duplicated). Callers pass this list — paired
+    with the same hostname — to :func:`pin_resolved_host` so the
+    connecting library's INDEPENDENT re-resolution is forced to the
+    addresses this guard already classified as public. Without that pin a
+    low-TTL attacker DNS record can pass validation here as public and
+    then re-resolve to ``169.254.169.254`` (cloud-metadata) or an
+    internal host at connection time — the DNS-rebinding bypass this
+    guard would otherwise leave open. Returns ``[]`` when ``block_private``
+    is False (nothing was validated, so nothing is pinnable).
 
     Parameters
     ----------
@@ -412,6 +454,12 @@ def enforce_public_host(
         default means internal-endpoint collection now requires this
         flag (a behavior change).
 
+    Returns
+    -------
+    list[str]
+        The validated public IPs the host resolved to. Empty when
+        ``block_private`` is False.
+
     Raises
     ------
     SSRFBlockedError
@@ -422,7 +470,7 @@ def enforce_public_host(
         refused fail-closed).
     """
     if not block_private:
-        return
+        return []
 
     host = _extract_host(url_or_host)
     if not host:
@@ -431,7 +479,7 @@ def enforce_public_host(
         )
 
     try:
-        is_private, bad_ip = resolve_host_is_private(host)
+        is_private, bad_ip, public_ips = _resolve_and_classify(host)
     except socket.gaierror as exc:
         # Fail closed: a host we cannot resolve cannot be proven public.
         raise SSRFBlockedError(
@@ -441,6 +489,7 @@ def enforce_public_host(
         raise SSRFBlockedError(
             subsystem=subsystem, host=host, resolved_ip=bad_ip
         )
+    return public_ips
 
 
 def _extract_host(url_or_host: str) -> str:
@@ -459,3 +508,167 @@ def _extract_host(url_or_host: str) -> str:
     # unwraps bracketed IPv6 correctly.
     parsed_host = urlparse(f"//{candidate}").hostname
     return parsed_host or ""
+
+
+# ── Resolution pinning (DNS-rebinding defeat — F-V1010-S1 close-out) ───────
+#
+# enforce_public_host resolves + validates a host, but every connecting
+# library (httpx, urllib, the SQL drivers, the Databricks / Snowflake SDKs)
+# RE-RESOLVES the same hostname independently when it opens its socket. A
+# low-TTL attacker DNS record can therefore pass validation as public and
+# then re-resolve to 169.254.169.254 / an internal host between the two
+# lookups — a classic TOCTOU DNS-rebinding bypass.
+#
+# The fix pins the validated resolution THROUGH the connection: for the
+# current thread only, socket.getaddrinfo(<pinned-host>, ...) returns ONLY
+# the addresses enforce_public_host already classified as public. The
+# hostname is unchanged, so TLS SNI + the Host header + certificate
+# verification all still use the original hostname — only the address the
+# socket dials is locked. We install a single process-level getaddrinfo
+# wrapper that consults a thread-local registry; unregistered hosts (and
+# every other thread) delegate to the real getaddrinfo unchanged, so the
+# process-wide resolution behavior is not altered.
+#
+# Thread-locality is correct on the exposed paths: the CLI is single-process
+# and every API collector route invokes its collector SYNCHRONOUSLY inline in
+# the async handler (no run_in_threadpool / to_thread / await between the
+# enforce_public_host validation and the driver's connect), so the validation
+# and the connection share one thread and the pin holds across both.
+
+_pin_state = threading.local()
+
+# The resolver the wrapper delegates to for un-pinned hosts. Set at install
+# time to whatever ``socket.getaddrinfo`` was immediately before we replaced
+# it (the real resolver in production; a monkeypatched stub under test). The
+# wrapper is marked so we can detect + re-wrap if some other library replaces
+# ``socket.getaddrinfo`` after us — keeping the delegate current.
+_GETADDRINFO_DELEGATE: Any = socket.getaddrinfo
+_pin_install_lock = threading.Lock()
+
+
+def _pinned_getaddrinfo(
+    host: object,
+    port: object,
+    family: int = 0,
+    type: int = 0,  # match socket.getaddrinfo's positional signature
+    proto: int = 0,
+    flags: int = 0,
+) -> list[tuple[int, int, int, str, tuple[object, ...]]]:
+    """getaddrinfo wrapper that returns pinned addresses for pinned hosts.
+
+    For a host registered on the CURRENT thread via
+    :func:`pin_resolved_host`, synthesize addrinfo tuples for the
+    pre-validated public IPs at the requested ``port`` (rebuilding the
+    tuple shape per address family). Every other host — and every other
+    thread — falls through to the delegate resolver untouched.
+    """
+    registry: dict[str, list[str]] = getattr(_pin_state, "hosts", {})
+    pinned_ips = (
+        registry.get(host.lower()) if isinstance(host, str) else None
+    )
+    if not pinned_ips:
+        return _GETADDRINFO_DELEGATE(  # type: ignore[no-any-return]
+            host, port, family, type, proto, flags
+        )
+
+    results: list[tuple[int, int, int, str, tuple[object, ...]]] = []
+    socktype = type or socket.SOCK_STREAM
+    for ip_str in pinned_ips:
+        try:
+            ip = ipaddress.ip_address(ip_str)
+        except ValueError:
+            continue
+        af = socket.AF_INET6 if ip.version == 6 else socket.AF_INET
+        if family not in (0, socket.AF_UNSPEC) and family != af:
+            # Caller asked for a specific family that this pinned
+            # address doesn't satisfy — skip it.
+            continue
+        sockaddr: tuple[object, ...] = (
+            (ip_str, port, 0, 0)
+            if af == socket.AF_INET6
+            else (ip_str, port)
+        )
+        results.append((af, socktype, proto, "", sockaddr))
+    if not results:
+        # No pinned address matched the requested family — fail the
+        # lookup rather than silently delegating (delegating would
+        # re-open the rebinding window we just closed).
+        raise socket.gaierror(
+            socket.EAI_NONAME,
+            f"no pinned address for {host!r} in requested family",
+        )
+    return results
+
+
+# Marker attribute so _ensure_pin_installed can recognize its own wrapper.
+_pinned_getaddrinfo._evidentia_pin_wrapper = True  # type: ignore[attr-defined]
+
+
+def _ensure_pin_installed() -> None:
+    """Install the process-level getaddrinfo wrapper, keeping the delegate.
+
+    Idempotent + thread-safe. Captures whatever ``socket.getaddrinfo`` is
+    right now as the delegate for un-pinned lookups, then swaps in the
+    wrapper. If the wrapper is already installed it is a no-op — UNLESS
+    some other code has since replaced ``socket.getaddrinfo`` with a
+    non-wrapper, in which case we re-capture that as the new delegate and
+    re-install (so the wrapper never silently shadows a newer resolver).
+    The wrapper is a transparent pass-through for any host not pinned on
+    the calling thread, so installing it has no effect on un-pinned
+    resolution.
+    """
+    global _GETADDRINFO_DELEGATE
+    with _pin_install_lock:
+        current = socket.getaddrinfo
+        if getattr(current, "_evidentia_pin_wrapper", False):
+            return
+        _GETADDRINFO_DELEGATE = current
+        socket.getaddrinfo = _pinned_getaddrinfo  # type: ignore[assignment]
+
+
+@contextmanager
+def pin_resolved_host(host: str, public_ips: list[str]) -> Iterator[None]:
+    """Pin ``host`` to ``public_ips`` for the duration of a block.
+
+    Within the block, on the CURRENT thread, ``socket.getaddrinfo(host,
+    ...)`` returns ONLY ``public_ips`` (the addresses
+    :func:`enforce_public_host` already validated as public). This closes
+    the DNS-rebinding window between validation and connection: a library
+    that re-resolves the hostname is forced to the validated addresses
+    rather than a freshly-rebound private one.
+
+    Usage::
+
+        validated = enforce_public_host(host, subsystem=..., block_private=...)
+        with pin_resolved_host(host, validated):
+            ... build the client + issue the request / open the socket ...
+
+    The hostname is NOT changed, so TLS SNI, the Host header, and
+    certificate verification still use the original hostname — the pin
+    only constrains which IP the socket dials.
+
+    A no-op when ``public_ips`` is empty (the opt-out / not-validated
+    path), so callers can pass the ``enforce_public_host`` return value
+    through unconditionally. Nested pins for the same host restore the
+    outer pin on exit.
+    """
+    if not public_ips:
+        yield
+        return
+
+    _ensure_pin_installed()
+    key = host.lower()
+    registry: dict[str, list[str]] | None = getattr(_pin_state, "hosts", None)
+    if registry is None:
+        registry = {}
+        _pin_state.hosts = registry
+    had_previous = key in registry
+    previous = registry.get(key)
+    registry[key] = list(public_ips)
+    try:
+        yield
+    finally:
+        if had_previous and previous is not None:
+            registry[key] = previous
+        else:
+            registry.pop(key, None)
