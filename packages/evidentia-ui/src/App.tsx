@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 
+import { DemoBanner } from "@/components/common/DemoBanner";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ConmonPage } from "@/routes/ConmonPage";
 import { DashboardPage } from "@/routes/DashboardPage";
@@ -23,35 +24,39 @@ import { TprmPage } from "@/routes/TprmPage";
  */
 export function App() {
   return (
-    <Routes>
-      <Route element={<AppLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="frameworks" element={<FrameworksPage />} />
-        <Route path="frameworks/:id" element={<FrameworkDetailPage />} />
-        <Route path="gap/analyze" element={<GapAnalyzePage />} />
-        <Route path="gap/diff" element={<GapDiffPage />} />
-        <Route path="risk/generate" element={<RiskGeneratePage />} />
-        <Route path="explain" element={<ExplainPage />} />
-        <Route path="poam" element={<PoamPage />} />
-        <Route path="conmon" element={<ConmonPage />} />
-        <Route path="tprm" element={<TprmPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route
-          path="*"
-          element={
-            <div className="space-y-3">
-              <h1 className="text-3xl font-semibold tracking-tight">
-                Page not found
-              </h1>
-              <p className="text-muted-foreground">
-                That route isn't implemented yet. Check the sidebar for
-                available pages.
-              </p>
-            </div>
-          }
-        />
-      </Route>
-    </Routes>
+    <>
+      {/* No-op in normal builds; a persistent strip in the VITE_DEMO bundle. */}
+      <DemoBanner />
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="frameworks" element={<FrameworksPage />} />
+          <Route path="frameworks/:id" element={<FrameworkDetailPage />} />
+          <Route path="gap/analyze" element={<GapAnalyzePage />} />
+          <Route path="gap/diff" element={<GapDiffPage />} />
+          <Route path="risk/generate" element={<RiskGeneratePage />} />
+          <Route path="explain" element={<ExplainPage />} />
+          <Route path="poam" element={<PoamPage />} />
+          <Route path="conmon" element={<ConmonPage />} />
+          <Route path="tprm" element={<TprmPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route
+            path="*"
+            element={
+              <div className="space-y-3">
+                <h1 className="text-3xl font-semibold tracking-tight">
+                  Page not found
+                </h1>
+                <p className="text-muted-foreground">
+                  That route isn't implemented yet. Check the sidebar for
+                  available pages.
+                </p>
+              </div>
+            }
+          />
+        </Route>
+      </Routes>
+    </>
   );
 }
