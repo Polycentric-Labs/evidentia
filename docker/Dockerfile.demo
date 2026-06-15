@@ -1,0 +1,155 @@
+# Evidentia Tier-1 demo-profile image (constrained runner, offline, no creds).
+#
+# This is the image the eventual hosted Tier-1 public demo runs (see
+# `docs/demo-suite-design.md` §5). Anonymous users drive the *real*
+# `evidentia` CLI through the argv-allowlist runner
+# (`evidentia.demo.runner`) — never a raw shell. The image satisfies the
+# threat model's IN-IMAGE conditions; the remaining conditions are the
+# HOST's responsibility and are spelled out in the run contract below.
+#
+# ── Threat-model conditions (docs/demo-suite-design.md §5) ───────────────
+# This image alone covers:
+#   1. No raw shell. The ENTRYPOINT is the constrained runner (exec-form,
+#      no /bin/sh, no -c/-m). It validates argv against a fixed allowlist
+#      of network-free, fixture-only verbs, scrubs the env, and forces
+#      `--offline`. Anything off the allowlist is refused (exit 2).
+#   3. Verifiably empty credentials + forced offline. The runner's
+#      `scrub_env` drops every inherited variable except a tiny essentials
+#      set and force-sets `EVIDENTIA_API_OFFLINE=1`; this image also sets
+#      `EVIDENTIA_API_OFFLINE=1` at the image level as defence-in-depth.
+#      Build with no `--secret`/`--build-arg <CRED>` and run with no
+#      `-e <CRED>` so the container starts credential-empty.
+#   5. Built FROM the cosign-verified, attestation-checked signed release
+#      digest (the `BASE` build-arg below — NOT `:latest`).
+#
+# ── HOST RUN CONTRACT — the host MUST add these (conditions 2 & 4) ───────
+# This Dockerfile cannot enforce runtime isolation; the hosting platform
+# is responsible for every item below before the demo goes live:
+#
+#   • condition 2 — Default-deny egress:
+#       docker run --network none ...           (or a loopback-only net)
+#     on a host with NO cloud IAM role attached and IMDS blocked. This
+#     single control neutralizes the entire SSRF/egress threat class.
+#
+#   • condition 4 — Per-session caps + read-only rootfs + hard TTL:
+#       --memory 512m --cpus 1 --pids-limit 256 \
+#       --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+#       --security-opt no-new-privileges \
+#       --cap-drop ALL
+#     plus an externally-enforced TTL (the platform kills the container
+#     after N seconds) to bound the Monte-Carlo / disk-fill primitives.
+#
+#   • credential-empty start (condition 3): launch with no `-e` cred vars
+#     and no mounted secret; the runner's `scrub_env` is the in-image
+#     backstop, not a substitute for a clean launch environment.
+#
+# ── Build ────────────────────────────────────────────────────────────────
+# Production (deploy time — pin BASE to the signed v0.10.10 release digest
+# obtained from cosign verification, NOT `:latest`):
+#   docker build -f docker/Dockerfile.demo \
+#       --build-arg BASE=ghcr.io/polycentric-labs/evidentia@sha256:<digest> \
+#       -t evidentia-demo:v0.10.10 .
+#
+# Smoke test (before the signed digest exists — BASE is overridable so the
+# allowlist/refusal logic is testable against a bare Python base):
+#   docker build -f docker/Dockerfile.demo \
+#       --build-arg BASE=python:3.13-slim -t evidentia-demo:smoke .
+#   # refuses a raw shell and a network verb (both exit non-zero, no exec):
+#   docker run --rm --network none evidentia-demo:smoke sh
+#   docker run --rm --network none evidentia-demo:smoke collect okta
+#
+# ── Run (example; the host adds the isolation flags above) ───────────────
+#   docker run --rm --network none --read-only --tmpfs /tmp \
+#       --memory 512m --cpus 1 --pids-limit 256 \
+#       --security-opt no-new-privileges --cap-drop ALL \
+#       evidentia-demo:v0.10.10 doctor
+
+# Default to the signed release digest at deploy time. The placeholder
+# below is intentionally a non-resolvable pin so a production build that
+# forgets to pass `--build-arg BASE=<verified-digest>` fails loudly rather
+# than silently pulling `:latest`. Smoke builds override it with
+# `--build-arg BASE=python:3.13-slim`.
+ARG BASE=ghcr.io/polycentric-labs/evidentia@sha256:0000000000000000000000000000000000000000000000000000000000000000
+FROM ${BASE}
+
+# The Tier-1 runner + its argv allowlist. The signed base already ships
+# these inside the `evidentia` wheel; copying them in (a) overlays the
+# exact allowlist from this repo state onto the runner the demo exposes,
+# and (b) makes the image self-contained for the `BASE=python:3.13-slim`
+# smoke build, where no `evidentia` wheel is installed. They land in a
+# dedicated package tree on PYTHONPATH (see ENV below) so
+# `importlib.resources.files("evidentia.demo")` resolves for the runner.
+#
+# This overlay is used ONLY by the launcher's own process. The runner
+# execs the real `evidentia` binary as a subprocess with a SCRUBBED env
+# (no PYTHONPATH — see `evidentia.demo.runner.scrub_env`), so the
+# subprocess imports the full installed package from site-packages, never
+# this minimal overlay.
+COPY packages/evidentia/src/evidentia/demo/__init__.py \
+     packages/evidentia/src/evidentia/demo/runner.py \
+     packages/evidentia/src/evidentia/demo/allowlist.yaml \
+     /opt/evidentia-demo/evidentia/demo/
+
+# Re-create the parent package marker the overlay needs to be importable
+# as `evidentia.demo` (the COPY above only brings the `demo/` leaf), and
+# bake the no-shell launcher. The launcher is the ONLY process the
+# ENTRYPOINT runs: it forwards the container's argv to the constrained
+# runner and exits with the runner's status. No /bin/sh, no `-c` at run
+# time — the launcher is a fixed file, and the runner refuses any
+# `-c`/`-m`/off-allowlist argv a caller might pass.
+USER root
+RUN printf '%s\n' \
+        '"""Namespace shim so the copied demo overlay imports as evidentia.demo."""' \
+        > /opt/evidentia-demo/evidentia/__init__.py \
+ && printf '%s\n' \
+        '"""No-shell entrypoint for the Tier-1 demo image.'  \
+        '' \
+        'Forwards the container argv to the constrained allowlist runner and' \
+        'exits with its status. This file is the entire entrypoint surface;' \
+        'the runner enforces the allowlist, env scrub, and forced --offline.' \
+        '"""' \
+        'import sys' \
+        '' \
+        'from evidentia.demo.runner import run' \
+        '' \
+        'if __name__ == "__main__":' \
+        '    sys.exit(run(sys.argv[1:]))' \
+        > /opt/evidentia-demo/launch.py \
+ && pip install --no-cache-dir "pyyaml>=6.0"
+
+# Put the overlay on the import path for the launcher's process only. The
+# runner's scrubbed subprocess env deliberately omits PYTHONPATH, so the
+# real `evidentia` binary it execs is unaffected by this overlay.
+ENV PYTHONPATH=/opt/evidentia-demo
+
+# Defence-in-depth offline flag (condition 3). The runner also forces this
+# on every invocation via `scrub_env`; setting it here means even a direct
+# `evidentia` call inside the image (which the ENTRYPOINT does not expose)
+# starts offline.
+ENV EVIDENTIA_API_OFFLINE=1
+
+# Drop privileges. The signed base image already creates the `evidentia`
+# user (uid 1000); the smoke base (`python:3.13-slim`) does not, so create
+# it idempotently. The demo runs as this non-root, no-login user.
+RUN (id -u evidentia >/dev/null 2>&1 || useradd --uid 1000 --no-create-home --shell /usr/sbin/nologin evidentia)
+USER evidentia
+WORKDIR /home/evidentia
+
+# The constrained runner is the only executable surface. Exec-form (no
+# shell): the container's argv after the image name becomes the runner's
+# argv. `docker run <img> doctor` runs the allowlisted `evidentia doctor`;
+# `docker run <img> sh` / `... collect okta` are refused (exit 2).
+ENTRYPOINT ["python", "/opt/evidentia-demo/launch.py"]
+# No default args: an argument-less run prints the runner's refusal (empty
+# argv is not on the allowlist), which is the safe default for a demo whose
+# host wires a specific command per session.
+CMD []
+
+# OCI labels for the demo image.
+LABEL org.opencontainers.image.title="Evidentia (Tier-1 demo profile)"
+LABEL org.opencontainers.image.description="Constrained-runner demo image: the real Evidentia CLI behind an argv allowlist, offline, credential-empty, non-root. Host must add --network none + caps + read-only rootfs + TTL (see Dockerfile header)."
+LABEL org.opencontainers.image.source="https://github.com/polycentric-labs/evidentia"
+LABEL org.opencontainers.image.url="https://github.com/polycentric-labs/evidentia"
+LABEL org.opencontainers.image.documentation="https://github.com/polycentric-labs/evidentia/blob/main/docs/demo-suite-design.md"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+LABEL org.opencontainers.image.vendor="polycentric-labs"
