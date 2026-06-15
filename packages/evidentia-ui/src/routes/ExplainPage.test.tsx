@@ -6,6 +6,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ExplainPage } from "@/routes/ExplainPage";
 
+// Demo-mode toggle. `IS_DEMO` is a build-time const, so we mock the module
+// behind a mutable flag the demo test flips on. Default false keeps every
+// other test on the real fetch-streaming path. The flag lives in a hoisted
+// block so the (hoisted) vi.mock factory can read it.
+const demo = vi.hoisted(() => ({ flag: false }));
+vi.mock("@/lib/demo", () => ({
+  get IS_DEMO() {
+    return demo.flag;
+  },
+}));
+
 // Mock the typed API client. listFrameworks + llmStatus are the only two
 // methods ExplainPage queries on mount; explainControlUrl is a pure URL
 // builder we keep real so the test exercises the actual query string.
@@ -90,6 +101,7 @@ describe("ExplainPage", () => {
   });
 
   afterEach(() => {
+    demo.flag = false;
     vi.unstubAllGlobals();
     vi.clearAllMocks();
   });
@@ -189,5 +201,31 @@ describe("ExplainPage", () => {
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("/api/explain/soc2-tsc/CC6.1");
     expect(init?.method).toBe("POST");
+  });
+
+  it("in demo mode renders the baked explanation with ZERO fetch calls", async () => {
+    demo.flag = true;
+    const user = userEvent.setup();
+
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderPage();
+
+    await user.click(await screen.findByRole("radio", { name: /soc2-tsc/i }));
+    await user.type(screen.getByLabelText(/control id/i), "AC-2");
+    await user.click(screen.getByRole("button", { name: /^explain$/i }));
+
+    // The baked DEMO_EXPLANATION (Account Management) reaches the done state.
+    const heading = await screen.findByRole("heading", {
+      name: /account management/i,
+    });
+    const card = heading.closest("section") as HTMLElement;
+    expect(
+      within(card).getByText(/knowing who has accounts/i),
+    ).toBeInTheDocument();
+
+    // No backend was touched — the SSE stream was replayed from fixtures.
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

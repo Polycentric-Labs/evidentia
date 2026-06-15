@@ -15,6 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api";
+import { IS_DEMO } from "@/lib/demo";
+import { simulateSse } from "@/lib/demo/demo-api";
+import { DEMO_EXPLANATION } from "@/lib/demo/fixtures";
 import { readSse } from "@/lib/sse";
 import { cn } from "@/lib/utils";
 
@@ -108,6 +111,19 @@ export function ExplainPage() {
     };
 
     try {
+      if (IS_DEMO) {
+        // Static demo build: replay a baked stream from fixtures — no backend,
+        // no network. Mirrors the real start→done frame sequence.
+        await simulateSse<ExplainEvent>(
+          [
+            { phase: "start", framework, control_id: controlId.trim() },
+            { phase: "done", explanation: DEMO_EXPLANATION },
+          ],
+          onEvent,
+        );
+        return;
+      }
+
       const url = api.explainControlUrl(framework, controlId.trim(), {
         refresh,
       });

@@ -15,6 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { api } from "@/lib/api";
+import { IS_DEMO } from "@/lib/demo";
+import { simulateSse } from "@/lib/demo/demo-api";
+import { DEMO_GAPS } from "@/lib/demo/fixtures";
 import { readSse } from "@/lib/sse";
 import { cn } from "@/lib/utils";
 
@@ -134,6 +137,30 @@ export function RiskGeneratePage() {
     abortRef.current = new AbortController();
 
     try {
+      if (IS_DEMO) {
+        // Static demo build: replay a baked per-gap stream from fixtures — no
+        // backend, no network. Five hero gaps stream start→progress×5→done.
+        const gaps = DEMO_GAPS.slice(0, 5);
+        const total = gaps.length;
+        const events: StreamEvent[] = [
+          { phase: "start", total },
+          ...gaps.map(
+            (g, i): StreamEvent => ({
+              phase: "progress",
+              gap_id: g.id,
+              control_id: g.control_id,
+              framework: g.framework,
+              index: i,
+              total,
+              status: "done",
+            }),
+          ),
+          { phase: "done", generated: total, failed: 0 },
+        ];
+        await simulateSse<StreamEvent>(events, onStreamEvent);
+        return;
+      }
+
       const res = await fetch("/api/risk/generate", {
         method: "POST",
         headers: {
