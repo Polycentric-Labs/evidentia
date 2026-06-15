@@ -3225,6 +3225,140 @@ backlog item, not a hidden delivery commitment.
 
 ---
 
+## Serve posture — container exposure trap (T3)
+
+> **Deployment-configuration finding, not a code defect.** The
+> `evidentia serve` CLI ships a safe default (loopback bind, auth
+> off, dev parity). The **published container image overrides that
+> default to a network-facing bind**, so a naive `docker run -p`
+> publishes the full unauthenticated REST surface. This section is
+> the canonical operator-facing hardening guidance for any
+> network-exposed deployment. It applies to every release and is
+> re-checked each cycle alongside the version-delta sections above.
+
+### The trap
+
+The two entry points have **different defaults by design** — and the
+difference is the finding:
+
+| Entry point | Bind | Auth | Source |
+|---|---|---|---|
+| `evidentia serve` (CLI) | `127.0.0.1` (loopback-only) | OFF | `--host` default in `evidentia.cli.main:serve` |
+| Container image (`CMD`) | `0.0.0.0` (all interfaces) | OFF | `CMD ["serve", "--host", "0.0.0.0", "--port", "8000"]` in the `Dockerfile` |
+
+The container overrides the loopback default to `0.0.0.0` so the web
+UI is reachable from the host once a port is mapped (`docker run -p
+8000:8000`) — the expected UX for a containerized GUI. But the auth
+gate is **not** wired on by that override. When `--auth-token-file` /
+`EVIDENTIA_API_AUTH_TOKEN_FILE` is unset (the default), **no auth
+gating fires** on any `/api/*` route (see
+[§v0.8.1 Surface 6](#surface-6-fastapi-authprovider-middleware-p33)
+for the gating mechanism itself). The result:
+
+- **An operator who maps the container port to a public interface
+  exposes the entire `/api/*` surface unauthenticated** — all 16+ REST
+  handlers (gap analysis, risk generation, TPRM/POA&M reads, config),
+  the `/api/metrics` fingerprinting endpoint
+  ([§v0.8.0 Surface 3](#surface-3-apimetrics-prometheus-endpoint-p1-g3)),
+  and the collector-trigger endpoints. The latter matter most: an
+  anonymous caller can drive Evidentia's outbound collectors, turning
+  the box into an **SSRF / outbound-request engine** against whatever
+  the deployment's network position can reach.
+
+### STRIDE summary
+
+- **Spoofing / Elevation**: no auth ⇒ any network peer is treated as
+  the operator. Every `/api/*` action runs with the server process's
+  authority.
+- **Information disclosure**: `/api/metrics` leaks version
+  (fingerprint), audit-event volume, and failure rates; gap/risk/TPRM
+  reads expose the operator's compliance posture.
+- **SSRF (the sharp edge)**: collector endpoints make outbound
+  requests to operator-configured targets. Unauthenticated access lets
+  an attacker pivot the server's network position (cloud metadata
+  endpoints, internal services). The default-on **collectors
+  private-IP guard** on `collect ocsf` URL mode
+  ([§v0.10.2, F-V101-L1 closed](#v0102-attack-surface-delta--mcp-as-backend--close-f-v101-l1-pre-tag-2026-05-23))
+  rejects RFC-1918 / link-local / loopback targets pre-fetch and is
+  **defense-in-depth** here, not the primary control — it narrows the
+  blast radius of the OCSF URL collector but is not a substitute for
+  not exposing the surface in the first place.
+
+### Recommended posture (in priority order)
+
+1. **Bind to loopback unless you intentionally mean to expose it.**
+   The CLI already does this (`127.0.0.1`). For the container, do
+   **not** publish the port to a public interface. Map it to localhost
+   only (`docker run -p 127.0.0.1:8000:8000 …`), or override the bind
+   back to loopback (`docker run … evidentia serve --host 127.0.0.1`),
+   or front it with a reverse proxy on a private network. Mapping
+   `0.0.0.0:8000` to a public IP is the foot-gun.
+2. **Set an auth token for ANY non-loopback exposure.** Point
+   `--auth-token-file` (or `EVIDENTIA_API_AUTH_TOKEN_FILE`) at a file
+   containing a bearer token before binding anywhere other than
+   loopback. Every `/api/*` route then requires `Authorization: Bearer
+   <token>` (liveness probes — `/api/health`, `/api/version`,
+   `/api/openapi.json`, `/api/docs`, `/api/redoc` — are intentionally
+   exempt for orchestrator readiness checks). Per the secret-handling
+   rule, mount the token file into the container; never bake the token
+   into the image or pass it on the command line. This token is the
+   primary access control — the private-IP guard is not.
+3. **Run with collectors disabled when you don't need them.** Pass
+   `--offline` (or set `EVIDENTIA_API_OFFLINE=1`) so the network guard
+   refuses outbound calls to non-loopback hosts — this neutralizes the
+   SSRF surface regardless of who reaches the API. Use this whenever
+   the deployment only does local gap/risk analysis and never collects
+   live evidence. See [`air-gapped.md`](air-gapped.md) §"Web UI in
+   air-gapped deployments".
+4. **Keep security headers on for network binds.** They are auto-on
+   when `--host` is non-loopback (the container's `0.0.0.0` bind
+   triggers this) and configurable via `EVIDENTIA_API_SECURITY_HEADERS`
+   — see [§v0.7.9 security-headers middleware](#defense-in-depth-security-headers-middleware).
+   Suppress only when a TLS-terminating proxy already injects them.
+
+### Minimal hardened container invocation
+
+```bash
+# Loopback-only (safest; reach the UI via an SSH tunnel or local proxy):
+docker run --rm -p 127.0.0.1:8000:8000 evidentia:latest
+
+# Network-exposed but auth-gated + collectors disabled:
+docker run --rm -p 8000:8000 \
+    -v /run/secrets/evidentia-token:/secrets/token:ro \
+    -e EVIDENTIA_API_AUTH_TOKEN_FILE=/secrets/token \
+    -e EVIDENTIA_API_OFFLINE=1 \
+    evidentia:latest
+```
+
+### Status
+
+Working as designed; documented rather than changed. The CLI default
+is loopback-safe; the container's network bind is a deliberate UX
+trade-off that this section makes explicit. The auth flag, the
+`--offline` guard, the security-headers middleware, and the
+collectors private-IP guard are all present — the residual exposure
+is purely a function of operator deployment choices, and this guidance
+is the mitigation. No code, Dockerfile, or version change is implied
+by this entry.
+
+### Cross-references
+
+- [`api-stability.md`](api-stability.md) — `EVIDENTIA_API_AUTH_TOKEN_FILE`
+  + the frozen env-var public contract; the `/api/*` auth contract.
+- [`air-gapped.md`](air-gapped.md) — `--offline` /
+  `EVIDENTIA_API_OFFLINE` air-gap posture for the web UI.
+- [§v0.8.1 Surface 6](#surface-6-fastapi-authprovider-middleware-p33)
+  — the AuthProvider gating mechanism this section tells operators to
+  enable.
+- [§v0.8.0 Surface 3](#surface-3-apimetrics-prometheus-endpoint-p1-g3)
+  — the `/api/metrics` exposure that this posture also covers.
+- [§v0.7.9 security-headers middleware](#defense-in-depth-security-headers-middleware)
+  — the auto-on-for-network-binds response headers.
+- `Dockerfile` `CMD` — the `--host 0.0.0.0` override that creates the
+  trap (owned by the container domain, not changed here).
+
+---
+
 *First published v0.7.7 (2026-05). Origin: promoted from a
 project-internal deep-pass note to a public-surface doc to
 satisfy pre-release-review v4 G5 (threat-model existence gate)

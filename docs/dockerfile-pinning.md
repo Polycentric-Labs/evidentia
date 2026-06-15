@@ -163,12 +163,13 @@ file. This was a deliberate trade-off rather than an oversight.
 **Regeneration**: `scripts/bump_version.py --regenerate-requirements
 --to A.B.C` updates the pin in `requirements.in` + invokes
 `pip-compile`. Run inside the pinned base-image
-(`python:3.14-slim@sha256:...`) so platform-specific transitives
-(uvloop, etc.) resolve correctly:
+(`python:3.13-slim@sha256:...` — 3.13, not 3.14, because the AI stack
+requires `python <3.14`; see the Dockerfile comment) so platform-specific
+transitives (uvloop, etc.) resolve correctly:
 
 ```bash
 docker run --rm -v "$PWD/docker:/work" -w /work \
-  python:3.14-slim@sha256:<base-digest> \
+  python:3.13-slim@sha256:<base-digest> \
   sh -c "pip install -q pip-tools && pip-compile --generate-hashes \
     --output-file=requirements.txt requirements.in"
 ```
@@ -268,7 +269,7 @@ locally can run:
 
 ```bash
 docker run --rm -v "$PWD/docker/requirements.txt:/tmp/req.txt" \
-  python:3.14-slim \
+  python:3.13-slim \
   pip install --require-hashes -r /tmp/req.txt --dry-run
 ```
 
