@@ -33,10 +33,10 @@ members = [
 
 [dependency-groups]
 dev = [
-    "pytest>=8.3",
+    "pytest>=9.1.0",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=5.0",
-    "ruff>=0.15.16",
+    "ruff>=0.15.17",
     "mypy>=2.1.0",
     # v0.3.0: flipped mypy CI job from advisory to strict. types-PyYAML is
     # needed to silence "Library stubs not installed for yaml" across every
@@ -49,14 +49,14 @@ dev = [
     # `boto3` is the runtime dependency (also in evidentia-collectors
     # [aws] extra); having it in dev deps means collector tests run
     # without an extra install step.
-    "boto3>=1.43.24",
+    "boto3>=1.43.29",
     "moto[all]>=5.2.2",
     # v0.7.12 P0: cloud-WORM backend SDKs (gated as evidentia[worm-X]
     # extras for end-users; in dev-deps so the dev/CI venv runs the
     # backend tests without needing the extra activated).
-    "azure-storage-blob>=12.29.0",
+    "azure-storage-blob>=12.30.0",
     "azure-identity>=1.16.0",
-    "google-cloud-storage>=3.11.0",
+    "google-cloud-storage>=3.12.0",
     # v0.7.0: BLOCKER B7 (docs/enterprise-grade.md). Validates that our
     # OSCAL Assessment Results output round-trips through the NIST
     # OSCAL-Compass reference impl. Trestle is on pydantic.v1 internally
@@ -106,7 +106,7 @@ dev = [
     # OpenAPI spec; playwright drives the React UI for end-to-
     # end probing. Both ride in dev-deps so a fresh dev/CI venv
     # can run the DAST suite without separate install steps.
-    "schemathesis>=4.21.1",
+    "schemathesis>=4.21.6",
     "playwright>=1.50",
     # v0.10.0: py-ocsf-models drives the OCSF mapping layer
     # (evidentia_core.ocsf). It is an end-user extra
