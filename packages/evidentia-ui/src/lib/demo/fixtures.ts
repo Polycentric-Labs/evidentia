@@ -432,23 +432,24 @@ export const DEMO_EFFICIENCY_OPPORTUNITIES: EfficiencyOpportunity[] = [
 
 /**
  * The hero gap report. Counts mirror the Meridian v2 baseline header
- * (311 / 297 / 13 / 1 / 0 / 0); 48 of 1196 controls implemented => 45.3%
- * coverage — the figure the demo story and the Tier-0 cast both quote.
+ * (311 / 297 / 13 / 1 / 0 / 0); 49 of 348 controls implemented => 10.6%
+ * coverage — the exact figures the Meridian v2 baseline.json carries, so
+ * the GUI and the Tier-0 cast (which runs the real CLI) quote the same story.
  */
 export const DEMO_GAP_REPORT: GapAnalysisReport = {
   id: "meridian-fintech-v2-baseline",
   organization: "Meridian Financial",
   frameworks_analyzed: ["nist-800-53-rev5-moderate", "soc2-tsc"],
   analyzed_at: ANALYZED_AT,
-  total_controls_required: 1196,
-  total_controls_in_inventory: 48,
+  total_controls_required: 348,
+  total_controls_in_inventory: 49,
   total_gaps: 311,
   critical_gaps: 297,
   high_gaps: 13,
   medium_gaps: 1,
   low_gaps: 0,
   informational_gaps: 0,
-  coverage_percentage: 45.3,
+  coverage_percentage: 10.6,
   gaps: DEMO_GAPS,
   efficiency_opportunities: DEMO_EFFICIENCY_OPPORTUNITIES,
   prioritized_roadmap: DEMO_GAPS.map((g) => g.id),
@@ -458,21 +459,21 @@ export const DEMO_GAP_REPORT: GapAnalysisReport = {
 };
 
 /**
- * The post-remediation report (the `pr-branch` snapshot) — three critical gaps
- * closed (IA-2, AU-2, SI-4) so the diff shows real progress. Counts shift down
- * accordingly: 308 gaps / 294 critical.
+ * The post-remediation report (the `pr-branch` snapshot) — one control added
+ * (49 -> 50 in inventory), closing one critical + the one medium gap, so the
+ * diff shows real progress. Counts mirror pr-branch.json: 309 gaps / 296
+ * critical / 0 medium, coverage 11.2%.
  */
 export const DEMO_GAP_REPORT_PR: GapAnalysisReport = {
   ...DEMO_GAP_REPORT,
   id: "meridian-fintech-v2-pr-branch",
   analyzed_at: "2026-04-26T09:12:05.114200Z",
-  total_controls_in_inventory: 51,
-  total_gaps: 308,
-  critical_gaps: 294,
-  coverage_percentage: 47.4,
-  gaps: DEMO_GAPS.filter(
-    (g) => !["AU-2", "SI-4", "IA-2"].includes(g.control_id),
-  ),
+  total_controls_in_inventory: 50,
+  total_gaps: 309,
+  critical_gaps: 296,
+  medium_gaps: 0,
+  coverage_percentage: 11.2,
+  gaps: DEMO_GAPS.filter((g) => !["AU-2", "AT-2"].includes(g.control_id)),
   inventory_source: "my-controls.yaml",
 };
 
@@ -504,7 +505,7 @@ export const DEMO_REPORT_LIST: GapReportListResponse = {
   ],
 };
 
-/** baseline → pr-branch diff: three critical gaps closed, none opened. */
+/** baseline → pr-branch diff: one critical + one medium gap closed, none opened. */
 export const DEMO_GAP_DIFF: GapDiff = {
   id: "meridian-fintech-v2-diff",
   generated_at: "2026-04-26T09:13:40.000000Z",
@@ -514,25 +515,13 @@ export const DEMO_GAP_DIFF: GapDiff = {
   head_inventory_source: "my-controls.yaml",
   frameworks_analyzed: ["nist-800-53-rev5-moderate", "soc2-tsc"],
   summary: {
-    closed: 3,
+    closed: 2,
     opened: 0,
     severity_increased: 0,
     severity_decreased: 0,
-    unchanged: 308,
+    unchanged: 309,
   },
   entries: [
-    {
-      framework: "nist-800-53-rev5-moderate",
-      control_id: "IA-2",
-      control_title: "Identification and Authentication (Organizational Users)",
-      status: "closed",
-      base_severity: "critical",
-      head_severity: null,
-      base_priority: 5.2,
-      head_priority: null,
-      gap_description: null,
-      remediation_guidance: null,
-    },
     {
       framework: "nist-800-53-rev5-moderate",
       control_id: "AU-2",
@@ -547,12 +536,12 @@ export const DEMO_GAP_DIFF: GapDiff = {
     },
     {
       framework: "nist-800-53-rev5-moderate",
-      control_id: "SI-4",
-      control_title: "System Monitoring",
+      control_id: "AT-2",
+      control_title: "Literacy Training and Awareness",
       status: "closed",
-      base_severity: "critical",
+      base_severity: "medium",
       head_severity: null,
-      base_priority: 5.4,
+      base_priority: 2.1,
       head_priority: null,
       gap_description: null,
       remediation_guidance: null,

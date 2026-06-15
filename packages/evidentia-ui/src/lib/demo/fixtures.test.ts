@@ -7,7 +7,9 @@ describe("demo fixtures", () => {
     expect(DEMO_GAP_REPORT.organization).toBe("Meridian Financial");
     expect(DEMO_GAP_REPORT.total_gaps).toBe(311);
     expect(DEMO_GAP_REPORT.critical_gaps).toBe(297);
-    expect(DEMO_GAP_REPORT.coverage_percentage).toBeCloseTo(45.3);
+    expect(DEMO_GAP_REPORT.coverage_percentage).toBeCloseTo(10.6);
+    expect(DEMO_GAP_REPORT.total_controls_required).toBe(348);
+    expect(DEMO_GAP_REPORT.total_controls_in_inventory).toBe(49);
     expect(DEMO_GAP_REPORT.frameworks_analyzed).toEqual([
       "nist-800-53-rev5-moderate",
       "soc2-tsc",
