@@ -119,11 +119,11 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 
 ## Recent Releases
 
-**v0.10.10 (2026-06-12)** — *supply-chain hardening + collectors SSRF guard*. **`serve` posture hardening doc (threat-model T3)**, `docs/threat-model.md` documents that the container `CMD` defaults to `serve --host 0.0.0.0` (online, no-auth) and recommends 127.0.0.1 binding, `EVIDENTIA_API_AUTH_TOKEN_FILE` for any non-loopback exposure, and `--offline` / `EVIDENTIA_API_OFFLINE=1` when collectors aren't needed.
+**v0.10.10 (2026-06-15)** — *supply-chain hardening + the public demo suite*. Container base → Python 3.13 (3 CVEs cleared), collectors SSRF guard default-on + DNS-rebind-resistant, a container osv-gate, and a three-tier zero-backend public demo (asciinema cast + static demo-mode console + constrained Tier-1 runner).
 
-**v0.10.9 (2026-06-10)** — *debt + robustness patch*. **`lib/sse.ts` shared SSE reader** in the web console, one generic `readSse<T>` replaces the functionally identical per-page readers in ExplainPage and RiskGeneratePage, with a 6-case vitest spec locking in the exact streaming semantics.
+**v0.10.9 (2026-06-10)** — *debt + robustness patch*. Shared `lib/sse.ts` `readSse<T>` replaces the per-page SSE readers, with a vitest spec locking the streaming semantics.
 
-**v0.10.8 (2026-06-04)** — *safeguards automation + CLI↔GUI parity + Tier-B GUI build-out*. **Tag-time release gate.** `release.yml` gains a `gate` job that runs the full SSOT check suite on the tagged commit, and the PyPI/GHCR `publish` jobs now `needs: gate`.
+**v0.10.8 (2026-06-04)** — *safeguards automation + CLI↔GUI parity*. Tag-time release `gate` job runs the full SSOT suite on the tagged commit; PyPI/GHCR publish now `needs: gate`.
 
 Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https://github.com/Polycentric-Labs/evidentia/releases)
 
@@ -139,7 +139,9 @@ Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https:/
 
 This project was developed alongside AI platforms.
 
-Models used: Claude Opus 4.6, Claude Opus 4.7, Sonar Deep Research
+AI models and tools used: Claude, Codex, Cursor, LangChain, Ollama (and other local models), OpenRouter (incl. Gemini, GPT, etc.), Perplexity.
+
+Custom-built infrastructure and integrations for each.
 
 ## License
 
