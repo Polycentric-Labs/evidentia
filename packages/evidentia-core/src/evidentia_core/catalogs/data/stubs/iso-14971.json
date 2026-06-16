@@ -1,0 +1,87 @@
+{
+  "framework_id": "iso-14971",
+  "framework_name": "ISO 14971 — Application of risk management to medical devices",
+  "version": "ISO 14971:2019",
+  "source": "ISO — ISO 14971:2019, \"Medical devices — Application of risk management to medical devices\" (third edition). Clause titles paraphrased in Evidentia's own words; no normative text reproduced. Authoritative text must be licensed from ISO.",
+  "tier": "C",
+  "category": "control",
+  "placeholder": true,
+  "families": [
+    "Clauses 4-10 — Risk management process"
+  ],
+  "controls": [
+    {
+      "id": "iso-14971-cl4",
+      "title": "ISO 14971:2019 Clause 4 — General requirements for the risk management system",
+      "description": "[Licensed content — see license_url for authoritative text.]",
+      "family": "Clauses 4-10 — Risk management process",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www.iso.org/standard/72704.html"
+    },
+    {
+      "id": "iso-14971-cl5",
+      "title": "ISO 14971:2019 Clause 5 — Risk analysis",
+      "description": "[Licensed content — see license_url for authoritative text.]",
+      "family": "Clauses 4-10 — Risk management process",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www.iso.org/standard/72704.html"
+    },
+    {
+      "id": "iso-14971-cl6",
+      "title": "ISO 14971:2019 Clause 6 — Risk evaluation",
+      "description": "[Licensed content — see license_url for authoritative text.]",
+      "family": "Clauses 4-10 — Risk management process",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www.iso.org/standard/72704.html"
+    },
+    {
+      "id": "iso-14971-cl7",
+      "title": "ISO 14971:2019 Clause 7 — Risk control",
+      "description": "[Licensed content — see license_url for authoritative text.]",
+      "family": "Clauses 4-10 — Risk management process",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www.iso.org/standard/72704.html"
+    },
+    {
+      "id": "iso-14971-cl8",
+      "title": "ISO 14971:2019 Clause 8 — Evaluation of overall residual risk",
+      "description": "[Licensed content — see license_url for authoritative text.]",
+      "family": "Clauses 4-10 — Risk management process",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www.iso.org/standard/72704.html"
+    },
+    {
+      "id": "iso-14971-cl9",
+      "title": "ISO 14971:2019 Clause 9 — Risk management review",
+      "description": "[Licensed content — see license_url for authoritative text.]",
+      "family": "Clauses 4-10 — Risk management process",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www.iso.org/standard/72704.html"
+    },
+    {
+      "id": "iso-14971-cl10",
+      "title": "ISO 14971:2019 Clause 10 — Production and post-production activities",
+      "description": "[Licensed content — see license_url for authoritative text.]",
+      "family": "Clauses 4-10 — Risk management process",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www.iso.org/standard/72704.html"
+    }
+  ],
+  "license_required": true,
+  "license_terms": "© ISO. Purchase the authoritative text from ISO.",
+  "license_url": "https://www.iso.org/standard/72704.html"
+}

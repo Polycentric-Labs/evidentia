@@ -1,0 +1,85 @@
+{
+  "source_framework": "fda-524b-appendix1",
+  "target_framework": "aami-sw96",
+  "version": "FDA §524B Premarket Cybersecurity (2026-02-03) / ANSI/AAMI SW96:2023",
+  "generated_at": "2026-06-16",
+  "source": "Hand-authored by Evidentia. Maps the eight FDA Section 524B premarket security control categories to coarse, high-level ANSI/AAMI SW96:2023 security-risk-management process areas. SW96 internal section numbers are NOT asserted (the standard is paywalled and was not inspected from a primary source); the target IDs are Evidentia's own coarse process-area labels.",
+  "provenance": "hand-authored",
+  "verification": "self-attested",
+  "verification_note": "These mappings are ILLUSTRATIVE conceptual links authored by Evidentia, not independently audited and not endorsed by the FDA or ANSI/AAMI. The target side maps to coarse, high-level SW96 process areas (no internal clause/section numbers are asserted). They are intended to orient a reader between the 524B security control categories and the SW96 security-risk-management process; they are not a control-equivalence assertion. Consumers MUST verify any reliance against the licensed ANSI/AAMI SW96:2023 text and the FDA guidance.",
+  "risk_model_note": "Safety risk management (ISO 14971:2019) characterizes risk as a combination of the probability of occurrence of harm and the severity of that harm (commonly operationalized as probability × severity). Security risk management (ANSI/AAMI SW96:2023, building on AAMI TIR57:2016 (R2023)) characterizes security risk in terms of exploitability rather than probability of occurrence, while sharing the same patient-harm severity axis — a security exploit is assessed by how readily it can be carried out (exploitability) combined with the severity of the resulting patient harm. The FDA Section 524B premarket security controls feed the device's security risk management, which in turn informs the ISO 14971 safety risk file via the shared severity axis. This characterization is a paraphrase of the ISO 14971 and AAMI SW96/TIR57 methodologies, not a quotation from the FDA guidance or the standards.",
+  "mappings": [
+    {
+      "source_control_id": "524b-scc-1-authentication",
+      "source_control_title": "Authentication",
+      "target_control_id": "aami-sw96-pa-security-risk-control",
+      "target_control_title": "ANSI/AAMI SW96:2023 — Security risk control",
+      "relationship": "related",
+      "notes": "Illustrative conceptual link: authentication is a security risk-control measure selected under the SW96 risk-control process area. Not independently audited — verify against the licensed standard."
+    },
+    {
+      "source_control_id": "524b-scc-2-authorization",
+      "source_control_title": "Authorization",
+      "target_control_id": "aami-sw96-pa-security-risk-control",
+      "target_control_title": "ANSI/AAMI SW96:2023 — Security risk control",
+      "relationship": "related",
+      "notes": "Illustrative conceptual link: authorization is a security risk-control measure. Not independently audited — verify against the licensed standard."
+    },
+    {
+      "source_control_id": "524b-scc-3-cryptography",
+      "source_control_title": "Cryptography",
+      "target_control_id": "aami-sw96-pa-security-risk-control",
+      "target_control_title": "ANSI/AAMI SW96:2023 — Security risk control",
+      "relationship": "related",
+      "notes": "Illustrative conceptual link: cryptographic protection is a security risk-control measure. Not independently audited — verify against the licensed standard."
+    },
+    {
+      "source_control_id": "524b-scc-4-code-data-execution-integrity",
+      "source_control_title": "Code, Data, and Execution Integrity",
+      "target_control_id": "aami-sw96-pa-threat-vuln-asset-analysis",
+      "target_control_title": "ANSI/AAMI SW96:2023 — Threat, vulnerability, and asset analysis",
+      "relationship": "related",
+      "notes": "Illustrative conceptual link: integrity hazards (unauthorized modification of code/data/execution) are characterized during threat, vulnerability, and asset analysis. Not independently audited — verify against the licensed standard."
+    },
+    {
+      "source_control_id": "524b-scc-4-code-data-execution-integrity",
+      "source_control_title": "Code, Data, and Execution Integrity",
+      "target_control_id": "aami-sw96-pa-security-risk-control",
+      "target_control_title": "ANSI/AAMI SW96:2023 — Security risk control",
+      "relationship": "related",
+      "notes": "Illustrative conceptual link: integrity-verification mechanisms are security risk-control measures. Not independently audited — verify against the licensed standard."
+    },
+    {
+      "source_control_id": "524b-scc-5-confidentiality",
+      "source_control_title": "Confidentiality",
+      "target_control_id": "aami-sw96-pa-security-risk-control",
+      "target_control_title": "ANSI/AAMI SW96:2023 — Security risk control",
+      "relationship": "related",
+      "notes": "Illustrative conceptual link: confidentiality protection is a security risk-control measure. Not independently audited — verify against the licensed standard."
+    },
+    {
+      "source_control_id": "524b-scc-6-event-detection-logging",
+      "source_control_title": "Event Detection and Logging",
+      "target_control_id": "aami-sw96-pa-production-post-production",
+      "target_control_title": "ANSI/AAMI SW96:2023 — Production and post-production security activities",
+      "relationship": "related",
+      "notes": "Illustrative conceptual link: security-event detection and logging support the production / post-production monitoring activity. Not independently audited — verify against the licensed standard."
+    },
+    {
+      "source_control_id": "524b-scc-7-resiliency-recovery",
+      "source_control_title": "Resiliency and Recovery",
+      "target_control_id": "aami-sw96-pa-security-risk-control",
+      "target_control_title": "ANSI/AAMI SW96:2023 — Security risk control",
+      "relationship": "related",
+      "notes": "Illustrative conceptual link: resiliency and recovery capabilities are security risk-control measures preserving safe operation. Not independently audited — verify against the licensed standard."
+    },
+    {
+      "source_control_id": "524b-scc-8-updatability-patchability",
+      "source_control_title": "Updatability and Patchability",
+      "target_control_id": "aami-sw96-pa-production-post-production",
+      "target_control_title": "ANSI/AAMI SW96:2023 — Production and post-production security activities",
+      "relationship": "related",
+      "notes": "Illustrative conceptual link: secure updatability/patchability is the remediation arm of post-production security risk management. Not independently audited — verify against the licensed standard."
+    }
+  ]
+}

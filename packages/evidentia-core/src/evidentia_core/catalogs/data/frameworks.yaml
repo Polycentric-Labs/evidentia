@@ -620,6 +620,20 @@ frameworks:
   source_url: MITRE Corporation — https://cwe.mitre.org (free to use)
   license: © MITRE Corporation. CWE is freely available.
   refresh: weekly
+- id: aami-sw96
+  name: ANSI/AAMI SW96 — Security risk management for medical device manufacturers
+  version: ANSI/AAMI SW96:2023
+  tier: C
+  category: control
+  path: stubs/aami-sw96.json
+  source_url: ANSI/AAMI SW96:2023, "Standard for medical device security — Security risk management for device manufacturers." Section structure is NOT reproduced; the entries below are coarse, high-level
+    security-risk-management process areas described in Evidentia's own words. The standard could not be inspected from a primary source (paywalled), so no internal clause/section numbers are asserted.
+    Authoritative text must be licensed from ANSI/AAMI.
+  license: © ANSI/AAMI. Purchase the authoritative text from ANSI/AAMI.
+  license_url: https://webstore.ansi.org/standards/aami/ansiaamisw962023
+  license_required: true
+  placeholder: true
+  refresh: manual
 - id: cis-benchmark-aws
   name: CIS Amazon Web Services Foundations Benchmark
   version: Current
@@ -726,6 +740,19 @@ frameworks:
   source_url: IEC/ISA
   license: © IEC/ISA. Purchase individual parts from ISA or IEC.
   license_url: https://www.isa.org/standards-and-publications/isa-standards/isa-iec-62443-series-of-standards
+  license_required: true
+  placeholder: true
+  refresh: manual
+- id: iso-14971
+  name: ISO 14971 — Application of risk management to medical devices
+  version: ISO 14971:2019
+  tier: C
+  category: control
+  path: stubs/iso-14971.json
+  source_url: ISO — ISO 14971:2019, "Medical devices — Application of risk management to medical devices" (third edition). Clause titles paraphrased in Evidentia's own words; no normative text reproduced.
+    Authoritative text must be licensed from ISO.
+  license: © ISO. Purchase the authoritative text from ISO.
+  license_url: https://www.iso.org/standard/72704.html
   license_required: true
   placeholder: true
   refresh: manual

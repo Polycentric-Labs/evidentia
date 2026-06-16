@@ -331,13 +331,17 @@ class CrosswalkDefinition(EvidentiaModel):
             "crosswalks predating v0.10.6."
         ),
     )
-    verification: Literal["self-attested-via-upstream", "hand-checked"] | None = Field(
+    verification: (
+        Literal["self-attested-via-upstream", "self-attested", "hand-checked"] | None
+    ) = Field(
         default=None,
         description=(
             "v0.10.6: verification posture. 'self-attested-via-upstream' "
             "= mappings auto-extracted from upstream guidelines[] "
-            "arrays, NOT independently audit-verified. 'hand-checked' "
-            "= SME-reviewed."
+            "arrays, NOT independently audit-verified. 'self-attested' "
+            "(v0.10.10 / FDA 524B pack) = hand-authored by Evidentia, "
+            "NOT independently audited — used for illustrative "
+            "conceptual crosswalks. 'hand-checked' = SME-reviewed."
         ),
     )
     verification_note: str | None = Field(
@@ -347,6 +351,18 @@ class CrosswalkDefinition(EvidentiaModel):
             "posture's scope + the path to upgrading "
             "'self-attested-via-upstream' → 'hand-checked' if a "
             "consumer requires independent verification."
+        ),
+    )
+    risk_model_note: str | None = Field(
+        default=None,
+        description=(
+            "v0.10.10 (FDA 524B pack): optional free-form note "
+            "documenting how the source and target frameworks "
+            "characterize risk differently (e.g., the ISO 14971 "
+            "safety probability×severity model vs. the AAMI "
+            "SW96/TIR57 exploitability×severity security model). "
+            "Additive — None for crosswalks that do not span "
+            "differing risk models."
         ),
     )
 

@@ -1,0 +1,77 @@
+{
+  "framework_id": "aami-sw96",
+  "framework_name": "ANSI/AAMI SW96 — Security risk management for medical device manufacturers",
+  "version": "ANSI/AAMI SW96:2023",
+  "source": "ANSI/AAMI SW96:2023, \"Standard for medical device security — Security risk management for device manufacturers.\" Section structure is NOT reproduced; the entries below are coarse, high-level security-risk-management process areas described in Evidentia's own words. The standard could not be inspected from a primary source (paywalled), so no internal clause/section numbers are asserted. Authoritative text must be licensed from ANSI/AAMI.",
+  "tier": "C",
+  "category": "control",
+  "placeholder": true,
+  "families": [
+    "Security risk management process areas (high-level)"
+  ],
+  "controls": [
+    {
+      "id": "aami-sw96-pa-security-risk-mgmt-process",
+      "title": "ANSI/AAMI SW96:2023 — Security risk management process and planning",
+      "description": "[Licensed content — see license_url for authoritative text.]",
+      "family": "Security risk management process areas (high-level)",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://webstore.ansi.org/standards/aami/ansiaamisw962023"
+    },
+    {
+      "id": "aami-sw96-pa-threat-vuln-asset-analysis",
+      "title": "ANSI/AAMI SW96:2023 — Threat, vulnerability, and asset analysis",
+      "description": "[Licensed content — see license_url for authoritative text.]",
+      "family": "Security risk management process areas (high-level)",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://webstore.ansi.org/standards/aami/ansiaamisw962023"
+    },
+    {
+      "id": "aami-sw96-pa-security-risk-evaluation",
+      "title": "ANSI/AAMI SW96:2023 — Security risk estimation and evaluation",
+      "description": "[Licensed content — see license_url for authoritative text.]",
+      "family": "Security risk management process areas (high-level)",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://webstore.ansi.org/standards/aami/ansiaamisw962023"
+    },
+    {
+      "id": "aami-sw96-pa-security-risk-control",
+      "title": "ANSI/AAMI SW96:2023 — Security risk control",
+      "description": "[Licensed content — see license_url for authoritative text.]",
+      "family": "Security risk management process areas (high-level)",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://webstore.ansi.org/standards/aami/ansiaamisw962023"
+    },
+    {
+      "id": "aami-sw96-pa-link-to-safety-risk-mgmt",
+      "title": "ANSI/AAMI SW96:2023 — Integration with the ISO 14971 safety risk management process",
+      "description": "[Licensed content — see license_url for authoritative text.]",
+      "family": "Security risk management process areas (high-level)",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://webstore.ansi.org/standards/aami/ansiaamisw962023"
+    },
+    {
+      "id": "aami-sw96-pa-production-post-production",
+      "title": "ANSI/AAMI SW96:2023 — Production and post-production security activities",
+      "description": "[Licensed content — see license_url for authoritative text.]",
+      "family": "Security risk management process areas (high-level)",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://webstore.ansi.org/standards/aami/ansiaamisw962023"
+    }
+  ],
+  "license_required": true,
+  "license_terms": "© ANSI/AAMI. Purchase the authoritative text from ANSI/AAMI.",
+  "license_url": "https://webstore.ansi.org/standards/aami/ansiaamisw962023"
+}
