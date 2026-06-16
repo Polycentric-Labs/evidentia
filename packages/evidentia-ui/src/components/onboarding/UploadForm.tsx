@@ -1,5 +1,6 @@
 import { FileUp } from "lucide-react";
 import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -110,7 +111,7 @@ export function UploadForm() {
           disabled={!droppedName}
           variant={droppedName ? "default" : "secondary"}
         >
-          <a href="/gap/analyze">Continue to Gap Analyze</a>
+          <Link to="/gap/analyze">Continue to Gap Analyze</Link>
         </Button>
       </div>
     </section>

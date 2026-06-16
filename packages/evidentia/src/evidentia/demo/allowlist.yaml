@@ -45,8 +45,15 @@ vectors:
      "--output", "$OUT",
      "--format", "oscal-ar"]
 
-  # --- oscal verify: verify the just-produced AR fixture ------------------
-  - ["oscal", "verify", "$OUT"]
+  # --- oscal verify: omitted until a bundled signed AR fixture ships -----
+  # The demo-suite-design.md §5 "oscal verify" step needs a COMMITTED,
+  # signed Assessment Results fixture to verify against: the runner is
+  # one-argv-per-container with a private per-run tmpdir, so a `$OUT`
+  # produced by a prior `gap analyze` invocation does NOT survive to a
+  # later `oscal verify` call (it would always fail file-not-found). The
+  # vector is deferred to the Tier-1 deploy prep — bundle a signed AR
+  # fixture, then add `["oscal", "verify", "<bundled-fixture-path>"]`.
+  # Removing it now is a safe allowlist narrowing. (v0.10.10 review MEDIUM-1.)
 
   # --- conmon: continuous-monitoring cadences (read-only) ----------------
   - ["conmon", "list"]

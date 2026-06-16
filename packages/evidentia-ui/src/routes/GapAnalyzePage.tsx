@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Layers, ShieldCheck, Sparkles } from "lucide-react";
 import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { MetricCard, SeverityBar } from "@/components/common/console";
 import { GapExportControl } from "@/components/gap/GapExportControl";
@@ -183,9 +184,9 @@ export function GapAnalyzePage() {
           <h2 className="section-num">2. Frameworks</h2>
           <p className="text-sm muted">
             Pick one or more. Filter by tier in the{" "}
-            <a href="/frameworks" className="primary-link">
+            <Link to="/frameworks" className="primary-link">
               Frameworks browser
-            </a>{" "}
+            </Link>{" "}
             if you need help picking.
           </p>
           <div className="box scroll-60">
@@ -279,6 +280,13 @@ export function GapAnalyzePage() {
 
 function GapResults({ report }: { report: GapAnalysisReport }) {
   const coveragePct = Math.round(report.coverage_percentage);
+  // The header counts (total/critical/high) come from the report's roll-up,
+  // but the SeverityBar + GapTable render only `report.gaps` — which can be a
+  // representative subset of `total_gaps` (e.g. the bundled demo report ships
+  // a sample of the full Meridian run). Surface a caption so the visible rows
+  // never read as a contradiction of the header totals. General: triggered by
+  // the length<total condition, not a demo-only branch.
+  const isSubset = report.gaps.length < report.total_gaps;
   return (
     <section className="stack-5" aria-labelledby="results-heading">
       <header
@@ -328,12 +336,19 @@ function GapResults({ report }: { report: GapAnalysisReport }) {
           <CardDescription>
             {report.total_gaps} open gaps across{" "}
             {report.frameworks_analyzed.length} frameworks, by gap severity.
+            {isSubset && " The chart below reflects the sampled rows."}
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
           <SeverityBar gaps={report.gaps} />
         </CardContent>
       </Card>
+      {isSubset && (
+        <p className="text-sm muted" role="note">
+          Showing a representative {report.gaps.length} of {report.total_gaps}{" "}
+          gaps.
+        </p>
+      )}
       <GapTable gaps={report.gaps} />
     </section>
   );

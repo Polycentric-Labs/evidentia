@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -157,7 +158,12 @@ export function RiskGeneratePage() {
           ),
           { phase: "done", generated: total, failed: 0 },
         ];
-        await simulateSse<StreamEvent>(events, onStreamEvent);
+        await simulateSse<StreamEvent>(
+          events,
+          onStreamEvent,
+          25,
+          abortRef.current.signal,
+        );
         return;
       }
 
@@ -215,9 +221,9 @@ export function RiskGeneratePage() {
           <AlertTitle>No reports in the gap store yet</AlertTitle>
           <AlertDescription>
             Run a gap analysis first (from the{" "}
-            <a href="/gap/analyze" className="primary underline">
+            <Link to="/gap/analyze" className="primary underline">
               Gap Analyze
-            </a>{" "}
+            </Link>{" "}
             page) so there's a report to generate risks for.
           </AlertDescription>
         </Alert>

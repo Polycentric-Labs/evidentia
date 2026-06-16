@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -120,6 +121,8 @@ export function ExplainPage() {
             { phase: "done", explanation: DEMO_EXPLANATION },
           ],
           onEvent,
+          25,
+          abortRef.current.signal,
         );
         return;
       }
@@ -189,9 +192,9 @@ export function ExplainPage() {
             Explanations need a configured LLM provider. Set a provider API key
             (for example <code className="kbd">ANTHROPIC_API_KEY</code>) in the
             server's environment — see the{" "}
-            <a href="/settings" className="primary underline">
+            <Link to="/settings" className="primary underline">
               Settings
-            </a>{" "}
+            </Link>{" "}
             page for the current provider status.
           </AlertDescription>
         </Alert>
@@ -254,9 +257,9 @@ export function ExplainPage() {
               />
               <p className="text-xs muted">
                 Not sure of the id? Browse a framework in the{" "}
-                <a href="/frameworks" className="primary-link">
+                <Link to="/frameworks" className="primary-link">
                   Frameworks browser
-                </a>
+                </Link>
                 .
               </p>
             </div>

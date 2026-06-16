@@ -51,6 +51,8 @@ class TestResolveHostIsPrivate:
             "fd00::1",  # IPv6 unique-local
             "0.0.0.0",  # unspecified
             "224.0.0.1",  # multicast
+            "100.64.0.1",  # RFC 6598 carrier-grade NAT (low end)
+            "100.127.255.255",  # RFC 6598 carrier-grade NAT (high end)
         ],
     )
     def test_private_addresses_flagged(self, ip: str) -> None:
@@ -60,7 +62,14 @@ class TestResolveHostIsPrivate:
 
     @pytest.mark.parametrize(
         "ip",
-        ["8.8.8.8", "1.1.1.1", "93.184.216.34", "2001:4860:4860::8888"],
+        [
+            "8.8.8.8",
+            "1.1.1.1",
+            "93.184.216.34",
+            "2001:4860:4860::8888",
+            "100.63.255.255",  # just below the CGNAT block — public
+            "100.128.0.1",  # just above the CGNAT block — public
+        ],
     )
     def test_public_addresses_pass(self, ip: str) -> None:
         is_private, bad = resolve_host_is_private(ip)

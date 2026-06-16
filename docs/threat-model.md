@@ -3276,13 +3276,21 @@ for the gating mechanism itself). The result:
 - **SSRF (the sharp edge)**: collector endpoints make outbound
   requests to operator-configured targets. Unauthenticated access lets
   an attacker pivot the server's network position (cloud metadata
-  endpoints, internal services). The default-on **collectors
-  private-IP guard** on `collect ocsf` URL mode
-  ([§v0.10.2, F-V101-L1 closed](#v0102-attack-surface-delta--mcp-as-backend--close-f-v101-l1-pre-tag-2026-05-23))
-  rejects RFC-1918 / link-local / loopback targets pre-fetch and is
-  **defense-in-depth** here, not the primary control — it narrows the
-  blast radius of the OCSF URL collector but is not a substitute for
-  not exposing the surface in the first place.
+  endpoints, internal services). As of **v0.10.10** the default-on
+  **collectors private-IP guard** is applied across **all outbound
+  collectors + the `/api/collectors` router** — not just `collect ocsf`
+  URL mode — rejecting RFC-1918 / loopback / link-local / CGNAT
+  (RFC 6598) / multicast / reserved targets pre-fetch, and **pinning the
+  validated IP through the connection** so a DNS-rebind TOCTOU cannot
+  bypass it (getaddrinfo-pin for the HTTP/thin-driver collectors, libpq
+  `hostaddr` for Postgres, ODBC IP-dial for MSSQL)
+  ([§v0.10.2, F-V101-L1](#v0102-attack-surface-delta--mcp-as-backend--close-f-v101-l1-pre-tag-2026-05-23);
+  default-on extension + rebind-resistance added v0.10.10). This
+  materially shrinks the unauthenticated-collector SSRF blast radius —
+  but it remains **defense-in-depth**, not the primary control: the
+  auth token (recommendation 2) and not exposing the surface (1, 3) are
+  the primary controls; the guard narrows what an attacker who reaches
+  the API can still pivot to.
 
 ### Recommended posture (in priority order)
 

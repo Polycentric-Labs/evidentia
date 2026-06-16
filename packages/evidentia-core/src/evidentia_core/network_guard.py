@@ -339,6 +339,13 @@ class SSRFBlockedError(Exception):
         )
 
 
+# RFC 6598 carrier-grade-NAT space (100.64.0.0/10). cpython's
+# ``ipaddress`` does NOT flag it as private/reserved, yet some cloud
+# fabrics route internal endpoints through it — block it explicitly
+# (v0.10.10 pre-release-review SSRF hardening, INFO-2).
+_CGNAT_V4 = ipaddress.ip_network("100.64.0.0/10")
+
+
 def _ip_is_non_public(
     ip: ipaddress.IPv4Address | ipaddress.IPv6Address,
 ) -> bool:
@@ -346,7 +353,10 @@ def _ip_is_non_public(
 
     Mirrors the ranges the OCSF URL collector rejected (the v0.10.2
     F-V101-L1 close-out): RFC-1918 private, loopback, link-local
-    (cloud-metadata services), multicast, reserved, and unspecified.
+    (cloud-metadata services), multicast, reserved, and unspecified —
+    plus RFC 6598 carrier-grade NAT (100.64.0.0/10), which cpython's
+    ``ipaddress`` does not classify as private but some cloud fabrics
+    use for internal endpoints.
     """
     return bool(
         ip.is_private
@@ -355,6 +365,7 @@ def _ip_is_non_public(
         or ip.is_multicast
         or ip.is_reserved
         or ip.is_unspecified
+        or (ip.version == 4 and ip in _CGNAT_V4)
     )
 
 

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 
 import { PathChooser } from "@/components/onboarding/PathChooser";
 import { SampleLoaded } from "@/components/onboarding/SampleLoaded";
@@ -61,13 +62,13 @@ export function HomePage() {
           You have {reportsQuery.data?.total} saved{" "}
           {reportsQuery.data?.total === 1 ? "report" : "reports"}. Head to
           the{" "}
-          <a href="/dashboard" className="primary-link">
+          <Link to="/dashboard" className="primary-link">
             Dashboard
-          </a>{" "}
+          </Link>{" "}
           to review, or run a new analysis from the{" "}
-          <a href="/gap/analyze" className="primary-link">
+          <Link to="/gap/analyze" className="primary-link">
             Gap Analyze
-          </a>{" "}
+          </Link>{" "}
           page.
         </aside>
       )}
@@ -99,13 +100,13 @@ function DonePanel() {
           </li>
           <li>
             Come back to the{" "}
-            <a className="primary-link" href="/dashboard">
+            <Link className="primary-link" to="/dashboard">
               Dashboard
-            </a>{" "}
+            </Link>{" "}
             to review gaps, or use the{" "}
-            <a className="primary-link" href="/gap/analyze">
+            <Link className="primary-link" to="/gap/analyze">
               Gap Analyze
-            </a>{" "}
+            </Link>{" "}
             page to re-run without leaving the browser.
           </li>
         </ul>

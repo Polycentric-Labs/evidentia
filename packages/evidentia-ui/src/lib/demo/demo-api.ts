@@ -74,14 +74,24 @@ function reportForKey(key: string): GapAnalysisReport {
  * Replay a baked SSE stream. Awaits a short delay between events (so progress
  * bars actually animate) then invokes `onEvent` for each frame — the same
  * callback contract the real pages' `readSse` loop uses, minus the network.
+ *
+ * `signal` mirrors how the real reader honors a Cancel button: once the
+ * caller's `AbortController` fires we stop emitting immediately and do NOT
+ * deliver any remaining frames — crucially including the terminal `done`
+ * frame, which would otherwise re-set the page's streaming state and undo
+ * the cancel. Aborting is silent (no throw): a cancelled demo stream simply
+ * stops, matching the caller's `AbortError`-swallowing try/catch.
  */
 export async function simulateSse<T>(
   events: T[],
   onEvent: (event: T) => void,
   gapMs = 25,
+  signal?: AbortSignal,
 ): Promise<void> {
   for (const event of events) {
+    if (signal?.aborted) return;
     await new Promise((resolve) => setTimeout(resolve, gapMs));
+    if (signal?.aborted) return;
     onEvent(event);
   }
 }
