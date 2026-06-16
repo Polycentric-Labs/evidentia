@@ -105,8 +105,15 @@ evidentia catalog list | grep fda-524b-appendix1
 evidentia gap analyze --inventory my-controls.yaml \
   --frameworks fda-524b-appendix1 --output report.json
 
-# Sign the OSCAL Assessment Results (GPG detached, or Sigstore keyless)
-evidentia oscal sign report.oscal.json
+# Or emit a SIGNED OSCAL Assessment Results document directly from the analysis:
+# --sign-with-gpg takes your GPG key ID (writes a detached <output>.asc), or use
+# --sign-with-sigstore for keyless Sigstore signing.
+evidentia gap analyze --inventory my-controls.yaml \
+  --frameworks fda-524b-appendix1 \
+  --format oscal-ar --output report.oscal.json --sign-with-gpg <your-gpg-key-id>
+
+# Verify the signed artifact (digests + GPG and/or Sigstore signatures):
+evidentia oscal verify report.oscal.json
 ```
 
 A synthetic, banner-labeled example Assessment Results document lives at

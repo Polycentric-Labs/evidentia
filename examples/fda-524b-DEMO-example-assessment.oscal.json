@@ -1,5 +1,5 @@
 {
-  "_evidentia_demo_notice": "DEMO / DISPLAY FIXTURE — synthetic, illustrative data backing the demo-only `#/demo/fda` showcase. The organization, device, findings, and the `_illustrative_signature` block below are invented for illustration and verify NOTHING. No signing key ships in this repository. Real deployments produce a signed Assessment Results document with `evidentia gap analyze --frameworks fda-524b-appendix1 ... && evidentia oscal sign` (GPG detached signature or Sigstore keyless). This file is not consumed by any verification path.",
+  "_evidentia_demo_notice": "DEMO / DISPLAY FIXTURE — synthetic, illustrative data backing the demo-only `#/demo/fda` showcase. The organization, device, findings, and the `_illustrative_signature` block below are invented for illustration and verify NOTHING. No signing key ships in this repository. Real deployments produce a signed Assessment Results document with `evidentia gap analyze --frameworks fda-524b-appendix1 --format oscal-ar --output report.oscal.json --sign-with-gpg <key>` (or `--sign-with-sigstore` for keyless), verified with `evidentia oscal verify`. This file is not consumed by any verification path.",
   "assessment-results": {
     "uuid": "f5240b00-0000-4000-8000-000000000524",
     "metadata": {
@@ -245,7 +245,7 @@
     ]
   },
   "_illustrative_signature": {
-    "notice": "ILLUSTRATIVE ONLY — this block is a display fixture, not a real signature. The hash is not computed from this file and verifies nothing; no signing key is committed to this repository. In production, `evidentia oscal sign` emits a GPG detached `.asc` sidecar, or Sigstore keyless signing records a Fulcio certificate + a Rekor transparency-log entry.",
+    "notice": "ILLUSTRATIVE ONLY — this block is a display fixture, not a real signature. The hash is not computed from this file and verifies nothing; no signing key is committed to this repository. In production, `evidentia gap analyze ... --format oscal-ar --sign-with-gpg <key>` emits a GPG detached `.asc` sidecar (or `--sign-with-sigstore` records a Fulcio certificate + a Rekor transparency-log entry), verified with `evidentia oscal verify`.",
     "artifact": "fda-524b-DEMO-example-assessment.oscal.json",
     "framework": "fda-524b-appendix1",
     "algorithm": "sigstore-keyless (illustrative)",
