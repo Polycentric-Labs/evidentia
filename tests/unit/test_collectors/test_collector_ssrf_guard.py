@@ -233,7 +233,7 @@ class _DriverReached(Exception):
 
 class TestSQLCollectorsSSRF:
     @pytest.mark.parametrize(
-        "module,cls_name,err_name,uri,_drv,_attr", _SQL_CASES
+        "module,cls_name,err_name,uri,drv,_attr", _SQL_CASES
     )
     def test_private_host_refused_by_default(
         self,
@@ -241,10 +241,17 @@ class TestSQLCollectorsSSRF:
         cls_name: str,
         err_name: str,
         uri: str,
-        _drv: str,
+        drv: str,
         _attr: str,
     ) -> None:
         import importlib
+
+        # The optional driver must be importable for the collector to reach
+        # the guard. Skip where it can't load — e.g. pyodbc needs the unixODBC
+        # system lib, absent on the macOS CI runner (the guard is platform-
+        # independent and fully exercised on Linux + Windows). v0.10.11 moves
+        # the guard ahead of the driver import so this skip won't be needed.
+        pytest.importorskip(drv)
 
         mod = importlib.import_module(module)
         cls = getattr(mod, cls_name)
@@ -279,7 +286,9 @@ class TestSQLCollectorsSSRF:
         mod = importlib.import_module(module)
         cls = getattr(mod, cls_name)
         base_err = getattr(mod, cls_name.replace("Collector", "CollectorError"))
-        driver_mod = importlib.import_module(drv)
+        # importorskip (not import_module): skip on a platform where the driver
+        # can't load — e.g. pyodbc needs unixODBC, absent on the macOS runner.
+        driver_mod = pytest.importorskip(drv)
 
         def _sentinel(*_a: object, **_k: object) -> object:
             raise _DriverReached("driver connect reached")
