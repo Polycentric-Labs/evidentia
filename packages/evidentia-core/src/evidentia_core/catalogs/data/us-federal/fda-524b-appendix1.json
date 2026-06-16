@@ -1,0 +1,62 @@
+{
+  "framework_id": "fda-524b-appendix1",
+  "framework_name": "FDA Section 524B Premarket Cybersecurity — Security Control Categories",
+  "version": "2026-02-03 (final guidance)",
+  "source": "Paraphrased from the FDA final guidance \"Cybersecurity in Medical Devices: Quality Management System Considerations and Content of Premarket Submissions\" (Feb 3, 2026 edition), Section V.B.1, which enumerates these eight security control categories (Appendix 1 details the per-category recommendations). Implements the cybersecurity expectations of FD&C Act Section 524B (21 U.S.C. 360n-2), \"Ensuring cybersecurity of devices,\" added by Section 3305 of the Food and Drug Omnibus Reform Act of 2022 (FDORA), Pub. L. 117-328, effective March 29, 2023 — which requires cyber-device premarket submissions to include a vulnerability-management plan, secure-by-design processes covering updates and patches, and a software bill of materials (SBOM). U.S. Government work, not subject to copyright (17 U.S.C. 105); category names reproduced verbatim, characterizations written in Evidentia's own words.",
+  "tier": "A",
+  "category": "control",
+  "placeholder": false,
+  "families": [
+    "FDA §524B Premarket Cybersecurity Security Control Categories"
+  ],
+  "controls": [
+    {
+      "id": "524b-scc-1-authentication",
+      "title": "Authentication",
+      "description": "Verifies the claimed identity of a user, process, or device before granting it access to the device or its functions.",
+      "family": "FDA §524B Premarket Cybersecurity Security Control Categories"
+    },
+    {
+      "id": "524b-scc-2-authorization",
+      "title": "Authorization",
+      "description": "Enforces what an authenticated entity is permitted to do, restricting actions and resource access to those granted by its assigned privileges.",
+      "family": "FDA §524B Premarket Cybersecurity Security Control Categories"
+    },
+    {
+      "id": "524b-scc-3-cryptography",
+      "title": "Cryptography",
+      "description": "Applies cryptographic methods and sound key management to protect the confidentiality, integrity, and authenticity of data at rest and in transit.",
+      "family": "FDA §524B Premarket Cybersecurity Security Control Categories"
+    },
+    {
+      "id": "524b-scc-4-code-data-execution-integrity",
+      "title": "Code, Data, and Execution Integrity",
+      "description": "Ensures that device code, stored data, and the execution environment remain unaltered and trustworthy, detecting and preventing unauthorized or unexpected modification.",
+      "family": "FDA §524B Premarket Cybersecurity Security Control Categories"
+    },
+    {
+      "id": "524b-scc-5-confidentiality",
+      "title": "Confidentiality",
+      "description": "Protects sensitive data handled by the device from disclosure to unauthorized parties.",
+      "family": "FDA §524B Premarket Cybersecurity Security Control Categories"
+    },
+    {
+      "id": "524b-scc-6-event-detection-logging",
+      "title": "Event Detection and Logging",
+      "description": "Detects security-relevant events and records them in logs that support monitoring, investigation, and forensic review.",
+      "family": "FDA §524B Premarket Cybersecurity Security Control Categories"
+    },
+    {
+      "id": "524b-scc-7-resiliency-recovery",
+      "title": "Resiliency and Recovery",
+      "description": "Enables the device to withstand cybersecurity events and to restore safe, essential operation afterward.",
+      "family": "FDA §524B Premarket Cybersecurity Security Control Categories"
+    },
+    {
+      "id": "524b-scc-8-updatability-patchability",
+      "title": "Updatability and Patchability",
+      "description": "Allows the device to be securely updated and patched over its lifecycle so vulnerabilities can be remediated; the guidance's Appendix 1 labels this same category \"Firmware and Software Updates.\"",
+      "family": "FDA §524B Premarket Cybersecurity Security Control Categories"
+    }
+  ]
+}

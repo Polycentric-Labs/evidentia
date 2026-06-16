@@ -77,6 +77,18 @@ frameworks:
   path: us-federal/fda-21-cfr-pt11.json
   source_url: FDA — 21 CFR Part 11 (U.S. federal regulation)
   refresh: monthly
+- id: fda-524b-appendix1
+  name: FDA Section 524B Premarket Cybersecurity — Security Control Categories
+  version: 2026-02-03 (final guidance)
+  tier: A
+  category: control
+  path: us-federal/fda-524b-appendix1.json
+  source_url: 'Paraphrased from the FDA final guidance "Cybersecurity in Medical Devices: Quality Management System Considerations and Content of Premarket Submissions" (Feb 3, 2026 edition), Section V.B.1,
+    which enumerates these eight security control categories (Appendix 1 details the per-category recommendations). Implements the cybersecurity expectations of FD&C Act Section 524B (21 U.S.C. 360n-2),
+    "Ensuring cybersecurity of devices," added by Section 3305 of the Food and Drug Omnibus Reform Act of 2022 (FDORA), Pub. L. 117-328, effective March 29, 2023 — which requires cyber-device premarket
+    submissions to include a vulnerability-management plan, secure-by-design processes covering updates and patches, and a software bill of materials (SBOM). U.S. Government work, not subject to copyright
+    (17 U.S.C. 105); category names reproduced verbatim, characterizations written in Evidentia''s own words.'
+  refresh: monthly
 - id: fedramp-rev5-high
   name: FedRAMP Rev 5 High Baseline
   version: Rev 5 (2023)
