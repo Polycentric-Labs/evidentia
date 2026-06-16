@@ -112,6 +112,7 @@ nav:
   - Compliance:
       - 5-compliance/index.md
       - OSPS Baseline mapping: 5-compliance/osps-baseline-mapping.md
+      - FDA medical devices (524B): 5-compliance/fda-medical-device-compliance.md
       # Other framework + compliance pages land v0.10.7+.
   - Project:
       - 6-project/index.md

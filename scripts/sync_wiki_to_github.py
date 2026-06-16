@@ -57,6 +57,7 @@ REPO_ROOT = Path.cwd()
 ACRONYM_FIXUPS: dict[str, str] = {
     r"\bOsps\b": "OSPS",
     r"\bOcsf\b": "OCSF",
+    r"\bFda\b": "FDA",
     r"\bOscal\b": "OSCAL",
     r"\bMcp\b": "MCP",
     r"\bCli\b": "CLI",
