@@ -57,9 +57,17 @@ jobs:
       - name: Sync workspace
         # Python-only tests — skip the frontend build hook to keep this
         # job Node-free and fast.
+        #
+        # --all-extras: the collector SSRF/rebind tests
+        # (test_collector_ssrf_guard / test_collector_rebind) import the
+        # optional DB + cloud drivers (psycopg, pymysql, oracledb, pyodbc,
+        # snowflake, databricks) to exercise / monkeypatch the connect path,
+        # so the extras MUST be installed or those tests error with
+        # ModuleNotFoundError. Matches the mypy job's --all-extras closure
+        # (the CI-vs-local gate-fidelity gap that surfaced at v0.10.10).
         env:
           EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
-        run: uv sync --all-packages
+        run: uv sync --all-extras --all-packages
 
       - name: Run tests (with coverage on Linux)
         if: matrix.os == 'ubuntu-latest'
