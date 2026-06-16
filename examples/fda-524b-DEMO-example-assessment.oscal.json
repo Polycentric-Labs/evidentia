@@ -1,0 +1,259 @@
+{
+  "_evidentia_demo_notice": "DEMO / DISPLAY FIXTURE — synthetic, illustrative data backing the demo-only `#/demo/fda` showcase. The organization, device, findings, and the `_illustrative_signature` block below are invented for illustration and verify NOTHING. No signing key ships in this repository. Real deployments produce a signed Assessment Results document with `evidentia gap analyze --frameworks fda-524b-appendix1 ... && evidentia oscal sign` (GPG detached signature or Sigstore keyless). This file is not consumed by any verification path.",
+  "assessment-results": {
+    "uuid": "f5240b00-0000-4000-8000-000000000524",
+    "metadata": {
+      "title": "DEMO — Gap Analysis: Northwind MedTech (illustrative) · FDA Section 524B Appendix 1",
+      "last-modified": "2026-06-16T15:04:11.164978+00:00",
+      "version": "0.10.10",
+      "oscal-version": "1.2.1",
+      "parties": [
+        {
+          "uuid": "a1b2c3d4-0000-4000-8000-000000000001",
+          "type": "organization",
+          "name": "Northwind MedTech (illustrative)",
+          "remarks": "Synthetic device-maker invented for this demonstration. Not a real organization."
+        }
+      ],
+      "props": [
+        {
+          "name": "frameworks-analyzed",
+          "value": "fda-524b-appendix1"
+        },
+        {
+          "name": "coverage-percentage",
+          "value": "37.5"
+        },
+        {
+          "name": "total-controls-required",
+          "value": "8"
+        },
+        {
+          "name": "total-controls-in-inventory",
+          "value": "3"
+        },
+        {
+          "name": "total-gaps",
+          "value": "5"
+        },
+        {
+          "ns": "https://polycentric-labs.github.io/evidentia/ns/demo",
+          "name": "synthetic",
+          "value": "true"
+        }
+      ],
+      "remarks": "Synthetic illustration of a Section 524B premarket-cybersecurity gap analysis for connected medical-device software (SaMD). The eight security control categories are FDA's own Appendix 1 categories from the premarket cybersecurity guidance (a U.S.-Government work, paraphrased here in our own words). All organization, system, and finding content is invented for demonstration."
+    },
+    "import-ap": {
+      "href": "#assessment-plan-placeholder"
+    },
+    "results": [
+      {
+        "uuid": "b6240001-0000-4000-8000-000000000001",
+        "title": "Evidentia Gap Analysis Result — FDA 524B Appendix 1",
+        "description": "Automated gap analysis of Northwind MedTech (illustrative) device software against the FDA Section 524B Appendix 1 security control categories.",
+        "start": "2026-06-16T15:04:11.157452+00:00",
+        "end": "2026-06-16T15:04:11.157452+00:00",
+        "reviewed-controls": {
+          "control-selections": [
+            {
+              "description": "Controls from fda-524b-appendix1",
+              "include-all": {}
+            }
+          ]
+        },
+        "observations": [
+          {
+            "uuid": "c0240001-0000-4000-8000-000000000001",
+            "title": "Observation: 524B.A1 (Authentication)",
+            "description": "An unauthenticated maintenance/debug interface is exposed and the device-to-cloud channel does not perform mutual authentication, allowing an attacker to impersonate the device or the gateway.",
+            "methods": ["EXAMINE"],
+            "types": ["finding"],
+            "subjects": [
+              {
+                "subject-uuid": "d0240001-0000-4000-8000-000000000001",
+                "type": "component"
+              }
+            ],
+            "collected": "2026-06-16T15:04:11.165978+00:00",
+            "props": [
+              { "name": "framework", "value": "fda-524b-appendix1" },
+              { "name": "control-id", "value": "524B.A1" }
+            ]
+          },
+          {
+            "uuid": "c0240003-0000-4000-8000-000000000003",
+            "title": "Observation: 524B.A3 (Cryptography)",
+            "description": "A symmetric key is hard-coded in firmware and shared across all units with no rotation, and a non-NIST-approved cipher is used on one link; a single extracted key would compromise the fleet.",
+            "methods": ["EXAMINE"],
+            "types": ["finding"],
+            "subjects": [
+              {
+                "subject-uuid": "d0240003-0000-4000-8000-000000000003",
+                "type": "component"
+              }
+            ],
+            "collected": "2026-06-16T15:04:11.165978+00:00",
+            "props": [
+              { "name": "framework", "value": "fda-524b-appendix1" },
+              { "name": "control-id", "value": "524B.A3" }
+            ]
+          },
+          {
+            "uuid": "c0240004-0000-4000-8000-000000000004",
+            "title": "Observation: 524B.A4 (Code, Data, and Execution Integrity)",
+            "description": "Firmware images are not cryptographically signed and the device has no secure-boot chain, so modified or rolled-back firmware can run undetected.",
+            "methods": ["EXAMINE"],
+            "types": ["finding"],
+            "subjects": [
+              {
+                "subject-uuid": "d0240004-0000-4000-8000-000000000004",
+                "type": "component"
+              }
+            ],
+            "collected": "2026-06-16T15:04:11.165978+00:00",
+            "props": [
+              { "name": "framework", "value": "fda-524b-appendix1" },
+              { "name": "control-id", "value": "524B.A4" }
+            ]
+          },
+          {
+            "uuid": "c0240008-0000-4000-8000-000000000008",
+            "title": "Observation: 524B.A8 (Updatability and Patchability)",
+            "description": "There is no validated mechanism to deliver authenticated out-of-cycle patches to fielded devices, which undercuts the postmarket vulnerability-management plan.",
+            "methods": ["EXAMINE"],
+            "types": ["finding"],
+            "subjects": [
+              {
+                "subject-uuid": "d0240008-0000-4000-8000-000000000008",
+                "type": "component"
+              }
+            ],
+            "collected": "2026-06-16T15:04:11.165978+00:00",
+            "props": [
+              { "name": "framework", "value": "fda-524b-appendix1" },
+              { "name": "control-id", "value": "524B.A8" }
+            ]
+          },
+          {
+            "uuid": "c0240006-0000-4000-8000-000000000006",
+            "title": "Observation: 524B.A6 (Event Detection and Logging)",
+            "description": "Security-relevant events are recorded inconsistently and cannot be exported for monitoring, so incidents on fielded devices may go undetected and unprovable.",
+            "methods": ["EXAMINE"],
+            "types": ["finding"],
+            "subjects": [
+              {
+                "subject-uuid": "d0240006-0000-4000-8000-000000000006",
+                "type": "component"
+              }
+            ],
+            "collected": "2026-06-16T15:04:11.165978+00:00",
+            "props": [
+              { "name": "framework", "value": "fda-524b-appendix1" },
+              { "name": "control-id", "value": "524B.A6" }
+            ]
+          }
+        ],
+        "findings": [
+          {
+            "uuid": "e0240001-0000-4000-8000-000000000001",
+            "title": "524B.A1: Authentication",
+            "description": "Control 524B.A1 (Authentication) is not implemented for the device's external interfaces.",
+            "target": {
+              "type": "objective-id",
+              "target-id": "524B.A1",
+              "status": { "state": "not-satisfied", "reason": "missing" }
+            },
+            "props": [
+              { "name": "framework", "value": "fda-524b-appendix1" },
+              { "name": "severity", "value": "critical" },
+              { "name": "priority-score", "value": "9.2" },
+              { "name": "implementation-effort", "value": "high" }
+            ],
+            "remarks": "Establish a cryptographic device identity (per-device certificate via PKI), require mutual TLS on every external interface, and disable or authenticate the maintenance interface; map the authentication architecture to the threat model."
+          },
+          {
+            "uuid": "e0240003-0000-4000-8000-000000000003",
+            "title": "524B.A3: Cryptography",
+            "description": "Control 524B.A3 (Cryptography) is not implemented to an acceptable standard.",
+            "target": {
+              "type": "objective-id",
+              "target-id": "524B.A3",
+              "status": { "state": "not-satisfied", "reason": "missing" }
+            },
+            "props": [
+              { "name": "framework", "value": "fda-524b-appendix1" },
+              { "name": "severity", "value": "critical" },
+              { "name": "priority-score", "value": "9.0" },
+              { "name": "implementation-effort", "value": "high" }
+            ],
+            "remarks": "Move to NIST-approved algorithms (AES-256, ECC), per-device keys generated and stored in hardware (TPM/HSM where available), and a defined rotation/revocation process; provide a cryptographic inventory and a path to crypto-agility for the post-quantum transition."
+          },
+          {
+            "uuid": "e0240004-0000-4000-8000-000000000004",
+            "title": "524B.A4: Code, Data, and Execution Integrity",
+            "description": "Control 524B.A4 (Code, Data, and Execution Integrity) is not implemented.",
+            "target": {
+              "type": "objective-id",
+              "target-id": "524B.A4",
+              "status": { "state": "not-satisfied", "reason": "missing" }
+            },
+            "props": [
+              { "name": "framework", "value": "fda-524b-appendix1" },
+              { "name": "severity", "value": "high" },
+              { "name": "priority-score", "value": "8.1" },
+              { "name": "implementation-effort", "value": "high" }
+            ],
+            "remarks": "Sign all firmware/software with a managed key, verify signatures in a secure-boot chain, and reject unsigned or downgraded images; capture the signing and verification evidence in the design history file."
+          },
+          {
+            "uuid": "e0240008-0000-4000-8000-000000000008",
+            "title": "524B.A8: Updatability and Patchability",
+            "description": "Control 524B.A8 (Updatability and Patchability) is only partially implemented.",
+            "target": {
+              "type": "objective-id",
+              "target-id": "524B.A8",
+              "status": { "state": "not-satisfied", "reason": "partial" }
+            },
+            "props": [
+              { "name": "framework", "value": "fda-524b-appendix1" },
+              { "name": "severity", "value": "high" },
+              { "name": "priority-score", "value": "7.3" },
+              { "name": "implementation-effort", "value": "medium" }
+            ],
+            "remarks": "Implement authenticated, integrity-protected over-the-air updates with rollback protection on a reasonably justified cycle, plus an out-of-cycle path for critical vulnerabilities; tie the mechanism to the postmarket plan and coordinated vulnerability disclosure."
+          },
+          {
+            "uuid": "e0240006-0000-4000-8000-000000000006",
+            "title": "524B.A6: Event Detection and Logging",
+            "description": "Control 524B.A6 (Event Detection and Logging) is only partially implemented.",
+            "target": {
+              "type": "objective-id",
+              "target-id": "524B.A6",
+              "status": { "state": "not-satisfied", "reason": "partial" }
+            },
+            "props": [
+              { "name": "framework", "value": "fda-524b-appendix1" },
+              { "name": "severity", "value": "medium" },
+              { "name": "priority-score", "value": "5.6" },
+              { "name": "implementation-effort", "value": "medium" }
+            ],
+            "remarks": "Log security-relevant events to a tamper-evident store and provide an export path for the operator's monitoring; define which events are captured and how they support postmarket surveillance."
+          }
+        ]
+      }
+    ]
+  },
+  "_illustrative_signature": {
+    "notice": "ILLUSTRATIVE ONLY — this block is a display fixture, not a real signature. The hash is not computed from this file and verifies nothing; no signing key is committed to this repository. In production, `evidentia oscal sign` emits a GPG detached `.asc` sidecar, or Sigstore keyless signing records a Fulcio certificate + a Rekor transparency-log entry.",
+    "artifact": "fda-524b-DEMO-example-assessment.oscal.json",
+    "framework": "fda-524b-appendix1",
+    "algorithm": "sigstore-keyless (illustrative)",
+    "sha256": "9f2c41e8a7b30d6c5e1f8a92b4d07c3e6a1b9d8f2c4e70a5b3d6f1c8e9a2b7d40",
+    "run_id": "01JZ8K6T7QF3WYB9N2C4D5E6F7",
+    "signed_at": "2026-06-16T15:04:11.220115Z",
+    "signer": "demo-signing-identity (test key)",
+    "rekor_log_index": "148203394",
+    "verified": false
+  }
+}

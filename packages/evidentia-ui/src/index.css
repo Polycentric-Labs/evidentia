@@ -436,3 +436,109 @@
   .empty-state .es-ic { width: 2.6rem; height: 2.6rem; color: hsl(var(--fg-faint)); }
   .skel { border-radius: var(--radius-sm-px); background: linear-gradient(90deg, hsl(var(--surface-2)) 25%, hsl(var(--border) / 0.6) 37%, hsl(var(--surface-2)) 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; }
 }
+
+/*
+ * ── FDA 524B demo (FdaDemoPage) ──────────────────────────────────────────
+ * Premium presentation for the demo-only `#/demo/fda` showcase. Scoped under
+ * .fda-page so nothing here leaks into the console routes. Reuses the design-
+ * system tokens (--bg / --surface / --sev-* / shadows / radii) verbatim.
+ */
+@keyframes fda-spin { to { transform: rotate(360deg); } }
+@keyframes fda-reveal { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+@layer components {
+  .fda-page { width: 100%; min-height: 100vh; background:
+      radial-gradient(1100px 520px at 50% -8%, hsl(var(--primary) / 0.07), transparent 70%),
+      linear-gradient(180deg, hsl(var(--accent) / 0.35), transparent 380px),
+      hsl(var(--bg)); color: hsl(var(--fg)); }
+  .fda-container { max-width: 1120px; margin: 0 auto; padding: 0 1.5rem 5rem; }
+
+  /* Top strip */
+  .fda-strip { display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.55rem 1rem; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.01em; color: hsl(var(--cream-soft)); background: hsl(var(--chrome-bg)); border-bottom: 1px solid hsl(var(--chrome-border)); text-align: center; }
+  .fda-strip-ic { width: 0.9rem; height: 0.9rem; flex-shrink: 0; color: hsl(var(--cream)); }
+  .fda-strip-link { color: hsl(var(--cream)); text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
+  .fda-strip-link:hover { color: #fff; }
+
+  /* Hero */
+  .fda-hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1.2rem; padding: 4.5rem 0 3.25rem; }
+  .fda-eyebrow { display: inline-flex; align-items: center; gap: 0.45rem; margin: 0; padding: 0.32rem 0.85rem; border-radius: 999px; border: 1px solid hsl(var(--primary) / 0.3); background: hsl(var(--primary) / 0.08); color: hsl(var(--primary)); font-size: 0.76rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .fda-eyebrow-ic { width: 0.95rem; height: 0.95rem; }
+  .fda-h1 { margin: 0; max-width: 18ch; font-size: clamp(2.1rem, 4.4vw, 3.15rem); font-weight: 600; line-height: 1.08; letter-spacing: -0.028em; }
+  .fda-lede { margin: 0; max-width: 60ch; font-size: 1.05rem; line-height: 1.6; color: hsl(var(--fg-muted)); }
+  .fda-hero-cta { display: flex; flex-direction: column; align-items: center; gap: 0.85rem; margin-top: 0.6rem; }
+  .fda-hero-cta .btn.lg { height: 3rem; padding: 0 1.9rem; font-size: 0.95rem; box-shadow: 0 8px 24px hsl(var(--primary) / 0.28), 0 1px 2px hsl(var(--primary) / 0.3); }
+  .fda-analyzing { margin: 0; font-size: 0.82rem; color: hsl(var(--fg-muted)); }
+  .fda-analyzing .mono { color: hsl(var(--fg)); font-size: 0.8rem; }
+  .fda-org { color: hsl(var(--fg)); font-weight: 500; }
+
+  .fda-spin { width: 1rem; height: 1rem; animation: fda-spin 0.85s linear infinite; }
+
+  /* Run animation stepper */
+  .fda-run { margin: 0 auto 1rem; max-width: 760px; border: 1px solid hsl(var(--border)); border-radius: var(--radius); background: hsl(var(--surface)); box-shadow: var(--shadow-md); padding: 1.25rem 1.4rem; }
+  .fda-steps { display: grid; gap: 0.55rem; }
+  .fda-step { display: flex; align-items: center; gap: 0.8rem; padding: 0.45rem 0.5rem; border-radius: var(--radius-sm-px); transition: background-color 0.2s, opacity 0.2s; opacity: 0.55; }
+  .fda-step[data-state="active"] { opacity: 1; background: hsl(var(--accent) / 0.55); }
+  .fda-step[data-state="done"] { opacity: 1; }
+  .fda-step-ic { display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; height: 1.5rem; border-radius: 999px; flex-shrink: 0; background: hsl(var(--surface-2)); color: hsl(var(--fg-muted)); border: 1px solid hsl(var(--border)); }
+  .fda-step[data-state="active"] .fda-step-ic { color: hsl(var(--primary)); border-color: hsl(var(--primary) / 0.4); background: hsl(var(--primary) / 0.1); }
+  .fda-step[data-state="done"] .fda-step-ic { color: hsl(var(--success)); border-color: hsl(var(--success) / 0.4); background: hsl(var(--success) / 0.12); }
+  .fda-step-check { width: 0.95rem; height: 0.95rem; }
+  .fda-step-dot { width: 0.5rem; height: 0.5rem; border-radius: 999px; background: hsl(var(--fg-faint) / 0.5); }
+  .fda-step .fda-spin { color: hsl(var(--primary)); }
+  .fda-step-text { display: flex; flex-direction: column; min-width: 0; }
+  .fda-step-label { font-size: 0.9rem; font-weight: 500; }
+  .fda-step-detail { font-size: 0.76rem; color: hsl(var(--fg-muted)); }
+
+  /* Revealed results animate in */
+  .fda-revealed { animation: fda-reveal 0.5s ease both; padding-top: 1.5rem; }
+  .fda-section-head { display: flex; flex-direction: column; gap: 0.4rem; }
+  .fda-section-sub { max-width: 70ch; font-size: 0.92rem; }
+  .fda-metric-badges { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+  .fda-metric-chips { display: inline-flex; gap: 0.35rem; flex-wrap: wrap; }
+  .fda-metric-chips .badge { font-size: 0.66rem; }
+
+  /* Traceability grid */
+  .fda-trace-grid { display: grid; gap: 0.85rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 880px) { .fda-trace-grid { grid-template-columns: 1fr; } }
+  .fda-trace-card { padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.85rem; border-left: 3px solid hsl(var(--border-strong)); transition: border-color 0.14s, box-shadow 0.14s, transform 0.14s; }
+  .fda-trace-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .fda-trace-card[data-status="gap"] { border-left-color: hsl(var(--sev-critical)); }
+  .fda-trace-card[data-status="partial"] { border-left-color: hsl(var(--sev-high)); }
+  .fda-trace-card[data-status="satisfied"] { border-left-color: hsl(var(--success)); }
+  .fda-trace-top { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+  .fda-stride { text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.66rem; }
+  .fda-trace-flow { display: flex; flex-direction: column; gap: 0.5rem; }
+  .fda-trace-node { display: flex; flex-direction: column; gap: 0.18rem; }
+  .fda-trace-kicker { font-size: 0.64rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: hsl(var(--fg-faint)); }
+  .fda-trace-threat { margin: 0; font-size: 0.88rem; line-height: 1.45; color: hsl(var(--fg)); }
+  .fda-trace-control { margin: 0; font-size: 0.88rem; line-height: 1.4; }
+  .fda-trace-control-name { font-weight: 500; }
+  .fda-trace-evidence { margin: 0; font-size: 0.85rem; line-height: 1.45; color: hsl(var(--fg-muted)); }
+  .fda-trace-arrow { width: 0.95rem; height: 0.95rem; color: hsl(var(--primary) / 0.7); margin-left: 0.15rem; flex-shrink: 0; }
+  .fda-status-satisfied { color: hsl(var(--success)) !important; border-color: hsl(var(--success) / 0.32) !important; background: hsl(var(--success) / 0.1) !important; }
+
+  /* Signed artifact */
+  .fda-artifact-card { box-shadow: var(--shadow-md); }
+  .fda-artifact-body { padding: var(--card-pad); display: flex; flex-direction: column; gap: 1.1rem; }
+  .fda-artifact-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .fda-artifact-file { display: flex; gap: 0.8rem; align-items: flex-start; }
+  .fda-artifact-file-ic { width: 2rem; height: 2rem; color: hsl(var(--primary)); flex-shrink: 0; }
+  .fda-artifact-filename { font-size: 0.95rem; font-weight: 600; word-break: break-all; }
+  .fda-artifact-fw { font-size: 0.8rem; margin: 0; }
+  .fda-verified { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.4rem 0.85rem; border-radius: 999px; font-size: 0.82rem; font-weight: 600; color: hsl(var(--success)); background: hsl(var(--success) / 0.12); border: 1px solid hsl(var(--success) / 0.4); }
+  .fda-verified-ic { width: 1.05rem; height: 1.05rem; }
+  .fda-artifact-grid { display: grid; gap: 0.7rem; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; }
+  @media (max-width: 880px) { .fda-artifact-grid { grid-template-columns: 1fr; } }
+  .fda-field { padding: 0.7rem 0.85rem; display: flex; flex-direction: column; gap: 0.25rem; }
+  .fda-field-label { font-size: 0.64rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: hsl(var(--fg-muted)); }
+  .fda-field-value { font-size: 0.86rem; color: hsl(var(--fg)); word-break: break-all; }
+  .fda-artifact-status { display: inline-flex; align-items: center; gap: 0.35rem; color: hsl(var(--success)); font-weight: 500; }
+  .fda-artifact-note { font-size: 0.8rem; line-height: 1.5; margin: 0; }
+  .fda-inline-ic { width: 0.9rem; height: 0.9rem; display: inline-block; vertical-align: -0.12em; }
+
+  /* Footer */
+  .fda-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid hsl(var(--border)); }
+  .fda-footer-links { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+  .fda-footer-link { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.86rem; font-weight: 500; color: hsl(var(--primary)); text-decoration: none; }
+  .fda-footer-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+}

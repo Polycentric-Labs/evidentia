@@ -7,6 +7,7 @@ import { ConmonPage } from "@/routes/ConmonPage";
 import { DashboardPage } from "@/routes/DashboardPage";
 import { DemoPage } from "@/routes/DemoPage";
 import { ExplainPage } from "@/routes/ExplainPage";
+import { FdaDemoPage } from "@/routes/FdaDemoPage";
 import { FrameworkDetailPage } from "@/routes/FrameworkDetailPage";
 import { FrameworksPage } from "@/routes/FrameworksPage";
 import { GapAnalyzePage } from "@/routes/GapAnalyzePage";
@@ -34,6 +35,12 @@ export function App() {
           <Route index element={<HomePage />} />
           {/* Tier 0 cast — registered only in the static VITE_DEMO bundle. */}
           {IS_DEMO && <Route path="demo" element={<DemoPage />} />}
+          {/*
+           * FDA Section 524B medical-device showcase — registered only in the
+           * VITE_DEMO bundle, demo-only, and kept inside the normal AppLayout.
+           * The landing/index is intentionally untouched.
+           */}
+          {IS_DEMO && <Route path="demo/fda" element={<FdaDemoPage />} />}
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="frameworks" element={<FrameworksPage />} />
           <Route path="frameworks/:id" element={<FrameworkDetailPage />} />
