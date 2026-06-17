@@ -2,7 +2,7 @@ import { Route, Routes } from "react-router-dom";
 
 import { DemoBanner } from "@/components/common/DemoBanner";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { IS_DEMO } from "@/lib/demo";
+import { IS_DEMO, IS_DEMO_FDA_INDEX } from "@/lib/demo";
 import { ConmonPage } from "@/routes/ConmonPage";
 import { DashboardPage } from "@/routes/DashboardPage";
 import { DemoPage } from "@/routes/DemoPage";
@@ -26,6 +26,19 @@ import { TprmPage } from "@/routes/TprmPage";
  *         Gap Analyze, Gap Diff, Risk Generate.
  */
 export function App() {
+  // FDA-index build (fdademo.evidentiagrc.com): the Section 524B showcase
+  // renders full-bleed as its own index, outside AppLayout. Every path resolves
+  // to it so a hard refresh on any sub-path still lands on the single-page demo.
+  // FdaDemoPage self-discloses its synthetic data, so the global DemoBanner is
+  // intentionally omitted here.
+  if (IS_DEMO_FDA_INDEX) {
+    return (
+      <Routes>
+        <Route path="*" element={<FdaDemoPage />} />
+      </Routes>
+    );
+  }
+
   return (
     <>
       {/* No-op in normal builds; a persistent strip in the VITE_DEMO bundle. */}
