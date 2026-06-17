@@ -31,6 +31,7 @@ from evidentia.cli import poam as poam_cmd
 from evidentia.cli import retention as retention_cmd
 from evidentia.cli import risk as risk_cmd
 from evidentia.cli import tprm as tprm_cmd
+from evidentia.cli import traceability as traceability_cmd
 
 app = typer.Typer(
     name="evidentia",
@@ -125,6 +126,14 @@ app.add_typer(
         "DFAH determinism harness (v0.8.0 P0.1). Validates that "
         "AI-driven artifact generation is auditor-defensibly "
         "reproducible."
+    ),
+)
+app.add_typer(
+    traceability_cmd.app,
+    name="traceability",
+    help=(
+        "Control↔Threat Traceability Matrix — emit a signed OSCAL "
+        "profile mapping controls to the threats they mitigate (v0.10.11)."
     ),
 )
 

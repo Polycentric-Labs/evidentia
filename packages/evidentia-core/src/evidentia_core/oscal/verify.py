@@ -151,8 +151,18 @@ def verify_digests(ar_doc: dict[str, Any]) -> list[DigestCheck]:
     for v0.7.0 digest verification).
     """
     checks: list[DigestCheck] = []
-    back_matter = ar_doc.get("assessment-results", {}).get("back-matter", {})
-    resources = back_matter.get("resources", [])
+    # OSCAL wraps a single top-level model object (assessment-results, profile,
+    # plan-of-action-and-milestones, component-definition, …). Locate that
+    # model's back-matter generically so digest verification works for ANY
+    # signed OSCAL artifact — e.g. the v0.10.11 Control↔Threat traceability
+    # profile — not just Assessment Results.
+    resources: list[dict[str, Any]] = []
+    for model_body in ar_doc.values():
+        if isinstance(model_body, dict) and "back-matter" in model_body:
+            bm = model_body.get("back-matter") or {}
+            if isinstance(bm, dict):
+                resources = bm.get("resources", []) or []
+            break
 
     for resource in resources:
         uuid_ = resource.get("uuid", "")

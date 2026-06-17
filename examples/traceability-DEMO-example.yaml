@@ -1,0 +1,55 @@
+# DEMO — illustrative Control↔Threat Traceability Matrix input.
+#
+# Emit a signed OSCAL profile from this file:
+#
+#   evidentia traceability emit -i examples/traceability-DEMO-example.yaml \
+#     -o traceability.profile.json --sign-with-gpg <key-fingerprint>
+#   evidentia oscal verify traceability.profile.json --require-signature
+#
+# The mappings below are ILLUSTRATIVE / self-attested — NOT an authoritative
+# crosswalk and NOT a NIST compliance safe harbor. The authoritative public
+# ATT&CK→NIST 800-53 mappings come from the MITRE Center for Threat-Informed
+# Defense "Mappings Explorer" (Apache-2.0); ingesting that dataset is the v0.11
+# build. Set `crosswalk_source: mitre-ctid-mappings-explorer` once you do.
+title: "Control-to-Threat Traceability — Northwind MedTech (illustrative)"
+catalog_href: "nist-800-53-rev5-moderate.json"
+framework_id: "nist-800-53-rev5-moderate"
+crosswalk_source: "self-attested"
+mappings:
+  - control_id: "AC-2"
+    threat_id: "T1078"
+    threat_framework: "mitre-attack"
+    threat_name: "Valid Accounts"
+    relationship: "mitigates"
+    coverage: "partial"
+    notes: "Account management limits the validity + scope of compromised credentials."
+  - control_id: "AC-2"
+    threat_id: "T1098"
+    threat_framework: "mitre-attack"
+    threat_name: "Account Manipulation"
+    relationship: "mitigates"
+    coverage: "partial"
+  - control_id: "AC-6"
+    threat_id: "T1548"
+    threat_framework: "mitre-attack"
+    threat_name: "Abuse Elevation Control Mechanism"
+    relationship: "mitigates"
+    coverage: "partial"
+  - control_id: "SI-2"
+    threat_id: "T1190"
+    threat_framework: "mitre-attack"
+    threat_name: "Exploit Public-Facing Application"
+    relationship: "mitigates"
+    coverage: "partial"
+  - control_id: "SI-10"
+    threat_id: "CWE-79"
+    threat_framework: "cwe"
+    threat_name: "Improper Neutralization of Input (Cross-site Scripting)"
+    relationship: "mitigates"
+    coverage: "full"
+  - control_id: "SC-7"
+    threat_id: "T1071"
+    threat_framework: "mitre-attack"
+    threat_name: "Application Layer Protocol (C2)"
+    relationship: "detects"
+    coverage: "partial"
