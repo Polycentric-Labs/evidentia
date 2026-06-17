@@ -14,16 +14,21 @@ name: dependabot-automerge
 on:
   pull_request:
 
-# JUSTIFIED: auto-merge needs pull-requests: write (to enable it) + contents: write (the squash-merge on green); the job is gated to the dependabot[bot] actor below, so no human PR is touched.
+# Least-privilege default at the workflow level. Scorecard Token-Permissions
+# near-binary-caps the check on ANY top-level non-read write, so the write
+# grants live on the single job below (which is gated to dependabot[bot]).
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   automerge:
     name: Auto-merge green patch/minor Dependabot PRs
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'dependabot[bot]' }}
+    # JUSTIFIED: auto-merge needs pull-requests: write (to enable it) + contents: write (the squash-merge on green); gated to the dependabot[bot] actor, so no human PR is touched.
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Fetch Dependabot metadata
         id: meta

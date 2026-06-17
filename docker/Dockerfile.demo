@@ -115,7 +115,7 @@ RUN printf '%s\n' \
         'if __name__ == "__main__":' \
         '    sys.exit(run(sys.argv[1:]))' \
         > /opt/evidentia-demo/launch.py \
- && pip install --no-cache-dir "pyyaml>=6.0"
+ && pip install --no-cache-dir "pyyaml==6.0.2"
 
 # Put the overlay on the import path for the launcher's process only. The
 # runner's scrubbed subprocess env deliberately omits PYTHONPATH, so the
