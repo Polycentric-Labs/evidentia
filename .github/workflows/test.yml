@@ -26,6 +26,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # v0.10.11: gate-fidelity backstop. The collector SSRF guard must fire
+  # BEFORE the optional driver import, so the security property holds even
+  # with ZERO optional extras installed. This job deliberately syncs WITHOUT
+  # --all-extras and asserts the SQL-collector SSRF guard tests still pass,
+  # structurally preventing the CI-vs-local extras gap that surfaced at
+  # v0.10.10 from masking a guard regression behind a ModuleNotFoundError.
+  no-extras-smoke:
+    name: pytest no-extras (collector SSRF guard fidelity)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync workspace WITHOUT optional extras
+        # Deliberately NO --all-extras: prove the SSRF guard is verified with
+        # zero optional DB/cloud drivers installed (guard-before-import).
+        env:
+          EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
+        run: uv sync --all-packages
+
+      - name: SSRF guard holds with zero drivers
+        run: uv run pytest tests/unit/test_collectors/test_collector_ssrf_guard.py::TestSQLCollectorsSSRF -q
+
   test:
     name: pytest (${{ matrix.os }}, Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
