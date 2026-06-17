@@ -47,5 +47,5 @@ keywords:
   - slsa
   - python
 license: Apache-2.0
-version: 0.10.10
-date-released: '2026-06-15'
+version: 0.10.11
+date-released: '2026-06-17'

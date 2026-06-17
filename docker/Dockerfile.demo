@@ -48,7 +48,7 @@
 # obtained from cosign verification, NOT `:latest`):
 #   docker build -f docker/Dockerfile.demo \
 #       --build-arg BASE=ghcr.io/polycentric-labs/evidentia@sha256:<digest> \
-#       -t evidentia-demo:v0.10.10 .
+#       -t evidentia-demo:v0.10.11 .
 #
 # Smoke test (before the signed digest exists — BASE is overridable so the
 # allowlist/refusal logic is testable against a bare Python base):
@@ -62,7 +62,7 @@
 #   docker run --rm --network none --read-only --tmpfs /tmp \
 #       --memory 512m --cpus 1 --pids-limit 256 \
 #       --security-opt no-new-privileges --cap-drop ALL \
-#       evidentia-demo:v0.10.10 doctor
+#       evidentia-demo:v0.10.11 doctor
 
 # Default to the signed release digest at deploy time. The placeholder
 # below is intentionally a non-resolvable pin so a production build that

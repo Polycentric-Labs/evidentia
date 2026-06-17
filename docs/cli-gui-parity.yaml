@@ -455,6 +455,11 @@ commands:
     gui: null
     status: exempt
     reason: "Offline OSCAL digest/signature verification; air-gap CLI tool, no server surface."
+  - cli: "traceability emit"
+    api: null
+    gui: null
+    status: exempt
+    reason: "Offline OSCAL traceability-matrix emit + signing; air-gap CLI tool, same family as `oscal verify`. A read-mostly traceability console view is the v0.10.12 parity item."
   - cli: "explain cache clear"
     api: null
     gui: null

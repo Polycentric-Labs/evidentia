@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.11] - 2026-06-17
+
+**Theme**: *v0.10.11 — public demo completion + signed traceability + hygiene*. Patch bump (v0.10.10 → v0.10.11). Finishes the public demo surface, promotes threat→control→evidence into a first-class signed capability, and clears the v0.10.10 follow-on hygiene. The full CLI↔GUI parity build-out (incl. a dedicated traceability console route) is the v0.10.12 cycle.
+
+### Added
+
+- **Signed Control↔Threat Traceability Matrix** — a new `evidentia traceability emit` verb produces a Sigstore-signable OSCAL profile mapping controls to the threats they mitigate. The representation was locked by a multi-model research pass (primary-source verified): a static control↔threat matrix is an OSCAL **profile** — NOT Assessment Results (a semantic abuse of an assessment-activity model) and NOT the OSCAL `mapping` model (released in 1.2.1, but control↔control only — its source/target are catalog/profile and items are control/statement, so it cannot target a threat ID). The profile imports a control catalog and adds a `link rel="mitigates"` + Evidentia-namespaced props to each control, with threats in integrity-hashed `back-matter.resources[]` (canonical JSON + SHA-256, the same tamper-evident pattern as the gap-analysis AR exporter). It signs via the existing `--sign-with-gpg` / `--sign-with-sigstore` path and round-trips through `evidentia oscal verify` (now generalized to locate any OSCAL model's back-matter, so digests + tamper detection work on the profile too). The relationship vocabulary is a domain mitigation set (`mitigates` / `partially-mitigates` / `compensating` / `detects`), deliberately NOT NIST OLIR (which is concept-to-concept / control↔control). Threat resource UUIDs + per-mapping IDs are derived deterministically (uuid5) so re-emitting the same matrix reproduces byte-identical evidence. Ships `models/traceability.py`, `oscal/traceability_exporter.py`, and an illustrative self-attested example (`examples/traceability-DEMO-example.yaml`). OWASP Threat-Dragon ingest, the MITRE CTID Mappings-Explorer crosswalk, and a CycloneDX representation are the v0.11 build.
+- **OSCAL emit/verify console view** (demo-gated, read-mostly). A new `#/oscal` route renders a gap run's emitted OSCAL Assessment Results — the document summary, its integrity-hashed back-matter resources, the signed artifact, and an illustrative verification panel (digests + Sigstore/Rekor + the air-gap GPG path) — by extracting a shared `SignedArtifactCard` + `VerificationPanel` (now reused by both the FDA demo and this view). Fixture-backed; wiring it to a live run + a real verify endpoint is v0.10.12 parity.
+- **FDA-index build mode** — a `VITE_DEMO_FDA_INDEX` flag renders `FdaDemoPage` full-bleed as the index (outside `AppLayout`), so `fdademo.evidentiagrc.com` can serve the **in-repo** bundle as the single source of truth, retiring the decoupled prototype fork. The build-time flag also tree-shakes the unused console routes. The main `VITE_DEMO` console deploy config (`packages/evidentia-ui/vercel.json`) shipped in v0.10.10; this completes the in-repo demo surface. Deploys + domain attaches remain operator-driven (Tier-4).
+
+### Security
+
+- **Collector SSRF guard now runs before the optional driver import.** The four SQL collectors (postgres / mysql / mssql / oracle) run the public-host SSRF guard (`enforce_public_host`) BEFORE importing their optional driver, so a private/loopback/link-local host is refused even when the driver is not installed — the security property is now verifiable in a no-extras environment (snowflake + databricks already guarded before their SDK import). A new CI `no-extras` smoke job asserts the guard with ZERO optional drivers installed, structurally backstopping the CI-vs-local extras gap that surfaced at v0.10.10. The SSRF tests are refactored to inject a fake driver module instead of `pytest.importorskip`.
+
+### Fixed
+
+- **`MetricCard` DOM nesting** — the value renders in a `<div>`, not a `<p>`, so the shipped `#/demo/fda` "Total gaps" card (a `<Badge>`, which is a `<div>`) no longer triggers a `validateDOMNesting` console error. Adds a regression guard.
+- **`oscal sign` → `gap analyze --sign-with-*` doc correction** in `docs/threat-model.md` + `docs/troubleshooting.md` (the removed verb), landing the edits stashed during the v0.10.10 ship.
+- **Roadmap accuracy** — the v0.11 "CycloneDX TM-BOM (ECMA-424 working-group track)" line overstated maturity; verification found no ratified CycloneDX TM-BOM type exists (CycloneDX = ECMA-424, current spec v1.7; threat data rides VEX + properties), so it is reframed as a forward-looking representation.
+- **Demo console** is labeled a partial-functionality preview ("Preview · synthetic data · partial functionality · no live backend") and the `GapExportControl` test no longer trips a jsdom `Blob.stream` console error.
+
 ## [0.10.10] - 2026-06-15
 
 **Theme**: *v0.10.10 — supply-chain hardening + the public demo suite*. Patch bump (v0.10.9 → v0.10.10). Closes the v0.10.9 Step-7 container findings, the post-ship Security-tab disposition, and the two product findings the Tier-1 demo threat model surfaced; and lands the in-repo artifacts for a three-tier public demo.

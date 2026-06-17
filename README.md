@@ -52,7 +52,7 @@ For the full workspace (AI risk-statements, REST API, all collectors, MCP server
 pip install 'evidentia[ai,api,collectors,mcp]'
 ```
 
-Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.10.10` (cosign keyless OIDC + SLSA Provenance v1 verified).
+Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.10.11` (cosign keyless OIDC + SLSA Provenance v1 verified).
 
 See the [Getting Started wiki section](https://github.com/Polycentric-Labs/evidentia/wiki/Getting-Started) for air-gapped install, virtualenv setup, and full extras matrix.
 
@@ -119,11 +119,11 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 
 ## Recent Releases
 
+**v0.10.11 (2026-06-17)** — *public demo completion + signed traceability + hygiene*. **Signed Control↔Threat Traceability Matrix**, a new `evidentia traceability emit` verb produces a Sigstore-signable OSCAL profile mapping controls to the threats they mitigate; **OSCAL emit/verify console view**.
+
 **v0.10.10 (2026-06-15)** — *supply-chain hardening + the public demo suite*. **FDA Section 524B medical-device pack.** Generic, public support for FDA premarket device cybersecurity, in four parts.
 
 **v0.10.9 (2026-06-10)** — *debt + robustness patch*. **`lib/sse.ts` shared SSE reader** in the web console, one generic `readSse<T>` replaces the functionally identical per-page readers in ExplainPage and RiskGeneratePage, with a 6-case vitest spec locking in the exact streaming semantics.
-
-**v0.10.8 (2026-06-04)** — *safeguards automation + CLI↔GUI parity + Tier-B GUI build-out*. **Tag-time release gate.** `release.yml` gains a `gate` job that runs the full SSOT check suite on the tagged commit, and the PyPI/GHCR `publish` jobs now `needs: gate`.
 
 Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https://github.com/Polycentric-Labs/evidentia/releases)
 
