@@ -32,7 +32,7 @@ export function MetricCard({
           <p className="metric-label">{label}</p>
           {Icon ? <Icon className="metric-ic" aria-hidden /> : null}
         </div>
-        <p className={cn("metric-value", !big && "sm")}>{value}</p>
+        <div className={cn("metric-value", !big && "sm")}>{value}</div>
         {bar !== undefined && (
           <div className="progress" style={{ margin: "0.6rem 0 0.1rem" }}>
             <div
