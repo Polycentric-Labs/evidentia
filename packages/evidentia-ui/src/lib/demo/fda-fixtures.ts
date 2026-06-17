@@ -10,6 +10,7 @@
  * the rendered components.
  */
 
+import type { SignedArtifactCardProps } from "@/components/common/signed-artifact";
 import type { FrameworkListResponse } from "@/lib/api";
 import type {
   ControlGap,
@@ -279,19 +280,25 @@ export const FDA_TRACEABILITY: TraceRow[] = [
 
 // ── The signed evidence artifact (the wow finish) ────────────────────────────
 
-export interface SignedArtifact {
-  filename: string;
-  framework: string;
-  /** SHA-256 over the assessment payload (synthetic, illustrative). */
-  sha256: string;
-  /** ULID run identifier. */
-  runId: string;
-  signedAt: string;
-  signer: string;
-  /** Sigstore Rekor transparency-log index (synthetic). */
-  rekorLogIndex: string;
-  verified: boolean;
-}
+/**
+ * The signed-artifact data fields, derived from the shared `SignedArtifactCard`
+ * props so the fixture can never drift from what the card renders. The
+ * presentation-only props (`statusLabel` / `note`) are omitted; `verified` is
+ * required here because a fixture always states it.
+ */
+export type SignedArtifact = Required<
+  Pick<
+    SignedArtifactCardProps,
+    | "filename"
+    | "framework"
+    | "sha256"
+    | "runId"
+    | "signedAt"
+    | "signer"
+    | "rekorLogIndex"
+    | "verified"
+  >
+>;
 
 /**
  * A representative signed OSCAL Assessment Results envelope. Real deployments
