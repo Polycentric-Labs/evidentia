@@ -96,6 +96,15 @@ docker run --rm -v "$PWD:/work" -w /work \
   --frameworks nist-800-53-rev5-moderate --output gap-report.json
 ```
 
+On **Windows PowerShell**, use PowerShell's backtick line-continuation instead of the bash `\`, and brace-wrap the bind-mount path as `${PWD}` (PowerShell parses a bare `$PWD:` as a drive-qualified variable, which breaks the mount):
+
+```powershell
+docker run --rm -v "${PWD}:/work" -w /work `
+  ghcr.io/polycentric-labs/evidentia:v0.10.11 `
+  gap analyze --inventory my-controls.yaml `
+  --frameworks nist-800-53-rev5-moderate --output gap-report.json
+```
+
 The image is keyless-signed via Fulcio + Rekor. Verify it before you trust it:
 
 ```bash

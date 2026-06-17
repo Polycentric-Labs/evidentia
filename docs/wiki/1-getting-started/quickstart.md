@@ -50,6 +50,15 @@ evidentia gap analyze \
   --output=gap-report.json
 ```
 
+On **Windows PowerShell**, use PowerShell's backtick line-continuation instead of the bash `\` (or put the whole command on one line):
+
+```powershell
+evidentia gap analyze `
+  --inventory=my-controls.yaml `
+  --frameworks=nist-800-53-rev5-low `
+  --output=gap-report.json
+```
+
 Evidentia prints a summary table to the console and writes the full report to
 `gap-report.json`:
 
