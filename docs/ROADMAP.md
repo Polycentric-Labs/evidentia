@@ -1,6 +1,6 @@
 # Evidentia roadmap
 
-**Last updated: v0.10.10 (June 2026).**
+**Last updated: v0.10.11 (planning, June 2026).**
 
 This roadmap synthesizes community feedback with the architecture plan
 at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0-v0.8.7
@@ -1924,6 +1924,18 @@ harden the release machinery that cycle built. Full plan:
   last full pass at v0.9.5) runs alongside the cycle; outputs land in
   `docs/positioning-and-value.md`.
 
+### v0.10.11 — Public demo completion + traceability + hygiene — PLANNED
+
+Patch (0.10.10 → 0.10.11). Per-cycle detail: [`v0.10.11-plan.md`](v0.10.11-plan.md). Three tracks:
+
+- **Webapp demo completion** — deploy the static `VITE_DEMO` web console to `demo.evidentiagrc.com`; add an FDA-index build mode so the in-repo bundle can serve the full-bleed FDA page directly (retiring the decoupled prototype, single source of truth); a targeted GUI-fill — an **OSCAL emit/verify console view** (shows a run's signed Assessment Results + a verify panel).
+- **Control↔Threat Traceability Matrix** — promote the threat→control→evidence view from a rendered demo into a first-class GUI + CLI capability that emits a **Sigstore-signable OSCAL** matrix (builds on `models/threat.py`; the OSCAL slice here sets up the v0.11 TM-BOM). Generalist OSS.
+- **Hygiene** — collector guard-before-driver-import + mock-driver SSRF test (the proper fix behind the v0.10.10 CI extras hotfix); the `MetricCard` `<p>`→`<div>` DOM-nesting fix (carried in the shipped `#/demo/fda`); the `oscal sign`→`gap analyze --sign-with-*` correction in `threat-model.md` + `troubleshooting.md`; `GapExportControl` jsdom `Blob.stream` cleanup; a CI `--no-extras` pytest fidelity smoke (the gate the v0.10.10 push exposed).
+
+### v0.10.12 — Full CLI↔GUI parity build-out — PLANNED (dedicated session)
+
+A single, heavily-planned, subagent-driven, multi-step-verified push to bring the web console to (near-)full CLI parity in one sitting (the v0.10.7 GUI-rebuild / wiki-population playbook). **Planning deliverable: a comprehensive surface × tier matrix** — for every capability, decide its presence on each surface (**CLI** / self-hosted **GUI** / hosted **web app**) and its open-source-vs-commercial scope, and adopt a standing rule that every *new* feature gets an explicit surface + scope decision. (The detailed tier breakdown is a private planning artifact, not this public roadmap.) The planning pass reconciles the prior surface/tier research via project-file synthesis + dedicated `polycentric-labcoat` research fleets. (Keeps v0.11 reserved for the federal theme below.)
+
 ### v0.11 — Federal-compliance theme + AI governance — PLANNED (post-deep-dive)
 
 Sourced from Phase B audit v3 + integration plan §"Per-release
@@ -2002,6 +2014,22 @@ detailed integration plan" §v0.11. Substantive minor (~6-8 weeks):
 - **Refresh `docs/integration-survey.md` competitive section**
   post-operator-deep-dive (incorporate AWS OSCAL MCP / Vanta MCP /
   ComplianceCow MCP / Snyk AI Trust Platform shifts).
+
+### Medical-device GRC feature line (v0.11 → v1.1+) — PLANNED (web-grounded research 2026-06-17)
+
+The medical-device-security direction the v0.10.10 FDA Section 524B catalogs opened, scanned + validated in a multi-angle web-grounded research pass. **Each feature gets a dedicated `polycentric-labcoat` research fleet at build-time** — the entries below are the high-level scan + positioning, not build specs. Effort and tier are planning-grade. The throughline: **don't rebuild commodity layers (STRIDE authoring, CBOM scanners) — ingest them; the uncontested slice is the open, signed, OSCAL/BOM-emitting evidence wrapper.**
+
+| Feature | Target | Effort | Tier | Positioning |
+|---|---|---|---|---|
+| **Signed Threat→Control→Test Traceability Matrix (TM-BOM)** — ingest OWASP Threat Dragon / pytm models, emit the matrix as Sigstore-signed OSCAL + a CycloneDX **TM-BOM** (ECMA-424 working-group track) | v0.11 | high | OSS / either | v0.10.11 ships the signed-OSCAL matrix slice; v0.11 adds Threat-Dragon ingest + TM-BOM + pre/post residual-risk. STRIDE/DFD authoring is commodity — the signed, machine-readable matrix is the differentiator. |
+| **CBOM ingest → 524B Cryptography mapping + signed PQC-readiness roadmap** — ingest a CycloneDX 1.6 CBOM (IBM/PQCA CBOMkit), map quantum-vulnerable primitives → NIST PQC (FIPS 203/204/205) + 524B Cat. 3, emit a signed crypto-agility roadmap vs the NIST-2030 clock | v0.11 | med | either | CBOM generation + PQC scanning are commodity/standardized; the white-space is the *submission-grade signed evidence wrapper*, not the scanner. |
+| **Deterministic deficiency-pattern pre-submission checker** — a rule-based, signable linter of FDA's *published* top-deficiency + RTA patterns, wired into gap-analysis + POA&M (**NOT** an ML predictor) | v0.11 | med | OSS | No public labeled premarket-cyber-deficiency corpus exists (483s/Warning Letters are postmarket; premarket cyber letters are FOIA-gated). A deterministic, honest checker is the defensible build. |
+| **Compliance-as-code QMS artifact generator** — per-control checklists, runbooks, role-based tasks, evidence-collection-readiness dashboard; signed, git-native artifacts that *feed* an existing eQMS (explicitly not an eQMS of record) | v0.11 | low-med | either | The quick early win; reuses the existing LLM explain/risk pipeline + POA&M/CONMON. Compliance-as-code delivery (git-native, signed, air-gap) is the differentiator vs medtech eQMS incumbents. |
+| **SW96/14971 + 800-30 likelihood × patient-harm risk register** — 800-30 threat-source/predisposing-condition templates → likelihood × *patient-harm* severity (per ANSI/AAMI SW96 on ISO 14971), signed OSCAL; reuse the existing Monte-Carlo only for exploitability uncertainty | v0.12 | med | either | Do **not** dollarize patient harm (FAIR annualized-loss is methodologically wrong for clinical risk); the standards-anchored harm axis wired into signed evidence is the ownable angle. |
+| **OSCAL-native continuous-compliance evidence** — lifecycle-tagged (premarket/postmarket), CI-byproduct, auto Assessment-Results + POA&M, Sigstore-signed; adopt the arXiv 2604.13767 AI-lifecycle OSCAL property extensions | v0.12 | med-high | either | Rides the OSCAL Foundation formation + RegScale OSCAL-Hub donation; "evidence as a signed byproduct of CI, traceable to the risk register." Aligns with the v0.11 federal theme. |
+| **AI-BOM for AI-enabled SaMD, eval-harness-backed** — SPDX 3.0 AI / CycloneDX ML-BOM whose model-eval claims are backed by Evidentia's signed eval-harness output; the **SBOM + CBOM + TM-BOM + AIBOM single signed evidence graph** | v1.1+ | med-high | commercial | NOVEL fit: almost no GRC tool ties an AIBOM to a device submission, and none surfaced that backs AIBOM eval claims with signed eval output. The convergence graph is the marquee. |
+
+**Honesty flags (from the research pass — keep these visible):** the "no OSS does the integrated 524B pack" positioning rests on *"none found"*, not *"none exists"* — a strong-but-unproven moat. An **AIBOM is not a codified 524B requirement** (forward-looking best practice only — SPDX 3.0 / AI RMF / PCCP-aligned). **Deep-binary cryptographic discovery is an open problem** — ingest declared/SBOM-derived CBOMs, never claim binary extraction. There is **no public labeled premarket-cyber-deficiency dataset** for ML. A "ggDSI" platform seen in one search summary is **unconfirmed** — do not cite. Effort/tier figures are planning-grade inferences, not commitments.
 
 ### v1.1+ — Post-v1.0 direction + remaining audit items — RESERVED (added 2026-05-24)
 
