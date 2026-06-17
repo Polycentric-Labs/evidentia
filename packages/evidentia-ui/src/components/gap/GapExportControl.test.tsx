@@ -75,15 +75,19 @@ describe("GapExportControl", () => {
   it("posts the selected format + report and triggers a download", async () => {
     const user = userEvent.setup();
     const blob = new Blob(["[]"], { type: "application/sarif+json" });
-    fetchMock.mockResolvedValue(
-      new Response(blob, {
-        status: 200,
-        headers: {
-          "Content-Type": "application/sarif+json",
-          "Content-Disposition": 'attachment; filename="Acme-Corp.sarif"',
-        },
+    // A lightweight response stub (not `new Response(blob, …)`): jsdom reads a
+    // Response body from a Blob via `Blob.stream()`, which jsdom does not
+    // implement, emitting a noisy console error. The exporter only needs `ok`,
+    // `headers.get(…)`, and `blob()`.
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers({
+        "Content-Type": "application/sarif+json",
+        "Content-Disposition": 'attachment; filename="Acme-Corp.sarif"',
       }),
-    );
+      blob: async () => blob,
+    } as unknown as Response);
 
     render(<GapExportControl report={REPORT} />);
     await user.selectOptions(screen.getByLabelText("Export format"), "sarif");
