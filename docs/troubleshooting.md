@@ -106,8 +106,9 @@ rebuild.
 
 ### `tuf.exceptions.RepositoryError` or TUF metadata fetch failure
 
-**Symptom**: `evidentia oscal sign --sigstore <ar.json>` fails with a
-TUF metadata error or a network timeout against `tuf-repo-cdn`.
+**Symptom**: signing an OSCAL AR via `evidentia gap analyze --format
+oscal-ar --sign-with-sigstore` fails with a TUF metadata error or a
+network timeout against `tuf-repo-cdn`.
 
 **Why**: the Sigstore Python SDK fetches TUF metadata on first run to
 verify the Fulcio + Rekor public keys. If your network blocks
@@ -116,12 +117,14 @@ network, FedRAMP High enclave), the fetch fails and signing can't
 proceed.
 
 **Fix**: switch to the air-gap GPG path documented in
-[`air-gapped.md`](air-gapped.md). `evidentia oscal sign --gpg` works
-without internet and `evidentia oscal verify` accepts either
-signature type interchangeably:
+[`air-gapped.md`](air-gapped.md). Sigstore signing is refused in
+air-gap mode, so sign at export time with `evidentia gap analyze
+--sign-with-gpg <key>` (no internet required); `evidentia oscal
+verify` then accepts either signature type interchangeably:
 
 ```bash
-evidentia oscal sign --gpg --signing-key <fingerprint> ar.json
+evidentia gap analyze -i inventory.yaml --format oscal-ar \
+  --sign-with-gpg <fingerprint> -o ar.json
 evidentia oscal verify --require-signature ar.json
 ```
 

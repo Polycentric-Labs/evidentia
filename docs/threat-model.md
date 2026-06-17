@@ -1040,9 +1040,10 @@ passed determinism + which violated.
 - **Mitigation**: eval output is SHA-256-hashable
   canonical JSON via Pydantic's `model_dump_json`. CI
   pipelines should pipe `evidentia eval` output through
-  Sigstore signing (the existing `evidentia oscal sign`
-  pattern is reusable post-v0.8.1 when the eval-result
-  signing surface lands). The `EvalResult.run_id` is a
+  Sigstore signing (the existing `evidentia gap analyze
+  --sign-with-sigstore` pattern is reusable post-v0.8.1
+  when the eval-result signing surface lands). The
+  `EvalResult.run_id` is a
   ULID; same-run-id replay attacks are detectable via
   the audit log.
 - **Residual risk**: v0.8.0 doesn't auto-sign eval output.
