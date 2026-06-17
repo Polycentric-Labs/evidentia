@@ -221,22 +221,15 @@ class OracleCollector:
     def _ensure_connected(self) -> Any:
         if self._connection is not None:
             return self._connection
-        try:
-            import oracledb
-        except ImportError as e:
-            raise OracleCollectorError(
-                "oracledb is not installed. Install via the [sql-oracle] "
-                "extra: pip install \"evidentia-collectors[sql-oracle]\""
-            ) from e
-
         if not self._connection_uri:
             raise OracleCollectorError(
                 "_ensure_connected called without a connection_uri."
             )
-        # SECURE-BY-DEFAULT (threat-model T2): refuse a connection_uri
-        # whose host resolves to a private / loopback / link-local /
-        # metadata address before oracledb opens a socket. A connection-
-        # class refusal surfaces as OracleConnectionError.
+        # SECURE-BY-DEFAULT (threat-model T2): refuse a connection_uri whose
+        # host resolves to a private / loopback / link-local / metadata address
+        # BEFORE importing the driver or opening a socket. Guard-before-import
+        # keeps the security property verifiable even with the driver absent. A
+        # connection-class refusal surfaces as OracleConnectionError.
         from evidentia_core.network_guard import (
             SSRFBlockedError,
             _extract_host,
@@ -253,6 +246,14 @@ class OracleCollector:
         except SSRFBlockedError as e:
             raise OracleConnectionError(str(e)) from e
         host = _extract_host(self._connection_uri)
+
+        try:
+            import oracledb
+        except ImportError as e:
+            raise OracleCollectorError(
+                "oracledb is not installed. Install via the [sql-oracle] "
+                "extra: pip install \"evidentia-collectors[sql-oracle]\""
+            ) from e
         kwargs = self._parse_uri(self._connection_uri)
         if self._password is not None:
             kwargs["password"] = self._password

@@ -232,22 +232,15 @@ class MSSQLCollector:
     def _ensure_connected(self) -> Any:
         if self._connection is not None:
             return self._connection
-        try:
-            import pyodbc
-        except ImportError as e:
-            raise MSSQLCollectorError(
-                "pyodbc is not installed. Install via the [sql-mssql] "
-                "extra: pip install \"evidentia-collectors[sql-mssql]\""
-            ) from e
-
         if not self._connection_uri:
             raise MSSQLCollectorError(
                 "_ensure_connected called without a connection_uri."
             )
-        # SECURE-BY-DEFAULT (threat-model T2): refuse a connection_uri
-        # whose host resolves to a private / loopback / link-local /
-        # metadata address before pyodbc opens a socket. A connection-
-        # class refusal surfaces as MSSQLConnectionError.
+        # SECURE-BY-DEFAULT (threat-model T2): refuse a connection_uri whose
+        # host resolves to a private / loopback / link-local / metadata address
+        # BEFORE importing the driver or opening a socket. Guard-before-import
+        # keeps the security property verifiable even with the driver absent. A
+        # connection-class refusal surfaces as MSSQLConnectionError.
         from evidentia_core.network_guard import (
             SSRFBlockedError,
             _extract_host,
@@ -264,6 +257,14 @@ class MSSQLCollector:
         except SSRFBlockedError as e:
             raise MSSQLConnectionError(str(e)) from e
         host = _extract_host(self._connection_uri)
+
+        try:
+            import pyodbc
+        except ImportError as e:
+            raise MSSQLCollectorError(
+                "pyodbc is not installed. Install via the [sql-mssql] "
+                "extra: pip install \"evidentia-collectors[sql-mssql]\""
+            ) from e
         # F-V1010-S1: the ODBC driver resolves natively (the getaddrinfo
         # pin does NOT reach it), so we pin at the connection-string level
         # — dial the validated IP directly and verify the cert against the

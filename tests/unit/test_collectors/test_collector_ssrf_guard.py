@@ -16,6 +16,8 @@ reason (driver-not-installed or connection-refused), and that's the point.
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 # A literal IP host avoids DNS entirely, so these tests never touch the
@@ -231,11 +233,25 @@ class _DriverReached(Exception):
     was bypassed and execution reached the driver-connect call."""
 
 
+def _fake_driver_module(name: str, attr: str) -> Any:
+    """A stand-in driver module whose connect-attr raises ``_DriverReached``,
+    so the SSRF opt-out tests run with ZERO real drivers installed."""
+    import types
+
+    mod = types.ModuleType(name)
+
+    def _connect(*_a: object, **_k: object) -> object:
+        raise _DriverReached("driver connect reached")
+
+    setattr(mod, attr, _connect)
+    return mod
+
+
 class TestSQLCollectorsSSRF:
     @pytest.mark.parametrize(
         "module,cls_name,err_name,uri,drv,_attr", _SQL_CASES
     )
-    def test_private_host_refused_by_default(
+    def test_private_host_refused_without_driver(
         self,
         module: str,
         cls_name: str,
@@ -243,24 +259,31 @@ class TestSQLCollectorsSSRF:
         uri: str,
         drv: str,
         _attr: str,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """The SSRF guard fires BEFORE the optional driver import, so a private
+        host is refused even when the driver is NOT installed. We force the
+        driver absent (``sys.modules[drv] = None`` makes ``import drv`` raise) to
+        prove guard-before-import: the refusal must be the SSRF policy error,
+        never a driver-missing error. This keeps the guard verified in a
+        no-extras CI run (the proper fix behind the v0.10.10 --all-extras hotfix)."""
         import importlib
+        import sys
 
-        # The optional driver must be importable for the collector to reach
-        # the guard. Skip where it can't load — e.g. pyodbc needs the unixODBC
-        # system lib, absent on the macOS CI runner (the guard is platform-
-        # independent and fully exercised on Linux + Windows). v0.10.11 moves
-        # the guard ahead of the driver import so this skip won't be needed.
-        pytest.importorskip(drv)
+        # `sys.modules[name] = None` makes a subsequent `import name` raise
+        # ImportError — the hermetic way to simulate the driver being absent.
+        monkeypatch.setitem(sys.modules, drv, None)
 
         mod = importlib.import_module(module)
         cls = getattr(mod, cls_name)
-        err = getattr(mod, err_name)
+        base_err = getattr(
+            mod, cls_name.replace("Collector", "CollectorError")
+        )
 
         collector = cls(
             connection_uri=uri.format(host=METADATA_HOST), password="pw"
         )
-        with pytest.raises(err) as exc:
+        with pytest.raises(base_err) as exc:
             collector._ensure_connected()
         assert _is_ssrf_refusal(exc.value)
 
@@ -277,23 +300,20 @@ class TestSQLCollectorsSSRF:
         attr: str,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Opt-out skips the guard. We monkeypatch the driver's connect to
-        raise a sentinel so NO real socket opens — reaching it proves the
-        guard was bypassed. The collector wraps the sentinel in its typed
-        error, which is NEVER the SSRF policy refusal."""
+        """Opt-out skips the guard, so execution reaches the driver connect. We
+        inject a FAKE driver module (no real driver needed) whose connect-attr
+        raises a sentinel — reaching it proves the guard was bypassed. The
+        collector wraps the sentinel in its typed error, NEVER the SSRF refusal."""
         import importlib
+        import sys
+
+        monkeypatch.setitem(sys.modules, drv, _fake_driver_module(drv, attr))
 
         mod = importlib.import_module(module)
         cls = getattr(mod, cls_name)
-        base_err = getattr(mod, cls_name.replace("Collector", "CollectorError"))
-        # importorskip (not import_module): skip on a platform where the driver
-        # can't load — e.g. pyodbc needs unixODBC, absent on the macOS runner.
-        driver_mod = pytest.importorskip(drv)
-
-        def _sentinel(*_a: object, **_k: object) -> object:
-            raise _DriverReached("driver connect reached")
-
-        monkeypatch.setattr(driver_mod, attr, _sentinel)
+        base_err = getattr(
+            mod, cls_name.replace("Collector", "CollectorError")
+        )
 
         collector = cls(
             connection_uri=uri.format(host=METADATA_HOST),

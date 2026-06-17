@@ -226,24 +226,15 @@ class PostgresCollector:
         """Lazy-connect on first use. Returns the connection object."""
         if self._connection is not None:
             return self._connection
-        try:
-            import psycopg
-        except ImportError as e:
-            raise PostgresCollectorError(
-                "psycopg is not installed. Install via the "
-                "[sql-postgres] extra: "
-                'pip install "evidentia-collectors[sql-postgres]"'
-            ) from e
 
-        kwargs: dict[str, Any] = {"autocommit": True}
-        if self._password is not None:
-            kwargs["password"] = self._password
         # __init__ requires a URI unless a connection was injected.
         assert self._connection_uri is not None
-        # SECURE-BY-DEFAULT (threat-model T2): refuse a connection_uri
-        # whose host resolves to a private / loopback / link-local /
-        # metadata address before psycopg opens a socket. A connection-
-        # class refusal surfaces as PostgresConnectionError.
+        # SECURE-BY-DEFAULT (threat-model T2): refuse a connection_uri whose
+        # host resolves to a private / loopback / link-local / metadata address
+        # BEFORE importing the driver or opening a socket. Guard-before-import
+        # means the security property holds — and is verifiable in CI — even
+        # when the optional driver is not installed. A refusal surfaces as
+        # PostgresConnectionError.
         from evidentia_core.network_guard import (
             SSRFBlockedError,
             _extract_host,
@@ -260,6 +251,19 @@ class PostgresCollector:
         except SSRFBlockedError as e:
             raise PostgresConnectionError(str(e)) from e
         host = _extract_host(self._connection_uri)
+
+        try:
+            import psycopg
+        except ImportError as e:
+            raise PostgresCollectorError(
+                "psycopg is not installed. Install via the "
+                "[sql-postgres] extra: "
+                'pip install "evidentia-collectors[sql-postgres]"'
+            ) from e
+
+        kwargs: dict[str, Any] = {"autocommit": True}
+        if self._password is not None:
+            kwargs["password"] = self._password
         # F-V1010-S1: pin the validated resolution through libpq's connect.
         # libpq honors a `hostaddr` param — it dials that IP directly while
         # still using `host` for TLS SNI + certificate verification. This is
