@@ -6,10 +6,11 @@ import { IS_DEMO } from "@/lib/demo";
  * Persistent demo-mode strip.
  *
  * Rendered only in a `VITE_DEMO=true` build (the static, no-backend bundle on
- * the public demo site). It makes the "synthetic data · no live backend"
- * contract unmissable so an evaluator never mistakes the baked Meridian fixtures
- * for live results. In every normal build `IS_DEMO` is `false` and this returns
- * `null`, so the production console is unaffected.
+ * the public demo site). It frames the build as a preview with partial
+ * functionality (the console surfaces a subset of the CLI via baked fixtures)
+ * so an evaluator never mistakes the synthetic Meridian data for live results.
+ * In every normal build `IS_DEMO` is `false` and this returns `null`, so the
+ * production console is unaffected.
  */
 export function DemoBanner() {
   if (!IS_DEMO) {
@@ -22,7 +23,7 @@ export function DemoBanner() {
     >
       <FlaskConical className="h-3.5 w-3.5 shrink-0 text-cream" aria-hidden />
       <span>
-        DEMO · synthetic data · no live backend ·{" "}
+        Preview · synthetic data · partial functionality · no live backend ·{" "}
         <a
           href="https://github.com/polycentric-labs/evidentia"
           className="underline underline-offset-[3px] hover:text-cream"

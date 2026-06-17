@@ -28,11 +28,16 @@ and 1 lead with the real CLI; Tier 2 is the click-through for non-technical eval
 
 ## 3. Hosting
 
-Deploy to **`evidentia-demo.vercel.app`** now (zero domain setup); map to
-**`evidentia-demo.polycentriclabs.com`** later. Design hosting-agnostic (static assets +
-one optional ephemeral-container link). The main Polycentric Labs site (separate private
-repo, static HTML on Vercel) gets a **single link/card** — I supply the snippet; no deep
-edits to that repo.
+Deploy the static `VITE_DEMO` bundle to **`demo.evidentiagrc.com`** (decided 2026-06-16;
+`evidentiagrc.com` is owned and `evidentia-grc.com` redirects to it). The enhanced FDA
+Section 524B showcase ships from the **same in-repo bundle** built with the
+`VITE_DEMO_FDA_INDEX` flag (the full-bleed `FdaDemoPage` rendered as the index, outside
+`AppLayout`) and serves at **`fdademo.evidentiagrc.com`** — the in-repo route is the single
+source of truth, retiring the earlier decoupled prototype fork. `polycentriclabs.com/evidentia`
+redirects to `evidentiagrc.com` (gated on both being live). Design hosting-agnostic (static
+assets + one optional ephemeral-container link). The main Polycentric Labs site (separate
+private repo, static HTML on Vercel) gets a **single link/card** — I supply the snippet; no
+deep edits to that repo. Every deploy + domain attach is **Tier-4** (your approval each).
 
 ## 4. Tier 0 — asciinema cast (self-hosted)
 
@@ -109,7 +114,7 @@ confirmed).
 
 ## 7. Site integration
 
-One link/card from `polycentriclabs-site` → `evidentia-demo.vercel.app`. I produce the
+One link/card from `polycentriclabs-site` → `demo.evidentiagrc.com`. I produce the
 markup + assets; the live deploy + the site edit are Tier-4 (your approval each).
 
 ## 8. Phasing & verification
@@ -127,7 +132,7 @@ Tier-4 approval gate.
 
 ## 9. Open items
 
-- Exact apex mapping (`evidentia-demo.polycentriclabs.com`) — deferred to first live deploy.
+- DNS attach of `demo.evidentiagrc.com` + `fdademo.evidentiagrc.com` (CNAME → Vercel) — Tier-4.
 - Tier-1 platform selection + its isolation verification (Phase C1).
 - Whether the demo subdomain is its own repo or a folder under the site repo.
 
