@@ -24,6 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { IS_DEMO_FDA_INDEX } from "@/lib/demo";
 import { simulateSse } from "@/lib/demo/demo-api";
 import {
   FDA_524B_GAPS,
@@ -108,6 +109,13 @@ export function FdaDemoPage() {
     : revealed
       ? "Re-run 524B gap analysis"
       : "Run 524B gap analysis";
+
+  // On the fdademo subdomain (FDA-index build) the full console lives at a
+  // different origin, so the CTA points off-site; inside the main console it is
+  // an in-app hash route.
+  const fullConsoleHref = IS_DEMO_FDA_INDEX
+    ? "https://demo.evidentiagrc.com/#/gap/analyze"
+    : "#/gap/analyze";
 
   return (
     <div className="fda-page">
@@ -216,7 +224,12 @@ export function FdaDemoPage() {
             Evidentia is open source (Apache-2.0).
           </p>
           <div className="fda-footer-links">
-            <a className="fda-footer-link" href="#/gap/analyze">
+            <a
+              className="fda-footer-link"
+              href={fullConsoleHref}
+              target={IS_DEMO_FDA_INDEX ? "_blank" : undefined}
+              rel={IS_DEMO_FDA_INDEX ? "noreferrer" : undefined}
+            >
               Explore the full console <ArrowRight className="fda-inline-ic" aria-hidden />
             </a>
             <a

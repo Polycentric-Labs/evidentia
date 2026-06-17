@@ -3,8 +3,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FdaDemoPage } from "@/routes/FdaDemoPage";
 
+// IS_DEMO_FDA_INDEX is a build-time const; mock the module behind a mutable
+// hoisted flag so the FDA-index (fdademo subdomain) branch can be exercised.
+const demo = vi.hoisted(() => ({ fdaIndex: false }));
+vi.mock("@/lib/demo", () => ({
+  get IS_DEMO() {
+    return false;
+  },
+  get IS_DEMO_FDA_INDEX() {
+    return demo.fdaIndex;
+  },
+}));
+
 // jsdom has no scrollIntoView; the reveal step calls it on the results node.
 beforeEach(() => {
+  demo.fdaIndex = false;
   Element.prototype.scrollIntoView = vi.fn();
 });
 
@@ -65,5 +78,28 @@ describe("FdaDemoPage", () => {
       screen.getByRole("button", { name: /re-run 524b gap analysis/i }),
     ).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("links the full-console CTA in-app when not in FDA-index mode", () => {
+    render(<FdaDemoPage />);
+
+    expect(
+      screen.getByRole("link", { name: /explore the full console/i }),
+    ).toHaveAttribute("href", "#/gap/analyze");
+  });
+
+  it("links the full-console CTA to the external console on the FDA-index subdomain", () => {
+    demo.fdaIndex = true;
+
+    render(<FdaDemoPage />);
+
+    const link = screen.getByRole("link", {
+      name: /explore the full console/i,
+    });
+    expect(link).toHaveAttribute(
+      "href",
+      "https://demo.evidentiagrc.com/#/gap/analyze",
+    );
+    expect(link).toHaveAttribute("target", "_blank");
   });
 });
