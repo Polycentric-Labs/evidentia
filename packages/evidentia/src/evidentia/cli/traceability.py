@@ -96,9 +96,12 @@ def emit(
     ),
 ) -> None:
     """Emit the Control↔Threat Traceability Matrix as a signable OSCAL profile."""
-    raw: Any = yaml.safe_load(input_path.read_text(encoding="utf-8"))
     try:
+        raw: Any = yaml.safe_load(input_path.read_text(encoding="utf-8"))
         matrix = TraceabilityMatrix.model_validate(raw)
+    except yaml.YAMLError as e:
+        console.print(f"[red]Invalid traceability matrix input (YAML parse):[/red] {e}")
+        raise typer.Exit(code=2) from e
     except Exception as e:
         console.print(f"[red]Invalid traceability matrix input:[/red] {e}")
         raise typer.Exit(code=2) from e

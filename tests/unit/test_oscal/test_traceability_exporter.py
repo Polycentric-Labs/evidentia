@@ -1,9 +1,11 @@
 """Tests for the Control↔Threat Traceability Matrix OSCAL profile emitter.
 
 Per the 2026-06-17 representation decision, the matrix is emitted as an OSCAL
-*profile* (imports a control catalog; adds `link rel="mitigates"` + props per
-control; threats in integrity-hashed back-matter resources). These tests pin
-the profile shape + the tamper-evident reproducibility guarantee.
+*profile* (imports a control catalog; adds one OSCAL ``add`` per mapping —
+props on the addition + a bare ``link rel="mitigates"``; threats in
+integrity-hashed back-matter resources). These tests pin the profile shape,
+schema-conformance through trestle, and the tamper-evident reproducibility
+guarantee.
 """
 
 from __future__ import annotations
@@ -13,6 +15,7 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
 from evidentia_core.models.traceability import (
     ControlThreatMapping,
     TraceabilityMatrix,
@@ -21,6 +24,7 @@ from evidentia_core.oscal.traceability_exporter import (
     traceability_matrix_to_oscal_profile,
 )
 from evidentia_core.oscal.verify import verify_ar_file
+from pydantic import ValidationError
 
 
 def _sample_matrix() -> TraceabilityMatrix:
@@ -59,6 +63,30 @@ class TestTraceabilityModel:
     def test_control_ids_are_unique_and_order_preserving(self) -> None:
         assert _sample_matrix().control_ids == ["AC-2", "SI-2"]
 
+    def test_conflicting_threat_names_are_rejected(self) -> None:
+        # The same (framework, threat_id) with two different names would emit an
+        # internally-inconsistent profile (link text vs first-occurrence resource).
+        with pytest.raises(ValidationError):
+            TraceabilityMatrix(
+                title="x",
+                catalog_href="cat.json",
+                framework_id="f",
+                mappings=[
+                    ControlThreatMapping(
+                        control_id="AC-2",
+                        threat_id="T1078",
+                        threat_framework="mitre-attack",
+                        threat_name="Valid Accounts",
+                    ),
+                    ControlThreatMapping(
+                        control_id="AC-3",
+                        threat_id="T1078",
+                        threat_framework="mitre-attack",
+                        threat_name="A Different Name",
+                    ),
+                ],
+            )
+
 
 class TestTraceabilityProfileEmitter:
     def test_emits_a_valid_oscal_profile_shape(self) -> None:
@@ -70,17 +98,40 @@ class TestTraceabilityProfileEmitter:
         alters = prof["modify"]["alters"]
         assert {a["control-id"] for a in alters} == {"ac-2", "si-2"}
 
-    def test_each_mapping_becomes_a_relationship_link_with_props(self) -> None:
+    def test_each_mapping_becomes_an_addition_with_a_bare_link(self) -> None:
         prof = traceability_matrix_to_oscal_profile(_sample_matrix())["profile"]
         ac2 = next(a for a in prof["modify"]["alters"] if a["control-id"] == "ac-2")
-        links = ac2["adds"][0]["links"]
-        assert len(links) == 2  # AC-2 maps two threats
-        assert {link["rel"] for link in links} == {"mitigates"}
-        names = {p["name"]: p["value"] for p in links[0]["props"]}
-        assert names["threat-id"] in {"T1078", "T1098"}
-        assert names["coverage"] in {"partial", "full"}
-        assert names["mapping-id"].startswith("urn:uuid:")
-        assert names["crosswalk-source"] == "self-attested"
+        adds = ac2["adds"]
+        assert len(adds) == 2  # AC-2 maps two threats -> one addition each
+        # OSCAL flag set for `link` (no `props` — that field is schema-invalid
+        # on a link; props belong on the addition). Regression guard for C1.
+        link_flags = {"href", "rel", "media-type", "resource-fragment", "text"}
+        for add in adds:
+            link = add["links"][0]
+            assert "props" not in link
+            assert set(link) <= link_flags
+            assert link["rel"] == "mitigates"
+            names = {p["name"]: p["value"] for p in add["props"]}
+            assert names["threat-id"] in {"T1078", "T1098"}
+            assert names["coverage"] in {"partial", "full"}
+            assert names["mapping-id"].startswith("urn:uuid:")
+            assert names["crosswalk-source"] == "self-attested"
+
+    def test_profile_round_trips_through_trestle(self) -> None:
+        """The emitted profile is schema-valid OSCAL per trestle (the OSCAL-Compass
+        reference impl, ``Extra.forbid`` on every model). This catches stray fields
+        NIST's JSON Schema misses — e.g. props-on-link (F-V1011-C1). Mirrors the AR
+        exporter's ``test_ar_round_trips_through_trestle``."""
+        trestle_profile = pytest.importorskip("trestle.oscal.profile")
+        doc = traceability_matrix_to_oscal_profile(_sample_matrix())
+        parsed = trestle_profile.Model.parse_obj(doc)
+        assert parsed.profile.uuid == doc["profile"]["uuid"]
+        alters = parsed.profile.modify.alters
+        assert {a.control_id for a in alters} == {"ac-2", "si-2"}
+        # AC-2's two mappings survive as two additions, each with one link.
+        ac2 = next(a for a in alters if a.control_id == "ac-2")
+        assert len(ac2.adds) == 2
+        assert all(len(add.links) == 1 for add in ac2.adds)
 
     def test_back_matter_threats_are_integrity_hashed(self) -> None:
         prof = traceability_matrix_to_oscal_profile(_sample_matrix())["profile"]

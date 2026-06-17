@@ -8,8 +8,11 @@ its source/target are catalog/profile and items are control/statement, so it
 cannot target a threat ID).
 
 The profile imports the control catalog and uses ``modify.alters[]`` to ``add``
-a ``link rel="mitigates"`` + Evidentia-namespaced ``prop``s to each control,
-pointing at threat resources declared in ``back-matter.resources[]``. Each
+(one addition per mapping) a ``link rel="mitigates"`` plus Evidentia-namespaced
+``prop``s to each control, pointing at threat resources declared in
+``back-matter.resources[]``. The props sit on the *addition* (OSCAL's ``link``
+assembly has no ``props`` field — ``add`` permits ``props`` + ``links`` as
+siblings), so the emitted profile is schema-valid OSCAL. Each
 threat resource embeds its canonical JSON (base64) + a SHA-256 hash in
 ``rlinks[].hashes[]`` — the same tamper-evident pattern as the AR exporter's
 finding resources — so the emitted profile signs + verifies through the existing
@@ -118,13 +121,22 @@ def _threat_to_resource(m: ControlThreatMapping) -> dict[str, Any]:
     }
 
 
-def _mapping_to_link(m: ControlThreatMapping, crosswalk_source: str) -> dict[str, Any]:
-    """Build the OSCAL ``link`` (control → threat) for one mapping."""
+def _mapping_to_add(m: ControlThreatMapping, crosswalk_source: str) -> dict[str, Any]:
+    """Build one OSCAL ``add`` (a control annotation) for a single mapping.
+
+    The control→threat ``link`` carries only OSCAL-permitted flags
+    (``href``/``rel``/``text``); the Evidentia-namespaced metadata
+    (threat-id / framework / coverage / mapping-id / crosswalk-source) rides
+    as ``props`` on the **addition**, not on the link. OSCAL's ``link``
+    assembly has no ``props`` field (``href``/``rel``/``media-type``/
+    ``resource-fragment``/``text`` only), so props-on-link is schema-invalid;
+    the ``add`` assembly permits ``props`` + ``links`` as siblings. Emitting
+    one ``add`` per mapping keeps each mapping's props co-located with its link
+    (per-mapping attribution survives even when a control maps many threats).
+    """
     res_uuid = _threat_resource_uuid(m.threat_framework, m.threat_id)
     return {
-        "href": f"#{res_uuid}",
-        "rel": m.relationship,
-        "text": m.threat_name or _threat_key(m.threat_framework, m.threat_id),
+        "position": "ending",
         "props": [
             {"name": "threat-id", "ns": EVIDENTIA_NS, "value": m.threat_id},
             {
@@ -139,6 +151,14 @@ def _mapping_to_link(m: ControlThreatMapping, crosswalk_source: str) -> dict[str
                 "ns": EVIDENTIA_NS,
                 "value": crosswalk_source,
             },
+        ],
+        "links": [
+            {
+                "href": f"#{res_uuid}",
+                "rel": m.relationship,
+                "text": m.threat_name
+                or _threat_key(m.threat_framework, m.threat_id),
+            }
         ],
     }
 
@@ -163,17 +183,12 @@ def traceability_matrix_to_oscal_profile(
         threats.setdefault(_threat_key(m.threat_framework, m.threat_id), m)
     back_matter_resources = [_threat_to_resource(m) for m in threats.values()]
 
+    # One `add` per mapping (props + a bare link), so per-mapping attribution
+    # survives even when a control maps to several threats.
     alters = [
         {
             "control-id": control_id.lower(),
-            "adds": [
-                {
-                    "position": "ending",
-                    "links": [
-                        _mapping_to_link(m, matrix.crosswalk_source) for m in ms
-                    ],
-                }
-            ],
+            "adds": [_mapping_to_add(m, matrix.crosswalk_source) for m in ms],
         }
         for control_id, ms in by_control.items()
     ]

@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from evidentia_core.models.common import EvidentiaModel
 
@@ -94,6 +94,30 @@ class TraceabilityMatrix(EvidentiaModel):
         ),
     )
     mappings: list[ControlThreatMapping] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _threat_names_are_consistent(self) -> TraceabilityMatrix:
+        """Reject a threat that appears with conflicting human-readable names.
+
+        The emitter builds one back-matter resource per ``(framework, threat_id)``
+        from the first occurrence; if a later mapping for the same threat carried
+        a different ``threat_name`` the emitted document would be internally
+        inconsistent (a link's text would disagree with the resource it points
+        at). Fail fast on the input rather than silently canonicalize.
+        """
+        names: dict[tuple[str, str], str] = {}
+        for m in self.mappings:
+            if m.threat_name is None:
+                continue
+            key = (m.threat_framework, m.threat_id)
+            existing = names.setdefault(key, m.threat_name)
+            if existing != m.threat_name:
+                raise ValueError(
+                    f"threat {m.threat_framework}:{m.threat_id} has conflicting "
+                    f"names ({existing!r} vs {m.threat_name!r}); a threat id must "
+                    "map to one name across the matrix."
+                )
+        return self
 
     @property
     def control_ids(self) -> list[str]:
