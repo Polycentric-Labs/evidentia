@@ -2,25 +2,20 @@
 
 **Version:** 1.0.0-draft  
 **Date:** April 5, 2026  
-**Status:** Definitive — Single Source of Truth  
+**Status:** Historical design baseline (v0.7.0-era) — NOT current state  
 **Audience:** Senior Engineers, Technical Leads, Contributors  
 **License:** Apache 2.0  
 
-> **Implementation status as of 2026-04-29:** v0.7.2 (the
-> "supply-chain polish + documentation refresh" release) is the latest
-> shipped version. v0.7.3 is in flight (composite action hardening +
-> docs polish + audit cleanup). All phases through Phase 2
-> (collectors) are SHIPPED. Phase 3 (AI evidence validation) baseline
-> is hardened in v0.7.1 — see "Updates since v0.7.0" below. v0.8.0
-> ships the AI moat features (DFAH determinism harness, PRT mode,
-> MCP server, plugin-contract scaffolding) per
-> [`docs/v0.8.0-plan.md`](docs/v0.8.0-plan.md). See
-> [`docs/v0.7.3-plan.md`](docs/v0.7.3-plan.md) for the next-release
-> scope and [`docs/positioning-and-value.md`](docs/positioning-and-value.md)
-> + [`docs/capability-matrix.md`](docs/capability-matrix.md) for
-> current competitive positioning and capability test matrix. This
-> architecture plan remains the canonical design reference; the
-> supplements carry status + forward direction.
+> **This is the original v0.7.0-era architecture baseline, retained for
+> design context. It is NOT a live status document and is intentionally
+> not version-bumped each release.** For the current shipped state and
+> forward plan see [`CHANGELOG.md`](CHANGELOG.md) and
+> [`docs/ROADMAP.md`](docs/ROADMAP.md); for current positioning and the
+> capability matrix see
+> [`docs/positioning-and-value.md`](docs/positioning-and-value.md) and
+> [`docs/capability-matrix.md`](docs/capability-matrix.md). The body below
+> describes the v0.7.0 design baseline; later releases extended specific
+> subsystems without changing the core architecture.
 
 ---
 

@@ -252,7 +252,7 @@ def test_scrub_env_strips_credentials_and_forces_offline():
 
 ## Deferred-to-deploy (Tier-4 — explicit approval each, NOT this build)
 
-- Deploy the `VITE_DEMO=true` static bundle to `evidentia-demo.vercel.app`.
+- Deploy the `VITE_DEMO=true` static bundle to the owned `demo.evidentiagrc.com` (NEVER a raw `*.vercel.app` subdomain — those are reclaimable once a deployment is deleted and have been observed to get taken over by unrelated parties; only owned domains in any public reference).
 - Stand up the Tier-1 hosted ephemeral-container runner (platform TBD per the design) with `--network none` + caps + TTL, built from the signed v0.10.10 digest.
 - Add the demo link/card to `polycentriclabs-site`.
 - Later: map `evidentia-demo.polycentriclabs.com`.

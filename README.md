@@ -15,13 +15,13 @@
 </p>
 
 <p>
-  <a href="https://github.com/polycentric-labs/evidentia/actions/workflows/test.yml"><img src="https://github.com/polycentric-labs/evidentia/actions/workflows/test.yml/badge.svg?branch=main" alt="tests"></a>
-  <a href="https://codecov.io/gh/polycentric-labs/evidentia"><img src="https://codecov.io/gh/polycentric-labs/evidentia/branch/main/graph/badge.svg" alt="codecov"></a>
+  <a href="https://github.com/Polycentric-Labs/evidentia/actions/workflows/test.yml"><img src="https://github.com/Polycentric-Labs/evidentia/actions/workflows/test.yml/badge.svg?branch=main" alt="tests"></a>
+  <a href="https://codecov.io/gh/Polycentric-Labs/evidentia"><img src="https://codecov.io/gh/Polycentric-Labs/evidentia/branch/main/graph/badge.svg" alt="codecov"></a>
   <a href="https://pypi.org/project/evidentia/"><img src="https://img.shields.io/pypi/v/evidentia.svg" alt="PyPI version"></a>
   <img src="https://img.shields.io/badge/python-3.12+-blue.svg" alt="Python 3.12+">
   <img src="https://img.shields.io/badge/license-Apache%202.0-green.svg" alt="License: Apache 2.0">
   <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Code of Conduct"></a>
-  <a href="https://www.bestpractices.dev/projects/12724"><img src="https://www.bestpractices.dev/projects/12724/badge?v=silver" alt="OpenSSF Best Practices"></a>
+  <a href="https://www.bestpractices.dev/projects/12724"><img src="https://www.bestpractices.dev/projects/12724/badge" alt="OpenSSF Best Practices"></a>
   <a href="https://scorecard.dev/viewer/?uri=github.com/Polycentric-Labs/evidentia"><img src="https://api.scorecard.dev/projects/github.com/Polycentric-Labs/evidentia/badge" alt="OpenSSF Scorecard"></a>
   <a href="docs/parity-coverage.md"><img src="https://img.shields.io/badge/CLI%E2%86%94GUI%20parity-13.3%25-orange.svg" alt="CLI↔GUI parity"></a>
 </p>
@@ -37,7 +37,7 @@ Evidentia turns compliance from a spreadsheet problem into a software problem. I
 Built for compliance engineers, GRC teams, and CISOs who want to:
 
 - Ship audit-grade evidence with cryptographic provenance (Sigstore + PEP 740 + SLSA Provenance v1).
-- Map controls across frameworks via **92 bundled catalogs** (NIST 800-53 Rev 5, FedRAMP, CMMC 2.0, ISO 27001, CSF 2.0, EU AI Act, DORA, NIS2, GDPR, OpenSSF OSPS Baseline, the full FFIEC stack, and all 15 comprehensive US state privacy laws).
+- Map controls across frameworks via **95 bundled catalogs** (NIST 800-53 Rev 5, FedRAMP, CMMC 2.0, ISO 27001, CSF 2.0, EU AI Act, DORA, NIS2, GDPR, OpenSSF OSPS Baseline, the full FFIEC stack, and all 15 comprehensive US state privacy laws).
 - Drive AI agents (Claude Desktop, Claude Code, Cursor, Copilot CLI) deterministically via MCP tools with signed output envelopes.
 
 ## Install
@@ -84,29 +84,29 @@ Full 5-minute walk-through: [Quickstart wiki page](https://github.com/Polycentri
 
 See it first, no install — a self-hosted [asciinema](https://asciinema.org/) recording of the exact `doctor → catalog list → gap analyze → oscal verify` sequence on the Meridian Financial sample, plus a clickable, backend-free demo console:
 
-[**▶ Watch the CLI demo**](https://evidentia-demo.vercel.app/#/demo) · [**Click through the demo console**](https://evidentia-demo.vercel.app/)
+[**▶ Watch the CLI demo**](https://demo.evidentiagrc.com/#/demo) · [**Click through the demo console**](https://demo.evidentiagrc.com/)
 
 ## Features
 
 - **OSCAL-native end-to-end** — Ingest NIST OSCAL catalogs (Catalog 1.2.1); emit OSCAL Assessment Results + Plan-of-Action-and-Milestones (POA&M). Ready for FedRAMP 20x machine-readable submissions.
 - **Cryptographic evidence chain** — Sigstore keyless signing on Assessment Results; PEP 740 attestations on every published wheel; SLSA Provenance v1 on the container; CycloneDX 1.6 SBOM on every GitHub Release.
-- **92 framework catalogs + 13 crosswalks** — NIST 800-53 Rev 5 (full 1,196 controls + Low/Moderate/High/Privacy baselines), CSF 2.0, FedRAMP, CMMC 2.0 L1/L2, OpenSSF OSPS Baseline (Maturity 1/2/3 + first public OSCAL serialization), ISO 27001:2022, EU AI Act, DORA, NIS2, GDPR, all 15 US state privacy laws, full FFIEC IT Examination Handbook, OCC Bulletin 2026-13a / FRB SR 26-02. Plus 13 inter-framework crosswalks.
+- **95 framework catalogs + 15 crosswalks** — NIST 800-53 Rev 5 (full 1,196 controls + Low/Moderate/High/Privacy baselines), CSF 2.0, FedRAMP, CMMC 2.0 L1/L2, OpenSSF OSPS Baseline (Maturity 1/2/3 + first public OSCAL serialization), ISO 27001:2022, EU AI Act, DORA, NIS2, GDPR, all 15 US state privacy laws, full FFIEC IT Examination Handbook, OCC Bulletin 2026-13a / FRB SR 26-02. Plus 15 inter-framework crosswalks.
 - **14 evidence collectors** — AWS, GitHub (including v0.10.6 OSPS conformance helpers), Postgres, MySQL, Oracle, SQLite, MS-SQL, Snowflake, Databricks, Okta, Vanta, Drata, BitSight, SecurityScorecard. All OCSF-aligned with `compliance_status` field.
 - **OCSF-aligned findings** — OCSF Compliance Finding (class_uid 2003) via `--format ocsf`; OCSF Detection Finding (class_uid 2004) via `--format ocsf-detection`. SARIF 2.1.0 for CI gates via `--format sarif`. CycloneDX 1.6 VEX via `--format cyclonedx-vex`.
 - **13 MCP tools** — Drive Evidentia from Claude Desktop, Claude Code, Cursor, or any MCP host. Append-only tool contract per [`docs/api-stability.md`](docs/api-stability.md) (NORMATIVE). Signed output envelopes (CIMD) per [`docs/evidence-integrity.md`](docs/evidence-integrity.md).
-- **OSPS Baseline conformance** — First public open-source project shipping self-attestation against the OpenSSF OSPS Baseline ([`OSPS-CONFORMANCE.md`](OSPS-CONFORMANCE.md)) with a CI gate that re-validates every evidence link on push/PR/cron.
+- **OSPS Baseline conformance** — First public open-source project to ship a machine-readable per-control OSPS Baseline conformance attestation ([`OSPS-CONFORMANCE.md`](OSPS-CONFORMANCE.md)) with a CI gate that re-validates every evidence link on push/PR/cron.
 
 ## What's in the Box
 
 | Surface | Count |
 |---|---|
 | Workspace packages | 9 (8 Python on PyPI + 1 TypeScript/Vite frontend) |
-| Framework catalogs | 92 |
-| Inter-framework crosswalks | 13 |
+| Framework catalogs | 95 |
+| Inter-framework crosswalks | 15 |
 | Evidence collectors | 14 |
 | MCP tools | 13 |
 | OSCAL serializations | 1 (OpenSSF OSPS Baseline; more on the v0.11+ roadmap) |
-| Test suite | 3,700+ tests; mypy strict; ruff clean |
+| Test suite | 4,000+ tests; mypy strict; ruff clean |
 
 ## Documentation
 
