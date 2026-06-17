@@ -13,6 +13,7 @@ import { FrameworksPage } from "@/routes/FrameworksPage";
 import { GapAnalyzePage } from "@/routes/GapAnalyzePage";
 import { GapDiffPage } from "@/routes/GapDiffPage";
 import { HomePage } from "@/routes/HomePage";
+import { OscalResultsPage } from "@/routes/OscalResultsPage";
 import { PoamPage } from "@/routes/PoamPage";
 import { RiskGeneratePage } from "@/routes/RiskGeneratePage";
 import { SettingsPage } from "@/routes/SettingsPage";
@@ -64,6 +65,10 @@ export function App() {
           <Route path="poam" element={<PoamPage />} />
           <Route path="conmon" element={<ConmonPage />} />
           <Route path="tprm" element={<TprmPage />} />
+          {/* OSCAL emit/verify console view — a read-mostly GUI-fill, previewed
+           * in the static demo bundle (fixture-backed). Wiring it to a live run
+           * is the v0.10.12 parity work. */}
+          {IS_DEMO && <Route path="oscal" element={<OscalResultsPage />} />}
           <Route path="settings" element={<SettingsPage />} />
           <Route
             path="*"

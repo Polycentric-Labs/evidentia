@@ -3,6 +3,7 @@ import {
   BookOpen,
   Building2,
   ClipboardCheck,
+  FileCheck2,
   GitCompare,
   Home,
   Layers,
@@ -40,6 +41,7 @@ const NAV_META: Record<string, NavMeta> = {
   "/poam": { label: "POA&M", description: "Plan of Action & Milestones", crumb: "Plan of Action & Milestones", icon: ClipboardCheck },
   "/conmon": { label: "Continuous Monitoring", description: "Monitoring cadences", crumb: "Monitoring cadences", icon: Activity },
   "/tprm": { label: "TPRM", description: "Third-party risk", crumb: "Third-party risk", icon: Building2 },
+  "/oscal": { label: "OSCAL Results", description: "Emit + verify Assessment Results", crumb: "OSCAL Assessment Results", icon: FileCheck2 },
   "/settings": { label: "Settings", description: "Config + LLM + air-gap", crumb: "Configuration", icon: Settings },
 };
 
@@ -50,7 +52,7 @@ const NAV_META: Record<string, NavMeta> = {
 const NAV_GROUPS: { label: string | null; items: string[] }[] = [
   { label: null, items: IS_DEMO ? ["/", "/demo"] : ["/"] },
   { label: "Analyze", items: ["/gap/analyze", "/gap/diff", "/risk/generate", "/explain"] },
-  { label: "Govern", items: ["/poam", "/conmon", "/tprm"] },
+  { label: "Govern", items: IS_DEMO ? ["/poam", "/conmon", "/tprm", "/oscal"] : ["/poam", "/conmon", "/tprm"] },
   { label: "Library", items: ["/dashboard", "/frameworks"] },
   { label: "Configure", items: ["/settings"] },
 ];

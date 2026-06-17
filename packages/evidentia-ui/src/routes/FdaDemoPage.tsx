@@ -1,9 +1,7 @@
 import {
   ArrowRight,
-  BadgeCheck,
   Check,
   ExternalLink,
-  FileSignature,
   FlaskConical,
   Layers,
   Loader2,
@@ -11,9 +9,10 @@ import {
   ScanLine,
   ShieldCheck,
 } from "lucide-react";
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { MetricCard, SeverityBar } from "@/components/common/console";
+import { SignedArtifactCard } from "@/components/common/signed-artifact";
 import { GapTable } from "@/components/gap/GapTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -414,85 +413,23 @@ function FdaSignedArtifact() {
         </p>
       </header>
 
-      <Card className="fda-artifact-card card-accent-top">
-        <CardContent className="fda-artifact-body">
-          <div className="fda-artifact-head">
-            <div className="fda-artifact-file">
-              <FileSignature className="fda-artifact-file-ic" aria-hidden />
-              <div className="stack-2">
-                <p className="fda-artifact-filename mono">{a.filename}</p>
-                <p className="muted fda-artifact-fw">
-                  Framework: <span className="kbd">{a.framework}</span>
-                </p>
-              </div>
-            </div>
-            <span className="fda-verified" role="status">
-              <BadgeCheck className="fda-verified-ic" aria-hidden />
-              Verified ✓
-            </span>
-          </div>
-
-          <dl className="fda-artifact-grid">
-            <ArtifactField label="SHA-256" mono title={a.sha256}>
-              {middleTruncate(a.sha256, 14, 12)}
-            </ArtifactField>
-            <ArtifactField label="Run ID (ULID)" mono>
-              {a.runId}
-            </ArtifactField>
-            <ArtifactField label="Signed at">
-              {formatSignedAt(a.signedAt)}
-            </ArtifactField>
-            <ArtifactField label="Signer">{a.signer}</ArtifactField>
-            <ArtifactField label="Rekor log index" mono>
-              {a.rekorLogIndex}
-            </ArtifactField>
-            <ArtifactField label="Status">
-              <span className="fda-artifact-status">
-                <ShieldCheck className="fda-inline-ic" aria-hidden /> Tamper-evident
-              </span>
-            </ArtifactField>
-          </dl>
-
-          <p className="fda-artifact-note muted">
+      <SignedArtifactCard
+        filename={a.filename}
+        framework={a.framework}
+        sha256={a.sha256}
+        runId={a.runId}
+        signedAt={a.signedAt}
+        signer={a.signer}
+        rekorLogIndex={a.rekorLogIndex}
+        verified={a.verified}
+        note={
+          <>
             Real deployments sign keylessly via Sigstore (Fulcio&nbsp;+ Rekor
             transparency log); this is a pre-signed illustration with a test key.
-          </p>
-        </CardContent>
-      </Card>
+          </>
+        }
+      />
     </section>
   );
 }
 
-function ArtifactField({
-  label,
-  children,
-  mono = false,
-  title,
-}: {
-  label: string;
-  children: ReactNode;
-  mono?: boolean;
-  title?: string;
-}) {
-  return (
-    <div className="fda-field box">
-      <dt className="fda-field-label">{label}</dt>
-      <dd className={mono ? "fda-field-value mono" : "fda-field-value"} title={title}>
-        {children}
-      </dd>
-    </div>
-  );
-}
-
-/** Middle-truncate a long string (e.g. a SHA-256) for compact display. */
-function middleTruncate(value: string, head: number, tail: number): string {
-  if (value.length <= head + tail + 1) return value;
-  return `${value.slice(0, head)}…${value.slice(-tail)}`;
-}
-
-/** Render an ISO timestamp as a stable, readable UTC string. */
-function formatSignedAt(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return `${d.toISOString().replace("T", " ").replace(/\.\d+Z$/, "Z")}`;
-}

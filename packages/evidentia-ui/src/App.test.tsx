@@ -32,6 +32,9 @@ vi.mock("@/components/layout/AppLayout", () => ({
     </div>
   ),
 }));
+vi.mock("@/routes/OscalResultsPage", () => ({
+  OscalResultsPage: () => <div>OSCAL_RESULTS_PAGE</div>,
+}));
 
 beforeEach(() => {
   demo.isDemo = false;
@@ -78,5 +81,21 @@ describe("App routing — FDA-index build mode", () => {
     expect(screen.getByTestId("app-layout")).toBeInTheDocument();
     expect(screen.getByText("HOME_PAGE")).toBeInTheDocument();
     expect(screen.queryByText("FDA_DEMO_PAGE")).not.toBeInTheDocument();
+  });
+
+  it("registers the OSCAL results route inside AppLayout in demo builds", () => {
+    demo.isDemo = true;
+
+    renderAppAt("/oscal");
+
+    expect(screen.getByTestId("app-layout")).toBeInTheDocument();
+    expect(screen.getByText("OSCAL_RESULTS_PAGE")).toBeInTheDocument();
+  });
+
+  it("does not register the OSCAL route in non-demo builds", () => {
+    renderAppAt("/oscal");
+
+    expect(screen.queryByText("OSCAL_RESULTS_PAGE")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /page not found/i })).toBeInTheDocument();
   });
 });

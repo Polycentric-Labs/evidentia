@@ -536,6 +536,24 @@
   .fda-artifact-note { font-size: 0.8rem; line-height: 1.5; margin: 0; }
   .fda-inline-ic { width: 0.9rem; height: 0.9rem; display: inline-block; vertical-align: -0.12em; }
 
+  /* Verification panel (signed-artifact integrity / signature checks) */
+  .verify-list { display: flex; flex-direction: column; margin: 0; }
+  .verify-row { display: flex; align-items: flex-start; gap: 0.7rem; padding: 0.75rem 0; border-bottom: 1px solid hsl(var(--border)); }
+  .verify-row:last-child { border-bottom: 0; }
+  .verify-body { display: flex; flex-direction: column; }
+  .verify-ic { width: 1.15rem; height: 1.15rem; flex-shrink: 0; margin-top: 0.05rem; }
+  .verify-ic.ok { color: hsl(var(--success)); }
+  .verify-ic.na { color: hsl(var(--fg-faint)); }
+  .verify-ic.bad { color: hsl(var(--sev-critical)); }
+  .verify-label { font-size: 0.88rem; font-weight: 600; margin: 0; }
+  .verify-detail { font-size: 0.8rem; color: hsl(var(--fg-muted)); margin: 0.15rem 0 0; line-height: 1.45; }
+
+  /* OSCAL back-matter resource list */
+  .oscal-resource-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  .oscal-resource { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.6rem 0.75rem; border: 1px solid hsl(var(--border)); border-radius: var(--radius); background: hsl(var(--surface)); }
+  .oscal-resource-title { font-size: 0.86rem; font-weight: 500; }
+  .oscal-resource-hash { font-size: 0.74rem; color: hsl(var(--fg-muted)); word-break: break-all; }
+
   /* Footer */
   .fda-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid hsl(var(--border)); }
   .fda-footer-links { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
