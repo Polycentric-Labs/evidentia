@@ -318,7 +318,7 @@ docstring-parser==0.18.0 \
 evidentia==0.10.11 \
     --hash=sha256:3f4fc6cf58e079a32a68b8fad6684f3912f9b1a4588497ea0e137f5fbdda318e \
     --hash=sha256:d3738d6d2ade42d8ba0c4b82388a94f4378a34eeef439cb82f8b3acb455460e1
-    # via -r requirements.in
+    # via -r docker/requirements.in
 evidentia-ai==0.10.11 \
     --hash=sha256:1a00b7380140ea3510d130dab6ffd4b245e0cb66b5b012ac0651e8bdd75224bf \
     --hash=sha256:b5bfdff859686d0d04e3166db9dbeaf55ab7c1c901a730a08f627a16640e54d9
@@ -1937,11 +1937,16 @@ typing-extensions==4.15.0 \
     --hash=sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466 \
     --hash=sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548
     # via
+    #   aiohttp
+    #   aiosignal
+    #   anyio
     #   fastapi
     #   huggingface-hub
     #   openai
     #   pydantic
     #   pydantic-core
+    #   referencing
+    #   starlette
     #   typing-inspection
 typing-inspection==0.4.2 \
     --hash=sha256:4ed1cacbdc298c220f1bd249ed5287caa16f34d44ef4e9c3d0cbad5b521545e7 \
@@ -1954,7 +1959,7 @@ urllib3==2.7.0 \
     --hash=sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c \
     --hash=sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897
     # via
-    #   -r requirements.in
+    #   -r docker/requirements.in
     #   requests
 uvicorn==0.49.0 \
     --hash=sha256:ba3d14c3ee7e41c6c654c46c9eb489d33213cdd30aa1696eab1374337c13f68f \
