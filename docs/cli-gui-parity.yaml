@@ -42,7 +42,7 @@ version: 1
 # fails if the live `cli-only` count exceeds this. The controller lowers it with
 # `--update-baseline` whenever a screen ships and a row flips cli-only -> *.
 baseline:
-  cli_only: 43
+  cli_only: 17
 commands:
   - cli: "gap analyze"
     api: "POST /api/gap/analyze"
@@ -337,109 +337,109 @@ commands:
     gui: null
     status: cli-only
   - cli: "retention set"
-    api: null
+    api: "POST /api/retention"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "retention list"
-    api: null
+    api: "GET /api/retention"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "retention show"
-    api: null
+    api: "GET /api/retention/{retention_id}"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "retention extend"
-    api: null
+    api: "POST /api/retention/{retention_id}/extend"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "retention transition"
-    api: null
+    api: "POST /api/retention/{retention_id}/transition"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "retention delete"
-    api: null
+    api: "DELETE /api/retention/{retention_id}"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "retention report"
-    api: null
+    api: "GET /api/retention/report"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance lines-report"
-    api: null
+    api: "POST /api/governance/lines-report"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance challenge add"
-    api: null
+    api: "POST /api/governance/challenges"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance challenge list"
-    api: null
+    api: "GET /api/governance/challenges"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance challenge show"
-    api: null
+    api: "GET /api/governance/challenges/{challenge_id}"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance metrics add"
-    api: null
+    api: "POST /api/governance/metrics"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance metrics observe"
-    api: null
+    api: "POST /api/governance/metrics/{metric_id}/observations"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance metrics list"
-    api: null
+    api: "GET /api/governance/metrics"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance metrics show"
-    api: null
+    api: "GET /api/governance/metrics/{metric_id}"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance metrics delete"
-    api: null
+    api: "DELETE /api/governance/metrics/{metric_id}"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance metrics report"
-    api: null
+    api: "GET /api/governance/metrics/report"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance workflow run"
-    api: null
+    api: "POST /api/governance/workflows"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance workflow advance"
-    api: null
+    api: "POST /api/governance/workflows/{workflow_id}/advance"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance workflow status"
-    api: null
+    api: "GET /api/governance/workflows/{workflow_id}"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance workflow list"
-    api: null
+    api: "GET /api/governance/workflows"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance workflow log"
-    api: null
+    api: "GET /api/governance/workflows/{workflow_id}/log"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "governance workflow delete"
-    api: null
+    api: "DELETE /api/governance/workflows/{workflow_id}"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "evidence save"
-    api: null
+    api: "POST /api/evidence"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "evidence history"
-    api: null
+    api: "GET /api/evidence/{lineage_id}/history"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "evidence show"
-    api: null
+    api: "GET /api/evidence/{lineage_id}/versions/{version}"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "serve"
     api: null
     gui: null

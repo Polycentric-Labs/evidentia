@@ -923,6 +923,85 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Save Evidence Artifact
+         * @description Persist an evidence artifact (new lineage or new version).
+         *
+         *     Body shape is the full :class:`EvidenceArtifact` model. For a new
+         *     lineage, leave ``lineage_id`` + ``predecessor_id`` unset and
+         *     ``version=1`` (the defaults). For a new version in an existing
+         *     chain, set ``lineage_id`` to the chain root + ``predecessor_id``
+         *     to the prior version's ``id`` + ``version=N+1`` (use
+         *     :meth:`EvidenceArtifact.new_version` client-side to construct it).
+         *
+         *     Returns a summary dict mirroring the CLI ``save`` output. WORM
+         *     enforcement: re-saving a persisted version raises
+         *     :class:`EvidenceWORMViolation` → HTTP 409 with the canonical
+         *     ``next_version`` recovery hint. A malformed lineage id → 404.
+         */
+        post: operations["save_evidence_artifact_api_evidence_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/evidence/{lineage_id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Evidence History
+         * @description Walk a lineage chain — every persisted version, sorted ascending.
+         *
+         *     A well-formed but unknown lineage id returns an empty envelope
+         *     (``total=0``). A malformed lineage id → 404 (shape-violation
+         *     normalized per the poam/TPRM precedent).
+         */
+        get: operations["get_evidence_history_api_evidence__lineage_id__history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/evidence/{lineage_id}/versions/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Evidence Version
+         * @description Render one specific version of a lineage chain.
+         *
+         *     404 when the well-formed lineage id + version has no record on
+         *     disk OR the lineage id is malformed.
+         */
+        get: operations["get_evidence_version_api_evidence__lineage_id__versions__version__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/explain/{framework}/{control_id}": {
         parameters: {
             query?: never;
@@ -1127,6 +1206,304 @@ export interface paths {
          * @description Load a saved gap report by its storage key.
          */
         get: operations["get_report_api_gap_reports__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/governance/challenges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Challenge Records
+         * @description List effective-challenge records (newest-first by challenge_date).
+         *
+         *     Filter + paginate semantics match the poam router (pagination
+         *     applies AFTER filtering so ``total`` reflects the filter-matched
+         *     count).
+         */
+        get: operations["list_challenge_records_api_governance_challenges_get"];
+        put?: never;
+        /**
+         * Create Challenge
+         * @description Log a new effective-challenge record.
+         *
+         *     Body shape is the full :class:`EffectiveChallenge` model. Server
+         *     fills ``id`` / ``created_at`` / ``updated_at`` / ``evidentia_version``
+         *     via Pydantic ``default_factory`` when the client omits them.
+         */
+        post: operations["create_challenge_api_governance_challenges_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/governance/challenges/{challenge_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Challenge
+         * @description Fetch a single challenge by ID. 404 on unknown OR malformed ID.
+         */
+        get: operations["get_challenge_api_governance_challenges__challenge_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/governance/lines-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lines Report
+         * @description Render a 3LOD distribution report from a posted owner list.
+         *
+         *     Stateless: the CLI reads owners from a YAML overlay file, but the
+         *     API takes the parsed ``list[Owner]`` directly as the JSON body.
+         *     Returns the deterministic Markdown report as plain text. Same
+         *     content as ``evidentia governance lines-report``.
+         */
+        post: operations["lines_report_api_governance_lines_report_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/governance/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Metric Records
+         * @description List metrics, each with its computed status.
+         *
+         *     Filter + paginate semantics match the poam router. Each item
+         *     carries a computed ``status`` (:func:`evaluate_metric`) spliced
+         *     alongside the persisted fields.
+         */
+        get: operations["list_metric_records_api_governance_metrics_get"];
+        put?: never;
+        /**
+         * Create Metric
+         * @description Define a new KRI / KPI / KGI metric.
+         *
+         *     Body shape is the full :class:`Metric` model. Server fills
+         *     ``id`` / timestamps / ``evidentia_version`` via Pydantic
+         *     ``default_factory`` when omitted.
+         *
+         *     Returns the created metric with its computed ``status`` spliced in
+         *     (via :func:`_metric_with_status`) — consistent with the list / show
+         *     / observe endpoints. A freshly-created metric has no observations,
+         *     so ``status`` is ``"no_data"``. ``response_model=Metric`` is
+         *     deliberately omitted: it would strip the non-model ``status`` key
+         *     and re-impose the bare-model shape this fix removes.
+         */
+        post: operations["create_metric_api_governance_metrics_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/governance/metrics/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Metrics Report
+         * @description Return the Markdown KRI/KPI/KGI dashboard report as plain text.
+         *
+         *     Declared BEFORE ``/governance/metrics/{metric_id}`` so the static
+         *     ``report`` segment is not captured by the path-parameter route (a
+         *     test asserts the ordering — ``report`` must not be parsed as an ID).
+         *     Same content as ``evidentia governance metrics report``.
+         */
+        get: operations["metrics_report_api_governance_metrics_report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/governance/metrics/{metric_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Metric
+         * @description Fetch a single metric with computed status. 404 on unknown/malformed.
+         */
+        get: operations["get_metric_api_governance_metrics__metric_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Metric Record
+         * @description Delete a metric by ID. 204 on success, 404 on unknown/malformed.
+         */
+        delete: operations["delete_metric_record_api_governance_metrics__metric_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/governance/metrics/{metric_id}/observations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Observe Metric
+         * @description Append an observation + return the updated metric with computed status.
+         *
+         *     Loads the metric (404 on unknown / malformed ID), appends a new
+         *     :class:`MetricObservation`, persists, then returns the full metric
+         *     with the recomputed ``status`` field spliced in (mirroring the
+         *     CLI's ``current status: <evaluate_metric>`` surface).
+         */
+        post: operations["observe_metric_api_governance_metrics__metric_id__observations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/governance/workflows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Workflow Records
+         * @description List workflows (newest-first). Standard envelope + pagination.
+         */
+        get: operations["list_workflow_records_api_governance_workflows_get"];
+        put?: never;
+        /**
+         * Run Workflow
+         * @description Instantiate + persist a workflow run.
+         *
+         *     Unlike the CLI (which takes a YAML *file path*), this endpoint takes
+         *     the already-parsed :class:`Workflow` model as the JSON body. The
+         *     post-parse lifecycle steps replicate the CLI's
+         *     ``_load_workflow_template`` (cli/governance.py): auto-promote step 0
+         *     from PENDING → IN_PROGRESS, then set ``status =
+         *     evaluate_workflow(wf)``.
+         *
+         *     NOTE: this auto-promote + evaluate block is duplicated inline from
+         *     the CLI. Lifting it into a shared core helper
+         *     (e.g. ``evidentia_core.governance.workflows.instantiate_workflow``)
+         *     is a future CLI/API-parity refactor.
+         */
+        post: operations["run_workflow_api_governance_workflows_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/governance/workflows/{workflow_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Workflow
+         * @description Fetch a single workflow by ID. 404 on unknown OR malformed ID.
+         */
+        get: operations["get_workflow_api_governance_workflows__workflow_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Workflow Record
+         * @description Delete a workflow by ID. 204 on success, 404 on unknown/malformed.
+         */
+        delete: operations["delete_workflow_record_api_governance_workflows__workflow_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/governance/workflows/{workflow_id}/advance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Advance Workflow
+         * @description Transition a workflow step to a new status.
+         *
+         *     Loads (404 on unknown / malformed ID), calls
+         *     :func:`advance_workflow_step`, normalizes
+         *     :class:`WorkflowAdvanceError` → 400 (rule violation), persists the
+         *     new workflow, and returns it with the re-evaluated ``status``.
+         */
+        post: operations["advance_workflow_api_governance_workflows__workflow_id__advance_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/governance/workflows/{workflow_id}/log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Workflow Log
+         * @description Return the Markdown workflow audit-log as plain text.
+         *
+         *     404 on unknown / malformed ID. Same content as
+         *     ``evidentia governance workflow log``.
+         */
+        get: operations["workflow_log_api_governance_workflows__workflow_id__log_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1693,6 +2070,135 @@ export interface paths {
         patch: operations["update_milestone_api_poam_items__poam_id__milestones__milestone_id__patch"];
         trace?: never;
     };
+    "/api/retention": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Retention Records
+         * @description List retention records in canonical sort order.
+         *
+         *     Filtering applies BEFORE pagination so ``total`` reflects the
+         *     filter-matched count.
+         */
+        get: operations["list_retention_records_api_retention_get"];
+        put?: never;
+        /**
+         * Set Retention
+         * @description Create a retention metadata record.
+         *
+         *     When ``retention_period_days`` is omitted, the per-classification
+         *     regulator default is used. The model's ``_populate_lock_until``
+         *     validator computes ``lock_until`` from
+         *     ``created_at + retention_period_days`` at construction.
+         */
+        post: operations["set_retention_api_retention_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/retention/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Retention Report
+         * @description Return the retention-posture audit report as Markdown text.
+         *
+         *     Response Content-Type is ``text/plain; charset=utf-8`` so the
+         *     Markdown body lands raw in the client. Same content as
+         *     ``evidentia retention report``. Declared before the
+         *     ``/retention/{retention_id}`` route so the static ``report``
+         *     segment is not captured as an ID.
+         */
+        get: operations["retention_report_api_retention_report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/retention/{retention_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Retention
+         * @description Fetch a single retention record by ID.
+         */
+        get: operations["get_retention_api_retention__retention_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Retention Record
+         * @description Delete a retention metadata record.
+         *
+         *     204 on success, 404 on shape-violation OR unknown. This removes
+         *     only the metadata record, not the underlying evidence.
+         */
+        delete: operations["delete_retention_record_api_retention__retention_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/retention/{retention_id}/extend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Extend Retention
+         * @description Extend a record's lock-until date.
+         *
+         *     WORM-style retention only allows extending — never shortening.
+         *     Replicates the CLI's inline extend logic (does not route through
+         *     the WORM backend).
+         */
+        post: operations["extend_retention_api_retention__retention_id__extend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/retention/{retention_id}/transition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Transition Retention
+         * @description Transition a record's lifecycle stage (state-machine enforced).
+         */
+        post: operations["transition_retention_api_retention__retention_id__transition_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/risk/generate": {
         parameters: {
             query?: never;
@@ -2142,6 +2648,22 @@ export interface components {
              */
             title: string;
         };
+        /**
+         * ChallengeOutcome
+         * @description Outcome classification for an effective challenge event.
+         *
+         *     Values:
+         *
+         *       - ``accepted`` — the challenger's concern was accepted by the
+         *         model owner; subsequent action follows (e.g., recalibrate,
+         *         add limitation, change use)
+         *       - ``rejected`` — the challenger's concern was reviewed and
+         *         rejected with documented rationale
+         *       - ``modify`` — partial acceptance; modification path agreed
+         *       - ``pending`` — challenge logged; resolution still in progress
+         * @enum {string}
+         */
+        ChallengeOutcome: "accepted" | "rejected" | "modify" | "pending";
         /** CheckCycleRow */
         CheckCycleRow: {
             /** Activity */
@@ -2700,6 +3222,91 @@ export interface components {
          */
         EUAIActTier: "unacceptable" | "high" | "limited" | "minimal";
         /**
+         * EffectiveChallenge
+         * @description One documented effective-challenge event.
+         *
+         *     Each record captures:
+         *
+         *       - Subject model — cross-link via ``subject_model_id`` to a
+         *         :class:`ModelInventory.id`
+         *       - Challenger identity + role
+         *       - Challenge date + topic + substance
+         *       - Model-owner response
+         *       - Outcome + rationale
+         *       - Optional resolved_at timestamp
+         *
+         *     Records are persisted via
+         *     :mod:`evidentia_core.effective_challenge_store` (JSON-file
+         *     mirroring the vendor + model-risk store patterns).
+         */
+        EffectiveChallenge: {
+            /**
+             * Challenge Date
+             * Format: date
+             * @description Date the challenge event occurred.
+             */
+            challenge_date: string;
+            /**
+             * Challenge Substance
+             * @description Full substance of the challenge — what was questioned + on what grounds.
+             */
+            challenge_substance: string;
+            /**
+             * Challenge Topic
+             * @description Short topic label for the challenge (e.g., 'Methodology — feature selection rationale').
+             */
+            challenge_topic: string;
+            /**
+             * Challenger Email
+             * @description Email identity of the challenger (independent of model dev).
+             */
+            challenger_email: string;
+            /**
+             * Challenger Role
+             * @description Role label of the challenger (e.g., 'MRM Director', 'Internal Audit Senior'). Used to substantiate independence + materiality of the challenge.
+             */
+            challenger_role: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /** Evidentia Version */
+            evidentia_version?: string;
+            /** Id */
+            id?: string;
+            /**
+             * @description Outcome classification per SR 11-7 §III.D.
+             * @default pending
+             */
+            outcome: components["schemas"]["ChallengeOutcome"];
+            /**
+             * Outcome Rationale
+             * @description Explanation for the outcome decision.
+             */
+            outcome_rationale?: string | null;
+            /**
+             * Resolved At
+             * @description Date the challenge was resolved (None while pending).
+             */
+            resolved_at?: string | null;
+            /**
+             * Response
+             * @description Model owner's documented response to the challenge. None until response is logged.
+             */
+            response?: string | null;
+            /**
+             * Subject Model Id
+             * @description Cross-link to the ModelInventory record being challenged. MUST be a UUID matching an entry in the model_risk store.
+             */
+            subject_model_id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+        };
+        /**
          * EfficiencyOpportunity
          * @description A control that satisfies multiple framework requirements simultaneously.
          *
@@ -2739,6 +3346,274 @@ export interface components {
              * @description Efficiency value score = total_gaps_closed / effort_weight
              */
             value_score: number;
+        };
+        /**
+         * EvidenceArtifact
+         * @description A single piece of compliance evidence.
+         *
+         *     An artifact represents one discrete piece of proof that a control is
+         *     implemented and operating effectively. Artifacts are collected by
+         *     collectors (automated) or uploaded manually.
+         */
+        "EvidenceArtifact-Input": {
+            /**
+             * Collected At
+             * Format: date-time
+             * @description When this evidence was collected (UTC)
+             */
+            collected_at?: string;
+            /**
+             * Collected By
+             * @description Collector name or user email that produced this evidence
+             */
+            collected_by: string;
+            /**
+             * Content
+             * @description The actual evidence content
+             */
+            content?: unknown | null;
+            /**
+             * Content Format
+             * @description Format of content: 'json', 'text', 'base64', 'html'
+             * @default json
+             */
+            content_format: string;
+            /**
+             * Content Hash
+             * @description SHA-256 hash of content for tamper detection
+             */
+            content_hash?: string | null;
+            /**
+             * Control Mappings
+             * @description Controls that this evidence supports, across one or more frameworks
+             */
+            control_mappings?: components["schemas"]["ControlMapping"][];
+            /**
+             * Description
+             * @description Detailed description of the evidence content and context
+             */
+            description?: string | null;
+            /** @description Classification of this evidence artifact */
+            evidence_type: components["schemas"]["EvidenceType"];
+            /**
+             * Expires At
+             * @description When this evidence becomes stale
+             */
+            expires_at?: string | null;
+            /**
+             * File Path
+             * @description Path to the evidence file if stored on disk
+             */
+            file_path?: string | null;
+            /**
+             * File Size Bytes
+             * @description Size of the evidence file in bytes
+             */
+            file_size_bytes?: number | null;
+            /**
+             * Id
+             * @description Unique identifier (UUID v4)
+             */
+            id?: string;
+            /**
+             * Lineage Id
+             * @description v0.9.5 P3.2: UUID identifying the lineage chain across versions. When ``None`` (default), the artifact IS the lineage root + the ``id`` field serves as the implicit lineage_id. Set explicitly on versions > 1 to point at the chain root.
+             */
+            lineage_id?: string | null;
+            /**
+             * Metadata
+             * @description Collector-specific metadata (region, account ID, etc.)
+             */
+            metadata?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Missing Elements
+             * @description Elements needed to make this evidence sufficient
+             */
+            missing_elements?: string[];
+            /**
+             * Predecessor Id
+             * @description v0.9.5 P3.2: ``id`` of the prior version in the lineage chain. ``None`` for the lineage root (version 1). Allows ``evidentia evidence show <lineage_id> --version N`` to walk the chain to the target version.
+             */
+            predecessor_id?: string | null;
+            /**
+             * Source System
+             * @description System that produced this evidence
+             */
+            source_system: string;
+            /**
+             * @description AI-assessed sufficiency of this evidence for its mapped controls
+             * @default unknown
+             */
+            sufficiency: components["schemas"]["EvidenceSufficiency"];
+            /**
+             * Sufficiency Rationale
+             * @description Explanation of the sufficiency assessment
+             */
+            sufficiency_rationale?: string | null;
+            /** Tags */
+            tags?: string[];
+            /**
+             * Title
+             * @description Human-readable title describing what this evidence shows
+             */
+            title: string;
+            /**
+             * Validated At
+             * @description When the sufficiency assessment was performed
+             */
+            validated_at?: string | null;
+            /**
+             * Validated By
+             * @description Model or person that performed the validation
+             */
+            validated_by?: string | null;
+            /**
+             * Validator Confidence
+             * @description Validator confidence in the sufficiency assessment (0.0–1.0)
+             */
+            validator_confidence?: number | null;
+            /**
+             * Version
+             * @description v0.9.5 P3.2: sequence number within the artifact's lineage chain. First version = 1; each subsequent edit creates a new artifact with version=N+1. Backward-compat default of 1 means v0.7.x → v0.9.4 artifacts load as version 1 of their own (single-element) chain.
+             * @default 1
+             */
+            version: number;
+        };
+        /**
+         * EvidenceArtifact
+         * @description A single piece of compliance evidence.
+         *
+         *     An artifact represents one discrete piece of proof that a control is
+         *     implemented and operating effectively. Artifacts are collected by
+         *     collectors (automated) or uploaded manually.
+         */
+        "EvidenceArtifact-Output": {
+            /**
+             * Collected At
+             * Format: date-time
+             * @description When this evidence was collected (UTC)
+             */
+            collected_at?: string;
+            /**
+             * Collected By
+             * @description Collector name or user email that produced this evidence
+             */
+            collected_by: string;
+            /**
+             * Content
+             * @description The actual evidence content
+             */
+            content?: unknown | null;
+            /**
+             * Content Format
+             * @description Format of content: 'json', 'text', 'base64', 'html'
+             * @default json
+             */
+            content_format: string;
+            /**
+             * Content Hash
+             * @description SHA-256 hash of content for tamper detection
+             */
+            content_hash?: string | null;
+            /**
+             * Control Mappings
+             * @description Controls that this evidence supports, across one or more frameworks
+             */
+            control_mappings?: components["schemas"]["ControlMapping"][];
+            /**
+             * Description
+             * @description Detailed description of the evidence content and context
+             */
+            description?: string | null;
+            /** @description Classification of this evidence artifact */
+            evidence_type: components["schemas"]["EvidenceType"];
+            /**
+             * Expires At
+             * @description When this evidence becomes stale
+             */
+            expires_at?: string | null;
+            /**
+             * File Path
+             * @description Path to the evidence file if stored on disk
+             */
+            file_path?: string | null;
+            /**
+             * File Size Bytes
+             * @description Size of the evidence file in bytes
+             */
+            file_size_bytes?: number | null;
+            /**
+             * Id
+             * @description Unique identifier (UUID v4)
+             */
+            id?: string;
+            /**
+             * Lineage Id
+             * @description v0.9.5 P3.2: UUID identifying the lineage chain across versions. When ``None`` (default), the artifact IS the lineage root + the ``id`` field serves as the implicit lineage_id. Set explicitly on versions > 1 to point at the chain root.
+             */
+            lineage_id?: string | null;
+            /**
+             * Metadata
+             * @description Collector-specific metadata (region, account ID, etc.)
+             */
+            metadata?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Missing Elements
+             * @description Elements needed to make this evidence sufficient
+             */
+            missing_elements?: string[];
+            /**
+             * Predecessor Id
+             * @description v0.9.5 P3.2: ``id`` of the prior version in the lineage chain. ``None`` for the lineage root (version 1). Allows ``evidentia evidence show <lineage_id> --version N`` to walk the chain to the target version.
+             */
+            predecessor_id?: string | null;
+            /**
+             * Source System
+             * @description System that produced this evidence
+             */
+            source_system: string;
+            /**
+             * @description AI-assessed sufficiency of this evidence for its mapped controls
+             * @default unknown
+             */
+            sufficiency: components["schemas"]["EvidenceSufficiency"];
+            /**
+             * Sufficiency Rationale
+             * @description Explanation of the sufficiency assessment
+             */
+            sufficiency_rationale?: string | null;
+            /** Tags */
+            tags?: string[];
+            /**
+             * Title
+             * @description Human-readable title describing what this evidence shows
+             */
+            title: string;
+            /**
+             * Validated At
+             * @description When the sufficiency assessment was performed
+             */
+            validated_at?: string | null;
+            /**
+             * Validated By
+             * @description Model or person that performed the validation
+             */
+            validated_by?: string | null;
+            /**
+             * Validator Confidence
+             * @description Validator confidence in the sufficiency assessment (0.0–1.0)
+             */
+            validator_confidence?: number | null;
+            /**
+             * Version
+             * @description v0.9.5 P3.2: sequence number within the artifact's lineage chain. First version = 1; each subsequent edit creates a new artifact with version=N+1. Backward-compat default of 1 means v0.7.x → v0.9.4 artifacts load as version 1 of their own (single-element) chain.
+             * @default 1
+             */
+            version: number;
         };
         /**
          * EvidenceRef
@@ -2798,6 +3673,18 @@ export interface components {
              */
             title: string;
         };
+        /**
+         * EvidenceSufficiency
+         * @description AI-assessed sufficiency of evidence for a control.
+         * @enum {string}
+         */
+        EvidenceSufficiency: "sufficient" | "partial" | "insufficient" | "stale" | "unknown";
+        /**
+         * EvidenceType
+         * @description Classification of evidence artifacts by type.
+         * @enum {string}
+         */
+        EvidenceType: "configuration" | "log" | "screenshot" | "policy_document" | "audit_report" | "api_response" | "test_result" | "attestation" | "repository_metadata" | "identity_data";
         /**
          * EvidentiaConfig
          * @description Validated shape of ``evidentia.yaml``.
@@ -3392,6 +4279,12 @@ export interface components {
             [key: string]: unknown;
         };
         /**
+         * LineOfDefense
+         * @description 3LOD classification per IIA Three Lines Model 2020 revision.
+         * @enum {string}
+         */
+        LineOfDefense: "first" | "second" | "third";
+        /**
          * LlmProviderState
          * @description Per-provider configuration state (no key values).
          */
@@ -3436,6 +4329,135 @@ export interface components {
          * @enum {string}
          */
         Methodology: "statistical" | "ml" | "rules_based" | "llm" | "expert_judgment" | "hybrid";
+        /**
+         * Metric
+         * @description A KRI / KPI / KGI metric definition + observation history.
+         *
+         *     Operators define metrics once + add observations over time
+         *     via the ``governance metrics observe`` CLI verb. The current
+         *     state is derived from the latest observation against the
+         *     documented thresholds.
+         */
+        Metric: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Critical Threshold
+             * @description Threshold above which (HIGHER_IS_WORSE) or below which (HIGHER_IS_BETTER) the metric is in BREACH state.
+             */
+            critical_threshold?: number | null;
+            /**
+             * Description
+             * @description What this metric measures + why it's tracked. Should include the unit (per-day, percentage, count, etc.).
+             */
+            description: string;
+            /** @description Whether higher values are worse or better. */
+            direction: components["schemas"]["MetricDirection"];
+            /** Evidentia Version */
+            evidentia_version?: string;
+            /** Id */
+            id?: string;
+            kind: components["schemas"]["MetricKind"];
+            /**
+             * Name
+             * @description Human-readable metric name (e.g., 'Failed-login rate').
+             */
+            name: string;
+            /**
+             * Notes
+             * @description Free-text notes about methodology, source data, etc.
+             */
+            notes?: string | null;
+            /**
+             * Observations
+             * @description Time-ordered observations. Newest tracked separately.
+             */
+            observations?: components["schemas"]["MetricObservation"][];
+            /**
+             * Owner Email
+             * @description Email of the metric owner. Cross-references the v0.7.10 governance Owner schema when present.
+             */
+            owner_email?: string | null;
+            /**
+             * Unit
+             * @description Measurement unit (e.g., 'per 1,000 logins', 'days', '%').
+             */
+            unit: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+            /**
+             * Warning Threshold
+             * @description Threshold above which (HIGHER_IS_WORSE) or below which (HIGHER_IS_BETTER) the metric is in WATCH state. None = no threshold (no automatic flagging).
+             */
+            warning_threshold?: number | null;
+        };
+        /**
+         * MetricDirection
+         * @description Whether higher values are worse or better.
+         *
+         *     For KRIs (risk indicators), higher is typically worse. For
+         *     KPIs measuring coverage / completeness / availability, higher
+         *     is typically better. For KGIs, the direction depends on the
+         *     specific outcome being measured.
+         * @enum {string}
+         */
+        MetricDirection: "higher_is_worse" | "higher_is_better";
+        /**
+         * MetricKind
+         * @description KRI / KPI / KGI classification.
+         * @enum {string}
+         */
+        MetricKind: "kri" | "kpi" | "kgi";
+        /**
+         * MetricObservation
+         * @description One timestamped observation of a metric.
+         */
+        MetricObservation: {
+            /**
+             * Note
+             * @description Optional contextual note (e.g., 'Q3 backlog spike').
+             */
+            note?: string | null;
+            /**
+             * Observed At
+             * Format: date
+             * @description Date the observation was recorded.
+             */
+            observed_at: string;
+            /**
+             * Value
+             * @description Numeric value. Units defined by the parent Metric.
+             */
+            value: number;
+        };
+        /**
+         * MetricObservationPayload
+         * @description Body shape for POST /governance/metrics/{id}/observations.
+         */
+        MetricObservationPayload: {
+            /**
+             * Note
+             * @description Optional contextual note.
+             */
+            note?: string | null;
+            /**
+             * Observed At
+             * Format: date
+             * @description ISO-8601 date (YYYY-MM-DD) the observation was recorded.
+             */
+            observed_at: string;
+            /**
+             * Value
+             * @description Observation value.
+             */
+            value: number;
+        };
         /**
          * Milestone
          * @description A single Plan-of-Action-and-Milestones milestone (v0.9.0 P1).
@@ -3843,6 +4865,37 @@ export interface components {
          */
         OLIRRelationship: "equivalent-to" | "equal-to" | "subset-of" | "superset-of" | "intersects-with" | "related-to";
         /**
+         * Owner
+         * @description An owner identity with 3LOD classification.
+         *
+         *     The minimum primitive for governance reporting. Each Owner ties
+         *     an email identity to a line-of-defense classification so the
+         *     aggregate distribution can be measured + presented.
+         *
+         *     Optional ``team`` and ``title`` fields support richer reporting
+         *     (e.g., "MRM team has 3 owners, 2 in 2nd line + 1 in 3rd line —
+         *     governance crossover requires explanation").
+         */
+        Owner: {
+            /**
+             * Email
+             * @description Owner's primary email address (acts as the identity key). Free-form str to match the existing inventory-model convention; light validation is up to the caller.
+             */
+            email: string;
+            /** @description 3LOD classification per IIA Three Lines Model 2020. First line = business operations; second line = risk/compliance oversight; third line = internal audit. */
+            line_of_defense: components["schemas"]["LineOfDefense"];
+            /**
+             * Team
+             * @description Optional team / department label (e.g., 'MRM', 'Audit').
+             */
+            team?: string | null;
+            /**
+             * Title
+             * @description Optional job-title label (e.g., 'Director, Model Risk').
+             */
+            title?: string | null;
+        };
+        /**
          * POAMState
          * @description Plan-of-Action-and-Milestones lifecycle state (v0.9.0 P1).
          *
@@ -4019,6 +5072,148 @@ export interface components {
          * @enum {string}
          */
         RegulatoryClassification: "custody" | "clearing" | "model" | "data_processor" | "critical_third_party";
+        /**
+         * RetentionClassification
+         * @description Regulator-aligned record-retention classifications.
+         *
+         *     The default-cadence column on each entry is the canonical
+         *     regulator-stated minimum; operators may extend per institution
+         *     policy via the explicit ``retention_period_days`` field.
+         * @enum {string}
+         */
+        RetentionClassification: "sec-17a-4" | "finra-3110" | "irs-tax" | "sox-404" | "hipaa" | "glba" | "pci-dss" | "model-risk" | "gdpr" | "generic";
+        /**
+         * RetentionCreatePayload
+         * @description Body shape for POST /api/retention (the `retention set` verb).
+         */
+        RetentionCreatePayload: {
+            /** @description Regulator-aligned classification (required). */
+            classification: components["schemas"]["RetentionClassification"];
+            /**
+             * Legal Hold
+             * @description Mark this record as under legal hold from the start.
+             * @default false
+             */
+            legal_hold: boolean;
+            /**
+             * Notes
+             * @description Free-text operator notes.
+             */
+            notes?: string | null;
+            /**
+             * Policy Name
+             * @description Optional cross-reference to a RetentionPolicy.
+             */
+            policy_name?: string | null;
+            /**
+             * Record Pointer
+             * @description Pointer to the underlying record (file/S3/Azure URL).
+             */
+            record_pointer?: string | null;
+            /**
+             * Retention Period Days
+             * @description Retention period in calendar days. Defaults to the regulator-stated minimum for the classification.
+             */
+            retention_period_days?: number | null;
+        };
+        /**
+         * RetentionExtendPayload
+         * @description Body shape for POST /api/retention/{id}/extend.
+         */
+        RetentionExtendPayload: {
+            /**
+             * New Lock Until
+             * Format: date
+             * @description ISO-8601 date the new lock-until should be (YYYY-MM-DD).
+             */
+            new_lock_until: string;
+        };
+        /**
+         * RetentionLifecycleStage
+         * @description Record lifecycle states.
+         *
+         *     State machine:
+         *       ACTIVE        → record is in active use; retention countdown
+         *                       hasn't started or hasn't been crossed
+         *       PRESERVED     → record is being explicitly preserved beyond
+         *                       its standard retention (legal hold,
+         *                       regulatory inquiry, ongoing litigation)
+         *       EXPIRED       → standard retention period has elapsed; record
+         *                       is eligible for purge but not yet purged
+         *       PURGED        → record has been securely deleted (terminal
+         *                       state; metadata retained for audit trail)
+         * @enum {string}
+         */
+        RetentionLifecycleStage: "active" | "preserved" | "expired" | "purged";
+        /**
+         * RetentionMetadata
+         * @description Per-record retention metadata.
+         *
+         *     Attached to a CollectionContext, OSCAL artifact, audit log
+         *     line, or any other record that needs retention tracking.
+         */
+        RetentionMetadata: {
+            /** @description Regulator-aligned classification. */
+            classification: components["schemas"]["RetentionClassification"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /** Evidentia Version */
+            evidentia_version?: string;
+            /** Id */
+            id?: string;
+            /**
+             * Legal Hold
+             * @description True = under legal hold; record cannot transition to EXPIRED or PURGED regardless of retention period.
+             * @default false
+             */
+            legal_hold: boolean;
+            /**
+             * @description Current lifecycle state.
+             * @default active
+             */
+            lifecycle_stage: components["schemas"]["RetentionLifecycleStage"];
+            /**
+             * Lock Until
+             * @description When set + lifecycle is ACTIVE/PRESERVED, the record is in its mandatory retention window. Computed from created_at + retention_period_days at construction; may be overridden for legacy records imported from external systems.
+             */
+            lock_until?: string | null;
+            /**
+             * Notes
+             * @description Free-text operator notes.
+             */
+            notes?: string | null;
+            /**
+             * Policy Name
+             * @description Optional cross-reference to a RetentionPolicy.
+             */
+            policy_name?: string | null;
+            /**
+             * Record Pointer
+             * @description Free-text pointer to the actual record this metadata covers (file path, S3 ARN, Azure URL, GCS URI, etc.). The retention metadata itself is operator-owned; this field links it to the underlying object.
+             */
+            record_pointer?: string | null;
+            /**
+             * Retention Period Days
+             * @description Retention period in calendar days from `created_at`. Operator may override the per-classification default.
+             */
+            retention_period_days: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+        };
+        /**
+         * RetentionTransitionPayload
+         * @description Body shape for POST /api/retention/{id}/transition.
+         */
+        RetentionTransitionPayload: {
+            /** @description Target lifecycle stage: active/preserved/expired/purged. */
+            new_stage: components["schemas"]["RetentionLifecycleStage"];
+        };
         /**
          * RiskGenerateRequest
          * @description Body of `POST /api/risk/generate` — SSE endpoint.
@@ -4529,6 +5724,282 @@ export interface components {
             /** Python Version */
             python_version: string;
         };
+        /**
+         * Workflow
+         * @description A governance workflow definition + execution state.
+         *
+         *     Stepwise execution: callers transition steps in order via
+         *     :func:`advance_workflow_step`. The first step is auto-promoted
+         *     from PENDING → IN_PROGRESS when the workflow is created (if
+         *     operators want a strictly draft-then-start flow, they can
+         *     explicitly mark the workflow DRAFT until the first transition).
+         */
+        "Workflow-Input": {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Description
+             * @description Workflow purpose narrative.
+             */
+            description: string;
+            /** Evidentia Version */
+            evidentia_version?: string;
+            /** Id */
+            id?: string;
+            /**
+             * Initiator
+             * @description Identity (typically email) that initiated the workflow.
+             */
+            initiator: string;
+            /**
+             * Name
+             * @description Workflow instance name (e.g., 'Credit-model-v3 quarterly review 2026-Q1').
+             */
+            name: string;
+            /**
+             * @description Overall workflow status (derived from step states).
+             * @default draft
+             */
+            status: components["schemas"]["WorkflowStatus"];
+            /**
+             * Steps
+             * @description Ordered list of workflow steps.
+             */
+            steps?: components["schemas"]["WorkflowStep-Input"][];
+            /**
+             * Subject
+             * @description What/who is the workflow about (e.g., 'Model X', 'Vendor Y', 'Change request CR-1234'). Free-text.
+             */
+            subject?: string | null;
+            /**
+             * Template
+             * @description Optional reference to a workflow template name. Templates are external — operators can maintain a template library + use this field for traceability.
+             */
+            template?: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+        };
+        /**
+         * Workflow
+         * @description A governance workflow definition + execution state.
+         *
+         *     Stepwise execution: callers transition steps in order via
+         *     :func:`advance_workflow_step`. The first step is auto-promoted
+         *     from PENDING → IN_PROGRESS when the workflow is created (if
+         *     operators want a strictly draft-then-start flow, they can
+         *     explicitly mark the workflow DRAFT until the first transition).
+         */
+        "Workflow-Output": {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Description
+             * @description Workflow purpose narrative.
+             */
+            description: string;
+            /** Evidentia Version */
+            evidentia_version?: string;
+            /** Id */
+            id?: string;
+            /**
+             * Initiator
+             * @description Identity (typically email) that initiated the workflow.
+             */
+            initiator: string;
+            /**
+             * Name
+             * @description Workflow instance name (e.g., 'Credit-model-v3 quarterly review 2026-Q1').
+             */
+            name: string;
+            /**
+             * @description Overall workflow status (derived from step states).
+             * @default draft
+             */
+            status: components["schemas"]["WorkflowStatus"];
+            /**
+             * Steps
+             * @description Ordered list of workflow steps.
+             */
+            steps?: components["schemas"]["WorkflowStep-Output"][];
+            /**
+             * Subject
+             * @description What/who is the workflow about (e.g., 'Model X', 'Vendor Y', 'Change request CR-1234'). Free-text.
+             */
+            subject?: string | null;
+            /**
+             * Template
+             * @description Optional reference to a workflow template name. Templates are external — operators can maintain a template library + use this field for traceability.
+             */
+            template?: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+        };
+        /**
+         * WorkflowAdvancePayload
+         * @description Body shape for POST /governance/workflows/{id}/advance.
+         */
+        WorkflowAdvancePayload: {
+            /**
+             * Actor
+             * @description Actor identity (typically email).
+             */
+            actor: string;
+            /** @description approved / rejected / skipped / in_progress. */
+            new_status: components["schemas"]["WorkflowStepStatus"];
+            /**
+             * Note
+             * @description Optional rationale / approval note.
+             */
+            note?: string | null;
+            /**
+             * Step Index
+             * @description Step index (0-based) to transition.
+             */
+            step_index: number;
+        };
+        /**
+         * WorkflowStatus
+         * @description Overall workflow lifecycle states.
+         * @enum {string}
+         */
+        WorkflowStatus: "draft" | "in_progress" | "approved" | "rejected" | "canceled";
+        /**
+         * WorkflowStep
+         * @description One step in a governance workflow.
+         *
+         *     Each step has:
+         *
+         *       - a name + sequence number (zero-indexed; populated by
+         *         ``Workflow``)
+         *       - a ``required_role`` label that should match the actor's
+         *         line of defense or domain (free-text — the workflow does
+         *         NOT enforce role-actor binding; that's the operator's
+         *         organizational discipline)
+         *       - a current ``status``
+         *       - an optional SLA in days
+         *       - a history of state-transition events
+         */
+        "WorkflowStep-Input": {
+            /**
+             * Description
+             * @description What this step requires + what counts as approval.
+             */
+            description?: string | null;
+            /**
+             * History
+             * @description Timestamped state-transition events.
+             */
+            history?: components["schemas"]["WorkflowStepEvent"][];
+            /**
+             * Name
+             * @description Step name (e.g., 'MRM 2nd-line review').
+             */
+            name: string;
+            /**
+             * Required Role
+             * @description Role label of the actor expected to perform this step (e.g., 'MRM Director', '3LOD-second', 'CAB chair'). Free-text; not enforced by the engine.
+             */
+            required_role: string;
+            /**
+             * Sla Days
+             * @description Optional SLA in calendar days from in-progress.
+             */
+            sla_days?: number | null;
+            /**
+             * @description Current state.
+             * @default pending
+             */
+            status: components["schemas"]["WorkflowStepStatus"];
+        };
+        /**
+         * WorkflowStep
+         * @description One step in a governance workflow.
+         *
+         *     Each step has:
+         *
+         *       - a name + sequence number (zero-indexed; populated by
+         *         ``Workflow``)
+         *       - a ``required_role`` label that should match the actor's
+         *         line of defense or domain (free-text — the workflow does
+         *         NOT enforce role-actor binding; that's the operator's
+         *         organizational discipline)
+         *       - a current ``status``
+         *       - an optional SLA in days
+         *       - a history of state-transition events
+         */
+        "WorkflowStep-Output": {
+            /**
+             * Description
+             * @description What this step requires + what counts as approval.
+             */
+            description?: string | null;
+            /**
+             * History
+             * @description Timestamped state-transition events.
+             */
+            history?: components["schemas"]["WorkflowStepEvent"][];
+            /**
+             * Name
+             * @description Step name (e.g., 'MRM 2nd-line review').
+             */
+            name: string;
+            /**
+             * Required Role
+             * @description Role label of the actor expected to perform this step (e.g., 'MRM Director', '3LOD-second', 'CAB chair'). Free-text; not enforced by the engine.
+             */
+            required_role: string;
+            /**
+             * Sla Days
+             * @description Optional SLA in calendar days from in-progress.
+             */
+            sla_days?: number | null;
+            /**
+             * @description Current state.
+             * @default pending
+             */
+            status: components["schemas"]["WorkflowStepStatus"];
+        };
+        /**
+         * WorkflowStepEvent
+         * @description One timestamped state-transition on a workflow step.
+         */
+        WorkflowStepEvent: {
+            /**
+             * Actor
+             * @description Identity who performed the transition (typically email).
+             */
+            actor: string;
+            from_status: components["schemas"]["WorkflowStepStatus"];
+            /**
+             * Note
+             * @description Optional rationale / approval note.
+             */
+            note?: string | null;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at?: string;
+            to_status: components["schemas"]["WorkflowStepStatus"];
+        };
+        /**
+         * WorkflowStepStatus
+         * @description Step lifecycle states.
+         * @enum {string}
+         */
+        WorkflowStepStatus: "pending" | "in_progress" | "approved" | "rejected" | "skipped";
         /**
          * _DecisionRole
          * @description How the AI's output is used in human decision-making.
@@ -5546,6 +7017,107 @@ export interface operations {
             };
         };
     };
+    save_evidence_artifact_api_evidence_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvidenceArtifact-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_evidence_history_api_evidence__lineage_id__history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lineage_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_evidence_version_api_evidence__lineage_id__versions__version__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lineage_id: string;
+                /** @description Sequence number within the chain (>=1). */
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceArtifact-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     explain_api_explain__framework___control_id__post: {
         parameters: {
             query?: {
@@ -5821,6 +7393,530 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GapAnalysisReport-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_challenge_records_api_governance_challenges_get: {
+        parameters: {
+            query?: {
+                /** @description Pagination offset. */
+                skip?: number;
+                /** @description Max records (1-1000). */
+                limit?: number;
+                /** @description Filter by subject ModelInventory.id (exact-equality). */
+                subject_model_id?: string | null;
+                /** @description Filter by outcome: accepted / rejected / modify / pending. */
+                outcome?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_challenge_api_governance_challenges_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EffectiveChallenge"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EffectiveChallenge"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_challenge_api_governance_challenges__challenge_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                challenge_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EffectiveChallenge"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lines_report_api_governance_lines_report_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Owner"][];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_metric_records_api_governance_metrics_get: {
+        parameters: {
+            query?: {
+                /** @description Pagination offset. */
+                skip?: number;
+                /** @description Max records (1-1000). */
+                limit?: number;
+                /** @description Filter by kind: kri / kpi / kgi. */
+                kind?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_metric_api_governance_metrics_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Metric"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    metrics_report_api_governance_metrics_report_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+        };
+    };
+    get_metric_api_governance_metrics__metric_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                metric_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_metric_record_api_governance_metrics__metric_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                metric_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    observe_metric_api_governance_metrics__metric_id__observations_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                metric_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MetricObservationPayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_workflow_records_api_governance_workflows_get: {
+        parameters: {
+            query?: {
+                /** @description Pagination offset. */
+                skip?: number;
+                /** @description Max records (1-1000). */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_workflow_api_governance_workflows_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Workflow-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Workflow-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_workflow_api_governance_workflows__workflow_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workflow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Workflow-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_workflow_record_api_governance_workflows__workflow_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workflow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    advance_workflow_api_governance_workflows__workflow_id__advance_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workflow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkflowAdvancePayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Workflow-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    workflow_log_api_governance_workflows__workflow_id__log_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workflow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
                 };
             };
             /** @description Validation Error */
@@ -6652,6 +8748,229 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ControlGap-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_retention_records_api_retention_get: {
+        parameters: {
+            query?: {
+                /** @description Pagination offset. */
+                skip?: number;
+                /** @description Max records (1-1000). */
+                limit?: number;
+                /** @description Filter by classification: sec-17a-4 / finra-3110 / irs-tax / sox-404 / hipaa / glba / pci-dss / model-risk / gdpr / generic. */
+                classification?: string | null;
+                /** @description Filter by lifecycle stage: active / preserved / expired / purged. */
+                lifecycle?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_retention_api_retention_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RetentionCreatePayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetentionMetadata"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retention_report_api_retention_report_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+        };
+    };
+    get_retention_api_retention__retention_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                retention_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetentionMetadata"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_retention_record_api_retention__retention_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                retention_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    extend_retention_api_retention__retention_id__extend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                retention_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RetentionExtendPayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetentionMetadata"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    transition_retention_api_retention__retention_id__transition_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                retention_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RetentionTransitionPayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetentionMetadata"];
                 };
             };
             /** @description Validation Error */

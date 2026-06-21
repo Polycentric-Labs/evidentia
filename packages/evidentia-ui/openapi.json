@@ -391,6 +391,17 @@
         "title": "CatalogControl",
         "type": "object"
       },
+      "ChallengeOutcome": {
+        "description": "Outcome classification for an effective challenge event.\n\nValues:\n\n  - ``accepted`` — the challenger's concern was accepted by the\n    model owner; subsequent action follows (e.g., recalibrate,\n    add limitation, change use)\n  - ``rejected`` — the challenger's concern was reviewed and\n    rejected with documented rationale\n  - ``modify`` — partial acceptance; modification path agreed\n  - ``pending`` — challenge logged; resolution still in progress",
+        "enum": [
+          "accepted",
+          "rejected",
+          "modify",
+          "pending"
+        ],
+        "title": "ChallengeOutcome",
+        "type": "string"
+      },
       "CheckCycleRow": {
         "properties": {
           "activity": {
@@ -1292,6 +1303,113 @@
         "title": "EUAIActTier",
         "type": "string"
       },
+      "EffectiveChallenge": {
+        "additionalProperties": false,
+        "description": "One documented effective-challenge event.\n\nEach record captures:\n\n  - Subject model — cross-link via ``subject_model_id`` to a\n    :class:`ModelInventory.id`\n  - Challenger identity + role\n  - Challenge date + topic + substance\n  - Model-owner response\n  - Outcome + rationale\n  - Optional resolved_at timestamp\n\nRecords are persisted via\n:mod:`evidentia_core.effective_challenge_store` (JSON-file\nmirroring the vendor + model-risk store patterns).",
+        "properties": {
+          "challenge_date": {
+            "description": "Date the challenge event occurred.",
+            "format": "date",
+            "title": "Challenge Date",
+            "type": "string"
+          },
+          "challenge_substance": {
+            "description": "Full substance of the challenge — what was questioned + on what grounds.",
+            "title": "Challenge Substance",
+            "type": "string"
+          },
+          "challenge_topic": {
+            "description": "Short topic label for the challenge (e.g., 'Methodology — feature selection rationale').",
+            "title": "Challenge Topic",
+            "type": "string"
+          },
+          "challenger_email": {
+            "description": "Email identity of the challenger (independent of model dev).",
+            "title": "Challenger Email",
+            "type": "string"
+          },
+          "challenger_role": {
+            "description": "Role label of the challenger (e.g., 'MRM Director', 'Internal Audit Senior'). Used to substantiate independence + materiality of the challenge.",
+            "title": "Challenger Role",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "evidentia_version": {
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/ChallengeOutcome",
+            "default": "pending",
+            "description": "Outcome classification per SR 11-7 §III.D."
+          },
+          "outcome_rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Explanation for the outcome decision.",
+            "title": "Outcome Rationale"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date the challenge was resolved (None while pending).",
+            "title": "Resolved At"
+          },
+          "response": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Model owner's documented response to the challenge. None until response is logged.",
+            "title": "Response"
+          },
+          "subject_model_id": {
+            "description": "Cross-link to the ModelInventory record being challenged. MUST be a UUID matching an entry in the model_risk store.",
+            "title": "Subject Model Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject_model_id",
+          "challenger_email",
+          "challenger_role",
+          "challenge_date",
+          "challenge_topic",
+          "challenge_substance"
+        ],
+        "title": "EffectiveChallenge",
+        "type": "object"
+      },
       "EfficiencyOpportunity": {
         "additionalProperties": false,
         "description": "A control that satisfies multiple framework requirements simultaneously.\n\nThese are high-value implementation targets — implementing one control\ncloses gaps across multiple frameworks.",
@@ -1344,6 +1462,480 @@
           "value_score"
         ],
         "title": "EfficiencyOpportunity",
+        "type": "object"
+      },
+      "EvidenceArtifact-Input": {
+        "additionalProperties": false,
+        "description": "A single piece of compliance evidence.\n\nAn artifact represents one discrete piece of proof that a control is\nimplemented and operating effectively. Artifacts are collected by\ncollectors (automated) or uploaded manually.",
+        "properties": {
+          "collected_at": {
+            "description": "When this evidence was collected (UTC)",
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "collected_by": {
+            "description": "Collector name or user email that produced this evidence",
+            "title": "Collected By",
+            "type": "string"
+          },
+          "content": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The actual evidence content",
+            "title": "Content"
+          },
+          "content_format": {
+            "default": "json",
+            "description": "Format of content: 'json', 'text', 'base64', 'html'",
+            "title": "Content Format",
+            "type": "string"
+          },
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "SHA-256 hash of content for tamper detection",
+            "title": "Content Hash"
+          },
+          "control_mappings": {
+            "description": "Controls that this evidence supports, across one or more frameworks",
+            "items": {
+              "$ref": "#/components/schemas/ControlMapping"
+            },
+            "title": "Control Mappings",
+            "type": "array"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Detailed description of the evidence content and context",
+            "title": "Description"
+          },
+          "evidence_type": {
+            "$ref": "#/components/schemas/EvidenceType",
+            "description": "Classification of this evidence artifact"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When this evidence becomes stale",
+            "title": "Expires At"
+          },
+          "file_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Path to the evidence file if stored on disk",
+            "title": "File Path"
+          },
+          "file_size_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Size of the evidence file in bytes",
+            "title": "File Size Bytes"
+          },
+          "id": {
+            "description": "Unique identifier (UUID v4)",
+            "title": "Id",
+            "type": "string"
+          },
+          "lineage_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "v0.9.5 P3.2: UUID identifying the lineage chain across versions. When ``None`` (default), the artifact IS the lineage root + the ``id`` field serves as the implicit lineage_id. Set explicitly on versions > 1 to point at the chain root.",
+            "title": "Lineage Id"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "description": "Collector-specific metadata (region, account ID, etc.)",
+            "title": "Metadata",
+            "type": "object"
+          },
+          "missing_elements": {
+            "description": "Elements needed to make this evidence sufficient",
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Elements",
+            "type": "array"
+          },
+          "predecessor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "v0.9.5 P3.2: ``id`` of the prior version in the lineage chain. ``None`` for the lineage root (version 1). Allows ``evidentia evidence show <lineage_id> --version N`` to walk the chain to the target version.",
+            "title": "Predecessor Id"
+          },
+          "source_system": {
+            "description": "System that produced this evidence",
+            "title": "Source System",
+            "type": "string"
+          },
+          "sufficiency": {
+            "$ref": "#/components/schemas/EvidenceSufficiency",
+            "default": "unknown",
+            "description": "AI-assessed sufficiency of this evidence for its mapped controls"
+          },
+          "sufficiency_rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Explanation of the sufficiency assessment",
+            "title": "Sufficiency Rationale"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "title": {
+            "description": "Human-readable title describing what this evidence shows",
+            "title": "Title",
+            "type": "string"
+          },
+          "validated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the sufficiency assessment was performed",
+            "title": "Validated At"
+          },
+          "validated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Model or person that performed the validation",
+            "title": "Validated By"
+          },
+          "validator_confidence": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Validator confidence in the sufficiency assessment (0.0–1.0)",
+            "title": "Validator Confidence"
+          },
+          "version": {
+            "default": 1,
+            "description": "v0.9.5 P3.2: sequence number within the artifact's lineage chain. First version = 1; each subsequent edit creates a new artifact with version=N+1. Backward-compat default of 1 means v0.7.x → v0.9.4 artifacts load as version 1 of their own (single-element) chain.",
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "title",
+          "evidence_type",
+          "source_system",
+          "collected_by"
+        ],
+        "title": "EvidenceArtifact",
+        "type": "object"
+      },
+      "EvidenceArtifact-Output": {
+        "additionalProperties": false,
+        "description": "A single piece of compliance evidence.\n\nAn artifact represents one discrete piece of proof that a control is\nimplemented and operating effectively. Artifacts are collected by\ncollectors (automated) or uploaded manually.",
+        "properties": {
+          "collected_at": {
+            "description": "When this evidence was collected (UTC)",
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "collected_by": {
+            "description": "Collector name or user email that produced this evidence",
+            "title": "Collected By",
+            "type": "string"
+          },
+          "content": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The actual evidence content",
+            "title": "Content"
+          },
+          "content_format": {
+            "default": "json",
+            "description": "Format of content: 'json', 'text', 'base64', 'html'",
+            "title": "Content Format",
+            "type": "string"
+          },
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "SHA-256 hash of content for tamper detection",
+            "title": "Content Hash"
+          },
+          "control_mappings": {
+            "description": "Controls that this evidence supports, across one or more frameworks",
+            "items": {
+              "$ref": "#/components/schemas/ControlMapping"
+            },
+            "title": "Control Mappings",
+            "type": "array"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Detailed description of the evidence content and context",
+            "title": "Description"
+          },
+          "evidence_type": {
+            "$ref": "#/components/schemas/EvidenceType",
+            "description": "Classification of this evidence artifact"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When this evidence becomes stale",
+            "title": "Expires At"
+          },
+          "file_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Path to the evidence file if stored on disk",
+            "title": "File Path"
+          },
+          "file_size_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Size of the evidence file in bytes",
+            "title": "File Size Bytes"
+          },
+          "id": {
+            "description": "Unique identifier (UUID v4)",
+            "title": "Id",
+            "type": "string"
+          },
+          "lineage_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "v0.9.5 P3.2: UUID identifying the lineage chain across versions. When ``None`` (default), the artifact IS the lineage root + the ``id`` field serves as the implicit lineage_id. Set explicitly on versions > 1 to point at the chain root.",
+            "title": "Lineage Id"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "description": "Collector-specific metadata (region, account ID, etc.)",
+            "title": "Metadata",
+            "type": "object"
+          },
+          "missing_elements": {
+            "description": "Elements needed to make this evidence sufficient",
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Elements",
+            "type": "array"
+          },
+          "predecessor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "v0.9.5 P3.2: ``id`` of the prior version in the lineage chain. ``None`` for the lineage root (version 1). Allows ``evidentia evidence show <lineage_id> --version N`` to walk the chain to the target version.",
+            "title": "Predecessor Id"
+          },
+          "source_system": {
+            "description": "System that produced this evidence",
+            "title": "Source System",
+            "type": "string"
+          },
+          "sufficiency": {
+            "$ref": "#/components/schemas/EvidenceSufficiency",
+            "default": "unknown",
+            "description": "AI-assessed sufficiency of this evidence for its mapped controls"
+          },
+          "sufficiency_rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Explanation of the sufficiency assessment",
+            "title": "Sufficiency Rationale"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "title": {
+            "description": "Human-readable title describing what this evidence shows",
+            "title": "Title",
+            "type": "string"
+          },
+          "validated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the sufficiency assessment was performed",
+            "title": "Validated At"
+          },
+          "validated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Model or person that performed the validation",
+            "title": "Validated By"
+          },
+          "validator_confidence": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Validator confidence in the sufficiency assessment (0.0–1.0)",
+            "title": "Validator Confidence"
+          },
+          "version": {
+            "default": 1,
+            "description": "v0.9.5 P3.2: sequence number within the artifact's lineage chain. First version = 1; each subsequent edit creates a new artifact with version=N+1. Backward-compat default of 1 means v0.7.x → v0.9.4 artifacts load as version 1 of their own (single-element) chain.",
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "title",
+          "evidence_type",
+          "source_system",
+          "collected_by"
+        ],
+        "title": "EvidenceArtifact",
         "type": "object"
       },
       "EvidenceRef": {
@@ -1429,6 +2021,35 @@
         ],
         "title": "EvidenceRef",
         "type": "object"
+      },
+      "EvidenceSufficiency": {
+        "description": "AI-assessed sufficiency of evidence for a control.",
+        "enum": [
+          "sufficient",
+          "partial",
+          "insufficient",
+          "stale",
+          "unknown"
+        ],
+        "title": "EvidenceSufficiency",
+        "type": "string"
+      },
+      "EvidenceType": {
+        "description": "Classification of evidence artifacts by type.",
+        "enum": [
+          "configuration",
+          "log",
+          "screenshot",
+          "policy_document",
+          "audit_report",
+          "api_response",
+          "test_result",
+          "attestation",
+          "repository_metadata",
+          "identity_data"
+        ],
+        "title": "EvidenceType",
+        "type": "string"
       },
       "EvidentiaConfig-Input": {
         "additionalProperties": true,
@@ -2467,6 +3088,16 @@
         "title": "LLMConfig",
         "type": "object"
       },
+      "LineOfDefense": {
+        "description": "3LOD classification per IIA Three Lines Model 2020 revision.",
+        "enum": [
+          "first",
+          "second",
+          "third"
+        ],
+        "title": "LineOfDefense",
+        "type": "string"
+      },
       "LlmProviderState": {
         "additionalProperties": false,
         "description": "Per-provider configuration state (no key values).",
@@ -2530,6 +3161,205 @@
         ],
         "title": "Methodology",
         "type": "string"
+      },
+      "Metric": {
+        "additionalProperties": false,
+        "description": "A KRI / KPI / KGI metric definition + observation history.\n\nOperators define metrics once + add observations over time\nvia the ``governance metrics observe`` CLI verb. The current\nstate is derived from the latest observation against the\ndocumented thresholds.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "critical_threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Threshold above which (HIGHER_IS_WORSE) or below which (HIGHER_IS_BETTER) the metric is in BREACH state.",
+            "title": "Critical Threshold"
+          },
+          "description": {
+            "description": "What this metric measures + why it's tracked. Should include the unit (per-day, percentage, count, etc.).",
+            "title": "Description",
+            "type": "string"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/MetricDirection",
+            "description": "Whether higher values are worse or better."
+          },
+          "evidentia_version": {
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/MetricKind"
+          },
+          "name": {
+            "description": "Human-readable metric name (e.g., 'Failed-login rate').",
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Free-text notes about methodology, source data, etc.",
+            "title": "Notes"
+          },
+          "observations": {
+            "description": "Time-ordered observations. Newest tracked separately.",
+            "items": {
+              "$ref": "#/components/schemas/MetricObservation"
+            },
+            "title": "Observations",
+            "type": "array"
+          },
+          "owner_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Email of the metric owner. Cross-references the v0.7.10 governance Owner schema when present.",
+            "title": "Owner Email"
+          },
+          "unit": {
+            "description": "Measurement unit (e.g., 'per 1,000 logins', 'days', '%').",
+            "title": "Unit",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "warning_threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Threshold above which (HIGHER_IS_WORSE) or below which (HIGHER_IS_BETTER) the metric is in WATCH state. None = no threshold (no automatic flagging).",
+            "title": "Warning Threshold"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "kind",
+          "direction",
+          "unit"
+        ],
+        "title": "Metric",
+        "type": "object"
+      },
+      "MetricDirection": {
+        "description": "Whether higher values are worse or better.\n\nFor KRIs (risk indicators), higher is typically worse. For\nKPIs measuring coverage / completeness / availability, higher\nis typically better. For KGIs, the direction depends on the\nspecific outcome being measured.",
+        "enum": [
+          "higher_is_worse",
+          "higher_is_better"
+        ],
+        "title": "MetricDirection",
+        "type": "string"
+      },
+      "MetricKind": {
+        "description": "KRI / KPI / KGI classification.",
+        "enum": [
+          "kri",
+          "kpi",
+          "kgi"
+        ],
+        "title": "MetricKind",
+        "type": "string"
+      },
+      "MetricObservation": {
+        "additionalProperties": false,
+        "description": "One timestamped observation of a metric.",
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional contextual note (e.g., 'Q3 backlog spike').",
+            "title": "Note"
+          },
+          "observed_at": {
+            "description": "Date the observation was recorded.",
+            "format": "date",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "value": {
+            "description": "Numeric value. Units defined by the parent Metric.",
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "observed_at",
+          "value"
+        ],
+        "title": "MetricObservation",
+        "type": "object"
+      },
+      "MetricObservationPayload": {
+        "description": "Body shape for POST /governance/metrics/{id}/observations.",
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional contextual note.",
+            "title": "Note"
+          },
+          "observed_at": {
+            "description": "ISO-8601 date (YYYY-MM-DD) the observation was recorded.",
+            "format": "date",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "value": {
+            "description": "Observation value.",
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "observed_at"
+        ],
+        "title": "MetricObservationPayload",
+        "type": "object"
       },
       "Milestone": {
         "additionalProperties": false,
@@ -3190,6 +4020,51 @@
         "title": "OLIRRelationship",
         "type": "string"
       },
+      "Owner": {
+        "additionalProperties": false,
+        "description": "An owner identity with 3LOD classification.\n\nThe minimum primitive for governance reporting. Each Owner ties\nan email identity to a line-of-defense classification so the\naggregate distribution can be measured + presented.\n\nOptional ``team`` and ``title`` fields support richer reporting\n(e.g., \"MRM team has 3 owners, 2 in 2nd line + 1 in 3rd line —\ngovernance crossover requires explanation\").",
+        "properties": {
+          "email": {
+            "description": "Owner's primary email address (acts as the identity key). Free-form str to match the existing inventory-model convention; light validation is up to the caller.",
+            "title": "Email",
+            "type": "string"
+          },
+          "line_of_defense": {
+            "$ref": "#/components/schemas/LineOfDefense",
+            "description": "3LOD classification per IIA Three Lines Model 2020. First line = business operations; second line = risk/compliance oversight; third line = internal audit."
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional team / department label (e.g., 'MRM', 'Audit').",
+            "title": "Team"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional job-title label (e.g., 'Director, Model Risk').",
+            "title": "Title"
+          }
+        },
+        "required": [
+          "email",
+          "line_of_defense"
+        ],
+        "title": "Owner",
+        "type": "object"
+      },
       "POAMState": {
         "description": "Plan-of-Action-and-Milestones lifecycle state (v0.9.0 P1).\n\nAligned to the FedRAMP POA&M Template Completion Guide v3.0 + NIST\nSP 800-53A Rev 5 Appendix F vocabulary an auditor sees in OSCAL\nPOA&M emit. The five states are time-ordered (planned → in-progress\n→ completed → verified) plus the off-axis ``OVERDUE`` state that\nfires when a planned/in-progress milestone's date is in the past\nrelative to the system clock.\n\nState transition rules (enforced by\n:func:`evidentia_core.poam.state.is_valid_transition`):\n\n- ``PLANNED`` → ``IN_PROGRESS`` | ``OVERDUE`` | ``COMPLETED``\n- ``IN_PROGRESS`` → ``COMPLETED`` | ``OVERDUE``\n- ``OVERDUE`` → ``IN_PROGRESS`` | ``COMPLETED`` (operator catches up)\n- ``COMPLETED`` → ``VERIFIED`` (auditor sign-off; closes the loop)\n- ``VERIFIED`` is terminal — re-opening a verified milestone\n  requires creating a new milestone, never mutating the verified\n  record (audit-trail integrity).\n\nBackward transitions (e.g., ``COMPLETED`` → ``IN_PROGRESS``) are\nexplicitly forbidden by the state machine. An auditor-defensible\nPOA&M must show forward progress only; a \"we changed our mind\"\nrewind is captured as a NEW milestone with a fresh planned date,\nnot an edit to the prior record.",
         "enum": [
@@ -3431,6 +4306,232 @@
         ],
         "title": "RegulatoryClassification",
         "type": "string"
+      },
+      "RetentionClassification": {
+        "description": "Regulator-aligned record-retention classifications.\n\nThe default-cadence column on each entry is the canonical\nregulator-stated minimum; operators may extend per institution\npolicy via the explicit ``retention_period_days`` field.",
+        "enum": [
+          "sec-17a-4",
+          "finra-3110",
+          "irs-tax",
+          "sox-404",
+          "hipaa",
+          "glba",
+          "pci-dss",
+          "model-risk",
+          "gdpr",
+          "generic"
+        ],
+        "title": "RetentionClassification",
+        "type": "string"
+      },
+      "RetentionCreatePayload": {
+        "description": "Body shape for POST /api/retention (the `retention set` verb).",
+        "properties": {
+          "classification": {
+            "$ref": "#/components/schemas/RetentionClassification",
+            "description": "Regulator-aligned classification (required)."
+          },
+          "legal_hold": {
+            "default": false,
+            "description": "Mark this record as under legal hold from the start.",
+            "title": "Legal Hold",
+            "type": "boolean"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Free-text operator notes.",
+            "title": "Notes"
+          },
+          "policy_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional cross-reference to a RetentionPolicy.",
+            "title": "Policy Name"
+          },
+          "record_pointer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pointer to the underlying record (file/S3/Azure URL).",
+            "title": "Record Pointer"
+          },
+          "retention_period_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Retention period in calendar days. Defaults to the regulator-stated minimum for the classification.",
+            "title": "Retention Period Days"
+          }
+        },
+        "required": [
+          "classification"
+        ],
+        "title": "RetentionCreatePayload",
+        "type": "object"
+      },
+      "RetentionExtendPayload": {
+        "description": "Body shape for POST /api/retention/{id}/extend.",
+        "properties": {
+          "new_lock_until": {
+            "description": "ISO-8601 date the new lock-until should be (YYYY-MM-DD).",
+            "format": "date",
+            "title": "New Lock Until",
+            "type": "string"
+          }
+        },
+        "required": [
+          "new_lock_until"
+        ],
+        "title": "RetentionExtendPayload",
+        "type": "object"
+      },
+      "RetentionLifecycleStage": {
+        "description": "Record lifecycle states.\n\nState machine:\n  ACTIVE        → record is in active use; retention countdown\n                  hasn't started or hasn't been crossed\n  PRESERVED     → record is being explicitly preserved beyond\n                  its standard retention (legal hold,\n                  regulatory inquiry, ongoing litigation)\n  EXPIRED       → standard retention period has elapsed; record\n                  is eligible for purge but not yet purged\n  PURGED        → record has been securely deleted (terminal\n                  state; metadata retained for audit trail)",
+        "enum": [
+          "active",
+          "preserved",
+          "expired",
+          "purged"
+        ],
+        "title": "RetentionLifecycleStage",
+        "type": "string"
+      },
+      "RetentionMetadata": {
+        "additionalProperties": false,
+        "description": "Per-record retention metadata.\n\nAttached to a CollectionContext, OSCAL artifact, audit log\nline, or any other record that needs retention tracking.",
+        "properties": {
+          "classification": {
+            "$ref": "#/components/schemas/RetentionClassification",
+            "description": "Regulator-aligned classification."
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "evidentia_version": {
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "legal_hold": {
+            "default": false,
+            "description": "True = under legal hold; record cannot transition to EXPIRED or PURGED regardless of retention period.",
+            "title": "Legal Hold",
+            "type": "boolean"
+          },
+          "lifecycle_stage": {
+            "$ref": "#/components/schemas/RetentionLifecycleStage",
+            "default": "active",
+            "description": "Current lifecycle state."
+          },
+          "lock_until": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When set + lifecycle is ACTIVE/PRESERVED, the record is in its mandatory retention window. Computed from created_at + retention_period_days at construction; may be overridden for legacy records imported from external systems.",
+            "title": "Lock Until"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Free-text operator notes.",
+            "title": "Notes"
+          },
+          "policy_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional cross-reference to a RetentionPolicy.",
+            "title": "Policy Name"
+          },
+          "record_pointer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Free-text pointer to the actual record this metadata covers (file path, S3 ARN, Azure URL, GCS URI, etc.). The retention metadata itself is operator-owned; this field links it to the underlying object.",
+            "title": "Record Pointer"
+          },
+          "retention_period_days": {
+            "description": "Retention period in calendar days from `created_at`. Operator may override the per-classification default.",
+            "minimum": 0.0,
+            "title": "Retention Period Days",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "classification",
+          "retention_period_days"
+        ],
+        "title": "RetentionMetadata",
+        "type": "object"
+      },
+      "RetentionTransitionPayload": {
+        "description": "Body shape for POST /api/retention/{id}/transition.",
+        "properties": {
+          "new_stage": {
+            "$ref": "#/components/schemas/RetentionLifecycleStage",
+            "description": "Target lifecycle stage: active/preserved/expired/purged."
+          }
+        },
+        "required": [
+          "new_stage"
+        ],
+        "title": "RetentionTransitionPayload",
+        "type": "object"
       },
       "RiskGenerateRequest": {
         "additionalProperties": false,
@@ -4293,6 +5394,397 @@
         ],
         "title": "VersionResponse",
         "type": "object"
+      },
+      "Workflow-Input": {
+        "additionalProperties": false,
+        "description": "A governance workflow definition + execution state.\n\nStepwise execution: callers transition steps in order via\n:func:`advance_workflow_step`. The first step is auto-promoted\nfrom PENDING → IN_PROGRESS when the workflow is created (if\noperators want a strictly draft-then-start flow, they can\nexplicitly mark the workflow DRAFT until the first transition).",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "description": "Workflow purpose narrative.",
+            "title": "Description",
+            "type": "string"
+          },
+          "evidentia_version": {
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "initiator": {
+            "description": "Identity (typically email) that initiated the workflow.",
+            "title": "Initiator",
+            "type": "string"
+          },
+          "name": {
+            "description": "Workflow instance name (e.g., 'Credit-model-v3 quarterly review 2026-Q1').",
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/WorkflowStatus",
+            "default": "draft",
+            "description": "Overall workflow status (derived from step states)."
+          },
+          "steps": {
+            "description": "Ordered list of workflow steps.",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowStep-Input"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What/who is the workflow about (e.g., 'Model X', 'Vendor Y', 'Change request CR-1234'). Free-text.",
+            "title": "Subject"
+          },
+          "template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional reference to a workflow template name. Templates are external — operators can maintain a template library + use this field for traceability.",
+            "title": "Template"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "initiator"
+        ],
+        "title": "Workflow",
+        "type": "object"
+      },
+      "Workflow-Output": {
+        "additionalProperties": false,
+        "description": "A governance workflow definition + execution state.\n\nStepwise execution: callers transition steps in order via\n:func:`advance_workflow_step`. The first step is auto-promoted\nfrom PENDING → IN_PROGRESS when the workflow is created (if\noperators want a strictly draft-then-start flow, they can\nexplicitly mark the workflow DRAFT until the first transition).",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "description": "Workflow purpose narrative.",
+            "title": "Description",
+            "type": "string"
+          },
+          "evidentia_version": {
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "initiator": {
+            "description": "Identity (typically email) that initiated the workflow.",
+            "title": "Initiator",
+            "type": "string"
+          },
+          "name": {
+            "description": "Workflow instance name (e.g., 'Credit-model-v3 quarterly review 2026-Q1').",
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/WorkflowStatus",
+            "default": "draft",
+            "description": "Overall workflow status (derived from step states)."
+          },
+          "steps": {
+            "description": "Ordered list of workflow steps.",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowStep-Output"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What/who is the workflow about (e.g., 'Model X', 'Vendor Y', 'Change request CR-1234'). Free-text.",
+            "title": "Subject"
+          },
+          "template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional reference to a workflow template name. Templates are external — operators can maintain a template library + use this field for traceability.",
+            "title": "Template"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "initiator"
+        ],
+        "title": "Workflow",
+        "type": "object"
+      },
+      "WorkflowAdvancePayload": {
+        "description": "Body shape for POST /governance/workflows/{id}/advance.",
+        "properties": {
+          "actor": {
+            "description": "Actor identity (typically email).",
+            "minLength": 1,
+            "title": "Actor",
+            "type": "string"
+          },
+          "new_status": {
+            "$ref": "#/components/schemas/WorkflowStepStatus",
+            "description": "approved / rejected / skipped / in_progress."
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional rationale / approval note.",
+            "title": "Note"
+          },
+          "step_index": {
+            "description": "Step index (0-based) to transition.",
+            "minimum": 0.0,
+            "title": "Step Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "step_index",
+          "new_status",
+          "actor"
+        ],
+        "title": "WorkflowAdvancePayload",
+        "type": "object"
+      },
+      "WorkflowStatus": {
+        "description": "Overall workflow lifecycle states.",
+        "enum": [
+          "draft",
+          "in_progress",
+          "approved",
+          "rejected",
+          "canceled"
+        ],
+        "title": "WorkflowStatus",
+        "type": "string"
+      },
+      "WorkflowStep-Input": {
+        "additionalProperties": false,
+        "description": "One step in a governance workflow.\n\nEach step has:\n\n  - a name + sequence number (zero-indexed; populated by\n    ``Workflow``)\n  - a ``required_role`` label that should match the actor's\n    line of defense or domain (free-text — the workflow does\n    NOT enforce role-actor binding; that's the operator's\n    organizational discipline)\n  - a current ``status``\n  - an optional SLA in days\n  - a history of state-transition events",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What this step requires + what counts as approval.",
+            "title": "Description"
+          },
+          "history": {
+            "description": "Timestamped state-transition events.",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowStepEvent"
+            },
+            "title": "History",
+            "type": "array"
+          },
+          "name": {
+            "description": "Step name (e.g., 'MRM 2nd-line review').",
+            "title": "Name",
+            "type": "string"
+          },
+          "required_role": {
+            "description": "Role label of the actor expected to perform this step (e.g., 'MRM Director', '3LOD-second', 'CAB chair'). Free-text; not enforced by the engine.",
+            "title": "Required Role",
+            "type": "string"
+          },
+          "sla_days": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional SLA in calendar days from in-progress.",
+            "title": "Sla Days"
+          },
+          "status": {
+            "$ref": "#/components/schemas/WorkflowStepStatus",
+            "default": "pending",
+            "description": "Current state."
+          }
+        },
+        "required": [
+          "name",
+          "required_role"
+        ],
+        "title": "WorkflowStep",
+        "type": "object"
+      },
+      "WorkflowStep-Output": {
+        "additionalProperties": false,
+        "description": "One step in a governance workflow.\n\nEach step has:\n\n  - a name + sequence number (zero-indexed; populated by\n    ``Workflow``)\n  - a ``required_role`` label that should match the actor's\n    line of defense or domain (free-text — the workflow does\n    NOT enforce role-actor binding; that's the operator's\n    organizational discipline)\n  - a current ``status``\n  - an optional SLA in days\n  - a history of state-transition events",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What this step requires + what counts as approval.",
+            "title": "Description"
+          },
+          "history": {
+            "description": "Timestamped state-transition events.",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowStepEvent"
+            },
+            "title": "History",
+            "type": "array"
+          },
+          "name": {
+            "description": "Step name (e.g., 'MRM 2nd-line review').",
+            "title": "Name",
+            "type": "string"
+          },
+          "required_role": {
+            "description": "Role label of the actor expected to perform this step (e.g., 'MRM Director', '3LOD-second', 'CAB chair'). Free-text; not enforced by the engine.",
+            "title": "Required Role",
+            "type": "string"
+          },
+          "sla_days": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional SLA in calendar days from in-progress.",
+            "title": "Sla Days"
+          },
+          "status": {
+            "$ref": "#/components/schemas/WorkflowStepStatus",
+            "default": "pending",
+            "description": "Current state."
+          }
+        },
+        "required": [
+          "name",
+          "required_role"
+        ],
+        "title": "WorkflowStep",
+        "type": "object"
+      },
+      "WorkflowStepEvent": {
+        "additionalProperties": false,
+        "description": "One timestamped state-transition on a workflow step.",
+        "properties": {
+          "actor": {
+            "description": "Identity who performed the transition (typically email).",
+            "title": "Actor",
+            "type": "string"
+          },
+          "from_status": {
+            "$ref": "#/components/schemas/WorkflowStepStatus"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional rationale / approval note.",
+            "title": "Note"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "to_status": {
+            "$ref": "#/components/schemas/WorkflowStepStatus"
+          }
+        },
+        "required": [
+          "actor",
+          "from_status",
+          "to_status"
+        ],
+        "title": "WorkflowStepEvent",
+        "type": "object"
+      },
+      "WorkflowStepStatus": {
+        "description": "Step lifecycle states.",
+        "enum": [
+          "pending",
+          "in_progress",
+          "approved",
+          "rejected",
+          "skipped"
+        ],
+        "title": "WorkflowStepStatus",
+        "type": "string"
       },
       "_DecisionRole": {
         "description": "How the AI's output is used in human decision-making.",
@@ -5721,6 +7213,150 @@
         ]
       }
     },
+    "/api/evidence": {
+      "post": {
+        "description": "Persist an evidence artifact (new lineage or new version).\n\nBody shape is the full :class:`EvidenceArtifact` model. For a new\nlineage, leave ``lineage_id`` + ``predecessor_id`` unset and\n``version=1`` (the defaults). For a new version in an existing\nchain, set ``lineage_id`` to the chain root + ``predecessor_id``\nto the prior version's ``id`` + ``version=N+1`` (use\n:meth:`EvidenceArtifact.new_version` client-side to construct it).\n\nReturns a summary dict mirroring the CLI ``save`` output. WORM\nenforcement: re-saving a persisted version raises\n:class:`EvidenceWORMViolation` → HTTP 409 with the canonical\n``next_version`` recovery hint. A malformed lineage id → 404.",
+        "operationId": "save_evidence_artifact_api_evidence_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvidenceArtifact-Input"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Save Evidence Artifact Api Evidence Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Evidence Artifact",
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/api/evidence/{lineage_id}/history": {
+      "get": {
+        "description": "Walk a lineage chain — every persisted version, sorted ascending.\n\nA well-formed but unknown lineage id returns an empty envelope\n(``total=0``). A malformed lineage id → 404 (shape-violation\nnormalized per the poam/TPRM precedent).",
+        "operationId": "get_evidence_history_api_evidence__lineage_id__history_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lineage_id",
+            "required": true,
+            "schema": {
+              "title": "Lineage Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Evidence History Api Evidence  Lineage Id  History Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Evidence History",
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/api/evidence/{lineage_id}/versions/{version}": {
+      "get": {
+        "description": "Render one specific version of a lineage chain.\n\n404 when the well-formed lineage id + version has no record on\ndisk OR the lineage id is malformed.",
+        "operationId": "get_evidence_version_api_evidence__lineage_id__versions__version__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lineage_id",
+            "required": true,
+            "schema": {
+              "title": "Lineage Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Sequence number within the chain (>=1).",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "description": "Sequence number within the chain (>=1).",
+              "minimum": 1,
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceArtifact-Output"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Evidence Version",
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
     "/api/explain/{framework}/{control_id}": {
       "post": {
         "description": "Return a plain-English explanation of a control, streamed via SSE.",
@@ -6156,6 +7792,789 @@
         "summary": "Get Report",
         "tags": [
           "gaps"
+        ]
+      }
+    },
+    "/api/governance/challenges": {
+      "get": {
+        "description": "List effective-challenge records (newest-first by challenge_date).\n\nFilter + paginate semantics match the poam router (pagination\napplies AFTER filtering so ``total`` reflects the filter-matched\ncount).",
+        "operationId": "list_challenge_records_api_governance_challenges_get",
+        "parameters": [
+          {
+            "description": "Pagination offset.",
+            "in": "query",
+            "name": "skip",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Pagination offset.",
+              "minimum": 0,
+              "title": "Skip",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Max records (1-1000).",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Max records (1-1000).",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Filter by subject ModelInventory.id (exact-equality).",
+            "in": "query",
+            "name": "subject_model_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by subject ModelInventory.id (exact-equality).",
+              "title": "Subject Model Id"
+            }
+          },
+          {
+            "description": "Filter by outcome: accepted / rejected / modify / pending.",
+            "in": "query",
+            "name": "outcome",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by outcome: accepted / rejected / modify / pending.",
+              "title": "Outcome"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Challenge Records Api Governance Challenges Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Challenge Records",
+        "tags": [
+          "governance"
+        ]
+      },
+      "post": {
+        "description": "Log a new effective-challenge record.\n\nBody shape is the full :class:`EffectiveChallenge` model. Server\nfills ``id`` / ``created_at`` / ``updated_at`` / ``evidentia_version``\nvia Pydantic ``default_factory`` when the client omits them.",
+        "operationId": "create_challenge_api_governance_challenges_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EffectiveChallenge"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EffectiveChallenge"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Challenge",
+        "tags": [
+          "governance"
+        ]
+      }
+    },
+    "/api/governance/challenges/{challenge_id}": {
+      "get": {
+        "description": "Fetch a single challenge by ID. 404 on unknown OR malformed ID.",
+        "operationId": "get_challenge_api_governance_challenges__challenge_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "challenge_id",
+            "required": true,
+            "schema": {
+              "title": "Challenge Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EffectiveChallenge"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Challenge",
+        "tags": [
+          "governance"
+        ]
+      }
+    },
+    "/api/governance/lines-report": {
+      "post": {
+        "description": "Render a 3LOD distribution report from a posted owner list.\n\nStateless: the CLI reads owners from a YAML overlay file, but the\nAPI takes the parsed ``list[Owner]`` directly as the JSON body.\nReturns the deterministic Markdown report as plain text. Same\ncontent as ``evidentia governance lines-report``.",
+        "operationId": "lines_report_api_governance_lines_report_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/Owner"
+                },
+                "title": "Owners",
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Lines Report",
+        "tags": [
+          "governance"
+        ]
+      }
+    },
+    "/api/governance/metrics": {
+      "get": {
+        "description": "List metrics, each with its computed status.\n\nFilter + paginate semantics match the poam router. Each item\ncarries a computed ``status`` (:func:`evaluate_metric`) spliced\nalongside the persisted fields.",
+        "operationId": "list_metric_records_api_governance_metrics_get",
+        "parameters": [
+          {
+            "description": "Pagination offset.",
+            "in": "query",
+            "name": "skip",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Pagination offset.",
+              "minimum": 0,
+              "title": "Skip",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Max records (1-1000).",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Max records (1-1000).",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Filter by kind: kri / kpi / kgi.",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by kind: kri / kpi / kgi.",
+              "title": "Kind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Metric Records Api Governance Metrics Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Metric Records",
+        "tags": [
+          "governance"
+        ]
+      },
+      "post": {
+        "description": "Define a new KRI / KPI / KGI metric.\n\nBody shape is the full :class:`Metric` model. Server fills\n``id`` / timestamps / ``evidentia_version`` via Pydantic\n``default_factory`` when omitted.\n\nReturns the created metric with its computed ``status`` spliced in\n(via :func:`_metric_with_status`) — consistent with the list / show\n/ observe endpoints. A freshly-created metric has no observations,\nso ``status`` is ``\"no_data\"``. ``response_model=Metric`` is\ndeliberately omitted: it would strip the non-model ``status`` key\nand re-impose the bare-model shape this fix removes.",
+        "operationId": "create_metric_api_governance_metrics_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Metric"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Create Metric Api Governance Metrics Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Metric",
+        "tags": [
+          "governance"
+        ]
+      }
+    },
+    "/api/governance/metrics/report": {
+      "get": {
+        "description": "Return the Markdown KRI/KPI/KGI dashboard report as plain text.\n\nDeclared BEFORE ``/governance/metrics/{metric_id}`` so the static\n``report`` segment is not captured by the path-parameter route (a\ntest asserts the ordering — ``report`` must not be parsed as an ID).\nSame content as ``evidentia governance metrics report``.",
+        "operationId": "metrics_report_api_governance_metrics_report_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Metrics Report",
+        "tags": [
+          "governance"
+        ]
+      }
+    },
+    "/api/governance/metrics/{metric_id}": {
+      "delete": {
+        "description": "Delete a metric by ID. 204 on success, 404 on unknown/malformed.",
+        "operationId": "delete_metric_record_api_governance_metrics__metric_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "metric_id",
+            "required": true,
+            "schema": {
+              "title": "Metric Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Metric Record",
+        "tags": [
+          "governance"
+        ]
+      },
+      "get": {
+        "description": "Fetch a single metric with computed status. 404 on unknown/malformed.",
+        "operationId": "get_metric_api_governance_metrics__metric_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "metric_id",
+            "required": true,
+            "schema": {
+              "title": "Metric Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Metric Api Governance Metrics  Metric Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Metric",
+        "tags": [
+          "governance"
+        ]
+      }
+    },
+    "/api/governance/metrics/{metric_id}/observations": {
+      "post": {
+        "description": "Append an observation + return the updated metric with computed status.\n\nLoads the metric (404 on unknown / malformed ID), appends a new\n:class:`MetricObservation`, persists, then returns the full metric\nwith the recomputed ``status`` field spliced in (mirroring the\nCLI's ``current status: <evaluate_metric>`` surface).",
+        "operationId": "observe_metric_api_governance_metrics__metric_id__observations_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "metric_id",
+            "required": true,
+            "schema": {
+              "title": "Metric Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MetricObservationPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Observe Metric Api Governance Metrics  Metric Id  Observations Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Observe Metric",
+        "tags": [
+          "governance"
+        ]
+      }
+    },
+    "/api/governance/workflows": {
+      "get": {
+        "description": "List workflows (newest-first). Standard envelope + pagination.",
+        "operationId": "list_workflow_records_api_governance_workflows_get",
+        "parameters": [
+          {
+            "description": "Pagination offset.",
+            "in": "query",
+            "name": "skip",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Pagination offset.",
+              "minimum": 0,
+              "title": "Skip",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Max records (1-1000).",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Max records (1-1000).",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Workflow Records Api Governance Workflows Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Workflow Records",
+        "tags": [
+          "governance"
+        ]
+      },
+      "post": {
+        "description": "Instantiate + persist a workflow run.\n\nUnlike the CLI (which takes a YAML *file path*), this endpoint takes\nthe already-parsed :class:`Workflow` model as the JSON body. The\npost-parse lifecycle steps replicate the CLI's\n``_load_workflow_template`` (cli/governance.py): auto-promote step 0\nfrom PENDING → IN_PROGRESS, then set ``status =\nevaluate_workflow(wf)``.\n\nNOTE: this auto-promote + evaluate block is duplicated inline from\nthe CLI. Lifting it into a shared core helper\n(e.g. ``evidentia_core.governance.workflows.instantiate_workflow``)\nis a future CLI/API-parity refactor.",
+        "operationId": "run_workflow_api_governance_workflows_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Workflow-Input"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workflow-Output"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Workflow",
+        "tags": [
+          "governance"
+        ]
+      }
+    },
+    "/api/governance/workflows/{workflow_id}": {
+      "delete": {
+        "description": "Delete a workflow by ID. 204 on success, 404 on unknown/malformed.",
+        "operationId": "delete_workflow_record_api_governance_workflows__workflow_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Workflow Record",
+        "tags": [
+          "governance"
+        ]
+      },
+      "get": {
+        "description": "Fetch a single workflow by ID. 404 on unknown OR malformed ID.",
+        "operationId": "get_workflow_api_governance_workflows__workflow_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workflow-Output"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Workflow",
+        "tags": [
+          "governance"
+        ]
+      }
+    },
+    "/api/governance/workflows/{workflow_id}/advance": {
+      "post": {
+        "description": "Transition a workflow step to a new status.\n\nLoads (404 on unknown / malformed ID), calls\n:func:`advance_workflow_step`, normalizes\n:class:`WorkflowAdvanceError` → 400 (rule violation), persists the\nnew workflow, and returns it with the re-evaluated ``status``.",
+        "operationId": "advance_workflow_api_governance_workflows__workflow_id__advance_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowAdvancePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workflow-Output"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Advance Workflow",
+        "tags": [
+          "governance"
+        ]
+      }
+    },
+    "/api/governance/workflows/{workflow_id}/log": {
+      "get": {
+        "description": "Return the Markdown workflow audit-log as plain text.\n\n404 on unknown / malformed ID. Same content as\n``evidentia governance workflow log``.",
+        "operationId": "workflow_log_api_governance_workflows__workflow_id__log_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Workflow Log",
+        "tags": [
+          "governance"
         ]
       }
     },
@@ -7436,6 +9855,350 @@
         "summary": "Update Milestone",
         "tags": [
           "poam"
+        ]
+      }
+    },
+    "/api/retention": {
+      "get": {
+        "description": "List retention records in canonical sort order.\n\nFiltering applies BEFORE pagination so ``total`` reflects the\nfilter-matched count.",
+        "operationId": "list_retention_records_api_retention_get",
+        "parameters": [
+          {
+            "description": "Pagination offset.",
+            "in": "query",
+            "name": "skip",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Pagination offset.",
+              "minimum": 0,
+              "title": "Skip",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Max records (1-1000).",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Max records (1-1000).",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Filter by classification: sec-17a-4 / finra-3110 / irs-tax / sox-404 / hipaa / glba / pci-dss / model-risk / gdpr / generic.",
+            "in": "query",
+            "name": "classification",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by classification: sec-17a-4 / finra-3110 / irs-tax / sox-404 / hipaa / glba / pci-dss / model-risk / gdpr / generic.",
+              "title": "Classification"
+            }
+          },
+          {
+            "description": "Filter by lifecycle stage: active / preserved / expired / purged.",
+            "in": "query",
+            "name": "lifecycle",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by lifecycle stage: active / preserved / expired / purged.",
+              "title": "Lifecycle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Retention Records Api Retention Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Retention Records",
+        "tags": [
+          "retention"
+        ]
+      },
+      "post": {
+        "description": "Create a retention metadata record.\n\nWhen ``retention_period_days`` is omitted, the per-classification\nregulator default is used. The model's ``_populate_lock_until``\nvalidator computes ``lock_until`` from\n``created_at + retention_period_days`` at construction.",
+        "operationId": "set_retention_api_retention_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetentionCreatePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionMetadata"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Retention",
+        "tags": [
+          "retention"
+        ]
+      }
+    },
+    "/api/retention/report": {
+      "get": {
+        "description": "Return the retention-posture audit report as Markdown text.\n\nResponse Content-Type is ``text/plain; charset=utf-8`` so the\nMarkdown body lands raw in the client. Same content as\n``evidentia retention report``. Declared before the\n``/retention/{retention_id}`` route so the static ``report``\nsegment is not captured as an ID.",
+        "operationId": "retention_report_api_retention_report_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Retention Report",
+        "tags": [
+          "retention"
+        ]
+      }
+    },
+    "/api/retention/{retention_id}": {
+      "delete": {
+        "description": "Delete a retention metadata record.\n\n204 on success, 404 on shape-violation OR unknown. This removes\nonly the metadata record, not the underlying evidence.",
+        "operationId": "delete_retention_record_api_retention__retention_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "retention_id",
+            "required": true,
+            "schema": {
+              "title": "Retention Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Retention Record",
+        "tags": [
+          "retention"
+        ]
+      },
+      "get": {
+        "description": "Fetch a single retention record by ID.",
+        "operationId": "get_retention_api_retention__retention_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "retention_id",
+            "required": true,
+            "schema": {
+              "title": "Retention Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionMetadata"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Retention",
+        "tags": [
+          "retention"
+        ]
+      }
+    },
+    "/api/retention/{retention_id}/extend": {
+      "post": {
+        "description": "Extend a record's lock-until date.\n\nWORM-style retention only allows extending — never shortening.\nReplicates the CLI's inline extend logic (does not route through\nthe WORM backend).",
+        "operationId": "extend_retention_api_retention__retention_id__extend_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "retention_id",
+            "required": true,
+            "schema": {
+              "title": "Retention Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetentionExtendPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionMetadata"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Extend Retention",
+        "tags": [
+          "retention"
+        ]
+      }
+    },
+    "/api/retention/{retention_id}/transition": {
+      "post": {
+        "description": "Transition a record's lifecycle stage (state-machine enforced).",
+        "operationId": "transition_retention_api_retention__retention_id__transition_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "retention_id",
+            "required": true,
+            "schema": {
+              "title": "Retention Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetentionTransitionPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionMetadata"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Transition Retention",
+        "tags": [
+          "retention"
         ]
       }
     },

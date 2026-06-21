@@ -341,6 +341,9 @@ def create_app(
         doctor as doctor_router,
     )
     from evidentia_api.routers import (
+        evidence as evidence_router,
+    )
+    from evidentia_api.routers import (
         explain as explain_router,
     )
     from evidentia_api.routers import (
@@ -348,6 +351,9 @@ def create_app(
     )
     from evidentia_api.routers import (
         gaps as gaps_router,
+    )
+    from evidentia_api.routers import (
+        governance as governance_router,
     )
     from evidentia_api.routers import (
         health as health_router,
@@ -369,6 +375,9 @@ def create_app(
     )
     from evidentia_api.routers import (
         poam as poam_router,
+    )
+    from evidentia_api.routers import (
+        retention as retention_router,
     )
     from evidentia_api.routers import (
         risks as risks_router,
@@ -404,6 +413,19 @@ def create_app(
     app.include_router(poam_router.router, prefix="/api", tags=["poam"])
     app.include_router(conmon_router.router, prefix="/api", tags=["conmon"])
     app.include_router(ai_gov_router.router, prefix="/api", tags=["ai-gov"])
+    # v0.10.12 Wave 1 — local-store CRUD areas (governance / retention /
+    # evidence). Evidence is the first router to adopt per-route RBAC
+    # (require_role), mirroring its CLI @require_role_cli gates; governance +
+    # retention gate mutations write/admin per the v0.10.12 threat-model.
+    app.include_router(
+        governance_router.router, prefix="/api", tags=["governance"]
+    )
+    app.include_router(
+        retention_router.router, prefix="/api", tags=["retention"]
+    )
+    app.include_router(
+        evidence_router.router, prefix="/api", tags=["evidence"]
+    )
 
     # Static SPA mount — everything that isn't /api/* falls through to index.html.
     _mount_spa(app)

@@ -9,10 +9,10 @@
 | status | count | meaning |
 |---|---:|---|
 | full | 13 | CLI verb + API op + wired GUI route |
-| api-only | 42 | API op exists; no dedicated GUI route yet |
-| cli-only | 43 | no API + no GUI (ratchet floor: 43) |
-| exempt | 11 | CLI-only by design (servers, local cache, offline verify, MCP) |
-| **total** | **109** | every live CLI leaf |
+| api-only | 68 | API op exists; no dedicated GUI route yet |
+| cli-only | 17 | no API + no GUI (ratchet floor: 17) |
+| exempt | 12 | CLI-only by design (servers, local cache, offline verify, MCP) |
+| **total** | **110** | every live CLI leaf |
 
 ## Per-command status
 
@@ -90,35 +90,36 @@
 | `conmon dedup-list` | — | — | cli-only |
 | `integrations servicenow push` | — | — | cli-only |
 | `integrations servicenow test` | — | — | cli-only |
-| `retention set` | — | — | cli-only |
-| `retention list` | — | — | cli-only |
-| `retention show` | — | — | cli-only |
-| `retention extend` | — | — | cli-only |
-| `retention transition` | — | — | cli-only |
-| `retention delete` | — | — | cli-only |
-| `retention report` | — | — | cli-only |
-| `governance lines-report` | — | — | cli-only |
-| `governance challenge add` | — | — | cli-only |
-| `governance challenge list` | — | — | cli-only |
-| `governance challenge show` | — | — | cli-only |
-| `governance metrics add` | — | — | cli-only |
-| `governance metrics observe` | — | — | cli-only |
-| `governance metrics list` | — | — | cli-only |
-| `governance metrics show` | — | — | cli-only |
-| `governance metrics delete` | — | — | cli-only |
-| `governance metrics report` | — | — | cli-only |
-| `governance workflow run` | — | — | cli-only |
-| `governance workflow advance` | — | — | cli-only |
-| `governance workflow status` | — | — | cli-only |
-| `governance workflow list` | — | — | cli-only |
-| `governance workflow log` | — | — | cli-only |
-| `governance workflow delete` | — | — | cli-only |
-| `evidence save` | — | — | cli-only |
-| `evidence history` | — | — | cli-only |
-| `evidence show` | — | — | cli-only |
+| `retention set` | POST /api/retention | — | api-only |
+| `retention list` | GET /api/retention | — | api-only |
+| `retention show` | GET /api/retention/{retention_id} | — | api-only |
+| `retention extend` | POST /api/retention/{retention_id}/extend | — | api-only |
+| `retention transition` | POST /api/retention/{retention_id}/transition | — | api-only |
+| `retention delete` | DELETE /api/retention/{retention_id} | — | api-only |
+| `retention report` | GET /api/retention/report | — | api-only |
+| `governance lines-report` | POST /api/governance/lines-report | — | api-only |
+| `governance challenge add` | POST /api/governance/challenges | — | api-only |
+| `governance challenge list` | GET /api/governance/challenges | — | api-only |
+| `governance challenge show` | GET /api/governance/challenges/{challenge_id} | — | api-only |
+| `governance metrics add` | POST /api/governance/metrics | — | api-only |
+| `governance metrics observe` | POST /api/governance/metrics/{metric_id}/observations | — | api-only |
+| `governance metrics list` | GET /api/governance/metrics | — | api-only |
+| `governance metrics show` | GET /api/governance/metrics/{metric_id} | — | api-only |
+| `governance metrics delete` | DELETE /api/governance/metrics/{metric_id} | — | api-only |
+| `governance metrics report` | GET /api/governance/metrics/report | — | api-only |
+| `governance workflow run` | POST /api/governance/workflows | — | api-only |
+| `governance workflow advance` | POST /api/governance/workflows/{workflow_id}/advance | — | api-only |
+| `governance workflow status` | GET /api/governance/workflows/{workflow_id} | — | api-only |
+| `governance workflow list` | GET /api/governance/workflows | — | api-only |
+| `governance workflow log` | GET /api/governance/workflows/{workflow_id}/log | — | api-only |
+| `governance workflow delete` | DELETE /api/governance/workflows/{workflow_id} | — | api-only |
+| `evidence save` | POST /api/evidence | — | api-only |
+| `evidence history` | GET /api/evidence/{lineage_id}/history | — | api-only |
+| `evidence show` | GET /api/evidence/{lineage_id}/versions/{version} | — | api-only |
 | `serve` | — | — | exempt |
 | `conmon watch` | — | — | exempt |
 | `oscal verify` | — | — | exempt |
+| `traceability emit` | — | — | exempt |
 | `explain cache clear` | — | — | exempt |
 | `explain cache where` | — | — | exempt |
 | `eval stub-smoke` | — | — | exempt |
