@@ -82,6 +82,8 @@ import type {
   GapAnalysisReport,
   GapDiff,
   HealthResponse,
+  InitWizardCommitRequest,
+  InitWizardCommitResponse,
   InitWizardRequest,
   InitWizardResponse,
   LlmStatusResponse,
@@ -612,6 +614,16 @@ export const demoApi = {
       my_controls_yaml: "controls: []\n",
       system_context_yaml: `system_name: ${payload.system_name ?? payload.organization}\n`,
       recommended_frameworks: ["nist-800-53-rev5-moderate", "soc2-tsc"],
+    }),
+  initCommit: (
+    _payload: InitWizardCommitRequest,
+  ): Promise<InitWizardCommitResponse> =>
+    // The static demo has no server filesystem; report a no-op "success" so
+    // the wizard flow completes without claiming real files were written.
+    Promise.resolve({
+      created: ["evidentia.yaml", "my-controls.yaml", "system-context.yaml"],
+      skipped: [],
+      directory: "(demo — files are not written to disk)",
     }),
 
   // ── POA&M ─────────────────────────────────────────────────────────────

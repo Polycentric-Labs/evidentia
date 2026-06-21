@@ -18,6 +18,8 @@ import type {
   GapAnalysisReport,
   GapDiff,
   HealthResponse,
+  InitWizardCommitRequest,
+  InitWizardCommitResponse,
   InitWizardRequest,
   InitWizardResponse,
   LlmStatusResponse,
@@ -586,6 +588,11 @@ const realApi = {
   // ── Init wizard ───────────────────────────────────────────────────────
   initWizard: (payload: InitWizardRequest) =>
     request<InitWizardResponse>("/api/init/wizard", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  initCommit: (payload: InitWizardCommitRequest) =>
+    request<InitWizardCommitResponse>("/api/init/commit", {
       method: "POST",
       body: JSON.stringify(payload),
     }),

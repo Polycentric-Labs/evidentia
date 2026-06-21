@@ -209,6 +209,32 @@ class InitWizardResponse(BaseModel):
     recommended_frameworks: list[str]
 
 
+class InitWizardCommitRequest(InitWizardRequest):
+    """Body of `POST /api/init/commit` — write the starter files to disk.
+
+    Carries the same onboarding answers as the preview request (the server
+    regenerates the files; the client never sends file content) plus an
+    `overwrite` flag mirroring the CLI's `init --force`.
+    """
+
+    overwrite: bool = Field(
+        default=False,
+        description="Overwrite files that already exist (mirrors `init --force`).",
+    )
+
+
+class InitWizardCommitResponse(BaseModel):
+    """Response from `POST /api/init/commit`."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    created: list[str] = Field(description="Filenames written this call.")
+    skipped: list[str] = Field(
+        description="Filenames left untouched because they already existed."
+    )
+    directory: str = Field(description="Absolute server directory written to.")
+
+
 class LlmStatusResponse(BaseModel):
     """Response from `GET /api/llm-status`.
 

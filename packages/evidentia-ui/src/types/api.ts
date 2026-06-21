@@ -179,3 +179,14 @@ export interface InitWizardResponse {
   system_context_yaml: string;
   recommended_frameworks: string[];
 }
+
+export interface InitWizardCommitRequest extends InitWizardRequest {
+  /** Overwrite files that already exist (mirrors `init --force`). */
+  overwrite?: boolean;
+}
+
+export interface InitWizardCommitResponse {
+  created: string[];
+  skipped: string[];
+  directory: string;
+}

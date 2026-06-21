@@ -1905,6 +1905,36 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/init/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Init Commit
+         * @description Write the generated starter files to the SERVER's working directory.
+         *
+         *     Mirrors ``evidentia init``: the three YAMLs are regenerated server-side from
+         *     the onboarding answers (the request NEVER carries file content), then
+         *     written to the directory the server was launched from. The filenames are a
+         *     closed set — there is no client-controlled path, so the write cannot be
+         *     steered elsewhere (no traversal). Existing files are SKIPPED unless
+         *     ``overwrite`` is true (mirrors the CLI's ``--force``), so the wizard cannot
+         *     silently clobber an existing project. This is a local-store mutation under
+         *     the same host-owner trust model as ``evidentia init`` — the security-posture
+         *     banner surfaces when the API is unauthenticated.
+         */
+        post: operations["init_commit_api_init_commit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/init/wizard": {
         parameters: {
             query?: never;
@@ -1918,9 +1948,9 @@ export interface paths {
          * Init Wizard
          * @description Generate starter YAMLs from lightweight onboarding context.
          *
-         *     Returns three pre-filled files + a recommended framework list. The
-         *     client previews them in the wizard UI and may edit before committing.
-         *     Writing to disk is a separate endpoint call (future v0.4.1).
+         *     Returns three pre-filled files + a recommended framework list. The client
+         *     previews them in the wizard UI; writing to disk is the separate
+         *     ``/init/commit`` call.
          */
         post: operations["init_wizard_api_init_wizard_post"];
         delete?: never;
@@ -4991,6 +5021,73 @@ export interface components {
          * @enum {string}
          */
         ImplementationEffort: "low" | "medium" | "high" | "very_high";
+        /**
+         * InitWizardCommitRequest
+         * @description Body of `POST /api/init/commit` — write the starter files to disk.
+         *
+         *     Carries the same onboarding answers as the preview request (the server
+         *     regenerates the files; the client never sends file content) plus an
+         *     `overwrite` flag mirroring the CLI's `init --force`.
+         */
+        InitWizardCommitRequest: {
+            /**
+             * Data Classification
+             * @description Data types (e.g. PII, PCI-CDE, PHI, CUI).
+             */
+            data_classification?: string[];
+            /**
+             * Hosting
+             * @description One of: aws, azure, gcp, on-prem, hybrid.
+             */
+            hosting?: string | null;
+            /**
+             * Industry
+             * @description One of: fintech, healthtech, saas, ecommerce, govcon, other.
+             */
+            industry?: string | null;
+            /** Organization */
+            organization: string;
+            /**
+             * Overwrite
+             * @description Overwrite files that already exist (mirrors `init --force`).
+             * @default false
+             */
+            overwrite: boolean;
+            /**
+             * Preset
+             * @description One of: soc2-starter, nist-moderate-starter, hipaa-starter, empty.
+             * @default soc2-starter
+             */
+            preset: string;
+            /**
+             * Regulatory Requirements
+             * @description Frameworks the user thinks apply.
+             */
+            regulatory_requirements?: string[];
+            /** System Name */
+            system_name?: string | null;
+        };
+        /**
+         * InitWizardCommitResponse
+         * @description Response from `POST /api/init/commit`.
+         */
+        InitWizardCommitResponse: {
+            /**
+             * Created
+             * @description Filenames written this call.
+             */
+            created: string[];
+            /**
+             * Directory
+             * @description Absolute server directory written to.
+             */
+            directory: string;
+            /**
+             * Skipped
+             * @description Filenames left untouched because they already existed.
+             */
+            skipped: string[];
+        };
         /**
          * InitWizardRequest
          * @description Body of `POST /api/init/wizard` — generate starter YAML files.
@@ -9573,6 +9670,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    init_commit_api_init_commit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InitWizardCommitRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InitWizardCommitResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -65,6 +65,9 @@ api_extra:
     reason: "GUI: Settings reads evidentia.yaml; the CLI edits the file directly."
   - api: "PUT /api/config"
     reason: "GUI: Settings writes evidentia.yaml; the CLI edits the file directly."
+  # ── GUI onboarding helper (the `init` CLI's write step is /init/commit) ──
+  - api: "POST /api/init/wizard"
+    reason: "GUI onboarding: previews the starter files; the write step is `init`'s POST /api/init/commit."
   # ── GUI read drill-downs (list/detail views with no standalone CLI verb) ──
   - api: "GET /api/frameworks/{framework_id}/controls/{control_id}"
     reason: "GUI: single-control drill-down on the framework detail page."
@@ -129,7 +132,7 @@ commands:
     status: api-only
     reason: "Surfaced in the API + UI chrome (sidebar), not a dedicated feature route."
   - cli: "init"
-    api: "POST /api/init/wizard"
+    api: "POST /api/init/commit"
     gui: null
     status: api-only
     reason: "Onboarding wizard lives at the index route (no path= attr); api-only under the route check."

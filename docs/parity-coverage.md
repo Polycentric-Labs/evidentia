@@ -25,7 +25,7 @@
 | `catalog show` | GET /api/frameworks/{framework_id} | /frameworks/:id | full |
 | `doctor` | GET /api/doctor | /settings | full |
 | `version` | GET /api/version | — | api-only |
-| `init` | POST /api/init/wizard | — | api-only |
+| `init` | POST /api/init/commit | — | api-only |
 | `explain control` | POST /api/explain/{framework}/{control_id} | /explain | full |
 | `collect aws` | POST /api/collectors/aws/collect | /collect | full |
 | `collect github` | POST /api/collectors/github/collect | /collect | full |

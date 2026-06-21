@@ -100,3 +100,74 @@ class TestInitWizard:
             },
         )
         assert r.status_code == 400
+
+
+class TestInitCommit:
+    """`POST /api/init/commit` writes the starter files to the server cwd."""
+
+    _NAMES = ("evidentia.yaml", "my-controls.yaml", "system-context.yaml")
+
+    def test_writes_three_starter_files(
+        self, api_client: TestClient, tmp_path: Path
+    ) -> None:
+        r = api_client.post(
+            "/api/init/commit",
+            json={
+                "organization": "Commit Co",
+                "industry": "saas",
+                "hosting": "aws",
+                "preset": "nist-moderate-starter",
+            },
+        )
+        assert r.status_code == 200, r.text
+        payload = r.json()
+        assert sorted(payload["created"]) == sorted(self._NAMES)
+        assert payload["skipped"] == []
+        for name in self._NAMES:
+            assert (tmp_path / name).is_file()
+        assert "Commit Co" in (tmp_path / "evidentia.yaml").read_text("utf-8")
+        # Mirrors `evidentia init`: the storage dir is created too.
+        assert (tmp_path / ".evidentia").is_dir()
+
+    def test_skips_existing_without_overwrite(
+        self, api_client: TestClient, tmp_path: Path
+    ) -> None:
+        (tmp_path / "evidentia.yaml").write_text("PRE-EXISTING", encoding="utf-8")
+        r = api_client.post(
+            "/api/init/commit",
+            json={"organization": "Skip Co", "preset": "empty"},
+        )
+        assert r.status_code == 200, r.text
+        payload = r.json()
+        assert payload["skipped"] == ["evidentia.yaml"]
+        assert sorted(payload["created"]) == [
+            "my-controls.yaml",
+            "system-context.yaml",
+        ]
+        # No silent clobber — the existing file is byte-for-byte untouched.
+        assert (tmp_path / "evidentia.yaml").read_text("utf-8") == "PRE-EXISTING"
+
+    def test_overwrite_true_replaces_existing(
+        self, api_client: TestClient, tmp_path: Path
+    ) -> None:
+        (tmp_path / "evidentia.yaml").write_text("OLD", encoding="utf-8")
+        r = api_client.post(
+            "/api/init/commit",
+            json={
+                "organization": "Overwrite Co",
+                "preset": "empty",
+                "overwrite": True,
+            },
+        )
+        assert r.status_code == 200, r.text
+        assert "evidentia.yaml" in r.json()["created"]
+        text = (tmp_path / "evidentia.yaml").read_text("utf-8")
+        assert "OLD" not in text
+        assert "Overwrite Co" in text
+
+    def test_rejects_unknown_preset(self, api_client: TestClient) -> None:
+        r = api_client.post(
+            "/api/init/commit",
+            json={"organization": "Test", "preset": "bogus-preset"},
+        )
+        assert r.status_code == 400

@@ -3257,6 +3257,118 @@
         "title": "ImplementationEffort",
         "type": "string"
       },
+      "InitWizardCommitRequest": {
+        "additionalProperties": false,
+        "description": "Body of `POST /api/init/commit` — write the starter files to disk.\n\nCarries the same onboarding answers as the preview request (the server\nregenerates the files; the client never sends file content) plus an\n`overwrite` flag mirroring the CLI's `init --force`.",
+        "properties": {
+          "data_classification": {
+            "description": "Data types (e.g. PII, PCI-CDE, PHI, CUI).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Data Classification",
+            "type": "array"
+          },
+          "hosting": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "One of: aws, azure, gcp, on-prem, hybrid.",
+            "title": "Hosting"
+          },
+          "industry": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "One of: fintech, healthtech, saas, ecommerce, govcon, other.",
+            "title": "Industry"
+          },
+          "organization": {
+            "title": "Organization",
+            "type": "string"
+          },
+          "overwrite": {
+            "default": false,
+            "description": "Overwrite files that already exist (mirrors `init --force`).",
+            "title": "Overwrite",
+            "type": "boolean"
+          },
+          "preset": {
+            "default": "soc2-starter",
+            "description": "One of: soc2-starter, nist-moderate-starter, hipaa-starter, empty.",
+            "title": "Preset",
+            "type": "string"
+          },
+          "regulatory_requirements": {
+            "description": "Frameworks the user thinks apply.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Regulatory Requirements",
+            "type": "array"
+          },
+          "system_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System Name"
+          }
+        },
+        "required": [
+          "organization"
+        ],
+        "title": "InitWizardCommitRequest",
+        "type": "object"
+      },
+      "InitWizardCommitResponse": {
+        "additionalProperties": false,
+        "description": "Response from `POST /api/init/commit`.",
+        "properties": {
+          "created": {
+            "description": "Filenames written this call.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Created",
+            "type": "array"
+          },
+          "directory": {
+            "description": "Absolute server directory written to.",
+            "title": "Directory",
+            "type": "string"
+          },
+          "skipped": {
+            "description": "Filenames left untouched because they already existed.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Skipped",
+            "type": "array"
+          }
+        },
+        "required": [
+          "created",
+          "skipped",
+          "directory"
+        ],
+        "title": "InitWizardCommitResponse",
+        "type": "object"
+      },
       "InitWizardRequest": {
         "additionalProperties": false,
         "description": "Body of `POST /api/init/wizard` — generate starter YAML files.",
@@ -10184,9 +10296,51 @@
         ]
       }
     },
+    "/api/init/commit": {
+      "post": {
+        "description": "Write the generated starter files to the SERVER's working directory.\n\nMirrors ``evidentia init``: the three YAMLs are regenerated server-side from\nthe onboarding answers (the request NEVER carries file content), then\nwritten to the directory the server was launched from. The filenames are a\nclosed set — there is no client-controlled path, so the write cannot be\nsteered elsewhere (no traversal). Existing files are SKIPPED unless\n``overwrite`` is true (mirrors the CLI's ``--force``), so the wizard cannot\nsilently clobber an existing project. This is a local-store mutation under\nthe same host-owner trust model as ``evidentia init`` — the security-posture\nbanner surfaces when the API is unauthenticated.",
+        "operationId": "init_commit_api_init_commit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitWizardCommitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitWizardCommitResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Init Commit",
+        "tags": [
+          "init"
+        ]
+      }
+    },
     "/api/init/wizard": {
       "post": {
-        "description": "Generate starter YAMLs from lightweight onboarding context.\n\nReturns three pre-filled files + a recommended framework list. The\nclient previews them in the wizard UI and may edit before committing.\nWriting to disk is a separate endpoint call (future v0.4.1).",
+        "description": "Generate starter YAMLs from lightweight onboarding context.\n\nReturns three pre-filled files + a recommended framework list. The client\npreviews them in the wizard UI; writing to disk is the separate\n``/init/commit`` call.",
         "operationId": "init_wizard_api_init_wizard_post",
         "requestBody": {
           "content": {
