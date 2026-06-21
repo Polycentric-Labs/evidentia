@@ -42,7 +42,7 @@ version: 1
 # fails if the live `cli-only` count exceeds this. The controller lowers it with
 # `--update-baseline` whenever a screen ships and a row flips cli-only -> *.
 baseline:
-  cli_only: 17
+  cli_only: 8
 commands:
   - cli: "gap analyze"
     api: "POST /api/gap/analyze"
@@ -269,9 +269,9 @@ commands:
     gui: null
     status: api-only
   - cli: "risk quantify"
-    api: null
+    api: "POST /api/risk/quantify"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "collect ocsf"
     api: null
     gui: null
@@ -281,9 +281,9 @@ commands:
     gui: null
     status: cli-only
   - cli: "tprm dd-questionnaire ingest"
-    api: null
+    api: "POST /api/tprm/vendors/{vendor_id}/dd-questionnaire/ingest"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "ai-gov retire"
     api: null
     gui: null
@@ -301,33 +301,33 @@ commands:
     gui: null
     status: cli-only
   - cli: "catalog crosswalk"
-    api: null
+    api: "GET /api/catalog/crosswalk"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "catalog import"
-    api: null
+    api: "POST /api/catalog/import"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "catalog where"
-    api: null
+    api: "GET /api/catalog/where"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "catalog license-info"
-    api: null
+    api: "GET /api/catalog/license-info/{framework_id}"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "catalog remove"
-    api: null
+    api: "DELETE /api/catalog/{framework_id}"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "conmon mark-completed"
-    api: null
+    api: "POST /api/conmon/mark-completed"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "conmon dedup-list"
-    api: null
+    api: "GET /api/conmon/dedup-list"
     gui: null
-    status: cli-only
+    status: api-only
   - cli: "integrations servicenow push"
     api: null
     gui: null

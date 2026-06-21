@@ -111,6 +111,130 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/crosswalk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Crosswalk
+         * @description Cross-framework mappings for a control (read-only).
+         *
+         *     Mirrors ``evidentia catalog crosswalk --source --target --control``.
+         *     Returns a list envelope; an empty ``mappings`` list (total 0) when no
+         *     mapping exists — consistent with the CLI's "no mappings found" path
+         *     (a successful zero-result, not a 404).
+         */
+        get: operations["get_crosswalk_api_catalog_crosswalk_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Catalog
+         * @description Import a user-supplied catalog into the local user catalog dir.
+         *
+         *     LOCAL WRITE. Gated on ``require_role("write")``. Parses the inline
+         *     content, rewrites its ``framework_id`` / ``framework_name`` to the
+         *     authoritative values, validates the shape via
+         *     :func:`load_evidentia_catalog`, then persists it + a manifest entry
+         *     via the ``user_dir`` helpers. Never touches a path outside the user
+         *     catalog dir.
+         */
+        post: operations["import_catalog_api_catalog_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/license-info/{framework_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * License Info
+         * @description Licensing metadata for a framework (read-only).
+         *
+         *     Mirrors ``evidentia catalog license-info``: user-imported entries
+         *     take precedence over bundled, then 404 if neither knows the ID.
+         */
+        get: operations["license_info_api_catalog_license_info__framework_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/where": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Where Framework
+         * @description Show where a framework resolves from — user, bundled, or 404.
+         *
+         *     Mirrors ``evidentia catalog where``. The user catalog dir is the one
+         *     the ``EVIDENTIA_CATALOG_DIR`` env var (or platform default) points at.
+         */
+        get: operations["where_framework_api_catalog_where_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/{framework_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove Catalog
+         * @description Remove a user-imported catalog. 204 on success; 404 otherwise.
+         *
+         *     LOCAL DELETE. Gated on ``require_role("admin")``. Bundled catalogs
+         *     are never user-imported, so they cannot be removed — an attempt to
+         *     remove one (or an unknown ID) returns 404, mirroring the CLI's
+         *     "no user-imported framework; bundled catalogs cannot be removed"
+         *     behavior.
+         */
+        delete: operations["remove_catalog_api_catalog__framework_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/collectors/aws/collect": {
         parameters: {
             query?: never;
@@ -834,6 +958,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/conmon/dedup-list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Conmon Dedup
+         * @description List the daemon's alert-dedup entries (read-only).
+         *
+         *     REST parity with the ``evidentia conmon dedup-list`` CLI verb.
+         *     Reads the alert-dedup JSON state file the ``conmon watch`` daemon
+         *     writes; the server resolves its path from the
+         *     ``EVIDENTIA_CONMON_ALERT_DEDUP_FILE`` env var. A missing file
+         *     yields an empty result (CLI parity — the verb tolerates a
+         *     not-yet-created file).
+         *
+         *     Returns:
+         *         200 with ``{"entries": [...], "count": N}``. Each entry is
+         *         ``{cadence_slug, state, last_dispatched_at,
+         *         suppression_remaining_minutes}``, newest-dispatched first.
+         *         400 when ``EVIDENTIA_CONMON_ALERT_DEDUP_FILE`` is unset.
+         *
+         *     Auth posture: open (read). No RBAC gate.
+         */
+        get: operations["list_conmon_dedup_api_conmon_dedup_list_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/conmon/health": {
         parameters: {
             query?: never;
@@ -851,6 +1010,52 @@ export interface paths {
          *     shape via :meth:`HealthReport.to_dict`.
          */
         post: operations["conmon_health_endpoint_api_conmon_health_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/conmon/mark-completed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark Conmon Completed
+         * @description Record a CONMON cycle completion in the server's state file.
+         *
+         *     REST parity with the ``evidentia conmon mark-completed`` CLI
+         *     verb. The verb mutates a YAML ``{slug: last_completed}`` state
+         *     file; over HTTP the server resolves that path from the
+         *     ``EVIDENTIA_CONMON_STATE_FILE`` env var so clients never pass an
+         *     arbitrary filesystem path (the CLI's deprecated
+         *     ``--last-completed-file`` alias is intentionally NOT surfaced —
+         *     only the canonical state-file concept is exposed).
+         *
+         *     Persistence + audit: delegates to
+         *     :func:`evidentia_core.conmon.mark_completed`, which atomically
+         *     writes the state file and emits
+         *     :attr:`EventAction.CONMON_CYCLE_MARKED_COMPLETED` with the
+         *     previous + new ``last_completed`` values — the auditor's primary
+         *     evidence that the cycle was performed, not merely scheduled.
+         *
+         *     Returns:
+         *         200 with the previous (``None`` on first mark) + new
+         *         completion dates.
+         *         400 when ``EVIDENTIA_CONMON_STATE_FILE`` is unset (the server
+         *         operator has not configured a state file) OR the slug is not a
+         *         registered cadence.
+         *         422 (FastAPI body validation) on a missing/malformed ``when``.
+         *
+         *     RBAC: ``require_role("write")`` — denies under a deny-by-default
+         *     policy; inert under the permissive DEFAULT_POLICY.
+         */
+        post: operations["mark_conmon_completed_api_conmon_mark_completed_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2219,6 +2424,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/risk/quantify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Quantify
+         * @description Quantify Open FAIR risk scenarios (deterministic or Monte Carlo).
+         *
+         *     The HTTP mirror of ``evidentia risk quantify``. ``method='open-fair'``
+         *     returns the deterministic PERT-mean ALE per scenario; ``method='fair-mc'``
+         *     runs a seeded Monte Carlo simulation returning P10/P50/P90 bands. Pure
+         *     local computation — no credentials, no network, no persisted state.
+         */
+        post: operations["quantify_api_risk_quantify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tprm/concentration": {
         parameters: {
             query?: never;
@@ -2347,6 +2577,45 @@ export interface paths {
          *     CLI surface — REST is JSON-only by design.
          */
         post: operations["generate_dd_questionnaire_api_tprm_vendors__vendor_id__dd_questionnaire_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tprm/vendors/{vendor_id}/dd-questionnaire/ingest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ingest Dd Questionnaire
+         * @description Ingest a completed DD questionnaire into a vendor record.
+         *
+         *     Records the completed-questionnaire responses as an
+         *     :class:`EvidenceRef` appended to ``vendor.evidence_refs`` and
+         *     persists the mutated vendor — the persistence-to-vendor phase the
+         *     v0.7.9 ``evidentia tprm dd-questionnaire ingest`` CLI verb
+         *     deferred (the CLI parses + correlates, then prints for review).
+         *
+         *     Local store mutation only — no credentials, no network. Returns
+         *     the updated :class:`Vendor`.
+         *
+         *     Error contract (matches the rest of this router):
+         *
+         *       - 404 on shape-violation OR well-formed-unknown ``vendor_id``
+         *         (F-V08-DAST-1 widening pattern).
+         *       - 400 (string detail, F-V08-DAST-3 invariant) when the
+         *         questionnaire content is malformed — i.e. ``responses`` is
+         *         empty (nothing to ingest). Pydantic auto-validation 422s
+         *         (wrong-typed body) keep their array-shape detail.
+         *       - 403 when an RBAC policy denies the ``write`` action.
+         */
+        post: operations["ingest_dd_questionnaire_api_tprm_vendors__vendor_id__dd_questionnaire_ingest_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2649,6 +2918,55 @@ export interface components {
             title: string;
         };
         /**
+         * CatalogImportPayload
+         * @description Body shape for ``POST /api/catalog/import``.
+         *
+         *     The catalog is supplied as inline ``content`` (NOT a server-side
+         *     path) so the API never reads an operator-chosen file off the server
+         *     — closing the path-traversal / arbitrary-read surface the CLI's
+         *     file-path argument would expose over HTTP.
+         */
+        CatalogImportPayload: {
+            /**
+             * Content
+             * @description Raw catalog document (JSON or YAML text).
+             */
+            content: string;
+            /**
+             * Force
+             * @description Overwrite an existing user import with the same ID.
+             * @default false
+             */
+            force: boolean;
+            /**
+             * Format
+             * @description Content format: 'json' or 'yaml'.
+             * @default json
+             */
+            format: string;
+            /**
+             * Framework Id
+             * @description Framework ID the catalog is imported under. Authoritative for the on-disk filename + the manifest entry; overrides any framework_id inside the content.
+             */
+            framework_id: string;
+            /**
+             * License Terms
+             * @description Statement about the content's source + licensing.
+             */
+            license_terms?: string | null;
+            /**
+             * Name
+             * @description Override the human-readable framework name.
+             */
+            name?: string | null;
+            /**
+             * Tier
+             * @description Redistribution tier of imported content (A/B/C/D).
+             * @default C
+             */
+            tier: string;
+        };
+        /**
          * ChallengeOutcome
          * @description Outcome classification for an effective challenge event.
          *
@@ -2801,6 +3119,44 @@ export interface components {
              * @description Source system instance identifier. Examples: 'aws-account:123456789012:us-east-1', 'github:org/repo', 'github:enterprise/acme'.
              */
             source_system_id: string;
+        };
+        /**
+         * CompletedQuestionnaireIngest
+         * @description Request body for the DD-questionnaire ingest endpoint.
+         *
+         *     Carries the completed (or partially-completed) questionnaire
+         *     content the API caller posts back after a vendor returns it. The
+         *     HTTP surface receives structured JSON directly (the CLI's
+         *     ``parse_completed_questionnaire`` file-parsing path has no
+         *     equivalent need here — the body IS the parsed content).
+         *
+         *     ``responses`` is the per-question answer map keyed by question.id
+         *     (e.g. ``EVG-GOV-01``). An empty map is a malformed ingest (nothing
+         *     to record) and the endpoint rejects it with a 400.
+         */
+        CompletedQuestionnaireIngest: {
+            /**
+             * Format
+             * @description Questionnaire framework the responses correspond to (e.g. 'evidentia-generic' / 'caiq-lite'). Free-text; recorded on the evidence reference for context.
+             */
+            format?: string | null;
+            /**
+             * Questionnaire Id
+             * @description UUID from the originating Questionnaire (when the caller carries it forward from the generate step). Recorded on the evidence reference for correlation; not required.
+             */
+            questionnaire_id?: string | null;
+            /**
+             * Responses
+             * @description Per-question vendor responses keyed by question.id. Empty string == 'no response'. At least one entry is required — an empty map is rejected as a malformed ingest (400).
+             */
+            responses?: {
+                [key: string]: string;
+            };
+            /**
+             * Source Path
+             * @description Optional provenance label — e.g. the filename the operator received the completed questionnaire as. Recorded on the evidence reference's notes for audit context.
+             */
+            source_path?: string | null;
         };
         /**
          * ComplianceStatus
@@ -3749,6 +4105,24 @@ export interface components {
             [key: string]: unknown;
         };
         /**
+         * FairMcQuantifyResponse
+         * @description Response for method='fair-mc' — one SimulationResult per scenario.
+         */
+        FairMcQuantifyResponse: {
+            /**
+             * Method
+             * @default fair-mc
+             */
+            method: string;
+            /**
+             * Scenario Count
+             * @description Number of scenarios simulated.
+             */
+            scenario_count: number;
+            /** Simulations */
+            simulations: components["schemas"]["SimulationResult"][];
+        };
+        /**
          * FindingStatus
          * @description Status of a security finding.
          * @enum {string}
@@ -4315,6 +4689,36 @@ export interface components {
                 [key: string]: components["schemas"]["LlmProviderState"];
             };
         };
+        /** MarkCompletedRequest */
+        MarkCompletedRequest: {
+            /**
+             * Slug
+             * @description Cadence slug (e.g., 'nist-800-53-rev5-ca7').
+             */
+            slug: string;
+            /**
+             * When
+             * Format: date
+             * @description ISO-8601 date of cycle completion (YYYY-MM-DD).
+             */
+            when: string;
+        };
+        /** MarkCompletedResponse */
+        MarkCompletedResponse: {
+            /** Activity */
+            activity: string;
+            /** Framework */
+            framework: string;
+            /**
+             * New Last Completed
+             * Format: date
+             */
+            new_last_completed: string;
+            /** Previous Last Completed */
+            previous_last_completed: string | null;
+            /** Slug */
+            slug: string;
+        };
         /**
          * Methodology
          * @description Model methodology classification per SR 11-7 §III.A.
@@ -4865,6 +5269,136 @@ export interface components {
          */
         OLIRRelationship: "equivalent-to" | "equal-to" | "subset-of" | "superset-of" | "intersects-with" | "related-to";
         /**
+         * OpenFAIRScenario
+         * @description A risk scenario expressed in Open FAIR terms.
+         *
+         *     Operators supply each FAIR factor as either a scalar (single-
+         *     point estimate) or a :class:`PERTRange` (range estimate).
+         *     The :func:`compute_ale` helper resolves both to a deterministic
+         *     expected value.
+         */
+        OpenFAIRScenario: {
+            /**
+             * Asset
+             * @description Asset under risk (free-text or ID).
+             */
+            asset?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Description
+             * @description Full scenario narrative covering threat, asset, + impact.
+             */
+            description: string;
+            /** Evidentia Version */
+            evidentia_version?: string;
+            /** Id */
+            id?: string;
+            /**
+             * Name
+             * @description Short scenario name (e.g., 'Credential stuffing on customer login').
+             */
+            name: string;
+            /**
+             * Notes
+             * @description Free-text notes about methodology, source data, etc.
+             */
+            notes?: string | null;
+            /**
+             * Primary Loss
+             * @description Primary Loss ($): direct response + replacement costs from one event. Scalar OR PERTRange.
+             */
+            primary_loss: number | components["schemas"]["PERTRange"];
+            /**
+             * Secondary Loss
+             * @description Secondary Loss ($): downstream costs — fines, reputation, customer churn, legal — from one event. Scalar OR PERTRange. Default 0.
+             * @default 0
+             */
+            secondary_loss: number | components["schemas"]["PERTRange"];
+            /**
+             * Tef
+             * @description Threat Event Frequency: events/year that threat actors attempt this attack. Scalar OR PERTRange.
+             */
+            tef: number | components["schemas"]["PERTRange"];
+            /**
+             * Threat Actor
+             * @description Threat-actor archetype (e.g., 'opportunistic external')
+             */
+            threat_actor?: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+            /**
+             * Vulnerability
+             * @description Vulnerability: probability (0-1) the attempt succeeds given controls. Scalar OR PERTRange.
+             */
+            vulnerability: number | components["schemas"]["PERTRange"];
+        };
+        /**
+         * OpenFairQuantifyResponse
+         * @description Response for method='open-fair' — deterministic per-scenario ALE.
+         */
+        OpenFairQuantifyResponse: {
+            /**
+             * Method
+             * @default open-fair
+             */
+            method: string;
+            /**
+             * Scenario Count
+             * @description Number of scenarios quantified.
+             */
+            scenario_count: number;
+            /** Scenarios */
+            scenarios: components["schemas"]["OpenFairScenarioResult"][];
+            /**
+             * Total Ale
+             * @description Sum of per-scenario ALE ($).
+             */
+            total_ale: number;
+        };
+        /**
+         * OpenFairScenarioResult
+         * @description Per-scenario deterministic Open FAIR result (method='open-fair').
+         */
+        OpenFairScenarioResult: {
+            /**
+             * Ale
+             * @description Annualized Loss Expectancy ($).
+             */
+            ale: number;
+            /**
+             * Id
+             * @description The scenario's ID.
+             */
+            id: string;
+            /**
+             * Lef
+             * @description Loss Event Frequency (events/yr).
+             */
+            lef: number;
+            /**
+             * Loss Magnitude
+             * @description Loss Magnitude per event ($).
+             */
+            loss_magnitude: number;
+            /**
+             * Name
+             * @description The scenario's name.
+             */
+            name: string;
+            /**
+             * Risk Category
+             * @description FAIR risk band (severe/high/significant/moderate/low).
+             */
+            risk_category: string;
+        };
+        /**
          * Owner
          * @description An owner identity with 3LOD classification.
          *
@@ -4894,6 +5428,33 @@ export interface components {
              * @description Optional job-title label (e.g., 'Director, Model Risk').
              */
             title?: string | null;
+        };
+        /**
+         * PERTRange
+         * @description A 3-point PERT estimate (low / most_likely / high).
+         *
+         *     PERT mean: ``E[X] = (low + 4*most_likely + high) / 6``.
+         *     Operators capturing range-of-estimate uncertainty use this
+         *     rather than single-point values.
+         *
+         *     Constraint: ``low <= most_likely <= high``.
+         */
+        PERTRange: {
+            /**
+             * High
+             * @description Highest plausible value (95th percentile-ish).
+             */
+            high: number;
+            /**
+             * Low
+             * @description Lowest plausible value (5th percentile-ish).
+             */
+            low: number;
+            /**
+             * Most Likely
+             * @description Most-likely value (mode).
+             */
+            most_likely: number;
         };
         /**
          * POAMState
@@ -5215,6 +5776,12 @@ export interface components {
             new_stage: components["schemas"]["RetentionLifecycleStage"];
         };
         /**
+         * RiskCategory
+         * @description FAIR risk-category bands from the published Open Group guide.
+         * @enum {string}
+         */
+        RiskCategory: "severe" | "high" | "significant" | "moderate" | "low";
+        /**
          * RiskGenerateRequest
          * @description Body of `POST /api/risk/generate` — SSE endpoint.
          *
@@ -5249,6 +5816,40 @@ export interface components {
              * @default 10
              */
             top_n: number;
+        };
+        /**
+         * RiskQuantifyRequest
+         * @description Body of ``POST /api/risk/quantify``.
+         *
+         *     Mirrors the CLI ``risk quantify`` options: a ``method`` selector,
+         *     the list of FAIR ``scenarios`` (the core :class:`OpenFAIRScenario`
+         *     schema, reused directly), and the Monte-Carlo-only ``iterations`` /
+         *     ``seed`` knobs. The CLI loads scenarios from a YAML/JSON file; over
+         *     HTTP the caller sends them inline.
+         */
+        RiskQuantifyRequest: {
+            /**
+             * Iterations
+             * @description Monte Carlo iteration count (only used when method='fair-mc'). Default 10,000 (FAIR-U recommended convergence point); the API caps it at 1,000,000 for bounded compute.
+             * @default 10000
+             */
+            iterations: number;
+            /**
+             * Method
+             * @description Quantification method: 'open-fair' (deterministic PERT-mean expected value) or 'fair-mc' (Monte Carlo simulation with P10/P50/P90 percentile bands).
+             * @default open-fair
+             */
+            method: string;
+            /**
+             * Scenarios
+             * @description One or more Open FAIR scenarios to quantify.
+             */
+            scenarios: components["schemas"]["OpenFAIRScenario"][];
+            /**
+             * Seed
+             * @description Random seed for deterministic Monte Carlo runs (only used when method='fair-mc'). Pass an explicit int for reproducible bands.
+             */
+            seed?: number | null;
         };
         /**
          * SecurityFinding
@@ -5339,6 +5940,78 @@ export interface components {
          * @enum {string}
          */
         Severity: "critical" | "high" | "medium" | "low" | "informational";
+        /**
+         * SimulationResult
+         * @description The output of a FAIR Monte Carlo simulation.
+         *
+         *     Captures the per-iteration ALE samples + canonical aggregate
+         *     statistics. The samples list itself is the source of truth;
+         *     the percentiles + mean + stddev are derived for ergonomic
+         *     access.
+         */
+        SimulationResult: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /** Evidentia Version */
+            evidentia_version?: string;
+            /** Id */
+            id?: string;
+            /**
+             * Iterations
+             * @description Number of Monte Carlo iterations executed.
+             */
+            iterations: number;
+            /**
+             * Mean
+             * @description Sample mean ALE.
+             */
+            mean: number;
+            /**
+             * P10
+             * @description 10th-percentile ALE.
+             */
+            p10: number;
+            /**
+             * P50
+             * @description Median (50th-percentile) ALE.
+             */
+            p50: number;
+            /**
+             * P90
+             * @description 90th-percentile ALE.
+             */
+            p90: number;
+            /** @description FAIR risk band of the median ALE. */
+            risk_category_p50: components["schemas"]["RiskCategory"];
+            /**
+             * Samples
+             * @description Per-iteration ALE samples ($). The full distribution is preserved here so callers can compute custom percentiles or render alternative visualizations.
+             */
+            samples: number[];
+            /**
+             * Scenario Id
+             * @description ID of the OpenFAIRScenario this simulation ran against.
+             */
+            scenario_id: string;
+            /**
+             * Scenario Name
+             * @description Scenario name — duplicated here so reports + CSV exports stay self-contained.
+             */
+            scenario_name: string;
+            /**
+             * Seed
+             * @description Random seed used. When set, the simulation is deterministic across runs (golden-file friendly).
+             */
+            seed?: number | null;
+            /**
+             * Stddev
+             * @description Sample standard deviation.
+             */
+            stddev: number;
+        };
         /**
          * Tier
          * @description SR 11-7 model criticality tier.
@@ -6186,6 +6859,175 @@ export interface operations {
             };
         };
     };
+    get_crosswalk_api_catalog_crosswalk_get: {
+        parameters: {
+            query: {
+                /** @description Source framework ID. */
+                source: string;
+                /** @description Target framework ID. */
+                target: string;
+                /** @description Source control ID. */
+                control: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_catalog_api_catalog_import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CatalogImportPayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    license_info_api_catalog_license_info__framework_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                framework_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    where_framework_api_catalog_where_get: {
+        parameters: {
+            query: {
+                /** @description Framework ID to locate. */
+                framework_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_catalog_api_catalog__framework_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                framework_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     aws_collect_api_collectors_aws_collect_post: {
         parameters: {
             query?: never;
@@ -6907,6 +7749,42 @@ export interface operations {
             };
         };
     };
+    list_conmon_dedup_api_conmon_dedup_list_get: {
+        parameters: {
+            query?: {
+                /** @description Optional cadence-slug filter (exact match). */
+                slug?: string | null;
+                /** @description Suppression window used for the 'suppression_remaining_minutes' column. Should match the daemon's --alert-suppression-hours. */
+                suppression_hours?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     conmon_health_endpoint_api_conmon_health_post: {
         parameters: {
             query?: never;
@@ -6929,6 +7807,39 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_conmon_completed_api_conmon_mark_completed_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkCompletedRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarkCompletedResponse"];
                 };
             };
             /** @description Validation Error */
@@ -9017,6 +9928,39 @@ export interface operations {
             };
         };
     };
+    quantify_api_risk_quantify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RiskQuantifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpenFairQuantifyResponse"] | components["schemas"]["FairMcQuantifyResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     concentration_api_tprm_concentration_get: {
         parameters: {
             query?: {
@@ -9240,6 +10184,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Questionnaire"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ingest_dd_questionnaire_api_tprm_vendors__vendor_id__dd_questionnaire_ingest_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vendor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompletedQuestionnaireIngest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Vendor-Output"];
                 };
             };
             /** @description Validation Error */

@@ -6,9 +6,11 @@ Reuses the project-wide ``api_client`` fixture from conftest.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 
@@ -748,3 +750,299 @@ class TestMetricsConmonDaemonGauges:
         assert (
             "evidentia_conmon_daemon_unknown_cadence_count 0" in resp.text
         )
+
+
+# ── v0.10.12: mark-completed endpoint ───────────────────────────────
+
+
+def _read_state_file(path: Path) -> dict[str, str]:
+    """Parse the YAML conmon state file into a {slug: iso-date} dict."""
+    import yaml as _yaml
+
+    raw = _yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    return {str(k): str(v) for k, v in raw.items()}
+
+
+class TestMarkCompleted:
+    """POST /api/conmon/mark-completed records a cycle completion into
+    the YAML state file the server exposes via
+    EVIDENTIA_CONMON_STATE_FILE. Mirrors the ``evidentia conmon
+    mark-completed`` CLI verb (state mutation; require_role("write"))."""
+
+    def test_records_first_completion(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        state_file = tmp_path / "conmon-state.yaml"
+        monkeypatch.setenv("EVIDENTIA_CONMON_STATE_FILE", str(state_file))
+
+        resp = api_client.post(
+            "/api/conmon/mark-completed",
+            json={
+                "slug": "nist-800-53-rev5-ca7",
+                "when": "2026-05-15",
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["slug"] == "nist-800-53-rev5-ca7"
+        assert body["new_last_completed"] == "2026-05-15"
+        # First mark → no previous value.
+        assert body["previous_last_completed"] is None
+        # State change persisted to the YAML state file.
+        assert _read_state_file(state_file) == {
+            "nist-800-53-rev5-ca7": "2026-05-15"
+        }
+
+    def test_records_subsequent_completion_returns_previous(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        state_file = tmp_path / "conmon-state.yaml"
+        monkeypatch.setenv("EVIDENTIA_CONMON_STATE_FILE", str(state_file))
+
+        api_client.post(
+            "/api/conmon/mark-completed",
+            json={"slug": "nist-800-53-rev5-ca7", "when": "2026-04-15"},
+        )
+        resp = api_client.post(
+            "/api/conmon/mark-completed",
+            json={"slug": "nist-800-53-rev5-ca7", "when": "2026-05-15"},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["previous_last_completed"] == "2026-04-15"
+        assert body["new_last_completed"] == "2026-05-15"
+        assert _read_state_file(state_file) == {
+            "nist-800-53-rev5-ca7": "2026-05-15"
+        }
+
+    def test_unknown_slug_returns_400(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        state_file = tmp_path / "conmon-state.yaml"
+        monkeypatch.setenv("EVIDENTIA_CONMON_STATE_FILE", str(state_file))
+
+        resp = api_client.post(
+            "/api/conmon/mark-completed",
+            json={"slug": "no-such-cadence", "when": "2026-05-15"},
+        )
+        assert resp.status_code == 400, resp.text
+        # State file must not be created for a rejected mark.
+        assert not state_file.exists()
+
+    def test_missing_when_returns_422(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        # Pydantic body validation: 'when' is required.
+        monkeypatch.setenv(
+            "EVIDENTIA_CONMON_STATE_FILE", str(tmp_path / "s.yaml")
+        )
+        resp = api_client.post(
+            "/api/conmon/mark-completed",
+            json={"slug": "nist-800-53-rev5-ca7"},
+        )
+        assert resp.status_code == 422
+
+    def test_malformed_when_returns_422(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv(
+            "EVIDENTIA_CONMON_STATE_FILE", str(tmp_path / "s.yaml")
+        )
+        resp = api_client.post(
+            "/api/conmon/mark-completed",
+            json={"slug": "nist-800-53-rev5-ca7", "when": "not-a-date"},
+        )
+        assert resp.status_code == 422
+
+    def test_returns_400_when_state_file_env_unset(
+        self,
+        api_client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.delenv("EVIDENTIA_CONMON_STATE_FILE", raising=False)
+        resp = api_client.post(
+            "/api/conmon/mark-completed",
+            json={"slug": "nist-800-53-rev5-ca7", "when": "2026-05-15"},
+        )
+        assert resp.status_code == 400
+        assert "EVIDENTIA_CONMON_STATE_FILE" in resp.json()["detail"]
+
+
+# ── v0.10.12: dedup-list endpoint ───────────────────────────────────
+
+
+class TestDedupList:
+    """GET /api/conmon/dedup-list reads the alert-dedup JSON file the
+    daemon writes (exposed via EVIDENTIA_CONMON_ALERT_DEDUP_FILE).
+    Mirrors the ``evidentia conmon dedup-list`` CLI verb (open read)."""
+
+    def _write_dedup(self, path: Path) -> None:
+        import json as _json
+
+        path.write_text(
+            _json.dumps(
+                {
+                    "nist-800-53-rev5-ca7|overdue": (
+                        "2026-05-16T03:00:00+00:00"
+                    ),
+                    "fedramp-conmon-poam|due_soon": (
+                        "2026-05-15T09:00:00+00:00"
+                    ),
+                }
+            )
+        )
+
+    def test_returns_deduped_entries(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        dedup_file = tmp_path / "dedup.json"
+        self._write_dedup(dedup_file)
+        monkeypatch.setenv(
+            "EVIDENTIA_CONMON_ALERT_DEDUP_FILE", str(dedup_file)
+        )
+
+        resp = api_client.get("/api/conmon/dedup-list")
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["count"] == 2
+        entries = body["entries"]
+        # Sorted by last_dispatched_at descending (newest first).
+        assert entries[0]["cadence_slug"] == "nist-800-53-rev5-ca7"
+        assert entries[0]["state"] == "overdue"
+        assert entries[0]["last_dispatched_at"] == (
+            "2026-05-16T03:00:00+00:00"
+        )
+        assert "suppression_remaining_minutes" in entries[0]
+        assert entries[1]["cadence_slug"] == "fedramp-conmon-poam"
+        assert entries[1]["state"] == "due_soon"
+
+    def test_slug_filter(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        dedup_file = tmp_path / "dedup.json"
+        self._write_dedup(dedup_file)
+        monkeypatch.setenv(
+            "EVIDENTIA_CONMON_ALERT_DEDUP_FILE", str(dedup_file)
+        )
+
+        resp = api_client.get(
+            "/api/conmon/dedup-list",
+            params={"slug": "nist-800-53-rev5-ca7"},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["count"] == 1
+        assert body["entries"][0]["cadence_slug"] == "nist-800-53-rev5-ca7"
+
+    def test_missing_file_returns_empty(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        # Missing dedup file yields an empty result (CLI parity: the
+        # verb tolerates a not-yet-created file).
+        dedup_file = tmp_path / "never-written.json"
+        monkeypatch.setenv(
+            "EVIDENTIA_CONMON_ALERT_DEDUP_FILE", str(dedup_file)
+        )
+        resp = api_client.get("/api/conmon/dedup-list")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["count"] == 0
+        assert body["entries"] == []
+
+    def test_returns_400_when_dedup_file_env_unset(
+        self,
+        api_client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.delenv(
+            "EVIDENTIA_CONMON_ALERT_DEDUP_FILE", raising=False
+        )
+        resp = api_client.get("/api/conmon/dedup-list")
+        assert resp.status_code == 400
+        assert "EVIDENTIA_CONMON_ALERT_DEDUP_FILE" in resp.json()["detail"]
+
+
+# ── v0.10.12: RBAC enforcement (proves the write gate bites) ────────
+
+
+@pytest.fixture
+def conmon_readonly_client(
+    monkeypatch: pytest.MonkeyPatch,
+) -> Iterator[TestClient]:
+    """A conmon TestClient under a restrictive read-only RBAC policy.
+
+    Installs a deny-by-default policy whose ``default_role`` is
+    ``reader``. An anonymous request (identity None) resolves to that
+    role, so reads pass while ``require_role("write")`` gates deny —
+    proving the mark-completed gate actually bites (it is inert under
+    the permissive DEFAULT_POLICY the other tests run with).
+    Mirrors test_governance_router.gov_readonly_client.
+    """
+    from evidentia_api.routers import conmon as conmon_router
+    from evidentia_core.rbac import RBACPolicy, Role
+
+    app = FastAPI()
+    app.include_router(conmon_router.router, prefix="/api")
+    app.state.rbac_policy = RBACPolicy(identities={}, default_role=Role.READER)
+    with TestClient(app) as client:
+        yield client
+
+
+class TestConmonRBAC:
+    """Under a read-only policy the write gate must deny, reads pass."""
+
+    def test_anonymous_mark_completed_denied_403(
+        self,
+        conmon_readonly_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv(
+            "EVIDENTIA_CONMON_STATE_FILE", str(tmp_path / "state.yaml")
+        )
+        resp = conmon_readonly_client.post(
+            "/api/conmon/mark-completed",
+            json={"slug": "nist-800-53-rev5-ca7", "when": "2026-05-15"},
+        )
+        assert resp.status_code == 403, resp.text
+        assert resp.json()["detail"]["error"] == "rbac_denied"
+
+    def test_anonymous_dedup_list_allowed_200(
+        self,
+        conmon_readonly_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        # dedup-list carries no require_role gate (reads are open), so
+        # it returns 200 even under the read-only policy.
+        dedup_file = tmp_path / "dedup.json"
+        monkeypatch.setenv(
+            "EVIDENTIA_CONMON_ALERT_DEDUP_FILE", str(dedup_file)
+        )
+        resp = conmon_readonly_client.get("/api/conmon/dedup-list")
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["count"] == 0

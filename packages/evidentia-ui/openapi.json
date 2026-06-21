@@ -391,6 +391,73 @@
         "title": "CatalogControl",
         "type": "object"
       },
+      "CatalogImportPayload": {
+        "description": "Body shape for ``POST /api/catalog/import``.\n\nThe catalog is supplied as inline ``content`` (NOT a server-side\npath) so the API never reads an operator-chosen file off the server\n— closing the path-traversal / arbitrary-read surface the CLI's\nfile-path argument would expose over HTTP.",
+        "properties": {
+          "content": {
+            "description": "Raw catalog document (JSON or YAML text).",
+            "maxLength": 20000000,
+            "minLength": 1,
+            "title": "Content",
+            "type": "string"
+          },
+          "force": {
+            "default": false,
+            "description": "Overwrite an existing user import with the same ID.",
+            "title": "Force",
+            "type": "boolean"
+          },
+          "format": {
+            "default": "json",
+            "description": "Content format: 'json' or 'yaml'.",
+            "title": "Format",
+            "type": "string"
+          },
+          "framework_id": {
+            "description": "Framework ID the catalog is imported under. Authoritative for the on-disk filename + the manifest entry; overrides any framework_id inside the content.",
+            "title": "Framework Id",
+            "type": "string"
+          },
+          "license_terms": {
+            "anyOf": [
+              {
+                "maxLength": 4096,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Statement about the content's source + licensing.",
+            "title": "License Terms"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Override the human-readable framework name.",
+            "title": "Name"
+          },
+          "tier": {
+            "default": "C",
+            "description": "Redistribution tier of imported content (A/B/C/D).",
+            "title": "Tier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "framework_id",
+          "content"
+        ],
+        "title": "CatalogImportPayload",
+        "type": "object"
+      },
       "ChallengeOutcome": {
         "description": "Outcome classification for an effective challenge event.\n\nValues:\n\n  - ``accepted`` — the challenger's concern was accepted by the\n    model owner; subsequent action follows (e.g., recalibrate,\n    add limitation, change use)\n  - ``rejected`` — the challenger's concern was reviewed and\n    rejected with documented rationale\n  - ``modify`` — partial acceptance; modification path agreed\n  - ``pending`` — challenge logged; resolution still in progress",
         "enum": [
@@ -627,6 +694,57 @@
           "source_system_id"
         ],
         "title": "CollectionContext",
+        "type": "object"
+      },
+      "CompletedQuestionnaireIngest": {
+        "description": "Request body for the DD-questionnaire ingest endpoint.\n\nCarries the completed (or partially-completed) questionnaire\ncontent the API caller posts back after a vendor returns it. The\nHTTP surface receives structured JSON directly (the CLI's\n``parse_completed_questionnaire`` file-parsing path has no\nequivalent need here — the body IS the parsed content).\n\n``responses`` is the per-question answer map keyed by question.id\n(e.g. ``EVG-GOV-01``). An empty map is a malformed ingest (nothing\nto record) and the endpoint rejects it with a 400.",
+        "properties": {
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Questionnaire framework the responses correspond to (e.g. 'evidentia-generic' / 'caiq-lite'). Free-text; recorded on the evidence reference for context.",
+            "title": "Format"
+          },
+          "questionnaire_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "UUID from the originating Questionnaire (when the caller carries it forward from the generate step). Recorded on the evidence reference for correlation; not required.",
+            "title": "Questionnaire Id"
+          },
+          "responses": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Per-question vendor responses keyed by question.id. Empty string == 'no response'. At least one entry is required — an empty map is rejected as a malformed ingest (400).",
+            "title": "Responses",
+            "type": "object"
+          },
+          "source_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional provenance label — e.g. the filename the operator received the completed questionnaire as. Recorded on the evidence reference's notes for audit context.",
+            "title": "Source Path"
+          }
+        },
+        "title": "CompletedQuestionnaireIngest",
         "type": "object"
       },
       "ComplianceStatus": {
@@ -2152,6 +2270,35 @@
         "title": "EvidentiaConfig",
         "type": "object"
       },
+      "FairMcQuantifyResponse": {
+        "additionalProperties": false,
+        "description": "Response for method='fair-mc' — one SimulationResult per scenario.",
+        "properties": {
+          "method": {
+            "default": "fair-mc",
+            "title": "Method",
+            "type": "string"
+          },
+          "scenario_count": {
+            "description": "Number of scenarios simulated.",
+            "title": "Scenario Count",
+            "type": "integer"
+          },
+          "simulations": {
+            "items": {
+              "$ref": "#/components/schemas/SimulationResult"
+            },
+            "title": "Simulations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scenario_count",
+          "simulations"
+        ],
+        "title": "FairMcQuantifyResponse",
+        "type": "object"
+      },
       "FindingStatus": {
         "description": "Status of a security finding.",
         "enum": [
@@ -3149,6 +3296,70 @@
         "title": "LlmStatusResponse",
         "type": "object"
       },
+      "MarkCompletedRequest": {
+        "properties": {
+          "slug": {
+            "description": "Cadence slug (e.g., 'nist-800-53-rev5-ca7').",
+            "minLength": 1,
+            "title": "Slug",
+            "type": "string"
+          },
+          "when": {
+            "description": "ISO-8601 date of cycle completion (YYYY-MM-DD).",
+            "format": "date",
+            "title": "When",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "when"
+        ],
+        "title": "MarkCompletedRequest",
+        "type": "object"
+      },
+      "MarkCompletedResponse": {
+        "properties": {
+          "activity": {
+            "title": "Activity",
+            "type": "string"
+          },
+          "framework": {
+            "title": "Framework",
+            "type": "string"
+          },
+          "new_last_completed": {
+            "format": "date",
+            "title": "New Last Completed",
+            "type": "string"
+          },
+          "previous_last_completed": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Last Completed"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "framework",
+          "activity",
+          "previous_last_completed",
+          "new_last_completed"
+        ],
+        "title": "MarkCompletedResponse",
+        "type": "object"
+      },
       "Methodology": {
         "description": "Model methodology classification per SR 11-7 §III.A.\n\nThe classification drives which validation requirements apply.\nStatistical + ML models (esp. high-tier ones) require formal\nindependent validation; rules-based + expert-judgment models\nfollow a lighter outcomes-analysis cadence; LLM models are in\nthe SR 26-02 / OCC 2026-13a explicit-exclusion zone and rely\non Evidentia's GenerationContext provenance chain for\nSR-replacement-grade evidence.",
         "enum": [
@@ -4020,6 +4231,215 @@
         "title": "OLIRRelationship",
         "type": "string"
       },
+      "OpenFAIRScenario": {
+        "additionalProperties": false,
+        "description": "A risk scenario expressed in Open FAIR terms.\n\nOperators supply each FAIR factor as either a scalar (single-\npoint estimate) or a :class:`PERTRange` (range estimate).\nThe :func:`compute_ale` helper resolves both to a deterministic\nexpected value.",
+        "properties": {
+          "asset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Asset under risk (free-text or ID).",
+            "title": "Asset"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "description": "Full scenario narrative covering threat, asset, + impact.",
+            "title": "Description",
+            "type": "string"
+          },
+          "evidentia_version": {
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "description": "Short scenario name (e.g., 'Credential stuffing on customer login').",
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Free-text notes about methodology, source data, etc.",
+            "title": "Notes"
+          },
+          "primary_loss": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "$ref": "#/components/schemas/PERTRange"
+              }
+            ],
+            "description": "Primary Loss ($): direct response + replacement costs from one event. Scalar OR PERTRange.",
+            "title": "Primary Loss"
+          },
+          "secondary_loss": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "$ref": "#/components/schemas/PERTRange"
+              }
+            ],
+            "default": 0.0,
+            "description": "Secondary Loss ($): downstream costs — fines, reputation, customer churn, legal — from one event. Scalar OR PERTRange. Default 0.",
+            "title": "Secondary Loss"
+          },
+          "tef": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "$ref": "#/components/schemas/PERTRange"
+              }
+            ],
+            "description": "Threat Event Frequency: events/year that threat actors attempt this attack. Scalar OR PERTRange.",
+            "title": "Tef"
+          },
+          "threat_actor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Threat-actor archetype (e.g., 'opportunistic external')",
+            "title": "Threat Actor"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "vulnerability": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "$ref": "#/components/schemas/PERTRange"
+              }
+            ],
+            "description": "Vulnerability: probability (0-1) the attempt succeeds given controls. Scalar OR PERTRange.",
+            "title": "Vulnerability"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "tef",
+          "vulnerability",
+          "primary_loss"
+        ],
+        "title": "OpenFAIRScenario",
+        "type": "object"
+      },
+      "OpenFairQuantifyResponse": {
+        "additionalProperties": false,
+        "description": "Response for method='open-fair' — deterministic per-scenario ALE.",
+        "properties": {
+          "method": {
+            "default": "open-fair",
+            "title": "Method",
+            "type": "string"
+          },
+          "scenario_count": {
+            "description": "Number of scenarios quantified.",
+            "title": "Scenario Count",
+            "type": "integer"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/OpenFairScenarioResult"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          },
+          "total_ale": {
+            "description": "Sum of per-scenario ALE ($).",
+            "title": "Total Ale",
+            "type": "number"
+          }
+        },
+        "required": [
+          "scenario_count",
+          "total_ale",
+          "scenarios"
+        ],
+        "title": "OpenFairQuantifyResponse",
+        "type": "object"
+      },
+      "OpenFairScenarioResult": {
+        "additionalProperties": false,
+        "description": "Per-scenario deterministic Open FAIR result (method='open-fair').",
+        "properties": {
+          "ale": {
+            "description": "Annualized Loss Expectancy ($).",
+            "title": "Ale",
+            "type": "number"
+          },
+          "id": {
+            "description": "The scenario's ID.",
+            "title": "Id",
+            "type": "string"
+          },
+          "lef": {
+            "description": "Loss Event Frequency (events/yr).",
+            "title": "Lef",
+            "type": "number"
+          },
+          "loss_magnitude": {
+            "description": "Loss Magnitude per event ($).",
+            "title": "Loss Magnitude",
+            "type": "number"
+          },
+          "name": {
+            "description": "The scenario's name.",
+            "title": "Name",
+            "type": "string"
+          },
+          "risk_category": {
+            "description": "FAIR risk band (severe/high/significant/moderate/low).",
+            "title": "Risk Category",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "lef",
+          "loss_magnitude",
+          "ale",
+          "risk_category"
+        ],
+        "title": "OpenFairScenarioResult",
+        "type": "object"
+      },
       "Owner": {
         "additionalProperties": false,
         "description": "An owner identity with 3LOD classification.\n\nThe minimum primitive for governance reporting. Each Owner ties\nan email identity to a line-of-defense classification so the\naggregate distribution can be measured + presented.\n\nOptional ``team`` and ``title`` fields support richer reporting\n(e.g., \"MRM team has 3 owners, 2 in 2nd line + 1 in 3rd line —\ngovernance crossover requires explanation\").",
@@ -4063,6 +4483,37 @@
           "line_of_defense"
         ],
         "title": "Owner",
+        "type": "object"
+      },
+      "PERTRange": {
+        "additionalProperties": false,
+        "description": "A 3-point PERT estimate (low / most_likely / high).\n\nPERT mean: ``E[X] = (low + 4*most_likely + high) / 6``.\nOperators capturing range-of-estimate uncertainty use this\nrather than single-point values.\n\nConstraint: ``low <= most_likely <= high``.",
+        "properties": {
+          "high": {
+            "description": "Highest plausible value (95th percentile-ish).",
+            "minimum": 0.0,
+            "title": "High",
+            "type": "number"
+          },
+          "low": {
+            "description": "Lowest plausible value (5th percentile-ish).",
+            "minimum": 0.0,
+            "title": "Low",
+            "type": "number"
+          },
+          "most_likely": {
+            "description": "Most-likely value (mode).",
+            "minimum": 0.0,
+            "title": "Most Likely",
+            "type": "number"
+          }
+        },
+        "required": [
+          "low",
+          "most_likely",
+          "high"
+        ],
+        "title": "PERTRange",
         "type": "object"
       },
       "POAMState": {
@@ -4533,6 +4984,18 @@
         "title": "RetentionTransitionPayload",
         "type": "object"
       },
+      "RiskCategory": {
+        "description": "FAIR risk-category bands from the published Open Group guide.",
+        "enum": [
+          "severe",
+          "high",
+          "significant",
+          "moderate",
+          "low"
+        ],
+        "title": "RiskCategory",
+        "type": "string"
+      },
       "RiskGenerateRequest": {
         "additionalProperties": false,
         "description": "Body of `POST /api/risk/generate` — SSE endpoint.\n\nAccepts either a list of explicit gap IDs or a report key + filter to\nselect gaps. The stream emits one event per gap:\n`{gap_id, status: \"generating\"|\"done\"|\"error\", risk?: RiskStatement}`.",
@@ -4595,6 +5058,52 @@
           "report_key"
         ],
         "title": "RiskGenerateRequest",
+        "type": "object"
+      },
+      "RiskQuantifyRequest": {
+        "additionalProperties": false,
+        "description": "Body of ``POST /api/risk/quantify``.\n\nMirrors the CLI ``risk quantify`` options: a ``method`` selector,\nthe list of FAIR ``scenarios`` (the core :class:`OpenFAIRScenario`\nschema, reused directly), and the Monte-Carlo-only ``iterations`` /\n``seed`` knobs. The CLI loads scenarios from a YAML/JSON file; over\nHTTP the caller sends them inline.",
+        "properties": {
+          "iterations": {
+            "default": 10000,
+            "description": "Monte Carlo iteration count (only used when method='fair-mc'). Default 10,000 (FAIR-U recommended convergence point); the API caps it at 1,000,000 for bounded compute.",
+            "maximum": 1000000.0,
+            "minimum": 1.0,
+            "title": "Iterations",
+            "type": "integer"
+          },
+          "method": {
+            "default": "open-fair",
+            "description": "Quantification method: 'open-fair' (deterministic PERT-mean expected value) or 'fair-mc' (Monte Carlo simulation with P10/P50/P90 percentile bands).",
+            "title": "Method",
+            "type": "string"
+          },
+          "scenarios": {
+            "description": "One or more Open FAIR scenarios to quantify.",
+            "items": {
+              "$ref": "#/components/schemas/OpenFAIRScenario"
+            },
+            "minItems": 1,
+            "title": "Scenarios",
+            "type": "array"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Random seed for deterministic Monte Carlo runs (only used when method='fair-mc'). Pass an explicit int for reproducible bands.",
+            "title": "Seed"
+          }
+        },
+        "required": [
+          "scenarios"
+        ],
+        "title": "RiskQuantifyRequest",
         "type": "object"
       },
       "SecurityFinding": {
@@ -4765,6 +5274,104 @@
         ],
         "title": "Severity",
         "type": "string"
+      },
+      "SimulationResult": {
+        "additionalProperties": false,
+        "description": "The output of a FAIR Monte Carlo simulation.\n\nCaptures the per-iteration ALE samples + canonical aggregate\nstatistics. The samples list itself is the source of truth;\nthe percentiles + mean + stddev are derived for ergonomic\naccess.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "evidentia_version": {
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "iterations": {
+            "description": "Number of Monte Carlo iterations executed.",
+            "minimum": 1.0,
+            "title": "Iterations",
+            "type": "integer"
+          },
+          "mean": {
+            "description": "Sample mean ALE.",
+            "title": "Mean",
+            "type": "number"
+          },
+          "p10": {
+            "description": "10th-percentile ALE.",
+            "title": "P10",
+            "type": "number"
+          },
+          "p50": {
+            "description": "Median (50th-percentile) ALE.",
+            "title": "P50",
+            "type": "number"
+          },
+          "p90": {
+            "description": "90th-percentile ALE.",
+            "title": "P90",
+            "type": "number"
+          },
+          "risk_category_p50": {
+            "$ref": "#/components/schemas/RiskCategory",
+            "description": "FAIR risk band of the median ALE."
+          },
+          "samples": {
+            "description": "Per-iteration ALE samples ($). The full distribution is preserved here so callers can compute custom percentiles or render alternative visualizations.",
+            "items": {
+              "type": "number"
+            },
+            "title": "Samples",
+            "type": "array"
+          },
+          "scenario_id": {
+            "description": "ID of the OpenFAIRScenario this simulation ran against.",
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "scenario_name": {
+            "description": "Scenario name — duplicated here so reports + CSV exports stay self-contained.",
+            "title": "Scenario Name",
+            "type": "string"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Random seed used. When set, the simulation is deterministic across runs (golden-file friendly).",
+            "title": "Seed"
+          },
+          "stddev": {
+            "description": "Sample standard deviation.",
+            "title": "Stddev",
+            "type": "number"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "scenario_name",
+          "iterations",
+          "samples",
+          "p10",
+          "p50",
+          "p90",
+          "mean",
+          "stddev",
+          "risk_category_p50"
+        ],
+        "title": "SimulationResult",
+        "type": "object"
       },
       "Tier": {
         "description": "SR 11-7 model criticality tier.\n\nDrives validation-cadence: Tier 1 = annual; Tier 2 = biennial;\nTier 3 = triennial. Tier 1 models are high-impact + complex\n(e.g., capital-allocation, credit-decision, fair-lending);\nTier 2 are moderate-impact (operational risk, marketing\noptimization); Tier 3 are low-impact (internal reporting,\nforecasting tools).\n\nThe tier value also drives the documentation-detail level\nexpected in the SR 11-7 §III.A \"Conceptual Soundness\"\nwrite-up — Tier 1 needs full theoretical justification +\ncomparison to alternatives; Tier 3 may be a short paragraph.",
@@ -6057,6 +6664,247 @@
         ]
       }
     },
+    "/api/catalog/crosswalk": {
+      "get": {
+        "description": "Cross-framework mappings for a control (read-only).\n\nMirrors ``evidentia catalog crosswalk --source --target --control``.\nReturns a list envelope; an empty ``mappings`` list (total 0) when no\nmapping exists — consistent with the CLI's \"no mappings found\" path\n(a successful zero-result, not a 404).",
+        "operationId": "get_crosswalk_api_catalog_crosswalk_get",
+        "parameters": [
+          {
+            "description": "Source framework ID.",
+            "in": "query",
+            "name": "source",
+            "required": true,
+            "schema": {
+              "description": "Source framework ID.",
+              "title": "Source",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Target framework ID.",
+            "in": "query",
+            "name": "target",
+            "required": true,
+            "schema": {
+              "description": "Target framework ID.",
+              "title": "Target",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Source control ID.",
+            "in": "query",
+            "name": "control",
+            "required": true,
+            "schema": {
+              "description": "Source control ID.",
+              "title": "Control",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Crosswalk Api Catalog Crosswalk Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Crosswalk",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/catalog/import": {
+      "post": {
+        "description": "Import a user-supplied catalog into the local user catalog dir.\n\nLOCAL WRITE. Gated on ``require_role(\"write\")``. Parses the inline\ncontent, rewrites its ``framework_id`` / ``framework_name`` to the\nauthoritative values, validates the shape via\n:func:`load_evidentia_catalog`, then persists it + a manifest entry\nvia the ``user_dir`` helpers. Never touches a path outside the user\ncatalog dir.",
+        "operationId": "import_catalog_api_catalog_import_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogImportPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Import Catalog Api Catalog Import Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Catalog",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/catalog/license-info/{framework_id}": {
+      "get": {
+        "description": "Licensing metadata for a framework (read-only).\n\nMirrors ``evidentia catalog license-info``: user-imported entries\ntake precedence over bundled, then 404 if neither knows the ID.",
+        "operationId": "license_info_api_catalog_license_info__framework_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "framework_id",
+            "required": true,
+            "schema": {
+              "title": "Framework Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response License Info Api Catalog License Info  Framework Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "License Info",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/catalog/where": {
+      "get": {
+        "description": "Show where a framework resolves from — user, bundled, or 404.\n\nMirrors ``evidentia catalog where``. The user catalog dir is the one\nthe ``EVIDENTIA_CATALOG_DIR`` env var (or platform default) points at.",
+        "operationId": "where_framework_api_catalog_where_get",
+        "parameters": [
+          {
+            "description": "Framework ID to locate.",
+            "in": "query",
+            "name": "framework_id",
+            "required": true,
+            "schema": {
+              "description": "Framework ID to locate.",
+              "title": "Framework Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Where Framework Api Catalog Where Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Where Framework",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/catalog/{framework_id}": {
+      "delete": {
+        "description": "Remove a user-imported catalog. 204 on success; 404 otherwise.\n\nLOCAL DELETE. Gated on ``require_role(\"admin\")``. Bundled catalogs\nare never user-imported, so they cannot be removed — an attempt to\nremove one (or an unknown ID) returns 404, mirroring the CLI's\n\"no user-imported framework; bundled catalogs cannot be removed\"\nbehavior.",
+        "operationId": "remove_catalog_api_catalog__framework_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "framework_id",
+            "required": true,
+            "schema": {
+              "title": "Framework Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Catalog",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
     "/api/collectors/aws/collect": {
       "post": {
         "description": "Run the AWS collector (Config + Security Hub).\n\nRequest body (optional):\n\n- ``region``: override region\n- ``profile``: optional AWS profile name\n- ``include_config``: bool (default True)\n- ``include_security_hub``: bool (default True)",
@@ -7081,6 +7929,73 @@
         ]
       }
     },
+    "/api/conmon/dedup-list": {
+      "get": {
+        "description": "List the daemon's alert-dedup entries (read-only).\n\nREST parity with the ``evidentia conmon dedup-list`` CLI verb.\nReads the alert-dedup JSON state file the ``conmon watch`` daemon\nwrites; the server resolves its path from the\n``EVIDENTIA_CONMON_ALERT_DEDUP_FILE`` env var. A missing file\nyields an empty result (CLI parity — the verb tolerates a\nnot-yet-created file).\n\nReturns:\n    200 with ``{\"entries\": [...], \"count\": N}``. Each entry is\n    ``{cadence_slug, state, last_dispatched_at,\n    suppression_remaining_minutes}``, newest-dispatched first.\n    400 when ``EVIDENTIA_CONMON_ALERT_DEDUP_FILE`` is unset.\n\nAuth posture: open (read). No RBAC gate.",
+        "operationId": "list_conmon_dedup_api_conmon_dedup_list_get",
+        "parameters": [
+          {
+            "description": "Optional cadence-slug filter (exact match).",
+            "in": "query",
+            "name": "slug",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional cadence-slug filter (exact match).",
+              "title": "Slug"
+            }
+          },
+          {
+            "description": "Suppression window used for the 'suppression_remaining_minutes' column. Should match the daemon's --alert-suppression-hours.",
+            "in": "query",
+            "name": "suppression_hours",
+            "required": false,
+            "schema": {
+              "default": 24,
+              "description": "Suppression window used for the 'suppression_remaining_minutes' column. Should match the daemon's --alert-suppression-hours.",
+              "minimum": 0.0,
+              "title": "Suppression Hours",
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Conmon Dedup Api Conmon Dedup List Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Conmon Dedup",
+        "tags": [
+          "conmon"
+        ]
+      }
+    },
     "/api/conmon/health": {
       "post": {
         "description": "Aggregate CONMON framework health from a state payload.\n\nMirrors the v0.9.3 P1.3 ``evidentia conmon health`` CLI output\nshape via :meth:`HealthReport.to_dict`.",
@@ -7120,6 +8035,48 @@
           }
         },
         "summary": "Conmon Health Endpoint",
+        "tags": [
+          "conmon"
+        ]
+      }
+    },
+    "/api/conmon/mark-completed": {
+      "post": {
+        "description": "Record a CONMON cycle completion in the server's state file.\n\nREST parity with the ``evidentia conmon mark-completed`` CLI\nverb. The verb mutates a YAML ``{slug: last_completed}`` state\nfile; over HTTP the server resolves that path from the\n``EVIDENTIA_CONMON_STATE_FILE`` env var so clients never pass an\narbitrary filesystem path (the CLI's deprecated\n``--last-completed-file`` alias is intentionally NOT surfaced —\nonly the canonical state-file concept is exposed).\n\nPersistence + audit: delegates to\n:func:`evidentia_core.conmon.mark_completed`, which atomically\nwrites the state file and emits\n:attr:`EventAction.CONMON_CYCLE_MARKED_COMPLETED` with the\nprevious + new ``last_completed`` values — the auditor's primary\nevidence that the cycle was performed, not merely scheduled.\n\nReturns:\n    200 with the previous (``None`` on first mark) + new\n    completion dates.\n    400 when ``EVIDENTIA_CONMON_STATE_FILE`` is unset (the server\n    operator has not configured a state file) OR the slug is not a\n    registered cadence.\n    422 (FastAPI body validation) on a missing/malformed ``when``.\n\nRBAC: ``require_role(\"write\")`` — denies under a deny-by-default\npolicy; inert under the permissive DEFAULT_POLICY.",
+        "operationId": "mark_conmon_completed_api_conmon_mark_completed_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkCompletedRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkCompletedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Conmon Completed",
         "tags": [
           "conmon"
         ]
@@ -10242,6 +11199,56 @@
         ]
       }
     },
+    "/api/risk/quantify": {
+      "post": {
+        "description": "Quantify Open FAIR risk scenarios (deterministic or Monte Carlo).\n\nThe HTTP mirror of ``evidentia risk quantify``. ``method='open-fair'``\nreturns the deterministic PERT-mean ALE per scenario; ``method='fair-mc'``\nruns a seeded Monte Carlo simulation returning P10/P50/P90 bands. Pure\nlocal computation — no credentials, no network, no persisted state.",
+        "operationId": "quantify_api_risk_quantify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskQuantifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/OpenFairQuantifyResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FairMcQuantifyResponse"
+                    }
+                  ],
+                  "title": "Response Quantify Api Risk Quantify Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Quantify",
+        "tags": [
+          "risks"
+        ]
+      }
+    },
     "/api/tprm/concentration": {
       "get": {
         "description": "Concentration-risk report across the vendor inventory.\n\nAggregates the v0.7.9 P0.1 vendor inventory across configurable\ndimensions to surface concentration risk per FFIEC + OCC Bulletin\n2013-29 + FRB SR 13-19 expectations. Returns a JSON\n:class:`ConcentrationReport`. For HTML / CSV rendering, use the\n`evidentia tprm concentration-report --format html|csv` CLI\nsurface — REST is JSON-only by design.",
@@ -10625,6 +11632,59 @@
           }
         },
         "summary": "Generate Dd Questionnaire",
+        "tags": [
+          "tprm"
+        ]
+      }
+    },
+    "/api/tprm/vendors/{vendor_id}/dd-questionnaire/ingest": {
+      "post": {
+        "description": "Ingest a completed DD questionnaire into a vendor record.\n\nRecords the completed-questionnaire responses as an\n:class:`EvidenceRef` appended to ``vendor.evidence_refs`` and\npersists the mutated vendor — the persistence-to-vendor phase the\nv0.7.9 ``evidentia tprm dd-questionnaire ingest`` CLI verb\ndeferred (the CLI parses + correlates, then prints for review).\n\nLocal store mutation only — no credentials, no network. Returns\nthe updated :class:`Vendor`.\n\nError contract (matches the rest of this router):\n\n  - 404 on shape-violation OR well-formed-unknown ``vendor_id``\n    (F-V08-DAST-1 widening pattern).\n  - 400 (string detail, F-V08-DAST-3 invariant) when the\n    questionnaire content is malformed — i.e. ``responses`` is\n    empty (nothing to ingest). Pydantic auto-validation 422s\n    (wrong-typed body) keep their array-shape detail.\n  - 403 when an RBAC policy denies the ``write`` action.",
+        "operationId": "ingest_dd_questionnaire_api_tprm_vendors__vendor_id__dd_questionnaire_ingest_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendor_id",
+            "required": true,
+            "schema": {
+              "title": "Vendor Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompletedQuestionnaireIngest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vendor-Output"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ingest Dd Questionnaire",
         "tags": [
           "tprm"
         ]

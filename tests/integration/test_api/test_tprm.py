@@ -8,6 +8,7 @@ tests or into the real user profile. Reuses the project-wide
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -22,6 +23,35 @@ def _isolated_vendor_store(
     store = tmp_path / "vendor-store"
     monkeypatch.setenv("EVIDENTIA_VENDOR_STORE_DIR", str(store))
     return store
+
+
+@pytest.fixture
+def tprm_readonly_client(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> Iterator[TestClient]:
+    """A TPRM TestClient under a restrictive read-only RBAC policy.
+
+    Mirrors ``gov_readonly_client`` in ``test_governance_router``: a local
+    app holding ONLY the tprm router, with a deny-by-default policy whose
+    ``default_role`` is ``reader``. An anonymous request (identity None)
+    resolves to that role, so reads pass while ``require_role("write")``
+    gates deny — proving the ingest gate actually bites (it is inert under
+    the permissive DEFAULT_POLICY the other tests run with).
+    """
+    from evidentia_api.routers import tprm as tprm_router
+    from evidentia_core.rbac import RBACPolicy, Role
+    from fastapi import FastAPI
+
+    store = tmp_path / "vendor-store"
+    monkeypatch.setenv("EVIDENTIA_VENDOR_STORE_DIR", str(store))
+
+    app = FastAPI()
+    app.include_router(tprm_router.router, prefix="/api")
+    app.state.rbac_policy = RBACPolicy(
+        identities={}, default_role=Role.READER
+    )
+    with TestClient(app) as client:
+        yield client
 
 
 def _make_payload(
@@ -467,3 +497,126 @@ class TestDDQuestionnaireEndpoint:
             "?format=evidentia-generic"
         )
         assert r.status_code == 404
+
+
+# ── DD-questionnaire INGEST (POST .../dd-questionnaire/ingest) ──────
+
+
+class TestDDQuestionnaireIngestEndpoint:
+    """Ingest a completed DD questionnaire back into a vendor record.
+
+    The ingest appends an :class:`EvidenceRef` to ``vendor.evidence_refs``
+    recording the completed-questionnaire responses + saves the mutated
+    vendor — the persistence-to-vendor phase the v0.7.9 CLI deferred.
+    """
+
+    def _add_vendor(self, api_client: TestClient) -> str:
+        r = api_client.post("/api/tprm/vendors", json=_make_payload())
+        assert r.status_code == 201, r.text
+        return str(r.json()["id"])
+
+    def _completed_body(self) -> dict[str, object]:
+        return {
+            "questionnaire_id": "33333333-3333-3333-3333-333333333333",
+            "format": "evidentia-generic",
+            "responses": {
+                "EVG-GOV-01": "Yes — board-approved infosec policy.",
+                "EVG-GOV-02": "SOC 2 Type II on file.",
+            },
+        }
+
+    def test_ingest_into_existing_vendor_updates_it(
+        self, api_client: TestClient
+    ) -> None:
+        vid = self._add_vendor(api_client)
+        # Pre-condition: no evidence refs yet.
+        before = api_client.get(f"/api/tprm/vendors/{vid}")
+        assert before.json()["evidence_refs"] == []
+
+        r = api_client.post(
+            f"/api/tprm/vendors/{vid}/dd-questionnaire/ingest",
+            json=self._completed_body(),
+        )
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["id"] == vid
+        # The mutation: a new evidence ref recording the questionnaire.
+        assert len(body["evidence_refs"]) == 1
+        ref = body["evidence_refs"][0]
+        assert "questionnaire" in ref["title"].lower()
+
+        # And it persisted — a fresh GET reflects the change.
+        after = api_client.get(f"/api/tprm/vendors/{vid}")
+        assert len(after.json()["evidence_refs"]) == 1
+
+    def test_ingest_unknown_vendor_returns_404(
+        self, api_client: TestClient
+    ) -> None:
+        r = api_client.post(
+            "/api/tprm/vendors/00000000-0000-0000-0000-000000000000"
+            "/dd-questionnaire/ingest",
+            json=self._completed_body(),
+        )
+        assert r.status_code == 404
+
+    def test_ingest_malformed_vendor_id_returns_404(
+        self, api_client: TestClient
+    ) -> None:
+        r = api_client.post(
+            "/api/tprm/vendors/not-a-uuid/dd-questionnaire/ingest",
+            json=self._completed_body(),
+        )
+        assert r.status_code == 404
+
+    def test_ingest_empty_responses_returns_400(
+        self, api_client: TestClient
+    ) -> None:
+        # Malformed questionnaire content: nothing to ingest. The router
+        # raises a string-detail 400 (F-V08-DAST-3 invariant).
+        vid = self._add_vendor(api_client)
+        r = api_client.post(
+            f"/api/tprm/vendors/{vid}/dd-questionnaire/ingest",
+            json={"responses": {}},
+        )
+        assert r.status_code == 400
+        assert isinstance(r.json()["detail"], str)
+
+    def test_ingest_missing_responses_key_returns_422(
+        self, api_client: TestClient
+    ) -> None:
+        # ``responses`` has a default_factory, so omitting it parses to {}
+        # which the router rejects with a 400. A wrong-typed responses
+        # value hits Pydantic auto-validation 422 (array-shape detail).
+        vid = self._add_vendor(api_client)
+        r = api_client.post(
+            f"/api/tprm/vendors/{vid}/dd-questionnaire/ingest",
+            json={"responses": "not-a-mapping"},
+        )
+        assert r.status_code == 422
+        assert isinstance(r.json()["detail"], list)
+
+    def test_ingest_denied_under_readonly_policy_403(
+        self, tprm_readonly_client: TestClient
+    ) -> None:
+        # The ingest is gated on require_role("write"). Seed a vendor
+        # directly via the store (env-isolated by the fixture) so a real
+        # record exists; the write gate must still deny.
+        from datetime import date
+
+        from evidentia_core.models.tprm import Vendor
+        from evidentia_core.vendor_store import save_vendor
+
+        vendor = Vendor(
+            name="Gated Co",
+            type="saas",  # type: ignore[arg-type]
+            criticality_tier="high",  # type: ignore[arg-type]
+            relationship_owner="allen@allenfbyrd.com",
+            contract_start_date=date(2025, 1, 1),
+        )
+        save_vendor(vendor)
+        r = tprm_readonly_client.post(
+            f"/api/tprm/vendors/{vendor.id}/dd-questionnaire/ingest",
+            json=self._completed_body(),
+        )
+        assert r.status_code == 403, r.text
+        assert r.json()["detail"]["error"] == "rbac_denied"

@@ -329,6 +329,9 @@ def create_app(
         ai_gov as ai_gov_router,
     )
     from evidentia_api.routers import (
+        catalog as catalog_router,
+    )
+    from evidentia_api.routers import (
         collectors as collectors_router,
     )
     from evidentia_api.routers import (
@@ -426,6 +429,10 @@ def create_app(
     app.include_router(
         evidence_router.router, prefix="/api", tags=["evidence"]
     )
+    # v0.10.12 Wave 2 — catalog management verbs (crosswalk/where/license-info
+    # reads + import/remove local writes). Distinct from the read-only
+    # `frameworks` browse router.
+    app.include_router(catalog_router.router, prefix="/api", tags=["catalog"])
 
     # Static SPA mount — everything that isn't /api/* falls through to index.html.
     _mount_spa(app)

@@ -23,9 +23,24 @@ Endpoints:
     snapshots from a rolling JSONL history file. Lets operators
     detect flapping daemons that the point-in-time status
     sidecar can't reveal (v0.9.5 P2.3)
+  - ``POST   /api/conmon/mark-completed`` — record a cycle
+    completion into the server's YAML state file (mutating;
+    require_role("write")). Mirrors the ``evidentia conmon
+    mark-completed`` CLI verb. The state-file path is resolved
+    server-side from the ``EVIDENTIA_CONMON_STATE_FILE`` env var
+    (clients never pass a filesystem path). (v0.10.12)
+  - ``GET    /api/conmon/dedup-list`` — list the daemon's
+    alert-dedup entries (open read). Mirrors the ``evidentia
+    conmon dedup-list`` CLI verb. The dedup-file path is resolved
+    server-side from the ``EVIDENTIA_CONMON_ALERT_DEDUP_FILE``
+    env var. (v0.10.12)
 
-Auth posture: open (matches v0.9.0 POA&M router; transport auth
-applied at the app layer via AuthProviderMiddleware).
+Auth posture: open for reads (matches v0.9.0 POA&M router;
+transport auth applied at the app layer via
+AuthProviderMiddleware). The v0.10.12 mark-completed write is
+gated on ``require_role("write")``; the long-running ``conmon
+watch`` daemon stays CLI-only (the API exposes read-only
+daemon-status / daemon-history instead).
 """
 
 from __future__ import annotations
@@ -37,11 +52,14 @@ from typing import Any
 
 from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.conmon import (
+    DEFAULT_SUPPRESSION_HOURS,
+    AlertDeduper,
     CycleAttentionState,
     compute_health,
     derive_status,
     get_cadence,
     list_cadences,
+    mark_completed,
     next_due,
 )
 from evidentia_core.conmon.daemon import (
@@ -50,6 +68,8 @@ from evidentia_core.conmon.daemon import (
 )
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
+
+from evidentia_api.rbac_dependency import require_role
 
 router = APIRouter()
 _log = get_logger("evidentia_api.routers.conmon")
@@ -442,3 +462,165 @@ async def conmon_daemon_history_endpoint(
         "count": len(snapshots),
         "limit": limit,
     }
+
+
+# ── mark-completed (v0.10.12) ─────────────────────────────────────
+
+
+class MarkCompletedRequest(BaseModel):
+    slug: str = Field(
+        min_length=1,
+        description="Cadence slug (e.g., 'nist-800-53-rev5-ca7').",
+    )
+    when: date = Field(
+        description="ISO-8601 date of cycle completion (YYYY-MM-DD).",
+    )
+
+
+class MarkCompletedResponse(BaseModel):
+    slug: str
+    framework: str
+    activity: str
+    previous_last_completed: date | None
+    new_last_completed: date
+
+
+@router.post(
+    "/conmon/mark-completed",
+    dependencies=[require_role("write")],
+)
+async def mark_conmon_completed(
+    body: MarkCompletedRequest,
+) -> MarkCompletedResponse:
+    """Record a CONMON cycle completion in the server's state file.
+
+    REST parity with the ``evidentia conmon mark-completed`` CLI
+    verb. The verb mutates a YAML ``{slug: last_completed}`` state
+    file; over HTTP the server resolves that path from the
+    ``EVIDENTIA_CONMON_STATE_FILE`` env var so clients never pass an
+    arbitrary filesystem path (the CLI's deprecated
+    ``--last-completed-file`` alias is intentionally NOT surfaced —
+    only the canonical state-file concept is exposed).
+
+    Persistence + audit: delegates to
+    :func:`evidentia_core.conmon.mark_completed`, which atomically
+    writes the state file and emits
+    :attr:`EventAction.CONMON_CYCLE_MARKED_COMPLETED` with the
+    previous + new ``last_completed`` values — the auditor's primary
+    evidence that the cycle was performed, not merely scheduled.
+
+    Returns:
+        200 with the previous (``None`` on first mark) + new
+        completion dates.
+        400 when ``EVIDENTIA_CONMON_STATE_FILE`` is unset (the server
+        operator has not configured a state file) OR the slug is not a
+        registered cadence.
+        422 (FastAPI body validation) on a missing/malformed ``when``.
+
+    RBAC: ``require_role("write")`` — denies under a deny-by-default
+    policy; inert under the permissive DEFAULT_POLICY.
+    """
+    state_file_env = os.environ.get(
+        "EVIDENTIA_CONMON_STATE_FILE", ""
+    ).strip()
+    if not state_file_env:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "No CONMON state file configured. Set "
+                "EVIDENTIA_CONMON_STATE_FILE on the server to the YAML "
+                "state-file path the daemon polls."
+            ),
+        )
+
+    state_file = Path(state_file_env)
+    try:
+        previous = mark_completed(state_file, body.slug, body.when)
+    except ValueError as exc:
+        # Unknown cadence slug — mirrors the CLI's exit-1 user error.
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    cadence = get_cadence(body.slug)
+    assert cadence is not None  # validated by mark_completed
+
+    return MarkCompletedResponse(
+        slug=cadence.slug,
+        framework=cadence.framework,
+        activity=cadence.activity,
+        previous_last_completed=previous,
+        new_last_completed=body.when,
+    )
+
+
+# ── dedup-list (v0.10.12) ─────────────────────────────────────────
+
+
+@router.get("/conmon/dedup-list")
+async def list_conmon_dedup(
+    slug: str | None = Query(
+        default=None,
+        description="Optional cadence-slug filter (exact match).",
+    ),
+    suppression_hours: float = Query(
+        default=DEFAULT_SUPPRESSION_HOURS,
+        ge=0.0,
+        description=(
+            "Suppression window used for the "
+            "'suppression_remaining_minutes' column. Should match the "
+            "daemon's --alert-suppression-hours."
+        ),
+    ),
+) -> dict[str, Any]:
+    """List the daemon's alert-dedup entries (read-only).
+
+    REST parity with the ``evidentia conmon dedup-list`` CLI verb.
+    Reads the alert-dedup JSON state file the ``conmon watch`` daemon
+    writes; the server resolves its path from the
+    ``EVIDENTIA_CONMON_ALERT_DEDUP_FILE`` env var. A missing file
+    yields an empty result (CLI parity — the verb tolerates a
+    not-yet-created file).
+
+    Returns:
+        200 with ``{"entries": [...], "count": N}``. Each entry is
+        ``{cadence_slug, state, last_dispatched_at,
+        suppression_remaining_minutes}``, newest-dispatched first.
+        400 when ``EVIDENTIA_CONMON_ALERT_DEDUP_FILE`` is unset.
+
+    Auth posture: open (read). No RBAC gate.
+    """
+    from datetime import UTC, datetime, timedelta
+
+    dedup_file_env = os.environ.get(
+        "EVIDENTIA_CONMON_ALERT_DEDUP_FILE", ""
+    ).strip()
+    if not dedup_file_env:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "No alert-dedup file configured. Set "
+                "EVIDENTIA_CONMON_ALERT_DEDUP_FILE on the server to the "
+                "JSON dedup-state path the daemon writes (pair with "
+                "--alert-dedup-file on the daemon side)."
+            ),
+        )
+
+    deduper = AlertDeduper.from_hours(Path(dedup_file_env), suppression_hours)
+    raw_entries = deduper.list_entries(slug_filter=slug)
+    now = datetime.now(tz=UTC)
+    window = timedelta(hours=suppression_hours)
+
+    entries: list[dict[str, Any]] = []
+    for entry_slug, state_name, ts in raw_entries:
+        remaining_seconds = max(0.0, (ts + window - now).total_seconds())
+        entries.append(
+            {
+                "cadence_slug": entry_slug,
+                "state": state_name,
+                "last_dispatched_at": ts.isoformat(),
+                "suppression_remaining_minutes": round(
+                    remaining_seconds / 60.0, 1
+                ),
+            }
+        )
+
+    return {"entries": entries, "count": len(entries)}

@@ -9,8 +9,8 @@
 | status | count | meaning |
 |---|---:|---|
 | full | 39 | CLI verb + API op + wired GUI route |
-| api-only | 42 | API op exists; no dedicated GUI route yet |
-| cli-only | 17 | no API + no GUI (ratchet floor: 17) |
+| api-only | 51 | API op exists; no dedicated GUI route yet |
+| cli-only | 8 | no API + no GUI (ratchet floor: 8) |
 | exempt | 12 | CLI-only by design (servers, local cache, offline verify, MCP) |
 | **total** | **110** | every live CLI leaf |
 
@@ -73,21 +73,21 @@
 | `integrations jira test` | GET /api/integrations/jira/status | — | api-only |
 | `integrations tableau publish` | POST /api/integrations/tableau/publish/{report_key} | — | api-only |
 | `integrations powerbi publish` | POST /api/integrations/powerbi/publish/{report_key} | — | api-only |
-| `risk quantify` | — | — | cli-only |
+| `risk quantify` | POST /api/risk/quantify | — | api-only |
 | `collect ocsf` | — | — | cli-only |
 | `collect convert` | — | — | cli-only |
-| `tprm dd-questionnaire ingest` | — | — | cli-only |
+| `tprm dd-questionnaire ingest` | POST /api/tprm/vendors/{vendor_id}/dd-questionnaire/ingest | — | api-only |
 | `ai-gov retire` | — | — | cli-only |
 | `ai-gov update` | — | — | cli-only |
 | `ai-gov categorize-fips` | — | — | cli-only |
 | `ai-gov set-omb-impact` | — | — | cli-only |
-| `catalog crosswalk` | — | — | cli-only |
-| `catalog import` | — | — | cli-only |
-| `catalog where` | — | — | cli-only |
-| `catalog license-info` | — | — | cli-only |
-| `catalog remove` | — | — | cli-only |
-| `conmon mark-completed` | — | — | cli-only |
-| `conmon dedup-list` | — | — | cli-only |
+| `catalog crosswalk` | GET /api/catalog/crosswalk | — | api-only |
+| `catalog import` | POST /api/catalog/import | — | api-only |
+| `catalog where` | GET /api/catalog/where | — | api-only |
+| `catalog license-info` | GET /api/catalog/license-info/{framework_id} | — | api-only |
+| `catalog remove` | DELETE /api/catalog/{framework_id} | — | api-only |
+| `conmon mark-completed` | POST /api/conmon/mark-completed | — | api-only |
+| `conmon dedup-list` | GET /api/conmon/dedup-list | — | api-only |
 | `integrations servicenow push` | — | — | cli-only |
 | `integrations servicenow test` | — | — | cli-only |
 | `retention set` | POST /api/retention | /retention | full |

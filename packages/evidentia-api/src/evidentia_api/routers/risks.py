@@ -30,14 +30,37 @@ from evidentia_core.gap_store import (
     load_report_by_key,
 )
 from evidentia_core.models.gap import ControlGap, GapAnalysisReport
+from evidentia_core.risk_quant import OpenFAIRScenario
+from evidentia_core.risk_quant.monte_carlo import (
+    SimulationResult,
+    simulate_ale,
+)
+from evidentia_core.risk_quant.open_fair import (
+    categorize_risk,
+    compute_ale,
+    compute_lef,
+    compute_loss_magnitude,
+)
 from evidentia_core.security.paths import PathTraversalError
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sse_starlette.sse import EventSourceResponse
 
 from evidentia_api.schemas import RiskGenerateRequest
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# Quantification methods accepted by ``POST /api/risk/quantify`` —
+# mirrors the CLI ``risk quantify --method`` allow-list.
+_QUANTIFY_METHODS: tuple[str, ...] = ("open-fair", "fair-mc")
+
+# Upper bound on Monte Carlo iterations for the OPEN endpoint. The CLI
+# defaults to 10,000 (FAIR-U recommended convergence point) with no
+# hard cap, but the API surface is unauthenticated local-compute — a
+# bound keeps a single request from monopolizing CPU. 1,000,000 is well
+# above any sane convergence need while staying sub-second per scenario.
+_MAX_ITERATIONS = 1_000_000
 
 
 def _load_report(key: str) -> GapAnalysisReport:
@@ -211,3 +234,159 @@ async def generate(payload: RiskGenerateRequest) -> EventSourceResponse:
             yield {"data": chunk}
 
     return EventSourceResponse(_event_stream())
+
+
+# ── Open FAIR risk quantification (v0.10.12) ───────────────────────
+#
+# HTTP mirror of the ``evidentia risk quantify`` CLI verb. Pure local
+# math (Open FAIR / Monte Carlo) — no credentials, no network, no
+# state mutation. Left OPEN (no require_role) like the other read-style
+# computational endpoints; the app-layer AuthProvider middleware still
+# applies when a token file is configured.
+
+
+class RiskQuantifyRequest(BaseModel):
+    """Body of ``POST /api/risk/quantify``.
+
+    Mirrors the CLI ``risk quantify`` options: a ``method`` selector,
+    the list of FAIR ``scenarios`` (the core :class:`OpenFAIRScenario`
+    schema, reused directly), and the Monte-Carlo-only ``iterations`` /
+    ``seed`` knobs. The CLI loads scenarios from a YAML/JSON file; over
+    HTTP the caller sends them inline.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    method: str = Field(
+        default="open-fair",
+        description=(
+            "Quantification method: 'open-fair' (deterministic PERT-mean "
+            "expected value) or 'fair-mc' (Monte Carlo simulation with "
+            "P10/P50/P90 percentile bands)."
+        ),
+    )
+    scenarios: list[OpenFAIRScenario] = Field(
+        min_length=1,
+        description="One or more Open FAIR scenarios to quantify.",
+    )
+    iterations: int = Field(
+        default=10_000,
+        ge=1,
+        le=_MAX_ITERATIONS,
+        description=(
+            "Monte Carlo iteration count (only used when method='fair-mc'). "
+            "Default 10,000 (FAIR-U recommended convergence point); the API "
+            f"caps it at {_MAX_ITERATIONS:,} for bounded compute."
+        ),
+    )
+    seed: int | None = Field(
+        default=None,
+        description=(
+            "Random seed for deterministic Monte Carlo runs (only used when "
+            "method='fair-mc'). Pass an explicit int for reproducible bands."
+        ),
+    )
+
+
+class OpenFairScenarioResult(BaseModel):
+    """Per-scenario deterministic Open FAIR result (method='open-fair')."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(description="The scenario's ID.")
+    name: str = Field(description="The scenario's name.")
+    lef: float = Field(description="Loss Event Frequency (events/yr).")
+    loss_magnitude: float = Field(description="Loss Magnitude per event ($).")
+    ale: float = Field(description="Annualized Loss Expectancy ($).")
+    risk_category: str = Field(
+        description="FAIR risk band (severe/high/significant/moderate/low)."
+    )
+
+
+class OpenFairQuantifyResponse(BaseModel):
+    """Response for method='open-fair' — deterministic per-scenario ALE."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    method: str = Field(default="open-fair")
+    scenario_count: int = Field(description="Number of scenarios quantified.")
+    total_ale: float = Field(description="Sum of per-scenario ALE ($).")
+    scenarios: list[OpenFairScenarioResult]
+
+
+class FairMcQuantifyResponse(BaseModel):
+    """Response for method='fair-mc' — one SimulationResult per scenario."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    method: str = Field(default="fair-mc")
+    scenario_count: int = Field(description="Number of scenarios simulated.")
+    simulations: list[SimulationResult]
+
+
+@router.post(
+    "/risk/quantify",
+    response_model=OpenFairQuantifyResponse | FairMcQuantifyResponse,
+)
+def quantify(
+    payload: RiskQuantifyRequest,
+) -> OpenFairQuantifyResponse | FairMcQuantifyResponse:
+    """Quantify Open FAIR risk scenarios (deterministic or Monte Carlo).
+
+    The HTTP mirror of ``evidentia risk quantify``. ``method='open-fair'``
+    returns the deterministic PERT-mean ALE per scenario; ``method='fair-mc'``
+    runs a seeded Monte Carlo simulation returning P10/P50/P90 bands. Pure
+    local computation — no credentials, no network, no persisted state.
+    """
+    if payload.method not in _QUANTIFY_METHODS:
+        # Runtime body-content error → 400 with {detail: string} per the
+        # F-V08-DAST-3 normalization convention (not Pydantic's 422 array).
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "method must be one of "
+                f"{', '.join(_QUANTIFY_METHODS)} (got {payload.method!r})."
+            ),
+        )
+
+    if payload.method == "open-fair":
+        results: list[OpenFairScenarioResult] = []
+        total_ale = 0.0
+        for scenario in payload.scenarios:
+            ale = compute_ale(scenario)
+            total_ale += ale
+            results.append(
+                OpenFairScenarioResult(
+                    id=scenario.id,
+                    name=scenario.name,
+                    lef=compute_lef(scenario),
+                    loss_magnitude=compute_loss_magnitude(scenario),
+                    ale=ale,
+                    risk_category=categorize_risk(ale).value,
+                )
+            )
+        return OpenFairQuantifyResponse(
+            scenario_count=len(results),
+            total_ale=total_ale,
+            scenarios=results,
+        )
+
+    # method == "fair-mc"
+    try:
+        simulations = [
+            simulate_ale(
+                scenario,
+                iterations=payload.iterations,
+                seed=payload.seed,
+            )
+            for scenario in payload.scenarios
+        ]
+    except (ValueError, ValidationError) as exc:
+        # simulate_ale raises ValueError on a degenerate / invalid run;
+        # normalize to 400 string-detail like the rest of the surface.
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return FairMcQuantifyResponse(
+        scenario_count=len(simulations),
+        simulations=simulations,
+    )
