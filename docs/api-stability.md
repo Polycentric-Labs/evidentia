@@ -280,13 +280,13 @@ original import path continues to work (via re-export).
 
 ### 6. REST API URIs
 
-**Package**: `evidentia_api.routes.*`
+**Package**: `evidentia_api.routers.*`
 
 All REST endpoints follow the pattern `/api/<resource>` and are
 versioned implicitly (no `/v1/` prefix until a breaking REST
 change necessitates it).
 
-Frozen URI prefixes (16 routers):
+Frozen URI prefixes (23 routers):
 
 | Prefix | Router module | Purpose |
 |--------|--------------|---------|
@@ -296,10 +296,10 @@ Frozen URI prefixes (16 routers):
 | `/api/explain` | `explain.py` | Control explanations |
 | `/api/llm-status` | `llm_status.py` | LLM provider health |
 | `/api/frameworks` | `frameworks.py` | Framework catalog |
-| `/api/init-wizard` | `init_wizard.py` | First-run wizard |
-| `/api/risks` | `risks.py` | Risk statements |
-| `/api/gaps` | `gaps.py` | Gap analysis |
-| `/api/integrations` | `integrations.py` | Integration status |
+| `/api/init` | `init_wizard.py` | First-run wizard (preview + commit) |
+| `/api/risk` | `risks.py` | Risk statements + FAIR risk quantification |
+| `/api/gap` | `gaps.py` | Gap analysis |
+| `/api/integrations` | `integrations.py` | Integration status (Jira / ServiceNow / BI) |
 | `/api/tprm` | `tprm.py` | Third-party risk |
 | `/api/model-risk` | `model_risk.py` | AI model risk |
 | `/api/collectors` | `collectors.py` | Collector status |
@@ -307,6 +307,12 @@ Frozen URI prefixes (16 routers):
 | `/api/poam` | `poam.py` | POA&M management |
 | `/api/conmon` | `conmon.py` | Continuous monitoring |
 | `/api/ai-gov` | `ai_gov.py` | AI governance |
+| `/api/governance` | `governance.py` | Governance challenges, metrics, workflows |
+| `/api/retention` | `retention.py` | Records retention + legal hold |
+| `/api/evidence` | `evidence.py` | WORM evidence store |
+| `/api/catalog` | `catalog.py` | Catalog management — import / crosswalk / license |
+| `/api/oscal` | `oscal.py` | OSCAL Verify (verify a signed Assessment Result; read-only) |
+| `/api/traceability` | `traceability.py` | Control ↔ threat traceability matrix |
 
 **Stability contract**:
 
