@@ -20,6 +20,33 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # v0.10.12 Wave 0(b): accidental-publish hardening. The trigger is
+  # `tags: ['v*']`, so ANY v-prefixed tag — a typo like `vtest`, an `rcN`
+  # pre-release, or a tag pushed in a fork/private mirror — would otherwise
+  # reach the publish jobs. This guard makes publishing structurally
+  # conditional on (a) the canonical repo AND (b) a strict `vX.Y.Z` semver
+  # tag. GitHub `if:` expressions have no regex, so the check runs in a tiny
+  # job that exports a `publishable` boolean the publish jobs gate on. This is
+  # defense-in-depth alongside the PyPI Trusted-Publisher binding
+  # (owner+repo+workflow+environment) and the Required-reviewers protection on
+  # the `pypi`/`ghcr` environments. Inherits `permissions: contents: read`.
+  tag-guard:
+    name: Validate publish trigger (canonical repo + semver tag)
+    runs-on: ubuntu-latest
+    outputs:
+      publishable: ${{ steps.check.outputs.publishable }}
+    steps:
+      - name: Check repository + strict semver tag
+        id: check
+        run: |
+          publishable=false
+          if [ "${{ github.repository }}" = "Polycentric-Labs/evidentia" ] \
+             && printf '%s' "$GITHUB_REF" | grep -Eq '^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            publishable=true
+          fi
+          echo "publishable=$publishable" >> "$GITHUB_OUTPUT"
+          echo "repository=${{ github.repository }} ref=$GITHUB_REF -> publishable=$publishable"
+
   # v0.10.8 A1: tag-time pre-publish gate. The irreversible PyPI publish
   # below ran NO gate before this job existed — the version/doc-staleness
   # guards lived only in .githooks/pre-push (which a force-push or a
@@ -74,7 +101,10 @@ jobs:
 
   publish-pypi:
     name: Build and publish to PyPI
-    needs: gate
+    needs: [gate, tag-guard]
+    # success() preserves the implicit "all needs succeeded" semantics that a
+    # bare custom if: would otherwise replace (so a failed gate still blocks).
+    if: ${{ success() && needs.tag-guard.outputs.publishable == 'true' }}
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -348,7 +378,10 @@ jobs:
   # See `docs/v0.7.5-plan.md` C1 + this commit message for full rationale.
   publish-container:
     name: Build and publish container image to ghcr.io
-    needs: publish-pypi
+    needs: [publish-pypi, tag-guard]
+    # success() preserves the implicit "all needs succeeded" semantics (so a
+    # failed/skipped publish-pypi still blocks the container publish).
+    if: ${{ success() && needs.tag-guard.outputs.publishable == 'true' }}
     runs-on: ubuntu-latest
     environment:
       name: ghcr
