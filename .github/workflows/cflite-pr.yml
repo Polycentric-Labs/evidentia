@@ -1,0 +1,61 @@
+# ClusterFuzzLite — PR (code-change) mode.
+#
+# Short, fast fuzzing run on every pull request that touches Python
+# source or the harnesses. Builds the atheris harnesses from
+# .clusterfuzzlite/ and fuzzes each for a bounded time, seeded from the
+# tests/fuzz/corpus/ seeds. A crash fails the check and uploads the
+# reproducer as an artifact. ClusterFuzzLite is the OpenSSF-Scorecard-
+# credited "Fuzzing" vehicle (bare atheris-in-CI is not).
+#
+# Deliberately separate from the tag-driven release pipeline
+# (release.yml) — fuzzing NEVER gates a release here; it is its own
+# continuous-assurance lane.
+#
+# OPTIONAL corpus persistence: ClusterFuzzLite can carry the growing
+# corpus + coverage between runs in a *separate* private "storage" repo.
+# It is left unset here so this workflow runs out-of-the-box with no
+# extra secret. To enable it, create a private repo
+# `<owner>/evidentia-cflite-storage`, add a `PERSONAL_ACCESS_TOKEN`
+# repo secret with write access to it, and uncomment the `storage-repo*`
+# lines in both steps below.
+#
+# Ref: https://google.github.io/clusterfuzzlite/running-clusterfuzzlite/github-actions/
+name: cflite-pr
+
+on:
+  pull_request:
+    paths:
+      - "packages/**/*.py"
+      - "tests/fuzz/**"
+      - ".clusterfuzzlite/**"
+      - ".github/workflows/cflite-pr.yml"
+
+permissions: read-all
+
+jobs:
+  fuzzing:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: cflite-pr-${{ github.workflow }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - name: Build Fuzzers
+        id: build
+        uses: google/clusterfuzzlite/actions/build_fuzzers@v1
+        with:
+          language: python
+          # storage-repo: https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }}-cflite-storage.git
+          # storage-repo-branch: main
+          # storage-repo-branch-coverage: gh-pages
+      - name: Run Fuzzers
+        id: run
+        uses: google/clusterfuzzlite/actions/run_fuzzers@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fuzz-seconds: 300
+          mode: code-change
+          # Emit SARIF so crashes surface in the PR "Code scanning" tab.
+          output-sarif: true
+          # storage-repo: https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }}-cflite-storage.git
+          # storage-repo-branch: main
+          # storage-repo-branch-coverage: gh-pages

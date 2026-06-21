@@ -1,0 +1,1 @@
+{"organization": "Demo Org", "frameworks_analyzed": ["soc2"], "total_controls_required": 10, "total_controls_in_inventory": 8, "total_gaps": 2, "critical_gaps": 0, "high_gaps": 1, "medium_gaps": 1, "low_gaps": 0, "informational_gaps": 0, "coverage_percentage": 80.0, "gaps": []}

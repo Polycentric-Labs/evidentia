@@ -161,10 +161,17 @@ def verify_digests(ar_doc: dict[str, Any]) -> list[DigestCheck]:
         if isinstance(model_body, dict) and "back-matter" in model_body:
             bm = model_body.get("back-matter") or {}
             if isinstance(bm, dict):
-                resources = bm.get("resources", []) or []
+                rs = bm.get("resources")
+                resources = rs if isinstance(rs, list) else []
             break
 
     for resource in resources:
+        if not isinstance(resource, dict):
+            # Malformed back-matter entry (not an object) — nothing to hash.
+            # A non-dict `resources` value or non-dict entry is rejected
+            # gracefully rather than raising AttributeError (found by the
+            # tests/fuzz Hypothesis robustness pass; CWE-248 hardening).
+            continue
         uuid_ = resource.get("uuid", "")
         title = resource.get("title", "")
         b64_block = resource.get("base64")

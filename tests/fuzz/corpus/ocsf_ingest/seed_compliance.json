@@ -1,0 +1,1 @@
+{"class_uid": 2003, "activity_id": 1, "category_uid": 2, "severity_id": 3, "type_uid": 200301, "time": 1700000000000, "metadata": {"product": {"name": "evidentia"}, "version": "1.1.0"}, "finding_info": {"title": "Demo finding", "uid": "f-1"}, "compliance": {"status": "Pass", "requirements": ["AC-1"]}}

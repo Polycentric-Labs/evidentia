@@ -1,0 +1,1 @@
+{"class_uid": 2004, "activity_id": 1, "category_uid": 2, "severity_id": 4, "type_uid": 200401, "time": 1700000000000, "metadata": {"product": {"name": "prowler"}, "version": "1.1.0"}, "finding_info": {"title": "Detection finding", "uid": "d-1"}}

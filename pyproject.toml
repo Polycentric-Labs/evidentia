@@ -114,6 +114,17 @@ dev = [
     # dev/CI venv runs the OCSF round-trip tests without activating
     # the extra — same pattern as boto3 / azure / gcs above.
     "py-ocsf-models>=0.9.0,<0.10.0",
+    # WS-D Q1 (OpenSSF Scorecard "Fuzzing" lift): atheris drives the
+    # coverage-guided fuzz harnesses in tests/fuzz/fuzz_*.py, built + run
+    # by ClusterFuzzLite (.clusterfuzzlite/) in CI and graduating to
+    # OSS-Fuzz later. atheris ships NO Windows wheel and is a CI-only
+    # build/runtime engine — the `; sys_platform == "linux"` marker keeps
+    # `uv sync` from failing on Windows dev boxes and ensures atheris is
+    # NEVER a hard dependency of any shipped evidentia-* package (it lives
+    # only in this dev group). The cross-platform Hypothesis complement in
+    # tests/fuzz/test_parser_robustness.py rides on the existing
+    # `hypothesis` dev dep above and needs no Linux marker.
+    "atheris>=2.3.0 ; sys_platform == 'linux'",
 ]
 docs = [
     # v0.10.7: in-repo wiki at docs/wiki/ rendered via Material for MkDocs.
@@ -178,6 +189,14 @@ ignore = [
 # Tests import fixtures and reset registries — a few idiomatic pytest patterns
 # are noisy under strict rules but not worth rewriting.
 "tests/**/*.py" = ["E501"]
+# Fuzz harnesses (WS-D Q1) deliberately use `try: <parser>(...) except
+# <declared-exceptions>: pass` — the canonical atheris/Hypothesis shape that
+# catches ONLY a parser's declared exceptions and lets any UNDECLARED type
+# crash (= the finding). `contextlib.suppress` (SIM105) obscures that intent
+# and adds per-execution overhead in the hot fuzz loop. The harness entry
+# points (`TestOneInput`) and `main()` are exercised by the fuzzer/ClusterFuzzLite,
+# not pytest, so their parameters are validly "unused" from a lint POV.
+"tests/fuzz/*.py" = ["SIM105"]
 
 [tool.mypy]
 python_version = "3.12"

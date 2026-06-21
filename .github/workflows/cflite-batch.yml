@@ -1,0 +1,50 @@
+# ClusterFuzzLite — batch (scheduled) mode.
+#
+# Longer, deeper fuzzing run on a cron schedule (and on demand via
+# workflow_dispatch). `mode: batch` fuzzes every harness for the full
+# `fuzz-seconds` budget against the accumulated corpus, surfacing bugs
+# the short per-PR run cannot reach. Pairs with cflite-pr.yml; together
+# they form the OpenSSF-Scorecard-credited ClusterFuzzLite setup that
+# graduates to OSS-Fuzz later on the SAME harnesses.
+#
+# Independent of the tag-driven release pipeline (release.yml).
+#
+# Corpus persistence is OPTIONAL (see cflite-pr.yml header for the
+# storage-repo setup); without it each batch run starts from the
+# in-repo tests/fuzz/corpus/ seeds.
+#
+# Ref: https://google.github.io/clusterfuzzlite/running-clusterfuzzlite/github-actions/
+name: cflite-batch
+
+on:
+  schedule:
+    # Daily at 06:17 UTC — off-peak, and offset from other crons in this
+    # repo (catalog-refresh / scorecard / mutmut) to avoid runner contention.
+    - cron: "17 6 * * *"
+  workflow_dispatch: {}
+
+permissions: read-all
+
+jobs:
+  batch-fuzzing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Fuzzers
+        id: build
+        uses: google/clusterfuzzlite/actions/build_fuzzers@v1
+        with:
+          language: python
+          # storage-repo: https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }}-cflite-storage.git
+          # storage-repo-branch: main
+          # storage-repo-branch-coverage: gh-pages
+      - name: Run Fuzzers
+        id: run
+        uses: google/clusterfuzzlite/actions/run_fuzzers@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fuzz-seconds: 1800
+          mode: batch
+          output-sarif: true
+          # storage-repo: https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }}-cflite-storage.git
+          # storage-repo-branch: main
+          # storage-repo-branch-coverage: gh-pages

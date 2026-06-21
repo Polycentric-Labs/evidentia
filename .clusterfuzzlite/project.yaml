@@ -1,0 +1,15 @@
+# ClusterFuzzLite project config for Evidentia.
+#
+# Python projects fuzz with atheris under libFuzzer. atheris pure-Python
+# coverage instrumentation does not produce native ASan-able binaries, so
+# `address` is the conventional sanitizer entry for the Python flow (it
+# governs the base image / runner selection); the bugs we hunt are
+# uncaught Python exceptions in the parse surfaces.
+#
+# Ref: https://google.github.io/clusterfuzzlite/build-integration/
+language: python
+fuzzing_engines:
+  - libfuzzer
+sanitizers:
+  - address
+main_repo: "https://github.com/Polycentric-Labs/evidentia"

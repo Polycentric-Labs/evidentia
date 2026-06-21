@@ -1,0 +1,1 @@
+{"id": "q-1", "format": "sig_lite", "vendor": {"vendor_id": "v-1"}, "questions": [{"id": "Q1", "domain": "Access Control", "question_text": "Do you enforce MFA?", "vendor_response": "Yes"}, {"id": "Q2", "domain": "Encryption", "question_text": "Is data encrypted at rest?", "vendor_response": "Yes, AES-256"}]}
