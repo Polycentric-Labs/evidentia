@@ -54,3 +54,20 @@ def test_gui_existence_requires_route_and_wiring() -> None:
 def test_debt_ratchet_fails_when_cli_only_increases() -> None:
     errs = p.check_debt_ratchet(current_cli_only=8, baseline_cli_only=6)
     assert errs
+
+
+def test_inverse_completeness_clean_when_every_op_classified() -> None:
+    ops = {"GET /api/health", "POST /api/gap/analyze", "GET /api/metrics"}
+    claimed = {"POST /api/gap/analyze"}  # backs a CLI verb
+    extra = {"GET /api/health", "GET /api/metrics"}  # intentionally beyond CLI
+    assert p.check_inverse_completeness(ops, claimed, extra) == []
+
+
+def test_inverse_completeness_flags_unclassified_op_and_stale_extra() -> None:
+    ops = {"POST /api/gap/analyze", "GET /api/surprise"}
+    claimed = {"POST /api/gap/analyze"}
+    extra = {"GET /api/stale-extra"}  # matches no live op
+    errs = p.check_inverse_completeness(ops, claimed, extra)
+    assert any("GET /api/surprise" in e for e in errs)  # unclassified live op
+    assert any("GET /api/stale-extra" in e for e in errs)  # stale allowlist entry
+    assert len(errs) == 2

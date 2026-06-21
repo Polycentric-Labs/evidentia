@@ -5,7 +5,7 @@ The ``openapi-drift`` gate keeps the frontend *types* in lockstep with the
 API, but it enforces no *feature* parity: a control can have a CLI verb and a
 REST endpoint while the web UI never surfaces it, and the drift gate is happy.
 This gate closes that blind spot. It reads the declarative manifest
-``docs/cli-gui-parity.yaml`` (one row per CLI leaf) and asserts four
+``docs/cli-gui-parity.yaml`` (one row per CLI leaf) and asserts five
 invariants against LIVE state:
 
   1. completeness   — every live CLI leaf (walked from the Typer app) has a
@@ -23,8 +23,15 @@ invariants against LIVE state:
                       ``baseline.cli_only`` floor. New CLI-only debt is blocked;
                       the floor only moves DOWN (via ``--update-baseline`` when a
                       screen ships and a row flips ``cli-only`` -> ``*``).
+  5. inverse-       — every live API operation (openapi.json) is either claimed
+     completeness     by some CLI-leaf row's ``api`` OR listed in the manifest's
+                      ``api_extra`` allowlist (API surface intentionally beyond
+                      the CLI — GUI read drill-downs, chrome/health, computed
+                      read-only behaviors, multi-dialect fan-out). The inverse of
+                      check 1: a new endpoint can't land unclassified, and a
+                      stale ``api_extra`` entry (matching no live op) is flagged.
 
-The four ``check_*`` functions are PURE (inputs in, list-of-error-strings out)
+The five ``check_*`` functions are PURE (inputs in, list-of-error-strings out)
 so they unit-test against tiny fixtures; the ``load_*`` functions derive the
 real inputs.
 
@@ -168,6 +175,35 @@ def check_debt_ratchet(current_cli_only: int, baseline_cli_only: int) -> list[st
             f"`python scripts/check_parity.py --update-baseline`."
         ]
     return []
+
+
+def check_inverse_completeness(
+    openapi_ops: set[str], claimed_apis: set[str], api_extra: set[str]
+) -> list[str]:
+    """Every live API operation must be classified — the inverse of check 1.
+
+    An operation is classified when it is either (a) claimed by some CLI-leaf
+    row's ``api`` ("this endpoint backs a CLI verb"), or (b) listed in the
+    manifest's ``api_extra`` allowlist ("this endpoint is intentionally beyond
+    the CLI" — GUI read drill-downs, chrome/health, computed read-only
+    behaviors, multi-dialect fan-out). Any live op that is neither is flagged so
+    a NEW endpoint cannot land unclassified. Stale ``api_extra`` entries (which
+    match no live op) are flagged too, so the allowlist can't rot.
+    """
+    errors: list[str] = []
+    for op in sorted(openapi_ops - claimed_apis - api_extra):
+        errors.append(
+            f"inverse-completeness: live API op {op!r} is neither claimed by a "
+            f"CLI-leaf row's 'api' nor listed in 'api_extra' — classify it in "
+            f"docs/cli-gui-parity.yaml (give a CLI row this api, or add an "
+            f"api_extra entry with a reason)"
+        )
+    for extra in sorted(api_extra - openapi_ops):
+        errors.append(
+            f"inverse-completeness: api_extra entry {extra!r} matches no live "
+            f"API operation — remove the stale entry from docs/cli-gui-parity.yaml"
+        )
+    return errors
 
 
 # ─────────────────────────── small helpers ───────────────────────────────
@@ -381,6 +417,23 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, Any]:
             )
         if status == "exempt" and not str(row.get("reason") or "").strip():
             sys.exit(f"check_parity: exempt row {cli!r} must carry a 'reason'")
+
+    extra = data.get("api_extra")
+    if extra is not None:
+        if not isinstance(extra, list):
+            sys.exit("check_parity: manifest 'api_extra' must be a list")
+        seen_extra: set[str] = set()
+        for e in extra:
+            if not isinstance(e, dict) or "api" not in e:
+                sys.exit(f"check_parity: malformed api_extra entry: {e!r}")
+            api = e["api"]
+            if not isinstance(api, str) or api in seen_extra:
+                sys.exit(f"check_parity: duplicate/invalid api_extra entry {api!r}")
+            seen_extra.add(api)
+            if not str(e.get("reason") or "").strip():
+                sys.exit(
+                    f"check_parity: api_extra entry {api!r} must carry a 'reason'"
+                )
     return data
 
 
@@ -393,6 +446,17 @@ def manifest_baseline(manifest: dict[str, Any]) -> int:
         return int(baseline["cli_only"])
     except (TypeError, ValueError):
         sys.exit("check_parity: 'baseline.cli_only' is not an integer")
+
+
+def load_api_extra(manifest: dict[str, Any]) -> set[str]:
+    """The ``api_extra`` allowlist — API ops intentionally beyond the CLI.
+
+    Each entry is a ``{api, reason}`` mapping (validated in ``load_manifest``);
+    this returns just the set of ``"METHOD /path"`` strings the inverse-
+    completeness check needs.
+    """
+    extra = manifest.get("api_extra") or []
+    return {str(e["api"]) for e in extra}
 
 
 # ─────────────────────── distribution / rendering ────────────────────────
@@ -542,12 +606,17 @@ def main(argv: list[str] | None = None) -> int:
     app_routes = load_app_routes()
     api_ts_paths = load_api_ts_paths()
     manifest_clis = {str(r["cli"]) for r in rows}
+    claimed_apis = {str(r["api"]) for r in rows if r.get("api")}
+    api_extra = load_api_extra(manifest)
 
     completeness = check_completeness(cli_leaves, manifest_clis)
     api_existence = check_api_existence(rows, openapi_ops)
     gui_existence = check_gui_existence(rows, app_routes, api_ts_paths)
     ratchet = check_debt_ratchet(counts["cli-only"], baseline)
-    all_errors = completeness + api_existence + gui_existence + ratchet
+    inverse = check_inverse_completeness(openapi_ops, claimed_apis, api_extra)
+    all_errors = (
+        completeness + api_existence + gui_existence + ratchet + inverse
+    )
     pct = coverage_pct(counts)
 
     if args.json:
@@ -561,6 +630,7 @@ def main(argv: list[str] | None = None) -> int:
                 "api_existence": api_existence,
                 "gui_existence": gui_existence,
                 "debt_ratchet": ratchet,
+                "inverse_completeness": inverse,
             },
         }, indent=2))
         return 0 if not all_errors else 1
@@ -572,6 +642,7 @@ def main(argv: list[str] | None = None) -> int:
         ("api-existence", api_existence),
         ("gui-existence", gui_existence),
         ("debt-ratchet", ratchet),
+        ("inverse-completeness", inverse),
     ):
         if errs:
             print(f"{label}: FAIL ({len(errs)})")

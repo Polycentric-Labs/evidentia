@@ -43,6 +43,61 @@ version: 1
 # `--update-baseline` whenever a screen ships and a row flips cli-only -> *.
 baseline:
   cli_only: 0
+
+# api_extra — live API operations intentionally BEYOND the CLI surface (so they
+# never appear as a CLI-leaf row's `api`). check_parity.py's inverse-completeness
+# check requires every openapi.json operation to be EITHER claimed by a row below
+# OR listed here with a reason — a new endpoint cannot land unclassified, and a
+# stale entry (matching no live op) also fails the gate.
+api_extra:
+  # ── Chrome / health / ops (polled by the nav + status surfaces) ──
+  - api: "GET /api/health"
+    reason: "Chrome: backend health + version poll for the nav status pill."
+  - api: "GET /api/llm-status"
+    reason: "Chrome: LLM-configured indicator in the nav rail."
+  - api: "GET /api/metrics"
+    reason: "Prometheus scrape endpoint (ops surface); not a CLI verb."
+  - api: "GET /api/collectors/status"
+    reason: "GUI: collector-registry status on the Collect console."
+  - api: "POST /api/doctor/check-air-gap"
+    reason: "GUI: air-gap status badge; the CLI surfaces this via `doctor`."
+  - api: "GET /api/config"
+    reason: "GUI: Settings reads evidentia.yaml; the CLI edits the file directly."
+  - api: "PUT /api/config"
+    reason: "GUI: Settings writes evidentia.yaml; the CLI edits the file directly."
+  # ── GUI read drill-downs (list/detail views with no standalone CLI verb) ──
+  - api: "GET /api/frameworks/{framework_id}/controls/{control_id}"
+    reason: "GUI: single-control drill-down on the framework detail page."
+  - api: "GET /api/gap/reports"
+    reason: "GUI: Dashboard saved-report list (the CLI writes the gap store)."
+  - api: "GET /api/gap/reports/{key}"
+    reason: "GUI: Dashboard saved-report detail view."
+  - api: "GET /api/conmon/cadences/{slug}"
+    reason: "GUI: single continuous-monitoring cadence detail."
+  - api: "GET /api/conmon/daemon-history"
+    reason: "GUI: continuous-monitoring daemon run-history view."
+  - api: "GET /api/conmon/daemon-status"
+    reason: "GUI: continuous-monitoring daemon live-status view."
+  # ── Computed read-only behaviors (no CLI verb; GUI/automation convenience) ──
+  - api: "GET /api/model-risk/models/{model_id}/next-validation-due"
+    reason: "Computed read: next SR 11-7 validation date for a model."
+  - api: "GET /api/tprm/vendors/{vendor_id}/next-review-due"
+    reason: "Computed read: next review date for a vendor."
+  - api: "POST /api/gap/export"
+    reason: "GUI/automation: export a saved gap report (the CLI exports inline via `gap analyze --format`)."
+  # ── GUI hard-delete (the CLI's `ai-gov retire` is a soft lifecycle change) ──
+  - api: "DELETE /api/ai-gov/systems/{system_id}"
+    reason: "GUI hard-delete of an AI system; `ai-gov retire` is a soft state transition, not a delete."
+  # ── Multi-dialect fan-out: the single `collect sql --adapter` CLI leaf maps to
+  #    the postgres endpoint on its row; the API exposes all five dialects. ──
+  - api: "POST /api/collectors/sql/mssql/collect"
+    reason: "SQL-dialect fan-out of the single `collect sql` CLI leaf (postgres is the row's representative)."
+  - api: "POST /api/collectors/sql/mysql/collect"
+    reason: "SQL-dialect fan-out of the single `collect sql` CLI leaf."
+  - api: "POST /api/collectors/sql/oracle/collect"
+    reason: "SQL-dialect fan-out of the single `collect sql` CLI leaf."
+  - api: "POST /api/collectors/sql/sqlite/collect"
+    reason: "SQL-dialect fan-out of the single `collect sql` CLI leaf."
 commands:
   - cli: "gap analyze"
     api: "POST /api/gap/analyze"
