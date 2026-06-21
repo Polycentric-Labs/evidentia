@@ -7,7 +7,7 @@ Thanks for taking the time to report a security concern. Evidentia
 takes its supply-chain posture seriously — see the per-release
 hardening in [`docs/enterprise-grade.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/enterprise-grade.md)
 and the supply-chain provenance section of every release on
-[GitHub Releases](https://github.com/polycentric-labs/evidentia/releases).
+[GitHub Releases](https://github.com/Polycentric-Labs/evidentia/releases).
 
 ## Reporting a vulnerability
 
@@ -16,7 +16,7 @@ and the supply-chain provenance section of every release on
 Two private channels:
 
 1. **Preferred — GitHub Private Vulnerability Reporting**:
-   <https://github.com/polycentric-labs/evidentia/security/advisories/new>.
+   <https://github.com/Polycentric-Labs/evidentia/security/advisories/new>.
    This routes through GitHub's coordinated-disclosure flow (private
    discussion thread, advisory drafting, optional CVE assignment).
 2. **Backup — email**: `allen@allenfbyrd.com` with subject
@@ -73,7 +73,7 @@ a vulnerability in Evidentia's own code.
 
 | Version | Status | Reason |
 |---------|--------|--------|
-| **`0.10.7`** | ✅ **Supported** | Latest patch. See the [CHANGELOG](https://github.com/Polycentric-Labs/evidentia/blob/main/CHANGELOG.md) and the latest `docs/security-review-*.md` for what shipped and the CVE posture at this release. |
+| **`0.10.11`** | ✅ **Supported** | Latest patch. See the [CHANGELOG](https://github.com/Polycentric-Labs/evidentia/blob/main/CHANGELOG.md) and the latest `docs/security-review-*.md` for what shipped and the CVE posture at this release. |
 | Earlier patches | ❌ Deprecated | Pre-v1.0 single-supported-patch policy; upgrade to the latest patch. |
 | Legacy `controlbridge*` packages | ❌ Yanked from PyPI | Every version of every legacy package was yanked at the v0.6.0 rename. Upgrade path documented in [`RENAMED.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/archive/RENAMED.md). |
 
@@ -95,7 +95,7 @@ agreement — for example:
 - **Shorter**: if the upstream library has already published a fix
   and we just need to bump our pin, we can ship + disclose within
   days. The v0.7.2 supply-chain follow-up
-  ([commit 8baa93d](https://github.com/polycentric-labs/evidentia/commit/8baa93d))
+  ([commit 8baa93d](https://github.com/Polycentric-Labs/evidentia/commit/8baa93d))
   is the canonical pattern: 4 disclosed advisories in upstream
   packages → bumped pins → shipped + documented within hours of
   internal alerts firing.
@@ -132,7 +132,7 @@ Out of scope:
   ([`.github/dependabot.yml`](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/dependabot.yml)) opens an
   auto-PR within the next weekly cycle, or sooner for critical
   advisories. Recent example:
-  [PR #8](https://github.com/polycentric-labs/evidentia/pull/8) closed
+  [PR #8](https://github.com/Polycentric-Labs/evidentia/pull/8) closed
   4 upstream advisories within hours of disclosure.
 - **AWS canonical-example placeholders** in test files
   (`AKIAIOSFODNN7EXAMPLE`, `ASIAIOSFODNN7EXAMPLE` —
@@ -174,8 +174,8 @@ Verify a release wheel:
 ```bash
 pip install pypi-attestations
 pypi-attestations verify pypi \
-  --repository https://github.com/polycentric-labs/evidentia \
-  "pypi:evidentia-0.10.7-py3-none-any.whl"
+  --repository https://github.com/Polycentric-Labs/evidentia \
+  "pypi:evidentia-0.10.11-py3-none-any.whl"
 ```
 
 If verification fails, **stop and report immediately** via the

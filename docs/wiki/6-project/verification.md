@@ -22,10 +22,10 @@ pip install pypi-attestations
 # Verify a single wheel
 pypi-attestations verify pypi \
   --repository https://github.com/Polycentric-Labs/evidentia \
-  pypi:evidentia_core-0.10.7-py3-none-any.whl
+  pypi:evidentia_core-0.10.11-py3-none-any.whl
 
 # Expected output:
-#   OK: evidentia_core-0.10.7-py3-none-any.whl
+#   OK: evidentia_core-0.10.11-py3-none-any.whl
 ```
 
 Per-release sweep across all 8 packages:
@@ -35,7 +35,7 @@ for pkg in evidentia evidentia_ai evidentia_api evidentia_collectors \
            evidentia_core evidentia_eval evidentia_integrations evidentia_mcp; do
   pypi-attestations verify pypi \
     --repository https://github.com/Polycentric-Labs/evidentia \
-    "pypi:${pkg}-0.10.7-py3-none-any.whl"
+    "pypi:${pkg}-0.10.11-py3-none-any.whl"
 done
 ```
 
@@ -46,8 +46,8 @@ done
 # https://docs.sigstore.dev/system_config/installation/
 
 # Verify the container's keyless OIDC signature
-cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.7 \
-  --certificate-identity-regexp "https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/v0.10.7" \
+cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.11 \
+  --certificate-identity-regexp "https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/v0.10.11" \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 
 # Expected output: "The cosign claims were validated" + SLSA Provenance v1 JSON.
@@ -57,7 +57,7 @@ cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.7 \
 
 ```bash
 # Download the SBOM
-gh release download v0.10.7 --pattern 'evidentia-sbom.cdx.json' \
+gh release download v0.10.11 --pattern 'evidentia-sbom.cdx.json' \
   --repo Polycentric-Labs/evidentia
 
 # Scan for vulnerabilities
@@ -72,8 +72,8 @@ The container's `cosign verify` output above includes the SLSA Provenance v1
 attestation inline. To extract it:
 
 ```bash
-cosign verify-attestation ghcr.io/polycentric-labs/evidentia:v0.10.7 \
-  --certificate-identity-regexp "https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/v0.10.7" \
+cosign verify-attestation ghcr.io/polycentric-labs/evidentia:v0.10.11 \
+  --certificate-identity-regexp "https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/v0.10.11" \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   --type slsaprovenance1
 ```

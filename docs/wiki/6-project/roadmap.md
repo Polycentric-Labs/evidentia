@@ -3,13 +3,14 @@
 
 # Evidentia roadmap
 
-**Last updated: v0.10.7 (May 2026).**
+**Last updated: v0.10.11 (planning, June 2026).**
 
 This roadmap synthesizes community feedback with the architecture plan
 at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0-v0.8.7
-+ v0.9.0-v0.9.9 + v0.10.0 + v0.10.1 have shipped; v0.10.2 ships now
-(third release of the v0.10.x line in a single calendar day —
-2026-05-23: v0.10.0 + v0.10.1 + v0.10.2). **v0.9.0 opened the
++ v0.9.0-v0.9.9 + v0.10.0-v0.10.10 have shipped; v0.10.11 is the current
+dev cycle (public demo completion + a signed Control↔Threat traceability
+matrix + the v0.10.10 follow-on hygiene, before the v0.11
+federal-compliance theme). **v0.9.0 opened the
 v0.9.x "federal compliance" line** with POA&M + CONMON read-only
 library; v0.9.1 landed the Polycentric Labs org migration; v0.9.2
 added the CONMON REST router + federal corpus + LLM rater + federal
@@ -59,6 +60,35 @@ self-test and demo/pitch recording precede the walk-throughs and
 multi-reviewer peer review, which complete before v1.0.0. See
 [`v1.0-transition.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v1.0-transition.md) for the v1.0
 narrative and acceptance gates.
+
+## Demo & showcase strategy (decided 2026-06-02)
+
+How Evidentia is shown to evaluators, decided after a structured multi-model +
+primary-source review of how comparable open-source GRC / security tools handle demos.
+
+**Principle:** Evidentia is a stateful, credentialed compliance platform, not a stateless
+widget. Its differentiators (OSCAL emit + verify, Sigstore signing, the collector suite,
+the MCP server) live in the CLI / library, which is also air-gap-native. So the showcase
+leads with the CLI.
+
+- **CLI-first assets (now):** a tight README quickstart (`pip install` -> `init` ->
+  `gap analyze` -> OSCAL emit, with the bundled sample inventory), an asciinema cast, and a
+  short walkthrough video. Air-gap-consistent; shows real output and the real differentiators.
+- **Clickable demo (planned):** an in-browser terminal (Killercoda / Instruqt-style) running
+  the *real* `evidentia` CLI in an ephemeral sandbox. The user drives the actual tool;
+  Evidentia hosts no state. Best fit for a CLI / library-shaped tool.
+- **Local writable GUI demo (pending a store-seeder):** a one-command
+  `docker compose -f docker-compose.demo.yml up` with a seeded store + mock collectors.
+  The web console now surfaces ~98% of coverable CLI leaves; this is gated only on a
+  store-seeder.
+- **Not planned:** a public, hosted, *stateful* backend demo. A credentialed GRC backend
+  exposed publicly is a real security surface (SSRF / secret exfiltration / prompt-injection
+  via collected evidence — the class the `--block-private-ips` hardening addresses). A durable
+  hosted experience is out of scope for the OSS project — it would mean operating a
+  credentialed, multi-tenant backend.
+
+Validated via a structured research pass (multi-model fleet + a primary-source survey of
+comparable tools + a 3-way adversarial validation).
 
 ## v0.3.0 — Compliance-as-code — SHIPPED
 
@@ -1668,15 +1698,31 @@ cycle, no LL-V105-1 recurrence risk). 3536 tests pass / 14 skipped /
 `docs/v0.10.6-plan.md` §12). OSCAL upstream contribution PR at
 https://github.com/oscal-club/awesome-oscal/pull/59.
 
-### v0.10.7 — Hygiene + automation-debt + pre-push gate L2 + wiki fill + doc-accuracy sweep — SHIPPED
+### v0.10.7 — Web console (GUI v2) + gap-export, on a hygiene + automation-debt + wiki-fill + doc-accuracy base — SHIPPED
 
-Patch on v0.10.6 (released 2026-05-27). Tag `v0.10.7` (2026-05-29).
-**A hardening, automation-debt, and documentation cycle — no new
-end-user product features.** Closed the v0.10.6 code-quality reviewer
-backlog (Groups A + D) and the 2 deferred Scorecard alerts, added a
-blocking pre-push gate, filled the in-repo wiki tree, and ran a
-doc-wide CLI-example accuracy sweep. Headline shipments:
+Patch on v0.10.6 (released 2026-05-27). Tag `v0.10.7` (2026-05-30).
+**A web-UI + hardening + automation-debt + documentation cycle.** The
+headline end-user change is the web console: a full GUI v2 visual
+refresh plus a real gap-report export/download surface (8 formats).
+The hardening side closed the v0.10.6 code-quality reviewer backlog
+(Groups A + D) and the 2 deferred Scorecard alerts, added a blocking
+pre-push gate (now with never-skip version-anchor + frontend guards),
+filled the in-repo wiki tree, added 7 operator-walkthrough guides,
+fixed two real product bugs (TPRM + governance enum rendering), and
+ran a doc-wide CLI-example accuracy sweep. Headline shipments:
 
+- **Web console (GUI v2)** — full design-system refresh (federal-blue /
+  deep-navy chrome, light/dark, self-hosted IBM Plex + favicons / PWA
+  manifest / OG brand assets, every route + onboarding restyled;
+  presentation-only with all API / SSE / Zustand wiring + accessibility
+  preserved) and a real gap-report **export/download** of all 8 formats,
+  guarded by an OpenAPI → TS type-parity drift-gate. Live-validated
+  across all 8 routes with zero console errors.
+- **7 operator-walkthrough guides + an input-schema reference**, and
+  **two product bug-fixes** — `tprm dd-questionnaire ingest` + the
+  governance workflow `run`/`advance` status output rendered enum
+  fields raw (the models store enums as strings under `use_enum_values`);
+  fixed via the shared `enum_value` helper, TDD, with a sibling audit.
 - **Scorecard delta closed** — `verify-osps-conformance.yml` pip
   install hash-pinned (#123 `PinnedDependenciesID`); `sync-wiki.yml`
   top-level token scope reduced to `read-all` with `contents: write`
@@ -1729,10 +1775,79 @@ ships 8 PyPI packages unchanged from v0.10.6 (no new packages this
 cycle). 3666 tests pass / 14 skipped / 3680 collected across 281
 source files (was 279 v0.10.6); mypy strict 0/0; ruff clean.
 
-### v0.10.8 — Deferred-backlog close-out — PLANNED
+### v0.10.8 — Release-automation hardening + CLI↔GUI parity + GUI build-out (start) — SHIPPED
 
-Carried out of the v0.10.7 cycle (narrow, ~3-5 days). Per
-`docs/v0.10.7-plan.md` §6:
+Patch on v0.10.7 (released 2026-05-31). Tag `v0.10.8` (2026-06-05).
+Full plan: [`docs/v0.10.8-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.10.8-plan.md). Theme:
+institutionalize the v0.10.7 quality discipline into the *automatic*
+release mechanism, start enforcing CLI↔GUI feature parity, and begin
+closing the GUI gap. First ship under `/pre-release-review` v5.2.
+Headline shipments: the tag-time `gate` job in `release.yml` (publish
+jobs blocked on a full gate-suite run, via the `run_gate_suite.py`
+single source of truth) + the `consistency.yml` CI staleness mirror +
+a real CI secret-scan; the `cli-gui-parity.yaml` manifest +
+`check_parity.py` gate (advisory this cycle; GUI coverage 6.1% →
+13.3%); 4 Tier-B GUI screens (POA&M / TPRM / ConMon / Explain); the
+Phase G upkeep workflows (stale-branches, dependabot-automerge,
+safeguards-resweep); 4 wiki guides + README hero refresh. **The new
+tag-gate proved itself on its first release** — it correctly blocked
+the initial publish on 3 real pre-publish issues (a pyjwt CVE wave, an
+accepted-with-rationale aiohttp pair, and an eval-CLI test failure
+only reproducible under the gate's full-extras environment). Post-ship
+fix (no version bump): `secret-scan.yml` switched from the
+license-gated gitleaks *action* to the MIT-licensed gitleaks *binary*.
+Note: the required-signatures ruleset shipped with its admin bypass
+still in place — the bypass removal (closing F-V107-1) moved to the
+v0.10.9 cycle's Tier-4 cleanups.
+
+**Approved scope (Allen 2026-05-31):**
+
+- **Release-hardening automation** — a tag-time gate job in
+  `release.yml` (pytest / mypy / ruff / version-consistency /
+  docs-health / osv) that blocks the irreversible PyPI publish on a red
+  or stale tree; a CI mirror of the version/doc-staleness guards
+  (currently pre-push-only); auto-regenerate the README on CHANGELOG
+  change; a real CI secret-scan.
+- **Commit-signature enforcement** — a GitHub required-signatures
+  ruleset on `main` with `enforce_admins=true` (server-side, closing
+  the F-V107-1 admin-bypass), with the v0.10.7 local pre-push check as
+  defense-in-depth.
+- **CLI↔GUI parity mechanism** — a `cli-gui-parity.yaml` manifest + a
+  `scripts/check_parity.py` CI gate (completeness + GUI-existence +
+  debt-ratchet so new CLI work must ship its GUI surface). The current
+  OpenAPI drift-gate keeps *types* in sync but enforces no *feature*
+  parity.
+- **GUI build-out (start)** — phased, API-exists-add-screen first
+  (collect / tprm / poam / conmon / model-risk / integrations / ai-gov
+  / explain), then build API+screen for governance / retention /
+  evidence / oscal / eval. **This cycle lands 4 Tier-B screens** —
+  POA&M / TPRM / ConMon / Explain (scope resolved 2026-06-02); the rest
+  follow across v0.10.9+, driven down by the parity debt-ratchet.
+- **Operator-walkthrough wiki media** — screenshots and/or video
+  captured live during the self-led operator walkthrough.
+- **README hero refresh** — centered OG title card + centered buttons.
+- **DONE this cycle:** the Framework-detail `.border-dest` fix
+  (validated 3×).
+
+**Resolved via brainstorming (2026-06-02):** GUI scope = moderate (the
+4 Tier-B screens above); the wiki is populated per-screen as built
+(Phase E1 screenshots pulled into each screen's definition-of-done;
+the operator-walkthrough video stays a live capture); execution runs
+as 3 waves — (1) release-hardening + parity mechanism, (2) the 4 GUI
+screens, (3) automation + polish — with a review checkpoint after each
+wave and a consolidated `/pre-release-review` + `/security-review` +
+`/code-review` gate before the (held) single push + tag.
+
+**Phase G — automatic-upkeep (resolved 2026-06-02):** ADOPT this cycle
+— stale-branch-flagging workflow, Dependabot auto-merge (patch/minor,
+post-gate; needs the repo "Allow auto-merge" setting), quarterly
+safeguards re-sweep. DEFER to the automatic-upkeep backlog —
+doc/pointer-rot cadence, session → memory capture, a consolidate-memory
+pass (requires explicit approval; the private MEMORY.md index is over
+its size limit), and research-resync cadence.
+
+**Carry-over deferred backlog** (from the v0.10.7 cycle, per
+`docs/v0.10.7-plan.md` §6):
 
 - **CIMD-terminology scrub across the 4 active non-wiki docs** —
   correct the "Cryptographic CIMD signatures" / "CIMD signing"
@@ -1772,20 +1887,77 @@ Carried out of the v0.10.7 cycle (narrow, ~3-5 days). Per
 - Pre-push gate L1 / L3 — defer-or-skip; revisit if a new pattern
   justifies them.
 
+### v0.10.9 — Debt + robustness patch — PLANNED
+
+Theme: close the v0.10.8 ship findings and skill-iteration debt, and
+harden the release machinery that cycle built. Full plan:
+[`docs/v0.10.9-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.10.9-plan.md) (approved 2026-06-10; scope
+= moderate, all eight items). Scope summary:
+
+- **eval CLI `_resolve_sign` OIDC graceful degrade** — the product fix
+  behind the v0.10.8 test fix. The eval CLI auto-signs when
+  `GITHUB_ACTIONS=true` and sigstore is importable, but never checks
+  OIDC-token *obtainability*, so it crashes (`SigstoreSigningError`)
+  in any CI job lacking `id-token: write`. Check
+  `ACTIONS_ID_TOKEN_REQUEST_TOKEN` and degrade gracefully (write
+  unsigned + warn) instead of crashing.
+- **SF-V108-3** — `check_uv_lock_pin_drift` should diff the
+  bump-commit's `uv.lock` specifically, not the aggregate push range,
+  so a separately-committed dependency bump in the range no longer
+  trips the false positive that forced a logged bypass in v0.10.8.
+- **SF-V108-4** — the `release-safeguards-scaffolder` G4 template
+  defaults to the gitleaks *binary* for organization-owned repos (the
+  gitleaks *action* needs a paid license on org repos — the bug
+  Evidentia hit post-v0.10.8).
+- **`parity.yml` advisory → blocking** — flip the CLI↔GUI parity gate
+  now that a full cycle has run advisory.
+- **Deferred polish from the v0.10.8 review**: widen `PoamGap` →
+  `ControlGap-Output[]`; extract a shared `lib/sse.ts` (ExplainPage +
+  RiskGeneratePage duplicate the SSE reader); safeguards-resweep
+  exact-title idempotency.
+- **Watch-item**: the accepted aiohttp client-cookie CVEs
+  (`osv-scanner.toml` `ignoreUntil` 2026-12-04) — if litellm relaxes
+  its exact `aiohttp==3.13.4` pin so aiohttp can float to ≥ 3.14.0,
+  drop both ignore entries and re-validate.
+- **Tier-4 post-v0.10.8 cleanups folded in**: the Dependabot "Allow
+  auto-merge" repo setting (prerequisite for
+  `dependabot-automerge.yml` to actually merge); the F-V107-1
+  ruleset admin-bypass removal. (The wiki sync proved already
+  automatic — `sync-wiki.yml` carried the v0.10.8 guides on push.)
+- A competitive/market research refresh (the quarterly-ish resync;
+  last full pass at v0.9.5) runs alongside the cycle; outputs land in
+  `docs/positioning-and-value.md`.
+
+### v0.10.11 — Public demo completion + traceability + hygiene — PLANNED
+
+Patch (0.10.10 → 0.10.11). Per-cycle detail: [`v0.10.11-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.10.11-plan.md). Three tracks:
+
+- **Webapp demo completion** — deploy the static `VITE_DEMO` web console to `demo.evidentiagrc.com`; add an FDA-index build mode so the in-repo bundle can serve the full-bleed FDA page directly (retiring the decoupled prototype, single source of truth); a targeted GUI-fill — an **OSCAL emit/verify console view** (shows a run's signed Assessment Results + a verify panel).
+- **Control↔Threat Traceability Matrix** — promote the threat→control→evidence view from a rendered demo into a first-class GUI + CLI capability that emits a **Sigstore-signable OSCAL** matrix (builds on `models/threat.py`; the OSCAL slice here sets up the v0.11 TM-BOM). Generalist OSS.
+- **Hygiene** — collector guard-before-driver-import + mock-driver SSRF test (the proper fix behind the v0.10.10 CI extras hotfix); the `MetricCard` `<p>`→`<div>` DOM-nesting fix (carried in the shipped `#/demo/fda`); the `oscal sign`→`gap analyze --sign-with-*` correction in `threat-model.md` + `troubleshooting.md`; `GapExportControl` jsdom `Blob.stream` cleanup; a CI `--no-extras` pytest fidelity smoke (the gate the v0.10.10 push exposed).
+
+### v0.10.12 — Full CLI↔GUI parity build-out — PLANNED (dedicated session)
+
+A single, heavily-planned, subagent-driven, multi-step-verified push to bring the web console to (near-)full CLI parity in one sitting (the v0.10.7 GUI-rebuild / wiki-population playbook). **Planning deliverable: a comprehensive surface × tier matrix** — for every capability, decide its presence and scope on each surface (**CLI** / self-hosted **GUI** / hosted **web app**), and adopt a standing rule that every *new* feature gets an explicit surface decision. (The detailed breakdown is a private planning artifact, not this public roadmap.) The planning pass reconciles the prior surface/tier research via project-file synthesis + dedicated `polycentric-labcoat` research fleets. (Keeps v0.11 reserved for the federal theme below.) The cycle **closes with a docs/ curation + CHANGELOG trim** once the console is at parity — archive the accumulated per-cycle plan + security-review docs and tighten the CHANGELOG (housekeeping, run last).
+
 ### v0.11 — Federal-compliance theme + AI governance — PLANNED (post-deep-dive)
 
 Sourced from Phase B audit v3 + integration plan §"Per-release
 detailed integration plan" §v0.11. Substantive minor (~6-8 weeks):
 
-- **KSI (Key Security Indicators) emission** as continuous OSCAL
-  evidence feeds — wires as third output mode on `evidentia conmon`
-  alongside the 7 bundled cadences shipped v0.9.0. Aligns to
-  **FedRAMP 20x March 2026 pilot → Q3 2026 public rollout** (NIST +
-  GSA expectations harden Q3 2026; this is the v0.10.x integration-
-  survey OCSF/MCP positioning advantage made concrete for the
-  federal lane). Evidentia's natural slot per Phase B Stream E4: OSS
-  engine for the audit-quality middle layer between Trestle (raw
-  OSCAL SDK) and RegScale (commercial FedRAMP package generator).
+- **KSI (Key Security Indicators) emission** per FedRAMP's
+  machine-readable schemas (FRMR JSON; the `FedRAMP/schemas`
+  JSON-Schema repo) — wires as third output mode on `evidentia
+  conmon` alongside the 7 bundled cadences shipped v0.9.0. (Re-based
+  2026-06-10: KSIs are FRMR JSON, not OSCAL feeds — OSCAL remains the
+  Rev5/RFC-0024 package format per NTC-0009; see
+  integration-survey §8.2.) Evidentia's natural slot per Phase B
+  Stream E4: OSS engine for the audit-quality middle layer between
+  Trestle (raw OSCAL SDK) and RegScale (commercial FedRAMP package
+  generator).
+- **Evaluate OSCAL 1.2.1 → 1.2.2** — OSCAL 1.2.2 released
+  2026-04-30; assess the schema delta against the current 1.2.1
+  surface before adopting.
 - **`evidentia incident emit --format dora-art-17`** (DoraIncident
   Pydantic record + `classify_dora()` per RTS 2024/1772 Art. 8 +
   Art. 9; auto-POA&M creation for 4h/24h/72h/1-month reporting
@@ -1826,9 +1998,42 @@ detailed integration plan" §v0.11. Substantive minor (~6-8 weeks):
   Regulatory Assurance" — 6-8pp, cites Marino & Lane (arXiv:2601.04474)
   blueprint, establishes priority before another impl beats Evidentia
   to the generalist-GRC-OSCAL niche.
+- **SARIF-ingestion collector** (`evidentia collect sarif`) — the
+  consume-side counterpart to the v0.10.0 SARIF *emit*, and the
+  [`integration-survey.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/integration-survey.md) §3 #5 candidate. One
+  adapter ingests any SARIF 2.1.0 emitter (Trivy / Checkov / Semgrep /
+  CodeQL, and the Clear Capabilities `agentic-security` scanner — see
+  [`integration-survey.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/integration-survey.md) §9) into
+  `SecurityFinding`s: maps SARIF `level` → `Severity`, preserves
+  `codeFlows` taint traces + KEV/EPSS `properties` as provenance, and
+  reuses the v0.10.1 OCSF collector's HTTPS/SSRF guard
+  (`--block-private-ips`). Mirrors the `evidentia_collectors.ocsf`
+  module; data-layer interop only (no third-party code dependency — see
+  the [`integration-survey.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/integration-survey.md) §9 licensing
+  note). Design spec:
+  [`sarif-ingestion-collector-design.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/sarif-ingestion-collector-design.md)
+  (control-agnostic default + attestation-gated candidate mappings from
+  SARIF-native taxa / operator map / derived; reuses `ControlMapping` +
+  `OLIRRelationship`).
 - **Refresh `docs/integration-survey.md` competitive section**
   post-operator-deep-dive (incorporate AWS OSCAL MCP / Vanta MCP /
   ComplianceCow MCP / Snyk AI Trust Platform shifts).
+
+### Medical-device GRC feature line (v0.11 → v1.1+) — PLANNED (web-grounded research 2026-06-17)
+
+The medical-device-security direction the v0.10.10 FDA Section 524B catalogs opened, scanned + validated in a multi-angle web-grounded research pass. **Each feature gets a dedicated `polycentric-labcoat` research fleet at build-time** — the entries below are the high-level scan + positioning, not build specs. Effort and tier are planning-grade. The throughline: **don't rebuild commodity layers (STRIDE authoring, CBOM scanners) — ingest them; the uncontested slice is the open, signed, OSCAL/BOM-emitting evidence wrapper.**
+
+| Feature | Target | Effort | Tier | Positioning |
+|---|---|---|---|---|
+| **Signed Threat→Control→Test Traceability Matrix** — ingest OWASP Threat Dragon / pytm models, emit the matrix as Sigstore-signed OSCAL + a forward-looking CycloneDX representation (properties / VEX) | v0.11 | high | OSS / either | v0.10.11 ships the signed-OSCAL matrix slice (a signed OSCAL **profile** per the 2026-06-17 labcoat); v0.11 adds Threat-Dragon ingest + the CycloneDX representation + pre/post residual-risk. STRIDE/DFD authoring is commodity — the signed, machine-readable matrix is the differentiator. **Honesty (verified 2026-06-17):** there is **no ratified CycloneDX "TM-BOM" type** (CycloneDX = ECMA-424, current spec v1.7; threat data currently rides VEX + custom properties), so the CycloneDX slice is a forward-looking representation, not a standardized BOM type. |
+| **CBOM ingest → 524B Cryptography mapping + signed PQC-readiness roadmap** — ingest a CycloneDX 1.6 CBOM (IBM/PQCA CBOMkit), map quantum-vulnerable primitives → NIST PQC (FIPS 203/204/205) + 524B Cat. 3, emit a signed crypto-agility roadmap vs the NIST-2030 clock | v0.11 | med | either | CBOM generation + PQC scanning are commodity/standardized; the white-space is the *submission-grade signed evidence wrapper*, not the scanner. |
+| **Deterministic deficiency-pattern pre-submission checker** — a rule-based, signable linter of FDA's *published* top-deficiency + RTA patterns, wired into gap-analysis + POA&M (**NOT** an ML predictor) | v0.11 | med | OSS | No public labeled premarket-cyber-deficiency corpus exists (483s/Warning Letters are postmarket; premarket cyber letters are FOIA-gated). A deterministic, honest checker is the defensible build. |
+| **Compliance-as-code QMS artifact generator** — per-control checklists, runbooks, role-based tasks, evidence-collection-readiness dashboard; signed, git-native artifacts that *feed* an existing eQMS (explicitly not an eQMS of record) | v0.11 | low-med | either | The quick early win; reuses the existing LLM explain/risk pipeline + POA&M/CONMON. Compliance-as-code delivery (git-native, signed, air-gap) is the differentiator vs medtech eQMS incumbents. |
+| **SW96/14971 + 800-30 likelihood × patient-harm risk register** — 800-30 threat-source/predisposing-condition templates → likelihood × *patient-harm* severity (per ANSI/AAMI SW96 on ISO 14971), signed OSCAL; reuse the existing Monte-Carlo only for exploitability uncertainty | v0.12 | med | either | Do **not** dollarize patient harm (FAIR annualized-loss is methodologically wrong for clinical risk); the standards-anchored harm axis wired into signed evidence is the ownable angle. |
+| **OSCAL-native continuous-compliance evidence** — lifecycle-tagged (premarket/postmarket), CI-byproduct, auto Assessment-Results + POA&M, Sigstore-signed; adopt the arXiv 2604.13767 AI-lifecycle OSCAL property extensions | v0.12 | med-high | either | Rides the OSCAL Foundation formation + RegScale OSCAL-Hub donation; "evidence as a signed byproduct of CI, traceable to the risk register." Aligns with the v0.11 federal theme. |
+| **AI-BOM for AI-enabled SaMD, eval-harness-backed** — SPDX 3.0 AI / CycloneDX ML-BOM whose model-eval claims are backed by Evidentia's signed eval-harness output; the **SBOM + CBOM + TM-BOM + AIBOM single signed evidence graph** | v1.1+ | med-high | either | NOVEL fit: almost no GRC tool ties an AIBOM to a device submission, and none surfaced that backs AIBOM eval claims with signed eval output. The convergence graph is the marquee. |
+
+**Honesty flags (from the research pass — keep these visible):** the "no OSS does the integrated 524B pack" positioning rests on *"none found"*, not *"none exists"* — a strong-but-unproven moat. An **AIBOM is not a codified 524B requirement** (forward-looking best practice only — SPDX 3.0 / AI RMF / PCCP-aligned). **Deep-binary cryptographic discovery is an open problem** — ingest declared/SBOM-derived CBOMs, never claim binary extraction. There is **no public labeled premarket-cyber-deficiency dataset** for ML. A "ggDSI" platform seen in one search summary is **unconfirmed** — do not cite. Effort/tier figures are planning-grade inferences, not commitments.
 
 ### v1.1+ — Post-v1.0 direction + remaining audit items — RESERVED (added 2026-05-24)
 
@@ -1866,9 +2071,8 @@ frozen). Acceptance gates include: domain-expert walk-through
 completed, 1+ external operator validation, API stability docs
 published, deprecation calendar, OpenSSF Gold tier (if achievable),
 cryptographic CIMD signatures, and pre-release-review PROCEED-CLEAN.
-Commercial packages (evidentia-pro, evidentia-enterprise,
-evidentia-federal) launch post-v1.0 as separate PyPI packages with
-proprietary licenses.
+Post-v1.0 packaging and distribution direction is tracked outside this
+public roadmap.
 
 ## v0.7.0+ — Quality signals, more integrations, UI polish
 
