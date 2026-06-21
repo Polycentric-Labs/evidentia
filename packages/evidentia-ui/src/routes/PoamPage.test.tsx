@@ -16,6 +16,11 @@ vi.mock("@/lib/api", async () => {
     api: {
       listPoamItems: vi.fn(),
       updatePoamMilestone: vi.fn(),
+      createPoamItem: vi.fn(),
+      deletePoamItem: vi.fn(),
+      addPoamMilestone: vi.fn(),
+      replacePoamItem: vi.fn(),
+      poamCalendar: vi.fn(),
     },
   };
 });
@@ -82,9 +87,19 @@ function renderWithClient(ui: ReactElement) {
 
 const mockedApi = vi.mocked(api);
 
+// The calendar attention surface fires on every render of the page; give it a
+// benign empty default so the pre-existing list/detail cases stay green. The
+// `poamCalendar` API method is typed `Record<string, unknown>` server-side.
+const EMPTY_CALENDAR: Record<string, unknown> = {
+  today: "2026-06-20",
+  overdue: [],
+  due_soon: [],
+};
+
 describe("PoamPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedApi.poamCalendar.mockResolvedValue(EMPTY_CALENDAR);
   });
 
   afterEach(() => {
@@ -97,7 +112,7 @@ describe("PoamPage", () => {
     renderWithClient(<PoamPage />);
 
     expect(
-      screen.getByRole("heading", { name: /POA&M/i }),
+      screen.getByRole("heading", { level: 1, name: /POA&M/i }),
     ).toBeInTheDocument();
     expect(await screen.findByText(/No POA&M items yet/i)).toBeInTheDocument();
   });
@@ -159,5 +174,145 @@ describe("PoamPage", () => {
     await waitFor(() =>
       expect(mockedApi.listPoamItems).toHaveBeenCalledTimes(2),
     );
+  });
+
+  it("creates a POA&M item through createPoamItem with the authored fields", async () => {
+    const user = userEvent.setup();
+    mockedApi.listPoamItems.mockResolvedValue({ total: 0, items: [] });
+    mockedApi.createPoamItem.mockResolvedValue(ITEM as ControlGap);
+
+    renderWithClient(<PoamPage />);
+
+    // Wait for the initial (empty) list to settle.
+    await screen.findByText(/No POA&M items yet/i);
+
+    await user.type(screen.getByLabelText("Framework"), "soc2-tsc");
+    await user.type(screen.getByLabelText("Control ID"), "CC6.1");
+    await user.type(
+      screen.getByLabelText("Control title"),
+      "Logical access controls",
+    );
+    await user.type(
+      screen.getByLabelText("Gap description"),
+      "MFA not enforced on admin accounts.",
+    );
+
+    // Pick severity + status from the create-form pickers (scoped by their
+    // radiogroup labels so the top filter chips are not matched).
+    const sevGroup = screen.getByRole("radiogroup", { name: "Gap severity" });
+    await user.click(within(sevGroup).getByRole("radio", { name: "Critical" }));
+    const statusGroup = screen.getByRole("radiogroup", { name: "Gap status" });
+    await user.click(within(statusGroup).getByRole("radio", { name: "Open" }));
+
+    await user.click(screen.getByRole("button", { name: /create item/i }));
+
+    await waitFor(() => expect(mockedApi.createPoamItem).toHaveBeenCalledTimes(1));
+    expect(mockedApi.createPoamItem).toHaveBeenCalledWith(
+      expect.objectContaining({
+        framework: "soc2-tsc",
+        control_id: "CC6.1",
+        control_title: "Logical access controls",
+        gap_description: "MFA not enforced on admin accounts.",
+        gap_severity: "critical",
+        status: "open",
+      }),
+    );
+  });
+
+  it("adds a milestone through addPoamMilestone from the detail panel", async () => {
+    const user = userEvent.setup();
+    mockedApi.listPoamItems.mockResolvedValue({ total: 1, items: [ITEM] });
+    mockedApi.addPoamMilestone.mockResolvedValue(ITEM as ControlGap);
+
+    renderWithClient(<PoamPage />);
+
+    const card = await screen.findByRole("button", {
+      name: /Logical access controls/i,
+    });
+    await user.click(card);
+
+    const addForm = await screen.findByRole("form", { name: /add milestone/i });
+    await user.type(
+      within(addForm).getByLabelText("Description"),
+      "Roll out hardware tokens",
+    );
+    const targetDate = within(addForm).getByLabelText(
+      "Target date",
+    ) as HTMLInputElement;
+    await user.clear(targetDate);
+    await user.type(targetDate, "2026-12-31");
+
+    await user.click(
+      within(addForm).getByRole("button", { name: /add milestone/i }),
+    );
+
+    await waitFor(() =>
+      expect(mockedApi.addPoamMilestone).toHaveBeenCalledWith(
+        "poam-1",
+        expect.objectContaining({
+          description: "Roll out hardware tokens",
+          target_date: "2026-12-31",
+          status: "planned",
+        }),
+      ),
+    );
+    // The list query is refetched after a successful add.
+    await waitFor(() =>
+      expect(mockedApi.listPoamItems).toHaveBeenCalledTimes(2),
+    );
+  });
+
+  it("deletes the item through deletePoamItem after a confirm step", async () => {
+    const user = userEvent.setup();
+    mockedApi.listPoamItems.mockResolvedValue({ total: 1, items: [ITEM] });
+    mockedApi.deletePoamItem.mockResolvedValue(undefined);
+
+    renderWithClient(<PoamPage />);
+
+    const card = await screen.findByRole("button", {
+      name: /Logical access controls/i,
+    });
+    await user.click(card);
+
+    // First click reveals the inline confirm; nothing is deleted yet.
+    await user.click(await screen.findByRole("button", { name: "Delete item" }));
+    expect(mockedApi.deletePoamItem).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: /confirm delete/i }));
+
+    await waitFor(() =>
+      expect(mockedApi.deletePoamItem).toHaveBeenCalledWith("poam-1"),
+    );
+    // The list query is refetched after a successful delete.
+    await waitFor(() =>
+      expect(mockedApi.listPoamItems).toHaveBeenCalledTimes(2),
+    );
+  });
+
+  it("fetches the calendar attention surface via poamCalendar", async () => {
+    mockedApi.listPoamItems.mockResolvedValue({ total: 0, items: [] });
+    mockedApi.poamCalendar.mockResolvedValue({
+      today: "2026-06-20",
+      overdue: [
+        {
+          milestone_id: "ms-9",
+          poam_id: "poam-9",
+          control_id: "soc2-tsc:CC7.2",
+          target_date: "2026-05-01",
+          status: "overdue",
+          description: "Patch the EOL appliance",
+        },
+      ],
+      due_soon: [],
+    } as Record<string, unknown>);
+
+    renderWithClient(<PoamPage />);
+
+    await waitFor(() => expect(mockedApi.poamCalendar).toHaveBeenCalled());
+    // The overdue milestone surfaces in the calendar section.
+    expect(
+      await screen.findByText(/Patch the EOL appliance/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/soc2-tsc:CC7\.2/i)).toBeInTheDocument();
   });
 });

@@ -46,6 +46,24 @@ import type {
   EvidenceArtifactInput,
   EvidenceSaveSummary,
   EvidenceHistoryResponse,
+  ModelInventory,
+  ModelInventoryInput,
+  ModelListResponse,
+  CatalogImportPayload,
+  CatalogCrosswalkResponse,
+  ConcentrationReport,
+  Questionnaire,
+  CompletedQuestionnaireIngest,
+  MilestoneCreatePayload,
+  RiskQuantifyRequest,
+  RiskQuantifyResponse,
+  ConmonNextRequest,
+  ConmonNextResponse,
+  ConmonCheckRequest,
+  ConmonCheckResponse,
+  ConmonHealthRequest,
+  ConmonMarkCompletedRequest,
+  ConmonMarkCompletedResponse,
 } from "@/lib/api";
 import type {
   AirGapCheckResponse,
@@ -309,9 +327,65 @@ const DEMO_EVIDENCE: EvidenceArtifact[] = [
   } as EvidenceArtifact,
 ];
 
+// Model-risk inventory: a couple of SR 11-7-style rows so the model-risk
+// screens render with zero network. Cast through `unknown` because the demo
+// rows carry only the required fields, not the full optional surface.
+const DEMO_MODELS: ModelInventory[] = [
+  {
+    id: "demo-model-credit-v3",
+    name: "Credit decisioning model v3",
+    owner: "mrm.lead@meridian.example",
+    purpose: "Consumer-credit underwriting score.",
+    methodology: "ml",
+    tier: "tier_1",
+    vendor_or_internal: "internal",
+  } as unknown as ModelInventory,
+  {
+    id: "demo-model-fraud-v1",
+    name: "Transaction-fraud model v1",
+    owner: "fraud.ds@meridian.example",
+    purpose: "Real-time card-fraud detection.",
+    methodology: "hybrid",
+    tier: "tier_2",
+    vendor_or_internal: "vendor",
+  } as unknown as ModelInventory,
+];
+
 const DEMO_REPORT_MARKDOWN =
   "# Demo Report\n\nThis is baked demo markdown — the live build streams a real " +
   "report from the API. No backend is contacted in the demo GUI.\n";
+
+// Baked markdown for the model-risk documentation / validation-report verbs.
+const DEMO_MODEL_DOC_MARKDOWN =
+  "# Model documentation (demo)\n\nBaked demo markdown — the live build renders " +
+  "the model's real documentation card. No backend is contacted in the demo GUI.\n";
+
+// Minimal baked crosswalk so the catalog crosswalk screen renders offline.
+const DEMO_CROSSWALK: CatalogCrosswalkResponse = {
+  source: "nist-800-53-rev5-moderate",
+  target: "soc2-tsc",
+  control: "AC-2",
+  total: 1,
+  mappings: [
+    {
+      source_control: "AC-2",
+      target_control: "CC6.1",
+      relationship: "equivalent",
+    },
+  ],
+};
+
+// Baked vendor-concentration report (cast: demo carries only the required field).
+const DEMO_CONCENTRATION: ConcentrationReport = {
+  total_vendors: 3,
+} as unknown as ConcentrationReport;
+
+// Baked due-diligence questionnaire (cast: demo carries the required fields only).
+const DEMO_QUESTIONNAIRE: Questionnaire = {
+  title: "Vendor due-diligence questionnaire (demo)",
+  format: "json",
+  vendor: { name: "Demo Vendor" },
+} as unknown as Questionnaire;
 
 export const demoApi = {
   // ── Probe / identity ──────────────────────────────────────────────────
@@ -444,6 +518,25 @@ export const demoApi = {
       DEMO_POAM.items.find((i) => i.id === poamId) ?? DEMO_POAM.items[0];
     return Promise.resolve(clone(item));
   },
+  createPoamItem: (item: PoamItemInput): Promise<ControlGap> =>
+    Promise.resolve({
+      ...clone(DEMO_POAM.items[0]),
+      ...clone(item),
+      id: `demo-poam-${Date.now()}`,
+    }),
+  deletePoamItem: (_poamId: string): Promise<void> => Promise.resolve(),
+  poamCalendar: (_params?: {
+    today?: string;
+  }): Promise<Record<string, unknown>> =>
+    Promise.resolve({ today: "2026-06-21", upcoming: [], overdue: [] }),
+  addPoamMilestone: (
+    poamId: string,
+    _payload: MilestoneCreatePayload,
+  ): Promise<ControlGap> => {
+    const item =
+      DEMO_POAM.items.find((i) => i.id === poamId) ?? DEMO_POAM.items[0];
+    return Promise.resolve(clone(item));
+  },
 
   // ── TPRM ──────────────────────────────────────────────────────────────
   listVendors: (params?: {
@@ -471,6 +564,40 @@ export const demoApi = {
       ...clone(vendor),
       id: `demo-vendor-${Date.now()}`,
     } as Vendor),
+  getVendor: (vendorId: string): Promise<Vendor> => {
+    const vendor =
+      DEMO_VENDORS.vendors.find((v) => v.id === vendorId) ??
+      DEMO_VENDORS.vendors[0];
+    return Promise.resolve(clone(vendor));
+  },
+  updateVendor: (vendorId: string, vendor: VendorInput): Promise<Vendor> => {
+    const base =
+      DEMO_VENDORS.vendors.find((v) => v.id === vendorId) ??
+      DEMO_VENDORS.vendors[0];
+    return Promise.resolve({
+      ...clone(base),
+      ...clone(vendor),
+      id: vendorId,
+    } as Vendor);
+  },
+  deleteVendor: (_vendorId: string): Promise<void> => Promise.resolve(),
+  tprmConcentration: (_params?: {
+    by?: string;
+    threshold?: number;
+  }): Promise<ConcentrationReport> => Promise.resolve(clone(DEMO_CONCENTRATION)),
+  ddQuestionnaireGenerate: (
+    _vendorId: string,
+    _params?: { format?: string },
+  ): Promise<Questionnaire> => Promise.resolve(clone(DEMO_QUESTIONNAIRE)),
+  ddQuestionnaireIngest: (
+    vendorId: string,
+    _payload: CompletedQuestionnaireIngest,
+  ): Promise<Vendor> => {
+    const vendor =
+      DEMO_VENDORS.vendors.find((v) => v.id === vendorId) ??
+      DEMO_VENDORS.vendors[0];
+    return Promise.resolve(clone(vendor));
+  },
 
   // ── ConMon ────────────────────────────────────────────────────────────
   listConmonCadences: (params?: {
@@ -481,6 +608,43 @@ export const demoApi = {
       cadences = cadences.filter((c) => c.framework === params.framework);
     return Promise.resolve(clone(cadences));
   },
+  conmonNext: (body: ConmonNextRequest): Promise<ConmonNextResponse> =>
+    Promise.resolve({
+      slug: body.slug,
+      framework: "soc2-tsc",
+      activity: "Quarterly access review",
+      frequency: "quarterly",
+      last_completed: body.last_completed,
+      next_due: "2026-09-30",
+    }),
+  conmonCheck: (body: ConmonCheckRequest): Promise<ConmonCheckResponse> =>
+    Promise.resolve({
+      today: "2026-06-21",
+      window_days: body.window_days ?? 30,
+      current: [],
+      due_soon: [],
+      overdue: [],
+      unknown_slugs: [],
+    }),
+  conmonHealth: (
+    _body: ConmonHealthRequest,
+  ): Promise<Record<string, unknown>> =>
+    Promise.resolve({ status: "ok", overdue: 0, due_soon: 0 }),
+  conmonMarkCompleted: (
+    body: ConmonMarkCompletedRequest,
+  ): Promise<ConmonMarkCompletedResponse> =>
+    Promise.resolve({
+      slug: body.slug,
+      framework: "soc2-tsc",
+      activity: "Quarterly access review",
+      previous_last_completed: null,
+      new_last_completed: body.when,
+    }),
+  conmonDedupList: (_params?: {
+    slug?: string;
+    suppression_hours?: number;
+  }): Promise<Record<string, unknown>> =>
+    Promise.resolve({ entries: [], suppressed: [] }),
 
   // ── Governance: challenges ────────────────────────────────────────────
   listChallenges: (params?: {
@@ -677,6 +841,92 @@ export const demoApi = {
       ) ?? DEMO_EVIDENCE[0];
     return Promise.resolve(clone(item));
   },
+
+  // ── Model-risk (inventory) ────────────────────────────────────────────
+  listModels: (params?: {
+    skip?: number;
+    limit?: number;
+  }): Promise<ModelListResponse> => {
+    const items = DEMO_MODELS;
+    const total = items.length;
+    const skip = params?.skip ?? 0;
+    const limit = params?.limit ?? total;
+    const page = items.slice(skip, skip + limit);
+    return Promise.resolve({ total, skip, limit, items: clone(page) });
+  },
+  createModel: (model: ModelInventoryInput): Promise<ModelInventory> =>
+    Promise.resolve({
+      ...clone(DEMO_MODELS[0]),
+      ...clone(model),
+      id: `demo-model-${Date.now()}`,
+    } as ModelInventory),
+  getModel: (modelId: string): Promise<ModelInventory> => {
+    const item = DEMO_MODELS.find((m) => m.id === modelId) ?? DEMO_MODELS[0];
+    return Promise.resolve(clone(item));
+  },
+  updateModel: (
+    modelId: string,
+    model: ModelInventoryInput,
+  ): Promise<ModelInventory> => {
+    const base = DEMO_MODELS.find((m) => m.id === modelId) ?? DEMO_MODELS[0];
+    return Promise.resolve({
+      ...clone(base),
+      ...clone(model),
+      id: modelId,
+    } as ModelInventory);
+  },
+  deleteModel: (_modelId: string): Promise<void> => Promise.resolve(),
+  modelDocumentation: (_modelId: string): Promise<string> =>
+    Promise.resolve(DEMO_MODEL_DOC_MARKDOWN),
+  modelValidationReport: (_modelId: string): Promise<string> =>
+    Promise.resolve(DEMO_MODEL_DOC_MARKDOWN),
+
+  // ── Catalog (crosswalk / where / license / import / remove) ───────────
+  catalogCrosswalk: (params: {
+    source: string;
+    target: string;
+    control: string;
+  }): Promise<CatalogCrosswalkResponse> =>
+    Promise.resolve({
+      ...clone(DEMO_CROSSWALK),
+      source: params.source,
+      target: params.target,
+      control: params.control,
+    }),
+  catalogWhere: (frameworkId: string): Promise<Record<string, unknown>> =>
+    Promise.resolve({
+      framework_id: frameworkId,
+      source: "bundled",
+      path: `bundled://${frameworkId}.yaml`,
+    }),
+  catalogLicenseInfo: (
+    frameworkId: string,
+  ): Promise<Record<string, unknown>> =>
+    Promise.resolve({
+      framework_id: frameworkId,
+      license_required: false,
+      license_terms: null,
+    }),
+  catalogImport: (
+    payload: CatalogImportPayload,
+  ): Promise<Record<string, unknown>> =>
+    Promise.resolve({
+      framework_id: payload.framework_id,
+      imported: true,
+      controls: 0,
+    }),
+  catalogRemove: (_frameworkId: string): Promise<void> => Promise.resolve(),
+
+  // ── Risk quantification (FAIR / OpenFAIR) ─────────────────────────────
+  riskQuantify: (
+    _body: RiskQuantifyRequest,
+  ): Promise<RiskQuantifyResponse> =>
+    Promise.resolve({
+      method: "open-fair",
+      scenario_count: 0,
+      scenarios: [],
+      total_ale: 0,
+    }),
 
   // ── Explain ───────────────────────────────────────────────────────────
   // Mirrors the real client: only builds the canonical URL. The SSE branch

@@ -2,7 +2,9 @@ import {
   Activity,
   Archive,
   BookOpen,
+  Boxes,
   Building2,
+  Calculator,
   ClipboardCheck,
   FileArchive,
   FileCheck2,
@@ -10,6 +12,7 @@ import {
   Home,
   Layers,
   LayoutDashboard,
+  Library,
   Lock,
   type LucideIcon,
   Moon,
@@ -47,6 +50,9 @@ const NAV_META: Record<string, NavMeta> = {
   "/governance": { label: "Governance", description: "Challenges, metrics, workflows", crumb: "Governance console", icon: Scale },
   "/retention": { label: "Retention", description: "Records retention + legal hold", crumb: "Retention records", icon: Archive },
   "/evidence": { label: "Evidence", description: "WORM evidence store", crumb: "Evidence lineage", icon: FileArchive },
+  "/model-risk": { label: "Model Risk", description: "SR 11-7 model inventory", crumb: "Model risk inventory", icon: Boxes },
+  "/catalog": { label: "Catalog mgmt", description: "Import / crosswalk / license", crumb: "Catalog management", icon: Library },
+  "/risk/quantify": { label: "Risk Quantify", description: "FAIR risk quantification", crumb: "FAIR quantification", icon: Calculator },
   "/oscal": { label: "OSCAL Results", description: "Emit + verify Assessment Results", crumb: "OSCAL Assessment Results", icon: FileCheck2 },
   "/settings": { label: "Settings", description: "Config + LLM + air-gap", crumb: "Configuration", icon: Settings },
 };
@@ -57,9 +63,9 @@ const NAV_META: Record<string, NavMeta> = {
  */
 const NAV_GROUPS: { label: string | null; items: string[] }[] = [
   { label: null, items: IS_DEMO ? ["/", "/demo"] : ["/"] },
-  { label: "Analyze", items: ["/gap/analyze", "/gap/diff", "/risk/generate", "/explain"] },
-  { label: "Govern", items: IS_DEMO ? ["/poam", "/conmon", "/tprm", "/governance", "/retention", "/evidence", "/oscal"] : ["/poam", "/conmon", "/tprm", "/governance", "/retention", "/evidence"] },
-  { label: "Library", items: ["/dashboard", "/frameworks"] },
+  { label: "Analyze", items: ["/gap/analyze", "/gap/diff", "/risk/generate", "/risk/quantify", "/explain"] },
+  { label: "Govern", items: IS_DEMO ? ["/poam", "/conmon", "/tprm", "/governance", "/retention", "/evidence", "/model-risk", "/oscal"] : ["/poam", "/conmon", "/tprm", "/governance", "/retention", "/evidence", "/model-risk"] },
+  { label: "Library", items: ["/dashboard", "/frameworks", "/catalog"] },
   { label: "Configure", items: ["/settings"] },
 ];
 

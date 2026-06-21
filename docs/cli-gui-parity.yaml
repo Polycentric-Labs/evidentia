@@ -125,8 +125,8 @@ commands:
     status: api-only
   - cli: "tprm concentration-report"
     api: "GET /api/tprm/concentration"
-    gui: null
-    status: api-only
+    gui: "/tprm"
+    status: full
   - cli: "tprm vendor add"
     api: "POST /api/tprm/vendors"
     gui: "/tprm"
@@ -137,48 +137,48 @@ commands:
     status: full
   - cli: "tprm vendor show"
     api: "GET /api/tprm/vendors/{vendor_id}"
-    gui: null
-    status: api-only
+    gui: "/tprm"
+    status: full
   - cli: "tprm vendor edit"
     api: "PUT /api/tprm/vendors/{vendor_id}"
-    gui: null
-    status: api-only
+    gui: "/tprm"
+    status: full
   - cli: "tprm vendor delete"
     api: "DELETE /api/tprm/vendors/{vendor_id}"
-    gui: null
-    status: api-only
+    gui: "/tprm"
+    status: full
   - cli: "tprm dd-questionnaire generate"
     api: "POST /api/tprm/vendors/{vendor_id}/dd-questionnaire"
-    gui: null
-    status: api-only
+    gui: "/tprm"
+    status: full
   - cli: "model-risk model add"
     api: "POST /api/model-risk/models"
-    gui: null
-    status: api-only
+    gui: "/model-risk"
+    status: full
   - cli: "model-risk model list"
     api: "GET /api/model-risk/models"
-    gui: null
-    status: api-only
+    gui: "/model-risk"
+    status: full
   - cli: "model-risk model show"
     api: "GET /api/model-risk/models/{model_id}"
-    gui: null
-    status: api-only
+    gui: "/model-risk"
+    status: full
   - cli: "model-risk model edit"
     api: "PUT /api/model-risk/models/{model_id}"
-    gui: null
-    status: api-only
+    gui: "/model-risk"
+    status: full
   - cli: "model-risk model delete"
     api: "DELETE /api/model-risk/models/{model_id}"
-    gui: null
-    status: api-only
+    gui: "/model-risk"
+    status: full
   - cli: "model-risk doc generate"
     api: "GET /api/model-risk/models/{model_id}/documentation"
-    gui: null
-    status: api-only
+    gui: "/model-risk"
+    status: full
   - cli: "model-risk validation-report generate"
     api: "GET /api/model-risk/models/{model_id}/validation-report"
-    gui: null
-    status: api-only
+    gui: "/model-risk"
+    status: full
   - cli: "ai-gov classify"
     api: "POST /api/ai-gov/classify"
     gui: null
@@ -197,8 +197,8 @@ commands:
     status: api-only
   - cli: "poam create"
     api: "POST /api/poam/items"
-    gui: null
-    status: api-only
+    gui: "/poam"
+    status: full
   - cli: "poam list"
     api: "GET /api/poam/items"
     gui: "/poam"
@@ -209,20 +209,20 @@ commands:
     status: full
   - cli: "poam update"
     api: "PUT /api/poam/items/{poam_id}"
-    gui: null
-    status: api-only
+    gui: "/poam"
+    status: full
   - cli: "poam delete"
     api: "DELETE /api/poam/items/{poam_id}"
-    gui: null
-    status: api-only
+    gui: "/poam"
+    status: full
   - cli: "poam calendar"
     api: "GET /api/poam/calendar"
-    gui: null
-    status: api-only
+    gui: "/poam"
+    status: full
   - cli: "poam milestone add"
     api: "POST /api/poam/items/{poam_id}/milestones"
-    gui: null
-    status: api-only
+    gui: "/poam"
+    status: full
   - cli: "poam milestone update"
     api: "PATCH /api/poam/items/{poam_id}/milestones/{milestone_id}"
     gui: "/poam"
@@ -233,16 +233,16 @@ commands:
     status: full
   - cli: "conmon next"
     api: "POST /api/conmon/next"
-    gui: null
-    status: api-only
+    gui: "/conmon"
+    status: full
   - cli: "conmon check"
     api: "POST /api/conmon/check"
-    gui: null
-    status: api-only
+    gui: "/conmon"
+    status: full
   - cli: "conmon health"
     api: "POST /api/conmon/health"
-    gui: null
-    status: api-only
+    gui: "/conmon"
+    status: full
   - cli: "integrations jira push"
     api: "POST /api/integrations/jira/push/{report_key}"
     gui: null
@@ -270,8 +270,8 @@ commands:
     status: api-only
   - cli: "risk quantify"
     api: "POST /api/risk/quantify"
-    gui: null
-    status: api-only
+    gui: "/risk/quantify"
+    status: full
   - cli: "collect ocsf"
     api: null
     gui: null
@@ -282,8 +282,8 @@ commands:
     status: cli-only
   - cli: "tprm dd-questionnaire ingest"
     api: "POST /api/tprm/vendors/{vendor_id}/dd-questionnaire/ingest"
-    gui: null
-    status: api-only
+    gui: "/tprm"
+    status: full
   - cli: "ai-gov retire"
     api: null
     gui: null
@@ -302,32 +302,32 @@ commands:
     status: cli-only
   - cli: "catalog crosswalk"
     api: "GET /api/catalog/crosswalk"
-    gui: null
-    status: api-only
+    gui: "/catalog"
+    status: full
   - cli: "catalog import"
     api: "POST /api/catalog/import"
-    gui: null
-    status: api-only
+    gui: "/catalog"
+    status: full
   - cli: "catalog where"
     api: "GET /api/catalog/where"
-    gui: null
-    status: api-only
+    gui: "/catalog"
+    status: full
   - cli: "catalog license-info"
     api: "GET /api/catalog/license-info/{framework_id}"
-    gui: null
-    status: api-only
+    gui: "/catalog"
+    status: full
   - cli: "catalog remove"
     api: "DELETE /api/catalog/{framework_id}"
-    gui: null
-    status: api-only
+    gui: "/catalog"
+    status: full
   - cli: "conmon mark-completed"
     api: "POST /api/conmon/mark-completed"
-    gui: null
-    status: api-only
+    gui: "/conmon"
+    status: full
   - cli: "conmon dedup-list"
     api: "GET /api/conmon/dedup-list"
-    gui: null
-    status: api-only
+    gui: "/conmon"
+    status: full
   - cli: "integrations servicenow push"
     api: null
     gui: null

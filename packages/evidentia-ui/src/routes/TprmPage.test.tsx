@@ -17,12 +17,22 @@ vi.mock("@/lib/api", async (importOriginal) => {
     api: {
       listVendors: vi.fn(),
       createVendor: vi.fn(),
+      getVendor: vi.fn(),
+      updateVendor: vi.fn(),
+      deleteVendor: vi.fn(),
+      tprmConcentration: vi.fn(),
+      ddQuestionnaireGenerate: vi.fn(),
+      ddQuestionnaireIngest: vi.fn(),
     },
   };
 });
 
 const listVendorsMock = vi.mocked(api.listVendors);
 const createVendorMock = vi.mocked(api.createVendor);
+const getVendorMock = vi.mocked(api.getVendor);
+const updateVendorMock = vi.mocked(api.updateVendor);
+const deleteVendorMock = vi.mocked(api.deleteVendor);
+const tprmConcentrationMock = vi.mocked(api.tprmConcentration);
 
 const VENDOR: Vendor = {
   id: "e5dd135b-e489-4a4a-9fa4-f3da59589f71",
@@ -48,6 +58,10 @@ describe("TprmPage", () => {
   beforeEach(() => {
     listVendorsMock.mockReset();
     createVendorMock.mockReset();
+    getVendorMock.mockReset();
+    updateVendorMock.mockReset();
+    deleteVendorMock.mockReset();
+    tprmConcentrationMock.mockReset();
   });
 
   afterEach(() => {
@@ -133,5 +147,118 @@ describe("TprmPage", () => {
       contract_start_date: "2025-06-01",
       residual_risk_score: 0,
     });
+  });
+
+  it("opens the detail panel when a vendor card is selected", async () => {
+    const user = userEvent.setup();
+    listVendorsMock.mockResolvedValue({ total: 1, vendors: [VENDOR] });
+    getVendorMock.mockResolvedValue({ ...VENDOR });
+
+    renderWithProviders(<TprmPage />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "Vendor Acme Cloud Inc." }),
+    );
+
+    // Detail panel renders + the vendor is fetched by id.
+    expect(
+      await screen.findByRole("heading", { name: "Vendor detail" }),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(getVendorMock).toHaveBeenCalledWith(VENDOR.id));
+  });
+
+  it("calls updateVendor when the edit form is saved", async () => {
+    const user = userEvent.setup();
+    listVendorsMock.mockResolvedValue({ total: 1, vendors: [VENDOR] });
+    getVendorMock.mockResolvedValue({ ...VENDOR });
+    updateVendorMock.mockResolvedValue({ ...VENDOR, name: "Acme Renamed" });
+
+    renderWithProviders(<TprmPage />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "Vendor Acme Cloud Inc." }),
+    );
+    await screen.findByRole("heading", { name: "Vendor detail" });
+
+    // Enter edit mode, change the name, save.
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    const editForm = await screen.findByRole("form", { name: "Edit vendor" });
+    const nameInput = within(editForm).getByLabelText(
+      "Name",
+    ) as HTMLInputElement;
+    await user.clear(nameInput);
+    await user.type(nameInput, "Acme Renamed");
+    await user.click(
+      within(editForm).getByRole("button", { name: /save changes/i }),
+    );
+
+    await waitFor(() => expect(updateVendorMock).toHaveBeenCalledTimes(1));
+    expect(updateVendorMock).toHaveBeenCalledWith(VENDOR.id, {
+      name: "Acme Renamed",
+      type: VENDOR.type,
+      criticality_tier: VENDOR.criticality_tier,
+      relationship_owner: VENDOR.relationship_owner,
+      contract_start_date: VENDOR.contract_start_date,
+      residual_risk_score: VENDOR.residual_risk_score,
+    });
+  });
+
+  it("calls deleteVendor after the delete confirmation", async () => {
+    const user = userEvent.setup();
+    listVendorsMock.mockResolvedValue({ total: 1, vendors: [VENDOR] });
+    getVendorMock.mockResolvedValue({ ...VENDOR });
+    deleteVendorMock.mockResolvedValue(undefined);
+
+    renderWithProviders(<TprmPage />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "Vendor Acme Cloud Inc." }),
+    );
+    await screen.findByRole("heading", { name: "Vendor detail" });
+
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    await user.click(
+      await screen.findByRole("button", { name: /confirm delete/i }),
+    );
+
+    await waitFor(() => expect(deleteVendorMock).toHaveBeenCalledTimes(1));
+    expect(deleteVendorMock).toHaveBeenCalledWith(VENDOR.id);
+  });
+
+  it("calls tprmConcentration when the report button is pressed", async () => {
+    const user = userEvent.setup();
+    listVendorsMock.mockResolvedValue({ total: 1, vendors: [VENDOR] });
+    tprmConcentrationMock.mockResolvedValue({
+      total_vendors: 1,
+      dimensions: [
+        {
+          dimension: "type",
+          total_unique_values: 1,
+          vendors_with_value: 1,
+          distribution: [
+            {
+              value: "saas",
+              count: 1,
+              percentage: 100,
+              exceeds_threshold: false,
+            },
+          ],
+        },
+      ],
+    });
+
+    renderWithProviders(<TprmPage />);
+
+    await screen.findByText("Acme Cloud Inc.");
+
+    await user.click(
+      screen.getByRole("button", { name: /run concentration report/i }),
+    );
+
+    await waitFor(() =>
+      expect(tprmConcentrationMock).toHaveBeenCalledTimes(1),
+    );
+    // The returned distribution renders as structured text.
+    expect(await screen.findByText(/1 vendors analyzed/i)).toBeInTheDocument();
   });
 });

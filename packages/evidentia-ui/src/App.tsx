@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { DemoBanner } from "@/components/common/DemoBanner";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { IS_DEMO, IS_DEMO_FDA_INDEX } from "@/lib/demo";
+import { CatalogPage } from "@/routes/CatalogPage";
 import { ConmonPage } from "@/routes/ConmonPage";
 import { DashboardPage } from "@/routes/DashboardPage";
 import { DemoPage } from "@/routes/DemoPage";
@@ -15,10 +16,12 @@ import { GapAnalyzePage } from "@/routes/GapAnalyzePage";
 import { GapDiffPage } from "@/routes/GapDiffPage";
 import { GovernancePage } from "@/routes/GovernancePage";
 import { HomePage } from "@/routes/HomePage";
+import { ModelRiskPage } from "@/routes/ModelRiskPage";
 import { OscalResultsPage } from "@/routes/OscalResultsPage";
 import { PoamPage } from "@/routes/PoamPage";
 import { RetentionPage } from "@/routes/RetentionPage";
 import { RiskGeneratePage } from "@/routes/RiskGeneratePage";
+import { RiskQuantifyPage } from "@/routes/RiskQuantifyPage";
 import { SettingsPage } from "@/routes/SettingsPage";
 import { TprmPage } from "@/routes/TprmPage";
 
@@ -29,6 +32,7 @@ import { TprmPage } from "@/routes/TprmPage";
  * v0.7.6: alpha.2 routing wired — Onboarding wizard (HomePage step machine),
  *         Gap Analyze, Gap Diff, Risk Generate.
  * v0.10.12: Wave-1 parity — Governance / Retention / Evidence consoles.
+ *           Wave-2 parity — Model-risk / Catalog management / Risk-quantify.
  */
 export function App() {
   // FDA-index build (fdademo.evidentiagrc.com): the Section 524B showcase
@@ -62,18 +66,22 @@ export function App() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="frameworks" element={<FrameworksPage />} />
           <Route path="frameworks/:id" element={<FrameworkDetailPage />} />
+          <Route path="catalog" element={<CatalogPage />} />
           <Route path="gap/analyze" element={<GapAnalyzePage />} />
           <Route path="gap/diff" element={<GapDiffPage />} />
           <Route path="risk/generate" element={<RiskGeneratePage />} />
+          <Route path="risk/quantify" element={<RiskQuantifyPage />} />
           <Route path="explain" element={<ExplainPage />} />
           <Route path="poam" element={<PoamPage />} />
           <Route path="conmon" element={<ConmonPage />} />
           <Route path="tprm" element={<TprmPage />} />
           {/* v0.10.12 Wave 1 — local-store CRUD consoles (governance / retention
-           * / evidence). Live (non-demo) routes wired through the typed client. */}
+           * / evidence). Live (non-demo) routes wired through the typed client.
+           * Wave 2 adds model-risk. */}
           <Route path="governance" element={<GovernancePage />} />
           <Route path="retention" element={<RetentionPage />} />
           <Route path="evidence" element={<EvidencePage />} />
+          <Route path="model-risk" element={<ModelRiskPage />} />
           {/* OSCAL emit/verify console view — a read-mostly GUI-fill, previewed
            * in the static demo bundle (fixture-backed). Wiring it to a live run
            * is the v0.10.12 parity work. */}
