@@ -70,6 +70,40 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+/**
+ * Like `request<T>` but for `text/markdown` (and other plain-text) endpoints —
+ * returns the raw `response.text()` instead of parsing JSON. Same
+ * `ApiError`-on-`!ok` handling. Used by the governance + retention report
+ * endpoints (`metricsReport`, `workflowLog`, `linesReport`, `retentionReport`),
+ * which the backend serves as `text/markdown`, not a JSON envelope.
+ */
+async function requestText(path: string, init?: RequestInit): Promise<string> {
+  const response = await fetch(path, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "text/markdown, text/plain, */*",
+      ...(init?.headers ?? {}),
+    },
+  });
+
+  if (!response.ok) {
+    let payload: unknown = null;
+    try {
+      payload = await response.json();
+    } catch {
+      /* empty body is fine */
+    }
+    throw new ApiError(
+      `API ${init?.method ?? "GET"} ${path} failed (${response.status})`,
+      response.status,
+      payload,
+    );
+  }
+
+  return await response.text();
+}
+
 export interface FrameworkListEntry {
   id: string;
   name: string;
@@ -179,6 +213,102 @@ export interface VendorListResponse {
  * flat list of string→(string|null) maps (read-only; no live daemon state).
  */
 export type ConmonCadence = Record<string, string | null>;
+
+// ── Governance types (mirrored from evidentia_core.governance / metrics /
+//    workflows / effective_challenge_store) ──────────────────────────────
+
+/** Effective-challenge record — body shape AND response shape (single schema). */
+export type EffectiveChallenge = components["schemas"]["EffectiveChallenge"];
+/** Metric create body. The server returns the Metric augmented with a derived
+ *  `status` field (untyped server-side); see `MetricWithStatus`. */
+export type Metric = components["schemas"]["Metric"];
+/** Observation PATCH/POST body ({value, observed_at(date), note?}). */
+export type MetricObservationPayload =
+  components["schemas"]["MetricObservationPayload"];
+/** Governance workflow — create body shape (server fills id / step state). */
+export type WorkflowInput = components["schemas"]["Workflow-Input"];
+/** Governance workflow as returned by the API. */
+export type Workflow = components["schemas"]["Workflow-Output"];
+/** Workflow step-advance body ({step_index, new_status, actor, note?}). */
+export type WorkflowAdvancePayload =
+  components["schemas"]["WorkflowAdvancePayload"];
+/** Three-lines-of-defense owner row (body of POST /governance/lines-report). */
+export type Owner = components["schemas"]["Owner"];
+
+/**
+ * A metric as returned by the create / get / observe endpoints: the stored
+ * `Metric` plus a server-derived `status` label (ok / watch / breach). The
+ * server response is an untyped dict, so this is a loose intersection.
+ */
+export type MetricWithStatus = Metric & { status: string };
+
+/** Paginated challenge list envelope (response is an untyped object server-side). */
+export interface ChallengeListResponse {
+  total: number;
+  skip: number;
+  limit: number;
+  items: EffectiveChallenge[];
+}
+
+/** Paginated metric list envelope. `items` carry the derived `status`. */
+export interface MetricListResponse {
+  total: number;
+  skip: number;
+  limit: number;
+  items: MetricWithStatus[];
+}
+
+/** Paginated workflow list envelope (response is an untyped object server-side). */
+export interface WorkflowListResponse {
+  total: number;
+  skip: number;
+  limit: number;
+  items: Workflow[];
+}
+
+// ── Retention types (mirrored from evidentia_core.retention) ─────────────
+
+/** Retention create body ({classification, retention_period_days?, …}). */
+export type RetentionCreatePayload =
+  components["schemas"]["RetentionCreatePayload"];
+/** Per-record retention metadata as returned by the API. */
+export type RetentionMetadata = components["schemas"]["RetentionMetadata"];
+/** Lock-until extension body ({new_lock_until: date}). */
+export type RetentionExtendPayload =
+  components["schemas"]["RetentionExtendPayload"];
+/** Lifecycle-stage transition body ({new_stage}). */
+export type RetentionTransitionPayload =
+  components["schemas"]["RetentionTransitionPayload"];
+
+/** Paginated retention list envelope (response is an untyped object server-side). */
+export interface RetentionListResponse {
+  total: number;
+  skip: number;
+  limit: number;
+  items: RetentionMetadata[];
+}
+
+// ── Evidence types (mirrored from evidentia_core.models.evidence) ────────
+
+/** Evidence artifact — save body shape (caller constructs new lineage/version). */
+export type EvidenceArtifactInput =
+  components["schemas"]["EvidenceArtifact-Input"];
+/** Evidence artifact as returned by the version endpoint. */
+export type EvidenceArtifact = components["schemas"]["EvidenceArtifact-Output"];
+
+/** Summary returned by `POST /api/evidence` after persisting an artifact. */
+export interface EvidenceSaveSummary {
+  artifact_id: string;
+  lineage_id: string;
+  version: number;
+  predecessor_id: string | null;
+}
+
+/** Evidence lineage history envelope (no skip/limit — full chain). */
+export interface EvidenceHistoryResponse {
+  total: number;
+  items: EvidenceArtifact[];
+}
 
 /**
  * Request a gap-report export and return the artifact blob + the
@@ -364,6 +494,169 @@ const realApi = {
       `/api/conmon/cadences${qs ? `?${qs}` : ""}`,
     );
   },
+
+  // ── Governance: challenges ────────────────────────────────────────────
+  listChallenges: (params?: {
+    skip?: number;
+    limit?: number;
+    subject_model_id?: string;
+    outcome?: string;
+  }) => {
+    const search = new URLSearchParams();
+    if (params?.skip != null) search.set("skip", String(params.skip));
+    if (params?.limit != null) search.set("limit", String(params.limit));
+    if (params?.subject_model_id)
+      search.set("subject_model_id", params.subject_model_id);
+    if (params?.outcome) search.set("outcome", params.outcome);
+    const qs = search.toString();
+    return request<ChallengeListResponse>(
+      `/api/governance/challenges${qs ? `?${qs}` : ""}`,
+    );
+  },
+  createChallenge: (challenge: EffectiveChallenge) =>
+    request<EffectiveChallenge>("/api/governance/challenges", {
+      method: "POST",
+      body: JSON.stringify(challenge),
+    }),
+  getChallenge: (challengeId: string) =>
+    request<EffectiveChallenge>(
+      `/api/governance/challenges/${encodeURIComponent(challengeId)}`,
+    ),
+
+  // ── Governance: metrics ───────────────────────────────────────────────
+  listMetrics: (params?: { skip?: number; limit?: number; kind?: string }) => {
+    const search = new URLSearchParams();
+    if (params?.skip != null) search.set("skip", String(params.skip));
+    if (params?.limit != null) search.set("limit", String(params.limit));
+    if (params?.kind) search.set("kind", params.kind);
+    const qs = search.toString();
+    return request<MetricListResponse>(
+      `/api/governance/metrics${qs ? `?${qs}` : ""}`,
+    );
+  },
+  createMetric: (metric: Metric) =>
+    request<MetricWithStatus>("/api/governance/metrics", {
+      method: "POST",
+      body: JSON.stringify(metric),
+    }),
+  observeMetric: (metricId: string, payload: MetricObservationPayload) =>
+    request<MetricWithStatus>(
+      `/api/governance/metrics/${encodeURIComponent(metricId)}/observations`,
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  getMetric: (metricId: string) =>
+    request<MetricWithStatus>(
+      `/api/governance/metrics/${encodeURIComponent(metricId)}`,
+    ),
+  deleteMetric: (metricId: string) =>
+    request<void>(`/api/governance/metrics/${encodeURIComponent(metricId)}`, {
+      method: "DELETE",
+    }),
+  metricsReport: () => requestText("/api/governance/metrics/report"),
+
+  // ── Governance: workflows ─────────────────────────────────────────────
+  listWorkflows: (params?: { skip?: number; limit?: number }) => {
+    const search = new URLSearchParams();
+    if (params?.skip != null) search.set("skip", String(params.skip));
+    if (params?.limit != null) search.set("limit", String(params.limit));
+    const qs = search.toString();
+    return request<WorkflowListResponse>(
+      `/api/governance/workflows${qs ? `?${qs}` : ""}`,
+    );
+  },
+  runWorkflow: (workflow: WorkflowInput) =>
+    request<Workflow>("/api/governance/workflows", {
+      method: "POST",
+      body: JSON.stringify(workflow),
+    }),
+  advanceWorkflow: (workflowId: string, payload: WorkflowAdvancePayload) =>
+    request<Workflow>(
+      `/api/governance/workflows/${encodeURIComponent(workflowId)}/advance`,
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  getWorkflow: (workflowId: string) =>
+    request<Workflow>(
+      `/api/governance/workflows/${encodeURIComponent(workflowId)}`,
+    ),
+  workflowLog: (workflowId: string) =>
+    requestText(
+      `/api/governance/workflows/${encodeURIComponent(workflowId)}/log`,
+    ),
+  deleteWorkflow: (workflowId: string) =>
+    request<void>(
+      `/api/governance/workflows/${encodeURIComponent(workflowId)}`,
+      { method: "DELETE" },
+    ),
+
+  // ── Governance: three-lines report ────────────────────────────────────
+  linesReport: (owners: Owner[]) =>
+    requestText("/api/governance/lines-report", {
+      method: "POST",
+      body: JSON.stringify(owners),
+    }),
+
+  // ── Retention ─────────────────────────────────────────────────────────
+  listRetention: (params?: {
+    skip?: number;
+    limit?: number;
+    classification?: string;
+    lifecycle?: string;
+  }) => {
+    const search = new URLSearchParams();
+    if (params?.skip != null) search.set("skip", String(params.skip));
+    if (params?.limit != null) search.set("limit", String(params.limit));
+    if (params?.classification)
+      search.set("classification", params.classification);
+    if (params?.lifecycle) search.set("lifecycle", params.lifecycle);
+    const qs = search.toString();
+    return request<RetentionListResponse>(
+      `/api/retention${qs ? `?${qs}` : ""}`,
+    );
+  },
+  createRetention: (payload: RetentionCreatePayload) =>
+    request<RetentionMetadata>("/api/retention", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  getRetention: (retentionId: string) =>
+    request<RetentionMetadata>(
+      `/api/retention/${encodeURIComponent(retentionId)}`,
+    ),
+  extendRetention: (retentionId: string, payload: RetentionExtendPayload) =>
+    request<RetentionMetadata>(
+      `/api/retention/${encodeURIComponent(retentionId)}/extend`,
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  transitionRetention: (
+    retentionId: string,
+    payload: RetentionTransitionPayload,
+  ) =>
+    request<RetentionMetadata>(
+      `/api/retention/${encodeURIComponent(retentionId)}/transition`,
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  deleteRetention: (retentionId: string) =>
+    request<void>(`/api/retention/${encodeURIComponent(retentionId)}`, {
+      method: "DELETE",
+    }),
+  retentionReport: () => requestText("/api/retention/report"),
+
+  // ── Evidence (lineage / versions) ─────────────────────────────────────
+  saveEvidence: (artifact: EvidenceArtifactInput) =>
+    request<EvidenceSaveSummary>("/api/evidence", {
+      method: "POST",
+      body: JSON.stringify(artifact),
+    }),
+  evidenceHistory: (lineageId: string) =>
+    request<EvidenceHistoryResponse>(
+      `/api/evidence/${encodeURIComponent(lineageId)}/history`,
+    ),
+  evidenceVersion: (lineageId: string, version: number) =>
+    request<EvidenceArtifact>(
+      `/api/evidence/${encodeURIComponent(lineageId)}/versions/${encodeURIComponent(
+        String(version),
+      )}`,
+    ),
 
   // ── Explain ───────────────────────────────────────────────────────────
   // NOTE: POST /api/explain/{framework}/{control_id} streams the explanation

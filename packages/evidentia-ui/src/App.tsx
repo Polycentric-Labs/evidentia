@@ -6,15 +6,18 @@ import { IS_DEMO, IS_DEMO_FDA_INDEX } from "@/lib/demo";
 import { ConmonPage } from "@/routes/ConmonPage";
 import { DashboardPage } from "@/routes/DashboardPage";
 import { DemoPage } from "@/routes/DemoPage";
+import { EvidencePage } from "@/routes/EvidencePage";
 import { ExplainPage } from "@/routes/ExplainPage";
 import { FdaDemoPage } from "@/routes/FdaDemoPage";
 import { FrameworkDetailPage } from "@/routes/FrameworkDetailPage";
 import { FrameworksPage } from "@/routes/FrameworksPage";
 import { GapAnalyzePage } from "@/routes/GapAnalyzePage";
 import { GapDiffPage } from "@/routes/GapDiffPage";
+import { GovernancePage } from "@/routes/GovernancePage";
 import { HomePage } from "@/routes/HomePage";
 import { OscalResultsPage } from "@/routes/OscalResultsPage";
 import { PoamPage } from "@/routes/PoamPage";
+import { RetentionPage } from "@/routes/RetentionPage";
 import { RiskGeneratePage } from "@/routes/RiskGeneratePage";
 import { SettingsPage } from "@/routes/SettingsPage";
 import { TprmPage } from "@/routes/TprmPage";
@@ -25,6 +28,7 @@ import { TprmPage } from "@/routes/TprmPage";
  * v0.4.0-alpha.1: Home / Dashboard / Frameworks (list + detail) / Settings.
  * v0.7.6: alpha.2 routing wired — Onboarding wizard (HomePage step machine),
  *         Gap Analyze, Gap Diff, Risk Generate.
+ * v0.10.12: Wave-1 parity — Governance / Retention / Evidence consoles.
  */
 export function App() {
   // FDA-index build (fdademo.evidentiagrc.com): the Section 524B showcase
@@ -65,6 +69,11 @@ export function App() {
           <Route path="poam" element={<PoamPage />} />
           <Route path="conmon" element={<ConmonPage />} />
           <Route path="tprm" element={<TprmPage />} />
+          {/* v0.10.12 Wave 1 — local-store CRUD consoles (governance / retention
+           * / evidence). Live (non-demo) routes wired through the typed client. */}
+          <Route path="governance" element={<GovernancePage />} />
+          <Route path="retention" element={<RetentionPage />} />
+          <Route path="evidence" element={<EvidencePage />} />
           {/* OSCAL emit/verify console view — a read-mostly GUI-fill, previewed
            * in the static demo bundle (fixture-backed). Wiring it to a live run
            * is the v0.10.12 parity work. */}

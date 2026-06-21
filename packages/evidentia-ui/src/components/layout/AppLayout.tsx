@@ -1,8 +1,10 @@
 import {
   Activity,
+  Archive,
   BookOpen,
   Building2,
   ClipboardCheck,
+  FileArchive,
   FileCheck2,
   GitCompare,
   Home,
@@ -12,6 +14,7 @@ import {
   type LucideIcon,
   Moon,
   PlayCircle,
+  Scale,
   ScanLine,
   Settings,
   Sparkles,
@@ -33,7 +36,7 @@ const NAV_META: Record<string, NavMeta> = {
   "/": { label: "Home", description: "Welcome + onboarding", crumb: "Welcome to Evidentia", icon: Home },
   "/demo": { label: "Watch it run", description: "CLI recording (Tier 0 cast)", crumb: "CLI recording", icon: PlayCircle },
   "/dashboard": { label: "Dashboard", description: "Saved gap reports", crumb: "Saved gap reports", icon: LayoutDashboard },
-  "/frameworks": { label: "Frameworks", description: "92 bundled catalogs", crumb: "Catalog browser", icon: Layers },
+  "/frameworks": { label: "Frameworks", description: "95 bundled catalogs", crumb: "Catalog browser", icon: Layers },
   "/gap/analyze": { label: "Gap Analyze", description: "Run a gap analysis", crumb: "Run a gap analysis", icon: ScanLine },
   "/gap/diff": { label: "Gap Diff", description: "Compare two reports", crumb: "Compare two reports", icon: GitCompare },
   "/risk/generate": { label: "Risk Generate", description: "AI risk statements", crumb: "AI risk statements", icon: Sparkles },
@@ -41,6 +44,9 @@ const NAV_META: Record<string, NavMeta> = {
   "/poam": { label: "POA&M", description: "Plan of Action & Milestones", crumb: "Plan of Action & Milestones", icon: ClipboardCheck },
   "/conmon": { label: "Continuous Monitoring", description: "Monitoring cadences", crumb: "Monitoring cadences", icon: Activity },
   "/tprm": { label: "TPRM", description: "Third-party risk", crumb: "Third-party risk", icon: Building2 },
+  "/governance": { label: "Governance", description: "Challenges, metrics, workflows", crumb: "Governance console", icon: Scale },
+  "/retention": { label: "Retention", description: "Records retention + legal hold", crumb: "Retention records", icon: Archive },
+  "/evidence": { label: "Evidence", description: "WORM evidence store", crumb: "Evidence lineage", icon: FileArchive },
   "/oscal": { label: "OSCAL Results", description: "Emit + verify Assessment Results", crumb: "OSCAL Assessment Results", icon: FileCheck2 },
   "/settings": { label: "Settings", description: "Config + LLM + air-gap", crumb: "Configuration", icon: Settings },
 };
@@ -52,7 +58,7 @@ const NAV_META: Record<string, NavMeta> = {
 const NAV_GROUPS: { label: string | null; items: string[] }[] = [
   { label: null, items: IS_DEMO ? ["/", "/demo"] : ["/"] },
   { label: "Analyze", items: ["/gap/analyze", "/gap/diff", "/risk/generate", "/explain"] },
-  { label: "Govern", items: IS_DEMO ? ["/poam", "/conmon", "/tprm", "/oscal"] : ["/poam", "/conmon", "/tprm"] },
+  { label: "Govern", items: IS_DEMO ? ["/poam", "/conmon", "/tprm", "/governance", "/retention", "/evidence", "/oscal"] : ["/poam", "/conmon", "/tprm", "/governance", "/retention", "/evidence"] },
   { label: "Library", items: ["/dashboard", "/frameworks"] },
   { label: "Configure", items: ["/settings"] },
 ];

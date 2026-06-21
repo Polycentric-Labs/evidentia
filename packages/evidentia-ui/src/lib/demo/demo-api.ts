@@ -26,6 +26,26 @@ import type {
   MilestoneUpdatePayload,
   GapExportResult,
   GapExportFormat,
+  ChallengeListResponse,
+  EffectiveChallenge,
+  Metric,
+  MetricWithStatus,
+  MetricObservationPayload,
+  MetricListResponse,
+  Workflow,
+  WorkflowInput,
+  WorkflowAdvancePayload,
+  WorkflowListResponse,
+  Owner,
+  RetentionCreatePayload,
+  RetentionMetadata,
+  RetentionExtendPayload,
+  RetentionTransitionPayload,
+  RetentionListResponse,
+  EvidenceArtifact,
+  EvidenceArtifactInput,
+  EvidenceSaveSummary,
+  EvidenceHistoryResponse,
 } from "@/lib/api";
 import type {
   AirGapCheckResponse,
@@ -141,6 +161,157 @@ function controlFromGap(gap: ControlGap): CatalogControl {
     placeholder: false,
   };
 }
+
+// ── Demo fixtures for the governance / retention / evidence surfaces ──────
+//
+// Small inline hero datasets (a couple of rows each) so the demo GUI renders
+// these screens with zero network. Mutating verbs echo their input; deletes
+// resolve void; the four report verbs return a short baked markdown string.
+
+const DEMO_CHALLENGES: EffectiveChallenge[] = [
+  {
+    id: "demo-chal-1",
+    subject_model_id: "demo-model-credit-v3",
+    challenger_email: "mrm.director@meridian.example",
+    challenger_role: "MRM Director",
+    challenge_date: "2026-03-12",
+    challenge_topic: "Methodology — feature selection rationale",
+    challenge_substance:
+      "Questioned whether the income-proxy feature introduces fair-lending risk absent a documented disparate-impact test.",
+    outcome: "modify",
+    outcome_rationale:
+      "Owner agreed to add a quarterly disparate-impact monitor before next validation.",
+    response: "Disparate-impact monitor scheduled for Q2; tracked in POA&M.",
+    resolved_at: null,
+  },
+  {
+    id: "demo-chal-2",
+    subject_model_id: "demo-model-fraud-v1",
+    challenger_email: "audit.senior@meridian.example",
+    challenger_role: "Internal Audit Senior",
+    challenge_date: "2026-04-02",
+    challenge_topic: "Data quality — training-set drift",
+    challenge_substance:
+      "Raised that the training set predates the 2026 product launch and may not represent current transaction patterns.",
+    outcome: "accepted",
+    outcome_rationale: "Retraining cadence accelerated to monthly.",
+    response: "Retraining job re-pointed at the rolling 90-day window.",
+    resolved_at: "2026-04-20",
+  },
+];
+
+const DEMO_METRICS: MetricWithStatus[] = [
+  {
+    id: "demo-metric-1",
+    name: "Failed-login rate",
+    description:
+      "Failed-login attempts per 1,000 successful logins (account-takeover KRI).",
+    kind: "kri",
+    direction: "higher_is_worse",
+    unit: "per 1,000 logins",
+    warning_threshold: 5,
+    critical_threshold: 12,
+    observations: [
+      { observed_at: "2026-04-01", value: 3.1, note: null },
+      { observed_at: "2026-05-01", value: 6.4, note: "Q2 backlog spike" },
+    ],
+    status: "watch",
+  },
+  {
+    id: "demo-metric-2",
+    name: "Control-coverage ratio",
+    description: "Fraction of in-scope controls with passing evidence (KPI).",
+    kind: "kpi",
+    direction: "higher_is_better",
+    unit: "%",
+    warning_threshold: 90,
+    critical_threshold: 80,
+    observations: [{ observed_at: "2026-05-01", value: 94, note: null }],
+    status: "ok",
+  },
+];
+
+const DEMO_WORKFLOWS: Workflow[] = [
+  {
+    id: "demo-wf-1",
+    name: "Credit-model-v3 quarterly review 2026-Q2",
+    description: "SR 11-7 quarterly review for the credit decisioning model.",
+    initiator: "mrm.lead@meridian.example",
+    subject: "demo-model-credit-v3",
+    template: "sr-11-7-quarterly",
+    status: "in_progress",
+    steps: [
+      {
+        name: "1st-line self-attestation",
+        required_role: "first",
+        status: "approved",
+        sla_days: 5,
+        history: [],
+      },
+      {
+        name: "2nd-line MRM review",
+        required_role: "second",
+        status: "in_progress",
+        sla_days: 10,
+        history: [],
+      },
+    ],
+  },
+];
+
+const DEMO_RETENTION: RetentionMetadata[] = [
+  {
+    id: "demo-ret-1",
+    classification: "sec-17a-4",
+    retention_period_days: 2555,
+    legal_hold: false,
+    lifecycle_stage: "active",
+    lock_until: "2033-01-01",
+    record_pointer: "s3://meridian-evidence/2026/audit-log.jsonl",
+    policy_name: "broker-dealer-books-and-records",
+    notes: "WORM-mirrored to the compliance bucket.",
+  },
+  {
+    id: "demo-ret-2",
+    classification: "model-risk",
+    retention_period_days: 1825,
+    legal_hold: true,
+    lifecycle_stage: "preserved",
+    lock_until: "2031-04-20",
+    record_pointer: "file:///evidence/model-validation-credit-v3.pdf",
+    policy_name: null,
+    notes: "Under legal hold pending regulatory inquiry.",
+  },
+];
+
+const DEMO_EVIDENCE: EvidenceArtifact[] = [
+  {
+    id: "demo-ev-v1",
+    lineage_id: "demo-lineage-1",
+    version: 1,
+    predecessor_id: null,
+    title: "S3 bucket encryption snapshot",
+    collected_by: "aws-collector",
+    content_format: "json",
+    content_hash:
+      "0000000000000000000000000000000000000000000000000000000000000000",
+  } as EvidenceArtifact,
+  {
+    id: "demo-ev-v2",
+    lineage_id: "demo-lineage-1",
+    version: 2,
+    predecessor_id: "demo-ev-v1",
+    title: "S3 bucket encryption snapshot (re-collected)",
+    collected_by: "aws-collector",
+    content_format: "json",
+    content_hash:
+      "1111111111111111111111111111111111111111111111111111111111111111",
+  } as EvidenceArtifact,
+];
+
+const DEMO_REPORT_MARKDOWN =
+  "# Demo Report\n\nThis is baked demo markdown — the live build streams a real " +
+  "report from the API. No backend is contacted in the demo GUI.\n";
 
 export const demoApi = {
   // ── Probe / identity ──────────────────────────────────────────────────
@@ -309,6 +480,202 @@ export const demoApi = {
     if (params?.framework)
       cadences = cadences.filter((c) => c.framework === params.framework);
     return Promise.resolve(clone(cadences));
+  },
+
+  // ── Governance: challenges ────────────────────────────────────────────
+  listChallenges: (params?: {
+    skip?: number;
+    limit?: number;
+    subject_model_id?: string;
+    outcome?: string;
+  }): Promise<ChallengeListResponse> => {
+    let items = DEMO_CHALLENGES;
+    if (params?.subject_model_id)
+      items = items.filter(
+        (c) => c.subject_model_id === params.subject_model_id,
+      );
+    if (params?.outcome)
+      items = items.filter((c) => c.outcome === params.outcome);
+    const total = items.length;
+    const skip = params?.skip ?? 0;
+    const limit = params?.limit ?? total;
+    const page = items.slice(skip, skip + limit);
+    return Promise.resolve({ total, skip, limit, items: clone(page) });
+  },
+  createChallenge: (challenge: EffectiveChallenge): Promise<EffectiveChallenge> =>
+    Promise.resolve({
+      ...clone(challenge),
+      id: `demo-chal-${Date.now()}`,
+    }),
+  getChallenge: (challengeId: string): Promise<EffectiveChallenge> => {
+    const item =
+      DEMO_CHALLENGES.find((c) => c.id === challengeId) ?? DEMO_CHALLENGES[0];
+    return Promise.resolve(clone(item));
+  },
+
+  // ── Governance: metrics ───────────────────────────────────────────────
+  listMetrics: (params?: {
+    skip?: number;
+    limit?: number;
+    kind?: string;
+  }): Promise<MetricListResponse> => {
+    let items = DEMO_METRICS;
+    if (params?.kind) items = items.filter((m) => m.kind === params.kind);
+    const total = items.length;
+    const skip = params?.skip ?? 0;
+    const limit = params?.limit ?? total;
+    const page = items.slice(skip, skip + limit);
+    return Promise.resolve({ total, skip, limit, items: clone(page) });
+  },
+  createMetric: (metric: Metric): Promise<MetricWithStatus> =>
+    Promise.resolve({
+      ...clone(metric),
+      id: `demo-metric-${Date.now()}`,
+      status: "ok",
+    }),
+  observeMetric: (
+    metricId: string,
+    payload: MetricObservationPayload,
+  ): Promise<MetricWithStatus> => {
+    const base = DEMO_METRICS.find((m) => m.id === metricId) ?? DEMO_METRICS[0];
+    const item = clone(base);
+    item.observations = [
+      ...(item.observations ?? []),
+      {
+        observed_at: payload.observed_at,
+        value: payload.value,
+        note: payload.note ?? null,
+      },
+    ];
+    return Promise.resolve(item);
+  },
+  getMetric: (metricId: string): Promise<MetricWithStatus> => {
+    const item = DEMO_METRICS.find((m) => m.id === metricId) ?? DEMO_METRICS[0];
+    return Promise.resolve(clone(item));
+  },
+  deleteMetric: (_metricId: string): Promise<void> => Promise.resolve(),
+  metricsReport: (): Promise<string> => Promise.resolve(DEMO_REPORT_MARKDOWN),
+
+  // ── Governance: workflows ─────────────────────────────────────────────
+  listWorkflows: (params?: {
+    skip?: number;
+    limit?: number;
+  }): Promise<WorkflowListResponse> => {
+    const items = DEMO_WORKFLOWS;
+    const total = items.length;
+    const skip = params?.skip ?? 0;
+    const limit = params?.limit ?? total;
+    const page = items.slice(skip, skip + limit);
+    return Promise.resolve({ total, skip, limit, items: clone(page) });
+  },
+  runWorkflow: (workflow: WorkflowInput): Promise<Workflow> =>
+    Promise.resolve({
+      ...clone(DEMO_WORKFLOWS[0]),
+      ...clone(workflow),
+      id: `demo-wf-${Date.now()}`,
+    } as Workflow),
+  advanceWorkflow: (
+    workflowId: string,
+    _payload: WorkflowAdvancePayload,
+  ): Promise<Workflow> => {
+    const item =
+      DEMO_WORKFLOWS.find((w) => w.id === workflowId) ?? DEMO_WORKFLOWS[0];
+    return Promise.resolve(clone(item));
+  },
+  getWorkflow: (workflowId: string): Promise<Workflow> => {
+    const item =
+      DEMO_WORKFLOWS.find((w) => w.id === workflowId) ?? DEMO_WORKFLOWS[0];
+    return Promise.resolve(clone(item));
+  },
+  workflowLog: (_workflowId: string): Promise<string> =>
+    Promise.resolve(DEMO_REPORT_MARKDOWN),
+  deleteWorkflow: (_workflowId: string): Promise<void> => Promise.resolve(),
+
+  // ── Governance: three-lines report ────────────────────────────────────
+  linesReport: (_owners: Owner[]): Promise<string> =>
+    Promise.resolve(DEMO_REPORT_MARKDOWN),
+
+  // ── Retention ─────────────────────────────────────────────────────────
+  listRetention: (params?: {
+    skip?: number;
+    limit?: number;
+    classification?: string;
+    lifecycle?: string;
+  }): Promise<RetentionListResponse> => {
+    let items = DEMO_RETENTION;
+    if (params?.classification)
+      items = items.filter((r) => r.classification === params.classification);
+    if (params?.lifecycle)
+      items = items.filter((r) => r.lifecycle_stage === params.lifecycle);
+    const total = items.length;
+    const skip = params?.skip ?? 0;
+    const limit = params?.limit ?? total;
+    const page = items.slice(skip, skip + limit);
+    return Promise.resolve({ total, skip, limit, items: clone(page) });
+  },
+  createRetention: (payload: RetentionCreatePayload): Promise<RetentionMetadata> =>
+    Promise.resolve({
+      ...clone(DEMO_RETENTION[0]),
+      ...clone(payload),
+      retention_period_days: payload.retention_period_days ?? 2555,
+      id: `demo-ret-${Date.now()}`,
+    } as RetentionMetadata),
+  getRetention: (retentionId: string): Promise<RetentionMetadata> => {
+    const item =
+      DEMO_RETENTION.find((r) => r.id === retentionId) ?? DEMO_RETENTION[0];
+    return Promise.resolve(clone(item));
+  },
+  extendRetention: (
+    retentionId: string,
+    payload: RetentionExtendPayload,
+  ): Promise<RetentionMetadata> => {
+    const base =
+      DEMO_RETENTION.find((r) => r.id === retentionId) ?? DEMO_RETENTION[0];
+    return Promise.resolve({
+      ...clone(base),
+      lock_until: payload.new_lock_until,
+    });
+  },
+  transitionRetention: (
+    retentionId: string,
+    payload: RetentionTransitionPayload,
+  ): Promise<RetentionMetadata> => {
+    const base =
+      DEMO_RETENTION.find((r) => r.id === retentionId) ?? DEMO_RETENTION[0];
+    return Promise.resolve({
+      ...clone(base),
+      lifecycle_stage: payload.new_stage,
+    });
+  },
+  deleteRetention: (_retentionId: string): Promise<void> => Promise.resolve(),
+  retentionReport: (): Promise<string> => Promise.resolve(DEMO_REPORT_MARKDOWN),
+
+  // ── Evidence (lineage / versions) ─────────────────────────────────────
+  saveEvidence: (
+    artifact: EvidenceArtifactInput,
+  ): Promise<EvidenceSaveSummary> =>
+    Promise.resolve({
+      artifact_id: `demo-ev-${Date.now()}`,
+      // Lineage continues the demo chain when the input names it; otherwise
+      // a fresh synthetic lineage. (artifact.lineage_id is echoed when set.)
+      lineage_id: artifact.lineage_id ?? "demo-lineage-1",
+      version: DEMO_EVIDENCE.length + 1,
+      predecessor_id: DEMO_EVIDENCE[DEMO_EVIDENCE.length - 1]?.id ?? null,
+    }),
+  evidenceHistory: (lineageId: string): Promise<EvidenceHistoryResponse> => {
+    const items = DEMO_EVIDENCE.filter((e) => e.lineage_id === lineageId);
+    const chain = items.length > 0 ? items : DEMO_EVIDENCE;
+    return Promise.resolve({ total: chain.length, items: clone(chain) });
+  },
+  evidenceVersion: (
+    lineageId: string,
+    version: number,
+  ): Promise<EvidenceArtifact> => {
+    const item =
+      DEMO_EVIDENCE.find(
+        (e) => e.lineage_id === lineageId && e.version === version,
+      ) ?? DEMO_EVIDENCE[0];
+    return Promise.resolve(clone(item));
   },
 
   // ── Explain ───────────────────────────────────────────────────────────

@@ -338,108 +338,108 @@ commands:
     status: cli-only
   - cli: "retention set"
     api: "POST /api/retention"
-    gui: null
-    status: api-only
+    gui: "/retention"
+    status: full
   - cli: "retention list"
     api: "GET /api/retention"
-    gui: null
-    status: api-only
+    gui: "/retention"
+    status: full
   - cli: "retention show"
     api: "GET /api/retention/{retention_id}"
-    gui: null
-    status: api-only
+    gui: "/retention"
+    status: full
   - cli: "retention extend"
     api: "POST /api/retention/{retention_id}/extend"
-    gui: null
-    status: api-only
+    gui: "/retention"
+    status: full
   - cli: "retention transition"
     api: "POST /api/retention/{retention_id}/transition"
-    gui: null
-    status: api-only
+    gui: "/retention"
+    status: full
   - cli: "retention delete"
     api: "DELETE /api/retention/{retention_id}"
-    gui: null
-    status: api-only
+    gui: "/retention"
+    status: full
   - cli: "retention report"
     api: "GET /api/retention/report"
-    gui: null
-    status: api-only
+    gui: "/retention"
+    status: full
   - cli: "governance lines-report"
     api: "POST /api/governance/lines-report"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "governance challenge add"
     api: "POST /api/governance/challenges"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "governance challenge list"
     api: "GET /api/governance/challenges"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "governance challenge show"
     api: "GET /api/governance/challenges/{challenge_id}"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "governance metrics add"
     api: "POST /api/governance/metrics"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "governance metrics observe"
     api: "POST /api/governance/metrics/{metric_id}/observations"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "governance metrics list"
     api: "GET /api/governance/metrics"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "governance metrics show"
     api: "GET /api/governance/metrics/{metric_id}"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "governance metrics delete"
     api: "DELETE /api/governance/metrics/{metric_id}"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "governance metrics report"
     api: "GET /api/governance/metrics/report"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "governance workflow run"
     api: "POST /api/governance/workflows"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "governance workflow advance"
     api: "POST /api/governance/workflows/{workflow_id}/advance"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "governance workflow status"
     api: "GET /api/governance/workflows/{workflow_id}"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "governance workflow list"
     api: "GET /api/governance/workflows"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "governance workflow log"
     api: "GET /api/governance/workflows/{workflow_id}/log"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "governance workflow delete"
     api: "DELETE /api/governance/workflows/{workflow_id}"
-    gui: null
-    status: api-only
+    gui: "/governance"
+    status: full
   - cli: "evidence save"
     api: "POST /api/evidence"
-    gui: null
-    status: api-only
+    gui: "/evidence"
+    status: full
   - cli: "evidence history"
     api: "GET /api/evidence/{lineage_id}/history"
-    gui: null
-    status: api-only
+    gui: "/evidence"
+    status: full
   - cli: "evidence show"
     api: "GET /api/evidence/{lineage_id}/versions/{version}"
-    gui: null
-    status: api-only
+    gui: "/evidence"
+    status: full
   - cli: "serve"
     api: null
     gui: null
