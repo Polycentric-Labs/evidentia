@@ -696,57 +696,6 @@
         "title": "CollectionContext",
         "type": "object"
       },
-      "CompletedQuestionnaireIngest": {
-        "description": "Request body for the DD-questionnaire ingest endpoint.\n\nCarries the completed (or partially-completed) questionnaire\ncontent the API caller posts back after a vendor returns it. The\nHTTP surface receives structured JSON directly (the CLI's\n``parse_completed_questionnaire`` file-parsing path has no\nequivalent need here — the body IS the parsed content).\n\n``responses`` is the per-question answer map keyed by question.id\n(e.g. ``EVG-GOV-01``). An empty map is a malformed ingest (nothing\nto record) and the endpoint rejects it with a 400.",
-        "properties": {
-          "format": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Questionnaire framework the responses correspond to (e.g. 'evidentia-generic' / 'caiq-lite'). Free-text; recorded on the evidence reference for context.",
-            "title": "Format"
-          },
-          "questionnaire_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "UUID from the originating Questionnaire (when the caller carries it forward from the generate step). Recorded on the evidence reference for correlation; not required.",
-            "title": "Questionnaire Id"
-          },
-          "responses": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Per-question vendor responses keyed by question.id. Empty string == 'no response'. At least one entry is required — an empty map is rejected as a malformed ingest (400).",
-            "title": "Responses",
-            "type": "object"
-          },
-          "source_path": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Optional provenance label — e.g. the filename the operator received the completed questionnaire as. Recorded on the evidence reference's notes for audit context.",
-            "title": "Source Path"
-          }
-        },
-        "title": "CompletedQuestionnaireIngest",
-        "type": "object"
-      },
       "ComplianceStatus": {
         "description": "Compliance/posture result of the check a finding represents.\n\nDistinct from :class:`FindingStatus`, which is the finding's\nlifecycle state (active / resolved / suppressed).\n``ComplianceStatus`` answers a different question — did the checked\ncontrol pass or fail? — and mirrors the OCSF Compliance Finding\n``compliance.status`` field. Added v0.10.0 for OCSF alignment.",
         "enum": [
@@ -1349,6 +1298,98 @@
         "title": "ControlMapping",
         "type": "object"
       },
+      "ControlThreatMapping": {
+        "additionalProperties": false,
+        "description": "A single control→threat relationship: a control mitigates a threat.",
+        "properties": {
+          "control_id": {
+            "description": "Control ID from the imported catalog, e.g. 'AC-2'.",
+            "title": "Control Id",
+            "type": "string"
+          },
+          "coverage": {
+            "default": "full",
+            "description": "Coverage strength (full / partial / compensating).",
+            "enum": [
+              "full",
+              "partial",
+              "compensating"
+            ],
+            "title": "Coverage",
+            "type": "string"
+          },
+          "mapping_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Stable per-mapping identifier (``urn:uuid:…``). Auto-derived deterministically on emit when absent.",
+            "title": "Mapping Id"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional operator note / rationale.",
+            "title": "Notes"
+          },
+          "relationship": {
+            "default": "mitigates",
+            "description": "How the control relates to the threat.",
+            "enum": [
+              "mitigates",
+              "partially-mitigates",
+              "compensating",
+              "detects"
+            ],
+            "title": "Relationship",
+            "type": "string"
+          },
+          "threat_framework": {
+            "description": "Source taxonomy of ``threat_id``.",
+            "enum": [
+              "mitre-attack",
+              "cwe",
+              "capec"
+            ],
+            "title": "Threat Framework",
+            "type": "string"
+          },
+          "threat_id": {
+            "description": "Canonical threat ID, e.g. 'T1078', 'CWE-79', 'CAPEC-66'.",
+            "title": "Threat Id",
+            "type": "string"
+          },
+          "threat_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Human-readable threat name.",
+            "title": "Threat Name"
+          }
+        },
+        "required": [
+          "control_id",
+          "threat_id",
+          "threat_framework"
+        ],
+        "title": "ControlThreatMapping",
+        "type": "object"
+      },
       "CriticalityTier": {
         "description": "FFIEC Vendor Management criticality tier.\n\nDrives the due-diligence-review cadence enforced by\n:meth:`Vendor.compute_next_review_due`:\n\n- ``critical`` → annual (12 months)\n- ``high`` → annual (12 months)\n- ``medium`` → biennial (24 months)\n- ``low`` → triennial (36 months)\n\nOperators may override by setting ``next_review_due`` directly.",
         "enum": [
@@ -1359,6 +1400,63 @@
         ],
         "title": "CriticalityTier",
         "type": "string"
+      },
+      "DDQuestionnaireIngestResult": {
+        "description": "Correlation result returned by the DD-questionnaire ingest endpoint.\n\nMirrors the ``evidentia tprm dd-questionnaire ingest`` CLI verb's\n``--output-format json`` shape: the parsed responses (keyed by\nquestion.id) correlated to a resolved vendor, plus the carry-forward\ncontext (questionnaire id / format) and the ingest timestamp. Like\nthe CLI, this is PARSE-ONLY — persistence to ``vendor.evidence_refs``\nstays deferred, so no vendor mutation occurs.",
+        "properties": {
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Questionnaire framework parsed from the document's ``format`` field (e.g. 'evidentia-generic' / 'caiq-lite'); null when absent or unrecognized.",
+            "title": "Format"
+          },
+          "ingested_at": {
+            "description": "ISO-8601 timestamp the parse/correlation ran.",
+            "title": "Ingested At",
+            "type": "string"
+          },
+          "questionnaire_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "UUID carried forward from the originating Questionnaire's ``id`` field, when the posted document includes it.",
+            "title": "Questionnaire Id"
+          },
+          "responses": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Per-question vendor responses correlated by question.id (e.g. ``EVG-GOV-01``). Empty string == 'no response'.",
+            "title": "Responses",
+            "type": "object"
+          },
+          "vendor": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "The resolved vendor the questionnaire correlated to: ``{'id': ..., 'name': ...}``. Mirrors the CLI's vendor block.",
+            "title": "Vendor",
+            "type": "object"
+          }
+        },
+        "required": [
+          "vendor",
+          "responses",
+          "ingested_at"
+        ],
+        "title": "DDQuestionnaireIngestResult",
+        "type": "object"
       },
       "DeploymentStatus": {
         "description": "Operational lifecycle status of a registered AI system.",
@@ -2269,6 +2367,63 @@
         },
         "title": "EvidentiaConfig",
         "type": "object"
+      },
+      "FIPS199CategorizeRequest": {
+        "description": "Body for ``POST /ai-gov/systems/{system_id}/categorize-fips``.\n\nThe three per-objective ratings are required; ``overall`` is\noptional (auto-computed high-water-mark when omitted, validated\nwhen supplied — a mismatch is a 400 domain error).",
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/FIPS199Impact",
+            "description": "FIPS 199 availability impact: low / moderate / high."
+          },
+          "confidentiality": {
+            "$ref": "#/components/schemas/FIPS199Impact",
+            "description": "FIPS 199 confidentiality impact: low / moderate / high."
+          },
+          "integrity": {
+            "$ref": "#/components/schemas/FIPS199Impact",
+            "description": "FIPS 199 integrity impact: low / moderate / high."
+          },
+          "overall": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FIPS199Impact"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional explicit high-water-mark. Omit to auto-compute; if supplied it MUST equal max(C, I, A) or the request is rejected as a paperwork error (400)."
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          }
+        },
+        "required": [
+          "confidentiality",
+          "integrity",
+          "availability"
+        ],
+        "title": "FIPS199CategorizeRequest",
+        "type": "object"
+      },
+      "FIPS199Impact": {
+        "description": "Impact level per FIPS 199 §3.\n\nOrdered ``LOW < MODERATE < HIGH`` for the high-water-mark\naggregation. String values match FIPS 199 + NIST SP 800-60\nspelling conventions.",
+        "enum": [
+          "low",
+          "moderate",
+          "high"
+        ],
+        "title": "FIPS199Impact",
+        "type": "string"
       },
       "FairMcQuantifyResponse": {
         "additionalProperties": false,
@@ -4231,6 +4386,31 @@
         "title": "OLIRRelationship",
         "type": "string"
       },
+      "OMBImpactCategory": {
+        "description": "OMB M-24-10 §5(b) AI impact classification.\n\nOperators rate per the published §5 definitions + worked examples\nin agency compliance plans (Federal Reserve / EXIM / SBA / DOJ /\nVA / EEOC each ship their interpretation of the categories).\nString values stable across releases so persisted YAML / JSON\ninventories survive minor / major version bumps.",
+        "enum": [
+          "rights_impacting",
+          "safety_impacting",
+          "rights_and_safety_impacting",
+          "neither"
+        ],
+        "title": "OMBImpactCategory",
+        "type": "string"
+      },
+      "OMBImpactRequest": {
+        "description": "Body for ``POST /ai-gov/systems/{system_id}/set-omb-impact``.",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/OMBImpactCategory",
+            "description": "OMB M-24-10 §5(b) category: rights_impacting / safety_impacting / rights_and_safety_impacting / neither."
+          }
+        },
+        "required": [
+          "category"
+        ],
+        "title": "OMBImpactRequest",
+        "type": "object"
+      },
       "OpenFAIRScenario": {
         "additionalProperties": false,
         "description": "A risk scenario expressed in Open FAIR terms.\n\nOperators supply each FAIR factor as either a scalar (single-\npoint estimate) or a :class:`PERTRange` (range estimate).\nThe :func:`compute_ale` helper resolves both to a deterministic\nexpected value.",
@@ -5383,6 +5563,102 @@
         "title": "Tier",
         "type": "string"
       },
+      "TraceabilityMatrix": {
+        "additionalProperties": false,
+        "description": "A Control↔Threat Traceability Matrix, emittable as a signed OSCAL profile.",
+        "properties": {
+          "catalog_href": {
+            "description": "OSCAL href of the control catalog the profile imports (the matrix annotates this catalog's controls with threat links).",
+            "title": "Catalog Href",
+            "type": "string"
+          },
+          "crosswalk_source": {
+            "default": "self-attested",
+            "description": "Provenance of the mappings, e.g. 'mitre-ctid-mappings-explorer' or 'self-attested'. Surfaced in the emitted profile so consumers can judge authority (CTID = authoritative-for-ATT&CK, illustrative for control coverage; NOT a NIST safe harbor).",
+            "title": "Crosswalk Source",
+            "type": "string"
+          },
+          "framework_id": {
+            "description": "Framework identifier, e.g. 'nist-800-53-rev5-moderate'.",
+            "title": "Framework Id",
+            "type": "string"
+          },
+          "mappings": {
+            "items": {
+              "$ref": "#/components/schemas/ControlThreatMapping"
+            },
+            "title": "Mappings",
+            "type": "array"
+          },
+          "title": {
+            "description": "Human-readable matrix title.",
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "catalog_href",
+          "framework_id"
+        ],
+        "title": "TraceabilityMatrix",
+        "type": "object"
+      },
+      "UpdateSystemRequest": {
+        "description": "Body for ``PUT /ai-gov/systems/{system_id}`` (partial update).\n\nAll fields optional — only the supplied ones are changed\n(partial-update semantics matching the ``ai-gov update`` CLI verb).\nAn empty body (no fields) is a 400 (nothing to update).",
+        "properties": {
+          "deployment_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeploymentStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "ssp_reference": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ssp Reference"
+          }
+        },
+        "title": "UpdateSystemRequest",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -5971,6 +6247,46 @@
         ],
         "title": "VendorType",
         "type": "string"
+      },
+      "VerifyRequest": {
+        "description": "Body for ``POST /oscal/verify``.\n\n``content`` is the OSCAL Assessment Result document as a JSON string\n(inline — not a server path). The two ``expected_sigstore_*`` fields\nare PUBLIC identity strings pinning the Sigstore signer; they are\nboth-or-neither (cosign model, F-V109-1) — supplying exactly one is a\nusage error.",
+        "properties": {
+          "content": {
+            "description": "The OSCAL Assessment Result document, inline, as a JSON string. NOT a filesystem path — the server writes this to a private temp file, verifies it, and deletes it.",
+            "minLength": 1,
+            "title": "Content",
+            "type": "string"
+          },
+          "expected_sigstore_identity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Expected Sigstore signer identity (email or OIDC subject). Public identity string. Both-or-neither with expected_sigstore_issuer (cosign model).",
+            "title": "Expected Sigstore Identity"
+          },
+          "expected_sigstore_issuer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Expected Sigstore identity issuer URL (e.g. 'https://token.actions.githubusercontent.com'). Public identity string. Both-or-neither with expected_sigstore_identity.",
+            "title": "Expected Sigstore Issuer"
+          }
+        },
+        "required": [
+          "content"
+        ],
+        "title": "VerifyRequest",
+        "type": "object"
       },
       "VersionResponse": {
         "additionalProperties": false,
@@ -6659,6 +6975,214 @@
           }
         },
         "summary": "Ai Gov Get System",
+        "tags": [
+          "ai-gov"
+        ]
+      },
+      "put": {
+        "description": "Partially update a registered AI system.\n\nFields omitted from the body are left unchanged. The merged entry\nis re-validated through ``model_validate`` so field validators run\non the partial-update path (mirrors the v0.9.5 F-V94-S12 closure\non the CLI ``ai-gov update`` verb). Returns the updated entry.",
+        "operationId": "ai_gov_update_system_api_ai_gov_systems__system_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "system_id",
+            "required": true,
+            "schema": {
+              "title": "System Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSystemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Ai Gov Update System Api Ai Gov Systems  System Id  Put",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ai Gov Update System",
+        "tags": [
+          "ai-gov"
+        ]
+      }
+    },
+    "/api/ai-gov/systems/{system_id}/categorize-fips": {
+      "post": {
+        "description": "Set FIPS 199 categorization on a registered AI system.\n\nThe overall high-water-mark is auto-computed from the three\nper-objective ratings per FIPS 199 §3 (or validated against the\nsupplied ``overall`` — a mismatch is a 400 paperwork error).",
+        "operationId": "ai_gov_categorize_fips_api_ai_gov_systems__system_id__categorize_fips_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "system_id",
+            "required": true,
+            "schema": {
+              "title": "System Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FIPS199CategorizeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Ai Gov Categorize Fips Api Ai Gov Systems  System Id  Categorize Fips Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ai Gov Categorize Fips",
+        "tags": [
+          "ai-gov"
+        ]
+      }
+    },
+    "/api/ai-gov/systems/{system_id}/retire": {
+      "post": {
+        "description": "Retire a registered AI system (deployment_status=retired).\n\nUnlike DELETE, the entry is PRESERVED so historical audits can\nstill see the system's classification + ownership history.\nIdempotent: retiring an already-retired system is a no-op success.",
+        "operationId": "ai_gov_retire_system_api_ai_gov_systems__system_id__retire_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "system_id",
+            "required": true,
+            "schema": {
+              "title": "System Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Ai Gov Retire System Api Ai Gov Systems  System Id  Retire Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ai Gov Retire System",
+        "tags": [
+          "ai-gov"
+        ]
+      }
+    },
+    "/api/ai-gov/systems/{system_id}/set-omb-impact": {
+      "post": {
+        "description": "Set the OMB M-24-10 impact category on a registered AI system.",
+        "operationId": "ai_gov_set_omb_impact_api_ai_gov_systems__system_id__set_omb_impact_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "system_id",
+            "required": true,
+            "schema": {
+              "title": "System Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OMBImpactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Ai Gov Set Omb Impact Api Ai Gov Systems  System Id  Set Omb Impact Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ai Gov Set Omb Impact",
         "tags": [
           "ai-gov"
         ]
@@ -10343,6 +10867,50 @@
         ]
       }
     },
+    "/api/oscal/verify": {
+      "post": {
+        "description": "Verify an inline OSCAL Assessment Result document. READ-ONLY.\n\nRuns the chain-of-custody check: back-matter SHA-256 digests, then a\ndetached GPG signature (only ever present in offline-safe form here —\nno signature artifacts travel with inline content, so the signature\nlegs are typically \"not checked\"), then the Sigstore/Rekor identity\nleg (skipped in offline mode).\n\nReturns 200 with a structured verdict whether the document is valid\nOR invalid — a tampered AR is a NEGATIVE verdict, not a server error\n(the verification ran successfully and concluded the document is\nbad). 400 is reserved for input that cannot be verified at all\n(unparseable JSON, both-or-neither identity violation). Pydantic body\nvalidation failures surface as 422.",
+        "operationId": "verify_assessment_result_api_oscal_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Verify Assessment Result Api Oscal Verify Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify Assessment Result",
+        "tags": [
+          "oscal"
+        ]
+      }
+    },
     "/api/poam/calendar": {
       "get": {
         "description": "Read-only attention surface: overdue + due-soon milestones.",
@@ -11639,7 +12207,7 @@
     },
     "/api/tprm/vendors/{vendor_id}/dd-questionnaire/ingest": {
       "post": {
-        "description": "Ingest a completed DD questionnaire into a vendor record.\n\nRecords the completed-questionnaire responses as an\n:class:`EvidenceRef` appended to ``vendor.evidence_refs`` and\npersists the mutated vendor — the persistence-to-vendor phase the\nv0.7.9 ``evidentia tprm dd-questionnaire ingest`` CLI verb\ndeferred (the CLI parses + correlates, then prints for review).\n\nLocal store mutation only — no credentials, no network. Returns\nthe updated :class:`Vendor`.\n\nError contract (matches the rest of this router):\n\n  - 404 on shape-violation OR well-formed-unknown ``vendor_id``\n    (F-V08-DAST-1 widening pattern).\n  - 400 (string detail, F-V08-DAST-3 invariant) when the\n    questionnaire content is malformed — i.e. ``responses`` is\n    empty (nothing to ingest). Pydantic auto-validation 422s\n    (wrong-typed body) keep their array-shape detail.\n  - 403 when an RBAC policy denies the ``write`` action.",
+        "description": "Parse + correlate a completed DD questionnaire (parse-only).\n\nMatches the ``evidentia tprm dd-questionnaire ingest`` CLI verb\nexactly: PARSES the posted completed-questionnaire document and\nCORRELATES the responses to the vendor record, then RETURNS the\ncorrelation result. It does NOT mutate or save the vendor and does\nNOT create an :class:`EvidenceRef` — persistence stays deferred,\nmatching the CLI's documented scope (the CLI parses + correlates,\nthen prints for review).\n\nThe core :func:`parse_completed_questionnaire` is file-based\n(extension-dispatched). Over HTTP the body IS the document, so it is\nwritten to an ephemeral ``.json`` temp file, parsed, and the temp\nfile is removed in a ``finally`` — no path/secret leakage and no\npersistent on-disk state.\n\nLocal parse only — no credentials, no network. Returns the parsed\n:class:`DDQuestionnaireIngestResult`.\n\nError contract (matches the rest of this router):\n\n  - 404 on shape-violation OR well-formed-unknown ``vendor_id``\n    (F-V08-DAST-1 widening pattern). The endpoint is vendor-scoped.\n  - 400 (string detail, F-V08-DAST-3 invariant) when the\n    questionnaire content is unparseable or correlates to no\n    responses (nothing to ingest). Pydantic auto-validation 422s\n    (wrong-typed body) keep their array-shape detail.\n\nNo ``require_role(\"write\")`` gate: a parse is a read-style operation\n(no vendor mutation), so it is open like the other read endpoints on\nthis router.",
         "operationId": "ingest_dd_questionnaire_api_tprm_vendors__vendor_id__dd_questionnaire_ingest_post",
         "parameters": [
           {
@@ -11656,7 +12224,10 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CompletedQuestionnaireIngest"
+                "additionalProperties": true,
+                "description": "The completed questionnaire document in the canonical Questionnaire shape — a top-level ``questions`` array whose entries carry an ``id`` + a ``vendor_response`` value, plus optional top-level ``id`` (questionnaire UUID) and ``format``. This is exactly the JSON the ``evidentia tprm dd-questionnaire generate --output-format json`` step emits, returned by the vendor with responses filled in.",
+                "title": "Document",
+                "type": "object"
               }
             }
           },
@@ -11667,7 +12238,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Vendor-Output"
+                  "$ref": "#/components/schemas/DDQuestionnaireIngestResult"
                 }
               }
             },
@@ -11741,6 +12312,50 @@
         "summary": "Preview Next Review Due",
         "tags": [
           "tprm"
+        ]
+      }
+    },
+    "/api/traceability/emit": {
+      "post": {
+        "description": "Emit the Control↔Threat Traceability Matrix as an UNSIGNED OSCAL profile.\n\nREAD-MOSTLY. The matrix is supplied inline (no server path); the\nresponse is the bare OSCAL profile dict. Signing is CLI-only and is\nNOT performed here — the returned document is always unsigned.\n\n400 when the matrix is schema-valid but has no mappings (nothing to\nemit, mirroring the CLI guard). 422 (Pydantic) for a shape-invalid\nbody, including any signing knob smuggled into the request (the body\nmodel forbids extra fields).",
+        "operationId": "emit_traceability_matrix_api_traceability_emit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TraceabilityMatrix"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Emit Traceability Matrix Api Traceability Emit Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Emit Traceability Matrix",
+        "tags": [
+          "traceability"
         ]
       }
     },

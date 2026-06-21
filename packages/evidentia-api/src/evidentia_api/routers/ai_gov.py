@@ -1,4 +1,4 @@
-"""AI governance router — v0.9.3 P2.5.
+"""AI governance router — v0.9.3 P2.5; v0.10.12 mutation verbs.
 
 REST surface for the v0.9.3 P2 AI governance work. Endpoints
 under ``/api/ai-gov`` mirror the CLI verbs:
@@ -8,11 +8,24 @@ under ``/api/ai-gov`` mirror the CLI verbs:
   - ``GET    /api/ai-gov/systems`` — list registered systems with
     optional ``?tier=`` filter
   - ``GET    /api/ai-gov/systems/{system_id}`` — get single entry
+  - ``PUT    /api/ai-gov/systems/{system_id}`` — partial-update a
+    registration (v0.10.12; mirrors ``ai-gov update``)
+  - ``POST   /api/ai-gov/systems/{system_id}/retire`` — lifecycle
+    retirement, entry preserved (v0.10.12; mirrors ``ai-gov retire``)
+  - ``POST   /api/ai-gov/systems/{system_id}/categorize-fips`` — set
+    FIPS 199 categorization (v0.10.12; mirrors ``ai-gov
+    categorize-fips``)
+  - ``POST   /api/ai-gov/systems/{system_id}/set-omb-impact`` — set
+    OMB M-24-10 impact category (v0.10.12; mirrors ``ai-gov
+    set-omb-impact``)
   - ``DELETE /api/ai-gov/systems/{system_id}`` — remove entry
 
-Auth posture: open (matches v0.9.0 POA&M router + v0.9.1 CONMON
-router; transport auth applied at the app layer via
-AuthProviderMiddleware).
+Auth posture: reads are open (matches v0.9.0 POA&M router + v0.9.1
+CONMON router; transport auth applied at the app layer via
+AuthProviderMiddleware). The v0.10.12 mutation verbs carry an opt-in
+``require_role("write")`` RBAC gate — inert under the default
+permissive policy, denying under an operator-configured deny-by-
+default policy (matches the governance router).
 """
 
 from __future__ import annotations
@@ -30,6 +43,9 @@ from evidentia_core.ai_governance import (
     AISystemRegistryEntry,
     DeploymentStatus,
     EUAIActTier,
+    FIPS199Categorization,
+    FIPS199Impact,
+    OMBImpactCategory,
     classify,
 )
 from evidentia_core.ai_governance.registry_store import (
@@ -39,7 +55,9 @@ from evidentia_core.ai_governance.registry_store import (
 from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.security import FileLock, atomic_write_text
 from fastapi import APIRouter, Header, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
+
+from evidentia_api.rbac_dependency import require_role
 
 router = APIRouter()
 # v0.9.3 F-V93-Q2 review fix: REST surface emits audit events at
@@ -414,3 +432,280 @@ async def ai_gov_delete_system(system_id: str) -> dict[str, Any]:
             evidentia={"system_id": system_id},
         )
     return {"system_id": system_id, "removed": removed}
+
+
+# ── mutation verbs (v0.10.12) ──────────────────────────────────────
+# REST parity with the ``ai-gov update / retire / categorize-fips /
+# set-omb-impact`` CLI verbs. Error-normalization mirrors the poam
+# router: invalid-ID-shape + unknown-ID → 404; domain / body-content
+# errors → 400; malformed request bodies → 422 (FastAPI/Pydantic
+# request-validation). All four carry require_role("write").
+
+
+def _load_entry_or_404(system_id: str) -> AISystemRegistryEntry:
+    """Load a registry entry; raise 404 on invalid-shape OR unknown ID.
+
+    Mirrors the poam router's load-or-404 normalization: an
+    ``InvalidAISystemIdError`` (UUID shape violation) and a
+    well-formed-but-absent ID both surface as 404 from the client's
+    perspective.
+    """
+    try:
+        entry = AIRegistryStore().load(system_id)
+    except InvalidAISystemIdError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No registered AI system with ID {system_id!r}",
+        ) from exc
+    if entry is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No registered AI system with ID {system_id!r}",
+        )
+    return entry
+
+
+class UpdateSystemRequest(BaseModel):
+    """Body for ``PUT /ai-gov/systems/{system_id}`` (partial update).
+
+    All fields optional — only the supplied ones are changed
+    (partial-update semantics matching the ``ai-gov update`` CLI verb).
+    An empty body (no fields) is a 400 (nothing to update).
+    """
+
+    owner: str | None = Field(default=None, min_length=1, max_length=256)
+    provider: str | None = Field(default=None, min_length=1, max_length=256)
+    deployment_status: DeploymentStatus | None = Field(default=None)
+    ssp_reference: str | None = Field(default=None, max_length=2048)
+
+
+class FIPS199CategorizeRequest(BaseModel):
+    """Body for ``POST /ai-gov/systems/{system_id}/categorize-fips``.
+
+    The three per-objective ratings are required; ``overall`` is
+    optional (auto-computed high-water-mark when omitted, validated
+    when supplied — a mismatch is a 400 domain error).
+    """
+
+    confidentiality: FIPS199Impact = Field(
+        description="FIPS 199 confidentiality impact: low / moderate / high."
+    )
+    integrity: FIPS199Impact = Field(
+        description="FIPS 199 integrity impact: low / moderate / high."
+    )
+    availability: FIPS199Impact = Field(
+        description="FIPS 199 availability impact: low / moderate / high."
+    )
+    overall: FIPS199Impact | None = Field(
+        default=None,
+        description=(
+            "Optional explicit high-water-mark. Omit to auto-compute; "
+            "if supplied it MUST equal max(C, I, A) or the request is "
+            "rejected as a paperwork error (400)."
+        ),
+    )
+    rationale: str | None = Field(default=None, max_length=4000)
+
+
+class OMBImpactRequest(BaseModel):
+    """Body for ``POST /ai-gov/systems/{system_id}/set-omb-impact``."""
+
+    category: OMBImpactCategory = Field(
+        description=(
+            "OMB M-24-10 §5(b) category: rights_impacting / "
+            "safety_impacting / rights_and_safety_impacting / neither."
+        )
+    )
+
+
+@router.put(
+    "/ai-gov/systems/{system_id}",
+    dependencies=[require_role("write")],
+)
+async def ai_gov_update_system(
+    system_id: str, body: UpdateSystemRequest
+) -> dict[str, Any]:
+    """Partially update a registered AI system.
+
+    Fields omitted from the body are left unchanged. The merged entry
+    is re-validated through ``model_validate`` so field validators run
+    on the partial-update path (mirrors the v0.9.5 F-V94-S12 closure
+    on the CLI ``ai-gov update`` verb). Returns the updated entry.
+    """
+    entry = _load_entry_or_404(system_id)
+
+    updates: dict[str, object] = {}
+    if body.owner is not None:
+        updates["owner"] = body.owner
+    if body.provider is not None:
+        updates["provider"] = body.provider
+    if body.deployment_status is not None:
+        updates["deployment_status"] = body.deployment_status
+    if body.ssp_reference is not None:
+        updates["ssp_reference"] = body.ssp_reference
+
+    if not updates:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "No fields to update — supply at least one of owner / "
+                "provider / deployment_status / ssp_reference."
+            ),
+        )
+
+    # Re-validate the merged dict so field validators run (a raw
+    # model_copy(update=...) would bypass them). A domain validation
+    # failure normalizes to 400.
+    merged = {**entry.model_dump(mode="python"), **updates}
+    try:
+        updated = type(entry).model_validate(merged)
+    except (ValidationError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    AIRegistryStore().save(updated)
+
+    _log.info(
+        action=EventAction.AI_SYSTEM_UPDATED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"AI system {entry.descriptor.name!r} updated via API "
+            f"(system_id={system_id}; fields={sorted(updates.keys())})"
+        ),
+        evidentia={
+            "system_id": system_id,
+            "descriptor_name": entry.descriptor.name,
+            "changed_fields": sorted(updates.keys()),
+        },
+    )
+    return {
+        "system_id": system_id,
+        "entry": updated.model_dump(mode="json"),
+    }
+
+
+@router.post(
+    "/ai-gov/systems/{system_id}/retire",
+    dependencies=[require_role("write")],
+)
+async def ai_gov_retire_system(system_id: str) -> dict[str, Any]:
+    """Retire a registered AI system (deployment_status=retired).
+
+    Unlike DELETE, the entry is PRESERVED so historical audits can
+    still see the system's classification + ownership history.
+    Idempotent: retiring an already-retired system is a no-op success.
+    """
+    entry = _load_entry_or_404(system_id)
+
+    if entry.deployment_status == DeploymentStatus.RETIRED:
+        # Already retired — idempotent success, no audit re-emit.
+        return {
+            "system_id": system_id,
+            "entry": entry.model_dump(mode="json"),
+            "already_retired": True,
+        }
+
+    prior_status = entry.deployment_status
+    retired = entry.model_copy(
+        update={"deployment_status": DeploymentStatus.RETIRED}
+    )
+    AIRegistryStore().save(retired)
+
+    _log.info(
+        action=EventAction.AI_SYSTEM_RETIRED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"AI system {entry.descriptor.name!r} retired via API "
+            f"(system_id={system_id})"
+        ),
+        evidentia={
+            "system_id": system_id,
+            "descriptor_name": entry.descriptor.name,
+            "previous_status": str(prior_status),
+            "retirement_kind": "lifecycle",
+        },
+    )
+    return {
+        "system_id": system_id,
+        "entry": retired.model_dump(mode="json"),
+    }
+
+
+@router.post(
+    "/ai-gov/systems/{system_id}/categorize-fips",
+    dependencies=[require_role("write")],
+)
+async def ai_gov_categorize_fips(
+    system_id: str, body: FIPS199CategorizeRequest
+) -> dict[str, Any]:
+    """Set FIPS 199 categorization on a registered AI system.
+
+    The overall high-water-mark is auto-computed from the three
+    per-objective ratings per FIPS 199 §3 (or validated against the
+    supplied ``overall`` — a mismatch is a 400 paperwork error).
+    """
+    entry = _load_entry_or_404(system_id)
+
+    try:
+        cat = FIPS199Categorization(
+            confidentiality_impact=body.confidentiality,
+            integrity_impact=body.integrity,
+            availability_impact=body.availability,
+            overall=body.overall,
+            rationale=body.rationale,
+        )
+    except (ValidationError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    updated = entry.model_copy(update={"fips_199_categorization": cat})
+    AIRegistryStore().save(updated)
+
+    _log.info(
+        action=EventAction.AI_SYSTEM_FIPS_CATEGORIZED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"FIPS 199 categorized AI system {entry.descriptor.name!r} "
+            f"via API as {cat.overall} (system_id={system_id})"
+        ),
+        evidentia={
+            "system_id": system_id,
+            "confidentiality": str(cat.confidentiality_impact),
+            "integrity": str(cat.integrity_impact),
+            "availability": str(cat.availability_impact),
+            "overall": str(cat.overall),
+        },
+    )
+    return {
+        "system_id": system_id,
+        "entry": updated.model_dump(mode="json"),
+    }
+
+
+@router.post(
+    "/ai-gov/systems/{system_id}/set-omb-impact",
+    dependencies=[require_role("write")],
+)
+async def ai_gov_set_omb_impact(
+    system_id: str, body: OMBImpactRequest
+) -> dict[str, Any]:
+    """Set the OMB M-24-10 impact category on a registered AI system."""
+    entry = _load_entry_or_404(system_id)
+
+    updated = entry.model_copy(update={"omb_impact": body.category})
+    AIRegistryStore().save(updated)
+
+    _log.info(
+        action=EventAction.AI_SYSTEM_OMB_CLASSIFIED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"OMB M-24-10 classified AI system "
+            f"{entry.descriptor.name!r} via API as {body.category} "
+            f"(system_id={system_id})"
+        ),
+        evidentia={
+            "system_id": system_id,
+            "omb_impact": str(body.category),
+        },
+    )
+    return {
+        "system_id": system_id,
+        "entry": updated.model_dump(mode="json"),
+    }

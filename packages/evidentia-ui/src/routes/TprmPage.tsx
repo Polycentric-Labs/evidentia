@@ -18,9 +18,9 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   api,
   ApiError,
-  type CompletedQuestionnaireIngest,
   type ConcentrationReport,
   type CriticalityTier,
+  type DDQuestionnaireIngestResult,
   type Questionnaire,
   type Vendor,
   type VendorInput,
@@ -572,7 +572,8 @@ function ConcentrationSection() {
  * inline edit (`PUT /api/tprm/vendors/{id}`), delete
  * (`DELETE /api/tprm/vendors/{id}`), DD-questionnaire generate
  * (`POST .../dd-questionnaire`) and ingest (`POST .../dd-questionnaire/ingest`).
- * Every mutation invalidates the vendor-list query.
+ * The vendor-mutating verbs (edit / delete) invalidate the vendor-list query;
+ * DD-questionnaire ingest is PARSE-ONLY (no vendor mutation), so it does not.
  */
 function VendorDetailPanel({
   vendorId,
@@ -719,9 +720,7 @@ function VendorDetailPanel({
             </div>
           ))}
 
-        {detail.isSuccess && (
-          <DdQuestionnaireSection vendorId={vendorId} onIngested={invalidate} />
-        )}
+        {detail.isSuccess && <DdQuestionnaireSection vendorId={vendorId} />}
       </CardContent>
     </Card>
   );
@@ -892,19 +891,18 @@ function EditVendorForm({
 /**
  * DD-questionnaire generate + ingest. Generate kicks
  * `POST /api/tprm/vendors/{id}/dd-questionnaire` and renders the returned
- * structured questionnaire; ingest parses a `key=value` (one per line)
- * responses editor into a responses map and POSTs it to
- * `.../dd-questionnaire/ingest`, showing the updated vendor.
+ * structured questionnaire. Ingest is PARSE-ONLY: the operator pastes a
+ * completed `Questionnaire` document (the generated questionnaire JSON with
+ * each `questions[].vendor_response` filled in), which is parsed to an object
+ * and POSTed to `.../dd-questionnaire/ingest`; the endpoint correlates the
+ * responses to the vendor WITHOUT mutating it, and the returned
+ * `DDQuestionnaireIngestResult` (correlated responses + carry-forward
+ * questionnaire id / format + timestamp) is rendered below.
  */
-function DdQuestionnaireSection({
-  vendorId,
-  onIngested,
-}: {
-  vendorId: string;
-  onIngested: () => void;
-}) {
+function DdQuestionnaireSection({ vendorId }: { vendorId: string }) {
   const [questionnaire, setQuestionnaire] = useState<Questionnaire | null>(null);
-  const [responsesText, setResponsesText] = useState("");
+  const [documentText, setDocumentText] = useState("");
+  const [parseError, setParseError] = useState<string | null>(null);
 
   const generate = useMutation({
     mutationFn: () => api.ddQuestionnaireGenerate(vendorId),
@@ -912,26 +910,47 @@ function DdQuestionnaireSection({
   });
 
   const ingest = useMutation({
-    mutationFn: (payload: CompletedQuestionnaireIngest) =>
-      api.ddQuestionnaireIngest(vendorId, payload),
-    onSuccess: onIngested,
+    mutationFn: (document: Questionnaire) =>
+      api.ddQuestionnaireIngest(vendorId, document),
   });
 
-  /** Parse `key=value` lines (blank lines + lines without `=` ignored). */
-  const parseResponses = (text: string): Record<string, string> => {
-    const map: Record<string, string> = {};
-    for (const line of text.split("\n")) {
-      const idx = line.indexOf("=");
-      if (idx <= 0) continue;
-      const key = line.slice(0, idx).trim();
-      if (key.length === 0) continue;
-      map[key] = line.slice(idx + 1).trim();
+  /**
+   * Parse the pasted completed-questionnaire JSON into a `Questionnaire`
+   * document. The backend ingest endpoint is the source of truth for shape
+   * validation (it returns 400/422 on a malformed document), so this only
+   * guards against non-JSON / non-object text before the round-trip.
+   */
+  const parseDocument = (text: string): Questionnaire | null => {
+    let value: unknown;
+    try {
+      value = JSON.parse(text);
+    } catch {
+      setParseError("Could not parse — paste valid questionnaire JSON.");
+      return null;
     }
-    return map;
+    if (value == null || typeof value !== "object" || Array.isArray(value)) {
+      setParseError("Expected a questionnaire object (the generated JSON).");
+      return null;
+    }
+    setParseError(null);
+    return value as Questionnaire;
   };
 
-  const parsed = parseResponses(responsesText);
-  const canIngest = Object.keys(parsed).length > 0 && !ingest.isPending;
+  const submitIngest = () => {
+    const document = parseDocument(documentText);
+    if (document == null) return;
+    ingest.mutate(document);
+  };
+
+  /** Seed the ingest textarea with the generated questionnaire JSON so the
+   *  operator can fill in each `vendor_response` and submit the document. */
+  const prefillFromGenerated = () => {
+    if (questionnaire == null) return;
+    setParseError(null);
+    setDocumentText(JSON.stringify(questionnaire, null, 2));
+  };
+
+  const canIngest = documentText.trim().length > 0 && !ingest.isPending;
 
   return (
     <section className="stack-3 border-t pt-4" aria-label="Due-diligence questionnaire">
@@ -956,7 +975,16 @@ function DdQuestionnaireSection({
 
       {questionnaire && (
         <div className="stack-2">
-          <p className="text-sm font-medium">{questionnaire.title}</p>
+          <div className="row-between">
+            <p className="text-sm font-medium">{questionnaire.title}</p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={prefillFromGenerated}
+            >
+              Fill responses
+            </Button>
+          </div>
           <p className="text-xs muted">
             Format: <code className="kbd">{questionnaire.format}</code>
             {questionnaire.licensing_attribution
@@ -983,37 +1011,38 @@ function DdQuestionnaireSection({
       )}
 
       <div className="stack-2">
-        <Label htmlFor="dd-responses">Ingest completed responses</Label>
+        <Label htmlFor="dd-document">Ingest completed questionnaire</Label>
         <p className="text-xs muted">
-          One <code className="kbd">question_id=response</code> pair per line.
+          Paste the completed questionnaire JSON — the generated document with
+          each question&apos;s <code className="kbd">vendor_response</code>{" "}
+          filled in. Ingest correlates the responses without changing the
+          vendor.
         </p>
         <Textarea
-          id="dd-responses"
-          value={responsesText}
-          onChange={(e) => setResponsesText(e.target.value)}
-          rows={4}
-          placeholder={"EVG-GOV-01=Yes\nEVG-GOV-02=Partial"}
+          id="dd-document"
+          value={documentText}
+          onChange={(e) => {
+            setDocumentText(e.target.value);
+            if (parseError) setParseError(null);
+          }}
+          rows={6}
+          placeholder={
+            '{\n  "format": "evidentia-generic",\n  "questions": [\n    { "id": "EVG-GOV-01", "vendor_response": "Yes" }\n  ]\n}'
+          }
         />
         <div className="row gap-2">
-          <Button
-            type="button"
-            onClick={() =>
-              ingest.mutate({
-                responses: parsed,
-                ...(questionnaire?.id
-                  ? { questionnaire_id: questionnaire.id }
-                  : {}),
-                ...(questionnaire?.format
-                  ? { format: questionnaire.format }
-                  : {}),
-              })
-            }
-            disabled={!canIngest}
-          >
+          <Button type="button" onClick={submitIngest} disabled={!canIngest}>
             {ingest.isPending ? "Ingesting..." : "Ingest questionnaire"}
           </Button>
         </div>
       </div>
+
+      {parseError && (
+        <Alert variant="destructive">
+          <AlertTitle>Could not read questionnaire</AlertTitle>
+          <AlertDescription>{parseError}</AlertDescription>
+        </Alert>
+      )}
 
       {ingest.isError && (
         <Alert variant="destructive">
@@ -1022,21 +1051,69 @@ function DdQuestionnaireSection({
         </Alert>
       )}
 
-      {ingest.isSuccess && (
-        <Alert>
-          <AlertTitle>Questionnaire ingested</AlertTitle>
-          <AlertDescription>
-            Updated vendor{" "}
-            <code className="kbd">{ingest.data.name}</code> — next review due{" "}
-            {ingest.data.next_review_due ? (
-              <code className="kbd">{ingest.data.next_review_due}</code>
-            ) : (
-              <span className="dim">not scheduled</span>
-            )}
-            .
-          </AlertDescription>
-        </Alert>
-      )}
+      {ingest.isSuccess && <IngestResult result={ingest.data} />}
     </section>
+  );
+}
+
+/**
+ * Render the PARSE-ONLY correlation result from
+ * `POST .../dd-questionnaire/ingest`: the resolved vendor, the carry-forward
+ * questionnaire id / format / ingest timestamp, and the per-question
+ * correlated responses map (keyed by `question.id`).
+ */
+function IngestResult({ result }: { result: DDQuestionnaireIngestResult }) {
+  const responseEntries = Object.entries(result.responses);
+  return (
+    <Alert>
+      <AlertTitle>Questionnaire ingested</AlertTitle>
+      <AlertDescription>
+        <div className="stack-2">
+          <p>
+            Correlated to vendor{" "}
+            <code className="kbd">{result.vendor.name ?? result.vendor.id}</code>{" "}
+            (parse-only — the vendor was not modified).
+          </p>
+          <p className="text-xs muted">
+            {result.questionnaire_id ? (
+              <>
+                Questionnaire{" "}
+                <code className="kbd">{result.questionnaire_id}</code>
+                {" · "}
+              </>
+            ) : null}
+            {result.format ? (
+              <>
+                Format <code className="kbd">{result.format}</code>
+                {" · "}
+              </>
+            ) : null}
+            Ingested <code className="kbd">{result.ingested_at}</code>
+          </p>
+          {responseEntries.length === 0 ? (
+            <p className="text-xs muted">No responses correlated.</p>
+          ) : (
+            <ul className="reset stack-1">
+              {responseEntries.map(([questionId, response]) => (
+                <li
+                  key={questionId}
+                  className="row-between text-xs"
+                  style={{ gap: "0.75rem" }}
+                >
+                  <code className="kbd">{questionId}</code>
+                  <span className="muted">
+                    {response === "" ? (
+                      <span className="dim">no response</span>
+                    ) : (
+                      response
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </AlertDescription>
+    </Alert>
   );
 }

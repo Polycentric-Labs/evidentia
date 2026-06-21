@@ -42,7 +42,7 @@ version: 1
 # fails if the live `cli-only` count exceeds this. The controller lowers it with
 # `--update-baseline` whenever a screen ships and a row flips cli-only -> *.
 baseline:
-  cli_only: 8
+  cli_only: 4
 commands:
   - cli: "gap analyze"
     api: "POST /api/gap/analyze"
@@ -181,20 +181,20 @@ commands:
     status: full
   - cli: "ai-gov classify"
     api: "POST /api/ai-gov/classify"
-    gui: null
-    status: api-only
+    gui: "/ai-gov"
+    status: full
   - cli: "ai-gov register"
     api: "POST /api/ai-gov/register"
-    gui: null
-    status: api-only
+    gui: "/ai-gov"
+    status: full
   - cli: "ai-gov list"
     api: "GET /api/ai-gov/systems"
-    gui: null
-    status: api-only
+    gui: "/ai-gov"
+    status: full
   - cli: "ai-gov show"
     api: "GET /api/ai-gov/systems/{system_id}"
-    gui: null
-    status: api-only
+    gui: "/ai-gov"
+    status: full
   - cli: "poam create"
     api: "POST /api/poam/items"
     gui: "/poam"
@@ -285,21 +285,21 @@ commands:
     gui: "/tprm"
     status: full
   - cli: "ai-gov retire"
-    api: null
-    gui: null
-    status: cli-only
+    api: "POST /api/ai-gov/systems/{system_id}/retire"
+    gui: "/ai-gov"
+    status: full
   - cli: "ai-gov update"
-    api: null
-    gui: null
-    status: cli-only
+    api: "PUT /api/ai-gov/systems/{system_id}"
+    gui: "/ai-gov"
+    status: full
   - cli: "ai-gov categorize-fips"
-    api: null
-    gui: null
-    status: cli-only
+    api: "POST /api/ai-gov/systems/{system_id}/categorize-fips"
+    gui: "/ai-gov"
+    status: full
   - cli: "ai-gov set-omb-impact"
-    api: null
-    gui: null
-    status: cli-only
+    api: "POST /api/ai-gov/systems/{system_id}/set-omb-impact"
+    gui: "/ai-gov"
+    status: full
   - cli: "catalog crosswalk"
     api: "GET /api/catalog/crosswalk"
     gui: "/catalog"
@@ -451,15 +451,13 @@ commands:
     status: exempt
     reason: "Long-running poll daemon; the API exposes read-only daemon-status/history, not a start verb."
   - cli: "oscal verify"
-    api: null
-    gui: null
-    status: exempt
-    reason: "Offline OSCAL digest/signature verification; air-gap CLI tool, no server surface."
+    api: "POST /api/oscal/verify"
+    gui: "/oscal"
+    status: full
   - cli: "traceability emit"
-    api: null
-    gui: null
-    status: exempt
-    reason: "Offline OSCAL traceability-matrix emit + signing; air-gap CLI tool, same family as `oscal verify`. A read-mostly traceability console view is the v0.10.12 parity item."
+    api: "POST /api/traceability/emit"
+    gui: "/traceability"
+    status: full
   - cli: "explain cache clear"
     api: null
     gui: null

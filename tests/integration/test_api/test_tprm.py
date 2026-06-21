@@ -503,11 +503,15 @@ class TestDDQuestionnaireEndpoint:
 
 
 class TestDDQuestionnaireIngestEndpoint:
-    """Ingest a completed DD questionnaire back into a vendor record.
+    """Parse + correlate a completed DD questionnaire (parse-only).
 
-    The ingest appends an :class:`EvidenceRef` to ``vendor.evidence_refs``
-    recording the completed-questionnaire responses + saves the mutated
-    vendor — the persistence-to-vendor phase the v0.7.9 CLI deferred.
+    Mirrors the ``evidentia tprm dd-questionnaire ingest`` CLI verb
+    exactly: the endpoint PARSES the completed-questionnaire document
+    (the canonical Questionnaire shape, with per-question
+    ``vendor_response`` values) and CORRELATES it to the vendor record,
+    then RETURNS the correlation result. It does NOT mutate the vendor
+    (no EvidenceRef appended) — persistence stays deferred, matching the
+    CLI's documented scope.
     """
 
     def _add_vendor(self, api_client: TestClient) -> str:
@@ -516,38 +520,68 @@ class TestDDQuestionnaireIngestEndpoint:
         return str(r.json()["id"])
 
     def _completed_body(self) -> dict[str, object]:
+        """A completed questionnaire in the canonical Questionnaire shape.
+
+        Matches what ``parse_completed_questionnaire`` consumes for the
+        ``.json`` path: per-question ``vendor_response`` values, plus
+        top-level ``id`` / ``format`` for correlation context.
+        """
         return {
-            "questionnaire_id": "33333333-3333-3333-3333-333333333333",
+            "id": "33333333-3333-3333-3333-333333333333",
             "format": "evidentia-generic",
-            "responses": {
-                "EVG-GOV-01": "Yes — board-approved infosec policy.",
-                "EVG-GOV-02": "SOC 2 Type II on file.",
-            },
+            "questions": [
+                {
+                    "id": "EVG-GOV-01",
+                    "vendor_response": "Yes — board-approved infosec policy.",
+                },
+                {
+                    "id": "EVG-GOV-02",
+                    "vendor_response": "SOC 2 Type II on file.",
+                },
+            ],
         }
 
-    def test_ingest_into_existing_vendor_updates_it(
+    def test_ingest_returns_correlation_result(
         self, api_client: TestClient
     ) -> None:
         vid = self._add_vendor(api_client)
-        # Pre-condition: no evidence refs yet.
-        before = api_client.get(f"/api/tprm/vendors/{vid}")
-        assert before.json()["evidence_refs"] == []
-
         r = api_client.post(
             f"/api/tprm/vendors/{vid}/dd-questionnaire/ingest",
             json=self._completed_body(),
         )
         assert r.status_code == 200, r.text
         body = r.json()
-        assert body["id"] == vid
-        # The mutation: a new evidence ref recording the questionnaire.
-        assert len(body["evidence_refs"]) == 1
-        ref = body["evidence_refs"][0]
-        assert "questionnaire" in ref["title"].lower()
+        # The correlation result: vendor identity + parsed responses
+        # correlated by question.id, plus carry-forward context.
+        assert body["vendor"]["id"] == vid
+        assert body["vendor"]["name"] == "Acme Cloud"
+        assert body["questionnaire_id"] == (
+            "33333333-3333-3333-3333-333333333333"
+        )
+        assert body["format"] == "evidentia-generic"
+        assert body["responses"] == {
+            "EVG-GOV-01": "Yes — board-approved infosec policy.",
+            "EVG-GOV-02": "SOC 2 Type II on file.",
+        }
 
-        # And it persisted — a fresh GET reflects the change.
-        after = api_client.get(f"/api/tprm/vendors/{vid}")
-        assert len(after.json()["evidence_refs"]) == 1
+    def test_ingest_does_not_mutate_vendor(
+        self, api_client: TestClient
+    ) -> None:
+        vid = self._add_vendor(api_client)
+        before = api_client.get(f"/api/tprm/vendors/{vid}").json()
+        assert before["evidence_refs"] == []
+
+        r = api_client.post(
+            f"/api/tprm/vendors/{vid}/dd-questionnaire/ingest",
+            json=self._completed_body(),
+        )
+        assert r.status_code == 200, r.text
+
+        # Parse-only: the vendor record is UNCHANGED — no EvidenceRef
+        # appended, updated_at not bumped.
+        after = api_client.get(f"/api/tprm/vendors/{vid}").json()
+        assert after["evidence_refs"] == []
+        assert after["updated_at"] == before["updated_at"]
 
     def test_ingest_unknown_vendor_returns_404(
         self, api_client: TestClient
@@ -568,46 +602,60 @@ class TestDDQuestionnaireIngestEndpoint:
         )
         assert r.status_code == 404
 
-    def test_ingest_empty_responses_returns_400(
+    def test_ingest_empty_questions_returns_400(
         self, api_client: TestClient
     ) -> None:
-        # Malformed questionnaire content: nothing to ingest. The router
-        # raises a string-detail 400 (F-V08-DAST-3 invariant).
+        # Unparseable / empty questionnaire content: nothing correlates.
+        # The router raises a string-detail 400 (F-V08-DAST-3 invariant).
         vid = self._add_vendor(api_client)
         r = api_client.post(
             f"/api/tprm/vendors/{vid}/dd-questionnaire/ingest",
-            json={"responses": {}},
+            json={"questions": []},
         )
         assert r.status_code == 400
         assert isinstance(r.json()["detail"], str)
 
-    def test_ingest_missing_responses_key_returns_422(
+    def test_ingest_wrong_typed_body_returns_422(
         self, api_client: TestClient
     ) -> None:
-        # ``responses`` has a default_factory, so omitting it parses to {}
-        # which the router rejects with a 400. A wrong-typed responses
-        # value hits Pydantic auto-validation 422 (array-shape detail).
+        # The body must be a JSON object (the questionnaire document).
+        # A top-level non-object (here a JSON array) fails Pydantic
+        # auto-validation with array-shape detail (422).
         vid = self._add_vendor(api_client)
         r = api_client.post(
             f"/api/tprm/vendors/{vid}/dd-questionnaire/ingest",
-            json={"responses": "not-a-mapping"},
+            json=["not", "an", "object"],
         )
         assert r.status_code == 422
         assert isinstance(r.json()["detail"], list)
 
-    def test_ingest_denied_under_readonly_policy_403(
+    def test_ingest_unparseable_object_returns_400(
+        self, api_client: TestClient
+    ) -> None:
+        # A well-formed JSON object whose `questions` value is not a list
+        # correlates to zero responses → string-detail 400 (parse-only;
+        # F-V08-DAST-3 invariant), not a Pydantic 422.
+        vid = self._add_vendor(api_client)
+        r = api_client.post(
+            f"/api/tprm/vendors/{vid}/dd-questionnaire/ingest",
+            json={"questions": "not-a-list"},
+        )
+        assert r.status_code == 400
+        assert isinstance(r.json()["detail"], str)
+
+    def test_ingest_open_under_readonly_policy(
         self, tprm_readonly_client: TestClient
     ) -> None:
-        # The ingest is gated on require_role("write"). Seed a vendor
-        # directly via the store (env-isolated by the fixture) so a real
-        # record exists; the write gate must still deny.
+        # Parse-only is a READ-style operation: it no longer requires the
+        # ``write`` role. Under a deny-by-default reader policy the ingest
+        # is OPEN (200), matching the other read endpoints on this router.
         from datetime import date
 
         from evidentia_core.models.tprm import Vendor
         from evidentia_core.vendor_store import save_vendor
 
         vendor = Vendor(
-            name="Gated Co",
+            name="Reader Co",
             type="saas",  # type: ignore[arg-type]
             criticality_tier="high",  # type: ignore[arg-type]
             relationship_owner="allen@allenfbyrd.com",
@@ -618,5 +666,5 @@ class TestDDQuestionnaireIngestEndpoint:
             f"/api/tprm/vendors/{vendor.id}/dd-questionnaire/ingest",
             json=self._completed_body(),
         )
-        assert r.status_code == 403, r.text
-        assert r.json()["detail"]["error"] == "rbac_denied"
+        assert r.status_code == 200, r.text
+        assert r.json()["vendor"]["id"] == vendor.id

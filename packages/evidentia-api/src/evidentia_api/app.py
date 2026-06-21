@@ -377,6 +377,9 @@ def create_app(
         model_risk as model_risk_router,
     )
     from evidentia_api.routers import (
+        oscal as oscal_router,
+    )
+    from evidentia_api.routers import (
         poam as poam_router,
     )
     from evidentia_api.routers import (
@@ -387,6 +390,9 @@ def create_app(
     )
     from evidentia_api.routers import (
         tprm as tprm_router,
+    )
+    from evidentia_api.routers import (
+        traceability as traceability_router,
     )
 
     app.include_router(health_router.router, prefix="/api", tags=["health"])
@@ -433,6 +439,12 @@ def create_app(
     # reads + import/remove local writes). Distinct from the read-only
     # `frameworks` browse router.
     app.include_router(catalog_router.router, prefix="/api", tags=["catalog"])
+    # v0.10.12 Wave 3 — read-only OSCAL verify + unsigned traceability emit
+    # (signing stays CLI-only; these back the read-mostly GUI views).
+    app.include_router(oscal_router.router, prefix="/api", tags=["oscal"])
+    app.include_router(
+        traceability_router.router, prefix="/api", tags=["traceability"]
+    )
 
     # Static SPA mount — everything that isn't /api/* falls through to index.html.
     _mount_spa(app)

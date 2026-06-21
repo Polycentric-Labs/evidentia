@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { DemoBanner } from "@/components/common/DemoBanner";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { IS_DEMO, IS_DEMO_FDA_INDEX } from "@/lib/demo";
+import { AiGovPage } from "@/routes/AiGovPage";
 import { CatalogPage } from "@/routes/CatalogPage";
 import { ConmonPage } from "@/routes/ConmonPage";
 import { DashboardPage } from "@/routes/DashboardPage";
@@ -17,13 +18,14 @@ import { GapDiffPage } from "@/routes/GapDiffPage";
 import { GovernancePage } from "@/routes/GovernancePage";
 import { HomePage } from "@/routes/HomePage";
 import { ModelRiskPage } from "@/routes/ModelRiskPage";
-import { OscalResultsPage } from "@/routes/OscalResultsPage";
+import { OscalVerifyPage } from "@/routes/OscalVerifyPage";
 import { PoamPage } from "@/routes/PoamPage";
 import { RetentionPage } from "@/routes/RetentionPage";
 import { RiskGeneratePage } from "@/routes/RiskGeneratePage";
 import { RiskQuantifyPage } from "@/routes/RiskQuantifyPage";
 import { SettingsPage } from "@/routes/SettingsPage";
 import { TprmPage } from "@/routes/TprmPage";
+import { TraceabilityPage } from "@/routes/TraceabilityPage";
 
 /**
  * Evidentia web UI root.
@@ -82,10 +84,12 @@ export function App() {
           <Route path="retention" element={<RetentionPage />} />
           <Route path="evidence" element={<EvidencePage />} />
           <Route path="model-risk" element={<ModelRiskPage />} />
-          {/* OSCAL emit/verify console view — a read-mostly GUI-fill, previewed
-           * in the static demo bundle (fixture-backed). Wiring it to a live run
-           * is the v0.10.12 parity work. */}
-          {IS_DEMO && <Route path="oscal" element={<OscalResultsPage />} />}
+          <Route path="ai-gov" element={<AiGovPage />} />
+          {/* v0.10.12 Wave 3 — live read-only OSCAL verify (verify an uploaded
+           * Assessment Result) + unsigned traceability emit. Signing stays an
+           * air-gap CLI operation; these consoles never sign. */}
+          <Route path="oscal" element={<OscalVerifyPage />} />
+          <Route path="traceability" element={<TraceabilityPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route
             path="*"

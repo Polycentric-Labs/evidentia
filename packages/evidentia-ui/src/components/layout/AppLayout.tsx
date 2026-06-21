@@ -2,6 +2,7 @@ import {
   Activity,
   Archive,
   BookOpen,
+  Bot,
   Boxes,
   Building2,
   Calculator,
@@ -16,6 +17,7 @@ import {
   Lock,
   type LucideIcon,
   Moon,
+  Network,
   PlayCircle,
   Scale,
   ScanLine,
@@ -51,9 +53,11 @@ const NAV_META: Record<string, NavMeta> = {
   "/retention": { label: "Retention", description: "Records retention + legal hold", crumb: "Retention records", icon: Archive },
   "/evidence": { label: "Evidence", description: "WORM evidence store", crumb: "Evidence lineage", icon: FileArchive },
   "/model-risk": { label: "Model Risk", description: "SR 11-7 model inventory", crumb: "Model risk inventory", icon: Boxes },
+  "/ai-gov": { label: "AI Governance", description: "EU AI Act / NIST AI RMF registry", crumb: "AI governance", icon: Bot },
+  "/traceability": { label: "Traceability", description: "Control ↔ threat matrix", crumb: "Traceability matrix", icon: Network },
   "/catalog": { label: "Catalog mgmt", description: "Import / crosswalk / license", crumb: "Catalog management", icon: Library },
   "/risk/quantify": { label: "Risk Quantify", description: "FAIR risk quantification", crumb: "FAIR quantification", icon: Calculator },
-  "/oscal": { label: "OSCAL Results", description: "Emit + verify Assessment Results", crumb: "OSCAL Assessment Results", icon: FileCheck2 },
+  "/oscal": { label: "OSCAL Verify", description: "Verify an Assessment Result", crumb: "OSCAL verify", icon: FileCheck2 },
   "/settings": { label: "Settings", description: "Config + LLM + air-gap", crumb: "Configuration", icon: Settings },
 };
 
@@ -64,7 +68,7 @@ const NAV_META: Record<string, NavMeta> = {
 const NAV_GROUPS: { label: string | null; items: string[] }[] = [
   { label: null, items: IS_DEMO ? ["/", "/demo"] : ["/"] },
   { label: "Analyze", items: ["/gap/analyze", "/gap/diff", "/risk/generate", "/risk/quantify", "/explain"] },
-  { label: "Govern", items: IS_DEMO ? ["/poam", "/conmon", "/tprm", "/governance", "/retention", "/evidence", "/model-risk", "/oscal"] : ["/poam", "/conmon", "/tprm", "/governance", "/retention", "/evidence", "/model-risk"] },
+  { label: "Govern", items: ["/poam", "/conmon", "/tprm", "/governance", "/retention", "/evidence", "/model-risk", "/ai-gov", "/oscal", "/traceability"] },
   { label: "Library", items: ["/dashboard", "/frameworks", "/catalog"] },
   { label: "Configure", items: ["/settings"] },
 ];

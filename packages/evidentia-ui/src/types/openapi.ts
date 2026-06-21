@@ -98,7 +98,16 @@ export interface paths {
          * @description Fetch a single registered AI system by ID.
          */
         get: operations["ai_gov_get_system_api_ai_gov_systems__system_id__get"];
-        put?: never;
+        /**
+         * Ai Gov Update System
+         * @description Partially update a registered AI system.
+         *
+         *     Fields omitted from the body are left unchanged. The merged entry
+         *     is re-validated through ``model_validate`` so field validators run
+         *     on the partial-update path (mirrors the v0.9.5 F-V94-S12 closure
+         *     on the CLI ``ai-gov update`` verb). Returns the updated entry.
+         */
+        put: operations["ai_gov_update_system_api_ai_gov_systems__system_id__put"];
         post?: never;
         /**
          * Ai Gov Delete System
@@ -106,6 +115,74 @@ export interface paths {
          *     actually removed (idempotent: no-op on unknown ID).
          */
         delete: operations["ai_gov_delete_system_api_ai_gov_systems__system_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai-gov/systems/{system_id}/categorize-fips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ai Gov Categorize Fips
+         * @description Set FIPS 199 categorization on a registered AI system.
+         *
+         *     The overall high-water-mark is auto-computed from the three
+         *     per-objective ratings per FIPS 199 §3 (or validated against the
+         *     supplied ``overall`` — a mismatch is a 400 paperwork error).
+         */
+        post: operations["ai_gov_categorize_fips_api_ai_gov_systems__system_id__categorize_fips_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai-gov/systems/{system_id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ai Gov Retire System
+         * @description Retire a registered AI system (deployment_status=retired).
+         *
+         *     Unlike DELETE, the entry is PRESERVED so historical audits can
+         *     still see the system's classification + ownership history.
+         *     Idempotent: retiring an already-retired system is a no-op success.
+         */
+        post: operations["ai_gov_retire_system_api_ai_gov_systems__system_id__retire_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai-gov/systems/{system_id}/set-omb-impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ai Gov Set Omb Impact
+         * @description Set the OMB M-24-10 impact category on a registered AI system.
+         */
+        post: operations["ai_gov_set_omb_impact_api_ai_gov_systems__system_id__set_omb_impact_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2148,6 +2225,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/oscal/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Assessment Result
+         * @description Verify an inline OSCAL Assessment Result document. READ-ONLY.
+         *
+         *     Runs the chain-of-custody check: back-matter SHA-256 digests, then a
+         *     detached GPG signature (only ever present in offline-safe form here —
+         *     no signature artifacts travel with inline content, so the signature
+         *     legs are typically "not checked"), then the Sigstore/Rekor identity
+         *     leg (skipped in offline mode).
+         *
+         *     Returns 200 with a structured verdict whether the document is valid
+         *     OR invalid — a tampered AR is a NEGATIVE verdict, not a server error
+         *     (the verification ran successfully and concluded the document is
+         *     bad). 400 is reserved for input that cannot be verified at all
+         *     (unparseable JSON, both-or-neither identity violation). Pydantic body
+         *     validation failures surface as 422.
+         */
+        post: operations["verify_assessment_result_api_oscal_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/poam/calendar": {
         parameters: {
             query?: never;
@@ -2594,26 +2704,37 @@ export interface paths {
         put?: never;
         /**
          * Ingest Dd Questionnaire
-         * @description Ingest a completed DD questionnaire into a vendor record.
+         * @description Parse + correlate a completed DD questionnaire (parse-only).
          *
-         *     Records the completed-questionnaire responses as an
-         *     :class:`EvidenceRef` appended to ``vendor.evidence_refs`` and
-         *     persists the mutated vendor — the persistence-to-vendor phase the
-         *     v0.7.9 ``evidentia tprm dd-questionnaire ingest`` CLI verb
-         *     deferred (the CLI parses + correlates, then prints for review).
+         *     Matches the ``evidentia tprm dd-questionnaire ingest`` CLI verb
+         *     exactly: PARSES the posted completed-questionnaire document and
+         *     CORRELATES the responses to the vendor record, then RETURNS the
+         *     correlation result. It does NOT mutate or save the vendor and does
+         *     NOT create an :class:`EvidenceRef` — persistence stays deferred,
+         *     matching the CLI's documented scope (the CLI parses + correlates,
+         *     then prints for review).
          *
-         *     Local store mutation only — no credentials, no network. Returns
-         *     the updated :class:`Vendor`.
+         *     The core :func:`parse_completed_questionnaire` is file-based
+         *     (extension-dispatched). Over HTTP the body IS the document, so it is
+         *     written to an ephemeral ``.json`` temp file, parsed, and the temp
+         *     file is removed in a ``finally`` — no path/secret leakage and no
+         *     persistent on-disk state.
+         *
+         *     Local parse only — no credentials, no network. Returns the parsed
+         *     :class:`DDQuestionnaireIngestResult`.
          *
          *     Error contract (matches the rest of this router):
          *
          *       - 404 on shape-violation OR well-formed-unknown ``vendor_id``
-         *         (F-V08-DAST-1 widening pattern).
+         *         (F-V08-DAST-1 widening pattern). The endpoint is vendor-scoped.
          *       - 400 (string detail, F-V08-DAST-3 invariant) when the
-         *         questionnaire content is malformed — i.e. ``responses`` is
-         *         empty (nothing to ingest). Pydantic auto-validation 422s
+         *         questionnaire content is unparseable or correlates to no
+         *         responses (nothing to ingest). Pydantic auto-validation 422s
          *         (wrong-typed body) keep their array-shape detail.
-         *       - 403 when an RBAC policy denies the ``write`` action.
+         *
+         *     No ``require_role("write")`` gate: a parse is a read-style operation
+         *     (no vendor mutation), so it is open like the other read endpoints on
+         *     this router.
          */
         post: operations["ingest_dd_questionnaire_api_tprm_vendors__vendor_id__dd_questionnaire_ingest_post"];
         delete?: never;
@@ -2642,6 +2763,35 @@ export interface paths {
         get: operations["preview_next_review_due_api_tprm_vendors__vendor_id__next_review_due_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/traceability/emit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Emit Traceability Matrix
+         * @description Emit the Control↔Threat Traceability Matrix as an UNSIGNED OSCAL profile.
+         *
+         *     READ-MOSTLY. The matrix is supplied inline (no server path); the
+         *     response is the bare OSCAL profile dict. Signing is CLI-only and is
+         *     NOT performed here — the returned document is always unsigned.
+         *
+         *     400 when the matrix is schema-valid but has no mappings (nothing to
+         *     emit, mirroring the CLI guard). 422 (Pydantic) for a shape-invalid
+         *     body, including any signing knob smuggled into the request (the body
+         *     model forbids extra fields).
+         */
+        post: operations["emit_traceability_matrix_api_traceability_emit_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3121,44 +3271,6 @@ export interface components {
             source_system_id: string;
         };
         /**
-         * CompletedQuestionnaireIngest
-         * @description Request body for the DD-questionnaire ingest endpoint.
-         *
-         *     Carries the completed (or partially-completed) questionnaire
-         *     content the API caller posts back after a vendor returns it. The
-         *     HTTP surface receives structured JSON directly (the CLI's
-         *     ``parse_completed_questionnaire`` file-parsing path has no
-         *     equivalent need here — the body IS the parsed content).
-         *
-         *     ``responses`` is the per-question answer map keyed by question.id
-         *     (e.g. ``EVG-GOV-01``). An empty map is a malformed ingest (nothing
-         *     to record) and the endpoint rejects it with a 400.
-         */
-        CompletedQuestionnaireIngest: {
-            /**
-             * Format
-             * @description Questionnaire framework the responses correspond to (e.g. 'evidentia-generic' / 'caiq-lite'). Free-text; recorded on the evidence reference for context.
-             */
-            format?: string | null;
-            /**
-             * Questionnaire Id
-             * @description UUID from the originating Questionnaire (when the caller carries it forward from the generate step). Recorded on the evidence reference for correlation; not required.
-             */
-            questionnaire_id?: string | null;
-            /**
-             * Responses
-             * @description Per-question vendor responses keyed by question.id. Empty string == 'no response'. At least one entry is required — an empty map is rejected as a malformed ingest (400).
-             */
-            responses?: {
-                [key: string]: string;
-            };
-            /**
-             * Source Path
-             * @description Optional provenance label — e.g. the filename the operator received the completed questionnaire as. Recorded on the evidence reference's notes for audit context.
-             */
-            source_path?: string | null;
-        };
-        /**
          * ComplianceStatus
          * @description Compliance/posture result of the check a finding represents.
          *
@@ -3524,6 +3636,57 @@ export interface components {
             relationship: components["schemas"]["OLIRRelationship"];
         };
         /**
+         * ControlThreatMapping
+         * @description A single control→threat relationship: a control mitigates a threat.
+         */
+        ControlThreatMapping: {
+            /**
+             * Control Id
+             * @description Control ID from the imported catalog, e.g. 'AC-2'.
+             */
+            control_id: string;
+            /**
+             * Coverage
+             * @description Coverage strength (full / partial / compensating).
+             * @default full
+             * @enum {string}
+             */
+            coverage: "full" | "partial" | "compensating";
+            /**
+             * Mapping Id
+             * @description Stable per-mapping identifier (``urn:uuid:…``). Auto-derived deterministically on emit when absent.
+             */
+            mapping_id?: string | null;
+            /**
+             * Notes
+             * @description Optional operator note / rationale.
+             */
+            notes?: string | null;
+            /**
+             * Relationship
+             * @description How the control relates to the threat.
+             * @default mitigates
+             * @enum {string}
+             */
+            relationship: "mitigates" | "partially-mitigates" | "compensating" | "detects";
+            /**
+             * Threat Framework
+             * @description Source taxonomy of ``threat_id``.
+             * @enum {string}
+             */
+            threat_framework: "mitre-attack" | "cwe" | "capec";
+            /**
+             * Threat Id
+             * @description Canonical threat ID, e.g. 'T1078', 'CWE-79', 'CAPEC-66'.
+             */
+            threat_id: string;
+            /**
+             * Threat Name
+             * @description Human-readable threat name.
+             */
+            threat_name?: string | null;
+        };
+        /**
          * CriticalityTier
          * @description FFIEC Vendor Management criticality tier.
          *
@@ -3539,6 +3702,48 @@ export interface components {
          * @enum {string}
          */
         CriticalityTier: "critical" | "high" | "medium" | "low";
+        /**
+         * DDQuestionnaireIngestResult
+         * @description Correlation result returned by the DD-questionnaire ingest endpoint.
+         *
+         *     Mirrors the ``evidentia tprm dd-questionnaire ingest`` CLI verb's
+         *     ``--output-format json`` shape: the parsed responses (keyed by
+         *     question.id) correlated to a resolved vendor, plus the carry-forward
+         *     context (questionnaire id / format) and the ingest timestamp. Like
+         *     the CLI, this is PARSE-ONLY — persistence to ``vendor.evidence_refs``
+         *     stays deferred, so no vendor mutation occurs.
+         */
+        DDQuestionnaireIngestResult: {
+            /**
+             * Format
+             * @description Questionnaire framework parsed from the document's ``format`` field (e.g. 'evidentia-generic' / 'caiq-lite'); null when absent or unrecognized.
+             */
+            format?: string | null;
+            /**
+             * Ingested At
+             * @description ISO-8601 timestamp the parse/correlation ran.
+             */
+            ingested_at: string;
+            /**
+             * Questionnaire Id
+             * @description UUID carried forward from the originating Questionnaire's ``id`` field, when the posted document includes it.
+             */
+            questionnaire_id?: string | null;
+            /**
+             * Responses
+             * @description Per-question vendor responses correlated by question.id (e.g. ``EVG-GOV-01``). Empty string == 'no response'.
+             */
+            responses: {
+                [key: string]: string;
+            };
+            /**
+             * Vendor
+             * @description The resolved vendor the questionnaire correlated to: ``{'id': ..., 'name': ...}``. Mirrors the CLI's vendor block.
+             */
+            vendor: {
+                [key: string]: string;
+            };
+        };
         /**
          * DeploymentStatus
          * @description Operational lifecycle status of a registered AI system.
@@ -4104,6 +4309,36 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /**
+         * FIPS199CategorizeRequest
+         * @description Body for ``POST /ai-gov/systems/{system_id}/categorize-fips``.
+         *
+         *     The three per-objective ratings are required; ``overall`` is
+         *     optional (auto-computed high-water-mark when omitted, validated
+         *     when supplied — a mismatch is a 400 domain error).
+         */
+        FIPS199CategorizeRequest: {
+            /** @description FIPS 199 availability impact: low / moderate / high. */
+            availability: components["schemas"]["FIPS199Impact"];
+            /** @description FIPS 199 confidentiality impact: low / moderate / high. */
+            confidentiality: components["schemas"]["FIPS199Impact"];
+            /** @description FIPS 199 integrity impact: low / moderate / high. */
+            integrity: components["schemas"]["FIPS199Impact"];
+            /** @description Optional explicit high-water-mark. Omit to auto-compute; if supplied it MUST equal max(C, I, A) or the request is rejected as a paperwork error (400). */
+            overall?: components["schemas"]["FIPS199Impact"] | null;
+            /** Rationale */
+            rationale?: string | null;
+        };
+        /**
+         * FIPS199Impact
+         * @description Impact level per FIPS 199 §3.
+         *
+         *     Ordered ``LOW < MODERATE < HIGH`` for the high-water-mark
+         *     aggregation. String values match FIPS 199 + NIST SP 800-60
+         *     spelling conventions.
+         * @enum {string}
+         */
+        FIPS199Impact: "low" | "moderate" | "high";
         /**
          * FairMcQuantifyResponse
          * @description Response for method='fair-mc' — one SimulationResult per scenario.
@@ -5269,6 +5504,26 @@ export interface components {
          */
         OLIRRelationship: "equivalent-to" | "equal-to" | "subset-of" | "superset-of" | "intersects-with" | "related-to";
         /**
+         * OMBImpactCategory
+         * @description OMB M-24-10 §5(b) AI impact classification.
+         *
+         *     Operators rate per the published §5 definitions + worked examples
+         *     in agency compliance plans (Federal Reserve / EXIM / SBA / DOJ /
+         *     VA / EEOC each ship their interpretation of the categories).
+         *     String values stable across releases so persisted YAML / JSON
+         *     inventories survive minor / major version bumps.
+         * @enum {string}
+         */
+        OMBImpactCategory: "rights_impacting" | "safety_impacting" | "rights_and_safety_impacting" | "neither";
+        /**
+         * OMBImpactRequest
+         * @description Body for ``POST /ai-gov/systems/{system_id}/set-omb-impact``.
+         */
+        OMBImpactRequest: {
+            /** @description OMB M-24-10 §5(b) category: rights_impacting / safety_impacting / rights_and_safety_impacting / neither. */
+            category: components["schemas"]["OMBImpactCategory"];
+        };
+        /**
          * OpenFAIRScenario
          * @description A risk scenario expressed in Open FAIR terms.
          *
@@ -6030,6 +6285,52 @@ export interface components {
          * @enum {string}
          */
         Tier: "tier_1" | "tier_2" | "tier_3";
+        /**
+         * TraceabilityMatrix
+         * @description A Control↔Threat Traceability Matrix, emittable as a signed OSCAL profile.
+         */
+        TraceabilityMatrix: {
+            /**
+             * Catalog Href
+             * @description OSCAL href of the control catalog the profile imports (the matrix annotates this catalog's controls with threat links).
+             */
+            catalog_href: string;
+            /**
+             * Crosswalk Source
+             * @description Provenance of the mappings, e.g. 'mitre-ctid-mappings-explorer' or 'self-attested'. Surfaced in the emitted profile so consumers can judge authority (CTID = authoritative-for-ATT&CK, illustrative for control coverage; NOT a NIST safe harbor).
+             * @default self-attested
+             */
+            crosswalk_source: string;
+            /**
+             * Framework Id
+             * @description Framework identifier, e.g. 'nist-800-53-rev5-moderate'.
+             */
+            framework_id: string;
+            /** Mappings */
+            mappings?: components["schemas"]["ControlThreatMapping"][];
+            /**
+             * Title
+             * @description Human-readable matrix title.
+             */
+            title: string;
+        };
+        /**
+         * UpdateSystemRequest
+         * @description Body for ``PUT /ai-gov/systems/{system_id}`` (partial update).
+         *
+         *     All fields optional — only the supplied ones are changed
+         *     (partial-update semantics matching the ``ai-gov update`` CLI verb).
+         *     An empty body (no fields) is a 400 (nothing to update).
+         */
+        UpdateSystemRequest: {
+            deployment_status?: components["schemas"]["DeploymentStatus"] | null;
+            /** Owner */
+            owner?: string | null;
+            /** Provider */
+            provider?: string | null;
+            /** Ssp Reference */
+            ssp_reference?: string | null;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -6383,6 +6684,33 @@ export interface components {
          * @enum {string}
          */
         VendorType: "saas" | "subservice_org" | "contractor" | "data_processor" | "cloud_provider" | "open_source";
+        /**
+         * VerifyRequest
+         * @description Body for ``POST /oscal/verify``.
+         *
+         *     ``content`` is the OSCAL Assessment Result document as a JSON string
+         *     (inline — not a server path). The two ``expected_sigstore_*`` fields
+         *     are PUBLIC identity strings pinning the Sigstore signer; they are
+         *     both-or-neither (cosign model, F-V109-1) — supplying exactly one is a
+         *     usage error.
+         */
+        VerifyRequest: {
+            /**
+             * Content
+             * @description The OSCAL Assessment Result document, inline, as a JSON string. NOT a filesystem path — the server writes this to a private temp file, verifies it, and deletes it.
+             */
+            content: string;
+            /**
+             * Expected Sigstore Identity
+             * @description Expected Sigstore signer identity (email or OIDC subject). Public identity string. Both-or-neither with expected_sigstore_issuer (cosign model).
+             */
+            expected_sigstore_identity?: string | null;
+            /**
+             * Expected Sigstore Issuer
+             * @description Expected Sigstore identity issuer URL (e.g. 'https://token.actions.githubusercontent.com'). Public identity string. Both-or-neither with expected_sigstore_identity.
+             */
+            expected_sigstore_issuer?: string | null;
+        };
         /**
          * VersionResponse
          * @description Version detail returned by `/api/version`.
@@ -6826,6 +7154,43 @@ export interface operations {
             };
         };
     };
+    ai_gov_update_system_api_ai_gov_systems__system_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                system_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSystemRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     ai_gov_delete_system_api_ai_gov_systems__system_id__delete: {
         parameters: {
             query?: never;
@@ -6836,6 +7201,113 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ai_gov_categorize_fips_api_ai_gov_systems__system_id__categorize_fips_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                system_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FIPS199CategorizeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ai_gov_retire_system_api_ai_gov_systems__system_id__retire_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                system_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ai_gov_set_omb_impact_api_ai_gov_systems__system_id__set_omb_impact_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                system_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OMBImpactRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -9395,6 +9867,41 @@ export interface operations {
             };
         };
     };
+    verify_assessment_result_api_oscal_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_calendar_api_poam_calendar_get: {
         parameters: {
             query?: {
@@ -10208,7 +10715,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CompletedQuestionnaireIngest"];
+                "application/json": {
+                    [key: string]: unknown;
+                };
             };
         };
         responses: {
@@ -10218,7 +10727,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Vendor-Output"];
+                    "application/json": components["schemas"]["DDQuestionnaireIngestResult"];
                 };
             };
             /** @description Validation Error */
@@ -10251,6 +10760,41 @@ export interface operations {
                 content: {
                     "application/json": {
                         [key: string]: string | null;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    emit_traceability_matrix_api_traceability_emit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TraceabilityMatrix"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
                     };
                 };
             };

@@ -32,8 +32,8 @@ vi.mock("@/components/layout/AppLayout", () => ({
     </div>
   ),
 }));
-vi.mock("@/routes/OscalResultsPage", () => ({
-  OscalResultsPage: () => <div>OSCAL_RESULTS_PAGE</div>,
+vi.mock("@/routes/OscalVerifyPage", () => ({
+  OscalVerifyPage: () => <div>OSCAL_VERIFY_PAGE</div>,
 }));
 
 beforeEach(() => {
@@ -83,19 +83,21 @@ describe("App routing — FDA-index build mode", () => {
     expect(screen.queryByText("FDA_DEMO_PAGE")).not.toBeInTheDocument();
   });
 
-  it("registers the OSCAL results route inside AppLayout in demo builds", () => {
+  it("registers the live OSCAL verify route inside AppLayout (demo builds)", () => {
     demo.isDemo = true;
 
     renderAppAt("/oscal");
 
     expect(screen.getByTestId("app-layout")).toBeInTheDocument();
-    expect(screen.getByText("OSCAL_RESULTS_PAGE")).toBeInTheDocument();
+    expect(screen.getByText("OSCAL_VERIFY_PAGE")).toBeInTheDocument();
   });
 
-  it("does not register the OSCAL route in non-demo builds", () => {
+  it("registers the live OSCAL verify route in non-demo builds too (v0.10.12 Wave 3)", () => {
+    // Wave 3 promoted /oscal from a demo-only fixture view to a live, always-
+    // registered read-only verify console (signing stays CLI-only).
     renderAppAt("/oscal");
 
-    expect(screen.queryByText("OSCAL_RESULTS_PAGE")).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /page not found/i })).toBeInTheDocument();
+    expect(screen.getByTestId("app-layout")).toBeInTheDocument();
+    expect(screen.getByText("OSCAL_VERIFY_PAGE")).toBeInTheDocument();
   });
 });

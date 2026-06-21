@@ -1,12 +1,16 @@
-"""Integration tests for /api/ai-gov/* (v0.9.3 P2.5)."""
+"""Integration tests for /api/ai-gov/* (v0.9.3 P2.5; v0.10.12 mutation verbs)."""
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 from typing import ClassVar
 
 import pytest
 from fastapi.testclient import TestClient
+
+# A well-formed-but-absent UUID (v4 shape) reused across not-found cases.
+_UNKNOWN_UUID = "11111111-1111-4111-8111-111111111111"
 
 
 @pytest.fixture(autouse=True)
@@ -17,6 +21,58 @@ def isolated_registry(
     registry_dir = tmp_path / "ai_registry"
     monkeypatch.setenv("EVIDENTIA_AI_REGISTRY_DIR", str(registry_dir))
     return registry_dir
+
+
+@pytest.fixture
+def ai_gov_readonly_client(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> Iterator[TestClient]:
+    """A TestClient over a local app holding ONLY the ai_gov router
+    under a deny-by-default (read-only) RBAC policy.
+
+    Mirrors ``gov_readonly_client`` in test_governance_router.py: an
+    anonymous request (identity None) resolves to ``Role.READER``, so
+    reads pass while ``require_role("write")`` gates deny — proving
+    those gates actually bite (they are inert under the permissive
+    DEFAULT_POLICY the other tests run with). The registry store is
+    isolated to tmp_path via the autouse ``isolated_registry`` fixture.
+    """
+    from evidentia_api.routers import ai_gov as ai_gov_router
+    from evidentia_core.rbac import RBACPolicy, Role
+    from fastapi import FastAPI
+
+    app = FastAPI()
+    app.include_router(ai_gov_router.router, prefix="/api")
+    app.state.rbac_policy = RBACPolicy(identities={}, default_role=Role.READER)
+    with TestClient(app) as client:
+        yield client
+
+
+def _register_system(
+    client: TestClient,
+    *,
+    name: str = "resume-screener",
+    annex_iii_domain: str = "employment",
+    provider: str = "acme-ai",
+    owner: str = "hr-team",
+    deployment_status: str = "pilot",
+) -> str:
+    """Register a system via the API and return its system_id."""
+    resp = client.post(
+        "/api/ai-gov/register",
+        json={
+            "descriptor": {
+                "name": name,
+                "purpose": "Score job applicants",
+                "annex_iii_domain": annex_iii_domain,
+            },
+            "provider": provider,
+            "owner": owner,
+            "deployment_status": deployment_status,
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    return resp.json()["system_id"]
 
 
 class TestClassify:
@@ -307,3 +363,273 @@ class TestRateLimit:
         for _ in range(50):
             resp = api_client.get("/api/ai-gov/systems")
             assert resp.status_code == 200
+
+
+# ── v0.10.12: mutation verbs (update / retire / categorize-fips /
+#    set-omb-impact) — REST parity with the CLI ai-gov verbs ──────────
+
+
+class TestUpdateSystem:
+    """PUT /ai-gov/systems/{system_id} — partial update of a registration."""
+
+    def test_update_mutates_and_persists(self, api_client: TestClient) -> None:
+        system_id = _register_system(api_client)
+        resp = api_client.put(
+            f"/api/ai-gov/systems/{system_id}",
+            json={"owner": "new-owner", "deployment_status": "production"},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["entry"]["owner"] == "new-owner"
+        assert body["entry"]["deployment_status"] == "production"
+        # Untouched fields preserved.
+        assert body["entry"]["provider"] == "acme-ai"
+
+        # Persisted: a fresh GET reflects the change.
+        got = api_client.get(f"/api/ai-gov/systems/{system_id}")
+        assert got.status_code == 200
+        assert got.json()["owner"] == "new-owner"
+        assert got.json()["deployment_status"] == "production"
+
+    def test_update_unknown_id_returns_404(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.put(
+            f"/api/ai-gov/systems/{_UNKNOWN_UUID}",
+            json={"owner": "x"},
+        )
+        assert resp.status_code == 404
+
+    def test_update_invalid_id_returns_404(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.put(
+            "/api/ai-gov/systems/not-a-uuid",
+            json={"owner": "x"},
+        )
+        assert resp.status_code == 404
+
+    def test_update_no_fields_returns_400(
+        self, api_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client)
+        resp = api_client.put(f"/api/ai-gov/systems/{system_id}", json={})
+        assert resp.status_code == 400
+
+    def test_update_bad_deployment_status_returns_422(
+        self, api_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client)
+        resp = api_client.put(
+            f"/api/ai-gov/systems/{system_id}",
+            json={"deployment_status": "bogus"},
+        )
+        assert resp.status_code == 422
+
+
+class TestRetireSystem:
+    """POST /ai-gov/systems/{system_id}/retire — lifecycle retirement."""
+
+    def test_retire_mutates_and_persists(self, api_client: TestClient) -> None:
+        system_id = _register_system(api_client, deployment_status="pilot")
+        resp = api_client.post(f"/api/ai-gov/systems/{system_id}/retire")
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["entry"]["deployment_status"] == "retired"
+
+        # Persisted — and the entry is preserved (not deleted).
+        got = api_client.get(f"/api/ai-gov/systems/{system_id}")
+        assert got.status_code == 200
+        assert got.json()["deployment_status"] == "retired"
+
+    def test_retire_already_retired_is_idempotent(
+        self, api_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client, deployment_status="pilot")
+        first = api_client.post(f"/api/ai-gov/systems/{system_id}/retire")
+        assert first.status_code == 200
+        second = api_client.post(f"/api/ai-gov/systems/{system_id}/retire")
+        assert second.status_code == 200
+        assert second.json()["entry"]["deployment_status"] == "retired"
+
+    def test_retire_unknown_id_returns_404(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(f"/api/ai-gov/systems/{_UNKNOWN_UUID}/retire")
+        assert resp.status_code == 404
+
+    def test_retire_invalid_id_returns_404(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post("/api/ai-gov/systems/not-a-uuid/retire")
+        assert resp.status_code == 404
+
+
+class TestCategorizeFips:
+    """POST /ai-gov/systems/{system_id}/categorize-fips — FIPS 199."""
+
+    def test_categorize_mutates_and_persists(
+        self, api_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/categorize-fips",
+            json={
+                "confidentiality": "moderate",
+                "integrity": "high",
+                "availability": "low",
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        cat = resp.json()["entry"]["fips_199_categorization"]
+        assert cat["confidentiality_impact"] == "moderate"
+        assert cat["integrity_impact"] == "high"
+        assert cat["availability_impact"] == "low"
+        # high-water-mark auto-computed.
+        assert cat["overall"] == "high"
+
+        # Persisted.
+        got = api_client.get(f"/api/ai-gov/systems/{system_id}")
+        assert got.json()["fips_199_categorization"]["overall"] == "high"
+
+    def test_categorize_unknown_id_returns_404(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{_UNKNOWN_UUID}/categorize-fips",
+            json={
+                "confidentiality": "low",
+                "integrity": "low",
+                "availability": "low",
+            },
+        )
+        assert resp.status_code == 404
+
+    def test_categorize_invalid_id_returns_404(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            "/api/ai-gov/systems/not-a-uuid/categorize-fips",
+            json={
+                "confidentiality": "low",
+                "integrity": "low",
+                "availability": "low",
+            },
+        )
+        assert resp.status_code == 404
+
+    def test_categorize_bad_impact_value_returns_422(
+        self, api_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/categorize-fips",
+            json={
+                "confidentiality": "bogus",
+                "integrity": "low",
+                "availability": "low",
+            },
+        )
+        assert resp.status_code == 422
+
+    def test_categorize_high_water_mark_mismatch_returns_400(
+        self, api_client: TestClient
+    ) -> None:
+        # overall=low while integrity=high is a paperwork error the
+        # core validator rejects → domain error normalizes to 400.
+        system_id = _register_system(api_client)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/categorize-fips",
+            json={
+                "confidentiality": "low",
+                "integrity": "high",
+                "availability": "low",
+                "overall": "low",
+            },
+        )
+        assert resp.status_code == 400
+
+
+class TestSetOmbImpact:
+    """POST /ai-gov/systems/{system_id}/set-omb-impact — OMB M-24-10."""
+
+    def test_set_omb_mutates_and_persists(
+        self, api_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-omb-impact",
+            json={"category": "rights_impacting"},
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["entry"]["omb_impact"] == "rights_impacting"
+
+        # Persisted.
+        got = api_client.get(f"/api/ai-gov/systems/{system_id}")
+        assert got.json()["omb_impact"] == "rights_impacting"
+
+    def test_set_omb_unknown_id_returns_404(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{_UNKNOWN_UUID}/set-omb-impact",
+            json={"category": "neither"},
+        )
+        assert resp.status_code == 404
+
+    def test_set_omb_invalid_id_returns_404(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            "/api/ai-gov/systems/not-a-uuid/set-omb-impact",
+            json={"category": "neither"},
+        )
+        assert resp.status_code == 404
+
+    def test_set_omb_bad_category_returns_422(
+        self, api_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-omb-impact",
+            json={"category": "bogus"},
+        )
+        assert resp.status_code == 422
+
+
+# ── v0.10.12: RBAC enforcement (proves the require_role gates bite) ──
+
+
+class TestAiGovRBAC:
+    """Under a read-only policy the write gates on the mutation verbs
+    must deny.
+
+    The other tests run under the permissive DEFAULT_POLICY, where the
+    ``require_role("write")`` gates are inert. This installs a deny-by-
+    default (read-only) policy and proves an anonymous update / retire
+    → 403, while a read (show) still resolves through the gate-free
+    path. Mirrors ``TestGovernanceRBAC`` in test_governance_router.py.
+    """
+
+    def test_anonymous_update_denied_403(
+        self, api_client: TestClient, ai_gov_readonly_client: TestClient
+    ) -> None:
+        # Seed via the permissive full-app client (shares the isolated
+        # registry env var), then attempt the write under the read-only
+        # policy.
+        system_id = _register_system(api_client)
+        resp = ai_gov_readonly_client.put(
+            f"/api/ai-gov/systems/{system_id}",
+            json={"owner": "x"},
+        )
+        assert resp.status_code == 403, resp.text
+        assert resp.json()["detail"]["error"] == "rbac_denied"
+
+    def test_anonymous_retire_denied_403(
+        self, api_client: TestClient, ai_gov_readonly_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client)
+        resp = ai_gov_readonly_client.post(
+            f"/api/ai-gov/systems/{system_id}/retire"
+        )
+        assert resp.status_code == 403, resp.text
+        assert resp.json()["detail"]["error"] == "rbac_denied"

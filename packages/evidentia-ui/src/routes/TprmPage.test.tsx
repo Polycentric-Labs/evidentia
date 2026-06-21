@@ -33,6 +33,7 @@ const getVendorMock = vi.mocked(api.getVendor);
 const updateVendorMock = vi.mocked(api.updateVendor);
 const deleteVendorMock = vi.mocked(api.deleteVendor);
 const tprmConcentrationMock = vi.mocked(api.tprmConcentration);
+const ddQuestionnaireIngestMock = vi.mocked(api.ddQuestionnaireIngest);
 
 const VENDOR: Vendor = {
   id: "e5dd135b-e489-4a4a-9fa4-f3da59589f71",
@@ -62,6 +63,7 @@ describe("TprmPage", () => {
     updateVendorMock.mockReset();
     deleteVendorMock.mockReset();
     tprmConcentrationMock.mockReset();
+    ddQuestionnaireIngestMock.mockReset();
   });
 
   afterEach(() => {
@@ -260,5 +262,61 @@ describe("TprmPage", () => {
     );
     // The returned distribution renders as structured text.
     expect(await screen.findByText(/1 vendors analyzed/i)).toBeInTheDocument();
+  });
+
+  it("ingests a pasted questionnaire document and renders the correlation result", async () => {
+    const user = userEvent.setup();
+    listVendorsMock.mockResolvedValue({ total: 1, vendors: [VENDOR] });
+    getVendorMock.mockResolvedValue({ ...VENDOR });
+    // The ingest endpoint is PARSE-ONLY: it returns a correlation result, not
+    // an updated Vendor.
+    ddQuestionnaireIngestMock.mockResolvedValue({
+      vendor: { id: VENDOR.id!, name: VENDOR.name },
+      questionnaire_id: "q-123",
+      format: "evidentia-generic",
+      responses: { "EVG-GOV-01": "Yes", "EVG-GOV-02": "" },
+      ingested_at: "2026-06-20T12:00:00Z",
+    });
+
+    renderWithProviders(<TprmPage />);
+
+    // Open the detail panel (the DD-questionnaire section lives inside it).
+    await user.click(
+      await screen.findByRole("button", { name: "Vendor Acme Cloud Inc." }),
+    );
+    await screen.findByRole("heading", { name: "Vendor detail" });
+
+    // Paste a completed questionnaire document into the ingest textarea.
+    const document = {
+      format: "evidentia-generic",
+      questions: [
+        { id: "EVG-GOV-01", vendor_response: "Yes" },
+        { id: "EVG-GOV-02", vendor_response: "" },
+      ],
+    };
+    const textarea = screen.getByLabelText("Ingest completed questionnaire");
+    await user.click(textarea);
+    await user.paste(JSON.stringify(document));
+
+    await user.click(
+      screen.getByRole("button", { name: /ingest questionnaire/i }),
+    );
+
+    // The page posts the parsed document object (not a {responses} payload).
+    await waitFor(() =>
+      expect(ddQuestionnaireIngestMock).toHaveBeenCalledTimes(1),
+    );
+    expect(ddQuestionnaireIngestMock).toHaveBeenCalledWith(VENDOR.id, document);
+
+    // The correlation result renders: resolved vendor + per-question responses.
+    expect(
+      await screen.findByText(/questionnaire ingested/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/parse-only/i)).toBeInTheDocument();
+    expect(screen.getByText("EVG-GOV-01")).toBeInTheDocument();
+    expect(screen.getByText("Yes")).toBeInTheDocument();
+    expect(screen.getByText("EVG-GOV-02")).toBeInTheDocument();
+    // Empty response renders as the "no response" placeholder.
+    expect(screen.getByText(/no response/i)).toBeInTheDocument();
   });
 });

@@ -25,14 +25,13 @@ request-body parsing) keep their array-shape detail.
 
 from __future__ import annotations
 
-import hashlib
 import json
+import tempfile
 from datetime import date
+from pathlib import Path
 
-from evidentia_core.audit import EventOutcome, get_logger
 from evidentia_core.models.tprm import (
     CriticalityTier,
-    EvidenceRef,
     Vendor,
     VendorType,
 )
@@ -42,9 +41,11 @@ from evidentia_core.tprm.concentration import (
     compute_concentration,
 )
 from evidentia_core.tprm.questionnaire import (
+    CompletedQuestionnaire,
     Questionnaire,
     QuestionnaireFormat,
     generate_questionnaire,
+    parse_completed_questionnaire,
 )
 from evidentia_core.vendor_store import (
     InvalidVendorIdError,
@@ -53,22 +54,10 @@ from evidentia_core.vendor_store import (
     load_vendor_by_id,
     save_vendor,
 )
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Body, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from evidentia_api.rbac_dependency import require_role
-
 router = APIRouter()
-_log = get_logger("evidentia.api.tprm")
-
-# Audit action string. No TPRM-specific EventAction enum member exists in
-# evidentia_core.audit.events, and this router may not edit that file
-# (strict scope). The audit logger's `action` parameter is typed
-# `EventAction | str`, so this stable ECS-style dotted string is a
-# type-clean fit, consistent with the events.py namespace convention
-# (``evidentia.<domain>.<verb>``) and the governance router precedent.
-# A future refactor can promote it to an enum member.
-_ACTION_DD_QUESTIONNAIRE_INGESTED = "evidentia.tprm.dd_questionnaire_ingested"
 
 
 # ── helpers ────────────────────────────────────────────────────────
@@ -412,93 +401,101 @@ async def generate_dd_questionnaire(
 # ── DD-questionnaire ingest (v0.10.12) ────────────────────────────
 
 
-class CompletedQuestionnaireIngest(BaseModel):
-    """Request body for the DD-questionnaire ingest endpoint.
+class DDQuestionnaireIngestResult(BaseModel):
+    """Correlation result returned by the DD-questionnaire ingest endpoint.
 
-    Carries the completed (or partially-completed) questionnaire
-    content the API caller posts back after a vendor returns it. The
-    HTTP surface receives structured JSON directly (the CLI's
-    ``parse_completed_questionnaire`` file-parsing path has no
-    equivalent need here — the body IS the parsed content).
-
-    ``responses`` is the per-question answer map keyed by question.id
-    (e.g. ``EVG-GOV-01``). An empty map is a malformed ingest (nothing
-    to record) and the endpoint rejects it with a 400.
+    Mirrors the ``evidentia tprm dd-questionnaire ingest`` CLI verb's
+    ``--output-format json`` shape: the parsed responses (keyed by
+    question.id) correlated to a resolved vendor, plus the carry-forward
+    context (questionnaire id / format) and the ingest timestamp. Like
+    the CLI, this is PARSE-ONLY — persistence to ``vendor.evidence_refs``
+    stays deferred, so no vendor mutation occurs.
     """
 
+    vendor: dict[str, str] = Field(
+        description=(
+            "The resolved vendor the questionnaire correlated to: "
+            "``{'id': ..., 'name': ...}``. Mirrors the CLI's vendor block."
+        ),
+    )
     questionnaire_id: str | None = Field(
         default=None,
         description=(
-            "UUID from the originating Questionnaire (when the caller "
-            "carries it forward from the generate step). Recorded on the "
-            "evidence reference for correlation; not required."
+            "UUID carried forward from the originating Questionnaire's "
+            "``id`` field, when the posted document includes it."
         ),
     )
     format: str | None = Field(
         default=None,
         description=(
-            "Questionnaire framework the responses correspond to "
-            "(e.g. 'evidentia-generic' / 'caiq-lite'). Free-text; "
-            "recorded on the evidence reference for context."
+            "Questionnaire framework parsed from the document's ``format`` "
+            "field (e.g. 'evidentia-generic' / 'caiq-lite'); null when "
+            "absent or unrecognized."
         ),
     )
     responses: dict[str, str] = Field(
-        default_factory=dict,
         description=(
-            "Per-question vendor responses keyed by question.id. Empty "
-            "string == 'no response'. At least one entry is required — "
-            "an empty map is rejected as a malformed ingest (400)."
+            "Per-question vendor responses correlated by question.id "
+            "(e.g. ``EVG-GOV-01``). Empty string == 'no response'."
         ),
     )
-    source_path: str | None = Field(
-        default=None,
-        description=(
-            "Optional provenance label — e.g. the filename the operator "
-            "received the completed questionnaire as. Recorded on the "
-            "evidence reference's notes for audit context."
-        ),
+    ingested_at: str = Field(
+        description="ISO-8601 timestamp the parse/correlation ran.",
     )
 
 
 @router.post(
     "/tprm/vendors/{vendor_id}/dd-questionnaire/ingest",
-    response_model=Vendor,
-    dependencies=[require_role("write")],
+    response_model=DDQuestionnaireIngestResult,
 )
 async def ingest_dd_questionnaire(
-    vendor_id: str, payload: CompletedQuestionnaireIngest
-) -> Vendor:
-    """Ingest a completed DD questionnaire into a vendor record.
+    vendor_id: str,
+    document: dict[str, object] = Body(
+        ...,
+        description=(
+            "The completed questionnaire document in the canonical "
+            "Questionnaire shape — a top-level ``questions`` array whose "
+            "entries carry an ``id`` + a ``vendor_response`` value, plus "
+            "optional top-level ``id`` (questionnaire UUID) and "
+            "``format``. This is exactly the JSON the "
+            "``evidentia tprm dd-questionnaire generate --output-format "
+            "json`` step emits, returned by the vendor with responses "
+            "filled in."
+        ),
+    ),
+) -> DDQuestionnaireIngestResult:
+    """Parse + correlate a completed DD questionnaire (parse-only).
 
-    Records the completed-questionnaire responses as an
-    :class:`EvidenceRef` appended to ``vendor.evidence_refs`` and
-    persists the mutated vendor — the persistence-to-vendor phase the
-    v0.7.9 ``evidentia tprm dd-questionnaire ingest`` CLI verb
-    deferred (the CLI parses + correlates, then prints for review).
+    Matches the ``evidentia tprm dd-questionnaire ingest`` CLI verb
+    exactly: PARSES the posted completed-questionnaire document and
+    CORRELATES the responses to the vendor record, then RETURNS the
+    correlation result. It does NOT mutate or save the vendor and does
+    NOT create an :class:`EvidenceRef` — persistence stays deferred,
+    matching the CLI's documented scope (the CLI parses + correlates,
+    then prints for review).
 
-    Local store mutation only — no credentials, no network. Returns
-    the updated :class:`Vendor`.
+    The core :func:`parse_completed_questionnaire` is file-based
+    (extension-dispatched). Over HTTP the body IS the document, so it is
+    written to an ephemeral ``.json`` temp file, parsed, and the temp
+    file is removed in a ``finally`` — no path/secret leakage and no
+    persistent on-disk state.
+
+    Local parse only — no credentials, no network. Returns the parsed
+    :class:`DDQuestionnaireIngestResult`.
 
     Error contract (matches the rest of this router):
 
       - 404 on shape-violation OR well-formed-unknown ``vendor_id``
-        (F-V08-DAST-1 widening pattern).
+        (F-V08-DAST-1 widening pattern). The endpoint is vendor-scoped.
       - 400 (string detail, F-V08-DAST-3 invariant) when the
-        questionnaire content is malformed — i.e. ``responses`` is
-        empty (nothing to ingest). Pydantic auto-validation 422s
+        questionnaire content is unparseable or correlates to no
+        responses (nothing to ingest). Pydantic auto-validation 422s
         (wrong-typed body) keep their array-shape detail.
-      - 403 when an RBAC policy denies the ``write`` action.
-    """
-    if not payload.responses:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "Malformed questionnaire content: `responses` is empty. "
-                "Provide at least one per-question response keyed by "
-                "question.id (e.g. {'EVG-GOV-01': 'Yes'})."
-            ),
-        )
 
+    No ``require_role("write")`` gate: a parse is a read-style operation
+    (no vendor mutation), so it is open like the other read endpoints on
+    this router.
+    """
     try:
         vendor = load_vendor_by_id(vendor_id)
     except InvalidVendorIdError as exc:
@@ -512,52 +509,58 @@ async def ingest_dd_questionnaire(
             detail=f"Vendor {vendor_id!r} not found.",
         )
 
-    answered = sum(1 for v in payload.responses.values() if v)
-    title = "Completed DD questionnaire"
-    if payload.format:
-        title = f"{title} ({payload.format})"
-    note_bits = [
-        f"{len(payload.responses)} response(s); {answered} answered",
-    ]
-    if payload.questionnaire_id:
-        note_bits.append(f"questionnaire_id={payload.questionnaire_id}")
-    if payload.source_path:
-        note_bits.append(f"source={payload.source_path}")
-    # EvidenceRef's two-mode contract requires a paired sha256 whenever
-    # file_path is set (tamper detection). The ingested responses ARE the
-    # evidence content here, so hash their canonical JSON serialization —
-    # a genuine digest the operator can later recompute to detect drift.
-    digest = hashlib.sha256(
-        json.dumps(payload.responses, sort_keys=True).encode("utf-8")
-    ).hexdigest()
-    evidence = EvidenceRef(
-        title=title,
-        file_path=payload.source_path or "(ingested via API)",
-        sha256=digest,
-        notes="; ".join(note_bits),
+    # The core parser is file-based + extension-dispatched. Write the
+    # posted document to an ephemeral .json temp file, parse, and clean
+    # up — the temp path never escapes this handler (no leakage).
+    tmp_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=".json",
+            delete=False,
+            encoding="utf-8",
+        ) as tmp:
+            json.dump(document, tmp)
+            tmp_path = Path(tmp.name)
+        completed: CompletedQuestionnaire = parse_completed_questionnaire(
+            tmp_path
+        )
+    except (ValueError, ImportError) as exc:
+        # Unparseable / malformed questionnaire content. Use a generic
+        # string detail (no path/internal leakage; F-V08-DAST-3 shape).
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Malformed questionnaire content: could not parse the "
+                "posted document. Expected the canonical Questionnaire "
+                "shape with a `questions` array of "
+                "{id, vendor_response} entries."
+            ),
+        ) from exc
+    finally:
+        if tmp_path is not None:
+            tmp_path.unlink(missing_ok=True)
+
+    if not completed.responses:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Malformed questionnaire content: no per-question "
+                "responses correlated. Provide a `questions` array whose "
+                "entries carry an `id` and a `vendor_response` "
+                "(e.g. {'id': 'EVG-GOV-01', 'vendor_response': 'Yes'})."
+            ),
+        )
+
+    fmt = completed.format
+    fmt_value = (
+        fmt.value if isinstance(fmt, QuestionnaireFormat) else fmt
     )
 
-    # Append to a model_copy rather than mutating the FastAPI-parsed
-    # vendor in place — matches the H-3 anti-pattern fix used across
-    # this router (create_vendor / replace_vendor).
-    vendor = vendor.model_copy(
-        update={"evidence_refs": [*vendor.evidence_refs, evidence]}
+    return DDQuestionnaireIngestResult(
+        vendor={"id": vendor.id, "name": vendor.name},
+        questionnaire_id=completed.questionnaire_id,
+        format=fmt_value,
+        responses=completed.responses,
+        ingested_at=completed.ingested_at.isoformat(),
     )
-    save_vendor(vendor)
-
-    _log.info(
-        action=_ACTION_DD_QUESTIONNAIRE_INGESTED,
-        outcome=EventOutcome.SUCCESS,
-        message=(
-            f"Completed DD questionnaire ingested via API for vendor "
-            f"{vendor.name}"
-        ),
-        evidentia={
-            "vendor_id": vendor.id,
-            "questionnaire_id": payload.questionnaire_id,
-            "format": payload.format,
-            "response_count": len(payload.responses),
-            "answered_count": answered,
-        },
-    )
-    return vendor

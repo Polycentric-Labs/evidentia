@@ -53,7 +53,7 @@ import type {
   CatalogCrosswalkResponse,
   ConcentrationReport,
   Questionnaire,
-  CompletedQuestionnaireIngest,
+  DDQuestionnaireIngestResult,
   MilestoneCreatePayload,
   RiskQuantifyRequest,
   RiskQuantifyResponse,
@@ -64,6 +64,15 @@ import type {
   ConmonHealthRequest,
   ConmonMarkCompletedRequest,
   ConmonMarkCompletedResponse,
+  AISystemDescriptor,
+  AISystemClassification,
+  AISystemRegisterRequest,
+  AISystemUpdateRequest,
+  AISystemEntry,
+  FIPS199CategorizeRequest,
+  OMBImpactRequest,
+  OscalVerifyRequest,
+  TraceabilityMatrix,
 } from "@/lib/api";
 import type {
   AirGapCheckResponse,
@@ -387,6 +396,71 @@ const DEMO_QUESTIONNAIRE: Questionnaire = {
   vendor: { name: "Demo Vendor" },
 } as unknown as Questionnaire;
 
+// ── AI-governance demo fixtures ──────────────────────────────────────────
+//
+// A couple of registered AI systems (free-form `AISystemEntry` objects, the
+// same loose shape the registry endpoints return) so the ai-gov screens render
+// with zero network. `eu_ai_act_tier` lets the `tier` filter exercise.
+const DEMO_AI_SYSTEMS: AISystemEntry[] = [
+  {
+    id: "demo-ai-credit-adjudicator",
+    name: "Credit adjudication assistant",
+    purpose: "Recommends consumer-credit decisions for human review.",
+    owner: "ai.gov.lead@meridian.example",
+    provider: "Meridian (internal)",
+    deployment_status: "production",
+    eu_ai_act_tier: "high",
+  },
+  {
+    id: "demo-ai-chat-helpdesk",
+    name: "Internal IT helpdesk chatbot",
+    purpose: "Answers employee IT questions from a knowledge base.",
+    owner: "it.ops@meridian.example",
+    provider: "acme-llm-vendor",
+    deployment_status: "pilot",
+    eu_ai_act_tier: "minimal",
+  },
+];
+
+// Baked classification verdict for the one-shot classify verb.
+const DEMO_AI_CLASSIFICATION: AISystemClassification = {
+  descriptor_name: "Credit adjudication assistant",
+  eu_ai_act_tier: "high",
+  applicable_nist_ai_rmf_functions: ["govern", "measure", "manage"],
+  rationale: [
+    "Influences access to an essential private service (credit) — Annex III high-risk use case.",
+    "Affects natural persons' significant interests — SME review recommended before deployment.",
+  ],
+  disclaimer:
+    "This classification is an informational starting point produced by a rule-based classifier. It is NOT a legal compliance determination.",
+};
+
+// Baked OSCAL-verify verdict (free-form object; a real verify returns a richer
+// structured verdict). Demo always reports a clean PASS on the digest leg.
+const DEMO_OSCAL_VERIFY: Record<string, unknown> = {
+  verified: true,
+  digest_check: "passed",
+  signature_check: "not checked",
+  sigstore_check: "skipped (offline)",
+  summary: "Demo verdict — the live build runs the real chain-of-custody check.",
+};
+
+// Baked UNSIGNED OSCAL profile returned by the traceability emit verb.
+const DEMO_TRACEABILITY_PROFILE: Record<string, unknown> = {
+  profile: {
+    uuid: "00000000-0000-0000-0000-000000000000",
+    metadata: {
+      title: "Control↔Threat Traceability Matrix (demo)",
+      version: "0.0.0-demo",
+    },
+    imports: [],
+  },
+  metadata: {
+    title: "Control↔Threat Traceability Matrix (demo)",
+    signed: false,
+  },
+};
+
 export const demoApi = {
   // ── Probe / identity ──────────────────────────────────────────────────
   health: (): Promise<HealthResponse> => Promise.resolve(clone(DEMO_HEALTH)),
@@ -591,12 +665,30 @@ export const demoApi = {
   ): Promise<Questionnaire> => Promise.resolve(clone(DEMO_QUESTIONNAIRE)),
   ddQuestionnaireIngest: (
     vendorId: string,
-    _payload: CompletedQuestionnaireIngest,
-  ): Promise<Vendor> => {
+    document: Questionnaire,
+  ): Promise<DDQuestionnaireIngestResult> => {
     const vendor =
       DEMO_VENDORS.vendors.find((v) => v.id === vendorId) ??
       DEMO_VENDORS.vendors[0];
-    return Promise.resolve(clone(vendor));
+    // PARSE-ONLY: correlate each posted question's `vendor_response` by its
+    // `id` (no mutation, mirroring the real endpoint). The demo fixture
+    // questionnaire carries no `questions`, so an empty/partial doc yields
+    // an empty `responses` map — exactly what the server would return.
+    const questions =
+      (document as { questions?: Array<{ id?: string; vendor_response?: string }> })
+        .questions ?? [];
+    const responses: Record<string, string> = {};
+    for (const q of questions) {
+      if (q?.id) responses[q.id] = q.vendor_response ?? "";
+    }
+    return Promise.resolve({
+      vendor: { id: vendor.id ?? vendorId, name: vendor.name },
+      questionnaire_id:
+        (document as { id?: string | null }).id ?? null,
+      format: (document as { format?: string | null }).format ?? null,
+      responses,
+      ingested_at: "2026-06-21T00:00:00Z",
+    });
   },
 
   // ── ConMon ────────────────────────────────────────────────────────────
@@ -944,6 +1036,104 @@ export const demoApi = {
       controlId,
     )}${qs ? `?${qs}` : ""}`;
   },
+
+  // ── AI governance (EU AI Act / FIPS 199 / OMB M-24-10) ────────────────
+  listAiSystems: (params?: {
+    skip?: number;
+    limit?: number;
+    tier?: string;
+  }): Promise<AISystemEntry[]> => {
+    let items = DEMO_AI_SYSTEMS;
+    if (params?.tier)
+      items = items.filter((s) => s.eu_ai_act_tier === params.tier);
+    const skip = params?.skip ?? 0;
+    const page =
+      params?.limit != null
+        ? items.slice(skip, skip + params.limit)
+        : items.slice(skip);
+    return Promise.resolve(clone(page));
+  },
+  classifyAiSystem: (
+    _descriptor: AISystemDescriptor,
+  ): Promise<AISystemClassification> =>
+    Promise.resolve(clone(DEMO_AI_CLASSIFICATION)),
+  registerAiSystem: (
+    body: AISystemRegisterRequest,
+  ): Promise<AISystemEntry> =>
+    Promise.resolve({
+      ...clone(DEMO_AI_SYSTEMS[0]),
+      owner: body.owner,
+      provider: body.provider,
+      deployment_status: body.deployment_status,
+      id: `demo-ai-${Date.now()}`,
+    }),
+  getAiSystem: (systemId: string): Promise<AISystemEntry> => {
+    const item =
+      DEMO_AI_SYSTEMS.find((s) => s.id === systemId) ?? DEMO_AI_SYSTEMS[0];
+    return Promise.resolve(clone(item));
+  },
+  updateAiSystem: (
+    systemId: string,
+    body: AISystemUpdateRequest,
+  ): Promise<AISystemEntry> => {
+    const base =
+      DEMO_AI_SYSTEMS.find((s) => s.id === systemId) ?? DEMO_AI_SYSTEMS[0];
+    return Promise.resolve({ ...clone(base), ...clone(body), id: systemId });
+  },
+  deleteAiSystem: (_systemId: string): Promise<void> => Promise.resolve(),
+  retireAiSystem: (systemId: string): Promise<AISystemEntry> => {
+    const base =
+      DEMO_AI_SYSTEMS.find((s) => s.id === systemId) ?? DEMO_AI_SYSTEMS[0];
+    return Promise.resolve({
+      ...clone(base),
+      id: systemId,
+      deployment_status: "retired",
+    });
+  },
+  categorizeFipsAiSystem: (
+    systemId: string,
+    body: FIPS199CategorizeRequest,
+  ): Promise<AISystemEntry> => {
+    const base =
+      DEMO_AI_SYSTEMS.find((s) => s.id === systemId) ?? DEMO_AI_SYSTEMS[0];
+    return Promise.resolve({
+      ...clone(base),
+      id: systemId,
+      fips199: clone(body),
+    });
+  },
+  setOmbImpactAiSystem: (
+    systemId: string,
+    body: OMBImpactRequest,
+  ): Promise<AISystemEntry> => {
+    const base =
+      DEMO_AI_SYSTEMS.find((s) => s.id === systemId) ?? DEMO_AI_SYSTEMS[0];
+    return Promise.resolve({
+      ...clone(base),
+      id: systemId,
+      omb_impact: clone(body),
+    });
+  },
+
+  // ── OSCAL (verify) ────────────────────────────────────────────────────
+  oscalVerify: (
+    _body: OscalVerifyRequest,
+  ): Promise<Record<string, unknown>> =>
+    Promise.resolve(clone(DEMO_OSCAL_VERIFY)),
+
+  // ── Traceability (Control↔Threat matrix → OSCAL profile) ──────────────
+  traceabilityEmit: (
+    matrix: TraceabilityMatrix,
+  ): Promise<Record<string, unknown>> =>
+    Promise.resolve({
+      ...clone(DEMO_TRACEABILITY_PROFILE),
+      // Echo the supplied title into the emitted profile's metadata so the
+      // demo response visibly reflects the posted matrix.
+      metadata: {
+        ...(DEMO_TRACEABILITY_PROFILE.metadata as Record<string, unknown>),
+        title: matrix.title,
+      },
+    }),
 };
 
 /**
