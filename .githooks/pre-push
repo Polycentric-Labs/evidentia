@@ -33,6 +33,10 @@
 #   9. check_commit_signatures    (every commit in the push range must be
 #                                  signed; closes the F-V107-1 unsigned-commit
 #                                  admin-bypass path. Blocks on %G? N/B.)
+#  10. check_readme_regen         (regenerate the Recent-Releases block; FAIL
+#                                  if it changed in the working tree)
+#  11. check_doc_counts           (README at-a-glance counts ==
+#                                  code-derived truth; v0.10.12 Wave 0)
 #
 # All checks run before the hook exits, so the operator sees every
 # failure at once.
@@ -311,6 +315,13 @@ check_readme_regen() {
     return 0
 }
 run_check "check_readme_regen" check_readme_regen || true
+
+# 11. README capability-count drift (v0.10.12 Wave 0): the at-a-glance counts
+#     (catalogs / crosswalks / collectors / MCP-tools) must equal the
+#     code-derived truth (catalogs manifest + openapi.json + MCP server
+#     source). Pure-filesystem; always runs.
+run_check "check_doc_counts" \
+    run_py "${REPO_ROOT}/scripts/check_doc_counts.py" || true
 
 # ---------------------------------------------------------------------------
 # Verdict.

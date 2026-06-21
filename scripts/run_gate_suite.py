@@ -22,9 +22,9 @@ Scopes
 ======
 
 * ``consistency`` — the fast staleness guards (no test/type/scan run):
-  ``version_consistency`` + ``docs_health`` + ``readme_releases``. This
-  is the set the pre-push hook and the push/PR ``consistency.yml``
-  enforce on every change.
+  ``version_consistency`` + ``docs_health`` + ``readme_releases`` +
+  ``doc_counts``. This is the set the pre-push hook and the push/PR
+  ``consistency.yml`` enforce on every change.
 * ``full`` — ``consistency`` PLUS the heavyweight gates
   (``pytest`` + ``mypy`` + ``ruff`` + ``osv`` + ``parity``). This is
   the set the tag-time ``gate`` job runs before any artifact is
@@ -86,10 +86,12 @@ class Check:
     argv: tuple[str, ...]
 
 
-# The staleness guards: fast, no test/type/scan execution. These three
+# The staleness guards: fast, no test/type/scan execution. These four
 # are the consistency scope AND the checks the pre-push hook already
 # runs locally — mirroring them into push/PR CI catches drift on PRs
 # independent of whether a contributor has the local hook configured.
+# All are pure-filesystem (no evidentia package import), keeping this
+# scope importable in a light CI install.
 _CONSISTENCY_CHECKS: tuple[Check, ...] = (
     Check(
         "version_consistency",
@@ -102,6 +104,14 @@ _CONSISTENCY_CHECKS: tuple[Check, ...] = (
     Check(
         "readme_releases",
         ("python", "scripts/gen_readme_releases.py", "--check"),
+    ),
+    # README capability-count drift: the at-a-glance counts (catalogs /
+    # crosswalks / collectors / MCP-tools) must equal the code-derived
+    # truth. Pure-filesystem (parses the catalogs manifest + openapi.json +
+    # the MCP server source), so it stays in the fast consistency scope.
+    Check(
+        "doc_counts",
+        ("python", "scripts/check_doc_counts.py"),
     ),
 )
 
