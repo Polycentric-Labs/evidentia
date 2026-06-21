@@ -23,7 +23,7 @@
   <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Code of Conduct"></a>
   <a href="https://www.bestpractices.dev/projects/12724"><img src="https://www.bestpractices.dev/projects/12724/badge" alt="OpenSSF Best Practices"></a>
   <a href="https://scorecard.dev/viewer/?uri=github.com/Polycentric-Labs/evidentia"><img src="https://api.scorecard.dev/projects/github.com/Polycentric-Labs/evidentia/badge" alt="OpenSSF Scorecard"></a>
-  <a href="docs/parity-coverage.md"><img src="https://img.shields.io/badge/CLI%E2%86%94GUI%20parity-13.3%25-orange.svg" alt="CLI↔GUI parity"></a>
+  <a href="docs/parity-coverage.md"><img src="https://img.shields.io/badge/CLI%E2%86%94GUI%20parity-98%25-brightgreen.svg" alt="CLI↔GUI parity"></a>
 </p>
 
 </div>

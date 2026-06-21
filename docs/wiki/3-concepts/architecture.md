@@ -9,7 +9,7 @@ Evidence collectors pull raw signals from source systems (AWS API, GitHub API, P
 ```
                                                 ┌──────────────────────────┐
                                                 │ Bundled framework catalog│
-                                                │ (92 catalogs incl. NIST  │
+                                                │ (95 catalogs incl. NIST  │
                                                 │ 800-53 Rev5, FedRAMP,    │
                                                 │ OSPS Baseline, etc.)     │
                                                 └────────────┬─────────────┘

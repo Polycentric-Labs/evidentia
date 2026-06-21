@@ -51,7 +51,7 @@ Real output on a healthy install:
 ```text
 Evidentia MCP doctor: PASS
   • MCP SDK: importable
-  • Catalog registry: 92 frameworks loaded
+  • Catalog registry: 95 frameworks loaded
   • FastMCP server: 13 tools registered
 ```
 

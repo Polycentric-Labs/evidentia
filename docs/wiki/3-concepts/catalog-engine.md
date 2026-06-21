@@ -1,6 +1,6 @@
 # Catalog engine
 
-A *catalog* is the machine-readable representation of a compliance framework's controls — NIST SP 800-53 Rev 5, SOC 2 TSC, ISO 27001, the OpenSSF OSPS Baseline, and ~88 others. Catalogs are the "target state" in gap analysis: the gap analyzer compares your evidence against a catalog's controls and reports what's missing. This page explains how catalogs are stored, discovered, loaded, validated, and indexed, and how to regenerate the manifest after adding one.
+A *catalog* is the machine-readable representation of a compliance framework's controls — NIST SP 800-53 Rev 5, SOC 2 TSC, ISO 27001, the OpenSSF OSPS Baseline, and ~91 others. Catalogs are the "target state" in gap analysis: the gap analyzer compares your evidence against a catalog's controls and reports what's missing. This page explains how catalogs are stored, discovered, loaded, validated, and indexed, and how to regenerate the manifest after adding one.
 
 The code lives in `packages/evidentia-core/src/evidentia_core/catalogs/`.
 

@@ -74,10 +74,10 @@ leads with the CLI.
 - **Clickable demo (planned):** an in-browser terminal (Killercoda / Instruqt-style) running
   the *real* `evidentia` CLI in an ephemeral sandbox. The user drives the actual tool;
   Evidentia hosts no state. Best fit for a CLI / library-shaped tool.
-- **Local writable GUI demo (deferred until CLI<->GUI parity):** a one-command
+- **Local writable GUI demo (pending a store-seeder):** a one-command
   `docker compose -f docker-compose.demo.yml up` with a seeded store + mock collectors.
-  Deferred until the web console reaches CLI parity (it currently surfaces a subset of the
-  CLI); requires a store-seeder.
+  The web console now surfaces ~98% of coverable CLI leaves; this is gated only on a
+  store-seeder.
 - **Not planned:** a public, hosted, *stateful* backend demo. A credentialed GRC backend
   exposed publicly is a real security surface (SSRF / secret exfiltration / prompt-injection
   via collected evidence — the class the `--block-private-ips` hardening addresses). A durable
