@@ -121,3 +121,16 @@ def test_count_collector_endpoints_counts_collect_paths() -> None:
         }
     }
     assert c.count_collector_endpoints(openapi) == 2
+
+
+def test_count_collector_endpoints_excludes_ocsf_ingest() -> None:
+    # The OCSF ingest path (added v0.10.12 to mirror `evidentia collect ocsf`)
+    # shares the /collect verb but is an importer of already-collected OCSF,
+    # not a credentialed collection agent — it is excluded from the count.
+    openapi = {
+        "paths": {
+            "/api/collectors/aws/collect": {"post": {}},
+            "/api/collectors/ocsf/collect": {"post": {}},
+        }
+    }
+    assert c.count_collector_endpoints(openapi) == 1

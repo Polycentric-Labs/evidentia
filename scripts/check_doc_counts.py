@@ -16,11 +16,13 @@ guards):
               ``FrameworkRegistry.list_frameworks()`` returns, matching how the
               README counts "bundled catalogs".
   crosswalks  count of ``*.json`` in evidentia_core catalogs/data/mappings.
-  collectors  count of ``POST /api/collectors/.../collect`` ops in openapi.json
-              — the credentialed cloud/SaaS collectors. The ``collect ocsf``
-              file-ingest path has no ``/collect`` endpoint and is intentionally
-              excluded (it ingests already-collected OCSF, it is not an
-              evidence-collection agent).
+  collectors  count of credentialed ``POST /api/collectors/<name>/collect``
+              ops in openapi.json — the credentialed cloud/SaaS collectors.
+              The OCSF ingest path (``/api/collectors/ocsf/collect``, added in
+              v0.10.12 to mirror the ``evidentia collect ocsf`` CLI verb) shares
+              the ``/collect`` verb but is intentionally excluded — it ingests
+              already-collected OCSF (file/URL, no credentials); it is an
+              importer, not an evidence-collection agent.
   mcp_tools   count of ``@server.tool()`` registrations in evidentia_mcp
               server.py.
 
@@ -141,16 +143,33 @@ def count_mcp_tools(server_text: str) -> int:
     return len(re.findall(r"(?m)^\s*@server\.tool\(", server_text))
 
 
+# Collector keys whose ``/collect`` endpoint is NOT a credentialed agent:
+# the OCSF ingest path shares the ``/collect`` verb but is an importer, not
+# a credentialed evidence-collection agent, so it is excluded from the count.
+_NON_COLLECTOR_INGEST = frozenset({"ocsf"})
+
+
 def count_collector_endpoints(openapi: dict[str, Any]) -> int:
-    """Count ``POST /api/collectors/.../collect`` operations in an OpenAPI doc."""
+    """Count credentialed ``POST /api/collectors/<name>/collect`` operations.
+
+    The OCSF ingest path (``/api/collectors/ocsf/collect``) shares the
+    ``/collect`` verb — it mirrors the ``evidentia collect ocsf`` CLI verb —
+    but ingests already-collected OCSF JSON (file/URL, no credentials) rather
+    than reaching out to a credentialed source. It is an importer, not an
+    evidence-collection agent, and is excluded from this count by design (see
+    ``_NON_COLLECTOR_INGEST``).
+    """
     paths = openapi.get("paths") or {}
     total = 0
     for op_path, methods in paths.items():
         if not isinstance(methods, dict):
             continue
-        is_collect = re.match(r"^/api/collectors/.+/collect$", op_path)
-        if is_collect and "post" in {k.lower() for k in methods}:
-            total += 1
+        m = re.match(r"^/api/collectors/(.+)/collect$", op_path)
+        if not m or "post" not in {k.lower() for k in methods}:
+            continue
+        if m.group(1) in _NON_COLLECTOR_INGEST:
+            continue
+        total += 1
     return total
 
 
