@@ -208,6 +208,7 @@ Collect compliance evidence from a BitSight portfolio (read-only).
 | `--base-url` | BitSight API base URL. |
 | `--max-companies` | Hard cap on portfolio enumeration. Default 2000 — covers typical portfolios. |
 | `--rating-threshold` | BitSight rating below which to emit a low-rating finding. Default 700 (BitSight's 'Basic' boundary between B and C grades). Range 250-900. |
+| `--block-private-ips, --allow-private-ips` | Reject hosts that resolve to RFC1918 / link-local / loopback / multicast / reserved ranges before opening the connection. Default True — closes the SSRF surface that could otherwise expose AWS / GCP / Azure instance-metadata endpoints (169.254.169.254) or internal services. Use --allow-private-ips to override for trusted internal endpoints. |
 | `--output, -o` | Where to write the findings JSON. Default: stdout. |
 
 ### `evidentia collect convert`
@@ -227,6 +228,7 @@ Collect compliance evidence from a Databricks workspace (read-only).
 | Flag / argument | Description |
 | --- | --- |
 | `--workspace-url, -w` | Databricks workspace URL. Example: https://my-workspace.cloud.databricks.com. Auth is delegated to the Databricks SDK's unified-auth resolver — set DATABRICKS_TOKEN env var (PAT) OR configure Azure AD / AWS IAM / OAuth M2M / .databrickscfg. The collector NEVER accepts a token via CLI flag per the secret-handling protocol. |
+| `--block-private-ips, --allow-private-ips` | Reject hosts that resolve to RFC1918 / link-local / loopback / multicast / reserved ranges before opening the connection. Default True — closes the SSRF surface that could otherwise expose AWS / GCP / Azure instance-metadata endpoints (169.254.169.254) or internal services. Use --allow-private-ips to override for trusted internal endpoints. |
 | `--output, -o` | Where to write the findings JSON. Default: stdout. |
 
 ### `evidentia collect drata`
@@ -238,6 +240,7 @@ Collect compliance evidence from a Drata workspace (read-only).
 | `--token-env` | Name of the env var holding the Drata API token. The CLI reads from this env var rather than accepting the token as a flag (per secret-handling protocol). Defaults to DRATA_API_TOKEN. |
 | `--base-url` | Drata Public API base URL. Override for staging / dev tenants. |
 | `--max-vendors` | Hard cap on vendor enumeration. Default 2000 — covers typical orgs without unbounded pagination. |
+| `--block-private-ips, --allow-private-ips` | Reject hosts that resolve to RFC1918 / link-local / loopback / multicast / reserved ranges before opening the connection. Default True — closes the SSRF surface that could otherwise expose AWS / GCP / Azure instance-metadata endpoints (169.254.169.254) or internal services. Use --allow-private-ips to override for trusted internal endpoints. |
 | `--output, -o` | Where to write the findings JSON. Default: stdout. |
 
 ### `evidentia collect github`
@@ -248,6 +251,8 @@ Collect evidence from a GitHub repository.
 | --- | --- |
 | `--repo, -r` | GitHub repository in 'owner/repo' format. |
 | `--token` | GitHub personal access token. Defaults to $GITHUB_TOKEN. Required for private repos and higher rate limits. |
+| `--base-url` | GitHub API base URL. Default https://api.github.com. Override for GitHub Enterprise. |
+| `--block-private-ips, --allow-private-ips` | Reject hosts that resolve to RFC1918 / link-local / loopback / multicast / reserved ranges before opening the connection. Default True — closes the SSRF surface that could otherwise expose AWS / GCP / Azure instance-metadata endpoints (169.254.169.254) or internal services. Use --allow-private-ips to override for trusted internal endpoints. |
 | `--output, -o` | Where to write the findings JSON. Default: stdout. |
 
 ### `evidentia collect ocsf`
@@ -271,6 +276,7 @@ Collect evidence from an Okta org (read-only).
 | `--org-url, -u` | Okta org URL (e.g., https://your-org.okta.com). |
 | `--inactive-threshold-days` | Days since last login that mark an ACTIVE user as inactive. Default: 90 (per AC-2(3)). |
 | `--max-users` | Hard cap on user enumeration. Default: 10000. Increase only if your org is genuinely larger. |
+| `--block-private-ips, --allow-private-ips` | Reject hosts that resolve to RFC1918 / link-local / loopback / multicast / reserved ranges before opening the connection. Default True — closes the SSRF surface that could otherwise expose AWS / GCP / Azure instance-metadata endpoints (169.254.169.254) or internal services. Use --allow-private-ips to override for trusted internal endpoints. |
 | `--output, -o` | Where to write the findings JSON. Default: stdout. |
 
 ### `evidentia collect securityscorecard`
@@ -284,6 +290,7 @@ Collect compliance evidence from a SecurityScorecard portfolio (read-only).
 | `--base-url` | SecurityScorecard API base URL. |
 | `--max-companies` | Hard cap on portfolio enumeration. Default 2000 — covers typical portfolios. |
 | `--score-threshold` | SSC score below which to emit a low-score finding. Default 70 (boundary between C and D grades). Range 0-100. |
+| `--block-private-ips, --allow-private-ips` | Reject hosts that resolve to RFC1918 / link-local / loopback / multicast / reserved ranges before opening the connection. Default True — closes the SSRF surface that could otherwise expose AWS / GCP / Azure instance-metadata endpoints (169.254.169.254) or internal services. Use --allow-private-ips to override for trusted internal endpoints. |
 | `--output, -o` | Where to write the findings JSON. Default: stdout. |
 
 ### `evidentia collect snowflake`
@@ -299,6 +306,7 @@ Collect compliance evidence from a Snowflake account (read-only).
 | `--warehouse, -w` | Optional warehouse name. Audit principals SHOULD use a dedicated low-cost warehouse (e.g. EVIDENTIA_AUDIT_WH XS auto-suspend 60s). |
 | `--role, -r` | Optional role name. Defaults to the user's default role. |
 | `--login-history-window-days` | How many days back to scan in LOGIN_HISTORY. Defaults to 90 (industry-standard window). |
+| `--block-private-ips, --allow-private-ips` | Reject hosts that resolve to RFC1918 / link-local / loopback / multicast / reserved ranges before opening the connection. Default True — closes the SSRF surface that could otherwise expose AWS / GCP / Azure instance-metadata endpoints (169.254.169.254) or internal services. Use --allow-private-ips to override for trusted internal endpoints. |
 | `--output, -o` | Where to write the findings JSON. Default: stdout. |
 
 ### `evidentia collect sql`
@@ -310,6 +318,7 @@ Collect compliance evidence from a SQL database (read-only).
 | `--adapter, -a` | SQL adapter: postgres, mysql, sqlite, mssql, oracle. |
 | `--connection-uri, -u` | Database connection URI WITHOUT embedded password. Example: postgres://reader@db.example.com/app?sslmode=require. Pass the password via the --password-env env var. |
 | `--password-env` | Environment variable containing the DB password. Default: EVIDENTIA_POSTGRES_PASSWORD. The collector refuses to read the password from a CLI flag per the secret-handling protocol. |
+| `--block-private-ips, --allow-private-ips` | Reject hosts that resolve to RFC1918 / link-local / loopback / multicast / reserved ranges before opening the connection. Default True — closes the SSRF surface that could otherwise expose AWS / GCP / Azure instance-metadata endpoints (169.254.169.254) or internal services. Use --allow-private-ips to override for trusted internal endpoints. |
 | `--output, -o` | Where to write the findings JSON. Default: stdout. |
 
 ### `evidentia collect vanta`
@@ -321,6 +330,7 @@ Collect compliance evidence from a Vanta TPRM workspace (read-only).
 | `--token-env` | Name of the env var holding the Vanta API token. The CLI reads from this env var rather than accepting the token as a flag (per secret-handling protocol). Defaults to VANTA_API_TOKEN. The token can be either a Personal Access Token (developer / scripting use) or a pre-acquired OAuth 2.0 access token; both pass Authorization: Bearer <token>. |
 | `--base-url` | Vanta Public API base URL. Override for staging / dev tenants. |
 | `--max-vendors` | Hard cap on vendor enumeration. Default 2000 — covers typical orgs without unbounded pagination. |
+| `--block-private-ips, --allow-private-ips` | Reject hosts that resolve to RFC1918 / link-local / loopback / multicast / reserved ranges before opening the connection. Default True — closes the SSRF surface that could otherwise expose AWS / GCP / Azure instance-metadata endpoints (169.254.169.254) or internal services. Use --allow-private-ips to override for trusted internal endpoints. |
 | `--output, -o` | Where to write the findings JSON. Default: stdout. |
 
 ## `evidentia conmon`
@@ -446,7 +456,7 @@ Run the DFAH harness against the live RiskStatementGenerator.
 | `--model, -m` | LiteLLM model identifier passed through to RiskStatementGenerator. Defaults to whatever the EVIDENTIA_LLM_MODEL env var or evidentia.yaml specifies. |
 | `--temperature` | Sampling temperature. 0.0 maximises determinism; the harness will report violations if the LLM provider is non-deterministic at this temperature. |
 | `--check-replay` | Additionally run a single replay-equivalence pass per gap (re-uses the determinism context). |
-| `--sign, --no-sign` | v0.8.2 P3.2: produce a Sigstore bundle alongside the JSON output. Default: auto-detect — sign in CI release context (GITHUB_ACTIONS=true), skip otherwise. Requires --output. The bundle proves the eval was produced by a specific OIDC identity at a specific time — auditor-defensible evidence. |
+| `--sign, --no-sign` | v0.8.2 P3.2: produce a Sigstore bundle alongside the JSON output. Default: auto-detect — sign in CI release context (GITHUB_ACTIONS=true with an OIDC token available), skip otherwise. Requires --output. The bundle proves the eval was produced by a specific OIDC identity at a specific time — auditor-defensible evidence. |
 | `--check-faithfulness` | v0.8.5 P1: also score each sample's modal output for faithfulness — the second arXiv 2601.15322 metric. Decomposes each generation into atomic claims (via LLM extraction) + scores each claim against the sample's source clauses. Requires --source-clauses-file. |
 | `--faithfulness-threshold` | Minimum claim-score below which a FAITHFULNESS_VIOLATION fires. When unset (default), looks up the framework-aware default (NIST 0.60 / FFIEC 0.35 / ISO27001 0.30) for the per-prompt framework when --faithfulness-threshold-mode is 'framework-aware' (default), or 0.30 framework-agnostic when 'fixed'. Explicit values always win over the mode flag. Per-corpus calibration via scripts/tune_faithfulness_threshold.py. |
 | `--faithfulness-method` | Scoring method: 'jaccard' (stdlib; default) or 'semantic' (requires `pip install evidentia-ai[eval-faithfulness]`). |
@@ -462,7 +472,7 @@ Run the harness against a built-in deterministic stub.
 | `--samples-per-prompt, -n` | Number of generation calls per prompt for the determinism check. |
 | `--fail-on-determinism-rate-below` | Exit 1 if the overall determinism rate falls below this threshold. Default 0.95 (per arXiv 2601.15322 DFAH guidance). |
 | `--output, -o` | Write the full :class:`EvalResult` JSON to this path. When omitted, only the summary line goes to stdout. |
-| `--sign, --no-sign` | v0.8.2 P3.2: produce a Sigstore bundle alongside the JSON output (audit-grade evidence). Default: auto-detect — sign in CI release context (GITHUB_ACTIONS=true), skip otherwise. Requires --output to be set; explicit --sign without --output is a no-op. |
+| `--sign, --no-sign` | v0.8.2 P3.2: produce a Sigstore bundle alongside the JSON output (audit-grade evidence). Default: auto-detect — sign in CI release context (GITHUB_ACTIONS=true with an OIDC token available), skip otherwise. Requires --output to be set; explicit --sign without --output is a no-op. |
 
 ### `evidentia eval verify`
 
@@ -472,8 +482,8 @@ v0.8.2 P3.2: verify a signed eval output.
 | --- | --- |
 | `OUTPUT_PATH` | — |
 | `--bundle, -b` | Path to the Sigstore bundle. Defaults to <output_path>.sigstore.json (the canonical naming from --sign). |
-| `--expected-identity` | Optional. Require the signer's certificate identity to match (e.g., the GitHub Actions workflow URL for a tagged release: 'https://github.com/<owner>/<repo>/.github/workflows/release.yml@refs/tags/<tag>'). |
-| `--expected-issuer` | Optional. Require the OIDC issuer to match (e.g., 'https://token.actions.githubusercontent.com'). |
+| `--expected-identity` | Optional. Require the signer's certificate identity to match (e.g., the GitHub Actions workflow URL for a tagged release: 'https://github.com/<owner>/<repo>/.github/workflows/release.yml@refs/tags/<tag>'). Must be paired with --expected-issuer (cosign model). |
+| `--expected-issuer` | Optional. Require the OIDC issuer to match (e.g., 'https://token.actions.githubusercontent.com'). Must be paired with --expected-identity (cosign model). |
 
 ## `evidentia evidence`
 
@@ -1018,8 +1028,8 @@ Verify digests + optional GPG and/or Sigstore signatures of an OSCAL AR document
 | `--gnupghome` | Override GNUPGHOME for signature verification. Useful when verifying against a specific keyring rather than the operator's default ~/.gnupg. |
 | `--check-sigstore, --no-check-sigstore` | Verify a Sigstore bundle (<path>.sigstore.json) if present. Default True. Use --no-check-sigstore to skip Sigstore checks entirely (e.g., for air-gap-only verification). |
 | `--sigstore-bundle` | Custom Sigstore bundle path. Defaults to <path>.sigstore.json next to the AR file. |
-| `--expected-identity` | Expected Sigstore signer identity (email or OIDC subject). When omitted, the verifier accepts ANY signer (UnsafeNoOp policy) and emits a warning. Production audit pipelines should always set this AND --expected-issuer. |
-| `--expected-issuer` | Expected Sigstore identity issuer URL (e.g., 'https://token.actions.githubusercontent.com' for GitHub Actions OIDC). Required if --expected-identity is set. |
+| `--expected-identity` | Expected Sigstore signer identity (email or OIDC subject). When omitted along with --expected-issuer, the verifier accepts ANY signer (UnsafeNoOp policy) and emits a warning. Both-or-neither with --expected-issuer (cosign model); supplying exactly one fails verification. Production audit pipelines should always set both. |
+| `--expected-issuer` | Expected Sigstore identity issuer URL (e.g., 'https://token.actions.githubusercontent.com' for GitHub Actions OIDC). Both-or-neither with --expected-identity (cosign model). |
 | `--json` | Emit the verification report as machine-readable JSON to stdout. Exit code reflects overall pass/fail regardless of output mode. |
 
 ## `evidentia poam`
@@ -1228,7 +1238,7 @@ Start the Evidentia web UI (REST API + React SPA).
 
 | Flag / argument | Description |
 | --- | --- |
-| `--host` | Host to bind the web UI to. Default 127.0.0.1 (localhost-only). Binding to 0.0.0.0 exposes the UI on your network; Evidentia has no auth in v0.4.0, so only do this if you know what you're doing. |
+| `--host` | Host to bind the web UI to. Default 127.0.0.1 (localhost-only). Binding to 0.0.0.0 exposes the UI on your network; the API has no auth gating unless you set --auth-token-file, so only do this if you know what you're doing. |
 | `--port, -p` | Port to serve on (default: 8000). |
 | `--dev` | Dev mode: permissive CORS for the Vite dev server at :5173. Use with `npm run dev` in packages/evidentia-ui/. |
 | `--no-browser` | Don't auto-open a browser on startup. |
@@ -1349,6 +1359,22 @@ Show a single vendor's full details.
 | --- | --- |
 | `VENDOR_ID` | — |
 | `--json` | Emit raw JSON instead of human-readable view. |
+
+## `evidentia traceability`
+
+Control↔Threat Traceability Matrix — emit a signed OSCAL profile mapping controls to the threats they mitigate (v0.10.11).
+
+### `evidentia traceability emit`
+
+Emit the Control↔Threat Traceability Matrix as a signable OSCAL profile.
+
+| Flag / argument | Description |
+| --- | --- |
+| `--input, -i` | Traceability matrix input (JSON or YAML): title, catalog_href, framework_id, crosswalk_source, mappings[]. |
+| `--output, -o` | Where to write the emitted OSCAL profile JSON. |
+| `--sign-with-gpg` | GPG key id/fingerprint to detached-sign the emitted profile (writes <output>.asc). The air-gap signing path. |
+| `--sign-with-sigstore` | Sigstore keyless-sign the emitted profile (writes <output>.sigstore.json). Requires network + an OIDC credential. |
+| `--sigstore-identity-token` | Explicit OIDC token for Sigstore signing (else auto-detected). |
 
 ## `evidentia version`
 

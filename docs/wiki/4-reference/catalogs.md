@@ -3,7 +3,7 @@
 
 > **Auto-generated page.** This page is generated from the live Evidentia codebase by [`scripts/wiki/sync_reference.py`](https://github.com/Polycentric-Labs/evidentia/blob/main/scripts/wiki/sync_reference.py). Do not edit it by hand; change the underlying code/data and re-run the generator (`uv run python scripts/wiki/sync_reference.py`).
 
-Evidentia ships **92** framework catalogs in-tree. Tier-A/B catalogs carry authoritative control text; tier-C catalogs are placeholders (control text is copyrighted — only IDs + neutral titles ship, with a `license_url` to obtain the full text); tier-D catalogs are paraphrased obligation/regulation references. Use `evidentia catalog list` to enumerate them at runtime.
+Evidentia ships **95** framework catalogs in-tree. Tier-A/B catalogs carry authoritative control text; tier-C catalogs are placeholders (control text is copyrighted — only IDs + neutral titles ship, with a `license_url` to obtain the full text); tier-D catalogs are paraphrased obligation/regulation references. Use `evidentia catalog list` to enumerate them at runtime.
 
 ## Tiers
 
@@ -14,7 +14,7 @@ Evidentia ships **92** framework catalogs in-tree. Tier-A/B catalogs carry autho
 | C | C — placeholder (control text copyrighted) |
 | D | D — obligation/regulation (paraphrased) |
 
-## US Federal (38)
+## US Federal (39)
 
 | ID | Name | Version | Tier | Category |
 | --- | --- | --- | --- | --- |
@@ -25,6 +25,7 @@ Evidentia ships **92** framework catalogs in-tree. Tier-A/B catalogs carry autho
 | `cmmc-2-l3` | CMMC 2.0 Level 3 (Expert) | 2.0 (2024 Final Rule) | A | control |
 | `cms-ars-5.1` | CMS Acceptable Risk Safeguards (ARS) 5.1 | 5.1 (2022) | A | control |
 | `fda-21-cfr-pt11` | FDA 21 CFR Part 11 — Electronic Records; Electronic Signatures | 1997 (with guidance updates) | A | control |
+| `fda-524b-appendix1` | FDA Section 524B Premarket Cybersecurity — Security Control Categories | 2026-02-03 (final guidance) | A | control |
 | `fedramp-rev5-high` | FedRAMP Rev 5 High Baseline | Rev 5 (2023) | A | control |
 | `fedramp-rev5-li-saas` | FedRAMP Rev 5 LI-SAAS Baseline | Rev 5 (2023) | A | control |
 | `fedramp-rev5-low` | FedRAMP Rev 5 Low Baseline | Rev 5 (2023) | A | control |
@@ -106,10 +107,11 @@ Evidentia ships **92** framework catalogs in-tree. Tier-A/B catalogs carry autho
 | `mitre-capec` | MITRE Common Attack Pattern Enumeration and Classification (CAPEC) — Sample | v3.9 (2024) | B | technique |
 | `mitre-cwe` | MITRE Common Weakness Enumeration (CWE) — 2024 Top 25 Sample | 4.14 (2024) | B | technique |
 
-## License-required (stub) (20)
+## License-required (stub) (22)
 
 | ID | Name | Version | Tier | Category |
 | --- | --- | --- | --- | --- |
+| `aami-sw96` | ANSI/AAMI SW96 — Security risk management for medical device manufacturers | ANSI/AAMI SW96:2023 | C | control |
 | `cis-benchmark-aws` | CIS Amazon Web Services Foundations Benchmark | Current | C | control |
 | `cis-benchmark-azure` | CIS Microsoft Azure Foundations Benchmark | Current | C | control |
 | `cis-benchmark-gcp` | CIS Google Cloud Platform Foundations Benchmark | Current | C | control |
@@ -119,6 +121,7 @@ Evidentia ships **92** framework catalogs in-tree. Tier-A/B catalogs carry autho
 | `cobit-2019` | COBIT 2019 | 2019 (with 2022 focus area guides) | C | control |
 | `hitrust-csf-v11` | HITRUST CSF v11 | v11 | C | control |
 | `iec-62443` | IEC 62443 — Industrial Automation and Control Systems Security | Multiple parts (2018-2023) | C | control |
+| `iso-14971` | ISO 14971 — Application of risk management to medical devices | ISO 14971:2019 | C | control |
 | `iso-22301-2019` | ISO 22301:2019 — Business Continuity Management System | 2019 | C | control |
 | `iso-27001-2022` | ISO/IEC 27001:2022 (Annex A controls) | 2022 | C | control |
 | `iso-27002-2022` | ISO/IEC 27002:2022 — Code of Practice for Information Security Controls | 2022 | C | control |

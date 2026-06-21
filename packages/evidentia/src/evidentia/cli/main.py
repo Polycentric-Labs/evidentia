@@ -516,8 +516,9 @@ def serve(
         "--host",
         help=(
             "Host to bind the web UI to. Default 127.0.0.1 (localhost-only). "
-            "Binding to 0.0.0.0 exposes the UI on your network; Evidentia "
-            "has no auth in v0.4.0, so only do this if you know what you're doing."
+            "Binding to 0.0.0.0 exposes the UI on your network; the API has no "
+            "auth gating unless you set --auth-token-file, so only do this if "
+            "you know what you're doing."
         ),
     ),
     port: int = typer.Option(
