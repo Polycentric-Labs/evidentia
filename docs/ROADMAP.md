@@ -81,7 +81,8 @@ leads with the CLI.
 - **Not planned:** a public, hosted, *stateful* backend demo. A credentialed GRC backend
   exposed publicly is a real security surface (SSRF / secret exfiltration / prompt-injection
   via collected evidence — the class the `--block-private-ips` hardening addresses). A durable
-  hosted experience is reserved for a future managed / commercial edition.
+  hosted experience is out of scope for the OSS project — it would mean operating a
+  credentialed, multi-tenant backend.
 
 Validated via a structured research pass (multi-model fleet + a primary-source survey of
 comparable tools + a 3-way adversarial validation).
@@ -1934,7 +1935,7 @@ Patch (0.10.10 → 0.10.11). Per-cycle detail: [`v0.10.11-plan.md`](v0.10.11-pla
 
 ### v0.10.12 — Full CLI↔GUI parity build-out — PLANNED (dedicated session)
 
-A single, heavily-planned, subagent-driven, multi-step-verified push to bring the web console to (near-)full CLI parity in one sitting (the v0.10.7 GUI-rebuild / wiki-population playbook). **Planning deliverable: a comprehensive surface × tier matrix** — for every capability, decide its presence on each surface (**CLI** / self-hosted **GUI** / hosted **web app**) and its open-source-vs-commercial scope, and adopt a standing rule that every *new* feature gets an explicit surface + scope decision. (The detailed tier breakdown is a private planning artifact, not this public roadmap.) The planning pass reconciles the prior surface/tier research via project-file synthesis + dedicated `polycentric-labcoat` research fleets. (Keeps v0.11 reserved for the federal theme below.)
+A single, heavily-planned, subagent-driven, multi-step-verified push to bring the web console to (near-)full CLI parity in one sitting (the v0.10.7 GUI-rebuild / wiki-population playbook). **Planning deliverable: a comprehensive surface × tier matrix** — for every capability, decide its presence and scope on each surface (**CLI** / self-hosted **GUI** / hosted **web app**), and adopt a standing rule that every *new* feature gets an explicit surface decision. (The detailed breakdown is a private planning artifact, not this public roadmap.) The planning pass reconciles the prior surface/tier research via project-file synthesis + dedicated `polycentric-labcoat` research fleets. (Keeps v0.11 reserved for the federal theme below.) The cycle **closes with a docs/ curation + CHANGELOG trim** once the console is at parity — archive the accumulated per-cycle plan + security-review docs and tighten the CHANGELOG (housekeeping, run last).
 
 ### v0.11 — Federal-compliance theme + AI governance — PLANNED (post-deep-dive)
 
@@ -2027,7 +2028,7 @@ The medical-device-security direction the v0.10.10 FDA Section 524B catalogs ope
 | **Compliance-as-code QMS artifact generator** — per-control checklists, runbooks, role-based tasks, evidence-collection-readiness dashboard; signed, git-native artifacts that *feed* an existing eQMS (explicitly not an eQMS of record) | v0.11 | low-med | either | The quick early win; reuses the existing LLM explain/risk pipeline + POA&M/CONMON. Compliance-as-code delivery (git-native, signed, air-gap) is the differentiator vs medtech eQMS incumbents. |
 | **SW96/14971 + 800-30 likelihood × patient-harm risk register** — 800-30 threat-source/predisposing-condition templates → likelihood × *patient-harm* severity (per ANSI/AAMI SW96 on ISO 14971), signed OSCAL; reuse the existing Monte-Carlo only for exploitability uncertainty | v0.12 | med | either | Do **not** dollarize patient harm (FAIR annualized-loss is methodologically wrong for clinical risk); the standards-anchored harm axis wired into signed evidence is the ownable angle. |
 | **OSCAL-native continuous-compliance evidence** — lifecycle-tagged (premarket/postmarket), CI-byproduct, auto Assessment-Results + POA&M, Sigstore-signed; adopt the arXiv 2604.13767 AI-lifecycle OSCAL property extensions | v0.12 | med-high | either | Rides the OSCAL Foundation formation + RegScale OSCAL-Hub donation; "evidence as a signed byproduct of CI, traceable to the risk register." Aligns with the v0.11 federal theme. |
-| **AI-BOM for AI-enabled SaMD, eval-harness-backed** — SPDX 3.0 AI / CycloneDX ML-BOM whose model-eval claims are backed by Evidentia's signed eval-harness output; the **SBOM + CBOM + TM-BOM + AIBOM single signed evidence graph** | v1.1+ | med-high | commercial | NOVEL fit: almost no GRC tool ties an AIBOM to a device submission, and none surfaced that backs AIBOM eval claims with signed eval output. The convergence graph is the marquee. |
+| **AI-BOM for AI-enabled SaMD, eval-harness-backed** — SPDX 3.0 AI / CycloneDX ML-BOM whose model-eval claims are backed by Evidentia's signed eval-harness output; the **SBOM + CBOM + TM-BOM + AIBOM single signed evidence graph** | v1.1+ | med-high | either | NOVEL fit: almost no GRC tool ties an AIBOM to a device submission, and none surfaced that backs AIBOM eval claims with signed eval output. The convergence graph is the marquee. |
 
 **Honesty flags (from the research pass — keep these visible):** the "no OSS does the integrated 524B pack" positioning rests on *"none found"*, not *"none exists"* — a strong-but-unproven moat. An **AIBOM is not a codified 524B requirement** (forward-looking best practice only — SPDX 3.0 / AI RMF / PCCP-aligned). **Deep-binary cryptographic discovery is an open problem** — ingest declared/SBOM-derived CBOMs, never claim binary extraction. There is **no public labeled premarket-cyber-deficiency dataset** for ML. A "ggDSI" platform seen in one search summary is **unconfirmed** — do not cite. Effort/tier figures are planning-grade inferences, not commitments.
 
@@ -2067,9 +2068,8 @@ frozen). Acceptance gates include: domain-expert walk-through
 completed, 1+ external operator validation, API stability docs
 published, deprecation calendar, OpenSSF Gold tier (if achievable),
 cryptographic CIMD signatures, and pre-release-review PROCEED-CLEAN.
-Commercial packages (evidentia-pro, evidentia-enterprise,
-evidentia-federal) launch post-v1.0 as separate PyPI packages with
-proprietary licenses.
+Post-v1.0 packaging and distribution direction is tracked outside this
+public roadmap.
 
 ## v0.7.0+ — Quality signals, more integrations, UI polish
 
