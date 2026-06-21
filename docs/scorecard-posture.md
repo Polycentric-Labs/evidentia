@@ -28,7 +28,7 @@ creation date is the **org-migration date** (`allenfbyrd/evidentia` →
 has shipped continuously since 2024. **Disposition:** ages out automatically
 once the 90-day window from migration closes (~August 2026); no action.
 
-### Signed-Releases — 0 · transient + one applied fix
+### Signed-Releases — 0 → provenance now attached (pending re-scan)
 **Measures:** cryptographic signatures / provenance attached to release
 artifacts. **Why low:** Scorecard scanned v0.10.6–v0.10.10 and inspects the
 **GitHub Release assets**, which carried only the CycloneDX SBOM. Evidentia
@@ -37,10 +37,10 @@ artifacts. **Why low:** Scorecard scanned v0.10.6–v0.10.10 and inspects the
 provenance — but those artifacts live on **PyPI / the OCI registry / Rekor**,
 which this check does not inspect. **Disposition:** the signing is real and
 verifiable today (see SECURITY.md → supply-chain provenance, and
-[`docs/verification.md`](verification.md)). To make the check *see* it, the
-release workflow additionally attaches the SLSA provenance (`.intoto.jsonl`) /
-cosign bundle as Release assets; the score climbs as the 5-release window rolls
-forward.
+[`docs/verification.md`](verification.md)). v0.10.12 makes the check *see* it:
+`release.yml` now also attaches the SLSA build-provenance bundle
+(`evidentia.intoto.jsonl`) as a Release asset alongside the SBOM, so the score
+climbs as the 5-release window rolls forward.
 
 ### Token-Permissions — 0 → fixed (pending re-scan)
 **Measures:** least-privilege GitHub Actions token scopes. **Why low:** one
@@ -75,27 +75,34 @@ structurally produces zero merged-and-approved PRs. **Disposition:** by-design.
 Substitute controls: CodeQL SAST (10), required status checks, signed commits,
 and a mandatory `/pre-release-review` gate before every tag.
 
-### Branch-Protection — 3 · by-design (+ a visibility lever)
+### Branch-Protection — 3 → hardened in v0.10.12 (pending re-scan)
 **Measures:** maximal branch-protection. **Why low:** the PR-centric
 requirements (required approvers, CODEOWNERS review, PRs-required) are
-incompatible with the direct-push design above. The non-PR protections **are**
-on: deletion disabled, force-push disabled, required status checks,
-admin-included. **Disposition:** by-design for the PR requirements; expressing
-the active protections as a public Repo Ruleset lets Scorecard fully credit the
-controls already in place.
+incompatible with the direct-push design above. **Disposition:** the non-PR
+protections on `main` are now maximal — deletion disabled, force-push disabled,
+required status checks (6 CI contexts, strict), and — v0.10.12 — required
+**signed commits**, **linear history**, and **conversation resolution**
+(`enforce_admins=false` keeps the solo direct-push flow). A `SCORECARD_TOKEN`
+(repo Administration: read) is wired into `scorecard.yml` so the check can read
+the branch-protection metadata the default token cannot. The PR-centric
+requirements remain by-design-absent.
 
 ### Contributors — 3 · by-design (early-stage)
 **Measures:** contributors from multiple organizations (bus-factor). **Why
 low:** a single-org solo project. **Disposition:** by-design; rises organically
 with external contributors. No artificial action.
 
-### Fuzzing — 0 · by-design (candidate for v1.0)
-**Measures:** continuous fuzzing integration. **Why low:** no fuzz harness yet.
-Evidentia's attack surface is structured-data parsing (OSCAL/YAML/JSON
-catalogs, OCSF findings) rather than raw byte-stream parsing; the project uses
-mutation testing (`mutmut`) today. **Disposition:** intentional gap with a named
-v1.0 candidate (ClusterFuzzLite against the catalog loader + OCSF ingestion
-paths).
+### Fuzzing — 0 → addressed in v0.10.12 (pending re-scan)
+**Measures:** continuous fuzzing integration. **Why low (historically):** no fuzz
+harness existed; Evidentia's attack surface is structured-data parsing
+(OSCAL/YAML/JSON catalogs, OCSF findings) rather than raw byte streams.
+**Disposition:** v0.10.12 adds **ClusterFuzzLite** (the Scorecard-credited
+vehicle) running six **atheris** harnesses over the untrusted-input parsers —
+catalog import, OSCAL profile + `oscal verify`, OCSF ingest, gap-report loader,
+and TPRM questionnaire — wired via `tests/fuzz/`, `.clusterfuzzlite/`, and the
+`cflite-pr.yml` + `cflite-batch.yml` workflows, plus a cross-platform
+`hypothesis` property suite. The harnesses graduate to OSS-Fuzz later unchanged.
+(The scaffold already surfaced + fixed a real CWE-248 in `oscal verify`.)
 
 ### CI-Tests — N/A (−1) · by-design
 Excluded from the aggregate. Reported "no pull request found" because of the

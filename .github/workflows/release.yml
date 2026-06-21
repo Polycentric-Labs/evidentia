@@ -285,6 +285,7 @@ jobs:
       # (`pypi-attestations verify pypi`) continues to work
       # independently via pypa/gh-action-pypi-publish below.
       - name: Generate SLSA build provenance attestation
+        id: provenance
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32  # v4.1.0
         with:
           # Subject globs cover both the published artifacts and the
@@ -355,10 +356,20 @@ jobs:
       # `body_path` so the Release body is substantive on first
       # publish (publish-container then appends the container-image
       # stanza via append_body).
-      - name: Attach SBOM to GitHub Release
+      # v0.10.12 (WS-D): also attach the SLSA build-provenance bundle to the
+      # Release so OpenSSF Scorecard's Signed-Releases check finds a signed
+      # provenance asset ON the Release. The attestation already exists in the
+      # repo attestations API + PEP 740 on PyPI; this surfaces it where
+      # Scorecard looks. Copied to a stable, recognizable filename first.
+      - name: Stage SLSA provenance bundle for the Release
+        run: cp "${{ steps.provenance.outputs.bundle-path }}" evidentia.intoto.jsonl
+
+      - name: Attach SBOM + provenance to GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda  # v3.0.0
         with:
-          files: evidentia-sbom.cdx.json
+          files: |
+            evidentia-sbom.cdx.json
+            evidentia.intoto.jsonl
           fail_on_unmatched_files: false
           body_path: release-body.md
 

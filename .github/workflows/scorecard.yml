@@ -80,6 +80,13 @@ jobs:
         with:
           results_file: results.sarif
           results_format: sarif
+          # A fine-grained, read-only PAT (repository "Administration: read"
+          # scope) lets Scorecard read the branch-protection + webhook
+          # settings the default GITHUB_TOKEN cannot — without it the
+          # Branch-Protection check scores 0/unknown. Falls back to the
+          # implicit GITHUB_TOKEN when the SCORECARD_TOKEN secret is unset,
+          # so the workflow never breaks before the secret is provisioned.
+          repo_token: ${{ secrets.SCORECARD_TOKEN || github.token }}
           # publish_results=true requires id-token: write above and
           # makes results visible at securityscorecards.dev — visible
           # OpenSSF scoring is marketing for a GRC tool's supply-chain
