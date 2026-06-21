@@ -62,7 +62,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
-from evidentia_core.audit import EventOutcome, get_logger
+from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.effective_challenge_store import (
     InvalidChallengeIdError,
     list_challenges,
@@ -110,21 +110,6 @@ from evidentia_api.rbac_dependency import require_role
 router = APIRouter()
 _log = get_logger("evidentia.api.governance")
 
-# Audit action strings. No governance-specific EventAction enum member
-# exists in evidentia_core.audit.events, and this router may not edit
-# that file (strict scope). The audit logger's `action` parameter is
-# typed `EventAction | str`, so these stable ECS-style dotted strings
-# are a type-clean fit, consistent with the events.py namespace
-# convention (``evidentia.<domain>.<verb>``). A future refactor can
-# promote these to enum members.
-_ACTION_CHALLENGE_CREATED = "evidentia.governance.challenge_created"
-_ACTION_METRIC_CREATED = "evidentia.governance.metric_created"
-_ACTION_METRIC_OBSERVED = "evidentia.governance.metric_observed"
-_ACTION_METRIC_DELETED = "evidentia.governance.metric_deleted"
-_ACTION_WORKFLOW_RUN = "evidentia.governance.workflow_run"
-_ACTION_WORKFLOW_ADVANCED = "evidentia.governance.workflow_advanced"
-_ACTION_WORKFLOW_DELETED = "evidentia.governance.workflow_deleted"
-
 
 def _metric_with_status(metric: Metric) -> dict[str, Any]:
     """Serialize a metric with its computed (non-stored) status spliced in.
@@ -160,7 +145,7 @@ async def create_challenge(payload: EffectiveChallenge) -> EffectiveChallenge:
     challenge = payload.model_copy()
     save_challenge(challenge)
     _log.info(
-        action=_ACTION_CHALLENGE_CREATED,
+        action=EventAction.GOVERNANCE_CHALLENGE_CREATED,
         outcome=EventOutcome.SUCCESS,
         message=(
             f"Effective challenge logged via API: "
@@ -283,7 +268,7 @@ async def create_metric(payload: Metric) -> dict[str, Any]:
     metric = payload.model_copy()
     save_metric(metric)
     _log.info(
-        action=_ACTION_METRIC_CREATED,
+        action=EventAction.GOVERNANCE_METRIC_CREATED,
         outcome=EventOutcome.SUCCESS,
         message=f"Metric defined via API: {metric.name}",
         evidentia={
@@ -330,7 +315,7 @@ async def observe_metric(
     )
     save_metric(metric)
     _log.info(
-        action=_ACTION_METRIC_OBSERVED,
+        action=EventAction.GOVERNANCE_METRIC_OBSERVED,
         outcome=EventOutcome.SUCCESS,
         message=(
             f"Observation {payload.value} recorded via API for "
@@ -432,7 +417,7 @@ async def delete_metric_record(metric_id: str) -> None:
             detail=f"Metric {metric_id!r} not found.",
         )
     _log.info(
-        action=_ACTION_METRIC_DELETED,
+        action=EventAction.GOVERNANCE_METRIC_DELETED,
         outcome=EventOutcome.SUCCESS,
         message=f"Metric {metric_id[:8]} deleted via API",
         evidentia={"metric_id": metric_id},
@@ -495,7 +480,7 @@ async def run_workflow(payload: Workflow) -> Workflow:
     wf = wf.model_copy(update={"status": evaluate_workflow(wf)})
     save_workflow(wf)
     _log.info(
-        action=_ACTION_WORKFLOW_RUN,
+        action=EventAction.GOVERNANCE_WORKFLOW_RUN,
         outcome=EventOutcome.SUCCESS,
         message=(
             f"Workflow started via API: {wf.name}; "
@@ -549,7 +534,7 @@ async def advance_workflow(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     save_workflow(new_wf)
     _log.info(
-        action=_ACTION_WORKFLOW_ADVANCED,
+        action=EventAction.GOVERNANCE_WORKFLOW_ADVANCED,
         outcome=EventOutcome.SUCCESS,
         message=(
             f"Workflow {workflow_id[:8]} step {payload.step_index} "
@@ -651,7 +636,7 @@ async def delete_workflow_record(workflow_id: str) -> None:
             detail=f"Workflow {workflow_id!r} not found.",
         )
     _log.info(
-        action=_ACTION_WORKFLOW_DELETED,
+        action=EventAction.GOVERNANCE_WORKFLOW_DELETED,
         outcome=EventOutcome.SUCCESS,
         message=f"Workflow {workflow_id[:8]} deleted via API",
         evidentia={"workflow_id": workflow_id},

@@ -116,3 +116,33 @@ def test_ai_event_member_to_value_mapping(name: str, value: str) -> None:
     """Pin both the Python member name and string value — downstream SIEM
     queries depend on the string, downstream callers depend on the member."""
     assert EventAction[name].value == value
+
+
+# -----------------------------------------------------------------------------
+# v0.10.12 WS-A4 — governance + catalog API audit actions (promoted from
+# per-router string constants to first-class EventAction members)
+# -----------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "name,value",
+    [
+        ("GOVERNANCE_CHALLENGE_CREATED", "evidentia.governance.challenge_created"),
+        ("GOVERNANCE_METRIC_CREATED", "evidentia.governance.metric_created"),
+        ("GOVERNANCE_METRIC_OBSERVED", "evidentia.governance.metric_observed"),
+        ("GOVERNANCE_METRIC_DELETED", "evidentia.governance.metric_deleted"),
+        ("GOVERNANCE_WORKFLOW_RUN", "evidentia.governance.workflow_run"),
+        ("GOVERNANCE_WORKFLOW_ADVANCED", "evidentia.governance.workflow_advanced"),
+        ("GOVERNANCE_WORKFLOW_DELETED", "evidentia.governance.workflow_deleted"),
+        ("CATALOG_IMPORTED", "evidentia.catalog.imported"),
+        ("CATALOG_REMOVED", "evidentia.catalog.removed"),
+    ],
+)
+def test_governance_catalog_action_member_to_value_mapping(
+    name: str, value: str
+) -> None:
+    """Pin the member name + string value for the v0.10.12 WS-A4 promotion.
+
+    Values are byte-identical to the pre-promotion router string constants,
+    so SIEM queries on the dotted ``event.action`` are unaffected."""
+    assert EventAction[name].value == value

@@ -444,6 +444,24 @@ class EventAction(str, Enum):
     cross_tenant_admin_role != DENY is itself an audit signal that
     no escalation has occurred."""
 
+    # ── Governance + catalog API surface (v0.10.12 WS-A4) ──
+    # Promoted from per-router string constants in the governance + catalog
+    # API routers. The v0.10.12 parity build emitted these as ECS-style
+    # dotted strings under a strict-scope constraint that barred editing this
+    # file mid-wave; WS-A4 lifts that constraint and centralizes them as
+    # first-class, type-safe members. Values are byte-identical to the prior
+    # strings, so the emitted ``event.action`` is unchanged — SIEM queries on
+    # the dotted action keep working.
+    GOVERNANCE_CHALLENGE_CREATED = "evidentia.governance.challenge_created"
+    GOVERNANCE_METRIC_CREATED = "evidentia.governance.metric_created"
+    GOVERNANCE_METRIC_OBSERVED = "evidentia.governance.metric_observed"
+    GOVERNANCE_METRIC_DELETED = "evidentia.governance.metric_deleted"
+    GOVERNANCE_WORKFLOW_RUN = "evidentia.governance.workflow_run"
+    GOVERNANCE_WORKFLOW_ADVANCED = "evidentia.governance.workflow_advanced"
+    GOVERNANCE_WORKFLOW_DELETED = "evidentia.governance.workflow_deleted"
+    CATALOG_IMPORTED = "evidentia.catalog.imported"
+    CATALOG_REMOVED = "evidentia.catalog.removed"
+
 
 class EventCategory(str, Enum):
     """ECS ``event.category`` values Evidentia uses.

@@ -44,7 +44,7 @@ import json
 import re
 
 import yaml
-from evidentia_core.audit import EventOutcome, get_logger
+from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.catalogs.loader import load_evidentia_catalog
 from evidentia_core.catalogs.manifest import (
     FrameworkManifest,
@@ -66,16 +66,6 @@ from evidentia_api.rbac_dependency import require_role
 
 router = APIRouter()
 _log = get_logger("evidentia.api.catalog")
-
-# Audit action strings. No catalog-specific EventAction enum member exists
-# in evidentia_core.audit.events, and this router may not edit that file
-# (strict scope). The audit logger's ``action`` parameter is typed
-# ``EventAction | str``, so these stable ECS-style dotted strings are a
-# type-clean fit, consistent with the events.py namespace convention
-# (``evidentia.<domain>.<verb>``) — see the governance router for the same
-# pattern. A future refactor can promote these to enum members.
-_ACTION_CATALOG_IMPORTED = "evidentia.catalog.imported"
-_ACTION_CATALOG_REMOVED = "evidentia.catalog.removed"
 
 # Kebab/dot framework IDs only. Must start with an alphanumeric and may
 # contain lowercase letters, digits, dots, hyphens, and underscores. This
@@ -347,7 +337,7 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
 
     shadows_bundled = load_manifest().get(payload.framework_id) is not None
     _log.info(
-        action=_ACTION_CATALOG_IMPORTED,
+        action=EventAction.CATALOG_IMPORTED,
         outcome=EventOutcome.SUCCESS,
         message=f"User catalog imported via API: {payload.framework_id}",
         evidentia={
@@ -405,7 +395,7 @@ async def remove_catalog(framework_id: str) -> None:
     )
     save_user_manifest(updated)
     _log.info(
-        action=_ACTION_CATALOG_REMOVED,
+        action=EventAction.CATALOG_REMOVED,
         outcome=EventOutcome.SUCCESS,
         message=f"User catalog removed via API: {framework_id}",
         evidentia={"framework_id": framework_id},
