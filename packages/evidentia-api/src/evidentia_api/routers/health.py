@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import sys
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from evidentia_api import __version__ as api_version
 from evidentia_api.schemas import HealthResponse, VersionResponse
@@ -19,9 +19,21 @@ router = APIRouter()
 
 
 @router.get("/health", response_model=HealthResponse)
-async def health() -> HealthResponse:
-    """Simple liveness probe — returns 200 when the server is serving requests."""
-    return HealthResponse(status="ok", version=api_version)
+async def health(request: Request) -> HealthResponse:
+    """Simple liveness probe — returns 200 when the server is serving requests.
+
+    Also reports ``auth_configured`` (whether an AuthProvider is wired on
+    ``app.state``) so the web console can gate credentialed actions and show an
+    unsecured-deployment notice on an anonymous deployment. Stays unauthenticated
+    (in ``UNAUTHENTICATED_PATHS``); ``auth_configured`` is not a secret — an
+    anonymous caller already learns the API is unauthenticated by reaching it.
+    """
+    auth_configured = (
+        getattr(request.app.state, "auth_provider", None) is not None
+    )
+    return HealthResponse(
+        status="ok", version=api_version, auth_configured=auth_configured
+    )
 
 
 @router.get("/version", response_model=VersionResponse)

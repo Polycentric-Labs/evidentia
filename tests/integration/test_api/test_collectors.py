@@ -231,3 +231,238 @@ class TestSecurityScorecardCollectEndpointSSRFGuard:
             f"got {r.status_code}: {r.text}"
         )
         assert "portfolio_id" in r.json()["detail"].lower()
+
+
+# A minimal-but-valid OCSF Compliance Finding (class_uid 2003). Lifted from
+# the unit OCSF collector test's forged-block fixture — the native fields
+# alone are enough to ingest (the unmapped block is ignored at the REST
+# boundary because the collector passes trust_unmapped=False). The
+# distinctive native title proves an ACTUAL ingest happened, not a forged
+# round-trip.
+_VALID_OCSF_COMPLIANCE_FINDING: dict[str, object] = {
+    "activity_id": 1,
+    "category_uid": 2,
+    "class_uid": 2003,
+    "type_uid": 200301,
+    "time": 1_716_422_400_000,
+    "severity_id": 2,
+    "metadata": {
+        "version": "1.5.0",
+        "product": {"name": "Prowler", "vendor_name": "Prowler"},
+    },
+    "finding_info": {"title": "Encryption at rest disabled", "uid": "ocsf-uid-1"},
+    # `requirements` (not `standards`) drives the native control_mappings —
+    # the framework name comes from `standards`, the control_id from each
+    # `requirements` entry (see _security_finding_from_native_ocsf).
+    "compliance": {
+        "status_id": 3,
+        "standards": ["cis-aws"],
+        "requirements": ["2.1.1"],
+    },
+}
+
+
+@pytest.mark.usefixtures("api_client")
+class TestOcsfCollectEndpoint:
+    """v0.10.12 — /api/collectors/ocsf/collect (inline-content + URL modes).
+
+    Hermetic: inline mode never touches the network; the URL-mode SSRF
+    cases use literal private / loopback IPs so no DNS round-trip fires
+    and the guard refusal is asserted BEFORE any socket is opened.
+    """
+
+    def test_inline_content_returns_findings(
+        self, api_client: TestClient
+    ) -> None:
+        pytest.importorskip("py_ocsf_models")
+        r = api_client.post(
+            "/api/collectors/ocsf/collect",
+            json={"content": [_VALID_OCSF_COMPLIANCE_FINDING]},
+        )
+        assert r.status_code == 200, r.text
+        payload = r.json()
+        assert isinstance(payload, list)
+        assert len(payload) == 1
+        # The native finding_info.title flows through (proves real ingest).
+        assert payload[0]["title"] == "Encryption at rest disabled"
+        # trust_unmapped=False path: control mapping comes from native
+        # compliance.standards, not a forged block.
+        assert payload[0]["control_mappings"][0]["framework"] == "cis-aws"
+
+    def test_inline_single_object_content_returns_findings(
+        self, api_client: TestClient
+    ) -> None:
+        """Content may be a single OCSF object (not just a list)."""
+        pytest.importorskip("py_ocsf_models")
+        r = api_client.post(
+            "/api/collectors/ocsf/collect",
+            json={"content": _VALID_OCSF_COMPLIANCE_FINDING},
+        )
+        assert r.status_code == 200, r.text
+        assert len(r.json()) == 1
+
+    def test_missing_content_and_url_returns_400(
+        self, api_client: TestClient
+    ) -> None:
+        r = api_client.post("/api/collectors/ocsf/collect", json={})
+        assert r.status_code == 400
+        assert "content" in r.json()["detail"].lower()
+
+    def test_bad_content_returns_400(self, api_client: TestClient) -> None:
+        pytest.importorskip("py_ocsf_models")
+        # class_uid 9999 is not a supported Findings class → 400.
+        r = api_client.post(
+            "/api/collectors/ocsf/collect",
+            json={"content": {"class_uid": 9999, "category_uid": 2}},
+        )
+        assert r.status_code == 400
+        assert "ocsf" in r.json()["detail"].lower()
+
+    def test_url_mode_rejects_http(self, api_client: TestClient) -> None:
+        r = api_client.post(
+            "/api/collectors/ocsf/collect",
+            json={"url": "http://example.com/ocsf.json"},
+        )
+        assert r.status_code == 400
+        assert "https" in r.json()["detail"].lower()
+
+    def test_url_mode_metadata_endpoint_refused_by_default(
+        self, api_client: TestClient
+    ) -> None:
+        """SSRF guard: the AWS instance-metadata endpoint is refused by
+        default. Literal IP host → no DNS; the refusal fires before any
+        socket is opened, so this is fully hermetic."""
+        r = api_client.post(
+            "/api/collectors/ocsf/collect",
+            json={"url": "https://169.254.169.254/latest/meta-data/"},
+        )
+        assert r.status_code == 400, r.text
+        detail = r.json()["detail"]
+        assert "169.254" in detail
+        assert "link-local" in detail or "private" in detail
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://10.0.0.1/api",
+            "https://192.168.1.1/api",
+            "https://127.0.0.1:8080/api",
+        ],
+    )
+    def test_url_mode_private_and_loopback_refused_by_default(
+        self, api_client: TestClient, url: str
+    ) -> None:
+        """RFC1918 + loopback URLs are all refused by the default-on guard."""
+        r = api_client.post(
+            "/api/collectors/ocsf/collect",
+            json={"url": url},
+        )
+        assert r.status_code == 400, r.text
+        detail = r.json()["detail"].lower()
+        assert (
+            "private" in detail or "loopback" in detail or "link-local" in detail
+        )
+
+    def test_url_mode_allowed_only_with_block_private_ips_false(
+        self, api_client: TestClient
+    ) -> None:
+        """With the explicit opt-out the guard is SKIPPED, so the request
+        proceeds to the actual fetch — which fails on connection refusal
+        (no listener on 127.0.0.1:1). The KEY assertion: the error is NOT
+        the SSRF policy refusal, proving the guard was bypassed."""
+        r = api_client.post(
+            "/api/collectors/ocsf/collect",
+            json={
+                "url": "https://127.0.0.1:1/api",
+                "block_private_ips": False,
+            },
+        )
+        # Connection-refused / fetch failure → the collector raises
+        # OCSFIngestError, which the router maps to 400 (bad url/content).
+        assert r.status_code == 400, r.text
+        detail = r.json()["detail"].lower()
+        assert "private" not in detail
+        assert "loopback" not in detail
+        assert "fetch failed" in detail or "fetch" in detail
+
+
+class TestConvertEndpoint:
+    """v0.10.12 — /api/collectors/convert (local, no network)."""
+
+    def _security_finding_payload(self) -> dict[str, object]:
+        """A minimal valid SecurityFinding dict (the convert input)."""
+        return {
+            "id": "EVID-TEST-1",
+            "title": "Encryption at rest disabled",
+            "description": "Bucket has no default encryption.",
+            "severity": "high",
+            "source_system": "aws-config",
+        }
+
+    def test_convert_happy_path_to_ocsf(self, api_client: TestClient) -> None:
+        pytest.importorskip("py_ocsf_models")
+        r = api_client.post(
+            "/api/collectors/convert",
+            json={
+                "content": [self._security_finding_payload()],
+                "to_format": "ocsf",
+            },
+        )
+        assert r.status_code == 200, r.text
+        payload = r.json()
+        assert isinstance(payload, list)
+        assert len(payload) == 1
+        # OCSF Compliance Finding output carries the canonical class_uid.
+        assert payload[0]["class_uid"] == 2003
+
+    def test_convert_single_object_content(
+        self, api_client: TestClient
+    ) -> None:
+        pytest.importorskip("py_ocsf_models")
+        r = api_client.post(
+            "/api/collectors/convert",
+            json={
+                "content": self._security_finding_payload(),
+                "to_format": "ocsf",
+            },
+        )
+        assert r.status_code == 200, r.text
+        assert len(r.json()) == 1
+
+    def test_convert_unsupported_format_returns_400(
+        self, api_client: TestClient
+    ) -> None:
+        r = api_client.post(
+            "/api/collectors/convert",
+            json={
+                "content": [self._security_finding_payload()],
+                "to_format": "stix",
+            },
+        )
+        assert r.status_code == 400
+        assert "format" in r.json()["detail"].lower()
+
+    def test_convert_missing_content_returns_400(
+        self, api_client: TestClient
+    ) -> None:
+        r = api_client.post(
+            "/api/collectors/convert",
+            json={"to_format": "ocsf"},
+        )
+        assert r.status_code == 400
+        assert "content" in r.json()["detail"].lower()
+
+    def test_convert_bad_finding_returns_400(
+        self, api_client: TestClient
+    ) -> None:
+        """Content that isn't a valid SecurityFinding → 400 (not 500)."""
+        r = api_client.post(
+            "/api/collectors/convert",
+            json={
+                "content": [{"not": "a finding"}],
+                "to_format": "ocsf",
+            },
+        )
+        assert r.status_code == 400
+        detail = r.json()["detail"].lower()
+        assert "finding" in detail or "invalid" in detail

@@ -7,6 +7,7 @@ import {
   Building2,
   Calculator,
   ClipboardCheck,
+  DownloadCloud,
   FileArchive,
   FileCheck2,
   GitCompare,
@@ -19,6 +20,7 @@ import {
   Moon,
   Network,
   PlayCircle,
+  Plug,
   Scale,
   ScanLine,
   Settings,
@@ -29,6 +31,7 @@ import { Fragment } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet, useLocation } from "react-router-dom";
 
+import { SecurityPostureBanner } from "@/components/common/SecurityPostureBanner";
 import { useTheme } from "@/hooks/use-theme";
 import { api } from "@/lib/api";
 import { IS_DEMO } from "@/lib/demo";
@@ -55,6 +58,8 @@ const NAV_META: Record<string, NavMeta> = {
   "/model-risk": { label: "Model Risk", description: "SR 11-7 model inventory", crumb: "Model risk inventory", icon: Boxes },
   "/ai-gov": { label: "AI Governance", description: "EU AI Act / NIST AI RMF registry", crumb: "AI governance", icon: Bot },
   "/traceability": { label: "Traceability", description: "Control ↔ threat matrix", crumb: "Traceability matrix", icon: Network },
+  "/collect": { label: "Collect", description: "Evidence collectors", crumb: "Evidence collection", icon: DownloadCloud },
+  "/integrations": { label: "Integrations", description: "Jira / ServiceNow / BI", crumb: "Integrations", icon: Plug },
   "/catalog": { label: "Catalog mgmt", description: "Import / crosswalk / license", crumb: "Catalog management", icon: Library },
   "/risk/quantify": { label: "Risk Quantify", description: "FAIR risk quantification", crumb: "FAIR quantification", icon: Calculator },
   "/oscal": { label: "OSCAL Verify", description: "Verify an Assessment Result", crumb: "OSCAL verify", icon: FileCheck2 },
@@ -69,6 +74,7 @@ const NAV_GROUPS: { label: string | null; items: string[] }[] = [
   { label: null, items: IS_DEMO ? ["/", "/demo"] : ["/"] },
   { label: "Analyze", items: ["/gap/analyze", "/gap/diff", "/risk/generate", "/risk/quantify", "/explain"] },
   { label: "Govern", items: ["/poam", "/conmon", "/tprm", "/governance", "/retention", "/evidence", "/model-risk", "/ai-gov", "/oscal", "/traceability"] },
+  { label: "Connect", items: ["/collect", "/integrations"] },
   { label: "Library", items: ["/dashboard", "/frameworks", "/catalog"] },
   { label: "Configure", items: ["/settings"] },
 ];
@@ -227,6 +233,7 @@ export function AppLayout() {
 
       {/* ── Workspace ── */}
       <div className="flex min-w-0 flex-1 flex-col">
+        <SecurityPostureBanner />
         <header className="sticky top-0 z-20 flex h-[58px] items-center justify-between gap-4 border-b border-border bg-[hsl(var(--background)/0.85)] px-8 backdrop-blur">
           <div className="flex items-center gap-2 text-[0.92rem]">
             <span className="font-semibold tracking-tight">{crumbLabel}</span>

@@ -10,6 +10,7 @@
 export interface HealthResponse {
   status: string;
   version: string;
+  auth_configured: boolean;
 }
 
 export interface VersionResponse {

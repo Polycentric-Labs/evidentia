@@ -38,6 +38,15 @@ class HealthResponse(BaseModel):
 
     status: str = Field(description="'ok' when the server is serving requests.")
     version: str = Field(description="Installed Evidentia API version.")
+    auth_configured: bool = Field(
+        default=False,
+        description=(
+            "True when an API AuthProvider is configured. False = an anonymous "
+            "deployment; the web console reads this to gate credentialed / "
+            "network-egress actions (collect, integrations) per the v0.10.12 "
+            "threat model and to show an unsecured-deployment notice."
+        ),
+    )
 
 
 class VersionResponse(BaseModel):

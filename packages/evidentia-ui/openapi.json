@@ -3222,6 +3222,12 @@
         "additionalProperties": false,
         "description": "Basic health probe response — used by the `/api/health` endpoint.",
         "properties": {
+          "auth_configured": {
+            "default": false,
+            "description": "True when an API AuthProvider is configured. False = an anonymous deployment; the web console reads this to gate credentialed / network-egress actions (collect, integrations) per the v0.10.12 threat model and to show an unsecured-deployment notice.",
+            "title": "Auth Configured",
+            "type": "boolean"
+          },
           "status": {
             "description": "'ok' when the server is serving requests.",
             "title": "Status",
@@ -7537,6 +7543,55 @@
         ]
       }
     },
+    "/api/collectors/convert": {
+      "post": {
+        "description": "Convert a findings document between formats (v0.10.12).\n\nMirrors the ``evidentia collect convert`` CLI verb — LOCAL ONLY, no\nnetwork, no credentials.\n\nRequest body (required):\n\n- ``content``: the input findings — either a single SecurityFinding\n  object or a JSON list of them (as produced by any\n  ``evidentia collect ...`` command / collect endpoint).\n- ``to_format``: output format. Currently only ``ocsf`` (OCSF\n  Compliance Finding bundle) is supported.\n\nReturns the converted output (a list of OCSF Compliance Finding\ndicts). 400 on bad input (missing/invalid content, unsupported\nformat).",
+        "operationId": "collect_convert_api_collectors_convert_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Payload",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Collect Convert Api Collectors Convert Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Collect Convert",
+        "tags": [
+          "collectors"
+        ]
+      }
+    },
     "/api/collectors/databricks/collect": {
       "post": {
         "description": "Run the Databricks collector (v0.7.8 P0.1).\n\nRequest body (required):\n\n- ``workspace_url``: Databricks workspace URL\n  (e.g., ``https://my-workspace.cloud.databricks.com``).\n\nAuth is delegated to the Databricks SDK's unified-auth\nresolver — credentials come from server-side environment\nvariables (``DATABRICKS_TOKEN``, ``DATABRICKS_CLIENT_ID`` +\n``DATABRICKS_CLIENT_SECRET``, Azure AD, AWS IAM, or\n``.databrickscfg``). Per CLAUDE.md secret-handling protocol,\nthe request body NEVER carries a token.\n\nResponse: list of SecurityFinding objects covering 4 evidence\nsources (PAT inventory, cluster compliance, service principal\ninventory, secret scope inventory).\n\nDeferred to subsequent v0.7.8 commits:\n\n- Workspace audit logs + table/column lineage (need SQL\n  Warehouse plumbing)\n- Workspace network policies (need Account API auth path)",
@@ -7682,6 +7737,54 @@
           }
         },
         "summary": "Github Collect",
+        "tags": [
+          "collectors"
+        ]
+      }
+    },
+    "/api/collectors/ocsf/collect": {
+      "post": {
+        "description": "Ingest OCSF Compliance / Detection Finding JSON (v0.10.12).\n\nMirrors the ``evidentia collect ocsf`` CLI verb. Two mutually-\nexclusive input modes:\n\n- ``content``: inline OCSF JSON — either a single OCSF finding\n  object or a JSON list of them. Local-only, no network.\n- ``url``: an ``https://`` URL the OCSF JSON is fetched from.\n\nOptional:\n\n- ``block_private_ips``: bool (default True). URL mode only.\n  SECURE-BY-DEFAULT (threat-model T2) — the URL's host is\n  pre-resolved through the shared SSRF chokepoint\n  (:func:`evidentia_core.network_guard.enforce_public_host`, via\n  :func:`evidentia_collectors.ocsf.collect_ocsf_url`) and refused\n  if it resolves to a private / loopback / link-local / metadata /\n  multicast / reserved address BEFORE any socket opens. Callers\n  ingesting from a trusted internal endpoint must explicitly send\n  ``{\"block_private_ips\": false}`` — the deliberate opt-out\n  mirroring the CLI's ``--allow-private-ips`` flag.\n\nNO credentials: OCSF ingest is file/URL only — the request body\nNEVER carries a secret. Third-party OCSF input is trust-boundary\naware (``trust_unmapped=False``) so a forged ``unmapped`` block\ncannot control Evidentia-native fields.\n\nReturns the ingested ``list[SecurityFinding]``. 400 on bad content\n/ URL (malformed JSON, unsupported class_uid, non-HTTPS URL, SSRF\nrefusal, fetch failure); 503 if the optional ``ocsf`` extra isn't\ninstalled (mirrors the aws/github import-guard pattern).",
+        "operationId": "ocsf_collect_api_collectors_ocsf_collect_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Payload",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SecurityFinding"
+                  },
+                  "title": "Response Ocsf Collect Api Collectors Ocsf Collect Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ocsf Collect",
         "tags": [
           "collectors"
         ]
@@ -10061,7 +10164,7 @@
     },
     "/api/health": {
       "get": {
-        "description": "Simple liveness probe — returns 200 when the server is serving requests.",
+        "description": "Simple liveness probe — returns 200 when the server is serving requests.\n\nAlso reports ``auth_configured`` (whether an AuthProvider is wired on\n``app.state``) so the web console can gate credentialed actions and show an\nunsecured-deployment notice on an anonymous deployment. Stays unauthenticated\n(in ``UNAUTHENTICATED_PATHS``); ``auth_configured`` is not a secret — an\nanonymous caller already learns the API is unauthenticated by reaching it.",
         "operationId": "health_api_health_get",
         "responses": {
           "200": {
@@ -10336,6 +10439,93 @@
           }
         },
         "summary": "Powerbi Publish",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/api/integrations/servicenow/push/{report_key}": {
+      "post": {
+        "description": "Push open gaps from a saved report as ServiceNow records.\n\nCredentialed EXTERNAL write — creates an incident / GRC-issue /\ncustom-table record per OPEN / IN_PROGRESS gap. Idempotent: a gap\nthat already has a matching record (by ``correlation_id``) is\nreported as ``existing`` rather than duplicated.\n\nPath:\n  - ``report_key``: the gap-store key for a previously saved\n    :class:`GapAnalysisReport`.\n\nRequest body is optional and carries ONLY non-secret params:\n\n  - ``force``: bool (default false) — create new records even when\n    a matching ``correlation_id`` already exists. Rarely needed.\n\nCredentials (instance URL / user / password) are sourced\nSERVER-SIDE from ``EVIDENTIA_SERVICENOW_*`` environment variables,\nexactly like the Jira ``push`` endpoint. Secret values NEVER flow\nthrough the request body; any ``instance_url`` / ``user`` /\n``password`` keys in the body are ignored.\n\nReturns ``503`` when the integration is unconfigured, ``400`` on a\nmalformed report key, and ``404`` when the report does not exist.",
+        "operationId": "servicenow_push_api_integrations_servicenow_push__report_key__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_key",
+            "required": true,
+            "schema": {
+              "title": "Report Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Servicenow Push Api Integrations Servicenow Push  Report Key  Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Servicenow Push",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/api/integrations/servicenow/status": {
+      "get": {
+        "description": "Return whether ServiceNow is configured + a connectivity probe.\n\nConnectivity/config probe only — does NOT create any records.\nCalls ``ServiceNowClient.test_connection`` which issues a single\n1-row read against the configured table, confirming both that the\ncredentials work and that the principal has read access.\n\nCredentials are sourced SERVER-SIDE from environment variables\n(``EVIDENTIA_SERVICENOW_*``), exactly like the Jira ``status``\nendpoint — never from the request. The basic-auth password value\nis never included in the response; on any failure a sanitized\nmessage + a correlatable ``request_id`` is returned and the\nspecifics are written to the server log only.",
+        "operationId": "servicenow_status_api_integrations_servicenow_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Servicenow Status Api Integrations Servicenow Status Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Servicenow Status",
         "tags": [
           "integrations"
         ]

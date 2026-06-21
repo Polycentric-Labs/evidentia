@@ -42,7 +42,7 @@ version: 1
 # fails if the live `cli-only` count exceeds this. The controller lowers it with
 # `--update-baseline` whenever a screen ships and a row flips cli-only -> *.
 baseline:
-  cli_only: 4
+  cli_only: 0
 commands:
   - cli: "gap analyze"
     api: "POST /api/gap/analyze"
@@ -84,45 +84,45 @@ commands:
     status: full
   - cli: "collect aws"
     api: "POST /api/collectors/aws/collect"
-    gui: null
-    status: api-only
+    gui: "/collect"
+    status: full
   - cli: "collect github"
     api: "POST /api/collectors/github/collect"
-    gui: null
-    status: api-only
+    gui: "/collect"
+    status: full
   - cli: "collect okta"
     api: "POST /api/collectors/okta/collect"
-    gui: null
-    status: api-only
+    gui: "/collect"
+    status: full
   - cli: "collect sql"
     api: "POST /api/collectors/sql/postgres/collect"
-    gui: null
-    status: api-only
+    gui: "/collect"
+    status: full
     reason: "One CLI verb dispatches by --dialect; the API splits per-dialect (postgres/mysql/oracle/sqlite/mssql)."
   - cli: "collect databricks"
     api: "POST /api/collectors/databricks/collect"
-    gui: null
-    status: api-only
+    gui: "/collect"
+    status: full
   - cli: "collect snowflake"
     api: "POST /api/collectors/snowflake/collect"
-    gui: null
-    status: api-only
+    gui: "/collect"
+    status: full
   - cli: "collect vanta"
     api: "POST /api/collectors/vanta/collect"
-    gui: null
-    status: api-only
+    gui: "/collect"
+    status: full
   - cli: "collect drata"
     api: "POST /api/collectors/drata/collect"
-    gui: null
-    status: api-only
+    gui: "/collect"
+    status: full
   - cli: "collect bitsight"
     api: "POST /api/collectors/bitsight/collect"
-    gui: null
-    status: api-only
+    gui: "/collect"
+    status: full
   - cli: "collect securityscorecard"
     api: "POST /api/collectors/securityscorecard/collect"
-    gui: null
-    status: api-only
+    gui: "/collect"
+    status: full
   - cli: "tprm concentration-report"
     api: "GET /api/tprm/concentration"
     gui: "/tprm"
@@ -245,41 +245,41 @@ commands:
     status: full
   - cli: "integrations jira push"
     api: "POST /api/integrations/jira/push/{report_key}"
-    gui: null
-    status: api-only
+    gui: "/integrations"
+    status: full
   - cli: "integrations jira sync"
     api: "POST /api/integrations/jira/sync/{report_key}"
-    gui: null
-    status: api-only
+    gui: "/integrations"
+    status: full
   - cli: "integrations jira status-map"
     api: "GET /api/integrations/jira/status-map"
-    gui: null
-    status: api-only
+    gui: "/integrations"
+    status: full
   - cli: "integrations jira test"
     api: "GET /api/integrations/jira/status"
-    gui: null
-    status: api-only
+    gui: "/integrations"
+    status: full
     reason: "Connectivity probe; maps to the jira status endpoint."
   - cli: "integrations tableau publish"
     api: "POST /api/integrations/tableau/publish/{report_key}"
-    gui: null
-    status: api-only
+    gui: "/integrations"
+    status: full
   - cli: "integrations powerbi publish"
     api: "POST /api/integrations/powerbi/publish/{report_key}"
-    gui: null
-    status: api-only
+    gui: "/integrations"
+    status: full
   - cli: "risk quantify"
     api: "POST /api/risk/quantify"
     gui: "/risk/quantify"
     status: full
   - cli: "collect ocsf"
-    api: null
-    gui: null
-    status: cli-only
+    api: "POST /api/collectors/ocsf/collect"
+    gui: "/collect"
+    status: full
   - cli: "collect convert"
-    api: null
-    gui: null
-    status: cli-only
+    api: "POST /api/collectors/convert"
+    gui: "/collect"
+    status: full
   - cli: "tprm dd-questionnaire ingest"
     api: "POST /api/tprm/vendors/{vendor_id}/dd-questionnaire/ingest"
     gui: "/tprm"
@@ -329,13 +329,13 @@ commands:
     gui: "/conmon"
     status: full
   - cli: "integrations servicenow push"
-    api: null
-    gui: null
-    status: cli-only
+    api: "POST /api/integrations/servicenow/push/{report_key}"
+    gui: "/integrations"
+    status: full
   - cli: "integrations servicenow test"
-    api: null
-    gui: null
-    status: cli-only
+    api: "GET /api/integrations/servicenow/status"
+    gui: "/integrations"
+    status: full
   - cli: "retention set"
     api: "POST /api/retention"
     gui: "/retention"

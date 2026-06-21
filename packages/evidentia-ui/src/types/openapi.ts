@@ -379,6 +379,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/collectors/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Collect Convert
+         * @description Convert a findings document between formats (v0.10.12).
+         *
+         *     Mirrors the ``evidentia collect convert`` CLI verb — LOCAL ONLY, no
+         *     network, no credentials.
+         *
+         *     Request body (required):
+         *
+         *     - ``content``: the input findings — either a single SecurityFinding
+         *       object or a JSON list of them (as produced by any
+         *       ``evidentia collect ...`` command / collect endpoint).
+         *     - ``to_format``: output format. Currently only ``ocsf`` (OCSF
+         *       Compliance Finding bundle) is supported.
+         *
+         *     Returns the converted output (a list of OCSF Compliance Finding
+         *     dicts). 400 on bad input (missing/invalid content, unsupported
+         *     format).
+         */
+        post: operations["collect_convert_api_collectors_convert_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/collectors/databricks/collect": {
         parameters: {
             query?: never;
@@ -488,6 +523,56 @@ export interface paths {
          *     Credentials are sourced from the server's ``$GITHUB_TOKEN`` env var.
          */
         post: operations["github_collect_api_collectors_github_collect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/collectors/ocsf/collect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ocsf Collect
+         * @description Ingest OCSF Compliance / Detection Finding JSON (v0.10.12).
+         *
+         *     Mirrors the ``evidentia collect ocsf`` CLI verb. Two mutually-
+         *     exclusive input modes:
+         *
+         *     - ``content``: inline OCSF JSON — either a single OCSF finding
+         *       object or a JSON list of them. Local-only, no network.
+         *     - ``url``: an ``https://`` URL the OCSF JSON is fetched from.
+         *
+         *     Optional:
+         *
+         *     - ``block_private_ips``: bool (default True). URL mode only.
+         *       SECURE-BY-DEFAULT (threat-model T2) — the URL's host is
+         *       pre-resolved through the shared SSRF chokepoint
+         *       (:func:`evidentia_core.network_guard.enforce_public_host`, via
+         *       :func:`evidentia_collectors.ocsf.collect_ocsf_url`) and refused
+         *       if it resolves to a private / loopback / link-local / metadata /
+         *       multicast / reserved address BEFORE any socket opens. Callers
+         *       ingesting from a trusted internal endpoint must explicitly send
+         *       ``{"block_private_ips": false}`` — the deliberate opt-out
+         *       mirroring the CLI's ``--allow-private-ips`` flag.
+         *
+         *     NO credentials: OCSF ingest is file/URL only — the request body
+         *     NEVER carries a secret. Third-party OCSF input is trust-boundary
+         *     aware (``trust_unmapped=False``) so a forged ``unmapped`` block
+         *     cannot control Evidentia-native fields.
+         *
+         *     Returns the ingested ``list[SecurityFinding]``. 400 on bad content
+         *     / URL (malformed JSON, unsupported class_uid, non-HTTPS URL, SSRF
+         *     refusal, fetch failure); 503 if the optional ``ocsf`` extra isn't
+         *     installed (mirrors the aws/github import-guard pattern).
+         */
+        post: operations["ocsf_collect_api_collectors_ocsf_collect_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1804,6 +1889,12 @@ export interface paths {
         /**
          * Health
          * @description Simple liveness probe — returns 200 when the server is serving requests.
+         *
+         *     Also reports ``auth_configured`` (whether an AuthProvider is wired on
+         *     ``app.state``) so the web console can gate credentialed actions and show an
+         *     unsecured-deployment notice on an anonymous deployment. Stays unauthenticated
+         *     (in ``UNAUTHENTICATED_PATHS``); ``auth_configured`` is not a secret — an
+         *     anonymous caller already learns the API is unauthenticated by reaching it.
          */
         get: operations["health_api_health_get"];
         put?: never;
@@ -1966,6 +2057,81 @@ export interface paths {
          *     NEVER flows through the request body — only the env-var name.
          */
         post: operations["powerbi_publish_api_integrations_powerbi_publish__report_key__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/integrations/servicenow/push/{report_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Servicenow Push
+         * @description Push open gaps from a saved report as ServiceNow records.
+         *
+         *     Credentialed EXTERNAL write — creates an incident / GRC-issue /
+         *     custom-table record per OPEN / IN_PROGRESS gap. Idempotent: a gap
+         *     that already has a matching record (by ``correlation_id``) is
+         *     reported as ``existing`` rather than duplicated.
+         *
+         *     Path:
+         *       - ``report_key``: the gap-store key for a previously saved
+         *         :class:`GapAnalysisReport`.
+         *
+         *     Request body is optional and carries ONLY non-secret params:
+         *
+         *       - ``force``: bool (default false) — create new records even when
+         *         a matching ``correlation_id`` already exists. Rarely needed.
+         *
+         *     Credentials (instance URL / user / password) are sourced
+         *     SERVER-SIDE from ``EVIDENTIA_SERVICENOW_*`` environment variables,
+         *     exactly like the Jira ``push`` endpoint. Secret values NEVER flow
+         *     through the request body; any ``instance_url`` / ``user`` /
+         *     ``password`` keys in the body are ignored.
+         *
+         *     Returns ``503`` when the integration is unconfigured, ``400`` on a
+         *     malformed report key, and ``404`` when the report does not exist.
+         */
+        post: operations["servicenow_push_api_integrations_servicenow_push__report_key__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/integrations/servicenow/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Servicenow Status
+         * @description Return whether ServiceNow is configured + a connectivity probe.
+         *
+         *     Connectivity/config probe only — does NOT create any records.
+         *     Calls ``ServiceNowClient.test_connection`` which issues a single
+         *     1-row read against the configured table, confirming both that the
+         *     credentials work and that the principal has read access.
+         *
+         *     Credentials are sourced SERVER-SIDE from environment variables
+         *     (``EVIDENTIA_SERVICENOW_*``), exactly like the Jira ``status``
+         *     endpoint — never from the request. The basic-auth password value
+         *     is never included in the response; on any failure a sanitized
+         *     message + a correlatable ``request_id`` is returned and the
+         *     specifics are written to the server log only.
+         */
+        get: operations["servicenow_status_api_integrations_servicenow_status_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4803,6 +4969,12 @@ export interface components {
          */
         HealthResponse: {
             /**
+             * Auth Configured
+             * @description True when an API AuthProvider is configured. False = an anonymous deployment; the web console reads this to gate credentialed / network-egress actions (collect, integrations) per the v0.10.12 threat model and to show an unsecured-deployment notice.
+             * @default false
+             */
+            auth_configured: boolean;
+            /**
              * Status
              * @description 'ok' when the server is serving requests.
              */
@@ -7570,6 +7742,43 @@ export interface operations {
             };
         };
     };
+    collect_convert_api_collectors_convert_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     databricks_collect_api_collectors_databricks_collect_post: {
         parameters: {
             query?: never;
@@ -7641,6 +7850,41 @@ export interface operations {
         };
     };
     github_collect_api_collectors_github_collect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityFinding"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ocsf_collect_api_collectors_ocsf_collect_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -9519,6 +9763,67 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    servicenow_push_api_integrations_servicenow_push__report_key__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                report_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                } | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    servicenow_status_api_integrations_servicenow_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

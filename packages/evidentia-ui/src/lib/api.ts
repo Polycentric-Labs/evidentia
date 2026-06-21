@@ -365,6 +365,43 @@ export type OscalVerifyRequest = components["schemas"]["VerifyRequest"];
 /** Control↔Threat Traceability Matrix — body of `POST /api/traceability/emit`. */
 export type TraceabilityMatrix = components["schemas"]["TraceabilityMatrix"];
 
+// ── Collector types (mirrored from evidentia_collectors) ─────────────────
+
+/**
+ * A single collector observation. Every `POST …/collect` endpoint returns a
+ * bare `SecurityFinding[]`. Collectors take NO secrets in the body — server-
+ * side credentials drive the connection; the body carries only non-secret
+ * params (region / repo / host / options).
+ */
+export type SecurityFinding = components["schemas"]["SecurityFinding"];
+
+/** SQL collector dialects accepted by `POST /api/collectors/sql/{dialect}/collect`. */
+export type SqlDialect = "postgres" | "mysql" | "mssql" | "oracle" | "sqlite";
+
+/**
+ * Concrete per-dialect SQL collect endpoints. Spelled out (not interpolated)
+ * so each path is a literal the CLI<->GUI parity gate sees as wired, and so an
+ * unknown dialect can't build an off-contract URL.
+ */
+const SQL_COLLECT_PATHS: Record<SqlDialect, string> = {
+  postgres: "/api/collectors/sql/postgres/collect",
+  mysql: "/api/collectors/sql/mysql/collect",
+  mssql: "/api/collectors/sql/mssql/collect",
+  oracle: "/api/collectors/sql/oracle/collect",
+  sqlite: "/api/collectors/sql/sqlite/collect",
+};
+
+/**
+ * OCSF ingest body for `POST /api/collectors/ocsf/collect`. Supply EITHER
+ * inline `content` OR a `url` to fetch; `block_private_ips` (default True
+ * server-side) rejects RFC1918 / loopback / link-local targets on the URL leg.
+ */
+export interface OcsfCollectRequest {
+  content?: unknown;
+  url?: string;
+  block_private_ips?: boolean;
+}
+
 // ── Catalog types (mirrored from evidentia_core catalog tooling) ─────────
 
 /** Catalog import body ({framework_id, content, format?, name?, …}). */
@@ -1055,6 +1092,118 @@ const realApi = {
       method: "POST",
       body: JSON.stringify(matrix),
     }),
+
+  // ── Collectors (evidence collection) ──────────────────────────────────
+  // Every collect verb returns a bare `SecurityFinding[]`. NO secrets in the
+  // body — credentials are server-side; the body carries only non-secret
+  // params (region / repo / host / options). `aws`/`okta`/the vendor-risk
+  // collectors accept an optional body; `github`/`sql` require one.
+  collectAws: (body?: Record<string, unknown>) =>
+    request<SecurityFinding[]>("/api/collectors/aws/collect", {
+      method: "POST",
+      body: JSON.stringify(body ?? {}),
+    }),
+  collectGithub: (body: Record<string, unknown>) =>
+    request<SecurityFinding[]>("/api/collectors/github/collect", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  collectOkta: (body?: Record<string, unknown>) =>
+    request<SecurityFinding[]>("/api/collectors/okta/collect", {
+      method: "POST",
+      body: JSON.stringify(body ?? {}),
+    }),
+  collectSql: (dialect: string, body: Record<string, unknown>) =>
+    request<SecurityFinding[]>(
+      SQL_COLLECT_PATHS[dialect as SqlDialect] ??
+        `/api/collectors/sql/${encodeURIComponent(dialect)}/collect`,
+      { method: "POST", body: JSON.stringify(body) },
+    ),
+  collectDatabricks: (body?: Record<string, unknown>) =>
+    request<SecurityFinding[]>("/api/collectors/databricks/collect", {
+      method: "POST",
+      body: JSON.stringify(body ?? {}),
+    }),
+  collectSnowflake: (body?: Record<string, unknown>) =>
+    request<SecurityFinding[]>("/api/collectors/snowflake/collect", {
+      method: "POST",
+      body: JSON.stringify(body ?? {}),
+    }),
+  collectVanta: (body?: Record<string, unknown>) =>
+    request<SecurityFinding[]>("/api/collectors/vanta/collect", {
+      method: "POST",
+      body: JSON.stringify(body ?? {}),
+    }),
+  collectDrata: (body?: Record<string, unknown>) =>
+    request<SecurityFinding[]>("/api/collectors/drata/collect", {
+      method: "POST",
+      body: JSON.stringify(body ?? {}),
+    }),
+  collectBitsight: (body?: Record<string, unknown>) =>
+    request<SecurityFinding[]>("/api/collectors/bitsight/collect", {
+      method: "POST",
+      body: JSON.stringify(body ?? {}),
+    }),
+  collectSecurityscorecard: (body?: Record<string, unknown>) =>
+    request<SecurityFinding[]>("/api/collectors/securityscorecard/collect", {
+      method: "POST",
+      body: JSON.stringify(body ?? {}),
+    }),
+  collectOcsf: (body: OcsfCollectRequest) =>
+    request<SecurityFinding[]>("/api/collectors/ocsf/collect", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  // `convert` is LOCAL-ONLY (no collection); it round-trips findings through the
+  // OCSF mapping layer and returns a loose object list (no named schema).
+  collectConvert: (body: Record<string, unknown>) =>
+    request<Record<string, unknown>[]>("/api/collectors/convert", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  collectorsStatus: () =>
+    request<Record<string, unknown>>("/api/collectors/status"),
+
+  // ── Integrations (push / publish to external systems) ─────────────────
+  // Status verbs report configuration / connectivity; push / publish / sync
+  // verbs round-trip a gap report (keyed by `report_key` in the PATH) to the
+  // target. NO secrets in the body — integration credentials are server-side;
+  // the body carries only non-secret options. Responses are free-form objects
+  // (no named schema server-side) → `Record<string, unknown>`.
+  jiraStatus: () =>
+    request<Record<string, unknown>>("/api/integrations/jira/status"),
+  jiraPush: (reportKey: string, body?: Record<string, unknown>) =>
+    request<Record<string, unknown>>(
+      `/api/integrations/jira/push/${encodeURIComponent(reportKey)}`,
+      { method: "POST", body: JSON.stringify(body ?? {}) },
+    ),
+  jiraSync: (reportKey: string, body?: Record<string, unknown>) =>
+    request<Record<string, unknown>>(
+      `/api/integrations/jira/sync/${encodeURIComponent(reportKey)}`,
+      { method: "POST", body: JSON.stringify(body ?? {}) },
+    ),
+  // status-map is a nested map of {report_key: {gap_id: jira_status}}.
+  jiraStatusMap: () =>
+    request<Record<string, Record<string, string>>>(
+      "/api/integrations/jira/status-map",
+    ),
+  tableauPublish: (reportKey: string, body?: Record<string, unknown>) =>
+    request<Record<string, unknown>>(
+      `/api/integrations/tableau/publish/${encodeURIComponent(reportKey)}`,
+      { method: "POST", body: JSON.stringify(body ?? {}) },
+    ),
+  powerbiPublish: (reportKey: string, body?: Record<string, unknown>) =>
+    request<Record<string, unknown>>(
+      `/api/integrations/powerbi/publish/${encodeURIComponent(reportKey)}`,
+      { method: "POST", body: JSON.stringify(body ?? {}) },
+    ),
+  servicenowStatus: () =>
+    request<Record<string, unknown>>("/api/integrations/servicenow/status"),
+  servicenowPush: (reportKey: string, body?: Record<string, unknown>) =>
+    request<Record<string, unknown>>(
+      `/api/integrations/servicenow/push/${encodeURIComponent(reportKey)}`,
+      { method: "POST", body: JSON.stringify(body ?? {}) },
+    ),
 };
 
 /**

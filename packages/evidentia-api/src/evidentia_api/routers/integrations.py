@@ -13,6 +13,7 @@ import logging
 import uuid
 from typing import Any
 
+from evidentia_core.audit import EventOutcome, get_logger
 from evidentia_core.gap_store import (
     InvalidReportKeyError,
     load_report_by_key,
@@ -23,6 +24,19 @@ from fastapi import APIRouter, HTTPException
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# Structured audit logger for credentialed external writes.
+_audit = get_logger("evidentia.api.integrations")
+
+# Audit action string. No servicenow-specific EventAction enum member
+# exists in evidentia_core.audit.events, and this router may not edit
+# that file (strict scope). The audit logger's `action` parameter is
+# typed `EventAction | str`, so this stable ECS-style dotted string is
+# a type-clean fit, consistent with the events.py namespace convention
+# (``evidentia.<domain>.<verb>``) — same pattern the governance +
+# catalog routers use. A future refactor can promote it to an enum
+# member.
+_ACTION_SERVICENOW_PUSH = "evidentia.integrations.servicenow_push"
 
 
 def _new_request_id() -> str:
@@ -482,3 +496,167 @@ async def powerbi_publish(
         ) from exc
 
     return result.model_dump()
+
+
+# ── ServiceNow status ─────────────────────────────────────────────
+
+
+@router.get("/integrations/servicenow/status")
+async def servicenow_status() -> dict[str, Any]:
+    """Return whether ServiceNow is configured + a connectivity probe.
+
+    Connectivity/config probe only — does NOT create any records.
+    Calls ``ServiceNowClient.test_connection`` which issues a single
+    1-row read against the configured table, confirming both that the
+    credentials work and that the principal has read access.
+
+    Credentials are sourced SERVER-SIDE from environment variables
+    (``EVIDENTIA_SERVICENOW_*``), exactly like the Jira ``status``
+    endpoint — never from the request. The basic-auth password value
+    is never included in the response; on any failure a sanitized
+    message + a correlatable ``request_id`` is returned and the
+    specifics are written to the server log only.
+    """
+    try:
+        from evidentia_integrations.servicenow import (
+            ServiceNowApiError,
+            ServiceNowClient,
+            ServiceNowConfig,
+        )
+    except ImportError as e:  # pragma: no cover — integrations ships with CLI
+        rid = _new_request_id()
+        logger.warning("servicenow_status import failure [%s]: %r", rid, e)
+        return {
+            "configured": False,
+            "error": "evidentia-integrations package is not installed.",
+            "request_id": rid,
+        }
+
+    try:
+        cfg = ServiceNowConfig.from_env()
+    except ValueError as e:
+        rid = _new_request_id()
+        logger.warning("servicenow_status config failure [%s]: %r", rid, e)
+        return {
+            "configured": False,
+            "error": "ServiceNow configuration is incomplete or invalid.",
+            "request_id": rid,
+        }
+
+    try:
+        with ServiceNowClient(cfg) as client:
+            info = client.test_connection()
+    except ServiceNowApiError as e:
+        rid = _new_request_id()
+        logger.warning("servicenow_status api failure [%s]: %r", rid, e)
+        return {
+            "configured": False,
+            "instance_url": cfg.instance_url,
+            "table_name": cfg.table_name,
+            "error": (
+                "ServiceNow API call failed; check server logs with the "
+                "request_id."
+            ),
+            "request_id": rid,
+        }
+
+    return {
+        "configured": True,
+        "instance_url": info["instance_url"],
+        "table_name": info["table_name"],
+        "user": info["user"],
+        "result_count": info["result_count"],
+    }
+
+
+# ── ServiceNow push ───────────────────────────────────────────────
+
+
+@router.post("/integrations/servicenow/push/{report_key}")
+async def servicenow_push(
+    report_key: str,
+    payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Push open gaps from a saved report as ServiceNow records.
+
+    Credentialed EXTERNAL write — creates an incident / GRC-issue /
+    custom-table record per OPEN / IN_PROGRESS gap. Idempotent: a gap
+    that already has a matching record (by ``correlation_id``) is
+    reported as ``existing`` rather than duplicated.
+
+    Path:
+      - ``report_key``: the gap-store key for a previously saved
+        :class:`GapAnalysisReport`.
+
+    Request body is optional and carries ONLY non-secret params:
+
+      - ``force``: bool (default false) — create new records even when
+        a matching ``correlation_id`` already exists. Rarely needed.
+
+    Credentials (instance URL / user / password) are sourced
+    SERVER-SIDE from ``EVIDENTIA_SERVICENOW_*`` environment variables,
+    exactly like the Jira ``push`` endpoint. Secret values NEVER flow
+    through the request body; any ``instance_url`` / ``user`` /
+    ``password`` keys in the body are ignored.
+
+    Returns ``503`` when the integration is unconfigured, ``400`` on a
+    malformed report key, and ``404`` when the report does not exist.
+    """
+    try:
+        from evidentia_integrations.servicenow import (
+            ServiceNowClient,
+            ServiceNowConfig,
+        )
+        from evidentia_integrations.servicenow import (
+            push_open_gaps as sn_push_open_gaps,
+        )
+    except ImportError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "ServiceNow integration not installed. Run "
+                "`pip install 'evidentia-integrations[servicenow]'`."
+            ),
+        ) from e
+
+    report = _load_report(report_key)
+
+    try:
+        cfg = ServiceNowConfig.from_env()
+    except ValueError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+
+    body = payload or {}
+    force = bool(body.get("force", False))
+
+    with ServiceNowClient(cfg) as client:
+        result = sn_push_open_gaps(report, client, force=force)
+
+    # Audit the credentialed external write. No secret values are
+    # included — only the report key, target table, and outcome counts.
+    _audit.info(
+        action=_ACTION_SERVICENOW_PUSH,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"Pushed gap report {report_key} to ServiceNow table "
+            f"{cfg.table_name} via API: created={result.created} "
+            f"existing={result.existing} skipped={result.skipped} "
+            f"errored={result.errored}"
+        ),
+        evidentia={
+            "report_key": report_key,
+            "table_name": cfg.table_name,
+            "created": result.created,
+            "existing": result.existing,
+            "skipped": result.skipped,
+            "errored": result.errored,
+        },
+    )
+
+    return {
+        "created": result.created,
+        "existing": result.existing,
+        "skipped": result.skipped,
+        "errored": result.errored,
+        "outcomes": [o.model_dump(mode="json") for o in result.outcomes],
+    }

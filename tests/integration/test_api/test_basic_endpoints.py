@@ -26,10 +26,15 @@ class TestHealth:
         assert r.status_code == 200
         assert r.headers["content-type"].startswith("application/json")
         payload = r.json()
-        assert set(payload.keys()) == {"status", "version"}
+        assert set(payload.keys()) == {"status", "version", "auth_configured"}
         assert payload["status"] == "ok"
         assert isinstance(payload["version"], str)
         assert payload["version"], "version was empty string"
+        # v0.10.12 Wave 4: auth_configured reports whether an AuthProvider is
+        # wired (False on the default anonymous deployment). The web console
+        # reads it to gate credentialed actions + show an unsecured-deployment
+        # notice (threat-model §4(c)).
+        assert isinstance(payload["auth_configured"], bool)
 
     def test_health_path_matches_dockerfile_healthcheck(
         self, api_client: TestClient

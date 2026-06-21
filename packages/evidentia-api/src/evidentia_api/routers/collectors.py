@@ -13,12 +13,14 @@ No credential values ever flow through request/response bodies.
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 from typing import Any
 
 from evidentia_core.models.finding import SecurityFinding
 from fastapi import APIRouter, HTTPException
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -1206,6 +1208,158 @@ async def securityscorecard_collect(
         ) from e
 
     return findings
+
+
+# v0.10.12 ─────────────────────────────────────────────────────────────────
+
+
+@router.post("/collectors/ocsf/collect", response_model=list[SecurityFinding])
+async def ocsf_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
+    """Ingest OCSF Compliance / Detection Finding JSON (v0.10.12).
+
+    Mirrors the ``evidentia collect ocsf`` CLI verb. Two mutually-
+    exclusive input modes:
+
+    - ``content``: inline OCSF JSON — either a single OCSF finding
+      object or a JSON list of them. Local-only, no network.
+    - ``url``: an ``https://`` URL the OCSF JSON is fetched from.
+
+    Optional:
+
+    - ``block_private_ips``: bool (default True). URL mode only.
+      SECURE-BY-DEFAULT (threat-model T2) — the URL's host is
+      pre-resolved through the shared SSRF chokepoint
+      (:func:`evidentia_core.network_guard.enforce_public_host`, via
+      :func:`evidentia_collectors.ocsf.collect_ocsf_url`) and refused
+      if it resolves to a private / loopback / link-local / metadata /
+      multicast / reserved address BEFORE any socket opens. Callers
+      ingesting from a trusted internal endpoint must explicitly send
+      ``{"block_private_ips": false}`` — the deliberate opt-out
+      mirroring the CLI's ``--allow-private-ips`` flag.
+
+    NO credentials: OCSF ingest is file/URL only — the request body
+    NEVER carries a secret. Third-party OCSF input is trust-boundary
+    aware (``trust_unmapped=False``) so a forged ``unmapped`` block
+    cannot control Evidentia-native fields.
+
+    Returns the ingested ``list[SecurityFinding]``. 400 on bad content
+    / URL (malformed JSON, unsupported class_uid, non-HTTPS URL, SSRF
+    refusal, fetch failure); 503 if the optional ``ocsf`` extra isn't
+    installed (mirrors the aws/github import-guard pattern).
+    """
+    try:
+        from evidentia_collectors.ocsf import (
+            OCSFIngestError,
+            collect_ocsf_url,
+        )
+        from evidentia_collectors.ocsf.collector import _convert_ocsf_payload
+    except ImportError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "OCSF ingestion needs the optional ocsf extra. Run "
+                "`pip install 'evidentia-core[ocsf]'`."
+            ),
+        ) from e
+
+    has_content = "content" in payload and payload.get("content") is not None
+    url = payload.get("url") if isinstance(payload.get("url"), str) else None
+
+    if not has_content and not url:
+        raise HTTPException(
+            status_code=400,
+            detail="Request body must include either 'content' or 'url'.",
+        )
+    if has_content and url:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide exactly one of 'content' or 'url', not both.",
+        )
+
+    try:
+        if has_content:
+            # Inline mode is local-only — serialize the supplied OCSF JSON
+            # and run it through the same dispatch path as file mode.
+            raw = json.dumps(payload["content"])
+            findings = _convert_ocsf_payload(raw, source="inline content")
+        else:
+            assert url is not None  # narrowed by the guards above
+            # URL mode routes through the collector's SSRF-guarded fetch —
+            # the host is resolved + refused via the shared network_guard
+            # chokepoint BEFORE any socket opens. block_private_ips defaults
+            # to True; only an explicit `false` opts out.
+            findings = collect_ocsf_url(
+                url, block_private_ips=_block_private_ips(payload)
+            )
+    except OCSFIngestError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    return findings
+
+
+@router.post("/collectors/convert", response_model=list[dict[str, Any]])
+async def collect_convert(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    """Convert a findings document between formats (v0.10.12).
+
+    Mirrors the ``evidentia collect convert`` CLI verb — LOCAL ONLY, no
+    network, no credentials.
+
+    Request body (required):
+
+    - ``content``: the input findings — either a single SecurityFinding
+      object or a JSON list of them (as produced by any
+      ``evidentia collect ...`` command / collect endpoint).
+    - ``to_format``: output format. Currently only ``ocsf`` (OCSF
+      Compliance Finding bundle) is supported.
+
+    Returns the converted output (a list of OCSF Compliance Finding
+    dicts). 400 on bad input (missing/invalid content, unsupported
+    format).
+    """
+    to_format = str(payload.get("to_format") or "ocsf").strip() or "ocsf"
+    if to_format != "ocsf":
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Unsupported to_format {to_format!r}. "
+                "v0.10.12 supports only 'ocsf'."
+            ),
+        )
+
+    if "content" not in payload or payload.get("content") is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Request body must include 'content'.",
+        )
+
+    try:
+        from evidentia_core.ocsf import OCSFMappingError, finding_to_ocsf
+    except ImportError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "OCSF conversion needs the optional ocsf extra. Run "
+                "`pip install 'evidentia-core[ocsf]'`."
+            ),
+        ) from e
+
+    raw_content = payload["content"]
+    items = raw_content if isinstance(raw_content, list) else [raw_content]
+
+    try:
+        findings = [SecurityFinding.model_validate(item) for item in items]
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid SecurityFinding in 'content': {e}",
+        ) from e
+
+    try:
+        bundle = [finding_to_ocsf(f) for f in findings]
+    except OCSFMappingError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    return bundle
 
 
 @router.get("/collectors/status")

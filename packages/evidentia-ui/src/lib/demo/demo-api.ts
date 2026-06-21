@@ -73,6 +73,8 @@ import type {
   OMBImpactRequest,
   OscalVerifyRequest,
   TraceabilityMatrix,
+  SecurityFinding,
+  OcsfCollectRequest,
 } from "@/lib/api";
 import type {
   AirGapCheckResponse,
@@ -459,6 +461,68 @@ const DEMO_TRACEABILITY_PROFILE: Record<string, unknown> = {
     title: "Control↔Threat Traceability Matrix (demo)",
     signed: false,
   },
+};
+
+// ── Collector demo fixtures ──────────────────────────────────────────────
+//
+// A tiny baked `SecurityFinding[]` so the collect verbs resolve offline. NO
+// secrets anywhere (the demo build never opens a connection); these are static
+// observations mirroring what a real collector run would surface.
+const DEMO_FINDINGS: SecurityFinding[] = [
+  {
+    title: "S3 bucket without default encryption",
+    description:
+      "Bucket meridian-evidence has no default server-side encryption configured.",
+    severity: "high",
+    source_system: "aws-config",
+    status: "active",
+    compliance_status: "fail",
+    resource_type: "AWS::S3::Bucket",
+    resource_id: "meridian-evidence",
+  },
+  {
+    title: "MFA enforced on all admin accounts",
+    description:
+      "All accounts in the Administrators group require multi-factor authentication.",
+    severity: "informational",
+    source_system: "aws-iam",
+    status: "active",
+    compliance_status: "pass",
+    resource_type: "AWS::IAM::Group",
+    resource_id: "Administrators",
+  },
+];
+
+// Baked OCSF-convert output (loose object list; the demo never runs the mapper).
+const DEMO_CONVERT_OUTPUT: Record<string, unknown>[] = [
+  {
+    activity_id: 1,
+    category_uid: 2,
+    class_uid: 2003,
+    metadata: { product: { name: "Evidentia (demo)" } },
+    compliance: { status: "Fail" },
+    finding_info: { title: "S3 bucket without default encryption" },
+  },
+];
+
+// Baked collectors-status map (demo: nothing configured — no live credentials).
+const DEMO_COLLECTORS_STATUS: Record<string, unknown> = {
+  aws: { configured: false },
+  github: { configured: false },
+  okta: { configured: false },
+  vanta: { configured: false },
+};
+
+// Baked integration status (demo: not configured — no server-side credentials).
+const DEMO_INTEGRATION_STATUS: Record<string, unknown> = { configured: false };
+
+// Baked push / publish / sync result for the demo integration verbs.
+const DEMO_INTEGRATION_RESULT: Record<string, unknown> = {
+  ok: true,
+  configured: false,
+  detail:
+    "Demo result — the live build pushes to the configured integration. No external system is contacted in the demo GUI.",
+  pushed: 0,
 };
 
 export const demoApi = {
@@ -1134,6 +1198,79 @@ export const demoApi = {
         title: matrix.title,
       },
     }),
+
+  // ── Collectors (evidence collection) ──────────────────────────────────
+  // Every collect verb resolves the baked `DEMO_FINDINGS` array — zero network,
+  // no credentials. Signatures mirror the real client one-for-one.
+  collectAws: (_body?: Record<string, unknown>): Promise<SecurityFinding[]> =>
+    Promise.resolve(clone(DEMO_FINDINGS)),
+  collectGithub: (_body: Record<string, unknown>): Promise<SecurityFinding[]> =>
+    Promise.resolve(clone(DEMO_FINDINGS)),
+  collectOkta: (_body?: Record<string, unknown>): Promise<SecurityFinding[]> =>
+    Promise.resolve(clone(DEMO_FINDINGS)),
+  collectSql: (
+    _dialect: string,
+    _body: Record<string, unknown>,
+  ): Promise<SecurityFinding[]> => Promise.resolve(clone(DEMO_FINDINGS)),
+  collectDatabricks: (
+    _body?: Record<string, unknown>,
+  ): Promise<SecurityFinding[]> => Promise.resolve(clone(DEMO_FINDINGS)),
+  collectSnowflake: (
+    _body?: Record<string, unknown>,
+  ): Promise<SecurityFinding[]> => Promise.resolve(clone(DEMO_FINDINGS)),
+  collectVanta: (_body?: Record<string, unknown>): Promise<SecurityFinding[]> =>
+    Promise.resolve(clone(DEMO_FINDINGS)),
+  collectDrata: (_body?: Record<string, unknown>): Promise<SecurityFinding[]> =>
+    Promise.resolve(clone(DEMO_FINDINGS)),
+  collectBitsight: (
+    _body?: Record<string, unknown>,
+  ): Promise<SecurityFinding[]> => Promise.resolve(clone(DEMO_FINDINGS)),
+  collectSecurityscorecard: (
+    _body?: Record<string, unknown>,
+  ): Promise<SecurityFinding[]> => Promise.resolve(clone(DEMO_FINDINGS)),
+  collectOcsf: (_body: OcsfCollectRequest): Promise<SecurityFinding[]> =>
+    Promise.resolve(clone(DEMO_FINDINGS)),
+  collectConvert: (
+    _body: Record<string, unknown>,
+  ): Promise<Record<string, unknown>[]> =>
+    Promise.resolve(clone(DEMO_CONVERT_OUTPUT)),
+  collectorsStatus: (): Promise<Record<string, unknown>> =>
+    Promise.resolve(clone(DEMO_COLLECTORS_STATUS)),
+
+  // ── Integrations (push / publish to external systems) ─────────────────
+  // Status verbs return a baked {configured:false}; push / publish / sync verbs
+  // return a baked result — no external system is contacted in the demo GUI.
+  jiraStatus: (): Promise<Record<string, unknown>> =>
+    Promise.resolve(clone(DEMO_INTEGRATION_STATUS)),
+  jiraPush: (
+    _reportKey: string,
+    _body?: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> =>
+    Promise.resolve(clone(DEMO_INTEGRATION_RESULT)),
+  jiraSync: (
+    _reportKey: string,
+    _body?: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> =>
+    Promise.resolve(clone(DEMO_INTEGRATION_RESULT)),
+  jiraStatusMap: (): Promise<Record<string, Record<string, string>>> =>
+    Promise.resolve({}),
+  tableauPublish: (
+    _reportKey: string,
+    _body?: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> =>
+    Promise.resolve(clone(DEMO_INTEGRATION_RESULT)),
+  powerbiPublish: (
+    _reportKey: string,
+    _body?: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> =>
+    Promise.resolve(clone(DEMO_INTEGRATION_RESULT)),
+  servicenowStatus: (): Promise<Record<string, unknown>> =>
+    Promise.resolve(clone(DEMO_INTEGRATION_STATUS)),
+  servicenowPush: (
+    _reportKey: string,
+    _body?: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> =>
+    Promise.resolve(clone(DEMO_INTEGRATION_RESULT)),
 };
 
 /**

@@ -714,6 +714,7 @@ export const DEMO_CONFIG: EvidentiaConfig = {
 export const DEMO_HEALTH: HealthResponse = {
   status: "ok",
   version: EVIDENTIA_VERSION,
+  auth_configured: true,
 };
 
 export const DEMO_VERSION: VersionResponse = {
