@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { Suspense } from "react";
 import { MemoryRouter, Outlet } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -18,7 +19,11 @@ vi.mock("@/lib/demo", () => ({
 
 // Stub the route surfaces so this is a focused test of App's routing decision,
 // not of each page's internals (HomePage / AppLayout mount their own API
-// queries, which are out of scope here).
+// queries, which are out of scope here). The page components are code-split
+// (React.lazy), so route content renders ASYNCHRONOUSLY behind a Suspense
+// boundary — assertions use `findBy*` to await the resolved chunk, and the
+// AppLayout stub carries its own Suspense boundary around the Outlet (the real
+// AppLayout does too).
 vi.mock("@/routes/FdaDemoPage", () => ({
   FdaDemoPage: () => <div>FDA_DEMO_PAGE</div>,
 }));
@@ -28,7 +33,9 @@ vi.mock("@/routes/HomePage", () => ({
 vi.mock("@/components/layout/AppLayout", () => ({
   AppLayout: () => (
     <div data-testid="app-layout">
-      <Outlet />
+      <Suspense fallback={null}>
+        <Outlet />
+      </Suspense>
     </div>
   ),
 }));
@@ -54,50 +61,50 @@ function renderAppAt(path: string) {
 }
 
 describe("App routing — FDA-index build mode", () => {
-  it("renders FdaDemoPage full-bleed as the index (outside AppLayout) when VITE_DEMO_FDA_INDEX is set", () => {
+  it("renders FdaDemoPage full-bleed as the index (outside AppLayout) when VITE_DEMO_FDA_INDEX is set", async () => {
     demo.isDemo = true;
     demo.fdaIndex = true;
 
     renderAppAt("/");
 
-    expect(screen.getByText("FDA_DEMO_PAGE")).toBeInTheDocument();
+    expect(await screen.findByText("FDA_DEMO_PAGE")).toBeInTheDocument();
     // Full-bleed: the AppLayout chrome must not wrap the FDA index.
     expect(screen.queryByTestId("app-layout")).not.toBeInTheDocument();
   });
 
-  it("serves the FDA page for any path in FDA-index mode (single-page subdomain)", () => {
+  it("serves the FDA page for any path in FDA-index mode (single-page subdomain)", async () => {
     demo.isDemo = true;
     demo.fdaIndex = true;
 
     renderAppAt("/anything/deep");
 
-    expect(screen.getByText("FDA_DEMO_PAGE")).toBeInTheDocument();
+    expect(await screen.findByText("FDA_DEMO_PAGE")).toBeInTheDocument();
     expect(screen.queryByTestId("app-layout")).not.toBeInTheDocument();
   });
 
-  it("renders HomePage inside AppLayout at the index in normal builds", () => {
+  it("renders HomePage inside AppLayout at the index in normal builds", async () => {
     renderAppAt("/");
 
+    expect(await screen.findByText("HOME_PAGE")).toBeInTheDocument();
     expect(screen.getByTestId("app-layout")).toBeInTheDocument();
-    expect(screen.getByText("HOME_PAGE")).toBeInTheDocument();
     expect(screen.queryByText("FDA_DEMO_PAGE")).not.toBeInTheDocument();
   });
 
-  it("registers the live OSCAL verify route inside AppLayout (demo builds)", () => {
+  it("registers the live OSCAL verify route inside AppLayout (demo builds)", async () => {
     demo.isDemo = true;
 
     renderAppAt("/oscal");
 
+    expect(await screen.findByText("OSCAL_VERIFY_PAGE")).toBeInTheDocument();
     expect(screen.getByTestId("app-layout")).toBeInTheDocument();
-    expect(screen.getByText("OSCAL_VERIFY_PAGE")).toBeInTheDocument();
   });
 
-  it("registers the live OSCAL verify route in non-demo builds too (v0.10.12 Wave 3)", () => {
+  it("registers the live OSCAL verify route in non-demo builds too (v0.10.12 Wave 3)", async () => {
     // Wave 3 promoted /oscal from a demo-only fixture view to a live, always-
     // registered read-only verify console (signing stays CLI-only).
     renderAppAt("/oscal");
 
+    expect(await screen.findByText("OSCAL_VERIFY_PAGE")).toBeInTheDocument();
     expect(screen.getByTestId("app-layout")).toBeInTheDocument();
-    expect(screen.getByText("OSCAL_VERIFY_PAGE")).toBeInTheDocument();
   });
 });

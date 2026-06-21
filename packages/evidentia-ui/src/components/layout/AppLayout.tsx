@@ -27,7 +27,7 @@ import {
   Sparkles,
   Sun,
 } from "lucide-react";
-import { Fragment } from "react";
+import { Fragment, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet, useLocation } from "react-router-dom";
 
@@ -275,7 +275,15 @@ export function AppLayout() {
         </header>
 
         <main className="mx-auto w-full max-w-[1180px] flex-1 px-8 pb-12 pt-9">
-          <Outlet />
+          <Suspense
+            fallback={
+              <div className="grid place-items-center py-24 text-sm text-muted-foreground">
+                Loading…
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </main>
 
         <footer className="border-t border-border py-4 text-center text-[0.74rem] text-muted-foreground">

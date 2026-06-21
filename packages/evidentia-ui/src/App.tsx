@@ -1,33 +1,117 @@
+import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 
 import { DemoBanner } from "@/components/common/DemoBanner";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { IS_DEMO, IS_DEMO_FDA_INDEX } from "@/lib/demo";
-import { AiGovPage } from "@/routes/AiGovPage";
-import { CatalogPage } from "@/routes/CatalogPage";
-import { CollectPage } from "@/routes/CollectPage";
-import { ConmonPage } from "@/routes/ConmonPage";
-import { DashboardPage } from "@/routes/DashboardPage";
-import { DemoPage } from "@/routes/DemoPage";
-import { EvidencePage } from "@/routes/EvidencePage";
-import { ExplainPage } from "@/routes/ExplainPage";
-import { FdaDemoPage } from "@/routes/FdaDemoPage";
-import { FrameworkDetailPage } from "@/routes/FrameworkDetailPage";
-import { FrameworksPage } from "@/routes/FrameworksPage";
-import { GapAnalyzePage } from "@/routes/GapAnalyzePage";
-import { GapDiffPage } from "@/routes/GapDiffPage";
-import { GovernancePage } from "@/routes/GovernancePage";
-import { HomePage } from "@/routes/HomePage";
-import { IntegrationsPage } from "@/routes/IntegrationsPage";
-import { ModelRiskPage } from "@/routes/ModelRiskPage";
-import { OscalVerifyPage } from "@/routes/OscalVerifyPage";
-import { PoamPage } from "@/routes/PoamPage";
-import { RetentionPage } from "@/routes/RetentionPage";
-import { RiskGeneratePage } from "@/routes/RiskGeneratePage";
-import { RiskQuantifyPage } from "@/routes/RiskQuantifyPage";
-import { SettingsPage } from "@/routes/SettingsPage";
-import { TprmPage } from "@/routes/TprmPage";
-import { TraceabilityPage } from "@/routes/TraceabilityPage";
+
+// Route pages are code-split with React.lazy so each console ships as its own
+// chunk instead of bloating the initial bundle. The page modules use NAMED
+// exports, so each loader adapts to the { default } shape lazy() expects. A
+// Suspense boundary inside AppLayout (and the FDA-index branch below) renders a
+// fallback while a chunk loads.
+const AiGovPage = lazy(() =>
+  import("@/routes/AiGovPage").then((m) => ({ default: m.AiGovPage })),
+);
+const CatalogPage = lazy(() =>
+  import("@/routes/CatalogPage").then((m) => ({ default: m.CatalogPage })),
+);
+const CollectPage = lazy(() =>
+  import("@/routes/CollectPage").then((m) => ({ default: m.CollectPage })),
+);
+const ConmonPage = lazy(() =>
+  import("@/routes/ConmonPage").then((m) => ({ default: m.ConmonPage })),
+);
+const DashboardPage = lazy(() =>
+  import("@/routes/DashboardPage").then((m) => ({ default: m.DashboardPage })),
+);
+const DemoPage = lazy(() =>
+  import("@/routes/DemoPage").then((m) => ({ default: m.DemoPage })),
+);
+const EvidencePage = lazy(() =>
+  import("@/routes/EvidencePage").then((m) => ({ default: m.EvidencePage })),
+);
+const ExplainPage = lazy(() =>
+  import("@/routes/ExplainPage").then((m) => ({ default: m.ExplainPage })),
+);
+const FdaDemoPage = lazy(() =>
+  import("@/routes/FdaDemoPage").then((m) => ({ default: m.FdaDemoPage })),
+);
+const FrameworkDetailPage = lazy(() =>
+  import("@/routes/FrameworkDetailPage").then((m) => ({
+    default: m.FrameworkDetailPage,
+  })),
+);
+const FrameworksPage = lazy(() =>
+  import("@/routes/FrameworksPage").then((m) => ({
+    default: m.FrameworksPage,
+  })),
+);
+const GapAnalyzePage = lazy(() =>
+  import("@/routes/GapAnalyzePage").then((m) => ({
+    default: m.GapAnalyzePage,
+  })),
+);
+const GapDiffPage = lazy(() =>
+  import("@/routes/GapDiffPage").then((m) => ({ default: m.GapDiffPage })),
+);
+const GovernancePage = lazy(() =>
+  import("@/routes/GovernancePage").then((m) => ({
+    default: m.GovernancePage,
+  })),
+);
+const HomePage = lazy(() =>
+  import("@/routes/HomePage").then((m) => ({ default: m.HomePage })),
+);
+const IntegrationsPage = lazy(() =>
+  import("@/routes/IntegrationsPage").then((m) => ({
+    default: m.IntegrationsPage,
+  })),
+);
+const ModelRiskPage = lazy(() =>
+  import("@/routes/ModelRiskPage").then((m) => ({ default: m.ModelRiskPage })),
+);
+const OscalVerifyPage = lazy(() =>
+  import("@/routes/OscalVerifyPage").then((m) => ({
+    default: m.OscalVerifyPage,
+  })),
+);
+const PoamPage = lazy(() =>
+  import("@/routes/PoamPage").then((m) => ({ default: m.PoamPage })),
+);
+const RetentionPage = lazy(() =>
+  import("@/routes/RetentionPage").then((m) => ({ default: m.RetentionPage })),
+);
+const RiskGeneratePage = lazy(() =>
+  import("@/routes/RiskGeneratePage").then((m) => ({
+    default: m.RiskGeneratePage,
+  })),
+);
+const RiskQuantifyPage = lazy(() =>
+  import("@/routes/RiskQuantifyPage").then((m) => ({
+    default: m.RiskQuantifyPage,
+  })),
+);
+const SettingsPage = lazy(() =>
+  import("@/routes/SettingsPage").then((m) => ({ default: m.SettingsPage })),
+);
+const TprmPage = lazy(() =>
+  import("@/routes/TprmPage").then((m) => ({ default: m.TprmPage })),
+);
+const TraceabilityPage = lazy(() =>
+  import("@/routes/TraceabilityPage").then((m) => ({
+    default: m.TraceabilityPage,
+  })),
+);
+
+/** Centered loading fallback shown while a lazily-loaded route chunk resolves. */
+function RouteFallback() {
+  return (
+    <div className="grid place-items-center py-24 text-sm text-muted-foreground">
+      Loading…
+    </div>
+  );
+}
 
 /**
  * Evidentia web UI root.
@@ -46,9 +130,11 @@ export function App() {
   // intentionally omitted here.
   if (IS_DEMO_FDA_INDEX) {
     return (
-      <Routes>
-        <Route path="*" element={<FdaDemoPage />} />
-      </Routes>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="*" element={<FdaDemoPage />} />
+        </Routes>
+      </Suspense>
     );
   }
 
