@@ -127,20 +127,20 @@ Meanwhile, the compliance workload keeps growing. A single fintech or healthcare
 
 ---
 
-## 3. Current capabilities (v0.7.8)
+## 3. Current capabilities (v0.10.12)
 
-> **Section summary.** As of v0.7.8 (May 2026, code-complete locally;
-> 10-commit chain awaiting tag), Evidentia ships 9 Typer CLI command
-> groups, 12 REST router modules, an 8-page React SPA (alpha.2
-> wired-in at v0.7.6), six Python packages with public APIs +
-> evidentia-ui frontend that bundles into the API server, **8 evidence
-> collection surfaces** (AWS, GitHub, Okta, ServiceNow, 5 SQL DB
-> adapters [Postgres / MySQL / SQLite / MSSQL / Oracle], Databricks,
-> Snowflake), **4 output integrations** (Jira, ServiceNow, Tableau
-> publish, Power BI publish — last two NEW in v0.7.8), AI-powered
-> risk-statement + control-explanation generation with full
-> GenerationContext provenance (model + temperature + prompt-hash +
-> run-id), **89 bundled framework catalogs** (4 redistribution tiers),
+> **Section summary.** As of v0.10.12 (June 2026), Evidentia ships 9 Typer
+> CLI command groups, 23 REST router modules, a full multi-console React
+> web app of ~24 routes that renders its own version live from the API,
+> six Python packages with public APIs + evidentia-ui frontend that
+> bundles into the API server, **14 credentialed evidence collectors**
+> (AWS, GitHub, Okta, 5 SQL DB adapters [Postgres / MySQL /
+> SQLite / MSSQL / Oracle], Databricks, Snowflake, Vanta, Drata,
+> BitSight, SecurityScorecard — with a separate OCSF importer alongside),
+> **4 output integrations** (Jira, ServiceNow, Tableau publish, Power BI
+> publish), AI-powered risk-statement + control-explanation generation
+> with full GenerationContext provenance (model + temperature +
+> prompt-hash + run-id), **95 bundled framework catalogs** (4 redistribution tiers),
 > bundled crosswalks, four output formats including OSCAL Assessment
 > Results with embedded SHA-256 evidence digests + Sigstore/Rekor or
 > GPG signing, cosign-signed container image at
@@ -174,7 +174,7 @@ Meanwhile, the compliance workload keeps growing. A single fintech or healthcare
 | `evidentia oscal verify [--require-signature]` | Verify SHA-256 evidence digests + GPG/Sigstore signatures on an OSCAL AR |
 | `evidentia serve` | Launch the FastAPI server + bundled React SPA at 127.0.0.1:8000 |
 
-### 3.2 REST API surface (FastAPI, 12 router modules)
+### 3.2 REST API surface (FastAPI, 23 router modules)
 
 Health, config CRUD, init wizard, gaps (analyze + diff + OSCAL AR export), frameworks (list + filter + crosswalk + license info), control explanations (POST), risk-statement generation (POST), collectors (trigger + retrieve), Jira integration (test + push + sync + status-map), LLM provider preflight checks, doctor / diagnostics. The web UI consumes these directly.
 
@@ -227,9 +227,9 @@ implementing modules.
 - **Tableau publish** (v0.7.8; `[tableau]` extra) — publishes 3 datasets to Tableau Server / Cloud as CSV-based data sources: `evidentia-gaps` (one row per ControlGap), `evidentia-risks` (NIST SP 800-30 shape with AI-provenance fields), `evidentia-collection-runs` (CollectionContext audit trail). PAT auth via `TABLEAU_PAT_NAME` + `TABLEAU_PAT_SECRET` env vars (never accepted as flag values). `tableauserverclient>=0.30` (pure Python). **`.hyper` extract publish documented as v0.7.9+ enhancement** under separate `[tableau-hyper]` extra (would require heavyweight `tableauhyperapi` native binary).
 - **Power BI publish** (v0.7.8; `[powerbi]` extra) — pushes same 3 datasets as Power BI Push Datasets via REST API + Azure AD service-principal OAuth2 (MSAL Python). Full-refresh semantics by default (clear-then-push). 10,000-row batching per Power BI's documented limit. Schema-declared dataset auto-creation via `ensure_dataset` (idempotent re-runs). Auth: service principal with `Dataset.ReadWrite.All`; client secret from `POWERBI_CLIENT_SECRET` env var server-side; never in request bodies. `msal>=1.31` driver.
 
-### 3.6 Bundled framework catalogs (89 total, four redistribution tiers)
+### 3.6 Bundled framework catalogs (95 total, four redistribution tiers)
 
-**89 catalog files (.json)** verified by direct codebase walk
+**95 catalog files (.json)** verified by direct codebase walk
 post-v0.7.9 (was 82 at v0.7.0; +7 in v0.7.9 — 5 FFIEC IT
 Examination Handbook booklets + OCC 2011-12/FRB SR 11-7 + FFIEC
 Cybersecurity Assessment Tool). The tier breakdown below is

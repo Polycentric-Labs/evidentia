@@ -91,17 +91,39 @@ root (`http://127.0.0.1:8000/`).
 ## Step 2 — Open the UI
 
 Browse to **`http://127.0.0.1:8000`** (or whatever `--port` you chose). The app
-is a sidebar-driven SPA. The left navigation exposes these screens:
+is a sidebar-driven, multi-console SPA. The left navigation groups every console
+under section headers (Analyze, Govern, Connect, Library, Configure); the full
+set is below.
 
 | Sidebar item | Route | Purpose |
 | --- | --- | --- |
-| **Home** | `/` | Landing + onboarding wizard (upload an inventory or load a sample to get started). |
-| **Dashboard** | `/dashboard` | Overview of saved gap reports from the local gap store. |
-| **Frameworks** | `/frameworks` | Browse the registered OSCAL frameworks; drill into a framework's detail page. |
+| **Home** | `/` | Welcome + onboarding (upload an inventory or load a sample to get started). |
+| _Analyze_ | | |
 | **Gap Analyze** | `/gap/analyze` | Run a gap analysis in-browser (the focus of this guide). |
 | **Gap Diff** | `/gap/diff` | Compare two saved gap reports (base vs head). |
-| **Risk Generate** | `/risk/generate` | Generate risk statements. |
-| **Settings** | `/settings` | App settings. |
+| **Risk Generate** | `/risk/generate` | Generate AI risk statements. |
+| **Risk Quantify** | `/risk/quantify` | FAIR risk quantification. |
+| **Explain Control** | `/explain` | Plain-English control help. |
+| _Govern_ | | |
+| **POA&M** | `/poam` | Plan of Action & Milestones. |
+| **Continuous Monitoring** | `/conmon` | Continuous monitoring / cadences. |
+| **TPRM** | `/tprm` | Third-party risk management. |
+| **Governance** | `/governance` | Challenges, metrics, workflows. |
+| **Retention** | `/retention` | Records retention + legal hold. |
+| **Evidence** | `/evidence` | WORM evidence store. |
+| **Model Risk** | `/model-risk` | SR 11-7 model inventory. |
+| **AI Governance** | `/ai-gov` | EU AI Act / NIST AI RMF registry. |
+| **OSCAL Verify** | `/oscal` | Verify a signed Assessment Result (read-only; signing stays a CLI / air-gap operation). |
+| **Traceability** | `/traceability` | Control ↔ threat matrix. |
+| _Connect_ | | |
+| **Collect** | `/collect` | Evidence collectors. |
+| **Integrations** | `/integrations` | Jira / ServiceNow / BI. |
+| _Library_ | | |
+| **Dashboard** | `/dashboard` | Saved gap reports from the local gap store. |
+| **Frameworks** | `/frameworks` | Browse the bundled catalogs; drill into a framework's detail page (`/frameworks/:id`). |
+| **Catalog mgmt** | `/catalog` | Catalog management — import / crosswalk / license. |
+| _Configure_ | | |
+| **Settings** | `/settings` | Config + LLM + air-gap. |
 
 This guide drives the **Gap Analyze** screen.
 
@@ -193,9 +215,10 @@ external state beyond the gap-store files it already wrote.
   `uv tool install "evidentia[gui]"`), then re-run. Confirm with
   `evidentia doctor` (the `evidentia_api` row should read
   `installed (web UI available)`).
-- **The browser shows "Page not found"** — that route isn't implemented; use the
-  sidebar to reach a real screen (the implemented routes are listed in
-  [Step 2](#step-2--open-the-ui)).
+- **The browser shows "Page not found"** — you've hit a path outside the app's
+  routes (a typo or a stale bookmark). Use the left sidebar to reach a console —
+  every implemented route is grouped there and listed in
+  [Step 2](#step-2--open-the-ui).
 - **Export fails for `ocsf` / `ocsf-detection`** with an "unavailable / install
   the `[ocsf]` extra" message — those two formats need the server's `[ocsf]`
   extra (`pip install "evidentia-core[ocsf]"`). The other six formats are
