@@ -97,7 +97,10 @@ root (`http://127.0.0.1:8000/`).
 > local use. If you must bind a routable interface, set `--auth-token-file` and
 > let `--security-headers` engage (it does so automatically for a non-loopback
 > host). Air-gapped operators can keep everything local — see
-> [Air-gapped install](air-gapped-install.md).
+> [Air-gapped install](air-gapped-install.md). For the full standing model —
+> the inherited controls, what each console exposes, why signing stays on the
+> CLI, and a hardening checklist — see
+> [Web console security](../3-concepts/web-console-security.md).
 
 ## Step 2 — Open the UI
 

@@ -129,50 +129,66 @@ Meanwhile, the compliance workload keeps growing. A single fintech or healthcare
 
 ## 3. Current capabilities (v0.10.12)
 
-> **Section summary.** As of v0.10.12 (June 2026), Evidentia ships 22 Typer
-> CLI commands (18 groups + 4 utility verbs), 23 REST router modules, a full multi-console React
-> web app of ~24 routes that renders its own version live from the API,
-> six Python packages with public APIs + evidentia-ui frontend that
-> bundles into the API server, **14 credentialed evidence collectors**
+> **Section summary.** As of v0.10.12 (June 2026), Evidentia ships **22 Typer
+> CLI commands** (18 groups + 4 utility verbs), **23 REST router modules**, a
+> full multi-console React web app (**22 consoles at ~98% CLI parity**) that
+> renders its own version live from the API, **13 read-mostly MCP tools**, six
+> Python packages with public APIs + the evidentia-ui frontend that bundles into
+> the API server, **14 credentialed evidence collectors**
 > (AWS, GitHub, Okta, 5 SQL DB adapters [Postgres / MySQL /
 > SQLite / MSSQL / Oracle], Databricks, Snowflake, Vanta, Drata,
 > BitSight, SecurityScorecard — with a separate OCSF importer alongside),
 > **4 output integrations** (Jira, ServiceNow, Tableau publish, Power BI
 > publish), AI-powered risk-statement + control-explanation generation
 > with full GenerationContext provenance (model + temperature +
-> prompt-hash + run-id), **95 bundled framework catalogs** (4 redistribution tiers),
-> bundled crosswalks, four output formats including OSCAL Assessment
-> Results with embedded SHA-256 evidence digests + Sigstore/Rekor or
-> GPG signing, cosign-signed container image at
-> `ghcr.io/polycentric-labs/evidentia` with SLSA L3 build provenance
-> against image digest. All 10 BLOCKER items in the enterprise-grade
-> credibility checklist remain closed; v0.7.5 added cosign container
-> publish (closing L1); v0.7.7 added 5 SQL collectors + Okta +
-> ServiceNow; v0.7.8 adds the cloud-DW + BI surfaces. Inventory below
-> is from a direct codebase walk on 2026-05-02 (Stream 7 of the v0.7.8
-> Step 2 research had documented hallucinations and was not used).
+> prompt-hash + run-id), **95 bundled framework catalogs** (4 redistribution
+> tiers), bundled crosswalks, and **eight gap-output formats** including OSCAL
+> 1.2.1 Assessment Results with embedded SHA-256 evidence digests + Sigstore/Rekor
+> or GPG signing. Every release carries six independently attestable supply-chain
+> credentials (PEP 740 + Sigstore + SLSA L3 + a cosign-signed container at
+> `ghcr.io/polycentric-labs/evidentia` + a CycloneDX 1.6 SBOM + a public OpenSSF
+> Scorecard), and the parsers are continuously fuzzed (atheris / ClusterFuzzLite
+> + Hypothesis). The subsections below enumerate each surface.
 
 ### 3.1 CLI surface (Typer)
 
+`evidentia --help` exposes **22 top-level commands** — 18 command groups plus
+four utility verbs (`init`, `version`, `doctor`, `serve`). Every group is open
+source; there is no paid-tier or admin-only verb. The table below names each
+command group with a representative entry point; run `evidentia <command> --help`
+for the full subcommand set.
+
 | Command | Purpose |
 |---|---|
-| `evidentia init` | Scaffold a new project (creates `evidentia.yaml`, `my-controls.yaml`, `system-context.yaml`) |
-| `evidentia doctor [--check-air-gap]` | System diagnostics; verifies LLM connectivity, file permissions, air-gap posture |
-| `evidentia version` | Print version of evidentia + its workspace packages |
-| `evidentia catalog list [--tier ... --category ...]` | Browse 95 bundled frameworks, filter by tier (A/B/C/D) or category |
-| `evidentia catalog show <fw> --control <id>` | Display the full text of a single control |
-| `evidentia catalog crosswalk --source <fw> --target <fw> --control <id>` | Show how a control maps across frameworks |
-| `evidentia catalog import [--mode stub\|oscal-profile\|json]` | Import licensed Tier-C catalog content (e.g., ISO 27001) |
-| `evidentia catalog license-info <fw>` | Show licensing posture for a Tier-C placeholder catalog |
-| `evidentia gap analyze --inventory <file> --frameworks <list> --output <file>` | Run gap analysis; output JSON / CSV / Markdown / OSCAL AR |
-| `evidentia gap diff --base <file> --head <file> [--fail-on-regression]` | Compare two gap snapshots; classify each as opened/closed/severity-changed/unchanged |
-| `evidentia explain control <fw> <id>` | LLM-generated plain-English translation of any framework control text (cached) |
-| `evidentia risk generate --context <file> --gaps <file>` | LLM-generated NIST SP 800-30 risk statements; structured output via Instructor |
-| `evidentia collect aws [--region ... --include-config --include-security-hub]` | Collect AWS Config rule + Security Hub findings |
-| `evidentia collect github --repo <owner/repo>` | Collect GitHub branch protection + CODEOWNERS + Dependabot alerts |
-| `evidentia integrations jira {test,push,sync,status-map}` | Push gaps as Jira issues; bidirectional status sync |
-| `evidentia oscal verify [--require-signature]` | Verify SHA-256 evidence digests + GPG/Sigstore signatures on an OSCAL AR |
-| `evidentia serve` | Launch the FastAPI server + bundled React SPA at 127.0.0.1:8000 |
+| `evidentia init` | Scaffold a new project (writes `evidentia.yaml`, `my-controls.yaml`, `system-context.yaml`) — interactive wizard or flags. |
+| `evidentia version` | Print Evidentia's version and Python-environment info. |
+| `evidentia doctor [--check-air-gap]` | System diagnostics — LLM connectivity, web-UI availability, and the per-subsystem air-gap posture report. |
+| `evidentia serve` | Launch the FastAPI server + bundled React SPA (defaults to `127.0.0.1:8000`). |
+| `evidentia gap {analyze,diff}` | Run gap analysis (eight output formats) and diff two snapshots (opened / closed / severity-changed / unchanged). |
+| `evidentia catalog {list,show,crosswalk,import,license-info}` | Browse the 95 bundled framework catalogs, show a control, map controls across frameworks, import licensed Tier-C content, inspect license posture. |
+| `evidentia risk generate` | LLM-generated NIST SP 800-30 risk statements with structured output. |
+| `evidentia explain control <fw> <id>` | Plain-English, LLM-generated translation of any control's text (on-disk cached). |
+| `evidentia integrations {jira,servicenow,tableau,powerbi}` | Output integrations — push gaps to Jira / ServiceNow and publish to Tableau / Power BI. |
+| `evidentia collect {aws,github,okta,…,ocsf}` | Run the 14 credentialed evidence collectors plus the OCSF importer path. |
+| `evidentia oscal {verify,sign}` | OSCAL integrity tooling — verify SHA-256 evidence digests and Sigstore/Rekor or GPG signatures on an Assessment Result. |
+| `evidentia tprm` | Third-Party Risk Management — vendor inventory, concentration risk, CAIQ/SIG questionnaires. |
+| `evidentia model-risk` | Model Risk Management — SR 11-7 model inventory and metadata. |
+| `evidentia governance` | Governance — Three Lines of Defense, Effective Challenge, KRI/KPI/KGI metrics. |
+| `evidentia retention` | Audit chain-of-custody — retention metadata, the WORM extend-only lock, and legal holds. |
+| `evidentia poam` | Plan-of-Action-and-Milestones — remediation tracking. |
+| `evidentia conmon` | Continuous-Monitoring cadence calendar (read-only library of assessment + reporting cycles). |
+| `evidentia ai-gov` | AI governance — EU AI Act tiering, NIST AI RMF inventory, FIPS-199 / OMB leveling. |
+| `evidentia evidence` | Evidence-artifact lineage — WORM-enforced, append-only versioning. |
+| `evidentia traceability` | Control↔Threat Traceability Matrix — emit a signed OSCAL Profile mapping controls to the threats they mitigate. |
+| `evidentia eval` | DFAH determinism harness — validates that AI-driven artifact generation is auditor-defensibly reproducible. |
+| `evidentia mcp` | Model Context Protocol server — exposes 13 read-mostly tools (gap analysis, control lookup, gap diff, and more) to MCP-aware AI clients. |
+
+Gap analysis emits **eight formats** from one engine: JSON, CSV, Markdown, OSCAL
+Assessment Results (OSCAL 1.2.1, with embedded SHA-256 evidence digests and
+optional Sigstore/Rekor or GPG signing), SARIF 2.1.0, OCSF Compliance Finding,
+OCSF Detection Finding, and CycloneDX 1.6 VEX. The same emitters back the web
+UI's export control, so a UI download is byte-for-byte identical to
+`evidentia gap analyze --format <id>`.
 
 ### 3.2 REST API surface (FastAPI, 23 router modules)
 
@@ -214,52 +230,124 @@ live in the 25-page [Guides](wiki/2-guides/index.md) section.
 
 ### 3.3 Web UI (React + Vite + shadcn/ui)
 
-| Page | Backing API |
-|---|---|
-| Dashboard | `GET /api/gaps`, `GET /api/health` |
-| Gap Analysis | `GET /api/gaps`, `GET /api/gaps/{id}` |
-| Framework Catalog | `GET /api/frameworks`, `GET /api/frameworks/{id}/controls` |
-| Control Explorer | `GET /api/frameworks/search`, `POST /api/explain` |
-| Risk Statements | `GET /api/risks`, `POST /api/risks/generate` |
-| Integrations Hub | `GET /api/integrations/jira/status`, `POST /api/integrations/jira/push` |
-| Settings | `GET /api/config`, `POST /api/config`, `POST /api/explain/cache/clear` |
-| Project Init | `POST /api/init/wizard` |
+`evidentia serve` launches a sidebar-driven, multi-console single-page app —
+**22 non-demo consoles** (Home plus 21 grouped consoles), each backed one-to-one
+by a REST endpoint and calling the same engine as the CLI. There is no UI-only
+analysis path and no admin-only or paid-tier surface. CLI↔GUI parity is roughly
+**98% across ~22 consoles**: every CLI command group except the server-side
+plumbing (`serve` / `mcp` / `eval`) has an equivalent console. The app renders
+its own version live from the API (`/api/health`) rather than hardcoding it.
 
-Localhost-only, WCAG 2.1 AA via Radix primitives. Multi-user auth / RBAC is queued for v0.7.x+.
+The left rail groups every console under six section headers, matching
+`AppLayout`'s nav:
+
+| Group | Consoles (route) |
+|---|---|
+| **Home** | Home (`/`) — welcome + onboarding (load a sample or upload an inventory) |
+| **Analyze** | Gap Analyze (`/gap/analyze`) · Gap Diff (`/gap/diff`) · Risk Generate (`/risk/generate`) · Risk Quantify (`/risk/quantify`, FAIR) · Explain Control (`/explain`) |
+| **Govern** | POA&M (`/poam`) · Continuous Monitoring (`/conmon`) · TPRM (`/tprm`) · Governance (`/governance`) · Retention (`/retention`) · Evidence (`/evidence`) · Model Risk (`/model-risk`) · AI Governance (`/ai-gov`) · OSCAL Verify (`/oscal`) · Traceability (`/traceability`) |
+| **Connect** | Collect (`/collect`) · Integrations (`/integrations`) |
+| **Library** | Dashboard (`/dashboard`) · Frameworks (`/frameworks`, + `/frameworks/:id`) · Catalog mgmt (`/catalog`) |
+| **Configure** | Settings (`/settings`) |
+
+**Localhost-only by default.** The server binds `127.0.0.1:8000` and serves the
+REST API at `/api/*` alongside the SPA at `/` — the same localhost-only /
+air-gap posture the CLI reports. Binding any routable interface is a deliberate
+opt-in (`--host`) that should be paired with a bearer-token file.
+
+**Auth posture (per the threat model §4(c)).** The API ships
+anonymous-by-default and RBAC-permissive: with no token configured, anything that
+can reach the local API can drive the console. The UI surfaces this honestly in
+two layers — (1) a soft, always-visible `SecurityPostureBanner` that warns
+*"Unsecured deployment"* whenever `auth_configured = false` and points at
+`EVIDENTIA_API_AUTH_TOKEN_FILE` as the fix; and (2) a hard gate that **disables
+the credentialed Run/Push buttons** on the only two egress consoles — **Collect**
+and **Integrations** — until an auth token is set. Read-only and local-store
+consoles stay usable either way; the Settings console shows per-provider LLM
+presence as booleans only and never exposes a key value. Starting the server with
+`--auth-token-file` clears the banner, requires `Authorization: Bearer <token>`
+on every `/api/*` route (liveness probes excepted), and unlocks the credentialed
+buttons; `--security-headers` engages automatically for a non-loopback host.
+
+**Gap export (eight formats).** When a gap analysis finishes on Gap Analyze, an
+Export-format control in the results header offers the same eight formats the CLI
+honors — JSON, OSCAL AR, SARIF (2.1.0), OCSF Compliance, OCSF Detection,
+CycloneDX VEX (1.6), CSV, Markdown — streaming the report straight to a download
+(the two OCSF formats need the server's `[ocsf]` extra; the other six are always
+available).
+
+Accessibility rides on shadcn/ui over Radix primitives (WCAG 2.1 AA — keyboard
+nav, ARIA live regions, focus management, light/dark themes). Task-level
+operator walkthroughs for every console live in the
+[Guides](wiki/2-guides/index.md) section and the
+[web-console reference](gui/README.md).
 
 ### 3.4 Evidence collectors (with explicit blind-spot disclosures)
 
-Each collector follows the v0.7.0 enterprise-grade pattern: typed
-exception hierarchy, `CollectionContext` threaded through every
-finding, `CollectionManifest` returned by `collect_v2()` for
-completeness attestation, ECS-structured audit logging, lazy SDK
-import so the package loads without the optional driver, explicit
-`BLIND_SPOTS` list per adapter.
+Every collector follows the same enterprise-grade pattern: a typed
+exception hierarchy, a `CollectionContext` threaded through every
+finding, a `CollectionManifest` returned by `collect_v2()` for
+completeness attestation, ECS-structured audit logging, lazy SDK import
+so the package loads without the optional driver installed, and an
+explicit `BLIND_SPOTS` list per adapter. All collectors are
+**read-only** and never mutate the source system.
 
-- **AWS** (v0.5.0+; `[aws]` extra) — Config compliance rules + Security Hub findings + IAM Access Analyzer (5 explicit blind-spot disclosures: KMS grants, S3 ACL/BPA interactions, service-linked roles, unsupported resource types, finding-generation latency). Standard boto3 credential chain.
-- **GitHub** (v0.5.0+; `[github]` extra) — Branch protection + CODEOWNERS + repo visibility + Dependabot alerts (100-page safety cap on pagination). `GITHUB_TOKEN` env var.
-- **Okta** (v0.7.7; `[okta]` extra) — User inventory + MFA enforcement + inactive-user detection + privileged-account counts. Mapped to NIST AC-2, IA-2, IA-5. `okta>=2.9` driver.
-- **ServiceNow** (v0.7.7; `[servicenow]` in evidentia-integrations) — bidirectional integration (also output side); compliance task / incident records. `pysnc>=1.1` driver.
-- **5 SQL DB adapters** (v0.7.7; `[sql-postgres]`, `[sql-mysql]`, `[sql-sqlite]`, `[sql-mssql]`, `[sql-oracle]`) — DB-resident compliance evidence (user privileges, audit-log status, encryption posture, schema change history) mapped to NIST AC-2 / AC-3 / AC-6 / AU-2 / AU-3 / SC-12 / SC-28. SQLite uses stdlib (no extra). MSSQL requires OS-level Microsoft ODBC Driver 18. Oracle uses `oracledb>=2.0` thin driver (pure Python).
-- **Databricks** (v0.7.8; `[databricks]` extra) — PAT inventory + lifecycle (long-lived, never-expires findings); cluster compliance (runtime version + libraries + init scripts) → CM-2 / CM-3 / CM-8 / SI-2; service principal inventory + active/inactive → AC-2 / AC-2(3) / AC-3; secret scope inventory (Databricks-backed vs Azure Key Vault-backed) → SC-12 / IA-5. Auth via `databricks-sdk>=0.30` unified resolver (PAT, OAuth M2M, Azure AD, AWS IAM, `.databrickscfg`). 7 documented BLIND_SPOTS. **DEFERRED to v0.7.9+**: Unity Catalog audit logs + table/column lineage (need SQL Warehouse plumbing); workspace network policies (need Account API auth path).
-- **Snowflake** (v0.7.8; `[snowflake]` extra) — LOGIN_HISTORY (per-user inventory + per-failed-login row over 90-day window) → AC-7 / AU-2 / AU-3 / IR-4; USERS inventory + MFA enforcement + disabled-account + never-logged-in findings → AC-2 / AC-2(3) / IA-2(1)/(2); GRANTS_TO_USERS inventory + privileged-role grants (ACCOUNTADMIN / SECURITYADMIN / ORGADMIN) → AC-3 / AC-6 / AC-6(7); network-policy inventory + account-level baseline → SC-7 / SC-7(5); masking + row-access policy inventory per database → AC-3 / AC-3(7) / SC-28; operator-attested key-rotation status → SC-12. Auth via `snowflake-connector-python>=3.10` (password env var or key-pair preferred for production — Snowflake is deprecating password auth). 7 documented BLIND_SPOTS. **DEFERRED to v0.7.9+**: ACCESS_HISTORY lineage; failed-login spike detection.
+Two cross-cutting safety properties apply to the whole set:
 
-**Honest note**: `[azure]` and `[gcp]` extras were declared in
-`packages/evidentia-collectors/pyproject.toml` from v0.5.0 through
-v0.7.7 without backing implementations. The v0.7.8 pre-release-review
-(Step 5.A batch fix) removed the unbacked extras + their entries from
-the umbrella `[all]` extra + the package `keywords` list. Azure + GCP
-remain on the forward roadmap (architectural sketches in
-`Evidentia-Architecture-and-Implementation-Plan.md`); when those
-collectors ship, the extras will be re-introduced alongside the
+- **Default-on SSRF private-IP guard.** Outbound collectors reject
+  RFC-1918 / loopback / link-local / CGNAT (RFC 6598) / multicast /
+  reserved targets *before* the request is made, and pin the validated
+  IP through the connection so a DNS-rebind TOCTOU cannot bypass it
+  (`getaddrinfo`-pin for the HTTP / thin-driver collectors, libpq
+  `hostaddr` for Postgres, ODBC IP-dial for MSSQL). The guard is applied
+  across all outbound collectors and the `/api/collectors` router — see
+  [§3.7](#37-supply-chain--security-hardening) and the threat model for
+  the full network-guard story.
+- **Credentials stay server-side.** Tokens and secrets are read from
+  environment variables / driver credential chains, never accepted as
+  CLI flag values or echoed into logs or request bodies.
+
+There are **14 credentialed collectors**:
+
+- **AWS** (`[aws]` extra) — Config compliance rules + Security Hub findings + IAM Access Analyzer (5 explicit blind-spot disclosures: KMS grants, S3 ACL/BPA interactions, service-linked roles, unsupported resource types, finding-generation latency). Standard boto3 credential chain.
+- **GitHub** (`[github]` extra) — branch protection + CODEOWNERS + repo visibility + Dependabot alerts (100-page safety cap on pagination). `GITHUB_TOKEN` env var.
+- **Okta** (`[okta]` extra) — user inventory + MFA enforcement + inactive-user detection + privileged-account counts, mapped to NIST AC-2, IA-2, IA-5. `okta>=2.9` driver.
+- **5 SQL DB adapters** (`[sql-postgres]`, `[sql-mysql]`, `[sql-sqlite]`, `[sql-mssql]`, `[sql-oracle]`) — DB-resident compliance evidence (user privileges, audit-log status, encryption posture, schema change history) mapped to NIST AC-2 / AC-3 / AC-6 / AU-2 / AU-3 / SC-12 / SC-28. SQLite uses the stdlib (no extra). MSSQL requires the OS-level Microsoft ODBC Driver 18. Oracle uses the `oracledb>=2.0` thin driver (pure Python).
+- **Databricks** (`[databricks]` extra) — PAT inventory + lifecycle (long-lived / never-expires findings); cluster compliance (runtime version + libraries + init scripts) → CM-2 / CM-3 / CM-8 / SI-2; service-principal inventory + active/inactive → AC-2 / AC-2(3) / AC-3; secret-scope inventory (Databricks-backed vs Azure Key Vault-backed) → SC-12 / IA-5. Auth via the `databricks-sdk>=0.30` unified resolver (PAT, OAuth M2M, Azure AD, AWS IAM, `.databrickscfg`). 7 documented blind spots.
+- **Snowflake** (`[snowflake]` extra) — LOGIN_HISTORY (per-user inventory + per-failed-login row over a 90-day window) → AC-7 / AU-2 / AU-3 / IR-4; USERS inventory + MFA enforcement + disabled-account + never-logged-in findings → AC-2 / AC-2(3) / IA-2(1)/(2); GRANTS_TO_USERS inventory + privileged-role grants (ACCOUNTADMIN / SECURITYADMIN / ORGADMIN) → AC-3 / AC-6 / AC-6(7); network-policy inventory + account-level baseline → SC-7 / SC-7(5); masking + row-access-policy inventory per database → AC-3 / AC-3(7) / SC-28; operator-attested key-rotation status → SC-12. Auth via `snowflake-connector-python>=3.10` (key-pair auth preferred for production; Snowflake is deprecating password auth). 7 documented blind spots.
+- **Vanta**, **Drata**, **BitSight**, **SecurityScorecard** — read-only TPRM / security-rating collectors that normalize each vendor's posture into Evidentia's `compliance_status` shape (the same field every collector now populates).
+
+Alongside the 14 collectors, **`evidentia collect ocsf`** ingests
+third-party OCSF Compliance Finding (class 2003) and Detection Finding
+(class 2004) JSON — e.g. from Prowler or AWS Security Hub — and
+**`evidentia collect convert`** re-emits a `SecurityFinding` set into
+another supported format. OCSF URL-ingest mode is HTTPS-only and carries
+the same default-on private-IP guard (`--block-private-ips` /
+`--allow-private-ips`).
+
+**Honest note**: `[azure]` and `[gcp]` extras were once declared in
+`packages/evidentia-collectors/pyproject.toml` without backing
+implementations; they were removed (along with their entries in the
+umbrella `[all]` extra and the package `keywords` list) once the gap was
+caught. Azure + GCP remain on the forward roadmap (architectural
+sketches in `Evidentia-Architecture-and-Implementation-Plan.md`); when
+those collectors ship, the extras will be re-introduced alongside the
 implementing modules.
 
 ### 3.5 Output integrations (Jira / ServiceNow / Tableau / Power BI)
 
-- **Jira** (v0.5.0+; `[jira]` extra) — push gaps as issues + bidirectional status sync. `jira>=3.8` driver.
-- **ServiceNow** (v0.7.7; `[servicenow]` extra) — push gaps as records (incident / sn_grc_issue / custom). `pysnc>=1.1` driver.
-- **Tableau publish** (v0.7.8; `[tableau]` extra) — publishes 3 datasets to Tableau Server / Cloud as CSV-based data sources: `evidentia-gaps` (one row per ControlGap), `evidentia-risks` (NIST SP 800-30 shape with AI-provenance fields), `evidentia-collection-runs` (CollectionContext audit trail). PAT auth via `TABLEAU_PAT_NAME` + `TABLEAU_PAT_SECRET` env vars (never accepted as flag values). `tableauserverclient>=0.30` (pure Python). **`.hyper` extract publish documented as v0.7.9+ enhancement** under separate `[tableau-hyper]` extra (would require heavyweight `tableauhyperapi` native binary).
-- **Power BI publish** (v0.7.8; `[powerbi]` extra) — pushes same 3 datasets as Power BI Push Datasets via REST API + Azure AD service-principal OAuth2 (MSAL Python). Full-refresh semantics by default (clear-then-push). 10,000-row batching per Power BI's documented limit. Schema-declared dataset auto-creation via `ensure_dataset` (idempotent re-runs). Auth: service principal with `Dataset.ReadWrite.All`; client secret from `POWERBI_CLIENT_SECRET` env var server-side; never in request bodies. `msal>=1.31` driver.
+Four output integrations push gap inventory, the risk register, and the
+collection-run audit trail into the systems teams already run. As with
+the collectors, all integration credentials are read server-side from
+environment variables and are never accepted as CLI flag values or
+placed in request bodies; the request-body-sourced publish target (the
+Tableau host) is covered by the same default-on private-IP / anti-rebind
+network guard described in [§3.7](#37-supply-chain--security-hardening).
+
+- **Jira** (`[jira]` extra) — push gaps as issues + bidirectional status sync. `jira>=3.8` driver.
+- **ServiceNow** (`[servicenow]` extra) — push gaps as records (incident / `sn_grc_issue` / custom). `pysnc>=1.1` driver. (ServiceNow is bidirectional — it also has a collect side.)
+- **Tableau publish** (`[tableau]` extra) — publishes 3 datasets to Tableau Server / Cloud as CSV-based data sources: `evidentia-gaps` (one row per ControlGap), `evidentia-risks` (NIST SP 800-30 shape with AI-provenance fields), and `evidentia-collection-runs` (the CollectionContext audit trail). PAT auth via the `TABLEAU_PAT_NAME` + `TABLEAU_PAT_SECRET` env vars (never accepted as flag values). `tableauserverclient>=0.30` (pure Python). A `.hyper`-extract publish path remains a roadmap enhancement under a separate `[tableau-hyper]` extra (it would require the heavyweight `tableauhyperapi` native binary).
+- **Power BI publish** (`[powerbi]` extra) — pushes the same 3 datasets as Power BI Push Datasets via the REST API + Azure AD service-principal OAuth2 (MSAL Python). Full-refresh semantics by default (clear-then-push), 10,000-row batching per Power BI's documented limit, and schema-declared dataset auto-creation via `ensure_dataset` (idempotent re-runs). Auth: a service principal with `Dataset.ReadWrite.All`; the client secret is read from `POWERBI_CLIENT_SECRET` server-side and never appears in request bodies. `msal>=1.31` driver.
 
 ### 3.6 Bundled framework catalogs (95 total, four redistribution tiers)
 
@@ -310,25 +398,70 @@ Per-catalog accounting is the manifest itself; the headline count is
 machine-checked on every push by `check_doc_counts.py`, so this number
 cannot drift from the README's "bundled catalogs" claim without failing CI.
 
-### 3.7 Enterprise-grade hardening (v0.7.0 BLOCKER baseline + v0.7.x additions)
+### 3.7 Supply-chain & security hardening
 
-The v0.7.0 release closed all 10 BLOCKER items in the [enterprise-grade credibility checklist](enterprise-grade.md). The supply-chain hardening narrative is end-to-end and has tightened across v0.7.x:
+Evidentia's supply-chain and security story is end-to-end and verifiable
+by anyone, not asserted. The headline is **six independently attestable
+release credentials** on every published artifact:
 
-- **Evidence integrity**: SHA-256 digest + Sigstore/Rekor signing (online) or GPG signing (air-gap) on every Assessment Results document
-- **Build provenance** (v0.7.0; tightened v0.7.3): GitHub Actions workflow with OIDC identity; SLSA L3 build provenance via `actions/attest-build-provenance@v2.4.0` (v0.7.3) — restores `gh attestation verify` as a working verifier alongside `pypi-attestations verify pypi`
-- **Signed publish**: PyPI Trusted Publisher (OIDC) on all 6 packages — no long-lived API tokens
-- **Per-artifact attestations**: PEP 740 Sigstore attestations on every wheel + sdist, logged to Rekor
-- **Container image** (v0.7.5; `ghcr.io/polycentric-labs/evidentia`): cosign keyless OIDC signing + SLSA L3 build provenance against image digest. Closes enterprise-grade L1 (was the last LOW-bucket external-artifact gap). v0.7.6+ added `Wait-for-PyPI` step to prevent propagation-race re-fires.
-- **Software bill of materials**: CycloneDX 1.6 SBOM attached to every GitHub Release
-- **Schema conformance**: `compliance-trestle>=4.0` round-trip in CI catches unknown-field bugs NIST's JSON Schema misses
-- **Structured logs**: ECS 8.11 + NIST AU-3 + OpenTelemetry via `--json-logs` flag
-- **Air-gap mode**: `--offline` flag refuses network egress; Sigstore refuses and routes operators to GPG; `evidentia doctor --check-air-gap` validator
-- **Composite GitHub Action** (v0.7.3; SHA-pinned): `.github/actions/gap-analysis/` replaces the archived standalone repo; 28 SHA-pinned `uses:` refs across composite + every workflow file (closes Scorecard "Pinned-Dependencies"). Composite-action E2E smoke test workflow catches future action.yml ↔ CLI drift
-- **Pre-commit hooks + dev container** (v0.7.3): ruff + mypy + markdownlint + trailing-whitespace; `.devcontainer/devcontainer.json` for reproducible dev env
-- **OpenSSF Scorecard** (v0.7.2): weekly workflow publishing to securityscorecards.dev
-- **Threat model** (v0.7.7 elevation): `docs/threat-model.md` (12KB); refreshed within 180 days per pre-release-review v4 G5 gate
-- **OpenSSF Best Practices Badge**: pre-application audit complete (v0.7.5 P0.7); badge filing pending (v0.7.5 deferral)
-- **Critical security batch** (v0.7.5 P0.5; v0.7.7 + v0.7.8 carry-forward): 14 HIGH py/path-injection alerts auto-closed; 1 HIGH py/polynomial-redos closed; 3 MEDIUM stack-trace exposure fixed; 4 MEDIUM workflow-permissions tightened; 5 MEDIUM Pinned-Dependencies; v0.7.8 added P0.5 fix-up batch (SQLite collector mandatory `safe_root` validation; user-controlled values switched to `%r` in log statements)
+1. **PEP 740 attestations** — Sigstore attestations on every wheel + sdist, logged to Rekor and served through PyPI's integrity API. Verify with `pypi-attestations verify pypi`.
+2. **Sigstore / Rekor signing** — keyless OIDC signing of release artifacts; the transparency-log entry is the public, append-only proof.
+3. **SLSA L3 build provenance** — generated in GitHub Actions under an OIDC identity via `actions/attest-build-provenance`, restoring `gh attestation verify` as a working verifier alongside the PyPI path.
+4. **cosign-signed container image** (`ghcr.io/polycentric-labs/evidentia`) — keyless OIDC signing + SLSA L3 build provenance bound to the image digest.
+5. **CycloneDX 1.6 SBOM** — attached to every GitHub Release; `osv-scanner --sbom` runs the published SBOM as a release gate.
+6. **OpenSSF Scorecard** — a scheduled workflow publishing the project's posture to `securityscorecards.dev`.
+
+The same artifact discipline carries into the product's own evidence
+output: every OSCAL Assessment Results document gets a SHA-256 evidence
+digest plus Sigstore/Rekor signing (online) or GPG signing (air-gap),
+and the signed Control↔Threat Traceability Matrix ships as a signed
+OSCAL profile. Schema conformance is enforced by a
+`compliance-trestle>=4.0` round-trip in CI that catches unknown-field
+bugs NIST's JSON Schema misses.
+
+Beyond release attestation, the current security posture includes:
+
+- **Coverage-guided fuzzing.** Six `atheris` harnesses target the
+  untrusted-input parsers (catalog import, OSCAL profile load/resolve,
+  OSCAL verify, OCSF ingest, gap-report load, TPRM questionnaire ingest),
+  run continuously in CI via **ClusterFuzzLite** (the
+  Scorecard-credited "Fuzzing" vehicle, with OSS-Fuzz as the graduation
+  path), and are complemented by cross-platform **Hypothesis** property
+  tests that encode the same invariants under plain `pytest`. The fuzzing
+  effort has already found and fixed a real defect — an OSCAL-verify
+  denial-of-service surfaced by the harnesses.
+- **SSRF / anti-rebind network guard.** A default-on private-IP guard
+  rejects RFC-1918 / loopback / link-local / CGNAT (RFC 6598) /
+  multicast / reserved destinations before any outbound request and pins
+  the validated IP through the connection so a DNS-rebind TOCTOU cannot
+  bypass it. It is applied across every outbound collector, the
+  `/api/collectors` router, and the Tableau integration publish
+  endpoint — defense-in-depth that shrinks the SSRF blast radius rather
+  than serving as the primary access control.
+- **Honest auth-default disclosure.** The CLI binds the web UI to
+  `127.0.0.1` by default. The threat model documents — plainly — that
+  with no auth token set, the `/api/*` surface is unauthenticated, so an
+  operator who deliberately binds a routable interface must set
+  `--auth-token-file` (or `EVIDENTIA_API_AUTH_TOKEN_FILE`) and can pass
+  `--offline` to disable outbound collectors entirely. Naming this sharp
+  edge in the threat model, rather than hiding it, is the posture.
+- **Air-gap mode.** The `--offline` flag refuses outbound network egress;
+  Sigstore declines and routes operators to GPG; `evidentia doctor
+  --check-air-gap` validates the posture.
+- **Structured, SIEM-ingestable logs.** `--json-logs` emits
+  ECS 8.11-compliant JSON (one record per line, NIST AU-3-aligned,
+  OpenTelemetry-friendly) for Splunk / Elastic / Datadog / Sentinel
+  ingest.
+- **Signed commits + branch protection.** Every commit is GPG-signed,
+  the default branch is protected, and `uses:` refs are SHA-pinned across
+  the composite action and every workflow (closing Scorecard's
+  "Pinned-Dependencies").
+- **A tag-driven release gate suite.** Releases are tag-driven, and the
+  publish path runs a battery of gates — version-consistency,
+  schema/round-trip conformance, the SBOM osv-scan, doc-health checks,
+  CLI↔GUI parity, and a secret-scan / commit-message hook — before any
+  artifact is published, with a documented threat model refreshed on a
+  fixed cadence.
 
 ---
 

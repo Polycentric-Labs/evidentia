@@ -18,10 +18,12 @@ Explanation + the "why" behind Evidentia's design. Read these if you're extendin
 
 - **[RBAC and multi-tenancy](rbac-and-multi-tenancy.md)** — multi-tenant primitives from v0.9.7 (data + decision layer); v0.11+ CLI/REST wiring direction.
 
+- **[Web console security](web-console-security.md)** — the standing security model for `evidentia serve`: the inherited controls and their default postures, the anonymous-by-default disclosure, what each console exposes, and the hardening checklist for a shared deployment.
+
 ## Recommended reading order
 
-`Architecture` → `Data model` → `Catalog engine` → `Crosswalk engine` → `Evidence integrity` → `Frozen surfaces and stability` → `RBAC and multi-tenancy`.
+`Architecture` → `Data model` → `Catalog engine` → `Crosswalk engine` → `Evidence integrity` → `Frozen surfaces and stability` → `RBAC and multi-tenancy` → `Web console security`.
 
 After this section, jump to [Reference](../4-reference/index.md) for symbol-level detail or [Compliance](../5-compliance/index.md) for framework-specific material.
 
-All seven concept pages above are live.
+All eight concept pages above are live.

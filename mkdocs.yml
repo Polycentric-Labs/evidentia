@@ -149,6 +149,7 @@ nav:
       - Evidence integrity: 3-concepts/evidence-integrity.md
       - Frozen surfaces and stability: 3-concepts/frozen-surfaces-and-stability.md
       - RBAC and multi-tenancy: 3-concepts/rbac-and-multi-tenancy.md
+      - Web console security: 3-concepts/web-console-security.md
   - Reference:
       - 4-reference/index.md
       - CLI reference: 4-reference/cli.md
