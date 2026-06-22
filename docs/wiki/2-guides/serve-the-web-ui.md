@@ -73,8 +73,19 @@ evidentia serve --port 8137 --no-browser
 
 Once it's up you can confirm it's live from a second terminal:
 
+**Bash / Linux / macOS**
+
 ```bash
 curl -s http://127.0.0.1:8000/api/health
+```
+
+**PowerShell (Windows)**
+
+```powershell
+Invoke-RestMethod -Uri http://127.0.0.1:8000/api/health
+# (or, to use the native binary verbatim: curl.exe -s http://127.0.0.1:8000/api/health
+#  — in Windows PowerShell 5.1, bare `curl` is an alias for Invoke-WebRequest and
+#  won't accept `-s`, so use Invoke-RestMethod or curl.exe.)
 ```
 
 The health probe returns a small JSON object with `status` `ok` and the running

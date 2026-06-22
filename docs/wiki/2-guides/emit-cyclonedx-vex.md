@@ -27,11 +27,23 @@ standards-conformant document your downstream tooling can act on.
 
 ## Step 1 — Emit the VEX document
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap analyze \
   --inventory=my-controls.yaml \
-  --frameworks=nist-800-53-rev5-mod \
+  --frameworks=nist-800-53-rev5-moderate \
   --format=cyclonedx-vex \
+  --output=gap-vex.cdx.json
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap analyze `
+  --inventory=my-controls.yaml `
+  --frameworks=nist-800-53-rev5-moderate `
+  --format=cyclonedx-vex `
   --output=gap-vex.cdx.json
 ```
 
@@ -52,10 +64,21 @@ downstream consumer.
 
 The general shape:
 
+**Bash / Linux / macOS**
+
 ```bash
 # Illustrative — use your CycloneDX tool of choice to associate the
 # VEX analysis with the SBOM's component inventory.
 cyclonedx merge --input-files evidentia-sbom.cdx.json gap-vex.cdx.json \
+  --output-file combined.cdx.json
+```
+
+**PowerShell (Windows)**
+
+```powershell
+# Illustrative — use your CycloneDX tool of choice to associate the
+# VEX analysis with the SBOM's component inventory.
+cyclonedx merge --input-files evidentia-sbom.cdx.json gap-vex.cdx.json `
   --output-file combined.cdx.json
 ```
 

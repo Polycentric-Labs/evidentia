@@ -37,8 +37,17 @@ breakdown, then the converted `SecurityFinding` array at `--output`.
 
 If the OCSF document is served over HTTPS, you can ingest it directly:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia collect ocsf --input=https://findings.internal.example.com/prowler.json \
+  --output=findings.json
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia collect ocsf --input=https://findings.internal.example.com/prowler.json `
   --output=findings.json
 ```
 
@@ -61,11 +70,23 @@ The flag is `--block-private-ips` (default, on) with an opt-out of
 `--allow-private-ips`. Only relax it for a deliberately internal endpoint you
 trust:
 
+**Bash / Linux / macOS**
+
 ```bash
 # Trusted on-cluster receiver — opt out of the private-IP block explicitly.
 evidentia collect ocsf \
   --input=https://findings.svc.cluster.local/ocsf.json \
   --allow-private-ips \
+  --output=findings.json
+```
+
+**PowerShell (Windows)**
+
+```powershell
+# Trusted on-cluster receiver — opt out of the private-IP block explicitly.
+evidentia collect ocsf `
+  --input=https://findings.svc.cluster.local/ocsf.json `
+  --allow-private-ips `
   --output=findings.json
 ```
 
@@ -89,12 +110,25 @@ The converted `findings.json` is an ordinary `SecurityFinding` array. Fold it
 into an OSCAL Assessment Results document the same way you would any collector
 output:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap analyze \
   --inventory=my-controls.yaml \
-  --frameworks=nist-800-53-rev5-mod \
+  --frameworks=nist-800-53-rev5-moderate \
   --findings=findings.json \
   --format=oscal-ar \
+  --output=assessment-results.json
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap analyze `
+  --inventory=my-controls.yaml `
+  --frameworks=nist-800-53-rev5-moderate `
+  --findings=findings.json `
+  --format=oscal-ar `
   --output=assessment-results.json
 ```
 

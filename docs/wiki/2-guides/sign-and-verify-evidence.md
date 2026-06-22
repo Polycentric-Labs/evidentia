@@ -25,12 +25,25 @@ ASCII armor survives email/Slack/text-only channels without binary mangling.
 
 Sign at emit time by passing your GPG key ID to `--sign-with-gpg`:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap analyze \
   --inventory my-controls.yaml \
   --frameworks nist-800-53-rev5-moderate \
   --format oscal-ar \
   --output assessment-results.json \
+  --sign-with-gpg YOUR_KEY_ID
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap analyze `
+  --inventory my-controls.yaml `
+  --frameworks nist-800-53-rev5-moderate `
+  --format oscal-ar `
+  --output assessment-results.json `
   --sign-with-gpg YOUR_KEY_ID
 ```
 
@@ -60,6 +73,8 @@ inclusion recorded in the Rekor transparency log. It requires the `[sigstore]`
 extra and network access to Fulcio + Rekor, so it is **refused in `--offline`
 mode** (use GPG in air-gapped environments):
 
+**Bash / Linux / macOS**
+
 ```bash
 pip install "evidentia-core[sigstore]"
 
@@ -71,15 +86,38 @@ evidentia gap analyze \
   --sign-with-sigstore
 ```
 
+**PowerShell (Windows)**
+
+```powershell
+pip install "evidentia-core[sigstore]"
+
+evidentia gap analyze `
+  --inventory my-controls.yaml `
+  --frameworks nist-800-53-rev5-moderate `
+  --format oscal-ar `
+  --output assessment-results.json `
+  --sign-with-sigstore
+```
+
 The Sigstore bundle is written to `assessment-results.json.sigstore.json` by
 default. `--sign-with-sigstore` coexists with `--sign-with-gpg` — sign with both
 for two independent trust paths. Verify the Sigstore bundle, pinning the
 expected identity and issuer (always pin both in an audit pipeline; an unpinned
 verify accepts *any* signer and warns):
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia oscal verify assessment-results.json \
   --expected-identity 'https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/v0.10.6' \
+  --expected-issuer https://token.actions.githubusercontent.com
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia oscal verify assessment-results.json `
+  --expected-identity 'https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/v0.10.6' `
   --expected-issuer https://token.actions.githubusercontent.com
 ```
 
@@ -92,9 +130,19 @@ The signing layer is **opt-in** and **signer-agnostic**: the backend is supplied
 via a dotted-path factory env var. Enable it with two env vars and point the
 factory at the bundled Sigstore-keyless signer:
 
+**Bash / Linux / macOS**
+
 ```bash
 export EVIDENTIA_MCP_SIGN_OUTPUTS=1
 export EVIDENTIA_MCP_SIGNER_FACTORY=evidentia_mcp.sigstore_signer:make_sigstore_signer
+evidentia mcp serve --transport stdio
+```
+
+**PowerShell (Windows)**
+
+```powershell
+$env:EVIDENTIA_MCP_SIGN_OUTPUTS = "1"
+$env:EVIDENTIA_MCP_SIGNER_FACTORY = "evidentia_mcp.sigstore_signer:make_sigstore_signer"
 evidentia mcp serve --transport stdio
 ```
 
@@ -164,10 +212,20 @@ hardware-enforced Write-Once-Read-Many, wire a cloud-WORM backend (S3 Object
 Lock, Azure Immutable Blob, or GCS Bucket Lock). Install the matching extra and
 set the auto-mirror env vars so each local-store write is mirrored to the cloud:
 
+**Bash / Linux / macOS**
+
 ```bash
 pip install "evidentia[worm-s3]"        # or worm-azure / worm-gcs
 export EVIDENTIA_EVIDENCE_AUTO_MIRROR_WORM=1
 export EVIDENTIA_EVIDENCE_WORM_BACKEND_FACTORY=<module:callable>
+```
+
+**PowerShell (Windows)**
+
+```powershell
+pip install "evidentia[worm-s3]"        # or worm-azure / worm-gcs
+$env:EVIDENTIA_EVIDENCE_AUTO_MIRROR_WORM = "1"
+$env:EVIDENTIA_EVIDENCE_WORM_BACKEND_FACTORY = "<module:callable>"
 ```
 
 You then get application-layer append-only locally *plus* hardware-enforced WORM

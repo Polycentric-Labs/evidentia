@@ -16,7 +16,8 @@ and a repository you can read — no cloud account required.
 - A GitHub repository you can read.
 - A GitHub personal access token (classic or fine-grained) with `repo` read
   scope. A token is required for private repos and lifts the API rate limit on
-  public ones.
+  public ones. (Public repos work without a token, subject to the lower
+  unauthenticated rate limit.)
 
 ## Step 1 — Configure the token
 
@@ -24,8 +25,16 @@ The GitHub collector reads its token from the `GITHUB_TOKEN` environment
 variable by default (you can override with `--token`, but the env var keeps the
 secret out of your shell history):
 
+**Bash / Linux / macOS**
+
 ```bash
 export GITHUB_TOKEN=ghp_your_token_here
+```
+
+**PowerShell (Windows)**
+
+```powershell
+$env:GITHUB_TOKEN = "ghp_your_token_here"
 ```
 
 > Evidentia's collectors deliberately prefer environment variables / file paths
@@ -37,24 +46,49 @@ export GITHUB_TOKEN=ghp_your_token_here
 `evidentia collect github` takes a `--repo` in `owner/repo` form and writes the
 findings JSON to `--output` (or stdout if omitted):
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia collect github \
   --repo octocat/Hello-World \
   --output findings.json
 ```
 
+**PowerShell (Windows)**
+
+```powershell
+evidentia collect github `
+  --repo octocat/Hello-World `
+  --output findings.json
+```
+
 The collector inspects branch protection, CODEOWNERS presence, repository
 visibility, and (where the token's scope allows) the security posture surface,
-then writes a JSON list of `SecurityFinding` objects. You will see a summary on
-the console and the full list in `findings.json`:
+then writes a JSON list of `SecurityFinding` objects. It prints a per-severity
+and per-source summary to the console and writes the full list to
+`findings.json`:
 
 ```
-GitHub collection complete for octocat/Hello-World
-  Findings: 7   (visibility, branch protection, CODEOWNERS, ...)
-  Written:  findings.json
+Wrote 3 findings to findings.json
+    GitHub findings
+ (octocat/Hello-World) — 3 total
+┌──────────┬───────┐
+│ Severity │ Count │
+├──────────┼───────┤
+│ medium   │ 2     │
+│ low      │ 1     │
+└──────────┴───────┘
+    By source
+┌────────┬───────┐
+│ Source │ Count │
+├────────┼───────┤
+│ github │ 3     │
+└────────┴───────┘
 ```
 
-(Counts are illustrative — they depend on the repository's configuration.)
+(Counts are illustrative — they depend on the repository's configuration and
+the token's scope. Without a token you will see fewer findings, because checks
+such as branch protection require authentication.)
 
 ## Step 3 — Inspect the findings
 
@@ -64,7 +98,15 @@ that tie the observation to NIST SP 800-53 Rev 5 control IDs (with an OLIR
 relationship + a per-mapping justification). Open `findings.json` in your editor,
 or pretty-print the first record:
 
+**Bash / Linux / macOS**
+
 ```bash
+python -c "import json,sys; d=json.load(open('findings.json')); print(json.dumps(d[0], indent=2))"
+```
+
+**PowerShell (Windows)**
+
+```powershell
 python -c "import json,sys; d=json.load(open('findings.json')); print(json.dumps(d[0], indent=2))"
 ```
 
@@ -77,6 +119,8 @@ The payoff: pass the findings to `evidentia gap analyze` with `--format oscal-ar
 and each finding is embedded in the OSCAL Assessment Results back-matter with a
 SHA-256 digest, cross-referenced from observations that share a control ID:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap analyze \
   --inventory my-controls.yaml \
@@ -84,6 +128,24 @@ evidentia gap analyze \
   --findings findings.json \
   --format oscal-ar \
   --output assessment-results.json
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap analyze `
+  --inventory my-controls.yaml `
+  --frameworks nist-800-53-rev5-moderate `
+  --findings findings.json `
+  --format oscal-ar `
+  --output assessment-results.json
+```
+
+When the findings are embedded you will see a confirmation line on the console:
+
+```
+Loaded 3 finding(s) from findings.json for AR evidence embedding.
+Report exported: assessment-results.json (oscal-ar)
 ```
 
 (Don't have an inventory yet? `evidentia init --preset nist-moderate-starter`
@@ -124,7 +186,21 @@ the SIEM-ingest path.
 - **`GitHubCollectorError: Could not read repo ...`** — the token cannot see the
   repository (wrong scope, private repo without access, or a typo in
   `--repo owner/repo`). Confirm the token works:
-  `curl -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/<owner>/<repo>`.
+
+  **Bash / Linux / macOS**
+
+  ```bash
+  curl -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/<owner>/<repo>
+  ```
+
+  **PowerShell (Windows)**
+
+  ```powershell
+  curl.exe -H "Authorization: Bearer $env:GITHUB_TOKEN" https://api.github.com/repos/<owner>/<repo>
+  ```
+
+  (In PowerShell, `curl` is an alias for `Invoke-WebRequest`; use `curl.exe` for
+  the real cURL, or `Invoke-RestMethod -Uri https://api.github.com/repos/<owner>/<repo> -Headers @{ Authorization = "Bearer $env:GITHUB_TOKEN" }`.)
 - **Rate-limit (HTTP 403/429)** — unauthenticated requests are throttled. Set
   `GITHUB_TOKEN` (Step 1) to use the authenticated 5000-req/hour limit.
 - **A finding shows `compliance_status: unknown`** — a transient API/5xx error

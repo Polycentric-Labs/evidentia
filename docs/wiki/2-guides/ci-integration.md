@@ -18,6 +18,8 @@ copy-pasteable starter configs for **GitHub Actions**, **GitLab CI**, and
 **Produce a SARIF log** (no extra install required — `sarif` is a first-class
 format):
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap analyze \
   --inventory my-controls.yaml \
@@ -26,11 +28,30 @@ evidentia gap analyze \
   --output gap-results.sarif
 ```
 
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap analyze `
+  --inventory my-controls.yaml `
+  --frameworks nist-800-53-rev5-moderate `
+  --format sarif `
+  --output gap-results.sarif
+```
+
 **Gate on regressions** — `gap diff --fail-on-regression` exits non-zero when a
 change opens new gaps or increases severities relative to a base report:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap diff --base base-report.json --head pr-report.json \
+  --fail-on-regression --format github
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap diff --base base-report.json --head pr-report.json `
   --fail-on-regression --format github
 ```
 
