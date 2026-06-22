@@ -177,11 +177,23 @@ a PERT-range factor varies. The run is deterministic **only if you pass an
 explicit `--seed`** — without one, the system clock seeds the generator and every
 run differs.
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia risk quantify \
   --method fair-mc \
   --scenarios scenarios.yaml \
   --iterations 1000 \
+  --seed 42
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia risk quantify `
+  --method fair-mc `
+  --scenarios scenarios.yaml `
+  --iterations 1000 `
   --seed 42
 ```
 
@@ -256,12 +268,25 @@ Notes on the flags:
 For downstream analysis in pandas or a spreadsheet, write every iteration's ALE
 sample to CSV with `--csv`:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia risk quantify \
   --method fair-mc \
   --scenarios scenarios.yaml \
   --iterations 1000 \
   --seed 42 \
+  --csv samples.csv
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia risk quantify `
+  --method fair-mc `
+  --scenarios scenarios.yaml `
+  --iterations 1000 `
+  --seed 42 `
   --csv samples.csv
 ```
 
@@ -318,11 +343,23 @@ frameworks:
 
 Then point `risk generate` at the gap report and the context, choosing a model:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia risk generate \
   --context context.yaml \
   --gaps gap-report.json \
   --model gpt-4o \
+  --output risks.json
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia risk generate `
+  --context context.yaml `
+  --gaps gap-report.json `
+  --model gpt-4o `
   --output risks.json
 ```
 

@@ -31,16 +31,32 @@ store. This guide walks the whole surface end to end with the bundled fixtures.
   invocation in this group — the rich output and several disclaimer strings
   contain non-Latin-1 characters that crash the default `cp1252` console codec:
 
+  **Bash / Linux / macOS**
+
   ```bash
-  export PYTHONIOENCODING=utf-8   # Windows: set this first, every session
+  export PYTHONIOENCODING=utf-8   # set this first, every session
+  ```
+
+  **PowerShell (Windows)**
+
+  ```powershell
+  $env:PYTHONIOENCODING = "utf-8"   # set this first, every session
   ```
 
 - The registry persists to an OS-specific user-data directory by default.
   Override it with the **`EVIDENTIA_AI_REGISTRY_DIR`** environment variable to
   keep a demo (or a CI run) isolated:
 
+  **Bash / Linux / macOS**
+
   ```bash
   export EVIDENTIA_AI_REGISTRY_DIR=/tmp/evidentia-demo/ai_registry
+  ```
+
+  **PowerShell (Windows)**
+
+  ```powershell
+  $env:EVIDENTIA_AI_REGISTRY_DIR = "$env:TEMP\evidentia-demo\ai_registry"
   ```
 
 ## The eight verbs and how they relate
@@ -156,6 +172,8 @@ To see the **limited** tier, write a descriptor for a customer-facing chatbot
 that both talks to people and generates content (Article 50 transparency
 triggers):
 
+**Bash / Linux / macOS**
+
 ```bash
 cat > chatbot.yaml <<'YAML'
 name: customer-support-chatbot
@@ -167,6 +185,22 @@ decision_role: advisory
 interacts_with_natural_persons: true
 generates_synthetic_content: true
 YAML
+evidentia ai-gov classify --descriptor chatbot.yaml
+```
+
+**PowerShell (Windows)**
+
+```powershell
+@"
+name: customer-support-chatbot
+purpose: >
+  Public-facing conversational assistant that answers product
+  questions on the company website. Hands off to a human agent for
+  account changes; does not make automated decisions about people.
+decision_role: advisory
+interacts_with_natural_persons: true
+generates_synthetic_content: true
+"@ | Set-Content -Encoding utf8 chatbot.yaml
 evidentia ai-gov classify --descriptor chatbot.yaml
 ```
 
@@ -228,11 +262,23 @@ the system) and `--owner` (the accountable person/team); `--deployment-status` i
 optional and defaults to `proposed` (enum: `proposed` / `in_development` /
 `pilot` / `production` / `retired`).
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia ai-gov register \
   --descriptor tests/data/walkthrough-federal-si/ai-systems.yaml \
   --provider "Acme HR Tech" \
   --owner "talent-ops@agency.gov" \
+  --deployment-status pilot
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia ai-gov register `
+  --descriptor tests/data/walkthrough-federal-si/ai-systems.yaml `
+  --provider "Acme HR Tech" `
+  --owner "talent-ops@agency.gov" `
   --deployment-status pilot
 ```
 
@@ -242,10 +288,21 @@ Registered AI system: federal-si-resume-screener
   EU AI Act tier: high
 ```
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia ai-gov register \
   --descriptor tests/data/walkthrough-federal-si/ai-systems-low-risk.yaml \
   --provider "in-house platform team" \
+  --owner "it-ops@agency.gov"
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia ai-gov register `
+  --descriptor tests/data/walkthrough-federal-si/ai-systems-low-risk.yaml `
+  --provider "in-house platform team" `
   --owner "it-ops@agency.gov"
 ```
 
@@ -359,9 +416,19 @@ required (`low` / `moderate` / `high`); Evidentia auto-computes the **overall**
 rating using the FIPS 199 §3 high-water-mark rule (`overall = max(C, I, A)`).
 `--rationale` is optional free text.
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia ai-gov categorize-fips 804e6d97-644e-4805-9970-fd6eb2bbc90d \
   -c moderate -i moderate -a low \
+  --rationale "Resume PII => moderate C; scoring integrity affects fair hiring => moderate I; batch tolerates downtime => low A."
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia ai-gov categorize-fips 804e6d97-644e-4805-9970-fd6eb2bbc90d `
+  -c moderate -i moderate -a low `
   --rationale "Resume PII => moderate C; scoring integrity affects fair hiring => moderate I; batch tolerates downtime => low A."
 ```
 
@@ -375,8 +442,17 @@ Set the OMB M-24-10 §5(b) impact category (`rights_impacting` /
 résumé-screener that affects who gets hired, `rights_impacting` is the right
 call:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia ai-gov set-omb-impact 804e6d97-644e-4805-9970-fd6eb2bbc90d \
+  --category rights_impacting
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia ai-gov set-omb-impact 804e6d97-644e-4805-9970-fd6eb2bbc90d `
   --category rights_impacting
 ```
 
@@ -417,9 +493,19 @@ evidentia ai-gov show 804e6d97-644e-4805-9970-fd6eb2bbc90d --json
 `update` applies **partial** updates — fields you omit are left unchanged. Move
 the system to `production` and reassign the owner:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia ai-gov update 804e6d97-644e-4805-9970-fd6eb2bbc90d \
   --owner "ai-governance-board@agency.gov" \
+  --deployment-status production
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia ai-gov update 804e6d97-644e-4805-9970-fd6eb2bbc90d `
+  --owner "ai-governance-board@agency.gov" `
   --deployment-status production
 ```
 

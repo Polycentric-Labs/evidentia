@@ -84,11 +84,23 @@ controls to see your true posture.)
 
 ## Step 4 — Emit OSCAL Assessment Results (10 seconds)
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap analyze \
   --inventory=my-controls.yaml \
   --frameworks=nist-800-53-rev5-low \
   --format=oscal-ar \
+  --output=assessment-results.json
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap analyze `
+  --inventory=my-controls.yaml `
+  --frameworks=nist-800-53-rev5-low `
+  --format=oscal-ar `
   --output=assessment-results.json
 ```
 
@@ -104,6 +116,8 @@ trestle validate --type oscal-ar --file assessment-results.json
 
 The wheel you installed has a PEP 740 attestation:
 
+**Bash / Linux / macOS**
+
 ```bash
 pip install pypi-attestations
 pypi-attestations verify pypi \
@@ -112,11 +126,32 @@ pypi-attestations verify pypi \
 # → OK: evidentia-0.10.11-py3-none-any.whl
 ```
 
+**PowerShell (Windows)**
+
+```powershell
+pip install pypi-attestations
+pypi-attestations verify pypi `
+  --repository https://github.com/Polycentric-Labs/evidentia `
+  "pypi:evidentia-0.10.11-py3-none-any.whl"
+# → OK: evidentia-0.10.11-py3-none-any.whl
+```
+
 The container image is cosign-signed (if you used the Docker install path):
+
+**Bash / Linux / macOS**
 
 ```bash
 cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.11 \
   --certificate-identity-regexp 'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+# → "The cosign claims were validated"
+```
+
+**PowerShell (Windows)**
+
+```powershell
+cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.11 `
+  --certificate-identity-regexp 'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' `
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 # → "The cosign claims were validated"
 ```

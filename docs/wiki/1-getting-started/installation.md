@@ -28,7 +28,8 @@ Verify the install:
 
 ```bash
 evidentia version
-# → Evidentia v0.10.11 / Python 3.12.x
+# → Evidentia v0.10.11
+# → Python 3.12.x
 ```
 
 If `evidentia` is not found on your PATH after install, your environment's
@@ -84,7 +85,8 @@ Registry:
 ```bash
 docker pull ghcr.io/polycentric-labs/evidentia:v0.10.11
 docker run --rm ghcr.io/polycentric-labs/evidentia:v0.10.11 version
-# → Evidentia v0.10.11 / Python 3.12.x
+# → Evidentia v0.10.11
+# → Python 3.12.x
 ```
 
 To run a gap analysis against a local inventory, mount your working directory:
@@ -107,9 +109,20 @@ docker run --rm -v "${PWD}:/work" -w /work `
 
 The image is keyless-signed via Fulcio + Rekor. Verify it before you trust it:
 
+**Bash / Linux / macOS**
+
 ```bash
 cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.11 \
   --certificate-identity-regexp 'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+# → "The cosign claims were validated"
+```
+
+**PowerShell (Windows)**
+
+```powershell
+cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.11 `
+  --certificate-identity-regexp 'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' `
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 # → "The cosign claims were validated"
 ```

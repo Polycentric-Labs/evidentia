@@ -16,8 +16,16 @@ walks the full operator loop with the `evidentia tprm` command group.
   (`platformdirs.user_data_dir`). For a self-contained demo or a CI run, point
   it at a scratch directory so you do not touch your real inventory:
 
+**Bash / Linux / macOS**
+
 ```bash
 export EVIDENTIA_VENDOR_STORE_DIR="$(mktemp -d)/vendor_store"
+```
+
+**PowerShell (Windows)**
+
+```powershell
+$env:EVIDENTIA_VENDOR_STORE_DIR = Join-Path ([System.IO.Path]::GetTempPath()) ("vendor_store_" + [guid]::NewGuid().ToString('N'))
 ```
 
 > The `xlsx` questionnaire output format requires the optional `[xlsx]` extra
@@ -42,6 +50,8 @@ expectations.
 
 ## Step 1 — Add a vendor
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia tprm vendor add \
   --name "Acme Cloud Inc." \
@@ -52,6 +62,21 @@ evidentia tprm vendor add \
   --region "us-east-1" \
   --regulatory-classification "data_processor,critical_third_party" \
   --residual-risk-score 16 \
+  --last-due-diligence-review 2026-02-15
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia tprm vendor add `
+  --name "Acme Cloud Inc." `
+  --type saas `
+  --criticality-tier critical `
+  --owner "alice@example.com" `
+  --contract-start-date 2026-01-01 `
+  --region "us-east-1" `
+  --regulatory-classification "data_processor,critical_third_party" `
+  --residual-risk-score 16 `
   --last-due-diligence-review 2026-02-15
 ```
 
@@ -76,6 +101,8 @@ The command prints the new vendor's **UUID** — capture it; later commands
 
 Add a couple more so later steps have something to aggregate:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia tprm vendor add --name "Globex Hosting LLC" --type cloud_provider \
   --criticality-tier high --owner "bob@example.com" \
@@ -84,6 +111,19 @@ evidentia tprm vendor add --name "Globex Hosting LLC" --type cloud_provider \
 evidentia tprm vendor add --name "Initech Analytics" --type data_processor \
   --criticality-tier medium --owner "carol@example.com" \
   --contract-start-date 2025-09-15 --region "eu-west-1" \
+  --regulatory-classification "model" --residual-risk-score 6
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia tprm vendor add --name "Globex Hosting LLC" --type cloud_provider `
+  --criticality-tier high --owner "bob@example.com" `
+  --contract-start-date 2025-06-01 --region "us-east-1" --residual-risk-score 12
+
+evidentia tprm vendor add --name "Initech Analytics" --type data_processor `
+  --criticality-tier medium --owner "carol@example.com" `
+  --contract-start-date 2025-09-15 --region "eu-west-1" `
   --regulatory-classification "model" --residual-risk-score 6
 ```
 
@@ -120,8 +160,16 @@ fourth-parties and `Ev` counts attached evidence refs. Filter with
 For machine consumption, add `--json` — a **bare array** of vendor records,
 ready for `jq`:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia tprm vendor list --json | jq '.[].name'
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia tprm vendor list --json | ConvertFrom-Json | ForEach-Object { $_.name }
 ```
 
 ```json
@@ -169,9 +217,19 @@ Add `--json` to `show` for the raw record instead of the human view.
 Atomic `--<field>` flags update one or more fields in place. Record a completed
 DD review and bump the residual-risk score for the cloud-provider:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia tprm vendor edit c03d3d9e-c2d0-451c-8a6a-fc3fbf541716 \
   --residual-risk-score 15 \
+  --last-due-diligence-review 2026-03-01
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia tprm vendor edit c03d3d9e-c2d0-451c-8a6a-fc3fbf541716 `
+  --residual-risk-score 15 `
   --last-due-diligence-review 2026-03-01
 ```
 
@@ -272,11 +330,23 @@ fourth-party disclosures) so the receiving vendor only fills in the control
 answers. The default framework is `evidentia-generic` (a packaged FFIEC-aligned
 baseline) and the default `--output-format` is `json`:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia tprm dd-questionnaire generate \
   --vendor-id e5dd135b-e489-4a4a-9fa4-f3da59589f71 \
   --format evidentia-generic \
   --output-format json \
+  --output acme-dd.json
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia tprm dd-questionnaire generate `
+  --vendor-id e5dd135b-e489-4a4a-9fa4-f3da59589f71 `
+  --format evidentia-generic `
+  --output-format json `
   --output acme-dd.json
 ```
 
@@ -317,10 +387,21 @@ Key flags:
 > content untouched for license compliance. Not shown here (the template is not
 > redistributable):
 >
+> **Bash / Linux / macOS**
+>
 > ```bash
 > evidentia tprm dd-questionnaire generate \
 >   --vendor-id <id> --format sig \
 >   --from-template path/to/SIG-2026.xlsx \
+>   --output sig-prefilled.xlsx
+> ```
+>
+> **PowerShell (Windows)**
+>
+> ```powershell
+> evidentia tprm dd-questionnaire generate `
+>   --vendor-id <id> --format sig `
+>   --from-template path/to/SIG-2026.xlsx `
 >   --output sig-prefilled.xlsx
 > ```
 

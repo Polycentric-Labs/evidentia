@@ -65,10 +65,21 @@ against the full Baseline at a chosen maturity level — including the controls
 that are *not* observable from the GitHub API (process + policy controls you
 attest to in your inventory):
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap analyze \
   --inventory my-controls.yaml \
   --frameworks osps-baseline-m2 \
+  --output osps-gap-report.json
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap analyze `
+  --inventory my-controls.yaml `
+  --frameworks osps-baseline-m2 `
   --output osps-gap-report.json
 ```
 
@@ -111,8 +122,17 @@ Fold the OSPS gap analysis into your CI pipeline the same way as any other
 framework — emit SARIF for Code Scanning, or diff against a base report to fail
 on regressions:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap analyze --inventory my-controls.yaml \
+  --frameworks osps-baseline-m2 --format sarif --output osps.sarif
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap analyze --inventory my-controls.yaml `
   --frameworks osps-baseline-m2 --format sarif --output osps.sarif
 ```
 

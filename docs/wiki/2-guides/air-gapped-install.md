@@ -50,8 +50,19 @@ Move the `evidentia-wheelhouse/` directory across the air gap (removable media,
 data diode, approved transfer process). On the target host, install with the
 index disabled so pip never reaches for the network:
 
+**Bash / Linux / macOS**
+
 ```bash
-python -m venv .venv && source .venv/bin/activate   # or .venv\Scripts\activate on Windows
+python -m venv .venv && source .venv/bin/activate
+pip install --no-index --find-links ./evidentia-wheelhouse evidentia
+evidentia version
+# → Evidentia v0.10.11 / Python 3.12.x
+```
+
+**PowerShell (Windows)**
+
+```powershell
+python -m venv .venv ; .\.venv\Scripts\Activate.ps1
 pip install --no-index --find-links ./evidentia-wheelhouse evidentia
 evidentia version
 # → Evidentia v0.10.11 / Python 3.12.x
@@ -73,10 +84,21 @@ Any red entry is a configuration mistake to fix before you start. Then run every
 command with the `--offline` global flag, which refuses any outbound call to a
 non-loopback / non-RFC-1918 host *before* the network IO is issued:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia --offline gap analyze \
   --inventory my-controls.yaml \
   --frameworks nist-800-53-rev5-moderate \
+  --output gap-report.json
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia --offline gap analyze `
+  --inventory my-controls.yaml `
+  --frameworks nist-800-53-rev5-moderate `
   --output gap-report.json
 ```
 
@@ -90,6 +112,8 @@ Fail closed, not open.
 inference endpoint in offline mode. Point Evidentia at Ollama or a self-hosted
 OpenAI-compatible server on a loopback/RFC-1918 address:
 
+**Bash / Linux / macOS**
+
 ```bash
 # Ollama on the same host
 export EVIDENTIA_LLM_MODEL=ollama/llama3.1:8b
@@ -97,6 +121,19 @@ export EVIDENTIA_LLM_MODEL=ollama/llama3.1:8b
 # or a self-hosted vLLM/LocalAI endpoint on a private IP
 export EVIDENTIA_LLM_MODEL=gpt-4o-compatible
 export EVIDENTIA_LLM_API_BASE=http://10.50.1.20:8000/v1
+
+evidentia --offline risk generate --gap-id GAP-0001 --context system-context.yaml
+```
+
+**PowerShell (Windows)**
+
+```powershell
+# Ollama on the same host
+$env:EVIDENTIA_LLM_MODEL = "ollama/llama3.1:8b"
+
+# or a self-hosted vLLM/LocalAI endpoint on a private IP
+$env:EVIDENTIA_LLM_MODEL = "gpt-4o-compatible"
+$env:EVIDENTIA_LLM_API_BASE = "http://10.50.1.20:8000/v1"
 
 evidentia --offline risk generate --gap-id GAP-0001 --context system-context.yaml
 ```
@@ -126,12 +163,28 @@ Sigstore keyless signing (`--sign-with-sigstore`) needs network access to Fulcio
 **refused in `--offline` mode**. Air-gapped chains of custody use **GPG-detached
 signatures** instead, which need no network:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia --offline gap analyze \
   --inventory my-controls.yaml \
   --frameworks nist-800-53-rev5-moderate \
   --format oscal-ar \
   --output assessment-results.json \
+  --sign-with-gpg YOUR_KEY_ID
+
+# Verify (also offline)
+evidentia --offline oscal verify assessment-results.json --require-signature
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia --offline gap analyze `
+  --inventory my-controls.yaml `
+  --frameworks nist-800-53-rev5-moderate `
+  --format oscal-ar `
+  --output assessment-results.json `
   --sign-with-gpg YOUR_KEY_ID
 
 # Verify (also offline)

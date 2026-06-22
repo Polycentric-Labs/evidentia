@@ -51,9 +51,19 @@ fedramp-conmon-annual: 2025-09-30
 
 You can maintain this file by hand, or let Evidentia append to it:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia conmon mark-completed nist-800-53-rev5-ca7 \
   --when 2026-05-28 \
+  --state-file conmon-state.yaml
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia conmon mark-completed nist-800-53-rev5-ca7 `
+  --when 2026-05-28 `
   --state-file conmon-state.yaml
 ```
 
@@ -118,10 +128,21 @@ when a cycle enters due-soon or overdue. It runs in the **foreground** (no
 fork) — you delegate process supervision to systemd / launchd / Windows Service
 Manager.
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia conmon watch \
   --state-file /var/lib/evidentia/conmon-state.yaml \
   --poll-interval 3600 \
+  --window-days 14
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia conmon watch `
+  --state-file C:\ProgramData\evidentia\conmon-state.yaml `
+  --poll-interval 3600 `
   --window-days 14
 ```
 
@@ -137,12 +158,24 @@ Wire SMTP and/or webhook alerting so transitions reach a human. Alerting flags
 require an `--alert-dedup-file` so the same `(slug, state)` does not re-alert on
 every poll within the suppression window:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia conmon watch \
   --state-file /var/lib/evidentia/conmon-state.yaml \
   --alert-dedup-file /var/lib/evidentia/conmon-dedup.json \
   --webhook-url https://hooks.example.com/conmon \
   --webhook-secret-file /etc/evidentia/secrets/webhook-secret
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia conmon watch `
+  --state-file C:\ProgramData\evidentia\conmon-state.yaml `
+  --alert-dedup-file C:\ProgramData\evidentia\conmon-dedup.json `
+  --webhook-url https://hooks.example.com/conmon `
+  --webhook-secret-file C:\ProgramData\evidentia\secrets\webhook-secret
 ```
 
 Secrets are passed via `--*-file` paths or env vars
@@ -175,11 +208,22 @@ audit events — are in the in-repo runbook
 For operator health-checks, point the daemon at a status sidecar and a rolling
 history file, then read them back via the REST API:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia conmon watch \
   --state-file /var/lib/evidentia/conmon-state.yaml \
   --status-file /var/lib/evidentia/conmon-status.json \
   --history-file /var/lib/evidentia/conmon-history.jsonl
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia conmon watch `
+  --state-file C:\ProgramData\evidentia\conmon-state.yaml `
+  --status-file C:\ProgramData\evidentia\conmon-status.json `
+  --history-file C:\ProgramData\evidentia\conmon-history.jsonl
 ```
 
 Configure the web server with the matching `EVIDENTIA_CONMON_DAEMON_STATUS_FILE`

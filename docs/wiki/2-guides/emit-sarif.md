@@ -16,11 +16,23 @@ findings.
 
 ## Step 1 — Produce the SARIF file
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap analyze \
   --inventory=my-controls.yaml \
-  --frameworks=nist-800-53-rev5-mod \
+  --frameworks=nist-800-53-rev5-moderate \
   --format=sarif \
+  --output=gap-results.sarif
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap analyze `
+  --inventory=my-controls.yaml `
+  --frameworks=nist-800-53-rev5-moderate `
+  --format=sarif `
   --output=gap-results.sarif
 ```
 
@@ -58,7 +70,7 @@ upload action:
   run: |
     evidentia gap analyze \
       --inventory=my-controls.yaml \
-      --frameworks=nist-800-53-rev5-mod \
+      --frameworks=nist-800-53-rev5-moderate \
       --format=sarif \
       --output=gap-results.sarif
 
@@ -82,8 +94,17 @@ hard gate, pair it with `evidentia gap diff --fail-on-regression`, which exits
 non-zero when a PR opens new gaps or increases severities relative to a base
 report:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap diff --base=main-report.json --head=pr-report.json \
+  --fail-on-regression --format=github
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap diff --base=main-report.json --head=pr-report.json `
   --fail-on-regression --format=github
 ```
 

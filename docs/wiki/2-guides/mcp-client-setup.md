@@ -216,9 +216,19 @@ Point the server at it and, on stdio, name the active client (the stdio wire
 protocol carries no per-request client_id, so `--default-client-id` is what
 identifies the session):
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia mcp serve --transport stdio \
   --cimd-registry cimd-registry.json \
+  --default-client-id claude-desktop
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia mcp serve --transport stdio `
+  --cimd-registry cimd-registry.json `
   --default-client-id claude-desktop
 ```
 

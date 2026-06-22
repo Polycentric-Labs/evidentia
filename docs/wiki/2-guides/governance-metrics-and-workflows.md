@@ -17,18 +17,36 @@ template.
   callout, box-drawing tables). On Windows `cp1252` consoles, export this first
   so a stray character cannot crash a command:
 
+  **Bash / Linux / macOS**
+
   ```bash
   export PYTHONIOENCODING=utf-8
+  ```
+
+  **PowerShell (Windows)**
+
+  ```powershell
+  $env:PYTHONIOENCODING = "utf-8"
   ```
 
 - **Optional: redirect the stores into a scratch directory.** Each governance
   surface has its own store-directory override. Point them at a throwaway folder
   to keep a demo (or CI run) isolated from your real records:
 
+  **Bash / Linux / macOS**
+
   ```bash
   export EVIDENTIA_METRIC_STORE_DIR="$PWD/.gov-demo/metrics"
   export EVIDENTIA_CHALLENGE_STORE_DIR="$PWD/.gov-demo/challenges"
   export EVIDENTIA_WORKFLOW_STORE_DIR="$PWD/.gov-demo/workflows"
+  ```
+
+  **PowerShell (Windows)**
+
+  ```powershell
+  $env:EVIDENTIA_METRIC_STORE_DIR = "$PWD\.gov-demo\metrics"
+  $env:EVIDENTIA_CHALLENGE_STORE_DIR = "$PWD\.gov-demo\challenges"
+  $env:EVIDENTIA_WORKFLOW_STORE_DIR = "$PWD\.gov-demo\workflows"
   ```
 
   The directories are created on first write. If you omit these, Evidentia uses
@@ -69,6 +87,8 @@ Create a metric once; you record observations against it over time. `--name`,
 `--description`, `--kind`, `--direction`, and `--unit` are required. Thresholds
 are optional but unlock automatic status flagging.
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia governance metrics add \
   --name "Failed-login rate" \
@@ -78,6 +98,20 @@ evidentia governance metrics add \
   --unit "per 1000 logins" \
   --owner-email ciso@bank.example \
   --warning-threshold 3.0 \
+  --critical-threshold 5.0
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia governance metrics add `
+  --name "Failed-login rate" `
+  --description "Failed authentications per 1,000 logins; a leading indicator of credential-stuffing pressure." `
+  --kind kri `
+  --direction higher_is_worse `
+  --unit "per 1000 logins" `
+  --owner-email ciso@bank.example `
+  --warning-threshold 3.0 `
   --critical-threshold 5.0
 ```
 
@@ -102,12 +136,25 @@ Copy the printed UUID — every `observe` / `show` / `delete` call takes it.
 Each observation is a dated value. The command echoes the metric's *current*
 status, recomputed from the latest observation against your thresholds:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia governance metrics observe 43b2dd89-82c1-4678-b0de-c04eb452fbde \
   --value 2.1 --observed-at 2026-03-01 --note "Baseline quarter."
 evidentia governance metrics observe 43b2dd89-82c1-4678-b0de-c04eb452fbde \
   --value 3.4 --observed-at 2026-04-01 --note "Uptick after partner SSO migration."
 evidentia governance metrics observe 43b2dd89-82c1-4678-b0de-c04eb452fbde \
+  --value 5.6 --observed-at 2026-05-01 --note "Credential-stuffing campaign detected."
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia governance metrics observe 43b2dd89-82c1-4678-b0de-c04eb452fbde `
+  --value 2.1 --observed-at 2026-03-01 --note "Baseline quarter."
+evidentia governance metrics observe 43b2dd89-82c1-4678-b0de-c04eb452fbde `
+  --value 3.4 --observed-at 2026-04-01 --note "Uptick after partner SSO migration."
+evidentia governance metrics observe 43b2dd89-82c1-4678-b0de-c04eb452fbde `
   --value 5.6 --observed-at 2026-05-01 --note "Credential-stuffing campaign detected."
 ```
 
@@ -130,6 +177,8 @@ Add a `kpi` with the opposite direction so the dashboard has more than one kind.
 For a `higher_is_better` metric the threshold comparison flips: a value **at or
 below** critical is a `breach`.
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia governance metrics add \
   --name "Critical-patch coverage" \
@@ -141,6 +190,22 @@ evidentia governance metrics add \
   --warning-threshold 95.0 \
   --critical-threshold 90.0
 evidentia governance metrics observe <kpi-id> \
+  --value 97.5 --observed-at 2026-05-01 --note "Within SLA target."
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia governance metrics add `
+  --name "Critical-patch coverage" `
+  --description "Share of HIGH/CRITICAL CVEs patched within SLA across the fleet." `
+  --kind kpi `
+  --direction higher_is_better `
+  --unit "%" `
+  --owner-email patch-mgmt@bank.example `
+  --warning-threshold 95.0 `
+  --critical-threshold 90.0
+evidentia governance metrics observe <kpi-id> `
   --value 97.5 --observed-at 2026-05-01 --note "Within SLA target."
 ```
 
@@ -270,6 +335,8 @@ SR 11-7 §III.D evidence that second-line review actually pushed back. The
 independently of, an inventory entry — see
 [Manage a model-risk inventory](manage-model-risk.md)).
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia governance challenge add \
   --subject-model-id "retail-credit-pd-v3" \
@@ -280,6 +347,21 @@ evidentia governance challenge add \
   --challenge-substance "The probability-of-default calibration was last refit on 2023 data; recent vintages show a 12% under-prediction in the subprime tier. Challenge the owner to re-estimate before the Q3 model-risk committee." \
   --outcome modify \
   --outcome-rationale "Owner agreed to refit on 2024-2025 vintages and re-present." \
+  --resolved-at 2026-05-20
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia governance challenge add `
+  --subject-model-id "retail-credit-pd-v3" `
+  --challenger-email "mrm-director@bank.example" `
+  --challenger-role "MRM Director (2nd line)" `
+  --challenge-date 2026-05-12 `
+  --challenge-topic "PD calibration drift" `
+  --challenge-substance "The probability-of-default calibration was last refit on 2023 data; recent vintages show a 12% under-prediction in the subprime tier. Challenge the owner to re-estimate before the Q3 model-risk committee." `
+  --outcome modify `
+  --outcome-rationale "Owner agreed to refit on 2024-2025 vintages and re-present." `
   --resolved-at 2026-05-20
 ```
 
@@ -298,6 +380,8 @@ the challenge resolves.
 
 Add a second, still-open challenge so the log has more than one row:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia governance challenge add \
   --subject-model-id "aml-txn-monitoring-v2" \
@@ -305,6 +389,18 @@ evidentia governance challenge add \
   --challenger-role "Independent Validator (2nd line)" \
   --challenge-date 2026-05-26 \
   --challenge-topic "Alert-threshold tuning evidence" \
+  --challenge-substance "Request the back-testing evidence behind the lowered transaction-monitoring alert threshold; the change log lacks a documented false-negative analysis."
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia governance challenge add `
+  --subject-model-id "aml-txn-monitoring-v2" `
+  --challenger-email "independent-validator@bank.example" `
+  --challenger-role "Independent Validator (2nd line)" `
+  --challenge-date 2026-05-26 `
+  --challenge-topic "Alert-threshold tuning evidence" `
   --challenge-substance "Request the back-testing evidence behind the lowered transaction-monitoring alert threshold; the change log lacks a documented false-negative analysis."
 ```
 
@@ -517,6 +613,8 @@ required; `--note` records the rationale. Approving a step auto-promotes the
 next `pending` step to `in_progress`, and approving the last step flips the
 whole workflow to `approved`.
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia governance workflow advance 002dacb9-baed-4dd8-993b-9cd45c171f65 \
   --step 0 --new-status approved --actor model-owner@bank.example \
@@ -529,6 +627,23 @@ evidentia governance workflow advance 002dacb9-baed-4dd8-993b-9cd45c171f65 \
   --note "SDLC adherence confirmed."
 evidentia governance workflow advance 002dacb9-baed-4dd8-993b-9cd45c171f65 \
   --step 3 --new-status approved --actor cab-chair@bank.example \
+  --note "CAB approved for 2026-06-01 release window."
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia governance workflow advance 002dacb9-baed-4dd8-993b-9cd45c171f65 `
+  --step 0 --new-status approved --actor model-owner@bank.example `
+  --note "Evidence pack submitted: AUC 0.81, KS 0.42."
+evidentia governance workflow advance 002dacb9-baed-4dd8-993b-9cd45c171f65 `
+  --step 1 --new-status approved --actor mrm-director@bank.example `
+  --note "Calibration acceptable on 2024-2025 vintages."
+evidentia governance workflow advance 002dacb9-baed-4dd8-993b-9cd45c171f65 `
+  --step 2 --new-status approved --actor internal-audit@bank.example `
+  --note "SDLC adherence confirmed."
+evidentia governance workflow advance 002dacb9-baed-4dd8-993b-9cd45c171f65 `
+  --step 3 --new-status approved --actor cab-chair@bank.example `
   --note "CAB approved for 2026-06-01 release window."
 ```
 

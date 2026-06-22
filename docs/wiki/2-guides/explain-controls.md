@@ -32,8 +32,16 @@ path.
 
 You can confirm a provider is wired up from a second terminal:
 
+**Bash / Linux / macOS**
+
 ```bash
 curl -s http://127.0.0.1:8000/api/llm-status
+```
+
+**PowerShell (Windows)**
+
+```powershell
+curl.exe -s http://127.0.0.1:8000/api/llm-status
 ```
 
 The response reports each provider's `configured` boolean and the active model —

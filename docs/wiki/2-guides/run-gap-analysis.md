@@ -27,7 +27,7 @@ evidentia catalog list --tier=A
 ```
 
 Tier-A catalogs are production-grade and verbatim-licensed. Note the framework
-IDs you care about (for example `nist-800-53-rev5-mod`, `soc2-tsc`). You can
+IDs you care about (for example `nist-800-53-rev5-moderate`, `soc2-tsc`). You can
 analyze against several at once — Evidentia will also surface cross-framework
 efficiency opportunities (one control that closes gaps in 3+ frameworks).
 
@@ -41,10 +41,21 @@ evidentia catalog show nist-800-53-rev5-low
 
 The minimal invocation needs an inventory, a framework list, and an output path:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap analyze \
   --inventory=my-controls.yaml \
-  --frameworks=nist-800-53-rev5-mod,soc2-tsc \
+  --frameworks=nist-800-53-rev5-moderate,soc2-tsc \
+  --output=gap-report.json
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap analyze `
+  --inventory=my-controls.yaml `
+  --frameworks=nist-800-53-rev5-moderate,soc2-tsc `
   --output=gap-report.json
 ```
 
@@ -92,11 +103,23 @@ find it without you re-specifying `--gaps`.
 
 For example, to hand an auditor an OSCAL Assessment Results document:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap analyze \
   --inventory=my-controls.yaml \
-  --frameworks=nist-800-53-rev5-mod \
+  --frameworks=nist-800-53-rev5-moderate \
   --format=oscal-ar \
+  --output=assessment-results.json
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap analyze `
+  --inventory=my-controls.yaml `
+  --frameworks=nist-800-53-rev5-moderate `
+  --format=oscal-ar `
   --output=assessment-results.json
 ```
 
@@ -120,12 +143,25 @@ If you have run an evidence collector (for example `evidentia collect aws
 --output findings.json`), you can embed those findings as tamper-evident OSCAL
 back-matter resources — but only with `--format oscal-ar`:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap analyze \
   --inventory=my-controls.yaml \
-  --frameworks=nist-800-53-rev5-mod \
+  --frameworks=nist-800-53-rev5-moderate \
   --findings=findings.json \
   --format=oscal-ar \
+  --output=assessment-results.json
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap analyze `
+  --inventory=my-controls.yaml `
+  --frameworks=nist-800-53-rev5-moderate `
+  --findings=findings.json `
+  --format=oscal-ar `
   --output=assessment-results.json
 ```
 
@@ -139,12 +175,25 @@ ignores the file. (To convert collector findings to OCSF directly, see
 For an auditor-defensible chain of custody, sign the `oscal-ar` export. GPG
 produces a detached `.asc` signature; Sigstore produces a keyless Rekor bundle:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap analyze \
   --inventory=my-controls.yaml \
-  --frameworks=nist-800-53-rev5-mod \
+  --frameworks=nist-800-53-rev5-moderate \
   --format=oscal-ar \
   --output=assessment-results.json \
+  --sign-with-gpg=YOUR_KEY_ID
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap analyze `
+  --inventory=my-controls.yaml `
+  --frameworks=nist-800-53-rev5-moderate `
+  --format=oscal-ar `
+  --output=assessment-results.json `
   --sign-with-gpg=YOUR_KEY_ID
 ```
 

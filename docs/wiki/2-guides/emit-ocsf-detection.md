@@ -30,11 +30,23 @@ SIEM; pick `ocsf` when your destination is OCSF-aware GRC tooling or a data lake
 
 ## Step 1 — Emit the Detection Finding array
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia gap analyze \
   --inventory=my-controls.yaml \
-  --frameworks=nist-800-53-rev5-mod \
+  --frameworks=nist-800-53-rev5-moderate \
   --format=ocsf-detection \
+  --output=gap-detections.json
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia gap analyze `
+  --inventory=my-controls.yaml `
+  --frameworks=nist-800-53-rev5-moderate `
+  --format=ocsf-detection `
   --output=gap-detections.json
 ```
 

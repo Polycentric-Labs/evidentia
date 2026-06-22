@@ -80,9 +80,19 @@ evidentia poam show <poam-id>
 
 ## Step 3 — Add a milestone
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia poam milestone add <poam-id> \
   --target-date=2026-09-30 \
+  --description="Enable MFA on all admin accounts"
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia poam milestone add <poam-id> `
+  --target-date=2026-09-30 `
   --description="Enable MFA on all admin accounts"
 ```
 
@@ -91,11 +101,23 @@ A new milestone starts at `planned` unless you pass `--status`; attach an
 evidence pointer with `--evidence-ref` (a URL, Sigstore bundle path, Jira key,
 ServiceNow record, etc.):
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia poam milestone add <poam-id> \
   --target-date=2026-10-15 \
   --description="Verify MFA enforcement via Okta export" \
   --status=in_progress \
+  --evidence-ref="https://jira.example.com/browse/SEC-1234"
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia poam milestone add <poam-id> `
+  --target-date=2026-10-15 `
+  --description="Verify MFA enforcement via Okta export" `
+  --status=in_progress `
   --evidence-ref="https://jira.example.com/browse/SEC-1234"
 ```
 
@@ -122,10 +144,21 @@ You can also revise a milestone's `--target-date`, `--description`, or
 Top-level fields (the gap-level status, owner, remediation text, tags) are edited
 on the item rather than a milestone:
 
+**Bash / Linux / macOS**
+
 ```bash
 evidentia poam update <poam-id> \
   --status=remediated \
   --assigned-to=alice@example.com \
+  --add-tag=q3-priority
+```
+
+**PowerShell (Windows)**
+
+```powershell
+evidentia poam update <poam-id> `
+  --status=remediated `
+  --assigned-to=alice@example.com `
   --add-tag=q3-priority
 ```
 
