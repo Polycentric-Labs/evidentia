@@ -15,7 +15,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from evidentia_core import network_guard
-from evidentia_core.audit import EventOutcome, get_logger
+from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.gap_store import (
     InvalidReportKeyError,
     load_report_by_key,
@@ -31,17 +31,6 @@ router = APIRouter()
 
 # Structured audit logger for credentialed external writes.
 _audit = get_logger("evidentia.api.integrations")
-
-# Audit action string. No servicenow-specific EventAction enum member
-# exists in evidentia_core.audit.events, and this router may not edit
-# that file (strict scope). The audit logger's `action` parameter is
-# typed `EventAction | str`, so this stable ECS-style dotted string is
-# a type-clean fit, consistent with the events.py namespace convention
-# (``evidentia.<domain>.<verb>``) — same pattern the governance +
-# catalog routers use. A future refactor can promote it to an enum
-# member.
-_ACTION_SERVICENOW_PUSH = "evidentia.integrations.servicenow_push"
-
 
 def _new_request_id() -> str:
     """Generate a short opaque ID to correlate a client error with the
@@ -687,7 +676,7 @@ async def servicenow_push(
     # Audit the credentialed external write. No secret values are
     # included — only the report key, target table, and outcome counts.
     _audit.info(
-        action=_ACTION_SERVICENOW_PUSH,
+        action=EventAction.INTEGRATIONS_SERVICENOW_PUSH,
         outcome=EventOutcome.SUCCESS,
         message=(
             f"Pushed gap report {report_key} to ServiceNow table "

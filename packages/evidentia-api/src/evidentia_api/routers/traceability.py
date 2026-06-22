@@ -43,7 +43,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from evidentia_core.audit import EventOutcome, get_logger
+from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.models.traceability import TraceabilityMatrix
 from evidentia_core.oscal.traceability_exporter import (
     traceability_matrix_to_oscal_profile,
@@ -52,15 +52,6 @@ from fastapi import APIRouter, HTTPException
 
 router = APIRouter()
 _log = get_logger("evidentia.api.traceability")
-
-# Audit action string. No traceability-specific EventAction enum member
-# exists in evidentia_core.audit.events, and this router may not edit that
-# file (strict scope). The audit logger's ``action`` parameter is typed
-# ``EventAction | str``, so a stable ECS-style dotted string is a
-# type-clean fit, consistent with the events.py namespace convention
-# (``evidentia.<domain>.<verb>``) — see the catalog router for the same
-# pattern. A future refactor can promote it to an enum member.
-_ACTION_TRACEABILITY_EMITTED = "evidentia.traceability.emitted"
 
 
 @router.post("/traceability/emit")
@@ -85,7 +76,7 @@ async def emit_traceability_matrix(matrix: TraceabilityMatrix) -> dict[str, Any]
     profile = traceability_matrix_to_oscal_profile(matrix)
 
     _log.info(
-        action=_ACTION_TRACEABILITY_EMITTED,
+        action=EventAction.TRACEABILITY_EMITTED,
         outcome=EventOutcome.SUCCESS,
         message=(
             f"Traceability matrix emitted via API (unsigned): "
