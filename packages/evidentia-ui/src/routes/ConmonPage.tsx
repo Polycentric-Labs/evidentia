@@ -755,7 +755,7 @@ export function ConmonPage() {
         </div>
 
         {query.isError && (
-          <Card className="border-dest">
+          <Card className="border-dest" role="alert">
             <CardContent className="card-body" style={{ padding: "1.5rem" }}>
               <span className="text-sm text-destructive">
                 Could not fetch continuous-monitoring cadences. Is the backend

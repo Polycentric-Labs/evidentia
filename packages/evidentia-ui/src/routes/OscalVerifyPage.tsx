@@ -243,7 +243,11 @@ export function OscalVerifyPage() {
             </div>
 
             {identityIncomplete && (
-              <p className="text-xs text-destructive">
+              <p
+                id="oscal-identity-hint"
+                role="alert"
+                className="text-xs text-destructive"
+              >
                 Provide both the expected identity and issuer, or leave both
                 blank (cosign both-or-neither model).
               </p>
@@ -254,7 +258,11 @@ export function OscalVerifyPage() {
                 Inline document only — no server path, no persistence, no
                 signing.
               </p>
-              <Button type="submit" disabled={!canSubmit}>
+              <Button
+                type="submit"
+                disabled={!canSubmit}
+                aria-describedby="oscal-identity-hint"
+              >
                 {mutation.isPending ? "Verifying..." : "Verify"}
               </Button>
             </div>
@@ -266,7 +274,9 @@ export function OscalVerifyPage() {
         <Card aria-label="Verifying">
           <CardContent className="card-body" style={{ padding: "1.5rem" }}>
             <div className="skel" style={{ height: "6rem" }} />
-            <p className="mt-3 text-xs muted">Verifying the Assessment Result…</p>
+            <p className="mt-3 text-xs muted" role="status" aria-live="polite">
+              Verifying the Assessment Result…
+            </p>
           </CardContent>
         </Card>
       )}

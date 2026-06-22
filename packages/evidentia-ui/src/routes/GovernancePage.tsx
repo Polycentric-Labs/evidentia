@@ -253,7 +253,7 @@ function ChallengesTab() {
         </div>
 
         {query.isError && (
-          <Card className="border-dest">
+          <Card className="border-dest" role="alert">
             <CardContent className="card-body" style={{ padding: "1.5rem" }}>
               <span className="text-sm text-destructive">
                 Could not fetch challenges. Is the backend running?
@@ -696,7 +696,7 @@ function MetricsTab() {
         )}
 
         {query.isError && (
-          <Card className="border-dest">
+          <Card className="border-dest" role="alert">
             <CardContent className="card-body" style={{ padding: "1.5rem" }}>
               <span className="text-sm text-destructive">
                 Could not fetch metrics. Is the backend running?
@@ -1272,7 +1272,7 @@ function WorkflowsTab() {
         <h2 className="section-num">Workflows</h2>
 
         {query.isError && (
-          <Card className="border-dest">
+          <Card className="border-dest" role="alert">
             <CardContent className="card-body" style={{ padding: "1.5rem" }}>
               <span className="text-sm text-destructive">
                 Could not fetch workflows. Is the backend running?

@@ -439,7 +439,9 @@ export function TraceabilityPage() {
         <Card aria-label="Emitting">
           <CardContent className="card-body" style={{ padding: "1.5rem" }}>
             <div className="skel" style={{ height: "6rem" }} />
-            <p className="mt-3 text-xs muted">Emitting the OSCAL profile…</p>
+            <p className="mt-3 text-xs muted" role="status" aria-live="polite">
+              Emitting the OSCAL profile…
+            </p>
           </CardContent>
         </Card>
       )}

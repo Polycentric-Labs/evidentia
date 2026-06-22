@@ -127,7 +127,7 @@ function ReportKeyPicker({
       </CardHeader>
       <CardContent className="stack-3">
         {error && (
-          <span className="text-sm text-destructive">
+          <span className="text-sm text-destructive" role="alert">
             Could not fetch reports. Is the backend running?
           </span>
         )}

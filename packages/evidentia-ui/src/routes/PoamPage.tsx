@@ -222,7 +222,7 @@ export function PoamPage() {
       </section>
 
       {query.isError && (
-        <Card className="border-dest">
+        <Card className="border-dest" role="alert">
           <CardContent className="card-body" style={{ padding: "1.5rem" }}>
             <span className="text-sm text-destructive">
               Could not fetch POA&amp;M items. Is the backend running?
@@ -1084,7 +1084,7 @@ function PoamCalendar() {
       <h2 className="section-num">Calendar / attention</h2>
 
       {query.isError && (
-        <Card className="border-dest">
+        <Card className="border-dest" role="alert">
           <CardContent className="card-body" style={{ padding: "1.5rem" }}>
             <span className="text-sm text-destructive">
               Could not fetch the POA&amp;M calendar. Is the backend running?
