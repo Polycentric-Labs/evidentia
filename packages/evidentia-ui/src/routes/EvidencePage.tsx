@@ -168,8 +168,9 @@ export function EvidencePage() {
         {submittedLineage === null && (
           <div className="empty-state">
             Enter a lineage id above to load its version chain. Evidence is
-            addressed by lineage — there is no global list. Find ids with{" "}
-            <code className="kbd">evidentia evidence list</code>.
+            addressed by lineage — there is no global list. A lineage id is
+            printed when you persist an artifact with{" "}
+            <code className="kbd">evidentia evidence save</code>.
           </div>
         )}
 
