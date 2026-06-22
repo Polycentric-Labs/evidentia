@@ -168,7 +168,7 @@ for exactly what is and is not claimed.
 
 ## See also
 
-- [Guides](../2-guides/) — task-oriented how-tos for every surface above.
-- [Concepts](../3-concepts/) — the "why" behind the data model + engines.
-- [Reference](../4-reference/) — CLI verbs, MCP tools, config, catalog +
+- [Guides](../2-guides/index.md) — task-oriented how-tos for every surface above.
+- [Concepts](../3-concepts/index.md) — the "why" behind the data model + engines.
+- [Reference](../4-reference/index.md) — CLI verbs, MCP tools, config, catalog +
   crosswalk tables.

@@ -121,7 +121,7 @@ cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.11 \
 # → "The cosign claims were validated"
 ```
 
-Full verification recipes: see [`docs/verification.md`](../../verification.md).
+Full verification recipes: see [Project → Verification](../6-project/verification.md).
 
 ## What's next
 

@@ -92,31 +92,93 @@ markdown_extensions:
   - toc:
       permalink: true
 
+# Build-time validation. nav.omitted_files=warn means every page in docs_dir
+# MUST be wired into the nav below (a forcing function so new wiki pages can't
+# silently orphan); links.not_found=warn fails the build on a broken internal
+# link. Both promote to errors under `mkdocs build --strict` (the Pages gate).
+validation:
+  nav:
+    omitted_files: warn
+  links:
+    not_found: warn
+
 nav:
   - Home: index.md
   - Getting Started:
       - 1-getting-started/index.md
       - Quickstart: 1-getting-started/quickstart.md
-      # - Installation: 1-getting-started/installation.md   # TODO v0.10.7+
-      # - First collection: 1-getting-started/first-collection.md   # TODO
+      - Installation: 1-getting-started/installation.md
+      - Your first evidence collection: 1-getting-started/first-collection.md
   - Guides:
       - 2-guides/index.md
-      # Per-page TODOs land in v0.10.7+ as the wiki fills in.
+      - Run a gap analysis: 2-guides/run-gap-analysis.md
+      - Explain a control: 2-guides/explain-controls.md
+      - Serve the local web UI: 2-guides/serve-the-web-ui.md
+      - Sign and verify evidence: 2-guides/sign-and-verify-evidence.md
+      - Generate and quantify risk: 2-guides/generate-and-quantify-risk.md
+      - Govern AI systems (EU AI Act + NIST AI RMF): 2-guides/ai-governance.md
+      - Manage a model-risk inventory: 2-guides/manage-model-risk.md
+      - Manage third-party / vendor risk: 2-guides/manage-third-party-risk.md
+      - Manage a POA&M: 2-guides/manage-poam.md
+      - Governance metrics, Three Lines & workflows: 2-guides/governance-metrics-and-workflows.md
+      - CONMON deployment: 2-guides/conmon-deployment.md
+      - OSPS self-assessment: 2-guides/osps-self-assessment.md
+      - Emit SARIF for CI gates: 2-guides/emit-sarif.md
+      - Emit OCSF Detection Findings: 2-guides/emit-ocsf-detection.md
+      - Emit CycloneDX VEX: 2-guides/emit-cyclonedx-vex.md
+      - Ingest third-party OCSF findings: 2-guides/ingest-ocsf.md
+      - CI integration: 2-guides/ci-integration.md
+      - Air-gapped install: 2-guides/air-gapped-install.md
+      - MCP client setup: 2-guides/mcp-client-setup.md
   - Concepts:
       - 3-concepts/index.md
       - Architecture: 3-concepts/architecture.md
-      # - Data model: 3-concepts/data-model.md   # TODO
+      - Data model: 3-concepts/data-model.md
+      - Catalog engine: 3-concepts/catalog-engine.md
+      - Crosswalk engine: 3-concepts/crosswalk-engine.md
+      - Evidence integrity: 3-concepts/evidence-integrity.md
+      - Frozen surfaces and stability: 3-concepts/frozen-surfaces-and-stability.md
+      - RBAC and multi-tenancy: 3-concepts/rbac-and-multi-tenancy.md
   - Reference:
       - 4-reference/index.md
-      # API reference auto-gen via mkdocstrings; pages land v0.10.7+.
+      - CLI reference: 4-reference/cli.md
+      - MCP tools: 4-reference/mcp-tools.md
+      - Configuration: 4-reference/configuration.md
+      - Bundled catalogs: 4-reference/catalogs.md
+      - Crosswalks: 4-reference/crosswalks.md
+      - Inventory & system-context files: 4-reference/inventory-and-system-context.md
+      - API:
+          - evidentia-core: 4-reference/api/evidentia-core.md
+          - evidentia-api: 4-reference/api/evidentia-api.md
+          - evidentia-ai: 4-reference/api/evidentia-ai.md
+          - evidentia-collectors: 4-reference/api/evidentia-collectors.md
+          - evidentia-integrations: 4-reference/api/evidentia-integrations.md
+          - evidentia-mcp: 4-reference/api/evidentia-mcp.md
+          - evidentia-eval: 4-reference/api/evidentia-eval.md
   - Compliance:
       - 5-compliance/index.md
       - OSPS Baseline mapping: 5-compliance/osps-baseline-mapping.md
+      - Framework conformance: 5-compliance/framework-conformance.md
+      - Catalog inventory: 5-compliance/catalog-inventory.md
+      - Crosswalk index: 5-compliance/crosswalk-index.md
+      - OCSF mapping: 5-compliance/ocsf-mapping.md
+      - Gemara mapping: 5-compliance/gemara-mapping.md
+      - Financial-sector overlay: 5-compliance/financial-sector-overlay.md
       - FDA medical devices (524B): 5-compliance/fda-medical-device-compliance.md
-      # Other framework + compliance pages land v0.10.7+.
+      - Contributing a catalog: 5-compliance/contributing-a-catalog.md
   - Project:
       - 6-project/index.md
-      # Mirror pages land via mkdocs-include-markdown-plugin (v0.10.7+).
+      - Roadmap: 6-project/roadmap.md
+      - Changelog: 6-project/changelog.md
+      - API stability: 6-project/api-stability.md
+      - Deprecation calendar: 6-project/deprecation-policy.md
+      - Versioning: 6-project/versioning.md
+      - Governance: 6-project/governance.md
+      - Security: 6-project/security.md
+      - Contributing: 6-project/contributing.md
+      - End-of-Life policy: 6-project/eol.md
+      - Verification: 6-project/verification.md
+      - FAQ: 6-project/faq.md
 
 extra:
   social:

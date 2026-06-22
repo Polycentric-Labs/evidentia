@@ -156,3 +156,6 @@ examples/**/report.csv
 examples/**/report.md
 examples/**/report.oscal.json
 examples/**/risks.json
+
+# MkDocs build output (WS-C docs site)
+site/

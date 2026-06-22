@@ -22,6 +22,6 @@ Explanation + the "why" behind Evidentia's design. Read these if you're extendin
 
 `Architecture` → `Data model` → `Catalog engine` → `Crosswalk engine` → `Evidence integrity` → `Frozen surfaces and stability` → `RBAC and multi-tenancy`.
 
-After this section, jump to [Reference](../4-reference/) for symbol-level detail or [Compliance](../5-compliance/) for framework-specific material.
+After this section, jump to [Reference](../4-reference/index.md) for symbol-level detail or [Compliance](../5-compliance/index.md) for framework-specific material.
 
 All seven concept pages above are live.

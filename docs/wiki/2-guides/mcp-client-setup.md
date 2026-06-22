@@ -75,7 +75,7 @@ tears down the server for you over **stdio**.
 | `--host` | `127.0.0.1` | Bind address for HTTP / SSE only. `0.0.0.0` binds all interfaces and **requires** a reverse-proxy auth layer in front (the server does not gate file-path tool inputs against an allow-root by itself). |
 | `--port, -p` | `8765` | Bind port for HTTP / SSE only. `8765` is chosen to avoid colliding with `evidentia serve`'s default `8000`. |
 | `--allow-root PATH` | unset | Bounds file-path tool inputs (`gap_analyze`, `gap_diff`) to a directory; out-of-root paths surface as a tool error rather than crashing the server. **Strongly recommended for non-loopback HTTP/SSE.** Unset is appropriate for stdio + loopback. |
-| `--cimd-registry FILE` | unset | Loads a per-client scope registry (see [Step 7](#step-7--optional-gate-tools-per-client-with-cimd)). Pair with `--default-client-id` on stdio. |
+| `--cimd-registry FILE` | unset | Loads a per-client scope registry (see [Step 7](#step-7-optional-gate-tools-per-client-with-cimd)). Pair with `--default-client-id` on stdio. |
 | `--default-client-id TEXT` | unset | On stdio the wire protocol carries no per-request client_id, so this flag **is** the client_id for the whole session — set it to a slug in your CIMD registry to enable per-tool scope enforcement. |
 
 > **Do not run `evidentia mcp serve` (stdio) in a foreground terminal to "test"

@@ -25,7 +25,7 @@ path.
   needs a provider API key in its environment (for example `ANTHROPIC_API_KEY`).
   Keys are read from the environment only — the browser never sees a key value.
   The screen shows a banner if no provider is configured, and the
-  [Settings](serve-the-web-ui.md#step-2--open-the-ui) screen lists the live
+  [Settings](serve-the-web-ui.md#step-2-open-the-ui) screen lists the live
   provider status. Air-gapped operators who run a local model endpoint can point
   the provider config at it; a control with no reachable model surfaces the
   failure inline rather than hanging.
@@ -52,7 +52,7 @@ Click exactly one framework chip. Each chip shows its redistribution tier as
 control in one framework at a time, so the picker is single-choice.
 
 If you are not sure which frameworks are registered, the
-[Frameworks browser](serve-the-web-ui.md#step-2--open-the-ui) (`/frameworks`)
+[Frameworks browser](serve-the-web-ui.md#step-2-open-the-ui) (`/frameworks`)
 lists them all and lets you drill into any catalog.
 
 ## Step 3 — Enter a control id

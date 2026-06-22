@@ -14,4 +14,4 @@ Install Evidentia, run your first gap analysis, and wire your first evidence col
 
 `Installation` → `Quickstart` → `First collection`.
 
-After this section, jump to [Guides](../2-guides/) for task-oriented how-tos or [Concepts](../3-concepts/) for the architecture + data-model explanation.
+After this section, jump to [Guides](../2-guides/index.md) for task-oriented how-tos or [Concepts](../3-concepts/index.md) for the architecture + data-model explanation.

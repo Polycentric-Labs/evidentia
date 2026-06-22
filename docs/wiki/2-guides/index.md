@@ -36,7 +36,7 @@ Task-oriented how-tos. Each page solves a specific operational need.
 
 - **[CI integration](ci-integration.md)** — GitHub Actions sample workflow (gap analysis on PR + SARIF upload); GitLab CI sample; Jenkins sample.
 
-- **[OSPS self-assessment](osps-self-assessment.md)** — walk through [`OSPS-CONFORMANCE.md`](../../../OSPS-CONFORMANCE.md) + the `verify-osps-conformance.yml` CI gate; how to fork the pattern for your own project.
+- **[OSPS self-assessment](osps-self-assessment.md)** — walk through [`OSPS-CONFORMANCE.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/OSPS-CONFORMANCE.md) + the `verify-osps-conformance.yml` CI gate; how to fork the pattern for your own project.
 
 - **[MCP client setup](mcp-client-setup.md)** — run the Evidentia MCP server and wire its 13 tools into Claude Desktop / Claude Code / Cursor (`mcp`).
 
@@ -44,6 +44,6 @@ Task-oriented how-tos. Each page solves a specific operational need.
 
 ## How to use this section
 
-Jump directly to the page that solves your problem. Each guide is self-contained; cross-references to [Concepts](../3-concepts/) point at the "why" if you need depth.
+Jump directly to the page that solves your problem. Each guide is self-contained; cross-references to [Concepts](../3-concepts/index.md) point at the "why" if you need depth.
 
 All nineteen guide pages above are live. New guides land here as new operational surfaces ship; see the [ROADMAP](../6-project/roadmap.md) for the forward cadence.

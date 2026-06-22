@@ -218,7 +218,7 @@ external state beyond the gap-store files it already wrote.
 - **The browser shows "Page not found"** — you've hit a path outside the app's
   routes (a typo or a stale bookmark). Use the left sidebar to reach a console —
   every implemented route is grouped there and listed in
-  [Step 2](#step-2--open-the-ui).
+  [Step 2](#step-2-open-the-ui).
 - **Export fails for `ocsf` / `ocsf-detection`** with an "unavailable / install
   the `[ocsf]` extra" message — those two formats need the server's `[ocsf]`
   extra (`pip install "evidentia-core[ocsf]"`). The other six formats are

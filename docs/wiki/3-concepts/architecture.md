@@ -61,7 +61,7 @@ Evidence collectors pull raw signals from source systems (AWS API, GitHub API, P
 
 ## Threat model
 
-See [`docs/threat-model.md`](../../threat-model.md). High-level: Evidentia trusts its evidence sources (operators are responsible for collector credential scope); does NOT trust input file paths (`evidentia_core.security.paths.validate_within` sanitizer); does NOT trust URLs in `evidentia collect ocsf` URL mode (the v0.10.2 `--block-private-ips` SSRF mitigation).
+See [`docs/threat-model.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/threat-model.md). High-level: Evidentia trusts its evidence sources (operators are responsible for collector credential scope); does NOT trust input file paths (`evidentia_core.security.paths.validate_within` sanitizer); does NOT trust URLs in `evidentia collect ocsf` URL mode (the v0.10.2 `--block-private-ips` SSRF mitigation).
 
 ## Related reading
 

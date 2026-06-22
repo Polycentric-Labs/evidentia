@@ -30,7 +30,7 @@ Per the v0.10.6 cycle's brainstorm decision (see `docs/v0.10.6-plan.md` §4.5 + 
 
 ## Evidentia's own OSPS Baseline conformance
 
-Evidentia self-attests against the OSPS Baseline at [`OSPS-CONFORMANCE.md`](../../../OSPS-CONFORMANCE.md). The conformance claim is **Maturity 2 + partial Maturity 3** as of v0.10.6. The `verify-osps-conformance.yml` GitHub Actions workflow re-validates every evidence link in the conformance doc on every push, PR, and weekly cron — ensuring the claim stays honest as the codebase evolves.
+Evidentia self-attests against the OSPS Baseline at [`OSPS-CONFORMANCE.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/OSPS-CONFORMANCE.md). The conformance claim is **Maturity 2 + partial Maturity 3** as of v0.10.6. The `verify-osps-conformance.yml` GitHub Actions workflow re-validates every evidence link in the conformance doc on every push, PR, and weekly cron — ensuring the claim stays honest as the codebase evolves.
 
 ## How to use the OSPS crosswalks
 

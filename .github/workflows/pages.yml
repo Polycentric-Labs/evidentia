@@ -1,0 +1,97 @@
+# GitHub Pages deploy for the Evidentia documentation site (WS-C, v0.10.12).
+#
+# Builds the Material for MkDocs site (config: mkdocs.yml, docs_dir:
+# docs/wiki) and publishes it to GitHub Pages at
+# https://polycentric-labs.github.io/evidentia/.
+#
+# Triggers:
+#   - push to main          -> the site tracks the default branch.
+#   - push of a v* tag      -> the site is refreshed with every release, so
+#                              the published docs match the shipped version.
+#   - workflow_dispatch     -> manual re-run from the Actions UI.
+#
+# Build gate: `mkdocs build --strict` fails on a broken internal link or an
+# orphaned (not-in-nav) page -- the same gate developers run locally and the
+# same one mkdocs.yml's `validation:` block enforces. A docs regression
+# therefore blocks the deploy instead of silently shipping a broken site.
+#
+# Docs toolchain: the PEP 735 `docs` dependency group (mkdocs-material +
+# mkdocstrings + redirects), installed reproducibly from uv.lock via
+# `uv sync --group docs`.
+#
+# Permissions: top-level defaults are read-only, so this workflow passes the
+# verify-workflow-perms.yml `--strict` audit with no top-level write scope.
+# The pages:write + id-token:write that a Pages deployment requires are
+# granted at the deploy JOB only (least privilege).
+#
+# Action pinning: every `uses:` is pinned to a full commit SHA with the
+# resolved tag in a trailing comment (OpenSSF Scorecard Pinned-Dependencies).
+# checkout / setup-uv SHAs match the repo-wide pins in the other workflows.
+#
+# First-run prerequisite (one-time, by a repo admin): Settings -> Pages ->
+# Source = "GitHub Actions". Until Pages is enabled the build job still runs
+# and validates the site; only the deploy job needs Pages turned on.
+
+name: pages
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+# Read-only defaults. The Pages write scopes live on the deploy job below.
+permissions:
+  contents: read
+
+# Serialize Pages deployments; never cancel an in-progress publish (a
+# half-finished deploy would leave the live site inconsistent).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build docs site (strict)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Install docs toolchain
+        run: uv sync --group docs
+
+      - name: Build site (strict)
+        run: uv run --no-sync mkdocs build --strict
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9  # v5.0.0
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # JUSTIFIED: a GitHub Pages deployment requires pages:write (publish the
+    # built artifact) + id-token:write (OIDC attestation of the deployment).
+    # Scoped to this job only -- the workflow's top-level default stays
+    # read-only, so verify-workflow-perms.yml --strict still passes.
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128  # v5.0.0

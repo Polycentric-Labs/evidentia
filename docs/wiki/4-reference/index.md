@@ -23,7 +23,7 @@ sourced from the Pydantic models, with example files from `evidentia init`.
   - [`evidentia-eval`](api/evidentia-eval.md)
   - [`evidentia-integrations`](api/evidentia-integrations.md)
 
-- **[MCP tools](mcp-tools.md)** — the MCP tools + signatures + behavior, parsed from the server's `@server.tool()` functions, with the append-only versioning rule per [`docs/api-stability.md`](../../api-stability.md) (NORMATIVE).
+- **[MCP tools](mcp-tools.md)** — the MCP tools + signatures + behavior, parsed from the server's `@server.tool()` functions, with the append-only versioning rule per [`api-stability.md`](../6-project/api-stability.md) (NORMATIVE).
 
 - **[Configuration](configuration.md)** — the `evidentia.yaml` schema + every `EVIDENTIA_*` environment variable + the LLM provider keys.
 
