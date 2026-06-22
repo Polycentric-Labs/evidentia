@@ -8,7 +8,11 @@
 
 site_name: Evidentia
 site_description: "Open-source compliance-as-code: gap analysis, evidence collection, OSCAL emit."
-site_url: https://polycentric-labs.github.io/evidentia/
+# Custom domain (owned): GitHub Pages serves the site at docs.evidentiagrc.com
+# and 301-redirects polycentric-labs.github.io/evidentia/* -> it. The
+# docs/wiki/CNAME file (copied to site/CNAME on build) pins the domain so a
+# redeploy never drops it. site_url drives canonical tags + sitemap.
+site_url: https://docs.evidentiagrc.com/
 site_author: Polycentric Labs
 repo_url: https://github.com/Polycentric-Labs/evidentia
 repo_name: Polycentric-Labs/evidentia
