@@ -12,15 +12,19 @@ from __future__ import annotations
 import logging
 import uuid
 from typing import Any
+from urllib.parse import urlparse
 
+from evidentia_core import network_guard
 from evidentia_core.audit import EventOutcome, get_logger
 from evidentia_core.gap_store import (
     InvalidReportKeyError,
     load_report_by_key,
 )
 from evidentia_core.models.gap import GapAnalysisReport
+from evidentia_core.network_guard import OfflineViolationError, SSRFBlockedError
 from evidentia_core.security.paths import PathTraversalError
 from fastapi import APIRouter, HTTPException
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -304,6 +308,31 @@ async def tableau_publish(
             detail="Request body must include 'server_url'.",
         )
 
+    # SSRF + offline guard on the body-controlled Tableau host. Tableau is
+    # the one integration whose outbound host comes from the request body
+    # (Jira / ServiceNow base URLs are env-sourced; Power BI is the fixed
+    # api.powerbi.com), so without this a caller — any anonymous caller on
+    # an unsecured deployment, or an authenticated low-privilege user —
+    # could point server_url at a private / loopback / cloud-metadata
+    # (169.254.169.254) address and exfiltrate the Tableau PAT. Same
+    # chokepoint every collector uses; block_private_ips defaults True (an
+    # explicit `false` opts out for a trusted internal Tableau Server).
+    block_private = payload.get("block_private_ips", True) is not False
+    try:
+        network_guard.check_url(
+            server_url,
+            subsystem="tableau",
+            remediation=(
+                "Publish to a reachable public Tableau Server / Cloud URL, "
+                "or disable offline mode."
+            ),
+        )
+        validated_ips = network_guard.enforce_public_host(
+            server_url, subsystem="tableau", block_private=block_private
+        )
+    except (SSRFBlockedError, OfflineViolationError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     # Validate body shape (risks list) BEFORE report lookup so 400
     # is returned for malformed bodies instead of 404 for missing
     # reports.
@@ -328,29 +357,52 @@ async def tableau_publish(
                 detail=f"Invalid risk payload: {exc}",
             ) from exc
 
-    report = _load_report(report_key)
+    try:
+        cfg = TableauConfig(
+            server_url=server_url,
+            site_id=str(payload.get("site_id") or ""),
+            project_name=str(payload.get("project_name") or "default"),
+            pat_name_env=str(
+                payload.get("pat_name_env") or "TABLEAU_PAT_NAME"
+            ),
+            pat_secret_env=str(
+                payload.get("pat_secret_env") or "TABLEAU_PAT_SECRET"
+            ),
+        )
+    except ValidationError as exc:
+        # e.g. the server_url https-scheme field_validator rejects a
+        # non-TLS URL — refuse rather than send a PAT over plaintext.
+        # Validated BEFORE the report lookup so a bad URL returns 400, not
+        # a 404 for a missing report.
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid Tableau configuration: {exc}",
+        ) from exc
 
-    cfg = TableauConfig(
-        server_url=server_url,
-        site_id=str(payload.get("site_id") or ""),
-        project_name=str(payload.get("project_name") or "default"),
-        pat_name_env=str(
-            payload.get("pat_name_env") or "TABLEAU_PAT_NAME"
-        ),
-        pat_secret_env=str(
-            payload.get("pat_secret_env") or "TABLEAU_PAT_SECRET"
-        ),
-    )
+    report = _load_report(report_key)
 
     overwrite = bool(payload.get("overwrite", True))
 
+    host = urlparse(server_url).hostname or ""
     try:
-        result = publish_report(
-            config=cfg,
-            report=report,
-            risks=risks,
-            overwrite=overwrite,
-        )
+        # Pin the validated public IPs through the Tableau SDK's own
+        # re-resolution (anti-DNS-rebind), mirroring the collectors. The
+        # pin is a no-op when block_private_ips=false (validated_ips empty).
+        if validated_ips:
+            with network_guard.pin_resolved_host(host, validated_ips):
+                result = publish_report(
+                    config=cfg,
+                    report=report,
+                    risks=risks,
+                    overwrite=overwrite,
+                )
+        else:
+            result = publish_report(
+                config=cfg,
+                report=report,
+                risks=risks,
+                overwrite=overwrite,
+            )
     except TableauApiError as exc:
         logger.exception(
             "Tableau publish failed (request_id=%s)", request_id

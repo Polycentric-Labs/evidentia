@@ -62,7 +62,13 @@ v0.8.0-plan §DFAH for the determinism harness).
 
 ### Tier A — REST API request handlers (16 surfaces)
 
-**Status**: clean. All Pydantic-protected with `extra="forbid"`.
+**Status**: clean. The core analysis handlers are Pydantic-protected
+with `extra="forbid"`; the later collectors + integrations routers
+(`/api/collectors`, `/api/integrations`) accept `dict[str, Any]` bodies
+validated explicitly per-field with `HTTPException(400)` on malformed
+input (the F-V08-DAST-3 invariant), and the SSRF private-IP guard is
+applied to every body-controlled outbound host — including the Tableau
+publish `server_url` (closed v0.10.12).
 
 - 16 REST endpoints under `/api/*` (POST `/api/gap/analyze`,
   POST `/api/risk/generate`, GET `/api/gap/diff`, etc.)
@@ -3279,7 +3285,11 @@ for the gating mechanism itself). The result:
   an attacker pivot the server's network position (cloud metadata
   endpoints, internal services). As of **v0.10.10** the default-on
   **collectors private-IP guard** is applied across **all outbound
-  collectors + the `/api/collectors` router** — not just `collect ocsf`
+  collectors, the `/api/collectors` router, and (v0.10.12) the Tableau
+  integration publish endpoint** — the one `/api/integrations` surface
+  whose outbound host comes from the request body (Jira / ServiceNow
+  base URLs are env-sourced; Power BI targets the fixed `api.powerbi.com`)
+  — not just `collect ocsf`
   URL mode — rejecting RFC-1918 / loopback / link-local / CGNAT
   (RFC 6598) / multicast / reserved targets pre-fetch, and **pinning the
   validated IP through the connection** so a DNS-rebind TOCTOU cannot

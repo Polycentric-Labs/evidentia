@@ -222,6 +222,39 @@ class TestTableauPublishEndpoint:
             json={
                 "server_url": "https://example.tableau.com",
                 "risks": "not-a-list",
+                # Opt out of the SSRF guard so this test exercises the
+                # risks-array validation rather than host resolution.
+                "block_private_ips": False,
+            },
+        )
+        assert r.status_code == 400
+
+    def test_private_server_url_refused_ssrf(
+        self, api_client: TestClient
+    ) -> None:
+        # SSRF guard: a body-controlled server_url pointing at a private /
+        # cloud-metadata host (169.254.169.254 = link-local) must be refused
+        # BEFORE any outbound, PAT-bearing request — the same network_guard
+        # chokepoint every collector uses. Literal IP, so no DNS needed.
+        r = api_client.post(
+            "/api/integrations/tableau/publish/0123456789abcdef",
+            json={"server_url": "https://169.254.169.254/"},
+        )
+        assert r.status_code == 400
+        assert "tableau" in r.json()["detail"].lower()
+
+    def test_http_server_url_refused_non_tls(
+        self, api_client: TestClient
+    ) -> None:
+        # The PAT must never go over a plaintext channel: an http:// URL is
+        # refused by the TableauConfig https field_validator. block_private
+        # is opted out so the SSRF guard does not fire first, isolating the
+        # scheme check.
+        r = api_client.post(
+            "/api/integrations/tableau/publish/0123456789abcdef",
+            json={
+                "server_url": "http://192.0.2.1/",
+                "block_private_ips": False,
             },
         )
         assert r.status_code == 400

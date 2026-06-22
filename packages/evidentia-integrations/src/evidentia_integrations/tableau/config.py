@@ -8,7 +8,7 @@ at call time.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class TableauConfig(BaseModel):
@@ -76,3 +76,20 @@ class TableauConfig(BaseModel):
             "deterministic across releases."
         ),
     )
+
+    @field_validator("server_url")
+    @classmethod
+    def _validate_https_and_strip_slash(cls, v: str) -> str:
+        """Refuse a non-TLS Tableau URL and strip a trailing slash.
+
+        Mirrors ``ServiceNowConfig.instance_url``: a Personal Access Token
+        must never be sent over a plaintext channel. The API router pairs
+        this with an SSRF private-IP guard on the same ``server_url``.
+        """
+        v = v.rstrip("/")
+        if not v.startswith("https://"):
+            raise ValueError(
+                "server_url must use https:// — refusing to send a "
+                "Tableau Personal Access Token over a non-TLS channel."
+            )
+        return v
