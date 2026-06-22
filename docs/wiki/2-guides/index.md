@@ -42,8 +42,20 @@ Task-oriented how-tos. Each page solves a specific operational need.
 
 - **[Serve the web UI](serve-the-web-ui.md)** — launch the local browser UI for gap analysis + the 8-format gap-export control (`evidentia serve`).
 
+- **[Run evidence collectors](run-collectors.md)** — gather findings from AWS, GitHub, Okta, SQL databases, Snowflake, and more (`collect`); credentials stay server-side, with the `--block-private-ips` SSRF guard and the console's auth-gated run buttons.
+
+- **[Browse and manage catalogs](manage-catalogs.md)** — list, inspect, crosswalk, import, and remove framework catalogs (`catalog`); the bundled-vs-user-imported split and per-catalog license tiers.
+
+- **[Track evidence lineage](track-evidence-lineage.md)** — append-only, WORM-enforced evidence-artifact versioning (`evidence save` / `history` / `show`); distinct from the signing chain.
+
+- **[Manage audit retention](manage-retention.md)** — per-record retention metadata, the WORM extend-only lock, legal holds, and the active → preserved → expired → purged lifecycle (`retention`).
+
+- **[Emit a traceability matrix](emit-traceability-matrix.md)** — emit a signed OSCAL Profile mapping controls to threats (`traceability emit`); plus the read-only console view.
+
+- **[Push to integrations](push-to-integrations.md)** — push gaps to Jira / ServiceNow and publish to Tableau / Power BI (`integrations`); credentials server-side, with an external-push confirmation step.
+
 ## How to use this section
 
 Jump directly to the page that solves your problem. Each guide is self-contained; cross-references to [Concepts](../3-concepts/index.md) point at the "why" if you need depth.
 
-All nineteen guide pages above are live. New guides land here as new operational surfaces ship; see the [ROADMAP](../6-project/roadmap.md) for the forward cadence.
+All twenty-five guide pages above are live. New guides land here as new operational surfaces ship; see the [ROADMAP](../6-project/roadmap.md) for the forward cadence.

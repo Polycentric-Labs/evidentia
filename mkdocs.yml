@@ -116,9 +116,13 @@ nav:
   - Guides:
       - 2-guides/index.md
       - Run a gap analysis: 2-guides/run-gap-analysis.md
+      - Run evidence collectors: 2-guides/run-collectors.md
       - Explain a control: 2-guides/explain-controls.md
+      - Browse and manage framework catalogs: 2-guides/manage-catalogs.md
       - Serve the local web UI: 2-guides/serve-the-web-ui.md
       - Sign and verify evidence: 2-guides/sign-and-verify-evidence.md
+      - Track evidence-artifact lineage: 2-guides/track-evidence-lineage.md
+      - Manage audit retention and chain-of-custody: 2-guides/manage-retention.md
       - Generate and quantify risk: 2-guides/generate-and-quantify-risk.md
       - Govern AI systems (EU AI Act + NIST AI RMF): 2-guides/ai-governance.md
       - Manage a model-risk inventory: 2-guides/manage-model-risk.md
@@ -130,8 +134,10 @@ nav:
       - Emit SARIF for CI gates: 2-guides/emit-sarif.md
       - Emit OCSF Detection Findings: 2-guides/emit-ocsf-detection.md
       - Emit CycloneDX VEX: 2-guides/emit-cyclonedx-vex.md
+      - Emit a control-to-threat traceability matrix: 2-guides/emit-traceability-matrix.md
       - Ingest third-party OCSF findings: 2-guides/ingest-ocsf.md
       - CI integration: 2-guides/ci-integration.md
+      - Push findings to Jira, ServiceNow & BI tools: 2-guides/push-to-integrations.md
       - Air-gapped install: 2-guides/air-gapped-install.md
       - MCP client setup: 2-guides/mcp-client-setup.md
   - Concepts:

@@ -175,9 +175,10 @@ Active hooks:
 - **prettier** — applies to `packages/evidentia-ui/{src,public}/`;
   excludes generated TypeScript types at `src/types/api.ts`
 - **yamllint** — config at `.yamllint`; scoped to `.github/`,
-  `.cursor/`, and `docs/` YAML (the 89 bundled catalog YAML files
-  are explicitly excluded — their upstream sources aren't
-  yamllint-clean by our standards and we don't author them)
+  `.cursor/`, and `docs/` YAML (the bundled catalog data files under
+  `packages/evidentia-core/.../catalogs/data/` are out of scope —
+  their upstream sources aren't yamllint-clean by our standards and we
+  don't author them)
 - **end-of-file-fixer**, **trailing-whitespace**, **check-yaml**,
   **check-toml**, **check-json**, **check-merge-conflict**,
   **check-added-large-files** (max 2 MB to allow CycloneDX SBOM)
