@@ -714,3 +714,32 @@ class TestGovernanceRBAC:
         r = gov_readonly_client.get("/api/governance/metrics")
         assert r.status_code == 200, r.text
         assert r.json()["total"] == 1
+
+
+class TestCreateEmptyIdReturns422:
+    """F-V1012-S4-1: a client-supplied empty ``id`` on the create endpoints
+    must return 422, not an unhandled 500. Pydantic accepts ``""`` as a valid
+    str (the UUID default_factory only fires on an OMITTED id), and the store's
+    id-shape validation then rejects it — the handler normalizes that to 422.
+    The same guard lands on the poam / tprm / model-risk create endpoints."""
+
+    def test_create_challenge_empty_id(self, gov_client: TestClient) -> None:
+        r = gov_client.post(
+            "/api/governance/challenges",
+            json={**_challenge_payload(), "id": ""},
+        )
+        assert r.status_code == 422, r.text
+
+    def test_create_metric_empty_id(self, gov_client: TestClient) -> None:
+        r = gov_client.post(
+            "/api/governance/metrics",
+            json={**_metric_payload(), "id": ""},
+        )
+        assert r.status_code == 422, r.text
+
+    def test_run_workflow_empty_id(self, gov_client: TestClient) -> None:
+        r = gov_client.post(
+            "/api/governance/workflows",
+            json={**_workflow_payload(), "id": ""},
+        )
+        assert r.status_code == 422, r.text

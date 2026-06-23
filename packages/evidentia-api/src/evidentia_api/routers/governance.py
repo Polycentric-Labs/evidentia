@@ -143,7 +143,15 @@ async def create_challenge(payload: EffectiveChallenge) -> EffectiveChallenge:
     via Pydantic ``default_factory`` when the client omits them.
     """
     challenge = payload.model_copy()
-    save_challenge(challenge)
+    try:
+        save_challenge(challenge)
+    except (InvalidChallengeIdError, ValueError) as exc:
+        # A client-supplied empty/malformed ``id`` (Pydantic accepts ``""`` as a
+        # valid str, so the UUID default_factory only fires on an OMITTED id)
+        # reaches the store's id-shape validation. Return 422 rather than letting
+        # it propagate as an unhandled 500 — a response-contract fix mirroring
+        # the GET/PUT paths in this router (F-V1012-S4-1).
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     _log.info(
         action=EventAction.GOVERNANCE_CHALLENGE_CREATED,
         outcome=EventOutcome.SUCCESS,
@@ -266,7 +274,12 @@ async def create_metric(payload: Metric) -> dict[str, Any]:
     and re-impose the bare-model shape this fix removes.
     """
     metric = payload.model_copy()
-    save_metric(metric)
+    try:
+        save_metric(metric)
+    except (InvalidMetricIdError, ValueError) as exc:
+        # See create_challenge — a client-supplied empty/malformed id must be a
+        # 422, not an unhandled 500 (F-V1012-S4-1).
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     _log.info(
         action=EventAction.GOVERNANCE_METRIC_CREATED,
         outcome=EventOutcome.SUCCESS,
@@ -478,7 +491,12 @@ async def run_workflow(payload: Workflow) -> Workflow:
         wf = wf.model_copy(update={"steps": new_steps})
     # Re-evaluate workflow status from the (now in-progress) step list.
     wf = wf.model_copy(update={"status": evaluate_workflow(wf)})
-    save_workflow(wf)
+    try:
+        save_workflow(wf)
+    except (InvalidWorkflowIdError, ValueError) as exc:
+        # See create_challenge — a client-supplied empty/malformed id must be a
+        # 422, not an unhandled 500 (F-V1012-S4-1).
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     _log.info(
         action=EventAction.GOVERNANCE_WORKFLOW_RUN,
         outcome=EventOutcome.SUCCESS,

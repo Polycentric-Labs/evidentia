@@ -176,7 +176,12 @@ async def create_poam_item(payload: ControlGap) -> ControlGap:
     the same id overwrites (use PUT for explicit replace semantics).
     """
     poam = payload.model_copy()
-    save_poam(poam)
+    try:
+        save_poam(poam)
+    except (InvalidPoamIdError, ValueError) as exc:
+        # A client-supplied empty/malformed id must be a 422, not an unhandled
+        # 500 (F-V1012-S4-1; mirrors the GET/PUT paths in this router).
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     _log.info(
         action=EventAction.POAM_CREATED,
         outcome=EventOutcome.SUCCESS,

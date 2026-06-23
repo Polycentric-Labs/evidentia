@@ -114,6 +114,19 @@ _SECRET_PATTERNS = [
     ),
     # JWTs — three base64url segments separated by dots.
     re.compile(r"\beyJ[A-Za-z0-9_\-]+\.eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\b"),
+    # GitHub fine-grained PATs (github_pat_ prefix; classic ghp_/gho_/... above).
+    re.compile(r"\bgithub_pat_[0-9A-Za-z_]{60,}\b"),
+    # OpenAI (sk-, sk-proj-, sk-svcacct-, sk-admin-) + Anthropic (sk-ant-) API
+    # keys — the provider keys for the in-tree AI subsystem. Distinct from the
+    # Stripe ``sk_live_``/``sk_test_`` (underscore) pattern above; these use a
+    # hyphen after ``sk``.
+    re.compile(r"\bsk-(?:ant-|proj-|svcacct-|admin-)?[A-Za-z0-9_\-]{20,}"),
+    # Credentials embedded in a connection-string / DSN userinfo, e.g.
+    # ``postgres://user:PASSWORD@host`` — the SQL collectors are keyed on
+    # connection URIs. Redacts the whole ``user:pass@`` userinfo segment.
+    re.compile(r"://[^/\s:@]+:[^/\s@]+@"),
+    # HTTP Authorization bearer tokens.
+    re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._\-]{16,}"),
 ]
 
 

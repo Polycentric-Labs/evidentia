@@ -74,6 +74,36 @@ def test_scrub_redacts_jwt() -> None:
     assert "[REDACTED]" in _scrub(f"bearer {jwt}")
 
 
+# F-V1012-S41-1: the scrubber must cover the credential shapes this system's
+# OWN integrations use (fine-grained PATs, OpenAI/Anthropic keys, DSN
+# passwords, bearer tokens), not just the classic AWS/ghp_/JWT shapes.
+def test_scrub_redacts_github_fine_grained_pat() -> None:
+    pat = "github_pat_" + "11ABCDE0Y0abcdefghijkl" + "_" + "A" * 59
+    redacted = _scrub(f"GITHUB_TOKEN={pat}")
+    assert "[REDACTED]" in redacted
+    assert "github_pat_" not in redacted
+
+
+def test_scrub_redacts_openai_and_anthropic_keys() -> None:
+    assert "[REDACTED]" in _scrub("key sk-" + "A" * 40 + " leaked")
+    assert "[REDACTED]" in _scrub("key sk-proj-" + "B" * 40)
+    redacted = _scrub("ANTHROPIC_API_KEY=sk-ant-api03-" + "C" * 40)
+    assert "[REDACTED]" in redacted
+    assert "sk-ant-" not in redacted
+
+
+def test_scrub_redacts_dsn_userinfo_password() -> None:
+    redacted = _scrub("postgres://dbuser:s3cr3tPass@db.internal:5432/evidentia")
+    assert "[REDACTED]" in redacted
+    assert "s3cr3tPass" not in redacted
+
+
+def test_scrub_redacts_bearer_token() -> None:
+    redacted = _scrub("Authorization: Bearer abcdef0123456789ABCDEF")
+    assert "[REDACTED]" in redacted
+    assert "abcdef0123456789ABCDEF" not in redacted
+
+
 def test_scrub_is_idempotent() -> None:
     s = "no secrets here"
     assert _scrub(_scrub(s)) == _scrub(s) == s

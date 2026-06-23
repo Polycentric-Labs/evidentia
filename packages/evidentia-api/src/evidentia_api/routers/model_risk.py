@@ -191,7 +191,12 @@ async def create_model(payload: ModelInventory) -> ModelInventory:
         )
     else:
         model = payload.model_copy()
-    save_model(model)
+    try:
+        save_model(model)
+    except (InvalidModelIdError, ValueError) as exc:
+        # A client-supplied empty/malformed id must be a 422, not an unhandled
+        # 500 (F-V1012-S4-1; mirrors the GET/PUT paths in this router).
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return model
 
 

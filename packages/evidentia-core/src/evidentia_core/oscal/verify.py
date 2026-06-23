@@ -281,6 +281,18 @@ def verify_ar_file(
         with ``expected_sigstore_identity`` (F-V109-1): supplying exactly
         one of the pair fails the report with an error rather than
         silently verifying under the any-signer policy.
+
+    Notes
+    -----
+    **GPG trust model — no signer pinning.** The GPG path fails closed for
+    tampered / expired / revoked signatures (it requires exit 0 AND a
+    ``GOODSIG``) and surfaces the signer key-id / fingerprint on the report
+    for inspection, but it does NOT pin an *expected* signer: a valid
+    signature by ANY key in the caller-controlled keyring passes. Unlike the
+    Sigstore path (which can pin ``expected_sigstore_identity`` / ``_issuer``),
+    trust on the GPG path is delegated to the keyring contents. Operators who
+    need a specific GPG signer asserted should check the returned fingerprint,
+    or use the Sigstore path with identity pinning.
     """
     ar_path = Path(ar_path)
     report = VerifyReport(ar_path=ar_path)
