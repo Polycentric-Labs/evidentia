@@ -55,7 +55,10 @@ def test_scrub_redacts_aws_session_credential() -> None:
 
 
 def test_scrub_redacts_github_token() -> None:
-    redacted = _scrub("ghp_abcdef1234567890abcdef1234567890abcd")
+    # Split the prefix so the literal never matches the pre-push secret-scan's
+    # ``ghp_[A-Za-z0-9]{36}`` content pattern in source (mirrors the AWS-example
+    # split above) — it's fake test data, not a real PAT.
+    redacted = _scrub("ghp_" + "abcdef1234567890abcdef1234567890abcd")
     assert "[REDACTED]" in redacted
     assert "ghp_" not in redacted
 
