@@ -28,7 +28,7 @@
 # CVE-2026-40217 (HIGH); the fix and every later patch require <3.14.
 # On 3.13 the container resolves the same CVE-clean set the library's
 # uv.lock pins (litellm 1.88.1, aiohttp 3.14.x, python-dotenv 1.2.2).
-FROM python:3.14-slim@sha256:44dd04494ee8f3b538294360e7c4b3acb87c8268e4d0a4828a6500b1eff50061
+FROM python:3.13-slim@sha256:c33f0bc4364a6881bed1ec0cc2665e6c53c87a43e774aaeab88e6f17af105e4f
 
 # System dependencies kept minimal:
 # - ca-certificates for HTTPS (PyPI, OSCAL catalog mirrors, Sigstore)

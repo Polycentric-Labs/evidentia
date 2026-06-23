@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.13] - 2026-06-23
+
+**Theme**: *Patch — restore the container base to Python 3.13.* v0.10.12 published to PyPI successfully, but its container image failed to build: the base had been bumped to `python:3.14-slim`, which the AI stack (`litellm`, `requires-python <3.14`) cannot resolve. This patch reverts the base to `python:3.13-slim` so the published container is complete and CVE-clean. The Python packages are otherwise identical to 0.10.12.
+
+### Fixed
+
+- **Container base reverted to `python:3.13-slim`** after a Dependabot bump (#83) to `python:3.14-slim` broke `release.yml`'s container build. The 3.14 base contradicted the Dockerfile's own guard comment — `litellm` declares `requires-python <3.14`, so on a 3.14 base the resolver caps at `litellm 1.83.7` (which carries CVE-2026-40217, HIGH) and the regenerated CVE-clean pin (`litellm` 1.89.x) is uninstallable; the container build failed only *after* the PyPI publish had already succeeded. Re-pinned to `python:3.13-slim@sha256:c33f0bc…` (the current 3.13-slim digest), realigning the `FROM` line with its own guard comment so the container resolves the CVE-clean AI stack. This regression surfaced the same cycle the patch/minor Dependabot auto-merge was removed in favour of human review — it is exactly the class of unreviewed-dependency-change that review catches.
+
 ## [0.10.12] - 2026-06-23
 
 **Theme**: *v0.10.12 — full CLI↔GUI parity build-out + the OMB M-25-21 AI-governance migration*. A feature-rich minor release: the local web console reaches **~98% CLI↔GUI parity** (up from ~13% in v0.10.11), the AI-governance module migrates to current federal guidance (**OMB M-25-21**), and the supply-chain / security posture is hardened (continuous fuzzing, an SSRF fix, and OpenSSF Scorecard lifts).

@@ -52,7 +52,7 @@ For the full workspace (AI risk-statements, REST API, all collectors, MCP server
 pip install 'evidentia[ai,api,collectors,mcp]'
 ```
 
-Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.10.12` (cosign keyless OIDC + SLSA Provenance v1 verified).
+Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.10.13` (cosign keyless OIDC + SLSA Provenance v1 verified).
 
 See the [Getting Started wiki section](https://github.com/Polycentric-Labs/evidentia/wiki/Getting-Started) for air-gapped install, virtualenv setup, and full extras matrix.
 
@@ -119,11 +119,11 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 
 ## Recent Releases
 
+**v0.10.13 (2026-06-23)** — *Patch — restore the container base to Python 3.13*. **Container base reverted to `python:3.13-slim`** after a Dependabot bump (#83) to `python:3.14-slim` broke `release.yml`'s container build.
+
 **v0.10.12 (2026-06-23)** — *full CLI↔GUI parity build-out + the OMB M-25-21 AI-governance migration*. **OMB M-25-21 "high-impact AI" model**, the AI-governance module now reflects current federal guidance; **Full CLI↔GUI parity build-out**, the local web console grows to **22 consoles at ~98% CLI↔GUI parity** (up from ~13% in v0.10.11), with matched REST endpoints for every new console.
 
 **v0.10.11 (2026-06-17)** — *public demo completion + signed traceability + hygiene*. **Signed Control↔Threat Traceability Matrix**, a new `evidentia traceability emit` verb produces a Sigstore-signable OSCAL profile mapping controls to the threats they mitigate; **OSCAL emit/verify console view**.
-
-**v0.10.10 (2026-06-15)** — *supply-chain hardening + the public demo suite*. **FDA Section 524B medical-device pack.** Generic, public support for FDA premarket device cybersecurity, in four parts.
 
 Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https://github.com/Polycentric-Labs/evidentia/releases)
 
