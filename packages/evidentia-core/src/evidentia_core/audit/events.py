@@ -361,10 +361,11 @@ class EventAction(str, Enum):
     log itself is the only remaining record. Added v0.9.4 Step 5.A
     (F-V94-Q12) to disambiguate from the retire semantic."""
 
-    # ── Federal AI governance (v0.9.6 P3) ──
-    # FIPS 199 + OMB M-24-10 + SCR emit surfaces. Each writes one
-    # event to the audit log so the SSP / ATO / continuous-monitoring
-    # reviewer can trace the provenance of inventory metadata.
+    # ── Federal AI governance (v0.9.6 P3; M-25-21 added v0.10.12) ──
+    # FIPS 199 + OMB (M-24-10 legacy / M-25-21 high-impact) + SCR emit
+    # surfaces. Each writes one event to the audit log so the SSP / ATO /
+    # continuous-monitoring reviewer can trace the provenance of
+    # inventory metadata.
     AI_SYSTEM_FIPS_CATEGORIZED = "evidentia.ai_governance.system_fips_categorized"
     """Fired when FIPS 199 categorization is set or updated on an
     AI system registry entry via ``evidentia ai-gov categorize-fips``
@@ -372,10 +373,21 @@ class EventAction(str, Enum):
     high-water-mark overall."""
 
     AI_SYSTEM_OMB_CLASSIFIED = "evidentia.ai_governance.system_omb_classified"
-    """Fired when OMB M-24-10 impact category is set or updated via
-    ``evidentia ai-gov set-omb-impact`` or ``ai-gov update``. Payload
-    carries the new category (rights_impacting / safety_impacting /
-    rights_and_safety_impacting / neither)."""
+    """Fired when the legacy OMB M-24-10 impact category is set or updated
+    via ``evidentia ai-gov set-omb-impact`` or ``ai-gov update``. Payload
+    carries the category (rights_impacting / safety_impacting /
+    rights_and_safety_impacting / neither). DEPRECATED v0.10.12 (M-24-10
+    rescinded 2025-04-03); see AI_SYSTEM_HIGH_IMPACT_CLASSIFIED. Retained
+    + still fired by the legacy verb for backward compatibility."""
+
+    AI_SYSTEM_HIGH_IMPACT_CLASSIFIED = (
+        "evidentia.ai_governance.system_high_impact_classified"
+    )
+    """Fired when the OMB M-25-21 high-impact AI determination is set or
+    updated via ``evidentia ai-gov set-high-impact``. Payload carries the
+    determination (high_impact / not_high_impact / not_assessed) + the
+    consequence bases. Added v0.10.12 — supersedes
+    AI_SYSTEM_OMB_CLASSIFIED after M-24-10's rescission by M-25-21."""
 
     AI_SYSTEM_SCR_EMITTED = "evidentia.ai_governance.system_scr_emitted"
     """Fired when a Significant Change Request form is emitted via

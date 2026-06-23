@@ -34,6 +34,12 @@ from evidentia_core.ai_governance.omb_m_24_10 import (
     OMBImpactCategory,
     triggers_minimum_practices,
 )
+from evidentia_core.ai_governance.omb_m_25_21 import (
+    HighImpactBasis,
+    HighImpactDetermination,
+    OMBHighImpactAssessment,
+    crosswalk_from_legacy,
+)
 from evidentia_core.ai_governance.registry import (
     AISystemRegistryEntry,
     ATOReference,
@@ -55,9 +61,13 @@ __all__ = [
     "EUAIActTier",
     "FIPS199Categorization",
     "FIPS199Impact",
+    "HighImpactBasis",
+    "HighImpactDetermination",
     "NISTAIRMFFunction",
+    "OMBHighImpactAssessment",
     "OMBImpactCategory",
     "classify",
+    "crosswalk_from_legacy",
     "get_default_registry_store",
     "triggers_minimum_practices",
 ]

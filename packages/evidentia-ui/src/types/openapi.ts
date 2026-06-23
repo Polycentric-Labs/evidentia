@@ -168,6 +168,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ai-gov/systems/{system_id}/set-high-impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ai Gov Set High Impact
+         * @description Set the OMB M-25-21 high-impact AI determination on a system.
+         *
+         *     Supersedes ``set-omb-impact`` after M-24-10's 2025-04-03 rescission
+         *     by M-25-21. A ``high_impact`` determination triggers the M-25-21
+         *     minimum risk-management practices.
+         */
+        post: operations["ai_gov_set_high_impact_api_ai_gov_systems__system_id__set_high_impact_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ai-gov/systems/{system_id}/set-omb-impact": {
         parameters: {
             query?: never;
@@ -5016,6 +5040,46 @@ export interface components {
             version: string;
         };
         /**
+         * HighImpactBasis
+         * @description An M-25-21 consequence area that can make an AI use high-impact.
+         *
+         *     The memo defines high-impact AI by the effect of the system's output
+         *     on these areas. An :class:`OMBHighImpactAssessment` carries the
+         *     subset that applies (a system can be high-impact on multiple
+         *     grounds). String values are stable (persisted in inventories).
+         * @enum {string}
+         */
+        HighImpactBasis: "civil_rights_liberties_privacy" | "essential_services_access" | "critical_government_resources" | "health_and_safety" | "critical_infrastructure" | "strategic_assets";
+        /**
+         * HighImpactDetermination
+         * @description OMB M-25-21 high-impact AI determination.
+         *
+         *     Replaces the legacy four-value rights/safety taxonomy with the
+         *     single consolidated category M-25-21 defines. String values are
+         *     stable across releases so persisted YAML / JSON inventories survive
+         *     minor / major version bumps (same contract the legacy enum carries).
+         * @enum {string}
+         */
+        HighImpactDetermination: "high_impact" | "not_high_impact" | "not_assessed";
+        /**
+         * HighImpactRequest
+         * @description Body for ``POST /ai-gov/systems/{system_id}/set-high-impact``.
+         *
+         *     OMB M-25-21 high-impact AI determination + consequence bases.
+         *     Supersedes :class:`OMBImpactRequest` after M-24-10's rescission.
+         */
+        HighImpactRequest: {
+            /**
+             * Bases
+             * @description Consequence area(s) that make the system high-impact. Meaningful only when determination is high_impact.
+             */
+            bases?: components["schemas"]["HighImpactBasis"][];
+            /** @description OMB M-25-21 high-impact determination: high_impact / not_high_impact / not_assessed. */
+            determination: components["schemas"]["HighImpactDetermination"];
+            /** Rationale */
+            rationale?: string | null;
+        };
+        /**
          * ImplementationEffort
          * @description Estimated effort to remediate a gap.
          * @enum {string}
@@ -5776,6 +5840,14 @@ export interface components {
          * OMBImpactCategory
          * @description OMB M-24-10 §5(b) AI impact classification.
          *
+         *     .. deprecated:: 0.10.12
+         *        Superseded by
+         *        :class:`~evidentia_core.ai_governance.omb_m_25_21.HighImpactDetermination`
+         *        after M-24-10's 2025-04-03 rescission. Retained for backward
+         *        compatibility (string values + import path are stable); map a
+         *        value forward with
+         *        :func:`~evidentia_core.ai_governance.omb_m_25_21.crosswalk_from_legacy`.
+         *
          *     Operators rate per the published §5 definitions + worked examples
          *     in agency compliance plans (Federal Reserve / EXIM / SBA / DOJ /
          *     VA / EEOC each ship their interpretation of the categories).
@@ -5787,6 +5859,11 @@ export interface components {
         /**
          * OMBImpactRequest
          * @description Body for ``POST /ai-gov/systems/{system_id}/set-omb-impact``.
+         *
+         *     DEPRECATED (v0.10.12): legacy OMB M-24-10 surface. M-24-10 was
+         *     rescinded 2025-04-03 by M-25-21 — use the ``set-high-impact``
+         *     endpoint + :class:`HighImpactRequest`. Retained for backward
+         *     compatibility.
          */
         OMBImpactRequest: {
             /** @description OMB M-24-10 §5(b) category: rights_impacting / safety_impacting / rights_and_safety_impacting / neither. */
@@ -7540,6 +7617,43 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ai_gov_set_high_impact_api_ai_gov_systems__system_id__set_high_impact_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                system_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HighImpactRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

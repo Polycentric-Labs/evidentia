@@ -3246,6 +3246,63 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "HighImpactBasis": {
+        "description": "An M-25-21 consequence area that can make an AI use high-impact.\n\nThe memo defines high-impact AI by the effect of the system's output\non these areas. An :class:`OMBHighImpactAssessment` carries the\nsubset that applies (a system can be high-impact on multiple\ngrounds). String values are stable (persisted in inventories).",
+        "enum": [
+          "civil_rights_liberties_privacy",
+          "essential_services_access",
+          "critical_government_resources",
+          "health_and_safety",
+          "critical_infrastructure",
+          "strategic_assets"
+        ],
+        "title": "HighImpactBasis",
+        "type": "string"
+      },
+      "HighImpactDetermination": {
+        "description": "OMB M-25-21 high-impact AI determination.\n\nReplaces the legacy four-value rights/safety taxonomy with the\nsingle consolidated category M-25-21 defines. String values are\nstable across releases so persisted YAML / JSON inventories survive\nminor / major version bumps (same contract the legacy enum carries).",
+        "enum": [
+          "high_impact",
+          "not_high_impact",
+          "not_assessed"
+        ],
+        "title": "HighImpactDetermination",
+        "type": "string"
+      },
+      "HighImpactRequest": {
+        "description": "Body for ``POST /ai-gov/systems/{system_id}/set-high-impact``.\n\nOMB M-25-21 high-impact AI determination + consequence bases.\nSupersedes :class:`OMBImpactRequest` after M-24-10's rescission.",
+        "properties": {
+          "bases": {
+            "description": "Consequence area(s) that make the system high-impact. Meaningful only when determination is high_impact.",
+            "items": {
+              "$ref": "#/components/schemas/HighImpactBasis"
+            },
+            "title": "Bases",
+            "type": "array"
+          },
+          "determination": {
+            "$ref": "#/components/schemas/HighImpactDetermination",
+            "description": "OMB M-25-21 high-impact determination: high_impact / not_high_impact / not_assessed."
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          }
+        },
+        "required": [
+          "determination"
+        ],
+        "title": "HighImpactRequest",
+        "type": "object"
+      },
       "ImplementationEffort": {
         "description": "Estimated effort to remediate a gap.",
         "enum": [
@@ -4505,7 +4562,7 @@
         "type": "string"
       },
       "OMBImpactCategory": {
-        "description": "OMB M-24-10 §5(b) AI impact classification.\n\nOperators rate per the published §5 definitions + worked examples\nin agency compliance plans (Federal Reserve / EXIM / SBA / DOJ /\nVA / EEOC each ship their interpretation of the categories).\nString values stable across releases so persisted YAML / JSON\ninventories survive minor / major version bumps.",
+        "description": "OMB M-24-10 §5(b) AI impact classification.\n\n.. deprecated:: 0.10.12\n   Superseded by\n   :class:`~evidentia_core.ai_governance.omb_m_25_21.HighImpactDetermination`\n   after M-24-10's 2025-04-03 rescission. Retained for backward\n   compatibility (string values + import path are stable); map a\n   value forward with\n   :func:`~evidentia_core.ai_governance.omb_m_25_21.crosswalk_from_legacy`.\n\nOperators rate per the published §5 definitions + worked examples\nin agency compliance plans (Federal Reserve / EXIM / SBA / DOJ /\nVA / EEOC each ship their interpretation of the categories).\nString values stable across releases so persisted YAML / JSON\ninventories survive minor / major version bumps.",
         "enum": [
           "rights_impacting",
           "safety_impacting",
@@ -4516,7 +4573,7 @@
         "type": "string"
       },
       "OMBImpactRequest": {
-        "description": "Body for ``POST /ai-gov/systems/{system_id}/set-omb-impact``.",
+        "description": "Body for ``POST /ai-gov/systems/{system_id}/set-omb-impact``.\n\nDEPRECATED (v0.10.12): legacy OMB M-24-10 surface. M-24-10 was\nrescinded 2025-04-03 by M-25-21 — use the ``set-high-impact``\nendpoint + :class:`HighImpactRequest`. Retained for backward\ncompatibility.",
         "properties": {
           "category": {
             "$ref": "#/components/schemas/OMBImpactCategory",
@@ -7246,6 +7303,61 @@
           }
         },
         "summary": "Ai Gov Retire System",
+        "tags": [
+          "ai-gov"
+        ]
+      }
+    },
+    "/api/ai-gov/systems/{system_id}/set-high-impact": {
+      "post": {
+        "description": "Set the OMB M-25-21 high-impact AI determination on a system.\n\nSupersedes ``set-omb-impact`` after M-24-10's 2025-04-03 rescission\nby M-25-21. A ``high_impact`` determination triggers the M-25-21\nminimum risk-management practices.",
+        "operationId": "ai_gov_set_high_impact_api_ai_gov_systems__system_id__set_high_impact_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "system_id",
+            "required": true,
+            "schema": {
+              "title": "System Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HighImpactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Ai Gov Set High Impact Api Ai Gov Systems  System Id  Set High Impact Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ai Gov Set High Impact",
         "tags": [
           "ai-gov"
         ]

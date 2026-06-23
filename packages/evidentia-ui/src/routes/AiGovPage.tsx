@@ -23,6 +23,7 @@ import {
   type AISystemEntry,
   type AISystemRegisterRequest,
   type FIPS199CategorizeRequest,
+  type HighImpactRequest,
   type OMBImpactRequest,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -55,6 +56,9 @@ type DeploymentStatus = components["schemas"]["DeploymentStatus"];
 type EUAIActTier = components["schemas"]["EUAIActTier"];
 type FIPS199Impact = components["schemas"]["FIPS199Impact"];
 type OMBImpactCategory = components["schemas"]["OMBImpactCategory"];
+type HighImpactDetermination =
+  components["schemas"]["HighImpactDetermination"];
+type HighImpactBasis = components["schemas"]["HighImpactBasis"];
 
 const TIER_FILTER_OPTIONS: [EUAIActTier | null, string][] = [
   [null, "All tiers"],
@@ -84,6 +88,37 @@ const OMB_PICKER_OPTIONS: [OMBImpactCategory, string][] = [
   ["rights_and_safety_impacting", "Rights & safety"],
   ["neither", "Neither"],
 ];
+
+// OMB M-25-21 high-impact AI (supersedes the rescinded M-24-10 split above).
+const DETERMINATION_PICKER_OPTIONS: [HighImpactDetermination, string][] = [
+  ["high_impact", "High-impact"],
+  ["not_high_impact", "Not high-impact"],
+  ["not_assessed", "Not assessed"],
+];
+
+const BASIS_PICKER_OPTIONS: [HighImpactBasis, string][] = [
+  ["civil_rights_liberties_privacy", "Civil rights / liberties / privacy"],
+  ["essential_services_access", "Essential-services access"],
+  ["critical_government_resources", "Critical government resources"],
+  ["health_and_safety", "Health & safety"],
+  ["critical_infrastructure", "Critical infrastructure"],
+  ["strategic_assets", "Strategic assets"],
+];
+
+const DETERMINATION_LABELS: Record<HighImpactDetermination, string> = {
+  high_impact: "High-impact",
+  not_high_impact: "Not high-impact",
+  not_assessed: "Not assessed",
+};
+
+const BASIS_LABELS: Record<HighImpactBasis, string> = {
+  civil_rights_liberties_privacy: "Civil rights / liberties / privacy",
+  essential_services_access: "Essential-services access",
+  critical_government_resources: "Critical government resources",
+  health_and_safety: "Health & safety",
+  critical_infrastructure: "Critical infrastructure",
+  strategic_assets: "Strategic assets",
+};
 
 const DEPLOYMENT_LABELS: Record<DeploymentStatus, string> = {
   proposed: "Proposed",
@@ -127,7 +162,14 @@ interface NormalizedSystem {
     availability: string | null;
     overall: string | null;
   } | null;
+  /** Legacy OMB M-24-10 category (rescinded; shown only if present). */
   ombImpact: string | null;
+  /** OMB M-25-21 high-impact assessment. */
+  highImpact: {
+    determination: string | null;
+    bases: string[];
+    rationale: string | null;
+  } | null;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -180,6 +222,17 @@ function normalizeEntry(entry: AISystemEntry): NormalizedSystem {
   const ombImpact =
     asString(entry.omb_impact) ?? asString(ombRecord?.category);
 
+  const hiRecord = asRecord(entry.omb_high_impact);
+  const highImpact = hiRecord
+    ? {
+        determination: asString(hiRecord.determination),
+        bases: Array.isArray(hiRecord.bases)
+          ? hiRecord.bases.filter((b): b is string => typeof b === "string")
+          : [],
+        rationale: asString(hiRecord.rationale),
+      }
+    : null;
+
   return {
     id,
     name,
@@ -191,6 +244,7 @@ function normalizeEntry(entry: AISystemEntry): NormalizedSystem {
     sspReference: asString(entry.ssp_reference),
     fips,
     ombImpact,
+    highImpact,
   };
 }
 
@@ -209,7 +263,7 @@ export function AiGovPage() {
         <h1 className="page-title">AI governance</h1>
         <p className="page-sub">
           EU AI Act / NIST AI RMF classification plus a FIPS 199 + OMB
-          M-24-10 AI-system registry.
+          M-25-21 high-impact AI-system registry.
         </p>
       </header>
 
@@ -927,17 +981,49 @@ function SystemDetailPanel({
                 </dd>
               </div>
               <div className="stack-1">
-                <dt className="muted text-xs">OMB M-24-10 impact</dt>
+                <dt className="muted text-xs">High-impact AI (OMB M-25-21)</dt>
                 <dd>
-                  {system.ombImpact ? (
+                  {system.highImpact?.determination ? (
+                    <Badge
+                      variant={
+                        system.highImpact.determination === "high_impact"
+                          ? "high"
+                          : "outline"
+                      }
+                    >
+                      {DETERMINATION_LABELS[
+                        system.highImpact
+                          .determination as HighImpactDetermination
+                      ] ?? system.highImpact.determination.replace(/_/g, " ")}
+                    </Badge>
+                  ) : (
+                    <span className="dim">not assessed</span>
+                  )}
+                  {system.highImpact &&
+                    system.highImpact.bases.length > 0 && (
+                      <div className="row gap-1 wrap mt-1">
+                        {system.highImpact.bases.map((b) => (
+                          <Badge key={b} variant="secondary">
+                            {BASIS_LABELS[b as HighImpactBasis] ??
+                              b.replace(/_/g, " ")}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                </dd>
+              </div>
+              {system.ombImpact && (
+                <div className="stack-1">
+                  <dt className="muted text-xs">
+                    OMB M-24-10 (rescinded — legacy)
+                  </dt>
+                  <dd>
                     <Badge variant="outline">
                       {system.ombImpact.replace(/_/g, " ")}
                     </Badge>
-                  ) : (
-                    <span className="dim">not set</span>
-                  )}
-                </dd>
-              </div>
+                  </dd>
+                </div>
+              )}
             </dl>
 
             <CardFooter className="row wrap gap-2 pt-0">
@@ -1005,6 +1091,8 @@ function SystemDetailPanel({
             )}
 
             <FipsCategorizeForm systemId={systemId} onSaved={invalidate} />
+
+            <HighImpactForm systemId={systemId} onSaved={invalidate} />
 
             <OmbImpactForm systemId={systemId} onSaved={invalidate} />
           </div>
@@ -1224,7 +1312,8 @@ function FipsCategorizeForm({
   );
 }
 
-/** OMB M-24-10 impact — single category select. */
+/** OMB M-24-10 impact — single category select. DEPRECATED (v0.10.12):
+ *  M-24-10 was rescinded 2025-04-03 by M-25-21; kept for legacy entries. */
 function OmbImpactForm({
   systemId,
   onSaved,
@@ -1244,14 +1333,17 @@ function OmbImpactForm({
   return (
     <form
       className="stack-4 border-t pt-4"
-      aria-label="Set OMB impact"
+      aria-label="Set OMB impact (legacy M-24-10)"
       onSubmit={(e) => {
         e.preventDefault();
         if (mutation.isPending) return;
         mutation.mutate({ category });
       }}
     >
-      <h3 className="section-num">Set OMB impact</h3>
+      <h3 className="section-num">Set OMB impact (legacy M-24-10)</h3>
+      <p className="text-xs muted">
+        Rescinded 2025-04-03 by M-25-21 — prefer “Set high-impact AI” above.
+      </p>
       <div
         className="row wrap gap-2"
         role="radiogroup"
@@ -1279,6 +1371,119 @@ function OmbImpactForm({
       {mutation.isError && (
         <Alert variant="destructive">
           <AlertTitle>Could not set OMB impact</AlertTitle>
+          <AlertDescription>{apiErrorText(mutation.error)}</AlertDescription>
+        </Alert>
+      )}
+    </form>
+  );
+}
+
+/** OMB M-25-21 high-impact AI — determination + consequence bases. */
+function HighImpactForm({
+  systemId,
+  onSaved,
+}: {
+  systemId: string;
+  onSaved: () => void;
+}) {
+  const [determination, setDetermination] =
+    useState<HighImpactDetermination>("high_impact");
+  const [bases, setBases] = useState<HighImpactBasis[]>([]);
+  const [rationale, setRationale] = useState("");
+
+  const mutation = useMutation({
+    mutationFn: (body: HighImpactRequest) =>
+      api.setHighImpactAiSystem(systemId, body),
+    onSuccess: onSaved,
+  });
+
+  const toggleBasis = (value: HighImpactBasis) =>
+    setBases((prev) =>
+      prev.includes(value)
+        ? prev.filter((b) => b !== value)
+        : [...prev, value],
+    );
+
+  return (
+    <form
+      className="stack-4 border-t pt-4"
+      aria-label="Set high-impact AI"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (mutation.isPending) return;
+        mutation.mutate({
+          determination,
+          bases,
+          ...(rationale.trim() ? { rationale: rationale.trim() } : {}),
+        });
+      }}
+    >
+      <h3 className="section-num">Set high-impact AI (OMB M-25-21)</h3>
+      <div className="stack-2">
+        <span className="text-sm font-medium leading-none">Determination</span>
+        <div
+          className="row wrap gap-2"
+          role="radiogroup"
+          aria-label="High-impact determination"
+        >
+          {DETERMINATION_PICKER_OPTIONS.map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={determination === value}
+              onClick={() => setDetermination(value)}
+              className={cn("pill", determination === value && "on")}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="stack-2">
+        <span className="text-sm font-medium leading-none">
+          Consequence bases{" "}
+          <span className="muted">(for high-impact)</span>
+        </span>
+        <div
+          className="row wrap gap-2"
+          role="group"
+          aria-label="High-impact consequence bases"
+        >
+          {BASIS_PICKER_OPTIONS.map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={bases.includes(value)}
+              onClick={() => toggleBasis(value)}
+              className={cn("pill", bases.includes(value) && "on")}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="stack-2">
+        <Label htmlFor="high-impact-rationale">Rationale (optional)</Label>
+        <Textarea
+          id="high-impact-rationale"
+          value={rationale}
+          onChange={(e) => setRationale(e.target.value)}
+          placeholder="Why this determination applies."
+        />
+      </div>
+
+      <div className="row-end">
+        <Button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? "Saving..." : "Set high-impact"}
+        </Button>
+      </div>
+
+      {mutation.isError && (
+        <Alert variant="destructive">
+          <AlertTitle>Could not set high-impact AI</AlertTitle>
           <AlertDescription>{apiErrorText(mutation.error)}</AlertDescription>
         </Alert>
       )}

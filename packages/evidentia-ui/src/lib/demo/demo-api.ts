@@ -71,6 +71,7 @@ import type {
   AISystemEntry,
   FIPS199CategorizeRequest,
   OMBImpactRequest,
+  HighImpactRequest,
   OscalVerifyRequest,
   TraceabilityMatrix,
   SecurityFinding,
@@ -414,6 +415,12 @@ const DEMO_AI_SYSTEMS: AISystemEntry[] = [
     provider: "Meridian (internal)",
     deployment_status: "production",
     eu_ai_act_tier: "high",
+    omb_high_impact: {
+      determination: "high_impact",
+      bases: ["civil_rights_liberties_privacy", "essential_services_access"],
+      rationale:
+        "Adjudicates access to an essential service (consumer credit).",
+    },
   },
   {
     id: "demo-ai-chat-helpdesk",
@@ -1188,6 +1195,18 @@ export const demoApi = {
       ...clone(base),
       id: systemId,
       omb_impact: clone(body),
+    });
+  },
+  setHighImpactAiSystem: (
+    systemId: string,
+    body: HighImpactRequest,
+  ): Promise<AISystemEntry> => {
+    const base =
+      DEMO_AI_SYSTEMS.find((s) => s.id === systemId) ?? DEMO_AI_SYSTEMS[0];
+    return Promise.resolve({
+      ...clone(base),
+      id: systemId,
+      omb_high_impact: clone(body),
     });
   },
 

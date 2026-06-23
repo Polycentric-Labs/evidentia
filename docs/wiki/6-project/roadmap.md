@@ -1940,6 +1940,8 @@ Patch (0.10.10 → 0.10.11). Per-cycle detail: [`v0.10.11-plan.md`](https://gith
 
 A single, heavily-planned, subagent-driven, multi-step-verified push to bring the web console to (near-)full CLI parity in one sitting (the v0.10.7 GUI-rebuild / wiki-population playbook). **Planning deliverable: a comprehensive surface × tier matrix** — for every capability, decide its presence and scope on each surface (**CLI** / self-hosted **GUI** / hosted **web app**), and adopt a standing rule that every *new* feature gets an explicit surface decision. (The detailed breakdown is a private planning artifact, not this public roadmap.) The planning pass reconciles the prior surface/tier research via project-file synthesis + dedicated `polycentric-labcoat` research fleets. (Keeps v0.11 reserved for the federal theme below.) The cycle **closes with a docs/ curation + CHANGELOG trim** once the console is at parity — archive the accumulated per-cycle plan + security-review docs and tighten the CHANGELOG (housekeeping, run last).
 
+Also folded in (additive, backward-compatible): the AI-governance module **migrates from the rescinded OMB M-24-10 to the M-25-21 "high-impact AI" model**. M-24-10 (2024-03-28) was rescinded 2025-04-03 by M-25-21, which collapses the old rights-impacting / safety-impacting split into one **high-impact AI** category across six bases (civil rights/liberties/privacy, access to essential services, critical government resources, health & safety, critical infrastructure, strategic assets). New `evidentia_core.ai_governance.omb_m_25_21` module (`HighImpactDetermination` + `HighImpactBasis` enums + `OMBHighImpactAssessment` model + `triggers_minimum_practices()` + `crosswalk_from_legacy()`), `evidentia ai-gov set-high-impact` CLI verb, `POST /api/ai-gov/systems/{system_id}/set-high-impact` REST route, `AI_SYSTEM_HIGH_IMPACT_CLASSIFIED` audit event, and an additive `omb_high_impact` registry field. The legacy M-24-10 module + `OMBImpactCategory` + `set-omb-impact` CLI/REST verb + `omb_impact` field remain DEPRECATED-but-functional (no behaviour change). The seven M-25-21 minimum risk-management practices are DOCUMENTED this cycle; structured per-practice tracking is deferred to v0.11 (see below).
+
 ### v0.11 — Federal-compliance theme + AI governance — PLANNED (post-deep-dive)
 
 Sourced from Phase B audit v3 + integration plan §"Per-release
@@ -1981,6 +1983,15 @@ detailed integration plan" §v0.11. Substantive minor (~6-8 weeks):
   AI Act Annex III + ISO 42001 Clauses 4-10 + Annex A controls
   (zero public OSS equivalent); (Phase 4) Council of Europe AI
   Convention (CETS 225) Tier-C stub.
+- **OMB M-25-21 full minimum-practice tracking** — structured
+  per-practice status for the seven M-25-21 minimum risk-management
+  practices (pre-deployment testing, AI impact assessment, ongoing
+  monitoring, human training, human oversight, remedies & appeals,
+  public feedback) as an extension of `OMBHighImpactAssessment`
+  (the v0.10.12 module DOCUMENTS the seven practices; v0.11 wires
+  structured per-practice tracking). Plus an **M-25-22 procurement-
+  lifecycle surface** (M-25-22 replaced M-24-18 on 2025-04-03;
+  Evidentia models no procurement surface today).
 - **`evidentia vex publish --rekor`** — Sigstore Rekor attestation
   via `cosign attest --type openvex`. Closes OSPS-VM-04 maturity-3
   control + CISA SbD Goal 6 alignment.

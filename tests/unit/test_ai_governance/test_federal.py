@@ -14,6 +14,7 @@ Covers:
 
 from __future__ import annotations
 
+import json
 from datetime import date
 
 import pytest
@@ -27,6 +28,15 @@ from evidentia_core.ai_governance import (
     OMBImpactCategory,
     classify,
     triggers_minimum_practices,
+)
+from evidentia_core.ai_governance.omb_m_25_21 import (
+    HighImpactBasis,
+    HighImpactDetermination,
+    OMBHighImpactAssessment,
+    crosswalk_from_legacy,
+)
+from evidentia_core.ai_governance.omb_m_25_21 import (
+    triggers_minimum_practices as high_impact_triggers_minimum_practices,
 )
 from evidentia_core.ai_governance.scr import (
     SCRCategory,
@@ -168,6 +178,117 @@ class TestOMBImpactCategory:
         assert OMBImpactCategory.NEITHER.value == "neither"
 
 
+# ── OMB M-25-21 high-impact AI (v0.10.12) ──────────────────────────
+
+
+class TestHighImpactDetermination:
+    def test_high_impact_triggers(self) -> None:
+        assert high_impact_triggers_minimum_practices(
+            HighImpactDetermination.HIGH_IMPACT
+        )
+
+    def test_not_high_impact_does_not_trigger(self) -> None:
+        assert not high_impact_triggers_minimum_practices(
+            HighImpactDetermination.NOT_HIGH_IMPACT
+        )
+
+    def test_not_assessed_does_not_trigger(self) -> None:
+        assert not high_impact_triggers_minimum_practices(
+            HighImpactDetermination.NOT_ASSESSED
+        )
+
+    def test_triggers_accepts_string_value(self) -> None:
+        # Registry entries persist enums as string values; the helper
+        # must coerce a raw string back to the enum.
+        assert high_impact_triggers_minimum_practices("high_impact")
+        assert not high_impact_triggers_minimum_practices("not_high_impact")
+
+    def test_enum_values_stable(self) -> None:
+        # Persisted in YAML/JSON inventories — must not drift.
+        assert HighImpactDetermination.HIGH_IMPACT.value == "high_impact"
+        assert (
+            HighImpactDetermination.NOT_HIGH_IMPACT.value == "not_high_impact"
+        )
+        assert HighImpactDetermination.NOT_ASSESSED.value == "not_assessed"
+
+
+class TestHighImpactBasis:
+    def test_six_bases_present(self) -> None:
+        assert len(list(HighImpactBasis)) == 6
+
+    def test_basis_values_stable(self) -> None:
+        assert {b.value for b in HighImpactBasis} == {
+            "civil_rights_liberties_privacy",
+            "essential_services_access",
+            "critical_government_resources",
+            "health_and_safety",
+            "critical_infrastructure",
+            "strategic_assets",
+        }
+
+
+class TestOMBHighImpactAssessment:
+    def test_minimal_construction(self) -> None:
+        a = OMBHighImpactAssessment(
+            determination=HighImpactDetermination.NOT_ASSESSED
+        )
+        assert a.bases == []
+        assert a.rationale is None
+
+    def test_bases_and_rationale(self) -> None:
+        a = OMBHighImpactAssessment(
+            determination=HighImpactDetermination.HIGH_IMPACT,
+            bases=[
+                HighImpactBasis.HEALTH_AND_SAFETY,
+                HighImpactBasis.CRITICAL_INFRASTRUCTURE,
+            ],
+            rationale="Autonomous control of safety-critical equipment.",
+        )
+        # use_enum_values → stored as the string values.
+        assert a.determination == "high_impact"
+        assert a.bases == ["health_and_safety", "critical_infrastructure"]
+        assert "safety-critical" in (a.rationale or "")
+
+    def test_string_coercion_round_trip(self) -> None:
+        a = OMBHighImpactAssessment.model_validate(
+            {
+                "determination": "high_impact",
+                "bases": ["strategic_assets"],
+            }
+        )
+        assert a.determination == "high_impact"
+        assert a.bases == ["strategic_assets"]
+
+
+class TestLegacyCrosswalk:
+    def test_rights_impacting_maps_to_high_impact(self) -> None:
+        a = crosswalk_from_legacy(OMBImpactCategory.RIGHTS_IMPACTING)
+        assert a.determination == HighImpactDetermination.HIGH_IMPACT
+        assert "civil_rights_liberties_privacy" in a.bases
+        assert "M-25-21" in (a.rationale or "")
+
+    def test_safety_impacting_maps_to_high_impact(self) -> None:
+        a = crosswalk_from_legacy(OMBImpactCategory.SAFETY_IMPACTING)
+        assert a.determination == HighImpactDetermination.HIGH_IMPACT
+        assert "health_and_safety" in a.bases
+
+    def test_both_maps_to_high_impact_with_four_bases(self) -> None:
+        a = crosswalk_from_legacy(
+            OMBImpactCategory.RIGHTS_AND_SAFETY_IMPACTING
+        )
+        assert a.determination == HighImpactDetermination.HIGH_IMPACT
+        assert len(a.bases) == 4
+
+    def test_neither_maps_to_not_high_impact(self) -> None:
+        a = crosswalk_from_legacy(OMBImpactCategory.NEITHER)
+        assert a.determination == HighImpactDetermination.NOT_HIGH_IMPACT
+        assert a.bases == []
+
+    def test_crosswalk_accepts_string_value(self) -> None:
+        a = crosswalk_from_legacy("neither")
+        assert a.determination == HighImpactDetermination.NOT_HIGH_IMPACT
+
+
 # ── ATOReference + registry extension ──────────────────────────────
 
 
@@ -234,6 +355,42 @@ class TestRegistryFederalExtension:
         assert loaded.ssp_reference == "emass://12345"
         assert loaded.ato_reference is not None
         assert loaded.ato_reference.system_name == "fed-system"
+
+    def test_high_impact_field_defaults_none(self) -> None:
+        # Backward-compat: pre-v0.10.12 entries carry no omb_high_impact.
+        entry = _make_entry()
+        assert entry.omb_high_impact is None
+
+    def test_round_trip_with_both_omb_fields(self) -> None:
+        # The legacy M-24-10 field and the new M-25-21 field are
+        # independent and both persist + reload.
+        entry = _make_entry(
+            omb_impact=OMBImpactCategory.RIGHTS_IMPACTING,
+            omb_high_impact=OMBHighImpactAssessment(
+                determination=HighImpactDetermination.HIGH_IMPACT,
+                bases=[HighImpactBasis.CIVIL_RIGHTS_LIBERTIES_PRIVACY],
+                rationale="Adjudicates a civil-rights-relevant decision.",
+            ),
+        )
+        loaded = AISystemRegistryEntry.model_validate_json(
+            entry.model_dump_json()
+        )
+        assert loaded.omb_impact == OMBImpactCategory.RIGHTS_IMPACTING
+        assert loaded.omb_high_impact is not None
+        assert loaded.omb_high_impact.determination == "high_impact"
+        assert loaded.omb_high_impact.bases == [
+            "civil_rights_liberties_privacy"
+        ]
+
+    def test_legacy_omb_only_entry_loads_without_high_impact(self) -> None:
+        # An entry serialized with only the legacy field (no
+        # omb_high_impact key) must still deserialize.
+        entry = _make_entry(omb_impact=OMBImpactCategory.SAFETY_IMPACTING)
+        raw = json.loads(entry.model_dump_json())
+        raw.pop("omb_high_impact", None)
+        loaded = AISystemRegistryEntry.model_validate(raw)
+        assert loaded.omb_impact == OMBImpactCategory.SAFETY_IMPACTING
+        assert loaded.omb_high_impact is None
 
     def test_legacy_entry_json_loads(self) -> None:
         """v0.9.3 – v0.9.5 entries (pre-federal) should deserialize."""
@@ -325,6 +482,51 @@ class TestClassifyChange:
         # fired. Routine recurring.
         assert classify_change(prior, new) == SCRCategory.ROUTINE_RECURRING
 
+    def test_high_impact_escalation_is_transformative(self) -> None:
+        prior = _make_entry(
+            omb_high_impact=OMBHighImpactAssessment(
+                determination=HighImpactDetermination.NOT_HIGH_IMPACT
+            )
+        )
+        new = prior.model_copy(
+            update={
+                "omb_high_impact": OMBHighImpactAssessment(
+                    determination=HighImpactDetermination.HIGH_IMPACT,
+                    bases=[HighImpactBasis.HEALTH_AND_SAFETY],
+                )
+            }
+        )
+        assert classify_change(prior, new) == SCRCategory.TRANSFORMATIVE
+
+    def test_high_impact_first_population_is_routine(self) -> None:
+        """None → HIGH_IMPACT (first-time population) must NOT trigger a
+        transformative SCR — operators migrating to M-25-21 shouldn't get
+        spurious change-requests."""
+        prior = _make_entry(omb_high_impact=None)
+        new = prior.model_copy(
+            update={
+                "omb_high_impact": OMBHighImpactAssessment(
+                    determination=HighImpactDetermination.HIGH_IMPACT
+                )
+            }
+        )
+        assert classify_change(prior, new) == SCRCategory.ROUTINE_RECURRING
+
+    def test_high_impact_not_assessed_to_high_is_transformative(self) -> None:
+        prior = _make_entry(
+            omb_high_impact=OMBHighImpactAssessment(
+                determination=HighImpactDetermination.NOT_ASSESSED
+            )
+        )
+        new = prior.model_copy(
+            update={
+                "omb_high_impact": OMBHighImpactAssessment(
+                    determination=HighImpactDetermination.HIGH_IMPACT
+                )
+            }
+        )
+        assert classify_change(prior, new) == SCRCategory.TRANSFORMATIVE
+
 
 # ── SCRForm emit ───────────────────────────────────────────────────
 
@@ -411,6 +613,30 @@ class TestEmitSCRForm:
         entry = _make_entry(omb_impact=None)
         form = emit_scr_form(entry, entry)
         assert "not yet populated" in form.customer_impact
+
+    def test_default_customer_impact_prefers_high_impact_when_set(
+        self,
+    ) -> None:
+        # When the M-25-21 field is set it takes precedence over the
+        # legacy M-24-10 narrative.
+        entry = _make_entry(
+            omb_impact=OMBImpactCategory.NEITHER,
+            omb_high_impact=OMBHighImpactAssessment(
+                determination=HighImpactDetermination.HIGH_IMPACT,
+                bases=[HighImpactBasis.HEALTH_AND_SAFETY],
+            ),
+        )
+        form = emit_scr_form(entry, entry)
+        assert "M-25-21 high-impact" in form.customer_impact
+
+    def test_default_customer_impact_high_impact_not_high(self) -> None:
+        entry = _make_entry(
+            omb_high_impact=OMBHighImpactAssessment(
+                determination=HighImpactDetermination.NOT_HIGH_IMPACT
+            )
+        )
+        form = emit_scr_form(entry, entry)
+        assert "not OMB M-25-21 high-impact" in form.customer_impact
 
     def test_auto_summary_lists_changes(self) -> None:
         prior = _make_entry()

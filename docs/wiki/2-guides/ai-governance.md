@@ -6,7 +6,9 @@ this fall into?"* and *"is it on our inventory with an accountable owner?"* The
 group runs a **deterministic, rule-based** EU AI Act tier classifier (Articles 5,
 6, and 50), surfaces the most operationally pressing NIST AI RMF 1.0 functions,
 maintains a JSON-backed AI-system registry, and lets you attach FIPS 199 and
-OMB M-24-10 categorizations to registered systems for federal cross-referencing.
+OMB M-25-21 high-impact determinations to registered systems for federal
+cross-referencing. (OMB M-24-10 was rescinded on 2025-04-03 by M-25-21; the
+legacy `set-omb-impact` verb is retained so older inventories still load.)
 None of these commands need an API key, a model endpoint, or any third-party
 credential — the classifier is pure rules, and the registry is a local file
 store. This guide walks the whole surface end to end with the bundled fixtures.
@@ -59,7 +61,7 @@ store. This guide walks the whole surface end to end with the bundled fixtures.
   $env:EVIDENTIA_AI_REGISTRY_DIR = "$env:TEMP\evidentia-demo\ai_registry"
   ```
 
-## The eight verbs and how they relate
+## The nine verbs and how they relate
 
 | Verb | Persists? | Needs a registered system? | What it does |
 | --- | --- | --- | --- |
@@ -70,7 +72,8 @@ store. This guide walks the whole surface end to end with the bundled fixtures.
 | `update` | yes | yes (UUID) | Partial-update owner / provider / status / SSP ref. |
 | `retire` | yes | yes (UUID) | Set `deployment_status=retired` (entry preserved). |
 | `categorize-fips` | yes | yes (UUID) | Attach a FIPS 199 C/I/A categorization. |
-| `set-omb-impact` | yes | yes (UUID) | Attach an OMB M-24-10 §5(b) impact category. |
+| `set-high-impact` | yes | yes (UUID) | Attach an OMB M-25-21 high-impact AI determination. |
+| `set-omb-impact` | yes | yes (UUID) | (legacy M-24-10; rescinded) Attach the legacy OMB M-24-10 §5(b) category. |
 
 The EU AI Act tier is computed by a fixed evaluation order — the first rule that
 matches wins:
@@ -313,7 +316,8 @@ Registered AI system: federal-si-internal-email-classifier
 ```
 
 The `system_id` UUID printed here is what every later verb (`show`, `update`,
-`retire`, `categorize-fips`, `set-omb-impact`) takes as its positional argument.
+`retire`, `categorize-fips`, `set-high-impact`, `set-omb-impact`) takes as its
+positional argument.
 Copy it. `register` fires an `AI_SYSTEM_REGISTERED` audit event.
 
 > `register` does **not** accept `--json` — only `classify`, `list`, and `show`
@@ -371,7 +375,8 @@ evidentia ai-gov list --tier high --json
     "fips_199_categorization": null,
     "ato_reference": null,
     "ssp_reference": null,
-    "omb_impact": null
+    "omb_impact": null,
+    "omb_high_impact": null
   }
 ]
 ```
@@ -408,7 +413,7 @@ categorization come before risk measurement).
 
 Add `--json` for the same full entry shown in Step 7.
 
-## Step 7 — Attach FIPS 199 and OMB M-24-10 categorizations
+## Step 7 — Attach FIPS 199 and OMB M-25-21 categorizations
 
 For federal systems you can attach a FIPS 199 confidentiality / integrity /
 availability categorization to a registered entry. All three ratings are
@@ -437,28 +442,58 @@ FIPS 199 categorized federal-si-resume-screener → overall=moderate (C=moderate
 I=moderate, A=low)
 ```
 
-Set the OMB M-24-10 §5(b) impact category (`rights_impacting` /
-`safety_impacting` / `rights_and_safety_impacting` / `neither`). For a
-résumé-screener that affects who gets hired, `rights_impacting` is the right
-call:
+Set the OMB M-25-21 high-impact AI determination with `set-high-impact`. OMB
+M-25-21 collapses the old rights-impacting / safety-impacting split into a single
+**high-impact AI** category — AI whose output is a principal basis for decisions
+with a significant effect on civil rights/liberties/privacy, access to essential
+services, critical government resources, human health & safety, critical
+infrastructure, or strategic assets. Pass a `--determination`
+(`high_impact` / `not_high_impact` / `not_assessed`) and, for a `high_impact`
+call, one or more `--basis` flags plus an optional `--rationale`. For a
+résumé-screener that adjudicates access to employment, the determination is
+`high_impact`:
 
 **Bash / Linux / macOS**
 
 ```bash
-evidentia ai-gov set-omb-impact 804e6d97-644e-4805-9970-fd6eb2bbc90d \
-  --category rights_impacting
+evidentia ai-gov set-high-impact 804e6d97-644e-4805-9970-fd6eb2bbc90d \
+  --determination high_impact \
+  --basis civil_rights_liberties_privacy \
+  --basis essential_services_access \
+  --rationale "Resume screening adjudicates access to employment (an essential service)."
 ```
 
 **PowerShell (Windows)**
 
 ```powershell
-evidentia ai-gov set-omb-impact 804e6d97-644e-4805-9970-fd6eb2bbc90d `
-  --category rights_impacting
+evidentia ai-gov set-high-impact 804e6d97-644e-4805-9970-fd6eb2bbc90d `
+  --determination high_impact `
+  --basis civil_rights_liberties_privacy `
+  --basis essential_services_access `
+  --rationale "Resume screening adjudicates access to employment (an essential service)."
 ```
 
 ```text
-OMB M-24-10 classified federal-si-resume-screener → rights_impacting
+OMB M-25-21 high-impact classified federal-si-resume-screener → high_impact (bases: civil_rights_liberties_privacy, essential_services_access)
 ```
+
+Valid `--determination` values: `high_impact` / `not_high_impact` /
+`not_assessed`. Valid `--basis` values (repeatable): `civil_rights_liberties_privacy`,
+`essential_services_access`, `critical_government_resources`, `health_and_safety`,
+`critical_infrastructure`, `strategic_assets`.
+
+> A `high_impact` determination triggers M-25-21's seven minimum
+> risk-management practices (pre-deployment testing; AI impact assessment;
+> ongoing monitoring + adverse-impact detection; human training/competency;
+> enhanced human oversight/intervention; consistent remedies & appeals;
+> end-user/public feedback). Evidentia records the determination for downstream
+> OSCAL emit and reporting; per-practice tracking is a planned follow-up.
+
+> **Legacy / rescinded memo.** OMB M-24-10 was rescinded on 2025-04-03 by
+> M-25-21. The legacy `set-omb-impact <id> --category <rights_impacting /
+> safety_impacting / rights_and_safety_impacting / neither>` verb still works for
+> older inventories and continues to persist the `omb_impact` field, but new
+> classifications should use `set-high-impact` above.
 
 Both fields now persist on the entry. Read them back with `show --json`:
 
@@ -479,7 +514,12 @@ evidentia ai-gov show 804e6d97-644e-4805-9970-fd6eb2bbc90d --json
   },
   "ato_reference": null,
   "ssp_reference": null,
-  "omb_impact": "rights_impacting"
+  "omb_impact": null,
+  "omb_high_impact": {
+    "determination": "high_impact",
+    "bases": ["civil_rights_liberties_privacy", "essential_services_access"],
+    "rationale": "Resume screening adjudicates access to employment (an essential service)."
+  }
 }
 ```
 
@@ -573,6 +613,13 @@ Retired AI system federal-si-resume-screener (entry preserved for audit)
 
 - **`Error: 'severe' is not a valid FIPS199Impact`** — `categorize-fips` ratings
   must be exactly `low`, `moderate`, or `high` for each of `-c` / `-i` / `-a`.
+
+- **An unknown `--determination` or `--basis` on `set-high-impact`** — the value
+  is out of vocabulary and the verb exits with code `1`, listing the valid
+  values. `--determination` must be exactly `high_impact`, `not_high_impact`, or
+  `not_assessed`; each `--basis` must be one of `civil_rights_liberties_privacy`,
+  `essential_services_access`, `critical_government_resources`,
+  `health_and_safety`, `critical_infrastructure`, or `strategic_assets`.
 
 - **A `UnicodeEncodeError` / `cp1252` traceback on Windows** — you skipped
   `export PYTHONIOENCODING=utf-8`. Set it and re-run; the rich output and

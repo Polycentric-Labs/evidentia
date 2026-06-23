@@ -725,7 +725,12 @@ def ai_gov_set_omb_impact(
         ),
     ),
 ) -> None:
-    """Set OMB M-24-10 impact category on an AI system entry (v0.9.6 P3)."""
+    """Set legacy OMB M-24-10 impact category on an AI system (v0.9.6 P3).
+
+    DEPRECATED (v0.10.12): M-24-10 was rescinded 2025-04-03 by M-25-21.
+    Use ``ai-gov set-high-impact`` for new work. Retained so existing
+    workflows + persisted M-24-10 inventories keep working.
+    """
     from evidentia_core.ai_governance import OMBImpactCategory
 
     store = AIRegistryStore()
@@ -770,4 +775,122 @@ def ai_gov_set_omb_impact(
     console.print(
         f"[green]OMB M-24-10[/green] classified [bold]{entry.descriptor.name}[/bold] "
         f"→ [cyan]{omb_cat.value}[/cyan]"
+    )
+    console.print(
+        "[dim italic]Note: OMB M-24-10 was rescinded 2025-04-03 by "
+        "M-25-21. Prefer `ai-gov set-high-impact` going forward.[/dim italic]"
+    )
+
+
+# ── set-high-impact (v0.10.12) ────────────────────────────────────
+
+
+@app.command("set-high-impact")
+def ai_gov_set_high_impact(
+    system_id: str = typer.Argument(..., help="System ID (UUID)."),
+    determination: str = typer.Option(
+        ...,
+        "--determination",
+        help=(
+            "OMB M-25-21 high-impact determination: high_impact / "
+            "not_high_impact / not_assessed."
+        ),
+    ),
+    basis: list[str] = typer.Option(
+        [],
+        "--basis",
+        help=(
+            "Consequence area(s) that make the system high-impact "
+            "(repeatable): civil_rights_liberties_privacy / "
+            "essential_services_access / critical_government_resources / "
+            "health_and_safety / critical_infrastructure / "
+            "strategic_assets. Meaningful only for high_impact."
+        ),
+    ),
+    rationale: str | None = typer.Option(
+        None,
+        "--rationale",
+        help="Optional free-text justification for the determination.",
+    ),
+) -> None:
+    """Set the OMB M-25-21 high-impact AI determination on an entry (v0.10.12).
+
+    Supersedes ``set-omb-impact`` after M-24-10's 2025-04-03 rescission.
+    A ``high_impact`` determination triggers the M-25-21 minimum
+    risk-management practices.
+    """
+    from evidentia_core.ai_governance import (
+        HighImpactBasis,
+        HighImpactDetermination,
+        OMBHighImpactAssessment,
+    )
+
+    store = AIRegistryStore()
+    try:
+        entry = store.load(system_id)
+    except ValueError as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    if entry is None:
+        console.print(
+            f"[red]Error:[/red] no registered AI system with ID "
+            f"{system_id!r}"
+        )
+        raise typer.Exit(code=1)
+
+    try:
+        determination_enum = HighImpactDetermination(determination.lower())
+    except ValueError:
+        console.print(
+            f"[red]Error:[/red] unknown determination {determination!r}. "
+            f"Valid: {', '.join(d.value for d in HighImpactDetermination)}"
+        )
+        raise typer.Exit(code=1) from None
+
+    basis_enums: list[HighImpactBasis] = []
+    for raw in basis:
+        try:
+            basis_enums.append(HighImpactBasis(raw.lower()))
+        except ValueError:
+            console.print(
+                f"[red]Error:[/red] unknown basis {raw!r}. Valid: "
+                f"{', '.join(b.value for b in HighImpactBasis)}"
+            )
+            raise typer.Exit(code=1) from None
+
+    try:
+        assessment = OMBHighImpactAssessment(
+            determination=determination_enum,
+            bases=basis_enums,
+            rationale=rationale,
+        )
+    except ValueError as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    updated = entry.model_copy(update={"omb_high_impact": assessment})
+    store.save(updated)
+
+    _log.info(
+        action=EventAction.AI_SYSTEM_HIGH_IMPACT_CLASSIFIED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"OMB M-25-21 high-impact classified AI system "
+            f"{entry.descriptor.name!r} as {determination_enum.value}"
+        ),
+        evidentia={
+            "system_id": system_id,
+            "determination": determination_enum.value,
+            "bases": [b.value for b in basis_enums],
+        },
+    )
+
+    basis_str = (
+        ", ".join(b.value for b in basis_enums) if basis_enums else "—"
+    )
+    console.print(
+        f"[green]OMB M-25-21[/green] high-impact classified "
+        f"[bold]{entry.descriptor.name}[/bold] → "
+        f"[cyan]{determination_enum.value}[/cyan] (bases: {basis_str})"
     )

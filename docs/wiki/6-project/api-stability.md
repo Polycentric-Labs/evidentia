@@ -89,7 +89,8 @@ Frozen models (48+ classes across 18 modules; v0.10.0-confirmed):
 | `ai_governance/classification.py` (v0.9.3+) | `AISystemDescriptor`, `AISystemClassification`, `EUAIActTier`, `NISTAIRMFFunction`, `AnnexIIIDomain` |
 | `ai_governance/registry.py` (v0.9.3+; v0.9.6 federal expansion) | `AISystemRegistryEntry`, `DeploymentStatus`, `ATOReference` (v0.9.6) |
 | `ai_governance/fips199.py` (v0.9.6+) | `FIPS199Categorization`, `FIPS199Impact` |
-| `ai_governance/omb_m_24_10.py` (v0.9.6+) | `OMBImpactCategory` |
+| `ai_governance/omb_m_24_10.py` (v0.9.6+; **DEPRECATED v0.10.12** — OMB M-24-10 was rescinded 2025-04-03 by M-25-21) | `OMBImpactCategory`. Retained + still loads (no behaviour change, no runtime warning) per the deprecation policy; superseded by `omb_m_25_21`. |
+| `ai_governance/omb_m_25_21.py` (v0.10.12+) | `HighImpactDetermination`, `HighImpactBasis`, `OMBHighImpactAssessment`, `triggers_minimum_practices`, `crosswalk_from_legacy`. Models OMB M-25-21's single "high-impact AI" category (replaces the legacy rights-/safety-impacting split). |
 | `ai_governance/scr.py` (v0.9.6+) | `SCRForm`, `SCRCategory` |
 | `rbac/policy.py` (v0.9.5+) | `Role`, `RBACPolicy`. `check_permission(identity, action, policy)` + `load_policy_from_file(path)` callables also frozen. |
 | `retention/metadata.py` (v0.7.11+) | `RetentionMetadata`, `RetentionClassification`, `RetentionLifecycleStage` |
@@ -119,7 +120,7 @@ enum module is the authoritative source:
 | `VERIFY_*` | Verification | `VERIFY_DIGEST_PASSED`, `VERIFY_SIGNATURE_PASSED`, `VERIFY_COMPLETED` |
 | `MANIFEST_*` | Manifest operations | `MANIFEST_GENERATED`, `MANIFEST_EMPTY_SET_ATTESTED`, `MANIFEST_INCOMPLETE` |
 | `AI_*` | AI/LLM operations | `AI_RISK_GENERATED`, `AI_EVAL_FAITHFULNESS_CHECKED` |
-| `AI_SYSTEM_*` (v0.9.3+) | AI system inventory | `AI_SYSTEM_CLASSIFIED`, `AI_SYSTEM_REGISTERED`, `AI_SYSTEM_UPDATED`, `AI_SYSTEM_RETIRED`, `AI_SYSTEM_DELETED`, `AI_SYSTEM_FIPS_CATEGORIZED` (v0.9.6), `AI_SYSTEM_OMB_CLASSIFIED` (v0.9.6), `AI_SYSTEM_SCR_EMITTED` (v0.9.6) |
+| `AI_SYSTEM_*` (v0.9.3+) | AI system inventory | `AI_SYSTEM_CLASSIFIED`, `AI_SYSTEM_REGISTERED`, `AI_SYSTEM_UPDATED`, `AI_SYSTEM_RETIRED`, `AI_SYSTEM_DELETED`, `AI_SYSTEM_FIPS_CATEGORIZED` (v0.9.6), `AI_SYSTEM_OMB_CLASSIFIED` (v0.9.6; **deprecated-but-retained** v0.10.12 — legacy M-24-10 path, append-only so it is never removed), `AI_SYSTEM_HIGH_IMPACT_CLASSIFIED` (v0.10.12 — OMB M-25-21 high-impact determination), `AI_SYSTEM_SCR_EMITTED` (v0.9.6) |
 | `AI_MCP_*` | MCP server operations | `AI_MCP_TOOL_AUTHORIZED`, `AI_MCP_TOOL_DENIED` |
 | `POAM_*` | POA&M lifecycle | `POAM_CREATED`, `POAM_MILESTONE_REACHED`, `POAM_VERIFIED` |
 | `CONMON_*` | Continuous monitoring | `CONMON_DAEMON_STARTED`, `CONMON_ALERT_DISPATCHED`, `CONMON_CYCLE_DUE`, `CONMON_CYCLE_OVERDUE`, `CONMON_CYCLE_MARKED_COMPLETED` |
@@ -230,6 +231,14 @@ from evidentia_core.ai_governance import (
     OMBImpactCategory, triggers_minimum_practices,
     ATOReference, AISystemRegistryEntry, DeploymentStatus,
 )
+
+# v0.10.12+ OMB M-25-21 high-impact AI (M-24-10 rescinded 2025-04-03;
+# the legacy OMBImpactCategory symbol above stays on the stable surface,
+# DEPRECATED but importable)
+from evidentia_core.ai_governance.omb_m_25_21 import (
+    HighImpactDetermination, HighImpactBasis, OMBHighImpactAssessment,
+    triggers_minimum_practices, crosswalk_from_legacy,
+)
 from evidentia_core.ai_governance.scr import (
     SCRForm, SCRCategory, emit_scr_form, classify_change,
 )
@@ -283,13 +292,13 @@ original import path continues to work (via re-export).
 
 ### 6. REST API URIs
 
-**Package**: `evidentia_api.routes.*`
+**Package**: `evidentia_api.routers.*`
 
 All REST endpoints follow the pattern `/api/<resource>` and are
 versioned implicitly (no `/v1/` prefix until a breaking REST
 change necessitates it).
 
-Frozen URI prefixes (16 routers):
+Frozen URI prefixes (23 routers):
 
 | Prefix | Router module | Purpose |
 |--------|--------------|---------|
@@ -299,10 +308,10 @@ Frozen URI prefixes (16 routers):
 | `/api/explain` | `explain.py` | Control explanations |
 | `/api/llm-status` | `llm_status.py` | LLM provider health |
 | `/api/frameworks` | `frameworks.py` | Framework catalog |
-| `/api/init-wizard` | `init_wizard.py` | First-run wizard |
-| `/api/risks` | `risks.py` | Risk statements |
-| `/api/gaps` | `gaps.py` | Gap analysis |
-| `/api/integrations` | `integrations.py` | Integration status |
+| `/api/init` | `init_wizard.py` | First-run wizard (preview + commit) |
+| `/api/risk` | `risks.py` | Risk statements + FAIR risk quantification |
+| `/api/gap` | `gaps.py` | Gap analysis |
+| `/api/integrations` | `integrations.py` | Integration status (Jira / ServiceNow / BI) |
 | `/api/tprm` | `tprm.py` | Third-party risk |
 | `/api/model-risk` | `model_risk.py` | AI model risk |
 | `/api/collectors` | `collectors.py` | Collector status |
@@ -310,6 +319,12 @@ Frozen URI prefixes (16 routers):
 | `/api/poam` | `poam.py` | POA&M management |
 | `/api/conmon` | `conmon.py` | Continuous monitoring |
 | `/api/ai-gov` | `ai_gov.py` | AI governance |
+| `/api/governance` | `governance.py` | Governance challenges, metrics, workflows |
+| `/api/retention` | `retention.py` | Records retention + legal hold |
+| `/api/evidence` | `evidence.py` | WORM evidence store |
+| `/api/catalog` | `catalog.py` | Catalog management — import / crosswalk / license |
+| `/api/oscal` | `oscal.py` | OSCAL Verify (verify a signed Assessment Result; read-only) |
+| `/api/traceability` | `traceability.py` | Control ↔ threat traceability matrix |
 
 **Stability contract**:
 

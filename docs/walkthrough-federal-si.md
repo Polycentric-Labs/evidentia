@@ -205,21 +205,24 @@ POA&M (Step 8 below) rather than reading the health score.
 
 ## Step 4 — Classify AI systems
 
-**Primary lens (federal)**: under OMB M-24-10, AI use cases are
-categorized as **Rights-Impacting** / **Safety-Impacting** /
-**Neither**. NIST AI RMF 1.0 provides the Govern / Map / Measure /
-Manage functions structure. Evidentia v0.9.4 surfaces the EU AI
-Act tier classifier as a *secondary* lens — useful for SIs whose
-AI systems also serve EU customers, and as a proxy for the
-"how risky is this AI?" question that NIST AI RMF asks via its
-Map function. v0.9.6+ will surface OMB M-24-10 categorization as a
-first-class field; today the EU AI Act tier is the closest in-
-product approximation.
+**Primary lens (federal)**: under **OMB M-25-21** (April 3, 2025 —
+which rescinded and replaced OMB M-24-10), an AI use case is either
+**high-impact AI** or not. The old M-24-10 Rights-Impacting /
+Safety-Impacting / Neither split is collapsed into the single
+high-impact category. NIST AI RMF 1.0 provides the Govern / Map /
+Measure / Manage functions structure. Evidentia surfaces the
+high-impact determination as a first-class field (set via
+`ai-gov set-high-impact`, below), and carries the EU AI Act tier
+classifier as a *secondary* lens — useful for SIs whose AI systems
+also serve EU customers, and as a proxy for the "how risky is this
+AI?" question that NIST AI RMF asks via its Map function. (The
+legacy M-24-10 `set-omb-impact` verb is retained for inventories
+that pre-date the migration.)
 
 ```bash
 # High-risk system (employment domain, Annex III — proxy for
-# OMB M-24-10 Rights-Impacting since employment decisions affect
-# the rights of natural persons)
+# OMB M-25-21 high-impact AI, since employment decisions affect
+# access to an essential service for natural persons)
 evidentia ai-gov classify \
   --descriptor tests/data/walkthrough-federal-si/ai-systems.yaml \
   --json
@@ -238,9 +241,9 @@ impact).
 This is the classification call SIs make at procurement-evaluation
 time when deciding which AI components a candidate vendor can
 deploy into a federal environment. Federal procurement teams
-typically pair this with an internal **OMB M-24-10
-categorization** worksheet + an **NIST AI RMF Profile** for the
-relevant agency mission.
+typically pair this with the **OMB M-25-21 high-impact
+determination** (recorded in Evidentia via `ai-gov set-high-impact`)
++ an **NIST AI RMF Profile** for the relevant agency mission.
 
 ## Step 5 — Register AI systems
 
@@ -258,17 +261,17 @@ evidentia ai-gov register \
 also tracks any `X-Idempotency-Key` headers if the same call is
 re-issued via the REST surface (v0.9.4 P1.3).
 
-Federal-SI persona note: federal AI System Inventory entries
-under OMB M-24-10 §5(a) also carry **FIPS 199** impact tags
+Federal-SI persona note: federal AI Use Case Inventory entries
+(the M-25-21 inventory requirement carried forward from the
+rescinded M-24-10 §5(a)) also carry **FIPS 199** impact tags
 (Confidentiality / Integrity / Availability — Low / Moderate /
 High), an **authorizing-official assignment**, an **ATO status
 field**, and a link to the **System Security Plan (SSP)** the AI
-system lives inside. Evidentia v0.9.4 carries provider / owner /
-deployment-status; FIPS 199 + ATO-linkage are tracked for
-v0.9.6+ surfacing as first-class fields. For today's deployments,
-operators capture those in a sidecar YAML referenced by the
-`owner` field, or via the v0.9.5 Phase 3 collaboration-primitive
-custom fields.
+system lives inside. Evidentia carries all of these as first-class
+registry fields: the high-impact determination (`set-high-impact`),
+FIPS 199 (`categorize-fips`), and the SSP / ATO references
+(`update --ssp-reference`, plus the `ato_reference` model). Provider
+/ owner / deployment-status round out the entry.
 
 ## Step 6 — List registered AI systems
 
@@ -391,8 +394,8 @@ v0.9.6 upgrade target.)
 | 1 | Catalog discovery — 89 bundled frameworks load | All |
 | 2 | CONMON cycle classification — overdue/due_soon bucketing | SI compliance ops; internal SIEM |
 | 3 | Framework health scoring — JSON output for SIEM ingest | SI compliance ops only (NOT PMO-grade) |
-| 4 | EU AI Act tier classification — Annex III + risk attributes | Procurement evaluation; pairs with OMB M-24-10 |
-| 5 | AI registry persistence — file-backed atomic write | OMB M-24-10 AI Use Case Inventory |
+| 4 | EU AI Act tier classification — Annex III + risk attributes | Procurement evaluation; pairs with OMB M-25-21 high-impact |
+| 5 | AI registry persistence — file-backed atomic write | OMB M-25-21 AI Use Case Inventory |
 | 6 | Registry query with tier filter | Inventory roll-ups |
 | 7 | Lifecycle CLI verbs (v0.9.4 P2.3) — update + retire firing audit events | SI compliance ops; pairs with SCR Form out-of-band |
 | 8 | POA&M emit + OSCAL 1.1.2 plan-of-action-and-milestones | 3PAO annual assessment; FedRAMP PMO monthly POA&M; RFC-0024 |
@@ -452,8 +455,10 @@ Limitations still open for v0.9.6+:
 - `docs/poam-runbook.md` — POA&M operator workflows
 - `docs/conmon-daemon-deployment.md` — daemon deployment guide
 - FedRAMP RFC-0024 — Machine-readable authorization packages
-- OMB M-24-10 — Advancing governance, innovation, and risk
-  management for agency use of AI
+- OMB M-25-21 — Accelerating Federal Use of AI through Innovation,
+  Governance, and Public Trust (2025-04-03; rescinded + replaced
+  OMB M-24-10's rights/safety-impacting model with a single
+  "high-impact AI" category)
 - NIST AI RMF 1.0 — AI risk management framework
 - NIST SP 800-218 SSDF — Secure Software Development Framework
 - CISA Secure by Design Pledge — voluntary commitment to

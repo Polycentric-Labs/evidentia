@@ -2567,8 +2567,17 @@ upgrade path for FedRAMP AU-9 / SOX §404 / HIPAA §164.312(b).
 `fips_199_categorization` (high-water-mark validator per FIPS PUB
 199 §3), `ato_reference` (new `ATOReference` submodel — system
 name + AO + ATO date + expiry + letter URI), `ssp_reference`
-(URI / handle), `omb_impact` (OMB M-24-10 §5(b) category). All
-Optional → backward-compat with v0.9.3-v0.9.5 entries.
+(URI / handle), `omb_high_impact` (OMB M-25-21 high-impact-AI
+determination + consequence bases — the operator's classification
+of whether an AI system's output is a principal basis for a
+high-consequence decision), and the deprecated legacy
+`omb_impact` (OMB M-24-10 §5(b) category, kept for back-compat
+after M-25-21 rescinded M-24-10; still loads with no behaviour
+change). All Optional → backward-compat with v0.9.3-v0.9.5 entries.
+As with the other fields here, these are operator-supplied
+inventory metadata, NOT a control surface: misclassification is an
+operator risk — Evidentia records the determination but does not
+validate it.
 
 `evidentia_core.ai_governance.scr.SCRForm` ships the FedRAMP
 Significant Change Form Template field set. `emit_scr_form(prior,
@@ -2578,7 +2587,9 @@ Rev 2 §3.7 + FedRAMP Significant Change Policies §4.1. JSON + MD
 writers for AO submission packages.
 
 3 new EventActions: `AI_SYSTEM_FIPS_CATEGORIZED`,
-`AI_SYSTEM_OMB_CLASSIFIED`, `AI_SYSTEM_SCR_EMITTED`. Every
+`AI_SYSTEM_OMB_CLASSIFIED`, `AI_SYSTEM_SCR_EMITTED`
+(`AI_SYSTEM_HIGH_IMPACT_CLASSIFIED` joins these for the OMB M-25-21
+high-impact-AI determination). Every
 federal-tier categorization change fires the corresponding audit
 event so the SSP / ATO / continuous-monitoring reviewer can trace
 inventory metadata provenance.

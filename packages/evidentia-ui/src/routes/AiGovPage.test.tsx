@@ -25,6 +25,7 @@ vi.mock("@/lib/api", async () => {
       retireAiSystem: vi.fn(),
       categorizeFipsAiSystem: vi.fn(),
       setOmbImpactAiSystem: vi.fn(),
+      setHighImpactAiSystem: vi.fn(),
     },
   };
 });
@@ -155,5 +156,76 @@ describe("AiGovPage", () => {
       expect(mockedApi.retireAiSystem).toHaveBeenCalledTimes(1),
     );
     expect(mockedApi.retireAiSystem).toHaveBeenCalledWith("sys-1");
+  });
+
+  it("shows the OMB M-25-21 high-impact determination when present", async () => {
+    mockedApi.listAiSystems.mockResolvedValue([
+      {
+        ...SYSTEM,
+        omb_high_impact: {
+          determination: "high_impact",
+          bases: ["essential_services_access"],
+          rationale: "Adjudicates access to consumer credit.",
+        },
+      },
+    ]);
+    const user = userEvent.setup();
+
+    renderWithClient(<AiGovPage />);
+
+    const card = await screen.findByRole("button", {
+      name: /System Credit adjudication assistant/i,
+    });
+    await user.click(card);
+
+    const detail = await screen.findByLabelText(/System detail/i);
+    // The M-25-21 determination row label renders (exact text — the form
+    // heading "Set high-impact AI (OMB M-25-21)" is a different string).
+    expect(
+      within(detail).getByText("High-impact AI (OMB M-25-21)"),
+    ).toBeInTheDocument();
+    // The determination badge + the consequence basis render (each also
+    // appears as a form control, so assert presence, not uniqueness).
+    expect(
+      within(detail).getAllByText(/High-impact/i).length,
+    ).toBeGreaterThan(0);
+    expect(
+      within(detail).getAllByText(/Essential-services access/i).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("sets the high-impact determination through setHighImpactAiSystem", async () => {
+    const user = userEvent.setup();
+    mockedApi.listAiSystems.mockResolvedValue([SYSTEM]);
+    mockedApi.setHighImpactAiSystem.mockResolvedValue(SYSTEM);
+
+    renderWithClient(<AiGovPage />);
+
+    const card = await screen.findByRole("button", {
+      name: /System Credit adjudication assistant/i,
+    });
+    await user.click(card);
+
+    const form = await screen.findByRole("form", {
+      name: /Set high-impact AI/i,
+    });
+    // "High-impact" determination is the default; add a consequence basis.
+    await user.click(
+      within(form).getByRole("button", { name: /Essential-services access/i }),
+    );
+    await user.click(
+      within(form).getByRole("button", { name: /^Set high-impact$/i }),
+    );
+
+    await waitFor(() =>
+      expect(mockedApi.setHighImpactAiSystem).toHaveBeenCalledTimes(1),
+    );
+    expect(mockedApi.setHighImpactAiSystem).toHaveBeenCalledWith(
+      "sys-1",
+      expect.objectContaining({
+        determination: "high_impact",
+        bases: ["essential_services_access"],
+      }),
+    );
   });
 });

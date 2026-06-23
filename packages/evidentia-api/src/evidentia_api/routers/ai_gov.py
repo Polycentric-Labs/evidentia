@@ -16,8 +16,11 @@ under ``/api/ai-gov`` mirror the CLI verbs:
     FIPS 199 categorization (v0.10.12; mirrors ``ai-gov
     categorize-fips``)
   - ``POST   /api/ai-gov/systems/{system_id}/set-omb-impact`` — set
-    OMB M-24-10 impact category (v0.10.12; mirrors ``ai-gov
-    set-omb-impact``)
+    legacy OMB M-24-10 impact category (v0.10.12; mirrors ``ai-gov
+    set-omb-impact``; DEPRECATED — M-24-10 rescinded 2025-04-03)
+  - ``POST   /api/ai-gov/systems/{system_id}/set-high-impact`` — set
+    OMB M-25-21 high-impact determination (v0.10.12; mirrors ``ai-gov
+    set-high-impact``)
   - ``DELETE /api/ai-gov/systems/{system_id}`` — remove entry
 
 Auth posture: reads are open (matches v0.9.0 POA&M router + v0.9.1
@@ -45,6 +48,9 @@ from evidentia_core.ai_governance import (
     EUAIActTier,
     FIPS199Categorization,
     FIPS199Impact,
+    HighImpactBasis,
+    HighImpactDetermination,
+    OMBHighImpactAssessment,
     OMBImpactCategory,
     classify,
 )
@@ -508,7 +514,13 @@ class FIPS199CategorizeRequest(BaseModel):
 
 
 class OMBImpactRequest(BaseModel):
-    """Body for ``POST /ai-gov/systems/{system_id}/set-omb-impact``."""
+    """Body for ``POST /ai-gov/systems/{system_id}/set-omb-impact``.
+
+    DEPRECATED (v0.10.12): legacy OMB M-24-10 surface. M-24-10 was
+    rescinded 2025-04-03 by M-25-21 — use the ``set-high-impact``
+    endpoint + :class:`HighImpactRequest`. Retained for backward
+    compatibility.
+    """
 
     category: OMBImpactCategory = Field(
         description=(
@@ -516,6 +528,29 @@ class OMBImpactRequest(BaseModel):
             "safety_impacting / rights_and_safety_impacting / neither."
         )
     )
+
+
+class HighImpactRequest(BaseModel):
+    """Body for ``POST /ai-gov/systems/{system_id}/set-high-impact``.
+
+    OMB M-25-21 high-impact AI determination + consequence bases.
+    Supersedes :class:`OMBImpactRequest` after M-24-10's rescission.
+    """
+
+    determination: HighImpactDetermination = Field(
+        description=(
+            "OMB M-25-21 high-impact determination: high_impact / "
+            "not_high_impact / not_assessed."
+        )
+    )
+    bases: list[HighImpactBasis] = Field(
+        default_factory=list,
+        description=(
+            "Consequence area(s) that make the system high-impact. "
+            "Meaningful only when determination is high_impact."
+        ),
+    )
+    rationale: str | None = Field(default=None, max_length=4000)
 
 
 @router.put(
@@ -703,6 +738,53 @@ async def ai_gov_set_omb_impact(
         evidentia={
             "system_id": system_id,
             "omb_impact": str(body.category),
+        },
+    )
+    return {
+        "system_id": system_id,
+        "entry": updated.model_dump(mode="json"),
+    }
+
+
+@router.post(
+    "/ai-gov/systems/{system_id}/set-high-impact",
+    dependencies=[require_role("write")],
+)
+async def ai_gov_set_high_impact(
+    system_id: str, body: HighImpactRequest
+) -> dict[str, Any]:
+    """Set the OMB M-25-21 high-impact AI determination on a system.
+
+    Supersedes ``set-omb-impact`` after M-24-10's 2025-04-03 rescission
+    by M-25-21. A ``high_impact`` determination triggers the M-25-21
+    minimum risk-management practices.
+    """
+    entry = _load_entry_or_404(system_id)
+
+    try:
+        assessment = OMBHighImpactAssessment(
+            determination=body.determination,
+            bases=body.bases,
+            rationale=body.rationale,
+        )
+    except (ValidationError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    updated = entry.model_copy(update={"omb_high_impact": assessment})
+    AIRegistryStore().save(updated)
+
+    _log.info(
+        action=EventAction.AI_SYSTEM_HIGH_IMPACT_CLASSIFIED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"OMB M-25-21 high-impact classified AI system "
+            f"{entry.descriptor.name!r} via API as {body.determination} "
+            f"(system_id={system_id})"
+        ),
+        evidentia={
+            "system_id": system_id,
+            "determination": str(body.determination),
+            "bases": [str(b) for b in body.bases],
         },
     )
     return {

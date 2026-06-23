@@ -74,9 +74,20 @@ Retire a registered AI system (sets deployment_status=retired).
 | --- | --- |
 | `SYSTEM_ID` | — |
 
+### `evidentia ai-gov set-high-impact`
+
+Set the OMB M-25-21 high-impact AI determination on an entry (v0.10.12).
+
+| Flag / argument | Description |
+| --- | --- |
+| `SYSTEM_ID` | — |
+| `--determination` | OMB M-25-21 high-impact determination: high_impact / not_high_impact / not_assessed. |
+| `--basis` | Consequence area(s) that make the system high-impact (repeatable): civil_rights_liberties_privacy / essential_services_access / critical_government_resources / health_and_safety / critical_infrastructure / strategic_assets. Meaningful only for high_impact. |
+| `--rationale` | Optional free-text justification for the determination. |
+
 ### `evidentia ai-gov set-omb-impact`
 
-Set OMB M-24-10 impact category on an AI system entry (v0.9.6 P3).
+Set legacy OMB M-24-10 impact category on an AI system (v0.9.6 P3).
 
 | Flag / argument | Description |
 | --- | --- |

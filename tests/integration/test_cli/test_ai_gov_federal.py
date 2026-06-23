@@ -293,6 +293,125 @@ class TestSetOMBImpact:
         assert result.exit_code == 1
 
 
+# ── set-high-impact (v0.10.12; OMB M-25-21) ─────────────────────────
+
+
+class TestSetHighImpact:
+    def test_happy_path_high_impact_with_bases(
+        self,
+        runner: CliRunner,
+        registered_system_id: str,
+    ) -> None:
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "set-high-impact",
+                registered_system_id,
+                "--determination",
+                "high_impact",
+                "--basis",
+                "civil_rights_liberties_privacy",
+                "--basis",
+                "essential_services_access",
+                "--rationale",
+                "Affects access to an essential service.",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        assert "high_impact" in result.output
+        assert "civil_rights_liberties_privacy" in result.output
+
+    def test_happy_path_not_high_impact(
+        self,
+        runner: CliRunner,
+        registered_system_id: str,
+    ) -> None:
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "set-high-impact",
+                registered_system_id,
+                "--determination",
+                "not_high_impact",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+
+    def test_happy_path_not_assessed(
+        self,
+        runner: CliRunner,
+        registered_system_id: str,
+    ) -> None:
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "set-high-impact",
+                registered_system_id,
+                "--determination",
+                "not_assessed",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+
+    def test_unknown_determination_errors(
+        self,
+        runner: CliRunner,
+        registered_system_id: str,
+    ) -> None:
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "set-high-impact",
+                registered_system_id,
+                "--determination",
+                "very_high",  # not valid
+            ],
+        )
+        assert result.exit_code == 1
+
+    def test_unknown_basis_errors(
+        self,
+        runner: CliRunner,
+        registered_system_id: str,
+    ) -> None:
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "set-high-impact",
+                registered_system_id,
+                "--determination",
+                "high_impact",
+                "--basis",
+                "national_pride",  # not a valid basis
+            ],
+        )
+        assert result.exit_code == 1
+
+    def test_unknown_system_errors(
+        self,
+        runner: CliRunner,
+        isolated_registry: Path,
+    ) -> None:
+        from uuid import uuid4
+
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "set-high-impact",
+                str(uuid4()),
+                "--determination",
+                "high_impact",
+            ],
+        )
+        assert result.exit_code == 1
+
+
 # ── update --emit-scr ──────────────────────────────────────────────
 
 

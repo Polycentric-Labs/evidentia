@@ -344,8 +344,16 @@ export type AISystemUpdateRequest =
 /** FIPS 199 categorization body ({confidentiality, integrity, availability, overall?}). */
 export type FIPS199CategorizeRequest =
   components["schemas"]["FIPS199CategorizeRequest"];
-/** OMB M-24-10 impact body ({impact_category, …}). */
+/** OMB M-24-10 impact body ({category}). DEPRECATED (v0.10.12): M-24-10
+ *  rescinded 2025-04-03 by M-25-21; use HighImpactRequest. */
 export type OMBImpactRequest = components["schemas"]["OMBImpactRequest"];
+/** OMB M-25-21 high-impact body ({determination, bases?, rationale?}). */
+export type HighImpactRequest = components["schemas"]["HighImpactRequest"];
+/** M-25-21 high-impact determination (high_impact / not_high_impact / not_assessed). */
+export type HighImpactDetermination =
+  components["schemas"]["HighImpactDetermination"];
+/** M-25-21 high-impact consequence basis. */
+export type HighImpactBasis = components["schemas"]["HighImpactBasis"];
 
 /**
  * A registered AI system as returned by the registry endpoints. The server
@@ -1025,7 +1033,7 @@ const realApi = {
     )}${qs ? `?${qs}` : ""}`;
   },
 
-  // ── AI governance (EU AI Act / FIPS 199 / OMB M-24-10) ────────────────
+  // ── AI governance (EU AI Act / FIPS 199 / OMB M-25-21 high-impact) ────
   // The list endpoint takes a `tier` filter (NOT skip/limit) and returns a
   // bare array of registry entries — there is no paginated envelope server-
   // side. The `skip`/`limit` params are accepted for call-site symmetry with
@@ -1078,6 +1086,11 @@ const realApi = {
   setOmbImpactAiSystem: (systemId: string, body: OMBImpactRequest) =>
     request<AISystemEntry>(
       `/api/ai-gov/systems/${encodeURIComponent(systemId)}/set-omb-impact`,
+      { method: "POST", body: JSON.stringify(body) },
+    ),
+  setHighImpactAiSystem: (systemId: string, body: HighImpactRequest) =>
+    request<AISystemEntry>(
+      `/api/ai-gov/systems/${encodeURIComponent(systemId)}/set-high-impact`,
       { method: "POST", body: JSON.stringify(body) },
     ),
 

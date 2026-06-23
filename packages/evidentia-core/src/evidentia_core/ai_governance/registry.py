@@ -17,10 +17,16 @@ federal-tier inventory expectations:
 - ``ssp_reference`` — URI / handle pointing at the System Security
   Plan document
 - :class:`OMBImpactCategory` — OMB M-24-10 Rights / Safety
-  classification
+  classification (DEPRECATED v0.10.12; see below)
 
 All four fields are Optional → backward-compat with v0.9.3 – v0.9.5
 entries that pre-date the federal expansion.
+
+v0.10.12 adds a fifth optional field, ``omb_high_impact``
+(:class:`OMBHighImpactAssessment`), modelling OMB M-25-21's single
+"high-impact AI" category. M-25-21 (2025-04-03) rescinded M-24-10, so
+``omb_impact`` is deprecated but retained (still loads/serializes);
+both fields are independent and Optional.
 """
 
 from __future__ import annotations
@@ -36,6 +42,7 @@ from evidentia_core.ai_governance.classification import (
 )
 from evidentia_core.ai_governance.fips199 import FIPS199Categorization
 from evidentia_core.ai_governance.omb_m_24_10 import OMBImpactCategory
+from evidentia_core.ai_governance.omb_m_25_21 import OMBHighImpactAssessment
 from evidentia_core.models.common import EvidentiaModel, new_id, utc_now
 
 
@@ -215,8 +222,21 @@ class AISystemRegistryEntry(EvidentiaModel):
     omb_impact: OMBImpactCategory | None = Field(
         default=None,
         description=(
-            "OMB M-24-10 §5(b) impact category (rights / safety / "
-            "both / neither). Operators determine via their Chief "
-            "AI Officer or General Counsel review path."
+            "DEPRECATED (v0.10.12): legacy OMB M-24-10 §5(b) impact "
+            "category (rights / safety / both / neither). M-24-10 was "
+            "rescinded 2025-04-03 by M-25-21 — use ``omb_high_impact``. "
+            "Retained so persisted M-24-10 inventories keep loading; "
+            "map forward with "
+            "``omb_m_25_21.crosswalk_from_legacy``."
+        ),
+    )
+    omb_high_impact: OMBHighImpactAssessment | None = Field(
+        default=None,
+        description=(
+            "OMB M-25-21 high-impact AI assessment (determination + "
+            "consequence bases). Supersedes ``omb_impact`` after the "
+            "M-24-10 rescission. Optional → backward-compat with "
+            "entries that pre-date the M-25-21 migration. Operators "
+            "determine via their Chief AI Officer review path."
         ),
     )

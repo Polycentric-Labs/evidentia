@@ -574,10 +574,11 @@ v0.8.x → v0.9.x line.
 | 4 | `evidentia_core.evidence_store_worm.mirror_to_worm` / `fetch_from_worm` | Library | Cloud-WORM mirror composing with `WORMBackend` ABC; record-id `<lineage>_v<version>`. |
 | 5 | `evidentia evidence save / history / show` | CLI | 3 new verbs; `save` write-gated, others read-gated by RBAC. JSON + human output. |
 | 6 | `evidentia_core.ai_governance.fips199.FIPS199Categorization` | Library | High-water-mark validator per FIPS PUB 199 §3; auto-computes `overall` from C/I/A. |
-| 7 | `evidentia_core.ai_governance.omb_m_24_10.OMBImpactCategory` | Library | OMB M-24-10 §5(b) category enum + `triggers_minimum_practices()` helper. |
+| 7 | `evidentia_core.ai_governance.omb_m_24_10.OMBImpactCategory` | Library | **DEPRECATED** (OMB M-24-10 rescinded 2025-04-03 by M-25-21). OMB M-24-10 §5(b) category enum + `triggers_minimum_practices()` helper. Still loads / works unchanged; superseded by the M-25-21 high-impact model (row 11). |
 | 8 | `evidentia_core.ai_governance.scr.SCRForm` + `emit_scr_form` + `classify_change` | Library | FedRAMP SCR template + auto-classifier (Routine / Adaptive / Transformative) + JSON / MD writers. |
-| 9 | `evidentia ai-gov categorize-fips / set-omb-impact / update --emit-scr / update --ssp-reference` | CLI | New verbs + flags for federal-tier AI-gov ops. |
+| 9 | `evidentia ai-gov categorize-fips / set-omb-impact / set-high-impact / update --emit-scr / update --ssp-reference` | CLI | New verbs + flags for federal-tier AI-gov ops. |
 | 10 | 4 new CONMON MCP tools (`conmon_list_cadences`, `conmon_next_due`, `conmon_check_state`, `conmon_health`) | MCP | First-mover claim per v0.9.5 Q3 2026 quarterly resync. Gated by existing v0.8.6 CIMD scope enforcement. |
+| 11 | `evidentia_core.ai_governance.omb_m_25_21` (`HighImpactDetermination` + `OMBHighImpactAssessment` + `crosswalk_from_legacy()` + `triggers_minimum_practices()`) | Library | OMB M-25-21 "high-impact AI" model — single high-impact category (6 bases) superseding the M-24-10 rights/safety split. `crosswalk_from_legacy(OMBImpactCategory)` maps the deprecated row-7 enum forward; additive + backward-compatible. |
 
 **Other v0.9.6 surfaces**:
 

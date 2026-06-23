@@ -1,5 +1,20 @@
 """OMB M-24-10 AI impact categorization (v0.9.6 P3).
 
+.. deprecated:: 0.10.12
+   **OMB M-24-10 was rescinded on 2025-04-03 by
+   `M-25-21 <https://www.whitehouse.gov/wp-content/uploads/2025/02/M-25-21-Accelerating-Federal-Use-of-AI-through-Innovation-Governance-and-Public-Trust.pdf>`_**,
+   which collapses the rights-impacting / safety-impacting split into a
+   single "high-impact AI" category. Use
+   :mod:`evidentia_core.ai_governance.omb_m_25_21`
+   (:class:`~evidentia_core.ai_governance.omb_m_25_21.HighImpactDetermination`
+   + :class:`~evidentia_core.ai_governance.omb_m_25_21.OMBHighImpactAssessment`)
+   for new work. This module, :class:`OMBImpactCategory`, the
+   ``omb_impact`` registry field, and the ``set-omb-impact`` CLI / REST
+   verbs are retained (no behaviour change, no runtime warning) so
+   persisted M-24-10 inventories keep loading; map a legacy value forward
+   with
+   :func:`~evidentia_core.ai_governance.omb_m_25_21.crosswalk_from_legacy`.
+
 `OMB Memorandum M-24-10 <https://www.whitehouse.gov/wp-content/uploads/2024/03/M-24-10-Advancing-Governance-Innovation-and-Risk-Management-for-Agency-Use-of-Artificial-Intelligence.pdf>`_
 (March 28, 2024) directs federal agencies to inventory AI use cases
 and apply minimum risk-management practices to systems that affect
@@ -50,6 +65,14 @@ from enum import Enum
 
 class OMBImpactCategory(str, Enum):
     """OMB M-24-10 §5(b) AI impact classification.
+
+    .. deprecated:: 0.10.12
+       Superseded by
+       :class:`~evidentia_core.ai_governance.omb_m_25_21.HighImpactDetermination`
+       after M-24-10's 2025-04-03 rescission. Retained for backward
+       compatibility (string values + import path are stable); map a
+       value forward with
+       :func:`~evidentia_core.ai_governance.omb_m_25_21.crosswalk_from_legacy`.
 
     Operators rate per the published §5 definitions + worked examples
     in agency compliance plans (Federal Reserve / EXIM / SBA / DOJ /

@@ -358,6 +358,10 @@ commands:
     api: "POST /api/ai-gov/systems/{system_id}/set-omb-impact"
     gui: "/ai-gov"
     status: full
+  - cli: "ai-gov set-high-impact"
+    api: "POST /api/ai-gov/systems/{system_id}/set-high-impact"
+    gui: "/ai-gov"
+    status: full
   - cli: "catalog crosswalk"
     api: "GET /api/catalog/crosswalk"
     gui: "/catalog"

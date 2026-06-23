@@ -596,6 +596,76 @@ class TestSetOmbImpact:
         assert resp.status_code == 422
 
 
+class TestSetHighImpact:
+    """POST /ai-gov/systems/{system_id}/set-high-impact — OMB M-25-21."""
+
+    def test_set_high_impact_mutates_and_persists(
+        self, api_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-high-impact",
+            json={
+                "determination": "high_impact",
+                "bases": [
+                    "civil_rights_liberties_privacy",
+                    "essential_services_access",
+                ],
+                "rationale": "Adjudicates access to an essential service.",
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        hi = resp.json()["entry"]["omb_high_impact"]
+        assert hi["determination"] == "high_impact"
+        assert "civil_rights_liberties_privacy" in hi["bases"]
+
+        # Persisted + independent of the legacy field.
+        got = api_client.get(f"/api/ai-gov/systems/{system_id}").json()
+        assert got["omb_high_impact"]["determination"] == "high_impact"
+        assert got["omb_impact"] is None
+
+    def test_set_high_impact_unknown_id_returns_404(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{_UNKNOWN_UUID}/set-high-impact",
+            json={"determination": "not_high_impact"},
+        )
+        assert resp.status_code == 404
+
+    def test_set_high_impact_invalid_id_returns_404(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            "/api/ai-gov/systems/not-a-uuid/set-high-impact",
+            json={"determination": "not_high_impact"},
+        )
+        assert resp.status_code == 404
+
+    def test_set_high_impact_bad_determination_returns_422(
+        self, api_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-high-impact",
+            json={"determination": "extremely_high"},
+        )
+        assert resp.status_code == 422
+
+    def test_set_high_impact_bad_basis_returns_422(
+        self, api_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-high-impact",
+            json={
+                "determination": "high_impact",
+                "bases": ["national_pride"],
+            },
+        )
+        assert resp.status_code == 422
+
+
 # ── v0.10.12: RBAC enforcement (proves the require_role gates bite) ──
 
 
@@ -630,6 +700,17 @@ class TestAiGovRBAC:
         system_id = _register_system(api_client)
         resp = ai_gov_readonly_client.post(
             f"/api/ai-gov/systems/{system_id}/retire"
+        )
+        assert resp.status_code == 403, resp.text
+        assert resp.json()["detail"]["error"] == "rbac_denied"
+
+    def test_anonymous_set_high_impact_denied_403(
+        self, api_client: TestClient, ai_gov_readonly_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client)
+        resp = ai_gov_readonly_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-high-impact",
+            json={"determination": "high_impact"},
         )
         assert resp.status_code == 403, resp.text
         assert resp.json()["detail"]["error"] == "rbac_denied"

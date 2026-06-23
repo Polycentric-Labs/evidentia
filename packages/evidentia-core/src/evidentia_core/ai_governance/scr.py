@@ -57,6 +57,10 @@ from evidentia_core.ai_governance.fips199 import (
     FIPS199Impact,
 )
 from evidentia_core.ai_governance.omb_m_24_10 import OMBImpactCategory
+from evidentia_core.ai_governance.omb_m_25_21 import (
+    HighImpactDetermination,
+    OMBHighImpactAssessment,
+)
 from evidentia_core.ai_governance.registry import (
     AISystemRegistryEntry,
     DeploymentStatus,
@@ -150,6 +154,42 @@ def _omb_impact_escalated(
     return _resolve(new) > _resolve(prior)
 
 
+def _high_impact_escalated(
+    prior: OMBHighImpactAssessment | None,
+    new: OMBHighImpactAssessment | None,
+) -> bool:
+    """Return True iff the OMB M-25-21 high-impact determination escalated.
+
+    The rank order:
+    (NOT_ASSESSED == NOT_HIGH_IMPACT) < HIGH_IMPACT. A move up to
+    HIGH_IMPACT is transformative (the M-25-21 minimum risk-management
+    practices newly apply).
+
+    First-time population (prior=None → new=anything) is NOT an
+    escalation — same rationale as the FIPS 199 + legacy-OMB checks
+    (v0.10.12 adds the field; operators populating it for existing
+    entries shouldn't retro-trigger transformative SCRs).
+    """
+    if prior is None or new is None:
+        return False
+    rank = {
+        HighImpactDetermination.NOT_ASSESSED: 0,
+        HighImpactDetermination.NOT_HIGH_IMPACT: 0,
+        HighImpactDetermination.HIGH_IMPACT: 1,
+    }
+
+    def _resolve(a: OMBHighImpactAssessment) -> int:
+        d = a.determination
+        coerced = (
+            d
+            if isinstance(d, HighImpactDetermination)
+            else HighImpactDetermination(d)
+        )
+        return rank[coerced]
+
+    return _resolve(new) > _resolve(prior)
+
+
 def classify_change(
     prior: AISystemRegistryEntry,
     new: AISystemRegistryEntry,
@@ -161,7 +201,8 @@ def classify_change(
     1. **TRANSFORMATIVE** — any of:
        - EU AI Act tier changed
        - FIPS 199 overall impact increased
-       - OMB M-24-10 category escalated
+       - OMB M-24-10 category escalated (legacy field)
+       - OMB M-25-21 high-impact determination escalated
        - Annex III domain changed to a different Annex III value
        - PILOT → PRODUCTION transition (production posture is the
          canonical transformative trigger per FedRAMP §4.1)
@@ -188,6 +229,8 @@ def classify_change(
     ):
         return SCRCategory.TRANSFORMATIVE
     if _omb_impact_escalated(prior.omb_impact, new.omb_impact):
+        return SCRCategory.TRANSFORMATIVE
+    if _high_impact_escalated(prior.omb_high_impact, new.omb_high_impact):
         return SCRCategory.TRANSFORMATIVE
     if (
         prior.descriptor.annex_iii_domain
@@ -663,13 +706,60 @@ def _auto_summary(
             f"OMB M-24-10 impact changed from {prior.omb_impact} to "
             f"{new.omb_impact}"
         )
+    if prior.omb_high_impact != new.omb_high_impact:
+        prior_det = (
+            prior.omb_high_impact.determination
+            if prior.omb_high_impact is not None
+            else None
+        )
+        new_det = (
+            new.omb_high_impact.determination
+            if new.omb_high_impact is not None
+            else None
+        )
+        changes.append(
+            f"OMB M-25-21 high-impact determination changed from "
+            f"{prior_det} to {new_det}"
+        )
     if not changes:
         return "No field-level changes detected (no-op SCR emit)."
     return "Field-level changes: " + "; ".join(changes) + "."
 
 
 def _default_customer_impact(entry: AISystemRegistryEntry) -> str:
-    """Default customer-impact narrative based on OMB classification."""
+    """Default customer-impact narrative based on OMB classification.
+
+    Prefers the OMB M-25-21 high-impact determination when set; falls
+    back to the legacy M-24-10 category for entries that pre-date the
+    M-25-21 migration (backward-compat — unchanged behaviour when only
+    the legacy field is populated).
+    """
+    hi = entry.omb_high_impact
+    if hi is not None:
+        det = hi.determination
+        det = (
+            det
+            if isinstance(det, HighImpactDetermination)
+            else HighImpactDetermination(det)
+        )
+        if det == HighImpactDetermination.HIGH_IMPACT:
+            return (
+                "System is OMB M-25-21 high-impact AI; external customer "
+                "impact assessment required per the minimum risk-management "
+                "practices. Operator MUST review + amend this section "
+                "before AO submission."
+            )
+        if det == HighImpactDetermination.NOT_HIGH_IMPACT:
+            return (
+                "System is not OMB M-25-21 high-impact AI; no external "
+                "customer impact beyond baseline governance. Review "
+                "required only for changes that would re-determine the "
+                "system as high-impact."
+            )
+        return (
+            "OMB M-25-21 high-impact determination not yet assessed; "
+            "operator review required to determine customer-impact scope."
+        )
     if entry.omb_impact == OMBImpactCategory.NEITHER:
         return (
             "Internal-only AI system per OMB M-24-10 §5(b); no external "

@@ -8,6 +8,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.12] - Unreleased
+
+**Theme**: *v0.10.12 — full CLI↔GUI parity build-out + the OMB M-25-21 AI-governance migration*. (Cycle in progress on `feature/v0.10.12`; this block is being composed as the cycle lands — the parity build-out, REST mutation-verb parity, audit EventAction promotions, a11y, and security-hardening entries are finalized at release.)
+
+### Added
+
+- **OMB M-25-21 "high-impact AI" model** — the AI-governance module now reflects current federal guidance. OMB **M-24-10** (the prior basis for the rights-impacting / safety-impacting / both / neither taxonomy) was **rescinded on 2025-04-03 by M-25-21** ("Accelerating Federal Use of AI through Innovation, Governance, and Public Trust"), which collapses the old split into a single **"high-impact AI"** category — AI whose output is a principal basis for decisions with significant effect on civil rights/liberties/privacy, access to essential services (education, housing, insurance, credit, employment), critical government resources, human health & safety, critical infrastructure, or strategic assets. New core module `evidentia_core.ai_governance.omb_m_25_21` ships `HighImpactDetermination` (`high_impact` / `not_high_impact` / `not_assessed`), `HighImpactBasis` (the six consequence areas), the `OMBHighImpactAssessment` sub-model (determination + bases + rationale), `triggers_minimum_practices()`, and `crosswalk_from_legacy()` (an explicit, operator-invoked old→new mapping — Evidentia never silently re-determines a persisted M-24-10 value). Surfaced as a matched CLI ↔ REST ↔ console triple — `evidentia ai-gov set-high-impact <id> --determination <d> [--basis <b>]… [--rationale <t>]`, `POST /api/ai-gov/systems/{id}/set-high-impact` (RBAC `write`-gated), and a "High-impact AI (OMB M-25-21)" form + display on the `/ai-gov` console — plus a new `omb_high_impact` registry field, the `AI_SYSTEM_HIGH_IMPACT_CLASSIFIED` audit event, and the SCR change-classifier treating a `not_high_impact`→`high_impact` escalation as transformative. Purely additive + backward-compatible: every existing M-24-10 inventory entry still loads. The seven M-25-21 minimum risk-management practices are documented this cycle; structured per-practice tracking is a v0.11 extension of `OMBHighImpactAssessment`.
+
+### Deprecated
+
+- **The OMB M-24-10 surface** — `evidentia_core.ai_governance.omb_m_24_10.OMBImpactCategory`, the `omb_impact` registry field, the `ai-gov set-omb-impact` CLI/REST verb, and the `AI_SYSTEM_OMB_CLASSIFIED` audit event — after M-24-10's 2025-04-03 rescission by M-25-21. **Retained and fully backward-compatible** (persisted inventories still load; no behaviour change; no runtime deprecation warning). Use the M-25-21 high-impact surface for new work, and `omb_m_25_21.crosswalk_from_legacy` to map a legacy value forward.
+
 ## [0.10.11] - 2026-06-17
 
 **Theme**: *v0.10.11 — public demo completion + signed traceability + hygiene*. Patch bump (v0.10.10 → v0.10.11). Finishes the public demo surface, promotes threat→control→evidence into a first-class signed capability, and clears the v0.10.10 follow-on hygiene. The full CLI↔GUI parity build-out (incl. a dedicated traceability console route) is the v0.10.12 cycle.
