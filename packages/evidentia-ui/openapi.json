@@ -5438,6 +5438,7 @@
             "items": {
               "$ref": "#/components/schemas/OpenFAIRScenario"
             },
+            "maxItems": 1000,
             "minItems": 1,
             "title": "Scenarios",
             "type": "array"
@@ -6427,7 +6428,8 @@
         "description": "Body for ``POST /oscal/verify``.\n\n``content`` is the OSCAL Assessment Result document as a JSON string\n(inline — not a server path). The two ``expected_sigstore_*`` fields\nare PUBLIC identity strings pinning the Sigstore signer; they are\nboth-or-neither (cosign model, F-V109-1) — supplying exactly one is a\nusage error.",
         "properties": {
           "content": {
-            "description": "The OSCAL Assessment Result document, inline, as a JSON string. NOT a filesystem path — the server writes this to a private temp file, verifies it, and deletes it.",
+            "description": "The OSCAL Assessment Result document, inline, as a JSON string. NOT a filesystem path — the server writes this to a private temp file, verifies it, and deletes it. Bounded at ~8 MB so an oversized body is rejected (422) before any disk write, independent of any reverse-proxy body limit.",
+            "maxLength": 8000000,
             "minLength": 1,
             "title": "Content",
             "type": "string"

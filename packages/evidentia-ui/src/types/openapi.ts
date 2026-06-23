@@ -7043,7 +7043,7 @@ export interface components {
         VerifyRequest: {
             /**
              * Content
-             * @description The OSCAL Assessment Result document, inline, as a JSON string. NOT a filesystem path — the server writes this to a private temp file, verifies it, and deletes it.
+             * @description The OSCAL Assessment Result document, inline, as a JSON string. NOT a filesystem path — the server writes this to a private temp file, verifies it, and deletes it. Bounded at ~8 MB so an oversized body is rejected (422) before any disk write, independent of any reverse-proxy body limit.
              */
             content: string;
             /**
