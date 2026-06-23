@@ -49,9 +49,6 @@ from _harness_util import to_text
 with atheris.instrument_imports():
     from evidentia_core.oscal.verify import verify_digests
 
-_EXPECTED = (ValueError, TypeError, KeyError)
-
-
 def TestOneInput(data: bytes) -> None:
     if not data:
         return
@@ -61,10 +58,12 @@ def TestOneInput(data: bytes) -> None:
         return
     if not isinstance(doc, dict):
         return
-    try:
-        verify_digests(doc)
-    except _EXPECTED:
-        pass
+    # verify_digests must NEVER raise on a parsed-JSON document — it returns a
+    # list of DigestCheck verdicts (CWE-248 robustness invariant). We do NOT
+    # swallow any exception: an uncaught raise IS the bug atheris should flag.
+    # (F-V1012-2: the prior ``except (ValueError, TypeError, KeyError)`` masked
+    # exactly the TypeError class that F-V1012-1 fixed.)
+    verify_digests(doc)
 
 
 def main() -> None:

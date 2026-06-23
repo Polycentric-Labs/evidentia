@@ -391,15 +391,13 @@ async def delete_retention_record(retention_id: str) -> None:
             status_code=404,
             detail=f"Retention record {retention_id!r} not found.",
         )
-    # NOTE: this DELETE removes only the retention METADATA record — it
-    # is NOT a WORM/secure evidence purge. The audit vocabulary has no
-    # metadata-delete EventAction member (the closest is
-    # RETENTION_RECORD_PURGED, which connotes a secure purge), and this
-    # router may not add one (events.py is out of scope). To avoid
-    # misleading an audit reviewer into reading this as a secure purge,
-    # the message string says so unambiguously.
+    # This DELETE removes only the retention METADATA record — it is NOT a
+    # WORM/secure evidence purge. It emits the dedicated
+    # RETENTION_METADATA_DELETED action (added v0.10.12) rather than
+    # RETENTION_RECORD_PURGED, so an audit reviewer querying the action
+    # vocabulary cannot read this metadata delete as a secure purge.
     _log.info(
-        action=EventAction.RETENTION_RECORD_PURGED,
+        action=EventAction.RETENTION_METADATA_DELETED,
         outcome=EventOutcome.SUCCESS,
         message=(
             f"Retention metadata record {retention_id[:8]} deleted via "

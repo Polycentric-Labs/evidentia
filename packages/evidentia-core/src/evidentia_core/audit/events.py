@@ -409,6 +409,13 @@ class EventAction(str, Enum):
     RETENTION_LIFECYCLE_TRANSITIONED = "evidentia.retention.lifecycle_transitioned"
     RETENTION_RECORD_PURGED = "evidentia.retention.record_purged"
     RETENTION_GDPR_PURGE = "evidentia.retention.gdpr_purge"
+    # v0.10.12 (V1012-1): a metadata-only delete of a retention record (the
+    # REST DELETE /retention/{id}) is NOT a secure WORM/evidence purge — it
+    # removes the retention metadata record only, leaving the underlying
+    # evidence untouched. Distinct from RETENTION_RECORD_PURGED (a secure
+    # purge) so an auditor querying the action vocabulary cannot read a
+    # metadata delete as a secure purge.
+    RETENTION_METADATA_DELETED = "evidentia.retention.metadata_deleted"
 
     # ── Evidence store WORM lineage (v0.9.6 P2) ──
     # Closes the v0.9.5 P3.2 deferral: the v0.9.5 cycle shipped the

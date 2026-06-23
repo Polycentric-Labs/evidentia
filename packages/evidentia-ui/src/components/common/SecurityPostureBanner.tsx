@@ -42,10 +42,12 @@ export function SecurityPostureBanner() {
       <span>
         <span className="font-semibold">Unsecured deployment.</span> The API has
         no authentication configured — anyone who can reach it can read and
-        modify local compliance data, and credentialed actions (collect,
-        integrations) are disabled. Set{" "}
+        modify local compliance data, and call the credentialed endpoints
+        (collect, integrations) directly. This console disables those actions
+        in the UI, but that is a convenience guard, not a server-side control:
+        set{" "}
         <code className="kbd">EVIDENTIA_API_AUTH_TOKEN_FILE</code> before exposing
-        this console beyond localhost.
+        the API beyond localhost.
       </span>
     </div>
   );

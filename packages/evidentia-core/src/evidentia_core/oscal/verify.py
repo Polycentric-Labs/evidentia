@@ -157,6 +157,10 @@ def verify_digests(ar_doc: dict[str, Any]) -> list[DigestCheck]:
     # signed OSCAL artifact — e.g. the v0.10.11 Control↔Threat traceability
     # profile — not just Assessment Results.
     resources: list[dict[str, Any]] = []
+    if not isinstance(ar_doc, dict):
+        # A non-object JSON root (list/scalar) is not a verifiable OSCAL
+        # document — return no checks rather than raising on ``.values()``.
+        return checks
     for model_body in ar_doc.values():
         if isinstance(model_body, dict) and "back-matter" in model_body:
             bm = model_body.get("back-matter") or {}
@@ -172,14 +176,20 @@ def verify_digests(ar_doc: dict[str, Any]) -> list[DigestCheck]:
             # gracefully rather than raising AttributeError (found by the
             # tests/fuzz Hypothesis robustness pass; CWE-248 hardening).
             continue
-        uuid_ = resource.get("uuid", "")
-        title = resource.get("title", "")
+        uuid_ = str(resource.get("uuid", ""))
+        title = str(resource.get("title", ""))
         b64_block = resource.get("base64")
-        if not b64_block or "value" not in b64_block:
-            # External resource or metadata-only — no content to hash.
+        if not isinstance(b64_block, dict) or "value" not in b64_block:
+            # External resource, metadata-only, or a malformed (non-object)
+            # base64 block — no content to hash. The isinstance guard stops a
+            # non-dict base64 value (a bare string / int from a crafted
+            # document) from raising on the ``in`` membership test
+            # (CWE-248 uncaught-exception hardening; F-V1012-1).
             continue
 
         rlinks = resource.get("rlinks", [])
+        if not isinstance(rlinks, list):
+            rlinks = []
         expected_hex = _extract_expected_digest(rlinks)
         if expected_hex is None:
             # Resource embeds content but has no hash to verify against.
@@ -398,7 +408,14 @@ def _extract_expected_digest(rlinks: list[dict[str, Any]]) -> str | None:
     v0.7.0-beta tooling that may have written the non-standard form).
     """
     for rlink in rlinks:
-        for hash_entry in rlink.get("hashes", []):
+        if not isinstance(rlink, dict):
+            continue
+        hashes = rlink.get("hashes", [])
+        if not isinstance(hashes, list):
+            continue
+        for hash_entry in hashes:
+            if not isinstance(hash_entry, dict):
+                continue
             algo = str(hash_entry.get("algorithm", "")).lower().replace("-", "")
             if algo == "sha256":
                 raw_value = str(hash_entry.get("value", ""))

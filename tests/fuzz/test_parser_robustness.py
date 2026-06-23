@@ -145,15 +145,14 @@ def test_oscal_profile_robustness(tmp_path: Path) -> None:
 
 
 def test_oscal_verify_digests_robustness() -> None:
-    # WS-D Q1: the fuzz scaffold surfaced an undeclared AttributeError in
-    # verify_digests when back-matter.resources held a non-dict entry or was
-    # itself a non-list (CWE-248 uncaught exception / DoS via `oscal verify`
-    # on a malformed-but-valid-JSON OSCAL doc). Fixed in
-    # evidentia_core/oscal/verify.py (coerce `resources` to a list + skip
-    # non-dict entries); this now asserts the parser degrades gracefully.
+    # WS-D Q1 + F-V1012-1: the fuzz scaffold surfaced undeclared exceptions in
+    # verify_digests on malformed-but-valid-JSON OSCAL docs (CWE-248 uncaught
+    # exception / DoS via `oscal verify`) — first a non-dict resources entry,
+    # then (F-V1012-1) a non-dict base64 block, a non-list rlinks, and the
+    # _extract_expected_digest hash chain. verify_digests is now fully hardened
+    # to return a verdict list rather than raise on ANY parsed-JSON input; this
+    # asserts that invariant directly (no exception is swallowed).
     from evidentia_core.oscal.verify import verify_digests
-
-    declared = (ValueError, TypeError, KeyError)
 
     # verify_digests takes an already-parsed dict; feed arbitrary dicts
     # plus partially-shaped OSCAL AR documents.
@@ -171,10 +170,12 @@ def test_oscal_verify_digests_robustness() -> None:
 
     @given(doc=st.one_of(_json_objects, _ar_like))
     def _check(doc: dict) -> None:
-        try:
-            verify_digests(doc)
-        except declared:
-            pass
+        # The invariant: verify_digests NEVER raises on a parsed-JSON document
+        # — it returns a list of DigestCheck verdicts. No exception is swallowed
+        # (F-V1012-2: the prior except-(ValueError, TypeError, KeyError) masked
+        # exactly the class F-V1012-1 fixed). An uncaught raise fails the test.
+        result = verify_digests(doc)
+        assert isinstance(result, list)
 
     _check()
 

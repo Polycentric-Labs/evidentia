@@ -267,6 +267,7 @@ class RiskQuantifyRequest(BaseModel):
     )
     scenarios: list[OpenFAIRScenario] = Field(
         min_length=1,
+        max_length=1000,
         description="One or more Open FAIR scenarios to quantify.",
     )
     iterations: int = Field(

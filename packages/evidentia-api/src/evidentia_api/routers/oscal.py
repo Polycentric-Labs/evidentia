@@ -67,10 +67,13 @@ class VerifyRequest(BaseModel):
 
     content: str = Field(
         min_length=1,
+        max_length=8_000_000,
         description=(
             "The OSCAL Assessment Result document, inline, as a JSON "
             "string. NOT a filesystem path — the server writes this to a "
-            "private temp file, verifies it, and deletes it."
+            "private temp file, verifies it, and deletes it. Bounded at "
+            "~8 MB so an oversized body is rejected (422) before any disk "
+            "write, independent of any reverse-proxy body limit."
         ),
     )
     expected_sigstore_identity: str | None = Field(

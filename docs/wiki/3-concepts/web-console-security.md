@@ -53,10 +53,14 @@ actions. It surfaces this in two layers:
    `auth_configured = false`, naming `EVIDENTIA_API_AUTH_TOKEN_FILE` as the fix.
    It disappears the moment an auth provider is configured (so a secured
    deployment — and the static demo bundle — shows nothing).
-2. **A hard gate on the egress consoles.** The two consoles that use credentials
+2. **A UI guard on the egress consoles.** The two consoles that use credentials
    and reach the network — **Collect** and **Integrations** — *disable* their
-   run / push buttons until an auth token is set. Local-store and read-only
-   consoles stay usable either way.
+   run / push buttons until an auth token is set. This is a UI convenience guard,
+   **not** a server-side control: the underlying `/api/collectors` and
+   `/api/integrations` endpoints stay reachable until an `AuthProvider` is
+   configured (see "Standing controls" above). Setting the token — not the
+   disabled button — is the real fix. Local-store and read-only consoles stay
+   usable either way.
 
 Setting `--auth-token-file` clears the banner, requires a bearer token on every
 `/api/*` route, and unlocks the credentialed buttons. This is the single most

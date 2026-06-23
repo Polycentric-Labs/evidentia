@@ -260,9 +260,11 @@ anonymous-by-default and RBAC-permissive: with no token configured, anything tha
 can reach the local API can drive the console. The UI surfaces this honestly in
 two layers — (1) a soft, always-visible `SecurityPostureBanner` that warns
 *"Unsecured deployment"* whenever `auth_configured = false` and points at
-`EVIDENTIA_API_AUTH_TOKEN_FILE` as the fix; and (2) a hard gate that **disables
-the credentialed Run/Push buttons** on the only two egress consoles — **Collect**
-and **Integrations** — until an auth token is set. Read-only and local-store
+`EVIDENTIA_API_AUTH_TOKEN_FILE` as the fix; and (2) a UI guard that **disables
+the credentialed Run/Push buttons** on the two egress consoles — **Collect**
+and **Integrations** — until an auth token is set (a convenience guard, not a
+server-side control — the API endpoints stay open until an `AuthProvider` is
+configured). Read-only and local-store
 consoles stay usable either way; the Settings console shows per-provider LLM
 presence as booleans only and never exposes a key value. Starting the server with
 `--auth-token-file` clears the banner, requires `Authorization: Bearer <token>`
