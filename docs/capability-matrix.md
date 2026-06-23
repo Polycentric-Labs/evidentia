@@ -13,6 +13,50 @@
 
 ---
 
+## Re-validation snapshot — 2026-06-23 (v0.10.12 PRE-TAG) — full CLI↔GUI parity build-out + OMB M-25-21
+
+v0.10.12 closes the CLI↔GUI parity programme opened in v0.10.8: GUI coverage of
+the CLI rises from **13.3% → ~98%** (the Wave 1–4 console build-out), and the
+AI-governance module migrates from the rescinded OMB **M-24-10** to current
+federal guidance, **M-25-21** ("high-impact AI"). Per skill v5.2 G29 this took
+the FULL flow (new endpoints + a new credential-adjacent path + a
+security-relevant SSRF change). Unchanged subsystems are REUSED from the
+v0.10.0 → v0.10.8 matrices; this snapshot covers the parity + OMB + hardening
+delta.
+
+### Surface delta — new in v0.10.12
+
+| # | New surface | Kind | Verification |
+|---|---|---|---|
+| 1 | The Wave 1–4 console build-out — ~12 new consoles (governance, retention, evidence, catalog mgmt, risk-quantify, TPRM, model-risk, AI-gov, OSCAL-verify, traceability, collect, integrations) reaching 22 consoles at ~98% parity | Web UI | vitest 137; live `evidentia serve` adversarial probing; the auth-gated Collect/Integrations consoles (SecurityPostureBanner + UI button-gate) |
+| 2 | ~46 new REST mutation endpoints (the matched API surface for the new consoles) + the bidirectional parity gate (inverse-completeness + `api_extra` allowlist) | REST API | `check_parity` PASS (5/5); Schemathesis DAST ~8,100 cases (the 6 create endpoints' empty-id 500 found + fixed → 422) |
+| 3 | OMB **M-25-21** high-impact AI surface — `omb_m_25_21` core module + `ai-gov set-high-impact` CLI↔REST↔console triple + `AI_SYSTEM_HIGH_IMPACT_CLASSIFIED` audit event; legacy M-24-10 retained-deprecated | CLI/API/UI/audit | RBAC write-gated (403 deny-by-default test); Pydantic-validated; backward-compat tests; the M-25-21 facts independently labcoat-verified vs whitehouse.gov primary sources |
+| 4 | Coverage-guided fuzzing — 6 atheris harnesses + ClusterFuzzLite CI + Hypothesis property tests over the untrusted-input parsers | Security/CI | found + (this review) completed an OSCAL-verify CWE-248 DoS fix across the whole `verify_digests` chain |
+
+### Parity baseline (G27 cross-surface walk)
+
+`check_parity --json` is green on all 5 checks (completeness + API-existence +
+GUI-existence + debt-ratchet + inverse-completeness). Counts: **99 full / 2
+api-only (`version`, `init` — chrome/index-surfaced) / 0 cli-only / 10 exempt =
+~98% GUI coverage**. The cli-only debt floor dropped from **43 → 0** — the
+parity programme's goal. Every new v0.10.12 surface is present across the
+surfaces it should be (CLI / API / UI).
+
+### Findings (this pre-release-review — skill v5)
+
+**0 CRITICAL.** 4 HIGH, all caught + fixed pre-tag: F-V1012-1 (the fuzz-found
+OSCAL-verify DoS fix was incomplete — hardened the full `verify_digests`
+chain + the robustness harness), H-1/M-1 (the credentialed-button "disabled"
+banner overclaimed a server-side control — reworded to a UI-convenience guard),
+and F-V1012-S4-1 (DAST: 13 HTTP 500s — the 6 full-model create endpoints
+returned 500 on an empty client `id`; now 422 + regression tests). MEDIUM/LOW:
+a retention metadata-delete event split, two DoS input bounds, secret-scrubber
+pattern coverage — all fixed; the structured-field scrub + audit-principal
+attribution + a few pre-existing items deferred-with-rationale. The OMB
+migration + the Tableau SSRF fix were independently confirmed clean.
+
+---
+
 ## Re-validation snapshot — 2026-06-04 (v0.10.8 PRE-TAG) — Tier-B GUI build-out + CLI↔GUI parity
 
 v0.10.8 wires the v0.10.7 quality discipline into the **automatic** release
