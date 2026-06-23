@@ -445,9 +445,9 @@ I=moderate, A=low)
 Set the OMB M-25-21 high-impact AI determination with `set-high-impact`. OMB
 M-25-21 collapses the old rights-impacting / safety-impacting split into a single
 **high-impact AI** category — AI whose output is a principal basis for decisions
-with a significant effect on civil rights/liberties/privacy, access to essential
-services, critical government resources, human health & safety, critical
-infrastructure, or strategic assets. Pass a `--determination`
+with a legal, material, binding, or significant effect on civil
+rights/liberties/privacy, access to essential services, critical government
+resources, human health & safety, critical infrastructure, or strategic assets. Pass a `--determination`
 (`high_impact` / `not_high_impact` / `not_assessed`) and, for a `high_impact`
 call, one or more `--basis` flags plus an optional `--rationale`. For a
 résumé-screener that adjudicates access to employment, the determination is

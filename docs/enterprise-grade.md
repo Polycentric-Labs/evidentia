@@ -1,9 +1,14 @@
-# Enterprise-grade credibility checklist (v0.7.0)
+# Enterprise-grade credibility checklist (v0.7.0 baseline · maintained through v0.10.12)
 
-Evidentia's v0.7.0 release is explicitly targeted at the quality bar
-that Big-4 audit firms (Deloitte, PwC, KPMG, EY), FedRAMP Third-Party
-Assessor Organizations (3PAOs), and senior GRC officers at regulated
-companies would consider production-grade for evidence collection.
+Evidentia's v0.7.0 release established the quality bar that Big-4 audit
+firms (Deloitte, PwC, KPMG, EY), FedRAMP Third-Party Assessor
+Organizations (3PAOs), and senior GRC officers at regulated companies
+would consider production-grade for evidence collection. That baseline
+has stayed closed and been extended every cycle since; the
+**[Status through v0.10.12](#status-through-v01012-maintenance-summary)**
+summary below captures what has advanced, while the per-tier tables remain
+the original v0.7.0 baseline snapshot (later status changes noted there
+or in the summary).
 
 This checklist synthesizes requirements from:
 
@@ -23,6 +28,46 @@ Priority tiers:
 - **HIGH** — strong enterprise expectation; acceptable with documented remediation plan
 - **MEDIUM** — desirable, often documented as "on the roadmap"
 - **LOW** — nice-to-have
+
+## Status through v0.10.12 (maintenance summary)
+
+The BLOCKER baseline has remained closed since v0.7.0. The enterprise
+posture has advanced materially across the v0.8.x–v0.10.x line:
+
+- **Supply chain — all six release credentials ship and are independently
+  verifiable** on every release: PEP 740 attestations, Sigstore/Rekor
+  signing, SLSA L3 build provenance, a cosign-signed container, a
+  CycloneDX 1.6 SBOM, and a public OpenSSF Scorecard. This closes the
+  v0.7.0 ⚠️ on **H2** (SLSA L3 was "planned") and **H7** (PyPI Trusted
+  Publisher OIDC was "planned").
+- **Continuous fuzzing** — six `atheris` harnesses + ClusterFuzzLite CI +
+  cross-platform Hypothesis property tests (v0.10.12) harden the
+  untrusted-input parsers and credit the OpenSSF Scorecard "Fuzzing"
+  check (advances **M1**'s intent via coverage-guided fuzzing; classic
+  mutation testing remains unscheduled).
+- **WORM evidence store + retention / legal-hold** (v0.9.6) provide
+  first-class anti-tamper evidence lineage at the product layer, advancing
+  **H8** and **H13** beyond operator-only responsibility.
+- **Collector breadth** — 14 credentialed collectors now ship (AWS,
+  GitHub, Okta, 5 SQL adapters, Databricks, Snowflake, Vanta, Drata,
+  BitSight, SecurityScorecard) plus third-party OCSF ingest, advancing
+  **M3** (Azure / GCP remain roadmap).
+- **Federal + AI-governance surface** — FIPS 199 / OMB impact leveling,
+  the **OMB M-25-21** high-impact AI model (v0.10.12, replacing the
+  rescinded M-24-10), and a signed Control↔Threat traceability **OSCAL
+  profile** (v0.10.11 — partially addresses **L4**'s "not OSCAL Profile
+  format" note).
+- **CLI↔GUI parity** — the local web console reaches ~98% parity across
+  22 consoles (v0.10.12), with a documented web-console security model and
+  a default-on SSRF / anti-DNS-rebind network guard across collectors,
+  integrations, and the Tableau publish path.
+- **95 bundled framework catalogs** across four redistribution tiers
+  (updates **L4**'s "82 frameworks" count).
+
+The v0.7.0 BLOCKER-complete, enterprise-ready classification holds;
+v0.10.12 extends it across breadth (collectors, consoles, federal
+surface), supply-chain depth (all six credentials + continuous fuzzing),
+and product-layer anti-tamper (WORM evidence lineage).
 
 ## BLOCKER items
 

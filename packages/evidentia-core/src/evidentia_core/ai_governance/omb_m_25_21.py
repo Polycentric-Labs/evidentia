@@ -12,9 +12,9 @@ out of scope here (tracked for a future cycle).
 The defining change for an AI-system inventory: M-25-21 **collapses
 the old "rights-impacting" / "safety-impacting" split into a single
 "high-impact AI" category.** An AI use is *high-impact* when its
-output serves as a *principal basis* for decisions or actions that
-have a significant effect on at least one of these consequence areas
-(:class:`HighImpactBasis`):
+output serves as a *principal basis* for decisions or actions with a
+legal, material, binding, or significant effect on at least one of these
+consequence areas (:class:`HighImpactBasis`):
 
   - civil rights, civil liberties, or privacy;
   - access to essential services / programs (education, housing,
@@ -79,9 +79,9 @@ class HighImpactDetermination(str, Enum):
 
     HIGH_IMPACT = "high_impact"
     """The AI use is high-impact per M-25-21: its output is a principal
-    basis for decisions/actions with a significant effect on one or more
-    :class:`HighImpactBasis` areas. Triggers the seven minimum
-    risk-management practices."""
+    basis for decisions/actions with a legal, material, binding, or
+    significant effect on one or more :class:`HighImpactBasis` areas.
+    Triggers the seven minimum risk-management practices."""
 
     NOT_HIGH_IMPACT = "not_high_impact"
     """The AI use is not high-impact. Subject to baseline governance but

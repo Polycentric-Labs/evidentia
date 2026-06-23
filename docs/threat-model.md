@@ -12,6 +12,14 @@ walked across 5 tiers. **0 HIGH, 0 MEDIUM, 3 LOW** — all
 design-choice or pre-existing intentional patterns. v0.7.5
 sanitization patterns confirmed at every callsite.
 
+**Targeted updates since the last deep-pass** (per
+[`docs/release-checklist.md`](release-checklist.md) Step 5): **v0.10.12** added
+the multi-console web REST surface (the SSRF / anti-DNS-rebind network-guard
+chokepoint now also covers the Tableau publish endpoint — a credential-exfil
+sink found and fixed this cycle, see the network-egress section) and the
+OMB M-25-21 high-impact AI-governance surface (additive; the legacy M-24-10
+path is retained-deprecated). No new open HIGH/MEDIUM findings.
+
 ---
 
 ## Why this doc exists
