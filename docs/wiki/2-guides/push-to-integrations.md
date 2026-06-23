@@ -242,7 +242,7 @@ sidebar (route `/integrations`). The page is organized as one card per system â€
 **Jira**, **ServiceNow**, **Tableau**, **Power BI** â€” backed by the
 `/api/integrations/...` routes.
 
-<!-- TODO(live-verify): capture docs/wiki/images/screen-integrations.png from the running /integrations console, then restore: ![The Integrations screen](../images/screen-integrations.png) -->
+![The Integrations screen](../images/screen-integrations.png)
 
 The console preserves the same secrets discipline as the CLI: **the forms never
 ask for a token.** Credentials are sourced server-side from the same environment

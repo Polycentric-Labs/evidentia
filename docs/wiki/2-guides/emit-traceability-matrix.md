@@ -170,7 +170,7 @@ Everything above — *except signing* — is also available in the browser. Star
 server with `evidentia serve` and open the **Traceability** screen from the
 sidebar (route `/traceability`). The screen calls `POST /api/traceability/emit`.
 
-<!-- TODO(live-verify): capture docs/wiki/images/screen-traceability.png from the running /traceability console, then restore: ![The Traceability screen](../images/screen-traceability.png) -->
+![The Traceability screen](../images/screen-traceability.png)
 
 The console is **read-mostly and never signs.** It builds the matrix inline from
 the form, posts it, and renders the returned **unsigned** OSCAL profile as

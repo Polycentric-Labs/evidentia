@@ -175,7 +175,7 @@ Everything above also works from the browser. Start the server with
 ingest**, **Convert**, and **Status** — each returning a list of findings rendered
 as severity-tagged cards.
 
-<!-- TODO(live-verify): capture docs/wiki/images/screen-collect.png from the running /collect console, then restore: ![The Collect screen](../images/screen-collect.png) -->
+![The Collect screen](../images/screen-collect.png)
 
 ### The auth gate (why your Run buttons may be disabled)
 
