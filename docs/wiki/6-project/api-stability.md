@@ -107,7 +107,7 @@ The `EventAction` enum is an append-only contract. Existing
 values are never removed or renamed post-v1.0. New values may
 be added in any minor release.
 
-Current namespaces (80+ values as of v0.9.8). Example values below
+Current namespaces (as of v0.10.12). Example values below
 are real members of `evidentia_core.audit.events.EventAction` — the
 enum module is the authoritative source:
 
@@ -127,6 +127,10 @@ enum module is the authoritative source:
 | `EVIDENCE_*` (v0.9.6+) | Evidence WORM lineage | `EVIDENCE_VERSION_PERSISTED`, `EVIDENCE_WORM_VIOLATION_BLOCKED`, `EVIDENCE_LINEAGE_QUERIED` |
 | `RBAC_*` (v0.9.8+) | Multi-tenant RBAC | `RBAC_TENANT_BOUNDARY_CROSSED` |
 | `RETENTION_*` | Data retention | `RETENTION_RECORD_PUT`, `RETENTION_RECORD_EXTENDED`, `RETENTION_LEGAL_HOLD_APPLIED`, `RETENTION_LEGAL_HOLD_RELEASED`, `RETENTION_LIFECYCLE_TRANSITIONED`, `RETENTION_RECORD_PURGED`, `RETENTION_GDPR_PURGE` |
+| `GOVERNANCE_*` (v0.10.12) | Governance metrics / workflows | `GOVERNANCE_CHALLENGE_CREATED`, `GOVERNANCE_METRIC_CREATED`, `GOVERNANCE_METRIC_OBSERVED`, `GOVERNANCE_METRIC_DELETED`, `GOVERNANCE_WORKFLOW_RUN`, `GOVERNANCE_WORKFLOW_ADVANCED`, `GOVERNANCE_WORKFLOW_DELETED` |
+| `CATALOG_*` (v0.10.12) | Catalog management | `CATALOG_IMPORTED`, `CATALOG_REMOVED` |
+| `TRACEABILITY_*` (v0.10.12) | Control↔threat traceability | `TRACEABILITY_EMITTED` |
+| `INTEGRATIONS_*` (v0.10.12) | Output integrations | `INTEGRATIONS_SERVICENOW_PUSH` |
 
 Operators building alerting / SIEM integrations on top of the
 audit log can depend on these values being stable.

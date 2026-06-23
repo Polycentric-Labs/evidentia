@@ -8,17 +8,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.10.12] - Unreleased
+## [0.10.12] - 2026-06-23
 
-**Theme**: *v0.10.12 — full CLI↔GUI parity build-out + the OMB M-25-21 AI-governance migration*. (Cycle in progress on `feature/v0.10.12`; this block is being composed as the cycle lands — the parity build-out, REST mutation-verb parity, audit EventAction promotions, a11y, and security-hardening entries are finalized at release.)
+**Theme**: *v0.10.12 — full CLI↔GUI parity build-out + the OMB M-25-21 AI-governance migration*. A feature-rich minor release: the local web console reaches **~98% CLI↔GUI parity** (up from ~13% in v0.10.11), the AI-governance module migrates to current federal guidance (**OMB M-25-21**), and the supply-chain / security posture is hardened (continuous fuzzing, an SSRF fix, and OpenSSF Scorecard lifts).
 
 ### Added
 
 - **OMB M-25-21 "high-impact AI" model** — the AI-governance module now reflects current federal guidance. OMB **M-24-10** (the prior basis for the rights-impacting / safety-impacting / both / neither taxonomy) was **rescinded on 2025-04-03 by M-25-21** ("Accelerating Federal Use of AI through Innovation, Governance, and Public Trust"), which collapses the old split into a single **"high-impact AI"** category — AI whose output is a principal basis for decisions with significant effect on civil rights/liberties/privacy, access to essential services (education, housing, insurance, credit, employment), critical government resources, human health & safety, critical infrastructure, or strategic assets. New core module `evidentia_core.ai_governance.omb_m_25_21` ships `HighImpactDetermination` (`high_impact` / `not_high_impact` / `not_assessed`), `HighImpactBasis` (the six consequence areas), the `OMBHighImpactAssessment` sub-model (determination + bases + rationale), `triggers_minimum_practices()`, and `crosswalk_from_legacy()` (an explicit, operator-invoked old→new mapping — Evidentia never silently re-determines a persisted M-24-10 value). Surfaced as a matched CLI ↔ REST ↔ console triple — `evidentia ai-gov set-high-impact <id> --determination <d> [--basis <b>]… [--rationale <t>]`, `POST /api/ai-gov/systems/{id}/set-high-impact` (RBAC `write`-gated), and a "High-impact AI (OMB M-25-21)" form + display on the `/ai-gov` console — plus a new `omb_high_impact` registry field, the `AI_SYSTEM_HIGH_IMPACT_CLASSIFIED` audit event, and the SCR change-classifier treating a `not_high_impact`→`high_impact` escalation as transformative. Purely additive + backward-compatible: every existing M-24-10 inventory entry still loads. The seven M-25-21 minimum risk-management practices are documented this cycle; structured per-practice tracking is a v0.11 extension of `OMBHighImpactAssessment`.
+- **Full CLI↔GUI parity build-out** — the local web console grows to **22 consoles at ~98% CLI↔GUI parity** (up from ~13% in v0.10.11), with matched REST endpoints for every new console (governance, retention, evidence, catalog management, risk-quantify, TPRM, continuous-monitoring, model-risk, POA&M, AI-governance, OSCAL-verify, traceability, collect, integrations). The two credentialed / network-egress consoles — **Collect** and **Integrations** — are auth-gated: a `SecurityPostureBanner` plus disabled run/push buttons appear when no `AuthProvider` is configured. Artifact signing remains an air-gap CLI operation (the consoles verify and emit unsigned only).
+- **Init wizard write-to-disk path** — `POST /api/init/commit` lets the onboarding wizard write the generated `system-context.yaml`, control inventory, and catalog index to the server's working directory (skips existing files unless `overwrite=true`, mirroring `evidentia init --force`).
+
+### Changed
+
+- **Web-console bundle reduced via route code-splitting** — every console page is now lazy-loaded with `React.lazy` + a Suspense boundary, dropping the main chunk to **339 kB** (105 kB gzip) and clearing the >500 kB build warning.
+- **The CLI↔GUI parity gate is now bidirectional** — a new inverse-completeness check requires every live OpenAPI operation to be either served by a CLI leaf or listed (with a rationale) in an `api_extra` allowlist; an unclassified endpoint or a stale allowlist row fails the gate.
+- **Audit vocabulary fully typed** — `EventAction.TRACEABILITY_EMITTED` and `EventAction.INTEGRATIONS_SERVICENOW_PUSH` promoted from ECS-style dotted strings to enum members (byte-identical emission; existing SIEM queries unaffected), completing the typed-`EventAction` refactor.
+- **Console accessibility (WCAG 4.1.3 Status Messages)** — fetch-error cards now announce via `role="alert"`, async pending states via `role="status"` / `aria-live`, and the OSCAL-verify identity hint is associated to its disabled control via `aria-describedby` (12 files across the console set).
+
+### Fixed
+
+- **Evidence console empty-state hint** — points operators to `evidentia evidence save` (which emits the lineage id) instead of the nonexistent `evidence list` command.
+- **Framework-ID typo in operator guides** — corrected `nist-800-53-rev5-mod` → the canonical `nist-800-53-rev5-moderate` across the SARIF / OCSF-detection / gap-analysis guides (the invalid id made `gap analyze` exit non-zero).
+
+### Security
+
+- **SSRF + credential-exfil guard on the Tableau publish endpoint** — the request-body `server_url` is now validated through `network_guard.enforce_public_host` (default-on private-IP block) + `pin_resolved_host` (anti-DNS-rebind), with https-only enforcement, closing a path by which a caller could reach a cloud-metadata endpoint (e.g. 169.254.169.254) and exfiltrate the Tableau PAT. Configuration is validated before the report lookup.
+- **Continuous fuzzing (ClusterFuzzLite) + a fuzz-found DoS fix** — six `atheris` harnesses (catalog import, OSCAL profile load/resolve, OSCAL verify, OCSF ingest, gap-report load, TPRM questionnaire) run in CI alongside cross-platform Hypothesis property tests; the first run found and fixed an uncaught-exception denial-of-service in `oscal verify` on malformed back-matter. This is the OpenSSF Scorecard "Fuzzing" lift; the harnesses graduate to OSS-Fuzz unchanged.
 
 ### Deprecated
 
 - **The OMB M-24-10 surface** — `evidentia_core.ai_governance.omb_m_24_10.OMBImpactCategory`, the `omb_impact` registry field, the `ai-gov set-omb-impact` CLI/REST verb, and the `AI_SYSTEM_OMB_CLASSIFIED` audit event — after M-24-10's 2025-04-03 rescission by M-25-21. **Retained and fully backward-compatible** (persisted inventories still load; no behaviour change; no runtime deprecation warning). Use the M-25-21 high-impact surface for new work, and `omb_m_25_21.crosswalk_from_legacy` to map a legacy value forward.
+
+### Documentation
+
+- **GitHub Pages site on the owned domain** — the Material-for-MkDocs documentation site is served at `docs.evidentiagrc.com` (CNAME + canonical `site_url`); a `pages.yml` workflow builds it under `mkdocs build --strict`. OpenSSF Scorecard was hardened in the same cycle (a `SCORECARD_TOKEN` for the branch-protection/webhooks checks; the SLSA build-provenance bundle is attached to each GitHub Release).
+- **Operator console guides + screenshots** — six new console walkthroughs, with bash **and PowerShell** command variants across every command-bearing guide; three new console screenshots (Collect, Integrations, Traceability); a new `web-console-security.md` concept page documenting the standing security model for `evidentia serve` (inherited controls, the anonymous-by-default posture + auth-gating, per-console exposure, and a hardening checklist); and a refresh of `positioning-and-value.md` §3 to the current v0.10.12 surface.
+- **Windows verification recipes** — the canonical `docs/verification.md` now carries the bash + PowerShell variants for every release-artifact verification recipe (PEP 740, cosign, SBOM, SLSA); the generated wiki mirror regenerates from it, so the two no longer drift.
 
 ## [0.10.11] - 2026-06-17
 
