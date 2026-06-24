@@ -128,7 +128,13 @@ jobs:
           # this race entirely (the v0.7.13 P0.5 pin-trap fix
           # ensures the inter-package pins are tightened, so any
           # of the 6 not-yet-propagated would block the install).
-          PACKAGES="evidentia evidentia-core evidentia-ai evidentia-collectors evidentia-integrations evidentia-api"
+          # v0.10.13: + evidentia-eval. The meta-package gained a direct
+          # evidentia-eval dep in v0.10.5 P9, but this wait-list was never
+          # updated, so the v0.10.13 container regen raced evidentia-eval's
+          # PyPI propagation (DistributionNotFound on evidentia-eval>=0.10.13)
+          # — the exact race this list exists to prevent. evidentia-mcp is
+          # intentionally absent: it is not a dependency of evidentia[gui].
+          PACKAGES="evidentia evidentia-core evidentia-ai evidentia-eval evidentia-collectors evidentia-integrations evidentia-api"
           for pkg in $PACKAGES; do
             echo "Waiting for ${pkg}==${VERSION} to appear on PyPI..."
             attempts=0

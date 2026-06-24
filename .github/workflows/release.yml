@@ -447,15 +447,23 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.semver }}
         run: |
-          # v0.7.16: extend the wait to ALL 6 inter-package deps
+          # v0.7.16: extend the wait to ALL inter-package deps
           # (matches the v0.7.14 P2.2 fix in container-build.yml).
           # The v0.7.15 first ship failed at the docker build because
           # this Wait step polled only `evidentia` while pip's
           # resolution then failed on `evidentia-core<0.8.0,>=0.7.15`
           # (not yet propagated). The pin-trap fix correctly REFUSED
           # to fall back, surfacing the propagation race as a hard
-          # CI failure. Polling all 6 packages prevents this entirely.
-          PACKAGES="evidentia evidentia-core evidentia-ai evidentia-collectors evidentia-integrations evidentia-api"
+          # CI failure. Polling all of them prevents this entirely.
+          #
+          # v0.10.13: + evidentia-eval. The meta-package gained a direct
+          # evidentia-eval dep in v0.10.5 P9, but this list was never
+          # updated, so the v0.10.13 container regen raced evidentia-eval's
+          # propagation (DistributionNotFound on evidentia-eval>=0.10.13)
+          # AFTER PyPI had published — the container failed while the wheels
+          # were already live. evidentia-mcp is intentionally absent: it is
+          # not a dependency of evidentia[gui].
+          PACKAGES="evidentia evidentia-core evidentia-ai evidentia-eval evidentia-collectors evidentia-integrations evidentia-api"
           for pkg in $PACKAGES; do
             echo "Waiting for ${pkg}==${VERSION} to appear on PyPI..."
             attempts=0
