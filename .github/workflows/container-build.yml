@@ -106,8 +106,11 @@ jobs:
       - name: Determine latest published evidentia version (from PyPI)
         id: pin
         run: |
-          VERSION=$(curl -sSfL https://pypi.org/pypi/evidentia/json \
-            | python3 -c "import sys, json; print(json.load(sys.stdin)['info']['version'])")
+          # Pure-python fetch+parse (NOT `curl ... | python3`) so the OpenSSF
+          # Scorecard Pinned-Dependencies "download-then-run" heuristic does not
+          # flag a pipe into an interpreter — urllib here only parses PyPI's
+          # JSON metadata, it executes no downloaded code.
+          VERSION=$(python3 -c "import json, urllib.request; print(json.load(urllib.request.urlopen('https://pypi.org/pypi/evidentia/json', timeout=30))['info']['version'])")
           if [ -z "${VERSION}" ]; then
             echo "::error::could not determine the latest published evidentia version from PyPI."
             exit 1
