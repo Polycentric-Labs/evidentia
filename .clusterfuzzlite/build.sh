@@ -13,7 +13,13 @@
 # harnesses import evidentia_core (catalogs/oscal/ocsf/gap/tprm),
 # evidentia_collectors (ocsf collector), pydantic, pyyaml, and — for the
 # OCSF mapping path — the optional [ocsf] extra (py-ocsf-models).
-pip3 install \
+# --ignore-requires-python: the base image ships Python 3.11, but the workspace
+# declares requires-python >=3.12 as a runtime floor. Every harness-reached
+# module imports clean on 3.11 (the only PEP 695 generic classes live in the
+# unreached plugins/storage/*); atheris is built against the base's 3.11, so we
+# install on 3.11 rather than swap the interpreter. Without this flag the build
+# fails at "No matching distribution ... requires a different Python".
+pip3 install --ignore-requires-python \
   "$SRC/evidentia/packages/evidentia-core[ocsf]" \
   "$SRC/evidentia/packages/evidentia-collectors"
 
