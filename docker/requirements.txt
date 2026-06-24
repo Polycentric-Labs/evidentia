@@ -315,27 +315,27 @@ docstring-parser==0.18.0 \
     --hash=sha256:292510982205c12b1248696f44959db3cdd1740237a968ea1e2e7a900eeb2015 \
     --hash=sha256:b3fcbed555c47d8479be0796ef7e19c2670d428d72e96da63f3a40122860374b
     # via instructor
-evidentia==0.10.11 \
-    --hash=sha256:3f4fc6cf58e079a32a68b8fad6684f3912f9b1a4588497ea0e137f5fbdda318e \
-    --hash=sha256:d3738d6d2ade42d8ba0c4b82388a94f4378a34eeef439cb82f8b3acb455460e1
+evidentia==0.10.13 \
+    --hash=sha256:4589d261112c47840e294dae5d9f17d3903e3e6ead87c3cacaf3822227a07666 \
+    --hash=sha256:a6ce058bd51c92ad3f8149a7e1a310b94e3ed8dd6a1cd260443a3a17fef83b85
     # via -r docker/requirements.in
-evidentia-ai==0.10.11 \
-    --hash=sha256:1a00b7380140ea3510d130dab6ffd4b245e0cb66b5b012ac0651e8bdd75224bf \
-    --hash=sha256:b5bfdff859686d0d04e3166db9dbeaf55ab7c1c901a730a08f627a16640e54d9
+evidentia-ai==0.10.13 \
+    --hash=sha256:96498fddca2e83920b9ad2b8c6acd4c21fcc5ad7bba1b7458a7e0aafa05eea36 \
+    --hash=sha256:e582c91bee4d4d663cd9b93488681ee5e334547aed6fac664dc82d23d281e410
     # via
     #   evidentia
     #   evidentia-api
-evidentia-api==0.10.11 \
-    --hash=sha256:74dd0c00a4e100d62e4fac3d8ad80ceae70983755ce3b2c2b5d67052bc22ccf3 \
-    --hash=sha256:db4e438ec271729d13d6bb3901c8d2322c92b975e8da89974116c56be134ccd0
+evidentia-api==0.10.13 \
+    --hash=sha256:240eebc38f171348778990ff162248808d9f3c5c0c0d5cba23629b13655a8d44 \
+    --hash=sha256:4646cc33330071ba149b127b29d438fc525e5e76615d145ac76b1f25d13b5eb4
     # via evidentia
-evidentia-collectors==0.10.11 \
-    --hash=sha256:560ea70a4206e819bc39f77c216a08a4dfa1ded794621a476928284e1b94cf46 \
-    --hash=sha256:72f9004752d0e3b65c563b0d6091d919dfa79a9541b1e4537571490fdc961d11
+evidentia-collectors==0.10.13 \
+    --hash=sha256:c36b15a182662322c481cc08f825646e4f545ee1e6162cac9bf99d54efc94aaa \
+    --hash=sha256:c8c0a7d1589a2cf9994d33cc1550664ab2a42172ff161b3c1050e3a85efa5df2
     # via evidentia
-evidentia-core==0.10.11 \
-    --hash=sha256:58489c13fba26aa07bed7ccfaf4c8bd0a259096b6adafc45fa36fee46f8bc8ec \
-    --hash=sha256:da5c4c47c19d0c714461e2c79b069554c9c54332014bc4f456ccbd99d238b751
+evidentia-core==0.10.13 \
+    --hash=sha256:02379ad496391f3c02acbfc72e972570fcee6b7aecae72fcebe46b2eda9c34c0 \
+    --hash=sha256:4e5966946dedc8631c891379d0a81101b84616f53a99372e5ff3432940ca4a83
     # via
     #   evidentia
     #   evidentia-ai
@@ -343,15 +343,15 @@ evidentia-core==0.10.11 \
     #   evidentia-collectors
     #   evidentia-eval
     #   evidentia-integrations
-evidentia-eval==0.10.11 \
-    --hash=sha256:e0ed0c08df416f78e24765eeed7dc26cd86ce09350401f4a95fc65ca10fddc5d \
-    --hash=sha256:fb12dde669d16a17a8cdf31d6b041272635d4a4ffc9d1bcd0f23a386d4a4891a
+evidentia-eval==0.10.13 \
+    --hash=sha256:6dffcb355f80477763cc2133e52e9012bb002a802184625e7e68379e2f677dfb \
+    --hash=sha256:a31b8f91ba7725a3b6b8d95b561752f5ee9992177ca9229bb5878ad74e1935c9
     # via
     #   evidentia
     #   evidentia-ai
-evidentia-integrations==0.10.11 \
-    --hash=sha256:b301978d7e5131b6837031aee7c70abb44d98704f36854bbfaa072a6a68ee7a2 \
-    --hash=sha256:e685fceea2591d63f1e31e761c651d3c3c798b5131331b4af4248617be948c85
+evidentia-integrations==0.10.13 \
+    --hash=sha256:96fd3887a2bae0492f269aa5aac1a4b34acf0d285ca3327f6002f674bdb0469e \
+    --hash=sha256:a00e42e21e4906026da491d6d2099065c021787e53bcb4c857a4552d4cdbf9ca
     # via evidentia
 fastapi==0.137.1 \
     --hash=sha256:64f6983c59e45c4b9fdc44e57cb8035c2451ee91ea8e8ec042aca37de7cf6b69 \
