@@ -26,6 +26,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Merge queue: a required check must run on merge_group or the queue stalls.
+  merge_group:
   # Allow manual re-runs from the Actions UI for diagnostic purposes.
   workflow_dispatch:
 
