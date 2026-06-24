@@ -79,26 +79,41 @@ jobs:
       # is that the smoke test is running for a release that hasn't
       # actually been published to PyPI yet. The error message
       # below makes that explicit.
-      - name: Extract version pin (v0.8.4 — from docker/requirements.txt)
+      # v0.10.13: determine the version from PyPI's latest PUBLISHED
+      # release, NOT by parsing the committed docker/requirements.txt.
+      #
+      # WHY THE CHANGE: the previous `sed` for `evidentia[gui]==X.Y.Z`
+      # in docker/requirements.txt broke twice over and silently
+      # disabled this entire gate from v0.10.11 onward:
+      #   1. FORMAT — pip-compile normalizes the umbrella line to
+      #      `evidentia==X.Y.Z` (the `[gui]` extra is expanded into its
+      #      transitive deps), so the `evidentia[gui]==` pattern never
+      #      matched the regenerated file.
+      #   2. STALENESS — bump_version.py advances docker/requirements.in
+      #      but not docker/requirements.txt, and release.yml only
+      #      regenerates the .txt *ephemerally* at tag time, so the
+      #      committed pin froze at the v0.10.11 value.
+      # The step therefore exited 1 at version-extraction on EVERY push
+      # since v0.10.11 — the smoke test never reached the build step, so
+      # a chronically-red gate masked the v0.10.12 `python:3.14` /
+      # litellm-`<3.14` regression (Dependabot #83) that a working build
+      # would have caught. Querying PyPI is self-correcting: the smoke
+      # test always builds against the latest real release, with no
+      # dependency on the (preview, perennially-stale) committed pin.
+      # This restores the original design intent — "validate the build
+      # works against the last published release on every main push" —
+      # with an implementation that cannot silently rot.
+      - name: Determine latest published evidentia version (from PyPI)
         id: pin
         run: |
-          # v0.8.4 G4 Path 2: read pin from docker/requirements.txt
-          # (committed preview state) instead of Dockerfile (which
-          # now uses --require-hashes).
-          # Match `evidentia[gui]==X.Y.Z` or `==X.Y.Z.N` (4-digit
-          # version support added in v0.7.7.1 bump_version.py).
-          # Using `sed -nE` (extended regex, portable across GNU + BSD)
-          # rather than `grep -oP` (PCRE) to avoid locale unibyte
-          # warnings on minimal runners.
-          VERSION=$(sed -nE 's/.*evidentia\[gui\]==([0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?).*/\1/p' docker/requirements.txt | head -n1)
+          VERSION=$(curl -sSfL https://pypi.org/pypi/evidentia/json \
+            | python3 -c "import sys, json; print(json.load(sys.stdin)['info']['version'])")
           if [ -z "${VERSION}" ]; then
-            echo "ERROR: could not parse pinned evidentia version from docker/requirements.txt."
-            echo "Expected pattern: evidentia[gui]==X.Y.Z \\"
-            grep -n 'evidentia\[gui\]' docker/requirements.txt || true
+            echo "::error::could not determine the latest published evidentia version from PyPI."
             exit 1
           fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "docker/requirements.txt pins evidentia[gui]==${VERSION}"
+          echo "Building container smoke test against latest published evidentia==${VERSION}"
 
       - name: Wait for PyPI propagation
         env:
