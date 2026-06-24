@@ -156,7 +156,19 @@ class TestMilestoneUpdatedAtRefresh:
     def test_changed_status_refreshes_milestone_updated_at(
         self, tmp_path: Path
     ) -> None:
+        from datetime import timedelta
+
+        from evidentia_core.models.common import utc_now
+
         m = _make_milestone()
+        # Anchor the original timestamp clearly in the past so the
+        # refresh-on-status-change assertion is robust to coarse clock
+        # granularity: the Windows system clock resolves to ~16ms, so two
+        # utc_now() calls within one tick can return an identical value,
+        # making a strict `>` flaky (this test failed exactly that way on
+        # windows-latest). Mirrors the vendor_store / effective_challenge
+        # save-refreshes-updated_at tests, which already anchor in the past.
+        m.updated_at = utc_now() - timedelta(days=10)
         original_ts = m.updated_at
         p = _make_poam(milestones=[m])
         save_poam(p, poam_store_dir=tmp_path)
