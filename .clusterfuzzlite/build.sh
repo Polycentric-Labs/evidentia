@@ -32,7 +32,14 @@ cd "$PYFUZZ_DIR"
 
 for harness in fuzz_*.py; do
   name="${harness%.py}"
-  compile_python_fuzzer "$PYFUZZ_DIR/$harness"
+  # --add-data bundles the shared _harness_util.py into each fuzzer. The
+  # harnesses do `from _harness_util import to_text`, but compile_python_fuzzer
+  # runs PyInstaller from a temp copy of the script, so the sibling module is
+  # not on the analysis path and was NOT bundled — every fuzzer then crashed at
+  # startup with `ModuleNotFoundError: No module named '_harness_util'`.
+  # Shipping it as data at the bundle root (extracted onto sys.path at runtime)
+  # makes the import resolve in the frozen fuzzer.
+  compile_python_fuzzer "$PYFUZZ_DIR/$harness" --add-data "$PYFUZZ_DIR/_harness_util.py:."
 
   # Map harness file -> seed-corpus subdir (drop the fuzz_ prefix).
   corpus_subdir="${name#fuzz_}"
