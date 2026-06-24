@@ -303,9 +303,7 @@ click==8.4.1 \
     --hash=sha256:482be17c6991b8c19c5429a1e995d9b0efdbb63172824c41f99965dc0ade8ec2 \
     --hash=sha256:918b5633eddf6b41c32d4f454bf0de810065c74e3f7dbf8ee5452f8be88d3e96
     # via
-    #   huggingface-hub
     #   litellm
-    #   typer
     #   uvicorn
 distro==1.9.0 \
     --hash=sha256:2fa77c6fd8940f116ee1d6b94a2f90b13b5ea8d019b98bc8bafdcabcdd9bdbed \
@@ -315,27 +313,27 @@ docstring-parser==0.18.0 \
     --hash=sha256:292510982205c12b1248696f44959db3cdd1740237a968ea1e2e7a900eeb2015 \
     --hash=sha256:b3fcbed555c47d8479be0796ef7e19c2670d428d72e96da63f3a40122860374b
     # via instructor
-evidentia==0.10.11 \
-    --hash=sha256:3f4fc6cf58e079a32a68b8fad6684f3912f9b1a4588497ea0e137f5fbdda318e \
-    --hash=sha256:d3738d6d2ade42d8ba0c4b82388a94f4378a34eeef439cb82f8b3acb455460e1
+evidentia==0.10.13 \
+    --hash=sha256:4589d261112c47840e294dae5d9f17d3903e3e6ead87c3cacaf3822227a07666 \
+    --hash=sha256:a6ce058bd51c92ad3f8149a7e1a310b94e3ed8dd6a1cd260443a3a17fef83b85
     # via -r docker/requirements.in
-evidentia-ai==0.10.11 \
-    --hash=sha256:1a00b7380140ea3510d130dab6ffd4b245e0cb66b5b012ac0651e8bdd75224bf \
-    --hash=sha256:b5bfdff859686d0d04e3166db9dbeaf55ab7c1c901a730a08f627a16640e54d9
+evidentia-ai==0.10.13 \
+    --hash=sha256:96498fddca2e83920b9ad2b8c6acd4c21fcc5ad7bba1b7458a7e0aafa05eea36 \
+    --hash=sha256:e582c91bee4d4d663cd9b93488681ee5e334547aed6fac664dc82d23d281e410
     # via
     #   evidentia
     #   evidentia-api
-evidentia-api==0.10.11 \
-    --hash=sha256:74dd0c00a4e100d62e4fac3d8ad80ceae70983755ce3b2c2b5d67052bc22ccf3 \
-    --hash=sha256:db4e438ec271729d13d6bb3901c8d2322c92b975e8da89974116c56be134ccd0
+evidentia-api==0.10.13 \
+    --hash=sha256:240eebc38f171348778990ff162248808d9f3c5c0c0d5cba23629b13655a8d44 \
+    --hash=sha256:4646cc33330071ba149b127b29d438fc525e5e76615d145ac76b1f25d13b5eb4
     # via evidentia
-evidentia-collectors==0.10.11 \
-    --hash=sha256:560ea70a4206e819bc39f77c216a08a4dfa1ded794621a476928284e1b94cf46 \
-    --hash=sha256:72f9004752d0e3b65c563b0d6091d919dfa79a9541b1e4537571490fdc961d11
+evidentia-collectors==0.10.13 \
+    --hash=sha256:c36b15a182662322c481cc08f825646e4f545ee1e6162cac9bf99d54efc94aaa \
+    --hash=sha256:c8c0a7d1589a2cf9994d33cc1550664ab2a42172ff161b3c1050e3a85efa5df2
     # via evidentia
-evidentia-core==0.10.11 \
-    --hash=sha256:58489c13fba26aa07bed7ccfaf4c8bd0a259096b6adafc45fa36fee46f8bc8ec \
-    --hash=sha256:da5c4c47c19d0c714461e2c79b069554c9c54332014bc4f456ccbd99d238b751
+evidentia-core==0.10.13 \
+    --hash=sha256:02379ad496391f3c02acbfc72e972570fcee6b7aecae72fcebe46b2eda9c34c0 \
+    --hash=sha256:4e5966946dedc8631c891379d0a81101b84616f53a99372e5ff3432940ca4a83
     # via
     #   evidentia
     #   evidentia-ai
@@ -343,19 +341,19 @@ evidentia-core==0.10.11 \
     #   evidentia-collectors
     #   evidentia-eval
     #   evidentia-integrations
-evidentia-eval==0.10.11 \
-    --hash=sha256:e0ed0c08df416f78e24765eeed7dc26cd86ce09350401f4a95fc65ca10fddc5d \
-    --hash=sha256:fb12dde669d16a17a8cdf31d6b041272635d4a4ffc9d1bcd0f23a386d4a4891a
+evidentia-eval==0.10.13 \
+    --hash=sha256:6dffcb355f80477763cc2133e52e9012bb002a802184625e7e68379e2f677dfb \
+    --hash=sha256:a31b8f91ba7725a3b6b8d95b561752f5ee9992177ca9229bb5878ad74e1935c9
     # via
     #   evidentia
     #   evidentia-ai
-evidentia-integrations==0.10.11 \
-    --hash=sha256:b301978d7e5131b6837031aee7c70abb44d98704f36854bbfaa072a6a68ee7a2 \
-    --hash=sha256:e685fceea2591d63f1e31e761c651d3c3c798b5131331b4af4248617be948c85
+evidentia-integrations==0.10.13 \
+    --hash=sha256:96fd3887a2bae0492f269aa5aac1a4b34acf0d285ca3327f6002f674bdb0469e \
+    --hash=sha256:a00e42e21e4906026da491d6d2099065c021787e53bcb4c857a4552d4cdbf9ca
     # via evidentia
-fastapi==0.137.1 \
-    --hash=sha256:64f6983c59e45c4b9fdc44e57cb8035c2451ee91ea8e8ec042aca37de7cf6b69 \
-    --hash=sha256:822360704230d9533d8d9475399613525968aa2f0b5bd2a3ccc9f18c88fd541c
+fastapi==0.138.0 \
+    --hash=sha256:b6f54fd1bd72c80b0f899f172c61a600f6f7af9b43d4d772a018f35624048cb0 \
+    --hash=sha256:d445a4877636ad191e7053e08c9bf98cb921a6756776848400bb773d1740c061
     # via evidentia-api
 fastuuid==0.14.0 \
     --hash=sha256:05a8dde1f395e0c9b4be515b7a521403d1e8349443e7641761af07c7ad1624b1 \
@@ -677,9 +675,9 @@ httpx==0.28.1 \
     #   huggingface-hub
     #   litellm
     #   openai
-huggingface-hub==1.19.0 \
-    --hash=sha256:1dc72e1f6b4d6df6b30eb72e57d00514ef453d660f04af2b87f0e67267f31ee0 \
-    --hash=sha256:fd771622182d40977272a923953ee3b1b13538f9f8a7f5d78398f10af0f1c0bd
+huggingface-hub==1.16.1 \
+    --hash=sha256:64340de934b9ce37857ef85a82de72f5629e8a270f9119eabb12bf495eb53c22 \
+    --hash=sha256:7f1dc4c5ec21aed69be630ad0c3378616be16f3de1a47b141c0e812965d9c832
     # via tokenizers
 idna==3.18 \
     --hash=sha256:7f952cbe720b688055e3f87de14f5c3e5fdaa8bc3928985c4077ca689de849a2 \
@@ -824,9 +822,9 @@ jsonschema-specifications==2025.9.1 \
     --hash=sha256:98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe \
     --hash=sha256:b540987f239e745613c7a9176f3edb72b832a4ac465cf02712288397832b5e8d
     # via jsonschema
-litellm==1.89.0 \
-    --hash=sha256:63b33e2de386ab2a83fed7ed852c755e59d461a21b16c79fc17993f1b8c3d154 \
-    --hash=sha256:eb1910a23497044b4375a0500c65f4c60d291a575d7b679c7566a5df9b9a5fcb
+litellm==1.89.3 \
+    --hash=sha256:414ef5aee504b2b3eb1b219d39f1c11902db399cbdbc06e5fb550c15d731abeb \
+    --hash=sha256:8fcdb2b7a0ef3381d41adf164443842e31ef9f0cd5bcda6fc3c0bd8bc2959510
     # via evidentia-ai
 markdown-it-py==4.2.0 \
     --hash=sha256:04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49 \
@@ -1821,9 +1819,9 @@ sniffio==1.3.1 \
     --hash=sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2 \
     --hash=sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc
     # via openai
-sse-starlette==3.4.4 \
-    --hash=sha256:07e0fa0460138baf25cdd5fb28683472c3995dc1642225191b3832d62526bcb0 \
-    --hash=sha256:3f4dd50d8aed2771a091f3a83000323fc3844541c16b4fe585ae2420cc6df973
+sse-starlette==3.4.5 \
+    --hash=sha256:83072538bc211a2f68b7b0422226c4af3e9b62e106e07034664b832ca019842a \
+    --hash=sha256:e71bad53323f65573c3864a6c3bd0c1eb6e5f092b2e48082b0c35927d19ca296
     # via evidentia-api
 starlette==1.3.1 \
     --hash=sha256:05d0213193f2fbaae60e2ecb593b4add4262ad4e46536b54abe36f11a71724e0 \
@@ -1926,9 +1924,9 @@ tqdm==4.68.2 \
     # via
     #   huggingface-hub
     #   openai
-typer==0.25.1 \
-    --hash=sha256:75caa44ed46a03fb2dab8808753ffacdbfea88495e74c85a28c5eefcf5f39c89 \
-    --hash=sha256:9616eb8853a09ffeabab1698952f33c6f29ffdbceb4eaeecf571880e8d7664cc
+typer==0.26.7 \
+    --hash=sha256:5c87cfbc5d34491c5346ebf49c23e18d56ccb863268d3a8d592b26087c2f5e58 \
+    --hash=sha256:e314a34c617e419c091b2830dda3ea1f257134ff593061a8f5b9717ab8dddb3a
     # via
     #   evidentia
     #   huggingface-hub
