@@ -39,7 +39,15 @@ for harness in fuzz_*.py; do
   # startup with `ModuleNotFoundError: No module named '_harness_util'`.
   # Shipping it as data at the bundle root (extracted onto sys.path at runtime)
   # makes the import resolve in the frozen fuzzer.
-  compile_python_fuzzer "$PYFUZZ_DIR/$harness" --add-data "$PYFUZZ_DIR/_harness_util.py:."
+  # --collect-data bundles every non-Python DATA file of the harnessed
+  # packages (the catalog YAMLs in evidentia_core/catalogs/data, OSCAL/OCSF
+  # data, etc.). PyInstaller bundles modules, not package data, by default —
+  # so the catalog/oscal harnesses crashed with
+  # FileNotFoundError: .../evidentia_core/catalogs/data/frameworks.yaml.
+  compile_python_fuzzer "$PYFUZZ_DIR/$harness" \
+    --add-data "$PYFUZZ_DIR/_harness_util.py:." \
+    --collect-data evidentia_core \
+    --collect-data evidentia_collectors
 
   # Map harness file -> seed-corpus subdir (drop the fuzz_ prefix).
   corpus_subdir="${name#fuzz_}"
