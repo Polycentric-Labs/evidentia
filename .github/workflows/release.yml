@@ -373,7 +373,7 @@ jobs:
 
     steps:
       - name: Download release-dist (wheels + sdists + SBOM)
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: release-dist
           path: .
@@ -461,19 +461,19 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download release-image (validated container tarball)
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: release-image
           path: .
 
       - name: Download release-dist (for the SBOM Release asset)
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: release-dist
           path: .
 
       - name: Download release-provenance (SLSA bundle Release asset)
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: release-provenance
           path: .
