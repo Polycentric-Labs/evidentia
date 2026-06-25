@@ -20,7 +20,11 @@ from hypothesis import HealthCheck, settings
 
 settings.register_profile(
     "ci",
-    deadline=400,  # ms; parser calls + temp-file IO are heavier than pure maps
+    # deadline=None: same reason as tests/property/conftest.py — a per-example
+    # wall-clock deadline flakes in CI (these parser harnesses do temp-file IO,
+    # so they are even more timing-sensitive). Hangs are caught by the job
+    # timeout; perf belongs in explicit benchmarks.
+    deadline=None,
     derandomize=True,
     max_examples=200,
     suppress_health_check=[HealthCheck.too_slow],

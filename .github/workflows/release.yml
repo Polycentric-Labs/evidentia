@@ -5,31 +5,52 @@ on:
     tags:
       - "v*"
 
-# Workflow-level least-privilege default. The publish-pypi job below
-# elevates to `contents: write` (Release attachment) +
-# `id-token: write` (PyPI OIDC) + `attestations: write` (SLSA L3)
-# locally. Closes OpenSSF Scorecard alert #30 (no top-level
-# permission defined) — top-level read-only narrows the blast
-# radius if any third-party action is compromised in a future job
-# we add to this workflow.
+# Workflow-level least-privilege default. Each publish job elevates locally.
+# Closes OpenSSF Scorecard alert #30 (no top-level permission defined).
 permissions:
   contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
+  # cancel-in-progress: false so a move-tag re-fire (the documented v0.10.3 /
+  # v0.10.8 recovery pattern) queues BEHIND an in-flight run rather than
+  # cancelling a job mid-publish.
   cancel-in-progress: false
 
+# ---------------------------------------------------------------------------
+# v0.10.14 — ATOMIC RELEASE reorder (the "PyPI-only release" lesson).
+#
+# v0.10.12 published all 8 wheels to PyPI and THEN the container job built FROM
+# PyPI and FAILED (a python:3.14/litellm base regression), leaving a PyPI-only
+# release. Two structural causes: (1) the container built AFTER the irreversible
+# PyPI publish, and (2) it built FROM PyPI, so it also raced PyPI propagation.
+#
+# This workflow now builds + validates EVERY artifact BEFORE the publish:
+#
+#   tag-guard ─▶ gate ─▶ build ──────────────▶ publish-pypi ─▶ publish-container
+#                        (wheels + SBOM +      (download +      (load the EXACT
+#                         container built       provenance +     validated image,
+#                         FROM LOCAL WHEELS,     publish to       push, sign,
+#                         smoke-tested,          PyPI)            create the
+#                         saved as an artifact)                   Release LAST)
+#
+# - The container is built FROM THE LOCALLY-BUILT WHEELS (docker/wheels), never
+#   from PyPI, so it has no PyPI-propagation dependency and a base/dep failure
+#   surfaces in `build`, BEFORE publish-pypi runs.
+# - publish-pypi `needs: build`, so a container-build failure blocks the
+#   irreversible PyPI publish entirely.
+# - publish-container LOADS the byte-identical image `build` validated (docker
+#   save/load) — no post-publish rebuild — then pushes + signs + attests it.
+# - The GitHub Release is created ONCE, LAST, by publish-container: a half-
+#   finished release leaves no Release page (fail-loud + recoverable) rather
+#   than a wheels-only Release that silently omits the container.
+# ---------------------------------------------------------------------------
+
 jobs:
-  # v0.10.12 Wave 0(b): accidental-publish hardening. The trigger is
-  # `tags: ['v*']`, so ANY v-prefixed tag — a typo like `vtest`, an `rcN`
-  # pre-release, or a tag pushed in a fork/private mirror — would otherwise
-  # reach the publish jobs. This guard makes publishing structurally
-  # conditional on (a) the canonical repo AND (b) a strict `vX.Y.Z` semver
-  # tag. GitHub `if:` expressions have no regex, so the check runs in a tiny
-  # job that exports a `publishable` boolean the publish jobs gate on. This is
-  # defense-in-depth alongside the PyPI Trusted-Publisher binding
-  # (owner+repo+workflow+environment) and the Required-reviewers protection on
-  # the `pypi`/`ghcr` environments. Inherits `permissions: contents: read`.
+  # Accidental-publish hardening (v0.10.12 Wave 0b). The trigger is tags:['v*'],
+  # so any v-prefixed tag — a typo, an rcN, a fork mirror — would otherwise reach
+  # the publish jobs. This guard makes publishing structurally conditional on
+  # (a) the canonical repo AND (b) a strict vX.Y.Z semver tag.
   tag-guard:
     name: Validate publish trigger (canonical repo + semver tag)
     runs-on: ubuntu-latest
@@ -47,22 +68,15 @@ jobs:
           echo "publishable=$publishable" >> "$GITHUB_OUTPUT"
           echo "repository=${{ github.repository }} ref=$GITHUB_REF -> publishable=$publishable"
 
-  # v0.10.8 A1: tag-time pre-publish gate. The irreversible PyPI publish
-  # below ran NO gate before this job existed — the version/doc-staleness
-  # guards lived only in .githooks/pre-push (which a force-push or a
-  # mis-configured clone could skip), and pytest/mypy/ruff/osv ran only on
-  # push/PR, never on the tag. This job runs the full SSOT gate suite
-  # (scripts/run_gate_suite.py --scope full) on the exact tagged commit, and
-  # publish-pypi `needs: gate`, so a red or stale tag can no longer publish.
-  # The suite is the single source of truth shared with consistency.yml and
-  # the pre-push hook (the v0.9.8 gate-fidelity lesson — one definition, no
-  # drift). Inherits the workflow-level `permissions: contents: read`.
+  # Tag-time pre-publish gate (v0.10.8 A1). Runs the full SSOT gate suite
+  # (scripts/run_gate_suite.py --scope full) on the exact tagged commit. `build`
+  # needs: gate, so a red or stale tag can no longer build artifacts or publish.
   gate:
     name: Pre-publish gate (full suite on the tag)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
 
       - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
@@ -74,19 +88,13 @@ jobs:
         run: uv python install 3.12
 
       - name: Sync workspace (extras for mypy + osv closure)
-        # --all-extras --all-packages: identical dependency closure to the
-        # standalone `typecheck` + `osv-scan` jobs in test.yml, so the
-        # tag-gate's mypy + osv checks scan the same surface those jobs do.
-        # Skip the frontend build hook — the gate suite's parity check
-        # reads the UI sources statically, so no frontend build is needed.
         env:
           EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
         run: uv sync --all-extras --all-packages
 
-      # Copied VERBATIM from the osv-scan job in test.yml (same v2.3.8
-      # binary + SHA256) so run_gate_suite.py's `osv` check finds an
-      # identically-pinned scanner on PATH. Pinned by version + SHA256-
-      # verified for the OpenSSF Scorecard Pinned-Dependencies signal.
+      # Copied VERBATIM from the osv-scan job in test.yml (same v2.3.8 binary +
+      # SHA256) so run_gate_suite.py's `osv` check finds an identically-pinned
+      # scanner on PATH. Pinned by version + SHA256 for Scorecard.
       - name: Install osv-scanner (v2.3.8, checksum-verified)
         run: |
           mkdir -p "$HOME/.local/bin"
@@ -99,45 +107,22 @@ jobs:
       - name: Run full gate suite (SSOT)
         run: uv run python scripts/run_gate_suite.py --scope full
 
-  publish-pypi:
-    name: Build and publish to PyPI
+  # v0.10.14: build + validate ALL release artifacts BEFORE any publish. Builds
+  # the wheels, the SBOM, and the container image (FROM the just-built local
+  # wheels), smoke-tests the image, and saves it as an artifact for
+  # publish-container to load + push unchanged. No environment + no write scope:
+  # it produces artifacts only, so the irreversible publish is fully gated on
+  # this job succeeding.
+  build:
+    name: Build + validate all artifacts (wheels + container)
     needs: [gate, tag-guard]
-    # success() preserves the implicit "all needs succeeded" semantics that a
-    # bare custom if: would otherwise replace (so a failed gate still blocks).
-    if: ${{ success() && needs.tag-guard.outputs.publishable == 'true' }}
+    if: ${{ needs.tag-guard.outputs.publishable == 'true' }}
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/project/evidentia/
     permissions:
-      # v0.7.0: contents: write so the CycloneDX SBOM can be attached
-      # to the GitHub Release via softprops/action-gh-release.
-      contents: write
-      # v0.7.0: id-token: write enables PyPI Trusted Publisher OIDC
-      # token exchange. The pypa/gh-action-pypi-publish action mints a
-      # short-lived (~15 min) PyPI API token bound to this exact repo +
-      # workflow file + environment, and uses it for the upload. The
-      # legacy long-lived PYPI_API_TOKEN is no longer used. This also
-      # auto-enables PEP 740 attestations: every wheel + sdist is
-      # Sigstore-signed with our OIDC identity and logged to Rekor,
-      # with the attestation uploaded to PyPI alongside the file.
-      # v0.7.3: same id-token: write also covers
-      # actions/attest-build-provenance for the SLSA L3 build
-      # provenance attestation step below.
-      id-token: write
-      # v0.7.3 (S3): attestations: write lets
-      # actions/attest-build-provenance store the SLSA build provenance
-      # under repos/<org>/<repo>/attestations so that
-      # `gh attestation verify` can resolve it for any artifact in this
-      # release. Closes the H2 enterprise-grade item ("SLSA L2+
-      # reproducible builds + SBOM") and restores `gh attestation
-      # verify dist/<wheel>` as a working verifier alongside
-      # `pypi-attestations verify pypi` (the PEP 740 verifier path).
-      attestations: write
-
+      contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
 
       - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
@@ -148,10 +133,9 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
 
-      # v0.4.0: the evidentia-api package bundles the React SPA built
-      # from packages/evidentia-ui. The hatchling build hook
-      # (packages/evidentia-api/hatch_build.py) drives `npm run build`
-      # automatically during `uv build`; this step just provisions Node.
+      # The evidentia-api wheel bundles the React SPA built from
+      # packages/evidentia-ui; the hatchling build hook drives `npm run build`
+      # during `uv build`, so Node must be provisioned.
       - name: Set up Node
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
         with:
@@ -162,38 +146,25 @@ jobs:
       - name: Sync workspace
         run: uv sync --all-packages
 
-      # v0.8.3 G4: SOURCE_DATE_EPOCH-driven reproducible builds.
-      # Sets the wheel-timestamp source from the tagged commit's
-      # author timestamp so `uv build` produces byte-identical
-      # wheels across hosts (verified locally pre-tag: same
-      # SOURCE_DATE_EPOCH → same SHA256 across two clean builds).
-      # This makes pre-tag-generated docker/requirements.txt
-      # SHA256 hashes match what this workflow uploads to PyPI,
-      # which unblocks the Dockerfile `--require-hashes`
-      # activation. Foundation laid in v0.8.2; activated in
-      # v0.8.3 per §26 G4 Path 1.
+      - name: Extract version from tag
+        id: version
+        run: |
+          REF="${{ github.ref_name }}"
+          echo "tag=${REF}" >> "$GITHUB_OUTPUT"
+          echo "semver=${REF#v}" >> "$GITHUB_OUTPUT"
+
+      # SOURCE_DATE_EPOCH-driven reproducible builds (v0.8.3 G4): byte-identical
+      # wheels across hosts, which also makes the local-wheel hashes pip-compile
+      # computes below match the bytes PyPI will serve.
       - name: Set SOURCE_DATE_EPOCH from tag commit
-        id: source_date_epoch
         run: |
           SOURCE_DATE_EPOCH=$(git log -1 --format=%ct HEAD)
           echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH" >> $GITHUB_ENV
-          echo "value=$SOURCE_DATE_EPOCH" >> $GITHUB_OUTPUT
           echo "Reproducible-build timestamp: $SOURCE_DATE_EPOCH"
 
       - name: Build all workspace packages
-        # uv build triggers the hatchling frontend-bundle hook for
-        # evidentia-api, which runs npm ci + npm run build in the UI
-        # directory and copies dist/* into src/evidentia_api/static/.
-        # SOURCE_DATE_EPOCH (set above) drives wheel timestamps for
-        # byte-identical output across hosts.
         run: uv build --all-packages
 
-      # v0.8.3 G4 build-twice verification: re-build into a separate
-      # output dir + assert SHA256 hashes match. Catches any
-      # non-determinism in uv's build pipeline or the npm bundle
-      # step (the SPA bundle landed inside evidentia-api's wheel
-      # would surface as a hash mismatch if npm ever produces
-      # non-deterministic output).
       - name: Verify reproducible build (build twice + sha256 match)
         run: |
           mkdir -p dist-verify
@@ -212,19 +183,16 @@ jobs:
           done
           rm -rf dist-verify
           if [ "$mismatch" -ne 0 ]; then
-            echo "::error::Reproducible-build verification FAILED: wheel hashes diverged across two builds with same SOURCE_DATE_EPOCH"
+            echo "::error::Reproducible-build verification FAILED: wheel hashes diverged"
             exit 1
           fi
-          echo "Reproducible-build verification PASSED: all wheels byte-identical across two builds"
+          echo "Reproducible-build verification PASSED"
 
       - name: Check distributions
         run: |
           ls -la dist/
           uvx twine check dist/*
 
-      # Verify the evidentia-api wheel actually contains the SPA bundle
-      # before we publish. Catches build-hook failures that would otherwise
-      # ship an empty web UI to users.
       - name: Verify SPA is bundled
         run: |
           python -c "
@@ -239,23 +207,10 @@ jobs:
           print(f'SPA bundled OK: {spa_files}')
           "
 
-      # v0.7.0: CycloneDX SBOM generation for supply-chain transparency.
-      # Addresses enterprise-grade checklist item H2 (SBOM on every
-      # release). cyclonedx-bom pins versions from the uv.lock so the
-      # SBOM matches the actually-published wheels.
+      # CycloneDX SBOM for the wheel/sdist surface. Travels with the release-dist
+      # artifact (root-level) so publish-pypi can attest it and publish-container
+      # can attach it to the Release.
       - name: Generate CycloneDX SBOM
-        # SBOM is written to repo root, NOT dist/, because pypa/gh-action-pypi-publish
-        # globs the entire packages-dir directory and rejects non-wheel/sdist files
-        # with `InvalidDistribution: Unknown distribution format`. The
-        # softprops/action-gh-release step below picks it up by explicit path.
-        #
-        # cyclonedx-py environment CLI surface (cyclonedx-bom 6.x):
-        #   -o <file>            output path (NOT --outfile)
-        #   --of <format>        output format (or --output-format)
-        #   --sv <version>       spec version (NOT --schema-version)
-        #   --pyproject <file>   root component pyproject.toml
-        #   <python>             positional: path to Python INTERPRETER
-        #                        (sys.executable, NOT sys.prefix/.venv dir)
         run: |
           uvx --from cyclonedx-bom cyclonedx-py environment \
             -o evidentia-sbom.cdx.json \
@@ -265,156 +220,235 @@ jobs:
             "$(uv run python -c 'import sys; print(sys.executable)')"
           echo "SBOM generated:"
           ls -la evidentia-sbom.cdx.json
-          python -c "
-          import json
-          with open('evidentia-sbom.cdx.json') as f:
-              sbom = json.load(f)
-          print(f\"bomFormat: {sbom.get('bomFormat')}\")
-          print(f\"specVersion: {sbom.get('specVersion')}\")
-          print(f\"components: {len(sbom.get('components', []))}\")
-          "
 
-      # v0.7.3 (S3): SLSA L3 build provenance attestation. Generated
-      # AFTER both `uv build` (the wheels + sdists in dist/) and the
-      # CycloneDX SBOM step so a single attestation covers all release
-      # artifacts. Stored under
-      # https://github.com/polycentric-labs/evidentia/attestations and
-      # verified by consumers via:
-      #   gh attestation verify dist/<wheel> -R Polycentric-Labs/evidentia
-      # This is the SLSA path; the PEP 740 path
-      # (`pypi-attestations verify pypi`) continues to work
-      # independently via pypa/gh-action-pypi-publish below.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5  # v4.1.0
+
+      # Regenerate docker/requirements.txt against the JUST-BUILT LOCAL WHEELS.
+      # pip-compile resolves evidentia[gui]==<version> from docker/wheels (the
+      # local dist/*.whl) + transitive third-party deps from PyPI, with hashes
+      # for everything (--generate-hashes). The evidentia-* hashes are therefore
+      # the LOCAL wheel bytes — the container installs the exact wheels this job
+      # is about to publish, with no PyPI-propagation dependency. pip-compile runs
+      # inside the literal image base (python:3.13-slim, NOT 3.14 — litellm
+      # requires-python <3.14) for interpreter parity with the --require-hashes
+      # install. --find-links is supplied on the Dockerfile install command (NOT
+      # emitted here), so requirements.txt carries no machine-specific path.
+      - name: Regenerate hash-pinned requirements.txt from LOCAL wheels
+        env:
+          VERSION: ${{ steps.version.outputs.semver }}
+        run: |
+          mkdir -p docker/wheels
+          cp dist/*.whl docker/wheels/
+          echo "Staged $(ls docker/wheels/*.whl | wc -l) local wheels into docker/wheels/"
+          echo "evidentia[gui]==${VERSION}" > docker/requirements.in
+          attempts=0
+          max_attempts=3
+          until docker run --rm -v "$PWD:/work" -w /work python:3.13-slim@sha256:c33f0bc4364a6881bed1ec0cc2665e6c53c87a43e774aaeab88e6f17af105e4f \
+                  bash -c "pip install -q pip-tools==7.5.3 && \
+                           pip-compile --generate-hashes \
+                                       --find-links docker/wheels \
+                                       --no-emit-find-links \
+                                       --output-file=docker/requirements.txt \
+                                       docker/requirements.in"
+          do
+            attempts=$((attempts + 1))
+            if [ "${attempts}" -ge "${max_attempts}" ]; then
+              echo "::error::pip-compile from local wheels failed after ${max_attempts} attempts"
+              exit 1
+            fi
+            echo "  pip-compile attempt ${attempts}/${max_attempts} failed, sleeping 15s"
+            sleep 15
+          done
+          echo "Regenerated docker/requirements.txt; evidentia[gui]==${VERSION} pin:"
+          grep -E "^evidentia==" docker/requirements.txt | head -2
+
+      - name: Install osv-scanner (v2.3.8, checksum-verified)
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.3.8/osv-scanner_linux_amd64 \
+            -o "$HOME/.local/bin/osv-scanner"
+          echo "bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc  $HOME/.local/bin/osv-scanner" | sha256sum -c -
+          chmod +x "$HOME/.local/bin/osv-scanner"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # Gate the just-regenerated container closure before baking it into the
+      # image. The container resolves a DIFFERENT closure than uv.lock, so this
+      # catches a vulnerable container dependency pre-publish. Same
+      # osv-scanner.toml allowlist as everywhere else.
+      - name: osv-scan regenerated container requirements
+        run: |
+          osv-scanner scan source \
+            --config osv-scanner.toml \
+            --lockfile docker/requirements.txt
+
+      # Build the container FROM THE LOCAL WHEELS (INSTALL_SOURCE=local). load:true
+      # keeps it in the local daemon for smoke-testing + docker save. provenance:
+      # false / sbom: false keep the image a plain single-platform manifest so
+      # save -> load -> push is digest-stable (the validated image's rootfs is
+      # exactly what publish-container pushes).
+      - name: Build container image from local wheels (load, not pushed)
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf  # v7.2.0
+        with:
+          context: .
+          push: false
+          load: true
+          tags: evidentia:rc
+          build-args: |
+            INSTALL_SOURCE=local
+          provenance: false
+          sbom: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test — `evidentia version`
+        run: |
+          out=$(docker run --rm evidentia:rc version)
+          echo "$out"
+          echo "$out" | grep -q "${{ steps.version.outputs.semver }}" \
+            || { echo "::error::image version does not match ${{ steps.version.outputs.semver }}"; exit 1; }
+
+      - name: Smoke test — `evidentia catalog list`
+        run: docker run --rm evidentia:rc catalog list | head -10
+
+      - name: Smoke test — image labels
+        run: docker inspect evidentia:rc --format '{{json .Config.Labels}}' | python -m json.tool
+
+      - name: Smoke test — non-root execution
+        run: |
+          uid=$(docker run --rm --entrypoint id evidentia:rc -u)
+          if [ "$uid" != "1000" ]; then
+            echo "FAIL: container runs as uid $uid; expected 1000"; exit 1
+          fi
+          echo "OK: container runs as uid $uid (non-root)"
+
+      # Save the EXACT validated image for publish-container to load + push.
+      # No post-publish rebuild -> what was smoke-tested is what ships.
+      - name: Save validated image as an artifact
+        run: |
+          docker save evidentia:rc | gzip > evidentia-image.tar.gz
+          echo "Saved image: $(du -h evidentia-image.tar.gz | cut -f1)"
+
+      # release-dist: wheels + sdists (dist/) at the same layout publish-pypi's
+      # provenance + publish steps expect, plus the root-level SBOM. download
+      # with path:. in the publish jobs restores dist/ + the SBOM in place.
+      - name: Upload release-dist (wheels + sdists + SBOM)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: release-dist
+          path: |
+            dist/
+            evidentia-sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload release-image (validated container tarball)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: release-image
+          path: evidentia-image.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+  # Publish the wheels to PyPI. needs: build, so this irreversible step runs ONLY
+  # after the wheels AND the container have built + validated. Generates the SLSA
+  # provenance over the downloaded artifacts (byte-identical to what is
+  # published) and hands the provenance bundle to publish-container for the
+  # Release. The Release itself is NOT created here.
+  publish-pypi:
+    name: Publish wheels to PyPI
+    needs: [build, tag-guard]
+    if: ${{ success() && needs.tag-guard.outputs.publishable == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/evidentia/
+    permissions:
+      # id-token: write — PyPI Trusted Publisher OIDC AND
+      #   actions/attest-build-provenance token exchange.
+      id-token: write
+      # attestations: write — store the SLSA build provenance under the repo's
+      #   attestations API so `gh attestation verify` resolves it.
+      attestations: write
+
+    steps:
+      - name: Download release-dist (wheels + sdists + SBOM)
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
+        with:
+          name: release-dist
+          path: .
+
+      - name: Check distributions
+        run: |
+          ls -la dist/
+          uvx twine check dist/*
+
+      # SLSA L3 build provenance over the wheels + sdists + SBOM. The subject
+      # files were downloaded above into the same layout the previous single-job
+      # design produced (dist/ subdir + root-level SBOM).
       - name: Generate SLSA build provenance attestation
         id: provenance
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32  # v4.1.0
         with:
-          # Subject globs cover both the published artifacts and the
-          # SBOM that travels with the GitHub Release. Newline-
-          # separated per the action's input contract.
           subject-path: |
             dist/*.whl
             dist/*.tar.gz
             evidentia-sbom.cdx.json
 
+      # Hand the provenance bundle to publish-container (which creates the
+      # Release) under a stable, recognizable filename.
+      - name: Stage + upload SLSA provenance bundle
+        run: cp "${{ steps.provenance.outputs.bundle-path }}" evidentia.intoto.jsonl
+
+      - name: Upload release-provenance
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: release-provenance
+          path: evidentia.intoto.jsonl
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Publish to PyPI via Trusted Publisher (OIDC)
-        # v0.7.0: migrated from long-lived PYPI_API_TOKEN to PyPI
-        # Trusted Publisher (OIDC). Per-package configuration on PyPI:
-        # https://pypi.org/manage/project/<name>/settings/publishing/
-        # All 6 packages (evidentia, evidentia-core, evidentia-collectors,
-        # evidentia-ai, evidentia-api, evidentia-integrations) must be
-        # registered with the same claims:
-        #   Owner=polycentric-labs, Repository=evidentia,
-        #   Workflow=release.yml, Environment=pypi
-        # `attestations: true` is the action's default since v1.11+
-        # (Nov 2024) when Trusted Publisher mode is detected, so PEP 740
-        # Sigstore attestations are produced automatically.
         uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # release/v1
         with:
           packages-dir: dist/
-          # skip-existing: true so re-runs after partial publishes
-          # don't choke on already-uploaded wheels (PyPI rejects
-          # re-uploads of the same version). With this flag, twine
-          # gracefully skips files PyPI already has and continues
-          # with the rest. Auth/OIDC errors still fail loud.
+          # skip-existing so a move-tag re-fire after a partial publish doesn't
+          # choke on already-uploaded wheels. Auth/OIDC errors still fail loud.
           skip-existing: true
           verbose: true
 
-      # v0.7.13 P2.2.1: extract the [X.Y.Z] block from CHANGELOG.md
-      # so the GitHub Release body carries the substantive release
-      # narrative (was: stub body with only the auto-appended
-      # container-image stanza, gap discovered during v0.7.13
-      # plan-mode investigation that surfaced 9 stub release bodies
-      # from v0.7.5 → v0.7.12). The CHANGELOG-extraction script
-      # also wraps the block in a PEP 740 wheel-verify stanza
-      # template + CHANGELOG-link footer.
-      #
-      # The version is parsed from `${{ github.ref_name }}` which is
-      # `v0.7.13` for `refs/tags/v0.7.13` — strip the leading `v`
-      # before passing to the script.
-      - name: Extract release body from CHANGELOG
-        id: release-body
-        run: |
-          version="${GITHUB_REF_NAME#v}"
-          echo "Extracting CHANGELOG block for version $version"
-          python scripts/extract_changelog_block.py "$version" \
-            > release-body.md
-          # Sanity gate: refuse to publish a near-empty body. 1500
-          # bytes is well below the smallest meaningful release (v0.7.4
-          # hot-fix is ~2700 bytes); a body shorter than this signals
-          # an extraction failure or a malformed CHANGELOG block.
-          body_size=$(wc -c < release-body.md)
-          echo "release-body.md size: $body_size bytes"
-          if [ "$body_size" -lt 1500 ]; then
-            echo "::error::release-body.md is suspiciously small ($body_size bytes); refusing to publish stub release"
-            cat release-body.md
-            exit 1
-          fi
-
-      # Attach the SBOM to the GitHub Release alongside the wheels so
-      # consumers can validate their install against the shipped SBOM.
-      # v0.7.13 P2.2.1: also passes the extracted CHANGELOG body via
-      # `body_path` so the Release body is substantive on first
-      # publish (publish-container then appends the container-image
-      # stanza via append_body).
-      # v0.10.12 (WS-D): also attach the SLSA build-provenance bundle to the
-      # Release so OpenSSF Scorecard's Signed-Releases check finds a signed
-      # provenance asset ON the Release. The attestation already exists in the
-      # repo attestations API + PEP 740 on PyPI; this surfaces it where
-      # Scorecard looks. Copied to a stable, recognizable filename first.
-      - name: Stage SLSA provenance bundle for the Release
-        run: cp "${{ steps.provenance.outputs.bundle-path }}" evidentia.intoto.jsonl
-
-      - name: Attach SBOM + provenance to GitHub Release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda  # v3.0.0
-        with:
-          files: |
-            evidentia-sbom.cdx.json
-            evidentia.intoto.jsonl
-          fail_on_unmatched_files: false
-          body_path: release-body.md
-
-  # v0.7.5 (C1-C3): Container image publish to ghcr.io with cosign keyless
-  # OIDC signing + SLSA L3 build provenance attestation for the image
-  # digest. Mirrors the publish-pypi pattern above so a single release
-  # workflow run covers wheels + SBOM + image under one OIDC identity
-  # binding (Polycentric-Labs/evidentia/release.yml@refs/tags/v*) and one
-  # GitHub Release.
-  #
-  # Design choice (Option A): the v0.7.5-plan.md C1 row originally
-  # described this as a separate `release-container.yml` workflow.
-  # During Phase 4 design we picked the in-`release.yml` job approach
-  # instead — needs: publish-pypi gives deterministic ordering for free,
-  # avoids `workflow_run` trigger flakiness, and keeps the wheel + image
-  # attestations under one GH Actions run id for clean audit narrative.
-  # See `docs/v0.7.5-plan.md` C1 + this commit message for full rationale.
+  # Load the EXACT image `build` validated, push it to ghcr.io, cosign-sign +
+  # SLSA-attest the pushed digest, then create the GitHub Release ONCE with the
+  # full body (CHANGELOG + container stanza) + the SBOM + provenance assets. The
+  # Release is created LAST so a failure leaves no half-finished Release page.
   publish-container:
-    name: Build and publish container image to ghcr.io
+    name: Publish container image to ghcr.io + create the GitHub Release
     needs: [publish-pypi, tag-guard]
-    # success() preserves the implicit "all needs succeeded" semantics (so a
-    # failed/skipped publish-pypi still blocks the container publish).
     if: ${{ success() && needs.tag-guard.outputs.publishable == 'true' }}
     runs-on: ubuntu-latest
     environment:
       name: ghcr
       url: https://ghcr.io/polycentric-labs/evidentia
     permissions:
-      # contents: write — append the image digest + verify-cmd snippet to
-      #   the GitHub Release alongside the wheels + SBOM.
+      # contents: write — create the GitHub Release.
       contents: write
-      # id-token: write — Fulcio OIDC for cosign keyless signing AND
-      #   token exchange for actions/attest-build-provenance.
+      # id-token: write — Fulcio OIDC for cosign keyless + attest token exchange.
       id-token: write
-      # attestations: write — store the SLSA build-provenance attestation
-      #   under repos/Polycentric-Labs/evidentia/attestations so consumers can
-      #   verify via `gh attestation verify oci://ghcr.io/...`.
+      # attestations: write — store the image SLSA provenance.
       attestations: write
-      # packages: write — push to ghcr.io under the github.repository_owner
-      #   namespace.
+      # packages: write — push to ghcr.io.
       packages: write
 
     steps:
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          REF="${{ github.ref_name }}"
+          echo "tag=${REF}" >> "$GITHUB_OUTPUT"
+          echo "semver=${REF#v}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5  # v4.1.0
@@ -426,265 +460,119 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract version from tag
-        id: version
-        # Tag is v0.7.5; we want both v0.7.5 (the tag) and 0.7.5 (the
-        # bare semver) for OCI label consumption + GitHub Release notes.
-        run: |
-          REF="${{ github.ref_name }}"
-          echo "tag=${REF}" >> "$GITHUB_OUTPUT"
-          echo "semver=${REF#v}" >> "$GITHUB_OUTPUT"
-
-      # v0.7.6 — pre-emptive PyPI propagation wait. v0.7.5 ship hit
-      # this race: even with `needs: publish-pypi` ordering, the
-      # PyPI Fastly CDN hadn't propagated the new wheel by the time
-      # the docker build's `pip install evidentia[gui]==<version>`
-      # ran (~50% failure rate observed on first-tag-push of v0.7.5).
-      # The previous design assumed propagation would be < buildx
-      # warm-up time; in practice it isn't. Loop polls `pip index
-      # versions` until the new version appears, capped at 5 minutes.
-      - name: Wait for PyPI propagation
-        env:
-          VERSION: ${{ steps.version.outputs.semver }}
-        run: |
-          # v0.7.16: extend the wait to ALL inter-package deps
-          # (matches the v0.7.14 P2.2 fix in container-build.yml).
-          # The v0.7.15 first ship failed at the docker build because
-          # this Wait step polled only `evidentia` while pip's
-          # resolution then failed on `evidentia-core<0.8.0,>=0.7.15`
-          # (not yet propagated). The pin-trap fix correctly REFUSED
-          # to fall back, surfacing the propagation race as a hard
-          # CI failure. Polling all of them prevents this entirely.
-          #
-          # v0.10.13: + evidentia-eval. The meta-package gained a direct
-          # evidentia-eval dep in v0.10.5 P9, but this list was never
-          # updated, so the v0.10.13 container regen raced evidentia-eval's
-          # propagation (DistributionNotFound on evidentia-eval>=0.10.13)
-          # AFTER PyPI had published — the container failed while the wheels
-          # were already live. evidentia-mcp is intentionally absent: it is
-          # not a dependency of evidentia[gui].
-          PACKAGES="evidentia evidentia-core evidentia-ai evidentia-eval evidentia-collectors evidentia-integrations evidentia-api"
-          for pkg in $PACKAGES; do
-            echo "Waiting for ${pkg}==${VERSION} to appear on PyPI..."
-            attempts=0
-            max_attempts=30  # 30 * 10s = 5 min cap per package
-            until pip index versions "${pkg}" 2>&1 | grep -q "${VERSION}"; do
-              attempts=$((attempts + 1))
-              if [ "${attempts}" -ge "${max_attempts}" ]; then
-                echo ""
-                echo "::error::PyPI propagation timed out after 5 min waiting for ${pkg}==${VERSION}."
-                echo "Latest visible:"
-                pip index versions "${pkg}" 2>&1 | head -3
-                exit 1
-              fi
-              echo "  ${pkg} attempt ${attempts}/${max_attempts}: not yet propagated, sleeping 10s"
-              sleep 10
-            done
-            echo "  ${pkg}==${VERSION} visible on PyPI"
-          done
-          # Extra safety margin for Fastly mirror lag — even after
-          # every index page lists the version, individual mirror
-          # nodes can lag by 10-20s before the wheel files themselves
-          # are fetchable.
-          echo "All 6 packages list ${VERSION}; sleeping 20s for mirror catch-up"
-          sleep 20
-
-      # v0.8.4 G4 Path 2: regenerate docker/requirements.txt against
-      # PyPI's just-published wheels. Replaces the v0.8.3 Path 1
-      # (SOURCE_DATE_EPOCH-driven cross-platform reproducibility)
-      # which failed at first-fire because uv build is NOT byte-
-      # identical across host platforms (Windows local vs Linux
-      # CI). Path 2 sidesteps this by computing hashes FROM PyPI's
-      # bytes — pip downloads the wheels, computes SHA256 of the
-      # bytes pip will use at container-build time, writes them to
-      # requirements.txt. Both pip-compile + the docker build's
-      # pip install run inside the same Linux runner against the
-      # same PyPI bytes → hashes match by construction.
-      #
-      # Retry loop (R2 mitigation): pip-compile up to 3x with 30s
-      # sleeps. The Wait-for-PyPI step above polls the package
-      # index endpoint, but PyPI's CDN can lag a few seconds before
-      # the wheel files themselves are fetchable.
-      #
-      # --upgrade (F-V109-4): pip-compile treats an existing
-      # --output-file as a set of preferred pins — without --upgrade
-      # it honors the committed preview docker/requirements.txt for
-      # every non-conflicting transitive, so a stale preview (e.g.
-      # 0.9.1-era starlette 1.0.0 / aiohttp 3.13.5) shipped into the
-      # published container despite uv.lock having newer versions.
-      # --upgrade ignores the committed file's pins entirely, so the
-      # regeneration is actually fresh: every dep resolves anew
-      # against PyPI at release time.
-      - name: Regenerate hash-pinned requirements.txt against PyPI
-        env:
-          VERSION: ${{ steps.version.outputs.semver }}
-        run: |
-          # Pin requirements.in to the just-published version. The
-          # committed file may pin to an older version (regenerated
-          # at any prior cycle's bump_version.py invocation); we
-          # overwrite ephemerally so pip-compile resolves the v0.8.4
-          # release we just uploaded.
-          echo "evidentia[gui]==${VERSION}" > docker/requirements.in
-          # INTERPRETER PARITY (F-V109-4): compile inside the literal
-          # image base (python:3.13-slim) so the resolved+hashed closure
-          # is exactly what the image's --require-hashes install gets.
-          # The base is 3.13 (not 3.14) because the AI stack (litellm)
-          # requires-python <3.14; on 3.13 the regen resolves the
-          # CVE-clean set (litellm 1.88.1 etc.) uv.lock pins.
-          # (bump_version.py F-V82-S1 pattern.)
-          attempts=0
-          max_attempts=3
-          until docker run --rm -v "$PWD:/work" -w /work python:3.13-slim \
-                  bash -c "pip install -q pip-tools==7.5.3 && \
-                           pip-compile --generate-hashes \
-                                       --upgrade \
-                                       --no-emit-find-links \
-                                       --output-file=docker/requirements.txt \
-                                       docker/requirements.in"
-          do
-            attempts=$((attempts + 1))
-            if [ "${attempts}" -ge "${max_attempts}" ]; then
-              echo "::error::pip-compile against PyPI failed after ${max_attempts} attempts"
-              exit 1
-            fi
-            echo "  pip-compile attempt ${attempts}/${max_attempts} failed, sleeping 30s"
-            sleep 30
-          done
-          # Surface the regenerated hash for the umbrella wheel so
-          # the release pipeline log records what we pinned.
-          echo "Regenerated docker/requirements.txt; evidentia[gui]==${VERSION} hashes:"
-          grep -A2 "^evidentia\[gui\]==" docker/requirements.txt | head -4
-
-      # Copied VERBATIM from the osv-scan job in test.yml / the tag-gate
-      # job above (same v2.3.8 binary + SHA256) so this container gate
-      # scans with an identically-pinned scanner. Pinned by version +
-      # SHA256-verified for the OpenSSF Scorecard Pinned-Dependencies
-      # signal.
-      - name: Install osv-scanner (v2.3.8, checksum-verified)
-        run: |
-          mkdir -p "$HOME/.local/bin"
-          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.3.8/osv-scanner_linux_amd64 \
-            -o "$HOME/.local/bin/osv-scanner"
-          echo "bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc  $HOME/.local/bin/osv-scanner" | sha256sum -c -
-          chmod +x "$HOME/.local/bin/osv-scanner"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-
-      # Gate the JUST-REGENERATED docker/requirements.txt before it is
-      # baked into the published image. The tag-gate job's osv-scan
-      # scans the workspace dependency CLOSURE (uv.lock) — but the
-      # container resolves a DIFFERENT closure: the container's
-      # pip-compile resolves against the image base independently of
-      # uv.lock, so it can carry a transitively-held vulnerable dep
-      # that the uv.lock closure never resolves. Without
-      # this gate a vulnerable container dependency ships silently. The
-      # same osv-scanner.toml allowlist applies, so accepted findings
-      # are dispositioned in exactly one place. Exit 1 (vulns found)
-      # fails the publish before the build runs.
-      - name: osv-scan regenerated container requirements
-        run: |
-          osv-scanner scan source \
-            --config osv-scanner.toml \
-            --lockfile docker/requirements.txt
-
-      - name: Build and push image to ghcr.io
-        id: build
-        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf  # v7.2.0
+      - name: Download release-image (validated container tarball)
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
         with:
-          context: .
-          push: true
-          # Both v<X.Y.Z> and :latest get pushed to the same digest.
-          # cosign signs by digest (not tag), so one signing call covers
-          # both tags. Keeping :latest as the rolling pointer matches
-          # Docker conventions and is the tag the Dockerfile-pin
-          # documentation recommends NOT using in production deployments
-          # (see docs/sigstore-quickstart.md "Pinning by digest" section).
-          tags: |
-            ghcr.io/polycentric-labs/evidentia:${{ steps.version.outputs.tag }}
-            ghcr.io/polycentric-labs/evidentia:latest
-          labels: |
-            org.opencontainers.image.version=${{ steps.version.outputs.semver }}
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
-          # CRITICAL: provenance: false because actions/attest-build-provenance
-          # below produces the SLSA-spec provenance separately. Leaving
-          # buildx's default provenance ON would emit a second, non-SLSA-
-          # spec provenance attestation that confuses
-          # `gh attestation verify oci://...`. Same for sbom: false —
-          # the project's CycloneDX SBOM is generated by publish-pypi
-          # for the wheel + sdist surface; image-level SBOM is a
-          # future enhancement.
-          provenance: false
-          sbom: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          name: release-image
+          path: .
+
+      - name: Download release-dist (for the SBOM Release asset)
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
+        with:
+          name: release-dist
+          path: .
+
+      - name: Download release-provenance (SLSA bundle Release asset)
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
+        with:
+          name: release-provenance
+          path: .
+
+      - name: Load the validated image
+        run: |
+          gunzip -c evidentia-image.tar.gz | docker load
+          docker image ls evidentia:rc
+
+      # Tag + push the loaded image under both refs (same digest), then read the
+      # registry manifest digest back for cosign + attestation.
+      - name: Tag + push to ghcr.io
+        id: push
+        run: |
+          REPO=ghcr.io/polycentric-labs/evidentia
+          TAG="${{ steps.version.outputs.tag }}"
+          docker tag evidentia:rc "${REPO}:${TAG}"
+          docker tag evidentia:rc "${REPO}:latest"
+          docker push "${REPO}:${TAG}"
+          docker push "${REPO}:latest"
+          DIGEST=$(docker buildx imagetools inspect "${REPO}:${TAG}" --format '{{.Manifest.Digest}}')
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "Pushed ${REPO}:${TAG} + :latest @ ${DIGEST}"
 
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6  # v4.1.2
         with:
-          # Pin both action SHA AND cosign-release version. Scorecard's
-          # Pinned-Dependencies will flag a floating cosign-release
-          # otherwise (would also break reproducibility — release-time
-          # cosign behavior should be byte-stable).
           cosign-release: 'v2.4.1'
 
       - name: Sign image with cosign (keyless OIDC)
         env:
-          # COSIGN_YES non-interactive mode. v2.x defaults to keyless;
-          # the env var here is an explicit-intent marker for code review.
           COSIGN_YES: "true"
         run: |
-          # Sign by digest (NOT tag) — guarantees the signature binds
-          # to the immutable image bytes, immune to tag re-targeting
-          # mid-release. cosign appends the signature as a sibling tag
-          # at sha256-<digest>.sig, so v0.7.5 and :latest both inherit
-          # the same signature via their shared digest.
           cosign sign --yes \
-            ghcr.io/polycentric-labs/evidentia@${{ steps.build.outputs.digest }}
+            ghcr.io/polycentric-labs/evidentia@${{ steps.push.outputs.digest }}
 
       - name: Generate SLSA build provenance attestation for image
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32  # v4.1.0
         with:
-          # subject-name MUST be the registry-qualified image without a
-          # tag; subject-digest is the sha256 from the build step. The
-          # attestation lands at repos/Polycentric-Labs/evidentia/attestations
-          # keyed on this digest, which `gh attestation verify oci://...`
-          # then resolves on the consumer side.
           subject-name: ghcr.io/polycentric-labs/evidentia
-          subject-digest: ${{ steps.build.outputs.digest }}
-          # push-to-registry: true also embeds the attestation as an
-          # OCI referrer artifact so cosign tooling can find it without
-          # querying GitHub. Belt-and-suspenders for offline verification.
+          subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
-      - name: Append container image section to GitHub Release
-        # Uses append_body so this lands AFTER softprops/action-gh-release
-        # in publish-pypi created the release (with SBOM attached). The
-        # publish-pypi job creates the release; this job appends to it.
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda  # v3.0.0
+      # Build the full Release body: the CHANGELOG [X.Y.Z] block (+ the PEP 740
+      # verify stanza the script appends) followed by the container stanza. The
+      # Release is created ONCE below, so the body is complete on first creation
+      # (no append_body, no double-stanza-on-rerun).
+      - name: Assemble Release body
+        run: |
+          version="${{ steps.version.outputs.semver }}"
+          python scripts/extract_changelog_block.py "$version" > release-body.md
+          body_size=$(wc -c < release-body.md)
+          echo "CHANGELOG block: $body_size bytes"
+          if [ "$body_size" -lt 1500 ]; then
+            echo "::error::release-body.md is suspiciously small ($body_size bytes); refusing stub release"
+            cat release-body.md
+            exit 1
+          fi
+          # Append the container stanza via a literal heredoc (backticks intact),
+          # then substitute the tag + digest placeholders.
+          cat >> release-body.md <<'STANZA'
+
+          ### Container image
+
+          - `ghcr.io/polycentric-labs/evidentia:__TAG__`
+          - `ghcr.io/polycentric-labs/evidentia:latest`
+          - Digest: `__DIGEST__`
+
+          **Verify (cosign keyless OIDC):**
+
+          ```bash
+          cosign verify ghcr.io/polycentric-labs/evidentia:__TAG__ \
+            --certificate-identity-regexp 'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
+            --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
+          ```
+
+          **Verify (SLSA build provenance):**
+
+          ```bash
+          gh attestation verify oci://ghcr.io/polycentric-labs/evidentia:__TAG__ \
+            -R Polycentric-Labs/evidentia
+          ```
+
+          See [docs/sigstore-quickstart.md](https://github.com/polycentric-labs/evidentia/blob/main/docs/sigstore-quickstart.md)
+          for the full verification narrative.
+          STANZA
+          # __TAG__/__DIGEST__ are the only substitutions — the quoted heredoc
+          # kept the backticks + cert-identity regex literal, and the YAML
+          # literal block already stripped the base indent so the stanza is
+          # flush-left.
+          sed -i "s|__TAG__|${{ steps.version.outputs.tag }}|g; s|__DIGEST__|${{ steps.push.outputs.digest }}|g" release-body.md
+          echo "---- assembled release-body.md ----"
+          cat release-body.md
+
+      - name: Create the GitHub Release (wheels + container, full body)
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b  # v3.0.1
         with:
-          append_body: true
-          body: |
-
-            ### Container image
-
-            - `ghcr.io/polycentric-labs/evidentia:${{ steps.version.outputs.tag }}`
-            - `ghcr.io/polycentric-labs/evidentia:latest`
-            - Digest: `${{ steps.build.outputs.digest }}`
-
-            **Verify (cosign keyless OIDC):**
-
-            ```bash
-            cosign verify ghcr.io/polycentric-labs/evidentia:${{ steps.version.outputs.tag }} \
-              --certificate-identity-regexp 'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
-              --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
-            ```
-
-            **Verify (SLSA build provenance):**
-
-            ```bash
-            gh attestation verify oci://ghcr.io/polycentric-labs/evidentia:${{ steps.version.outputs.tag }} \
-              -R Polycentric-Labs/evidentia
-            ```
-
-            See [docs/sigstore-quickstart.md](https://github.com/polycentric-labs/evidentia/blob/main/docs/sigstore-quickstart.md)
-            for the full verification narrative.
+          body_path: release-body.md
+          files: |
+            evidentia-sbom.cdx.json
+            evidentia.intoto.jsonl
+          fail_on_unmatched_files: false
