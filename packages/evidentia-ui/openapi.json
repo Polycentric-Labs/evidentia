@@ -912,177 +912,7 @@
         "title": "ControlCatalog",
         "type": "object"
       },
-      "ControlGap-Input": {
-        "additionalProperties": false,
-        "description": "A single control gap identified by the gap analyzer.\n\nRepresents a framework requirement that the organization has not\nfully implemented.",
-        "properties": {
-          "assigned_to": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Assigned To"
-          },
-          "control_description": {
-            "description": "Full control description from the catalog",
-            "title": "Control Description",
-            "type": "string"
-          },
-          "control_family": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Control family or category",
-            "title": "Control Family"
-          },
-          "control_id": {
-            "description": "Control ID within the framework, e.g. 'AC-2', 'CC6.1'",
-            "title": "Control Id",
-            "type": "string"
-          },
-          "control_title": {
-            "description": "Human-readable control title from the catalog",
-            "title": "Control Title",
-            "type": "string"
-          },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "cross_framework_value": {
-            "description": "Other framework:control_id pairs that this gap also satisfies",
-            "items": {
-              "type": "string"
-            },
-            "title": "Cross Framework Value",
-            "type": "array"
-          },
-          "equivalent_controls_in_inventory": {
-            "description": "Organization control IDs that partially satisfy this requirement",
-            "items": {
-              "type": "string"
-            },
-            "title": "Equivalent Controls In Inventory",
-            "type": "array"
-          },
-          "framework": {
-            "description": "Framework ID, e.g. 'nist-800-53-mod', 'soc2-tsc'",
-            "title": "Framework",
-            "type": "string"
-          },
-          "gap_description": {
-            "description": "Specific description of what is missing or incomplete",
-            "title": "Gap Description",
-            "type": "string"
-          },
-          "gap_severity": {
-            "$ref": "#/components/schemas/GapSeverity",
-            "description": "Severity based on requirement level and implementation state"
-          },
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "implementation_effort": {
-            "$ref": "#/components/schemas/ImplementationEffort",
-            "description": "Estimated engineering effort to close this gap"
-          },
-          "implementation_status": {
-            "description": "Current state: 'missing', 'partial', 'planned', 'not_applicable'",
-            "title": "Implementation Status",
-            "type": "string"
-          },
-          "jira_issue_key": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Jira Issue Key"
-          },
-          "poam_milestones": {
-            "description": "Plan-of-Action-and-Milestones milestones for this gap. Order is preserved across save+load round-trips. Sorting by ``target_date`` happens at query time, not at persistence time.",
-            "items": {
-              "$ref": "#/components/schemas/Milestone"
-            },
-            "title": "Poam Milestones",
-            "type": "array"
-          },
-          "priority_score": {
-            "default": 0.0,
-            "description": "Computed priority score (higher = more urgent)",
-            "title": "Priority Score",
-            "type": "number"
-          },
-          "remediated_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Remediated At"
-          },
-          "remediation_guidance": {
-            "description": "Actionable remediation guidance for this gap",
-            "title": "Remediation Guidance",
-            "type": "string"
-          },
-          "servicenow_ticket_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Servicenow Ticket Id"
-          },
-          "status": {
-            "$ref": "#/components/schemas/GapStatus",
-            "default": "open",
-            "description": "Current remediation status"
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Tags",
-            "type": "array"
-          }
-        },
-        "required": [
-          "framework",
-          "control_id",
-          "control_title",
-          "control_description",
-          "gap_severity",
-          "implementation_status",
-          "gap_description",
-          "remediation_guidance",
-          "implementation_effort"
-        ],
-        "title": "ControlGap",
-        "type": "object"
-      },
-      "ControlGap-Output": {
+      "ControlGap": {
         "additionalProperties": false,
         "description": "A single control gap identified by the gap analyzer.\n\nRepresents a framework requirement that the organization has not\nfully implemented.",
         "properties": {
@@ -1680,244 +1510,7 @@
         "title": "EfficiencyOpportunity",
         "type": "object"
       },
-      "EvidenceArtifact-Input": {
-        "additionalProperties": false,
-        "description": "A single piece of compliance evidence.\n\nAn artifact represents one discrete piece of proof that a control is\nimplemented and operating effectively. Artifacts are collected by\ncollectors (automated) or uploaded manually.",
-        "properties": {
-          "collected_at": {
-            "description": "When this evidence was collected (UTC)",
-            "format": "date-time",
-            "title": "Collected At",
-            "type": "string"
-          },
-          "collected_by": {
-            "description": "Collector name or user email that produced this evidence",
-            "title": "Collected By",
-            "type": "string"
-          },
-          "content": {
-            "anyOf": [
-              {},
-              {
-                "type": "null"
-              }
-            ],
-            "description": "The actual evidence content",
-            "title": "Content"
-          },
-          "content_format": {
-            "default": "json",
-            "description": "Format of content: 'json', 'text', 'base64', 'html'",
-            "title": "Content Format",
-            "type": "string"
-          },
-          "content_hash": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "SHA-256 hash of content for tamper detection",
-            "title": "Content Hash"
-          },
-          "control_mappings": {
-            "description": "Controls that this evidence supports, across one or more frameworks",
-            "items": {
-              "$ref": "#/components/schemas/ControlMapping"
-            },
-            "title": "Control Mappings",
-            "type": "array"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Detailed description of the evidence content and context",
-            "title": "Description"
-          },
-          "evidence_type": {
-            "$ref": "#/components/schemas/EvidenceType",
-            "description": "Classification of this evidence artifact"
-          },
-          "expires_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "When this evidence becomes stale",
-            "title": "Expires At"
-          },
-          "file_path": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Path to the evidence file if stored on disk",
-            "title": "File Path"
-          },
-          "file_size_bytes": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Size of the evidence file in bytes",
-            "title": "File Size Bytes"
-          },
-          "id": {
-            "description": "Unique identifier (UUID v4)",
-            "title": "Id",
-            "type": "string"
-          },
-          "lineage_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "v0.9.5 P3.2: UUID identifying the lineage chain across versions. When ``None`` (default), the artifact IS the lineage root + the ``id`` field serves as the implicit lineage_id. Set explicitly on versions > 1 to point at the chain root.",
-            "title": "Lineage Id"
-          },
-          "metadata": {
-            "additionalProperties": true,
-            "description": "Collector-specific metadata (region, account ID, etc.)",
-            "title": "Metadata",
-            "type": "object"
-          },
-          "missing_elements": {
-            "description": "Elements needed to make this evidence sufficient",
-            "items": {
-              "type": "string"
-            },
-            "title": "Missing Elements",
-            "type": "array"
-          },
-          "predecessor_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "v0.9.5 P3.2: ``id`` of the prior version in the lineage chain. ``None`` for the lineage root (version 1). Allows ``evidentia evidence show <lineage_id> --version N`` to walk the chain to the target version.",
-            "title": "Predecessor Id"
-          },
-          "source_system": {
-            "description": "System that produced this evidence",
-            "title": "Source System",
-            "type": "string"
-          },
-          "sufficiency": {
-            "$ref": "#/components/schemas/EvidenceSufficiency",
-            "default": "unknown",
-            "description": "AI-assessed sufficiency of this evidence for its mapped controls"
-          },
-          "sufficiency_rationale": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Explanation of the sufficiency assessment",
-            "title": "Sufficiency Rationale"
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Tags",
-            "type": "array"
-          },
-          "title": {
-            "description": "Human-readable title describing what this evidence shows",
-            "title": "Title",
-            "type": "string"
-          },
-          "validated_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "When the sufficiency assessment was performed",
-            "title": "Validated At"
-          },
-          "validated_by": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Model or person that performed the validation",
-            "title": "Validated By"
-          },
-          "validator_confidence": {
-            "anyOf": [
-              {
-                "maximum": 1.0,
-                "minimum": 0.0,
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Validator confidence in the sufficiency assessment (0.0–1.0)",
-            "title": "Validator Confidence"
-          },
-          "version": {
-            "default": 1,
-            "description": "v0.9.5 P3.2: sequence number within the artifact's lineage chain. First version = 1; each subsequent edit creates a new artifact with version=N+1. Backward-compat default of 1 means v0.7.x → v0.9.4 artifacts load as version 1 of their own (single-element) chain.",
-            "minimum": 1.0,
-            "title": "Version",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "title",
-          "evidence_type",
-          "source_system",
-          "collected_by"
-        ],
-        "title": "EvidenceArtifact",
-        "type": "object"
-      },
-      "EvidenceArtifact-Output": {
+      "EvidenceArtifact": {
         "additionalProperties": false,
         "description": "A single piece of compliance evidence.\n\nAn artifact represents one discrete piece of proof that a control is\nimplemented and operating effectively. Artifacts are collected by\ncollectors (automated) or uploaded manually.",
         "properties": {
@@ -2505,7 +2098,7 @@
         "title": "FourthParty",
         "type": "object"
       },
-      "GapAnalysisReport-Input": {
+      "GapAnalysisReport": {
         "additionalProperties": false,
         "description": "Complete gap analysis report.\n\nThe primary output of the gap analyzer. Contains all identified gaps,\nefficiency opportunities, and a prioritized remediation roadmap.",
         "properties": {
@@ -2547,142 +2140,7 @@
           "gaps": {
             "description": "All identified gaps, sorted by priority_score descending",
             "items": {
-              "$ref": "#/components/schemas/ControlGap-Input"
-            },
-            "title": "Gaps",
-            "type": "array"
-          },
-          "high_gaps": {
-            "title": "High Gaps",
-            "type": "integer"
-          },
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "informational_gaps": {
-            "default": 0,
-            "title": "Informational Gaps",
-            "type": "integer"
-          },
-          "inventory_source": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Path to the inventory file used",
-            "title": "Inventory Source"
-          },
-          "low_gaps": {
-            "title": "Low Gaps",
-            "type": "integer"
-          },
-          "medium_gaps": {
-            "title": "Medium Gaps",
-            "type": "integer"
-          },
-          "notes": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Notes"
-          },
-          "organization": {
-            "description": "Organization name from the control inventory",
-            "title": "Organization",
-            "type": "string"
-          },
-          "prioritized_roadmap": {
-            "description": "Ordered list of gap IDs by descending priority_score",
-            "items": {
-              "type": "string"
-            },
-            "title": "Prioritized Roadmap",
-            "type": "array"
-          },
-          "total_controls_in_inventory": {
-            "description": "Total controls in the organization's inventory",
-            "title": "Total Controls In Inventory",
-            "type": "integer"
-          },
-          "total_controls_required": {
-            "description": "Total unique controls required across all analyzed frameworks",
-            "title": "Total Controls Required",
-            "type": "integer"
-          },
-          "total_gaps": {
-            "title": "Total Gaps",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "organization",
-          "frameworks_analyzed",
-          "total_controls_required",
-          "total_controls_in_inventory",
-          "total_gaps",
-          "critical_gaps",
-          "high_gaps",
-          "medium_gaps",
-          "low_gaps",
-          "coverage_percentage",
-          "gaps"
-        ],
-        "title": "GapAnalysisReport",
-        "type": "object"
-      },
-      "GapAnalysisReport-Output": {
-        "additionalProperties": false,
-        "description": "Complete gap analysis report.\n\nThe primary output of the gap analyzer. Contains all identified gaps,\nefficiency opportunities, and a prioritized remediation roadmap.",
-        "properties": {
-          "analyzed_at": {
-            "format": "date-time",
-            "title": "Analyzed At",
-            "type": "string"
-          },
-          "coverage_percentage": {
-            "description": "Percentage of required controls that are fully implemented",
-            "title": "Coverage Percentage",
-            "type": "number"
-          },
-          "critical_gaps": {
-            "title": "Critical Gaps",
-            "type": "integer"
-          },
-          "efficiency_opportunities": {
-            "description": "Controls that satisfy 3+ framework requirements",
-            "items": {
-              "$ref": "#/components/schemas/EfficiencyOpportunity"
-            },
-            "title": "Efficiency Opportunities",
-            "type": "array"
-          },
-          "evidentia_version": {
-            "description": "Version of evidentia-core that produced this report",
-            "title": "Evidentia Version",
-            "type": "string"
-          },
-          "frameworks_analyzed": {
-            "description": "Framework IDs that were analyzed",
-            "items": {
-              "type": "string"
-            },
-            "title": "Frameworks Analyzed",
-            "type": "array"
-          },
-          "gaps": {
-            "description": "All identified gaps, sorted by priority_score descending",
-            "items": {
-              "$ref": "#/components/schemas/ControlGap-Output"
+              "$ref": "#/components/schemas/ControlGap"
             },
             "title": "Gaps",
             "type": "array"
@@ -3106,7 +2564,7 @@
           "report": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/GapAnalysisReport-Input"
+                "$ref": "#/components/schemas/GapAnalysisReport"
               },
               {
                 "type": "null"
@@ -4141,159 +3599,7 @@
         "title": "ModelInput",
         "type": "object"
       },
-      "ModelInventory-Input": {
-        "additionalProperties": false,
-        "description": "The Model Risk Management inventory record.\n\nOne ModelInventory entry per managed model, satisfying SR 11-7 /\nSR 26-02 §III.A \"Conceptual Soundness\" inventory expectations.\nCross-links to TPRM via `vendor_id` (when sourced from a\nthird-party vendor) and to the AI-features path via\n`RiskStatement.model_inventory_ref` (introduced in v0.7.10 P0.6.4).",
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "evidence_refs": {
-            "description": "Sigstore-signed evidence chain (validation reports, back-test results, sensitivity-analysis outputs). Reuses the v0.7.9 TPRM EvidenceRef model — same artifact_id-or-file_path two-mode contract.",
-            "items": {
-              "$ref": "#/components/schemas/EvidenceRef"
-            },
-            "title": "Evidence Refs",
-            "type": "array"
-          },
-          "evidentia_version": {
-            "title": "Evidentia Version",
-            "type": "string"
-          },
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "inputs": {
-            "description": "Data sources feeding the model (SR 11-7 §III.A.2).",
-            "items": {
-              "$ref": "#/components/schemas/ModelInput"
-            },
-            "title": "Inputs",
-            "type": "array"
-          },
-          "last_validation_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Date the model was most recently validated.",
-            "title": "Last Validation Date"
-          },
-          "methodology": {
-            "$ref": "#/components/schemas/Methodology"
-          },
-          "name": {
-            "description": "Human-readable model name (e.g., 'FICO-style credit scorer v3', 'Fraud-detector LLM-v0.4').",
-            "title": "Name",
-            "type": "string"
-          },
-          "next_validation_due": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Auto-computed from `tier` + `last_validation_date` via :meth:`compute_next_validation_due`. Operators can also override via the CLI `--next-validation-due` flag.",
-            "title": "Next Validation Due"
-          },
-          "notes": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Free-text notes (operator observations, history, etc.).",
-            "title": "Notes"
-          },
-          "outputs": {
-            "description": "Decisions the model produces (SR 11-7 §III.B.1).",
-            "items": {
-              "$ref": "#/components/schemas/ModelOutput"
-            },
-            "title": "Outputs",
-            "type": "array"
-          },
-          "owner": {
-            "description": "Internal model owner (email or LDAP identifier).",
-            "title": "Owner",
-            "type": "string"
-          },
-          "purpose": {
-            "description": "Business purpose per SR 11-7 §III.A 'Conceptual Soundness'. Should describe what decisions the model influences and why it was built (e.g., 'Score consumer credit applications using behavioural + bureau features to support the loan-origination decision flow').",
-            "title": "Purpose",
-            "type": "string"
-          },
-          "retirement_plan": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Per SR 11-7 §III.C ongoing-monitoring expectations, models have a documented retirement / replacement plan. None = indefinite use; not best practice.",
-            "title": "Retirement Plan"
-          },
-          "tier": {
-            "$ref": "#/components/schemas/Tier"
-          },
-          "updated_at": {
-            "format": "date-time",
-            "title": "Updated At",
-            "type": "string"
-          },
-          "validation_findings": {
-            "description": "Open + closed findings from validation activities. Operator reviews open findings during validation-due cadence + before promoting model versions.",
-            "items": {
-              "$ref": "#/components/schemas/ValidationFinding"
-            },
-            "title": "Validation Findings",
-            "type": "array"
-          },
-          "vendor_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Cross-link to the v0.7.9 TPRM `Vendor.id` when `vendor_or_internal=vendor`. MUST be set for vendor-provenance models so SR 11-7 §V (vendor-risk overlay) applies. Validated via `@field_validator` per the two-mode contract.",
-            "title": "Vendor Id"
-          },
-          "vendor_or_internal": {
-            "$ref": "#/components/schemas/Provenance"
-          }
-        },
-        "required": [
-          "name",
-          "purpose",
-          "methodology",
-          "vendor_or_internal",
-          "tier",
-          "owner"
-        ],
-        "title": "ModelInventory",
-        "type": "object"
-      },
-      "ModelInventory-Output": {
+      "ModelInventory": {
         "additionalProperties": false,
         "description": "The Model Risk Management inventory record.\n\nOne ModelInventory entry per managed model, satisfying SR 11-7 /\nSR 26-02 §III.A \"Conceptual Soundness\" inventory expectations.\nCross-links to TPRM via `vendor_id` (when sourced from a\nthird-party vendor) and to the AI-features path via\n`RiskStatement.model_inventory_ref` (introduced in v0.7.10 P0.6.4).",
         "properties": {
@@ -6012,165 +5318,7 @@
         "title": "ValueCount",
         "type": "object"
       },
-      "Vendor-Input": {
-        "additionalProperties": false,
-        "description": "Third-party vendor inventory record.\n\nThe atomic unit of the v0.7.9 TPRM module. Every other TPRM\ncapability (DD-questionnaire generation, concentration reporting,\nvendor-risk collectors, OSCAL TPRM emit) operates on collections\nof these records.\n\nSee `docs/v0.7.9-plan.md` §P0.1 for the canonical spec.",
-        "properties": {
-          "contract_end_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Contract end date. Null for indefinite / month-to-month engagements; expiry warnings ride on this field when set.",
-            "title": "Contract End Date"
-          },
-          "contract_start_date": {
-            "description": "Contract effective date.",
-            "format": "date",
-            "title": "Contract Start Date",
-            "type": "string"
-          },
-          "created_at": {
-            "description": "When the vendor record was created.",
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "criticality_tier": {
-            "$ref": "#/components/schemas/CriticalityTier",
-            "description": "FFIEC Vendor Management criticality tier. Drives the due-diligence-review cadence (annual / biennial / triennial)."
-          },
-          "evidence_refs": {
-            "description": "Sigstore-signed evidence references attached to this vendor — SOC 2 reports, ISO certs, completed questionnaires, etc.",
-            "items": {
-              "$ref": "#/components/schemas/EvidenceRef"
-            },
-            "title": "Evidence Refs",
-            "type": "array"
-          },
-          "evidentia_version": {
-            "description": "evidentia-core version that produced this record.",
-            "title": "Evidentia Version",
-            "type": "string"
-          },
-          "fourth_parties": {
-            "description": "Disclosed sub-processors / sub-service organizations. Drives 4th-party concentration-risk roll-ups in v0.7.9 P0.3 reporting.",
-            "items": {
-              "$ref": "#/components/schemas/FourthParty"
-            },
-            "title": "Fourth Parties",
-            "type": "array"
-          },
-          "id": {
-            "description": "Unique identifier (UUID v4 per the model-layer convention).",
-            "title": "Id",
-            "type": "string"
-          },
-          "last_due_diligence_review": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Date of the most recent completed due-diligence review. Drives ``next_review_due`` via :meth:`compute_next_review_due`.",
-            "title": "Last Due Diligence Review"
-          },
-          "name": {
-            "description": "Vendor legal name.",
-            "title": "Name",
-            "type": "string"
-          },
-          "next_review_due": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Date the next DD review is due. Computed from ``last_due_diligence_review`` + the criticality cadence via :meth:`compute_next_review_due` — but operators can override directly (e.g., per a regulator request).",
-            "title": "Next Review Due"
-          },
-          "notes": {
-            "anyOf": [
-              {
-                "maxLength": 4096,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Free-text vendor notes — relationship history, escalations, etc.",
-            "title": "Notes"
-          },
-          "region": {
-            "anyOf": [
-              {
-                "maxLength": 128,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Geographic region the vendor operates in (e.g., ``us-east-1``, ``EU``, ``US-West``, ``APAC``). Free-text because region semantics vary by vendor type — AWS-style region IDs for cloud providers, ISO-3166 country codes for data processors, business-region designations for consultancies. Drives the v0.7.9 P0.3 concentration-risk reporting `--by region` aggregation. Nullable for legacy imports + vendors whose region is genuinely indeterminate.",
-            "title": "Region"
-          },
-          "regulatory_classification": {
-            "description": "Zero or more regulatory flags. Multiple may apply — e.g., a stablecoin custody vendor that runs an internal pricing model is both ``custody`` AND ``model``.",
-            "items": {
-              "$ref": "#/components/schemas/RegulatoryClassification"
-            },
-            "title": "Regulatory Classification",
-            "type": "array"
-          },
-          "relationship_owner": {
-            "description": "Internal owner — typically an email address or LDAP identifier. The relationship-owner is responsible for ongoing monitoring + the next due-diligence review.",
-            "title": "Relationship Owner",
-            "type": "string"
-          },
-          "residual_risk_score": {
-            "default": 0,
-            "description": "Residual risk score on a 1-25 inherent × control matrix (5 × 5). 0 = unscored. Operators set this from the DD review outcome.",
-            "maximum": 25.0,
-            "minimum": 0.0,
-            "title": "Residual Risk Score",
-            "type": "integer"
-          },
-          "type": {
-            "$ref": "#/components/schemas/VendorType",
-            "description": "Vendor taxonomy per FFIEC + NIST 800-161 categories."
-          },
-          "updated_at": {
-            "description": "When the vendor record was last modified.",
-            "format": "date-time",
-            "title": "Updated At",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "type",
-          "criticality_tier",
-          "relationship_owner",
-          "contract_start_date"
-        ],
-        "title": "Vendor",
-        "type": "object"
-      },
-      "Vendor-Output": {
+      "Vendor": {
         "additionalProperties": false,
         "description": "Third-party vendor inventory record.\n\nThe atomic unit of the v0.7.9 TPRM module. Every other TPRM\ncapability (DD-questionnaire generation, concentration reporting,\nvendor-risk collectors, OSCAL TPRM emit) operates on collections\nof these records.\n\nSee `docs/v0.7.9-plan.md` §P0.1 for the canonical spec.",
         "properties": {
@@ -6495,7 +5643,7 @@
         "title": "VersionResponse",
         "type": "object"
       },
-      "Workflow-Input": {
+      "Workflow": {
         "additionalProperties": false,
         "description": "A governance workflow definition + execution state.\n\nStepwise execution: callers transition steps in order via\n:func:`advance_workflow_step`. The first step is auto-promoted\nfrom PENDING → IN_PROGRESS when the workflow is created (if\noperators want a strictly draft-then-start flow, they can\nexplicitly mark the workflow DRAFT until the first transition).",
         "properties": {
@@ -6535,90 +5683,7 @@
           "steps": {
             "description": "Ordered list of workflow steps.",
             "items": {
-              "$ref": "#/components/schemas/WorkflowStep-Input"
-            },
-            "title": "Steps",
-            "type": "array"
-          },
-          "subject": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "What/who is the workflow about (e.g., 'Model X', 'Vendor Y', 'Change request CR-1234'). Free-text.",
-            "title": "Subject"
-          },
-          "template": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Optional reference to a workflow template name. Templates are external — operators can maintain a template library + use this field for traceability.",
-            "title": "Template"
-          },
-          "updated_at": {
-            "format": "date-time",
-            "title": "Updated At",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "description",
-          "initiator"
-        ],
-        "title": "Workflow",
-        "type": "object"
-      },
-      "Workflow-Output": {
-        "additionalProperties": false,
-        "description": "A governance workflow definition + execution state.\n\nStepwise execution: callers transition steps in order via\n:func:`advance_workflow_step`. The first step is auto-promoted\nfrom PENDING → IN_PROGRESS when the workflow is created (if\noperators want a strictly draft-then-start flow, they can\nexplicitly mark the workflow DRAFT until the first transition).",
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "description": {
-            "description": "Workflow purpose narrative.",
-            "title": "Description",
-            "type": "string"
-          },
-          "evidentia_version": {
-            "title": "Evidentia Version",
-            "type": "string"
-          },
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "initiator": {
-            "description": "Identity (typically email) that initiated the workflow.",
-            "title": "Initiator",
-            "type": "string"
-          },
-          "name": {
-            "description": "Workflow instance name (e.g., 'Credit-model-v3 quarterly review 2026-Q1').",
-            "title": "Name",
-            "type": "string"
-          },
-          "status": {
-            "$ref": "#/components/schemas/WorkflowStatus",
-            "default": "draft",
-            "description": "Overall workflow status (derived from step states)."
-          },
-          "steps": {
-            "description": "Ordered list of workflow steps.",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowStep-Output"
+              "$ref": "#/components/schemas/WorkflowStep"
             },
             "title": "Steps",
             "type": "array"
@@ -6713,67 +5778,7 @@
         "title": "WorkflowStatus",
         "type": "string"
       },
-      "WorkflowStep-Input": {
-        "additionalProperties": false,
-        "description": "One step in a governance workflow.\n\nEach step has:\n\n  - a name + sequence number (zero-indexed; populated by\n    ``Workflow``)\n  - a ``required_role`` label that should match the actor's\n    line of defense or domain (free-text — the workflow does\n    NOT enforce role-actor binding; that's the operator's\n    organizational discipline)\n  - a current ``status``\n  - an optional SLA in days\n  - a history of state-transition events",
-        "properties": {
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "What this step requires + what counts as approval.",
-            "title": "Description"
-          },
-          "history": {
-            "description": "Timestamped state-transition events.",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowStepEvent"
-            },
-            "title": "History",
-            "type": "array"
-          },
-          "name": {
-            "description": "Step name (e.g., 'MRM 2nd-line review').",
-            "title": "Name",
-            "type": "string"
-          },
-          "required_role": {
-            "description": "Role label of the actor expected to perform this step (e.g., 'MRM Director', '3LOD-second', 'CAB chair'). Free-text; not enforced by the engine.",
-            "title": "Required Role",
-            "type": "string"
-          },
-          "sla_days": {
-            "anyOf": [
-              {
-                "minimum": 1.0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Optional SLA in calendar days from in-progress.",
-            "title": "Sla Days"
-          },
-          "status": {
-            "$ref": "#/components/schemas/WorkflowStepStatus",
-            "default": "pending",
-            "description": "Current state."
-          }
-        },
-        "required": [
-          "name",
-          "required_role"
-        ],
-        "title": "WorkflowStep",
-        "type": "object"
-      },
-      "WorkflowStep-Output": {
+      "WorkflowStep": {
         "additionalProperties": false,
         "description": "One step in a governance workflow.\n\nEach step has:\n\n  - a name + sequence number (zero-indexed; populated by\n    ``Workflow``)\n  - a ``required_role`` label that should match the actor's\n    line of defense or domain (free-text — the workflow does\n    NOT enforce role-actor binding; that's the operator's\n    organizational discipline)\n  - a current ``status``\n  - an optional SLA in days\n  - a history of state-transition events",
         "properties": {
@@ -9031,7 +8036,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EvidenceArtifact-Input"
+                "$ref": "#/components/schemas/EvidenceArtifact"
               }
             }
           },
@@ -9144,7 +8149,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EvidenceArtifact-Output"
+                  "$ref": "#/components/schemas/EvidenceArtifact"
                 }
               }
             },
@@ -9433,7 +8438,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GapAnalysisReport-Output"
+                  "$ref": "#/components/schemas/GapAnalysisReport"
                 }
               }
             },
@@ -9582,7 +8587,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GapAnalysisReport-Output"
+                  "$ref": "#/components/schemas/GapAnalysisReport"
                 }
               }
             },
@@ -10181,7 +9186,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Workflow-Input"
+                "$ref": "#/components/schemas/Workflow"
               }
             }
           },
@@ -10192,7 +9197,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Workflow-Output"
+                  "$ref": "#/components/schemas/Workflow"
                 }
               }
             },
@@ -10269,7 +9274,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Workflow-Output"
+                  "$ref": "#/components/schemas/Workflow"
                 }
               }
             },
@@ -10322,7 +9327,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Workflow-Output"
+                  "$ref": "#/components/schemas/Workflow"
                 }
               }
             },
@@ -11023,7 +10028,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ModelInventory-Input"
+                "$ref": "#/components/schemas/ModelInventory"
               }
             }
           },
@@ -11034,7 +10039,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ModelInventory-Output"
+                  "$ref": "#/components/schemas/ModelInventory"
                 }
               }
             },
@@ -11111,7 +10116,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ModelInventory-Output"
+                  "$ref": "#/components/schemas/ModelInventory"
                 }
               }
             },
@@ -11151,7 +10156,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ModelInventory-Input"
+                "$ref": "#/components/schemas/ModelInventory"
               }
             }
           },
@@ -11162,7 +10167,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ModelInventory-Output"
+                  "$ref": "#/components/schemas/ModelInventory"
                 }
               }
             },
@@ -11564,7 +10569,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ControlGap-Input"
+                "$ref": "#/components/schemas/ControlGap"
               }
             }
           },
@@ -11575,7 +10580,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ControlGap-Output"
+                  "$ref": "#/components/schemas/ControlGap"
                 }
               }
             },
@@ -11652,7 +10657,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ControlGap-Output"
+                  "$ref": "#/components/schemas/ControlGap"
                 }
               }
             },
@@ -11692,7 +10697,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ControlGap-Input"
+                "$ref": "#/components/schemas/ControlGap"
               }
             }
           },
@@ -11703,7 +10708,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ControlGap-Output"
+                  "$ref": "#/components/schemas/ControlGap"
                 }
               }
             },
@@ -11756,7 +10761,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ControlGap-Output"
+                  "$ref": "#/components/schemas/ControlGap"
                 }
               }
             },
@@ -11818,7 +10823,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ControlGap-Output"
+                  "$ref": "#/components/schemas/ControlGap"
                 }
               }
             },
@@ -12446,7 +11451,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Vendor-Input"
+                "$ref": "#/components/schemas/Vendor"
               }
             }
           },
@@ -12457,7 +11462,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Vendor-Output"
+                  "$ref": "#/components/schemas/Vendor"
                 }
               }
             },
@@ -12534,7 +11539,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Vendor-Output"
+                  "$ref": "#/components/schemas/Vendor"
                 }
               }
             },
@@ -12574,7 +11579,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Vendor-Input"
+                "$ref": "#/components/schemas/Vendor"
               }
             }
           },
@@ -12585,7 +11590,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Vendor-Output"
+                  "$ref": "#/components/schemas/Vendor"
                 }
               }
             },
