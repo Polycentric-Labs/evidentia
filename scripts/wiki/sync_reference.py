@@ -166,13 +166,24 @@ def _format_click_param(param: Any) -> tuple[str, str]:
     parameter's help text (empty for Arguments, which Click does not carry
     help on).
     """
-    import click
-
-    if isinstance(param, click.Option):
+    # Duck-type rather than ``isinstance(param, click.Option)``: typer 0.26
+    # vendors its own Click, so a Typer app's params are vendored-Click
+    # instances that fail an external-``click`` isinstance check.
+    # ``param_type_name`` ("option" / "argument") is the stable,
+    # vendor-agnostic discriminator that works on either Click.
+    if getattr(param, "param_type_name", "") == "option":
         invocation = ", ".join(param.opts + param.secondary_opts)
         return invocation, (param.help or "")
     # Argument: no help attribute; show the (upper-cased) metavar/name.
-    name = param.make_metavar() if hasattr(param, "make_metavar") else param.name
+    # Click 8.2+ made make_metavar() require a ctx; typer's override defaults
+    # it to None, so the no-arg call works for Typer params — fall back to the
+    # ctx-taking signature (then the raw name) to stay robust on either Click.
+    name: Any = param.name
+    if hasattr(param, "make_metavar"):
+        try:
+            name = param.make_metavar()
+        except TypeError:
+            name = param.make_metavar(None)
     return str(name), ""
 
 
@@ -188,7 +199,10 @@ def _walk_click_command(
     commands record their parameters. Deterministic: subcommands are always
     visited alphabetically.
     """
-    import click
+    # Duck-type the Click introspection so it works on typer 0.26's vendored
+    # Click (see _format_click_param): a group exposes ``list_commands`` /
+    # ``get_command``; ``param_type_name`` discriminates option vs argument.
+    is_group = hasattr(command, "list_commands")
 
     help_text = first_docstring_line(command.help) if command.help else ""
     params = [
@@ -196,20 +210,23 @@ def _walk_click_command(
         for p in command.params
         # Skip the auto-added --help flag; it is on every command and adds
         # no signal.
-        if not (isinstance(p, click.Option) and p.name == "help")
+        if not (getattr(p, "param_type_name", "") == "option" and p.name == "help")
     ]
     rows.append(
         {
             "path": list(path),
             "help": help_text,
             "params": params,
-            "is_group": isinstance(command, click.Group),
+            "is_group": is_group,
         }
     )
-    if isinstance(command, click.Group):
-        ctx = click.Context(command, info_name=path[-1] if path else command.name)
-        for sub_name in sorted(command.list_commands(ctx)):
-            sub = command.get_command(ctx, sub_name)
+    if is_group:
+        # ctx=None is sufficient for a static command tree — list_commands /
+        # get_command on a basic group ignore it (verified against the live
+        # Typer app). Avoids constructing a Click Context, which would mix
+        # the external and vendored Click classes.
+        for sub_name in sorted(command.list_commands(None)):
+            sub = command.get_command(None, sub_name)
             if sub is None:  # pragma: no cover — defensive
                 continue
             _walk_click_command(sub, [*path, sub_name], rows)
