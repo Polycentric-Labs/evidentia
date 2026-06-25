@@ -1,0 +1,149 @@
+# Post-publish install smoke test.
+#
+# release.yml is atomic: it builds + validates every artifact (wheels, SBOM,
+# and the container built from the local wheels) BEFORE the irreversible PyPI
+# publish. That closes the build-time failure classes. What it cannot cover is
+# a problem that only appears once the artifact is *live* — a metadata /
+# dependency-resolution / registry-propagation issue that bites a real
+# consumer doing a clean `pip install` or `docker pull`.
+#
+# This workflow is that final check. It fires after a Release is published
+# (the last step of release.yml's publish-container job), waits for the
+# package/image to propagate, and confirms both install + run `evidentia
+# version` from a clean environment. On failure it goes red so a maintainer is
+# notified. Auto-yank is intentionally NOT automated — yank-vs-hotfix is a
+# human call (and an unverified-publish false positive must never yank a good
+# release). `workflow_dispatch` allows re-running the smoke for any version.
+
+name: post-publish smoke
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to smoke-test, without the leading v (e.g. 0.10.13)"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: post-publish-smoke-${{ github.event.release.tag_name || github.event.inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  pypi-install-smoke:
+    name: PyPI fresh-install smoke
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.release.prerelease }}
+    steps:
+      - name: Resolve version
+        id: ver
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            REF="${{ github.event.release.tag_name }}"   # e.g. v0.10.13
+            VERSION="${REF#v}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Smoke-testing evidentia==${VERSION}"
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: "3.13"
+
+      - name: Wait for PyPI propagation
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            if pip index versions evidentia 2>/dev/null | grep -q "${VERSION}"; then
+              echo "evidentia ${VERSION} is visible on PyPI."
+              exit 0
+            fi
+            echo "Attempt ${i}/30: evidentia ${VERSION} not on PyPI yet; waiting 20s..."
+            sleep 20
+          done
+          echo "::error::evidentia ${VERSION} never appeared on PyPI after ~10 minutes."
+          exit 1
+
+      - name: Fresh-install (base) + run `evidentia version`
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          python -m venv /tmp/smoke-base
+          /tmp/smoke-base/bin/pip install --quiet --upgrade pip
+          /tmp/smoke-base/bin/pip install "evidentia==${VERSION}"
+          OUT="$(/tmp/smoke-base/bin/evidentia version)"
+          echo "$OUT"
+          echo "$OUT" | grep -q "${VERSION}" \
+            || { echo "::error::base 'evidentia version' did not report ${VERSION}"; exit 1; }
+
+      - name: Fresh-install (all extras) — verify every published package resolves
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          python -m venv /tmp/smoke-extras
+          /tmp/smoke-extras/bin/pip install --quiet --upgrade pip
+          /tmp/smoke-extras/bin/pip install "evidentia[ai,api,collectors,mcp]==${VERSION}"
+          OUT="$(/tmp/smoke-extras/bin/evidentia version)"
+          echo "$OUT"
+          echo "$OUT" | grep -q "${VERSION}" \
+            || { echo "::error::extras 'evidentia version' did not report ${VERSION}"; exit 1; }
+
+  container-smoke:
+    name: GHCR container pull smoke
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.release.prerelease }}
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Resolve tag
+        id: tag
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="v${{ github.event.inputs.version }}"
+          else
+            TAG="${{ github.event.release.tag_name }}"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee  # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull published container (with propagation retry) + run `version`
+        env:
+          IMAGE: ghcr.io/polycentric-labs/evidentia:${{ steps.tag.outputs.tag }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 20); do
+            if docker pull "${IMAGE}"; then
+              break
+            fi
+            echo "Attempt ${i}/20: ${IMAGE} not pullable yet; waiting 15s..."
+            sleep 15
+            if [ "${i}" -eq 20 ]; then
+              echo "::error::could not pull ${IMAGE} after ~5 minutes."
+              exit 1
+            fi
+          done
+          OUT="$(docker run --rm "${IMAGE}" version)"
+          echo "$OUT"
+          # TAG is vX.Y.Z; the version banner carries the bare X.Y.Z.
+          echo "$OUT" | grep -q "${TAG#v}" \
+            || { echo "::error::container 'evidentia version' did not report ${TAG#v}"; exit 1; }
