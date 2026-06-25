@@ -44,7 +44,7 @@ dev = [
     "types-PyYAML>=6.0",
     # `pydantic.mypy` plugin is enabled in `[tool.mypy]`; pydantic must be
     # in the mypy-run env so the plugin can be imported at type-check time.
-    "pydantic>=2.13.4",
+    "pydantic>=2.9,<2.13",  # held <2.13 to match evidentia-core (defer the pydantic-2.13 migration)
     # v0.5.0: AWS collector tests run against moto's AWS API mock.
     # `boto3` is the runtime dependency (also in evidentia-collectors
     # [aws] extra); having it in dev deps means collector tests run

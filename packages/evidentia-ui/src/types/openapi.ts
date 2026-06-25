@@ -3631,7 +3631,103 @@ export interface components {
          *     Represents a framework requirement that the organization has not
          *     fully implemented.
          */
-        ControlGap: {
+        "ControlGap-Input": {
+            /** Assigned To */
+            assigned_to?: string | null;
+            /**
+             * Control Description
+             * @description Full control description from the catalog
+             */
+            control_description: string;
+            /**
+             * Control Family
+             * @description Control family or category
+             */
+            control_family?: string | null;
+            /**
+             * Control Id
+             * @description Control ID within the framework, e.g. 'AC-2', 'CC6.1'
+             */
+            control_id: string;
+            /**
+             * Control Title
+             * @description Human-readable control title from the catalog
+             */
+            control_title: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Cross Framework Value
+             * @description Other framework:control_id pairs that this gap also satisfies
+             */
+            cross_framework_value?: string[];
+            /**
+             * Equivalent Controls In Inventory
+             * @description Organization control IDs that partially satisfy this requirement
+             */
+            equivalent_controls_in_inventory?: string[];
+            /**
+             * Framework
+             * @description Framework ID, e.g. 'nist-800-53-mod', 'soc2-tsc'
+             */
+            framework: string;
+            /**
+             * Gap Description
+             * @description Specific description of what is missing or incomplete
+             */
+            gap_description: string;
+            /** @description Severity based on requirement level and implementation state */
+            gap_severity: components["schemas"]["GapSeverity"];
+            /** Id */
+            id?: string;
+            /** @description Estimated engineering effort to close this gap */
+            implementation_effort: components["schemas"]["ImplementationEffort"];
+            /**
+             * Implementation Status
+             * @description Current state: 'missing', 'partial', 'planned', 'not_applicable'
+             */
+            implementation_status: string;
+            /** Jira Issue Key */
+            jira_issue_key?: string | null;
+            /**
+             * Poam Milestones
+             * @description Plan-of-Action-and-Milestones milestones for this gap. Order is preserved across save+load round-trips. Sorting by ``target_date`` happens at query time, not at persistence time.
+             */
+            poam_milestones?: components["schemas"]["Milestone"][];
+            /**
+             * Priority Score
+             * @description Computed priority score (higher = more urgent)
+             * @default 0
+             */
+            priority_score: number;
+            /** Remediated At */
+            remediated_at?: string | null;
+            /**
+             * Remediation Guidance
+             * @description Actionable remediation guidance for this gap
+             */
+            remediation_guidance: string;
+            /** Servicenow Ticket Id */
+            servicenow_ticket_id?: string | null;
+            /**
+             * @description Current remediation status
+             * @default open
+             */
+            status: components["schemas"]["GapStatus"];
+            /** Tags */
+            tags?: string[];
+        };
+        /**
+         * ControlGap
+         * @description A single control gap identified by the gap analyzer.
+         *
+         *     Represents a framework requirement that the organization has not
+         *     fully implemented.
+         */
+        "ControlGap-Output": {
             /** Assigned To */
             assigned_to?: string | null;
             /**
@@ -4040,7 +4136,141 @@ export interface components {
          *     implemented and operating effectively. Artifacts are collected by
          *     collectors (automated) or uploaded manually.
          */
-        EvidenceArtifact: {
+        "EvidenceArtifact-Input": {
+            /**
+             * Collected At
+             * Format: date-time
+             * @description When this evidence was collected (UTC)
+             */
+            collected_at?: string;
+            /**
+             * Collected By
+             * @description Collector name or user email that produced this evidence
+             */
+            collected_by: string;
+            /**
+             * Content
+             * @description The actual evidence content
+             */
+            content?: unknown | null;
+            /**
+             * Content Format
+             * @description Format of content: 'json', 'text', 'base64', 'html'
+             * @default json
+             */
+            content_format: string;
+            /**
+             * Content Hash
+             * @description SHA-256 hash of content for tamper detection
+             */
+            content_hash?: string | null;
+            /**
+             * Control Mappings
+             * @description Controls that this evidence supports, across one or more frameworks
+             */
+            control_mappings?: components["schemas"]["ControlMapping"][];
+            /**
+             * Description
+             * @description Detailed description of the evidence content and context
+             */
+            description?: string | null;
+            /** @description Classification of this evidence artifact */
+            evidence_type: components["schemas"]["EvidenceType"];
+            /**
+             * Expires At
+             * @description When this evidence becomes stale
+             */
+            expires_at?: string | null;
+            /**
+             * File Path
+             * @description Path to the evidence file if stored on disk
+             */
+            file_path?: string | null;
+            /**
+             * File Size Bytes
+             * @description Size of the evidence file in bytes
+             */
+            file_size_bytes?: number | null;
+            /**
+             * Id
+             * @description Unique identifier (UUID v4)
+             */
+            id?: string;
+            /**
+             * Lineage Id
+             * @description v0.9.5 P3.2: UUID identifying the lineage chain across versions. When ``None`` (default), the artifact IS the lineage root + the ``id`` field serves as the implicit lineage_id. Set explicitly on versions > 1 to point at the chain root.
+             */
+            lineage_id?: string | null;
+            /**
+             * Metadata
+             * @description Collector-specific metadata (region, account ID, etc.)
+             */
+            metadata?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Missing Elements
+             * @description Elements needed to make this evidence sufficient
+             */
+            missing_elements?: string[];
+            /**
+             * Predecessor Id
+             * @description v0.9.5 P3.2: ``id`` of the prior version in the lineage chain. ``None`` for the lineage root (version 1). Allows ``evidentia evidence show <lineage_id> --version N`` to walk the chain to the target version.
+             */
+            predecessor_id?: string | null;
+            /**
+             * Source System
+             * @description System that produced this evidence
+             */
+            source_system: string;
+            /**
+             * @description AI-assessed sufficiency of this evidence for its mapped controls
+             * @default unknown
+             */
+            sufficiency: components["schemas"]["EvidenceSufficiency"];
+            /**
+             * Sufficiency Rationale
+             * @description Explanation of the sufficiency assessment
+             */
+            sufficiency_rationale?: string | null;
+            /** Tags */
+            tags?: string[];
+            /**
+             * Title
+             * @description Human-readable title describing what this evidence shows
+             */
+            title: string;
+            /**
+             * Validated At
+             * @description When the sufficiency assessment was performed
+             */
+            validated_at?: string | null;
+            /**
+             * Validated By
+             * @description Model or person that performed the validation
+             */
+            validated_by?: string | null;
+            /**
+             * Validator Confidence
+             * @description Validator confidence in the sufficiency assessment (0.0–1.0)
+             */
+            validator_confidence?: number | null;
+            /**
+             * Version
+             * @description v0.9.5 P3.2: sequence number within the artifact's lineage chain. First version = 1; each subsequent edit creates a new artifact with version=N+1. Backward-compat default of 1 means v0.7.x → v0.9.4 artifacts load as version 1 of their own (single-element) chain.
+             * @default 1
+             */
+            version: number;
+        };
+        /**
+         * EvidenceArtifact
+         * @description A single piece of compliance evidence.
+         *
+         *     An artifact represents one discrete piece of proof that a control is
+         *     implemented and operating effectively. Artifacts are collected by
+         *     collectors (automated) or uploaded manually.
+         */
+        "EvidenceArtifact-Output": {
             /**
              * Collected At
              * Format: date-time
@@ -4388,7 +4618,7 @@ export interface components {
          *     The primary output of the gap analyzer. Contains all identified gaps,
          *     efficiency opportunities, and a prioritized remediation roadmap.
          */
-        GapAnalysisReport: {
+        "GapAnalysisReport-Input": {
             /**
              * Analyzed At
              * Format: date-time
@@ -4420,7 +4650,90 @@ export interface components {
              * Gaps
              * @description All identified gaps, sorted by priority_score descending
              */
-            gaps: components["schemas"]["ControlGap"][];
+            gaps: components["schemas"]["ControlGap-Input"][];
+            /** High Gaps */
+            high_gaps: number;
+            /** Id */
+            id?: string;
+            /**
+             * Informational Gaps
+             * @default 0
+             */
+            informational_gaps: number;
+            /**
+             * Inventory Source
+             * @description Path to the inventory file used
+             */
+            inventory_source?: string | null;
+            /** Low Gaps */
+            low_gaps: number;
+            /** Medium Gaps */
+            medium_gaps: number;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Organization
+             * @description Organization name from the control inventory
+             */
+            organization: string;
+            /**
+             * Prioritized Roadmap
+             * @description Ordered list of gap IDs by descending priority_score
+             */
+            prioritized_roadmap?: string[];
+            /**
+             * Total Controls In Inventory
+             * @description Total controls in the organization's inventory
+             */
+            total_controls_in_inventory: number;
+            /**
+             * Total Controls Required
+             * @description Total unique controls required across all analyzed frameworks
+             */
+            total_controls_required: number;
+            /** Total Gaps */
+            total_gaps: number;
+        };
+        /**
+         * GapAnalysisReport
+         * @description Complete gap analysis report.
+         *
+         *     The primary output of the gap analyzer. Contains all identified gaps,
+         *     efficiency opportunities, and a prioritized remediation roadmap.
+         */
+        "GapAnalysisReport-Output": {
+            /**
+             * Analyzed At
+             * Format: date-time
+             */
+            analyzed_at?: string;
+            /**
+             * Coverage Percentage
+             * @description Percentage of required controls that are fully implemented
+             */
+            coverage_percentage: number;
+            /** Critical Gaps */
+            critical_gaps: number;
+            /**
+             * Efficiency Opportunities
+             * @description Controls that satisfy 3+ framework requirements
+             */
+            efficiency_opportunities?: components["schemas"]["EfficiencyOpportunity"][];
+            /**
+             * Evidentia Version
+             * @description Version of evidentia-core that produced this report
+             */
+            evidentia_version?: string;
+            /**
+             * Frameworks Analyzed
+             * @description Framework IDs that were analyzed
+             */
+            frameworks_analyzed: string[];
+            /**
+             * Gaps
+             * @description All identified gaps, sorted by priority_score descending
+             */
+            gaps: components["schemas"]["ControlGap-Output"][];
             /** High Gaps */
             high_gaps: number;
             /** Id */
@@ -4654,7 +4967,7 @@ export interface components {
              */
             format: string;
             /** @description Inline report to export (as returned by /api/gap/analyze). */
-            report?: components["schemas"]["GapAnalysisReport"] | null;
+            report?: components["schemas"]["GapAnalysisReport-Input"] | null;
             /**
              * Report Key
              * @description gap_store SHA-16 key of a saved report to export instead.
@@ -5271,7 +5584,96 @@ export interface components {
          *     third-party vendor) and to the AI-features path via
          *     `RiskStatement.model_inventory_ref` (introduced in v0.7.10 P0.6.4).
          */
-        ModelInventory: {
+        "ModelInventory-Input": {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Evidence Refs
+             * @description Sigstore-signed evidence chain (validation reports, back-test results, sensitivity-analysis outputs). Reuses the v0.7.9 TPRM EvidenceRef model — same artifact_id-or-file_path two-mode contract.
+             */
+            evidence_refs?: components["schemas"]["EvidenceRef"][];
+            /** Evidentia Version */
+            evidentia_version?: string;
+            /** Id */
+            id?: string;
+            /**
+             * Inputs
+             * @description Data sources feeding the model (SR 11-7 §III.A.2).
+             */
+            inputs?: components["schemas"]["ModelInput"][];
+            /**
+             * Last Validation Date
+             * @description Date the model was most recently validated.
+             */
+            last_validation_date?: string | null;
+            methodology: components["schemas"]["Methodology"];
+            /**
+             * Name
+             * @description Human-readable model name (e.g., 'FICO-style credit scorer v3', 'Fraud-detector LLM-v0.4').
+             */
+            name: string;
+            /**
+             * Next Validation Due
+             * @description Auto-computed from `tier` + `last_validation_date` via :meth:`compute_next_validation_due`. Operators can also override via the CLI `--next-validation-due` flag.
+             */
+            next_validation_due?: string | null;
+            /**
+             * Notes
+             * @description Free-text notes (operator observations, history, etc.).
+             */
+            notes?: string | null;
+            /**
+             * Outputs
+             * @description Decisions the model produces (SR 11-7 §III.B.1).
+             */
+            outputs?: components["schemas"]["ModelOutput"][];
+            /**
+             * Owner
+             * @description Internal model owner (email or LDAP identifier).
+             */
+            owner: string;
+            /**
+             * Purpose
+             * @description Business purpose per SR 11-7 §III.A 'Conceptual Soundness'. Should describe what decisions the model influences and why it was built (e.g., 'Score consumer credit applications using behavioural + bureau features to support the loan-origination decision flow').
+             */
+            purpose: string;
+            /**
+             * Retirement Plan
+             * @description Per SR 11-7 §III.C ongoing-monitoring expectations, models have a documented retirement / replacement plan. None = indefinite use; not best practice.
+             */
+            retirement_plan?: string | null;
+            tier: components["schemas"]["Tier"];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+            /**
+             * Validation Findings
+             * @description Open + closed findings from validation activities. Operator reviews open findings during validation-due cadence + before promoting model versions.
+             */
+            validation_findings?: components["schemas"]["ValidationFinding"][];
+            /**
+             * Vendor Id
+             * @description Cross-link to the v0.7.9 TPRM `Vendor.id` when `vendor_or_internal=vendor`. MUST be set for vendor-provenance models so SR 11-7 §V (vendor-risk overlay) applies. Validated via `@field_validator` per the two-mode contract.
+             */
+            vendor_id?: string | null;
+            vendor_or_internal: components["schemas"]["Provenance"];
+        };
+        /**
+         * ModelInventory
+         * @description The Model Risk Management inventory record.
+         *
+         *     One ModelInventory entry per managed model, satisfying SR 11-7 /
+         *     SR 26-02 §III.A "Conceptual Soundness" inventory expectations.
+         *     Cross-links to TPRM via `vendor_id` (when sourced from a
+         *     third-party vendor) and to the AI-features path via
+         *     `RiskStatement.model_inventory_ref` (introduced in v0.7.10 P0.6.4).
+         */
+        "ModelInventory-Output": {
             /**
              * Created At
              * Format: date-time
@@ -6392,7 +6794,108 @@ export interface components {
          *
          *     See `docs/v0.7.9-plan.md` §P0.1 for the canonical spec.
          */
-        Vendor: {
+        "Vendor-Input": {
+            /**
+             * Contract End Date
+             * @description Contract end date. Null for indefinite / month-to-month engagements; expiry warnings ride on this field when set.
+             */
+            contract_end_date?: string | null;
+            /**
+             * Contract Start Date
+             * Format: date
+             * @description Contract effective date.
+             */
+            contract_start_date: string;
+            /**
+             * Created At
+             * Format: date-time
+             * @description When the vendor record was created.
+             */
+            created_at?: string;
+            /** @description FFIEC Vendor Management criticality tier. Drives the due-diligence-review cadence (annual / biennial / triennial). */
+            criticality_tier: components["schemas"]["CriticalityTier"];
+            /**
+             * Evidence Refs
+             * @description Sigstore-signed evidence references attached to this vendor — SOC 2 reports, ISO certs, completed questionnaires, etc.
+             */
+            evidence_refs?: components["schemas"]["EvidenceRef"][];
+            /**
+             * Evidentia Version
+             * @description evidentia-core version that produced this record.
+             */
+            evidentia_version?: string;
+            /**
+             * Fourth Parties
+             * @description Disclosed sub-processors / sub-service organizations. Drives 4th-party concentration-risk roll-ups in v0.7.9 P0.3 reporting.
+             */
+            fourth_parties?: components["schemas"]["FourthParty"][];
+            /**
+             * Id
+             * @description Unique identifier (UUID v4 per the model-layer convention).
+             */
+            id?: string;
+            /**
+             * Last Due Diligence Review
+             * @description Date of the most recent completed due-diligence review. Drives ``next_review_due`` via :meth:`compute_next_review_due`.
+             */
+            last_due_diligence_review?: string | null;
+            /**
+             * Name
+             * @description Vendor legal name.
+             */
+            name: string;
+            /**
+             * Next Review Due
+             * @description Date the next DD review is due. Computed from ``last_due_diligence_review`` + the criticality cadence via :meth:`compute_next_review_due` — but operators can override directly (e.g., per a regulator request).
+             */
+            next_review_due?: string | null;
+            /**
+             * Notes
+             * @description Free-text vendor notes — relationship history, escalations, etc.
+             */
+            notes?: string | null;
+            /**
+             * Region
+             * @description Geographic region the vendor operates in (e.g., ``us-east-1``, ``EU``, ``US-West``, ``APAC``). Free-text because region semantics vary by vendor type — AWS-style region IDs for cloud providers, ISO-3166 country codes for data processors, business-region designations for consultancies. Drives the v0.7.9 P0.3 concentration-risk reporting `--by region` aggregation. Nullable for legacy imports + vendors whose region is genuinely indeterminate.
+             */
+            region?: string | null;
+            /**
+             * Regulatory Classification
+             * @description Zero or more regulatory flags. Multiple may apply — e.g., a stablecoin custody vendor that runs an internal pricing model is both ``custody`` AND ``model``.
+             */
+            regulatory_classification?: components["schemas"]["RegulatoryClassification"][];
+            /**
+             * Relationship Owner
+             * @description Internal owner — typically an email address or LDAP identifier. The relationship-owner is responsible for ongoing monitoring + the next due-diligence review.
+             */
+            relationship_owner: string;
+            /**
+             * Residual Risk Score
+             * @description Residual risk score on a 1-25 inherent × control matrix (5 × 5). 0 = unscored. Operators set this from the DD review outcome.
+             * @default 0
+             */
+            residual_risk_score: number;
+            /** @description Vendor taxonomy per FFIEC + NIST 800-161 categories. */
+            type: components["schemas"]["VendorType"];
+            /**
+             * Updated At
+             * Format: date-time
+             * @description When the vendor record was last modified.
+             */
+            updated_at?: string;
+        };
+        /**
+         * Vendor
+         * @description Third-party vendor inventory record.
+         *
+         *     The atomic unit of the v0.7.9 TPRM module. Every other TPRM
+         *     capability (DD-questionnaire generation, concentration reporting,
+         *     vendor-risk collectors, OSCAL TPRM emit) operates on collections
+         *     of these records.
+         *
+         *     See `docs/v0.7.9-plan.md` §P0.1 for the canonical spec.
+         */
+        "Vendor-Output": {
             /**
              * Contract End Date
              * @description Contract end date. Null for indefinite / month-to-month engagements; expiry warnings ride on this field when set.
@@ -6578,7 +7081,7 @@ export interface components {
          *     operators want a strictly draft-then-start flow, they can
          *     explicitly mark the workflow DRAFT until the first transition).
          */
-        Workflow: {
+        "Workflow-Input": {
             /**
              * Created At
              * Format: date-time
@@ -6612,7 +7115,68 @@ export interface components {
              * Steps
              * @description Ordered list of workflow steps.
              */
-            steps?: components["schemas"]["WorkflowStep"][];
+            steps?: components["schemas"]["WorkflowStep-Input"][];
+            /**
+             * Subject
+             * @description What/who is the workflow about (e.g., 'Model X', 'Vendor Y', 'Change request CR-1234'). Free-text.
+             */
+            subject?: string | null;
+            /**
+             * Template
+             * @description Optional reference to a workflow template name. Templates are external — operators can maintain a template library + use this field for traceability.
+             */
+            template?: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+        };
+        /**
+         * Workflow
+         * @description A governance workflow definition + execution state.
+         *
+         *     Stepwise execution: callers transition steps in order via
+         *     :func:`advance_workflow_step`. The first step is auto-promoted
+         *     from PENDING → IN_PROGRESS when the workflow is created (if
+         *     operators want a strictly draft-then-start flow, they can
+         *     explicitly mark the workflow DRAFT until the first transition).
+         */
+        "Workflow-Output": {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Description
+             * @description Workflow purpose narrative.
+             */
+            description: string;
+            /** Evidentia Version */
+            evidentia_version?: string;
+            /** Id */
+            id?: string;
+            /**
+             * Initiator
+             * @description Identity (typically email) that initiated the workflow.
+             */
+            initiator: string;
+            /**
+             * Name
+             * @description Workflow instance name (e.g., 'Credit-model-v3 quarterly review 2026-Q1').
+             */
+            name: string;
+            /**
+             * @description Overall workflow status (derived from step states).
+             * @default draft
+             */
+            status: components["schemas"]["WorkflowStatus"];
+            /**
+             * Steps
+             * @description Ordered list of workflow steps.
+             */
+            steps?: components["schemas"]["WorkflowStep-Output"][];
             /**
              * Subject
              * @description What/who is the workflow about (e.g., 'Model X', 'Vendor Y', 'Change request CR-1234'). Free-text.
@@ -6674,7 +7238,55 @@ export interface components {
          *       - an optional SLA in days
          *       - a history of state-transition events
          */
-        WorkflowStep: {
+        "WorkflowStep-Input": {
+            /**
+             * Description
+             * @description What this step requires + what counts as approval.
+             */
+            description?: string | null;
+            /**
+             * History
+             * @description Timestamped state-transition events.
+             */
+            history?: components["schemas"]["WorkflowStepEvent"][];
+            /**
+             * Name
+             * @description Step name (e.g., 'MRM 2nd-line review').
+             */
+            name: string;
+            /**
+             * Required Role
+             * @description Role label of the actor expected to perform this step (e.g., 'MRM Director', '3LOD-second', 'CAB chair'). Free-text; not enforced by the engine.
+             */
+            required_role: string;
+            /**
+             * Sla Days
+             * @description Optional SLA in calendar days from in-progress.
+             */
+            sla_days?: number | null;
+            /**
+             * @description Current state.
+             * @default pending
+             */
+            status: components["schemas"]["WorkflowStepStatus"];
+        };
+        /**
+         * WorkflowStep
+         * @description One step in a governance workflow.
+         *
+         *     Each step has:
+         *
+         *       - a name + sequence number (zero-indexed; populated by
+         *         ``Workflow``)
+         *       - a ``required_role`` label that should match the actor's
+         *         line of defense or domain (free-text — the workflow does
+         *         NOT enforce role-actor binding; that's the operator's
+         *         organizational discipline)
+         *       - a current ``status``
+         *       - an optional SLA in days
+         *       - a history of state-transition events
+         */
+        "WorkflowStep-Output": {
             /**
              * Description
              * @description What this step requires + what counts as approval.
@@ -8252,7 +8864,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["EvidenceArtifact"];
+                "application/json": components["schemas"]["EvidenceArtifact-Input"];
             };
         };
         responses: {
@@ -8330,7 +8942,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EvidenceArtifact"];
+                    "application/json": components["schemas"]["EvidenceArtifact-Output"];
                 };
             };
             /** @description Validation Error */
@@ -8499,7 +9111,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GapAnalysisReport"];
+                    "application/json": components["schemas"]["GapAnalysisReport-Output"];
                 };
             };
             /** @description Validation Error */
@@ -8618,7 +9230,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GapAnalysisReport"];
+                    "application/json": components["schemas"]["GapAnalysisReport-Output"];
                 };
             };
             /** @description Validation Error */
@@ -9006,7 +9618,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Workflow"];
+                "application/json": components["schemas"]["Workflow-Input"];
             };
         };
         responses: {
@@ -9016,7 +9628,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Workflow"];
+                    "application/json": components["schemas"]["Workflow-Output"];
                 };
             };
             /** @description Validation Error */
@@ -9047,7 +9659,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Workflow"];
+                    "application/json": components["schemas"]["Workflow-Output"];
                 };
             };
             /** @description Validation Error */
@@ -9111,7 +9723,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Workflow"];
+                    "application/json": components["schemas"]["Workflow-Output"];
                 };
             };
             /** @description Validation Error */
@@ -9590,7 +10202,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ModelInventory"];
+                "application/json": components["schemas"]["ModelInventory-Input"];
             };
         };
         responses: {
@@ -9600,7 +10212,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ModelInventory"];
+                    "application/json": components["schemas"]["ModelInventory-Output"];
                 };
             };
             /** @description Validation Error */
@@ -9631,7 +10243,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ModelInventory"];
+                    "application/json": components["schemas"]["ModelInventory-Output"];
                 };
             };
             /** @description Validation Error */
@@ -9656,7 +10268,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ModelInventory"];
+                "application/json": components["schemas"]["ModelInventory-Input"];
             };
         };
         responses: {
@@ -9666,7 +10278,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ModelInventory"];
+                    "application/json": components["schemas"]["ModelInventory-Output"];
                 };
             };
             /** @description Validation Error */
@@ -9926,7 +10538,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ControlGap"];
+                "application/json": components["schemas"]["ControlGap-Input"];
             };
         };
         responses: {
@@ -9936,7 +10548,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ControlGap"];
+                    "application/json": components["schemas"]["ControlGap-Output"];
                 };
             };
             /** @description Validation Error */
@@ -9967,7 +10579,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ControlGap"];
+                    "application/json": components["schemas"]["ControlGap-Output"];
                 };
             };
             /** @description Validation Error */
@@ -9992,7 +10604,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ControlGap"];
+                "application/json": components["schemas"]["ControlGap-Input"];
             };
         };
         responses: {
@@ -10002,7 +10614,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ControlGap"];
+                    "application/json": components["schemas"]["ControlGap-Output"];
                 };
             };
             /** @description Validation Error */
@@ -10066,7 +10678,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ControlGap"];
+                    "application/json": components["schemas"]["ControlGap-Output"];
                 };
             };
             /** @description Validation Error */
@@ -10102,7 +10714,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ControlGap"];
+                    "application/json": components["schemas"]["ControlGap-Output"];
                 };
             };
             /** @description Validation Error */
@@ -10488,7 +11100,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Vendor"];
+                "application/json": components["schemas"]["Vendor-Input"];
             };
         };
         responses: {
@@ -10498,7 +11110,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Vendor"];
+                    "application/json": components["schemas"]["Vendor-Output"];
                 };
             };
             /** @description Validation Error */
@@ -10529,7 +11141,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Vendor"];
+                    "application/json": components["schemas"]["Vendor-Output"];
                 };
             };
             /** @description Validation Error */
@@ -10554,7 +11166,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Vendor"];
+                "application/json": components["schemas"]["Vendor-Input"];
             };
         };
         responses: {
@@ -10564,7 +11176,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Vendor"];
+                    "application/json": components["schemas"]["Vendor-Output"];
                 };
             };
             /** @description Validation Error */
