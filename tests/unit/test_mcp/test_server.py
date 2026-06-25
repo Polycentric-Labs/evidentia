@@ -529,11 +529,10 @@ class TestCLI:
     def test_serve_with_no_stdio_exits_2(self) -> None:
         """Operators trying to bypass stdio without --transport
         get a clear error pointing at the new flag."""
-        # CliRunner's mix_stderr=False keeps stderr separately
-        # captured; without it, the err output is mixed into
-        # stdout. Use mix_stderr=False so we can assert on the
-        # error message specifically.
-        runner = CliRunner(mix_stderr=False)
+        # Click 8.2+ always keeps stderr a separate stream and removed the
+        # mix_stderr parameter, so result.stderr carries the error message
+        # without any CliRunner configuration.
+        runner = CliRunner()
         # We pass --no-stdio which the implementation rejects
         # (with a hint to use --transport instead).
         result = runner.invoke(mcp_cli_app, ["serve", "--no-stdio"])
@@ -552,13 +551,14 @@ class TestCLI:
         vary unpredictably across local/CI/OS — checking the
         parameter declarations directly is deterministic.
         """
-        import click
         from typer.main import get_command
 
         click_app = get_command(mcp_cli_app)
-        # click_app is a Group; .get_command(ctx, name) walks
-        # subcommands. Pass ctx=None — no command actually runs.
-        assert isinstance(click_app, click.Group)
+        # click_app is a group (a TyperGroup under typer 0.26's vendored
+        # Click). Duck-type the introspection: typer vendors its own Click, so
+        # external-``click`` isinstance checks fail. .get_command(None, name)
+        # walks subcommands without constructing a Context.
+        assert hasattr(click_app, "get_command")
         serve_cmd = click_app.get_command(None, "serve")  # type: ignore[arg-type]
         assert serve_cmd is not None, "serve subcommand missing"
 
@@ -569,19 +569,20 @@ class TestCLI:
         transport_param = next(
             p for p in serve_cmd.params if "--transport" in p.opts
         )
-        # Typer renders enum-typed Options as click.Choice; the
-        # choices are the enum's value strings.
-        assert isinstance(transport_param.type, click.Choice)
+        # Typer renders enum-typed Options as a Click Choice (vendored under
+        # typer 0.26); duck-type via .choices rather than isinstance.
+        assert hasattr(transport_param.type, "choices")
         choice_values = set(transport_param.type.choices)
         assert {"stdio", "sse", "http"}.issubset(choice_values)
 
     def test_serve_help_shows_host_port(self) -> None:
         """v0.8.1 P3.1: --host + --port flags are documented."""
-        import click
         from typer.main import get_command
 
         click_app = get_command(mcp_cli_app)
-        assert isinstance(click_app, click.Group)
+        # Duck-type: typer 0.26 vendors its own Click, so an external-``click``
+        # isinstance check fails. .get_command(None, name) walks subcommands.
+        assert hasattr(click_app, "get_command")
         serve_cmd = click_app.get_command(None, "serve")  # type: ignore[arg-type]
         assert serve_cmd is not None, "serve subcommand missing"
 
@@ -591,11 +592,12 @@ class TestCLI:
 
     def test_serve_help_shows_allow_root(self) -> None:
         """v0.8.2 F-V81-S1: --allow-root flag is documented."""
-        import click
         from typer.main import get_command
 
         click_app = get_command(mcp_cli_app)
-        assert isinstance(click_app, click.Group)
+        # Duck-type: typer 0.26 vendors its own Click, so an external-``click``
+        # isinstance check fails. .get_command(None, name) walks subcommands.
+        assert hasattr(click_app, "get_command")
         serve_cmd = click_app.get_command(None, "serve")  # type: ignore[arg-type]
         assert serve_cmd is not None, "serve subcommand missing"
 

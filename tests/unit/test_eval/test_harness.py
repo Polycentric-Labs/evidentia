@@ -608,8 +608,9 @@ class TestRiskDeterminismFaithfulnessCLI:
             ],
         )
         assert result.exit_code == 2
-        # CliRunner default merges stderr into stdout.
-        assert "--source-clauses-file" in (result.stdout or "")
+        # Click 8.2+ keeps stderr a separate stream (it no longer merges into
+        # stdout), so the usage error message lands on result.stderr.
+        assert "--source-clauses-file" in (result.stderr or "")
 
     def test_invalid_faithfulness_method_exits_2(
         self, tmp_path: Path
@@ -913,9 +914,11 @@ class TestFaithfulnessThresholdMode:
             ],
         )
         assert result.exit_code == 2
+        # Click 8.2+ keeps stderr separate; the invalid-choice usage error
+        # lands on stderr (no longer merged into stdout).
         assert (
-            "framework-aware" in (result.stdout or "")
-            or "fixed" in (result.stdout or "")
+            "framework-aware" in (result.stderr or "")
+            or "fixed" in (result.stderr or "")
         )
 
     def test_fixed_mode_uses_0_30(
