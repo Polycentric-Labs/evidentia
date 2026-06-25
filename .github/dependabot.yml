@@ -9,10 +9,27 @@
 #   - Weekly cadence (Monday 06:00 ET) — single batch to triage at the
 #     start of the week, not a daily drip.
 #   - Grouped updates (one PR per group, not per package) — turns ~10
-#     individual PRs into ~3 reviewable batches.
+#     individual PRs into a few reviewable batches.
 #   - Per-ecosystem open-PR cap so the queue can't run away.
 #   - Conventional-commit prefixes so release-automation tooling parses
 #     the bump-type correctly.
+#
+# Isolation strategy (added after the v0.10.12/13 cycle, where pydantic
+# 2.13, typer 0.26, and click 8.2 — all breaking *minors* — rode an
+# 18-package group bump and broke CI before the break was visible):
+#   - `cooldown` holds a freshly published release for a few days so a
+#     yanked / hotfixed bad release is superseded before Dependabot
+#     proposes it (longer for majors than patches). Security advisories
+#     bypass cooldown (they are not version updates).
+#   - `update-types: [minor, patch]` on the routine groups raises every
+#     *major* as its own PR — a major is never buried in a batch.
+#   - A dedicated `python-frameworks` group pulls the breaking-prone
+#     web/CLI core (pydantic / fastapi / starlette / typer / click /
+#     uvicorn / httpx) into a small, separately-reviewable PR. A
+#     major-only split would NOT have caught the breaking *minors* that
+#     bit us; isolating these packages by name does. Their version
+#     upper-bound caps + human review (auto-merge is off) are the
+#     complementary guards.
 #
 # Security update PRs are NEVER grouped (see `applies-to: version-updates`
 # scope on each group below) — each advisory deserves its own PR with a
@@ -40,13 +57,43 @@ updates:
     labels:
       - "dependencies"
       - "python:uv"
+    cooldown:
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
     groups:
+      # Breaking-prone web/CLI framework core — its own small PR, never
+      # buried in the routine batch (the pydantic/typer/click break class).
+      python-frameworks:
+        applies-to: version-updates
+        patterns:
+          - "pydantic*"
+          - "fastapi"
+          - "starlette"
+          - "typer"
+          - "click"
+          - "uvicorn*"
+          - "httpx*"
       python-runtime:
         applies-to: version-updates
         dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+        exclude-patterns:
+          - "pydantic*"
+          - "fastapi"
+          - "starlette"
+          - "typer"
+          - "click"
+          - "uvicorn*"
+          - "httpx*"
       python-dev:
         applies-to: version-updates
         dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
 
   # ---------------------------------------------------------------------
   # Frontend (npm — packages/evidentia-ui)
@@ -66,13 +113,23 @@ updates:
     labels:
       - "dependencies"
       - "javascript"
+    cooldown:
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
     groups:
       npm-runtime:
         applies-to: version-updates
         dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
       npm-dev:
         applies-to: version-updates
         dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
 
   # ---------------------------------------------------------------------
   # GitHub Actions (workflow files in .github/workflows/)
@@ -91,15 +148,26 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+    cooldown:
+      semver-major-days: 7
+      semver-minor-days: 3
+      semver-patch-days: 2
     groups:
       github-actions:
         applies-to: version-updates
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # ---------------------------------------------------------------------
   # Docker (the repo-root Dockerfile + any future container builds)
   # ---------------------------------------------------------------------
+  # The python:3.13 -> 3.14 base bump (#83) that broke the v0.10.12
+  # container is exactly the class cooldown + human review now guard:
+  # the smoke test (un-broken in v0.10.13) catches the build break, and
+  # cooldown lets a base-image tag settle before it is proposed.
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
@@ -114,8 +182,15 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+    cooldown:
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
     groups:
       docker:
         applies-to: version-updates
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
