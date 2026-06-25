@@ -150,7 +150,16 @@ def checks_for_scope(scope: str) -> tuple[Check, ...]:
 
 def _run_check(check: Check) -> int:
     """Shell out to one check via ``uv run``; return its exit code."""
-    cmd = ["uv", "run", *check.argv]
+    # Gate fidelity: resolve every check against the SAME --all-extras
+    # --all-packages environment CI uses (test.yml's pytest / mypy / osv jobs
+    # sync ``--all-extras --all-packages``). Without this, the local pre-push
+    # gate ran pytest in the default no-extras env, so the collector-SSRF tests
+    # that import optional DB/cloud drivers (snowflake / databricks / psycopg)
+    # failed locally with ModuleNotFoundError while passing in CI — a false-red
+    # that erodes trust in the gate. One environment definition, used locally
+    # AND in CI, so "passes locally" and "passes in CI" cannot mean two
+    # different things.
+    cmd = ["uv", "run", "--all-extras", "--all-packages", *check.argv]
     print(f"\n--- {check.name} ---")
     print(f"$ {' '.join(cmd)}")
     proc = subprocess.run(cmd, check=False)
