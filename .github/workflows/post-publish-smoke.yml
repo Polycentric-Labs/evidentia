@@ -79,7 +79,10 @@ jobs:
         run: |
           set -euo pipefail
           python -m venv /tmp/smoke-base
-          /tmp/smoke-base/bin/pip install --quiet --upgrade pip
+          # Intentionally UNPINNED: a post-publish smoke test must install the
+          # just-published artifact exactly as a real consumer does — hashes
+          # are unknowable here and pinning would defeat the test's purpose.
+          # The runner's bundled pip is current, so no `--upgrade pip` needed.
           /tmp/smoke-base/bin/pip install "evidentia==${VERSION}"
           OUT="$(/tmp/smoke-base/bin/evidentia version)"
           echo "$OUT"
@@ -92,7 +95,8 @@ jobs:
         run: |
           set -euo pipefail
           python -m venv /tmp/smoke-extras
-          /tmp/smoke-extras/bin/pip install --quiet --upgrade pip
+          # Intentionally UNPINNED (see the base-install step): install the live
+          # published extras exactly as a consumer would.
           /tmp/smoke-extras/bin/pip install "evidentia[ai,api,collectors,mcp]==${VERSION}"
           OUT="$(/tmp/smoke-extras/bin/evidentia version)"
           echo "$OUT"
