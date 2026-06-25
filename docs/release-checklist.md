@@ -338,7 +338,7 @@ git log --all --format="%ae" | sort -u | grep "@allenfbyrd.com$" || echo "OK: ze
 gh repo view polycentric-labs/evidentia --json name,description,isArchived,defaultBranchRef
 gh secret list --env pypi --repo polycentric-labs/evidentia
 gh api repos/polycentric-labs/evidentia/environments/pypi --jq '{name, url, deployment_branch_policy}'
-gh api repos/polycentric-labs/evidentia/branches/main/protection --jq '{required_status_checks, required_pull_request_reviews, enforce_admins, allow_force_pushes, allow_deletions}'
+gh api repos/Polycentric-Labs/evidentia/rulesets --jq '.[] | {id, name, target, enforcement}'   # main PR-flow ruleset + org baseline
 gh search commits --author-email allen@allenfbyrd.com --owner polycentric-labs  # zero hits
 ```
 
@@ -366,12 +366,16 @@ gh search commits --author-email allen@allenfbyrd.com --owner polycentric-labs  
 - [ ] PyPI Trusted Publisher entries exist for all 6 published packages
       (verify via `https://pypi.org/manage/project/<name>/settings/publishing/`).
 - [ ] Zero `allen@allenfbyrd.com` commits across all owned repos.
-- [ ] **Branch protection on `main` still active** (added in v0.7.2
-      post-audit hardening). Required status checks include the test
-      matrix + ruff + mypy + scorecard. `allow_force_pushes` and
-      `allow_deletions` both `false`. If protection has been
-      accidentally removed, re-apply per the rule documented in
-      [`SECURITY.md`](../SECURITY.md) before tagging.
+- [ ] **`main` PR-flow ruleset still active** (v0.10.14). Confirm the
+      repository ruleset `main — PR flow (required checks + merge queue)` is
+      `enforcement: active` with `bypass_actors: []`, a `pull_request` rule, a
+      `required_status_checks` rule listing the full meaningful set, a
+      `merge_queue` rule (`merge_method: SQUASH`), and
+      `required_linear_history`. The org `polycentric-labs-default-branch-baseline`
+      ruleset additionally enforces signatures / non-FF / deletion. Classic
+      branch protection was intentionally removed (the ruleset is the single
+      source of truth). If the ruleset has been removed/weakened, re-apply it
+      (see the "PR flow via merge queue" section below) before tagging.
 - [ ] **`pypi` environment branch policy correct**: with branch
       protection in place,
       `deployment_branch_policy.custom_branch_policies` should be
@@ -450,47 +454,62 @@ If the release.yml workflow fails:
   the failing publisher then re-run; `skip-existing: true` in
   `release.yml` makes retries idempotent.
 
-### Direct push vs PR workflow (post-v0.9.4 clarification)
+### PR flow via merge queue (v0.10.14 — the "never ship a failed test" flip)
 
-For solo-developer cycles, **direct push to `main` is the preferred
-shipping pattern** (matches the v0.7.x + v0.8.x direct-to-main
-ship workflow Allen used historically). Branch protection on
-`main` has `enforce_admins: False`, allowing admin pushes to
-bypass required-status-checks gating — useful when the local
-pre-push gate has already validated the same checks the CI would
-run.
+As of v0.10.14, `main` is governed by a **repository ruleset** that makes the
+full CI matrix gate **before** a change lands, not after. This reverses the
+prior direct-push pattern, under which admin pushes bypassed the required
+checks (`enforce_admins: false`), so the full matrix only ran post-merge / at
+release — the structural root cause of the v0.10.12 layered failures (a
+`python:3.14` base regression + a dead container smoke test surfaced only after
+the PyPI publish).
 
-PR-based workflow remains available for collaboration scenarios
-(when contributors are added to the repo) or when the user
-explicitly requests it (e.g., wanting GitHub's UI diff view for a
-high-stakes change before merge).
+The ruleset on `main` (created via `gh api repos/.../rulesets`) enforces:
 
-The v0.9.1-v0.9.4 PR ceremony was self-imposed by Claude during
-the session-driven ship pattern; it doubled the CI surface area
-(PR-head run + merge-commit run + release.yml = 3+ events vs 2 in
-the old workflow) + surfaced transient flakes that direct-push
-wouldn't have (v0.9.3 Jira request_id collision; v0.9.4 Windows
-cache-save). Future Claude sessions should default to direct-push
-for solo-dev work unless the user signals a preference for PR
-review.
+- **Require a pull request before merging** — 0 required approvals (solo
+  maintainer; a PR is still mandatory). `bypass_actors: []` — **no one
+  bypasses, including admins**.
+- **Require status checks** — the full meaningful set: the 3-OS `pytest`
+  matrix + `pytest no-extras`, `ruff`, `mypy`, `frontend (typecheck + build)`,
+  `docker/requirements drift`, `openapi schema drift`, `osv-scanner (SBOM)`,
+  `staleness guards …`, `gitleaks …`, `Analyze (python/js/actions)`,
+  `CLI<->GUI parity`, `verify-conformance-evidence`,
+  `Audit workflow permissions (strict)`, and the container `Build + smoke test`.
+- **Merge queue** (`merge_method: SQUASH`) — re-tests the prospective `main` +
+  PR merge so two individually-green PRs can't break `main`. SQUASH is the only
+  method compatible with `required_signatures` + `required_linear_history`
+  (`merge` breaks linearity; `rebase` produces commits GitHub cannot sign, which
+  would fail the signature rule). Every workflow producing a required check
+  carries the `merge_group:` trigger, or the queue stalls waiting for a
+  conclusion that never arrives. Paths-filtered workflows are **not** required —
+  they do not run on `merge_group` (GitHub does not expand the queue-branch
+  diff), so requiring one would hang the queue; the container smoke test avoids
+  this by always running and early-exiting on a step-level relevance check
+  rather than an `on.paths` filter.
+- **required_linear_history + required_signatures + non_fast_forward** (the org
+  `polycentric-labs-default-branch-baseline` ruleset also enforces signatures /
+  non-FF / deletion org-wide).
 
-How to execute direct-push:
+The classic branch protection was removed so the ruleset is the single source
+of truth.
+
+How to ship a change now — code, docs, **and** releases all go through a PR:
 
 ```bash
-git checkout main
-git pull origin main
-# ... make changes ...
-git add <paths>
-git commit -m "..."  # NO Claude attribution per global rules
-git push origin main
-# Tag a release if applicable:
-git tag vX.Y.Z && git push origin vX.Y.Z
+git checkout -b <branch>
+# ... make changes ...   (commits signed; NO Claude attribution per global rules)
+git push origin <branch>
+gh pr create --base main --head <branch> --title "..." --body "..."
+# wait for the required checks to go green, then add to the merge queue:
+gh pr merge <PR#> --squash --auto     # or "Merge when ready" in the UI
+# the queue re-tests main+PR and squash-merges (GitHub-signed) when green
 ```
 
-The first `git push origin main` is the only Claude-publishing-
-authority gate that needs the user's explicit "yes" — once the
-commit is staged locally + the user approves the push, no PR
-ceremony is required.
+A direct `git push origin main` now **fails** by design (the ruleset requires a
+PR). Tagging a release is unchanged — `git tag -s vX.Y.Z && git push origin
+vX.Y.Z` fires `release.yml`; the tag is pushed to its own ref, not to `main`.
+Each `git push`, `gh pr merge`, and tag push remains a Tier-4 action requiring
+explicit approval per the global publishing-authority protocol.
 
 ---
 

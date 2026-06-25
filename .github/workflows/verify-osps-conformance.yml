@@ -33,6 +33,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Merge queue: a required check must run on merge_group or the queue stalls.
+  merge_group:
   schedule:
     # Weekly Monday 03:00 UTC — catches link rot from out-of-band
     # repo changes (e.g., a file rename that doesn't go through PR

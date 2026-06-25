@@ -23,6 +23,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Merge queue: a required check must run on merge_group or the queue stalls.
+  merge_group:
   schedule:
     # Weekly re-scan to catch query-suite updates that surface new
     # alerts without a code change. Mondays 12:00 UTC.
