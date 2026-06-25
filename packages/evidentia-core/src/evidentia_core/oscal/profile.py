@@ -35,7 +35,12 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from evidentia_core.catalogs.loader import _extract_prose, _parse_oscal_control
+from evidentia_core.catalogs.loader import (
+    _extract_prose,
+    _iter_mappings,
+    _parse_oscal_control,
+    _require_mapping,
+)
 from evidentia_core.models.catalog import CatalogControl, ControlCatalog
 from evidentia_core.oscal._version import OSCAL_SCHEMA_VERSION
 
@@ -292,7 +297,8 @@ def _load_source_catalog(
     merging, which this implementation handles by collecting controls
     from each resolved source in order.
     """
-    imports = profile.get("profile", {}).get("imports", [])
+    profile_section = _require_mapping(profile.get("profile", {}), "profile")
+    imports = _iter_mappings(profile_section.get("imports", []), "profile.imports")
     if not imports:
         raise ProfileResolutionError(
             f"Profile {profile_path.name} has no imports — nothing to resolve"
@@ -306,26 +312,43 @@ def _load_source_catalog(
             f"Profile {profile_path.name} first import missing href"
         )
 
-    catalog_path = _resolve_href(href, base_dir, profile=profile)
-    if not catalog_path.exists():
+    try:
+        catalog_path = _resolve_href(href, base_dir, profile=profile)
+        catalog_missing = not catalog_path.exists()
+    except (OSError, ValueError) as exc:
+        # A malformed href can resolve to an unusable path: a 250+ char
+        # filename raises OSError ENAMETOOLONG; an embedded NUL raises
+        # ValueError — both from pathlib's .resolve()/.exists()/.stat().
+        # Convert to the module's typed error rather than leaking an
+        # uncaught exception (CWE-248; fuzz-found in fuzz_oscal_profile).
+        raise ProfileResolutionError(
+            f"Profile {profile_path.name} import href {href!r} resolves to an "
+            f"unusable path: {exc}"
+        ) from exc
+    if catalog_missing:
         raise ProfileResolutionError(
             f"Source catalog not found: {catalog_path} (profile href: {href!r})"
         )
 
     raw = _load_oscal_json(catalog_path)
-    catalog_data = raw.get("catalog", raw)
-    metadata = catalog_data.get("metadata", {})
+    catalog_data = _require_mapping(raw.get("catalog", raw), "source catalog")
+    metadata = _require_mapping(
+        catalog_data.get("metadata", {}), "source catalog metadata"
+    )
 
     controls: list[CatalogControl] = []
     families: list[str] = []
-    for group in catalog_data.get("groups", []):
+    for group in _iter_mappings(catalog_data.get("groups", []), "catalog.groups"):
         family_title = group.get("title", "")
         families.append(family_title)
-        for oscal_control in group.get("controls", []):
+        for oscal_control in _iter_mappings(
+            group.get("controls", []), "group.controls"
+        ):
             controls.append(_parse_oscal_control(oscal_control, family_title))
 
+    title = str(metadata.get("title", catalog_path.stem))
     return ControlCatalog(
-        framework_id=metadata.get("title", catalog_path.stem).lower().replace(" ", "-"),
+        framework_id=title.lower().replace(" ", "-"),
         framework_name=metadata.get("title", catalog_path.stem),
         version=metadata.get("version", "unknown"),
         source=f"OSCAL: {catalog_path.name}",
@@ -357,52 +380,74 @@ def resolve_profile(
     :raises ProfileResolutionError: profile malformed or source missing.
     """
     profile = _load_oscal_json(profile_path)
-    source_catalog = _load_source_catalog(profile_path, profile)
-    profile_meta = profile.get("profile", {}).get("metadata", {})
+    try:
+        source_catalog = _load_source_catalog(profile_path, profile)
+        profile_section = _require_mapping(profile.get("profile", {}), "profile")
+        profile_meta = _require_mapping(
+            profile_section.get("metadata", {}), "profile.metadata"
+        )
 
-    included, with_children, excluded = _collect_included_ids(profile)
-    include_all = not included
+        included, with_children, excluded = _collect_included_ids(profile)
+        include_all = not included
 
-    filtered = _filter_controls(
-        source_catalog.controls, included, excluded, include_all, with_children
-    )
+        filtered = _filter_controls(
+            source_catalog.controls, included, excluded, include_all, with_children
+        )
 
-    # Apply modifications (set-parameters + alters) to every surviving control
-    filtered = [_apply_set_parameters(profile, c) for c in filtered]
-    filtered = [_apply_alter(profile, c) for c in filtered]
+        # Apply modifications (set-parameters + alters) to every surviving control
+        filtered = [_apply_set_parameters(profile, c) for c in filtered]
+        filtered = [_apply_alter(profile, c) for c in filtered]
 
-    # Derive family list from surviving controls (some families may be
-    # entirely excluded)
-    surviving_families: list[str] = []
-    seen_families: set[str] = set()
-    for c in filtered:
-        if c.family and c.family not in seen_families:
-            surviving_families.append(c.family)
-            seen_families.add(c.family)
+        # Derive family list from surviving controls (some families may be
+        # entirely excluded)
+        surviving_families: list[str] = []
+        seen_families: set[str] = set()
+        for c in filtered:
+            if c.family and c.family not in seen_families:
+                surviving_families.append(c.family)
+                seen_families.add(c.family)
 
-    framework_id = (
-        override_framework_id
-        or profile_meta.get("title", profile_path.stem).lower().replace(" ", "-")
-    )
-    framework_name = override_framework_name or profile_meta.get(
-        "title", source_catalog.framework_name
-    )
+        framework_id = override_framework_id or str(
+            profile_meta.get("title", profile_path.stem)
+        ).lower().replace(" ", "-")
+        framework_name = override_framework_name or profile_meta.get(
+            "title", source_catalog.framework_name
+        )
 
-    resolved = ControlCatalog(
-        framework_id=framework_id,
-        framework_name=framework_name,
-        version=profile_meta.get("version", source_catalog.version),
-        source=f"OSCAL profile: {profile_path.name}",
-        controls=filtered,
-        families=surviving_families,
-    )
-    logger.info(
-        "Resolved profile %s → %d controls (from %d in source)",
-        profile_path.name,
-        resolved.control_count,
-        source_catalog.control_count,
-    )
-    return resolved
+        resolved = ControlCatalog(
+            framework_id=framework_id,
+            framework_name=framework_name,
+            version=profile_meta.get("version", source_catalog.version),
+            source=f"OSCAL profile: {profile_path.name}",
+            controls=filtered,
+            families=surviving_families,
+        )
+        logger.info(
+            "Resolved profile %s → %d controls (from %d in source)",
+            profile_path.name,
+            resolved.control_count,
+            source_catalog.control_count,
+        )
+        return resolved
+    except ProfileResolutionError:
+        # Already the module's typed error (e.g. from _load_source_catalog's
+        # explicit guards) — propagate unchanged.
+        raise
+    except (ValueError, OSError, AttributeError) as exc:
+        # resolve_profile traverses arbitrary, untrusted OSCAL structure via
+        # many ``.get(...)`` calls and path operations across _resolve_href /
+        # _collect_included_ids / _apply_set_parameters / _apply_alter. A
+        # malformed-but-valid-JSON profile can put a non-object where an
+        # object is expected (→ AttributeError), an unusable path in an href
+        # (→ OSError), or trip a structural guard (→ ValueError). Convert this
+        # whole malformed-input family to the declared ProfileResolutionError
+        # so a bad profile is a clean rejection, never an uncaught-exception
+        # denial-of-service (CWE-248; fuzz-found in fuzz_oscal_profile).
+        # Genuinely unexpected error types still propagate.
+        raise ProfileResolutionError(
+            f"Profile {profile_path.name} is malformed and could not be "
+            f"resolved: {exc}"
+        ) from exc
 
 
 def catalog_to_oscal_json(catalog: ControlCatalog) -> dict[str, Any]:

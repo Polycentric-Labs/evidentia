@@ -87,6 +87,49 @@ def _load_catalog_data(catalog_path: Path) -> dict[str, Any]:
     return data
 
 
+def _require_mapping(value: Any, what: str) -> dict[str, Any]:
+    """Return ``value`` if it is a JSON object, else raise a clean ``ValueError``.
+
+    OSCAL / Evidentia catalog structures are JSON objects at every nesting
+    level. A malformed-but-valid-JSON file can place a string, list, or
+    scalar where a mapping is expected (e.g. ``{"catalog": "oops"}`` or
+    ``{"groups": [{"controls": "x"}]}``). Without this guard the next
+    ``.get(...)`` raises ``AttributeError: 'str' object has no attribute
+    'get'`` — an *unexpected* exception type that escapes the parser as an
+    uncaught-exception denial-of-service (CWE-248; fuzz-found in the OSCAL
+    catalog-import + profile paths). Converting it to ``ValueError`` aligns
+    the failure with the module's declared "malformed input" signal (the
+    top-level non-mapping guard above already raises ``ValueError``, and
+    callers + the fuzz harnesses already treat ``ValueError`` as clean
+    rejection). Valid catalogs are unaffected — they never carry a
+    non-object where an object is required.
+    """
+    if not isinstance(value, dict):
+        raise ValueError(f"{what} must be a JSON object, got {type(value).__name__}")
+    return value
+
+
+def _iter_mappings(value: Any, what: str) -> list[dict[str, Any]]:
+    """Return ``value`` as a list of JSON objects, else raise a clean ``ValueError``.
+
+    Guards the ``for item in data.get("groups", [])`` family of loops. A
+    non-list (a string iterates character-by-character; a scalar is not
+    iterable at all) or a list holding a non-mapping element both lead to
+    ``AttributeError`` on the next ``.get(...)``. Reject with ``ValueError``
+    instead — the same CWE-248 hardening as :func:`_require_mapping`. An
+    absent key (``.get(key, [])`` → ``[]``) is the empty list and iterates
+    zero times, so omitted optional sections stay valid.
+    """
+    if not isinstance(value, list):
+        raise ValueError(f"{what} must be a JSON array, got {type(value).__name__}")
+    for index, item in enumerate(value):
+        if not isinstance(item, dict):
+            raise ValueError(
+                f"{what}[{index}] must be a JSON object, got {type(item).__name__}"
+            )
+    return value
+
+
 def load_oscal_catalog(catalog_path: Path) -> ControlCatalog:
     """Load an OSCAL Catalog JSON file into a ControlCatalog.
 
@@ -96,17 +139,19 @@ def load_oscal_catalog(catalog_path: Path) -> ControlCatalog:
     """
     data = _load_catalog_data(catalog_path)
 
-    catalog_data = data.get("catalog", data)
-    metadata = catalog_data.get("metadata", {})
+    catalog_data = _require_mapping(data.get("catalog", data), "catalog")
+    metadata = _require_mapping(catalog_data.get("metadata", {}), "catalog.metadata")
 
     controls: list[CatalogControl] = []
     families: list[str] = []
 
-    for group in catalog_data.get("groups", []):
+    for group in _iter_mappings(catalog_data.get("groups", []), "catalog.groups"):
         family_title = group.get("title", "")
         families.append(family_title)
 
-        for oscal_control in group.get("controls", []):
+        for oscal_control in _iter_mappings(
+            group.get("controls", []), "group.controls"
+        ):
             control = _parse_oscal_control(oscal_control, family_title)
             controls.append(control)
 
@@ -133,38 +178,49 @@ def load_oscal_catalog(catalog_path: Path) -> ControlCatalog:
 
 
 def _parse_oscal_control(oscal_control: dict[str, Any], family: str) -> CatalogControl:
-    """Parse a single OSCAL control into a CatalogControl."""
-    control_id = oscal_control.get("id", "").upper()
+    """Parse a single OSCAL control into a CatalogControl.
+
+    Shared by :func:`load_oscal_catalog` and the OSCAL profile resolver, so
+    its malformed-input guards protect both fuzz entry points. Every nested
+    collection is read through :func:`_iter_mappings`, and the two
+    string-only operations (``.upper()`` on ``id``, ``.replace().upper()``
+    on a link ``href``) coerce via :func:`str` first — a non-string ``id``
+    or ``href`` would otherwise raise an uncaught ``AttributeError``.
+    """
+    oscal_control = _require_mapping(oscal_control, "control")
+    control_id = str(oscal_control.get("id", "")).upper()
     title = oscal_control.get("title", "")
 
     # Extract description from parts
     description = ""
-    for part in oscal_control.get("parts", []):
+    for part in _iter_mappings(oscal_control.get("parts", []), "control.parts"):
         if part.get("name") == "statement":
             description = _extract_prose(part)
             break
 
     # Extract assessment objectives
     objectives: list[str] = []
-    for part in oscal_control.get("parts", []):
+    for part in _iter_mappings(oscal_control.get("parts", []), "control.parts"):
         if part.get("name") == "assessment-objective":
             objectives.append(_extract_prose(part))
 
     # Parse enhancements (nested controls)
     enhancements: list[CatalogControl] = []
-    for sub_control in oscal_control.get("controls", []):
+    for sub_control in _iter_mappings(
+        oscal_control.get("controls", []), "control.controls"
+    ):
         enhancement = _parse_oscal_control(sub_control, family)
         enhancements.append(enhancement)
 
     # Extract priority from properties
     priority = None
-    for prop in oscal_control.get("props", []):
+    for prop in _iter_mappings(oscal_control.get("props", []), "control.props"):
         if prop.get("name") == "priority":
             priority = prop.get("value")
 
     # Extract baseline impact from properties
     baseline_impact: list[str] = []
-    for prop in oscal_control.get("props", []):
+    for prop in _iter_mappings(oscal_control.get("props", []), "control.props"):
         if prop.get("name") in ("baseline", "impact"):
             value = prop.get("value", "")
             if value:
@@ -172,22 +228,26 @@ def _parse_oscal_control(oscal_control: dict[str, Any], family: str) -> CatalogC
 
     # Extract related controls from links
     related: list[str] = []
-    for link in oscal_control.get("links", []):
+    for link in _iter_mappings(oscal_control.get("links", []), "control.links"):
         if link.get("rel") == "related":
-            related.append(link.get("href", "").replace("#", "").upper())
+            related.append(str(link.get("href", "")).replace("#", "").upper())
 
     # Extract parameters
     parameters: dict[str, str] = {}
-    for param in oscal_control.get("params", []):
+    for param in _iter_mappings(oscal_control.get("params", []), "control.params"):
         param_id = param.get("id", "")
         default_value = ""
         if "select" in param:
-            choices = param["select"].get("choice", [])
+            choices = _require_mapping(param["select"], "param.select").get(
+                "choice", []
+            )
             default_value = " | ".join(choices) if choices else ""
         elif "guidelines" in param:
             guidelines = param["guidelines"]
-            if guidelines:
-                default_value = guidelines[0].get("prose", "")
+            if isinstance(guidelines, list) and guidelines:
+                default_value = _require_mapping(
+                    guidelines[0], "param.guidelines[0]"
+                ).get("prose", "")
         parameters[param_id] = default_value
 
     return CatalogControl(
@@ -206,8 +266,9 @@ def _parse_oscal_control(oscal_control: dict[str, Any], family: str) -> CatalogC
 
 def _extract_prose(part: dict[str, Any]) -> str:
     """Recursively extract prose text from an OSCAL part."""
+    part = _require_mapping(part, "part")
     prose: str = str(part.get("prose", ""))
-    for sub_part in part.get("parts", []):
+    for sub_part in _iter_mappings(part.get("parts", []), "part.parts"):
         sub_prose = _extract_prose(sub_part)
         if sub_prose:
             prose += "\n" + sub_prose

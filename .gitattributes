@@ -2,3 +2,9 @@
 # never sneak into `gh repo edit --description "$(cat .github/repo-description.txt)"`
 # on Windows checkouts (core.autocrlf=true). See docs/release-checklist.md Step 7.
 .github/repo-description.txt text eol=lf
+
+# Fuzz crash reproducers are exact-byte FuzzedDataProvider inputs: the
+# trailing bytes drive ext/int selection, so EOL normalization (LF->CRLF on a
+# Windows checkout) would change the bytes the harness replays. Treat them as
+# binary so git never touches them. Seed corpus JSON stays text.
+tests/fuzz/corpus/**/crash-* binary
