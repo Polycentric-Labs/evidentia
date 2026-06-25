@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+**Theme**: *Engineering hardening — never ship a failed test again.* Infrastructure + documentation changes that make release quality mechanical; no package API changes (the release-pipeline changes are exercised at the next tag).
+
+### Added
+
+- **`docs/engineering-practices.md`** — a public account of the engineering safeguard stack (PR-flow + merge queue, atomic releases, SLSA provenance + cosign + SBOM + OIDC publishing, continuous fuzzing + Scorecard + CodeQL, verified docs) and the candid failure classes that shaped each safeguard.
+
+### Changed
+
+- **PR-flow + merge queue on `main`.** A repository ruleset now requires a pull request, the full set of status checks, and a squash merge queue, with an empty bypass list — no direct push to `main`, including by administrators. This reverses the prior direct-push model so the complete CI matrix gates every change *before* it lands, not after. Every workflow producing a required check gained a `merge_group` trigger (paths-filtered workflows do not run on `merge_group`, so the container smoke test instead always runs with a step-level relevance early-exit).
+- **Atomic release.** `release.yml` builds and validates all artifacts — wheels, SBOM, and the container image (built from the locally-built wheels, not the package index) — *before* the irreversible PyPI publish, then pushes the byte-identical validated image. This closes the post-publish container-build-failure class (the v0.10.12 packages-only release) and the index-propagation race. The Dockerfile is now multi-stage with an `INSTALL_SOURCE` build argument; the operator default (install from PyPI) is unchanged.
+- **The container smoke test is now a required check.** Restructured to run on every pull request with a relevance early-exit, so it reports success on changes that do not touch the container while still building whenever the Dockerfile or its inputs change — which is what lets it be required without blocking unrelated PRs.
+
+### Fixed
+
+- **Flake-resistance policy** (`docs/testing-flake-policy.md`) — bans wall-clock-timing assertions and treats a skipped or dead gate as a failure, after a Windows clock-granularity flake and a Hypothesis-deadline flake were eliminated.
+
 ## [0.10.13] - 2026-06-23
 
 **Theme**: *Patch — restore the container base to Python 3.13.* v0.10.12 published to PyPI successfully, but its container image failed to build: the base had been bumped to `python:3.14-slim`, which the AI stack (`litellm`, `requires-python <3.14`) cannot resolve. This patch reverts the base to `python:3.13-slim` so the published container is complete and CVE-clean. The Python packages are otherwise identical to 0.10.12.

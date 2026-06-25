@@ -2,6 +2,10 @@
 
 **Last updated: v0.10.13 (planning, June 2026).**
 
+> **Engineering practices** — how Evidentia is built, tested, and shipped (the
+> PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
+> failure classes that shaped them): [`docs/engineering-practices.md`](engineering-practices.md).
+
 This roadmap synthesizes community feedback with the architecture plan
 at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0-v0.8.7
 + v0.9.0-v0.9.9 + v0.10.0-v0.10.11 have shipped; v0.10.12 is the current
