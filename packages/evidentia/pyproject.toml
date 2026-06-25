@@ -27,7 +27,16 @@ dependencies = [
     "evidentia-eval>=0.10.13,<0.11.0",
     "evidentia-collectors>=0.10.13,<0.11.0",
     "evidentia-integrations>=0.10.13,<0.11.0",
-    "typer>=0.14",
+    # typer + click are held below the versions that ship click 8.2's CLI
+    # behavior change: 8.2 removed CliRunner's mix_stderr and splits stderr from
+    # stdout, and make_metavar() now requires a ctx; typer 0.26 additionally
+    # vendors its own click so TyperGroup is no longer a click.Group. The test
+    # suite and the wiki reference generator (scripts/wiki/sync_reference.py)
+    # assume the pre-8.2 behavior. Adopting click 8.2 / typer 0.26 is tracked as a
+    # dedicated migration follow-up — lift both caps there so it gets isolated
+    # review rather than riding an 18-package group bump.
+    "typer>=0.14,<0.26",
+    "click>=8.0,<8.2",
     "rich>=13.0",
 ]
 
