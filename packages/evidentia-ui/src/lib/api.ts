@@ -179,7 +179,7 @@ export interface GapExportResult {
 // ("planned" | "in_progress" | "overdue" | "completed" | "verified").
 
 /** POA&M item — full-replace body shape (server fills id / created_at). */
-export type PoamItemInput = components["schemas"]["ControlGap-Input"];
+export type PoamItemInput = components["schemas"]["ControlGap"];
 /** Milestone PATCH body (state-transition). Backward transitions blocked. */
 export type MilestoneUpdatePayload =
   components["schemas"]["MilestoneUpdatePayload"];
@@ -196,9 +196,9 @@ export interface PoamListResponse {
 
 /** Vendor create body. Required: name, type, criticality_tier,
  *  relationship_owner, contract_start_date. */
-export type VendorInput = components["schemas"]["Vendor-Input"];
+export type VendorInput = components["schemas"]["Vendor"];
 /** Vendor record as returned by the API. */
-export type Vendor = components["schemas"]["Vendor-Output"];
+export type Vendor = components["schemas"]["Vendor"];
 export type VendorType = components["schemas"]["VendorType"];
 export type CriticalityTier = components["schemas"]["CriticalityTier"];
 
@@ -228,9 +228,9 @@ export type Metric = components["schemas"]["Metric"];
 export type MetricObservationPayload =
   components["schemas"]["MetricObservationPayload"];
 /** Governance workflow — create body shape (server fills id / step state). */
-export type WorkflowInput = components["schemas"]["Workflow-Input"];
+export type WorkflowInput = components["schemas"]["Workflow"];
 /** Governance workflow as returned by the API. */
-export type Workflow = components["schemas"]["Workflow-Output"];
+export type Workflow = components["schemas"]["Workflow"];
 /** Workflow step-advance body ({step_index, new_status, actor, note?}). */
 export type WorkflowAdvancePayload =
   components["schemas"]["WorkflowAdvancePayload"];
@@ -294,9 +294,9 @@ export interface RetentionListResponse {
 
 /** Evidence artifact — save body shape (caller constructs new lineage/version). */
 export type EvidenceArtifactInput =
-  components["schemas"]["EvidenceArtifact-Input"];
+  components["schemas"]["EvidenceArtifact"];
 /** Evidence artifact as returned by the version endpoint. */
-export type EvidenceArtifact = components["schemas"]["EvidenceArtifact-Output"];
+export type EvidenceArtifact = components["schemas"]["EvidenceArtifact"];
 
 /** Summary returned by `POST /api/evidence` after persisting an artifact. */
 export interface EvidenceSaveSummary {
@@ -315,9 +315,9 @@ export interface EvidenceHistoryResponse {
 // ── Model-risk types (mirrored from evidentia_core.model_risk) ───────────
 
 /** Model-inventory create / update body shape (server fills id / timestamps). */
-export type ModelInventoryInput = components["schemas"]["ModelInventory-Input"];
+export type ModelInventoryInput = components["schemas"]["ModelInventory"];
 /** Model-inventory record as returned by the API. */
-export type ModelInventory = components["schemas"]["ModelInventory-Output"];
+export type ModelInventory = components["schemas"]["ModelInventory"];
 
 /** Paginated model-inventory list envelope (response is an untyped object
  *  server-side; hand-typed here like the other list envelopes). */

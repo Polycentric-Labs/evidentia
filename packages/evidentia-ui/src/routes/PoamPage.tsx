@@ -49,7 +49,7 @@ type Milestone = components["schemas"]["Milestone"];
  * The list/detail endpoints return the full generated `ControlGap-Output`,
  * which models `poam_milestones` directly.
  */
-type PoamGap = components["schemas"]["ControlGap-Output"];
+type PoamGap = components["schemas"]["ControlGap"];
 
 const SEVERITY_OPTIONS: [string | null, string][] = [
   [null, "All severities"],

@@ -17,7 +17,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "pydantic>=2.9,<2.13",  # capped <2.13: defer the pydantic-2.13 OpenAPI-schema migration (collapses FastAPI -Input/-Output schemas; breaks SPA types). Lift in a dedicated migration PR.
+    "pydantic>=2.9,<3.0",  # 2.13 adopted; openapi.json regenerated to match. Capped <3.0 (next major); pydantic bumps are isolated for review via .github/dependabot.yml.
     "pydantic-settings>=2.6",
     "pyyaml>=6.0",
     "python-dateutil>=2.9",
