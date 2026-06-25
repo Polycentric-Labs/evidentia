@@ -116,6 +116,7 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 - [`OSPS-CONFORMANCE.md`](OSPS-CONFORMANCE.md) — OpenSSF OSPS Baseline self-attestation + CI gate
 - [`docs/verification.md`](docs/verification.md) — consumer-side recipes for PEP 740 + cosign + osv-scanner + SLSA Provenance v1
 - [`EOL.md`](EOL.md) — version support windows + cessation comms policy
+- [`docs/engineering-practices.md`](docs/engineering-practices.md) — how Evidentia is built, tested, and shipped: the safeguard stack and the candid failures that shaped it
 
 ## Recent Releases
 

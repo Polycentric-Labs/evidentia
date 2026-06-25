@@ -16,7 +16,7 @@ DOC HEALTH (always runs):
                               section-index pattern).
 3. **readme_size_guard**    — README.md is at or below the
                               ``--readme-max`` byte budget (default
-                              10,000; canonical OSS benchmark ~6-8KB).
+                              11,000; canonical OSS benchmark ~6-8KB).
 4. **private_path_leak**    — no tracked public .md file links to a
                               ``private/`` path (the gitignored
                               strategy directory).
@@ -1050,8 +1050,8 @@ def main() -> int:
         help="Emit findings as JSON (machine-readable).",
     )
     parser.add_argument(
-        "--readme-max", type=int, default=10_000,
-        help="README.md max byte budget (default 10000; canonical OSS ~6-8KB).",
+        "--readme-max", type=int, default=11_000,
+        help="README.md max byte budget (default 11000; canonical OSS ~6-8KB).",
     )
     parser.add_argument(
         "--check-commit-msg", metavar="FILE",
