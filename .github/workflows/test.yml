@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Merge queue: a required check must run on the merge_group event or the
+  # queue stalls waiting for a conclusion that never arrives (the verified
+  # gotcha — see docs/engineering-practices.md / the PR-flow ruleset).
+  merge_group:
   # v0.9.4 P4.5: allow operator-triggered manual re-runs so the
   # post-merge "is the merge flake really a flake?" debug loop
   # doesn't require pushing an empty commit. Surfaced during the

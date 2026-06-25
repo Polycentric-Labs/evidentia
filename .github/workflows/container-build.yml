@@ -1,34 +1,62 @@
 # Container image build smoke test (v0.7.3 P2 B2 lightweight).
 #
-# Builds the repo-root `Dockerfile` on every PR that touches it +
-# every push to main. Validates that the image builds end-to-end
-# and that the in-image `evidentia version` + `evidentia
+# Builds the repo-root `Dockerfile` and validates that the image builds
+# end-to-end and that the in-image `evidentia version` + `evidentia
 # catalog list` invocations succeed against the latest published
 # evidentia wheel from PyPI.
 #
 # This workflow does NOT publish the built image — publishing to
-# `ghcr.io/polycentric-labs/evidentia` is gated to a future release that
-# explicitly opts in (likely v0.7.4 with cosign signing wired in).
-# Runs in PR context so any breaking change to the Dockerfile or
-# to the published evidentia wheel surfaces here, not at consumer-
-# pull time.
+# `ghcr.io/polycentric-labs/evidentia` happens in release.yml at tag time.
+# Running in PR context surfaces any breaking change to the Dockerfile or
+# the published evidentia wheel here, not at consumer-pull time.
+#
+# v0.10.14 — REQUIRABLE restructure (the "dead smoke test" lesson).
+#   PREVIOUS DESIGN: `pull_request`/`push` were `paths:`-filtered to
+#   `Dockerfile` + this workflow file, so the job only ran when those
+#   paths changed. A `paths:`-filtered check CANNOT be a required status
+#   check: on a PR that does NOT touch those paths the check never
+#   reports, so it sits "Expected" forever and blocks the merge. That is
+#   exactly why this smoke test was never made required — and why a
+#   chronically-red-then-dead version of it masked the v0.10.12
+#   `python:3.14`/litellm base-image regression (Dependabot #83): a
+#   non-required gate became noise nobody gated on.
+#
+#   NEW DESIGN: the job runs on EVERY pull_request + push to `main`
+#   (no paths filter) and on the merge queue (merge_group). A first
+#   "Determine relevance" step diffs the event's base..head range; when
+#   no container-relevant path changed it sets relevant=false and every
+#   build/smoke step is skipped via `if:`, but THE JOB STILL COMPLETES
+#   SUCCESSFULLY. So `Build + smoke test` always reports a green
+#   conclusion on a non-Dockerfile PR — which means it CAN be a required
+#   status check without blocking doc-only / code-only PRs, while still
+#   running the full build whenever the Dockerfile, docker/, or this
+#   workflow change.
+#
+#   FAIL-SAFE: relevance defaults to TRUE (build) on workflow_dispatch or
+#   whenever the base..head range can't be resolved. Skipping a build
+#   that SHOULD run is the dangerous direction (it is how the dead smoke
+#   test hid #83); a needless build is just a few wasted minutes.
 
 name: Container build smoke test
 
 on:
   pull_request:
-    paths:
-      - 'Dockerfile'
-      - '.github/workflows/container-build.yml'
+    branches: [main]
   push:
     branches: [main]
-    paths:
-      - 'Dockerfile'
-      - '.github/workflows/container-build.yml'
+  # merge_group: the merge queue (enabled with the PR-flow ruleset) re-tests
+  # the prospective `main` + PR merge. A REQUIRED check must run on this event
+  # or the queue stalls waiting for a conclusion that never arrives. The
+  # relevance gate below early-exits to SUCCESS for non-container merges.
+  merge_group:
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -37,48 +65,65 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        with:
+          # Full history so the relevance step can diff the event's
+          # base..head range (the base commit is not in a shallow clone).
+          fetch-depth: 0
+
+      # v0.10.14: relevance gate. Diffs the event-appropriate base..head
+      # range and sets `relevant=true` iff a container-build input changed
+      # (the repo-root Dockerfile, anything under docker/, or this workflow
+      # file). Every build/smoke step below is gated on this output, so a
+      # non-relevant PR skips the heavy work yet the job still reports
+      # SUCCESS — the property that lets this check be `required` without
+      # blocking unrelated PRs.
+      - name: Determine whether container-relevant paths changed
+        id: relevant
+        run: |
+          event="${{ github.event_name }}"
+          base=""
+          head=""
+          case "$event" in
+            pull_request)
+              base="${{ github.event.pull_request.base.sha }}"
+              head="${{ github.event.pull_request.head.sha }}" ;;
+            merge_group)
+              base="${{ github.event.merge_group.base_sha }}"
+              head="${{ github.event.merge_group.head_sha }}" ;;
+            push)
+              base="${{ github.event.before }}"
+              head="${{ github.sha }}" ;;
+          esac
+
+          # Fail-safe: build unconditionally on workflow_dispatch, or when
+          # the base/head range can't be resolved (empty, all-zero "no
+          # parent" sentinel, or a commit absent from local history). Better
+          # a wasted build than a silently-skipped one.
+          if [ "$event" = "workflow_dispatch" ] || [ -z "$base" ] || [ -z "$head" ] \
+             || printf '%s' "$base" | grep -qE '^0+$' \
+             || ! git cat-file -e "${base}^{commit}" 2>/dev/null \
+             || ! git cat-file -e "${head}^{commit}" 2>/dev/null; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+            echo "Building unconditionally (event=$event; base/head range unresolved)."
+            exit 0
+          fi
+
+          changed="$(git diff --name-only "$base" "$head")"
+          echo "Changed files in range ${base}..${head}:"
+          printf '%s\n' "$changed"
+          echo "---"
+          if printf '%s\n' "$changed" | grep -qE '^(Dockerfile|docker/|\.github/workflows/container-build\.yml)'; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+            echo "Container-relevant path changed — running the full build + smoke test."
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+            echo "No container-relevant path changed — skipping build, reporting SUCCESS."
+          fi
 
       - name: Set up Docker Buildx
+        if: steps.relevant.outputs.relevant == 'true'
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5  # v4.1.0
 
-      # v0.7.9 — PyPI propagation wait (mirrors release.yml's
-      # publish-container Wait-for-PyPI step added in v0.7.6).
-      #
-      # WHY THIS EXISTS: the container build pins
-      # `evidentia[gui]==X.Y.Z` to the exact current release. When
-      # the version-bump commit (`chore(release): bump to X.Y.Z`)
-      # lands on main as part of a multi-commit push, the smoke
-      # test fires before X.Y.Z has been published to PyPI (publish
-      # only happens when the matching `vX.Y.Z` tag is pushed,
-      # triggering release.yml). The pre-v0.7.9 design tried to
-      # avoid this with `if: !startsWith(github.event.head_commit.message, 'chore(release):')`
-      # — but that only checks the head commit. In a 21-commit push
-      # where the bump is the 5th commit and 16 docs/refactor commits
-      # follow it (the v0.7.8 ship pattern), the head IS NOT the bump,
-      # the guard misses, and the build hits "No matching distribution
-      # found for evidentia==X.Y.Z" 1.3 seconds in.
-      #
-      # THE FIX: parse the version pin + poll PyPI until that exact
-      # version is fetchable, capped at 5 min. Same mechanism as
-      # release.yml/publish-container (v0.7.6 CI1) so one mental
-      # model covers both workflows.
-      #
-      # v0.8.4 G4 Path 2: with the Dockerfile now using
-      # `pip install --require-hashes -r /tmp/requirements.txt`,
-      # the version pin lives in `docker/requirements.txt` (which
-      # release.yml regenerates ephemerally against PyPI's just-
-      # published wheels at tag time). Pre-tag pushes carry the
-      # PREVIOUS release's pin (e.g. v0.8.4 cycle pre-tag push
-      # carries v0.8.3 hashes). The smoke test validates the
-      # build process works against the previous release on every
-      # main push; the actual v0.8.4-pinned image is built at tag
-      # time by release.yml (which regenerates requirements.txt
-      # first against PyPI's just-published v0.8.4 wheels).
-      #
-      # FAILURE MODE: if the wait times out, the most likely cause
-      # is that the smoke test is running for a release that hasn't
-      # actually been published to PyPI yet. The error message
-      # below makes that explicit.
       # v0.10.13: determine the version from PyPI's latest PUBLISHED
       # release, NOT by parsing the committed docker/requirements.txt.
       #
@@ -105,9 +150,13 @@ jobs:
       # with an implementation that cannot silently rot.
       - name: Determine latest published evidentia version (from PyPI)
         id: pin
+        if: steps.relevant.outputs.relevant == 'true'
         run: |
-          VERSION=$(curl -sSfL https://pypi.org/pypi/evidentia/json \
-            | python3 -c "import sys, json; print(json.load(sys.stdin)['info']['version'])")
+          # Pure-python fetch+parse (NOT `curl ... | python3`) so the OpenSSF
+          # Scorecard Pinned-Dependencies "download-then-run" heuristic does not
+          # flag a pipe into an interpreter — urllib here only parses PyPI's
+          # JSON metadata, it executes no downloaded code.
+          VERSION=$(python3 -c "import json, urllib.request; print(json.load(urllib.request.urlopen('https://pypi.org/pypi/evidentia/json', timeout=30))['info']['version'])")
           if [ -z "${VERSION}" ]; then
             echo "::error::could not determine the latest published evidentia version from PyPI."
             exit 1
@@ -116,24 +165,16 @@ jobs:
           echo "Building container smoke test against latest published evidentia==${VERSION}"
 
       - name: Wait for PyPI propagation
+        if: steps.relevant.outputs.relevant == 'true'
         env:
           VERSION: ${{ steps.pin.outputs.version }}
         run: |
-          # v0.7.14 P2.2: extend the wait to ALL 6 inter-package
-          # deps, not just the umbrella. The v0.7.13 e32b742 smoke
-          # test failure proved this gap: pip resolved
-          # evidentia==0.7.13 then failed on
-          # evidentia-core<0.8.0,>=0.7.13 because evidentia-core
-          # hadn't propagated yet. Polling all 6 packages prevents
-          # this race entirely (the v0.7.13 P0.5 pin-trap fix
-          # ensures the inter-package pins are tightened, so any
-          # of the 6 not-yet-propagated would block the install).
-          # v0.10.13: + evidentia-eval. The meta-package gained a direct
-          # evidentia-eval dep in v0.10.5 P9, but this wait-list was never
-          # updated, so the v0.10.13 container regen raced evidentia-eval's
-          # PyPI propagation (DistributionNotFound on evidentia-eval>=0.10.13)
-          # — the exact race this list exists to prevent. evidentia-mcp is
-          # intentionally absent: it is not a dependency of evidentia[gui].
+          # Poll all 7 inter-package deps (the v0.7.14 P2.2 race fix; the
+          # v0.10.13 + evidentia-eval fix). evidentia-mcp is intentionally
+          # absent: it is not a dependency of evidentia[gui]. Querying PyPI
+          # for an already-published version is effectively instant, so this
+          # loop only ever waits when the smoke test runs mid-release before
+          # propagation completes.
           PACKAGES="evidentia evidentia-core evidentia-ai evidentia-eval evidentia-collectors evidentia-integrations evidentia-api"
           for pkg in $PACKAGES; do
             echo "Waiting for ${pkg}==${VERSION} to appear on PyPI..."
@@ -149,11 +190,6 @@ jobs:
                 echo "the matching v${VERSION} tag, so release.yml never fired and"
                 echo "${pkg}==${VERSION} was never published to PyPI."
                 echo ""
-                echo "Recovery:"
-                echo "  git tag v${VERSION}"
-                echo "  git push origin v${VERSION}"
-                echo "  # then re-run this workflow via workflow_dispatch"
-                echo ""
                 echo "Latest visible on PyPI:"
                 pip index versions "${pkg}" 2>&1 | head -3
                 exit 1
@@ -163,52 +199,34 @@ jobs:
             done
             echo "  ${pkg}==${VERSION} visible on PyPI"
           done
-          # Extra safety margin for Fastly mirror lag — even after
-          # every index page lists the version, individual mirror
-          # nodes can lag by 10-20s before the wheel files themselves
-          # are fetchable. This single 20s wait is sufficient for the
-          # mirror catch-up across all 6 packages (mirror lag is per
-          # CDN node, not per package).
-          echo "All 6 packages list ${VERSION}; sleeping 20s for mirror catch-up"
+          # Extra safety margin for Fastly mirror lag — even after every index
+          # page lists the version, individual mirror nodes can lag by 10-20s
+          # before the wheel files themselves are fetchable.
+          echo "All packages list ${VERSION}; sleeping 20s for mirror catch-up"
           sleep 20
 
-      # v0.8.4 G4 Path 2: regenerate docker/requirements.txt against
-      # PyPI's just-confirmed-propagated wheels BEFORE the docker
-      # build. Mirrors release.yml's publish-container regeneration
-      # step. The committed docker/requirements.txt is preview
-      # state — release.yml AND this smoke test both overwrite it
-      # ephemerally so hashes match the bytes actually being
-      # downloaded by the container build's `pip install
-      # --require-hashes` step. Without this, the committed file's
-      # hashes (which may be from a Windows local pip-compile run
-      # whose `uv build` produced different bytes than the
-      # PyPI-uploaded Linux-CI build) wouldn't match what pip
-      # downloads, breaking the install.
+      # v0.8.4 G4 Path 2: regenerate docker/requirements.txt against PyPI's
+      # just-confirmed-propagated wheels BEFORE the docker build. Mirrors
+      # release.yml's publish-container regeneration step. The committed
+      # docker/requirements.txt is preview state; both release.yml AND this
+      # smoke test overwrite it ephemerally so hashes match the bytes the
+      # container build's `pip install --require-hashes` actually downloads.
       #
-      # --upgrade (F-V109-4): pip-compile treats an existing
-      # --output-file as a set of preferred pins — without --upgrade
-      # it honors the committed preview docker/requirements.txt for
-      # every non-conflicting transitive, so a stale preview (e.g.
-      # 0.9.1-era starlette 1.0.0 / aiohttp 3.13.5) shipped into the
-      # published container despite uv.lock having newer versions.
-      # --upgrade ignores the committed file's pins entirely, so the
-      # regeneration is actually fresh: every dep resolves anew
-      # against PyPI at rebuild time.
-      # INTERPRETER PARITY (F-V109-4): pip-compile must run under the
-      # SAME Python as the image base (python:3.13-slim) so the
-      # resolved+hashed closure is exactly what `pip install
-      # --require-hashes` installs in the image. The base is 3.13 (not
-      # 3.14) because the AI stack (litellm) requires-python <3.14; on
-      # 3.13 the regen resolves the CVE-clean set (litellm 1.88.1 etc.)
-      # the library's uv.lock pins. (bump_version.py F-V82-S1 pattern.)
+      # --upgrade (F-V109-4): ignore the committed file's pins entirely so
+      # the regeneration is genuinely fresh (a stale preview otherwise
+      # shipped 0.9.1-era starlette/aiohttp into the image). INTERPRETER
+      # PARITY: pip-compile runs under the SAME base (python:3.13-slim, NOT
+      # 3.14 — litellm requires-python <3.14) so the resolved+hashed closure
+      # is exactly what the image installs.
       - name: Regenerate hash-pinned requirements.txt against PyPI
+        if: steps.relevant.outputs.relevant == 'true'
         env:
           VERSION: ${{ steps.pin.outputs.version }}
         run: |
           echo "evidentia[gui]==${VERSION}" > docker/requirements.in
           attempts=0
           max_attempts=3
-          until docker run --rm -v "$PWD:/work" -w /work python:3.13-slim \
+          until docker run --rm -v "$PWD:/work" -w /work python:3.13-slim@sha256:c33f0bc4364a6881bed1ec0cc2665e6c53c87a43e774aaeab88e6f17af105e4f \
                   bash -c "pip install -q pip-tools==7.5.3 && \
                            pip-compile --generate-hashes \
                                        --upgrade \
@@ -232,6 +250,7 @@ jobs:
       # an identically-pinned scanner. Pinned by version + SHA256-
       # verified for the OpenSSF Scorecard Pinned-Dependencies signal.
       - name: Install osv-scanner (v2.3.8, checksum-verified)
+        if: steps.relevant.outputs.relevant == 'true'
         run: |
           mkdir -p "$HOME/.local/bin"
           curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.3.8/osv-scanner_linux_amd64 \
@@ -241,24 +260,22 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       # Gate the JUST-REGENERATED docker/requirements.txt before it is
-      # baked into the smoke-test image. The workspace osv-scan job (in
-      # test.yml) scans the uv.lock closure — but the container resolves
-      # a DIFFERENT closure: the container's pip-compile resolves
-      # against the image base independently of uv.lock, so it can
-      # carry a transitively-held
-      # vulnerable deps that uv.lock (on a Python that supports newer
-      # litellm) never resolves. Catching it here — on every main push
-      # — surfaces a vulnerable container dependency at PR/push time,
-      # not at consumer-pull time. The same osv-scanner.toml allowlist
-      # applies, so accepted findings are dispositioned in one place.
-      # Exit 1 (vulns found) fails the build.
+      # baked into the smoke-test image. The container resolves a DIFFERENT
+      # closure than uv.lock (pip-compile against the image base), so it can
+      # carry a transitively-held vulnerable dep that uv.lock never resolves.
+      # Catching it here surfaces a vulnerable container dependency at
+      # PR/push time, not at consumer-pull time. Same osv-scanner.toml
+      # allowlist as everywhere else, so accepted findings are dispositioned
+      # in one place. Exit 1 (vulns found) fails the build.
       - name: osv-scan regenerated container requirements
+        if: steps.relevant.outputs.relevant == 'true'
         run: |
           osv-scanner scan source \
             --config osv-scanner.toml \
             --lockfile docker/requirements.txt
 
       - name: Build image (load into local Docker, not pushed)
+        if: steps.relevant.outputs.relevant == 'true'
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf  # v7.2.0
         with:
           context: .
@@ -269,6 +286,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Smoke test — `evidentia version`
+        if: steps.relevant.outputs.relevant == 'true'
         run: |
           # `evidentia version` is a subcommand (not a `--version` flag).
           # The Typer-driven CLI registers `version` alongside `init`,
@@ -277,6 +295,7 @@ jobs:
           docker run --rm evidentia:smoke version
 
       - name: Smoke test — `evidentia catalog list`
+        if: steps.relevant.outputs.relevant == 'true'
         run: |
           # Validate the bundled catalog set ships in the image.
           # `catalog` is the canonical subcommand (not `frameworks`).
@@ -286,6 +305,7 @@ jobs:
           docker run --rm evidentia:smoke catalog list | head -10
 
       - name: Smoke test — image labels
+        if: steps.relevant.outputs.relevant == 'true'
         run: |
           # Validate the OCI labels are populated (downstream registry
           # tooling reads these for description / license / source).
@@ -293,6 +313,7 @@ jobs:
               | python -m json.tool
 
       - name: Smoke test — non-root execution
+        if: steps.relevant.outputs.relevant == 'true'
         run: |
           # Confirm the image runs as the `evidentia` user (uid 1000),
           # not root. A future regression that flips USER to root would
