@@ -307,8 +307,12 @@ jobs:
             INSTALL_SOURCE=local
           provenance: false
           sbom: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # No type=gha build cache in the release pipeline: the shared Actions
+          # cache can be written by a PR-triggered run on a branch, so reading
+          # layers from it in an artifact-producing build is a cache-poisoning
+          # vector. Matches the disabled uv/npm caches above — a release builds
+          # from scratch. (Releases are tag-driven + infrequent; the lost layer
+          # cache costs a few minutes, not correctness.)
 
       - name: Smoke test — `evidentia version`
         run: |

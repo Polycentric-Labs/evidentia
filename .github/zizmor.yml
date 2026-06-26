@@ -19,4 +19,7 @@ rules:
       # the SBOM + SLSA provenance bundle. Reimplementing via `gh release create`
       # in a script step would duplicate that logic for no security gain — the
       # action is already pinned by full commit SHA. Informational only.
-      - release.yml:594
+      # (Line tracks the action-gh-release `uses:`; the zizmor gate itself
+      # flags this ignore if a release.yml edit shifts the line, so it stays
+      # in sync — re-point it to the new line when that happens.)
+      - release.yml:598
