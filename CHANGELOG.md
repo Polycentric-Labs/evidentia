@@ -12,16 +12,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`docs/engineering-practices.md`** — a public account of the engineering safeguard stack (PR-flow + merge queue, atomic releases, SLSA provenance + cosign + SBOM + OIDC publishing, continuous fuzzing + Scorecard + CodeQL, verified docs) and the candid failure classes that shaped each safeguard.
+- **Security posture documents.** `docs/SECURE-BY-DESIGN-PLEDGE.md` (voluntary alignment with the CISA Secure by Design Pledge's seven goals), `docs/slsa-source-track.md` (an honest SLSA v1.2 Source Track self-assessment — the L3 technical controls are enforced and verifiable, the L4 two-party-review gap disclosed), `docs/runbooks/ghsa-cve-issuance.md` and `docs/runbooks/release-rollback.md` (maintainer runbooks for GHSA + CVE issuance via GitHub-as-CNA and for release rollback/yank per PEP 592), and a root `security-insights.yml` (OpenSSF Security Insights v2.2.0 manifest). All linked from `SECURITY.md`.
 
 ### Changed
 
 - **PR-flow + merge queue on `main`.** A repository ruleset now requires a pull request, the full set of status checks, and a squash merge queue, with an empty bypass list — no direct push to `main`, including by administrators. This reverses the prior direct-push model so the complete CI matrix gates every change *before* it lands, not after. Every workflow producing a required check gained a `merge_group` trigger (paths-filtered workflows do not run on `merge_group`, so the container smoke test instead always runs with a step-level relevance early-exit).
 - **Atomic release.** `release.yml` builds and validates all artifacts — wheels, SBOM, and the container image (built from the locally-built wheels, not the package index) — *before* the irreversible PyPI publish, then pushes the byte-identical validated image. This closes the post-publish container-build-failure class (the v0.10.12 packages-only release) and the index-propagation race. The Dockerfile is now multi-stage with an `INSTALL_SOURCE` build argument; the operator default (install from PyPI) is unchanged.
 - **The container smoke test is now a required check.** Restructured to run on every pull request with a relevance early-exit, so it reports success on changes that do not touch the container while still building whenever the Dockerfile or its inputs change — which is what lets it be required without blocking unrelated PRs.
+- **Required-check concurrency.** The four required-check workflows (`test`, `consistency`, `container-build`, `secret-scan`) now cancel in-progress runs only on `pull_request` events; `push:[main]` and `merge_group` runs always run to a green conclusion, so every `main` commit earns its own completed required check (no spurious cancelled runs on rapid back-to-back merges).
 
 ### Fixed
 
 - **Flake-resistance policy** (`docs/testing-flake-policy.md`) — bans wall-clock-timing assertions and treats a skipped or dead gate as a failure, after a Windows clock-granularity flake and a Hypothesis-deadline flake were eliminated.
+
+### Security
+
+- **npm registry-signature verification.** The frontend CI job runs `npm audit signatures` after `npm ci`, verifying installed UI tarballs against npm's registry signatures and maintainer Sigstore provenance — the JS/TS analogue of the Python side's PEP 740 attestations.
+- **Release-tag root-of-trust protection.** A server-side repository ruleset makes `refs/tags/v*` append-only (no force-move, no delete, signatures required), and GitHub Immutable Releases locks published release assets and tags — so the cosign certificate-identity binding on a signed tag cannot be silently broken after publish.
 
 ## [0.10.13] - 2026-06-23
 
