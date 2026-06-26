@@ -38,6 +38,14 @@ logger = logging.getLogger(__name__)
 # Path to bundled data directory
 DATA_DIR = Path(__file__).parent / "data"
 
+# CWE-674 guard: the OSCAL control/part trees are recursive, so a
+# pathologically deep document could exhaust Python's recursion limit
+# (RecursionError — a type the fuzz harnesses do not allowlist). Real
+# catalogs nest ~2-4 levels; 100 is generous yet well under the interpreter
+# default (~1000), so the recursive parsers raise a clean ValueError before
+# the stack is exhausted.
+_MAX_NEST_DEPTH = 100
+
 
 def _load_catalog_data(catalog_path: Path) -> dict[str, Any]:
     """Read a catalog file and return its parsed dict.
@@ -58,27 +66,37 @@ def _load_catalog_data(catalog_path: Path) -> dict[str, Any]:
     """
     suffix = catalog_path.suffix.lower()
     text = catalog_path.read_text(encoding="utf-8")
-    if suffix in (".yaml", ".yml"):
-        data = yaml.safe_load(text)
-    elif suffix == ".json":
-        data = json.loads(text)
-    else:
-        # v0.10.4 P2 polish: when the suffix is empty (operator
-        # drag-and-drop or scripted file with no extension), the
-        # default {suffix!r} = '' is opaque. Name the case explicitly
-        # and tell the operator the fix — rename to .yaml / .yml /
-        # .json — so the error is self-resolving.
-        if suffix == "":
+    try:
+        if suffix in (".yaml", ".yml"):
+            data = yaml.safe_load(text)
+        elif suffix == ".json":
+            data = json.loads(text)
+        else:
+            # v0.10.4 P2 polish: when the suffix is empty (operator
+            # drag-and-drop or scripted file with no extension), the
+            # default {suffix!r} = '' is opaque. Name the case explicitly
+            # and tell the operator the fix — rename to .yaml / .yml /
+            # .json — so the error is self-resolving.
+            if suffix == "":
+                raise ValueError(
+                    f"Catalog file {catalog_path.name} has no file "
+                    f"extension; expected .json, .yaml, or .yml. Rename "
+                    f"the file (e.g. mv {catalog_path.name} "
+                    f"{catalog_path.name}.yaml) and retry."
+                )
             raise ValueError(
-                f"Catalog file {catalog_path.name} has no file "
-                f"extension; expected .json, .yaml, or .yml. Rename "
-                f"the file (e.g. mv {catalog_path.name} "
-                f"{catalog_path.name}.yaml) and retry."
+                f"Unsupported catalog file extension {suffix!r} for "
+                f"{catalog_path.name}; expected .json, .yaml, or .yml"
             )
+    except RecursionError as exc:
+        # CWE-674: a pathologically deeply-nested document exhausts the JSON /
+        # YAML parser's recursion limit. Convert to the module's typed
+        # ValueError rather than leaking RecursionError — defense-in-depth
+        # alongside the CWE-248 structural guards. (A coverage-guided fuzzer is
+        # unlikely to build the depth, but the class is real.)
         raise ValueError(
-            f"Unsupported catalog file extension {suffix!r} for "
-            f"{catalog_path.name}; expected .json, .yaml, or .yml"
-        )
+            f"Catalog file {catalog_path.name} is nested too deeply to parse"
+        ) from exc
     if not isinstance(data, dict):
         raise ValueError(
             f"{suffix} catalog {catalog_path.name} top-level must be a "
@@ -177,7 +195,9 @@ def load_oscal_catalog(catalog_path: Path) -> ControlCatalog:
     return catalog
 
 
-def _parse_oscal_control(oscal_control: dict[str, Any], family: str) -> CatalogControl:
+def _parse_oscal_control(
+    oscal_control: dict[str, Any], family: str, _depth: int = 0
+) -> CatalogControl:
     """Parse a single OSCAL control into a CatalogControl.
 
     Shared by :func:`load_oscal_catalog` and the OSCAL profile resolver, so
@@ -186,7 +206,15 @@ def _parse_oscal_control(oscal_control: dict[str, Any], family: str) -> CatalogC
     string-only operations (``.upper()`` on ``id``, ``.replace().upper()``
     on a link ``href``) coerce via :func:`str` first — a non-string ``id``
     or ``href`` would otherwise raise an uncaught ``AttributeError``.
+
+    ``_depth`` tracks enhancement (sub-control) nesting; beyond
+    :data:`_MAX_NEST_DEPTH` it raises ``ValueError`` rather than recursing into
+    a ``RecursionError`` (CWE-674).
     """
+    if _depth > _MAX_NEST_DEPTH:
+        raise ValueError(
+            f"control nesting exceeds the maximum depth ({_MAX_NEST_DEPTH})"
+        )
     oscal_control = _require_mapping(oscal_control, "control")
     control_id = str(oscal_control.get("id", "")).upper()
     title = oscal_control.get("title", "")
@@ -209,7 +237,7 @@ def _parse_oscal_control(oscal_control: dict[str, Any], family: str) -> CatalogC
     for sub_control in _iter_mappings(
         oscal_control.get("controls", []), "control.controls"
     ):
-        enhancement = _parse_oscal_control(sub_control, family)
+        enhancement = _parse_oscal_control(sub_control, family, _depth + 1)
         enhancements.append(enhancement)
 
     # Extract priority from properties
@@ -264,12 +292,21 @@ def _parse_oscal_control(oscal_control: dict[str, Any], family: str) -> CatalogC
     )
 
 
-def _extract_prose(part: dict[str, Any]) -> str:
-    """Recursively extract prose text from an OSCAL part."""
+def _extract_prose(part: dict[str, Any], _depth: int = 0) -> str:
+    """Recursively extract prose text from an OSCAL part.
+
+    ``_depth`` guards the part-nesting recursion against a CWE-674
+    ``RecursionError`` on a pathologically deep document (see
+    :data:`_MAX_NEST_DEPTH`).
+    """
+    if _depth > _MAX_NEST_DEPTH:
+        raise ValueError(
+            f"part nesting exceeds the maximum depth ({_MAX_NEST_DEPTH})"
+        )
     part = _require_mapping(part, "part")
     prose: str = str(part.get("prose", ""))
     for sub_part in _iter_mappings(part.get("parts", []), "part.parts"):
-        sub_prose = _extract_prose(sub_part)
+        sub_prose = _extract_prose(sub_part, _depth + 1)
         if sub_prose:
             prose += "\n" + sub_prose
     return prose.strip()

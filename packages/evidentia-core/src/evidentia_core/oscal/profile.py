@@ -54,7 +54,14 @@ class ProfileResolutionError(Exception):
 def _load_oscal_json(path: Path) -> dict[str, Any]:
     """Load and return the top-level JSON object of an OSCAL file."""
     with open(path, encoding="utf-8") as f:
-        data = json.load(f)
+        try:
+            data = json.load(f)
+        except RecursionError as exc:
+            # CWE-674: a pathologically deeply-nested JSON document exhausts
+            # json's recursion limit. Convert to the module's typed error.
+            raise ProfileResolutionError(
+                f"OSCAL file {path} is nested too deeply to parse"
+            ) from exc
     if not isinstance(data, dict):
         raise ProfileResolutionError(
             f"OSCAL file {path} must contain a JSON object at top level"
@@ -433,15 +440,17 @@ def resolve_profile(
         # Already the module's typed error (e.g. from _load_source_catalog's
         # explicit guards) — propagate unchanged.
         raise
-    except (ValueError, OSError, AttributeError) as exc:
+    except (ValueError, OSError, AttributeError, RecursionError) as exc:
         # resolve_profile traverses arbitrary, untrusted OSCAL structure via
         # many ``.get(...)`` calls and path operations across _resolve_href /
         # _collect_included_ids / _apply_set_parameters / _apply_alter. A
         # malformed-but-valid-JSON profile can put a non-object where an
         # object is expected (→ AttributeError), an unusable path in an href
-        # (→ OSError), or trip a structural guard (→ ValueError). Convert this
-        # whole malformed-input family to the declared ProfileResolutionError
-        # so a bad profile is a clean rejection, never an uncaught-exception
+        # (→ OSError), trip a structural guard (→ ValueError), or chain
+        # fragment hrefs / nest deeply enough to exhaust the stack
+        # (→ RecursionError, CWE-674). Convert this whole malformed-input
+        # family to the declared ProfileResolutionError so a bad profile is a
+        # clean rejection, never an uncaught-exception
         # denial-of-service (CWE-248; fuzz-found in fuzz_oscal_profile).
         # Genuinely unexpected error types still propagate.
         raise ProfileResolutionError(

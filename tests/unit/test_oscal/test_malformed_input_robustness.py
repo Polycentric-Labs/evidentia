@@ -273,3 +273,59 @@ def test_valid_profile_still_resolves(tmp_path: Path) -> None:
     profile_path = _write(tmp_path, "profile.json", VALID_PROFILE)
     resolved = resolve_profile(profile_path)
     assert resolved.control_count >= 1
+
+
+# ---------------------------------------------------------------------------
+# CWE-674 — deeply-nested input raises a clean typed error, never RecursionError.
+# Built as raw strings (json.dumps would itself recurse and RecursionError).
+# ---------------------------------------------------------------------------
+
+
+def _deep_control_chain(depth: int) -> str:
+    """Raw JSON for a `depth`-deep nested-control catalog."""
+    body = '{"id": "c", "controls": [' * depth + '{"id": "c"}' + "]}" * depth
+    return '{"catalog": {"groups": [{"controls": [' + body + "]}]}}"
+
+
+def _deep_part_chain(depth: int) -> str:
+    """Raw JSON for a catalog whose single control has `depth`-deep parts."""
+    parts = '{"name": "statement", "parts": [' * depth + '{"name": "p"}' + "]}" * depth
+    return (
+        '{"catalog": {"groups": [{"controls": [{"id": "c", "parts": ['
+        + parts
+        + "]}]}]}}"
+    )
+
+
+def test_deeply_nested_controls_raise_clean_error(tmp_path: Path) -> None:
+    """Control nesting past the depth limit -> ValueError, not RecursionError."""
+    path = tmp_path / "catalog.json"
+    path.write_text(_deep_control_chain(150), encoding="utf-8")
+    with pytest.raises(ValueError):
+        load_oscal_catalog(path)
+
+
+def test_deeply_nested_parts_raise_clean_error(tmp_path: Path) -> None:
+    """Part nesting past the depth limit -> ValueError, not RecursionError."""
+    path = tmp_path / "catalog.json"
+    path.write_text(_deep_part_chain(150), encoding="utf-8")
+    with pytest.raises(ValueError):
+        load_oscal_catalog(path)
+
+
+def test_deeply_nested_json_raises_clean_error(tmp_path: Path) -> None:
+    """A pathologically deep JSON document -> clean error, not RecursionError."""
+    path = tmp_path / "catalog.json"
+    # 6000-deep arrays exceed json's recursion limit; the loader converts the
+    # RecursionError (or rejects the non-mapping) -> ValueError either way.
+    path.write_text("[" * 6000 + "]" * 6000, encoding="utf-8")
+    with pytest.raises(ValueError):
+        load_oscal_catalog(path)
+
+
+def test_deeply_nested_profile_source_raises_clean_error(tmp_path: Path) -> None:
+    """A profile whose source catalog over-nests -> ProfileResolutionError."""
+    (tmp_path / "catalog.json").write_text(_deep_control_chain(150), encoding="utf-8")
+    profile_path = _write(tmp_path, "profile.json", VALID_PROFILE)
+    with pytest.raises(ProfileResolutionError):
+        resolve_profile(profile_path)
