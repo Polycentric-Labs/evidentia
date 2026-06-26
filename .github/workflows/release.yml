@@ -12,9 +12,13 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # cancel-in-progress: false so a move-tag re-fire (the documented v0.10.3 /
-  # v0.10.8 recovery pattern) queues BEHIND an in-flight run rather than
-  # cancelling a job mid-publish.
+  # cancel-in-progress: false so any re-fired release run (e.g. re-running a
+  # failed publish) queues BEHIND an in-flight run rather than cancelling a job
+  # mid-publish. Note: moving or deleting a published v* tag is now blocked
+  # server-side by the "Protect release tags (v*)" ruleset + GitHub Immutable
+  # Releases, so the historical v0.10.3 / v0.10.8 move-tag re-fire recovery no
+  # longer applies — recovery is yank + a forward patch
+  # (see docs/runbooks/release-rollback.md).
   cancel-in-progress: false
 
 # ---------------------------------------------------------------------------
