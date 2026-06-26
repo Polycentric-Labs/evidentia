@@ -44,13 +44,16 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION="${{ github.event.inputs.version }}"
+            VERSION="${GITHUB_EVENT_INPUTS_VERSION}"
           else
-            REF="${{ github.event.release.tag_name }}"   # e.g. v0.10.13
+            REF="${GITHUB_EVENT_RELEASE_TAG_NAME}"   # e.g. v0.10.13
             VERSION="${REF#v}"
           fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Smoke-testing evidentia==${VERSION}"
+        env:
+          GITHUB_EVENT_INPUTS_VERSION: ${{ github.event.inputs.version }}
+          GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
@@ -116,11 +119,14 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="v${{ github.event.inputs.version }}"
+            TAG="v${GITHUB_EVENT_INPUTS_VERSION}"
           else
-            TAG="${{ github.event.release.tag_name }}"
+            TAG="${GITHUB_EVENT_RELEASE_TAG_NAME}"
           fi
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+        env:
+          GITHUB_EVENT_INPUTS_VERSION: ${{ github.event.inputs.version }}
+          GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
 
       - name: Log in to GHCR
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee  # v4.2.0

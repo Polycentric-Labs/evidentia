@@ -1,0 +1,50 @@
+# Static analysis of the GitHub Actions workflows themselves (zizmor, by Trail
+# of Bits). Mechanically enforces the invariants the workflows were maintaining
+# by hand: full-SHA action pins, least-privilege permissions, no template
+# injection, no cache poisoning, no credential persistence (artipacked). Runs on
+# every PR + the merge queue so a regressing workflow edit is caught BEFORE it
+# lands. Findings are listed in the job log; the run goes RED on any finding not
+# justified in .github/zizmor.yml.
+
+name: zizmor
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Cancel only on PR iteration; push:[main] + merge_group run to a green
+  # conclusion (matches the other required-check workflows — green-checks MUST).
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  zizmor:
+    name: zizmor (Actions static analysis)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          version: "latest"
+
+      # Pinned zizmor release; --persona regular = minimal false positives;
+      # --offline runs the deterministic local audits (template-injection,
+      # cache-poisoning, artipacked, permissions, pinning) with no token needed
+      # and auto-discovers .github/zizmor.yml (the two justified ignores). A
+      # non-zero exit on any unjustified finding fails the job. (Online audits
+      # — impostor-commit / ref-confusion — can be added later with a token.)
+      - name: Audit workflows with zizmor (pinned 1.26.1, offline)
+        run: uvx zizmor@1.26.1 --persona regular --offline .github/workflows/

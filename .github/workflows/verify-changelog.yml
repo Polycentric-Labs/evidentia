@@ -51,6 +51,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6
@@ -70,7 +72,7 @@ jobs:
 
       - name: Verify CHANGELOG block presence + size
         run: |
-          version="${{ steps.workspace-version.outputs.version }}"
+          version="${STEPS_WORKSPACE_VERSION_OUTPUTS_VERSION}"
           if ! python scripts/extract_changelog_block.py "$version" \
               > extracted-body.md 2>/tmp/extract-err.txt; then
             echo "::error::extract_changelog_block.py failed for [$version]"
@@ -106,3 +108,5 @@ jobs:
             exit 1
           fi
           echo "::notice::CHANGELOG block for [$version] looks healthy ($body_size bytes)."
+        env:
+          STEPS_WORKSPACE_VERSION_OUTPUTS_VERSION: ${{ steps.workspace-version.outputs.version }}
