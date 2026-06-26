@@ -1,0 +1,146 @@
+# Scheduled re-scan of ALREADY-PUBLISHED artifacts for day-N CVEs.
+#
+# The release-time osv gate and the per-PR osv gate only catch CVEs KNOWN AT
+# RELEASE. A CVE disclosed in a frozen transitive dependency — or in the
+# python:3.13-slim container base — AFTER a release is invisible until the next
+# release: post-publish-smoke.yml is a one-shot install+`version` smoke (not a
+# re-scan), and safeguards-resweep.yml only opens a tracking issue (it scans
+# nothing). This workflow closes that day-N window. Weekly, it:
+#
+#   1. fresh-installs the latest PUBLISHED `evidentia` from PyPI into a clean
+#      venv, rebuilds a CycloneDX SBOM from the installed closure (the exact
+#      `cyclonedx-py` command release.yml uses), and re-runs the SAME pinned,
+#      checksum-verified osv-scanner via the SSOT `scripts/run_osv_scan.py`
+#      (so the committed osv-scanner.toml allowlist + expiry warnings apply);
+#   2. pulls the published container image and osv-scans it (catches base-image
+#      OS-package CVEs the wheel closure does not cover).
+#
+# An un-allowlisted advisory turns the run RED so a maintainer is notified — the
+# project's own continuous-attestation thesis, applied to its OWN shipped
+# artifacts. workflow_dispatch allows an on-demand rescan of any version.
+
+name: post-publish rescan
+
+on:
+  schedule:
+    - cron: "17 7 * * 1"   # Mondays 07:17 UTC (after the 06:00 Dependabot run)
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Published version to rescan (no leading v, e.g. 0.10.13). Blank = latest on PyPI."
+        required: false
+
+# Least-privilege default: jobs only read the tree + (for the image) GHCR.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  pypi-rescan:
+    name: Rescan published PyPI closure (osv SSOT)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (for osv-scanner.toml + run_osv_scan.py)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: "3.13"
+
+      # Copied VERBATIM from release.yml / test.yml (same v2.3.8 binary + SHA256)
+      # so the re-scan uses the identically-pinned scanner the gate uses.
+      - name: Install osv-scanner (v2.3.8, checksum-verified)
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin"
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.3.8/osv-scanner_linux_amd64 \
+            -o "$HOME/.local/bin/osv-scanner"
+          echo "bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc  $HOME/.local/bin/osv-scanner" | sha256sum -c -
+          chmod +x "$HOME/.local/bin/osv-scanner"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Fresh-install the published release into a clean venv
+        id: install
+        run: |
+          set -euo pipefail
+          VERSION="${{ github.event.inputs.version }}"
+          python -m venv /tmp/rescan
+          if [ -n "$VERSION" ]; then
+            SPEC="evidentia[ai,api,collectors,mcp]==${VERSION}"
+          else
+            SPEC="evidentia[ai,api,collectors,mcp]"
+          fi
+          echo "Installing ${SPEC} from PyPI ..."
+          /tmp/rescan/bin/pip install --quiet "${SPEC}"
+          INSTALLED=$(/tmp/rescan/bin/python -c "import importlib.metadata as m; print(m.version('evidentia'))")
+          echo "Re-scanning published evidentia==${INSTALLED}"
+          echo "version=${INSTALLED}" >> "$GITHUB_OUTPUT"
+
+      - name: Build a CycloneDX SBOM from the published closure
+        run: |
+          set -euo pipefail
+          # Same cyclonedx-py invocation as scripts/run_osv_scan.py / release.yml,
+          # but pointed at the FRESH venv interpreter so the SBOM reflects the
+          # published dependency closure rather than the repo workspace.
+          uvx --from cyclonedx-bom cyclonedx-py environment \
+            -o /tmp/published-sbom.cdx.json \
+            --of JSON \
+            --sv 1.6 \
+            --pyproject packages/evidentia-core/pyproject.toml \
+            /tmp/rescan/bin/python
+          echo "SBOM:"; ls -la /tmp/published-sbom.cdx.json
+
+      - name: Re-scan the published SBOM (SSOT scanner + osv-scanner.toml)
+        run: |
+          set -euo pipefail
+          # run_osv_scan.py is stdlib-only; --skip-sbom-gen reuses the SSOT's
+          # osv-scanner invocation + allowlist + expiry warnings on the SBOM
+          # built above. Exits 1 (RED) on an un-allowlisted advisory.
+          python scripts/run_osv_scan.py --skip-sbom-gen --sbom /tmp/published-sbom.cdx.json
+
+  container-rescan:
+    name: Rescan published container image (osv)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout (for osv-scanner.toml)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+
+      - name: Install osv-scanner (v2.3.8, checksum-verified)
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin"
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.3.8/osv-scanner_linux_amd64 \
+            -o "$HOME/.local/bin/osv-scanner"
+          echo "bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc  $HOME/.local/bin/osv-scanner" | sha256sum -c -
+          chmod +x "$HOME/.local/bin/osv-scanner"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee  # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull + osv-scan the published image
+        run: |
+          set -euo pipefail
+          VERSION="${{ github.event.inputs.version }}"
+          if [ -n "$VERSION" ]; then TAG="v${VERSION}"; else TAG="latest"; fi
+          IMAGE="ghcr.io/polycentric-labs/evidentia:${TAG}"
+          echo "Pulling ${IMAGE} ..."
+          docker pull "${IMAGE}"
+          echo "Scanning ${IMAGE} for OS + language-package advisories ..."
+          osv-scanner scan image --config=osv-scanner.toml "${IMAGE}"
