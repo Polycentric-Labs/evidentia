@@ -346,6 +346,16 @@ jobs:
         # `npm ci` strictly honors the committed lockfile).
         run: npm ci --no-audit --no-fund
 
+      # Registry-trust hardening: `npm ci` honors the committed lockfile's
+      # CONTENT hashes, but does NOT verify the installed tarballs against
+      # npm's registry ECDSA signatures / maintainer Sigstore provenance.
+      # `npm audit signatures` closes that npm registry-compromise / account-
+      # takeover class (the JS/TS analogue of the Python side's PEP 740).
+      # Fail-closed — verified locally: 397 packages signed, 161 attested.
+      - name: Verify frontend registry signatures + provenance
+        working-directory: packages/evidentia-ui
+        run: npm audit signatures
+
       # Second drift-gate of the GUI type-parity chain (see
       # scripts/dump_openapi.py): regenerate the TypeScript types from the
       # committed openapi.json and fail if the committed types drifted. The
