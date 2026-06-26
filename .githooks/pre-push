@@ -37,6 +37,9 @@
 #                                  if it changed in the working tree)
 #  11. check_doc_counts           (README at-a-glance counts ==
 #                                  code-derived truth; v0.10.12 Wave 0)
+#  12. check_ruff                 (`ruff check . --no-cache` — fast lint
+#                                  shifted left from CI so a cached-pass lint
+#                                  break is caught pre-push, not in the queue)
 #
 # All checks run before the hook exits, so the operator sees every
 # failure at once.
@@ -68,6 +71,15 @@ run_py() {
         uv run python "$@"
     else
         python "$@"
+    fi
+}
+
+# Like run_py, but for the ruff CLI (uv-resolved, with a plain-ruff fallback).
+run_ruff() {
+    if command -v uv >/dev/null 2>&1; then
+        uv run ruff "$@"
+    else
+        ruff "$@"
     fi
 }
 
@@ -322,6 +334,13 @@ run_check "check_readme_regen" check_readme_regen || true
 #     source). Pure-filesystem; always runs.
 run_check "check_doc_counts" \
     run_py "${REPO_ROOT}/scripts/check_doc_counts.py" || true
+
+# 12. ruff lint — shifted left from CI-only. `--no-cache` so the gate matches
+#     CI's fresh runner exactly: a *cached* pass can mask a lint break (e.g. an
+#     unused `# noqa` for a non-enabled rule → RUF100) that CI then catches,
+#     causing avoidable merge-queue churn. ruff is fast (~1-2s), so it fits the
+#     "fast checks pre-push, heavyweight (pytest/mypy) in CI" gate design.
+run_check "check_ruff" run_ruff check . --no-cache || true
 
 # ---------------------------------------------------------------------------
 # Verdict.
