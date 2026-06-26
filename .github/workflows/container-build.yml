@@ -56,7 +56,10 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel only on PR iteration (rapid re-pushes to a PR supersede each other).
+  # push:[main] + merge_group MUST run to a green conclusion so every main commit
+  # earns its own completed check (no misleading cancelled-run noise on rapid merges).
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
