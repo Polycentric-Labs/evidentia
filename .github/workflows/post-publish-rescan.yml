@@ -45,6 +45,8 @@ jobs:
     steps:
       - name: Checkout (for osv-scanner.toml + run_osv_scan.py)
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
@@ -70,9 +72,13 @@ jobs:
 
       - name: Fresh-install the published release into a clean venv
         id: install
+        env:
+          # Pass the dispatch input via env, never interpolated directly into
+          # the run-block script text (template-injection — zizmor High).
+          VERSION_INPUT: ${{ github.event.inputs.version }}
         run: |
           set -euo pipefail
-          VERSION="${{ github.event.inputs.version }}"
+          VERSION="${VERSION_INPUT}"
           python -m venv /tmp/rescan
           if [ -n "$VERSION" ]; then
             SPEC="evidentia[ai,api,collectors,mcp]==${VERSION}"
@@ -116,6 +122,8 @@ jobs:
     steps:
       - name: Checkout (for osv-scanner.toml)
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Install osv-scanner (v2.3.8, checksum-verified)
         run: |
@@ -135,9 +143,13 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull + osv-scan the published image
+        env:
+          # Dispatch input via env, not interpolated into the run block
+          # (template-injection — zizmor High).
+          VERSION_INPUT: ${{ github.event.inputs.version }}
         run: |
           set -euo pipefail
-          VERSION="${{ github.event.inputs.version }}"
+          VERSION="${VERSION_INPUT}"
           if [ -n "$VERSION" ]; then TAG="v${VERSION}"; else TAG="latest"; fi
           IMAGE="ghcr.io/polycentric-labs/evidentia:${TAG}"
           echo "Pulling ${IMAGE} ..."
