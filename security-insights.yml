@@ -1,0 +1,94 @@
+header:
+  schema-version: 2.2.0
+  last-updated: '2026-06-26'
+  last-reviewed: '2026-06-26'
+  url: https://github.com/Polycentric-Labs/evidentia/raw/main/security-insights.yml
+  comment: |
+    Single-repository OpenSSF Security Insights manifest for Evidentia, an
+    open-source Python GRC / compliance-as-code tool. This is a machine-readable
+    index of the project's existing security posture (coordinated vulnerability
+    disclosure, threat model, supply-chain provenance, support/EOL policy) for
+    consumption by the OSPS Baseline tooling, CLOMonitor, and LFX Insights.
+    Maintained by Polycentric Labs.
+
+project:
+  name: Evidentia
+  homepage: https://github.com/Polycentric-Labs/evidentia
+  administrators:
+    - name: Allen Byrd
+      affiliation: Polycentric Labs
+      email: allen@allenfbyrd.com
+      primary: true
+  documentation:
+    detailed-guide: https://github.com/Polycentric-Labs/evidentia/blob/main/README.md
+    code-of-conduct: https://github.com/Polycentric-Labs/evidentia/blob/main/CODE_OF_CONDUCT.md
+    release-process: https://github.com/Polycentric-Labs/evidentia/blob/main/docs/release-checklist.md
+    support-policy: https://github.com/Polycentric-Labs/evidentia/blob/main/EOL.md
+    signature-verification: https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md
+  repositories:
+    - name: evidentia
+      url: https://github.com/Polycentric-Labs/evidentia
+      comment: |
+        Core monorepo: 8 evidentia-* PyPI packages plus the bundled React UI,
+        published to PyPI and ghcr.io with PEP 740 attestations + cosign signing.
+  vulnerability-reporting:
+    reports-accepted: true
+    bug-bounty-available: false
+    contact:
+      name: Allen Byrd
+      email: allen@allenfbyrd.com
+      primary: true
+    policy: https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md
+    comment: |
+      Preferred channel is GitHub Private Vulnerability Reporting:
+      https://github.com/Polycentric-Labs/evidentia/security/advisories/new
+      Acknowledgment within 3 business days; triage within 10. A researcher safe
+      harbor and an RFC 9116 security.txt (/.well-known/security.txt) are in place.
+
+repository:
+  url: https://github.com/Polycentric-Labs/evidentia
+  status: active
+  bug-fixes-only: false
+  accepts-change-request: true
+  accepts-automated-change-request: true
+  no-third-party-packages: false
+  core-team:
+    - name: Allen Byrd
+      affiliation: Polycentric Labs
+      email: allen@allenfbyrd.com
+      primary: true
+  documentation:
+    contributing-guide: https://github.com/Polycentric-Labs/evidentia/blob/main/CONTRIBUTING.md
+    governance: https://github.com/Polycentric-Labs/evidentia/blob/main/GOVERNANCE.md
+    security-policy: https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md
+  license:
+    url: https://github.com/Polycentric-Labs/evidentia/blob/main/LICENSE
+    expression: Apache-2.0
+  security:
+    assessments:
+      self:
+        comment: |
+          Per-release security review published as docs/security-review-vX.Y.Z.md.
+          Threat model: docs/threat-model.md (NORMATIVE). OSPS Baseline
+          conformance tracked in OSPS-CONFORMANCE.md (Maturity 3, CI-gated).
+          OpenSSF Best Practices: Silver (project 12724). Additional CI security
+          tooling beyond the SCA entries below: CodeQL (security-extended +
+          custom python-sanitizers), OpenSSF Scorecard, and gitleaks secret
+          scanning.
+    tools:
+      - name: osv-scanner
+        type: SCA
+        integration:
+          adhoc: false
+          ci: true
+          release: true
+        comment: |
+          SBOM-based SCA gate run in CI and at release time (release.yml).
+      - name: Dependabot
+        type: SCA
+        integration:
+          adhoc: false
+          ci: true
+          release: false
+        comment: |
+          Grouped dependency updates with cooldown + python-framework isolation.
