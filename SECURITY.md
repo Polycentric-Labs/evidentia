@@ -179,6 +179,27 @@ If verification fails, **stop and report immediately** via the
 private channels above — a verification failure on a published
 artifact is itself a security incident.
 
+## Security posture documents
+
+Machine- and human-readable attestations of the project's security
+posture:
+
+- [`docs/SECURE-BY-DESIGN-PLEDGE.md`](docs/SECURE-BY-DESIGN-PLEDGE.md)
+  — voluntary self-assessed alignment with the CISA Secure by Design
+  Pledge's seven goals (an alignment statement, not a signatory claim).
+- [`docs/slsa-source-track.md`](docs/slsa-source-track.md) — honest SLSA
+  v1.2 Source Track self-assessment: the Source L3 technical controls are
+  enforced and independently verifiable; the L4 two-party-review gap is
+  disclosed (single maintainer).
+- [`docs/runbooks/ghsa-cve-issuance.md`](docs/runbooks/ghsa-cve-issuance.md)
+  — maintainer runbook for publishing a GitHub Security Advisory and
+  issuing a CVE via GitHub-as-CNA.
+- [`docs/runbooks/release-rollback.md`](docs/runbooks/release-rollback.md)
+  — release rollback / yank / recovery decision tree (PEP 592 yank
+  semantics; release tags are immutable server-side).
+- [`security-insights.yml`](security-insights.yml) — OpenSSF Security
+  Insights v2.2.0 manifest.
+
 ## Acknowledgments
 
 Coordinated security reports — once disclosed and fixed — are
