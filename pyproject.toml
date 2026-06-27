@@ -4,6 +4,21 @@ version = "0.10.13"
 requires-python = ">=3.12"
 description = "Workspace root for the Evidentia GRC tool monorepo"
 
+[tool.uv]
+# Security version-floor for a TRANSITIVE dependency — the transitive analog of the
+# direct-dep CVE floors in packages/*/pyproject.toml (e.g. litellm>=1.83.7, the
+# evidentia-api >=0.0.26 floor). joserfc reaches the workspace ONLY via moto[all]
+# (the AWS-mock test library, dev group); it is not imported in any src/ and is in no
+# shipped wheel or the container image. constraint-dependencies are resolution/lock
+# ONLY — they do NOT propagate into published wheel/sdist metadata, and a constraint
+# never *adds* a package (it is inert if moto ever stops pulling joserfc). This floors
+# joserfc out of GHSA-wphv-vfrh-23q5 / CVE-2026-48990 (affects >=1.3.4,<1.6.7; Medium
+# 5.3, b64=false RFC7797 JWS payload-size bypass; published 2026-06-26). Fail-closed: a
+# future re-lock that would select joserfc<1.6.7 errors out instead of silently
+# regressing. REMOVAL TRIGGER: moto raises its own joserfc floor to >=1.6.7 (it
+# currently caps only >=0.9.0), or the advisory is withdrawn. Re-validate by 2026-12-26.
+constraint-dependencies = ["joserfc>=1.6.7"]
+
 [tool.uv.workspace]
 members = [
     "packages/evidentia-core",
