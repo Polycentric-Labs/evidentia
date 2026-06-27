@@ -131,3 +131,36 @@ def test_resolve_unknown_framework_raises(tmp_path) -> None:
             bundled_manifest=bundled,
             user_dir_override=tmp_path,
         )
+
+
+def test_resolve_rejects_user_path_escaping_user_dir(tmp_path) -> None:
+    """A user-manifest entry whose path escapes the user dir is refused
+    (defense-in-depth path containment, CWE-22). The API import endpoint never
+    writes such a path (``framework_id`` is regex-validated), but a hand-edited
+    or otherwise-tampered manifest could carry one — it must never reach the
+    file loader. The manifest model itself does not validate the path, so this
+    containment check in ``resolve_catalog_path`` is the guard.
+    """
+    bundled = load_manifest()
+    save_user_manifest(
+        FrameworkManifest(
+            version=1,
+            frameworks=[
+                FrameworkManifestEntry(
+                    id="evil",
+                    name="Escaping catalog",
+                    version="x",
+                    tier="A",
+                    category="control",
+                    path="../../escape.json",
+                )
+            ],
+        ),
+        tmp_path,
+    )
+    with pytest.raises(ValueError, match="escapes the user"):
+        resolve_catalog_path(
+            "evil",
+            bundled_manifest=bundled,
+            user_dir_override=tmp_path,
+        )
