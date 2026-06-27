@@ -72,6 +72,7 @@ jobs:
           # Full history so the relevance step can diff the event's
           # base..head range (the base commit is not in a shallow clone).
           fetch-depth: 0
+          persist-credentials: false
 
       # v0.10.14: relevance gate. Diffs the event-appropriate base..head
       # range and sets `relevant=true` iff a container-build input changed
@@ -92,7 +93,7 @@ jobs:
               head="${{ github.event.pull_request.head.sha }}" ;;
             merge_group)
               base="${{ github.event.merge_group.base_sha }}"
-              head="${{ github.event.merge_group.head_sha }}" ;;
+              head="${GITHUB_EVENT_MERGE_GROUP_HEAD_SHA}" ;;
             push)
               base="${{ github.event.before }}"
               head="${{ github.sha }}" ;;
@@ -122,6 +123,8 @@ jobs:
             echo "relevant=false" >> "$GITHUB_OUTPUT"
             echo "No container-relevant path changed — skipping build, reporting SUCCESS."
           fi
+        env:
+          GITHUB_EVENT_MERGE_GROUP_HEAD_SHA: ${{ github.event.merge_group.head_sha }}
 
       - name: Set up Docker Buildx
         if: steps.relevant.outputs.relevant == 'true'

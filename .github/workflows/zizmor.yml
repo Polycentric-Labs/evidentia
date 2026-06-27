@@ -1,0 +1,54 @@
+# Static analysis of the GitHub Actions workflows themselves (zizmor, by Trail
+# of Bits). Mechanically enforces the invariants the workflows were maintaining
+# by hand: full-SHA action pins (resolving to the right commit, not a moved tag
+# or stale version comment), least-privilege permissions, no template injection,
+# no cache poisoning, no credential persistence (artipacked). Runs on
+# every PR + the merge queue so a regressing workflow edit is caught BEFORE it
+# lands. Findings are listed in the job log; the run goes RED on any finding not
+# justified in .github/zizmor.yml.
+
+name: zizmor
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Cancel only on PR iteration; push:[main] + merge_group run to a green
+  # conclusion (matches the other required-check workflows — green-checks MUST).
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  zizmor:
+    name: zizmor (Actions static analysis)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      # Official SHA-pinned zizmor runner. Runs the ONLINE audits by default
+      # (impostor-commit, ref-confusion, ref-version-mismatch) using the job's
+      # read-only github.token — these catch SHA-pin tampering and stale/forged
+      # version comments that the offline-only audits cannot see. zizmor itself
+      # is version-pinned (1.26.1); --persona regular keeps false positives low;
+      # config carries the two justified ignores. advanced-security:false prints
+      # findings to the log and fails the job on any unjustified finding (no
+      # SARIF upload, so the contents:read permission above stays sufficient).
+      - name: Audit workflows with zizmor (online, SHA-pinned action)
+        uses: zizmorcore/zizmor-action@192e21d79ab29983730a13d1382995c2307fbcaa  # v0.5.7
+        with:
+          inputs: .github/workflows/
+          version: "1.26.1"
+          persona: regular
+          config: .github/zizmor.yml
+          advanced-security: false
