@@ -113,7 +113,7 @@ In scope:
 - Build + release infrastructure (`.github/workflows/*.yml`).
 - Distribution surface (PyPI packages `evidentia`, `evidentia-core`,
   `evidentia-collectors`, `evidentia-ai`, `evidentia-api`,
-  `evidentia-integrations`).
+  `evidentia-integrations`, `evidentia-mcp`, `evidentia-eval`).
 - The composite GitHub Action
   (`.github/actions/gap-analysis/action.yml`).
 - The bundled framework catalogs and crosswalk mappings
