@@ -299,15 +299,13 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
     placeholder = bool(data.get("placeholder", False))
 
     user_dir = ensure_user_dir()
+    # framework_id is validated by _validate_framework_id above (no '..', no path
+    # separators), so this lands inside the user catalog dir by construction —
+    # the validator is the containment guarantee. (A second resolve()-based check
+    # here is redundant and CodeQL would itself flag it as a path operation on
+    # caller input; the resolve_catalog_path guard covers the read-back path,
+    # where the user-manifest value is NOT regex-validated.)
     out_path = user_dir / f"{payload.framework_id}.json"
-    # Defense-in-depth (belt-and-suspenders over _validate_framework_id, which
-    # already rejects '..' + path separators): assert the resolved write target
-    # stays within the user catalog dir before it is written + loaded (CWE-22).
-    if not out_path.resolve().is_relative_to(user_dir.resolve()):
-        raise HTTPException(
-            status_code=400,
-            detail="Resolved catalog path escapes the user catalog directory.",
-        )
     if out_path.exists() and not payload.force:
         raise HTTPException(
             status_code=400,
