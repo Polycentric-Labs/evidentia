@@ -2030,6 +2030,29 @@ detailed integration plan" §v0.11. Substantive minor (~6-8 weeks):
   post-operator-deep-dive (incorporate AWS OSCAL MCP / Vanta MCP /
   ComplianceCow MCP / Snyk AI Trust Platform shifts).
 
+### Engineering & security follow-ups — PLANNED (not feature-tied)
+
+Hardening items the continuous-assurance gates surfaced about themselves, tracked
+here so they aren't lost between feature cycles (see
+[`docs/engineering-practices.md`](engineering-practices.md)):
+
+- **Extend the CodeQL custom sanitizer model to recognize `_validate_framework_id`.**
+  The catalog router validates every `framework_id` (regex + `..`/separator
+  rejection) before deriving an on-disk path, but the sanitizer model doesn't yet
+  model that helper, so `py/path-injection` flagged the catalog loader (alert #164
+  — dismissed as mitigated 2026-06-27, with a runtime
+  `resolve()`/`is_relative_to(user_dir)` containment guard added as defense-in-
+  depth). Teaching the model the validator clears that finding class at the query
+  level — restoring the "report real findings, not known-safe ones" property.
+- **Enable code-scanning merge protection** so a *new* High/Critical code-scanning
+  alert blocks the PR. The CodeQL `Analyze` jobs are required, but they gate on the
+  analysis *running*, not on introduced findings; the "Code scanning results" gate
+  is the piece that blocks a newly-introduced alert.
+- **Dependabot patch auto-merge** (`dependabot/fetch-metadata` + `gh pr merge
+  --auto`, patch-only, after the full required-check suite is green; majors +
+  security PRs stay human-reviewed). Validate once on a harmless Dependabot PR and
+  confirm the workflow itself passes the now-required zizmor gate before enabling.
+
 ### Medical-device GRC feature line (v0.11 → v1.1+) — PLANNED (web-grounded research 2026-06-17)
 
 The medical-device-security direction the v0.10.10 FDA Section 524B catalogs opened, scanned + validated in a multi-angle web-grounded research pass. **Each feature gets a dedicated `polycentric-labcoat` research fleet at build-time** — the entries below are the high-level scan + positioning, not build specs. Effort and tier are planning-grade. The throughline: **don't rebuild commodity layers (STRIDE authoring, CBOM scanners) — ingest them; the uncontested slice is the open, signed, OSCAL/BOM-emitting evidence wrapper.**

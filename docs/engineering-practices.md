@@ -25,6 +25,10 @@ Three principles run through all of it:
 - **Verify, don't assert.** Documented commands and factual claims are executed
   against the live tool, not trusted because they were true once.
 
+This document is the **single home** for Evidentia's engineering + security
+practices: a new safeguard, finding-handling rule, or dependency policy extends
+the relevant section below rather than starting a parallel document.
+
 ---
 
 ## The development & release flow
@@ -86,6 +90,14 @@ Evidentia's releases are designed to be independently verifiable end to end:
   closure — including the container's independently-resolved closure — on every
   pull request, surfacing transitive and disputed advisories the standard alert
   feed suppresses.
+- **Dependency updates are automated with guardrails.** Dependabot proposes
+  weekly, grouped, cooldown-delayed version updates (a freshly-published release
+  is held a few days, so a yanked or hot-fixed bad release is superseded before it
+  is proposed); breaking-prone framework packages are isolated into their own
+  reviewable PR; per-ecosystem open-PR caps bound the queue; and security
+  advisories are never grouped — each rides its own PR. Majors and security
+  updates always get human review: CI verifies correctness, not the *intent* of a
+  possibly-poisoned dependency.
 
 These are also the signals OpenSSF Scorecard scores, which the project tracks
 publicly.
@@ -98,8 +110,20 @@ publicly.
   relevant pull request and on a scheduled batch, exercising the parsing and
   catalog-loading surfaces with coverage-guided inputs.
 - **Static analysis.** CodeQL runs in an advanced configuration with a custom
-  sanitizer model, so the path-traversal queries understand the project's own
-  validation helpers and report real findings rather than known-safe ones.
+  sanitizer model that teaches the path-traversal queries about the project's
+  validation helpers, so they report real findings rather than known-safe ones.
+  (The model is extended as new validators land — see the roadmap's engineering
+  follow-ups.) **zizmor** statically audits the workflows themselves — full-commit-
+  SHA action pins that resolve to the right commit, least-privilege permissions,
+  no template injection, no cache poisoning, no credential persistence — online,
+  on every PR and the merge queue, as a required check.
+- **Findings are handled, not accumulated.** Every security gate that *runs* is a
+  *required* check — no advisory-only scanners left to rot. A code-scanning
+  finding is either fixed in the PR or dismissed with a written, primary-source-
+  grounded reason; systemic false positives are encoded in committed config (a
+  CodeQL query filter or sanitizer-model entry), never one-off clicks. High alerts
+  carry a tight triage SLA toward a zero-open-High goal, and open code-scanning +
+  Dependabot alerts are reviewed before a change is called done.
 - **Secret scanning.** A pinned gitleaks binary scans the full history on every
   push and pull request, complementing a local pre-push secret scan.
 - **Defensive guards in the code itself.** Network-egress paths enforce a
