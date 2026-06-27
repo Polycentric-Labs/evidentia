@@ -118,6 +118,16 @@ def resolve_catalog_path(
     if user_entry is not None:
         user_dir = get_user_catalog_dir(user_dir_override)
         path = user_dir / user_entry.path
+        # Defense-in-depth path containment (CWE-22): a user-manifest path must
+        # resolve INSIDE the user catalog dir. The API import endpoint only ever
+        # writes a validated ``{framework_id}.json`` (no separators, no ``..``),
+        # but a hand-edited manifest could carry an escaping path — assert
+        # containment so a traversal can never reach the file loader.
+        if not path.resolve().is_relative_to(user_dir.resolve()):
+            raise ValueError(
+                f"User catalog path for {framework_id!r} escapes the user "
+                "catalog directory; refusing to load."
+            )
         # %r (repr) escapes control chars in user-controlled framework_id
         # + path — closes CodeQL py/log-injection alert #81 (CWE-117)
         # per v0.7.8 P0.5 S2. framework_id comes from CLI/API arg;

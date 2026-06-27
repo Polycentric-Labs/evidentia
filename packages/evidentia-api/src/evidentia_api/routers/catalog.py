@@ -300,6 +300,14 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
 
     user_dir = ensure_user_dir()
     out_path = user_dir / f"{payload.framework_id}.json"
+    # Defense-in-depth (belt-and-suspenders over _validate_framework_id, which
+    # already rejects '..' + path separators): assert the resolved write target
+    # stays within the user catalog dir before it is written + loaded (CWE-22).
+    if not out_path.resolve().is_relative_to(user_dir.resolve()):
+        raise HTTPException(
+            status_code=400,
+            detail="Resolved catalog path escapes the user catalog directory.",
+        )
     if out_path.exists() and not payload.force:
         raise HTTPException(
             status_code=400,
