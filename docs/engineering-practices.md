@@ -126,6 +126,28 @@ publicly.
   CodeQL query filter or sanitizer-model entry), never one-off clicks. High alerts
   carry a tight triage SLA toward a zero-open-High goal, and open code-scanning +
   Dependabot alerts are reviewed before a change is called done.
+- **Published artifacts are re-scanned for day-N advisories.** The release-time
+  and per-pull-request scans only catch what was *known at release*. A scheduled
+  rescan re-runs the same pinned scanner against the **already-published**
+  release — both the PyPI dependency closure and the container image — so a CVE
+  disclosed in a frozen transitive dependency, or in the container's base image,
+  *after* a release does not stay invisible until the next one. The container
+  rides a general-purpose OS base whose packages steadily accrue advisories the
+  project cannot fix; failing the rescan on *every* such advisory would pin it
+  permanently red on unfixable distro CVEs — the chronically-red-gate failure
+  again (see *Lessons*, below). So the container rescan gates on **fixability**:
+  it fails only when a detected advisory has an applicable upstream fix ("a fix is
+  now available — rebuild the image"), while unfixable base-OS advisories are
+  **notify-only** — rendered in full to the run summary for visibility, but not
+  failing the run. The scanner has no native fixable gate (it exits non-zero on
+  any advisory), so the fixable/notify split is a committed, unit-tested policy
+  step that parses the scanner's JSON and matches each *applicable* fix to the
+  detected package, not to any release that merely shares the CVE. Time-bound
+  exceptions live in the one committed allowlist (a single definition, applied by
+  the scanner itself); reducing the base-OS surface *itself* — a minimal base
+  image plus a scheduled rebuild that resets the day-N clock — is tracked as an
+  engineering follow-up so the rescan stays a safety net rather than the primary
+  trigger.
 - **Secret scanning.** A pinned gitleaks binary scans the full history on every
   push and pull request, complementing a local pre-push secret scan.
 - **Defensive guards in the code itself.** Network-egress paths enforce a
