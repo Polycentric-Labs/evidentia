@@ -2037,15 +2037,21 @@ here so they aren't lost between feature cycles (see
 [`docs/engineering-practices.md`](engineering-practices.md)). The v0.10.x
 engineering-hardening batch addressed all three:
 
-- **CodeQL custom sanitizer model extended — DONE.** The custom QL pack now models
-  `evidentia_core.catalogs.user_dir.resolve_catalog_path` (the choke point whose
-  return feeds the catalog loader's `read_text`, alert #164) and the catalog
-  router's `_validate_framework_id` as `py/path-injection` sanitizers, and
-  `resolve_catalog_path` now returns the `is_relative_to`-checked *resolved* path
-  so CodeQL's built-in guard recognition also sees the barrier. This clears the
-  #164 class at the query level — restoring "report real findings, not known-safe
-  ones." (The #164 dismissal is converted to *fixed* once a CI CodeQL run confirms
-  the loader is no longer flagged.)
+- **CodeQL #164 (catalog-loader path-injection) — addressed at the analysis layer.**
+  A primary-source CodeQL investigation (the SARIF code-flow, multi-model-researched)
+  showed #164's source is the API import endpoint's `payload.framework_id`, flowing
+  `payload.framework_id → out_path → load_evidentia_catalog → read_text` — NOT the
+  `resolve_catalog_path` read path first assumed. A first attempt to model the
+  router's `_validate_framework_id` as a `.qll` sanitizer could not fire: an
+  `API::moduleImport(...).getACall()` sanitizer does not match a module-private
+  helper's INTRA-module callsites (verified — `results_count` was unchanged). The
+  robust fix is a code refactor (the labcoat-endorsed "route the path through a
+  modeled sanitizer" over a brittle/uncertain model): the import endpoint now routes
+  `out_path` through the already-CI-proven `validate_within` (write-path containment),
+  clearing #164 via `ValidateWithinSanitizer`. The repo also keeps
+  `ResolveCatalogPathSanitizer` (defense-in-depth model of the read-path guard). The
+  #164 dismissal is converted to *fixed* once a CI CodeQL run confirms the loader is
+  no longer flagged.
 - **Code-scanning merge protection — DONE.** A `code_scanning` rule on the `main`
   ruleset (CodeQL, `high_or_higher` / `errors`) now blocks a PR that introduces a
   new High/Critical alert. The CodeQL `Analyze` jobs gate on the analysis

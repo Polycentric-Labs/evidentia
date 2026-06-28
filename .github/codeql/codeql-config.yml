@@ -2,18 +2,30 @@
 #
 # Loads the security-extended query suite (matching what default
 # setup runs) PLUS our custom python-sanitizers pack which declares
-# path-injection sanitizers at the analysis layer:
+# path-injection sanitizers at the analysis layer (a custom-`.qll`
+# sanitizer is the "systemic false positives go in committed config,
+# not per-instance dismissals" mechanism — and a code refactor that
+# routes a path through a MODELED sanitizer is even better, see #164):
 #   - `evidentia_core.security.paths.validate_within`
 #     (ValidateWithinSanitizer) — closes the false-positive HIGH
-#     alerts #71/#72/#73.
+#     alerts #71/#72/#73, AND is the modeled barrier the catalog
+#     import write-path routes through (alert #164, see below).
 #   - `evidentia_core.catalogs.user_dir.resolve_catalog_path`
-#     (ResolveCatalogPathSanitizer) — closes alert #164 (the catalog
-#     loader read_text), whose path is the containment-checked /
-#     trusted-manifest value this helper returns.
-#   - `evidentia_api.routers.catalog._validate_framework_id`
-#     (FrameworkIdSanitizer) — the catalog-router id validator.
-# Encoding these in committed config (not per-instance dismissals) is
-# the "systemic false positives go in config" rule.
+#     (ResolveCatalogPathSanitizer) — models the containment-checked /
+#     trusted-manifest path this helper returns (defense-in-depth for
+#     the catalog read path).
+#
+# NOTE on #164 (catalog loader read_text): a primary-source CodeQL
+# investigation (the SARIF code-flow) showed #164's source is the API
+# import endpoint's `payload.framework_id`, flowing
+# payload.framework_id -> out_path -> load_evidentia_catalog ->
+# read_text. The catalog router's `_validate_framework_id` is the
+# first-line shape guard, but an `API::moduleImport(...).getACall()`
+# sanitizer does NOT match its INTRA-module callsites, so a `.qll`
+# model for it could not fire. The robust fix is therefore a code
+# refactor: the import endpoint routes `out_path` through the already-
+# modeled `validate_within` (write-path containment), which clears
+# #164 via ValidateWithinSanitizer rather than a non-firing model.
 #
 # To verify the sanitizer is firing, look at the CodeQL job logs
 # after a push: the `Analyze` step should show the python-sanitizers
