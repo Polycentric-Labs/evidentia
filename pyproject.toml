@@ -65,7 +65,17 @@ dev = [
     # [aws] extra); having it in dev deps means collector tests run
     # without an extra install step.
     "boto3>=1.43.36",
-    "moto[all]>=5.2.2",
+    # Narrowed from moto[all] to the minimal service extras the suite
+    # actually exercises (empirically: S3 Object Lock for the WORM +
+    # GDPR-purge tests, STS for the AWS-collector connection test; the
+    # Config/SecurityHub collector tests use unittest.mock, not moto).
+    # moto[all] pulled the auth-service extras (cognitoidp etc.), which
+    # is how joserfc — and its day-N CVE GHSA-wphv-vfrh-23q5 — entered the
+    # dev closure. Dropping those extras removes that exposure at the
+    # source; the [tool.uv] joserfc constraint above is now belt-and-
+    # suspenders (inert unless a dep re-introduces joserfc). If a new test
+    # mocks another AWS service, add its extra here (NOT moto[all]).
+    "moto[s3,sts]>=5.2.2",
     # v0.7.12 P0: cloud-WORM backend SDKs (gated as evidentia[worm-X]
     # extras for end-users; in dev-deps so the dev/CI venv runs the
     # backend tests without needing the extra activated).
