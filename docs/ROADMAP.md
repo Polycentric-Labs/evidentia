@@ -2037,21 +2037,27 @@ here so they aren't lost between feature cycles (see
 [`docs/engineering-practices.md`](engineering-practices.md)). The v0.10.x
 engineering-hardening batch addressed all three:
 
-- **CodeQL #164 (catalog-loader path-injection) — addressed at the analysis layer.**
-  A primary-source CodeQL investigation (the SARIF code-flow, multi-model-researched)
-  showed #164's source is the API import endpoint's `payload.framework_id`, flowing
-  `payload.framework_id → out_path → load_evidentia_catalog → read_text` — NOT the
-  `resolve_catalog_path` read path first assumed. A first attempt to model the
-  router's `_validate_framework_id` as a `.qll` sanitizer could not fire: an
-  `API::moduleImport(...).getACall()` sanitizer does not match a module-private
-  helper's INTRA-module callsites (verified — `results_count` was unchanged). The
-  robust fix is a code refactor (the labcoat-endorsed "route the path through a
-  modeled sanitizer" over a brittle/uncertain model): the import endpoint now routes
-  `out_path` through the already-CI-proven `validate_within` (write-path containment),
-  clearing #164 via `ValidateWithinSanitizer`. The repo also keeps
-  `ResolveCatalogPathSanitizer` (defense-in-depth model of the read-path guard). The
-  #164 dismissal is converted to *fixed* once a CI CodeQL run confirms the loader is
-  no longer flagged.
+- **CodeQL #164 (catalog-loader path-injection) — remains a documented dismissal (genuine
+  false positive); CodeQL cannot model the validated flow.** A primary-source investigation
+  (the live SARIF code-flow, multi-model-researched, CI-verified) established: #164's source is
+  the API import endpoint's `payload.framework_id`, flowing
+  `payload.framework_id → out_path → load_evidentia_catalog → read_text` (NOT the
+  `resolve_catalog_path` read path first assumed). The framework_id is regex-validated (no
+  separators, no `..`), so it cannot traverse — a true FP. **Two analysis-layer attempts both
+  failed, and the failures were verified** (`results_count` held at 40; alert stayed `dismissed`,
+  not `fixed`): (1) a `.qll` sanitizer on `_validate_framework_id` could not fire —
+  `API::moduleImport(...).getACall()` does not match a module-private helper's INTRA-module
+  callsites; (2) routing `out_path` through the CI-proven `validate_within` did not cut it either —
+  the SARIF shows CodeQL traces *interprocedurally through* `validate_within`'s body, so its
+  call-result barrier does not block this flow (it does clear the simpler #71/#72/#73 callsites).
+  **Terminal state (per the labcoat best-practice verdict): keep #164 dismissed with a precise,
+  primary-source reason — a legitimate FP the query genuinely cannot model is a valid dismissal,
+  not a workaround.** The `validate_within(out_path, user_dir)` wrap is KEPT regardless: real
+  runtime write-path containment (the write-side analog of the `resolve_catalog_path` read-side
+  guard), valuable on its own merits even though CodeQL does not credit it. Future option (not
+  pursued now): a CodeQL models-as-data `barrierModel` (the 2026-04 mechanism) once its Python
+  schema is verified. Inline `# codeql[...]` suppression is NOT an option — CodeQL code scanning
+  does not support it (github/codeql#11427).
 - **Code-scanning merge protection — DONE.** A `code_scanning` rule on the `main`
   ruleset (CodeQL, `high_or_higher` / `errors`) now blocks a PR that introduces a
   new High/Critical alert. The CodeQL `Analyze` jobs gate on the analysis
@@ -2064,6 +2070,23 @@ engineering-hardening batch addressed all three:
   earlier broad patch+minor auto-merge was removed after a docker-minor base-image
   break — see engineering-practices.md lesson #1). The workflow passes the required
   zizmor gate; it is validated end-to-end on the next real Dependabot patch PR.
+- **Post-publish container rescan — gate on FIXABLE only — PLANNED.** The
+  `post-publish-rescan.yml` container job runs `osv-scanner` on the published image and
+  currently fails on day-N **base-OS** CVEs (a dispatch on v0.10.13 found ~81, only ~4
+  fixable, the rest Debian "No fix available") — a chronically-red gate, which the doctrine
+  forbids. Verdict (multi-model + osv-scanner primary-source verified): osv-scanner v2 has NO
+  native fixable/severity gate, so add a JSON-parse policy step (`--format json` +
+  `continue-on-error`, then fail ONLY when a vuln has an applicable fix —
+  `affected[].ranges[].events[].fixed`); keep an `if: always()` full-visibility report for
+  unfixable CVEs; use `osv-scanner.toml [[IgnoredVulns]]` + `ignoreUntil` for time-bound
+  exceptions only. Makes the rescan an actionable signal ("a fix is now available → rebuild"),
+  not noise.
+- **Container base-image migration — PLANNED.** Migrate the container off the full Debian
+  `python` base to a minimal **glibc** base — `cgr.dev/chainguard/python` (Wolfi/glibc, low-CVE,
+  manylinux-compatible) or `gcr.io/distroless/python3` — via a multi-stage build, plus a scheduled
+  rebuild to reset the day-N clock. Drastically cuts the OS-package CVE surface (~19 Debian source
+  packages → a handful). NOT Alpine (musl breaks manylinux wheels — the AI/crypto deps would force
+  fragile source builds). Ships in a release; its own cycle. (Verified 2026-06-28.)
 
 ### Medical-device GRC feature line (v0.11 → v1.1+) — PLANNED (web-grounded research 2026-06-17)
 
