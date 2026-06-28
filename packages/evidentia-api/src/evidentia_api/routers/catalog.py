@@ -76,12 +76,20 @@ _log = get_logger("evidentia.api.catalog")
 _FRAMEWORK_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
 
 
-def _validate_framework_id(framework_id: str) -> None:
-    """Reject framework IDs whose shape could enable path traversal.
+def _validate_framework_id(framework_id: str) -> str:
+    """Validate a framework ID's shape and RETURN the validated value.
 
     Raises ``HTTPException(400)`` on an invalid shape. Bundled +
     user-imported IDs are all kebab-case (e.g. ``nist-csf-2.0``), so a
     well-formed ID always matches; only crafted inputs fail here.
+
+    Returns the (unchanged) ``framework_id`` so callers reassign it
+    (``framework_id = _validate_framework_id(framework_id)``): a validator
+    that *returns* its sanitized value is a sanitizing transform CodeQL can
+    model (see ``FrameworkIdSanitizer`` in the custom QL pack), mirroring
+    ``evidentia_core.security.paths.validate_within``. Functionally this is a
+    pass-through on success; the value-returning shape is purely so the
+    ``py/path-injection`` query sees the validation barrier.
     """
     if ".." in framework_id or not _FRAMEWORK_ID_RE.match(framework_id):
         raise HTTPException(
@@ -92,6 +100,7 @@ def _validate_framework_id(framework_id: str) -> None:
                 f"{_FRAMEWORK_ID_RE.pattern} (no path separators)."
             ),
         )
+    return framework_id
 
 
 # ── crosswalk (read) ───────────────────────────────────────────────
@@ -133,7 +142,7 @@ async def where_framework(
     Mirrors ``evidentia catalog where``. The user catalog dir is the one
     the ``EVIDENTIA_CATALOG_DIR`` env var (or platform default) points at.
     """
-    _validate_framework_id(framework_id)
+    framework_id = _validate_framework_id(framework_id)
     bundled = load_manifest()
     user = load_user_manifest()
     try:
@@ -171,7 +180,7 @@ async def license_info(framework_id: str) -> dict[str, object]:
     Mirrors ``evidentia catalog license-info``: user-imported entries
     take precedence over bundled, then 404 if neither knows the ID.
     """
-    _validate_framework_id(framework_id)
+    framework_id = _validate_framework_id(framework_id)
     bundled = load_manifest()
     user = load_user_manifest()
     entry = user.get(framework_id) or bundled.get(framework_id)
@@ -255,7 +264,7 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
     via the ``user_dir`` helpers. Never touches a path outside the user
     catalog dir.
     """
-    _validate_framework_id(payload.framework_id)
+    framework_id = _validate_framework_id(payload.framework_id)
 
     tier = payload.tier.upper()
     if tier not in ("A", "B", "C", "D"):
@@ -291,21 +300,23 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
 
     # Path/body framework_id is authoritative; rewrite the content so the
     # persisted catalog + manifest agree on the ID it lands under.
-    data["framework_id"] = payload.framework_id
+    data["framework_id"] = framework_id
     if payload.name:
         data["framework_name"] = payload.name
-    resolved_name = data.get("framework_name") or payload.framework_id
+    resolved_name = data.get("framework_name") or framework_id
     version = str(data.get("version", "unknown"))
     placeholder = bool(data.get("placeholder", False))
 
     user_dir = ensure_user_dir()
-    # framework_id is validated by _validate_framework_id above (no '..', no path
-    # separators), so this lands inside the user catalog dir by construction —
-    # the validator is the containment guarantee. (A second resolve()-based check
-    # here is redundant and CodeQL would itself flag it as a path operation on
-    # caller input; the resolve_catalog_path guard covers the read-back path,
-    # where the user-manifest value is NOT regex-validated.)
-    out_path = user_dir / f"{payload.framework_id}.json"
+    # ``framework_id`` is the VALIDATED value returned by _validate_framework_id
+    # above (no '..', no path separators), so this lands inside the user catalog
+    # dir by construction — the validator is the containment guarantee, and using
+    # its return value (not the raw payload field) is what lets CodeQL's
+    # py/path-injection see the barrier. (A second resolve()-based check here is
+    # redundant and CodeQL would itself flag it as a path operation on caller
+    # input; the resolve_catalog_path guard covers the read-back path, where the
+    # user-manifest value is NOT regex-validated.)
+    out_path = user_dir / f"{framework_id}.json"
     if out_path.exists() and not payload.force:
         raise HTTPException(
             status_code=400,
@@ -378,7 +389,7 @@ async def remove_catalog(framework_id: str) -> None:
     "no user-imported framework; bundled catalogs cannot be removed"
     behavior.
     """
-    _validate_framework_id(framework_id)
+    framework_id = _validate_framework_id(framework_id)
     user = load_user_manifest()
     entry = user.get(framework_id)
     if entry is None:
