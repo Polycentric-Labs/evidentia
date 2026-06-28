@@ -13,7 +13,7 @@
 # - https://github.com/github/codeql/blob/main/python/ql/lib/semmle/python/security/dataflow/PathInjectionCustomizations.qll
 
 name: polycentric-labs/evidentia-python-sanitizers
-version: 0.0.3
+version: 0.0.4
 library: true
 
 dependencies:

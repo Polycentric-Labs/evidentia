@@ -59,6 +59,7 @@ from evidentia_core.catalogs.user_dir import (
     resolve_catalog_path,
     save_user_manifest,
 )
+from evidentia_core.security.paths import validate_within
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
@@ -84,12 +85,15 @@ def _validate_framework_id(framework_id: str) -> str:
     well-formed ID always matches; only crafted inputs fail here.
 
     Returns the (unchanged) ``framework_id`` so callers reassign it
-    (``framework_id = _validate_framework_id(framework_id)``): a validator
-    that *returns* its sanitized value is a sanitizing transform CodeQL can
-    model (see ``FrameworkIdSanitizer`` in the custom QL pack), mirroring
-    ``evidentia_core.security.paths.validate_within``. Functionally this is a
-    pass-through on success; the value-returning shape is purely so the
-    ``py/path-injection`` query sees the validation barrier.
+    (``framework_id = _validate_framework_id(framework_id)``). This is the
+    first-line *shape* guard (fast 400 on a malformed id). It is NOT the
+    CodeQL barrier for the import write-path: CodeQL's ``py/path-injection``
+    traces ``payload.framework_id`` THROUGH this helper (it returns its arg)
+    into ``out_path``, and an ``API::moduleImport(...).getACall()`` sanitizer
+    cannot match this helper's INTRA-module callsites. The actual modeled
+    barrier is downstream — ``out_path`` is routed through the CodeQL-modeled
+    ``evidentia_core.security.paths.validate_within`` (write-path containment),
+    which is what clears alert #164.
     """
     if ".." in framework_id or not _FRAMEWORK_ID_RE.match(framework_id):
         raise HTTPException(
@@ -308,15 +312,20 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
     placeholder = bool(data.get("placeholder", False))
 
     user_dir = ensure_user_dir()
-    # ``framework_id`` is the VALIDATED value returned by _validate_framework_id
-    # above (no '..', no path separators), so this lands inside the user catalog
-    # dir by construction — the validator is the containment guarantee, and using
-    # its return value (not the raw payload field) is what lets CodeQL's
-    # py/path-injection see the barrier. (A second resolve()-based check here is
-    # redundant and CodeQL would itself flag it as a path operation on caller
-    # input; the resolve_catalog_path guard covers the read-back path, where the
-    # user-manifest value is NOT regex-validated.)
-    out_path = user_dir / f"{framework_id}.json"
+    # Write-path containment (CWE-22) — defense-in-depth AND the CodeQL barrier.
+    # ``framework_id`` is regex-validated above (no '..', no separators), so the
+    # join already lands inside the user catalog dir; wrapping it in
+    # ``validate_within`` (resolve() + assert is_relative_to(user_dir)) makes that
+    # containment EXPLICIT and is the write-side analog of the resolve_catalog_path
+    # read-side guard. Because validate_within is the project's CodeQL-MODELED path
+    # sanitizer (ValidateWithinSanitizer), routing out_path through it clears the
+    # py/path-injection finding on the read-back loader at the analysis layer
+    # (alert #164: payload.framework_id -> out_path -> load_evidentia_catalog ->
+    # _load_catalog_data -> read_text). NB: a *raw* ``.resolve()`` here would
+    # instead be flagged by CodeQL as a path op on caller input — using the
+    # modeled helper is what makes the guard a barrier, not a new finding.
+    # validate_within returns the resolved path.
+    out_path = validate_within(user_dir / f"{framework_id}.json", user_dir)
     if out_path.exists() and not payload.force:
         raise HTTPException(
             status_code=400,
