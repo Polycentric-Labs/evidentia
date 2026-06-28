@@ -1,25 +1,22 @@
 # zizmor (Trail-of-Bits GitHub Actions static analysis) configuration.
 # https://docs.zizmor.sh/configuration/
 #
-# Every workflow finding must pass EXCEPT the two justified exceptions below.
-# Both are documented; neither hides an actual vulnerability.
-rules:
-  cache-poisoning:
-    ignore:
-      # release.yml "Set up Node": the npm cache is explicitly DISABLED (the
-      # step has no `cache:` key — see its inline comment), so there is no
-      # cache-poisoning vector. zizmor's Low-confidence heuristic flags the
-      # action's mere presence in a release-publishing workflow; the actual
-      # cache is off (as are the setup-uv caches, set enable-cache: false).
-      - release.yml:148
-  superfluous-actions:
-    ignore:
-      # release.yml "Create the GitHub Release": softprops/action-gh-release is
-      # intentionally used (SHA-pinned) to assemble the release body and attach
-      # the SBOM + SLSA provenance bundle. Reimplementing via `gh release create`
-      # in a script step would duplicate that logic for no security gain — the
-      # action is already pinned by full commit SHA. Informational only.
-      # (Line tracks the action-gh-release `uses:`; the zizmor gate itself
-      # flags this ignore if a release.yml edit shifts the line, so it stays
-      # in sync — re-point it to the new line when that happens.)
-      - release.yml:598
+# Every workflow finding must pass. The two justified, documented exceptions in
+# release.yml are now expressed as INLINE `# zizmor: ignore[<rule>]` comments on
+# the offending `uses:` lines (they travel with the step, so they can't drift
+# the way a line-number config ignore does — the previous `release.yml:148/598`
+# entries went stale whenever release.yml shifted):
+#   - "Set up Node" → ignore[cache-poisoning]: the npm cache is explicitly
+#     DISABLED (no `cache:` key), so there is no cache-poisoning vector; zizmor's
+#     Low-confidence heuristic only flags setup-node's presence in a
+#     release-publishing workflow.
+#   - "Create the GitHub Release" → ignore[superfluous-actions]:
+#     softprops/action-gh-release (SHA-pinned) intentionally assembles the
+#     release body + attaches the SBOM/SLSA bundle; reimplementing via
+#     `gh release create` would duplicate that logic for no security gain.
+#
+# No rule-level config ignores remain — the inline comments are the single
+# source of truth. zizmor still flags a STALE inline ignore (one that no longer
+# matches a finding), so an accidental over-broad ignore surfaces on the next
+# run.
+rules: {}
