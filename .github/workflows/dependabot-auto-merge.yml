@@ -1,0 +1,84 @@
+name: dependabot-auto-merge
+
+# Patch-only Dependabot auto-merge (v0.10.x engineering follow-up). The policy
+# was settled by a multi-model, primary-source research pass; the verdict +
+# rationale live in docs/engineering-practices.md ("Lessons that shaped the
+# system" #1). Scope is deliberately NARROW and FAIL-CLOSED: a PR auto-merges
+# ONLY when every allow-list condition holds; anything else falls through to
+# human review.
+#
+#   - author is dependabot[bot]
+#   - update-type is version-update:semver-patch (never minor, never major)
+#   - ecosystem is Python (uv/pip) or npm. NEVER docker (base-image caution from
+#     the v0.10.12 incident — a docker minor bump broke the release) and NEVER
+#     github-actions in v1 (action-SHA bumps are supply-chain-sensitive and stay
+#     human-reviewed even though zizmor gates them; promote later if desired).
+#   - the PR is a GROUPED version update (dependency-group != ''). Dependabot
+#     SECURITY updates are never grouped in this repo (every group in
+#     .github/dependabot.yml is applies-to: version-updates), so requiring a
+#     group membership EXCLUDES every security PR. A "security patch" can carry a
+#     poisoned dependency, so it always gets a human. (If security-update
+#     grouping is ever added to dependabot.yml, add an explicit fetch-metadata
+#     `alert-lookup: true` + `ghsa-id == ''` check here.)
+#   - NOT the breaking-prone python-frameworks group.
+#
+# Auto-merge does NOT bypass any gate. It calls GitHub native auto-merge, so the
+# PR merges only after the full required-check suite is green and the merge queue
+# re-tests the prospective merge; a 3-day release-age cooldown (dependabot.yml)
+# sits in front. Auto-merge != auto-publish: a merged patch lands on main but
+# ships only when a human cuts a signed release tag (pre-release-review gates it).
+#
+# Security model (verified against GitHub's official Dependabot auto-merge doc):
+# trigger on `pull_request` (NOT pull_request_target) and elevate the token via a
+# JOB-scoped permissions block — the documented pattern, which never executes
+# PR-controlled code. There is NO checkout; the job only reads PR metadata and
+# calls the GitHub API. fetch-metadata is full-SHA pinned; tokens pass via env,
+# never interpolated into a run: block (zizmor template-injection hardening).
+
+on:
+  pull_request:
+    branches: [main]
+
+# Least privilege at the top level; the single job elevates only what native
+# auto-merge requires.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  auto-merge:
+    name: Enable auto-merge (Dependabot patch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Act ONLY on Dependabot's own PRs. Use the PR author (not github.actor,
+    # which can be a human re-runner) so the gate is not spoofable.
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
+    permissions:
+      contents: write # enable native auto-merge on the PR
+      pull-requests: write # gh pr merge --auto
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge for in-scope patch updates
+        # Fail-closed allow-list: patch-only, Python/npm only, GROUPED (=> not a
+        # security PR), not the frameworks group. Anything else => no auto-merge.
+        if: >-
+          steps.meta.outputs.update-type == 'version-update:semver-patch'
+          && steps.meta.outputs.dependency-group != ''
+          && steps.meta.outputs.dependency-group != 'python-frameworks'
+          && (steps.meta.outputs.package-ecosystem == 'uv'
+          || steps.meta.outputs.package-ecosystem == 'pip'
+          || steps.meta.outputs.package-ecosystem == 'npm')
+        # `gh pr merge --auto` with NO strategy flag: the merge queue owns the
+        # squash strategy (passing --squash makes gh bail on a queue repo).
+        run: gh pr merge --auto "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

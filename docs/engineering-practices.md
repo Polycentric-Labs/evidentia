@@ -95,9 +95,11 @@ Evidentia's releases are designed to be independently verifiable end to end:
   is held a few days, so a yanked or hot-fixed bad release is superseded before it
   is proposed); breaking-prone framework packages are isolated into their own
   reviewable PR; per-ecosystem open-PR caps bound the queue; and security
-  advisories are never grouped — each rides its own PR. Majors and security
-  updates always get human review: CI verifies correctness, not the *intent* of a
-  possibly-poisoned dependency.
+  advisories are never grouped — each rides its own PR. Patch updates in the
+  lower-risk ecosystems (Python and npm) auto-merge once the full required-check
+  suite is green (narrow, fail-closed; see lesson #1); majors, minors, container
+  and Actions updates, and security updates always get human review, because CI
+  verifies correctness, not the *intent* of a possibly-poisoned dependency.
 
 These are also the signals OpenSSF Scorecard scores, which the project tracks
 publicly.
@@ -174,11 +176,20 @@ interpreter, so on the new base the resolver could only reach a
 vulnerability-bearing version of one dependency and the patched pin became
 uninstallable — and the container build failed. *Root cause:* a
 security-sensitive, deliberately-chosen pin was reverted by a change that
-merged on green CI without a human reading it. *Prevention:* patch/minor
-dependency auto-merge was removed so a maintainer reviews **every** dependency
-change; the base image is pinned by digest with a guard comment; and the
-container smoke test (see below) now catches an incompatible base bump at
-pull-request time.
+merged on green CI without a human reading it. *Prevention:* the **broad**
+auto-merge policy (patch **and minor**, every ecosystem) was removed; the base
+image is pinned by digest with a guard comment; and the container smoke test
+(see below) now catches an incompatible base bump at pull-request time.
+Auto-merge was later **reinstated in a deliberately narrow form** — patch-only,
+Python and npm ecosystems only, excluding majors, minors, the container
+(`docker`) and `github-actions` ecosystems, the breaking-prone frameworks
+group, and **all security updates** — firing only after the full required-check
+suite is green, behind the release-age cooldown and the merge queue, via a
+workflow that never executes pull-request code. The incident was a *minor*
+`docker` bump under the broad policy with a silently-dead gate (lesson #2); the
+narrow policy excludes that class twice over, and every major or security change
+still gets a human. The narrow policy was settled by a multi-model,
+primary-source research pass before it shipped.
 
 **2. The gate that should have caught it had silently died.** The container
 smoke test had been exiting early on a version-extraction step for several

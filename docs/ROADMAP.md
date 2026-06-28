@@ -2030,28 +2030,34 @@ detailed integration plan" §v0.11. Substantive minor (~6-8 weeks):
   post-operator-deep-dive (incorporate AWS OSCAL MCP / Vanta MCP /
   ComplianceCow MCP / Snyk AI Trust Platform shifts).
 
-### Engineering & security follow-ups — PLANNED (not feature-tied)
+### Engineering & security follow-ups (not feature-tied)
 
 Hardening items the continuous-assurance gates surfaced about themselves, tracked
 here so they aren't lost between feature cycles (see
-[`docs/engineering-practices.md`](engineering-practices.md)):
+[`docs/engineering-practices.md`](engineering-practices.md)). The v0.10.x
+engineering-hardening batch addressed all three:
 
-- **Extend the CodeQL custom sanitizer model to recognize `_validate_framework_id`.**
-  The catalog router validates every `framework_id` (regex + `..`/separator
-  rejection) before deriving an on-disk path, but the sanitizer model doesn't yet
-  model that helper, so `py/path-injection` flagged the catalog loader (alert #164
-  — dismissed as mitigated 2026-06-27, with a runtime
-  `resolve()`/`is_relative_to(user_dir)` containment guard added as defense-in-
-  depth). Teaching the model the validator clears that finding class at the query
-  level — restoring the "report real findings, not known-safe ones" property.
-- **Enable code-scanning merge protection** so a *new* High/Critical code-scanning
-  alert blocks the PR. The CodeQL `Analyze` jobs are required, but they gate on the
-  analysis *running*, not on introduced findings; the "Code scanning results" gate
-  is the piece that blocks a newly-introduced alert.
-- **Dependabot patch auto-merge** (`dependabot/fetch-metadata` + `gh pr merge
-  --auto`, patch-only, after the full required-check suite is green; majors +
-  security PRs stay human-reviewed). Validate once on a harmless Dependabot PR and
-  confirm the workflow itself passes the now-required zizmor gate before enabling.
+- **CodeQL custom sanitizer model extended — DONE.** The custom QL pack now models
+  `evidentia_core.catalogs.user_dir.resolve_catalog_path` (the choke point whose
+  return feeds the catalog loader's `read_text`, alert #164) and the catalog
+  router's `_validate_framework_id` as `py/path-injection` sanitizers, and
+  `resolve_catalog_path` now returns the `is_relative_to`-checked *resolved* path
+  so CodeQL's built-in guard recognition also sees the barrier. This clears the
+  #164 class at the query level — restoring "report real findings, not known-safe
+  ones." (The #164 dismissal is converted to *fixed* once a CI CodeQL run confirms
+  the loader is no longer flagged.)
+- **Code-scanning merge protection — DONE.** A `code_scanning` rule on the `main`
+  ruleset (CodeQL, `high_or_higher` / `errors`) now blocks a PR that introduces a
+  new High/Critical alert. The CodeQL `Analyze` jobs gate on the analysis
+  *running*; this rule is the piece that gates on introduced *findings*.
+- **Dependabot patch auto-merge — DONE (narrow).** `dependabot-auto-merge.yml`
+  enables GitHub native auto-merge for **patch-only**, Python/npm, grouped (=> not
+  a security PR), non-frameworks updates, after the full required-check suite is
+  green; majors, minors, container/Actions, and security PRs stay human-reviewed.
+  The policy was settled by a multi-model, primary-source research pass (the
+  earlier broad patch+minor auto-merge was removed after a docker-minor base-image
+  break — see engineering-practices.md lesson #1). The workflow passes the required
+  zizmor gate; it is validated end-to-end on the next real Dependabot patch PR.
 
 ### Medical-device GRC feature line (v0.11 → v1.1+) — PLANNED (web-grounded research 2026-06-17)
 
