@@ -109,7 +109,10 @@ def test_user_entry_shadows_bundled(tmp_path) -> None:
         user_dir_override=tmp_path,
     )
     assert source == "user"
-    assert path == fake_json
+    # resolve_catalog_path returns the RESOLVED, containment-checked path
+    # (the value its is_relative_to guard checked) so CodeQL's path-injection
+    # barrier recognizes the guard; compare against the resolved fixture path.
+    assert path == fake_json.resolve()
 
 
 def test_resolve_falls_through_to_bundled(tmp_path) -> None:

@@ -2,9 +2,18 @@
 #
 # Loads the security-extended query suite (matching what default
 # setup runs) PLUS our custom python-sanitizers pack which declares
-# `evidentia_core.security.paths.validate_within` as a sanitizer
-# for the `py/path-injection` query. The custom pack closes the
-# 3 false-positive HIGH alerts (#71/#72/#73) at the analysis layer.
+# path-injection sanitizers at the analysis layer:
+#   - `evidentia_core.security.paths.validate_within`
+#     (ValidateWithinSanitizer) — closes the false-positive HIGH
+#     alerts #71/#72/#73.
+#   - `evidentia_core.catalogs.user_dir.resolve_catalog_path`
+#     (ResolveCatalogPathSanitizer) — closes alert #164 (the catalog
+#     loader read_text), whose path is the containment-checked /
+#     trusted-manifest value this helper returns.
+#   - `evidentia_api.routers.catalog._validate_framework_id`
+#     (FrameworkIdSanitizer) — the catalog-router id validator.
+# Encoding these in committed config (not per-instance dismissals) is
+# the "systemic false positives go in config" rule.
 #
 # To verify the sanitizer is firing, look at the CodeQL job logs
 # after a push: the `Analyze` step should show the python-sanitizers

@@ -123,7 +123,16 @@ def resolve_catalog_path(
         # writes a validated ``{framework_id}.json`` (no separators, no ``..``),
         # but a hand-edited manifest could carry an escaping path — assert
         # containment so a traversal can never reach the file loader.
-        if not path.resolve().is_relative_to(user_dir.resolve()):
+        #
+        # Resolve ONCE and RETURN the resolved, containment-checked path (not the
+        # raw join). Returning the value the ``is_relative_to`` guard actually
+        # checked is what lets CodeQL's built-in ``py/path-injection`` barrier
+        # recognize the guard — previously the check ran on ``path.resolve()``
+        # but the *unchecked* ``path`` was returned, so the loader's
+        # ``read_text`` was flagged (alert #164). ``ResolveCatalogPathSanitizer``
+        # (the custom QL pack) models this return as a second, explicit barrier.
+        resolved = path.resolve()
+        if not resolved.is_relative_to(user_dir.resolve()):
             raise ValueError(
                 f"User catalog path for {framework_id!r} escapes the user "
                 "catalog directory; refusing to load."
@@ -138,9 +147,9 @@ def resolve_catalog_path(
             if bundled_manifest.get(framework_id)
             else "Framework %r resolved from user dir (%r)",
             framework_id,
-            path,
+            resolved,
         )
-        return path, user_entry, "user"
+        return resolved, user_entry, "user"
 
     # Fall back to bundled
     bundled_entry = bundled_manifest.get(framework_id)
@@ -157,4 +166,8 @@ def resolve_catalog_path(
         from evidentia_core.catalogs.loader import DATA_DIR
 
         bundled_data_dir = DATA_DIR
-    return bundled_data_dir / bundled_entry.path, bundled_entry, "bundled"
+    # Resolve the bundled path too so resolve_catalog_path uniformly returns a
+    # resolved absolute path. Bundled entries come from the trusted package
+    # manifest (not user input), but returning a single sanitized shape keeps
+    # the choke-point's output consistent for both branches + the QL sanitizer.
+    return (bundled_data_dir / bundled_entry.path).resolve(), bundled_entry, "bundled"
