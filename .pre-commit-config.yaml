@@ -89,6 +89,23 @@ repos:
         # Skip if no Python files changed — saves ~15 seconds per commit.
         files: '\.py$'
 
+      # uv audit (ADVISORY, non-blocking) — a shift-left SECOND, independent
+      # vulnerability signal. `uv audit` is EXPERIMENTAL ("may change without
+      # warning"), so it is deliberately NEVER a hard gate: the required CI
+      # vulnerability gate is osv-scanner (the SSOT, scripts/run_osv_scan.py).
+      # This hook caught the joserfc day-N CVE (GHSA-wphv-vfrh-23q5) before
+      # osv-scanner picked it up, so it earns its place as an early warning.
+      # It runs ONLY when the dependency set changes (any pyproject.toml or
+      # uv.lock) and NEVER fails the commit (`|| true`) — it surfaces
+      # advisories, it does not block. Needs network; offline it just prints
+      # nothing actionable and passes.
+      - id: uv-audit
+        name: uv audit (advisory; experimental, non-blocking)
+        language: system
+        entry: bash -c 'uv audit || true'
+        pass_filenames: false
+        files: '(pyproject\.toml|uv\.lock)$'
+
       # v0.7.15 P0.3 + v0.7.16 P1: standing-rule keyword sweep
       # closes the gap from a v0.7.13-cycle commit-message-body
       # leak (a forbidden-token phrase landed on origin/main
