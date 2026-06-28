@@ -2070,17 +2070,26 @@ engineering-hardening batch addressed all three:
   earlier broad patch+minor auto-merge was removed after a docker-minor base-image
   break — see engineering-practices.md lesson #1). The workflow passes the required
   zizmor gate; it is validated end-to-end on the next real Dependabot patch PR.
-- **Post-publish container rescan — gate on FIXABLE only — PLANNED.** The
-  `post-publish-rescan.yml` container job runs `osv-scanner` on the published image and
-  currently fails on day-N **base-OS** CVEs (a dispatch on v0.10.13 found ~81, only ~4
-  fixable, the rest Debian "No fix available") — a chronically-red gate, which the doctrine
-  forbids. Verdict (multi-model + osv-scanner primary-source verified): osv-scanner v2 has NO
-  native fixable/severity gate, so add a JSON-parse policy step (`--format json` +
-  `continue-on-error`, then fail ONLY when a vuln has an applicable fix —
-  `affected[].ranges[].events[].fixed`); keep an `if: always()` full-visibility report for
-  unfixable CVEs; use `osv-scanner.toml [[IgnoredVulns]]` + `ignoreUntil` for time-bound
-  exceptions only. Makes the rescan an actionable signal ("a fix is now available → rebuild"),
-  not noise.
+- **Post-publish container rescan — gate on FIXABLE only — DONE.** The
+  `post-publish-rescan.yml` container job no longer goes permanently red on day-N **base-OS**
+  CVEs that have no upstream fix (an osv-scanner dispatch on the published v0.10.13 image
+  reports 81 advisories, only 4 fixable — the rest Debian "No fix available") — which the
+  chronically-red-gate doctrine forbids. osv-scanner v2 has NO native fixable/severity gate
+  and exits non-zero on any advisory, so the job now captures the scan as JSON and a
+  committed, unit-tested policy step (`scripts/check_osv_fixable.py`) FAILS only when a
+  detected advisory has an applicable fix for the *detected package* — matched on the
+  package's own `ecosystem` + `name` (`affected[].ranges[].events[].fixed`), exact down to the
+  Debian release suffix; matching any affected entry that merely shares the CVE would flag 110
+  of the 248 raw vulnerability records instead of 4. Unfixable base-OS CVEs are notify-only
+  via a full-visibility job-summary report; the scan step fails *closed* on any osv-scanner
+  exit code other than 0/1 (a partial/errored scan that writes an empty result must not pass
+  green); `osv-scanner.toml [[IgnoredVulns]]` + `ignoreUntil` cover time-bound exceptions only
+  (a single allowlist definition, applied by the scanner). The JSON schema + the "4 fixable"
+  determination were verified empirically against real osv-scanner v2.3.8 output on the
+  published image, captured as a committed regression fixture. Makes the rescan an actionable
+  signal ("a fix is now available → rebuild"), not noise — and it is *expected* to fire red on
+  the current published image until a rebuild clears its 4 fixable advisories. Doctrine:
+  `docs/engineering-practices.md` ("Continuous security assurance").
 - **Container base-image migration — PLANNED.** Migrate the container off the full Debian
   `python` base to a minimal **glibc** base — `cgr.dev/chainguard/python` (Wolfi/glibc, low-CVE,
   manylinux-compatible) or `gcr.io/distroless/python3` — via a multi-stage build, plus a scheduled

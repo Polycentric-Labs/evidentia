@@ -13,11 +13,22 @@
 #      checksum-verified osv-scanner via the SSOT `scripts/run_osv_scan.py`
 #      (so the committed osv-scanner.toml allowlist + expiry warnings apply);
 #   2. pulls the published container image and osv-scans it (catches base-image
-#      OS-package CVEs the wheel closure does not cover).
+#      OS-package CVEs the wheel closure does not cover), then applies a
+#      FIXABLE-ONLY policy gate (`scripts/check_osv_fixable.py`): the run goes
+#      RED only when a detected advisory has an applicable fix ("a fix is now
+#      available -> rebuild the image"); the unfixable day-N base-OS CVEs are
+#      notify-only, rendered to the job summary for full visibility on a green
+#      run. osv-scanner v2 has no native fixable gate and exits non-zero on ANY
+#      advisory, so a published image on a full Debian base turns this gate
+#      permanently red on day-N "No fix available" distro CVEs — the project's
+#      own chronically-red anti-pattern (docs/engineering-practices.md, "Fail
+#      closed" + lesson #2). Surface reduction (a minimal glibc base + a
+#      scheduled rebuild) is the companion roadmap item.
 #
-# An un-allowlisted advisory turns the run RED so a maintainer is notified — the
-# project's own continuous-attestation thesis, applied to its OWN shipped
-# artifacts. workflow_dispatch allows an on-demand rescan of any version.
+# For the PyPI-closure job (1), an un-allowlisted advisory turns the run RED so a
+# maintainer is notified — the project's own continuous-attestation thesis,
+# applied to its OWN shipped artifacts. workflow_dispatch allows an on-demand
+# rescan of any version.
 
 name: post-publish rescan
 
@@ -120,10 +131,15 @@ jobs:
       contents: read
       packages: read
     steps:
-      - name: Checkout (for osv-scanner.toml)
+      - name: Checkout (for osv-scanner.toml + scripts/check_osv_fixable.py)
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           persist-credentials: false
+
+      - name: Set up Python (for the fixable-only policy script)
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: "3.13"
 
       - name: Install osv-scanner (v2.3.8, checksum-verified)
         run: |
@@ -142,17 +158,74 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull + osv-scan the published image
+      - name: Resolve image reference
+        id: img
         env:
-          # Dispatch input via env, not interpolated into the run block
+          # Dispatch input via env, never interpolated into a run block
           # (template-injection — zizmor High).
           VERSION_INPUT: ${{ github.event.inputs.version }}
         run: |
           set -euo pipefail
           VERSION="${VERSION_INPUT}"
           if [ -n "$VERSION" ]; then TAG="v${VERSION}"; else TAG="latest"; fi
-          IMAGE="ghcr.io/polycentric-labs/evidentia:${TAG}"
+          echo "ref=ghcr.io/polycentric-labs/evidentia:${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Pull the published image
+        env:
+          IMAGE: ${{ steps.img.outputs.ref }}
+        run: |
+          set -euo pipefail
           echo "Pulling ${IMAGE} ..."
           docker pull "${IMAGE}"
-          echo "Scanning ${IMAGE} for OS + language-package advisories ..."
-          osv-scanner scan image --config=osv-scanner.toml "${IMAGE}"
+
+      # Capture the FULL advisory report as JSON; the policy step below decides
+      # pass/fail. osv-scanner has no native fixable gate, so we cannot let it
+      # set the job result directly — but we MUST distinguish "ran fine, found
+      # advisories" from "errored". osv-scanner exits 0 (no advisories) or 1
+      # (advisories found — the normal case for an image on a general-purpose
+      # base); ANY other code is a scanner failure. Critically, a vuln-DB load
+      # error after package extraction exits non-zero yet still writes a
+      # structurally-valid but EMPTY `{"results": []}` file — so trusting the
+      # file content alone would let an errored scan look like a clean image and
+      # pass GREEN (a reachable false negative). We therefore whitelist exit
+      # 0/1 and FAIL CLOSED on anything else, here, rather than swallowing it
+      # with continue-on-error. `--config` applies osv-scanner.toml so its
+      # [[IgnoredVulns]] + `ignoreUntil` time-bound exceptions stay a single
+      # definition (vuln-id-level accepts, applied on every scan surface).
+      # Default filtering is kept (no `--all-vulns`).
+      - name: osv-scan the image (capture JSON; fail closed on scanner error)
+        id: scan
+        env:
+          IMAGE: ${{ steps.img.outputs.ref }}
+        run: |
+          set -euo pipefail
+          echo "Scanning ${IMAGE} (OS + language advisories) -> rescan.json ..."
+          rc=0
+          osv-scanner scan image \
+            --config=osv-scanner.toml \
+            --format json \
+            --output-file rescan.json \
+            "${IMAGE}" || rc=$?
+          if [ "$rc" -ne 0 ] && [ "$rc" -ne 1 ]; then
+            echo "::error::osv-scanner errored (exit ${rc}); a partial/errored scan must not pass — failing closed."
+            exit 1
+          fi
+          echo "osv-scanner completed (exit ${rc}); evaluating fixability next."
+
+      # The doctrine fix: FAIL only when a detected advisory has an APPLICABLE
+      # fix (rebuild the published image); unfixable day-N base-OS CVEs are
+      # notify-only and rendered to the job summary, so the rescan is an
+      # actionable signal instead of a permanently-red gate. Runs only when the
+      # scan above succeeded (a scanner error already failed the job, fail-
+      # closed); a missing/malformed rescan.json still makes the script exit 2
+      # as a defensive backstop. NOTE: this gate is *expected* to go red on the
+      # currently-published image (it carries fixable advisories) until the next
+      # rebuild clears them — that is the signal working, not a regression.
+      - name: Gate on FIXABLE advisories (unfixable = notify-only) + report
+        env:
+          IMAGE: ${{ steps.img.outputs.ref }}
+        run: |
+          set -euo pipefail
+          python scripts/check_osv_fixable.py rescan.json \
+            --image "${IMAGE}" \
+            --summary-file "$GITHUB_STEP_SUMMARY"

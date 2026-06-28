@@ -1,0 +1,1265 @@
+{
+  "results": [
+    {
+      "source": {
+        "path": "/var/lib/dpkg/status",
+        "type": "os"
+      },
+      "packages": [
+        {
+          "package": {
+            "name": "libssh2",
+            "os_package_name": "libssh2-1t64",
+            "version": "1.11.1-1",
+            "ecosystem": "Debian:13",
+            "image_origin_details": {
+              "index": 9
+            }
+          },
+          "groups": [
+            {
+              "ids": [
+                "DEBIAN-CVE-2025-15661"
+              ],
+              "aliases": [
+                "CVE-2025-15661",
+                "DEBIAN-CVE-2025-15661"
+              ],
+              "max_severity": "6.5"
+            },
+            {
+              "ids": [
+                "DEBIAN-CVE-2026-55199"
+              ],
+              "aliases": [
+                "CVE-2026-55199",
+                "DEBIAN-CVE-2026-55199"
+              ],
+              "max_severity": "7.5"
+            },
+            {
+              "ids": [
+                "DEBIAN-CVE-2026-55200"
+              ],
+              "aliases": [
+                "CVE-2026-55200",
+                "DEBIAN-CVE-2026-55200"
+              ],
+              "max_severity": "9.8"
+            },
+            {
+              "ids": [
+                "DEBIAN-CVE-2026-58050"
+              ],
+              "aliases": [
+                "CVE-2026-58050",
+                "DEBIAN-CVE-2026-58050"
+              ],
+              "max_severity": "7.0"
+            },
+            {
+              "ids": [
+                "DEBIAN-CVE-2026-58051"
+              ],
+              "aliases": [
+                "CVE-2026-58051",
+                "DEBIAN-CVE-2026-58051"
+              ],
+              "max_severity": "6.5"
+            },
+            {
+              "ids": [
+                "DEBIAN-CVE-2026-7598"
+              ],
+              "aliases": [
+                "CVE-2026-7598",
+                "DEBIAN-CVE-2026-7598"
+              ],
+              "max_severity": "6.9"
+            }
+          ],
+          "vulnerabilities": [
+            {
+              "id": "DEBIAN-CVE-2025-15661",
+              "aliases": null,
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=bullseye"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:12",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=bookworm"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:13",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=trixie"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.11.1-1+deb13u1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:14",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=forky"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.11.1-4"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                }
+              ],
+              "severity": [
+                {
+                  "score": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:N/A:H",
+                  "type": "CVSS_V3"
+                }
+              ]
+            },
+            {
+              "id": "DEBIAN-CVE-2026-55199",
+              "aliases": null,
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=bullseye"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:12",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=bookworm"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:13",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=trixie"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.11.1-1+deb13u1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:14",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=forky"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.11.1-4"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                }
+              ],
+              "severity": [
+                {
+                  "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+                  "type": "CVSS_V3"
+                }
+              ]
+            },
+            {
+              "id": "DEBIAN-CVE-2026-55200",
+              "aliases": null,
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=bullseye"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:12",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=bookworm"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:13",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=trixie"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.11.1-1+deb13u1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:14",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=forky"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.11.1-4"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                }
+              ],
+              "severity": [
+                {
+                  "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+                  "type": "CVSS_V3"
+                }
+              ]
+            },
+            {
+              "id": "DEBIAN-CVE-2026-58050",
+              "aliases": null,
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=bullseye"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:12",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=bookworm"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:13",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=trixie"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:14",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=forky"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                }
+              ],
+              "severity": [
+                {
+                  "score": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:H",
+                  "type": "CVSS_V3"
+                }
+              ]
+            },
+            {
+              "id": "DEBIAN-CVE-2026-58051",
+              "aliases": null,
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=bullseye"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:12",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=bookworm"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:13",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=trixie"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:14",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=forky"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                }
+              ],
+              "severity": [
+                {
+                  "score": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:H",
+                  "type": "CVSS_V3"
+                }
+              ]
+            },
+            {
+              "id": "DEBIAN-CVE-2026-7598",
+              "aliases": null,
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=bullseye"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:12",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=bookworm"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:13",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=trixie"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.11.1-1+deb13u1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:14",
+                    "name": "libssh2",
+                    "purl": "pkg:deb/debian/libssh2?arch=source&distro=forky"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.11.1-3"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                }
+              ],
+              "severity": [
+                {
+                  "score": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:L/VI:L/VA:L/SC:N/SI:N/SA:N/E:X/CR:X/IR:X/AR:X/MAV:X/MAC:X/MAT:X/MPR:X/MUI:X/MVC:X/MVI:X/MVA:X/MSC:X/MSI:X/MSA:X/S:X/AU:X/R:X/V:X/RE:X/U:X",
+                  "type": "CVSS_V4"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "package": {
+            "name": "gnutls28",
+            "os_package_name": "libgnutls30t64",
+            "version": "3.8.9-3+deb13u4",
+            "ecosystem": "Debian:13",
+            "image_origin_details": {
+              "index": 9
+            }
+          },
+          "groups": [
+            {
+              "ids": [
+                "DEBIAN-CVE-2011-3389"
+              ],
+              "aliases": [
+                "CVE-2011-3389",
+                "DEBIAN-CVE-2011-3389"
+              ],
+              "experimental_analysis": {
+                "DEBIAN-CVE-2011-3389": {
+                  "called": true,
+                  "unimportant": true
+                }
+              },
+              "max_severity": ""
+            }
+          ],
+          "vulnerabilities": [
+            {
+              "id": "DEBIAN-CVE-2011-3389",
+              "aliases": null,
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "asterisk",
+                    "purl": "pkg:deb/debian/asterisk?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1:13.7.2~dfsg-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "bouncycastle",
+                    "purl": "pkg:deb/debian/bouncycastle?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.49+dfsg-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:12",
+                    "name": "bouncycastle",
+                    "purl": "pkg:deb/debian/bouncycastle?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.49+dfsg-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:13",
+                    "name": "bouncycastle",
+                    "purl": "pkg:deb/debian/bouncycastle?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.49+dfsg-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:14",
+                    "name": "bouncycastle",
+                    "purl": "pkg:deb/debian/bouncycastle?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.49+dfsg-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "curl",
+                    "purl": "pkg:deb/debian/curl?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "7.24.0-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:12",
+                    "name": "curl",
+                    "purl": "pkg:deb/debian/curl?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "7.24.0-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:13",
+                    "name": "curl",
+                    "purl": "pkg:deb/debian/curl?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "7.24.0-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:14",
+                    "name": "curl",
+                    "purl": "pkg:deb/debian/curl?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "7.24.0-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "erlang",
+                    "purl": "pkg:deb/debian/erlang?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1:15.b-dfsg-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:12",
+                    "name": "erlang",
+                    "purl": "pkg:deb/debian/erlang?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1:15.b-dfsg-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:13",
+                    "name": "erlang",
+                    "purl": "pkg:deb/debian/erlang?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1:15.b-dfsg-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:14",
+                    "name": "erlang",
+                    "purl": "pkg:deb/debian/erlang?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1:15.b-dfsg-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "gnutls28",
+                    "purl": "pkg:deb/debian/gnutls28?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:12",
+                    "name": "gnutls28",
+                    "purl": "pkg:deb/debian/gnutls28?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:13",
+                    "name": "gnutls28",
+                    "purl": "pkg:deb/debian/gnutls28?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:14",
+                    "name": "gnutls28",
+                    "purl": "pkg:deb/debian/gnutls28?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "haskell-tls",
+                    "purl": "pkg:deb/debian/haskell-tls?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:12",
+                    "name": "haskell-tls",
+                    "purl": "pkg:deb/debian/haskell-tls?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:13",
+                    "name": "haskell-tls",
+                    "purl": "pkg:deb/debian/haskell-tls?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:14",
+                    "name": "haskell-tls",
+                    "purl": "pkg:deb/debian/haskell-tls?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "lighttpd",
+                    "purl": "pkg:deb/debian/lighttpd?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.4.30-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:12",
+                    "name": "lighttpd",
+                    "purl": "pkg:deb/debian/lighttpd?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.4.30-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:13",
+                    "name": "lighttpd",
+                    "purl": "pkg:deb/debian/lighttpd?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.4.30-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:14",
+                    "name": "lighttpd",
+                    "purl": "pkg:deb/debian/lighttpd?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "1.4.30-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "nss",
+                    "purl": "pkg:deb/debian/nss?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "3.13.1.with.ckbi.1.88-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:12",
+                    "name": "nss",
+                    "purl": "pkg:deb/debian/nss?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "3.13.1.with.ckbi.1.88-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:13",
+                    "name": "nss",
+                    "purl": "pkg:deb/debian/nss?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "3.13.1.with.ckbi.1.88-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:14",
+                    "name": "nss",
+                    "purl": "pkg:deb/debian/nss?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "3.13.1.with.ckbi.1.88-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "pound",
+                    "purl": "pkg:deb/debian/pound?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "2.6-2"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:13",
+                    "name": "pound",
+                    "purl": "pkg:deb/debian/pound?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "2.6-2"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:14",
+                    "name": "pound",
+                    "purl": "pkg:deb/debian/pound?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "2.6-2"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                },
+                {
+                  "package": {
+                    "ecosystem": "Debian:11",
+                    "name": "python2.7",
+                    "purl": "pkg:deb/debian/python2.7?arch=source"
+                  },
+                  "ranges": [
+                    {
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "2.7.3~rc1-1"
+                        }
+                      ],
+                      "type": "ECOSYSTEM"
+                    }
+                  ]
+                }
+              ],
+              "severity": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
