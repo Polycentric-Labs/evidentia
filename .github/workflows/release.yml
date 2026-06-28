@@ -145,7 +145,7 @@ jobs:
       # packages/evidentia-ui; the hatchling build hook drives `npm run build`
       # during `uv build`, so Node must be provisioned.
       - name: Set up Node
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0 # zizmor: ignore[cache-poisoning]
         with:
           node-version: "20"
           # No npm cache in the release build (zizmor cache-poisoning hardening):
@@ -595,7 +595,7 @@ jobs:
           STEPS_PUSH_OUTPUTS_DIGEST: ${{ steps.push.outputs.digest }}
 
       - name: Create the GitHub Release (wheels + container, full body)
-        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b  # v3.0.1
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1 # zizmor: ignore[superfluous-actions]
         with:
           body_path: release-body.md
           files: |
