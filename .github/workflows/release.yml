@@ -403,7 +403,7 @@ jobs:
       # design produced (dist/ subdir + root-level SBOM).
       - name: Generate SLSA build provenance attestation
         id: provenance
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32  # v4.1.0
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373  # v4.1.1
         with:
           subject-path: |
             dist/*.whl
@@ -533,7 +533,7 @@ jobs:
             ghcr.io/polycentric-labs/evidentia@${STEPS_PUSH_OUTPUTS_DIGEST}
 
       - name: Generate SLSA build provenance attestation for image
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32  # v4.1.0
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373  # v4.1.1
         with:
           subject-name: ghcr.io/polycentric-labs/evidentia
           subject-digest: ${{ steps.push.outputs.digest }}
