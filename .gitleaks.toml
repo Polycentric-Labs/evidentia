@@ -48,3 +48,18 @@ paths = [
     '''tests/integration/test_api/test_gaps\.py''',
     '''tests/integration/test_api/test_sse_endpoints\.py''',
 ]
+
+# Value-precise regex allowlist (matched against the detected SECRET, NOT the
+# file path — so real source stays fully scanned). The generic-api-key
+# high-entropy rule trips on pyca/cryptography public TYPE NAMES used in the
+# OSCAL air-gap signing module's type aliases / annotations, e.g.
+# `_PrivateKey = Ed25519PrivateKey | RSAPrivateKey` (keysign.py). These are
+# class names exported by the `cryptography` library — never credentials.
+# Scoped to these exact tokens, so a genuine high-entropy secret anywhere
+# (including the same file) still flags.
+regexes = [
+    '''Ed25519PrivateKey''',
+    '''RSAPrivateKey''',
+    '''Ed25519PublicKey''',
+    '''RSAPublicKey''',
+]
