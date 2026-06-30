@@ -155,6 +155,61 @@ publicly.
   security property holds even with zero optional extras installed — a property
   that is itself verified by a dedicated CI job.
 
+### Air-gap DSSE signing architecture
+
+Evidentia ships a binary-free, air-gap-native signing path that works inside
+distroless and minimal-base containers without a `gpg` binary or network access.
+It complements — and in constrained environments replaces — the GPG and Sigstore
+signing paths.
+
+**Implementation.** `evidentia_core.oscal.keysign` produces DSSE envelopes
+(Dead Simple Signing Envelope, per the
+[secure-systems-lab/dsse](https://github.com/secure-systems-lab/dsse) spec)
+carrying an in-toto Statement v1 payload. The statement binds the artifact's
+canonical-JSON SHA-256 digest to the signing key. The signature algorithm is
+auto-detected from the operator-supplied key: **Ed25519** (recommended —
+constant-time, compact signature) or **RSA-PSS-SHA-256** (for operators whose
+deployment requires RSA). The `cryptography` library (PyPI) is the only
+dependency; no subprocess, no network.
+
+**Trust model.** The operator pins the expected public key via `--verify-key
+<pubkey.pem>`. Verification is fail-closed: if the DSSE file is absent, the
+envelope is malformed, or the signature does not verify against the pinned key,
+the `evidentia oscal verify` command exits non-zero. The `keyId` field in the
+envelope is a hint (the SHA-256 of the public key's DER-encoded SubjectPublicKeyInfo)
+— it is informational, not an authority decision. The decision is made by
+`--verify-key`: only the pinned key can make the verification pass.
+
+**What a passing verify actually asserts.** A passing DSSE leg means: the
+operator-supplied key signed over this exact canonical-JSON content. It does
+**not** assert the artifact's filename, the directory it lives in, or the
+recency of the signing event. `signedAt` in the predicate is signer-asserted
+wall-clock time — not a trusted timestamp. Key-based DSSE has no revocation or
+expiry channel — trust is pinned-key-scoped. `subject.name` carries the
+artifact filename at sign time and is non-authoritative: a renamed file whose
+content is unchanged still verifies.
+
+**Normative verify sequence.** `verify_oscal_file` enforces this order:
+1. Parse and load the DSSE envelope.
+2. Derive the signing algorithm from the **pinned key only** (not from the
+   envelope header).
+3. Verify the DSSE Pre-Authentication Encoding (PAE) signature.
+4. Check `payloadType` is `application/vnd.in-toto+json`.
+5. Check `_type` / `predicateType` in the decoded statement.
+6. Cross-check the envelope's `predicate.algorithm` against the pinned key's
+   expected algorithm — a mismatch (e.g., `ed25519` key presented against an
+   `rsa-pss-sha256` envelope) fails closed.
+7. Recompute the artifact's canonical-JSON SHA-256 and compare against the
+   `subject[].digest.sha256` — a content change (even a byte flip in the OSCAL
+   body) fails here.
+
+**FIPS note.** DSSE + Ed25519/RSA-PSS is a signature *format*, not a
+crypto-module validation. The stock `cryptography` Python wheel bundles its own
+OpenSSL and is **not FIPS-validated**. Deployments requiring FIPS must use a
+FIPS-validated cryptographic module and approved configuration (e.g., a
+FIPS-OpenSSL base image); see the roadmap engineering follow-ups for the P3
+FIPS-base migration.
+
 ---
 
 ## Research rigor

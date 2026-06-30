@@ -835,6 +835,8 @@ def _register_tools(
         require_signature: bool = True,
         expected_sigstore_identity: str | None = None,
         expected_sigstore_issuer: str | None = None,
+        verify_key_path: str | None = None,
+        dsse_bundle_path: str | None = None,
     ) -> dict[str, Any]:
         """Verify an OSCAL Assessment Result file's signatures + digests.
 
@@ -875,13 +877,25 @@ def _register_tools(
             expected_sigstore_issuer: Required Sigstore identity issuer
                 (e.g., ``https://token.actions.githubusercontent.com``).
                 Both-or-neither with ``expected_sigstore_identity``.
+            verify_key_path: Filesystem path to the PEM-encoded Ed25519
+                or RSA public key used for DSSE envelope verification.
+                Resolved against ``--allow-root`` when set. When ``None``
+                the DSSE path is skipped. Signing stays CLI-only; this
+                tool is read-only.
+            dsse_bundle_path: Filesystem path to an explicit DSSE bundle
+                (``.dsse.json``). Resolved against ``--allow-root`` when
+                set. When ``None`` the verifier looks for the co-located
+                ``<ar>.dsse.json`` sidecar automatically.
 
         Returns:
             JSON-serializable verification report — ``ar_path``,
             ``digest_checks`` (list of per-back-matter-resource
-            digest outcomes), ``signature_valid``, ``signature_kind``
-            (``"gpg"`` / ``"sigstore"`` / ``None``), ``errors`` (list
-            of human-readable failure reasons), ``warnings``.
+            digest outcomes), ``signature_valid``, ``errors`` (list
+            of human-readable failure reasons), ``warnings``,
+            ``dsse_signature_valid`` (bool or None when not checked),
+            ``dsse_signer_key_id`` (SHA-256 hex of the signing key's
+            SPKI), ``dsse_algorithm`` (``"ed25519"`` or
+            ``"rsa-pss-sha256"``).
 
         Raises:
             FileNotFoundError: ``ar_path`` does not exist (or
@@ -913,11 +927,28 @@ def _register_tools(
             path = candidate.resolve(strict=False)
         if not path.exists():
             raise FileNotFoundError(f"OSCAL AR file not found: {path}")
+
+        def _resolve_opt(candidate_str: str | None) -> Path | None:
+            """Resolve an optional path through the same allow-root gate."""
+            if candidate_str is None:
+                return None
+            cand = Path(candidate_str).expanduser()
+            return (
+                validate_within(cand, resolved_allow_root)
+                if resolved_allow_root is not None
+                else cand.resolve(strict=False)
+            )
+
+        verify_key_resolved = _resolve_opt(verify_key_path)
+        dsse_bundle_resolved = _resolve_opt(dsse_bundle_path)
+
         report = verify_ar_file(
             path,
             require_signature=require_signature,
             expected_sigstore_identity=expected_sigstore_identity,
             expected_sigstore_issuer=expected_sigstore_issuer,
+            verify_key_path=verify_key_resolved,
+            dsse_bundle_path=dsse_bundle_resolved,
         )
         # VerifyReport is a stdlib @dataclass (not Pydantic), so go
         # through dataclasses.asdict + add the computed properties

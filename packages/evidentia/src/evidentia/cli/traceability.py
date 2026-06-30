@@ -94,6 +94,19 @@ def emit(
         "--sigstore-identity-token",
         help="Explicit OIDC token for Sigstore signing (else auto-detected).",
     ),
+    sign_with_key: Path | None = typer.Option(
+        None,
+        "--sign-with-key",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help=(
+            "PEM/PKCS#8 private key (Ed25519 or RSA) to DSSE-sign the emitted "
+            "profile to <output>.dsse.json — air-gap-clean (no gpg binary). "
+            "Encrypted keys: $EVIDENTIA_SIGNING_KEY_PASSPHRASE."
+        ),
+    ),
 ) -> None:
     """Emit the Control↔Threat Traceability Matrix as a signable OSCAL profile."""
     try:
@@ -140,8 +153,25 @@ def emit(
         console.print(f"[green]Sigstore bundle:[/green] {bundle}")
         signed = True
 
+    if sign_with_key:
+        from evidentia_core.oscal.keysign import sign_oscal_file
+
+        try:
+            dsse_out = sign_oscal_file(output, key_path=sign_with_key)
+        except Exception as e:
+            console.print(f"[red]DSSE signing failed:[/red] {e}")
+            raise typer.Exit(code=1) from e
+        console.print(f"[green]DSSE envelope:[/green] {dsse_out}")
+        signed = True
+
     if signed:
-        console.print(
-            f"[dim]Verify with:[/dim] evidentia oscal verify {output} "
-            "--require-signature"
-        )
+        if sign_with_key and not sign_with_gpg and not sign_with_sigstore:
+            console.print(
+                f"[dim]Verify with:[/dim] evidentia oscal verify {output} "
+                f"--verify-key <pubkey.pem> --require-signature"
+            )
+        else:
+            console.print(
+                f"[dim]Verify with:[/dim] evidentia oscal verify {output} "
+                "--require-signature"
+            )

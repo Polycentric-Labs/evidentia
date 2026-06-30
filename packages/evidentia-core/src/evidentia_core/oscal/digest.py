@@ -34,6 +34,24 @@ add sha384 / sha512 behind an algo parameter in a later release if
 FedRAMP High or DoD IL5 customers require them."""
 
 
+def canonical_json_bytes(data: Any) -> bytes:
+    """Serialize ``data`` to Evidentia-canonical JSON *bytes*.
+
+    The single shared canonicalizer. ``sort_keys`` + compact separators give
+    bit-for-bit reproducibility; ``default=str`` is a defensive fallback for
+    non-JSON-native values; ``ensure_ascii=True`` is pinned so the DSSE PAE's
+    byte-length field is deterministic. ``digest_json`` and the DSSE signing
+    path both go through this — never re-implement ``json.dumps`` elsewhere.
+
+    NOTE: this is Evidentia-canonical, NOT RFC-8785 JCS. Internal soundness
+    does not depend on any other tool reproducing it (the DSSE signature is
+    verified over the stored payload bytes).
+    """
+    return json.dumps(
+        data, sort_keys=True, separators=(",", ":"), default=str, ensure_ascii=True
+    ).encode("utf-8")
+
+
 def digest_bytes(data: bytes) -> str:
     """Compute the SHA-256 digest of a raw bytes payload.
 
@@ -78,12 +96,10 @@ def digest_model(model: BaseModel) -> str:
 def digest_json(data: Any) -> str:
     """Compute the SHA-256 digest of any JSON-serializable Python object.
 
-    Uses the same canonical-JSON serialization as :func:`digest_model`
-    so the two functions agree on shape (a ``BaseModel`` and its
-    ``.model_dump(mode="json")`` produce the same digest).
+    Uses the shared :func:`canonical_json_bytes` so the bytes that get hashed
+    are identical to the DSSE-signing path's payload canonicalization.
     """
-    canonical = json.dumps(data, sort_keys=True, separators=(",", ":"), default=str)
-    return digest_bytes(canonical.encode("utf-8"))
+    return digest_bytes(canonical_json_bytes(data))
 
 
 def format_digest(hex_digest: str) -> str:

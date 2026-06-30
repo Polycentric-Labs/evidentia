@@ -55,3 +55,34 @@ def test_empty_mappings_exits_nonzero(tmp_path: Path) -> None:
     result = runner.invoke(app, ["traceability", "emit","-i", str(empty), "-o", str(out)])
 
     assert result.exit_code == 2
+
+
+def test_traceability_emit_sign_with_key(tmp_path: Path) -> None:
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+    key = Ed25519PrivateKey.generate()
+    priv = tmp_path / "k.key"
+    priv.write_bytes(
+        key.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption(),
+        )
+    )
+    out = tmp_path / "profile.json"
+    result = runner.invoke(
+        app,
+        [
+            "traceability",
+            "emit",
+            "--input",
+            str(_EXAMPLE),
+            "--output",
+            str(out),
+            "--sign-with-key",
+            str(priv),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "profile.json.dsse.json").is_file()

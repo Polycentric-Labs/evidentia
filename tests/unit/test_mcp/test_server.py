@@ -518,6 +518,101 @@ class TestGapDiffPathGating:
 # ── 3. CLI doctor ──────────────────────────────────────────────────
 
 
+class TestVerifySignedArtifactDSSE:
+    """Task-13: verify_signed_artifact DSSE path params (v0.10.15)."""
+
+    def test_verify_signed_artifact_dsse(self, tmp_path: Path) -> None:
+        """Sign a real AR on disk and verify via MCP tool with verify_key_path."""
+        import json as _json
+
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+        from evidentia_core.oscal import keysign
+
+        key = Ed25519PrivateKey.generate()
+        priv = tmp_path / "k.key"
+        pub = tmp_path / "k.pub"
+        priv.write_bytes(
+            key.private_bytes(
+                serialization.Encoding.PEM,
+                serialization.PrivateFormat.PKCS8,
+                serialization.NoEncryption(),
+            )
+        )
+        pub.write_bytes(
+            key.public_key().public_bytes(
+                serialization.Encoding.PEM,
+                serialization.PublicFormat.SubjectPublicKeyInfo,
+            )
+        )
+        ar = tmp_path / "audit.oscal-ar.json"
+        ar.write_text(
+            _json.dumps({"assessment-results": {"uuid": "u1"}}),
+            encoding="utf-8",
+        )
+        keysign.sign_oscal_file(ar, key_path=priv)
+
+        server = build_server()
+        result = _invoke_tool(
+            server,
+            "verify_signed_artifact",
+            ar_path=str(ar),
+            require_signature=True,
+            verify_key_path=str(pub),
+        )
+        assert result["dsse_signature_valid"] is True
+
+
+class TestVerifySignedArtifactPathGating:
+    """TQ-2: verify_signed_artifact gates verify_key_path + dsse_bundle_path
+    through the same allow-root check as the other file-path tools."""
+
+    def test_verify_key_path_outside_allow_root_raises(
+        self, tmp_path: Path
+    ) -> None:
+        """verify_key_path that resolves outside --allow-root → PathTraversalError."""
+        safe_root = tmp_path / "safe"
+        safe_root.mkdir()
+        ar_path = safe_root / "audit.oscal-ar.json"
+        ar_path.write_text("{}", encoding="utf-8")
+        # The key lives outside safe_root
+        outside_key = tmp_path / "outside.pub"
+        outside_key.write_text("dummy", encoding="utf-8")
+
+        server = build_server(allow_root=safe_root)
+        with pytest.raises(PathTraversalError):
+            _invoke_tool(
+                server,
+                "verify_signed_artifact",
+                ar_path=str(ar_path),
+                verify_key_path=str(outside_key),
+            )
+
+    def test_dsse_bundle_path_outside_allow_root_raises(
+        self, tmp_path: Path
+    ) -> None:
+        """dsse_bundle_path that resolves outside --allow-root → PathTraversalError."""
+        safe_root = tmp_path / "safe"
+        safe_root.mkdir()
+        ar_path = safe_root / "audit.oscal-ar.json"
+        ar_path.write_text("{}", encoding="utf-8")
+        # The bundle lives outside safe_root
+        outside_bundle = tmp_path / "outside.dsse.json"
+        outside_bundle.write_text("{}", encoding="utf-8")
+
+        server = build_server(allow_root=safe_root)
+        with pytest.raises(PathTraversalError):
+            _invoke_tool(
+                server,
+                "verify_signed_artifact",
+                ar_path=str(ar_path),
+                dsse_bundle_path=str(outside_bundle),
+            )
+
+
+# ── 3. CLI doctor ──────────────────────────────────────────────────
+
+
 class TestCLI:
     def test_doctor_returns_zero_on_pass(self) -> None:
         runner = CliRunner()

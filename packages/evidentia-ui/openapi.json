@@ -5582,6 +5582,18 @@
             "title": "Content",
             "type": "string"
           },
+          "dsse_envelope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional DSSE envelope (the <ar>.dsse.json contents), inline as a JSON string. Requires verify_public_key (both-or-neither).",
+            "title": "Dsse Envelope"
+          },
           "expected_sigstore_identity": {
             "anyOf": [
               {
@@ -5605,6 +5617,18 @@
             ],
             "description": "Expected Sigstore identity issuer URL (e.g. 'https://token.actions.githubusercontent.com'). Public identity string. Both-or-neither with expected_sigstore_identity.",
             "title": "Expected Sigstore Issuer"
+          },
+          "verify_public_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional PEM public key (Ed25519 or RSA) pinning the DSSE signer. Requires dsse_envelope (both-or-neither).",
+            "title": "Verify Public Key"
           }
         },
         "required": [

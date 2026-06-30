@@ -74,6 +74,9 @@ class VerifyReport:
     sigstore_signer_identity: str | None = None
     sigstore_signer_issuer: str | None = None
     sigstore_rekor_log_index: int | None = None
+    dsse_signature_valid: bool | None = None  # None = not checked
+    dsse_signer_key_id: str | None = None
+    dsse_algorithm: str | None = None
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
@@ -105,6 +108,7 @@ class VerifyReport:
             bool(self.digest_checks)
             or self.signature_valid is not None
             or self.sigstore_signature_valid is not None
+            or self.dsse_signature_valid is not None
         )
 
     @property
@@ -133,6 +137,8 @@ class VerifyReport:
         if any(not check.valid for check in self.digest_checks):
             return False
         if self.signature_valid is False:
+            return False
+        if self.dsse_signature_valid is False:
             return False
         # ``is not False`` covers both valid-True and not-checked-None in
         # one comparison (mirrors the ``signature_valid`` check above
@@ -243,6 +249,8 @@ def verify_ar_file(
     sigstore_bundle_path: str | Path | None = None,
     expected_sigstore_identity: str | None = None,
     expected_sigstore_issuer: str | None = None,
+    verify_key_path: str | Path | None = None,
+    dsse_bundle_path: str | Path | None = None,
 ) -> VerifyReport:
     """Verify an OSCAL AR JSON file end-to-end.
 
@@ -323,14 +331,23 @@ def verify_ar_file(
     )
     sigstore_exists = check_sigstore and sigstore_path.is_file()
 
-    # require_signature is satisfied by EITHER GPG or Sigstore in v0.7.0+
-    if require_signature and not gpg_exists and not sigstore_exists:
+    # ── DSSE (cryptography-native) path ─────────────────────────────────
+    dsse_path = (
+        Path(dsse_bundle_path)
+        if dsse_bundle_path
+        else ar_path.with_suffix(ar_path.suffix + ".dsse.json")
+    )
+    dsse_exists = dsse_path.is_file()
+
+    # require_signature is satisfied by GPG, Sigstore, or DSSE (v0.11+)
+    if require_signature and not gpg_exists and not sigstore_exists and not dsse_exists:
         report.errors.append(
-            f"Signature required but neither found: {sig_path} or "
-            f"{sigstore_path}"
+            f"Signature required but none found: {sig_path}, {sigstore_path}, "
+            f"or {dsse_path}"
         )
         report.signature_valid = False
         report.sigstore_signature_valid = False
+        report.dsse_signature_valid = False
         return report
 
     if gpg_exists:
@@ -407,6 +424,28 @@ def verify_ar_file(
         report.sigstore_signer_identity = ss_result.signer_identity
         report.sigstore_signer_issuer = ss_result.signer_issuer
         report.sigstore_rekor_log_index = ss_result.rekor_log_index
+
+    if dsse_exists:
+        if verify_key_path is None:
+            report.errors.append(
+                f"DSSE envelope found ({dsse_path}) but no --verify-key supplied; "
+                "key-based DSSE verification requires a pinned public key (fail-closed)."
+            )
+            report.dsse_signature_valid = False
+            return report
+        from evidentia_core.oscal.keysign import KeySignError, verify_oscal_file
+
+        try:
+            ds_result = verify_oscal_file(
+                ar_path, verify_key_path=verify_key_path, dsse_path=dsse_path
+            )
+        except KeySignError as e:
+            report.errors.append(f"DSSE verification failed: {e}")
+            report.dsse_signature_valid = False
+            return report
+        report.dsse_signature_valid = ds_result.valid
+        report.dsse_signer_key_id = ds_result.signer_key_id
+        report.dsse_algorithm = ds_result.algorithm
 
     return report
 
