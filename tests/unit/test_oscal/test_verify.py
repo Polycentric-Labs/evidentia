@@ -20,6 +20,7 @@ from evidentia_core.models.gap import (
     GapStatus,
     ImplementationEffort,
 )
+from evidentia_core.oscal import keysign
 from evidentia_core.oscal.exporter import gap_report_to_oscal_ar
 from evidentia_core.oscal.verify import verify_ar_file, verify_digests
 
@@ -482,3 +483,57 @@ def test_verify_ar_file_sigstore_single_flag_fails_with_report_error(
     assert any("provided together" in e for e in report.errors)
     # The misleading any-signer warning must NOT fire on the error path.
     assert not any("UnsafeNoOp" in w for w in report.warnings)
+
+
+# ── DSSE (cryptography-native) leg in verify_ar_file (Task 7) ────────────
+
+
+def _signed_ar(tmp_path):  # type: ignore[no-untyped-def]
+    """Create a freshly DSSE-signed AR file; return (ar_path, pub_key_path)."""
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+    key = Ed25519PrivateKey.generate()
+    priv = tmp_path / "k.key"
+    pub = tmp_path / "k.pub"
+    priv.write_bytes(
+        key.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption(),
+        )
+    )
+    pub.write_bytes(
+        key.public_key().public_bytes(
+            serialization.Encoding.PEM,
+            serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+    )
+    ar = tmp_path / "audit.oscal-ar.json"
+    ar.write_text(json.dumps({"assessment-results": {"uuid": "u1"}}), encoding="utf-8")
+    keysign.sign_oscal_file(ar, key_path=priv)
+    return ar, pub
+
+
+def test_verify_ar_file_dsse_pass(tmp_path: Path) -> None:
+    """A valid DSSE envelope + matching key → dsse_signature_valid=True + overall_valid=True."""
+    ar, pub = _signed_ar(tmp_path)
+    report = verify_ar_file(ar, verify_key_path=pub)
+    assert report.dsse_signature_valid is True
+    assert report.overall_valid is True
+
+
+def test_verify_ar_file_dsse_present_without_key_is_error(tmp_path: Path) -> None:
+    """DSSE envelope present but no verify_key_path → fail-closed: dsse_signature_valid=False."""
+    ar, _ = _signed_ar(tmp_path)
+    report = verify_ar_file(ar)  # no verify_key_path
+    assert report.dsse_signature_valid is False
+    assert report.overall_valid is False
+    assert any("verify-key" in e for e in report.errors)
+
+
+def test_require_signature_satisfied_by_dsse(tmp_path: Path) -> None:
+    """require_signature=True is satisfied by a valid DSSE envelope alone."""
+    ar, pub = _signed_ar(tmp_path)
+    report = verify_ar_file(ar, require_signature=True, verify_key_path=pub)
+    assert report.overall_valid is True

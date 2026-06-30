@@ -6544,6 +6544,11 @@ export interface components {
              */
             content: string;
             /**
+             * Dsse Envelope
+             * @description Optional DSSE envelope (the <ar>.dsse.json contents), inline as a JSON string. Requires verify_public_key (both-or-neither).
+             */
+            dsse_envelope?: string | null;
+            /**
              * Expected Sigstore Identity
              * @description Expected Sigstore signer identity (email or OIDC subject). Public identity string. Both-or-neither with expected_sigstore_issuer (cosign model).
              */
@@ -6553,6 +6558,11 @@ export interface components {
              * @description Expected Sigstore identity issuer URL (e.g. 'https://token.actions.githubusercontent.com'). Public identity string. Both-or-neither with expected_sigstore_identity.
              */
             expected_sigstore_issuer?: string | null;
+            /**
+             * Verify Public Key
+             * @description Optional PEM public key (Ed25519 or RSA) pinning the DSSE signer. Requires dsse_envelope (both-or-neither).
+             */
+            verify_public_key?: string | null;
         };
         /**
          * VersionResponse

@@ -179,4 +179,26 @@ describe("OscalVerifyPage", () => {
       screen.getByText(/content is not valid json/i),
     ).toBeInTheDocument();
   });
+
+  it("renders the DSSE signature verdict row", async () => {
+    oscalVerifyMock.mockResolvedValue({
+      overall_valid: true,
+      digests_valid: null,
+      signature_valid: null,
+      sigstore_signature_valid: null,
+      dsse_signature_valid: true,
+      dsse_status: "valid",
+      errors: [],
+      warnings: [],
+      digest_checks: [],
+    });
+
+    renderWithProviders(<OscalVerifyPage />);
+
+    fireEvent.change(screen.getByLabelText(/Assessment Result/i), {
+      target: { value: '{"assessment-results":{"uuid":"u1"}}' },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
+    expect(await screen.findByText(/DSSE signature/i)).toBeInTheDocument();
+  });
 });

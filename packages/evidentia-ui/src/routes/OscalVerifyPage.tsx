@@ -133,6 +133,8 @@ export function OscalVerifyPage() {
   const [content, setContent] = useState("");
   const [identity, setIdentity] = useState("");
   const [issuer, setIssuer] = useState("");
+  const [dsseEnvelope, setDsseEnvelope] = useState("");
+  const [verifyPublicKey, setVerifyPublicKey] = useState("");
 
   const mutation = useMutation({
     mutationFn: (body: OscalVerifyRequest) => api.oscalVerify(body),
@@ -145,8 +147,17 @@ export function OscalVerifyPage() {
   const identityIncomplete =
     (identityTrim.length > 0) !== (issuerTrim.length > 0);
 
+  // Both-or-neither DSSE guard — envelope + public key must be supplied together.
+  const dsseEnvelopeTrim = dsseEnvelope.trim();
+  const verifyPublicKeyTrim = verifyPublicKey.trim();
+  const dsseIncomplete =
+    (dsseEnvelopeTrim.length > 0) !== (verifyPublicKeyTrim.length > 0);
+
   const canSubmit =
-    content.trim().length > 0 && !identityIncomplete && !mutation.isPending;
+    content.trim().length > 0 &&
+    !identityIncomplete &&
+    !dsseIncomplete &&
+    !mutation.isPending;
 
   const submit = () => {
     if (!canSubmit) return;
@@ -156,6 +167,12 @@ export function OscalVerifyPage() {
         ? {
             expected_sigstore_identity: identityTrim,
             expected_sigstore_issuer: issuerTrim,
+          }
+        : {}),
+      ...(dsseEnvelopeTrim.length > 0
+        ? {
+            dsse_envelope: dsseEnvelopeTrim,
+            verify_public_key: verifyPublicKeyTrim,
           }
         : {}),
     };
@@ -253,6 +270,46 @@ export function OscalVerifyPage() {
               </p>
             )}
 
+            <div className="grid grid-2">
+              <div className="stack-2">
+                <Label htmlFor="oscal-dsse-envelope">
+                  DSSE envelope (optional)
+                </Label>
+                <Textarea
+                  id="oscal-dsse-envelope"
+                  value={dsseEnvelope}
+                  onChange={(e) => setDsseEnvelope(e.target.value)}
+                  rows={4}
+                  className="mono"
+                  placeholder={"{\n  \"payloadType\": \"...\"\n}"}
+                />
+              </div>
+              <div className="stack-2">
+                <Label htmlFor="oscal-verify-public-key">
+                  Verify public key — PEM (optional)
+                </Label>
+                <Textarea
+                  id="oscal-verify-public-key"
+                  value={verifyPublicKey}
+                  onChange={(e) => setVerifyPublicKey(e.target.value)}
+                  rows={4}
+                  className="mono"
+                  placeholder="-----BEGIN PUBLIC KEY-----"
+                />
+              </div>
+            </div>
+
+            {dsseIncomplete && (
+              <p
+                id="oscal-dsse-hint"
+                role="alert"
+                className="text-xs text-destructive"
+              >
+                Provide both the DSSE envelope and verify public key, or leave
+                both blank (both-or-neither).
+              </p>
+            )}
+
             <div className="row-between border-t pt-4">
               <p className="text-xs muted">
                 Inline document only — no server path, no persistence, no
@@ -261,7 +318,7 @@ export function OscalVerifyPage() {
               <Button
                 type="submit"
                 disabled={!canSubmit}
-                aria-describedby="oscal-identity-hint"
+                aria-describedby="oscal-identity-hint oscal-dsse-hint"
               >
                 {mutation.isPending ? "Verifying..." : "Verify"}
               </Button>
@@ -301,6 +358,8 @@ function VerdictPanel({ verdict }: { verdict: Verdict }) {
   const offline = readBool(verdict, "offline") === true;
   const sigstoreValid = readBool(verdict, "sigstore_signature_valid");
   const sigstoreStatus = readString(verdict, "sigstore_status");
+  const dsseValid = readBool(verdict, "dsse_signature_valid");
+  const dsseStatus = readString(verdict, "dsse_status");
 
   const errors = readStringArray(verdict, "errors");
   const warnings = readStringArray(verdict, "warnings");
@@ -326,6 +385,13 @@ function VerdictPanel({ verdict }: { verdict: Verdict }) {
                 offline
                   ? "skipped (offline)"
                   : sigstoreStatus ?? undefined
+              }
+            />
+            <CheckRow
+              label="DSSE signature"
+              value={dsseValid}
+              overrideText={
+                dsseValid === null ? (dsseStatus ?? undefined) : undefined
               }
             />
           </ul>

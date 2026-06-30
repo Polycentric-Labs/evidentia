@@ -22,6 +22,7 @@ from __future__ import annotations
 import base64
 import json
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 from evidentia_core.models.common import Severity
@@ -256,3 +257,89 @@ class TestVerifyOffline:
         # Digest verification still ran + passed offline.
         assert body["digests_valid"] is True
         assert body["overall_valid"] is True
+
+
+# ── POST /api/oscal/verify — DSSE inline verification ───────────────
+
+
+class TestVerifyDSSEInline:
+    def test_oscal_verify_dsse_inline(
+        self, oscal_client: TestClient, tmp_path: Path
+    ) -> None:
+        """Supplying a DSSE envelope + matching public key returns
+        dsse_signature_valid=True and dsse_status='valid'."""
+        import json
+
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+        from evidentia_core.oscal import keysign
+
+        key = Ed25519PrivateKey.generate()
+        priv = tmp_path / "k.key"
+        priv.write_bytes(
+            key.private_bytes(
+                serialization.Encoding.PEM,
+                serialization.PrivateFormat.PKCS8,
+                serialization.NoEncryption(),
+            )
+        )
+        pub_pem = key.public_key().public_bytes(
+            serialization.Encoding.PEM,
+            serialization.PublicFormat.SubjectPublicKeyInfo,
+        ).decode()
+        ar = tmp_path / "audit.oscal-ar.json"
+        content = json.dumps({"assessment-results": {"uuid": "u1"}})
+        ar.write_text(content, encoding="utf-8")
+        dsse_path = keysign.sign_oscal_file(ar, key_path=priv)
+
+        resp = oscal_client.post(
+            "/api/oscal/verify",
+            json={
+                "content": content,
+                "dsse_envelope": dsse_path.read_text(encoding="utf-8"),
+                "verify_public_key": pub_pem,
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["dsse_signature_valid"] is True
+        assert body["dsse_status"] == "valid"
+
+    def test_oscal_verify_dsse_envelope_without_key_is_400(
+        self, oscal_client: TestClient
+    ) -> None:
+        """Both-or-neither: supplying dsse_envelope without verify_public_key
+        is a usage error → 400."""
+        resp = oscal_client.post(
+            "/api/oscal/verify",
+            json={"content": "{}", "dsse_envelope": "{}"},
+        )
+        assert resp.status_code == 400
+
+    def test_oscal_verify_dsse_key_without_envelope_is_400(
+        self, oscal_client: TestClient
+    ) -> None:
+        """Both-or-neither: supplying verify_public_key without dsse_envelope
+        is a usage error → 400."""
+        resp = oscal_client.post(
+            "/api/oscal/verify",
+            json={"content": "{}", "verify_public_key": "-----BEGIN PUBLIC KEY-----\n-----END PUBLIC KEY-----\n"},
+        )
+        assert resp.status_code == 400
+
+    def test_no_dsse_returns_not_checked_status(
+        self, oscal_client: TestClient
+    ) -> None:
+        """When no DSSE fields are supplied the response carries
+        dsse_status='not checked (no DSSE envelope)' and
+        dsse_signature_valid=None."""
+        import json
+
+        resp = oscal_client.post(
+            "/api/oscal/verify",
+            json={"content": json.dumps(_valid_ar_doc())},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["dsse_signature_valid"] is None
+        assert body["dsse_status"] == "not checked (no DSSE envelope)"

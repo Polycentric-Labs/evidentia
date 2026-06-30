@@ -79,6 +79,10 @@ class EventAction(str, Enum):
     SIGN_SIGSTORE_SIGNED = "evidentia.sign.sigstore_signed"
     SIGN_SIGSTORE_SKIPPED_AIRGAP = "evidentia.sign.sigstore_skipped_airgap"
     SIGN_FAILED = "evidentia.sign.signing_failed"
+    # v0.11 — cryptography-native (Ed25519/RSA-PSS) + DSSE/in-toto air-gap
+    # signing. Binary-free (works in distroless/DHI). Verify reuses the
+    # VERIFY_SIGNATURE_* events, same as the gpg/sigstore paths.
+    SIGN_KEY_SIGNED = "evidentia.sign.key_signed"
 
     # Verification events ─ mirror SIGN_* for the verify path. Digest and
     # signature outcomes are emitted separately so auditors can filter on

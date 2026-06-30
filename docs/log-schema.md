@@ -133,6 +133,7 @@ without breaking consumers.
 | Action | When emitted |
 |---|---|
 | `evidentia.sign.gpg_signed` | GPG signature produced |
+| `evidentia.sign.key_signed` | DSSE envelope produced via cryptography-native Ed25519/RSA-PSS path (`--sign-with-key`) |
 | `evidentia.sign.sigstore_signed` | Sigstore bundle produced |
 | `evidentia.sign.sigstore_skipped_airgap` | Sigstore refused in air-gap mode |
 | `evidentia.sign.signing_failed` | Signing raised an error |

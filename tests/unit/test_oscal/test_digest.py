@@ -189,3 +189,23 @@ def test_verify_file_detects_tamper(tmp_path):
     original_digest = format_digest(digest_file(path))
     path.write_bytes(b"tampered")
     assert verify_file(path, original_digest) is False
+
+
+# ── canonical_json_bytes (v0.11 signing path canonicalizer) ──────────────
+
+
+from evidentia_core.oscal.digest import canonical_json_bytes  # noqa: E402
+
+
+def test_canonical_json_bytes_is_sorted_compact_bytes():
+    assert canonical_json_bytes({"b": 1, "a": 2}) == b'{"a":2,"b":1}'
+
+
+def test_canonical_json_bytes_ensure_ascii_is_pinned_true():
+    # Non-ASCII must be \u-escaped so LEN(payload) in the DSSE PAE is deterministic.
+    assert canonical_json_bytes({"k": "café"}) == b'{"k":"caf\\u00e9"}'
+
+
+def test_digest_json_unchanged_and_routed_through_helper():
+    sample = {"z": 1, "a": [3, 2, 1], "m": "x"}
+    assert digest_json(sample) == digest_bytes(canonical_json_bytes(sample))

@@ -156,6 +156,22 @@ def analyze(
             "if not passed."
         ),
     ),
+    sign_with_key: Path | None = typer.Option(
+        None,
+        "--sign-with-key",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help=(
+            "Optional PEM/PKCS#8 private key (Ed25519 or RSA). With "
+            "--format oscal-ar, the exported JSON is DSSE-signed (in-toto "
+            "Statement v1) to <output>.dsse.json — air-gap-clean, no gpg "
+            "binary. Encrypted keys: supply the passphrase via "
+            "$EVIDENTIA_SIGNING_KEY_PASSPHRASE (never a flag). Verify with "
+            "`evidentia oscal verify <output> --verify-key <pubkey.pem>`."
+        ),
+    ),
 ) -> None:
     """Run gap analysis against one or more frameworks."""
     # v0.2.1: resolve inputs via the config-aware precedence chain:
@@ -317,6 +333,13 @@ def analyze(
         )
         sign_with_sigstore = False
 
+    if sign_with_key and format != "oscal-ar":
+        console.print(
+            "[yellow]Note:[/yellow] --sign-with-key only applies to "
+            f"--format oscal-ar. Ignoring for format=[bold]{format}[/bold]."
+        )
+        sign_with_key = None
+
     # Export
     out_path = export_report(
         report,
@@ -328,6 +351,7 @@ def analyze(
         sign_with_sigstore=sign_with_sigstore,
         sigstore_bundle_path=sigstore_bundle,
         sigstore_identity_token=sigstore_identity_token,
+        key_sign_path=sign_with_key,
     )
     console.print(
         f"[green]Report exported:[/green] [bold]{out_path}[/bold] ({format})"
@@ -344,6 +368,12 @@ def analyze(
         )
         console.print(
             f"[green]Sigstore bundle written:[/green] [bold]{bundle_path}[/bold]"
+        )
+    if sign_with_key:
+        from evidentia_core.oscal.keysign import default_dsse_path
+
+        console.print(
+            f"[green]DSSE envelope written:[/green] [bold]{default_dsse_path(out_path)}[/bold]"
         )
 
     # v0.2.1: save a canonical copy to the user-dir gap store so

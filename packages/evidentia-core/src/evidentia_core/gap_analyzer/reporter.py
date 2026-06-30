@@ -58,6 +58,7 @@ def export_report(
     sign_with_sigstore: bool = False,
     sigstore_bundle_path: str | Path | None = None,
     sigstore_identity_token: str | None = None,
+    key_sign_path: str | Path | None = None,
 ) -> Path:
     """Export a gap analysis report in the specified format.
 
@@ -96,6 +97,12 @@ def export_report(
         Optional explicit OIDC token for Sigstore signing. When omitted,
         sigstore-python's ``detect_credential()`` resolves it from the
         ambient GitHub Actions / GCP / AWS environment.
+    key_sign_path:
+        Optional path to a PEM/PKCS#8 private key (Ed25519 or RSA). When
+        supplied alongside ``format="oscal-ar"``, the AR JSON is DSSE-signed
+        (in-toto Statement v1) and written to ``<output_path>.dsse.json``.
+        Air-gap-clean: no gpg binary, no network. Encrypted keys: set
+        ``$EVIDENTIA_SIGNING_KEY_PASSPHRASE``. Ignored by non-OSCAL formats.
     """
     path = Path(output_path)
 
@@ -116,6 +123,7 @@ def export_report(
             sign_with_sigstore=sign_with_sigstore,
             sigstore_bundle_path=sigstore_bundle_path,
             sigstore_identity_token=sigstore_identity_token,
+            key_sign_path=key_sign_path,
         )
     if format == "sarif":
         return _export_sarif(report, path)
@@ -249,6 +257,7 @@ def _export_oscal_ar(
     sign_with_sigstore: bool = False,
     sigstore_bundle_path: str | Path | None = None,
     sigstore_identity_token: str | None = None,
+    key_sign_path: str | Path | None = None,
 ) -> Path:
     """Export as OSCAL Assessment Results JSON.
 
@@ -287,6 +296,11 @@ def _export_oscal_ar(
             bundle_path=sigstore_bundle_path,
             identity_token=sigstore_identity_token,
         )
+
+    if key_sign_path:
+        from evidentia_core.oscal.keysign import sign_oscal_file
+
+        sign_oscal_file(path, key_path=key_sign_path)
 
     return path
 

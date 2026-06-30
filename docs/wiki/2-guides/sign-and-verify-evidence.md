@@ -17,6 +17,111 @@ how-to; for the design rationale see [Concepts → Evidence integrity](../3-conc
 > below. This page used to be named "sign-and-verify-cimd"; the name was a
 > misnomer and has been corrected.
 
+## Generate a signing key (air-gap DSSE)
+
+The air-gap DSSE path requires an Ed25519 or RSA key in PEM/PKCS#8 format.
+Generate one with `openssl` (standard on Linux/macOS; install
+[OpenSSL for Windows](https://slproweb.com/products/Win32OpenSSL.html) or use
+Git Bash / WSL on Windows):
+
+**Bash / Linux / macOS**
+
+```bash
+# Ed25519 (recommended — constant-time, compact)
+openssl genpkey -algorithm ed25519 -out signing.key
+openssl pkey -in signing.key -pubout -out signing.pub
+chmod 600 signing.key
+
+# RSA-3072 (for operators whose validated FIPS module requires RSA — a standard
+# RSA key; Evidentia applies RSA-PSS at sign time)
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out signing.key
+openssl pkey -in signing.key -pubout -out signing.pub
+chmod 600 signing.key
+
+# Optional: encrypt the private key (passphrase supplied via env var, never a flag)
+openssl pkey -in signing.key -aes-256-cbc -out signing.key.enc
+```
+
+**PowerShell (Windows)**
+
+```powershell
+# Ed25519 (recommended)
+openssl genpkey -algorithm ed25519 -out signing.key
+openssl pkey -in signing.key -pubout -out signing.pub
+# On Windows, chmod is not available; restrict access via icacls or store in a
+# secrets manager
+
+# RSA-3072
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out signing.key
+openssl pkey -in signing.key -pubout -out signing.pub
+```
+
+Evidentia computes and prints the `keyId` (a SHA-256 of the public key's DER-encoded
+SubjectPublicKeyInfo) at sign time — operators never derive it by hand.
+
+### Sign and verify with the DSSE path
+
+**Bash / Linux / macOS**
+
+```bash
+# Sign a gap-analysis OSCAL AR
+evidentia gap analyze \
+  --inventory inv.yaml \
+  --frameworks nist-800-53-rev5-moderate \
+  --format oscal-ar \
+  --output audit.oscal-ar.json \
+  --sign-with-key signing.key
+# Writes audit.oscal-ar.json  +  audit.oscal-ar.json.dsse.json
+
+# For an encrypted key, supply the passphrase via env (never a flag)
+export EVIDENTIA_SIGNING_KEY_PASSPHRASE=<passphrase>
+evidentia gap analyze --sign-with-key signing.key.enc ...
+
+# Sign a traceability profile
+evidentia traceability emit --sign-with-key signing.key --output traceability.json
+
+# Verify (pinned key, fail-closed)
+evidentia oscal verify audit.oscal-ar.json \
+  --verify-key signing.pub \
+  --require-signature
+```
+
+**PowerShell (Windows)**
+
+```powershell
+# Sign
+evidentia gap analyze `
+  --inventory inv.yaml `
+  --frameworks nist-800-53-rev5-moderate `
+  --format oscal-ar `
+  --output audit.oscal-ar.json `
+  --sign-with-key signing.key
+# Writes audit.oscal-ar.json  +  audit.oscal-ar.json.dsse.json
+
+# For an encrypted key
+$env:EVIDENTIA_SIGNING_KEY_PASSPHRASE = "<passphrase>"
+evidentia gap analyze --sign-with-key signing.key.enc ...
+
+# Verify
+evidentia oscal verify audit.oscal-ar.json `
+  --verify-key signing.pub `
+  --require-signature
+```
+
+> **What `--require-signature` checks.** With `--verify-key`, verification fails
+> if the DSSE envelope is absent, malformed, or the signature does not verify
+> against the pinned public key. A passing verify means the pinned key signed
+> over the exact canonical-JSON content — not the filename or the signing
+> timestamp. See [Concepts → Evidence integrity](../3-concepts/evidence-integrity.md)
+> for the full trust-model semantics.
+
+The DSSE path is binary-free and air-gap-clean (no `gpg` binary, no network
+call to Fulcio or Rekor). It works inside distroless and minimal-base containers.
+Use `--sign-with-gpg` for a detached GPG signature alongside the DSSE envelope,
+or `--sign-with-sigstore` for a Sigstore keyless signature (requires network).
+
+---
+
 ## Sign an OSCAL Assessment Results document (GPG detached)
 
 The OSCAL emit path produces an ASCII-armored GPG detached signature (`.asc`).
@@ -263,10 +368,22 @@ To hand an auditor a fully verifiable package:
 
 - **`GPGNotAvailableError`** — `gpg` is not on your PATH. Install GnuPG 2.x.
 - **`--sign-with-sigstore` errors in offline mode** — Sigstore needs Fulcio +
-  Rekor; it is refused under `--offline`. Use `--sign-with-gpg` instead.
+  Rekor; it is refused under `--offline`. Use `--sign-with-gpg` or
+  `--sign-with-key` instead.
 - **Sigstore verify warns "accepts ANY signer"** — you did not pass
   `--expected-identity` + `--expected-issuer`. Always pin both in an audit
   pipeline.
 - **MCP server starts but outputs are unsigned** — confirm
   `EVIDENTIA_MCP_SIGN_OUTPUTS` is set *and* `EVIDENTIA_MCP_SIGNER_FACTORY`
   resolves to an importable callable; a factory error surfaces at startup.
+- **`SigningKeyError: encrypted signing key requires EVIDENTIA_SIGNING_KEY_PASSPHRASE`**
+  — your key was generated with AES encryption (`-aes-256-cbc`). Set the env
+  var `EVIDENTIA_SIGNING_KEY_PASSPHRASE=<passphrase>` before running the sign
+  command. The passphrase is never accepted as a CLI flag (prevents shell
+  history exposure).
+- **DSSE verify fails: "subject digest mismatch"** — the artifact file was
+  modified after signing. Re-sign the current content or verify the original
+  signed copy.
+- **DSSE verify fails: "DSSE envelope not found"** — the `.dsse.json` sidecar
+  file is missing. Ensure both `<output>.json` and `<output>.json.dsse.json`
+  are co-located when passing to `oscal verify`.

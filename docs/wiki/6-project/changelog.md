@@ -8,6 +8,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+**Theme**: *Engineering hardening — never ship a failed test again.* Infrastructure + documentation changes that make release quality mechanical; no package API changes (the release-pipeline changes are exercised at the next tag).
+
+### Added
+
+- **Cryptography-native air-gap signing via DSSE/in-toto** — a binary-free,
+  network-free signing path that works inside distroless and minimal-base
+  containers (`evidentia_core.oscal.keysign`). Operators pass a PEM/PKCS#8
+  Ed25519 or RSA private key via `--sign-with-key` on `evidentia gap analyze`
+  and `evidentia traceability emit`; Evidentia writes a `.dsse.json` sidecar
+  (DSSE envelope carrying an in-toto Statement v1, signed with Ed25519 or
+  RSA-PSS-SHA-256). Verify with `evidentia oscal verify <artifact>
+  --verify-key <pubkey.pem> --require-signature` (fail-closed; pinned key
+  required). Encrypted private keys are supported via the
+  `EVIDENTIA_SIGNING_KEY_PASSPHRASE` env var (never a CLI flag). The API and
+  MCP surfaces accept the signed artifacts for verification; the UI console
+  verifies and emits unsigned (artifact signing remains an air-gap CLI
+  operation). This path is the recommended signing method for air-gapped
+  deployments and distroless containers where the `gpg` binary is absent.
+- **`docs/engineering-practices.md`** — a public account of the engineering safeguard stack (PR-flow + merge queue, atomic releases, SLSA provenance + cosign + SBOM + OIDC publishing, continuous fuzzing + Scorecard + CodeQL, verified docs) and the candid failure classes that shaped each safeguard.
+- **Security posture documents.** `docs/SECURE-BY-DESIGN-PLEDGE.md` (voluntary alignment with the CISA Secure by Design Pledge's seven goals), `docs/slsa-source-track.md` (an honest SLSA v1.2 Source Track self-assessment — the L3 technical controls are enforced and verifiable, the L4 two-party-review gap disclosed), `docs/runbooks/ghsa-cve-issuance.md` and `docs/runbooks/release-rollback.md` (maintainer runbooks for GHSA + CVE issuance via GitHub-as-CNA and for release rollback/yank per PEP 592), and a root `security-insights.yml` (OpenSSF Security Insights v2.2.0 manifest). All linked from `SECURITY.md`.
+
+### Changed
+
+- **PR-flow + merge queue on `main`.** A repository ruleset now requires a pull request, the full set of status checks, and a squash merge queue, with an empty bypass list — no direct push to `main`, including by administrators. This reverses the prior direct-push model so the complete CI matrix gates every change *before* it lands, not after. Every workflow producing a required check gained a `merge_group` trigger (paths-filtered workflows do not run on `merge_group`, so the container smoke test instead always runs with a step-level relevance early-exit).
+- **Atomic release.** `release.yml` builds and validates all artifacts — wheels, SBOM, and the container image (built from the locally-built wheels, not the package index) — *before* the irreversible PyPI publish, then pushes the byte-identical validated image. This closes the post-publish container-build-failure class (the v0.10.12 packages-only release) and the index-propagation race. The Dockerfile is now multi-stage with an `INSTALL_SOURCE` build argument; the operator default (install from PyPI) is unchanged.
+- **The container smoke test is now a required check.** Restructured to run on every pull request with a relevance early-exit, so it reports success on changes that do not touch the container while still building whenever the Dockerfile or its inputs change — which is what lets it be required without blocking unrelated PRs.
+- **Required-check concurrency.** The four required-check workflows (`test`, `consistency`, `container-build`, `secret-scan`) now cancel in-progress runs only on `pull_request` events; `push:[main]` and `merge_group` runs always run to a green conclusion, so every `main` commit earns its own completed required check (no spurious cancelled runs on rapid back-to-back merges).
+- **Post-publish container rescan gates on *fixable* advisories.** The scheduled rescan of the published container image (`post-publish-rescan.yml`) no longer goes permanently red on day-N base-OS CVEs that have no upstream fix — the chronically-red-gate failure class the doctrine forbids (an osv-scanner dispatch on the published image reports 81 advisories, only 4 fixable). `osv-scanner` has no native fixable gate and exits non-zero on any advisory, so the job now captures the scan as JSON and a committed, unit-tested policy step (`scripts/check_osv_fixable.py`) fails **only** when a detected advisory has an applicable fix for the *detected package* — matched on the package's own ecosystem and name (exact down to the Debian release suffix), so a fix in an unrelated release that merely shares the CVE does not count (matching any shared-CVE affected entry would instead flag 110 of the 248 raw vulnerability records, not 4). Unfixable base-OS CVEs are notify-only, rendered in full to the run job-summary; the scan step fails *closed* on any osv-scanner exit code other than 0/1 (so a partial or errored scan that writes an empty result cannot be mistaken for a clean image), and a missing or malformed report is rejected too. The gate is expected to fire on the current published image until its 4 fixable advisories are cleared by a rebuild. The JSON schema and the fixable determination were verified empirically against real `osv-scanner` v2.3.8 output on the published image and captured as a committed regression fixture. The PyPI-closure rescan job is unchanged. Doctrine in `docs/engineering-practices.md`; a companion minimal-base-image migration that shrinks the OS-CVE surface itself is tracked as an engineering follow-up.
+
+### Fixed
+
+- **Flake-resistance policy** (`docs/testing-flake-policy.md`) — bans wall-clock-timing assertions and treats a skipped or dead gate as a failure, after a Windows clock-granularity flake and a Hypothesis-deadline flake were eliminated.
+
+### Security
+
+- **npm registry-signature verification.** The frontend CI job runs `npm audit signatures` after `npm ci`, verifying installed UI tarballs against npm's registry signatures and maintainer Sigstore provenance — the JS/TS analogue of the Python side's PEP 740 attestations.
+- **Release-tag root-of-trust protection.** A server-side repository ruleset makes `refs/tags/v*` append-only (no force-move, no delete, signatures required), and GitHub Immutable Releases locks published release assets and tags — so the cosign certificate-identity binding on a signed tag cannot be silently broken after publish.
+
+## [0.10.13] - 2026-06-23
+
+**Theme**: *Patch — restore the container base to Python 3.13.* v0.10.12 published to PyPI successfully, but its container image failed to build: the base had been bumped to `python:3.14-slim`, which the AI stack (`litellm`, `requires-python <3.14`) cannot resolve. This patch reverts the base to `python:3.13-slim` so the published container is complete and CVE-clean. The Python packages are otherwise identical to 0.10.12.
+
+### Fixed
+
+- **Container base reverted to `python:3.13-slim`** after a Dependabot bump (#83) to `python:3.14-slim` broke `release.yml`'s container build. The 3.14 base contradicted the Dockerfile's own guard comment — `litellm` declares `requires-python <3.14`, so on a 3.14 base the resolver caps at `litellm 1.83.7` (which carries CVE-2026-40217, HIGH) and the regenerated CVE-clean pin (`litellm` 1.89.x) is uninstallable; the container build failed only *after* the PyPI publish had already succeeded. Re-pinned to `python:3.13-slim@sha256:c33f0bc…` (the current 3.13-slim digest), realigning the `FROM` line with its own guard comment so the container resolves the CVE-clean AI stack. This regression surfaced the same cycle the patch/minor Dependabot auto-merge was removed in favour of human review — it is exactly the class of unreviewed-dependency-change that review catches.
+- **Container smoke test un-broken — the gate that should have caught the above.** `container-build.yml`'s smoke test had silently exited at version-extraction on every push since v0.10.11: its `sed` for `evidentia[gui]==` never matched the pip-compile-normalized `evidentia==` line in the perennially-stale committed `docker/requirements.txt` (which `bump_version.py` never advances), so it never reached the build step. A chronically-red gate became noise that masked exactly the `python:3.14` base regression above. The version is now read from PyPI's latest published release — self-correcting, with no dependency on the committed preview pin — so the smoke test builds the container on every Dockerfile change again, and an incompatible base-image bump is caught at PR/push time instead of at release.
+
 ## [0.10.12] - 2026-06-23
 
 **Theme**: *v0.10.12 — full CLI↔GUI parity build-out + the OMB M-25-21 AI-governance migration*. A feature-rich minor release: the local web console reaches **~98% CLI↔GUI parity** (up from ~13% in v0.10.11), the AI-governance module migrates to current federal guidance (**OMB M-25-21**), and the supply-chain / security posture is hardened (continuous fuzzing, an SSRF fix, and OpenSSF Scorecard lifts).
@@ -24,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The CLI↔GUI parity gate is now bidirectional** — a new inverse-completeness check requires every live OpenAPI operation to be either served by a CLI leaf or listed (with a rationale) in an `api_extra` allowlist; an unclassified endpoint or a stale allowlist row fails the gate.
 - **Audit vocabulary fully typed** — `EventAction.TRACEABILITY_EMITTED` and `EventAction.INTEGRATIONS_SERVICENOW_PUSH` promoted from ECS-style dotted strings to enum members (byte-identical emission; existing SIEM queries unaffected), completing the typed-`EventAction` refactor. A new `EventAction.RETENTION_METADATA_DELETED` distinguishes a retention metadata delete (the REST `DELETE /retention/{id}`) from a secure WORM purge, so an auditor querying the action vocabulary can no longer read a metadata delete as a secure purge.
 - **Console accessibility (WCAG 4.1.3 Status Messages)** — fetch-error cards now announce via `role="alert"`, async pending states via `role="status"` / `aria-live`, and the OSCAL-verify identity hint is associated to its disabled control via `aria-describedby` (12 files across the console set).
+- **Dependency-update auto-merge removed** — the v0.10.8 `dependabot-automerge.yml` workflow (which auto-enabled merge on green patch/minor Dependabot PRs) is removed and the repo `allow_auto_merge` setting is disabled. Dependabot itself stays fully on — grouped update PRs, alerts, and security updates — but dependency changes are now merged **deliberately, after human review**, rather than automatically. For a supply-chain-integrity tool the stronger posture is that *every* dependency change in this repo was reviewed by a human: the xz-utils / event-stream class of compromise ships as an innocuous, green-CI patch/minor bump, which is exactly what auto-merge would have admitted unattended.
 
 ### Fixed
 

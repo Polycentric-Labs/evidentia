@@ -146,3 +146,8 @@ def test_governance_catalog_action_member_to_value_mapping(
     Values are byte-identical to the pre-promotion router string constants,
     so SIEM queries on the dotted ``event.action`` are unaffected."""
     assert EventAction[name].value == value
+
+
+def test_sign_key_signed_event_present() -> None:
+    assert EventAction.SIGN_KEY_SIGNED.value == "evidentia.sign.key_signed"
+    assert EventAction["SIGN_KEY_SIGNED"].value == "evidentia.sign.key_signed"

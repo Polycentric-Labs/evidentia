@@ -29,6 +29,11 @@ dependencies = [
     # in the ECS/OpenTelemetry log schema.
     "tenacity>=9.0",
     "python-ulid>=3.0",
+    # v0.11: cryptography-native (Ed25519/RSA-PSS) + DSSE/in-toto air-gap
+    # signing. Promoted from a transitive [ocsf]-extra dep to a direct,
+    # unconditional dep so the signing path works in the slim (and future
+    # gpg-free distroless/DHI) install. Resolved 46.0.7; floor pinned low.
+    "cryptography>=44.0",
 ]
 
 [project.optional-dependencies]
@@ -67,11 +72,13 @@ worm-gcs = [
 # v0.10.0: OCSF (Open Cybersecurity Schema Framework) interop. The
 # evidentia_core.ocsf mapping layer converts SecurityFinding objects
 # to/from OCSF Compliance Finding objects. Gated behind an extra
-# because py-ocsf-models pulls `cryptography` — same slim-default-
-# install rationale as the `sigstore` extra above. The mapping module
-# lazy-imports py_ocsf_models and raises a helpful error if the extra
-# is absent (mirrors the collector extras pattern). Pinned to the
-# 0.9.x line: py-ocsf-models is pre-1.0, so a minor bump may break.
+# because py-ocsf-models pulls `cryptography` — `cryptography` is now
+# a direct dep (v0.11+), but py-ocsf-models itself is still gated here
+# for the same slim-default-install rationale as the `sigstore` extra.
+# The mapping module lazy-imports py_ocsf_models and raises a helpful
+# error if the extra is absent (mirrors the collector extras pattern).
+# Pinned to the 0.9.x line: py-ocsf-models is pre-1.0, so a minor
+# bump may break.
 ocsf = [
     "py-ocsf-models>=0.9.0,<0.10.0",
 ]

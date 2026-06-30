@@ -110,6 +110,6 @@ poam_list() -> list[dict[str, Any]]
 Verify an OSCAL Assessment Result file's signatures + digests.
 
 ```python
-verify_signed_artifact(ar_path: str, require_signature: bool = True, expected_sigstore_identity: str | None = None, expected_sigstore_issuer: str | None = None) -> dict[str, Any]
+verify_signed_artifact(ar_path: str, require_signature: bool = True, expected_sigstore_identity: str | None = None, expected_sigstore_issuer: str | None = None, verify_key_path: str | None = None, dsse_bundle_path: str | None = None) -> dict[str, Any]
 ```
 

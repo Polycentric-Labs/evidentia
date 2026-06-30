@@ -94,6 +94,28 @@ def verify(
             "next to the AR file."
         ),
     ),
+    verify_key: Path | None = typer.Option(
+        None,
+        "--verify-key",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help=(
+            "PEM public key (Ed25519 or RSA) pinning the expected DSSE signer. "
+            "Required to verify a <path>.dsse.json envelope; without it a "
+            "present envelope fails closed."
+        ),
+    ),
+    dsse_bundle: Path | None = typer.Option(
+        None,
+        "--dsse-bundle",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help="Custom DSSE envelope path. Defaults to <path>.dsse.json.",
+    ),
     expected_identity: str | None = typer.Option(
         None,
         "--expected-identity",
@@ -144,6 +166,8 @@ def verify(
         sigstore_bundle_path=sigstore_bundle,
         expected_sigstore_identity=expected_identity,
         expected_sigstore_issuer=expected_issuer,
+        verify_key_path=verify_key,
+        dsse_bundle_path=dsse_bundle,
     )
 
     if json_output:
@@ -222,6 +246,19 @@ def _render_rich(report: VerifyReport) -> None:
     else:
         console.print("[dim]No Sigstore signature checked.[/dim]")
 
+    # DSSE signature
+    if report.dsse_signature_valid is not None:
+        ds_status = (
+            "[green]valid[/green]" if report.dsse_signature_valid else "[red]INVALID[/red]"
+        )
+        console.print(f"DSSE signature: {ds_status}")
+        if report.dsse_signer_key_id:
+            console.print(f"  Signer key id: [cyan]{report.dsse_signer_key_id}[/cyan]")
+        if report.dsse_algorithm:
+            console.print(f"  Algorithm:     [cyan]{report.dsse_algorithm}[/cyan]")
+    else:
+        console.print("[dim]No DSSE signature checked.[/dim]")
+
 
 def _render_digest_table(checks: list[DigestCheck]) -> None:
     """Tabulate per-resource digest outcomes."""
@@ -255,6 +292,9 @@ def _emit_json(report: VerifyReport) -> None:
         "sigstore_signer_identity": report.sigstore_signer_identity,
         "sigstore_signer_issuer": report.sigstore_signer_issuer,
         "sigstore_rekor_log_index": report.sigstore_rekor_log_index,
+        "dsse_signature_valid": report.dsse_signature_valid,
+        "dsse_signer_key_id": report.dsse_signer_key_id,
+        "dsse_algorithm": report.dsse_algorithm,
         "errors": report.errors,
         "warnings": report.warnings,
         "digest_checks": [

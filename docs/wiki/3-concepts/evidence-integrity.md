@@ -86,6 +86,44 @@ A reference `LocalFilesystemWORM` ships in the same module (records as `<root>/<
 
 When `EVIDENTIA_EVIDENCE_AUTO_MIRROR_WORM` is set, `save_evidence` mirrors each successful local-store write to a cloud-WORM backend (resolved from the `EVIDENTIA_EVIDENCE_WORM_BACKEND_FACTORY` dotted-path env var) via `evidentia_core.evidence_store_worm.mirror_to_worm` — giving operators application-layer append-only locally *plus* hardware-enforced WORM in the cloud, gated behind one env var.
 
+## Air-gap DSSE signing (cryptography-native, binary-free)
+
+The third signing path — alongside GPG detached and Sigstore keyless — is the
+**cryptography-native DSSE path** in `evidentia_core.oscal.keysign`. It produces
+a DSSE (Dead Simple Signing Envelope) file containing an in-toto Statement v1,
+signed with either Ed25519 or RSA-PSS-SHA-256 via the `cryptography` library.
+No external binary (`gpg`), no network call (Fulcio, Rekor) — making it the
+**only signing path that works inside a distroless or DHI container**.
+
+### Binding semantics
+
+A DSSE signature is **content-bound, not filename-bound or time-bound.** The
+signed subject is the SHA-256 of the artifact's canonical JSON — the artifact
+bytes, serialized deterministically. A file renamed after signing still verifies
+(the name in `subject[].name` is informational only). A file whose JSON content
+was changed by even one byte fails the subject-digest check — regardless of
+whether the filename, directory, or signature timestamp changed.
+
+`signedAt` in the predicate is **signer-asserted wall-clock time, not trusted
+time.** There is no trusted-timestamp authority in the key-based DSSE path;
+`signedAt` records when the signer's clock said it was, nothing more. Key-based
+DSSE has **no revocation or expiry channel** — trust is pinned-key-scoped. When
+a key is compromised, operators rotate to a new key and re-sign artifacts; there
+is no CRL or OCSP path.
+
+### `keyId` semantics
+
+The `keyId` field in the DSSE envelope is the SHA-256 of the public key's
+DER-encoded SubjectPublicKeyInfo — a deterministic identifier for the signing
+key, computed and printed by Evidentia at sign time. It is a **hint**, not an
+authority decision. The authoritative verify decision is made by the pinned
+`--verify-key` flag: Evidentia derives the expected algorithm from the pinned
+key and verifies the PAE signature with that key. The `keyId` is logged in the
+`DSSEVerifyResult` as `signer_key_id` for auditability, but it is **not**
+compared during verification — no `keyId` comparison is performed. The sole
+gate is the cryptographic PAE signature check over the full payload with the
+pinned key; if the wrong key is supplied, that check fails closed.
+
 ## CIMD — the MCP client-metadata layer (not a signing primitive)
 
 `evidentia_mcp/cimd.py` implements a **Client ID Metadata Document** registry per the OAuth Dynamic Client Registration spec (RFC 7591). Each registered client has a stable `client_id`, a `client_name`, and a space-separated `scope` field that acts as an allowlist of MCP tool names the client may call. The registry (`CIMDRegistry`, loaded from a JSON file via `from_file`) supports multi-tenant MCP deployments (one server instance, multiple clients with different scopes), per-client audit trails (the calling `client_id` is logged on each tool fire), and forward-looking `policy_uri` / `tos_uri` metadata.

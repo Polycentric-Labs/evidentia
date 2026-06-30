@@ -93,6 +93,20 @@ class VerifyRequest(BaseModel):
             "expected_sigstore_identity."
         ),
     )
+    dsse_envelope: str | None = Field(
+        default=None,
+        description=(
+            "Optional DSSE envelope (the <ar>.dsse.json contents), inline as a "
+            "JSON string. Requires verify_public_key (both-or-neither)."
+        ),
+    )
+    verify_public_key: str | None = Field(
+        default=None,
+        description=(
+            "Optional PEM public key (Ed25519 or RSA) pinning the DSSE signer. "
+            "Requires dsse_envelope (both-or-neither)."
+        ),
+    )
 
 
 def _api_offline() -> bool:
@@ -142,6 +156,15 @@ async def verify_assessment_result(payload: VerifyRequest) -> dict[str, Any]:
             ),
         )
 
+    if (payload.dsse_envelope is None) != (payload.verify_public_key is None):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "dsse_envelope and verify_public_key must be provided together "
+                "(pinned-key DSSE verification)."
+            ),
+        )
+
     # Parse BEFORE touching disk so malformed input never creates a temp
     # file. A clean 400 with a generic string detail (no path / secret).
     try:
@@ -159,6 +182,8 @@ async def verify_assessment_result(payload: VerifyRequest) -> dict[str, Any]:
     check_sigstore = not offline
 
     tmp_path: Path | None = None
+    dsse_tmp: Path | None = None
+    key_tmp: Path | None = None
     try:
         # Write the inline content to a private temp file (the core
         # verifier is file-based). NamedTemporaryFile with delete=False so
@@ -174,16 +199,41 @@ async def verify_assessment_result(payload: VerifyRequest) -> dict[str, Any]:
             handle.write(payload.content)
             tmp_path = Path(handle.name)
 
+        verify_key_arg: Path | None = None
+        dsse_bundle_arg: Path | None = None
+        if payload.dsse_envelope is not None and payload.verify_public_key is not None:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                suffix=tmp_path.name + ".dsse.json",
+                delete=False,
+            ) as dh:
+                dh.write(payload.dsse_envelope)
+                dsse_tmp = Path(dh.name)
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                suffix=".pub.pem",
+                delete=False,
+            ) as kh:
+                kh.write(payload.verify_public_key)
+                key_tmp = Path(kh.name)
+            verify_key_arg = key_tmp
+            dsse_bundle_arg = dsse_tmp
+
         report = verify_ar_file(
             tmp_path,
             require_signature=False,
             check_sigstore=check_sigstore,
             expected_sigstore_identity=payload.expected_sigstore_identity,
             expected_sigstore_issuer=payload.expected_sigstore_issuer,
+            verify_key_path=verify_key_arg,
+            dsse_bundle_path=dsse_bundle_arg,
         )
     finally:
-        if tmp_path is not None:
-            tmp_path.unlink(missing_ok=True)
+        for p in (tmp_path, dsse_tmp, key_tmp):
+            if p is not None:
+                p.unlink(missing_ok=True)
 
     # Build the GUI-facing result. We deliberately DO NOT echo
     # report.ar_path (the temp path) — G-9, no filesystem-path leak.
@@ -213,6 +263,14 @@ async def verify_assessment_result(payload: VerifyRequest) -> dict[str, Any]:
         "sigstore_signer_identity": report.sigstore_signer_identity,
         "sigstore_signer_issuer": report.sigstore_signer_issuer,
         "sigstore_rekor_log_index": report.sigstore_rekor_log_index,
+        "dsse_signature_valid": report.dsse_signature_valid,
+        "dsse_signer_key_id": report.dsse_signer_key_id,
+        "dsse_algorithm": report.dsse_algorithm,
+        "dsse_status": (
+            "not checked (no DSSE envelope)"
+            if report.dsse_signature_valid is None
+            else ("valid" if report.dsse_signature_valid else "invalid")
+        ),
         "errors": report.errors,
         "warnings": report.warnings,
         "digest_checks": [

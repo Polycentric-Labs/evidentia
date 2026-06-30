@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Cryptography-native air-gap signing via DSSE/in-toto** — a binary-free,
+  network-free signing path that works inside distroless and minimal-base
+  containers (`evidentia_core.oscal.keysign`). Operators pass a PEM/PKCS#8
+  Ed25519 or RSA private key via `--sign-with-key` on `evidentia gap analyze`
+  and `evidentia traceability emit`; Evidentia writes a `.dsse.json` sidecar
+  (DSSE envelope carrying an in-toto Statement v1, signed with Ed25519 or
+  RSA-PSS-SHA-256). Verify with `evidentia oscal verify <artifact>
+  --verify-key <pubkey.pem> --require-signature` (fail-closed; pinned key
+  required). Encrypted private keys are supported via the
+  `EVIDENTIA_SIGNING_KEY_PASSPHRASE` env var (never a CLI flag). The API and
+  MCP surfaces accept the signed artifacts for verification; the UI console
+  verifies and emits unsigned (artifact signing remains an air-gap CLI
+  operation). This path is the recommended signing method for air-gapped
+  deployments and distroless containers where the `gpg` binary is absent.
 - **`docs/engineering-practices.md`** — a public account of the engineering safeguard stack (PR-flow + merge queue, atomic releases, SLSA provenance + cosign + SBOM + OIDC publishing, continuous fuzzing + Scorecard + CodeQL, verified docs) and the candid failure classes that shaped each safeguard.
 - **Security posture documents.** `docs/SECURE-BY-DESIGN-PLEDGE.md` (voluntary alignment with the CISA Secure by Design Pledge's seven goals), `docs/slsa-source-track.md` (an honest SLSA v1.2 Source Track self-assessment — the L3 technical controls are enforced and verifiable, the L4 two-party-review gap disclosed), `docs/runbooks/ghsa-cve-issuance.md` and `docs/runbooks/release-rollback.md` (maintainer runbooks for GHSA + CVE issuance via GitHub-as-CNA and for release rollback/yank per PEP 592), and a root `security-insights.yml` (OpenSSF Security Insights v2.2.0 manifest). All linked from `SECURITY.md`.
 

@@ -588,6 +588,7 @@ Run gap analysis against one or more frameworks.
 | `--sign-with-sigstore` | Optional Sigstore/Rekor signing (v0.7.0). When supplied with --format oscal-ar, the exported JSON is keyless-signed via Fulcio + Rekor using the workflow's ambient OIDC identity (GitHub Actions, Google Workload Identity, AWS, etc.). Bundle written to <output>.sigstore.json by default. Coexists with --sign-with-gpg for defence-in-depth. Refused in air-gap mode (use GPG instead). Requires the [sigstore] extra: `pip install 'evidentia-core[sigstore]'`. |
 | `--sigstore-bundle` | Custom Sigstore bundle output path. Defaults to <output>.sigstore.json. Only used with --sign-with-sigstore. |
 | `--sigstore-identity-token` | Optional explicit OIDC token for Sigstore signing. When omitted, sigstore-python's detect_credential() resolves it from ambient GitHub Actions / GCP / AWS environment. Read from $SIGSTORE_ID_TOKEN if not passed. |
+| `--sign-with-key` | Optional PEM/PKCS#8 private key (Ed25519 or RSA). With --format oscal-ar, the exported JSON is DSSE-signed (in-toto Statement v1) to <output>.dsse.json — air-gap-clean, no gpg binary. Encrypted keys: supply the passphrase via $EVIDENTIA_SIGNING_KEY_PASSPHRASE (never a flag). Verify with `evidentia oscal verify <output> --verify-key <pubkey.pem>`. |
 
 ### `evidentia gap diff`
 
@@ -1039,6 +1040,8 @@ Verify digests + optional GPG and/or Sigstore signatures of an OSCAL AR document
 | `--gnupghome` | Override GNUPGHOME for signature verification. Useful when verifying against a specific keyring rather than the operator's default ~/.gnupg. |
 | `--check-sigstore, --no-check-sigstore` | Verify a Sigstore bundle (<path>.sigstore.json) if present. Default True. Use --no-check-sigstore to skip Sigstore checks entirely (e.g., for air-gap-only verification). |
 | `--sigstore-bundle` | Custom Sigstore bundle path. Defaults to <path>.sigstore.json next to the AR file. |
+| `--verify-key` | PEM public key (Ed25519 or RSA) pinning the expected DSSE signer. Required to verify a <path>.dsse.json envelope; without it a present envelope fails closed. |
+| `--dsse-bundle` | Custom DSSE envelope path. Defaults to <path>.dsse.json. |
 | `--expected-identity` | Expected Sigstore signer identity (email or OIDC subject). When omitted along with --expected-issuer, the verifier accepts ANY signer (UnsafeNoOp policy) and emits a warning. Both-or-neither with --expected-issuer (cosign model); supplying exactly one fails verification. Production audit pipelines should always set both. |
 | `--expected-issuer` | Expected Sigstore identity issuer URL (e.g., 'https://token.actions.githubusercontent.com' for GitHub Actions OIDC). Both-or-neither with --expected-identity (cosign model). |
 | `--json` | Emit the verification report as machine-readable JSON to stdout. Exit code reflects overall pass/fail regardless of output mode. |
@@ -1386,6 +1389,7 @@ Emit the Control↔Threat Traceability Matrix as a signable OSCAL profile.
 | `--sign-with-gpg` | GPG key id/fingerprint to detached-sign the emitted profile (writes <output>.asc). The air-gap signing path. |
 | `--sign-with-sigstore` | Sigstore keyless-sign the emitted profile (writes <output>.sigstore.json). Requires network + an OIDC credential. |
 | `--sigstore-identity-token` | Explicit OIDC token for Sigstore signing (else auto-detected). |
+| `--sign-with-key` | PEM/PKCS#8 private key (Ed25519 or RSA) to DSSE-sign the emitted profile to <output>.dsse.json — air-gap-clean (no gpg binary). Encrypted keys: $EVIDENTIA_SIGNING_KEY_PASSPHRASE. |
 
 ## `evidentia version`
 
