@@ -43,7 +43,7 @@ id = "GHSA-rrmf-rvhw-rf47"
 ignoreUntil = 2026-12-10
 reason = "torch 2.11.0 (CVE-2025-3000 / PYSEC-2025-194, CVSS3.1 5.3 AV:L, CWE-119): local-only memory corruption in torch.jit.script on attacker-supplied script input (VulDB-sourced, pytorch/pytorch#149623). NVD-published 2025-03-31 but only GitHub-reviewed 2026-06-10 (github_reviewed_at 18:02 UTC), which is why it first surfaces in this scan. NO FIX EXISTS: the affected range covers every torch release through the latest 2.12.0, so no upgrade clears it. NOT REACHABLE from Evidentia: torch is transitive-only (sentence-transformers <- evidentia-eval [faithfulness-semantic] optional extra), zero 'torch' references in any packages/*/src source (grep-confirmed 2026-06-10), Evidentia never invokes torch.jit.script and never compiles TorchScript from untrusted input -- sentence-transformers uses torch for embedding inference on operator-chosen models only; the attack additionally requires local code execution (AV:L), at which point the attacker already runs code locally. Operator-confirmed accept 2026-06-10 (v0.10.9 cycle). Re-validate by 2026-12-10."
 
-# (v0.11 / P2 DHI migration) Accepted nominal HIGH, availability-only, that is FIXED
+# (v0.10.14 / P2 DHI migration) Accepted nominal HIGH, availability-only, that is FIXED
 # in the shipped container as of P1 (cryptography is now a direct evidentia-core dep
 # and the [gui] closure resolves cryptography==49.0.0, >=48.0.1). CWE-125 out-of-bounds
 # READ in the OpenSSL statically bundled into cryptography's PyPI wheels (wheel-only --
