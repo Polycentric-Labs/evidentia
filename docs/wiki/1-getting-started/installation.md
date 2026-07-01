@@ -86,7 +86,7 @@ Registry:
 docker pull ghcr.io/polycentric-labs/evidentia:v0.10.14
 docker run --rm ghcr.io/polycentric-labs/evidentia:v0.10.14 version
 # → Evidentia v0.10.14
-# → Python 3.12.x
+# → Python 3.13.x
 ```
 
 To run a gap analysis against a local inventory, mount your working directory:

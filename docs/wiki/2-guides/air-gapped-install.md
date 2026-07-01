@@ -160,8 +160,9 @@ URL. Any future URL-based import is already routed through the offline guard.)
 
 > **Container vs host install.** The published `ghcr.io/polycentric-labs/evidentia`
 > image is distroless and ships **no `gpg` binary** — inside the container, air-gap
-> signing uses the binary-free **DSSE** path (`evidentia oscal … --sign-with-key`,
-> verify with `--verify-key`); `--sign-with-gpg` there fails closed with
+> signing uses the binary-free **DSSE** path (`evidentia gap analyze --sign-with-key`
+> or `evidentia traceability emit --sign-with-key`; verify with `evidentia oscal
+> verify … --verify-key`); `--sign-with-gpg` there fails closed with
 > `GPGNotAvailableError`. The GPG recipe below applies to a **host wheelhouse
 > install** (a machine with `gpg` on PATH), not to the transferred container image.
 

@@ -47,14 +47,17 @@ jobs:
             exit 1
           fi
           pinned_digest="${pinned#*@}"
-          # 2) The current upstream digest (anonymous).
+          # 2) The current upstream digest (anonymous — dhi.io serves public repos
+          #    via an anonymous bearer token). Fail-soft: if the registry is ever
+          #    unreachable or gated, skip the digest-drift compare (keep the age
+          #    nudge) rather than turning this scheduled job chronically red.
           current_digest=$(docker buildx imagetools inspect dhi.io/python:3.13 \
-            --format '{{ .Manifest.Digest }}')
+            --format '{{ .Manifest.Digest }}' 2>/dev/null || echo "")
           # 3) Latest release age.
           published=$(gh release view --repo "$GITHUB_REPOSITORY" \
             --json publishedAt -q .publishedAt 2>/dev/null || echo "")
           reasons=""
-          if [ "$pinned_digest" != "$current_digest" ]; then
+          if [ -n "$current_digest" ] && [ "$pinned_digest" != "$current_digest" ]; then
             reasons="${reasons}- Base digest drifted: pinned \`${pinned_digest}\` != current \`${current_digest}\`\n"
           fi
           if [ -n "$published" ]; then
