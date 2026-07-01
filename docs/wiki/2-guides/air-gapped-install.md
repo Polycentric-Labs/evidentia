@@ -38,8 +38,8 @@ Pull the cosign-signed image on the connected host, save it to a tarball, and
 carry the tarball across the air gap:
 
 ```bash
-docker pull ghcr.io/polycentric-labs/evidentia:v0.10.13
-docker save ghcr.io/polycentric-labs/evidentia:v0.10.13 -o evidentia.tar
+docker pull ghcr.io/polycentric-labs/evidentia:v0.10.14
+docker save ghcr.io/polycentric-labs/evidentia:v0.10.14 -o evidentia.tar
 ```
 
 On the air-gapped host: `docker load -i evidentia.tar`.
@@ -56,7 +56,7 @@ index disabled so pip never reaches for the network:
 python -m venv .venv && source .venv/bin/activate
 pip install --no-index --find-links ./evidentia-wheelhouse evidentia
 evidentia version
-# → Evidentia v0.10.13 / Python 3.12.x
+# → Evidentia v0.10.14 / Python 3.12.x
 ```
 
 **PowerShell (Windows)**
@@ -65,7 +65,7 @@ evidentia version
 python -m venv .venv ; .\.venv\Scripts\Activate.ps1
 pip install --no-index --find-links ./evidentia-wheelhouse evidentia
 evidentia version
-# → Evidentia v0.10.13 / Python 3.12.x
+# → Evidentia v0.10.14 / Python 3.12.x
 ```
 
 ## Step 3 — Validate the air-gap posture
@@ -158,6 +158,14 @@ URL. Any future URL-based import is already routed through the offline guard.)
 
 ## Signing offline — GPG only
 
+> **Container vs host install.** The published `ghcr.io/polycentric-labs/evidentia`
+> image is distroless and ships **no `gpg` binary** — inside the container, air-gap
+> signing uses the binary-free **DSSE** path (`evidentia gap analyze --sign-with-key`
+> or `evidentia traceability emit --sign-with-key`; verify with `evidentia oscal
+> verify … --verify-key`); `--sign-with-gpg` there fails closed with
+> `GPGNotAvailableError`. The GPG recipe below applies to a **host wheelhouse
+> install** (a machine with `gpg` on PATH), not to the transferred container image.
+
 Sigstore keyless signing (`--sign-with-sigstore`) needs network access to Fulcio
 (the certificate authority) and Rekor (the transparency log), so it is
 **refused in `--offline` mode**. Air-gapped chains of custody use **GPG-detached
@@ -207,8 +215,10 @@ for the full signing workflow.
 4. **Risk generation** — with a local LLM configured,
    `evidentia --offline risk generate ...` produces output (a misconfiguration
    yields a clear `OfflineViolationError`, not a hang).
-5. **Signing** — `--sign-with-gpg` succeeds offline; `--sign-with-sigstore` is
-   correctly refused.
+5. **Signing** — on a host install with gpg present, `--sign-with-gpg` succeeds
+   offline; in the distroless container, the equivalent air-gap guarantee is the
+   DSSE `--sign-with-key` / `--verify-key` round-trip. `--sign-with-sigstore` is
+   correctly refused in both cases.
 
 ## What's next
 

@@ -1,6 +1,6 @@
 # Evidentia roadmap
 
-**Last updated: v0.10.13 (planning, June 2026).**
+**Last updated: v0.10.14 (planning, July 2026).**
 
 > **Engineering practices** — how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
@@ -8,9 +8,10 @@
 
 This roadmap synthesizes community feedback with the architecture plan
 at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0-v0.8.7
-+ v0.9.0-v0.9.9 + v0.10.0-v0.10.11 have shipped; v0.10.12 is the current
-dev cycle (the full CLI↔GUI parity build-out + the OMB M-25-21
-AI-governance migration, before the v0.11 federal-compliance theme). **v0.9.0 opened the
++ v0.9.0-v0.9.9 + v0.10.0-v0.10.13 have shipped; v0.10.14 is the current
+release (cryptography-native DSSE air-gap signing + the distroless DHI
+container base hardening, following v0.10.12's CLI↔GUI parity build-out + the
+OMB M-25-21 AI-governance migration), before the v0.11 federal-compliance theme. **v0.9.0 opened the
 v0.9.x "federal compliance" line** with POA&M + CONMON read-only
 library; v0.9.1 landed the Polycentric Labs org migration; v0.9.2
 added the CONMON REST router + federal corpus + LLM rater + federal
@@ -2090,12 +2091,16 @@ engineering-hardening batch addressed all three:
   signal ("a fix is now available → rebuild"), not noise — and it is *expected* to fire red on
   the current published image until a rebuild clears its 4 fixable advisories. Doctrine:
   `docs/engineering-practices.md` ("Continuous security assurance").
-- **Container base-image migration — PLANNED.** Migrate the container off the full Debian
-  `python` base to a minimal **glibc** base — `cgr.dev/chainguard/python` (Wolfi/glibc, low-CVE,
-  manylinux-compatible) or `gcr.io/distroless/python3` — via a multi-stage build, plus a scheduled
-  rebuild to reset the day-N clock. Drastically cuts the OS-package CVE surface (~19 Debian source
-  packages → a handful). NOT Alpine (musl breaks manylinux wheels — the AI/crypto deps would force
-  fragile source builds). Ships in a release; its own cycle. (Verified 2026-06-28.)
+- **Container base-image migration — SHIPPED (0.10.14).** The published image rides a
+  multi-stage build: a `python:3.13-slim` builder resolves the hash-pinned closure into a
+  venv, and a distroless **`dhi.io/python:3.13`** (Docker Hardened Images; free, Apache-2.0,
+  anonymous pull) runtime carries only that venv as nonroot uid 65532 — no shell, `curl`,
+  `apt`, `perl`, or `gpg`. A scheduled freshness sentinel nudges a rebuild when the base
+  digest drifts or the image ages past 90 days. **Honest framing:** the win is
+  post-exploitation attack-surface reduction + keeping the fixable-rescan gate green, NOT a
+  raw CVE-count cut (DHI carries ~40 unfixable advisories; "0 fixable" is a snapshot whose
+  durable control is the scheduled rebuild + digest re-pin). NOT Alpine (musl breaks
+  manylinux wheels). (Verified 2026-06-28; shipped in 0.10.14, 2026-07-01.)
 
 ### Medical-device GRC feature line (v0.11 → v1.1+) — PLANNED (web-grounded research 2026-06-17)
 

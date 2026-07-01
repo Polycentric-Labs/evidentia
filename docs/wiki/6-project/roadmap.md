@@ -3,13 +3,18 @@
 
 # Evidentia roadmap
 
-**Last updated: v0.10.12 (planning, June 2026).**
+**Last updated: v0.10.14 (planning, July 2026).**
+
+> **Engineering practices** — how Evidentia is built, tested, and shipped (the
+> PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
+> failure classes that shaped them): [`docs/engineering-practices.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/engineering-practices.md).
 
 This roadmap synthesizes community feedback with the architecture plan
 at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0-v0.8.7
-+ v0.9.0-v0.9.9 + v0.10.0-v0.10.11 have shipped; v0.10.12 is the current
-dev cycle (the full CLI↔GUI parity build-out + the OMB M-25-21
-AI-governance migration, before the v0.11 federal-compliance theme). **v0.9.0 opened the
++ v0.9.0-v0.9.9 + v0.10.0-v0.10.13 have shipped; v0.10.14 is the current
+release (cryptography-native DSSE air-gap signing + the distroless DHI
+container base hardening, following v0.10.12's CLI↔GUI parity build-out + the
+OMB M-25-21 AI-governance migration), before the v0.11 federal-compliance theme. **v0.9.0 opened the
 v0.9.x "federal compliance" line** with POA&M + CONMON read-only
 library; v0.9.1 landed the Polycentric Labs org migration; v0.9.2
 added the CONMON REST router + federal corpus + LLM rater + federal
@@ -2028,6 +2033,77 @@ detailed integration plan" §v0.11. Substantive minor (~6-8 weeks):
 - **Refresh `docs/integration-survey.md` competitive section**
   post-operator-deep-dive (incorporate AWS OSCAL MCP / Vanta MCP /
   ComplianceCow MCP / Snyk AI Trust Platform shifts).
+
+### Engineering & security follow-ups (not feature-tied)
+
+Hardening items the continuous-assurance gates surfaced about themselves, tracked
+here so they aren't lost between feature cycles (see
+[`docs/engineering-practices.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/engineering-practices.md)). The v0.10.x
+engineering-hardening batch addressed all three:
+
+- **CodeQL #164 (catalog-loader path-injection) — remains a documented dismissal (genuine
+  false positive); CodeQL cannot model the validated flow.** A primary-source investigation
+  (the live SARIF code-flow, multi-model-researched, CI-verified) established: #164's source is
+  the API import endpoint's `payload.framework_id`, flowing
+  `payload.framework_id → out_path → load_evidentia_catalog → read_text` (NOT the
+  `resolve_catalog_path` read path first assumed). The framework_id is regex-validated (no
+  separators, no `..`), so it cannot traverse — a true FP. **Two analysis-layer attempts both
+  failed, and the failures were verified** (`results_count` held at 40; alert stayed `dismissed`,
+  not `fixed`): (1) a `.qll` sanitizer on `_validate_framework_id` could not fire —
+  `API::moduleImport(...).getACall()` does not match a module-private helper's INTRA-module
+  callsites; (2) routing `out_path` through the CI-proven `validate_within` did not cut it either —
+  the SARIF shows CodeQL traces *interprocedurally through* `validate_within`'s body, so its
+  call-result barrier does not block this flow (it does clear the simpler #71/#72/#73 callsites).
+  **Terminal state (per the labcoat best-practice verdict): keep #164 dismissed with a precise,
+  primary-source reason — a legitimate FP the query genuinely cannot model is a valid dismissal,
+  not a workaround.** The `validate_within(out_path, user_dir)` wrap is KEPT regardless: real
+  runtime write-path containment (the write-side analog of the `resolve_catalog_path` read-side
+  guard), valuable on its own merits even though CodeQL does not credit it. Future option (not
+  pursued now): a CodeQL models-as-data `barrierModel` (the 2026-04 mechanism) once its Python
+  schema is verified. Inline `# codeql[...]` suppression is NOT an option — CodeQL code scanning
+  does not support it (github/codeql#11427).
+- **Code-scanning merge protection — DONE.** A `code_scanning` rule on the `main`
+  ruleset (CodeQL, `high_or_higher` / `errors`) now blocks a PR that introduces a
+  new High/Critical alert. The CodeQL `Analyze` jobs gate on the analysis
+  *running*; this rule is the piece that gates on introduced *findings*.
+- **Dependabot patch auto-merge — DONE (narrow).** `dependabot-auto-merge.yml`
+  enables GitHub native auto-merge for **patch-only**, Python/npm, grouped (=> not
+  a security PR), non-frameworks updates, after the full required-check suite is
+  green; majors, minors, container/Actions, and security PRs stay human-reviewed.
+  The policy was settled by a multi-model, primary-source research pass (the
+  earlier broad patch+minor auto-merge was removed after a docker-minor base-image
+  break — see engineering-practices.md lesson #1). The workflow passes the required
+  zizmor gate; it is validated end-to-end on the next real Dependabot patch PR.
+- **Post-publish container rescan — gate on FIXABLE only — DONE.** The
+  `post-publish-rescan.yml` container job no longer goes permanently red on day-N **base-OS**
+  CVEs that have no upstream fix (an osv-scanner dispatch on the published v0.10.13 image
+  reports 81 advisories, only 4 fixable — the rest Debian "No fix available") — which the
+  chronically-red-gate doctrine forbids. osv-scanner v2 has NO native fixable/severity gate
+  and exits non-zero on any advisory, so the job now captures the scan as JSON and a
+  committed, unit-tested policy step (`scripts/check_osv_fixable.py`) FAILS only when a
+  detected advisory has an applicable fix for the *detected package* — matched on the
+  package's own `ecosystem` + `name` (`affected[].ranges[].events[].fixed`), exact down to the
+  Debian release suffix; matching any affected entry that merely shares the CVE would flag 110
+  of the 248 raw vulnerability records instead of 4. Unfixable base-OS CVEs are notify-only
+  via a full-visibility job-summary report; the scan step fails *closed* on any osv-scanner
+  exit code other than 0/1 (a partial/errored scan that writes an empty result must not pass
+  green); `osv-scanner.toml [[IgnoredVulns]]` + `ignoreUntil` cover time-bound exceptions only
+  (a single allowlist definition, applied by the scanner). The JSON schema + the "4 fixable"
+  determination were verified empirically against real osv-scanner v2.3.8 output on the
+  published image, captured as a committed regression fixture. Makes the rescan an actionable
+  signal ("a fix is now available → rebuild"), not noise — and it is *expected* to fire red on
+  the current published image until a rebuild clears its 4 fixable advisories. Doctrine:
+  `docs/engineering-practices.md` ("Continuous security assurance").
+- **Container base-image migration — SHIPPED (0.10.14).** The published image rides a
+  multi-stage build: a `python:3.13-slim` builder resolves the hash-pinned closure into a
+  venv, and a distroless **`dhi.io/python:3.13`** (Docker Hardened Images; free, Apache-2.0,
+  anonymous pull) runtime carries only that venv as nonroot uid 65532 — no shell, `curl`,
+  `apt`, `perl`, or `gpg`. A scheduled freshness sentinel nudges a rebuild when the base
+  digest drifts or the image ages past 90 days. **Honest framing:** the win is
+  post-exploitation attack-surface reduction + keeping the fixable-rescan gate green, NOT a
+  raw CVE-count cut (DHI carries ~40 unfixable advisories; "0 fixable" is a snapshot whose
+  durable control is the scheduled rebuild + digest re-pin). NOT Alpine (musl breaks
+  manylinux wheels). (Verified 2026-06-28; shipped in 0.10.14, 2026-07-01.)
 
 ### Medical-device GRC feature line (v0.11 → v1.1+) — PLANNED (web-grounded research 2026-06-17)
 

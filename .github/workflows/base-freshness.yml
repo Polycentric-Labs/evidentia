@@ -1,0 +1,94 @@
+# Base-image freshness sentinel. DETECTS + NUDGES only — it never rebuilds or
+# republishes (that would violate the atomic-release / immutable-digest /
+# human-review doctrine). It complements Dependabot-docker (digest-bump PRs) and
+# post-publish-rescan.yml (fixable day-N CVEs) with the one signal neither
+# provides: a TIME-based staleness nudge. When the pinned DHI base digest drifts
+# from the current dhi.io/python:3.13, or the latest GitHub Release is older than
+# 90 days, it opens/updates a single tracking issue: "cut a patch release to
+# rebuild on the fresh base".
+name: base freshness
+
+on:
+  schedule:
+    - cron: "23 8 * * 2"   # Tuesdays 08:23 UTC (offset from the Mon rescan)
+  workflow_dispatch: {}
+
+# JUSTIFIED: bot opens/updates one tracking issue when the base drifts or ages out
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: base-freshness
+  cancel-in-progress: false
+
+jobs:
+  sentinel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (Dockerfile pin)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Evaluate base freshness + published-image age
+        id: eval
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAX_AGE_DAYS: "90"
+        run: |
+          set -euo pipefail
+          # 1) The pinned DHI digest — anchor on the DHI FROM line SPECIFICALLY
+          #    (the Dockerfile has two @sha256 FROMs: slim builder + DHI final).
+          pinned=$(grep -oE 'dhi\.io/python:3\.13@sha256:[0-9a-f]{64}' Dockerfile || true)
+          count=$(printf '%s\n' "$pinned" | grep -c . || true)
+          if [ "$count" -ne 1 ]; then
+            echo "::error::expected exactly one 'FROM dhi.io/python:3.13@sha256:' line, found ${count}"
+            exit 1
+          fi
+          pinned_digest="${pinned#*@}"
+          # 2) The current upstream digest (anonymous — dhi.io serves public repos
+          #    via an anonymous bearer token). Fail-soft: if the registry is ever
+          #    unreachable or gated, skip the digest-drift compare (keep the age
+          #    nudge) rather than turning this scheduled job chronically red.
+          current_digest=$(docker buildx imagetools inspect dhi.io/python:3.13 \
+            --format '{{ .Manifest.Digest }}' 2>/dev/null || echo "")
+          # 3) Latest release age.
+          published=$(gh release view --repo "$GITHUB_REPOSITORY" \
+            --json publishedAt -q .publishedAt 2>/dev/null || echo "")
+          reasons=""
+          if [ -n "$current_digest" ] && [ "$pinned_digest" != "$current_digest" ]; then
+            reasons="${reasons}- Base digest drifted: pinned \`${pinned_digest}\` != current \`${current_digest}\`\n"
+          fi
+          if [ -n "$published" ]; then
+            age_days=$(( ( $(date -u +%s) - $(date -u -d "$published" +%s) ) / 86400 ))
+            if [ "$age_days" -gt "$MAX_AGE_DAYS" ]; then
+              reasons="${reasons}- Published image age ${age_days}d > ${MAX_AGE_DAYS}d (latest release ${published})\n"
+            fi
+          fi
+          if [ -n "$reasons" ]; then
+            { echo "stale=true"; echo "reasons<<EOF"; printf '%b' "$reasons"; echo "EOF"; } >> "$GITHUB_OUTPUT"
+          else
+            echo "stale=false" >> "$GITHUB_OUTPUT"
+            echo "Base fresh + image within age budget; nothing to do."
+          fi
+
+      - name: Open or update the tracking issue
+        if: steps.eval.outputs.stale == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REASONS: ${{ steps.eval.outputs.reasons }}
+        run: |
+          set -euo pipefail
+          TITLE="Container base freshness: rebuild due"
+          BODY=$(printf '%b\n\n%s\n' \
+            "The DHI container base or the published image is stale:\n\n${REASONS}" \
+            "Action: cut a patch release to rebuild on the fresh base (Dependabot may already have a digest-bump PR open). This is a scheduled sentinel — not a gate. See docs/engineering-practices.md (Continuous security assurance).")
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "in:title \"$TITLE\"" --json number -q '.[0].number' || echo "")
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --body "$BODY"
+            echo "Updated issue #$existing"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$BODY"
+          fi

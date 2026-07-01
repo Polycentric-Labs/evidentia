@@ -166,19 +166,19 @@ evidentia oscal verify ar.json                       # v0.7.5+: PASS
 analyze ...` fails with `permission denied` when the container tries
 to write to a bind-mounted output directory.
 
-**Why**: the Evidentia container runs as uid 1000 (the non-root
-`evidentia` user). If the host directory is owned by a different uid
-(e.g. root-owned, or your host user is uid 501 on macOS), the
-container can read but not write.
+**Why**: the Evidentia container runs as uid 65532 (the distroless
+non-root `nonroot` user). If the host directory is owned by a
+different uid (e.g. root-owned, or your host user is uid 501 on
+macOS), the container can read but not write.
 
-**Fix**: chown the host directory to uid 1000 before mounting, or run
+**Fix**: chown the host directory to uid 65532 before mounting, or run
 with `--user "$(id -u):$(id -g)"` to run the container as your host
 user:
 
 ```bash
 # Option A: chown
-sudo chown -R 1000:1000 ./output
-docker run -v "$PWD/output:/home/evidentia/reports" evidentia:v0.7.5 ...
+sudo chown -R 65532:65532 ./output
+docker run -v "$PWD/output:/home/nonroot/reports" evidentia:v0.7.5 ...
 
 # Option B: run-as host user
 docker run --user "$(id -u):$(id -g)" \
