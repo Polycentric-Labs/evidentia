@@ -18,7 +18,7 @@ The Dockerfile install line reads:
 
 ```dockerfile
 COPY docker/requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir --user --require-hashes \
+RUN /opt/venv/bin/pip install --no-cache-dir --require-hashes \
                 -r /tmp/requirements.txt
 ```
 
