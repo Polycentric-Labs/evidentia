@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.10.14] - 2026-07-01
+## [0.10.15] - 2026-07-01
 
-**Theme**: *Engineering hardening + distroless container base — never ship a failed test again.* Bundles the accumulated supply-chain work into one release: cryptography-native DSSE/in-toto air-gap signing, the atomic (validate-before-publish) release pipeline, and the migration of the published container onto a distroless **Docker Hardened Images** base (nonroot uid 65532; no shell, `curl`, or `gpg`). No package API changes.
+**Theme**: *Engineering hardening + distroless container base — never ship a failed test again.* Bundles the accumulated supply-chain work into one release: cryptography-native DSSE/in-toto air-gap signing, the atomic (validate-before-publish) release pipeline, and the migration of the published container onto a distroless **Docker Hardened Images** base (nonroot uid 65532; no shell, `curl`, or `gpg`). No package API changes. (The 0.10.14 tag was created but never published: the atomic release's build-before-publish gate correctly caught a non-reproducible container-requirements-hash issue *before* any artifact shipped — 0.10.15 is the same content plus the release-pipeline fix.)
 
 ### Added
 

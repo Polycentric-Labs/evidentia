@@ -250,6 +250,14 @@ jobs:
           mkdir -p docker/wheels
           cp dist/*.whl docker/wheels/
           echo "Staged $(ls docker/wheels/*.whl | wc -l) local wheels into docker/wheels/"
+          # Regenerate from scratch. pip-compile (unlike container-build.yml's
+          # --upgrade invocation) REUSES an existing --output-file's pins + hashes;
+          # a committed docker/requirements.txt can carry local, cross-host,
+          # non-reproducible evidentia-* wheel hashes that will NOT match THIS
+          # job's freshly-built CI wheels -> HashMismatch (the v0.10.14 build
+          # failure). Removing it forces the hashes below to be generated from
+          # these exact local wheels.
+          rm -f docker/requirements.txt
           echo "evidentia[gui]==${VERSION}" > docker/requirements.in
           attempts=0
           max_attempts=3
