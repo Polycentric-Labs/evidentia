@@ -73,7 +73,7 @@ a vulnerability in Evidentia's own code.
 
 | Version | Status | Reason |
 |---------|--------|--------|
-| **`0.10.12`** | ✅ **Supported** | Latest patch. See the [CHANGELOG](https://github.com/Polycentric-Labs/evidentia/blob/main/CHANGELOG.md) and the latest `docs/security-review-*.md` for what shipped and the CVE posture at this release. |
+| **`0.10.14`** | ✅ **Supported** | Latest patch. See the [CHANGELOG](https://github.com/Polycentric-Labs/evidentia/blob/main/CHANGELOG.md) and the latest `docs/security-review-*.md` for what shipped and the CVE posture at this release. |
 | Earlier patches | ❌ Deprecated | Pre-v1.0 single-supported-patch policy; upgrade to the latest patch. |
 | Legacy `controlbridge*` packages | ❌ Yanked from PyPI | Every version of every legacy package was yanked at the v0.6.0 rename. Upgrade path documented in [`RENAMED.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/archive/RENAMED.md). |
 
@@ -116,7 +116,7 @@ In scope:
 - Build + release infrastructure (`.github/workflows/*.yml`).
 - Distribution surface (PyPI packages `evidentia`, `evidentia-core`,
   `evidentia-collectors`, `evidentia-ai`, `evidentia-api`,
-  `evidentia-integrations`).
+  `evidentia-integrations`, `evidentia-mcp`, `evidentia-eval`).
 - The composite GitHub Action
   (`.github/actions/gap-analysis/action.yml`).
 - The bundled framework catalogs and crosswalk mappings
@@ -175,12 +175,33 @@ Verify a release wheel:
 pip install pypi-attestations
 pypi-attestations verify pypi \
   --repository https://github.com/Polycentric-Labs/evidentia \
-  "pypi:evidentia-0.10.12-py3-none-any.whl"
+  "pypi:evidentia-0.10.14-py3-none-any.whl"
 ```
 
 If verification fails, **stop and report immediately** via the
 private channels above — a verification failure on a published
 artifact is itself a security incident.
+
+## Security posture documents
+
+Machine- and human-readable attestations of the project's security
+posture:
+
+- [`docs/SECURE-BY-DESIGN-PLEDGE.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/SECURE-BY-DESIGN-PLEDGE.md)
+  — voluntary self-assessed alignment with the CISA Secure by Design
+  Pledge's seven goals (an alignment statement, not a signatory claim).
+- [`docs/slsa-source-track.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/slsa-source-track.md) — honest SLSA
+  v1.2 Source Track self-assessment: the Source L3 technical controls are
+  enforced and independently verifiable; the L4 two-party-review gap is
+  disclosed (single maintainer).
+- [`docs/runbooks/ghsa-cve-issuance.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/runbooks/ghsa-cve-issuance.md)
+  — maintainer runbook for publishing a GitHub Security Advisory and
+  issuing a CVE via GitHub-as-CNA.
+- [`docs/runbooks/release-rollback.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/runbooks/release-rollback.md)
+  — release rollback / yank / recovery decision tree (PEP 592 yank
+  semantics; release tags are immutable server-side).
+- [`security-insights.yml`](https://github.com/Polycentric-Labs/evidentia/blob/main/security-insights.yml) — OpenSSF Security
+  Insights v2.2.0 manifest.
 
 ## Acknowledgments
 

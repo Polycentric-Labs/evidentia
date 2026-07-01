@@ -2090,12 +2090,16 @@ engineering-hardening batch addressed all three:
   signal ("a fix is now available → rebuild"), not noise — and it is *expected* to fire red on
   the current published image until a rebuild clears its 4 fixable advisories. Doctrine:
   `docs/engineering-practices.md` ("Continuous security assurance").
-- **Container base-image migration — PLANNED.** Migrate the container off the full Debian
-  `python` base to a minimal **glibc** base — `cgr.dev/chainguard/python` (Wolfi/glibc, low-CVE,
-  manylinux-compatible) or `gcr.io/distroless/python3` — via a multi-stage build, plus a scheduled
-  rebuild to reset the day-N clock. Drastically cuts the OS-package CVE surface (~19 Debian source
-  packages → a handful). NOT Alpine (musl breaks manylinux wheels — the AI/crypto deps would force
-  fragile source builds). Ships in a release; its own cycle. (Verified 2026-06-28.)
+- **Container base-image migration — SHIPPED (0.10.14).** The published image rides a
+  multi-stage build: a `python:3.13-slim` builder resolves the hash-pinned closure into a
+  venv, and a distroless **`dhi.io/python:3.13`** (Docker Hardened Images; free, Apache-2.0,
+  anonymous pull) runtime carries only that venv as nonroot uid 65532 — no shell, `curl`,
+  `apt`, `perl`, or `gpg`. A scheduled freshness sentinel nudges a rebuild when the base
+  digest drifts or the image ages past 90 days. **Honest framing:** the win is
+  post-exploitation attack-surface reduction + keeping the fixable-rescan gate green, NOT a
+  raw CVE-count cut (DHI carries ~40 unfixable advisories; "0 fixable" is a snapshot whose
+  durable control is the scheduled rebuild + digest re-pin). NOT Alpine (musl breaks
+  manylinux wheels). (Verified 2026-06-28; shipped 2026-06-29.)
 
 ### Medical-device GRC feature line (v0.11 → v1.1+) — PLANNED (web-grounded research 2026-06-17)
 

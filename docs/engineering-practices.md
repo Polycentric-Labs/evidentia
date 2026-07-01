@@ -85,7 +85,11 @@ Evidentia's releases are designed to be independently verifiable end to end:
 - **Everything is pinned.** Python dependencies install under
   `pip --require-hashes`; third-party GitHub Actions are pinned to full commit
   SHAs; the container base image is pinned by digest. A floating reference is
-  treated as a defect.
+  treated as a defect. The container is a multi-stage build: a `python:3.13-slim`
+  builder resolves the hash-pinned closure into a venv, and a distroless
+  `dhi.io/python:3.13` (Docker Hardened Images) runtime carries only that venv as
+  nonroot uid 65532 — no shell, package manager, `curl`, or `gpg` binary. Both base
+  images are digest-pinned.
 - **Vulnerability scanning** runs `osv-scanner` against the resolved dependency
   closure — including the container's independently-resolved closure — on every
   pull request, surfacing transitive and disputed advisories the standard alert
@@ -144,10 +148,16 @@ publicly.
   step that parses the scanner's JSON and matches each *applicable* fix to the
   detected package, not to any release that merely shares the CVE. Time-bound
   exceptions live in the one committed allowlist (a single definition, applied by
-  the scanner itself); reducing the base-OS surface *itself* — a minimal base
-  image plus a scheduled rebuild that resets the day-N clock — is tracked as an
-  engineering follow-up so the rescan stays a safety net rather than the primary
-  trigger.
+  the scanner itself); reducing the base-OS surface *itself* is now done: the
+  image rides the distroless `dhi.io/python:3.13` base (no shell/curl/apt/perl/gpg
+  — an RCE is trapped in the Python process, with fewer commodity second-stage
+  tools), and a scheduled **freshness sentinel** opens a tracking issue when the
+  base digest drifts or the published image ages past 90 days, so the day-N clock
+  is reset by an ordinary rebuild-and-release rather than left to the rescan
+  alone. The honest limit stands: this is post-exploitation attack-surface
+  reduction, not a CVE-count win (the distroless base still carries unfixable
+  advisories) — and removing `curl` is not egress denial (Python
+  `socket`/`urllib` remain).
 - **Secret scanning.** A pinned gitleaks binary scans the full history on every
   push and pull request, complementing a local pre-push secret scan.
 - **Defensive guards in the code itself.** Network-egress paths enforce a
