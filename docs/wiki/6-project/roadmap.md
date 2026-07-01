@@ -2102,7 +2102,7 @@ engineering-hardening batch addressed all three:
   post-exploitation attack-surface reduction + keeping the fixable-rescan gate green, NOT a
   raw CVE-count cut (DHI carries ~40 unfixable advisories; "0 fixable" is a snapshot whose
   durable control is the scheduled rebuild + digest re-pin). NOT Alpine (musl breaks
-  manylinux wheels). (Verified 2026-06-28; shipped 2026-06-29.)
+  manylinux wheels). (Verified 2026-06-28; shipped in 0.10.14, 2026-07-01.)
 
 ### Medical-device GRC feature line (v0.11 → v1.1+) — PLANNED (web-grounded research 2026-06-17)
 

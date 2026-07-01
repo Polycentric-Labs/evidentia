@@ -120,11 +120,11 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 
 ## Recent Releases
 
+**v0.10.14 (2026-07-01)** — *Engineering hardening + distroless container base — never ship a failed test again*. **Cryptography-native air-gap signing via DSSE/in-toto**, a binary-free, network-free signing path that works inside distroless and minimal-base containers.
+
 **v0.10.13 (2026-06-23)** — *Patch — restore the container base to Python 3.13*. **Container base reverted to `python:3.13-slim`** after a Dependabot bump (#83) to `python:3.14-slim` broke `release.yml`'s container build.
 
 **v0.10.12 (2026-06-23)** — *full CLI↔GUI parity build-out + the OMB M-25-21 AI-governance migration*. **OMB M-25-21 "high-impact AI" model**, the AI-governance module now reflects current federal guidance; **Full CLI↔GUI parity build-out**, the local web console grows to **22 consoles at ~98% CLI↔GUI parity** (up from ~13% in v0.10.11), with matched REST endpoints for every new console.
-
-**v0.10.11 (2026-06-17)** — *public demo completion + signed traceability + hygiene*. **Signed Control↔Threat Traceability Matrix**, a new `evidentia traceability emit` verb produces a Sigstore-signable OSCAL profile mapping controls to the threats they mitigate; **OSCAL emit/verify console view**.
 
 Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https://github.com/Polycentric-Labs/evidentia/releases)
 
