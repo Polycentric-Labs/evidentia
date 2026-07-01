@@ -331,11 +331,11 @@ jobs:
 
       - name: Smoke test — non-root execution
         run: |
-          uid=$(docker run --rm --entrypoint id evidentia:rc -u)
-          if [ "$uid" != "1000" ]; then
-            echo "FAIL: container runs as uid $uid; expected 1000"; exit 1
+          user=$(docker inspect evidentia:rc --format '{{.Config.User}}')
+          if [ "$user" != "65532" ]; then
+            echo "FAIL: image User is '$user'; expected 65532"; exit 1
           fi
-          echo "OK: container runs as uid $uid (non-root)"
+          echo "OK: image runs as uid $user (nonroot)"
 
       # Save the EXACT validated image for publish-container to load + push.
       # No post-publish rebuild -> what was smoke-tested is what ships.

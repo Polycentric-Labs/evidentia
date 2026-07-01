@@ -321,12 +321,12 @@ jobs:
       - name: Smoke test — non-root execution
         if: steps.relevant.outputs.relevant == 'true'
         run: |
-          # Confirm the image runs as the `evidentia` user (uid 1000),
-          # not root. A future regression that flips USER to root would
-          # be caught here.
-          uid=$(docker run --rm --entrypoint id evidentia:smoke -u)
-          if [ "$uid" != "1000" ]; then
-            echo "FAIL: container runs as uid $uid; expected 1000"
+          # DHI is distroless (no `id` binary), so assert the configured user
+          # statically via `docker inspect` — no in-image exec. A regression
+          # that flips USER to root (uid 0) is caught here.
+          user=$(docker inspect evidentia:smoke --format '{{.Config.User}}')
+          if [ "$user" != "65532" ]; then
+            echo "FAIL: image User is '$user'; expected 65532"
             exit 1
           fi
-          echo "OK: container runs as uid $uid (non-root)"
+          echo "OK: image runs as uid $user (nonroot)"
