@@ -244,3 +244,51 @@ def test_malformed_yaml_is_parse_error(cwt: Any, tmp_path: Path) -> None:
 def test_reusable_workflow_job_skipped(cwt: Any, tmp_path: Path) -> None:
     wf = "name: r\non: [push]\njobs:\n  call:\n    uses: org/repo/.github/workflows/x.yml@main\n"
     assert cwt.check_workflow_tools(_write(tmp_path, "r.yml", wf)) == []
+
+
+# ---------------------------------------------------------------------------
+# G9 — extras validity
+# ---------------------------------------------------------------------------
+
+PYPROJECT_META = """\
+[project]
+name = "evidentia"
+version = "0.10.16"
+[project.optional-dependencies]
+gui = ["evidentia-api>=0.10.16"]
+mcp = ["evidentia-mcp>=0.10.16"]
+"""
+
+WF_EXTRAS = """\
+name: extras
+on: [push]
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: good
+        run: pip install "evidentia[gui,mcp]==0.10.16"
+      - name: bogus
+        run: pip install "evidentia[ai,api]==0.10.16"
+      - name: third-party ignored
+        run: pip install "psycopg[binary]>=3.1"
+"""
+
+
+def test_collect_workspace_extras(cwt: Any, tmp_path: Path) -> None:
+    manifest = _write(tmp_path, "pyproject.toml", PYPROJECT_META)
+    extras = cwt.collect_workspace_extras([manifest])
+    assert extras == {"evidentia": {"gui", "mcp"}}
+
+
+def test_unknown_extras_flagged_known_and_thirdparty_pass(cwt: Any, tmp_path: Path) -> None:
+    manifest = _write(tmp_path, "pyproject.toml", PYPROJECT_META)
+    extras = cwt.collect_workspace_extras([manifest])
+    findings = cwt.check_workflow_extras(_write(tmp_path, "e.yml", WF_EXTRAS), extras)
+    kinds = {(f.kind, f.detail.split("`")[1]) for f in findings}
+    assert ("unknown-extra", "ai") in kinds and ("unknown-extra", "api") in kinds
+    assert len(findings) == 2  # gui/mcp pass; psycopg[binary] ignored
+
+
+def test_normalization_underscore_dash_case(cwt: Any) -> None:
+    assert cwt._normalize("Evidentia_Core") == "evidentia-core"

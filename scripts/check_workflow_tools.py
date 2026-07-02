@@ -44,6 +44,7 @@ Exit codes (mirrors the precedent):
 from __future__ import annotations
 
 import re
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -278,4 +279,74 @@ def check_workflow_tools(path: Path) -> list[Finding]:
                         f"waived (`# tool-check: ok {cmd}`)",
                     )
                 )
+    return findings
+
+
+_INSTALL_SPEC_RE = re.compile(
+    r"(?P<pkg>[A-Za-z0-9][A-Za-z0-9._-]*)\[(?P<extras>[A-Za-z0-9_,\s-]+)\]"
+)
+
+
+def _normalize(name: str) -> str:
+    return name.strip().lower().replace("_", "-")
+
+
+def workspace_manifests() -> list[Path]:
+    """Root pyproject + every packages/*/pyproject.toml that exists."""
+    candidates = [REPO_ROOT / "pyproject.toml"]
+    candidates += sorted((REPO_ROOT / "packages").glob("*/pyproject.toml"))
+    return [p for p in candidates if p.is_file()]
+
+
+def collect_workspace_extras(manifests: list[Path]) -> dict[str, set[str]]:
+    extras_by_pkg: dict[str, set[str]] = {}
+    for manifest in manifests:
+        data = tomllib.loads(manifest.read_text(encoding="utf-8"))
+        project = data.get("project")
+        if not isinstance(project, dict) or "name" not in project:
+            continue
+        extras = project.get("optional-dependencies", {})
+        extras_by_pkg[_normalize(str(project["name"]))] = {
+            _normalize(e) for e in extras
+        }
+    return extras_by_pkg
+
+
+def check_workflow_extras(
+    path: Path, extras_by_pkg: dict[str, set[str]]
+) -> list[Finding]:
+    """G9: workspace-package install-specs may only name declared extras."""
+    data = _load_workflow(path)
+    if isinstance(data, Finding):
+        return []  # the parse error is already reported by the G8 pass
+    findings: list[Finding] = []
+    jobs = data.get("jobs")
+    if not isinstance(jobs, dict):
+        return findings
+    for job_id, job in jobs.items():
+        if not isinstance(job, dict):
+            continue
+        for idx, step in enumerate(job.get("steps") or []):
+            if not isinstance(step, dict) or not isinstance(step.get("run"), str):
+                continue
+            step_name = str(step.get("name", f"step[{idx}]"))
+            for m in _INSTALL_SPEC_RE.finditer(step["run"]):
+                pkg = _normalize(m.group("pkg"))
+                if pkg not in extras_by_pkg:
+                    continue  # third-party spec (or shell noise) — out of scope
+                declared = extras_by_pkg[pkg]
+                for extra in m.group("extras").split(","):
+                    if _normalize(extra) not in declared:
+                        findings.append(
+                            Finding(
+                                path.name,
+                                str(job_id),
+                                step_name,
+                                "unknown-extra",
+                                f"`{extra.strip()}` is not a declared extra of "
+                                f"workspace package `{pkg}` (declared: "
+                                f"{sorted(declared)}); pip silently skips "
+                                f"unknown extras (exit 0)",
+                            )
+                        )
     return findings
