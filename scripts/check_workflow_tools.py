@@ -44,7 +44,10 @@ Exit codes (mirrors the precedent):
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from pathlib import Path
+
+import yaml
 
 REPO_ROOT = Path(__file__).parent.parent
 WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
@@ -213,3 +216,66 @@ def extract_commands(script: str) -> list[str]:
                 continue
             tokens.append(first)
     return tokens
+
+
+@dataclass
+class Finding:
+    workflow: str
+    job: str
+    step: str
+    kind: str  # "missing-tool" | "unknown-extra" | "parse-error"
+    detail: str
+
+
+def _load_workflow(path: Path) -> dict | Finding:
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as exc:
+        return Finding(path.name, "-", "-", "parse-error", str(exc))
+    if not isinstance(data, dict):
+        return Finding(path.name, "-", "-", "parse-error", "top-level not a YAML mapping")
+    return data
+
+
+def check_workflow_tools(path: Path) -> list[Finding]:
+    """G8: per-job, every run-block command must be provided/allowed/waived."""
+    data = _load_workflow(path)
+    if isinstance(data, Finding):
+        return [data]
+    findings: list[Finding] = []
+    jobs = data.get("jobs")
+    if not isinstance(jobs, dict):
+        return findings
+    for job_id, job in jobs.items():
+        if not isinstance(job, dict) or "steps" not in job:
+            # Reusable-workflow call jobs (job-level `uses:`) — out of scope v1.
+            continue
+        available = set(RUNNER_PREINSTALLED)
+        steps = job.get("steps") or []
+        for idx, step in enumerate(steps):
+            if not isinstance(step, dict):
+                continue
+            uses = step.get("uses")
+            if isinstance(uses, str):
+                available |= ACTION_TOOLS.get(uses.split("@", 1)[0], set())
+                continue
+            run = step.get("run")
+            if not isinstance(run, str):
+                continue
+            waived = {m.group("cmd") for m in WAIVER_RE.finditer(run)}
+            step_name = str(step.get("name", f"step[{idx}]"))
+            for cmd in extract_commands(run):
+                if cmd in available or cmd in waived:
+                    continue
+                findings.append(
+                    Finding(
+                        path.name,
+                        str(job_id),
+                        step_name,
+                        "missing-tool",
+                        f"`{cmd}` is not provided by an earlier `uses:` step in "
+                        f"job `{job_id}`, not runner-preinstalled, and not "
+                        f"waived (`# tool-check: ok {cmd}`)",
+                    )
+                )
+    return findings

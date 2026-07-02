@@ -148,3 +148,99 @@ def test_single_quoted_program_bodies_opaque(cwt: Any) -> None:
         'sed -i "s|__TAG__|v1|g; s|__D__|abc|g" file.md\n'
     )
     assert cwt.extract_commands(script) == ["gh", "sed"]
+
+
+# ---------------------------------------------------------------------------
+# check_workflow_tools — G8 job walk
+# ---------------------------------------------------------------------------
+
+WF_OK = """\
+name: ok
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@abc123
+      - name: Install uv
+        uses: astral-sh/setup-uv@def456
+      - name: Check
+        run: uvx twine check dist/*
+"""
+
+WF_MISSING = """\
+name: missing
+on: [push]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@abc123
+      - name: Check distributions
+        run: uvx twine check dist/*
+"""
+
+WF_WAIVED = """\
+name: waived
+on: [push]
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install scanner then use it
+        run: |
+          curl -sSfL https://example.com -o "$HOME/.local/bin/osv-scanner"
+          # tool-check: ok osv-scanner
+          osv-scanner scan source --lockfile x.txt
+"""
+
+WF_CROSS_JOB = """\
+name: crossjob
+on: [push]
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: astral-sh/setup-uv@def456
+  use:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Uses uv without installing it in THIS job
+        run: uv sync
+"""
+
+
+def _write(tmp_path: Path, name: str, content: str) -> Path:
+    p = tmp_path / name
+    p.write_text(content, encoding="utf-8")
+    return p
+
+
+def test_tools_provided_by_uses_pass(cwt: Any, tmp_path: Path) -> None:
+    assert cwt.check_workflow_tools(_write(tmp_path, "ok.yml", WF_OK)) == []
+
+
+def test_missing_setup_step_is_finding(cwt: Any, tmp_path: Path) -> None:
+    findings = cwt.check_workflow_tools(_write(tmp_path, "missing.yml", WF_MISSING))
+    assert len(findings) == 1
+    f = findings[0]
+    assert f.kind == "missing-tool" and f.job == "publish" and "uvx" in f.detail
+
+
+def test_waiver_comment_suppresses(cwt: Any, tmp_path: Path) -> None:
+    assert cwt.check_workflow_tools(_write(tmp_path, "waived.yml", WF_WAIVED)) == []
+
+
+def test_tools_do_not_leak_across_jobs(cwt: Any, tmp_path: Path) -> None:
+    findings = cwt.check_workflow_tools(_write(tmp_path, "crossjob.yml", WF_CROSS_JOB))
+    assert len(findings) == 1 and findings[0].job == "use"
+
+
+def test_malformed_yaml_is_parse_error(cwt: Any, tmp_path: Path) -> None:
+    findings = cwt.check_workflow_tools(_write(tmp_path, "bad.yml", "jobs: ["))
+    assert len(findings) == 1 and findings[0].kind == "parse-error"
+
+
+def test_reusable_workflow_job_skipped(cwt: Any, tmp_path: Path) -> None:
+    wf = "name: r\non: [push]\njobs:\n  call:\n    uses: org/repo/.github/workflows/x.yml@main\n"
+    assert cwt.check_workflow_tools(_write(tmp_path, "r.yml", wf)) == []
