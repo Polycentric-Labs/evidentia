@@ -90,6 +90,15 @@ Evidentia's releases are designed to be independently verifiable end to end:
   `dhi.io/python:3.13` (Docker Hardened Images) runtime carries only that venv as
   nonroot uid 65532 — no shell, package manager, `curl`, or `gpg` binary. Both base
   images are digest-pinned.
+- **Release pipelines regenerate, never reuse.** The container's hash-pinned
+  closure is regenerated from scratch inside the release run, against the exact
+  wheels the run just built — an existing resolution output is never trusted
+  (`pip-compile` silently reuses a prior output file's pins and hashes; see
+  lesson 8), and the committed copy of that file is a lagging preview for
+  inspection, never an input to a release. The publish path also runs
+  **cache-free**: a PR-writable Actions cache read inside an artifact-producing
+  job is a cache-poisoning vector, so the release builds every layer and
+  toolchain from source-of-truth references.
 - **Vulnerability scanning** runs `osv-scanner` against the resolved dependency
   closure — including the container's independently-resolved closure — on every
   pull request, surfacing transitive and disputed advisories the standard alert
@@ -344,6 +353,48 @@ lockfile, synced with identical flags *including the optional extras*
 `nox`/`tox` session or a one-command bootstrap) that both the pre-push hook and
 the CI job invoke, with a `uv lock --check` gate keeping the lockfile itself
 honest, so "passes locally" and "passes in CI" cannot mean two different things.
+
+**8. A release pipeline's publish jobs failed on their first live run — twice.**
+The atomic-release restructure moved publishing into jobs that *cannot execute in
+pull-request CI* — so the first release tag after the change was also their first
+execution, on an irreversible trigger. Two consecutive tags failed inside that
+never-exercised surface: first a hash mismatch (the release's dependency
+resolution *reused* a committed preview file's pins and hashes — `pip-compile`
+silently reuses an existing output file — and that preview carried
+locally-built wheel hashes at the same version, which cannot match the CI-built
+wheels because wheel builds are not byte-reproducible across platforms), then an
+exit-127 (a verification step invoked a tool the job never installs). Both times
+the validate-before-publish gate stopped the run with **nothing published** — the
+two burned tags remain as signed, immutable, unpublished "ghost" tags, which is
+the accepted cost of an append-only tag ruleset, not a defect. *Root cause:* code
+that only runs on an irreversible trigger was reviewed by diff but never executed
+or simulated. *Prevention:* a **first-live-run audit** whenever the release
+workflow changes — walk every post-build step in execution order and verify each
+shell command's tool is installed *in that job* (or runner-preinstalled), each
+pinned action's inputs and outputs against the action's schema *at the pinned
+commit*, artifact names and paths across the job graph, that environment
+deployment policies admit tag refs, and that the publish path runs cache-free
+and regenerates every resolution artifact from scratch rather than trusting a
+committed preview.
+
+**9. Assurance jobs were green while verifying nothing.** Two post-publish
+assurance workflows installed package *extras that do not exist* — `pip` emits a
+warning for an unknown extra and exits 0 — so for weeks the scheduled
+published-closure rescan scanned an incomplete dependency closure, missing the
+API server package entirely. The same latent bug sat in the post-publish smoke
+workflow's "verify every published package resolves" step — but that step turned
+out *never to have run at all*: the smoke workflow triggers on the Release
+event, and a Release created by the release workflow's default `GITHUB_TOKEN`
+never fires other workflows (GitHub's anti-recursion rule) — a structurally dead
+trigger that looked wired, with zero runs in the workflow's lifetime. *Root
+cause:* gates were trusted for their exit codes and their wiring, not for
+observed behavior. *Prevention:* **assert coverage, not exit codes** — an
+assurance step carries a post-condition that proves its claim (import checks,
+`pip show` per expected package, names validated against the package manifest);
+and **a gate is not real until it has been observed firing** — a workflow whose
+trigger has never produced a run is a dead gate (the never-fired generalization
+of lesson 2's silently-died gate), detectable mechanically from the workflow-runs
+API.
 
 ---
 
