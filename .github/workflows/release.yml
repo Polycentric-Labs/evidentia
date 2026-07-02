@@ -258,7 +258,10 @@ jobs:
           # failure). Removing it forces the hashes below to be generated from
           # these exact local wheels.
           rm -f docker/requirements.txt
-          echo "evidentia[gui]==${VERSION}" > docker/requirements.in
+          # Keep the committed .in's deliberate urllib3 security floor (the
+          # regen would otherwise silently drop it; the osv-scan below is the
+          # backstop, the floor is the defense-in-depth minimum).
+          printf 'evidentia[gui]==%s\nurllib3>=2.7.0\n' "${VERSION}" > docker/requirements.in
           attempts=0
           max_attempts=3
           until docker run --rm -v "$PWD:/work" -w /work python:3.13-slim@sha256:c33f0bc4364a6881bed1ec0cc2665e6c53c87a43e774aaeab88e6f17af105e4f \

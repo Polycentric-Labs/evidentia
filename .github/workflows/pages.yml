@@ -81,6 +81,11 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     needs: build
+    # Deploy only from main: the github-pages environment's branch policy
+    # allows main only, so a tag-triggered deploy is REJECTED and reds the
+    # run (observed on v0.10.14/v0.10.15). Tags still run the strict docs
+    # BUILD above as a gate; the deploy is main's job.
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # JUSTIFIED: a GitHub Pages deployment requires pages:write (publish the
