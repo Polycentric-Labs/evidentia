@@ -204,6 +204,7 @@ jobs:
           set -euo pipefail
           echo "Scanning ${IMAGE} (OS + language advisories) -> rescan.json ..."
           rc=0
+          # tool-check: ok osv-scanner  (installed by the prior curl step "Install osv-scanner" in this job)
           osv-scanner scan image \
             --config=osv-scanner.toml \
             --format json \

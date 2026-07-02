@@ -150,6 +150,62 @@ def test_single_quoted_program_bodies_opaque(cwt: Any) -> None:
     assert cwt.extract_commands(script) == ["gh", "sed"]
 
 
+# --- apostrophe-in-comment must NOT desync quote state (the real-tree
+# --- `s` / `%s` / `evidentia` fragment noise: a prose comment like
+# --- `can't` / `package's` opened single-quote state that leaked across
+# --- lines and inverted the masking of every command below it) ------------
+
+
+def test_apostrophe_in_comment_does_not_desync_masking(cwt: Any) -> None:
+    # The comment's lone apostrophe must not open a cross-line string; the
+    # `printf '%s'` below must stay opaque (printf is a builtin -> filtered)
+    # rather than leaking a bare `%s` token because quote state was inverted.
+    script = (
+        "# the range can't be resolved (empty, all-zero \"no\n"
+        "# parent\" sentinel), so build unconditionally.\n"
+        "printf '%s' \"$base\" | grep -qE '^0+$'\n"
+        "docker build .\n"
+    )
+    assert cwt.extract_commands(script) == ["grep", "docker"]
+
+
+def test_apostrophe_in_comment_keeps_later_single_quotes_paired(cwt: Any) -> None:
+    # A later `'evidentia version'` string must remain a paired, opaque unit
+    # (not expose a bare `evidentia`) after an apostrophe-bearing comment.
+    script = (
+        "# install the extras exactly as a consumer would; the meta-package's\n"
+        "# base deps already pull the closure.\n"
+        "pip install \"evidentia[gui,mcp]==1.0\"\n"
+        "grep -q x || { echo \"'evidentia version' mismatch\"; exit 1; }\n"
+    )
+    got = cwt.extract_commands(script)
+    assert "evidentia" not in got
+    assert got == ["pip", "grep"]
+
+
+def test_brace_group_delimiters_are_not_commands(cwt: Any) -> None:
+    # `{ ...; } >> file` is a compound-command group: the `{` opener and `}`
+    # closer are shell grouping, never tool invocations (real in
+    # base-freshness.yml / stale-branches.yml).
+    script = (
+        "{\n"
+        '  echo "## report"\n'
+        '  echo ""\n'
+        '} >> "$GITHUB_STEP_SUMMARY"\n'
+        "gh api repos/x/branches\n"
+    )
+    got = cwt.extract_commands(script)
+    assert "{" not in got and "}" not in got
+    assert got == ["gh"]
+
+
+def test_inline_brace_group_on_one_line(cwt: Any) -> None:
+    # The single-line form: `{ echo a; echo b; } >> f` — the leading `{`
+    # and the `; }` closer must both be skipped.
+    script = '{ echo "stale=true"; echo "reasons=x"; } >> "$GITHUB_OUTPUT"\n'
+    assert cwt.extract_commands(script) == []
+
+
 # ---------------------------------------------------------------------------
 # check_workflow_tools — G8 job walk
 # ---------------------------------------------------------------------------

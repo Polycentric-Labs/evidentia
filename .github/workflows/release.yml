@@ -298,6 +298,7 @@ jobs:
       # osv-scanner.toml allowlist as everywhere else.
       - name: osv-scan regenerated container requirements
         run: |
+          # tool-check: ok osv-scanner  (installed by the prior curl step "Install osv-scanner" in this job)
           osv-scanner scan source \
             --config osv-scanner.toml \
             --lockfile docker/requirements.txt

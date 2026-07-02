@@ -85,12 +85,16 @@ _WRAPPER_TOKENS: set[str] = {
 }
 
 # Terminal keywords/builtins: the statement is satisfied — skip it.
+# ``{`` / ``}`` are brace-group compound-command delimiters (``{ cmd; } >> f``),
+# not external commands — a first token of ``{`` or ``}`` is shell grouping, never
+# a tool invocation (real in base-freshness.yml / stale-branches.yml).
 SHELL_BUILTINS: set[str] = {
     ".", ":", "[", "[[", "break", "continue", "cd", "declare", "done",
     "echo", "esac", "eval", "exit", "export", "false", "fi", "for",
     "function", "hash", "in", "let", "local", "popd", "printf", "pushd",
     "read", "readonly", "return", "select", "set", "shift", "source",
     "test", "trap", "true", "type", "ulimit", "umask", "unset", "wait",
+    "{", "}",
 }
 
 WAIVER_RE = re.compile(r"#\s*tool-check:\s*ok\s+(?P<cmd>[\w.+-]+)")
@@ -106,16 +110,25 @@ def _mask_line(line: str, state: str) -> tuple[str, str]:
     state ('' / \"'\" / '\"') across lines so multi-line strings (python -c
     bodies) stay opaque. Quote characters themselves are preserved.
     POSIX-ish: no escapes inside single quotes; backslash escapes inside
-    double quotes and in bare context."""
+    double quotes and in bare context.
+
+    An unquoted ``#`` at a word boundary (line start or after whitespace)
+    begins a shell comment: the rest of the line is copied verbatim and does
+    NOT mutate quote state. Without this, an apostrophe in a prose comment
+    (``can't``, ``package's``) would spuriously open single-quote state that
+    leaks across lines and desyncs the masking of every command below it —
+    the root cause of the ``%s`` / ``s`` / ``evidentia`` fragment noise."""
     out: list[str] = []
     escaped = False
-    for ch in line:
+    prev_ws = True  # line start counts as a word boundary
+    for i, ch in enumerate(line):
         if state == "'":
             if ch == "'":
                 state = ""
                 out.append(ch)
             else:
                 out.append(" ")
+            prev_ws = False
         elif state == '"':
             if escaped:
                 escaped = False
@@ -128,21 +141,32 @@ def _mask_line(line: str, state: str) -> tuple[str, str]:
                 out.append(ch)
             else:
                 out.append(" ")
+            prev_ws = False
         else:
             if escaped:
                 escaped = False
                 out.append(ch)
+                prev_ws = False
             elif ch == "\\":
                 escaped = True
                 out.append(ch)
+                prev_ws = False
+            elif ch == "#" and prev_ws:
+                # Word-boundary '#' → comment; copy the tail verbatim and stop
+                # (a comment cannot open a cross-line string).
+                out.append(line[i:])
+                break
             elif ch == "'":
                 state = "'"
                 out.append(ch)
+                prev_ws = False
             elif ch == '"':
                 state = '"'
                 out.append(ch)
+                prev_ws = False
             else:
                 out.append(ch)
+                prev_ws = ch.isspace()
     return "".join(out), state
 
 
