@@ -197,6 +197,39 @@ reaction wired into the pipeline. Do not add an auto-yank step; it would
 fire only on conditions that cannot occur (a published-but-smoke-failed
 release) and would risk yanking a good release on a flaky check.
 
+### The nothing-published case: ghost tags (the atomic gate fired)
+
+The best failure this runbook covers is the one with **zero public
+blast radius**: the tag was pushed, `release.yml` fired, and the run
+failed *before* the irreversible publish — the validate-before-publish
+design working as intended (observed live: v0.10.14 failed in build
+validation, v0.10.15 failed pre-upload; neither put a byte on PyPI or
+GHCR).
+
+What remains is a **ghost tag**: a signed, immutable tag whose version
+slot is consumed but which published nothing. Recovery:
+
+1. **Verify nothing actually published** before anything else:
+   `pip index versions evidentia` / the PyPI JSON API (the version must
+   be absent), `docker manifest inspect ghcr.io/...:v<X.Y.Z>` (must
+   404), and `gh release view v<X.Y.Z>` (must not exist).
+2. **Do not try to delete or move the tag.** The `Protect release tags
+   (v*)` ruleset (deletion + non-fast-forward blocked, empty bypass
+   list) makes the tag permanent *by design* — the append-only tag
+   history is the provenance property being protected, and a burned
+   patch number is its accepted, cheap cost. Do not weaken the ruleset
+   to "clean up."
+3. **Root-cause on a branch, then re-release as the next patch
+   number** — normal PR flow, then a fresh tag. If the release workflow
+   itself changed, run the first-live-run audit (engineering-practices
+   lesson 8) before the new tag: publish jobs are unreachable in PR CI,
+   so re-tagging is their next first execution.
+4. **Record the ghost honestly**: the shipped release's CHANGELOG block
+   names the ghost tag(s) and why the gate stopped them (see the
+   0.10.16 entry) — a burned number with a one-line explanation reads
+   as the safety system working; an unexplained gap reads as history
+   editing.
+
 ---
 
 ## 4. PyPI yank + ship-a-patch (the standard ladder, detailed)
