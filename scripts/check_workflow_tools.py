@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+"""G8 tool-availability + G9 extras-validity checker for GitHub workflows.
+
+Mechanizes engineering-practices lessons 8-9 (the v0.10.15 exit-127 ghost tag
+and the nonexistent-[ai,api,collectors] silent-skip incident):
+
+G8 — for every job in every TOP-LEVEL workflow, each command invoked in a
+``run:`` block must be (i) provided by an earlier ``uses:`` step in the SAME
+job (committed ACTION_TOOLS map), (ii) on the committed RUNNER_PREINSTALLED
+allowlist, (iii) a shell keyword/builtin, or (iv) waived by an inline
+``# tool-check: ok <cmd>`` comment inside that ``run:`` block. Waivers are for
+VERIFIED false-positives only (e.g. a tool installed by a prior ``run:`` step);
+a genuinely missing setup step is a workflow bug — fix it, never waive it.
+
+G9 — any install-spec ``<pkg>[<extras>]`` in a ``run:`` block whose ``<pkg>``
+is a WORKSPACE package must only name extras declared in that package's
+pyproject manifest (pip warns and exits 0 on a nonexistent extra — verified
+live 2026-07-02 — so nothing downstream catches it). Third-party specs like
+``psycopg[binary]`` are ignored: their extras are not in workspace manifests.
+
+SCOPE (v1, honest limits):
+- Top-level ``.github/workflows/*.yml`` only; composite actions and reusable
+  workflows are OUT of scope.
+- RUNNER_PREINSTALLED approximates ubuntu-latest; cross-OS matrix jobs share it.
+- Extraction is a QUOTE-AWARE first-token heuristic: quoted-string content is
+  masked (with cross-line state, so multi-line ``python -c "..."`` bodies are
+  opaque) before operator splitting; heredoc bodies and ``case``…``esac``
+  bodies are skipped; ``VAR=value`` prefixes are stripped; line-leading
+  ``$(...)`` unwraps one level; backslash continuations fold. Tools invoked
+  via variables/paths (``$X``, ``./x``, ``/usr/bin/x``) and commands inside
+  mid-line substitutions or case arms are skipped — a disclosed
+  false-NEGATIVE surface, accepted for v1. A literal ``<<`` inside a string
+  can false-trigger heredoc skipping (disclosed; none in this repo today).
+
+Dependency note: PyYAML (an existing dev dependency, same as the
+``audit_workflow_permissions.py`` precedent) + stdlib ``tomllib``. Zero NEW
+third-party dependencies.
+
+Exit codes (mirrors the precedent):
+    0 — clean, or advisory mode (no ``--strict``)
+    2 — findings (including parse errors) under ``--strict``
+"""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).parent.parent
+WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
+
+# Committed action -> provided-tools map. Keyed on the action name WITHOUT the
+# version ref. Owned like osv-scanner.toml's allowlist: PR-reviewed, commented.
+# Unknown actions contribute nothing (never a finding by themselves).
+ACTION_TOOLS: dict[str, set[str]] = {
+    "astral-sh/setup-uv": {"uv", "uvx"},
+    "actions/setup-python": {"python", "python3", "pip", "pip3"},
+    "actions/setup-node": {"node", "npm", "npx"},
+    "sigstore/cosign-installer": {"cosign"},
+    # docker/* setup actions provide no CLI beyond the preinstalled `docker`.
+}
+
+# ubuntu-latest preinstalled approximation — the honest 20% that catches the
+# 80%. Deliberately conservative; extend only with a comment naming the need.
+RUNNER_PREINSTALLED: set[str] = {
+    "awk", "basename", "bash", "cat", "chmod", "cp", "curl", "cut", "date",
+    "df", "dirname", "docker", "du", "env", "find", "gh", "git", "grep",
+    "gunzip", "gzip", "head", "jq", "ls", "mkdir", "mv", "node", "npm",
+    "npx", "pip", "pip3", "python", "python3", "rm", "sed", "sh",
+    "sha256sum", "sleep", "sort", "tail", "tar", "tee", "touch", "tr",
+    "uniq", "unzip", "wc", "wget", "which", "xargs", "zip",
+}
+
+# Wrapper tokens: strip and keep parsing the remainder of the statement.
+_WRAPPER_TOKENS: set[str] = {
+    "sudo", "command", "nohup", "exec", "time", "if", "until", "while",
+    "then", "else", "elif", "do", "!",
+}
+
+# Terminal keywords/builtins: the statement is satisfied — skip it.
+SHELL_BUILTINS: set[str] = {
+    ".", ":", "[", "[[", "break", "continue", "cd", "declare", "done",
+    "echo", "esac", "eval", "exit", "export", "false", "fi", "for",
+    "function", "hash", "in", "let", "local", "popd", "printf", "pushd",
+    "read", "readonly", "return", "select", "set", "shift", "source",
+    "test", "trap", "true", "type", "ulimit", "umask", "unset", "wait",
+}
+
+WAIVER_RE = re.compile(r"#\s*tool-check:\s*ok\s+(?P<cmd>[\w.+-]+)")
+_STMT_SPLIT_RE = re.compile(r"&&|\|\||\||;")
+_HEREDOC_RE = re.compile(r"<<-?\s*['\"]?(\w+)['\"]?")
+_ASSIGN_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=(?P<rest>.*)$", re.DOTALL)
+_REDIRECT_RE = re.compile(r"^\d*[<>]")
+_COMMENT_SPLIT_RE = re.compile(r"(?:^|\s)#")
+
+
+def _mask_line(line: str, state: str) -> tuple[str, str]:
+    """Mask quoted-string CONTENT on one line with spaces, threading quote
+    state ('' / \"'\" / '\"') across lines so multi-line strings (python -c
+    bodies) stay opaque. Quote characters themselves are preserved.
+    POSIX-ish: no escapes inside single quotes; backslash escapes inside
+    double quotes and in bare context."""
+    out: list[str] = []
+    escaped = False
+    for ch in line:
+        if state == "'":
+            if ch == "'":
+                state = ""
+                out.append(ch)
+            else:
+                out.append(" ")
+        elif state == '"':
+            if escaped:
+                escaped = False
+                out.append(" ")
+            elif ch == "\\":
+                escaped = True
+                out.append(" ")
+            elif ch == '"':
+                state = ""
+                out.append(ch)
+            else:
+                out.append(" ")
+        else:
+            if escaped:
+                escaped = False
+                out.append(ch)
+            elif ch == "\\":
+                escaped = True
+                out.append(ch)
+            elif ch == "'":
+                state = "'"
+                out.append(ch)
+            elif ch == '"':
+                state = '"'
+                out.append(ch)
+            else:
+                out.append(ch)
+    return "".join(out), state
+
+
+def extract_commands(script: str) -> list[str]:
+    """Quote-aware first-token command candidates from a run: block."""
+    tokens: list[str] = []
+    pending_heredocs: list[str] = []
+    continuation = False
+    in_case = False
+    quote_state = ""
+    for raw in script.splitlines():
+        if pending_heredocs:
+            if raw.strip() == pending_heredocs[0]:
+                pending_heredocs.pop(0)
+            continue
+        masked, quote_state = _mask_line(raw, quote_state)
+        if continuation:
+            continuation = masked.rstrip().endswith("\\")
+            continue
+        line = masked.strip()
+        if not line or line.startswith("#"):
+            continue
+        if in_case:
+            if re.search(r"\besac\b", line):
+                in_case = False
+            continue
+        # Heredoc openers are detected on the RAW line — a quoted terminator
+        # (<<'STANZA') is masked in `masked` and would be missed there.
+        for m in _HEREDOC_RE.finditer(raw):
+            pending_heredocs.append(m.group(1))
+        continuation = line.endswith("\\")
+        # Truncate any trailing comment (safe post-masking: a '#' inside a
+        # string has been masked away).
+        line = _COMMENT_SPLIT_RE.split(line, maxsplit=1)[0].strip()
+        if not line:
+            continue
+        for stmt in _STMT_SPLIT_RE.split(line):
+            stmt = stmt.strip()
+            m = _ASSIGN_RE.match(stmt)
+            if m:
+                rest = m.group("rest").strip()
+                if not rest or rest.startswith(("'", '"')) or rest.startswith("$(("):
+                    continue
+                if rest.startswith("$("):
+                    stmt = rest[2:].strip()
+                else:
+                    parts = rest.split(None, 1)
+                    if len(parts) < 2:
+                        continue
+                    stmt = parts[1].strip()
+            if stmt.startswith("$(("):
+                continue
+            if stmt.startswith("$("):
+                stmt = stmt[2:].strip()
+            while stmt:
+                first = stmt.split()[0].strip("\"'()").rstrip(";")
+                if first in _WRAPPER_TOKENS:
+                    parts = stmt.split(None, 1)
+                    stmt = parts[1].strip() if len(parts) > 1 else ""
+                    continue
+                break
+            if not stmt:
+                continue
+            first = stmt.split()[0].strip("\"'()").rstrip(";")
+            if not first or first.startswith(("$", "-", "&")):
+                continue
+            if _REDIRECT_RE.match(first):
+                continue
+            if "/" in first or "=" in first:
+                continue
+            if first == "case":
+                in_case = True
+                break
+            if first in SHELL_BUILTINS:
+                continue
+            tokens.append(first)
+    return tokens
