@@ -43,9 +43,12 @@ Exit codes (mirrors the precedent):
 
 from __future__ import annotations
 
+import argparse
+import json
 import re
+import sys
 import tomllib
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import yaml
@@ -350,3 +353,38 @@ def check_workflow_extras(
                             )
                         )
     return findings
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument(
+        "--strict",
+        action="store_true",
+        help="exit 2 if any finding (incl. parse errors); default is advisory",
+    )
+    ap.add_argument("--json", action="store_true", dest="as_json")
+    args = ap.parse_args(argv)
+
+    extras_by_pkg = collect_workspace_extras(workspace_manifests())
+    paths = sorted(WORKFLOWS_DIR.glob("*.yml")) + sorted(WORKFLOWS_DIR.glob("*.yaml"))
+    findings: list[Finding] = []
+    for path in paths:
+        findings.extend(check_workflow_tools(path))
+        findings.extend(check_workflow_extras(path, extras_by_pkg))
+
+    if args.as_json:
+        print(json.dumps({"findings": [asdict(f) for f in findings]}, indent=2))
+    else:
+        for f in findings:
+            print(f"{f.kind:13} {f.workflow} :: {f.job} :: {f.step} :: {f.detail}")
+        print(
+            f"check_workflow_tools: {len(findings)} finding(s) across "
+            f"{len(paths)} workflow file(s)"
+        )
+    if findings and args.strict:
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

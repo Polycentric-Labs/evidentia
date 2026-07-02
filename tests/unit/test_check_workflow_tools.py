@@ -292,3 +292,56 @@ def test_unknown_extras_flagged_known_and_thirdparty_pass(cwt: Any, tmp_path: Pa
 
 def test_normalization_underscore_dash_case(cwt: Any) -> None:
     assert cwt._normalize("Evidentia_Core") == "evidentia-core"
+
+
+# ---------------------------------------------------------------------------
+# CLI exit codes (monkeypatch WORKFLOWS_DIR + workspace manifests like the
+# audit_workflow_permissions precedent)
+# ---------------------------------------------------------------------------
+
+
+def _patch_tree(cwt: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    wf_dir = tmp_path / "workflows"
+    wf_dir.mkdir()
+    monkeypatch.setattr(cwt, "WORKFLOWS_DIR", wf_dir)
+    manifest = _write(tmp_path, "pyproject.toml", PYPROJECT_META)
+    monkeypatch.setattr(cwt, "workspace_manifests", lambda: [manifest])
+
+
+def test_strict_exit_2_on_finding(
+    cwt: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    _patch_tree(cwt, monkeypatch, tmp_path)
+    _write(tmp_path / "workflows", "missing.yml", WF_MISSING)
+    assert cwt.main(["--strict"]) == 2
+
+
+def test_strict_exit_0_when_clean(
+    cwt: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    _patch_tree(cwt, monkeypatch, tmp_path)
+    _write(tmp_path / "workflows", "ok.yml", WF_OK)
+    assert cwt.main(["--strict"]) == 0
+
+
+def test_advisory_exit_0_despite_finding(
+    cwt: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    _patch_tree(cwt, monkeypatch, tmp_path)
+    _write(tmp_path / "workflows", "missing.yml", WF_MISSING)
+    assert cwt.main([]) == 0
+
+
+def test_json_output_shape(
+    cwt: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    import json as _json
+
+    _patch_tree(cwt, monkeypatch, tmp_path)
+    _write(tmp_path / "workflows", "missing.yml", WF_MISSING)
+    cwt.main(["--json"])
+    payload = _json.loads(capsys.readouterr().out)
+    assert payload["findings"][0]["kind"] == "missing-tool"
