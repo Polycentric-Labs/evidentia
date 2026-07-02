@@ -258,7 +258,10 @@ jobs:
           # failure). Removing it forces the hashes below to be generated from
           # these exact local wheels.
           rm -f docker/requirements.txt
-          echo "evidentia[gui]==${VERSION}" > docker/requirements.in
+          # Keep the committed .in's deliberate urllib3 security floor (the
+          # regen would otherwise silently drop it; the osv-scan below is the
+          # backstop, the floor is the defense-in-depth minimum).
+          printf 'evidentia[gui]==%s\nurllib3>=2.7.0\n' "${VERSION}" > docker/requirements.in
           attempts=0
           max_attempts=3
           until docker run --rm -v "$PWD:/work" -w /work python:3.13-slim@sha256:c33f0bc4364a6881bed1ec0cc2665e6c53c87a43e774aaeab88e6f17af105e4f \
@@ -400,6 +403,20 @@ jobs:
         with:
           name: release-dist
           path: .
+
+      # uv is NOT preinstalled on the runner — this job runs `uvx twine check`
+      # below, and its absence is exactly what killed the first live run of the
+      # restructured publish path (v0.10.15: exit 127 `uvx: command not found`;
+      # the publish jobs never run in PR CI, so tag time is their first
+      # execution). Same pinned action the build job uses. Cache DISABLED:
+      # a PR-writable Actions cache read inside an artifact-publishing job is a
+      # cache-poisoning vector (zizmor cache-poisoning; same rationale as the
+      # disabled docker type=gha cache above — a release builds from scratch).
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          version: "latest"
+          enable-cache: false
 
       - name: Check distributions
         run: |

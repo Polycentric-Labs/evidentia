@@ -52,7 +52,7 @@ For the full workspace (AI risk-statements, REST API, all collectors, MCP server
 pip install 'evidentia[ai,api,collectors,mcp]'
 ```
 
-Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.10.15` (cosign keyless OIDC + SLSA Provenance v1 verified).
+Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.10.16` (cosign keyless OIDC + SLSA Provenance v1 verified).
 
 See the [Getting Started wiki section](https://github.com/Polycentric-Labs/evidentia/wiki/Getting-Started) for air-gapped install, virtualenv setup, and full extras matrix.
 
@@ -120,7 +120,7 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 
 ## Recent Releases
 
-**v0.10.15 (2026-07-01)** — *Engineering hardening + distroless container base — never ship a failed test again*. **Cryptography-native air-gap signing via DSSE/in-toto**, a binary-free, network-free signing path that works inside distroless and minimal-base containers.
+**v0.10.16 (2026-07-02)** — *Engineering hardening + distroless container base — never ship a failed test again*. **Cryptography-native air-gap signing via DSSE/in-toto**, a binary-free, network-free signing path that works inside distroless and minimal-base containers.
 
 **v0.10.13 (2026-06-23)** — *Patch — restore the container base to Python 3.13*. **Container base reverted to `python:3.13-slim`** after a Dependabot bump (#83) to `python:3.14-slim` broke `release.yml`'s container build.
 

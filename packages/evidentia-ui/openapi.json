@@ -5930,7 +5930,7 @@
   "info": {
     "description": "REST API for the Evidentia GRC tool. All endpoints mirror CLI capabilities. Binds to 127.0.0.1 by default for localhost web-UI use.",
     "title": "Evidentia API",
-    "version": "0.10.15"
+    "version": "0.10.16"
   },
   "openapi": "3.1.0",
   "paths": {

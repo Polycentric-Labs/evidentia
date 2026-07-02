@@ -91,10 +91,13 @@ jobs:
           set -euo pipefail
           VERSION="${VERSION_INPUT}"
           python -m venv /tmp/rescan
+          # [gui,mcp] + the meta base deps = all 8 published packages (the
+          # prior `[ai,api,collectors]` extras never existed — pip silently
+          # skipped them, so the rescanned closure omitted evidentia-api).
           if [ -n "$VERSION" ]; then
-            SPEC="evidentia[ai,api,collectors,mcp]==${VERSION}"
+            SPEC="evidentia[gui,mcp]==${VERSION}"
           else
-            SPEC="evidentia[ai,api,collectors,mcp]"
+            SPEC="evidentia[gui,mcp]"
           fi
           echo "Installing ${SPEC} from PyPI ..."
           /tmp/rescan/bin/pip install --quiet "${SPEC}"

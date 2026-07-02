@@ -99,8 +99,13 @@ jobs:
           set -euo pipefail
           python -m venv /tmp/smoke-extras
           # Intentionally UNPINNED (see the base-install step): install the live
-          # published extras exactly as a consumer would.
-          /tmp/smoke-extras/bin/pip install "evidentia[ai,api,collectors,mcp]==${VERSION}"
+          # published extras exactly as a consumer would. The meta-package's
+          # BASE deps already pull evidentia-core/-ai/-eval/-collectors/
+          # -integrations; [gui] adds evidentia-api and [mcp] adds
+          # evidentia-mcp — together = all 8 published packages. (The prior
+          # `[ai,api,collectors]` extras never existed; pip warned + silently
+          # skipped them, so evidentia-api was never actually verified.)
+          /tmp/smoke-extras/bin/pip install "evidentia[gui,mcp]==${VERSION}"
           OUT="$(/tmp/smoke-extras/bin/evidentia version)"
           echo "$OUT"
           echo "$OUT" | grep -q "${VERSION}" \

@@ -17,7 +17,7 @@ Verify:
 
 ```bash
 evidentia version
-# → Evidentia v0.10.15 / Python 3.12.x
+# → Evidentia v0.10.16 / Python 3.12.x
 ```
 
 ## Step 2 — Pick a framework (10 seconds)
@@ -122,8 +122,8 @@ The wheel you installed has a PEP 740 attestation:
 pip install pypi-attestations
 pypi-attestations verify pypi \
   --repository https://github.com/Polycentric-Labs/evidentia \
-  "pypi:evidentia-0.10.15-py3-none-any.whl"
-# → OK: evidentia-0.10.15-py3-none-any.whl
+  "pypi:evidentia-0.10.16-py3-none-any.whl"
+# → OK: evidentia-0.10.16-py3-none-any.whl
 ```
 
 **PowerShell (Windows)**
@@ -132,8 +132,8 @@ pypi-attestations verify pypi \
 pip install pypi-attestations
 pypi-attestations verify pypi `
   --repository https://github.com/Polycentric-Labs/evidentia `
-  "pypi:evidentia-0.10.15-py3-none-any.whl"
-# → OK: evidentia-0.10.15-py3-none-any.whl
+  "pypi:evidentia-0.10.16-py3-none-any.whl"
+# → OK: evidentia-0.10.16-py3-none-any.whl
 ```
 
 The container image is cosign-signed (if you used the Docker install path):
@@ -141,7 +141,7 @@ The container image is cosign-signed (if you used the Docker install path):
 **Bash / Linux / macOS**
 
 ```bash
-cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.15 \
+cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.16 \
   --certificate-identity-regexp 'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 # → "The cosign claims were validated"
@@ -150,7 +150,7 @@ cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.15 \
 **PowerShell (Windows)**
 
 ```powershell
-cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.15 `
+cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.16 `
   --certificate-identity-regexp 'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' `
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 # → "The cosign claims were validated"
