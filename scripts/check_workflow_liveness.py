@@ -25,6 +25,11 @@ internal errors.
 
 from __future__ import annotations
 
+import json
+import urllib.error
+import urllib.parse
+import urllib.request
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import yaml
@@ -69,4 +74,72 @@ def check_dead_triggers(triggers_by_file: dict[str, set[str]]) -> list[str]:
                 f"- **`{name}`** declares a structurally dead `on: {event}` "
                 f"trigger: {DEAD_TRIGGER_RULES[event]}"
             )
+    return findings
+
+
+def _parse_gh_datetime(value: str) -> datetime:
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+class GitHubAPI:
+    """Tiny REST client. Paths are RELATIVE to /repos/{repo} (e.g.
+    ``/actions/workflows``); auth via GITHUB_TOKEN/GH_TOKEN."""
+
+    def __init__(self, repo: str, token: str | None) -> None:
+        self.base = f"https://api.github.com/repos/{repo}"
+        self.token = token
+
+    def get(self, path: str, params: dict[str, str] | None = None) -> object:
+        url = self.base + path
+        if params:
+            url += "?" + urllib.parse.urlencode(params)
+        req = urllib.request.Request(
+            url,
+            headers={
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+                **({"Authorization": f"Bearer {self.token}"} if self.token else {}),
+            },
+        )
+        # Fixed https host (api.github.com); 30s covers connect, but a
+        # read-phase stall raises bare TimeoutError — callers catch OSError.
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+
+
+def check_never_fired(
+    api: GitHubAPI, triggers_by_path: dict[str, set[str]], now: datetime
+) -> list[str]:
+    findings: list[str] = []
+    listing = api.get("/actions/workflows", params={"per_page": "100"})
+    if not isinstance(listing, dict):
+        raise ValueError("unexpected /actions/workflows response shape")
+    for wf in listing.get("workflows", []):
+        if wf.get("state") != "active":
+            continue
+        path = wf.get("path", "")
+        triggers = triggers_by_path.get(path)
+        if not triggers:
+            continue  # not a local top-level workflow file we parsed
+        anchor = _parse_gh_datetime(wf["created_at"])
+        commits = api.get("/commits", params={"path": path, "per_page": "1"})
+        if isinstance(commits, list) and commits:
+            touched = _parse_gh_datetime(commits[0]["commit"]["committer"]["date"])
+            anchor = max(anchor, touched)
+        age = now - anchor
+        if age < timedelta(days=GRACE_DAYS):
+            continue
+        for event in sorted(triggers - EXEMPT_EVENTS):
+            runs = api.get(
+                f"/actions/workflows/{wf['id']}/runs",
+                params={"event": event, "per_page": "1"},
+            )
+            if not isinstance(runs, dict):
+                raise ValueError(f"unexpected runs response shape for {path}")
+            if runs.get("total_count", 0) == 0:
+                findings.append(
+                    f"- **`{Path(path).name}`** trigger `on: {event}` has ZERO "
+                    f"runs ever in {age.days}d (grace window {GRACE_DAYS}d) — "
+                    f"a never-fired gate is a dead gate (lesson 9)."
+                )
     return findings

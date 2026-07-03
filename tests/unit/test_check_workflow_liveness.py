@@ -59,3 +59,71 @@ def test_dead_release_trigger_flagged_even_with_dispatch(cwl: Any) -> None:
 
 def test_no_dead_trigger_no_finding(cwl: Any) -> None:
     assert cwl.check_dead_triggers({"test.yml": {"push", "pull_request"}}) == []
+
+
+class FakeAPI:
+    """Minimal stand-in for GitHubAPI.get keyed on (path, frozen params)."""
+
+    def __init__(self, responses: dict[tuple[str, str], Any]) -> None:
+        self.responses = responses
+
+    def get(self, path: str, params: dict[str, str] | None = None) -> Any:
+        key = (path, json.dumps(params or {}, sort_keys=True))
+        return self.responses[key]
+
+
+NOW = datetime(2026, 7, 2, tzinfo=UTC)
+OLD = "2026-01-01T00:00:00Z"
+RECENT = "2026-06-25T00:00:00Z"
+
+
+def _api(created: str, touched: str, total: int) -> FakeAPI:
+    wf_path = ".github/workflows/w.yml"
+    return FakeAPI(
+        {
+            ("/actions/workflows", json.dumps({"per_page": "100"}, sort_keys=True)): {
+                "total_count": 1,
+                "workflows": [
+                    {"id": 7, "path": wf_path, "state": "active", "created_at": created}
+                ],
+            },
+            (
+                "/commits",
+                json.dumps({"path": wf_path, "per_page": "1"}, sort_keys=True),
+            ): [{"commit": {"committer": {"date": touched}}}],
+            (
+                "/actions/workflows/7/runs",
+                json.dumps({"event": "schedule", "per_page": "1"}, sort_keys=True),
+            ): {"total_count": total},
+        }
+    )
+
+
+def test_zero_runs_past_grace_flagged(cwl: Any) -> None:
+    findings = cwl.check_never_fired(
+        _api(OLD, OLD, 0), {".github/workflows/w.yml": {"schedule"}}, NOW
+    )
+    assert len(findings) == 1 and "schedule" in findings[0]
+
+
+def test_recently_touched_file_gets_fresh_grace(cwl: Any) -> None:
+    findings = cwl.check_never_fired(
+        _api(OLD, RECENT, 0), {".github/workflows/w.yml": {"schedule"}}, NOW
+    )
+    assert findings == []
+
+
+def test_nonzero_runs_not_flagged(cwl: Any) -> None:
+    findings = cwl.check_never_fired(
+        _api(OLD, OLD, 3), {".github/workflows/w.yml": {"schedule"}}, NOW
+    )
+    assert findings == []
+
+
+def test_dispatch_and_call_events_exempt(cwl: Any) -> None:
+    findings = cwl.check_never_fired(
+        _api(OLD, OLD, 0),
+        {".github/workflows/w.yml": {"workflow_dispatch", "workflow_call"}},
+        NOW,
+    )
+    assert findings == []
