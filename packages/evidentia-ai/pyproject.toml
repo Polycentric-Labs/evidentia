@@ -35,7 +35,7 @@ dependencies = [
     # GHSA-v4p8-mg3p-g94g HIGH auth'd command exec via MCP stdio test
     # endpoints). Evidentia uses LiteLLM as a client library, not the
     # proxy server, so reachability is theoretical; bumped anyway.
-    "litellm>=1.83.7,<2.0",
+    "litellm>=1.90.2,<2.0",
     "instructor>=1.6",
     "tenacity>=9.0",
 ]

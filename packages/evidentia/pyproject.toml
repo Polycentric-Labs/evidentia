@@ -33,7 +33,7 @@ dependencies = [
     # when these caps were lifted (see the typer/click migration). The next
     # breaking release is capped (typer 0.x minors are breaking-prone; click 9.0)
     # so a future bump gets isolated review rather than riding a group bump.
-    "typer>=0.26,<0.27",
+    "typer>=0.26.8,<0.27",
     "click>=8.2,<9.0",
     "rich>=13.0",
 ]
