@@ -31,11 +31,14 @@ DOC HEALTH (always runs):
                               ``gen_readme_releases.py --check``; can't
                               ship a stale releases list). Added E5c.
 
-PHRASE AUDIT (config-driven; runs only if private config present):
+PHRASE AUDIT (config-driven; layered base + private overlay):
 
-7. **phrase_audit**         — no forbidden phrases (per the project's
-                              private phrase config) in tracked public
-                              files outside the per-file allowlist.
+7. **phrase_audit**         — no forbidden phrases (per the layered phrase
+                              config) in tracked public files outside the
+                              per-file allowlist. This includes the committed
+                              base's reclaimable-vendor-host patterns
+                              (*.vercel.app / *.netlify.app / *.pages.dev / …)
+                              plus any private-overlay phrases.
 8. **commit_msg_audit**     — same forbidden-phrase set, applied to
                               commit messages in the range
                               ``cutoff..HEAD`` (cutoff loaded from
@@ -51,10 +54,19 @@ PHRASE AUDIT (config-driven; runs only if private config present):
                               (gracefully WARNs if gh is unauthenticated
                               or returns empty).
 
-Config: ``private/check-docs-health-patterns.yaml`` (gitignored).
-If absent, the 4 phrase-related checks emit one WARN and skip; the
-4 doc-health checks still run. See ``private/README.md`` for the
-config schema + setup.
+Config (layered, docs-airtightness A1.5):
+  * ``check-docs-health-patterns.yaml`` (repo root) — the committed, PUBLIC
+    base. Ships the reclaimable-vendor-host patterns so that grep runs in
+    EVERY environment (CI, fresh clones).
+  * ``private/check-docs-health-patterns.yaml`` (gitignored) — the PRIVATE
+    overlay: the sensitive phrase set + audit-scoping keys
+    (``commit_cutoff_sha``, ``tag_allowlist``, …). Merged on top of the base;
+    it WINS / EXTENDS.
+If the private overlay is absent, the commit/tag/release-body audits emit an
+advisory WARN and skip (no ``commit_cutoff_sha``), but the base vendor-host
+grep + the 6 always-on doc-health checks still run. If NEITHER layer is
+present, all phrase checks skip with one WARN. See ``private/README.md`` for
+the private-overlay schema + setup.
 
 SPECIAL MODE for the commit-msg git hook:
 
@@ -107,6 +119,14 @@ from enum import Enum
 from pathlib import Path
 
 REPO_ROOT = Path.cwd().resolve()
+# Layered phrase config (docs-airtightness A1.5):
+#   * BASE_CONFIG_PATH — committed, PUBLIC, non-sensitive layer. Ships in the
+#     repo so the reclaimable-vendor-host grep runs in EVERY environment (CI,
+#     fresh clones), never only where the private overlay happens to exist.
+#   * PHRASE_CONFIG_PATH — the gitignored PRIVATE overlay. Merged on top of the
+#     base when present; it WINS/EXTENDS (its patterns append, its scalar/list
+#     keys override the base's). Absent for fresh clones / collaborators.
+BASE_CONFIG_PATH = Path("check-docs-health-patterns.yaml")
 PHRASE_CONFIG_PATH = Path("private/check-docs-health-patterns.yaml")
 
 # ── README header Title-Case invariant (v0.10.7 E5c) ───────────────────────
@@ -192,24 +212,21 @@ class PhraseConfig:
         )
 
 
-def load_phrase_config() -> tuple[PhraseConfig, str | None]:
-    """Load the private phrase-audit config.
+def _parse_config_file(config_path: Path) -> tuple[dict | None, str | None]:
+    """Parse one YAML config file into a raw dict.
 
-    Returns (config, error_message). If config is absent or unparseable,
-    the returned config is the empty placeholder and error_message
-    describes why phrase checks are disabled.
+    Returns ``(data, error)``. ``data`` is ``None`` (with a populated
+    ``error``) when the file is absent, PyYAML is unavailable, the file is
+    unparseable, or its top level is not a mapping. Pure — no compilation or
+    merging happens here (that is :func:`load_phrase_config`'s job).
     """
-    config_path = REPO_ROOT / PHRASE_CONFIG_PATH
     if not config_path.exists():
-        return PhraseConfig.empty(), (
-            f"phrase config not found at {PHRASE_CONFIG_PATH.as_posix()}; "
-            f"phrase checks disabled (see private/README.md for setup)"
-        )
+        return None, f"config not found at {config_path.as_posix()}"
 
     try:
         import yaml  # type: ignore[import-untyped]
     except ImportError:
-        return PhraseConfig.empty(), (
+        return None, (
             "PyYAML not available; phrase checks disabled "
             "(install with `uv sync --all-groups`)"
         )
@@ -217,17 +234,24 @@ def load_phrase_config() -> tuple[PhraseConfig, str | None]:
     try:
         data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     except (yaml.YAMLError, OSError) as e:
-        return PhraseConfig.empty(), (
-            f"phrase config at {PHRASE_CONFIG_PATH.as_posix()} unparseable: {e}"
-        )
+        return None, f"config at {config_path.as_posix()} unparseable: {e}"
 
     if not isinstance(data, dict):
-        return PhraseConfig.empty(), (
-            f"phrase config at {PHRASE_CONFIG_PATH.as_posix()} not a dict"
-        )
+        return None, f"config at {config_path.as_posix()} not a dict"
 
-    raw_patterns = data.get("forbidden_patterns", []) or []
+    return data, None
+
+
+def _compile_patterns(raw_patterns: object) -> list[tuple[str, re.Pattern[str]]]:
+    """Compile a raw ``forbidden_patterns`` list into ``(name, pattern)`` pairs.
+
+    Each entry is a mapping with ``name`` + ``regex`` (and optional ``flags`` /
+    ``reason``; ``reason`` is documentation-only and ignored here). Malformed
+    entries and uncompilable regexes are skipped, matching the prior behavior.
+    """
     compiled: list[tuple[str, re.Pattern[str]]] = []
+    if not isinstance(raw_patterns, list):
+        return compiled
     for entry in raw_patterns:
         if not isinstance(entry, dict):
             continue
@@ -242,20 +266,94 @@ def load_phrase_config() -> tuple[PhraseConfig, str | None]:
             compiled.append((name, re.compile(regex, flags)))
         except re.error:
             continue
+    return compiled
 
-    raw_line_allow = data.get("line_allowlist", {}) or {}
+
+def _parse_line_allowlist(raw_line_allow: object) -> dict[str, set[int]]:
+    """Parse a raw ``line_allowlist`` mapping into ``{path: {line, ...}}``."""
     line_allow: dict[str, set[int]] = {}
     if isinstance(raw_line_allow, dict):
         for path_key, lines in raw_line_allow.items():
             if isinstance(lines, list):
                 line_allow[str(path_key)] = {int(n) for n in lines if isinstance(n, int)}
+    return line_allow
+
+
+def load_phrase_config() -> tuple[PhraseConfig, str | None]:
+    """Load the layered doc-health phrase config (base + private overlay).
+
+    Two layers (docs-airtightness A1.5):
+
+      * The committed, public BASE at :data:`BASE_CONFIG_PATH` — ships the
+        reclaimable-vendor-host patterns so that check runs in every
+        environment.
+      * The gitignored PRIVATE overlay at :data:`PHRASE_CONFIG_PATH` — the
+        sensitive phrase set + audit-scoping keys.
+
+    The private overlay WINS / EXTENDS: its ``forbidden_patterns`` are appended
+    to the base's, and its scalar/list keys (``commit_cutoff_sha``,
+    ``tag_allowlist``, ``file_allowlist``, ``line_allowlist``) override or
+    extend the base's. ``is_loaded`` is True if EITHER layer parsed, so the
+    doc-health run treats the config as present whenever the committed base
+    ships (which it always does in-repo).
+
+    Returns ``(config, error_message)``. ``error_message`` is populated only
+    when NEITHER layer could be loaded (so phrase checks are fully disabled) —
+    it describes why. When the base loads but the private overlay is absent,
+    the config is returned with ``error_message=None`` and the commit/tag/
+    release-body audits degrade to their own advisory WARNs (missing
+    ``commit_cutoff_sha`` etc.), while the base vendor-host grep still runs.
+    """
+    # The per-file parse errors are intentionally discarded: a missing/
+    # unparseable single layer is not itself an error as long as the OTHER
+    # layer loaded (handled below); only the both-absent case surfaces a
+    # message, and it builds its own.
+    base_data, _base_err = _parse_config_file(REPO_ROOT / BASE_CONFIG_PATH)
+    priv_data, _priv_err = _parse_config_file(REPO_ROOT / PHRASE_CONFIG_PATH)
+
+    if base_data is None and priv_data is None:
+        # Neither layer available: phrase checks fully disabled. Surface the
+        # private-overlay reason (the historical message) so setup guidance is
+        # unchanged for the common "no config at all" case.
+        return PhraseConfig.empty(), (
+            f"phrase config not found at {PHRASE_CONFIG_PATH.as_posix()} "
+            f"or {BASE_CONFIG_PATH.as_posix()}; phrase checks disabled "
+            f"(see private/README.md for setup)"
+        )
+
+    base_data = base_data or {}
+    priv_data = priv_data or {}
+
+    # forbidden_patterns: base first, then private appended (private extends).
+    compiled = _compile_patterns(base_data.get("forbidden_patterns", []) or [])
+    compiled += _compile_patterns(priv_data.get("forbidden_patterns", []) or [])
+
+    # file_allowlist: union (either layer may exempt a path).
+    file_allow = list(base_data.get("file_allowlist", []) or []) + list(
+        priv_data.get("file_allowlist", []) or []
+    )
+
+    # line_allowlist: merge; private wins on a path collision.
+    line_allow = _parse_line_allowlist(base_data.get("line_allowlist", {}) or {})
+    line_allow.update(_parse_line_allowlist(priv_data.get("line_allowlist", {}) or {}))
+
+    # tag_allowlist: union.
+    tag_allow = set(base_data.get("tag_allowlist", []) or []) | set(
+        priv_data.get("tag_allowlist", []) or []
+    )
+
+    # commit_cutoff_sha: private wins (base leaves it empty).
+    cutoff = str(
+        priv_data.get("commit_cutoff_sha", "")
+        or base_data.get("commit_cutoff_sha", "")
+    )
 
     return PhraseConfig(
         forbidden_patterns=compiled,
-        file_allowlist_globs=list(data.get("file_allowlist", []) or []),
+        file_allowlist_globs=file_allow,
         line_allowlist=line_allow,
-        tag_allowlist=set(data.get("tag_allowlist", []) or []),
-        commit_cutoff_sha=str(data.get("commit_cutoff_sha", "")),
+        tag_allowlist=tag_allow,
+        commit_cutoff_sha=cutoff,
         is_loaded=True,
     ), None
 
@@ -413,14 +511,17 @@ def check_cross_link_resolve(
             if abs_target.is_dir():
                 continue
             if rel_to_repo not in all_tracked:
-                # Downgrade to WARN for any broken link under docs/wiki/.
-                # The wiki is scaffolded in v0.10.7; per-page files fill
-                # in over upcoming cycles. Section indexes legitimately
-                # reference future stubs.
-                under_wiki = rel_to_repo.parts[:2] == ("docs", "wiki")
-                severity = Severity.WARN if under_wiki else Severity.FAIL
+                # A broken relative link always FAILs (docs-airtightness A1.3).
+                # Historically broken links under docs/wiki/ were DOWNGRADED to
+                # WARN on the rationale that the wiki was "scaffolded" in v0.10.7
+                # with per-page stubs filling in over later cycles. The wiki is
+                # now content-complete, so that rationale is dead — a broken
+                # wiki-internal link is real link-rot and must block --strict in
+                # required CI (previously it slipped through to be caught only
+                # post-merge by the Pages `mkdocs build --strict`; A1.4 also
+                # adds a PR-scoped strict build as a second layer).
                 result.add(Finding(
-                    severity, "cross_link_resolve", path.as_posix(), line,
+                    Severity.FAIL, "cross_link_resolve", path.as_posix(), line,
                     f"broken link to {rel_to_repo.as_posix()}",
                 ))
 
