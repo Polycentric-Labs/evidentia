@@ -62,6 +62,16 @@ def test_ceiling_allows_respects_custom_target(cpc: Any) -> None:
     assert cpc.ceiling_allows("<3.14,>=3.10", target="3.14.0") is False
 
 
+def test_ceiling_allows_false_on_malformed_specifier(cpc: Any) -> None:
+    # An unexpected/non-spec PyPI value must not crash the sentinel (exit-0
+    # detect-and-nudge doctrine) — "can't tell" means no nudge.
+    assert cpc.ceiling_allows("not-a-specifier") is False
+
+
+def test_ceiling_allows_false_on_malformed_target(cpc: Any) -> None:
+    assert cpc.ceiling_allows("<3.14,>=3.10", target="garbage") is False
+
+
 # --- fetch_requires_python ---------------------------------------------------
 
 

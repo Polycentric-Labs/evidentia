@@ -30,7 +30,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from packaging.specifiers import SpecifierSet
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
+from packaging.version import InvalidVersion
 
 DEFAULT_PACKAGE = "litellm"
 DEFAULT_TARGET = "3.14.0"
@@ -64,7 +65,13 @@ def ceiling_allows(requires_python: str | None, target: str = DEFAULT_TARGET) ->
     (nothing to lift yet, or we couldn't tell)."""
     if not requires_python:
         return False
-    return SpecifierSet(requires_python).contains(target, prereleases=True)
+    try:
+        return SpecifierSet(requires_python).contains(target, prereleases=True)
+    except (InvalidSpecifier, InvalidVersion):
+        # A malformed specifier (an unexpected PyPI value) or a malformed target
+        # must not crash the sentinel — "can't tell" means don't nudge, don't
+        # fail (the exit-0 detect-and-nudge doctrine).
+        return False
 
 
 def main(argv: list[str] | None = None) -> int:
