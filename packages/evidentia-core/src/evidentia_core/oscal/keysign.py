@@ -99,8 +99,17 @@ def _load_private_key(pem: bytes) -> _PrivateKey:
             raise SigningKeyError(f"could not load private key: {e}") from e
     except ValueError as e:
         msg = str(e).lower()
-        if "password" in msg or "decrypt" in msg:
+        if "password" in msg or "decrypt" in msg or "passphrase" in msg:
             raise SigningKeyError("incorrect passphrase for signing key") from e
+        if password is not None:
+            # A passphrase was supplied but the upstream error wording is
+            # unrecognized (cryptography/OpenSSL variants drift across
+            # versions/platforms): report both plausible causes rather than
+            # misclassifying as key corruption.
+            raise SigningKeyError(
+                "could not decrypt signing key: incorrect passphrase or "
+                "malformed key data"
+            ) from e
         raise SigningKeyError("malformed or undecodable private key") from e
     except UnsupportedAlgorithm as e:
         raise UnsupportedKeyError(f"unsupported key algorithm: {e}") from e
