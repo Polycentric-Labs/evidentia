@@ -7,19 +7,34 @@
 # dependency-resolution / registry-propagation issue that bites a real
 # consumer doing a clean `pip install` or `docker pull`.
 #
-# This workflow is that final check. It fires after a Release is published
-# (the last step of release.yml's publish-container job), waits for the
-# package/image to propagate, and confirms both install + run `evidentia
-# version` from a clean environment. On failure it goes red so a maintainer is
-# notified. Auto-yank is intentionally NOT automated — yank-vs-hotfix is a
-# human call (and an unverified-publish false positive must never yank a good
-# release). `workflow_dispatch` allows re-running the smoke for any version.
+# This workflow is that final check. It fires when the `release` workflow
+# COMPLETES (a Release created with GITHUB_TOKEN never fires `release:`
+# triggers — GitHub anti-recursion — so the old `release: [published]` trigger
+# was structurally dead and had ZERO automatic runs in its lifetime; lesson 9).
+# `workflow_run` on the release workflow's completion IS delivered even for
+# GITHUB_TOKEN-driven runs, and its `head_branch` carries the tag name for
+# tag-push-triggered runs. It waits for the package/image to propagate, then
+# confirms both install + run `evidentia version` from a clean environment. On
+# failure it goes red so a maintainer is notified. Auto-yank is intentionally
+# NOT automated — yank-vs-hotfix is a human call (and an unverified-publish
+# false positive must never yank a good release). `workflow_dispatch` allows
+# re-running the smoke for any version.
 
 name: post-publish smoke
 
-on:
-  release:
-    types: [published]
+# A Release created with GITHUB_TOKEN never fires `release:` triggers
+# (GitHub anti-recursion) — this workflow had ZERO automatic runs in its
+# lifetime under the old `release:` trigger (lesson 9). workflow_run on the
+# release workflow's completion IS delivered, and head_branch carries the
+# tag name for tag-push-triggered runs (verified on the v0.10.16 run).
+# zizmor's dangerous-triggers audit flags ANY workflow_run usage; ignored
+# with justification: this workflow checks out NO code, both jobs gate on
+# conclusion=='success' + a strict-semver head_branch, and head_branch is
+# consumed exclusively via env vars (no template injection into run:).
+on: # zizmor: ignore[dangerous-triggers]
+  workflow_run:
+    workflows: [release]
+    types: [completed]
   workflow_dispatch:
     inputs:
       version:
@@ -30,37 +45,50 @@ permissions:
   contents: read
 
 concurrency:
-  group: post-publish-smoke-${{ github.event.release.tag_name || github.event.inputs.version }}
+  group: post-publish-smoke-${{ github.event.workflow_run.head_branch || github.event.inputs.version }}
   cancel-in-progress: false
 
 jobs:
   pypi-install-smoke:
     name: PyPI fresh-install smoke
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.release.prerelease }}
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       startsWith(github.event.workflow_run.head_branch, 'v'))
     steps:
       - name: Resolve version
         id: ver
+        env:
+          GITHUB_EVENT_INPUTS_VERSION: ${{ github.event.inputs.version }}
+          WORKFLOW_RUN_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${GITHUB_EVENT_INPUTS_VERSION}"
           else
-            REF="${GITHUB_EVENT_RELEASE_TAG_NAME}"   # e.g. v0.10.13
+            REF="${WORKFLOW_RUN_HEAD_BRANCH}"   # tag name, e.g. v0.10.16
+            if ! printf '%s' "$REF" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+              # Non-canonical v-tag: release.yml's tag-guard skipped publishing,
+              # so there is nothing live to smoke. Skip green, don't go red.
+              echo "Non-canonical ref '${REF}' — nothing was published, skipping."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
             VERSION="${REF#v}"
           fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Smoke-testing evidentia==${VERSION}"
-        env:
-          GITHUB_EVENT_INPUTS_VERSION: ${{ github.event.inputs.version }}
-          GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
 
       - name: Set up Python
+        if: steps.ver.outputs.skip != 'true'
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
         with:
           python-version: "3.13"
 
       - name: Wait for PyPI propagation
+        if: steps.ver.outputs.skip != 'true'
         env:
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
@@ -77,6 +105,7 @@ jobs:
           exit 1
 
       - name: Fresh-install (base) + run `evidentia version`
+        if: steps.ver.outputs.skip != 'true'
         env:
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
@@ -93,6 +122,7 @@ jobs:
             || { echo "::error::base 'evidentia version' did not report ${VERSION}"; exit 1; }
 
       - name: Fresh-install (all extras) — verify every published package resolves
+        if: steps.ver.outputs.skip != 'true'
         env:
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
@@ -114,26 +144,38 @@ jobs:
   container-smoke:
     name: GHCR container pull smoke
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.release.prerelease }}
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       startsWith(github.event.workflow_run.head_branch, 'v'))
     permissions:
       contents: read
       packages: read
     steps:
       - name: Resolve tag
         id: tag
+        env:
+          GITHUB_EVENT_INPUTS_VERSION: ${{ github.event.inputs.version }}
+          WORKFLOW_RUN_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             TAG="v${GITHUB_EVENT_INPUTS_VERSION}"
           else
-            TAG="${GITHUB_EVENT_RELEASE_TAG_NAME}"
+            TAG="${WORKFLOW_RUN_HEAD_BRANCH}"   # tag name, e.g. v0.10.16
+            if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+              # Non-canonical v-tag: release.yml's tag-guard skipped publishing,
+              # so there is nothing live to smoke. Skip green, don't go red.
+              echo "Non-canonical ref '${TAG}' — nothing was published, skipping."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-        env:
-          GITHUB_EVENT_INPUTS_VERSION: ${{ github.event.inputs.version }}
-          GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
 
       - name: Log in to GHCR
+        if: steps.tag.outputs.skip != 'true'
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee  # v4.2.0
         with:
           registry: ghcr.io
@@ -141,6 +183,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull published container (with propagation retry) + run `version`
+        if: steps.tag.outputs.skip != 'true'
         env:
           IMAGE: ghcr.io/polycentric-labs/evidentia:${{ steps.tag.outputs.tag }}
           TAG: ${{ steps.tag.outputs.tag }}
