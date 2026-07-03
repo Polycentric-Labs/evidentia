@@ -375,7 +375,9 @@ pinned action's inputs and outputs against the action's schema *at the pinned
 commit*, artifact names and paths across the job graph, that environment
 deployment policies admit tag refs, and that the publish path runs cache-free
 and regenerates every resolution artifact from scratch rather than trusting a
-committed preview.
+committed preview. The tool-availability leg of that audit is now mechanized: a
+strict CI check (`scripts/check_workflow_tools.py`) fails any job that invokes
+a tool its own steps never install.
 
 **9. Assurance jobs were green while verifying nothing.** Two post-publish
 assurance workflows installed package *extras that do not exist* — `pip` emits a
@@ -394,7 +396,11 @@ assurance step carries a post-condition that proves its claim (import checks,
 and **a gate is not real until it has been observed firing** — a workflow whose
 trigger has never produced a run is a dead gate (the never-fired generalization
 of lesson 2's silently-died gate), detectable mechanically from the workflow-runs
-API.
+API. That detection now runs weekly: the workflow-liveness sentinel flags
+structurally dead trigger events and automatic triggers that have never
+produced a run (`scripts/check_workflow_liveness.py`), and the same strict CI
+check that guards tool availability validates install-spec extras against the
+package manifests.
 
 ---
 

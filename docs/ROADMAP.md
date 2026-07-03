@@ -2101,6 +2101,22 @@ engineering-hardening batch addressed all three:
   raw CVE-count cut (DHI carries ~40 unfixable advisories; "0 fixable" is a snapshot whose
   durable control is the scheduled rebuild + digest re-pin). NOT Alpine (musl breaks
   manylinux wheels). (Verified 2026-06-28; shipped in 0.10.16, 2026-07-01.)
+- **Workflow-gate self-verification (G8/G9/G10) — DONE.** Two committed checkers
+  now mechanize lessons 8-9: `check_workflow_tools.py` (strict, per-PR: per-job
+  tool availability + workspace-extras validity; flipped to a REQUIRED check
+  after being observed green on main) and `check_workflow_liveness.py`
+  (weekly sentinel: dead trigger events + never-fired automatic triggers, with a
+  rescan-hosted self-liveness guard). The smoke workflow's dead `release:` trigger
+  is rewired via `workflow_run`. Follow-ups: the `workflow_run` trigger is
+  observed live at the next release (an interim never-fired nudge from the
+  sentinel is expected-and-benign if no release ships within 30 days); a zizmor
+  dead-trigger feature request is drafted post-ship (goodwill, non-blocking).
+- **Carried (unscoped):** `docker/Dockerfile.demo` shell-free rework for the
+  distroless base (not built in CI; blocks only the hosted Tier-1 demo).
+  Pre-tag preflight dry-run stays the LEAD CONDITIONAL for release-pipeline
+  rehearsal (trigger: ≥2 structural release.yml changes in 2 quarters or a 2nd
+  maintainer — checked at PRR Row 21). P3 FIPS container variant stays gated on
+  the federal-SI OpenPGP-interop answer.
 
 ### Medical-device GRC feature line (v0.11 → v1.1+) — PLANNED (web-grounded research 2026-06-17)
 

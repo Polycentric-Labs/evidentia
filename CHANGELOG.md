@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Workflow tool-availability + extras-validity checker (G8+G9)** —
+  `scripts/check_workflow_tools.py`, a strict CI job: every `run:` command in
+  every workflow job must be provided by that job's own `uses:` steps or the
+  runner image (the v0.10.15 exit-127 class), and workspace install-specs may
+  only name declared extras (pip silently skips unknown extras — the class
+  that left two assurance workflows verifying nothing). Mechanizes
+  engineering-practices lessons 8-9.
+- **Workflow-liveness sentinel (G10)** — the weekly base-freshness sentinel
+  now flags structurally dead trigger events (e.g. `release:` triggers, which
+  GITHUB_TOKEN-created Releases never fire) and automatic triggers with zero
+  runs ever past a 30-day grace window (`scripts/check_workflow_liveness.py`),
+  via a single tracking issue. A companion self-liveness guard in the Monday
+  rescan goes red if the sentinel itself stops running.
+
+### Fixed
+
+- **Post-publish smoke now actually fires after releases** — replaced the
+  structurally dead `release:` trigger (zero runs in the workflow's lifetime)
+  with `workflow_run` on the release workflow's completion, gated on success +
+  a strict semver tag check.
+- **Wrong-passphrase signing errors are classified robustly** — an
+  unrecognized upstream (cryptography/OpenSSL) message variant no longer
+  misreports an incorrect passphrase as key corruption.
+- **`docker/requirements.txt` preview regenerated against PyPI at 0.10.16**
+  (the committed file is an operator preview; release builds regenerate from
+  scratch). Dependabot now ignores docker `python` version bumps — major AND
+  minor, since Dependabot classifies 3.13→3.14 as minor — while digest bumps
+  continue to flow (litellm `requires-python <3.14`).
+
 ### Changed
 
 - **`docs/engineering-practices.md`** gains lessons 8 (a release pipeline's
