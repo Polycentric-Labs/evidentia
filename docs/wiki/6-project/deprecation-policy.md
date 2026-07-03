@@ -25,7 +25,7 @@
 | `evidentia conmon check --last-completed-file` (CLI flag) | `--state-file` | v0.9.6 (2026-05-18) | **v1.0.0** | Normalized to match `conmon watch`, `conmon health`, `conmon mark-completed`. DeprecationWarning emitted when used; specifying both flags exits with code 2. |
 | `evidentia_core.models.finding.SecurityFinding` (library class name) | `evidentia_core.models.finding.Finding` (same class, new canonical name) | v0.10.1 (2026-05-23) | **v1.0.0** (earliest major bump) | The `SecurityFinding` name is kept as a backward-compatible alias for ≥ 1 minor cycle per the deprecation policy. Both names refer to the same class — no runtime difference, no behavior change, `isinstance(obj, SecurityFinding)` and `isinstance(obj, Finding)` both succeed. The rename aligns with OCSF's "Finding" terminology (Compliance Finding, Detection Finding). No `DeprecationWarning` is emitted in v0.10.1 to avoid spamming the ~50+ existing call sites — the alias is silent. Operators / integrators are encouraged to switch to `Finding` in new code; existing code keeps working unchanged. |
 
-No other surfaces are currently deprecated as of v0.10.1.
+No other surfaces are currently deprecated as of v0.10.16.
 
 ---
 

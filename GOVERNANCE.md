@@ -45,8 +45,11 @@ and search:
 - **Security decisions** — handled per the disclosure policy in
   [`SECURITY.md`](SECURITY.md) using GitHub Private Vulnerability
   Reporting + the per-release [`docs/release-checklist.md`](docs/release-checklist.md)
-  security gate. Per-release security reviews are published as
-  `docs/security-review-vX.Y.Z.md`.
+  security gate. Every release gets a review sized to its change
+  surface via the `/pre-release-review` right-sizing rubric: a full
+  review (published as `docs/security-review-vX.Y.Z.md`) when the
+  attack surface changes, or a right-sized reuse-based review
+  (logged in the release's per-run record) otherwise.
 - **Release decisions** — gated by the 11-step
   [`docs/release-checklist.md`](docs/release-checklist.md) (pre-release
   scope confirmation through post-release verification).

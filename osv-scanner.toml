@@ -49,7 +49,11 @@ reason = "torch 2.11.0 (CVE-2025-3000 / PYSEC-2025-194, CVSS3.1 5.3 AV:L, CWE-11
 # READ in the OpenSSL statically bundled into cryptography's PyPI wheels (wheel-only --
 # sdist builds use system OpenSSL). This entry is retained ONLY because the full-extras
 # DEV resolution (sigstore+ocsf+collectors) is still capped below the fix by py-ocsf-models.
-# Full reachability proof: docs/security-review-v0.10.10.md.
+# Full reachability proof: CHANGELOG.md `## [0.10.10]` (original acceptance
+# rationale) + `## [0.10.16]` (shipped-container fix confirmation, P2 DHI
+# migration) -- v0.10.10 was a skip-by-reuse cycle with no standalone
+# docs/security-review-v0.10.10.md; the nearest full review is
+# docs/security-review-v0.10.12.md.
 [[IgnoredVulns]]
 id = "GHSA-537c-gmf6-5ccf"
 ignoreUntil = 2026-09-15
