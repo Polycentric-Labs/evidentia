@@ -203,7 +203,13 @@ updates:
       # engineering-practices lesson 1; PR #127 closed on this basis).
       # Digest bumps are NOT version-updates and continue to flow.
       # Revisit when the AI stack supports 3.14.
+      # Both FROM lines are covered: the python:3.13-slim builder AND the
+      # dhi.io/python runtime base.
       - dependency-name: "python"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+      - dependency-name: "dhi.io/python"
         update-types:
           - "version-update:semver-major"
           - "version-update:semver-minor"

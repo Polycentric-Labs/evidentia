@@ -36,11 +36,12 @@ def test_load_encrypted_key_without_passphrase_is_clean_error(monkeypatch):
 
 def test_load_encrypted_key_with_wrong_passphrase_is_clean_error(monkeypatch):
     monkeypatch.setenv(keysign.EVIDENTIA_SIGNING_KEY_PASSPHRASE, "wrong")
-    # (?i)passphrase tolerates both classifier outcomes: the specific
-    # "incorrect passphrase for signing key" and the passphrase-aware
-    # fallback — upstream (cryptography/OpenSSL) wording varies by
-    # version/platform and must not decide this test.
-    with pytest.raises(keysign.SigningKeyError, match=r"(?i)passphrase"):
+    # "incorrect passphrase" matches BOTH classifier outcomes (the specific
+    # message and the passphrase-aware fallback — Evidentia's own constants,
+    # so upstream wording cannot decide this test) while still failing on the
+    # missing-passphrase misclassification, which a bare "passphrase" match
+    # would spuriously accept via the env-var name.
+    with pytest.raises(keysign.SigningKeyError, match="incorrect passphrase"):
         keysign._load_private_key(_ed25519_pem(encrypted=b"right"))
 
 
@@ -48,6 +49,8 @@ def test_wrong_passphrase_with_unrecognized_upstream_message(monkeypatch):
     # If cryptography's ValueError wording drifts past the keyword classifier,
     # a supplied passphrase must still yield a passphrase-mentioning error —
     # never the bare "malformed" message (the #136 macOS failure mode).
+    # "incorrect passphrase" matches both classifier outcomes while still
+    # failing on the missing-passphrase misclassification (see above).
     monkeypatch.setenv(keysign.EVIDENTIA_SIGNING_KEY_PASSPHRASE, "wrong")
 
     def _raise_unrecognized(*args, **kwargs):
@@ -56,7 +59,7 @@ def test_wrong_passphrase_with_unrecognized_upstream_message(monkeypatch):
     monkeypatch.setattr(
         keysign.serialization, "load_pem_private_key", _raise_unrecognized
     )
-    with pytest.raises(keysign.SigningKeyError, match=r"(?i)passphrase"):
+    with pytest.raises(keysign.SigningKeyError, match="incorrect passphrase"):
         keysign._load_private_key(_ed25519_pem(encrypted=b"right"))
 
 
