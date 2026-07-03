@@ -6390,7 +6390,7 @@ export interface components {
          *     vendor-risk collectors, OSCAL TPRM emit) operates on collections
          *     of these records.
          *
-         *     See `docs/v0.7.9-plan.md` §P0.1 for the canonical spec.
+         *     See `docs/releases/plans/v0.7.9-plan.md` §P0.1 for the canonical spec.
          */
         Vendor: {
             /**

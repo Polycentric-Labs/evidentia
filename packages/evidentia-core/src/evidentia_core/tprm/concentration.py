@@ -7,7 +7,7 @@ your 12 ostensibly-independent SaaS vendors all run on the same
 hyperscaler region — a single failure mode the regulator wants you
 to be aware of and mitigating.
 
-Supported dimensions (per `docs/v0.7.9-plan.md` §P0.3):
+Supported dimensions (per `docs/releases/plans/v0.7.9-plan.md` §P0.3):
 
 - ``region`` — ``vendor.region`` (free-text geo / cloud-region label)
 - ``cloud-provider`` — ``vendor.fourth_parties[].name`` filtered to

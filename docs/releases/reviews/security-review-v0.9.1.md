@@ -61,5 +61,5 @@ This backfill differs from the v0.9.3+ pre-release-review v4 cycle artifacts in 
 - [`docs/v0.9.0-shipped.md`](v0.9.0-shipped.md) — the preceding ship (federal-compliance theme)
 - [`docs/security-review-v0.9.0.md`](security-review-v0.9.0.md) — the last contemporaneous review before this backfill
 - [`docs/security-review-v0.9.2.md`](security-review-v0.9.2.md) — the next contemporaneous-but-also-backfilled review (post-org-migration feature ship)
-- [`docs/ROADMAP.md`](ROADMAP.md) §v0.9.1 — cycle-scope narrative
+- [`docs/ROADMAP.md`](../../ROADMAP.md) §v0.9.1 — cycle-scope narrative
 - `~/.claude/projects/<evidentia-hash>/memory/evidentia_org_migration.md` — private memory entry documenting the migration decisions

@@ -1,8 +1,8 @@
 # Design: SARIF-ingestion collector (`evidentia collect sarif`)
 
 > Status: DESIGN (pre-implementation). Target: v0.11. Companion to
-> [integration-survey.md](integration-survey.md) §3 #5 + §9 and
-> [ROADMAP.md](ROADMAP.md) v0.11. This spec feeds an implementation plan; it is
+> [integration-survey.md](../integration-survey.md) §3 #5 + §9 and
+> [ROADMAP.md](../ROADMAP.md) v0.11. This spec feeds an implementation plan; it is
 > not a release commitment.
 
 ## 1. Goal

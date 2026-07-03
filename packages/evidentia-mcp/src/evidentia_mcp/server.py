@@ -684,7 +684,7 @@ def _register_tools(
     # 2026-05-21 integration research pass: gap-as-CI-gate (SARIF)
     # + third-party OCSF ingestion + TPRM read + POA&M read. All
     # read-only; write-mode tools (poam_create, vendor mutation)
-    # deferred. See docs/v0.10.2-plan.md §2.
+    # deferred. See docs/releases/plans/v0.10.2-plan.md §2.
 
     @server.tool()
     def gap_analyze_sarif(
@@ -795,7 +795,7 @@ def _register_tools(
         then name case-insensitive.
 
         Read-only — vendor mutation tools are deferred to a future
-        release per docs/v0.10.2-plan.md §2.
+        release per docs/releases/plans/v0.10.2-plan.md §2.
 
         Returns:
             ``list[dict]`` of ``Vendor`` records as JSON-serializable
@@ -817,7 +817,7 @@ def _register_tools(
         milestone target date, then control id.
 
         Read-only — POA&M creation + milestone transitions are
-        deferred to a future release per docs/v0.10.2-plan.md §2.
+        deferred to a future release per docs/releases/plans/v0.10.2-plan.md §2.
 
         Returns:
             ``list[dict]`` of ``ControlGap`` records (POA&Ms are

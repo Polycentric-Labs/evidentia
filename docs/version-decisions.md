@@ -62,7 +62,7 @@ a second/historical literal — but they are listed here so a human reviewer
 doesn't "helpfully" correct them:
 
 - **`marketplace/grc-engineering-suite/plugins/evidentia/README.md`** — the
-  [`docs/v0.10.2-marketplace.md`](v0.10.2-marketplace.md) plan-doc link + the
+  [`docs/v0.10.2-marketplace.md`](releases/plans/v0.10.2-marketplace.md) plan-doc link + the
   "per the v0.10.2 scope decision" citation. *This is the case that motivated
   the entire register* (a `v0.10.2` that looks stale but is a correct historical
   reference).

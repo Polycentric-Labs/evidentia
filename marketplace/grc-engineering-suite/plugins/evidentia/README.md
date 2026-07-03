@@ -9,7 +9,7 @@
 
 **Status**: staged in the Evidentia repo as
 `marketplace/grc-engineering-suite/plugins/evidentia/` per
-[`docs/v0.10.2-marketplace.md`](../../../../docs/v0.10.2-marketplace.md);
+[`docs/v0.10.2-marketplace.md`](../../../../docs/releases/plans/v0.10.2-marketplace.md);
 upstream PR to `GRCEngClub/claude-grc-engineering` is a separate
 step requiring explicit approval.
 

@@ -77,6 +77,6 @@ Backfilled-but-detailed scope:
 
 - [`docs/security-review-v0.9.1.md`](security-review-v0.9.1.md) — preceding backfill (org migration)
 - [`docs/security-review-v0.9.3.md`](security-review-v0.9.3.md) — first contemporaneous review of the v0.9.x federal-compliance-feature line
-- [`docs/ROADMAP.md`](ROADMAP.md) §v0.9.2 — cycle-scope narrative
-- [`docs/capability-matrix.md`](capability-matrix.md) — FS-1 through FS-10 scenario rows
+- [`docs/ROADMAP.md`](../../ROADMAP.md) §v0.9.2 — cycle-scope narrative
+- [`docs/capability-matrix.md`](../../capability-matrix.md) — FS-1 through FS-10 scenario rows
 - `~/.claude/projects/<evidentia-hash>/memory/evidentia_v0_9_2_shipped.md` — private ship record

@@ -19,7 +19,7 @@
 # `## [X.Y.Z]` heading in CHANGELOG.md (the exact failure mode of
 # v0.10.3 commit 487e0ac before the c0ed3ad CHANGELOG backfill).
 #
-# See docs/security-review-v0.10.3.md §"Step 6 ship incident + recovery"
+# See docs/releases/reviews/security-review-v0.10.3.md §"Step 6 ship incident + recovery"
 # for the canonical incident this gate prevents.
 
 name: verify-changelog
@@ -91,7 +91,7 @@ jobs:
             echo "AFTER PyPI publish. PyPI publish is irreversible; failing"
             echo "this check at tag-time forces a move-tag re-fire. See the"
             echo "Evidentia v0.10.3 ship incident:"
-            echo "  docs/security-review-v0.10.3.md §Step 6 ship incident"
+            echo "  docs/releases/reviews/security-review-v0.10.3.md §Step 6 ship incident"
             echo "------------------------------------------------------------"
             exit 1
           fi

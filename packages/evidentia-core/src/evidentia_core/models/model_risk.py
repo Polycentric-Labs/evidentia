@@ -1,6 +1,6 @@
 """Model Risk Management (MRM) models.
 
-Introduced in v0.7.10 P0.6 per `docs/v0.7.10-plan.md`. The model-risk
+Introduced in v0.7.10 P0.6 per `docs/releases/plans/v0.7.10-plan.md`. The model-risk
 module brings Evidentia into the regulated financial-services
 model-risk domain by providing first-class model-inventory,
 validation-finding, and AI-feature-linkage primitives that satisfy

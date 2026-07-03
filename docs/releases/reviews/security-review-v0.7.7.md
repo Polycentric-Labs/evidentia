@@ -9,11 +9,11 @@ post-tag verification, plus the disposition of each finding.
 
 Cross-reference:
 
-- [docs/positioning-and-value.md](positioning-and-value.md) — version-history v0.7.7 skip-by-reuse note
-- [docs/capability-matrix.md](capability-matrix.md) — v0.7.7 re-validation snapshot (17 surfaces)
-- [docs/threat-model.md](threat-model.md) — STRIDE asset coverage
-- [docs/enterprise-grade-accepted-findings.md](enterprise-grade-accepted-findings.md) — pre-existing accepted-findings rationale
-- [CHANGELOG.md](../CHANGELOG.md) — `[0.7.7]` and `[0.7.7.1]` entries
+- [docs/positioning-and-value.md](../../positioning-and-value.md) — version-history v0.7.7 skip-by-reuse note
+- [docs/capability-matrix.md](../../capability-matrix.md) — v0.7.7 re-validation snapshot (17 surfaces)
+- [docs/threat-model.md](../../threat-model.md) — STRIDE asset coverage
+- [docs/enterprise-grade-accepted-findings.md](../../enterprise-grade-accepted-findings.md) — pre-existing accepted-findings rationale
+- [CHANGELOG.md](../../../CHANGELOG.md) — `[0.7.7]` and `[0.7.7.1]` entries
 
 ## Scope
 

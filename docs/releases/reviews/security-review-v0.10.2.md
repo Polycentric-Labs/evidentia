@@ -11,7 +11,7 @@
 
 v0.10.2 is the second patch on the v0.10.x line (third ship on
 2026-05-23 — same calendar day as v0.10.0 + v0.10.1). The
-[`docs/v0.10.2-plan.md`](v0.10.2-plan.md) 3 phases:
+[`docs/v0.10.2-plan.md`](../plans/v0.10.2-plan.md) 3 phases:
 
 1. **MCP tool surface expansion**: 4 new tools
    (`gap_analyze_sarif`, `collect_ocsf`, `tprm_vendor_list`,
@@ -149,20 +149,20 @@ Secure-by-Design (default-secure SSRF block, opt-out via explicit
 
 ## Cross-references
 
-- [`docs/v0.10.2-plan.md`](v0.10.2-plan.md) — phase-by-phase scope.
-- [`docs/v0.10.2-marketplace.md`](v0.10.2-marketplace.md) — GRC
+- [`docs/v0.10.2-plan.md`](../plans/v0.10.2-plan.md) — phase-by-phase scope.
+- [`docs/v0.10.2-marketplace.md`](../plans/v0.10.2-marketplace.md) — GRC
   Engineering Club marketplace plugin staging + upstream PR plan +
   standing OSS-vs-paid policy for future v0.10.x / v0.11.x scope
   decisions.
-- [`docs/v0.10.3-plan.md`](v0.10.3-plan.md) — forward-looking
+- [`docs/v0.10.3-plan.md`](../plans/v0.10.3-plan.md) — forward-looking
   next-release scope.
-- [`docs/ocsf-mapping.md`](ocsf-mapping.md) — OCSF mapping reference
+- [`docs/ocsf-mapping.md`](../../ocsf-mapping.md) — OCSF mapping reference
   (unchanged in v0.10.2).
-- [`docs/api-stability.md`](api-stability.md) — §MCP tool contract
+- [`docs/api-stability.md`](../../api-stability.md) — §MCP tool contract
   now lists the 4 new v0.10.2 tools; revision-history row added.
-- [`docs/capability-matrix.md`](capability-matrix.md) — v0.10.2
+- [`docs/capability-matrix.md`](../../capability-matrix.md) — v0.10.2
   PRE-TAG snapshot.
-- [`docs/threat-model.md`](threat-model.md) — v0.10.2 attack-surface
+- [`docs/threat-model.md`](../../threat-model.md) — v0.10.2 attack-surface
   delta section.
 - `.local/pre-release-review/runs/2026-05-23T06-25-00Z.json` — per-run
   log (27th in the series).

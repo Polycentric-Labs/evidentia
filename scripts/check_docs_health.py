@@ -185,7 +185,7 @@ CROSS_LINK_LINE_ALLOWLIST: dict[str, set[int]] = {
 #   security review's evidence pointer (audit-trail; not actionable).
 CROSS_LINK_FILE_ALLOWLIST_GLOBS: list[str] = [
     "CHANGELOG.md",
-    "docs/security-review-v[0-9]*.md",
+    "docs/releases/reviews/security-review-v[0-9]*.md",
 ]
 
 

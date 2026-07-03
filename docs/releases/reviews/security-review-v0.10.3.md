@@ -12,7 +12,7 @@
 v0.10.3 is the third patch on the v0.10.x line and the **fourth
 ship on 2026-05-23** — same calendar day as v0.10.0 (03:07 UTC)
 + v0.10.1 (~04:54 UTC) + v0.10.2 (~06:30 UTC). The
-[`docs/v0.10.3-plan.md`](v0.10.3-plan.md) selected Candidates C +
+[`docs/v0.10.3-plan.md`](../plans/v0.10.3-plan.md) selected Candidates C +
 D under Allen's "C, then D, both under v0.10.3" directive:
 
 1. **Phase 1 — Candidate C (YAML-driven catalog definitions)**:
@@ -146,7 +146,7 @@ remains verifiable. The container's SLSA Provenance v1 binds to
 `c0ed3ad`.
 
 **Lessons learned**: added as v0.10.4 P5 in
-[`docs/v0.10.4-plan.md`](v0.10.4-plan.md) — pre-tag CHANGELOG-
+[`docs/v0.10.4-plan.md`](../plans/v0.10.4-plan.md) — pre-tag CHANGELOG-
 presence check at both the skill layer (Step 6 pre-flight) AND
 the workflow layer (CI gate on main before any tag can fire).
 

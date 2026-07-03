@@ -18,7 +18,7 @@
 [[IgnoredVulns]]
 id = "PYSEC-2025-183"
 ignoreUntil = 2026-11-21
-reason = "pyjwt CVE-2025-45768: DISPUTED, no fix exists. The pyjwt maintainer disputes the advisory (HMAC key length is the calling application's choice, not a library defect); every pyjwt release is flagged, so there is no first_patched version. pyjwt reaches Evidentia only transitively (sigstore / mcp / msal / okta / pygithub / snowflake-connector-python) and Evidentia exposes no operator-chosen-key JWT-minting surface. Operator-confirmed accept 2026-05-21 (docs/security-review-v0.9.8.md); re-affirmed for v0.9.9. Re-validate by 2026-11-21."
+reason = "pyjwt CVE-2025-45768: DISPUTED, no fix exists. The pyjwt maintainer disputes the advisory (HMAC key length is the calling application's choice, not a library defect); every pyjwt release is flagged, so there is no first_patched version. pyjwt reaches Evidentia only transitively (sigstore / mcp / msal / okta / pygithub / snowflake-connector-python) and Evidentia exposes no operator-chosen-key JWT-minting surface. Operator-confirmed accept 2026-05-21 (docs/releases/reviews/security-review-v0.9.8.md); re-affirmed for v0.9.9. Re-validate by 2026-11-21."
 
 # (v0.10.10) The accepted tuf MEDIUM (GHSA-qp9x-wp8f-qgjj, "platform-dependent
 # delegation path matching", accepted 2026-05-29 in the v0.10.7 cycle) was
@@ -52,8 +52,8 @@ reason = "torch 2.11.0 (CVE-2025-3000 / PYSEC-2025-194, CVSS3.1 5.3 AV:L, CWE-11
 # Full reachability proof: CHANGELOG.md `## [0.10.10]` (original acceptance
 # rationale) + `## [0.10.16]` (shipped-container fix confirmation, P2 DHI
 # migration) -- v0.10.10 was a skip-by-reuse cycle with no standalone
-# docs/security-review-v0.10.10.md; the nearest full review is
-# docs/security-review-v0.10.12.md.
+# docs/releases/reviews/security-review-v0.10.10.md; the nearest full review is
+# docs/releases/reviews/security-review-v0.10.12.md.
 [[IgnoredVulns]]
 id = "GHSA-537c-gmf6-5ccf"
 ignoreUntil = 2026-09-15

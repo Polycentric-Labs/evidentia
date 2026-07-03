@@ -52,5 +52,5 @@ jobs:
             exit 0
           fi
           gh issue create --repo "$REPO" --title "$title" --body \
-          "Quarterly reminder to re-run the automated-vs-manual safeguards audit (see \`docs/v0.10.8-plan.md\` Phase G). Re-confirm the tag-time release gate, the CLI<->GUI parity debt-ratchet, and the scheduled safeguards (Scorecard / CodeQL / OSPS-conformance / mutmut) are all still enforced, catch any NEW gap that opened since the last sweep, and adopt any Phase-G backlog item that is now ready. Close this issue once the sweep is complete."
+          "Quarterly reminder to re-run the automated-vs-manual safeguards audit (see \`docs/releases/plans/v0.10.8-plan.md\` Phase G). Re-confirm the tag-time release gate, the CLI<->GUI parity debt-ratchet, and the scheduled safeguards (Scorecard / CodeQL / OSPS-conformance / mutmut) are all still enforced, catch any NEW gap that opened since the last sweep, and adopt any Phase-G backlog item that is now ready. Close this issue once the sweep is complete."
           echo "Opened tracking issue: ${title}"

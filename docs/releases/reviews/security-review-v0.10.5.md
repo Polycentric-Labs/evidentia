@@ -5,7 +5,7 @@
 > time (the v0.10.5 + v0.10.6 reviews were captured in internal memory
 > rather than as in-repo docs); this public companion was backfilled
 > during the v0.10.8 docs close-out from the `CHANGELOG.md` `[0.10.5]`
-> block, [`docs/v0.10.5-plan.md`](v0.10.5-plan.md), and the annotated
+> block, [`docs/v0.10.5-plan.md`](../plans/v0.10.5-plan.md), and the annotated
 > `v0.10.5` tag object.
 >
 > **Theme**: output-format expansion (OCSF Detection Finding 2004 +
@@ -48,7 +48,7 @@ first-mover artifacts" theme: OSPS Baseline catalog + OSCAL conversion +
 `OSPS-CONFORMANCE.md` + `SECURITY.md` refresh + `EOL.md` +
 verification-recipe). A 2026-05-25 full-sweep research pass redirected
 the cycle to Phases 7-12, deferring Phases 1-5 to v0.10.6 with no scope
-loss (see [`docs/v0.10.5-plan.md`](v0.10.5-plan.md) §0 and §0.A for the
+loss (see [`docs/v0.10.5-plan.md`](../plans/v0.10.5-plan.md) §0 and §0.A for the
 plan-vs-actual reconciliation). The shipped scope was:
 
 1. **`evidentia gap analyze --format ocsf-detection` (Phase 7).** Gap
@@ -72,7 +72,7 @@ plan-vs-actual reconciliation). The shipped scope was:
    `code_not_present` justification for not-applicable). New
    `evidentia_core.gap_analyzer.vex.gap_report_to_cyclonedx_vex` library
    helper. `OutputFormat` Literal extended additively per
-   [`docs/api-stability.md`](api-stability.md) §3 to add `"ocsf-detection"`
+   [`docs/api-stability.md`](../../api-stability.md) §3 to add `"ocsf-detection"`
    + `"cyclonedx-vex"`; the six prior emits are unchanged.
 3. **`evidentia-eval` workspace package extraction (Phase 9, 8th
    package).** The DFAH determinism + faithfulness harness moves out of
@@ -83,7 +83,7 @@ plan-vs-actual reconciliation). The shipped scope was:
    import paths remain as deprecation shims that re-export from
    `evidentia_eval.*` and emit a `DeprecationWarning`, with removal
    scheduled for v0.12.0 (a 2-minor-version migration window per
-   [`docs/api-stability.md`](api-stability.md) §1).
+   [`docs/api-stability.md`](../../api-stability.md) §1).
 4. **Collector idempotency hardening for the v1.0 API freeze (Phase
    10).** A new `evidentia_core.models.common.deterministic_finding_id(source_system, source_finding_id)`
    helper computes a UUID v5 from natural keys under a pinned
@@ -95,7 +95,7 @@ plan-vs-actual reconciliation). The shipped scope was:
    unchanged sources previously yielded random `uuid4()` ids. Additive
    only (explicit `id=` always wins; OCSF round-trip preserved;
    pre-v0.10.5 OSCAL AR documents continue to load). New NORMATIVE
-   [`docs/collector-idempotency-audit.md`](collector-idempotency-audit.md)
+   [`docs/collector-idempotency-audit.md`](../../collector-idempotency-audit.md)
    refutes the principal-engineer architecture audit on two specifics
    (no collector uses timestamp cursors; no DB-backed findings store
    exists - OSCAL AR is the canonical sink).
@@ -105,7 +105,7 @@ plan-vs-actual reconciliation). The shipped scope was:
    2027-12-02 per the Digital Omnibus political agreement of 2026-05-07.
    The v1.0 acceptance gates were rewritten so the OpenSSF Gold
    honest-gap is tied to SOC 2 Type I segregation-of-duties (see
-   [`docs/v1.0-transition.md`](v1.0-transition.md) §"Acceptance gates for
+   [`docs/v1.0-transition.md`](../../v1.0-transition.md) §"Acceptance gates for
    v1.0").
 6. **Commercial-validation foundation (Phase 12, draft).** A
    `design-partner-program.md` v0 draft describing a fixed-fee
@@ -133,7 +133,7 @@ ship-memory.
 |---|---|---|
 | `/security-review` (pre-tag) | The v0.10.5 phase diffs (`v0.10.4..HEAD`): the two new gap-output emitters (`ocsf_detection.py` + `vex.py`), the `evidentia-eval` package extraction, the `SecurityFinding` idempotency validator, and the positioning/design-partner docs | **Recorded PROCEED-CLEAN** in the cycle ship-memory. `VERIFY-LIMITED` - the exact invocation count, the per-dimension pass table, and the CRITICAL/HIGH/MEDIUM/LOW tallies are not derivable in-repo (no per-run JSON); confirm against the private ship-memory. The two new emitters are one-way serializers over the existing in-memory gap report (no new input-trust boundary; the VEX/Detection arrays are produced, not parsed), and the package extraction is an import-path move with byte-identical symbols. |
 | `/code-review` (auto-fire on the emitter + refactor deltas) | Same phase diffs | `VERIFY-LIMITED` - the CRITICAL/HIGH/MEDIUM/LOW tallies and any deferred-item list are not derivable in-repo. The v0.10.4 doc's "Deferred to v0.10.5" ledger (CR-V105-1 through CR-V105-6 plus the LOW/INFO stylistic batch) was the inbound queue for this cycle; whether each item landed in v0.10.5 versus rolled forward is recorded only in the private ship-memory. |
-| Idempotency-audit pass (Phase 10) | The 13-collector + 1-ingest-module surface | NORMATIVE [`docs/collector-idempotency-audit.md`](collector-idempotency-audit.md) authored; per-collector PASS/GAP verdicts on cursor model, natural-key shape, and finding-identity contract. The single real gap documented (random `uuid4()` on `SecurityFinding.id` despite stable `source_finding_id` natural keys) was closed in-cycle by the Phase 10 validator. This is a determinism/data-integrity hardening, not a security vulnerability. |
+| Idempotency-audit pass (Phase 10) | The 13-collector + 1-ingest-module surface | NORMATIVE [`docs/collector-idempotency-audit.md`](../../collector-idempotency-audit.md) authored; per-collector PASS/GAP verdicts on cursor model, natural-key shape, and finding-identity contract. The single real gap documented (random `uuid4()` on `SecurityFinding.id` despite stable `source_finding_id` natural keys) was closed in-cycle by the Phase 10 validator. This is a determinism/data-integrity hardening, not a security vulnerability. |
 
 > **0-finding framing**: the cycle is recorded in ship-memory as a
 > PROCEED-CLEAN ship. No CRITICAL / HIGH / MEDIUM / LOW security finding
@@ -212,7 +212,7 @@ the lesson is the new-PyPI-project pending-publisher readiness gap. It is
 recorded in the skill-side lessons-learned register
 (`.local/pre-release-review/lessons-learned.yaml` LL-V105-1) and was
 acted on in v0.10.6 (a new "Pre-publish credential readiness check" Step
-2.A added to [`docs/release-checklist.md`](release-checklist.md), plus a
+2.A added to [`docs/release-checklist.md`](../../release-checklist.md), plus a
 skill-side Step 5.D sub-check). `VERIFY-LIMITED` - the exact v0.10.5
 publish sequencing / whether any wheel published out of order is recorded
 only in the private ship-memory.
@@ -239,13 +239,13 @@ only in the private ship-memory.
 
 ## Cross-references
 
-- CHANGELOG block: [CHANGELOG.md §[0.10.5]](../CHANGELOG.md)
-- Plan: [docs/v0.10.5-plan.md](v0.10.5-plan.md) (§0 actual-scope + §0.A deferred Phases 1-5)
+- CHANGELOG block: [CHANGELOG.md §[0.10.5]](../../../CHANGELOG.md)
+- Plan: [docs/v0.10.5-plan.md](../plans/v0.10.5-plan.md) (§0 actual-scope + §0.A deferred Phases 1-5)
 - Structural model: [docs/security-review-v0.10.4.md](security-review-v0.10.4.md)
-- Forward direction: [docs/v0.10.6-plan.md](v0.10.6-plan.md) (§2.A carries the deferred Phases 1-5; §1 cites the v0.10.5 container digest + PEP 740 status)
-- OCSF Detection emit: [docs/ocsf-mapping.md](ocsf-mapping.md) (§7.B)
-- Collector idempotency: [docs/collector-idempotency-audit.md](collector-idempotency-audit.md) (NORMATIVE)
-- Positioning + v1.0 gates: [docs/positioning-and-value.md](positioning-and-value.md) §10 + [docs/v1.0-transition.md](v1.0-transition.md)
+- Forward direction: [docs/v0.10.6-plan.md](../plans/v0.10.6-plan.md) (§2.A carries the deferred Phases 1-5; §1 cites the v0.10.5 container digest + PEP 740 status)
+- OCSF Detection emit: [docs/ocsf-mapping.md](../../ocsf-mapping.md) (§7.B)
+- Collector idempotency: [docs/collector-idempotency-audit.md](../../collector-idempotency-audit.md) (NORMATIVE)
+- Positioning + v1.0 gates: [docs/positioning-and-value.md](../../positioning-and-value.md) §10 + [docs/v1.0-transition.md](../../v1.0-transition.md)
 - Per-run JSON (audit trail): **does not exist for v0.10.5** - the run directory `.local/pre-release-review/runs/` skips from `2026-05-24...v0.10.4` to `2026-05-31...v0.10.7`; the Step-7 ship record is in private memory
 
 ---

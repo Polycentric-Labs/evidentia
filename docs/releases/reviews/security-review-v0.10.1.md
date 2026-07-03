@@ -12,7 +12,7 @@
 ## Cycle scope
 
 v0.10.1 is the first patch on the v0.10.x line. The
-[`docs/v0.10.1-plan.md`](v0.10.1-plan.md) 5 phases:
+[`docs/v0.10.1-plan.md`](../plans/v0.10.1-plan.md) 5 phases:
 
 1. `finding_from_ocsf` gains `trust_unmapped: bool = True` (closes
    F-V100-L1).
@@ -150,18 +150,18 @@ of new surfaces; CVSS / CWE scoring on findings).
 
 ## Cross-references
 
-- [`docs/v0.10.1-plan.md`](v0.10.1-plan.md) — phase-by-phase scope.
-- [`docs/v0.10.2-plan.md`](v0.10.2-plan.md) — forward-looking
+- [`docs/v0.10.1-plan.md`](../plans/v0.10.1-plan.md) — phase-by-phase scope.
+- [`docs/v0.10.2-plan.md`](../plans/v0.10.2-plan.md) — forward-looking
   (MCP-as-backend + F-V101-L1 SSRF hardening).
-- [`docs/ocsf-mapping.md`](ocsf-mapping.md) §5.1 + §7.A — trust_unmapped
+- [`docs/ocsf-mapping.md`](../../ocsf-mapping.md) §5.1 + §7.A — trust_unmapped
   + Detection Finding mapping.
-- [`docs/api-stability.md`](api-stability.md) — Finding alias + new
+- [`docs/api-stability.md`](../../api-stability.md) — Finding alias + new
   EventAction value documented.
-- [`docs/deprecation-calendar.md`](deprecation-calendar.md) —
+- [`docs/deprecation-calendar.md`](../../deprecation-calendar.md) —
   SecurityFinding deprecation entry.
-- [`docs/capability-matrix.md`](capability-matrix.md) — v0.10.1
+- [`docs/capability-matrix.md`](../../capability-matrix.md) — v0.10.1
   PRE-TAG snapshot.
-- [`docs/threat-model.md`](threat-model.md) — v0.10.1 attack-surface
+- [`docs/threat-model.md`](../../threat-model.md) — v0.10.1 attack-surface
   delta section.
 - `.local/pre-release-review/runs/2026-05-23T04-36-19Z.json` — per-run
   log (26th in the series).

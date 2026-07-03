@@ -6,8 +6,8 @@
 > `docs/threat-model.md` v0.9.0 delta,
 > `docs/capability-matrix.md` v0.9.0 snapshot, and
 > `docs/release-checklist.md`. Cross-link to:
-> [`docs/poam-runbook.md`](poam-runbook.md),
-> [`docs/conmon-runbook.md`](conmon-runbook.md).
+> [`docs/poam-runbook.md`](../../poam-runbook.md),
+> [`docs/conmon-runbook.md`](../../conmon-runbook.md).
 
 ## Verdict: **PROCEED-CLEAN** — 15th consecutive of v0.7.x → v0.8.x → v0.9.x line
 

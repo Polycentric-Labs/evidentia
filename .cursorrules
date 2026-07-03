@@ -28,7 +28,7 @@ SBOM, PyPI Trusted Publisher OIDC + PEP 740 attestations.
   competitive synthesis), [docs/capability-matrix.md](docs/capability-matrix.md)
   (every public surface tested), [docs/enterprise-grade.md](docs/enterprise-grade.md)
   (the quality bar), [docs/release-checklist.md](docs/release-checklist.md)
-  (the per-release runbook), [docs/v0.7.2-plan.md](docs/v0.7.2-plan.md)
+  (the per-release runbook), [docs/releases/plans/v0.7.2-plan.md](docs/releases/plans/v0.7.2-plan.md)
   (current scope).
 
 ## Quality bar — non-negotiable patterns

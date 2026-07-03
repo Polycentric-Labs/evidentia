@@ -28,11 +28,11 @@
 #
 # v0.7.2 shipped this workflow itself; v0.7.3 closes Pinned-Dependencies
 # by SHA-pinning every third-party action across the composite action +
-# all .github/workflows/*.yml files (S1 in docs/v0.7.3-plan.md).
+# all .github/workflows/*.yml files (S1 in docs/releases/plans/v0.7.3-plan.md).
 #   - Pinned-Dependencies — closed in v0.7.3 (S1)
 #   - SAST — currently no CodeQL; add in a follow-up if Scorecard flags
 #
-# This workflow itself was a v0.7.2 P0 deliverable per docs/v0.7.2-plan.md S4.
+# This workflow itself was a v0.7.2 P0 deliverable per docs/releases/plans/v0.7.2-plan.md S4.
 
 name: OpenSSF Scorecard
 

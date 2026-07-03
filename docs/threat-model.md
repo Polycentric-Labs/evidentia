@@ -215,7 +215,7 @@ Each is documented for transparency:
   read-only generator. CLI usage is fully validated.
 - **Action**: Add `validate_within(STATIC_DIR)` to the REST
   handler in v0.8.0 alongside the AI-moat hardening work
-  ([`v0.8.0-plan.md`](v0.8.0-plan.md) §P0).
+  ([`v0.8.0-plan.md`](releases/plans/v0.8.0-plan.md) §P0).
 
 ### Static-analysis accepts (Scorecard + CodeQL)
 
@@ -242,7 +242,7 @@ These categories are **not** addressed by this threat model:
 - **LLM injection / AI-moat threats**: AI features are designed
   by-contract to treat LLM output as untrusted. Determinism +
   policy-reasoning-trace work for v0.8.0 (DFAH + PRT per
-  [`v0.8.0-plan.md`](v0.8.0-plan.md)) hardens this surface.
+  [`v0.8.0-plan.md`](releases/plans/v0.8.0-plan.md)) hardens this surface.
 - **Social engineering** on individual operators
 - **Physical security** of operator workstations
 - **Denial of service** under sustained load — covered separately
@@ -459,7 +459,7 @@ suppress duplicates via `--no-security-headers`.
 
 - WORM evidence retention backends (S3 Object Lock / Azure
   Immutable Blob / GCS Bucket Lock) per
-  [`v0.7.9-plan.md`](v0.7.9-plan.md) P2.
+  [`v0.7.9-plan.md`](releases/plans/v0.7.9-plan.md) P2.
 - Continuous Monitoring (CONMON) capability surface for federal
   compliance per the domain-expert input log.
 

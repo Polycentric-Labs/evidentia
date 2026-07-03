@@ -1,13 +1,13 @@
 # Evidentia Tier-1 demo-profile image (constrained runner, offline, no creds).
 #
 # This is the image the eventual hosted Tier-1 public demo runs (see
-# `docs/demo-suite-design.md` §5). Anonymous users drive the *real*
+# `docs/designs/demo-suite-design.md` §5). Anonymous users drive the *real*
 # `evidentia` CLI through the argv-allowlist runner
 # (`evidentia.demo.runner`) — never a raw shell. The image satisfies the
 # threat model's IN-IMAGE conditions; the remaining conditions are the
 # HOST's responsibility and are spelled out in the run contract below.
 #
-# ── Threat-model conditions (docs/demo-suite-design.md §5) ───────────────
+# ── Threat-model conditions (docs/designs/demo-suite-design.md §5) ───────────────
 # This image alone covers:
 #   1. No raw shell. The ENTRYPOINT is the constrained runner (exec-form,
 #      no /bin/sh, no -c/-m). It validates argv against a fixed allowlist
@@ -150,6 +150,6 @@ LABEL org.opencontainers.image.title="Evidentia (Tier-1 demo profile)"
 LABEL org.opencontainers.image.description="Constrained-runner demo image: the real Evidentia CLI behind an argv allowlist, offline, credential-empty, non-root. Host must add --network none + caps + read-only rootfs + TTL (see Dockerfile header)."
 LABEL org.opencontainers.image.source="https://github.com/polycentric-labs/evidentia"
 LABEL org.opencontainers.image.url="https://github.com/polycentric-labs/evidentia"
-LABEL org.opencontainers.image.documentation="https://github.com/polycentric-labs/evidentia/blob/main/docs/demo-suite-design.md"
+LABEL org.opencontainers.image.documentation="https://github.com/polycentric-labs/evidentia/blob/main/docs/designs/demo-suite-design.md"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.vendor="polycentric-labs"

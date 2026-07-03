@@ -260,11 +260,11 @@ review time). The post-tag checklist to be filled at Step 7:
 ## Cross-references
 
 - Per-run JSON (audit trail): `.local/pre-release-review/runs/2026-06-23T19-31-55Z-v0.10.12.json`
-- CHANGELOG block: [CHANGELOG.md §[0.10.12]](../CHANGELOG.md)
-- Threat model: [docs/threat-model.md](threat-model.md) (v0.10.12 delta: console REST surface + Tableau SSRF + OMB M-25-21)
-- Capability matrix snapshot: [docs/capability-matrix.md](capability-matrix.md) (v0.10.12 pre-tag, `@3ebac70` — 13.3% → 98%)
-- Web-console security model: [docs/web-console-security.md](web-console-security.md) (H-1/M-1 remediation — UI-guard-not-server-control)
-- Positioning §3 refresh: [docs/positioning-and-value.md](positioning-and-value.md) (`@b0cbb07`)
+- CHANGELOG block: [CHANGELOG.md §[0.10.12]](../../../CHANGELOG.md)
+- Threat model: [docs/threat-model.md](../../threat-model.md) (v0.10.12 delta: console REST surface + Tableau SSRF + OMB M-25-21)
+- Capability matrix snapshot: [docs/capability-matrix.md](../../capability-matrix.md) (v0.10.12 pre-tag, `@3ebac70` — 13.3% → 98%)
+- Web-console security model: [docs/web-console-security.md](../../wiki/3-concepts/web-console-security.md) (H-1/M-1 remediation — UI-guard-not-server-control)
+- Positioning §3 refresh: [docs/positioning-and-value.md](../../positioning-and-value.md) (`@b0cbb07`)
 - Remediation source: `oscal/verify.py` (F-V1012-1), `routers/{governance,poam,tprm,model_risk}.py` (F-V1012-S4-1), `audit/logger.py` (F-V1012-S41-1)
 - Fix batches: `@2ff9178` (Step 3) · `@48d4add` (Step 4)
 

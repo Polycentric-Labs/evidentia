@@ -9,7 +9,7 @@
 > **Cross-references**:
 > [api-stability.md](api-stability.md),
 > [threat-model.md](threat-model.md) §"Stuck-cursor guards",
-> [v0.10.5-plan.md](v0.10.5-plan.md) Phase 10.
+> [v0.10.5-plan.md](releases/plans/v0.10.5-plan.md) Phase 10.
 
 ---
 

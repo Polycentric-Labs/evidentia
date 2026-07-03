@@ -5,7 +5,7 @@
 > time (the v0.10.5 + v0.10.6 reviews were captured in internal memory
 > rather than as in-repo docs); this public companion was backfilled
 > during the v0.10.8 docs close-out from the `CHANGELOG.md` `[0.10.6]`
-> block, [`docs/v0.10.6-plan.md`](v0.10.6-plan.md), and the annotated
+> block, [`docs/v0.10.6-plan.md`](../plans/v0.10.6-plan.md), and the annotated
 > `v0.10.6` tag object.
 >
 > **Theme**: OSS first-mover artifacts (the Phases 1-5 carried forward
@@ -42,7 +42,7 @@ commit `254277f` is dated `2026-05-27 10:45 -0400`). Seventeen cycle
 commits were authored 2026-05-27 between v0.10.5 (tagged 2026-05-26) and
 this tag, all on `main` (the `[0.10.6]` block's "17 cycle commits"
 figure; the `git rev-list v0.10.5..v0.10.6` count is 18 including the
-chore(release) commit). Per [`docs/v0.10.6-plan.md`](v0.10.6-plan.md) §2,
+chore(release) commit). Per [`docs/v0.10.6-plan.md`](../plans/v0.10.6-plan.md) §2,
 which locked the scope on 2026-05-26 in Approach B (theme-grouped commits
 with two in-cycle Tier-4 publishing-approval gates), the cycle delivered:
 
@@ -93,7 +93,7 @@ with two in-cycle Tier-4 publishing-approval gates), the cycle delivered:
    alerts #121 + #122 (`PinnedDependenciesID`) and restore the score from
    the v0.10.5 6.2 regression toward 6.5+ (commit `e9e0865`).
 8. **Post-v0.10.5 hygiene (H2 + H4).** A new "Pre-publish credential
-   readiness check" Step 2.A in [`docs/release-checklist.md`](release-checklist.md)
+   readiness check" Step 2.A in [`docs/release-checklist.md`](../../release-checklist.md)
    capturing the v0.10.5 LL-V105-1 partial-publish lesson, and a
    `README.md` "Recent releases" backfill of the v0.10.3 + v0.10.4
    entries (commit `0acd843`). A `capability-matrix.md` snapshot was also
@@ -130,7 +130,7 @@ private Step-7 ship-memory.
 | Pass | Scope | Verdict |
 |---|---|---|
 | `/security-review` (pre-tag) | The v0.10.6 phase diffs (`v0.10.5..HEAD`): the OSPS catalog + OSCAL data, the `CrosswalkDefinition` additive extension + 5 crosswalk JSONs, the new `github.osps` collector module + 4 `GitHubClient` methods, the `verify-osps-conformance.yml` CI gate, the workflow-permissions audit script, and the security-policy docs | **Recorded PROCEED-CLEAN** in the cycle ship-memory. `VERIFY-LIMITED` - the exact invocation count, the per-dimension pass table, and the CRITICAL/HIGH/MEDIUM/LOW tallies are not derivable in-repo (no per-run JSON); confirm against the private ship-memory. The crosswalk + catalog work is bundled static data; the new collector methods are read-only GitHub-API queries; the new CI gate's token-scope exposure is the one new active surface (analyzed below). |
-| `/code-review` (auto-fire on the collector + CI-gate deltas) | Same phase diffs | `VERIFY-LIMITED` - the CRITICAL/HIGH/MEDIUM/LOW tallies are not derivable in-repo. One concrete code-quality follow-up IS attested: the C5 reviewer flagged that future upstream OSPS bumps would require a manual ~15-site SHA regeneration sweep, which became the v0.10.7 `scripts/catalogs/gen_osps_crosswalks.py` deterministic regenerator (see [`docs/v0.10.6-plan.md`](v0.10.6-plan.md) §12.3 maintenance follow-up). |
+| `/code-review` (auto-fire on the collector + CI-gate deltas) | Same phase diffs | `VERIFY-LIMITED` - the CRITICAL/HIGH/MEDIUM/LOW tallies are not derivable in-repo. One concrete code-quality follow-up IS attested: the C5 reviewer flagged that future upstream OSPS bumps would require a manual ~15-site SHA regeneration sweep, which became the v0.10.7 `scripts/catalogs/gen_osps_crosswalks.py` deterministic regenerator (see [`docs/v0.10.6-plan.md`](../plans/v0.10.6-plan.md) §12.3 maintenance follow-up). |
 | §12 corrections-log (data-shape verification) | The OSPS catalog + crosswalk + collector data claims | **Four** load-bearing brainstorm assumptions were caught failing verification and corrected in-cycle (§12.1 through §12.4 below). These are accuracy corrections, not security findings. |
 
 > **0-finding framing**: the cycle is recorded in ship-memory as a
@@ -162,7 +162,7 @@ formal per-dimension verdict is `VERIFY-LIMITED` per the ship-memory):
 
 Per the global publishing-authority protocol, two Tier-4 actions were
 gated behind explicit per-action approval in this cycle (recorded in
-[`docs/v0.10.6-plan.md`](v0.10.6-plan.md) §2.D, §3, and the tag object):
+[`docs/v0.10.6-plan.md`](../plans/v0.10.6-plan.md) §2.D, §3, and the tag object):
 
 | # | Action | As recorded |
 |---|---|---|
@@ -216,7 +216,7 @@ empty-findings array against the private ship-memory.
 These are accuracy corrections (not security findings) surfaced by the
 standing-directive triple-validation discipline when brainstorm-locked
 assumptions were checked against the actual codebase + pinned upstream.
-Full detail in [`docs/v0.10.6-plan.md`](v0.10.6-plan.md) §12; the
+Full detail in [`docs/v0.10.6-plan.md`](../plans/v0.10.6-plan.md) §12; the
 `[0.10.6]` CHANGELOG records them with commit pointers.
 
 | Ref | Class of failed assumption | Description | Correction |
@@ -230,7 +230,7 @@ Full detail in [`docs/v0.10.6-plan.md`](v0.10.6-plan.md) §12; the
 
 v0.10.6 is where the v0.10.5 LL-V105-1 partial-publish lesson is acted
 on: a new "Pre-publish credential readiness check" Step 2.A added to
-[`docs/release-checklist.md`](release-checklist.md) (Evidentia-side; H2),
+[`docs/release-checklist.md`](../../release-checklist.md) (Evidentia-side; H2),
 plus a skill-side Step 5.D new-PyPI-project pending-publisher sub-check
 (H3, committed outside the Evidentia repo). Not a code finding.
 
@@ -266,14 +266,14 @@ plus a skill-side Step 5.D new-PyPI-project pending-publisher sub-check
 
 ## Cross-references
 
-- CHANGELOG block: [CHANGELOG.md §[0.10.6]](../CHANGELOG.md)
-- Plan: [docs/v0.10.6-plan.md](v0.10.6-plan.md) (§2 locked scope, §3 execution sequence, §12 corrections-log)
+- CHANGELOG block: [CHANGELOG.md §[0.10.6]](../../../CHANGELOG.md)
+- Plan: [docs/v0.10.6-plan.md](../plans/v0.10.6-plan.md) (§2 locked scope, §3 execution sequence, §12 corrections-log)
 - Structural model: [docs/security-review-v0.10.4.md](security-review-v0.10.4.md)
 - Prior cycle: [docs/security-review-v0.10.5.md](security-review-v0.10.5.md) (deferred Phases 1-5 originate there)
 - Forward direction: [docs/security-review-v0.10.7.md](security-review-v0.10.7.md) (closes the §12.3 maintenance follow-up via `gen_osps_crosswalks.py`; promotes the workflow-permissions audit to a blocking gate; crosswalk hand-verification)
-- Security policy + lifecycle: [SECURITY.md](../SECURITY.md), [EOL.md](../EOL.md), [docs/verification.md](verification.md)
-- Conformance: [OSPS-CONFORMANCE.md](../OSPS-CONFORMANCE.md)
-- Threat-model addition: [docs/threat-model.md](threat-model.md) (the conformance-gate token-scope + rate-limit note)
+- Security policy + lifecycle: [SECURITY.md](../../../SECURITY.md), [EOL.md](../../../EOL.md), [docs/verification.md](../../verification.md)
+- Conformance: [OSPS-CONFORMANCE.md](../../../OSPS-CONFORMANCE.md)
+- Threat-model addition: [docs/threat-model.md](../../threat-model.md) (the conformance-gate token-scope + rate-limit note)
 - Per-run JSON (audit trail): **does not exist for v0.10.6** - the run directory `.local/pre-release-review/runs/` skips from `2026-05-24...v0.10.4` to `2026-05-31...v0.10.7`; the Step-7 ship record is in private memory
 
 ---

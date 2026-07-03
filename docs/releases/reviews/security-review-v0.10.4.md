@@ -194,12 +194,12 @@ delivery to that session.
 ## Cross-references
 
 - Per-run JSON: `.local/pre-release-review/runs/2026-05-24T21-41-48Z-v0.10.4-prototype.json`
-- CHANGELOG block: [CHANGELOG.md §[0.10.4]](../CHANGELOG.md#0104---2026-05-24)
-- Plan: [docs/v0.10.4-plan.md](v0.10.4-plan.md) (§6 cycle-close note)
-- Forward direction: [docs/v0.10.5-plan.md](v0.10.5-plan.md) (NEW; 7-phase OSS first-mover artifacts)
-- Capability matrix snapshot: [docs/capability-matrix.md](capability-matrix.md) — 2026-05-24 v0.10.4 PRE-TAG section
-- Positioning version-history row: [docs/positioning-and-value.md](positioning-and-value.md) §16
-- API stability revision: [docs/api-stability.md](api-stability.md) §Revision history (2026-05-24 row)
+- CHANGELOG block: [CHANGELOG.md §[0.10.4]](../../../CHANGELOG.md#0104---2026-05-24)
+- Plan: [docs/v0.10.4-plan.md](../plans/v0.10.4-plan.md) (§6 cycle-close note)
+- Forward direction: [docs/v0.10.5-plan.md](../plans/v0.10.5-plan.md) (NEW; 7-phase OSS first-mover artifacts)
+- Capability matrix snapshot: [docs/capability-matrix.md](../../capability-matrix.md) — 2026-05-24 v0.10.4 PRE-TAG section
+- Positioning version-history row: [docs/positioning-and-value.md](../../positioning-and-value.md) §16
+- API stability revision: [docs/api-stability.md](../../api-stability.md) §Revision history (2026-05-24 row)
 - Container: `ghcr.io/polycentric-labs/evidentia:v0.10.4` @ `sha256:3bf7da49ae4fed43bc43c3f677eeb66711c1e95cbaf0ae96ff73b08ca7a87759`
 - Tag SHA: `2ca3c3198b73fbc4798d62e9ec79a64d749ee55f` (annotated tag object) → `9a1d6c9bb058bee314b7b3c55be83a8cd38d4904` (commit)
 

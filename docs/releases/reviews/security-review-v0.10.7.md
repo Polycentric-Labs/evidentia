@@ -4,7 +4,7 @@
 > write-up that was deferred at ship time (Step 7.G ship-doc landed in
 > internal memory; this public companion was carried to the v0.10.8 docs
 > close-out, where it was authored from the `[0.10.7]` CHANGELOG block +
-> [`docs/v0.10.7-plan.md`](v0.10.7-plan.md)).
+> [`docs/v0.10.7-plan.md`](../plans/v0.10.7-plan.md)).
 >
 > **Theme**: web console (GUI v2) visual refresh + gap-report export +
 > the last hygiene / automation-debt / wiki-fill / doc-accuracy cycle on
@@ -255,10 +255,10 @@ documentation verify-everything pass, recorded in
 
 ## Cross-references
 
-- CHANGELOG block: [CHANGELOG.md §[0.10.7]](../CHANGELOG.md)
-- Plan: [docs/v0.10.7-plan.md](v0.10.7-plan.md) (§4 execution sequence + §12 corrections-log)
-- Forward direction: [docs/v0.10.8-plan.md](v0.10.8-plan.md) (B1/G2 server-side required-signatures ruleset closing F-V107-1)
-- Pre-push gate: [docs/pre-push-gate.md](pre-push-gate.md) (the 3-layer architecture; L2 is the blocking layer)
+- CHANGELOG block: [CHANGELOG.md §[0.10.7]](../../../CHANGELOG.md)
+- Plan: [docs/v0.10.7-plan.md](../plans/v0.10.7-plan.md) (§4 execution sequence + §12 corrections-log)
+- Forward direction: [docs/v0.10.8-plan.md](../plans/v0.10.8-plan.md) (B1/G2 server-side required-signatures ruleset closing F-V107-1)
+- Pre-push gate: [docs/pre-push-gate.md](../../pre-push-gate.md) (the 3-layer architecture; L2 is the blocking layer)
 - Remediation source: `.githooks/pre-push` (check #9) + `scripts/pre_push/check_commit_signatures.py`
 - Per-run JSON (audit trail): `.local/pre-release-review/runs/2026-05-31T01-55-11Z-v0.10.7.json`
 

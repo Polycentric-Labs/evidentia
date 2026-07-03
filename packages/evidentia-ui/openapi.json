@@ -5320,7 +5320,7 @@
       },
       "Vendor": {
         "additionalProperties": false,
-        "description": "Third-party vendor inventory record.\n\nThe atomic unit of the v0.7.9 TPRM module. Every other TPRM\ncapability (DD-questionnaire generation, concentration reporting,\nvendor-risk collectors, OSCAL TPRM emit) operates on collections\nof these records.\n\nSee `docs/v0.7.9-plan.md` §P0.1 for the canonical spec.",
+        "description": "Third-party vendor inventory record.\n\nThe atomic unit of the v0.7.9 TPRM module. Every other TPRM\ncapability (DD-questionnaire generation, concentration reporting,\nvendor-risk collectors, OSCAL TPRM emit) operates on collections\nof these records.\n\nSee `docs/releases/plans/v0.7.9-plan.md` §P0.1 for the canonical spec.",
         "properties": {
           "contract_end_date": {
             "anyOf": [
