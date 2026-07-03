@@ -29,6 +29,11 @@
 # maintainer is notified — the project's own continuous-attestation thesis,
 # applied to its OWN shipped artifacts. workflow_dispatch allows an on-demand
 # rescan of any version.
+#
+# A third job, sentinel-liveness, independently guards the base-freshness
+# sentinel itself: it goes RED if that workflow has not produced a run in 14
+# days, so a silently auto-disabled or broken sentinel schedule is caught here
+# rather than staying an invisible coverage gap.
 
 name: post-publish rescan
 
@@ -233,3 +238,36 @@ jobs:
           python scripts/check_osv_fixable.py rescan.json \
             --image "${IMAGE}" \
             --summary-file "$GITHUB_STEP_SUMMARY"
+
+  # Sentinel self-liveness (G10 companion): the liveness detector's HOST must
+  # not be its own blind spot. This independent weekly job goes RED if the
+  # base-freshness sentinel has not produced a run in 14 days (e.g. GitHub's
+  # 60-day scheduled-workflow auto-disable, or a broken cron).
+  sentinel-liveness:
+    name: Sentinel self-liveness (base-freshness ran within 14 days)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Assert base-freshness ran within 14 days
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if ! last=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/base-freshness.yml/runs?per_page=1" \
+            -q '.workflow_runs[0].created_at'); then
+            echo "::error::runs API unreachable — cannot assert sentinel liveness (transient failure? re-run this job)."
+            exit 1
+          fi
+          if [ -z "$last" ] || [ "$last" = "null" ]; then
+            echo "::error::base-freshness has NO runs at all — the sentinel is dead (lesson 9)."
+            exit 1
+          fi
+          age_days=$(( ( $(date -u +%s) - $(date -u -d "$last" +%s) ) / 86400 ))
+          echo "base-freshness last ran ${last} (${age_days}d ago)"
+          if [ "$age_days" -gt 14 ]; then
+            echo "::error::base-freshness sentinel silent for ${age_days}d (>14d) — investigate (auto-disabled schedule? broken cron?)."
+            exit 1
+          fi
