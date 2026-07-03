@@ -24,20 +24,29 @@
 #   2. check_secrets              (NEVER prints the secret value)
 #   3. check_changelog_present
 #   4. check_docs_health  (--strict; reused)
-#   5. check_workflow_perms (audit_workflow_permissions.py --strict; reused)
-#   6. check_uv_lock_pin_drift
-#   7. check_osps_crosswalk_drift (only when OSPS files are in range)
-#   8. check_version_consistency  (v0.10.7 E4 "never-skip-a-version-reference":
+#   5. check_wiki_mirrors_drift    (sync_mirrors.py --check; docs-airtightness
+#                                  A1.1 — the 13 canonical-source -> wiki-mirror
+#                                  pages must match; pure-filesystem)
+#   6. check_wiki_reference_drift  (sync_reference.py --check; imports the
+#                                  Typer app to regenerate the CLI reference
+#                                  pages in memory and byte-compare)
+#   7. check_wiki_api_docs_drift   (sync_api_docs.py --check; reads each
+#                                  package's source to regenerate the API
+#                                  wiki pages in memory and byte-compare)
+#   8. check_workflow_perms (audit_workflow_permissions.py --strict; reused)
+#   9. check_uv_lock_pin_drift
+#  10. check_osps_crosswalk_drift (only when OSPS files are in range)
+#  11. check_version_consistency  (v0.10.7 E4 "never-skip-a-version-reference":
 #                                  coverage of tracked files + hard-fail on any
 #                                  unclassified project-version literal; reused)
-#   9. check_commit_signatures    (every commit in the push range must be
+#  12. check_commit_signatures    (every commit in the push range must be
 #                                  signed; closes the F-V107-1 unsigned-commit
 #                                  admin-bypass path. Blocks on %G? N/B.)
-#  10. check_readme_regen         (regenerate the Recent-Releases block; FAIL
+#  13. check_readme_regen         (regenerate the Recent-Releases block; FAIL
 #                                  if it changed in the working tree)
-#  11. check_doc_counts           (README at-a-glance counts ==
+#  14. check_doc_counts           (README at-a-glance counts ==
 #                                  code-derived truth; v0.10.12 Wave 0)
-#  12. check_ruff                 (`ruff check . --no-cache` — fast lint
+#  15. check_ruff                 (`ruff check . --no-cache` — fast lint
 #                                  shifted left from CI so a cached-pass lint
 #                                  break is caught pre-push, not in the queue)
 #
@@ -280,15 +289,32 @@ run_check "check_changelog_present" \
 run_check "check_docs_health" \
     run_py "${REPO_ROOT}/scripts/check_docs_health.py" --strict || true
 
-# 5. workflow permissions (reused; --strict exits 2 on FAIL).
+# 5. wiki mirror drift (docs-airtightness A1.1): regenerates the 13
+#    canonical-source -> wiki-mirror pages in memory and byte-compares them
+#    against the committed copies. Pure-filesystem (no app import).
+run_check "check_wiki_mirrors_drift" \
+    run_py "${REPO_ROOT}/scripts/wiki/sync_mirrors.py" --check || true
+
+# 6. wiki CLI-reference drift (docs-airtightness A1.1): imports the Typer app
+#    to regenerate the CLI reference wiki pages and byte-compares. Requires
+#    the dev venv (`uv run`), which provides the app import.
+run_check "check_wiki_reference_drift" \
+    run_py "${REPO_ROOT}/scripts/wiki/sync_reference.py" --check || true
+
+# 7. wiki API-docs drift (docs-airtightness A1.1): reads each package's source
+#    to regenerate the API wiki pages and byte-compares.
+run_check "check_wiki_api_docs_drift" \
+    run_py "${REPO_ROOT}/scripts/wiki/sync_api_docs.py" --check || true
+
+# 8. workflow permissions (reused; --strict exits 2 on FAIL).
 run_check "check_workflow_perms" \
     run_py "${REPO_ROOT}/scripts/audit_workflow_permissions.py" --strict || true
 
-# 6. uv.lock third-party pin drift on workspace bump.
+# 9. uv.lock third-party pin drift on workspace bump.
 run_check "check_uv_lock_pin_drift" \
     run_py "${SCRIPTS_DIR}/check_uv_lock_pin_drift.py" "${RANGE_BASE}" "${RANGE_TIP}" || true
 
-# 7. OSPS crosswalk drift — only when OSPS files are in the push range.
+# 10. OSPS crosswalk drift — only when OSPS files are in the push range.
 if printf '%s\n' "${CHANGED_FILES}" | grep -Eq 'mappings/osps-baseline_.*\.json$|/_osps_upstream\.py$'; then
     run_check "check_osps_crosswalk_drift" \
         run_py "${REPO_ROOT}/scripts/catalogs/gen_osps_crosswalks.py" --check || true
@@ -298,22 +324,22 @@ else
     echo "SKIP check_osps_crosswalk_drift (no OSPS mapping/_osps_upstream files in range)"
 fi
 
-# 8. version consistency (v0.10.7 E4): every tracked file holds the current
-#    version + no git-tracked file carries an unclassified project-version
-#    literal. Reads scripts/version_tracked_files.yaml (the same manifest
-#    bump_version.py drives off). Always runs (not range-gated) — a stale
-#    tracked file or an unclassified literal anywhere is a push blocker.
+# 11. version consistency (v0.10.7 E4): every tracked file holds the current
+#     version + no git-tracked file carries an unclassified project-version
+#     literal. Reads scripts/version_tracked_files.yaml (the same manifest
+#     bump_version.py drives off). Always runs (not range-gated) — a stale
+#     tracked file or an unclassified literal anywhere is a push blocker.
 run_check "check_version_consistency" \
     run_py "${REPO_ROOT}/scripts/check_version_consistency.py" || true
 
-# 9. commit signatures (v0.10.7 follow-up; closes F-V107-1): every commit in
-#    the push range must be signed. Catches the unsigned-commit path that the
-#    main-branch admin-bypass admitted (eedde81/5f44982/458a94c). Blocks on
-#    %G? == N (none) or B (bad); range-aware via RANGE_BASE..RANGE_TIP.
+# 12. commit signatures (v0.10.7 follow-up; closes F-V107-1): every commit in
+#     the push range must be signed. Catches the unsigned-commit path that the
+#     main-branch admin-bypass admitted (eedde81/5f44982/458a94c). Blocks on
+#     %G? == N (none) or B (bad); range-aware via RANGE_BASE..RANGE_TIP.
 run_check "check_commit_signatures" \
     run_py "${SCRIPTS_DIR}/check_commit_signatures.py" "${RANGE_BASE}" "${RANGE_TIP}" || true
 
-# 10. README auto-regen (A3): regenerate the Recent-Releases block from
+# 13. README auto-regen (A3): regenerate the Recent-Releases block from
 #     CHANGELOG; FAIL if it changed in the working tree (commit the regen).
 check_readme_regen() {
     run_py "${REPO_ROOT}/scripts/gen_readme_releases.py" || return 1
@@ -328,14 +354,14 @@ check_readme_regen() {
 }
 run_check "check_readme_regen" check_readme_regen || true
 
-# 11. README capability-count drift (v0.10.12 Wave 0): the at-a-glance counts
+# 14. README capability-count drift (v0.10.12 Wave 0): the at-a-glance counts
 #     (catalogs / crosswalks / collectors / MCP-tools) must equal the
 #     code-derived truth (catalogs manifest + openapi.json + MCP server
 #     source). Pure-filesystem; always runs.
 run_check "check_doc_counts" \
     run_py "${REPO_ROOT}/scripts/check_doc_counts.py" || true
 
-# 12. ruff lint — shifted left from CI-only. `--no-cache` so the gate matches
+# 15. ruff lint — shifted left from CI-only. `--no-cache` so the gate matches
 #     CI's fresh runner exactly: a *cached* pass can mask a lint break (e.g. an
 #     unused `# noqa` for a non-enabled rule → RUF100) that CI then catches,
 #     causing avoidable merge-queue churn. ruff is fast (~1-2s), so it fits the

@@ -43,13 +43,47 @@ name: sync-wiki
 on:
   push:
     branches: [main]
+    # The paths filter MUST cover the FULL input set of the three generators
+    # this workflow runs, not just docs/wiki/ + the scripts. A canon-only push
+    # (e.g. editing docs/ROADMAP.md or a package's public surface WITHOUT
+    # touching docs/wiki/) regenerates a DIFFERENT wiki page — omitting those
+    # inputs is a partial dead-trigger (the wiki sync never fires, so the live
+    # wiki goes stale). Rule: a paths filter must cover the full input set —
+    # partial dead-trigger class (docs-airtightness A1.2). The required
+    # sync_*.py --check drift gates in consistency.yml (A1.1) are the safety net
+    # if this list ever misses one, but the correct fix is to keep it complete.
     paths:
+      # The wiki source tree + the sync/generator scripts + this workflow.
       - "docs/wiki/**"
       - "scripts/sync_wiki_to_github.py"
       - "scripts/wiki/sync_mirrors.py"
       - "scripts/wiki/sync_reference.py"
       - "scripts/wiki/sync_api_docs.py"
       - ".github/workflows/sync-wiki.yml"
+      # sync_mirrors.py inputs: the 13 canonical mirror sources (MIRRORS tuple).
+      #   6-project (9):
+      - "docs/ROADMAP.md"
+      - "CHANGELOG.md"
+      - "docs/api-stability.md"
+      - "docs/deprecation-calendar.md"
+      - "GOVERNANCE.md"
+      - "SECURITY.md"
+      - "CONTRIBUTING.md"
+      - "EOL.md"
+      - "docs/verification.md"
+      #   5-compliance (4):
+      - "docs/ocsf-mapping.md"
+      - "docs/gemara-mapping.md"
+      - "docs/financial-sector-overlay.md"
+      - "docs/contributing-a-catalog.md"
+      # sync_reference.py + sync_api_docs.py inputs: the live package surface
+      # (Typer CLI app, MCP server, config models, catalogs/mappings data, and
+      # every package's public __init__/pyproject) that the reference + per-
+      # package API pages are generated from. A code-only push that changes a
+      # CLI verb / MCP tool / env var / catalog must re-fire the wiki sync.
+      - "packages/**/*.py"
+      - "packages/**/pyproject.toml"
+      - "packages/evidentia-core/src/evidentia_core/catalogs/data/**"
   workflow_dispatch:
 
 # Top-level defaults: read-only. The push to <repo>.wiki.git needs

@@ -68,7 +68,11 @@ repository:
     assessments:
       self:
         comment: |
-          Per-release security review published as docs/security-review-vX.Y.Z.md.
+          Every release gets a security review sized to its change surface
+          (the /pre-release-review right-sizing rubric): a full review is
+          published as docs/security-review-vX.Y.Z.md when the attack
+          surface changes; otherwise a right-sized reuse-based review is
+          performed and logged in the release's per-run record.
           Threat model: docs/threat-model.md (NORMATIVE). OSPS Baseline
           conformance tracked in OSPS-CONFORMANCE.md (Maturity 3, CI-gated).
           OpenSSF Best Practices: Silver (project 12724). Additional CI security

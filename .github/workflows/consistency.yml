@@ -59,3 +59,38 @@ jobs:
 
       - name: Run consistency gate suite (SSOT)
         run: uv run python scripts/run_gate_suite.py --scope consistency
+
+  # PR-scoped strict docs build (docs-airtightness A1.4). `mkdocs build
+  # --strict` fails on a broken internal wiki link or an orphaned (not-in-nav)
+  # page. It previously ran ONLY in pages.yml, which triggers on push:[main] +
+  # tags — i.e. AFTER merge. So a wiki-breaking PR merged green and only THEN
+  # reddened main's Pages build, violating the green-checks MUST. Running the
+  # same build here (on pull_request + merge_group) moves that gate before the
+  # merge. Build-only: no artifact upload, no deploy — pages.yml still owns the
+  # publish. The invocation + docs toolchain mirror pages.yml's build job
+  # verbatim (uv sync --group docs -> uv run --no-sync mkdocs build --strict) so
+  # the pre-merge gate and the deploy gate can never diverge. Kept a SIBLING job
+  # (not a step in `consistency`) so the fast Node-free staleness guards are not
+  # slowed by the mkdocs-material install, and so a docs-build failure is
+  # attributable on its own line.
+  docs-build:
+    name: docs build (strict)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          enable-cache: false
+          python-version: "3.12"
+
+      - name: Install docs toolchain
+        run: uv sync --group docs
+
+      - name: Build site (strict)
+        run: uv run --no-sync mkdocs build --strict

@@ -1,4 +1,4 @@
-# Evidentia v0.7.0 — capability matrix
+# Evidentia capability matrix (v0.7.0 baseline · re-validated through v0.10.12)
 
 > Step-4 deliverable from the v0.7.0 comprehensive review (2026-04-25).
 > Functional + code-review + adversarial smoke testing of every public

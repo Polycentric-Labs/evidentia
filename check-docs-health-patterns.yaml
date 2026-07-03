@@ -1,0 +1,85 @@
+# Committed base config for scripts/check_docs_health.py (docs-airtightness A1.5).
+#
+# This is the PUBLIC, non-sensitive layer of the doc-health phrase config. It
+# ships in the repo so the reclaimable-vendor-host check runs in EVERY
+# environment — CI runners, fresh clones, collaborators — not only on a machine
+# that happens to hold the gitignored private overlay.
+#
+# Layering
+# --------
+# check_docs_health.py loads THIS file as the base, then merges the private
+# overlay `private/check-docs-health-patterns.yaml` on top if it is present.
+# The private overlay WINS / EXTENDS: its forbidden_patterns are appended, and
+# its scalar/list keys (commit_cutoff_sha, tag_allowlist, file_allowlist,
+# line_allowlist) override or extend the base. The base intentionally sets only
+# `forbidden_patterns` (the vendor-host set) and leaves the audit-scoping keys
+# empty, so on a runner WITHOUT the overlay the commit/tag/release-body phrase
+# audits degrade to their advisory-WARN "config incomplete" behavior while the
+# vendor-host grep over tracked .md files still runs and BLOCKS on a match.
+#
+# Why vendor hosts are here (and only here)
+# -----------------------------------------
+# Reclaimable vendor-preview subdomains (e.g. *.vercel.app) can be taken over
+# by an unrelated party once the originating deployment is deleted
+# (dangling-subdomain / link-takeover). Real incident (2026-06-17): the
+# README's "Live Demo" linked evidentia-demo.vercel.app, which had been
+# reclaimed and was serving a DIFFERENT company — caught only in a manual
+# pre-send review. This gate makes any such host in a tracked .md file a
+# blocking FAIL. Use owned domains instead (evidentiagrc.com,
+# polycentriclabs.com, allenfbyrd.com, and their subdomains).
+#
+# Each pattern below is a deterministic, network-free regex applied by the
+# `phrase_audit` check to every tracked public .md file (outside the
+# file_allowlist). `flags: [IGNORECASE]` makes host matching case-insensitive.
+
+forbidden_patterns:
+  - name: vendor_host_vercel_app
+    regex: '\bhttps?://[a-z0-9-]+(?:\.[a-z0-9-]+)*\.vercel\.app\b'
+    flags: [IGNORECASE]
+    reason: "reclaimable vendor-preview host — takeover risk; use owned domains"
+
+  - name: vendor_host_netlify_app
+    regex: '\bhttps?://[a-z0-9-]+(?:\.[a-z0-9-]+)*\.netlify\.app\b'
+    flags: [IGNORECASE]
+    reason: "reclaimable vendor-preview host — takeover risk; use owned domains"
+
+  - name: vendor_host_pages_dev
+    regex: '\bhttps?://[a-z0-9-]+(?:\.[a-z0-9-]+)*\.pages\.dev\b'
+    flags: [IGNORECASE]
+    reason: "reclaimable vendor-preview host — takeover risk; use owned domains"
+
+  - name: vendor_host_herokuapp_com
+    regex: '\bhttps?://[a-z0-9-]+(?:\.[a-z0-9-]+)*\.herokuapp\.com\b'
+    flags: [IGNORECASE]
+    reason: "reclaimable vendor-preview host — takeover risk; use owned domains"
+
+  - name: vendor_host_web_app
+    regex: '\bhttps?://[a-z0-9-]+(?:\.[a-z0-9-]+)*\.web\.app\b'
+    flags: [IGNORECASE]
+    reason: "reclaimable vendor-preview host — takeover risk; use owned domains"
+
+  - name: vendor_host_fly_dev
+    regex: '\bhttps?://[a-z0-9-]+(?:\.[a-z0-9-]+)*\.fly\.dev\b'
+    flags: [IGNORECASE]
+    reason: "reclaimable vendor-preview host — takeover risk; use owned domains"
+
+  - name: vendor_host_onrender_com
+    regex: '\bhttps?://[a-z0-9-]+(?:\.[a-z0-9-]+)*\.onrender\.com\b'
+    flags: [IGNORECASE]
+    reason: "reclaimable vendor-preview host — takeover risk; use owned domains"
+
+  # github.io: any *.github.io project/user page is reclaimable if the account
+  # or repo is deleted, so it is flagged by default — EXCEPT two allowlisted,
+  # stable pages this repo legitimately cites:
+  #   * polycentric-labs.github.io — the project's OWN Pages host (mkdocs.yml,
+  #     pages.yml, the generated wiki API pages). Owned by us.
+  #   * squidfunk.github.io — the canonical docs homepage of the Material for
+  #     MkDocs upstream tool the wiki is built with (a maintained OSS project's
+  #     own page, not a reclaimable deploy-preview). Cited in docs/wiki/index.md.
+  # The negative lookahead allowlists exactly those two hosts and flags every
+  # other github.io host. (Deploy-preview hosts like *.vercel.app have no such
+  # legitimate-upstream-citation case, so they carry no allowlist.)
+  - name: vendor_host_github_io
+    regex: '\bhttps?://(?!(?:polycentric-labs|squidfunk)\.github\.io)[a-z0-9-]+(?:\.[a-z0-9-]+)*\.github\.io\b'
+    flags: [IGNORECASE]
+    reason: "reclaimable vendor-preview host — takeover risk; use owned domains (polycentric-labs.github.io + squidfunk.github.io allowlisted)"

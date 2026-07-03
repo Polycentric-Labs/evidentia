@@ -337,8 +337,14 @@ frozen:
 #   EXACTLY-ONE rule in the SCHEMA header.
 #
 #   NOTE on mirrors: the wiki "mirror" pages under docs/wiki/6-project/ are
-#   GENERATED from these canonical sources by scripts/wiki/sync_mirrors.py (the
-#   --check drift gate is wired into sync-wiki.yml). We anchor the SOURCE
+#   GENERATED from these canonical sources by scripts/wiki/sync_mirrors.py. Its
+#   --check drift gate is a REQUIRED check: it runs in the `consistency` scope
+#   of scripts/run_gate_suite.py, which consistency.yml (push/PR/merge_group)
+#   and the .githooks/pre-push hook both invoke (docs-airtightness A1.1). (The
+#   sync-wiki.yml workflow regenerates these pages in WRITE mode before the wiki
+#   push — that path auto-corrects drift on deploy but does not GATE it; the
+#   required --check in consistency.yml is what blocks a drifted PR.) We anchor
+#   the SOURCE
 #   (SECURITY.md, docs/ROADMAP.md, docs/verification.md); the corresponding
 #   mirrors (6-project/security.md, /roadmap.md, /verification.md) inherit the
 #   new literal on the next `sync_mirrors.py` run and are deliberately NOT

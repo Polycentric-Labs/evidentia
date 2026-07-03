@@ -1,4 +1,4 @@
-# Enterprise-grade credibility checklist (v0.7.0 baseline · maintained through v0.10.12)
+# Enterprise-grade credibility checklist (v0.7.0 baseline · maintenance summary last refreshed v0.10.12, current release v0.10.16)
 
 Evidentia's v0.7.0 release established the quality bar that Big-4 audit
 firms (Deloitte, PwC, KPMG, EY), FedRAMP Third-Party Assessor
