@@ -1,0 +1,76 @@
+# Self-lift watcher for the workspace's `requires-python<3.14` cap. The
+# workspace's true Python ceiling is <3.14 because litellm (evidentia-ai dep)
+# declares requires_python "<3.14,>=3.10"; the root pyproject.toml was capped
+# to >=3.12,<3.14 to unblock Dependabot. This sentinel WATCHES litellm's
+# published requires_python on PyPI and NUDGES (opens/updates a single
+# tracking issue) once it relaxes past the target Python — the signal that
+# the cap can be lifted. Detect-and-nudge only: it never edits pyproject.toml
+# or uv.lock. Its own liveness is covered by the G10 dead-trigger detector +
+# the sentinel-liveness guard (base-freshness.yml's workflow-liveness job /
+# post-publish-rescan.yml's sentinel-liveness job) — both declared triggers
+# below (schedule + workflow_dispatch) are live, so no dead-trigger nudge.
+name: python ceiling watch
+
+on:
+  schedule:
+    - cron: "41 8 * * 3"   # Wednesdays 08:41 UTC (distinct from base-freshness Tue 08:23 and rescan Mon 07:17)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: python-ceiling-watch
+  cancel-in-progress: false
+
+jobs:
+  sentinel:
+    runs-on: ubuntu-latest
+    # Single-job workflow — write scope lives at the job level, not repeated
+    # at the workflow level (zizmor excessive-permissions).
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Sync workspace
+        run: uv sync --all-packages
+
+      - name: Check litellm's published Python ceiling
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          uv run --no-sync python scripts/check_python_ceiling.py \
+            --output ceiling-findings.md
+
+      - name: Open or update the tracking issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ ! -s ceiling-findings.md ]; then
+            echo "No ceiling findings — nothing to do."
+            exit 0
+          fi
+          TITLE="litellm relaxed its Python ceiling past 3.14 — lift the requires-python cap"
+          BODY=$(printf '%s\n\n%s\n' \
+            "$(cat ceiling-findings.md)" \
+            "Action: bump root pyproject.toml's requires-python cap and re-run uv lock (scripts/bump_version.py does not touch this — it's a manual pyproject.toml edit). This is a scheduled sentinel — not a gate.")
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "in:title \"$TITLE\"" --json number -q '.[0].number' || echo "")
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --body "$BODY"
+            echo "Updated issue #$existing"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$BODY"
+          fi

@@ -1,7 +1,22 @@
 [project]
 name = "evidentia-workspace"
 version = "0.10.16"
-requires-python = ">=3.12"
+# Upper bound tracks the TRUE runnable ceiling of the workspace, which is set by the
+# tightest transitive Python cap: litellm (a hard dep of evidentia-ai, pinned
+# >=1.83.7,<2.0) declares requires_python "<3.14,>=3.10", so the stack cannot run on
+# 3.14+. Beyond honesty, the cap is load-bearing for RESOLUTION: without it, uv's
+# universal resolver (which Dependabot runs) explores a python_full_version>=3.15 fork
+# where py-ocsf-models 0.9.0 (via evidentia-collectors[ocsf]; caps cryptography<47)
+# collides with the newest cryptography the open floor selects -> "requirements
+# unsatisfiable" -> every Dependabot update run errors and NO dependency PR can rebase
+# or auto-merge. Capping requires-python prunes that fork DURING resolution (uv PR
+# #8403), which unblocks Dependabot. uv workspaces take the INTERSECTION of all members'
+# requires-python, so this root cap governs the whole workspace. Plain comparator (NOT
+# ~=, which breaks Dependabot's graph — dependabot-core#14883). REMOVAL TRIGGER: litellm
+# raises its requires_python past <3.14 (watched weekly by
+# .github/workflows/python-ceiling-watch.yml, which opens a tracking issue); lift only
+# after a real `uv lock` trial at >=3.14 passes (a transitive like redisvl may still gate).
+requires-python = ">=3.12,<3.14"
 description = "Workspace root for the Evidentia GRC tool monorepo"
 
 [tool.uv]
