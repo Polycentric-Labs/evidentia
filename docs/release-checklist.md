@@ -13,9 +13,9 @@
 > Cross-link to: [testing-playbook.md](testing-playbook.md) (the
 > operational test loop), [enterprise-grade.md](enterprise-grade.md)
 > (the quality bar), [capability-matrix.md](capability-matrix.md)
-> (last release's test snapshot), [v0.7.2-plan.md](v0.7.2-plan.md)
-> (the next release's scope), [v0.7.1-plan.md](v0.7.1-plan.md)
-> (the prior release's scope, SHIPPED 2026-04-26).
+> (last release's test snapshot), [ROADMAP.md](ROADMAP.md) (the
+> current dev cycle and its scope; the top PLANNED entry links the
+> active `docs/v<x>-plan.md` when one exists for the cycle).
 
 ---
 
@@ -232,7 +232,7 @@ Acceptance:
 - [ ] mypy: `Success: no issues found in N source files`
 - [ ] pytest: ≥ 857 passed (the v0.7.0 baseline; will grow over
       time), ≤ 8 skipped, 16 benign Tier-C warnings
-- [ ] `uv build --all-packages`: 6 evidentia-* wheels + sdists at the
+- [ ] `uv build --all-packages`: 8 evidentia-* wheels + sdists at the
       new version (no shim wheels)
 - [ ] `uvx twine check dist/*`: every distribution PASSED
 - [ ] (v0.9.9+) `scripts/run_osv_scan.py`: `PASS: osv-scanner found no
