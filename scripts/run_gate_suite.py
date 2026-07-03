@@ -23,8 +23,9 @@ Scopes
 
 * ``consistency`` — the fast staleness guards (no test/type/scan run):
   ``version_consistency`` + ``docs_health`` + ``readme_releases`` +
-  ``doc_counts``. This is the set the pre-push hook and the push/PR
-  ``consistency.yml`` enforce on every change.
+  ``doc_counts`` + the three wiki drift gates (``wiki_mirrors_drift`` +
+  ``wiki_reference_drift`` + ``wiki_api_docs_drift``). This is the set the
+  pre-push hook and the push/PR ``consistency.yml`` enforce on every change.
 * ``full`` — ``consistency`` PLUS the heavyweight gates
   (``pytest`` + ``mypy`` + ``ruff`` + ``osv`` + ``parity``). This is
   the set the tag-time ``gate`` job runs before any artifact is
@@ -112,6 +113,30 @@ _CONSISTENCY_CHECKS: tuple[Check, ...] = (
     Check(
         "doc_counts",
         ("python", "scripts/check_doc_counts.py"),
+    ),
+    # Wiki mirror/reference/API drift gates (docs-airtightness A1.1). Each
+    # generator has a --check mode that regenerates its wiki pages in memory
+    # and byte-compares them against the committed copies; a non-zero exit is
+    # drift. These previously ran ONLY inside sync-wiki.yml's regenerate steps
+    # (which overwrite + push, so drift was silently corrected at deploy time,
+    # never surfaced as a failing PR/push check) — a mirror drift shipped
+    # undetected this cycle. Wiring them into the consistency scope makes them
+    # blocking in consistency.yml (push/PR/merge_group) AND the pre-push hook,
+    # with no ruleset change. They read the workspace (sync_reference imports
+    # the Typer app; sync_api_docs reads each package's source), which the
+    # `uv run --all-extras --all-packages` env in _run_check + consistency.yml's
+    # `uv sync --all-packages` both provide. All three PASS on HEAD.
+    Check(
+        "wiki_mirrors_drift",
+        ("python", "scripts/wiki/sync_mirrors.py", "--check"),
+    ),
+    Check(
+        "wiki_reference_drift",
+        ("python", "scripts/wiki/sync_reference.py", "--check"),
+    ),
+    Check(
+        "wiki_api_docs_drift",
+        ("python", "scripts/wiki/sync_api_docs.py", "--check"),
     ),
 )
 
