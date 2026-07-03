@@ -127,3 +127,31 @@ def test_dispatch_and_call_events_exempt(cwl: Any) -> None:
         NOW,
     )
     assert findings == []
+
+
+def test_main_skip_api_writes_dead_trigger_findings(
+    cwl: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    wf_dir = tmp_path / "wf"
+    wf_dir.mkdir()
+    (wf_dir / "smoke.yml").write_text(
+        "name: s\non:\n  release:\n    types: [published]\njobs: {}\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(cwl, "WORKFLOWS_DIR", wf_dir)
+    out = tmp_path / "findings.md"
+    rc = cwl.main(["--repo", "o/r", "--output", str(out), "--skip-api"])
+    assert rc == 0
+    assert "release" in out.read_text(encoding="utf-8")
+
+
+def test_main_skip_api_clean_writes_empty_file(
+    cwl: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    wf_dir = tmp_path / "wf"
+    wf_dir.mkdir()
+    (wf_dir / "ok.yml").write_text("name: k\non: [push]\njobs: {}\n", encoding="utf-8")
+    monkeypatch.setattr(cwl, "WORKFLOWS_DIR", wf_dir)
+    out = tmp_path / "findings.md"
+    assert cwl.main(["--repo", "o/r", "--output", str(out), "--skip-api"]) == 0
+    assert out.read_text(encoding="utf-8") == ""

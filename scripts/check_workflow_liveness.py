@@ -25,11 +25,14 @@ internal errors.
 
 from __future__ import annotations
 
+import argparse
 import json
+import os
+import sys
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import yaml
@@ -143,3 +146,53 @@ def check_never_fired(
                     f"a never-fired gate is a dead gate (lesson 9)."
                 )
     return findings
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--repo", required=True, help="OWNER/NAME")
+    ap.add_argument("--output", required=True, help="findings markdown path")
+    ap.add_argument(
+        "--skip-api",
+        action="store_true",
+        help="rule (i) only — no network (local/test use)",
+    )
+    args = ap.parse_args(argv)
+
+    triggers_by_path: dict[str, set[str]] = {}
+    for path in sorted(WORKFLOWS_DIR.glob("*.yml")) + sorted(
+        WORKFLOWS_DIR.glob("*.yaml")
+    ):
+        try:
+            triggers_by_path[f".github/workflows/{path.name}"] = workflow_triggers(
+                path.read_text(encoding="utf-8")
+            )
+        except yaml.YAMLError as exc:
+            print(f"WARN: could not parse {path.name}: {exc}", file=sys.stderr)
+
+    findings = check_dead_triggers(
+        {Path(p).name: t for p, t in triggers_by_path.items()}
+    )
+    if not args.skip_api:
+        token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+        api = GitHubAPI(args.repo, token)
+        try:
+            findings += check_never_fired(api, triggers_by_path, datetime.now(UTC))
+        except (OSError, ValueError, KeyError) as exc:
+            # Fail-soft (lesson 2: a chronically-red sentinel trains people to
+            # ignore it). OSError covers URLError/HTTPError/read-phase
+            # TimeoutError; ValueError covers JSONDecodeError + shape checks.
+            # Rule (i) findings above still stand.
+            print(f"WARN: runs-API check skipped: {exc}", file=sys.stderr)
+
+    Path(args.output).write_text(
+        "\n".join(findings) + ("\n" if findings else ""), encoding="utf-8"
+    )
+    for line in findings:
+        print(line)
+    print(f"check_workflow_liveness: {len(findings)} finding(s)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
