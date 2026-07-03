@@ -5,7 +5,9 @@
 # provides: a TIME-based staleness nudge. When the pinned DHI base digest drifts
 # from the current dhi.io/python:3.13, or the latest GitHub Release is older than
 # 90 days, it opens/updates a single tracking issue: "cut a patch release to
-# rebuild on the fresh base".
+# rebuild on the fresh base". It also detects dead or never-fired workflow
+# trigger events (lesson 9, G10), and its own liveness is in turn asserted
+# weekly by post-publish-rescan.yml's sentinel-liveness job.
 name: base freshness
 
 on:
@@ -13,10 +15,10 @@ on:
     - cron: "23 8 * * 2"   # Tuesdays 08:23 UTC (offset from the Mon rescan)
   workflow_dispatch: {}
 
-# JUSTIFIED: bot opens/updates one tracking issue when the base drifts or ages out
+# Write scopes are JOB-scoped below (zizmor excessive-permissions: a multi-job
+# workflow must not hold workflow-level write).
 permissions:
   contents: read
-  issues: write
 
 concurrency:
   group: base-freshness
@@ -25,6 +27,10 @@ concurrency:
 jobs:
   sentinel:
     runs-on: ubuntu-latest
+    # Opens/updates the freshness tracking issue.
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: Checkout (Dockerfile pin)
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
@@ -84,6 +90,63 @@ jobs:
           BODY=$(printf '%b\n\n%s\n' \
             "The DHI container base or the published image is stale:\n\n${REASONS}" \
             "Action: cut a patch release to rebuild on the fresh base (Dependabot may already have a digest-bump PR open). This is a scheduled sentinel — not a gate. See docs/engineering-practices.md (Continuous security assurance).")
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "in:title \"$TITLE\"" --json number -q '.[0].number' || echo "")
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --body "$BODY"
+            echo "Updated issue #$existing"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$BODY"
+          fi
+
+  # G10 (engineering-practices lesson 9): a gate is not real until observed
+  # firing. Flags (i) structurally dead trigger events (a `release:` trigger
+  # in a repo whose Releases are GITHUB_TOKEN-created) and (ii) declared
+  # automatic triggers with zero runs ever after a 30-day grace window.
+  # Detect-and-nudge only — findings go to one tracking issue, never a red run.
+  workflow-liveness:
+    name: Workflow liveness (dead / never-fired triggers)
+    runs-on: ubuntu-latest
+    # Opens/updates the liveness tracking issue; reads the runs API.
+    permissions:
+      contents: read
+      issues: write
+      actions: read
+    steps:
+      - name: Checkout (workflow files)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Sync workspace
+        run: uv sync --all-packages
+
+      - name: Detect dead / never-fired trigger events
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          uv run --no-sync python scripts/check_workflow_liveness.py \
+            --repo "$GITHUB_REPOSITORY" --output liveness-findings.md
+
+      - name: Open or update the tracking issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ ! -s liveness-findings.md ]; then
+            echo "No liveness findings — nothing to do."
+            exit 0
+          fi
+          TITLE="Workflow liveness: dead or never-fired triggers"
+          BODY=$(printf '%s\n\n%s\n' \
+            "$(cat liveness-findings.md)" \
+            "Action: rewire or remove the dead trigger (see docs/engineering-practices.md lesson 9). This is a scheduled sentinel — not a gate.")
           existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
             --search "in:title \"$TITLE\"" --json number -q '.[0].number' || echo "")
           if [ -n "$existing" ]; then
