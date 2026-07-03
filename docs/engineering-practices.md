@@ -98,11 +98,22 @@ Evidentia's releases are designed to be independently verifiable end to end:
   inspection, never an input to a release. The publish path also runs
   **cache-free**: a PR-writable Actions cache read inside an artifact-producing
   job is a cache-poisoning vector, so the release builds every layer and
-  toolchain from source-of-truth references.
+  toolchain from source-of-truth references. A release build must also use a
+  version distinct from every published one: if artifacts are built at a
+  version that already exists on the index, the resolver sources dependency
+  metadata from the *index*, not the freshly-built local wheels, so a
+  newly-added core dependency silently vanishes from the pinned closure —
+  which is why a same-version committed hash file is structurally infeasible
+  before publication.
 - **Vulnerability scanning** runs `osv-scanner` against the resolved dependency
   closure — including the container's independently-resolved closure — on every
   pull request, surfacing transitive and disputed advisories the standard alert
-  feed suppresses.
+  feed suppresses. Each requirements/lock artifact represents exactly one
+  dependency closure — the container's closure is not the published package's
+  closure — so expected drift between them is not a defect to "fix";
+  regeneration consumes the committed input file (never overwriting it, which
+  would drop manually-added security floors) and asserts the expected pins are
+  present afterward.
 - **Dependency updates are automated with guardrails.** Dependabot proposes
   weekly, grouped, cooldown-delayed version updates (a freshly-published release
   is held a few days, so a yanked or hot-fixed bad release is superseded before it
@@ -168,7 +179,11 @@ publicly.
   advisories) — and removing `curl` is not egress denial (Python
   `socket`/`urllib` remain).
 - **Secret scanning.** A pinned gitleaks binary scans the full history on every
-  push and pull request, complementing a local pre-push secret scan.
+  push and pull request, complementing a local pre-push secret scan. Systemic
+  secret-scanner false positives are encoded the same way — as value-precise
+  allowlist regexes in committed config, matched against the flagged secret
+  *value*, never as a path allowlist over source directories — and verified
+  locally before landing.
 - **Defensive guards in the code itself.** Network-egress paths enforce a
   public-host SSRF guard that fires *before* any optional driver import, so the
   security property holds even with zero optional extras installed — a property
@@ -256,6 +271,14 @@ real defects before any of it reached the release pipeline.
   reviewed in pull requests, and are guarded by automated consistency checks:
   the version is consistent across every source, capability counts match the
   code, and cross-document links resolve.
+- **Doc moves are airtight.** Because GitHub does not redirect moved document
+  paths, any doc cited by a frozen external surface (an immutable release
+  body, a per-version package README, a tool config pointer) 404s the instant
+  it moves; before a reorganization, frozen-cited paths are enumerated, left
+  as stub redirects with an index map, and the citing gates are updated
+  atomically in the move commit. Link-resolution checks sweep config-embedded
+  and workflow-embedded doc pointers, not only tracked Markdown, since a
+  phantom pointer shipped in code reaches the package index as a live 404.
 
 ---
 
@@ -401,6 +424,44 @@ structurally dead trigger events and automatic triggers that have never
 produced a run (`scripts/check_workflow_liveness.py`), and the same strict CI
 check that guards tool availability validates install-spec extras against the
 package manifests.
+
+**10. An open-ended version bound let the resolver explore an impossible
+world.** The project declared its Python floor with no upper bound, while a
+transitive AI-stack dependency capped a core library well below the newest
+Python. That combination is not merely cosmetic: the dependency updater runs a
+*universal* resolver that solves across every Python version the bound admits,
+so it explored future interpreter versions where the transitive cap became
+mathematically unsatisfiable — and every updater run then failed with
+"requirements unsatisfiable." The visible symptom was oblique: the build stayed
+green, but *every* open dependency pull request silently stopped rebasing, so
+none could ever pick up a newly-required status check — a whole class of
+updates wedged behind a resolver error nobody was watching. The guardrail that
+should have caught the underlying base-image drift earlier was itself dead: an
+ignore rule written to block *major* base-image bumps assumed a `3.13 → 3.14`
+step was a major change, but the updater classifies it as *minor* (the leading
+component stays `3`), so the rule never matched the class it was written to
+stop — the same incident, one layer up. *Root cause:* a version bound was
+treated as honesty metadata rather than a load-bearing input to resolution, and
+a guardrail's matching semantics were never checked against how the tool
+actually classifies the change it was meant to catch — a rule that looks
+protective but can never fire. *Prevention:* **declare the true supported
+ceiling** — cap the floor's upper bound to the tightest transitive cap the
+project actually inherits, with a comment stating *why* and the *condition
+that removes it*; in a workspace where members intersect, a single root cap
+prunes the unsatisfiable resolver fork *during* resolution, unblocking the
+updater immediately. Use a plain comparator, never a compatible-release
+operator, which the updater's dependency graph cannot parse. And because a cap
+set on someone else's constraint should not become permanent by neglect, pair
+it with a scheduled watcher (`scripts/check_python_ceiling.py` in
+`python-ceiling-watch.yml`) that reads the blocking package's published
+metadata, evaluates it with real version-set containment rather than brittle
+string matching, and opens a single tracking issue proposing the lift when the
+ecosystem is ready — while the lift itself stays human-gated behind a real lock
+trial, because an upstream relaxing its own bound is necessary but not
+sufficient when other transitive gates remain. The same audit applies to every
+ignore/ceiling rule in the dependency-update config: state the exact class it
+is meant to catch, and verify that class against the tool's actual
+classification of the change, not an assumption about what "major" means.
 
 ---
 
