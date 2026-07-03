@@ -60,3 +60,29 @@ jobs:
 
       - name: Audit workflow permissions (--strict)
         run: uv run --no-sync python scripts/audit_workflow_permissions.py --strict
+
+  # G8+G9 (engineering-practices lessons 8-9): every run: command must be
+  # provided by that job's own uses: steps or the runner image, and every
+  # workspace-package install-spec may only name declared extras. Same
+  # checker pattern as audit-permissions above.
+  check-workflow-tools:
+    name: Check workflow tools (strict)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Sync workspace
+        run: uv sync --all-packages
+
+      - name: Check workflow tools + extras (--strict)
+        run: uv run --no-sync python scripts/check_workflow_tools.py --strict

@@ -276,6 +276,7 @@ jobs:
       - name: osv-scan regenerated container requirements
         if: steps.relevant.outputs.relevant == 'true'
         run: |
+          # tool-check: ok osv-scanner  (installed by the prior curl step "Install osv-scanner" in this job)
           osv-scanner scan source \
             --config osv-scanner.toml \
             --lockfile docker/requirements.txt
