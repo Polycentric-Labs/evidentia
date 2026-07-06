@@ -21,7 +21,7 @@ dependencies = [
     "pydantic-settings>=2.6",
     "pyyaml>=6.0",
     "python-dateutil>=2.9",
-    "thefuzz[speedup]>=0.22",
+    "thefuzz[speedup]>=0.22.1",
     "platformdirs>=4.3",
     # v0.7.0: audit module deps. tenacity drives bounded
     # exponential-backoff retry with jitter; python-ulid produces
