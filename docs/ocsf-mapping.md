@@ -5,7 +5,7 @@
 > model and the OCSF **Compliance Finding** class.
 >
 > **Canonical location**: `docs/ocsf-mapping.md`
-> **Cross-references**: [v0.10.0-plan.md](v0.10.0-plan.md),
+> **Cross-references**: [v0.10.0-plan.md](releases/plans/v0.10.0-plan.md),
 > [integration-survey.md](integration-survey.md),
 > [api-stability.md](api-stability.md)
 

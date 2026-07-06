@@ -151,7 +151,7 @@ delta.
 
 ### §12 corrections-log entries added this cycle
 
-4-of-4, per [v0.10.6-plan.md §12](v0.10.6-plan.md):
+4-of-4, per [v0.10.6-plan.md §12](releases/plans/v0.10.6-plan.md):
 
 - §12.1: crosswalk format/path (JSON in catalogs/data/mappings/, NOT YAML in new dir)
 - §12.2: OSPS Baseline counts (25/42/63 assessment-requirements, NOT plan's 21/38/58)
@@ -1758,7 +1758,7 @@ output formats, and configuration-precedence chain are unchanged.
   All four AI subsystems (`evidentia_ai.client`, `risk_statements/`,
   `explain/`, `explain/cache.py`) now ship with the v0.7.0
   collector-pattern enterprise grade. Detail: see
-  [`docs/v0.7.1-plan.md`](v0.7.1-plan.md) §"P0 — AI features
+  [`docs/v0.7.1-plan.md`](releases/plans/v0.7.1-plan.md) §"P0 — AI features
   enterprise-grade hardening".
 - **Surface tier 7 — CLI commands**: `evidentia version` would now
   report "Evidentia v0.7.1" (the table below shows the v0.7.0 review

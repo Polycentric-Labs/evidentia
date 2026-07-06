@@ -104,7 +104,7 @@
 >
 > ### Future direction (v0.8.0+)
 >
-> See [`docs/v0.8.0-plan.md`](docs/v0.8.0-plan.md). The
+> See [`docs/v0.8.0-plan.md`](docs/releases/plans/v0.8.0-plan.md). The
 > `evidentia-ai` package gains a new `eval/` submodule (DFAH
 > determinism harness), `risk_statements/` gains a `--emit-trace`
 > mode (Policy Reasoning Traces with structured clause citations

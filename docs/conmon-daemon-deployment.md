@@ -340,4 +340,4 @@ Configure your log shipper to alert on this pattern.
 - [`docs/ROADMAP.md`](ROADMAP.md) — v0.9.3 P1 CONMON daemon scope
 - [`docs/conmon-runbook.md`](conmon-runbook.md) — operator workflows
   for the v0.9.0 read-only library + CLI
-- [`docs/v0.9.3-plan.md`](v0.9.3-plan.md) — full v0.9.3 cycle plan
+- [`docs/v0.9.3-plan.md`](releases/plans/v0.9.3-plan.md) — full v0.9.3 cycle plan

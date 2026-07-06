@@ -516,5 +516,5 @@ evidentia gap analyze \
   responses persist to `Vendor.evidence_refs[]` with Sigstore
   signing once this lands.
 
-See [`docs/v0.7.9-plan.md`](v0.7.9-plan.md) and
+See [`docs/v0.7.9-plan.md`](releases/plans/v0.7.9-plan.md) and
 [`docs/ROADMAP.md`](ROADMAP.md) for the full forward plan.

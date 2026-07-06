@@ -70,7 +70,7 @@ repository:
         comment: |
           Every release gets a security review sized to its change surface
           (the /pre-release-review right-sizing rubric): a full review is
-          published as docs/security-review-vX.Y.Z.md when the attack
+          published as docs/releases/reviews/security-review-vX.Y.Z.md when the attack
           surface changes; otherwise a right-sized reuse-based review is
           performed and logged in the release's per-run record.
           Threat model: docs/threat-model.md (NORMATIVE). OSPS Baseline

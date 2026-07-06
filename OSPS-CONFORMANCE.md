@@ -10,7 +10,7 @@
 > [`ac6bbec8aecf51dce41f62712745f7949ab6bdeb`](https://github.com/ossf/security-baseline/tree/ac6bbec8aecf51dce41f62712745f7949ab6bdeb/baseline))
 > was walked against Evidentia's release pipeline + repo state on
 > 2026-05-27. Per-control evidence pointers below. Walk methodology +
-> JSONL working note documented in `docs/v0.10.6-implementation-plan.md`
+> JSONL working note documented in `docs/releases/plans/v0.10.6-implementation-plan.md`
 > §Task 3.1.
 >
 > **First-mover claim**: `gh api search/code "filename:OSPS-CONFORMANCE.md"`
@@ -179,13 +179,13 @@ milestone (see [`docs/v1.0-transition.md`](docs/v1.0-transition.md)).
 
 | Control | Applicability | Reason | Resolution path |
 |---|---|---|---|
-| OSPS-AC-04.01 | M2, M3 | Explicit CI/CD permissions audit not yet automated. `release.yml` declares top-level `permissions: contents: read` but other workflows have not been fully audited for default-deny posture. | **v0.10.7 CI gate** — scoped in `docs/v0.10.6-plan.md` §2.E; C7 ships the advisory-mode audit script ahead of the v0.10.7 enforcing gate. |
+| OSPS-AC-04.01 | M2, M3 | Explicit CI/CD permissions audit not yet automated. `release.yml` declares top-level `permissions: contents: read` but other workflows have not been fully audited for default-deny posture. | **v0.10.7 CI gate** — scoped in `docs/releases/plans/v0.10.6-plan.md` §2.E; C7 ships the advisory-mode audit script ahead of the v0.10.7 enforcing gate. |
 | OSPS-AC-04.02 | M3 | Per-job least-privilege not yet enforced across all workflows. | **v0.10.7 CI gate** — same workflow-permissions audit as 04.01. |
 | OSPS-GV-04.01 | M3 | Formal permission-grant review requires ≥2 unassociated contributors. Single-maintainer project — no reviewer for the maintainer's own permission grants. | **SOC 2 Type I program + second-maintainer onboarding** per `docs/v1.0-transition.md`. Tracked at v1.1+ (post-second-maintainer). |
 | OSPS-QA-07.01 | M3 | Two-person merge approval requires ≥2 unassociated contributors. The maintainer is the only reviewer for the maintainer's own PRs. | **SOC 2 Type I program + second-maintainer onboarding** per `docs/v1.0-transition.md`. Tracked at v1.1+ (post-second-maintainer). |
 | OSPS-LE-01.01 | M2, M3 | DCO sign-off not yet enforced. Per upstream OSPS-LE-01.01 recommendation, GitHub ToS arguably satisfies (all contributors accept GitHub's contribution-terms clause), but explicit DCO sign-off is the stronger interpretation. Single-maintainer; all commits to date are by the maintainer. | **`.github/workflows/dco.yml` + `Signed-off-by:` trailers** enabled in the same PR that onboards the second contributor (per `GOVERNANCE.md` §Becoming a contributor). |
 | OSPS-VM-04.02 | M3 | VEX documents not yet emitted for non-affecting upstream advisories. Per-release `docs/security-review-vX.Y.Z.md` artifacts narrate non-applicability prose-style for upstream-only vulnerabilities, but no formal CycloneDX-VEX or CSAF-VEX artifact is produced. | **`evidentia vex emit` CLI verb** scoped for **v0.11.x**. The existing per-release security-review prose is the human-readable equivalent in the interim. |
-| OSPS-VM-05.03 | M3 | `osv-scanner` is run pre-tag locally (manual gate per `docs/release-checklist.md` Step 7) but is NOT yet integrated as a CI-blocking workflow on pull-request. Dependabot security_updates blocks merging via branch protection when a CVE auto-PR is filed, but there is no programmatic SCA-violation block on arbitrary PRs. | **`verify-osv-scan.yml` workflow** scoped for **v0.10.7** per `docs/v0.10.6-plan.md` §11 backlog. |
+| OSPS-VM-05.03 | M3 | `osv-scanner` is run pre-tag locally (manual gate per `docs/release-checklist.md` Step 7) but is NOT yet integrated as a CI-blocking workflow on pull-request. Dependabot security_updates blocks merging via branch protection when a CVE auto-PR is filed, but there is no programmatic SCA-violation block on arbitrary PRs. | **`verify-osv-scan.yml` workflow** scoped for **v0.10.7** per `docs/releases/plans/v0.10.6-plan.md` §11 backlog. |
 
 ## Re-validation
 

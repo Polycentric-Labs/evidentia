@@ -8,7 +8,7 @@
 > model and the OCSF **Compliance Finding** class.
 >
 > **Canonical location**: `docs/ocsf-mapping.md`
-> **Cross-references**: [v0.10.0-plan.md](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.10.0-plan.md),
+> **Cross-references**: [v0.10.0-plan.md](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.10.0-plan.md),
 > [integration-survey.md](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/integration-survey.md),
 > [api-stability.md](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/api-stability.md)
 

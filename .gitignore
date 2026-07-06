@@ -120,7 +120,7 @@ published-sbom*.cdx.json
 
 # Superpowers working artifacts (brainstorming specs + implementation
 # plans). Transient tactical docs that drive a build cycle; the canonical
-# strategic plan for each cycle lives in docs/<vX.Y.Z>-plan.md (tracked).
+# strategic plan for each cycle lives in docs/releases/plans/<vX.Y.Z>-plan.md (tracked).
 docs/superpowers/
 
 # Private competitive-strategy / market-research working docs. The repo

@@ -225,7 +225,7 @@ tracked:
       bumped in lockstep. The plugin README is NOT tracked: its install
       examples are unpinned and its §Versioning prose is version-agnostic, so
       the README carries no project-version literal to bump — it stays frozen
-      below for its historical docs/v0.10.2-marketplace.md plan-doc link.
+      below for its historical docs/releases/plans/v0.10.2-marketplace.md plan-doc link.
 
 frozen:
   # ── Whole historical/prose trees (globs) ───────────────────────────────
@@ -246,7 +246,7 @@ frozen:
       Evidentia release line" per its own README §Versioning, so plugin.json
       mirrors the monorepo version and is bumped in lockstep. Everything else
       under this tree is frozen: the plugin README (version-agnostic install
-      examples + prose, plus the historical docs/v0.10.2-marketplace.md
+      examples + prose, plus the historical docs/releases/plans/v0.10.2-marketplace.md
       plan-doc link) and commands/. plugin.json is matched by this glob too;
       that is harmless — the bumper drives only off `tracked`, and the
       never-skip classified set is a union of tracked + frozen.

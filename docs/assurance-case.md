@@ -28,7 +28,7 @@ Evidentia composes its assurance case across three documents:
    the system's attack surface inventory, trust boundaries, and
    in-scope / out-of-scope definitions.
 2. **Per-release security review** —
-   [`docs/security-review-v0.7.9.md`](security-review-v0.7.9.md)
+   [`docs/security-review-v0.7.9.md`](releases/reviews/security-review-v0.7.9.md)
    (latest) — applies CVSS / CWE / EPSS classification to the
    active surface and demonstrates that secure-design principles
    have been applied + common implementation weaknesses
@@ -63,7 +63,7 @@ threat-model's
 
 ## Argument: secure design principles applied
 
-[`docs/security-review-v0.7.9.md`](security-review-v0.7.9.md)
+[`docs/security-review-v0.7.9.md`](releases/reviews/security-review-v0.7.9.md)
 demonstrates the application of six established secure-design
 principles:
 
@@ -78,7 +78,7 @@ principles:
 
 Each principle is supported by code references to specific
 locations in
-[`docs/security-review-v0.7.9.md`](security-review-v0.7.9.md).
+[`docs/security-review-v0.7.9.md`](releases/reviews/security-review-v0.7.9.md).
 
 ## Argument: common implementation weaknesses countered
 
@@ -111,7 +111,7 @@ rationale + **0 unfixed findings at v0.7.9 ship**.
 The full per-finding mapping with CVSS estimates, CWE references,
 EPSS likelihood, and disposition + commit links is in
 [`docs/security-review-v0.7.9.md` §Findings — bug-bucket
-table](security-review-v0.7.9.md#findings--bug-bucket-table).
+table](releases/reviews/security-review-v0.7.9.md#findings--bug-bucket-table).
 
 ## Argument: residual risk explicitly accepted
 
@@ -170,7 +170,7 @@ The assurance case satisfies (in addition to the OpenSSF Silver
 
 The full per-control mapping is in
 [`docs/security-review-v0.7.9.md` §Compliance framework
-mapping](security-review-v0.7.9.md#compliance-framework-mapping).
+mapping](releases/reviews/security-review-v0.7.9.md#compliance-framework-mapping).
 
 ## How to verify this assurance case
 
@@ -181,7 +181,7 @@ An auditor or successor verifying the assurance case should:
    trust-boundaries + in-scope / out-of-scope sections match the
    reality of the deployed code.
 3. Open
-   [`docs/security-review-v0.7.9.md`](security-review-v0.7.9.md)
+   [`docs/security-review-v0.7.9.md`](releases/reviews/security-review-v0.7.9.md)
    and spot-check 2-3 of the cited CWE-counter rows against the
    referenced commits.
 4. Open
@@ -223,7 +223,7 @@ This document is updated:
 *Created 2026-05-04 for v0.7.9 P0.6 OpenSSF Silver-tier prep.
 Satisfies the `assurance_case` MUST criterion. Companion to
 [`docs/threat-model.md`](threat-model.md) +
-[`docs/security-review-v0.7.9.md`](security-review-v0.7.9.md) +
+[`docs/security-review-v0.7.9.md`](releases/reviews/security-review-v0.7.9.md) +
 [`docs/enterprise-grade-accepted-findings.md`](enterprise-grade-accepted-findings.md) +
 [`docs/access-continuity.md`](access-continuity.md). Reviewed at
 every release; full review on a quarterly cadence.*

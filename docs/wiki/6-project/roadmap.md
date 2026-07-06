@@ -291,7 +291,7 @@ end-to-end supply-chain hardening narrative:
 The release was preceded by a 6-step comprehensive pre-tag review
 (see [`docs/positioning-and-value.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/positioning-and-value.md),
 [`docs/capability-matrix.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/capability-matrix.md),
-[`docs/v0.7.1-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.7.1-plan.md)).
+[`docs/v0.7.1-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.7.1-plan.md)).
 
 **857 tests passing**; mypy strict clean; ruff lint clean; all 10
 BLOCKER items in `docs/enterprise-grade.md` closed.
@@ -335,7 +335,7 @@ Shipped as **P0-only** by deliberate scope-narrowing decision at ship
 time. P1 (supply-chain polish — SHA-pin composite action, action E2E
 smoke test, SLSA L3 build provenance, OpenSSF Scorecard) and P2/P3
 (documentation polish + community-driven items) **moved to
-[`docs/v0.7.2-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.7.2-plan.md)** so v0.7.1 could land
+[`docs/v0.7.2-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.7.2-plan.md)** so v0.7.1 could land
 focused on the BLOCKER B3 closure without scope creep.
 
 **973 tests collected** (965 passed + 8 environmental skips on local
@@ -373,7 +373,7 @@ landed:
 
 Shipped without the originally-scoped P0 supply-chain items
 (SHA-pinning, action E2E smoke test, SLSA L3) — those moved to
-[`docs/v0.7.3-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.7.3-plan.md) along with the originally-scoped
+[`docs/v0.7.3-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.7.3-plan.md) along with the originally-scoped
 docs polish (sigstore-quickstart, v0.8.0-plan, etc.). See the v0.7.2
 plan's "Deferred to v0.7.3" section for the full carry-forward
 inventory.
@@ -385,7 +385,7 @@ clean.
 
 ## v0.7.3 — Composite action hardening + docs polish — SHIPPED
 
-See [`docs/v0.7.3-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.7.3-plan.md) for the full plan. Theme:
+See [`docs/v0.7.3-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.7.3-plan.md) for the full plan. Theme:
 finishes the v0.7.1-plan-originated supply-chain items that didn't
 make v0.7.2. P0 SHIPPED: SHA-pin every third-party action across the
 composite action + every workflow file (28 pinned refs), composite
@@ -421,7 +421,7 @@ forward unchanged. See `CHANGELOG.md` `[0.7.4]` block.
 
 ## v0.7.5 — Container publish + critical security batch + quick-win polish — SHIPPED
 
-See [`docs/v0.7.5-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.7.5-plan.md). Renumbered from
+See [`docs/v0.7.5-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.7.5-plan.md). Renumbered from
 v0.7.4-plan at v0.7.4 hot-fix ship time; **augmented 2026-04-29
 post-v0.7.4** with three new buckets: P0.5 critical-security
 batch (S1-S6 closing 14 HIGH `py/path-injection` + 1 HIGH
@@ -437,7 +437,7 @@ quarterly resync, R2 oscal verify UX) carry forward unchanged.
 
 ## v0.7.6 — UI alpha.2 + benchmark design + quickstart polish — SHIPPED
 
-See [`docs/v0.7.6-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.7.6-plan.md). Closes the alpha.2
+See [`docs/v0.7.6-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.7.6-plan.md). Closes the alpha.2
 UI completion gap that's been outstanding since v0.4.0 (Gap Analyze
 form, Gap Diff picker, Risk Generate streaming page, README
 screenshots), runs the deferred quarterly research-resync if Q3
@@ -448,7 +448,7 @@ deep-pass threat-model walk. ~4-5 week ship target.
 
 ## v0.7.7 — SQL family evidence collectors — SHIPPED (+ v0.7.7.1 same-day Dockerfile-pin hot-fix)
 
-See [`docs/v0.7.7-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.7.7-plan.md). First substantive
+See [`docs/v0.7.7-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.7.7-plan.md). First substantive
 new-collector release since v0.5.0. Adds 5 SQL-family adapters as
 `evidentia-collectors[sql-{postgres,mysql,sqlite,mssql,oracle}]`
 extras — read-only collectors mapping DB-resident compliance
@@ -460,7 +460,7 @@ ship target.
 
 ## v0.7.8 — Cloud data-warehouse collectors + BI integrations — SHIPPED
 
-See [`docs/v0.7.8-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.7.8-plan.md) for the full plan.
+See [`docs/v0.7.8-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.7.8-plan.md) for the full plan.
 Extended the v0.7.7 relational-DB evidence layer into modern cloud
 data warehouses (Databricks, Snowflake) and added the first BI
 output integrations (Tableau, Power BI). Each cloud-DW adapter
@@ -494,7 +494,7 @@ Account API auth path) — all surfaced as explicit BLIND_SPOTS.
 
 ## v0.7.9 — TPRM module + 4 vendor-risk-collectors + OSCAL TPRM emit — SHIPPED
 
-See [`docs/v0.7.9-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.7.9-plan.md) + the v0.7.9 SHIPPED
+See [`docs/v0.7.9-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.7.9-plan.md) + the v0.7.9 SHIPPED
 memory pointer. Tag `v0.7.9` at commit `b643caf` (2026-05-04).
 Brings Evidentia into the regulated financial-services compliance
 domain via the new `evidentia tprm` top-level capability module —
@@ -515,7 +515,7 @@ strict 0/0 across 160 source files / ruff clean. Image digest
 
 ## v0.7.10 — Federal compliance + Model Risk Management overlay — SHIPPED
 
-See [`docs/v0.7.10-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.7.10-plan.md). The v0.7.9
+See [`docs/v0.7.10-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.7.10-plan.md). The v0.7.9
 follow-on. Shipped: top-level `evidentia model-risk` module per
 SR 11-7 / SR 26-02 / OCC Bulletin 2011-12 / OCC 2026-13a (model
 inventory CRUD + SR-aligned doc generator + validation report
@@ -531,7 +531,7 @@ Pre-tag review: 0 HIGH / 1 MEDIUM (F-V10-S1 inline-fixed) / 1 LOW
 
 ## v0.7.11 — Audit chain-of-custody + KRI/KPI/KGI + Open FAIR + workflows — SHIPPED
 
-See [`docs/v0.7.11-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.7.11-plan.md). Shipped: P0 audit
+See [`docs/v0.7.11-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.7.11-plan.md). Shipped: P0 audit
 chain-of-custody (RetentionMetadata + lifecycle state machine +
 WORMBackend ABC + LocalFilesystemWORM reference impl), P1.5
 governance trio (G3 KRI/KPI/KGI metrics + G4 Open FAIR risk
@@ -546,7 +546,7 @@ cycle.
 
 ## v0.7.12 — Concrete WORM backends + FAIR Monte Carlo + alert-zero — SHIPPED
 
-See [`docs/v0.7.12-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.7.12-plan.md). Shipped: 3 cloud-
+See [`docs/v0.7.12-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.7.12-plan.md). Shipped: 3 cloud-
 WORM backend implementations (`S3ObjectLockWORM` /
 `AzureImmutableBlobWORM` / `GCSBucketLockWORM` via
 `evidentia[worm-s3]` / `[worm-azure]` / `[worm-gcs]` extras),
@@ -562,7 +562,7 @@ across 188 source files.
 
 ## v0.7.13 — Dependency modernization + Codecov fix + P3 closures + release-notes hygiene — SHIPPED
 
-See [`docs/v0.7.13-shipped.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.7.13-shipped.md). Wrap-up
+See [`docs/v0.7.13-shipped.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.7.13-shipped.md). Wrap-up
 release for the v0.7.x cycle. PR #18 (13 GH Actions major bumps)
 merged post-ship. Codecov source_pkgs fix (Cobertura XML emits
 full repo-relative file paths). P3 carry-overs closed (M-9
@@ -579,7 +579,7 @@ substantiveness gate.
 
 ## v0.7.14 — Frontend modernization + Codecov P2.1 + final v0.7.x hygiene + v0.8.0 G4 foundation — SHIPPED
 
-See [`docs/v0.7.14-shipped.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.7.14-shipped.md). 7 of 8 PR
+See [`docs/v0.7.14-shipped.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.7.14-shipped.md). 7 of 8 PR
 #21 frontend major bumps landed (TypeScript 5→6, ESLint 9→10,
 plugin-react-hooks 5→7, plugin-react-refresh 0.4→0.5, jsdom
 25→29, postcss + @types/node minors; tailwind 3→4 deferred to
@@ -594,7 +594,7 @@ as v0.8.0 G4 foundation. Fourth consecutive PROCEED-CLEAN
 
 ## v0.7.15 — Tailwind 4 + SettingsPage refactor + standing-rule pre-commit — SHIPPED
 
-See [`docs/v0.7.15-shipped.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.7.15-shipped.md). Tailwind 3→4
+See [`docs/v0.7.15-shipped.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.7.15-shipped.md). Tailwind 3→4
 migration (CSS-first `@theme` blocks; `@tailwindcss/vite` plugin;
 `tw-animate-css` replaces v3-era `tailwindcss-animate`),
 SettingsPage refactor (key-based remount; lint rule promoted
@@ -620,9 +620,9 @@ consecutive PROCEED-CLEAN. v0.7.x cycle CLOSED.
 
 ## v0.8.0 — The OSS-native AI moat — SHIPPED
 
-See [`docs/security-review-v0.8.0.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/security-review-v0.8.0.md) for the
+See [`docs/security-review-v0.8.0.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/reviews/security-review-v0.8.0.md) for the
 full pre-tag review (5th canonical Pre-tag deliverable per the
-pre-release-review v4 §G7) + [`docs/v0.8.0-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.8.0-plan.md)
+pre-release-review v4 §G7) + [`docs/v0.8.0-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.8.0-plan.md)
 for the original plan. First minor release after the v0.7.x cycle
 close. Lands the four AI-quality features that distinguish a
 Vanta-class dashboard from a compliance-engineering tool:
@@ -695,7 +695,7 @@ smoke (89 frameworks + 9 crosswalks) + fresh-venv install
 v4 Continuous variant PROCEED-CLEAN — 8th consecutive of
 the v0.7.x → v0.8.x line.**
 
-See [`docs/security-review-v0.8.1.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/security-review-v0.8.1.md)
+See [`docs/security-review-v0.8.1.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/reviews/security-review-v0.8.1.md)
 for the full Pre-tag review. Aggressive ~4-week scope (Allen's
 v0.8.1 cycle-open lock-in 2026-05-05) executed in a single
 focused session.
@@ -764,7 +764,7 @@ carried out of v0.8.1 (CIMD richness deferred further to v0.8.3
 per §24.6 R6). 9th consecutive PROCEED-CLEAN of the v0.7.x →
 v0.8.x line.
 
-See [`docs/security-review-v0.8.2.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/security-review-v0.8.2.md)
+See [`docs/security-review-v0.8.2.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/reviews/security-review-v0.8.2.md)
 for the full Pre-tag review.
 
 **Closures**:
@@ -824,7 +824,7 @@ DFAHarness `check_faithfulness=True` wiring deferred to v0.8.4
 polish. **10th consecutive PROCEED-CLEAN** of the v0.7.x →
 v0.8.x line.
 
-See [`docs/security-review-v0.8.3.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/security-review-v0.8.3.md)
+See [`docs/security-review-v0.8.3.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/reviews/security-review-v0.8.3.md)
 for the full Pre-tag review.
 
 **Closures**:
@@ -892,7 +892,7 @@ first-class on `DFAHarness`). MCP CIMD richness deferred 5th
 time to v0.8.5; CLI flags + corpus expansion + real-LLM
 integration tests deferred to v0.8.5.
 
-See [`docs/security-review-v0.8.4.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/security-review-v0.8.4.md)
+See [`docs/security-review-v0.8.4.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/reviews/security-review-v0.8.4.md)
 for the v4 Pre-tag-style closeout (PROCEED-CLEAN; 11th
 consecutive of v0.7.x → v0.8.x line).
 
@@ -957,7 +957,7 @@ v0.8.4 cadence). Closes ALL 4 v0.8.4 carry-overs per Allen's
 explicit Comprehensive scope + Implement-CIMD-now lock-in
 (§28). 12th consecutive PROCEED-CLEAN of v0.7.x → v0.8.x line.
 
-See [`docs/security-review-v0.8.5.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/security-review-v0.8.5.md)
+See [`docs/security-review-v0.8.5.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/reviews/security-review-v0.8.5.md)
 for the v4 Pre-tag-style closeout (PROCEED-CLEAN; 12th
 consecutive of v0.7.x → v0.8.x line).
 
@@ -1011,7 +1011,7 @@ Allen's explicit Comprehensive scope + CIMD-first sequencing
 additions lock-in (§29). 13th consecutive PROCEED-CLEAN of
 v0.7.x → v0.8.x line.
 
-See [`docs/security-review-v0.8.6.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/security-review-v0.8.6.md)
+See [`docs/security-review-v0.8.6.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/reviews/security-review-v0.8.6.md)
 for the v4 Pre-tag-style closeout (PROCEED-CLEAN; 13th
 consecutive).
 
@@ -1064,7 +1064,7 @@ signatures deferred to v1.0). 14th consecutive PROCEED-CLEAN
 of v0.7.x → v0.8.x line. **FINAL v0.8.x patch** — v0.9.0 opens
 with a clean slate.
 
-See [`docs/security-review-v0.8.7.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/security-review-v0.8.7.md)
+See [`docs/security-review-v0.8.7.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/reviews/security-review-v0.8.7.md)
 for the v4 Pre-tag-style closeout (PROCEED-CLEAN; 14th
 consecutive).
 
@@ -1158,7 +1158,7 @@ v0.9.1 reservation. v0.9.0 ships regardless.
 ## v0.9.1 — Walk-through-driven refinement — SHIPPED
 
 Cycle opened 2026-05-15 after v0.9.0 ship. Plan file:
-[`docs/v0.9.1-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.9.1-plan.md).
+[`docs/v0.9.1-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.9.1-plan.md).
 
 - **Phase 1**: CONMON REST router — 4 endpoints under
   `/api/conmon/` (list, get, next, check) matching CLI parity.
@@ -1638,7 +1638,7 @@ backlog.
 
 Sourced from the Phase B audit re-run + 6-stream Evidentia-integration
 research synthesis (`~/.claude/skills/pre-release-review/_audits/evidentia-integration-plan-2026-05-24.md`).
-Full plan at [`docs/v0.10.5-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.10.5-plan.md). Headline:
+Full plan at [`docs/v0.10.5-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.10.5-plan.md). Headline:
 Evidentia ships **4 first-of-its-kind OSS artifacts**, each currently
 absent from the public ecosystem (confirmed via `gh api search/code` +
 ecosystem scan):
@@ -1782,7 +1782,7 @@ source files (was 279 v0.10.6); mypy strict 0/0; ruff clean.
 ### v0.10.8 — Release-automation hardening + CLI↔GUI parity + GUI build-out (start) — SHIPPED
 
 Patch on v0.10.7 (released 2026-05-31). Tag `v0.10.8` (2026-06-05).
-Full plan: [`docs/v0.10.8-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.10.8-plan.md). Theme:
+Full plan: [`docs/v0.10.8-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.10.8-plan.md). Theme:
 institutionalize the v0.10.7 quality discipline into the *automatic*
 release mechanism, start enforcing CLI↔GUI feature parity, and begin
 closing the GUI gap. First ship under `/pre-release-review` v5.2.
@@ -1895,7 +1895,7 @@ its size limit), and research-resync cadence.
 
 Theme: close the v0.10.8 ship findings and skill-iteration debt, and
 harden the release machinery that cycle built. Full plan:
-[`docs/v0.10.9-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.10.9-plan.md) (approved 2026-06-10; scope
+[`docs/v0.10.9-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.10.9-plan.md) (approved 2026-06-10; scope
 = moderate, all eight items). Scope summary:
 
 - **eval CLI `_resolve_sign` OIDC graceful degrade** — the product fix
@@ -1934,7 +1934,7 @@ harden the release machinery that cycle built. Full plan:
 
 ### v0.10.11 — Public demo completion + traceability + hygiene — PLANNED
 
-Patch (0.10.10 → 0.10.11). Per-cycle detail: [`v0.10.11-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v0.10.11-plan.md). Three tracks:
+Patch (0.10.10 → 0.10.11). Per-cycle detail: [`v0.10.11-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.10.11-plan.md). Three tracks:
 
 - **Webapp demo completion** — deploy the static `VITE_DEMO` web console to `demo.evidentiagrc.com`; add an FDA-index build mode so the in-repo bundle can serve the full-bleed FDA page directly (retiring the decoupled prototype, single source of truth); a targeted GUI-fill — an **OSCAL emit/verify console view** (shows a run's signed Assessment Results + a verify panel).
 - **Control↔Threat Traceability Matrix** — promote the threat→control→evidence view from a rendered demo into a first-class GUI + CLI capability that emits a **Sigstore-signable OSCAL** matrix (builds on `models/threat.py`; the OSCAL slice here sets up the v0.11 TM-BOM). Generalist OSS.
@@ -2026,7 +2026,7 @@ detailed integration plan" §v0.11. Substantive minor (~6-8 weeks):
   module; data-layer interop only (no third-party code dependency — see
   the [`integration-survey.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/integration-survey.md) §9 licensing
   note). Design spec:
-  [`sarif-ingestion-collector-design.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/sarif-ingestion-collector-design.md)
+  [`sarif-ingestion-collector-design.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/designs/sarif-ingestion-collector-design.md)
   (control-agnostic default + attestation-gated candidate mappings from
   SARIF-native taxa / operator map / derived; reuses `ControlMapping` +
   `OLIRRelationship`).

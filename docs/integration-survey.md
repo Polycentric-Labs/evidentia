@@ -274,7 +274,7 @@ The Phase B audit research pass (6 parallel streams; HF MCP `paper_search`
 integration moves Evidentia can ship as **first-of-its-kind OSS
 artifacts**. Each becomes a citable claim in its own right because no
 other OSS project has shipped it. Sequenced into v0.10.5 — see
-[`v0.10.5-plan.md`](v0.10.5-plan.md).
+[`v0.10.5-plan.md`](releases/plans/v0.10.5-plan.md).
 
 ### 8.1 OpenSSF OSPS Baseline OSCAL conversion (FIRST-MOVER)
 

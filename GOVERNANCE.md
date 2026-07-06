@@ -38,7 +38,7 @@ and search:
   [Pull Requests](https://github.com/polycentric-labs/evidentia/pulls).
   Significant design decisions also land in
   [`docs/`](docs/) as version-controlled records (e.g., the per-release
-  plan files at `docs/v0.7.x-plan.md`).
+  plan files at `docs/releases/plans/v0.7.x-plan.md`).
 - **Roadmap** — proposed and tracked in [`docs/ROADMAP.md`](docs/ROADMAP.md)
   and the per-release plan files. Quarterly and per-release updates
   are committed to the repo so the history of intent is visible.
@@ -47,7 +47,7 @@ and search:
   Reporting + the per-release [`docs/release-checklist.md`](docs/release-checklist.md)
   security gate. Every release gets a review sized to its change
   surface via the `/pre-release-review` right-sizing rubric: a full
-  review (published as `docs/security-review-vX.Y.Z.md`) when the
+  review (published as `docs/releases/reviews/security-review-vX.Y.Z.md`) when the
   attack surface changes, or a right-sized reuse-based review
   (logged in the release's per-run record) otherwise.
 - **Release decisions** — gated by the 11-step

@@ -28,7 +28,7 @@ v0.10.0 schema upgrade (OCSF alignment):
   mapping to the OCSF Compliance Finding ``remediation.desc`` field.
 
 Both fields are additive and optional — v0.7.x / v0.8.x / v0.9.x
-serialized findings re-parse cleanly. See ``docs/v0.10.0-plan.md``
+serialized findings re-parse cleanly. See ``docs/releases/plans/v0.10.0-plan.md``
 for the OCSF mapping design.
 
 See :mod:`evidentia_core.audit.provenance` for the CollectionContext

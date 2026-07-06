@@ -238,7 +238,7 @@ every CVE record.
   disclosure timeline states a CVE "is requested" after a fix is published.
   The path to *issue* a CVE is therefore in place and documented.
 - **CWE transparency is already practiced.** Every release ships a
-  `docs/security-review-vX.Y.Z.md` (37 such files at the date above, from
+  `docs/releases/reviews/security-review-vX.Y.Z.md` (37 such files at the date above, from
   v0.7.7 through v0.10.12), and `docs/threat-model.md` carries explicit CWE
   identifiers per surface (CWE-22, -918, -502, -400, -770, -295, -319, -345,
   -362, and more). So the "accurate CWE in the record" discipline is already

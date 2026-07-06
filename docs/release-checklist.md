@@ -582,7 +582,7 @@ introduced this practice retroactively.
       verifier covering the build-provenance attestation that
       `actions/attest-build-provenance` stores under the repo's
       Attestations endpoint (added in v0.7.3 S3 per
-      [`docs/v0.7.3-plan.md`](v0.7.3-plan.md)):
+      [`docs/v0.7.3-plan.md`](releases/plans/v0.7.3-plan.md)):
       ```bash
       gh attestation verify dist/evidentia_core-X.Y.Z-py3-none-any.whl \
           -R Polycentric-Labs/evidentia

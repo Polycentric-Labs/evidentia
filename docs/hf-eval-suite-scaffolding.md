@@ -162,9 +162,9 @@ The eval suite ships with Evidentia's `evidentia eval` CLI verbs
 
 - [`positioning-and-value.md`](positioning-and-value.md) §11.2.B —
   the first-in-class framing.
-- [`v0.8.6-plan.md`](v0.8.6-plan.md) — the DFAH calibration corpus
+- [`v0.8.6-plan.md`](releases/plans/v0.8.6-plan.md) — the DFAH calibration corpus
   origin.
-- [`security-review-v0.8.6.md`](security-review-v0.8.6.md) — the
+- [`security-review-v0.8.6.md`](releases/reviews/security-review-v0.8.6.md) — the
   Cohen's Kappa methodology baseline.
 - [`v1.0-transition.md`](v1.0-transition.md) — the v1.0 acceptance
   gates that the eval-suite publish would satisfy

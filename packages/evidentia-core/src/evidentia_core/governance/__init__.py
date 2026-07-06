@@ -1,6 +1,6 @@
 """Governance primitives — Three Lines of Defense + Effective Challenge.
 
-Introduced in v0.7.10 P1.5 per `docs/v0.7.10-plan.md`. Brings
+Introduced in v0.7.10 P1.5 per `docs/releases/plans/v0.7.10-plan.md`. Brings
 Evidentia into alignment with the IIA "Three Lines Model" (2020
 revision) and SR 11-7 / SR 26-02 §III.D effective-challenge
 expectations regulators apply across financial-services

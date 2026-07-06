@@ -1,6 +1,6 @@
 """Third-Party Risk Management (TPRM) models.
 
-Introduced in v0.7.9 P0.1 per `docs/v0.7.9-plan.md`. The TPRM module
+Introduced in v0.7.9 P0.1 per `docs/releases/plans/v0.7.9-plan.md`. The TPRM module
 brings Evidentia into the regulated financial-services compliance
 domain by providing first-class vendor-inventory, fourth-party-
 disclosure, and Sigstore-signed-evidence-reference primitives.
@@ -23,7 +23,7 @@ the cross-link to the v0.7.9 P0.6 Model Risk Management module
 (`evidentia model-risk`) — see SR 26-02 + OCC 2026-13a (April 2026
 active model-risk guidance, superseding SR 11-7 + OCC 2011-12, with
 explicit generative-AI/agentic-AI exclusion noted in
-`docs/v0.7.9-plan.md` §1).
+`docs/releases/plans/v0.7.9-plan.md` §1).
 
 ID convention: UUID v4 via `new_id()` to match the rest of the model
 layer (gaps, evidence, findings, risks). The v0.7.9-plan §P0.1 spec
@@ -128,7 +128,7 @@ class RegulatoryClassification(str, Enum):
     OCC 2011-12). Cross-links to the v0.7.9 P0.6 Model Risk
     Management module (`evidentia model-risk`). Note: the 2026
     guidance EXPLICITLY EXCLUDES generative + agentic AI from scope
-    — see `docs/v0.7.9-plan.md` §1."""
+    — see `docs/releases/plans/v0.7.9-plan.md` §1."""
 
     DATA_PROCESSOR = "data_processor"
     """GDPR Article 28 processor flag. Distinct from
@@ -280,7 +280,7 @@ class Vendor(EvidentiaModel):
     vendor-risk collectors, OSCAL TPRM emit) operates on collections
     of these records.
 
-    See `docs/v0.7.9-plan.md` §P0.1 for the canonical spec.
+    See `docs/releases/plans/v0.7.9-plan.md` §P0.1 for the canonical spec.
     """
 
     id: str = Field(
