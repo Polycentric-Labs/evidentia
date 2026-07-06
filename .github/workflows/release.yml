@@ -171,6 +171,13 @@ jobs:
           echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH" >> $GITHUB_ENV
           echo "Reproducible-build timestamp: $SOURCE_DATE_EPOCH"
 
+      # PEP 770: generate the per-package SBOMs ONCE, before BOTH builds —
+      # the reproducibility gate compares dist/ and dist-verify/ byte-for-byte,
+      # and the generator is deterministic (UUIDv5 serial, SOURCE_DATE_EPOCH
+      # timestamp), so identical inputs -> identical wheels.
+      - name: Generate per-package SBOMs (PEP 770)
+        run: uv run python scripts/gen_package_sboms.py --npm
+
       - name: Build all workspace packages
         run: uv build --all-packages
 
@@ -196,6 +203,27 @@ jobs:
             exit 1
           fi
           echo "Reproducible-build verification PASSED"
+
+      # PEP 770 presence gate: every published wheel must carry
+      # .dist-info/sboms/ (two files for evidentia-api: python + npm closure).
+      - name: Verify wheels embed SBOMs (PEP 770)
+        run: |
+          python - <<'EOF'
+          import glob, sys, zipfile
+          bad = []
+          for whl in glob.glob("dist/*.whl"):
+              names = zipfile.ZipFile(whl).namelist()
+              sboms = [n for n in names if "/sboms/" in n and n.endswith(".cdx.json")]
+              want = 2 if "evidentia_api" in whl else 1
+              if len(sboms) < want:
+                  bad.append((whl, sboms))
+              else:
+                  print(f"OK {whl}: {sboms}")
+          if bad:
+              for whl, sboms in bad:
+                  print(f"MISSING SBOM: {whl} -> {sboms}", file=sys.stderr)
+              sys.exit(1)
+          EOF
 
       - name: Check distributions
         run: |
