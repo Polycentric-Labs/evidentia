@@ -19,13 +19,14 @@ Endpoints (mirroring the v0.7.9 P0.1.4 TPRM router pattern):
     — compute (without persisting) the next-validation-due date for
     UI previews
 
-Error normalization follows the v0.7.8 F-V08-DAST-3 status
-normalization: manual errors use status 400 (not 422) for runtime
-body-content validation failures, and carry the structured object
-``detail`` per the 2026-07-06 error-shape convergence (see
+Error normalization follows the v0.7.8 F-V08-DAST-3 lineage with the
+F-V1012-S4-1 per-router convention: a save-time body-content/id
+failure raises a *manual* 422 (not 400) carrying the structured
+object ``detail`` per the 2026-07-06 error-shape convergence (see
 :mod:`evidentia_api.errors`). Pydantic auto-validation 422s (from
 FastAPI's request-body parsing) keep their array-shape detail, so
-manual-vs-automatic stays distinguishable (object vs array).
+manual-vs-automatic stays distinguishable (object vs array) — and the
+422 response documents the union of both shapes.
 
 SR 11-7 / SR 26-02 / OCC Bulletin 2011-12 / OCC Bulletin 2026-13a
 model risk management framework alignment carries over from the

@@ -15,14 +15,15 @@ Endpoints (resolved per plan §17.B1-B4):
     (preserves id + created_at; refreshes updated_at)
   - ``DELETE /api/tprm/vendors/{vendor_id}`` — remove from store
 
-Error normalization follows the v0.7.8 F-V08-DAST-3 status
-normalization (plan §17.B4): manual errors use status 400 (not 422)
-for runtime body-content validation failures, and carry the
+Error normalization follows the v0.7.8 F-V08-DAST-3 lineage with the
+F-V1012-S4-1 per-router convention (plan §17.B4): a save-time
+body-content/id failure raises a *manual* 422 (not 400) carrying the
 structured object ``detail`` per the 2026-07-06 error-shape
 convergence (see :mod:`evidentia_api.errors`). Pydantic
 auto-validation 422s (from FastAPI's request-body parsing) keep
 their array-shape detail, so manual-vs-automatic stays
-distinguishable (object vs array).
+distinguishable (object vs array) — and the 422 response documents
+the union of both shapes.
 """
 
 from __future__ import annotations
