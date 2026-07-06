@@ -5,7 +5,8 @@ description = "LLM-powered risk statement generator and evidence validator for E
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
 license = "Apache-2.0"
-requires-python = ">=3.12"
+# Ceiling tracks the workspace root cap (litellm <3.14) — see root pyproject.toml for the full rationale + removal trigger; kept in sync by check_version_consistency.py.
+requires-python = ">=3.12,<3.14"
 keywords = ["grc", "compliance", "llm", "risk-statement", "nist-800-30", "litellm", "instructor"]
 classifiers = [
     "Development Status :: 3 - Alpha",

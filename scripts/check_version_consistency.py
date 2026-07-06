@@ -58,6 +58,7 @@ import importlib.util
 import json
 import re
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -379,6 +380,71 @@ def check_frontend_no_hardcoded_version(bump: Any) -> list[str]:
     return failures
 
 
+def check_requires_python_in_sync(bump: Any) -> list[str]:
+    """Assert the root + every ``packages/*/pyproject.toml`` declare an
+    IDENTICAL ``requires-python`` string.
+
+    The root cap (litellm's ``<3.14`` transitive ceiling) is sufficient for
+    uv workspace RESOLUTION alone (uv workspaces take the intersection of all
+    members' ``requires-python``), but the 8 member packages still publish
+    their own wheel metadata to PyPI — an open-ended member spec would tell a
+    downstream 3.14 consumer "compatible" right up until the litellm wall at
+    install-resolve time. Members are capped to match the root for honest
+    published metadata (see root ``pyproject.toml`` for the full rationale).
+    This check guards that cap against drift: any member whose
+    ``requires-python`` diverges from the root's is a HARD FAIL naming the
+    offending file(s), so the eventual cap-lift (root pyproject.toml's
+    REMOVAL TRIGGER) is atomic across all 9 files rather than silently
+    leaving a member behind.
+
+    Returns a list of human-readable failure strings (empty == pass).
+    """
+    failures: list[str] = []
+    root_path = REPO_ROOT / "pyproject.toml"
+    try:
+        root_data = tomllib.loads(root_path.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        return [f"cannot read/parse root pyproject.toml: {exc}"]
+    root_requires_python = root_data.get("project", {}).get("requires-python")
+    if not isinstance(root_requires_python, str) or not root_requires_python:
+        return [
+            "root pyproject.toml is missing a [project] requires-python string"
+        ]
+
+    all_tracked = bump.tracked_files()
+    member_files = sorted(
+        bump.expand_manifest_path("packages/*/pyproject.toml", all_tracked)
+    )
+    if not member_files:
+        failures.append(
+            "no packages/*/pyproject.toml files found — fix the glob or the "
+            "workspace layout"
+        )
+        return failures
+
+    for p in member_files:
+        posix = p.as_posix()
+        try:
+            data = tomllib.loads(p.read_text(encoding="utf-8"))
+        except (OSError, tomllib.TOMLDecodeError) as exc:
+            failures.append(f"cannot read/parse {posix}: {exc}")
+            continue
+        member_requires_python = data.get("project", {}).get("requires-python")
+        if not isinstance(member_requires_python, str) or not member_requires_python:
+            failures.append(
+                f"{posix} is missing a [project] requires-python string"
+            )
+            continue
+        if member_requires_python != root_requires_python:
+            failures.append(
+                f"requires-python mismatch in {posix}: has "
+                f"{member_requires_python!r}, root pyproject.toml has "
+                f"{root_requires_python!r} — align it so the workspace cap "
+                "stays honest in published wheel metadata"
+            )
+    return failures
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -395,12 +461,14 @@ def main(argv: list[str] | None = None) -> int:
     anchor_failures = check_anchors(bump, manifest, current)
     decisions_failures = check_decisions_documented(manifest)
     frontend_failures = check_frontend_no_hardcoded_version(bump)
+    requires_python_failures = check_requires_python_in_sync(bump)
     all_failures = (
         coverage_failures
         + never_skip_failures
         + anchor_failures
         + decisions_failures
         + frontend_failures
+        + requires_python_failures
     )
 
     if args.json:
@@ -412,6 +480,7 @@ def main(argv: list[str] | None = None) -> int:
             "anchor_failures": anchor_failures,
             "decisions_failures": decisions_failures,
             "frontend_failures": frontend_failures,
+            "requires_python_failures": requires_python_failures,
         }
         print(json.dumps(report, indent=2))
         return 0 if not all_failures else 1
@@ -463,6 +532,16 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print(
             "  frontend: PASS — no hardcoded project-version literal in the UI."
+        )
+
+    if requires_python_failures:
+        print()
+        print(f"REQUIRES-PYTHON-IN-SYNC FAILURES ({len(requires_python_failures)}):")
+        for f in requires_python_failures:
+            print(f"  - {f}")
+    else:
+        print(
+            "  requires-python: PASS — root + all member packages agree."
         )
 
     print()

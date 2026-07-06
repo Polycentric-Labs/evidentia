@@ -689,3 +689,106 @@ def test_real_repo_decisions_documented_passes(check: Any) -> None:
     bump = check._load_bump_module()
     manifest = bump.load_manifest()
     assert check.check_decisions_documented(manifest) == []
+
+
+# ── requires-python in-sync (member caps, 2026-07 closeout) ────────────────
+
+
+def _write_pyproject(path: Path, requires_python: str) -> None:
+    path.write_text(
+        f'[project]\nname = "x"\nrequires-python = "{requires_python}"\n',
+        encoding="utf-8",
+    )
+
+
+def test_requires_python_in_sync_passes_when_identical(
+    check: Any, bump: Any, chdir_tmp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Root + every packages/*/pyproject.toml agreeing on requires-python
+    passes cleanly."""
+    _write_pyproject(chdir_tmp / "pyproject.toml", ">=3.12,<3.14")
+    pkg_dir = chdir_tmp / "packages" / "evidentia-core"
+    pkg_dir.mkdir(parents=True)
+    _write_pyproject(pkg_dir / "pyproject.toml", ">=3.12,<3.14")
+    monkeypatch.setattr(check, "REPO_ROOT", chdir_tmp)
+    _make_bump_with_tracked(
+        bump,
+        monkeypatch,
+        ["pyproject.toml", "packages/evidentia-core/pyproject.toml"],
+        [],
+    )
+    assert check.check_requires_python_in_sync(bump) == []
+
+
+def test_requires_python_in_sync_fails_naming_offending_file(
+    check: Any, bump: Any, chdir_tmp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A member whose requires-python diverges from the root is a hard fail
+    that NAMES the offending file (the observed-firing contract)."""
+    _write_pyproject(chdir_tmp / "pyproject.toml", ">=3.12,<3.14")
+    ok_dir = chdir_tmp / "packages" / "evidentia-core"
+    ok_dir.mkdir(parents=True)
+    _write_pyproject(ok_dir / "pyproject.toml", ">=3.12,<3.14")
+    bad_dir = chdir_tmp / "packages" / "evidentia-mcp"
+    bad_dir.mkdir(parents=True)
+    _write_pyproject(bad_dir / "pyproject.toml", ">=3.12")  # open-ended -> mismatch
+    monkeypatch.setattr(check, "REPO_ROOT", chdir_tmp)
+    _make_bump_with_tracked(
+        bump,
+        monkeypatch,
+        [
+            "pyproject.toml",
+            "packages/evidentia-core/pyproject.toml",
+            "packages/evidentia-mcp/pyproject.toml",
+        ],
+        [],
+    )
+    failures = check.check_requires_python_in_sync(bump)
+    assert len(failures) == 1
+    assert "packages/evidentia-mcp/pyproject.toml" in failures[0]
+    assert ">=3.12" in failures[0]
+    assert ">=3.12,<3.14" in failures[0]
+
+
+def test_requires_python_in_sync_fails_when_member_missing_field(
+    check: Any, bump: Any, chdir_tmp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A member pyproject.toml with no requires-python at all is a clean
+    failure, not a crash."""
+    _write_pyproject(chdir_tmp / "pyproject.toml", ">=3.12,<3.14")
+    bad_dir = chdir_tmp / "packages" / "evidentia-core"
+    bad_dir.mkdir(parents=True)
+    (bad_dir / "pyproject.toml").write_text(
+        '[project]\nname = "evidentia-core"\n', encoding="utf-8"
+    )
+    monkeypatch.setattr(check, "REPO_ROOT", chdir_tmp)
+    _make_bump_with_tracked(
+        bump,
+        monkeypatch,
+        ["pyproject.toml", "packages/evidentia-core/pyproject.toml"],
+        [],
+    )
+    failures = check.check_requires_python_in_sync(bump)
+    assert len(failures) == 1
+    assert "packages/evidentia-core/pyproject.toml" in failures[0]
+    assert "missing" in failures[0]
+
+
+def test_requires_python_in_sync_fails_when_no_members_found(
+    check: Any, bump: Any, chdir_tmp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """No packages/*/pyproject.toml at all is a config error, not a silent
+    pass."""
+    _write_pyproject(chdir_tmp / "pyproject.toml", ">=3.12,<3.14")
+    monkeypatch.setattr(check, "REPO_ROOT", chdir_tmp)
+    _make_bump_with_tracked(bump, monkeypatch, ["pyproject.toml"], [])
+    failures = check.check_requires_python_in_sync(bump)
+    assert len(failures) == 1
+    assert "no packages/*/pyproject.toml files found" in failures[0]
+
+
+def test_real_repo_requires_python_in_sync_passes(check: Any) -> None:
+    """The committed repo's root + all 8 member packages agree on
+    requires-python (the v2026-07 member-caps closeout acceptance gate)."""
+    bump = check._load_bump_module()
+    assert check.check_requires_python_in_sync(bump) == []

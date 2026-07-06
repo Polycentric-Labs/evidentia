@@ -5,7 +5,8 @@ description = "Open-source GRC tool: gap analysis, risk statements, evidence col
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
 license = "Apache-2.0"
-requires-python = ">=3.12"
+# Ceiling tracks the workspace root cap (litellm <3.14) — see root pyproject.toml for the full rationale + removal trigger; kept in sync by check_version_consistency.py.
+requires-python = ">=3.12,<3.14"
 keywords = ["grc", "compliance", "governance", "risk", "oscal", "nist", "soc2", "iso27001"]
 classifiers = [
     "Development Status :: 3 - Alpha",
