@@ -52,8 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **REST error payloads converge on one machine-readable shape** — every
-  deliberate 4xx/5xx `HTTPException` across all 21 API routers (plus the
-  rate-limit middleware's 429) now carries
+  deliberate 4xx/5xx `HTTPException` across all 19 error-raising API routers
+  (plus the rate-limit middleware's 429) now carries
   `{"detail": {"error": "<snake_case_key>", ..., "message": "<human text>"}}`,
   generalizing the v0.9.5 `rbac_denied` 403 shape and retiring both the
   bare-string majority and the evidence router's ad-hoc
@@ -61,11 +61,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   key, now beside `error: worm_violation`). Human-readable texts are
   preserved verbatim in `message`. The stable key registry + `api_error()` /
   `error_responses()` helpers live in `evidentia_api.errors`. The v0.7.8
-  F-V08-DAST-3 *status* normalization (manual body errors → 400, never
-  Pydantic's 422) is unchanged. Every operation now documents its
-  deliberately-raised 4xx/5xx statuses in OpenAPI `responses` (closing the
-  schemathesis undocumented-status class ahead of the Horizon-A stateful
-  suite), and the web console extracts `detail.message` via a shared
+  F-V08-DAST-3 *status* normalization (manual body errors → 400 in most
+  routers, except the documented F-V1012-S4-1 manual-422 convention on
+  model_risk/tprm/poam/governance) is unchanged. Every operation now
+  documents its deliberately-raised 4xx/5xx statuses in OpenAPI `responses`
+  (closing the schemathesis undocumented-status class ahead of the
+  Horizon-A stateful suite) — 422 responses that can occur both ways (a
+  manual domain-422 and FastAPI's own request-validation 422) now document
+  the union of the `ErrorEnvelope` and `HTTPValidationError` shapes — and
+  the web console extracts `detail.message` via a shared
   `extractApiErrorMessage()` helper (legacy string details still accepted).
 - **`docs/engineering-practices.md`** gains lessons 8 (a release pipeline's
   publish jobs failed on their first live run — twice; the first-live-run audit)

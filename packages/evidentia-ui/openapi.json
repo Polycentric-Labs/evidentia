@@ -9826,7 +9826,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorEnvelope"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
                 }
               }
             },
@@ -10068,7 +10075,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorEnvelope"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
                 }
               }
             },
@@ -10387,7 +10401,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorEnvelope"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
                 }
               }
             },
@@ -11499,7 +11520,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorEnvelope"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
                 }
               }
             },
@@ -12130,7 +12158,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorEnvelope"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
                 }
               }
             },
@@ -13232,7 +13267,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorEnvelope"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
                 }
               }
             },

@@ -9676,7 +9676,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "application/json": components["schemas"]["ErrorEnvelope"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -9840,7 +9840,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "application/json": components["schemas"]["ErrorEnvelope"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -10082,7 +10082,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "application/json": components["schemas"]["ErrorEnvelope"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -10909,7 +10909,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "application/json": components["schemas"]["ErrorEnvelope"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -11326,7 +11326,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "application/json": components["schemas"]["ErrorEnvelope"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -12086,7 +12086,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "application/json": components["schemas"]["ErrorEnvelope"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };

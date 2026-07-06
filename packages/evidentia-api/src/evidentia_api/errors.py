@@ -14,12 +14,17 @@ sit between them (e.g. ``next_version`` on WORM 409s, ``valid`` on
 enum-filter 400s).
 
 Relationship to the v0.7.8 F-V08-DAST-3 invariant: the status-code
-normalization is UNCHANGED — manual body-content validation is 400
-(never Pydantic's 422), invalid-id-shape normalizes per-router to
-400/404. Only the ``detail`` payload evolved from a bare string to
-the structured object above; FastAPI/Pydantic request-validation 422s
-keep their array-shape ``detail``, so the manual-vs-automatic
-discrimination survives (object vs array).
+normalization is UNCHANGED — manual body-content validation normalizes
+to 400 in most routers, invalid-id-shape normalizes per-router to
+400/404. The documented exception is the F-V1012-S4-1 per-router
+convention (model_risk/tprm/poam/governance), which raises a manual
+422 for save-time domain/id failures instead of 400. Only the
+``detail`` payload evolved from a bare string to the structured object
+above; FastAPI/Pydantic request-validation 422s keep their array-shape
+``detail``, so the manual-vs-automatic discrimination still holds
+(object vs array) — and where both a manual and an automatic 422 can
+occur on the same route, ``error_responses()`` documents the union of
+both shapes (see its docstring).
 
 Error-key registry (keep this the single source of truth — reuse an
 existing key before minting a new one):
@@ -44,7 +49,8 @@ Key                          Meaning (typical status)
 ``already_exists``           Duplicate creation without an explicit
                              force/overwrite flag (400)
 ``worm_violation``           Evidence WORM version collision (409);
-                             context: ``lineage_id``, ``next_version``
+                             context: ``lineage_id``,
+                             ``attempted_version``, ``next_version``
 ``verification_failed``      Signed-artifact verification failed (400)
 ``feature_unavailable``      Optional dependency/extra not installed
                              or subsystem not configured (400/500/503)
@@ -159,11 +165,46 @@ def error_responses(
     response model plus the supplied description. Descriptions should
     name the error key(s) the route raises for that status, e.g.
     ``"Unknown ``tier`` filter (``error: unknown_tier``)."``.
+
+    422 is special-cased: on body-bearing routes, FastAPI's own
+    request-validation 422 (``HTTPValidationError``, array-shape
+    ``detail``) fires ahead of any route code whenever the body fails
+    schema validation, while the F-V1012-S4-1 per-router convention
+    (model_risk/tprm/poam/governance) also raises a *manual* 422
+    (``ErrorEnvelope``, object-shape ``detail``) for save-time
+    domain/id failures. FastAPI's explicit ``responses=`` entry
+    replaces the auto-generated one rather than merging with it, so a
+    plain ``{"model": ErrorEnvelope}`` entry would mis-advertise 422 as
+    always object-shaped. Document the union of both shapes instead so
+    the generated schema (and schemathesis / the UI's generated types)
+    reflect what the route can actually return.
     """
-    return {
-        status: {"model": ErrorEnvelope, "description": description}
-        for status, description in by_status.items()
-    }
+    responses: dict[int | str, dict[str, Any]] = {}
+    for status, description in by_status.items():
+        if status == 422:
+            responses[status] = {
+                "description": description,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                },
+                                {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                },
+                            ]
+                        }
+                    }
+                },
+            }
+        else:
+            responses[status] = {
+                "model": ErrorEnvelope,
+                "description": description,
+            }
+    return responses
 
 
 RBAC_DENIED_403 = (

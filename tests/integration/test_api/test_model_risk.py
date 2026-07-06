@@ -418,3 +418,32 @@ def test_model_risk_error_statuses_documented_in_openapi(
             assert status in op["responses"], (
                 f"{method.upper()} {path} missing documented {status}"
             )
+
+
+def test_model_risk_create_422_documents_union_shape(
+    api_client: TestClient,
+) -> None:
+    """POST /model-risk/models can 422 two ways: FastAPI's own request-
+    validation (array-shape ``HTTPValidationError``) for a schema-invalid
+    body, or this router's manual ``api_error(422, "invalid_body", ...)``
+    (object-shape ``ErrorEnvelope``) for a save-time domain/id failure.
+    The documented 422 response must union both shapes rather than
+    over-claiming only the object shape (review finding: 422 schema
+    mis-advertised the response as always object-shaped)."""
+    schema = api_client.get("/api/openapi.json").json()
+    response_422 = schema["paths"]["/api/model-risk/models"]["post"][
+        "responses"
+    ]["422"]
+    content_schema = response_422["content"]["application/json"]["schema"]
+    assert "anyOf" in content_schema
+    refs = {entry["$ref"] for entry in content_schema["anyOf"]}
+    assert refs == {
+        "#/components/schemas/ErrorEnvelope",
+        "#/components/schemas/HTTPValidationError",
+    }
+    # Both refs must resolve — no dangling $ref (schemathesis/openapi validity).
+    for ref in refs:
+        component_name = ref.rsplit("/", 1)[-1]
+        assert component_name in schema["components"]["schemas"], (
+            f"dangling $ref: {ref}"
+        )
