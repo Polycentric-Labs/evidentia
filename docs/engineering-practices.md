@@ -79,6 +79,16 @@ Evidentia's releases are designed to be independently verifiable end to end:
   index-hosted attestations; the container image is signed by digest with
   cosign's keyless OIDC flow and logged to the public Rekor transparency log.
 - **A CycloneDX SBOM** is produced for, and attached to, every release.
+- **PEP 770 per-wheel SBOMs.** Every published wheel embeds its own CycloneDX
+  SBOM in `.dist-info/sboms/`, so `pip install` materializes it downstream —
+  the release-asset SBOM describes the release; these travel with each package.
+  The `evidentia-api` wheel carries a second document covering the bundled
+  React SPA's npm closure (CycloneDX 1.5, npm's native emitter, alongside the
+  1.6 python document — PEP 770 permits mixed documents). Generation is
+  deterministic by construction (UUIDv5 serial numbers, `SOURCE_DATE_EPOCH`
+  timestamps, sorted keys) because the release's reproducible-build gate
+  byte-compares a double build; a release-time gate fails the run if any
+  wheel is missing its SBOM, while local builds skip cleanly without one.
 - **PyPI publishing uses an OIDC Trusted Publisher** — short-lived, workflow-
   scoped credentials minted per run. There are no long-lived API tokens to
   leak or rotate.
