@@ -113,7 +113,7 @@ dev = [
     # case-folding, prefix-stripping, mapping cardinality) to
     # catch regressions hand-written tests would miss. Tests live
     # in tests/property/.
-    "hypothesis>=6.155.7",
+    "hypothesis>=6.156.1",
     # v0.8.2 G1: mutation testing baseline on the gap_analyzer +
     # risk_statements modules. Mutmut introduces small random
     # mutations to source code + re-runs the test suite — surviving
@@ -130,7 +130,7 @@ dev = [
     # sentence-transformers half while exercising the real numpy
     # math. Sentence-transformers itself is NOT in dev deps —
     # tests mock it to validate the missing-extra failure mode.
-    "numpy>=2.5.0",
+    "numpy>=2.5.1",
     # v0.9.5 P1.1: random test ordering surfaces test-isolation
     # bugs that the default alphabetical ordering masks. Pinned
     # opt-out per test invocation: ``pytest -p no:randomly``
