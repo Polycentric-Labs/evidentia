@@ -92,6 +92,8 @@ evidentia-sbom.cdx.json
 # GitHub Release attached assets for osv-scan re-verification. The
 # canonical SBOM lives on the published release, not in the repo.
 published-sbom*.cdx.json
+# Per-package SBOMs (PEP 770) regenerated during build; not tracked.
+packages/*/sbom/
 
 # IDE
 # .vscode/ is ignored by default but the canonical shared workspace
