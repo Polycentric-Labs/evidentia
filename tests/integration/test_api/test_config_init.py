@@ -90,7 +90,8 @@ class TestInitWizard:
     def test_rejects_unknown_preset(self, api_client: TestClient) -> None:
         # The wizard validates the preset value at runtime; the
         # generator raises ValueError which the route normalizes to
-        # 400 with `{detail: string}` shape (F-V08-DAST-3).
+        # 400 (the F-V08-DAST-3 status normalization is unchanged)
+        # with the structured detail shape from evidentia_api.errors.
         r = api_client.post(
             "/api/init/wizard",
             json={
@@ -100,6 +101,10 @@ class TestInitWizard:
             },
         )
         assert r.status_code == 400
+        detail = r.json()["detail"]
+        assert detail["error"] == "unknown_preset"
+        assert detail["preset"] == "bogus-preset"
+        assert "message" in detail
 
 
 class TestInitCommit:
@@ -171,3 +176,27 @@ class TestInitCommit:
             json={"organization": "Test", "preset": "bogus-preset"},
         )
         assert r.status_code == 400
+        detail = r.json()["detail"]
+        assert detail["error"] == "unknown_preset"
+        assert detail["preset"] == "bogus-preset"
+
+
+# ── OpenAPI error-status documentation (2026-07-06 convergence) ─────
+
+
+def test_config_init_error_statuses_documented_in_openapi(
+    api_client: TestClient,
+) -> None:
+    """Every status the config + init-wizard routes deliberately raise
+    is documented on the operation's ``responses`` in the OpenAPI
+    schema (schemathesis undocumented-status noise → contract)."""
+    schema = api_client.get("/api/openapi.json").json()
+    expected = [
+        ("/api/config", "put", ["500"]),
+        ("/api/init/wizard", "post", ["400"]),
+        ("/api/init/commit", "post", ["400"]),
+    ]
+    for path, method, statuses in expected:
+        responses = schema["paths"][path][method]["responses"]
+        for status in statuses:
+            assert status in responses, (path, method, status)

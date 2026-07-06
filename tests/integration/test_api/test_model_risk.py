@@ -159,7 +159,13 @@ class TestListModels:
     ) -> None:
         r = api_client.get("/api/model-risk/models?tier=tier_99")
         assert r.status_code == 400
-        assert isinstance(r.json()["detail"], str)
+        # F-V08-DAST-3 status normalization: manual 4xx carries the
+        # structured object detail (2026-07-06 convergence) — still
+        # distinguishable from Pydantic's 422 array.
+        detail = r.json()["detail"]
+        assert detail["error"] == "unknown_tier"
+        assert detail["tier"] == "tier_99"
+        assert "message" in detail
 
 
 # ── GET /api/model-risk/models/{id} ────────────────────────────────
@@ -368,3 +374,47 @@ class TestValidationReportEndpoint:
             "00000000-0000-0000-0000-000000000000/validation-report"
         )
         assert r.status_code == 404
+        detail = r.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert detail["resource"] == "model"
+
+
+# ── OpenAPI error-status documentation (2026-07-06 convergence) ─────
+
+
+def test_model_risk_error_statuses_documented_in_openapi(
+    api_client: TestClient,
+) -> None:
+    """Every status the model-risk router deliberately raises is
+    documented on the operation's ``responses`` (schemathesis
+    undocumented-status noise → contract; companion to the ai_gov
+    openapi test)."""
+    schema = api_client.get("/api/openapi.json").json()
+    expected: list[tuple[str, str, list[str]]] = [
+        ("/api/model-risk/models", "get", ["400"]),
+        ("/api/model-risk/models", "post", ["422"]),
+        ("/api/model-risk/models/{model_id}", "get", ["404"]),
+        ("/api/model-risk/models/{model_id}", "put", ["404"]),
+        ("/api/model-risk/models/{model_id}", "delete", ["404"]),
+        (
+            "/api/model-risk/models/{model_id}/next-validation-due",
+            "get",
+            ["404"],
+        ),
+        (
+            "/api/model-risk/models/{model_id}/documentation",
+            "get",
+            ["404"],
+        ),
+        (
+            "/api/model-risk/models/{model_id}/validation-report",
+            "get",
+            ["404"],
+        ),
+    ]
+    for path, method, statuses in expected:
+        op = schema["paths"][path][method]
+        for status in statuses:
+            assert status in op["responses"], (
+                f"{method.upper()} {path} missing documented {status}"
+            )

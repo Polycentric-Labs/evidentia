@@ -5,8 +5,11 @@ Surfaces the v0.7.11 retention data layer + lifecycle primitives
 :mod:`evidentia_core.retention_metadata_store`) over HTTP under the
 ``/api/retention`` prefix. Mirrors the v0.9.0 P2 POA&M router shape +
 inherits the same error-normalization conventions (400 for runtime
-body / domain errors per v0.7.8 F-V08-DAST-3; 404 for shape-violation
-+ not-found IDs per v0.7.9 P0.1 H-3 widening).
+body / domain errors per the v0.7.8 F-V08-DAST-3 status
+normalization, with the structured object ``detail`` per the
+2026-07-06 error-shape convergence — see
+:mod:`evidentia_api.errors`; 404 for shape-violation + not-found IDs
+per v0.7.9 P0.1 H-3 widening).
 
 Endpoints (7 CLI verbs → REST):
 
@@ -56,10 +59,15 @@ from evidentia_core.retention_metadata_store import (
     load_retention_by_id,
     save_retention,
 )
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
+from evidentia_api.errors import (
+    RBAC_DENIED_403,
+    api_error,
+    error_responses,
+)
 from evidentia_api.rbac_dependency import require_role
 
 router = APIRouter()
@@ -123,6 +131,7 @@ class RetentionTransitionPayload(BaseModel):
     response_model=RetentionMetadata,
     status_code=201,
     dependencies=[require_role("write")],
+    responses=error_responses({403: RBAC_DENIED_403}),
 )
 async def set_retention(payload: RetentionCreatePayload) -> RetentionMetadata:
     """Create a retention metadata record.
@@ -166,7 +175,19 @@ async def set_retention(payload: RetentionCreatePayload) -> RetentionMetadata:
     return metadata
 
 
-@router.get("/retention")
+@router.get(
+    "/retention",
+    responses=error_responses(
+        {
+            400: (
+                "Unknown ``classification`` / ``lifecycle`` filter "
+                "value (``error: unknown_classification`` / "
+                "``unknown_lifecycle``); ``detail`` carries the "
+                "field + ``valid``."
+            ),
+        }
+    ),
+)
 async def list_retention_records(
     skip: int = Query(0, ge=0, description="Pagination offset."),
     limit: int = Query(
@@ -199,22 +220,28 @@ async def list_retention_records(
     if classification and classification not in {
         c.value for c in RetentionClassification
     }:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "unknown_classification",
+            (
                 f"Unknown classification {classification!r}; valid: "
                 f"{sorted(c.value for c in RetentionClassification)}"
             ),
+            classification=classification,
+            valid=sorted(c.value for c in RetentionClassification),
         )
     if lifecycle and lifecycle not in {
         s.value for s in RetentionLifecycleStage
     }:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "unknown_lifecycle",
+            (
                 f"Unknown lifecycle {lifecycle!r}; valid: "
                 f"{sorted(s.value for s in RetentionLifecycleStage)}"
             ),
+            lifecycle=lifecycle,
+            valid=sorted(s.value for s in RetentionLifecycleStage),
         )
 
     items = list_retention()
@@ -251,20 +278,37 @@ async def retention_report() -> str:
 # ── show / extend / transition / delete ────────────────────────────
 
 
-@router.get("/retention/{retention_id}", response_model=RetentionMetadata)
+@router.get(
+    "/retention/{retention_id}",
+    response_model=RetentionMetadata,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``retention_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
+)
 async def get_retention(retention_id: str) -> RetentionMetadata:
     """Fetch a single retention record by ID."""
     try:
         metadata = load_retention_by_id(retention_id)
     except InvalidRetentionIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Retention record {retention_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Retention record {retention_id!r} not found.",
+            resource="retention_record",
+            resource_id=retention_id,
         ) from exc
     if metadata is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Retention record {retention_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Retention record {retention_id!r} not found.",
+            resource="retention_record",
+            resource_id=retention_id,
         )
     return metadata
 
@@ -273,6 +317,19 @@ async def get_retention(retention_id: str) -> RetentionMetadata:
     "/retention/{retention_id}/extend",
     response_model=RetentionMetadata,
     dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            400: (
+                "WORM shorten attempt "
+                "(``error: invalid_body``)."
+            ),
+            403: RBAC_DENIED_403,
+            404: (
+                "Unknown or malformed ``retention_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def extend_retention(
     retention_id: str, payload: RetentionExtendPayload
@@ -286,22 +343,29 @@ async def extend_retention(
     try:
         metadata = load_retention_by_id(retention_id)
     except InvalidRetentionIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Retention record {retention_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Retention record {retention_id!r} not found.",
+            resource="retention_record",
+            resource_id=retention_id,
         ) from exc
     if metadata is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Retention record {retention_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Retention record {retention_id!r} not found.",
+            resource="retention_record",
+            resource_id=retention_id,
         )
     if (
         metadata.lock_until is not None
         and payload.new_lock_until < metadata.lock_until
     ):
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "invalid_body",
+            (
                 f"WORM forbids shortening retention (current "
                 f"lock_until={metadata.lock_until}; "
                 f"requested={payload.new_lock_until})."
@@ -332,6 +396,19 @@ async def extend_retention(
     "/retention/{retention_id}/transition",
     response_model=RetentionMetadata,
     dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            400: (
+                "Illegal lifecycle transition "
+                "(``error: invalid_body``)."
+            ),
+            403: RBAC_DENIED_403,
+            404: (
+                "Unknown or malformed ``retention_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def transition_retention(
     retention_id: str, payload: RetentionTransitionPayload
@@ -340,20 +417,26 @@ async def transition_retention(
     try:
         metadata = load_retention_by_id(retention_id)
     except InvalidRetentionIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Retention record {retention_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Retention record {retention_id!r} not found.",
+            resource="retention_record",
+            resource_id=retention_id,
         ) from exc
     if metadata is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Retention record {retention_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Retention record {retention_id!r} not found.",
+            resource="retention_record",
+            resource_id=retention_id,
         )
     prior_stage = _enum_value(metadata.lifecycle_stage)
     try:
         updated = transition_lifecycle(metadata, payload.new_stage)
     except RetentionTransitionError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise api_error(400, "invalid_body", str(exc)) from exc
     save_retention(updated)
     _log.info(
         action=EventAction.RETENTION_LIFECYCLE_TRANSITIONED,
@@ -372,6 +455,15 @@ async def transition_retention(
     "/retention/{retention_id}",
     status_code=204,
     dependencies=[require_role("admin")],
+    responses=error_responses(
+        {
+            403: RBAC_DENIED_403,
+            404: (
+                "Unknown or malformed ``retention_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def delete_retention_record(retention_id: str) -> None:
     """Delete a retention metadata record.
@@ -382,14 +474,20 @@ async def delete_retention_record(retention_id: str) -> None:
     try:
         removed = delete_retention(retention_id)
     except InvalidRetentionIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Retention record {retention_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Retention record {retention_id!r} not found.",
+            resource="retention_record",
+            resource_id=retention_id,
         ) from exc
     if not removed:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Retention record {retention_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Retention record {retention_id!r} not found.",
+            resource="retention_record",
+            resource_id=retention_id,
         )
     # This DELETE removes only the retention METADATA record — it is NOT a
     # WORM/secure evidence purge. It emits the dedicated

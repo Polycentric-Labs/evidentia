@@ -164,9 +164,14 @@ class TestSaveEvidence:
         )
         r = client.post("/api/evidence", json=payload)
         assert r.status_code == 409, r.text
-        body = r.json()
-        assert "next_version" in body["detail"]
-        assert body["detail"]["next_version"] == 2
+        detail = r.json()["detail"]
+        # 2026-07-06 error-shape convergence: the WORM 409 carries the
+        # structured machine-readable detail (cf. rbac_denied) instead
+        # of the ad-hoc ``{detail, next_version}`` shape.
+        assert detail["error"] == "worm_violation"
+        assert detail["next_version"] == 2
+        assert detail["lineage_id"] == artifact.effective_lineage_id
+        assert "message" in detail
 
     def test_save_invalid_lineage_id_returns_404(
         self, client: TestClient

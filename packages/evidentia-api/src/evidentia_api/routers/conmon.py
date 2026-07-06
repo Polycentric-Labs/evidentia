@@ -66,9 +66,14 @@ from evidentia_core.conmon.daemon import (
     read_daemon_history,
     read_daemon_status,
 )
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
 
+from evidentia_api.errors import (
+    RBAC_DENIED_403,
+    api_error,
+    error_responses,
+)
 from evidentia_api.rbac_dependency import require_role
 
 router = APIRouter()
@@ -167,14 +172,22 @@ async def list_conmon_cadences(
     ]
 
 
-@router.get("/conmon/cadences/{slug}")
+@router.get(
+    "/conmon/cadences/{slug}",
+    responses=error_responses(
+        {404: "Unknown cadence ``slug`` (``error: not_found``)."}
+    ),
+)
 async def get_conmon_cadence(slug: str) -> dict[str, str | None]:
     """Get a single cadence by slug."""
     cadence = get_cadence(slug)
     if cadence is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Unknown cadence slug: {slug!r}",
+        raise api_error(
+            404,
+            "not_found",
+            f"Unknown cadence slug: {slug!r}",
+            resource="cadence",
+            resource_id=slug,
         )
     return {
         "slug": cadence.slug,
@@ -189,14 +202,22 @@ async def get_conmon_cadence(slug: str) -> dict[str, str | None]:
 # ── next-due computation ──────────────────────────────────────────
 
 
-@router.post("/conmon/next")
+@router.post(
+    "/conmon/next",
+    responses=error_responses(
+        {404: "Unknown cadence ``slug`` (``error: not_found``)."}
+    ),
+)
 async def compute_next_due(body: NextDueRequest) -> NextDueResponse:
     """Compute the next-due date for a registered cadence."""
     cadence = get_cadence(body.slug)
     if cadence is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Unknown cadence slug: {body.slug!r}",
+        raise api_error(
+            404,
+            "not_found",
+            f"Unknown cadence slug: {body.slug!r}",
+            resource="cadence",
+            resource_id=body.slug,
         )
     due = next_due(body.slug, body.last_completed)
     return NextDueResponse(
@@ -312,7 +333,17 @@ async def conmon_health_endpoint(body: HealthRequest) -> dict[str, Any]:
 # ── daemon-status (v0.9.4 P2.1) ───────────────────────────────────
 
 
-@router.get("/conmon/daemon-status")
+@router.get(
+    "/conmon/daemon-status",
+    responses=error_responses(
+        {
+            404: (
+                "Status file not configured, missing, or unparseable "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
+)
 async def conmon_daemon_status_endpoint() -> dict[str, Any]:
     """Return the running daemon's last-poll status snapshot.
 
@@ -337,26 +368,30 @@ async def conmon_daemon_status_endpoint() -> dict[str, Any]:
         "EVIDENTIA_CONMON_DAEMON_STATUS_FILE", ""
     ).strip()
     if not status_file_env:
-        raise HTTPException(
-            status_code=404,
-            detail=(
+        raise api_error(
+            404,
+            "not_found",
+            (
                 "No daemon-status file configured. Set "
                 "EVIDENTIA_CONMON_DAEMON_STATUS_FILE on the server + "
                 "pass --status-file=<same path> to evidentia conmon "
                 "watch on the daemon side."
             ),
+            resource="daemon_state",
         )
 
     status_file = Path(status_file_env)
     payload = read_daemon_status(status_file)
     if payload is None:
-        raise HTTPException(
-            status_code=404,
-            detail=(
+        raise api_error(
+            404,
+            "not_found",
+            (
                 f"Daemon status not available: {status_file} missing "
                 "or unparseable. Daemon may not have started yet, or "
                 "the file is mid-write — retry after one poll cycle."
             ),
+            resource="daemon_state",
         )
 
     _log.info(
@@ -378,7 +413,17 @@ async def conmon_daemon_status_endpoint() -> dict[str, Any]:
 # ── daemon-history (v0.9.5 P2.3) ──────────────────────────────────
 
 
-@router.get("/conmon/daemon-history")
+@router.get(
+    "/conmon/daemon-history",
+    responses=error_responses(
+        {
+            404: (
+                "History file not configured or missing "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
+)
 async def conmon_daemon_history_endpoint(
     limit: int = Query(
         default=50,
@@ -420,25 +465,29 @@ async def conmon_daemon_history_endpoint(
         "EVIDENTIA_CONMON_DAEMON_HISTORY_FILE", ""
     ).strip()
     if not history_file_env:
-        raise HTTPException(
-            status_code=404,
-            detail=(
+        raise api_error(
+            404,
+            "not_found",
+            (
                 "No daemon-history file configured. Set "
                 "EVIDENTIA_CONMON_DAEMON_HISTORY_FILE on the server + "
                 "pass --history-file=<same path> to evidentia conmon "
                 "watch on the daemon side."
             ),
+            resource="daemon_history",
         )
 
     history_file = Path(history_file_env)
     if not history_file.is_file():
-        raise HTTPException(
-            status_code=404,
-            detail=(
+        raise api_error(
+            404,
+            "not_found",
+            (
                 f"Daemon history not available: {history_file} "
                 "missing. Daemon may not have completed its first "
                 "poll cycle yet."
             ),
+            resource="daemon_history",
         )
 
     snapshots = read_daemon_history(history_file, limit=limit)
@@ -488,6 +537,16 @@ class MarkCompletedResponse(BaseModel):
 @router.post(
     "/conmon/mark-completed",
     dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            400: (
+                "State file not configured (``error: "
+                "feature_unavailable``) or unknown cadence ``slug`` "
+                "(``error: invalid_field``)."
+            ),
+            403: RBAC_DENIED_403,
+        }
+    ),
 )
 async def mark_conmon_completed(
     body: MarkCompletedRequest,
@@ -524,13 +583,15 @@ async def mark_conmon_completed(
         "EVIDENTIA_CONMON_STATE_FILE", ""
     ).strip()
     if not state_file_env:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "feature_unavailable",
+            (
                 "No CONMON state file configured. Set "
                 "EVIDENTIA_CONMON_STATE_FILE on the server to the YAML "
                 "state-file path the daemon polls."
             ),
+            env_var="EVIDENTIA_CONMON_STATE_FILE",
         )
 
     state_file = Path(state_file_env)
@@ -538,7 +599,9 @@ async def mark_conmon_completed(
         previous = mark_completed(state_file, body.slug, body.when)
     except ValueError as exc:
         # Unknown cadence slug — mirrors the CLI's exit-1 user error.
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise api_error(
+            400, "invalid_field", str(exc), field="slug"
+        ) from exc
 
     cadence = get_cadence(body.slug)
     assert cadence is not None  # validated by mark_completed
@@ -555,7 +618,17 @@ async def mark_conmon_completed(
 # ── dedup-list (v0.10.12) ─────────────────────────────────────────
 
 
-@router.get("/conmon/dedup-list")
+@router.get(
+    "/conmon/dedup-list",
+    responses=error_responses(
+        {
+            400: (
+                "Alert-dedup file not configured "
+                "(``error: feature_unavailable``)."
+            ),
+        }
+    ),
+)
 async def list_conmon_dedup(
     slug: str | None = Query(
         default=None,
@@ -594,14 +667,16 @@ async def list_conmon_dedup(
         "EVIDENTIA_CONMON_ALERT_DEDUP_FILE", ""
     ).strip()
     if not dedup_file_env:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "feature_unavailable",
+            (
                 "No alert-dedup file configured. Set "
                 "EVIDENTIA_CONMON_ALERT_DEDUP_FILE on the server to the "
                 "JSON dedup-state path the daemon writes (pair with "
                 "--alert-dedup-file on the daemon side)."
             ),
+            env_var="EVIDENTIA_CONMON_ALERT_DEDUP_FILE",
         )
 
     deduper = AlertDeduper.from_hours(Path(dedup_file_env), suppression_hours)

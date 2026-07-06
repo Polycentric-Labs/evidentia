@@ -11,13 +11,15 @@ from __future__ import annotations
 from pathlib import Path
 
 from evidentia_core.init_wizard import (
+    _PRESET_CONTROLS,
     generate_evidentia_yaml,
     generate_my_controls_yaml,
     generate_system_context_yaml,
     recommend_frameworks,
 )
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
+from evidentia_api.errors import api_error, error_responses
 from evidentia_api.schemas import (
     InitWizardCommitRequest,
     InitWizardCommitResponse,
@@ -37,7 +39,8 @@ def _generate(payload: InitWizardRequest) -> tuple[dict[str, str], list[str]]:
 
     Shared by the preview (``/init/wizard``) and commit (``/init/commit``)
     paths so a committed file is byte-identical to what the browser previewed.
-    Raises ``HTTPException(400)`` on an invalid ``preset``.
+    Raises a 400 ``api_error`` (``error: unknown_preset``) on an invalid
+    ``preset``.
     """
     recommended = recommend_frameworks(
         industry=payload.industry,
@@ -52,10 +55,17 @@ def _generate(payload: InitWizardRequest) -> tuple[dict[str, str], list[str]]:
             organization=payload.organization,
         )
     except ValueError as e:
-        # 400 (not 422) — runtime input-validation after Pydantic body parsing
-        # succeeded. Detail shape `{detail: string}` matches the OpenAPI
-        # declaration (closes F-V08-DAST-3).
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        # 400 (not 422) — runtime input-validation after Pydantic body
+        # parsing succeeded (the F-V08-DAST-3 status normalization is
+        # unchanged). The detail is the structured object from
+        # evidentia_api.errors, following the unknown_<field> pattern.
+        raise api_error(
+            400,
+            "unknown_preset",
+            str(e),
+            preset=payload.preset,
+            valid=sorted(_PRESET_CONTROLS),
+        ) from e
 
     files = {
         "evidentia.yaml": generate_evidentia_yaml(
@@ -75,7 +85,18 @@ def _generate(payload: InitWizardRequest) -> tuple[dict[str, str], list[str]]:
     return files, recommended
 
 
-@router.post("/init/wizard", response_model=InitWizardResponse)
+@router.post(
+    "/init/wizard",
+    response_model=InitWizardResponse,
+    responses=error_responses(
+        {
+            400: (
+                "Unknown ``preset`` (``error: unknown_preset``); "
+                "``detail`` carries ``preset`` + ``valid``."
+            ),
+        }
+    ),
+)
 async def init_wizard(payload: InitWizardRequest) -> InitWizardResponse:
     """Generate starter YAMLs from lightweight onboarding context.
 
@@ -92,7 +113,18 @@ async def init_wizard(payload: InitWizardRequest) -> InitWizardResponse:
     )
 
 
-@router.post("/init/commit", response_model=InitWizardCommitResponse)
+@router.post(
+    "/init/commit",
+    response_model=InitWizardCommitResponse,
+    responses=error_responses(
+        {
+            400: (
+                "Unknown ``preset`` (``error: unknown_preset``); "
+                "``detail`` carries ``preset`` + ``valid``."
+            ),
+        }
+    ),
+)
 async def init_commit(
     payload: InitWizardCommitRequest,
 ) -> InitWizardCommitResponse:

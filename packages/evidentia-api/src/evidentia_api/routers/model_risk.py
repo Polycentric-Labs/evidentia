@@ -19,11 +19,13 @@ Endpoints (mirroring the v0.7.9 P0.1.4 TPRM router pattern):
     — compute (without persisting) the next-validation-due date for
     UI previews
 
-Error normalization follows the v0.7.8 F-V08-DAST-3 fix: manual
-HTTPException uses status 400 (not 422) for runtime body-content
-validation errors so the ``{detail: string}`` response shape matches
-the OpenAPI declaration. Pydantic auto-validation 422s (from FastAPI's
-request-body parsing) keep their array-shape detail.
+Error normalization follows the v0.7.8 F-V08-DAST-3 status
+normalization: manual errors use status 400 (not 422) for runtime
+body-content validation failures, and carry the structured object
+``detail`` per the 2026-07-06 error-shape convergence (see
+:mod:`evidentia_api.errors`). Pydantic auto-validation 422s (from
+FastAPI's request-body parsing) keep their array-shape detail, so
+manual-vs-automatic stays distinguishable (object vs array).
 
 SR 11-7 / SR 26-02 / OCC Bulletin 2011-12 / OCC Bulletin 2026-13a
 model risk management framework alignment carries over from the
@@ -51,8 +53,10 @@ from evidentia_core.models.model_risk import (
     Provenance,
     Tier,
 )
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from fastapi.responses import PlainTextResponse
+
+from evidentia_api.errors import api_error, error_responses
 
 router = APIRouter()
 
@@ -93,7 +97,20 @@ def _eq(field_value: object, query_value: str) -> bool:
 # ── endpoints ──────────────────────────────────────────────────────
 
 
-@router.get("/model-risk/models")
+@router.get(
+    "/model-risk/models",
+    responses=error_responses(
+        {
+            400: (
+                "Unknown ``tier`` / ``methodology`` / "
+                "``vendor_or_internal`` filter value (``error: "
+                "unknown_tier`` / ``unknown_methodology`` / "
+                "``unknown_vendor_or_internal``); ``detail`` carries "
+                "the field + ``valid``."
+            ),
+        }
+    ),
+)
 async def list_models_endpoint(
     skip: int = Query(
         0,
@@ -130,30 +147,39 @@ async def list_models_endpoint(
     count, not the unfiltered store size.
     """
     if tier and tier not in {e.value for e in Tier}:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "unknown_tier",
+            (
                 f"Unknown tier {tier!r}; valid: "
                 f"{sorted(e.value for e in Tier)}"
             ),
+            tier=tier,
+            valid=sorted(e.value for e in Tier),
         )
     if methodology and methodology not in {e.value for e in Methodology}:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "unknown_methodology",
+            (
                 f"Unknown methodology {methodology!r}; valid: "
                 f"{sorted(e.value for e in Methodology)}"
             ),
+            methodology=methodology,
+            valid=sorted(e.value for e in Methodology),
         )
     if vendor_or_internal and vendor_or_internal not in {
         e.value for e in Provenance
     }:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "unknown_vendor_or_internal",
+            (
                 f"Unknown vendor_or_internal {vendor_or_internal!r}; "
                 f"valid: {sorted(e.value for e in Provenance)}"
             ),
+            vendor_or_internal=vendor_or_internal,
+            valid=sorted(e.value for e in Provenance),
         )
 
     all_models = list_models()
@@ -169,7 +195,17 @@ async def list_models_endpoint(
 
 
 @router.post(
-    "/model-risk/models", response_model=ModelInventory, status_code=201
+    "/model-risk/models",
+    response_model=ModelInventory,
+    status_code=201,
+    responses=error_responses(
+        {
+            422: (
+                "Body-content semantic failure "
+                "(``error: invalid_body``)."
+            ),
+        }
+    ),
 )
 async def create_model(payload: ModelInventory) -> ModelInventory:
     """Create a new model record.
@@ -196,12 +232,21 @@ async def create_model(payload: ModelInventory) -> ModelInventory:
     except (InvalidModelIdError, ValueError) as exc:
         # A client-supplied empty/malformed id must be a 422, not an unhandled
         # 500 (F-V1012-S4-1; mirrors the GET/PUT paths in this router).
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise api_error(422, "invalid_body", str(exc)) from exc
     return model
 
 
 @router.get(
-    "/model-risk/models/{model_id}", response_model=ModelInventory
+    "/model-risk/models/{model_id}",
+    response_model=ModelInventory,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``model_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def get_model(model_id: str) -> ModelInventory:
     """Fetch a single model by ID."""
@@ -211,20 +256,35 @@ async def get_model(model_id: str) -> ModelInventory:
         # Match the v0.7.8 F-V08-DAST-1 widening pattern: shape
         # violations + not-found both normalize to 404 from the
         # client's perspective.
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model {model_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Model {model_id!r} not found.",
+            resource="model",
+            resource_id=model_id,
         ) from exc
     if model is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model {model_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Model {model_id!r} not found.",
+            resource="model",
+            resource_id=model_id,
         )
     return model
 
 
 @router.put(
-    "/model-risk/models/{model_id}", response_model=ModelInventory
+    "/model-risk/models/{model_id}",
+    response_model=ModelInventory,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``model_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def replace_model(
     model_id: str, payload: ModelInventory
@@ -244,14 +304,20 @@ async def replace_model(
     try:
         existing = load_model_by_id(model_id)
     except InvalidModelIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model {model_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Model {model_id!r} not found.",
+            resource="model",
+            resource_id=model_id,
         ) from exc
     if existing is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model {model_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Model {model_id!r} not found.",
+            resource="model",
+            resource_id=model_id,
         )
     update: dict[str, object] = {
         "id": existing.id,
@@ -266,7 +332,18 @@ async def replace_model(
     return model
 
 
-@router.delete("/model-risk/models/{model_id}", status_code=204)
+@router.delete(
+    "/model-risk/models/{model_id}",
+    status_code=204,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``model_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
+)
 async def delete_model_endpoint(model_id: str) -> None:
     """Delete a model by ID.
 
@@ -277,21 +354,37 @@ async def delete_model_endpoint(model_id: str) -> None:
     try:
         removed = delete_model(model_id)
     except InvalidModelIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model {model_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Model {model_id!r} not found.",
+            resource="model",
+            resource_id=model_id,
         ) from exc
     if not removed:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model {model_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Model {model_id!r} not found.",
+            resource="model",
+            resource_id=model_id,
         )
 
 
 # ── helper endpoint: cadence preview ──────────────────────────────
 
 
-@router.get("/model-risk/models/{model_id}/next-validation-due")
+@router.get(
+    "/model-risk/models/{model_id}/next-validation-due",
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``model_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
+)
 async def preview_next_validation_due(
     model_id: str,
 ) -> dict[str, str | None]:
@@ -306,14 +399,20 @@ async def preview_next_validation_due(
     try:
         model = load_model_by_id(model_id)
     except InvalidModelIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model {model_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Model {model_id!r} not found.",
+            resource="model",
+            resource_id=model_id,
         ) from exc
     if model is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model {model_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Model {model_id!r} not found.",
+            resource="model",
+            resource_id=model_id,
         )
     computed: date | None = model.compute_next_validation_due()
     return {
@@ -327,6 +426,14 @@ async def preview_next_validation_due(
 @router.get(
     "/model-risk/models/{model_id}/documentation",
     response_class=PlainTextResponse,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``model_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def model_documentation(model_id: str) -> str:
     """Return SR 11-7-aligned model documentation as Markdown text.
@@ -339,14 +446,20 @@ async def model_documentation(model_id: str) -> str:
     try:
         model = load_model_by_id(model_id)
     except InvalidModelIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model {model_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Model {model_id!r} not found.",
+            resource="model",
+            resource_id=model_id,
         ) from exc
     if model is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model {model_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Model {model_id!r} not found.",
+            resource="model",
+            resource_id=model_id,
         )
     return generate_model_documentation(model)
 
@@ -354,6 +467,14 @@ async def model_documentation(model_id: str) -> str:
 @router.get(
     "/model-risk/models/{model_id}/validation-report",
     response_class=PlainTextResponse,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``model_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def model_validation_report(model_id: str) -> str:
     """Return SR 11-7-aligned validation cycle report as Markdown.
@@ -364,13 +485,19 @@ async def model_validation_report(model_id: str) -> str:
     try:
         model = load_model_by_id(model_id)
     except InvalidModelIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model {model_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Model {model_id!r} not found.",
+            resource="model",
+            resource_id=model_id,
         ) from exc
     if model is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model {model_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Model {model_id!r} not found.",
+            resource="model",
+            resource_id=model_id,
         )
     return generate_validation_report(model)

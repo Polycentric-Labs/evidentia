@@ -60,9 +60,14 @@ from evidentia_core.catalogs.user_dir import (
     save_user_manifest,
 )
 from evidentia_core.security.paths import validate_within
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
 
+from evidentia_api.errors import (
+    RBAC_DENIED_403,
+    api_error,
+    error_responses,
+)
 from evidentia_api.rbac_dependency import require_role
 
 router = APIRouter()
@@ -80,7 +85,8 @@ _FRAMEWORK_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
 def _validate_framework_id(framework_id: str) -> str:
     """Validate a framework ID's shape and RETURN the validated value.
 
-    Raises ``HTTPException(400)`` on an invalid shape. Bundled +
+    Raises a 400 ``api_error`` (``error: invalid_id``) on an invalid
+    shape. Bundled +
     user-imported IDs are all kebab-case (e.g. ``nist-csf-2.0``), so a
     well-formed ID always matches; only crafted inputs fail here.
 
@@ -96,13 +102,15 @@ def _validate_framework_id(framework_id: str) -> str:
     which is what clears alert #164.
     """
     if ".." in framework_id or not _FRAMEWORK_ID_RE.match(framework_id):
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "invalid_id",
+            (
                 f"Invalid framework_id {framework_id!r}; expected a "
                 "kebab-case identifier matching "
                 f"{_FRAMEWORK_ID_RE.pattern} (no path separators)."
             ),
+            resource="framework",
         )
     return framework_id
 
@@ -137,7 +145,15 @@ async def get_crosswalk(
 # ── where (read) ───────────────────────────────────────────────────
 
 
-@router.get("/catalog/where")
+@router.get(
+    "/catalog/where",
+    responses=error_responses(
+        {
+            400: "Malformed ``framework_id`` (``error: invalid_id``).",
+            404: "Unknown framework (``error: not_found``).",
+        }
+    ),
+)
 async def where_framework(
     framework_id: str = Query(..., description="Framework ID to locate."),
 ) -> dict[str, object]:
@@ -156,9 +172,12 @@ async def where_framework(
             user_manifest=user,
         )
     except ValueError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Unknown framework {framework_id!r}.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Unknown framework {framework_id!r}.",
+            resource="framework",
+            resource_id=framework_id,
         ) from exc
 
     shadowed = source == "user" and bundled.get(framework_id) is not None
@@ -177,7 +196,15 @@ async def where_framework(
 # ── license-info (read) ────────────────────────────────────────────
 
 
-@router.get("/catalog/license-info/{framework_id}")
+@router.get(
+    "/catalog/license-info/{framework_id}",
+    responses=error_responses(
+        {
+            400: "Malformed ``framework_id`` (``error: invalid_id``).",
+            404: "Unknown framework (``error: not_found``).",
+        }
+    ),
+)
 async def license_info(framework_id: str) -> dict[str, object]:
     """Licensing metadata for a framework (read-only).
 
@@ -189,9 +216,12 @@ async def license_info(framework_id: str) -> dict[str, object]:
     user = load_user_manifest()
     entry = user.get(framework_id) or bundled.get(framework_id)
     if entry is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Unknown framework {framework_id!r}.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Unknown framework {framework_id!r}.",
+            resource="framework",
+            resource_id=framework_id,
         )
     return {
         "framework_id": framework_id,
@@ -257,6 +287,19 @@ class CatalogImportPayload(BaseModel):
     "/catalog/import",
     status_code=201,
     dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            400: (
+                "Malformed ``framework_id``, invalid ``tier``, "
+                "unsupported ``format``, unparseable/invalid catalog "
+                "content, or a duplicate import without ``force`` "
+                "(``error: invalid_id`` / ``invalid_field`` / "
+                "``unsupported_format`` / ``invalid_body`` / "
+                "``already_exists``)."
+            ),
+            403: RBAC_DENIED_403,
+        }
+    ),
 )
 async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
     """Import a user-supplied catalog into the local user catalog dir.
@@ -272,16 +315,21 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
 
     tier = payload.tier.upper()
     if tier not in ("A", "B", "C", "D"):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid tier {payload.tier!r}; expected one of A, B, C, D.",
+        raise api_error(
+            400,
+            "invalid_field",
+            f"Invalid tier {payload.tier!r}; expected one of A, B, C, D.",
+            field="tier",
         )
 
     fmt = payload.format.lower()
     if fmt not in ("json", "yaml", "yml"):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported format {payload.format!r}; expected json or yaml.",
+        raise api_error(
+            400,
+            "unsupported_format",
+            f"Unsupported format {payload.format!r}; expected json or yaml.",
+            format=payload.format,
+            supported=["json", "yaml", "yml"],
         )
 
     # Parse the inline content into a dict.
@@ -292,14 +340,16 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
             else yaml.safe_load(payload.content)
         )
     except (json.JSONDecodeError, yaml.YAMLError) as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Could not parse catalog content as {fmt}: {exc}",
+        raise api_error(
+            400,
+            "invalid_body",
+            f"Could not parse catalog content as {fmt}: {exc}",
         ) from exc
     if not isinstance(data, dict):
-        raise HTTPException(
-            status_code=400,
-            detail="Catalog content top-level must be a mapping/object.",
+        raise api_error(
+            400,
+            "invalid_body",
+            "Catalog content top-level must be a mapping/object.",
         )
 
     # Path/body framework_id is authoritative; rewrite the content so the
@@ -327,12 +377,15 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
     # validate_within returns the resolved path.
     out_path = validate_within(user_dir / f"{framework_id}.json", user_dir)
     if out_path.exists() and not payload.force:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "already_exists",
+            (
                 f"A user-imported {payload.framework_id!r} already exists; "
                 "set force=true to overwrite."
             ),
+            resource="user_catalog",
+            resource_id=payload.framework_id,
         )
 
     # Validate the catalog shape BEFORE writing so a malformed body never
@@ -346,9 +399,10 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
     except Exception as exc:  # normalize any load error to 400
         # Roll back the partial write so a bad import is a no-op.
         out_path.unlink(missing_ok=True)
-        raise HTTPException(
-            status_code=400,
-            detail=f"Catalog content failed validation: {exc}",
+        raise api_error(
+            400,
+            "invalid_body",
+            f"Catalog content failed validation: {exc}",
         ) from exc
 
     _add_to_user_manifest(
@@ -388,6 +442,16 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
     "/catalog/{framework_id}",
     status_code=204,
     dependencies=[require_role("admin")],
+    responses=error_responses(
+        {
+            400: "Malformed ``framework_id`` (``error: invalid_id``).",
+            403: RBAC_DENIED_403,
+            404: (
+                "No user-imported framework under that ID "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def remove_catalog(framework_id: str) -> None:
     """Remove a user-imported catalog. 204 on success; 404 otherwise.
@@ -402,12 +466,15 @@ async def remove_catalog(framework_id: str) -> None:
     user = load_user_manifest()
     entry = user.get(framework_id)
     if entry is None:
-        raise HTTPException(
-            status_code=404,
-            detail=(
+        raise api_error(
+            404,
+            "not_found",
+            (
                 f"No user-imported framework {framework_id!r}. Bundled "
                 "catalogs cannot be removed."
             ),
+            resource="user_catalog",
+            resource_id=framework_id,
         )
 
     user_dir = get_user_catalog_dir()

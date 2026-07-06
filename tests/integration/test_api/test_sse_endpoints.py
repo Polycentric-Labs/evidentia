@@ -21,6 +21,7 @@ class TestRiskGenerateValidation:
         # for missing upstream resources (the handler raises HTTPException
         # before starting the stream).
         assert r.status_code == 404
+        assert r.json()["detail"]["error"] == "not_found"
 
     def test_invalid_key_returns_400(self, api_client: TestClient) -> None:
         r = api_client.post(
@@ -29,9 +30,11 @@ class TestRiskGenerateValidation:
         )
         # 400 (not 422) — runtime body-content validation (the Pydantic
         # parser accepts the string, then the report-key validator
-        # rejects it). Matches OpenAPI `{detail: string}` shape.
-        # F-V08-DAST-3.
+        # rejects it). The F-V08-DAST-3 status normalization is
+        # unchanged; the detail is the structured object from
+        # evidentia_api.errors.
         assert r.status_code == 400
+        assert r.json()["detail"]["error"] == "invalid_id"
 
     def test_top_n_out_of_range(self, api_client: TestClient) -> None:
         r = api_client.post(
@@ -46,10 +49,37 @@ class TestExplainValidation:
     def test_unknown_framework_returns_404(self, api_client: TestClient) -> None:
         r = api_client.post("/api/explain/does-not-exist/AC-2")
         assert r.status_code == 404
+        detail = r.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert detail["resource"] == "framework"
 
     def test_unknown_control_returns_404(self, api_client: TestClient) -> None:
         r = api_client.post("/api/explain/nist-800-53-mod/NOPE-999")
         assert r.status_code == 404
+        detail = r.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert detail["resource"] == "control"
+
+    def test_explain_error_statuses_documented_in_openapi(
+        self, api_client: TestClient
+    ) -> None:
+        """2026-07-06 error-shape convergence: the deliberate 404s +
+        the deliberate 500 (evidentia-ai import failure) are documented
+        on the explain operation."""
+        schema = api_client.get("/api/openapi.json").json()
+        expected: list[tuple[str, str, list[str]]] = [
+            (
+                "/api/explain/{framework}/{control_id}",
+                "post",
+                ["404", "500"],
+            ),
+        ]
+        for path, method, statuses in expected:
+            responses = schema["paths"][path][method]["responses"]
+            for status in statuses:
+                assert status in responses, (
+                    f"{method.upper()} {path} missing {status}"
+                )
 
 
 class TestOpenApi:

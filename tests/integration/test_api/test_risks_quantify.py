@@ -171,8 +171,14 @@ class TestErrors:
             json={"method": "monte-carlo-old-name", "scenarios": _scenarios()},
         )
         assert r.status_code == 400
-        # F-V08-DAST-3 invariant: detail is a string, not array.
-        assert isinstance(r.json()["detail"], str)
+        # F-V08-DAST-3 status normalization (manual body validation is
+        # 400, not Pydantic's 422 array); the detail is the structured
+        # object from evidentia_api.errors.
+        detail = r.json()["detail"]
+        assert detail["error"] == "unknown_method"
+        assert detail["method"] == "monte-carlo-old-name"
+        assert detail["valid"] == ["open-fair", "fair-mc"]
+        assert "message" in detail
 
     def test_bad_pert_range_returns_422(self, client: TestClient) -> None:
         # The PERTRange validator (low <= most_likely <= high) fires during
@@ -231,3 +237,27 @@ class TestErrors:
         )
         assert r.status_code == 422
         assert isinstance(r.json()["detail"], list)
+
+
+# ── OpenAPI error-status documentation (2026-07-06 convergence) ────
+
+
+def test_risks_error_statuses_documented_in_openapi(
+    client: TestClient,
+) -> None:
+    """Every status the risks routes deliberately raise is documented
+    on the operation's ``responses`` in the OpenAPI schema. For the
+    SSE ``/risk/generate`` route only the PRE-STREAM statuses (raised
+    before the stream starts) are documented; mid-stream errors ride
+    inside the event stream. The hermetic app serves its schema at
+    ``/openapi.json`` (the ``/api`` prefix applies to the routes, not
+    the schema endpoint)."""
+    schema = client.get("/openapi.json").json()
+    expected = [
+        ("/api/risk/generate", "post", ["400", "404"]),
+        ("/api/risk/quantify", "post", ["400"]),
+    ]
+    for path, method, statuses in expected:
+        responses = schema["paths"][path][method]["responses"]
+        for status in statuses:
+            assert status in responses, (path, method, status)

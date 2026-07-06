@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   api,
   ApiError,
+  extractApiErrorMessage,
   type CatalogCrosswalkResponse,
   type CatalogImportPayload,
 } from "@/lib/api";
@@ -62,8 +63,8 @@ const TIER_OPTIONS: [string, string][] = [
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.payload && typeof error.payload === "object") {
-      const detail = (error.payload as { detail?: unknown }).detail;
-      if (typeof detail === "string") return detail;
+      const detail = extractApiErrorMessage(error.payload);
+      if (detail) return detail;
       return JSON.stringify(error.payload);
     }
     return error.message;

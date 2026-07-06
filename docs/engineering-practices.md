@@ -198,6 +198,21 @@ publicly.
   public-host SSRF guard that fires *before* any optional driver import, so the
   security property holds even with zero optional extras installed — a property
   that is itself verified by a dedicated CI job.
+- **One machine-readable API error contract, documented per operation.** Every
+  deliberate 4xx/5xx the REST layer raises carries the structured
+  `{"detail": {"error": "<snake_case_key>", ..., "message": "<human text>"}}`
+  payload — a single stable key vocabulary (registry + `api_error()` /
+  `error_responses()` helpers in `evidentia_api.errors`) instead of ad-hoc
+  bare strings, and every operation's deliberately-raised statuses are declared
+  in its OpenAPI `responses`. Two properties fall out: DAST (schemathesis) can
+  hold the API to its own published contract — an undocumented status or a
+  malformed error body is a finding, not noise — and clients (the web console's
+  shared `extractApiErrorMessage()` included) dispatch on `error` keys rather
+  than parsing prose. The v0.7.8 F-V08-DAST-3 *status* normalization (manual
+  body-content errors → 400; Pydantic request-validation → 422 array) is
+  unchanged — the manual-vs-automatic discrimination survives as object vs
+  array. Convention set 2026-07-06; contract terms in
+  `docs/api-stability.md` §6.
 
 ### Air-gap DSSE signing architecture
 

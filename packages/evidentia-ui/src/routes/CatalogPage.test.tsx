@@ -148,7 +148,10 @@ describe("CatalogPage", () => {
     const user = userEvent.setup();
     mockedApi.catalogImport.mockRejectedValue(
       new ApiError("import failed", 400, {
-        detail: "Catalog already exists; use force=true to overwrite.",
+        detail: {
+          error: "already_exists",
+          message: "Catalog already exists; use force=true to overwrite.",
+        },
       }),
     );
 

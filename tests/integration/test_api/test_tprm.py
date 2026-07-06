@@ -189,13 +189,20 @@ class TestListVendors:
             "/api/tprm/vendors?criticality_tier=ultra-critical"
         )
         assert r.status_code == 400
-        # F-V08-DAST-3 invariant: detail is a string, not array
-        assert isinstance(r.json()["detail"], str)
+        # F-V08-DAST-3 status normalization: manual 4xx carries the
+        # structured object detail (2026-07-06 convergence) — still
+        # distinguishable from Pydantic's 422 array.
+        detail = r.json()["detail"]
+        assert detail["error"] == "unknown_criticality_tier"
+        assert detail["criticality_tier"] == "ultra-critical"
+        assert "message" in detail
 
     def test_unknown_type_returns_400(self, api_client: TestClient) -> None:
         r = api_client.get("/api/tprm/vendors?type=not-a-type")
         assert r.status_code == 400
-        assert isinstance(r.json()["detail"], str)
+        detail = r.json()["detail"]
+        assert detail["error"] == "unknown_type"
+        assert "message" in detail
 
 
 # ── GET /api/tprm/vendors/{vendor_id} ──────────────────────────────
@@ -384,14 +391,22 @@ class TestConcentrationEndpoint:
     ) -> None:
         r = api_client.get("/api/tprm/concentration?by=not-a-dim")
         assert r.status_code == 400
-        # F-V08-DAST-3 invariant: detail is a string, not array
-        assert isinstance(r.json()["detail"], str)
+        # F-V08-DAST-3 status normalization: manual 4xx carries the
+        # structured object detail (2026-07-06 convergence) — still
+        # distinguishable from Pydantic's 422 array.
+        detail = r.json()["detail"]
+        assert detail["error"] == "unknown_dimension"
+        assert detail["dimensions"] == ["not-a-dim"]
+        assert "message" in detail
 
     def test_empty_by_returns_400(
         self, api_client: TestClient
     ) -> None:
         r = api_client.get("/api/tprm/concentration?by=")
         assert r.status_code == 400
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_field"
+        assert detail["field"] == "by"
 
     def test_threshold_out_of_range_returns_422(
         self, api_client: TestClient
@@ -463,8 +478,13 @@ class TestDDQuestionnaireEndpoint:
             f"/api/tprm/vendors/{vid}/dd-questionnaire?format=not-a-format"
         )
         assert r.status_code == 400
-        # F-V08-DAST-3 invariant: detail is a string, not array
-        assert isinstance(r.json()["detail"], str)
+        # F-V08-DAST-3 status normalization: manual 4xx carries the
+        # structured object detail (2026-07-06 convergence) — still
+        # distinguishable from Pydantic's 422 array.
+        detail = r.json()["detail"]
+        assert detail["error"] == "unknown_format"
+        assert detail["format"] == "not-a-format"
+        assert "message" in detail
 
     def test_sig_format_returns_501(
         self, api_client: TestClient
@@ -477,8 +497,10 @@ class TestDDQuestionnaireEndpoint:
             f"/api/tprm/vendors/{vid}/dd-questionnaire?format=sig"
         )
         assert r.status_code == 501
+        detail = r.json()["detail"]
+        assert detail["error"] == "not_implemented"
         # Message references the BYO-template path
-        assert "Shared Assessments" in r.json()["detail"]
+        assert "Shared Assessments" in detail["message"]
 
     def test_unknown_vendor_returns_404(
         self, api_client: TestClient
@@ -606,14 +628,18 @@ class TestDDQuestionnaireIngestEndpoint:
         self, api_client: TestClient
     ) -> None:
         # Unparseable / empty questionnaire content: nothing correlates.
-        # The router raises a string-detail 400 (F-V08-DAST-3 invariant).
+        # F-V08-DAST-3 status normalization: the manual 400 carries the
+        # structured object detail (2026-07-06 convergence) — still
+        # distinguishable from Pydantic's 422 array.
         vid = self._add_vendor(api_client)
         r = api_client.post(
             f"/api/tprm/vendors/{vid}/dd-questionnaire/ingest",
             json={"questions": []},
         )
         assert r.status_code == 400
-        assert isinstance(r.json()["detail"], str)
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_body"
+        assert "message" in detail
 
     def test_ingest_wrong_typed_body_returns_422(
         self, api_client: TestClient
@@ -633,15 +659,18 @@ class TestDDQuestionnaireIngestEndpoint:
         self, api_client: TestClient
     ) -> None:
         # A well-formed JSON object whose `questions` value is not a list
-        # correlates to zero responses → string-detail 400 (parse-only;
-        # F-V08-DAST-3 invariant), not a Pydantic 422.
+        # correlates to zero responses → structured-detail 400
+        # (parse-only; F-V08-DAST-3 status normalization, 2026-07-06
+        # convergence), not a Pydantic 422.
         vid = self._add_vendor(api_client)
         r = api_client.post(
             f"/api/tprm/vendors/{vid}/dd-questionnaire/ingest",
             json={"questions": "not-a-list"},
         )
         assert r.status_code == 400
-        assert isinstance(r.json()["detail"], str)
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_body"
+        assert "message" in detail
 
     def test_ingest_open_under_readonly_policy(
         self, tprm_readonly_client: TestClient
@@ -668,3 +697,44 @@ class TestDDQuestionnaireIngestEndpoint:
         )
         assert r.status_code == 200, r.text
         assert r.json()["vendor"]["id"] == vendor.id
+
+
+# ── OpenAPI error-status documentation (2026-07-06 convergence) ─────
+
+
+def test_tprm_error_statuses_documented_in_openapi(
+    api_client: TestClient,
+) -> None:
+    """Every status the tprm router deliberately raises is documented
+    on the operation's ``responses`` (schemathesis undocumented-status
+    noise → contract; companion to the ai_gov openapi test)."""
+    schema = api_client.get("/api/openapi.json").json()
+    expected: list[tuple[str, str, list[str]]] = [
+        ("/api/tprm/vendors", "get", ["400"]),
+        ("/api/tprm/vendors", "post", ["422"]),
+        ("/api/tprm/vendors/{vendor_id}", "get", ["404"]),
+        ("/api/tprm/vendors/{vendor_id}", "put", ["404"]),
+        ("/api/tprm/vendors/{vendor_id}", "delete", ["404"]),
+        (
+            "/api/tprm/vendors/{vendor_id}/next-review-due",
+            "get",
+            ["404"],
+        ),
+        ("/api/tprm/concentration", "get", ["400"]),
+        (
+            "/api/tprm/vendors/{vendor_id}/dd-questionnaire",
+            "post",
+            ["400", "404", "501"],
+        ),
+        (
+            "/api/tprm/vendors/{vendor_id}/dd-questionnaire/ingest",
+            "post",
+            ["400", "404"],
+        ),
+    ]
+    for path, method, statuses in expected:
+        op = schema["paths"][path][method]
+        for status in statuses:
+            assert status in op["responses"], (
+                f"{method.upper()} {path} missing documented {status}"
+            )

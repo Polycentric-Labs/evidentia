@@ -74,7 +74,10 @@ v0.8.0-plan §DFAH for the determinism harness).
 with `extra="forbid"`; the later collectors + integrations routers
 (`/api/collectors`, `/api/integrations`) accept `dict[str, Any]` bodies
 validated explicitly per-field with `HTTPException(400)` on malformed
-input (the F-V08-DAST-3 invariant), and the SSRF private-IP guard is
+input (the F-V08-DAST-3 invariant; since the 2026-07-06 error-shape
+convergence every deliberate 4xx/5xx carries the structured
+machine-readable `detail` — `{error, ..., message}`, see
+`evidentia_api.errors`), and the SSRF private-IP guard is
 applied to every body-controlled outbound host — including the Tableau
 publish `server_url` (closed v0.10.12).
 

@@ -203,12 +203,14 @@ class TestVerifyBadInput:
             json={"content": "this is not json {{{"},
         )
         assert r.status_code == 400, r.text
-        # Detail is a string; must not leak the temp path.
+        # Detail is the structured object from evidentia_api.errors;
+        # its message must not leak the temp path.
         detail = r.json()["detail"]
-        assert isinstance(detail, str)
-        assert ".oscal-ar.json" not in detail
-        assert "/tmp" not in detail
-        assert "AppData" not in detail
+        assert detail["error"] == "verification_failed"
+        assert "message" in detail
+        assert ".oscal-ar.json" not in detail["message"]
+        assert "/tmp" not in detail["message"]
+        assert "AppData" not in detail["message"]
 
     def test_missing_content_field_returns_422(
         self, oscal_client: TestClient
@@ -230,7 +232,9 @@ class TestVerifyBadInput:
             },
         )
         assert r.status_code == 400, r.text
-        assert isinstance(r.json()["detail"], str)
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_body"
+        assert "message" in detail
 
 
 # ── POST /api/oscal/verify — offline mode ──────────────────────────
@@ -315,6 +319,7 @@ class TestVerifyDSSEInline:
             json={"content": "{}", "dsse_envelope": "{}"},
         )
         assert resp.status_code == 400
+        assert resp.json()["detail"]["error"] == "invalid_body"
 
     def test_oscal_verify_dsse_key_without_envelope_is_400(
         self, oscal_client: TestClient
@@ -326,6 +331,7 @@ class TestVerifyDSSEInline:
             json={"content": "{}", "verify_public_key": "-----BEGIN PUBLIC KEY-----\n-----END PUBLIC KEY-----\n"},
         )
         assert resp.status_code == 400
+        assert resp.json()["detail"]["error"] == "invalid_body"
 
     def test_no_dsse_returns_not_checked_status(
         self, oscal_client: TestClient
@@ -343,3 +349,23 @@ class TestVerifyDSSEInline:
         body = resp.json()
         assert body["dsse_signature_valid"] is None
         assert body["dsse_status"] == "not checked (no DSSE envelope)"
+
+
+# ── OpenAPI error-status documentation (2026-07-06 convergence) ─────
+
+
+def test_oscal_error_statuses_documented_in_openapi(
+    oscal_client: TestClient,
+) -> None:
+    """Every status the oscal route deliberately raises is documented
+    on the operation's ``responses`` in the OpenAPI schema. The
+    hermetic app serves its schema at ``/openapi.json`` (the ``/api``
+    prefix applies to the routes, not the schema endpoint)."""
+    schema = oscal_client.get("/openapi.json").json()
+    expected = [
+        ("/api/oscal/verify", "post", ["400"]),
+    ]
+    for path, method, statuses in expected:
+        responses = schema["paths"][path][method]["responses"]
+        for status in statuses:
+            assert status in responses, (path, method, status)

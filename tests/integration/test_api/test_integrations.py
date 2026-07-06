@@ -152,6 +152,7 @@ class TestJiraPushSyncValidation:
     def test_push_invalid_key_returns_400(self, api_client: TestClient) -> None:
         r = api_client.post("/api/integrations/jira/push/not-a-hex-key")
         assert r.status_code == 400
+        assert r.json()["detail"]["error"] == "invalid_id"
 
     def test_push_missing_report_returns_404(
         self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
@@ -159,10 +160,14 @@ class TestJiraPushSyncValidation:
         _set_jira_env(monkeypatch)
         r = api_client.post("/api/integrations/jira/push/0123456789abcdef")
         assert r.status_code == 404
+        detail = r.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert detail["resource"] == "gap_report"
 
     def test_sync_invalid_key_returns_400(self, api_client: TestClient) -> None:
         r = api_client.post("/api/integrations/jira/sync/xxxxxxxxxxxxxxxx")
         assert r.status_code == 400
+        assert r.json()["detail"]["error"] == "invalid_id"
 
     def test_push_returns_503_when_jira_unconfigured_but_report_exists(
         self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
@@ -188,21 +193,32 @@ class TestJiraPushSyncValidation:
         _unset_jira_env(monkeypatch)
         r = api_client.post(f"/api/integrations/jira/push/{key}")
         assert r.status_code == 503
-        assert "JIRA_BASE_URL" in r.json()["detail"]
+        detail = r.json()["detail"]
+        assert detail["error"] == "credentials_missing"
+        assert "JIRA_BASE_URL" in detail["message"]
 
 
 # ── Tableau publish endpoint (v0.7.8 P1.1) ────────────────────────
 
 
 class TestTableauPublishEndpoint:
-    def test_invalid_key_returns_400(
+    def test_guarded_server_url_returns_400(
         self, api_client: TestClient
     ) -> None:
+        # The SSRF/offline guard on the body-controlled ``server_url``
+        # deliberately fires BEFORE the report-key lookup, so this
+        # request never reaches the invalid-key branch (which the
+        # jira/servicenow/powerbi tests cover via ``error:
+        # invalid_id``). The unresolvable host trips the guard → 400
+        # ``invalid_field`` on ``server_url``.
         r = api_client.post(
             "/api/integrations/tableau/publish/not-a-hex-key",
             json={"server_url": "https://example.tableau"},
         )
         assert r.status_code == 400
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_field"
+        assert detail["field"] == "server_url"
 
     def test_missing_server_url_returns_400(
         self, api_client: TestClient
@@ -212,7 +228,10 @@ class TestTableauPublishEndpoint:
             json={},
         )
         assert r.status_code == 400
-        assert "server_url" in r.json()["detail"]
+        detail = r.json()["detail"]
+        assert detail["error"] == "missing_field"
+        assert detail["field"] == "server_url"
+        assert "server_url" in detail["message"]
 
     def test_invalid_risks_array_returns_400(
         self, api_client: TestClient
@@ -228,6 +247,7 @@ class TestTableauPublishEndpoint:
             },
         )
         assert r.status_code == 400
+        assert r.json()["detail"]["error"] == "invalid_field"
 
     def test_private_server_url_refused_ssrf(
         self, api_client: TestClient
@@ -241,7 +261,10 @@ class TestTableauPublishEndpoint:
             json={"server_url": "https://169.254.169.254/"},
         )
         assert r.status_code == 400
-        assert "tableau" in r.json()["detail"].lower()
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_field"
+        assert detail["field"] == "server_url"
+        assert "tableau" in detail["message"].lower()
 
     def test_http_server_url_refused_non_tls(
         self, api_client: TestClient
@@ -276,6 +299,7 @@ class TestPowerBIPublishEndpoint:
             },
         )
         assert r.status_code == 400
+        assert r.json()["detail"]["error"] == "invalid_id"
 
     def test_missing_workspace_returns_400(
         self, api_client: TestClient
@@ -285,7 +309,10 @@ class TestPowerBIPublishEndpoint:
             json={"tenant_id": "t-1", "client_id": "c-1"},
         )
         assert r.status_code == 400
-        assert "workspace_id" in r.json()["detail"]
+        detail = r.json()["detail"]
+        assert detail["error"] == "missing_field"
+        assert detail["field"] == "workspace_id"
+        assert "workspace_id" in detail["message"]
 
     def test_missing_tenant_returns_400(
         self, api_client: TestClient
@@ -295,7 +322,10 @@ class TestPowerBIPublishEndpoint:
             json={"workspace_id": "ws-1", "client_id": "c-1"},
         )
         assert r.status_code == 400
-        assert "tenant_id" in r.json()["detail"]
+        detail = r.json()["detail"]
+        assert detail["error"] == "missing_field"
+        assert detail["field"] == "tenant_id"
+        assert "tenant_id" in detail["message"]
 
     def test_missing_client_returns_400(
         self, api_client: TestClient
@@ -305,7 +335,10 @@ class TestPowerBIPublishEndpoint:
             json={"workspace_id": "ws-1", "tenant_id": "t-1"},
         )
         assert r.status_code == 400
-        assert "client_id" in r.json()["detail"]
+        detail = r.json()["detail"]
+        assert detail["error"] == "missing_field"
+        assert detail["field"] == "client_id"
+        assert "client_id" in detail["message"]
 
 
 # ── ServiceNow helpers ─────────────────────────────────────────────────────
@@ -477,6 +510,7 @@ class TestServiceNowPush:
             "/api/integrations/servicenow/push/not-a-hex-key"
         )
         assert r.status_code == 400
+        assert r.json()["detail"]["error"] == "invalid_id"
 
     def test_push_missing_report_returns_404(
         self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
@@ -486,6 +520,7 @@ class TestServiceNowPush:
             "/api/integrations/servicenow/push/0123456789abcdef"
         )
         assert r.status_code == 404
+        assert r.json()["detail"]["error"] == "not_found"
 
     def test_push_returns_503_when_unconfigured_but_report_exists(
         self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
@@ -494,7 +529,9 @@ class TestServiceNowPush:
         _unset_servicenow_env(monkeypatch)
         r = api_client.post(f"/api/integrations/servicenow/push/{key}")
         assert r.status_code == 503
-        assert "EVIDENTIA_SERVICENOW_INSTANCE_URL" in r.json()["detail"]
+        detail = r.json()["detail"]
+        assert detail["error"] == "credentials_missing"
+        assert "EVIDENTIA_SERVICENOW_INSTANCE_URL" in detail["message"]
 
     def test_push_valid_report_calls_client_and_returns_result(
         self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
@@ -566,4 +603,49 @@ class TestServiceNowPush:
         )
         assert r.status_code == 503, r.text
         # The 503 proves config came from (absent) env, not the body.
-        assert "EVIDENTIA_SERVICENOW_INSTANCE_URL" in r.json()["detail"]
+        detail = r.json()["detail"]
+        assert detail["error"] == "credentials_missing"
+        assert "EVIDENTIA_SERVICENOW_INSTANCE_URL" in detail["message"]
+
+
+# ── OpenAPI error-status documentation (2026-07-06 convergence) ────────────
+
+
+def test_integrations_error_statuses_documented_in_openapi(
+    api_client: TestClient,
+) -> None:
+    """Every status the integrations routes deliberately raise is
+    documented on the operation's ``responses`` in the OpenAPI schema
+    (schemathesis undocumented-status noise → contract)."""
+    schema = api_client.get("/api/openapi.json").json()
+    expected = [
+        (
+            "/api/integrations/jira/push/{report_key}",
+            "post",
+            ["400", "404", "503"],
+        ),
+        (
+            "/api/integrations/jira/sync/{report_key}",
+            "post",
+            ["400", "404", "503"],
+        ),
+        (
+            "/api/integrations/tableau/publish/{report_key}",
+            "post",
+            ["400", "404", "500", "503"],
+        ),
+        (
+            "/api/integrations/powerbi/publish/{report_key}",
+            "post",
+            ["400", "404", "500", "503"],
+        ),
+        (
+            "/api/integrations/servicenow/push/{report_key}",
+            "post",
+            ["400", "404", "503"],
+        ),
+    ]
+    for path, method, statuses in expected:
+        responses = schema["paths"][path][method]["responses"]
+        for status in statuses:
+            assert status in responses, (path, method, status)

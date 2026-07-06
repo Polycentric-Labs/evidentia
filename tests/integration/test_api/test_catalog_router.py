@@ -117,6 +117,9 @@ class TestWhere:
     def test_unknown_framework_returns_404(self, cat_client: TestClient) -> None:
         r = cat_client.get("/api/catalog/where?framework_id=does-not-exist")
         assert r.status_code == 404, r.text
+        detail = r.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert detail["resource"] == "framework"
 
     def test_imported_framework_resolves_from_user(
         self, cat_client: TestClient
@@ -217,6 +220,9 @@ class TestImport:
         )
         r = cat_client.post("/api/catalog/import", json=_import_payload())
         assert r.status_code == 400, r.text
+        detail = r.json()["detail"]
+        assert detail["error"] == "already_exists"
+        assert detail["resource"] == "user_catalog"
 
     def test_duplicate_import_with_force_overwrites(
         self, cat_client: TestClient
@@ -250,6 +256,7 @@ class TestImport:
         }
         r = cat_client.post("/api/catalog/import", json=payload)
         assert r.status_code == 400, r.text
+        assert r.json()["detail"]["error"] == "invalid_id"
 
     def test_content_framework_id_mismatch_uses_path_id(
         self, cat_client: TestClient
@@ -284,6 +291,9 @@ class TestRemove:
     def test_remove_unknown_returns_404(self, cat_client: TestClient) -> None:
         r = cat_client.delete("/api/catalog/never-imported")
         assert r.status_code == 404, r.text
+        detail = r.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert detail["resource"] == "user_catalog"
 
     def test_remove_bundled_returns_404(self, cat_client: TestClient) -> None:
         # A bundled catalog is not user-imported, so it cannot be removed.
@@ -336,3 +346,39 @@ class TestCatalogRBAC:
             "/api/catalog/where?framework_id=nist-csf-2.0"
         )
         assert r.status_code == 200, r.text
+
+
+# ════════════════════════════════════════════════════════════════════
+# OpenAPI error documentation (2026-07-06 error-shape convergence)
+# ════════════════════════════════════════════════════════════════════
+
+
+class TestCatalogOpenApiErrorDocs:
+    """Every deliberate 4xx the catalog router raises is documented on
+    its OpenAPI operation. Uses the project-wide app so the schema
+    reflects the registered router."""
+
+    def test_catalog_error_statuses_documented_in_openapi(
+        self, api_client: TestClient
+    ) -> None:
+        schema = api_client.get("/api/openapi.json").json()
+        expected: list[tuple[str, str, list[str]]] = [
+            ("/api/catalog/where", "get", ["400", "404"]),
+            (
+                "/api/catalog/license-info/{framework_id}",
+                "get",
+                ["400", "404"],
+            ),
+            ("/api/catalog/import", "post", ["400", "403"]),
+            (
+                "/api/catalog/{framework_id}",
+                "delete",
+                ["400", "403", "404"],
+            ),
+        ]
+        for path, method, statuses in expected:
+            responses = schema["paths"][path][method]["responses"]
+            for status in statuses:
+                assert status in responses, (
+                    f"{method.upper()} {path} missing {status}"
+                )

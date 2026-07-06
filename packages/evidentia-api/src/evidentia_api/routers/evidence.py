@@ -14,7 +14,9 @@ Endpoints:
     in an existing chain. Body = the full :class:`EvidenceArtifact`
     model (``extra="forbid"`` inherited from EvidentiaModel). Returns
     a summary dict mirroring the CLI ``save`` output. WORM collisions
-    → 409 with ``{detail, next_version}``; invalid lineage id → 404.
+    → 409 with the structured ``{error: worm_violation, lineage_id,
+    attempted_version, next_version, message}`` detail; invalid
+    lineage id → 404.
   - ``GET /evidence/{lineage_id}/history`` — walk a lineage chain,
     returning every persisted version sorted by version ascending
     (the store already sorts). Invalid lineage id → 404.
@@ -44,8 +46,13 @@ from evidentia_core.evidence_store import (
     save_evidence,
 )
 from evidentia_core.models.evidence import EvidenceArtifact
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, Path
 
+from evidentia_api.errors import (
+    RBAC_DENIED_403,
+    api_error,
+    error_responses,
+)
 from evidentia_api.rbac_dependency import require_role
 
 router = APIRouter()
@@ -59,6 +66,17 @@ _log = get_logger("evidentia.api.evidence")
     "/evidence",
     status_code=201,
     dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            403: RBAC_DENIED_403,
+            404: "Malformed lineage id (``error: not_found``).",
+            409: (
+                "WORM collision — the version already exists "
+                "(``error: worm_violation``); ``detail`` carries the "
+                "canonical ``next_version`` recovery hint."
+            ),
+        }
+    ),
 )
 async def save_evidence_artifact(
     payload: EvidenceArtifact,
@@ -74,8 +92,9 @@ async def save_evidence_artifact(
 
     Returns a summary dict mirroring the CLI ``save`` output. WORM
     enforcement: re-saving a persisted version raises
-    :class:`EvidenceWORMViolation` → HTTP 409 with the canonical
-    ``next_version`` recovery hint. A malformed lineage id → 404.
+    :class:`EvidenceWORMViolation` → HTTP 409 with the structured
+    ``worm_violation`` detail carrying the canonical ``next_version``
+    recovery hint. A malformed lineage id → 404.
     """
     artifact = payload.model_copy()
     try:
@@ -91,15 +110,18 @@ async def save_evidence_artifact(
                 "next_version": exc.next_version,
             },
         )
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "detail": str(exc),
-                "next_version": exc.next_version,
-            },
+        raise api_error(
+            409,
+            "worm_violation",
+            str(exc),
+            lineage_id=exc.lineage_id,
+            attempted_version=exc.attempted_version,
+            next_version=exc.next_version,
         ) from exc
     except InvalidEvidenceIdError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise api_error(
+            404, "not_found", str(exc), resource="evidence_lineage"
+        ) from exc
 
     _log.info(
         action=EventAction.EVIDENCE_VERSION_PERSISTED,
@@ -135,6 +157,12 @@ async def save_evidence_artifact(
 @router.get(
     "/evidence/{lineage_id}/history",
     dependencies=[require_role("read")],
+    responses=error_responses(
+        {
+            403: RBAC_DENIED_403,
+            404: "Malformed lineage id (``error: not_found``).",
+        }
+    ),
 )
 async def get_evidence_history(lineage_id: str) -> dict[str, Any]:
     """Walk a lineage chain — every persisted version, sorted ascending.
@@ -146,9 +174,12 @@ async def get_evidence_history(lineage_id: str) -> dict[str, Any]:
     try:
         artifacts = list_lineage(lineage_id)
     except InvalidEvidenceIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Lineage {lineage_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Lineage {lineage_id!r} not found.",
+            resource="evidence_lineage",
+            resource_id=lineage_id,
         ) from exc
 
     _log.info(
@@ -176,6 +207,15 @@ async def get_evidence_history(lineage_id: str) -> dict[str, Any]:
     "/evidence/{lineage_id}/versions/{version}",
     response_model=EvidenceArtifact,
     dependencies=[require_role("read")],
+    responses=error_responses(
+        {
+            403: RBAC_DENIED_403,
+            404: (
+                "Malformed lineage id OR no such version "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def get_evidence_version(
     lineage_id: str,
@@ -189,17 +229,22 @@ async def get_evidence_version(
     try:
         artifact = load_evidence_version(lineage_id, version)
     except InvalidEvidenceIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Lineage {lineage_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Lineage {lineage_id!r} not found.",
+            resource="evidence_lineage",
+            resource_id=lineage_id,
         ) from exc
 
     if artifact is None:
-        raise HTTPException(
-            status_code=404,
-            detail=(
-                f"No v{version} found for lineage {lineage_id!r}."
-            ),
+        raise api_error(
+            404,
+            "not_found",
+            f"No v{version} found for lineage {lineage_id!r}.",
+            resource="evidence_version",
+            resource_id=lineage_id,
+            version=version,
         )
 
     _log.info(

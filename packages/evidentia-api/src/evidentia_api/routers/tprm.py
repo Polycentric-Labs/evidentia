@@ -15,12 +15,14 @@ Endpoints (resolved per plan §17.B1-B4):
     (preserves id + created_at; refreshes updated_at)
   - ``DELETE /api/tprm/vendors/{vendor_id}`` — remove from store
 
-Error normalization follows the v0.7.8 F-V08-DAST-3 fix
-(plan §17.B4): manual HTTPException uses status 400 (not 422)
-for runtime body-content validation errors so the
-``{detail: string}`` response shape matches the OpenAPI
-declaration. Pydantic auto-validation 422s (from FastAPI's
-request-body parsing) keep their array-shape detail.
+Error normalization follows the v0.7.8 F-V08-DAST-3 status
+normalization (plan §17.B4): manual errors use status 400 (not 422)
+for runtime body-content validation failures, and carry the
+structured object ``detail`` per the 2026-07-06 error-shape
+convergence (see :mod:`evidentia_api.errors`). Pydantic
+auto-validation 422s (from FastAPI's request-body parsing) keep
+their array-shape detail, so manual-vs-automatic stays
+distinguishable (object vs array).
 """
 
 from __future__ import annotations
@@ -54,8 +56,10 @@ from evidentia_core.vendor_store import (
     load_vendor_by_id,
     save_vendor,
 )
-from fastapi import APIRouter, Body, HTTPException, Query
+from fastapi import APIRouter, Body, Query
 from pydantic import BaseModel, Field
+
+from evidentia_api.errors import api_error, error_responses
 
 router = APIRouter()
 
@@ -78,7 +82,19 @@ def _filter_vendors(
 # ── endpoints ──────────────────────────────────────────────────────
 
 
-@router.get("/tprm/vendors")
+@router.get(
+    "/tprm/vendors",
+    responses=error_responses(
+        {
+            400: (
+                "Unknown ``criticality_tier`` / ``type`` filter value "
+                "(``error: unknown_criticality_tier`` / "
+                "``unknown_type``); ``detail`` carries the field + "
+                "``valid``."
+            ),
+        }
+    ),
+)
 async def list_vendors_endpoint(
     skip: int = Query(
         0,
@@ -116,20 +132,26 @@ async def list_vendors_endpoint(
     if criticality_tier and criticality_tier not in {
         e.value for e in CriticalityTier
     }:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "unknown_criticality_tier",
+            (
                 f"Unknown criticality_tier {criticality_tier!r}; valid: "
                 f"{sorted(e.value for e in CriticalityTier)}"
             ),
+            criticality_tier=criticality_tier,
+            valid=sorted(e.value for e in CriticalityTier),
         )
     if type_ and type_ not in {e.value for e in VendorType}:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "unknown_type",
+            (
                 f"Unknown type {type_!r}; valid: "
                 f"{sorted(e.value for e in VendorType)}"
             ),
+            type=type_,
+            valid=sorted(e.value for e in VendorType),
         )
 
     all_vendors = list_vendors()
@@ -144,7 +166,19 @@ async def list_vendors_endpoint(
     }
 
 
-@router.post("/tprm/vendors", response_model=Vendor, status_code=201)
+@router.post(
+    "/tprm/vendors",
+    response_model=Vendor,
+    status_code=201,
+    responses=error_responses(
+        {
+            422: (
+                "Body-content semantic failure "
+                "(``error: invalid_body``)."
+            ),
+        }
+    ),
+)
 async def create_vendor(payload: Vendor) -> Vendor:
     """Create a new vendor record.
 
@@ -171,11 +205,22 @@ async def create_vendor(payload: Vendor) -> Vendor:
     except (InvalidVendorIdError, ValueError) as exc:
         # A client-supplied empty/malformed id must be a 422, not an unhandled
         # 500 (F-V1012-S4-1; mirrors the GET/PUT paths in this router).
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise api_error(422, "invalid_body", str(exc)) from exc
     return vendor
 
 
-@router.get("/tprm/vendors/{vendor_id}", response_model=Vendor)
+@router.get(
+    "/tprm/vendors/{vendor_id}",
+    response_model=Vendor,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``vendor_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
+)
 async def get_vendor(vendor_id: str) -> Vendor:
     """Fetch a single vendor by ID."""
     try:
@@ -184,19 +229,36 @@ async def get_vendor(vendor_id: str) -> Vendor:
         # Match the v0.7.8 F-V08-DAST-1 widening pattern: shape
         # violations + not-found both normalize to 404 from the
         # client's perspective.
-        raise HTTPException(
-            status_code=404,
-            detail=f"Vendor {vendor_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Vendor {vendor_id!r} not found.",
+            resource="vendor",
+            resource_id=vendor_id,
         ) from exc
     if vendor is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Vendor {vendor_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Vendor {vendor_id!r} not found.",
+            resource="vendor",
+            resource_id=vendor_id,
         )
     return vendor
 
 
-@router.put("/tprm/vendors/{vendor_id}", response_model=Vendor)
+@router.put(
+    "/tprm/vendors/{vendor_id}",
+    response_model=Vendor,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``vendor_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
+)
 async def replace_vendor(vendor_id: str, payload: Vendor) -> Vendor:
     """Replace a vendor record by ID (full update).
 
@@ -209,14 +271,20 @@ async def replace_vendor(vendor_id: str, payload: Vendor) -> Vendor:
     try:
         existing = load_vendor_by_id(vendor_id)
     except InvalidVendorIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Vendor {vendor_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Vendor {vendor_id!r} not found.",
+            resource="vendor",
+            resource_id=vendor_id,
         ) from exc
     if existing is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Vendor {vendor_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Vendor {vendor_id!r} not found.",
+            resource="vendor",
+            resource_id=vendor_id,
         )
     # Authoritatively pin id + created_at via `model_copy` rather
     # than mutating the FastAPI-parsed `payload` directly — closes
@@ -236,7 +304,18 @@ async def replace_vendor(vendor_id: str, payload: Vendor) -> Vendor:
     return vendor
 
 
-@router.delete("/tprm/vendors/{vendor_id}", status_code=204)
+@router.delete(
+    "/tprm/vendors/{vendor_id}",
+    status_code=204,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``vendor_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
+)
 async def delete_vendor_endpoint(vendor_id: str) -> None:
     """Delete a vendor by ID.
 
@@ -247,21 +326,37 @@ async def delete_vendor_endpoint(vendor_id: str) -> None:
     try:
         removed = delete_vendor(vendor_id)
     except InvalidVendorIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Vendor {vendor_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Vendor {vendor_id!r} not found.",
+            resource="vendor",
+            resource_id=vendor_id,
         ) from exc
     if not removed:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Vendor {vendor_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Vendor {vendor_id!r} not found.",
+            resource="vendor",
+            resource_id=vendor_id,
         )
 
 
 # ── helper endpoint: cadence preview ──────────────────────────────
 
 
-@router.get("/tprm/vendors/{vendor_id}/next-review-due")
+@router.get(
+    "/tprm/vendors/{vendor_id}/next-review-due",
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``vendor_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
+)
 async def preview_next_review_due(vendor_id: str) -> dict[str, str | None]:
     """Compute (without persisting) the next review due date.
 
@@ -274,14 +369,20 @@ async def preview_next_review_due(vendor_id: str) -> dict[str, str | None]:
     try:
         vendor = load_vendor_by_id(vendor_id)
     except InvalidVendorIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Vendor {vendor_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Vendor {vendor_id!r} not found.",
+            resource="vendor",
+            resource_id=vendor_id,
         ) from exc
     if vendor is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Vendor {vendor_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Vendor {vendor_id!r} not found.",
+            resource="vendor",
+            resource_id=vendor_id,
         )
     computed: date | None = vendor.compute_next_review_due()
     return {
@@ -292,7 +393,20 @@ async def preview_next_review_due(vendor_id: str) -> dict[str, str | None]:
 # ── concentration-risk reporting (v0.7.9 P0.3) ─────────────────────
 
 
-@router.get("/tprm/concentration", response_model=ConcentrationReport)
+@router.get(
+    "/tprm/concentration",
+    response_model=ConcentrationReport,
+    responses=error_responses(
+        {
+            400: (
+                "Empty ``by`` (``error: invalid_field``) or "
+                "unsupported dimension(s) (``error: "
+                "unknown_dimension``; ``detail`` carries "
+                "``dimensions`` + ``valid``)."
+            ),
+        }
+    ),
+)
 async def concentration(
     by: str = Query(
         "region,cloud-provider",
@@ -323,18 +437,23 @@ async def concentration(
     """
     dimensions = [d.strip() for d in by.split(",") if d.strip()]
     if not dimensions:
-        raise HTTPException(
-            status_code=400,
-            detail="`by` must list at least one dimension.",
+        raise api_error(
+            400,
+            "invalid_field",
+            "`by` must list at least one dimension.",
+            field="by",
         )
     bad = [d for d in dimensions if d not in SUPPORTED_DIMENSIONS]
     if bad:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "unknown_dimension",
+            (
                 f"Unsupported dimension(s) {bad!r}; "
                 f"valid: {sorted(SUPPORTED_DIMENSIONS)}"
             ),
+            dimensions=bad,
+            valid=sorted(SUPPORTED_DIMENSIONS),
         )
     vendors = list_vendors()
     return compute_concentration(vendors, dimensions, threshold=threshold)
@@ -347,6 +466,23 @@ async def concentration(
     "/tprm/vendors/{vendor_id}/dd-questionnaire",
     response_model=Questionnaire,
     status_code=201,
+    responses=error_responses(
+        {
+            400: (
+                "Unknown questionnaire ``format`` (``error: "
+                "unknown_format``); ``detail`` carries ``format`` + "
+                "``valid``."
+            ),
+            404: (
+                "Unknown or malformed ``vendor_id`` "
+                "(``error: not_found``)."
+            ),
+            501: (
+                "SIG / SIG-Lite stub formats "
+                "(``error: not_implemented``)."
+            ),
+        }
+    ),
 )
 async def generate_dd_questionnaire(
     vendor_id: str,
@@ -374,33 +510,42 @@ async def generate_dd_questionnaire(
     try:
         fmt = QuestionnaireFormat(format)
     except ValueError as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "unknown_format",
+            (
                 f"Unknown questionnaire format {format!r}; valid: "
                 f"{[f.value for f in QuestionnaireFormat]}"
             ),
+            format=format,
+            valid=[f.value for f in QuestionnaireFormat],
         ) from exc
 
     try:
         vendor = load_vendor_by_id(vendor_id)
     except InvalidVendorIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Vendor {vendor_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Vendor {vendor_id!r} not found.",
+            resource="vendor",
+            resource_id=vendor_id,
         ) from exc
     if vendor is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Vendor {vendor_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Vendor {vendor_id!r} not found.",
+            resource="vendor",
+            resource_id=vendor_id,
         )
 
     try:
         return generate_questionnaire(vendor, fmt)
     except NotImplementedError as exc:
         # SIG / SIG-Lite stubs — clear 501 with the BYO-template
-        # narrative in the detail.
-        raise HTTPException(status_code=501, detail=str(exc)) from exc
+        # narrative in the message.
+        raise api_error(501, "not_implemented", str(exc)) from exc
 
 
 # ── DD-questionnaire ingest (v0.10.12) ────────────────────────────
@@ -452,6 +597,19 @@ class DDQuestionnaireIngestResult(BaseModel):
 @router.post(
     "/tprm/vendors/{vendor_id}/dd-questionnaire/ingest",
     response_model=DDQuestionnaireIngestResult,
+    responses=error_responses(
+        {
+            400: (
+                "Malformed questionnaire content — unparseable or "
+                "zero correlated responses "
+                "(``error: invalid_body``)."
+            ),
+            404: (
+                "Unknown or malformed ``vendor_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def ingest_dd_questionnaire(
     vendor_id: str,
@@ -492,10 +650,12 @@ async def ingest_dd_questionnaire(
 
       - 404 on shape-violation OR well-formed-unknown ``vendor_id``
         (F-V08-DAST-1 widening pattern). The endpoint is vendor-scoped.
-      - 400 (string detail, F-V08-DAST-3 invariant) when the
-        questionnaire content is unparseable or correlates to no
-        responses (nothing to ingest). Pydantic auto-validation 422s
-        (wrong-typed body) keep their array-shape detail.
+      - 400 (F-V08-DAST-3 status normalization; structured detail per
+        the 2026-07-06 error-shape convergence, see
+        :mod:`evidentia_api.errors`) when the questionnaire content is
+        unparseable or correlates to no responses (nothing to ingest).
+        Pydantic auto-validation 422s (wrong-typed body) keep their
+        array-shape detail.
 
     No ``require_role("write")`` gate: a parse is a read-style operation
     (no vendor mutation), so it is open like the other read endpoints on
@@ -504,14 +664,20 @@ async def ingest_dd_questionnaire(
     try:
         vendor = load_vendor_by_id(vendor_id)
     except InvalidVendorIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Vendor {vendor_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Vendor {vendor_id!r} not found.",
+            resource="vendor",
+            resource_id=vendor_id,
         ) from exc
     if vendor is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Vendor {vendor_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Vendor {vendor_id!r} not found.",
+            resource="vendor",
+            resource_id=vendor_id,
         )
 
     # The core parser is file-based + extension-dispatched. Write the
@@ -532,10 +698,12 @@ async def ingest_dd_questionnaire(
         )
     except (ValueError, ImportError) as exc:
         # Unparseable / malformed questionnaire content. Use a generic
-        # string detail (no path/internal leakage; F-V08-DAST-3 shape).
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        # message (no path/internal leakage; F-V08-DAST-3 status
+        # normalization with the structured detail shape).
+        raise api_error(
+            400,
+            "invalid_body",
+            (
                 "Malformed questionnaire content: could not parse the "
                 "posted document. Expected the canonical Questionnaire "
                 "shape with a `questions` array of "
@@ -547,9 +715,10 @@ async def ingest_dd_questionnaire(
             tmp_path.unlink(missing_ok=True)
 
     if not completed.responses:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "invalid_body",
+            (
                 "Malformed questionnaire content: no per-question "
                 "responses correlated. Provide a `questions` array whose "
                 "entries carry an `id` and a `vendor_response` "

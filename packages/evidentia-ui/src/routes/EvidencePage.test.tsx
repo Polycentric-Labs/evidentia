@@ -113,7 +113,14 @@ describe("EvidencePage", () => {
   it("shows a friendly message when the lineage id is not found (404)", async () => {
     const user = userEvent.setup();
     evidenceHistoryMock.mockRejectedValue(
-      new ApiError("not found", 404, { detail: "unknown lineage" }),
+      new ApiError("not found", 404, {
+        detail: {
+          error: "not_found",
+          resource: "evidence_lineage",
+          resource_id: "does-not-exist",
+          message: "Lineage 'does-not-exist' not found.",
+        },
+      }),
     );
 
     renderWithClient(<EvidencePage />);
@@ -175,11 +182,16 @@ describe("EvidencePage", () => {
 
   it("surfaces the next_version hint on a 409 WORM collision", async () => {
     const user = userEvent.setup();
+    // Mirrors the 2026-07-06 error-shape convergence: the WORM 409
+    // carries `{error: "worm_violation", ..., next_version, message}`.
     saveEvidenceMock.mockRejectedValue(
       new ApiError("conflict", 409, {
         detail: {
-          detail: "version 2 already exists for this lineage",
+          error: "worm_violation",
+          lineage_id: "lineage-1",
+          attempted_version: 2,
           next_version: 3,
+          message: "version 2 already exists for this lineage",
         },
       }),
     );

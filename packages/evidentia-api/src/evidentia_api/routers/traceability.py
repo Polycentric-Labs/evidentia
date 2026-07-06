@@ -33,10 +33,11 @@ Security
 - The matrix is supplied as inline body content (NOT a server-side path
   to read), so there is no SSRF / arbitrary-file-read surface — the same
   posture as the catalog ``import`` endpoint.
-- Errors normalize to 400 (string ``detail``) for a schema-valid but
-  insufficient matrix (no mappings → nothing to emit, mirroring the CLI
-  guard); Pydantic returns 422 for shape-invalid bodies. No filesystem
-  path or secret is ever surfaced in an error (G-9).
+- Errors normalize to 400 (the structured ``detail`` object from
+  :mod:`evidentia_api.errors`) for a schema-valid but insufficient
+  matrix (no mappings → nothing to emit, mirroring the CLI guard);
+  Pydantic returns 422 for shape-invalid bodies. No filesystem path or
+  secret is ever surfaced in an error (G-9).
 """
 
 from __future__ import annotations
@@ -48,13 +49,25 @@ from evidentia_core.models.traceability import TraceabilityMatrix
 from evidentia_core.oscal.traceability_exporter import (
     traceability_matrix_to_oscal_profile,
 )
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
+
+from evidentia_api.errors import api_error, error_responses
 
 router = APIRouter()
 _log = get_logger("evidentia.api.traceability")
 
 
-@router.post("/traceability/emit")
+@router.post(
+    "/traceability/emit",
+    responses=error_responses(
+        {
+            400: (
+                "Schema-valid matrix with no mappings — nothing to "
+                "emit (``error: invalid_body``)."
+            ),
+        }
+    ),
+)
 async def emit_traceability_matrix(matrix: TraceabilityMatrix) -> dict[str, Any]:
     """Emit the Control↔Threat Traceability Matrix as an UNSIGNED OSCAL profile.
 
@@ -68,9 +81,10 @@ async def emit_traceability_matrix(matrix: TraceabilityMatrix) -> dict[str, Any]
     model forbids extra fields).
     """
     if not matrix.mappings:
-        raise HTTPException(
-            status_code=400,
-            detail="The matrix has no mappings — nothing to emit.",
+        raise api_error(
+            400,
+            "invalid_body",
+            "The matrix has no mappings — nothing to emit.",
         )
 
     profile = traceability_matrix_to_oscal_profile(matrix)

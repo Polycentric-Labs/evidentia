@@ -19,8 +19,10 @@ import os
 from typing import Any
 
 from evidentia_core.models.finding import SecurityFinding
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import ValidationError
+
+from evidentia_api.errors import api_error, error_responses
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -40,7 +42,23 @@ def _block_private_ips(body: dict[str, Any]) -> bool:
     return body.get("block_private_ips", True) is not False
 
 
-@router.post("/collectors/aws/collect", response_model=list[SecurityFinding])
+@router.post(
+    "/collectors/aws/collect",
+    response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            500: (
+                "Unexpected collector failure "
+                "(``error: collector_failed``)."
+            ),
+            503: (
+                "AWS collector not installed or AWS unreachable "
+                "(``error: feature_unavailable`` / "
+                "``error: upstream_error``)."
+            ),
+        }
+    ),
+)
 async def aws_collect(payload: dict[str, Any] | None = None) -> list[SecurityFinding]:
     """Run the AWS collector (Config + Security Hub).
 
@@ -54,9 +72,10 @@ async def aws_collect(payload: dict[str, Any] | None = None) -> list[SecurityFin
     try:
         from evidentia_collectors.aws import AwsCollector, AwsCollectorError
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
                 "AWS collector not installed. Run "
                 "`pip install 'evidentia-collectors[aws]'`."
             ),
@@ -72,7 +91,7 @@ async def aws_collect(payload: dict[str, Any] | None = None) -> list[SecurityFin
         collector = AwsCollector(region=region, profile=profile)
         collector.test_connection()
     except AwsCollectorError as e:
-        raise HTTPException(status_code=503, detail=str(e)) from e
+        raise api_error(503, "upstream_error", str(e)) from e
 
     try:
         findings = collector.collect_all(
@@ -81,12 +100,31 @@ async def aws_collect(payload: dict[str, Any] | None = None) -> list[SecurityFin
         )
     except Exception as e:
         logger.exception("AWS collector failed")
-        raise HTTPException(status_code=500, detail=f"AWS collector failed: {e}") from e
+        raise api_error(
+            500, "collector_failed", f"AWS collector failed: {e}"
+        ) from e
 
     return findings
 
 
-@router.post("/collectors/github/collect", response_model=list[SecurityFinding])
+@router.post(
+    "/collectors/github/collect",
+    response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            400: (
+                "Missing or malformed ``repo`` body field "
+                "(``error: missing_field``)."
+            ),
+            404: "Repository not found (``error: not_found``).",
+            502: "GitHub API call failed (``error: upstream_error``).",
+            503: (
+                "GitHub collector import failed "
+                "(``error: feature_unavailable``)."
+            ),
+        }
+    ),
+)
 async def github_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     """Run the GitHub collector.
 
@@ -103,16 +141,19 @@ async def github_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             GitHubCollectorError,
         )
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=f"GitHub collector import failed: {e}",
+        raise api_error(
+            503,
+            "feature_unavailable",
+            f"GitHub collector import failed: {e}",
         ) from e
 
     repo = str(payload.get("repo") or "").strip()
     if "/" not in repo:
-        raise HTTPException(
-            status_code=400,
-            detail="Request body must include 'repo' in 'owner/repo' format.",
+        raise api_error(
+            400,
+            "missing_field",
+            "Request body must include 'repo' in 'owner/repo' format.",
+            field="repo",
         )
     owner, repo_name = repo.split("/", 1)
     token = os.environ.get("GITHUB_TOKEN")
@@ -128,14 +169,37 @@ async def github_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
         ) as collector:
             findings = collector.collect()
     except GitHubCollectorError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
+        raise api_error(
+            404, "not_found", str(e), resource="github_repo"
+        ) from e
     except GitHubApiError as e:
-        raise HTTPException(status_code=502, detail=str(e)) from e
+        raise api_error(502, "upstream_error", str(e)) from e
 
     return findings
 
 
-@router.post("/collectors/okta/collect", response_model=list[SecurityFinding])
+@router.post(
+    "/collectors/okta/collect",
+    response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            400: (
+                "Missing ``org_url`` body field "
+                "(``error: missing_field``)."
+            ),
+            500: (
+                "Unexpected collector failure "
+                "(``error: collector_failed``)."
+            ),
+            503: (
+                "Collector import failed, ``OKTA_API_TOKEN`` unset, "
+                "or Okta unreachable (``error: feature_unavailable`` "
+                "/ ``error: credentials_missing`` / "
+                "``error: upstream_error``)."
+            ),
+        }
+    ),
+)
 async def okta_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     """Run the Okta collector (v0.7.7 C1).
 
@@ -158,25 +222,30 @@ async def okta_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             OktaCollectorError,
         )
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Okta collector import failed: {e}",
+        raise api_error(
+            503,
+            "feature_unavailable",
+            f"Okta collector import failed: {e}",
         ) from e
 
     org_url = str(payload.get("org_url") or "").strip()
     if not org_url:
-        raise HTTPException(
-            status_code=400,
-            detail="Request body must include 'org_url'.",
+        raise api_error(
+            400,
+            "missing_field",
+            "Request body must include 'org_url'.",
+            field="org_url",
         )
     inactive_threshold_days = int(payload.get("inactive_threshold_days") or 90)
     max_users = int(payload.get("max_users") or 10_000)
 
     api_token = os.environ.get("OKTA_API_TOKEN")
     if api_token is None:
-        raise HTTPException(
-            status_code=503,
-            detail="OKTA_API_TOKEN env var not set on the server.",
+        raise api_error(
+            503,
+            "credentials_missing",
+            "OKTA_API_TOKEN env var not set on the server.",
+            env_var="OKTA_API_TOKEN",
         )
 
     try:
@@ -189,18 +258,37 @@ async def okta_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
         ) as collector:
             findings = collector.collect()
     except OktaCollectorError as e:
-        raise HTTPException(status_code=503, detail=str(e)) from e
+        raise api_error(503, "upstream_error", str(e)) from e
     except Exception as e:
         logger.exception("Okta collector failed")
-        raise HTTPException(
-            status_code=500, detail=f"Okta collector failed: {e}"
+        raise api_error(
+            500, "collector_failed", f"Okta collector failed: {e}"
         ) from e
 
     return findings
 
 
 @router.post(
-    "/collectors/sql/postgres/collect", response_model=list[SecurityFinding]
+    "/collectors/sql/postgres/collect",
+    response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            400: (
+                "Missing ``connection_uri`` body field "
+                "(``error: missing_field``)."
+            ),
+            500: (
+                "Unexpected collector failure "
+                "(``error: collector_failed``)."
+            ),
+            503: (
+                "Collector not installed, password env var unset, or "
+                "database unreachable (``error: feature_unavailable`` "
+                "/ ``error: credentials_missing`` / "
+                "``error: upstream_error``)."
+            ),
+        }
+    ),
 )
 async def postgres_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     """Run the PostgreSQL collector (v0.7.7 P0.1).
@@ -224,9 +312,10 @@ async def postgres_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             PostgresCollectorError,
         )
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
                 "PostgreSQL collector not installed. Run "
                 "`pip install 'evidentia-collectors[sql-postgres]'`."
             ),
@@ -234,9 +323,11 @@ async def postgres_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
     connection_uri = str(payload.get("connection_uri") or "").strip()
     if not connection_uri:
-        raise HTTPException(
-            status_code=400,
-            detail="Request body must include 'connection_uri'.",
+        raise api_error(
+            400,
+            "missing_field",
+            "Request body must include 'connection_uri'.",
+            field="connection_uri",
         )
     password_env = (
         str(payload.get("password_env") or "EVIDENTIA_POSTGRES_PASSWORD").strip()
@@ -244,12 +335,14 @@ async def postgres_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     )
     password = os.environ.get(password_env)
     if password is None:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "credentials_missing",
+            (
                 f"Environment variable {password_env!r} not set on the "
                 "server. Set it before invoking this endpoint."
             ),
+            env_var=password_env,
         )
 
     try:
@@ -263,18 +356,37 @@ async def postgres_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
         # Constructor / auth / connection / TLS failure — 503 because
         # the API surface is up but the upstream DB isn't reachable
         # with the supplied credentials.
-        raise HTTPException(status_code=503, detail=str(e)) from e
+        raise api_error(503, "upstream_error", str(e)) from e
     except Exception as e:
         logger.exception("Postgres collector failed")
-        raise HTTPException(
-            status_code=500, detail=f"Postgres collector failed: {e}"
+        raise api_error(
+            500, "collector_failed", f"Postgres collector failed: {e}"
         ) from e
 
     return findings
 
 
 @router.post(
-    "/collectors/sql/mysql/collect", response_model=list[SecurityFinding]
+    "/collectors/sql/mysql/collect",
+    response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            400: (
+                "Missing ``connection_uri`` body field "
+                "(``error: missing_field``)."
+            ),
+            500: (
+                "Unexpected collector failure "
+                "(``error: collector_failed``)."
+            ),
+            503: (
+                "Collector not installed, password env var unset, or "
+                "database unreachable (``error: feature_unavailable`` "
+                "/ ``error: credentials_missing`` / "
+                "``error: upstream_error``)."
+            ),
+        }
+    ),
 )
 async def mysql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     """Run the MySQL / MariaDB collector (v0.7.7 P0.2).
@@ -295,9 +407,10 @@ async def mysql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             MySQLCollectorError,
         )
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
                 "MySQL collector not installed. Run "
                 "`pip install 'evidentia-collectors[sql-mysql]'`."
             ),
@@ -305,9 +418,11 @@ async def mysql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
     connection_uri = str(payload.get("connection_uri") or "").strip()
     if not connection_uri:
-        raise HTTPException(
-            status_code=400,
-            detail="Request body must include 'connection_uri'.",
+        raise api_error(
+            400,
+            "missing_field",
+            "Request body must include 'connection_uri'.",
+            field="connection_uri",
         )
     password_env = (
         str(payload.get("password_env") or "EVIDENTIA_MYSQL_PASSWORD").strip()
@@ -315,12 +430,14 @@ async def mysql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     )
     password = os.environ.get(password_env)
     if password is None:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "credentials_missing",
+            (
                 f"Environment variable {password_env!r} not set on the "
                 "server."
             ),
+            env_var=password_env,
         )
 
     try:
@@ -331,18 +448,37 @@ async def mysql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
         ) as collector:
             findings = collector.collect()
     except MySQLCollectorError as e:
-        raise HTTPException(status_code=503, detail=str(e)) from e
+        raise api_error(503, "upstream_error", str(e)) from e
     except Exception as e:
         logger.exception("MySQL collector failed")
-        raise HTTPException(
-            status_code=500, detail=f"MySQL collector failed: {e}"
+        raise api_error(
+            500, "collector_failed", f"MySQL collector failed: {e}"
         ) from e
 
     return findings
 
 
 @router.post(
-    "/collectors/sql/mssql/collect", response_model=list[SecurityFinding]
+    "/collectors/sql/mssql/collect",
+    response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            400: (
+                "Missing ``connection_uri`` body field "
+                "(``error: missing_field``)."
+            ),
+            500: (
+                "Unexpected collector failure "
+                "(``error: collector_failed``)."
+            ),
+            503: (
+                "Collector not installed, password env var unset, or "
+                "database unreachable (``error: feature_unavailable`` "
+                "/ ``error: credentials_missing`` / "
+                "``error: upstream_error``)."
+            ),
+        }
+    ),
 )
 async def mssql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     """Run the MS SQL Server collector (v0.7.7 P0.4).
@@ -364,9 +500,10 @@ async def mssql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             MSSQLCollectorError,
         )
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
                 "MSSQL collector not installed. Run "
                 "`pip install 'evidentia-collectors[sql-mssql]'`. "
                 "Note: also requires Microsoft ODBC Driver 18 at OS level."
@@ -375,9 +512,11 @@ async def mssql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
     connection_uri = str(payload.get("connection_uri") or "").strip()
     if not connection_uri:
-        raise HTTPException(
-            status_code=400,
-            detail="Request body must include 'connection_uri'.",
+        raise api_error(
+            400,
+            "missing_field",
+            "Request body must include 'connection_uri'.",
+            field="connection_uri",
         )
     password_env = (
         str(payload.get("password_env") or "EVIDENTIA_MSSQL_PASSWORD").strip()
@@ -385,12 +524,14 @@ async def mssql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     )
     password = os.environ.get(password_env)
     if password is None:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "credentials_missing",
+            (
                 f"Environment variable {password_env!r} not set on the "
                 "server."
             ),
+            env_var=password_env,
         )
 
     try:
@@ -401,18 +542,37 @@ async def mssql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
         ) as collector:
             findings = collector.collect()
     except MSSQLCollectorError as e:
-        raise HTTPException(status_code=503, detail=str(e)) from e
+        raise api_error(503, "upstream_error", str(e)) from e
     except Exception as e:
         logger.exception("MSSQL collector failed")
-        raise HTTPException(
-            status_code=500, detail=f"MSSQL collector failed: {e}"
+        raise api_error(
+            500, "collector_failed", f"MSSQL collector failed: {e}"
         ) from e
 
     return findings
 
 
 @router.post(
-    "/collectors/sql/oracle/collect", response_model=list[SecurityFinding]
+    "/collectors/sql/oracle/collect",
+    response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            400: (
+                "Missing ``connection_uri`` body field "
+                "(``error: missing_field``)."
+            ),
+            500: (
+                "Unexpected collector failure "
+                "(``error: collector_failed``)."
+            ),
+            503: (
+                "Collector not installed, password env var unset, or "
+                "database unreachable (``error: feature_unavailable`` "
+                "/ ``error: credentials_missing`` / "
+                "``error: upstream_error``)."
+            ),
+        }
+    ),
 )
 async def oracle_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     """Run the Oracle Database collector (v0.7.7 P0.5).
@@ -433,9 +593,10 @@ async def oracle_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             OracleCollectorError,
         )
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
                 "Oracle collector not installed. Run "
                 "`pip install 'evidentia-collectors[sql-oracle]'`."
             ),
@@ -443,9 +604,11 @@ async def oracle_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
     connection_uri = str(payload.get("connection_uri") or "").strip()
     if not connection_uri:
-        raise HTTPException(
-            status_code=400,
-            detail="Request body must include 'connection_uri'.",
+        raise api_error(
+            400,
+            "missing_field",
+            "Request body must include 'connection_uri'.",
+            field="connection_uri",
         )
     password_env = (
         str(payload.get("password_env") or "EVIDENTIA_ORACLE_PASSWORD").strip()
@@ -453,12 +616,14 @@ async def oracle_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     )
     password = os.environ.get(password_env)
     if password is None:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "credentials_missing",
+            (
                 f"Environment variable {password_env!r} not set on the "
                 "server."
             ),
+            env_var=password_env,
         )
 
     try:
@@ -469,18 +634,36 @@ async def oracle_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
         ) as collector:
             findings = collector.collect()
     except OracleCollectorError as e:
-        raise HTTPException(status_code=503, detail=str(e)) from e
+        raise api_error(503, "upstream_error", str(e)) from e
     except Exception as e:
         logger.exception("Oracle collector failed")
-        raise HTTPException(
-            status_code=500, detail=f"Oracle collector failed: {e}"
+        raise api_error(
+            500, "collector_failed", f"Oracle collector failed: {e}"
         ) from e
 
     return findings
 
 
 @router.post(
-    "/collectors/sql/sqlite/collect", response_model=list[SecurityFinding]
+    "/collectors/sql/sqlite/collect",
+    response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            400: (
+                "Missing ``database_path`` body field "
+                "(``error: missing_field``)."
+            ),
+            500: (
+                "Unexpected collector failure "
+                "(``error: collector_failed``)."
+            ),
+            503: (
+                "Collector import failed or database not readable / "
+                "outside safe_root (``error: feature_unavailable`` / "
+                "``error: upstream_error``)."
+            ),
+        }
+    ),
 )
 async def sqlite_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     """Run the SQLite collector (v0.7.7 P0.3).
@@ -508,16 +691,19 @@ async def sqlite_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             SQLiteCollectorError,
         )
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=f"SQLite collector failed to import: {e}",
+        raise api_error(
+            503,
+            "feature_unavailable",
+            f"SQLite collector failed to import: {e}",
         ) from e
 
     database_path = str(payload.get("database_path") or "").strip()
     if not database_path:
-        raise HTTPException(
-            status_code=400,
-            detail="Request body must include 'database_path'.",
+        raise api_error(
+            400,
+            "missing_field",
+            "Request body must include 'database_path'.",
+            field="database_path",
         )
 
     safe_root = os.environ.get("EVIDENTIA_SQLITE_SAFE_ROOT") or None
@@ -529,18 +715,36 @@ async def sqlite_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
         ) as collector:
             findings = collector.collect()
     except SQLiteCollectorError as e:
-        raise HTTPException(status_code=503, detail=str(e)) from e
+        raise api_error(503, "upstream_error", str(e)) from e
     except Exception as e:
         logger.exception("SQLite collector failed")
-        raise HTTPException(
-            status_code=500, detail=f"SQLite collector failed: {e}"
+        raise api_error(
+            500, "collector_failed", f"SQLite collector failed: {e}"
         ) from e
 
     return findings
 
 
 @router.post(
-    "/collectors/databricks/collect", response_model=list[SecurityFinding]
+    "/collectors/databricks/collect",
+    response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            400: (
+                "Missing ``workspace_url`` body field "
+                "(``error: missing_field``)."
+            ),
+            500: (
+                "Unexpected collector failure "
+                "(``error: collector_failed``)."
+            ),
+            503: (
+                "Collector not installed or workspace unreachable "
+                "(``error: feature_unavailable`` / "
+                "``error: upstream_error``)."
+            ),
+        }
+    ),
 )
 async def databricks_collect(
     payload: dict[str, Any],
@@ -575,9 +779,10 @@ async def databricks_collect(
             DatabricksCollectorError,
         )
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
                 "Databricks collector not installed. Run "
                 "`pip install 'evidentia-collectors[databricks]'`."
             ),
@@ -585,9 +790,11 @@ async def databricks_collect(
 
     workspace_url = str(payload.get("workspace_url") or "").strip()
     if not workspace_url:
-        raise HTTPException(
-            status_code=400,
-            detail="Request body must include 'workspace_url'.",
+        raise api_error(
+            400,
+            "missing_field",
+            "Request body must include 'workspace_url'.",
+            field="workspace_url",
         )
 
     try:
@@ -597,12 +804,13 @@ async def databricks_collect(
         ) as collector:
             findings = collector.collect()
     except DatabricksCollectorError as e:
-        raise HTTPException(status_code=503, detail=str(e)) from e
+        raise api_error(503, "upstream_error", str(e)) from e
     except Exception as e:
         logger.exception("Databricks collector failed")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Databricks collector failed: {e}",
+        raise api_error(
+            500,
+            "collector_failed",
+            f"Databricks collector failed: {e}",
         ) from e
 
     return findings
@@ -611,6 +819,24 @@ async def databricks_collect(
 @router.post(
     "/collectors/snowflake/collect",
     response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            400: (
+                "Missing ``account`` / ``user`` body field or "
+                "password env var unset (``error: missing_field`` / "
+                "``error: credentials_missing``)."
+            ),
+            500: (
+                "Unexpected collector failure "
+                "(``error: collector_failed``)."
+            ),
+            503: (
+                "Collector not installed or Snowflake unreachable "
+                "(``error: feature_unavailable`` / "
+                "``error: upstream_error``)."
+            ),
+        }
+    ),
 )
 async def snowflake_collect(
     payload: dict[str, Any],
@@ -657,9 +883,10 @@ async def snowflake_collect(
             SnowflakeCollectorError,
         )
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
                 "Snowflake collector not installed. Run "
                 "`pip install 'evidentia-collectors[snowflake]'`."
             ),
@@ -668,14 +895,18 @@ async def snowflake_collect(
     account = str(payload.get("account") or "").strip()
     user = str(payload.get("user") or "").strip()
     if not account:
-        raise HTTPException(
-            status_code=400,
-            detail="Request body must include 'account'.",
+        raise api_error(
+            400,
+            "missing_field",
+            "Request body must include 'account'.",
+            field="account",
         )
     if not user:
-        raise HTTPException(
-            status_code=400,
-            detail="Request body must include 'user'.",
+        raise api_error(
+            400,
+            "missing_field",
+            "Request body must include 'user'.",
+            field="user",
         )
 
     private_key_path = payload.get("private_key_path")
@@ -692,13 +923,15 @@ async def snowflake_collect(
         )
         password = os.environ.get(password_env)
         if not password:
-            raise HTTPException(
-                status_code=400,
-                detail=(
+            raise api_error(
+                400,
+                "credentials_missing",
+                (
                     f"Env var '{password_env}' is not set or is "
                     f"empty. Either set it server-side OR pass "
                     f"'private_key_path' for key-pair auth."
                 ),
+                env_var=password_env,
             )
 
     warehouse = payload.get("warehouse")
@@ -720,12 +953,13 @@ async def snowflake_collect(
         ) as collector:
             findings = collector.collect()
     except SnowflakeCollectorError as e:
-        raise HTTPException(status_code=503, detail=str(e)) from e
+        raise api_error(503, "upstream_error", str(e)) from e
     except Exception as e:
         logger.exception("Snowflake collector failed")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Snowflake collector failed: {e}",
+        raise api_error(
+            500,
+            "collector_failed",
+            f"Snowflake collector failed: {e}",
         ) from e
 
     return findings
@@ -734,6 +968,24 @@ async def snowflake_collect(
 @router.post(
     "/collectors/vanta/collect",
     response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            400: (
+                "Invalid ``max_vendors`` body field "
+                "(``error: invalid_field``)."
+            ),
+            500: (
+                "Unexpected collector failure "
+                "(``error: collector_failed``)."
+            ),
+            503: (
+                "Collector not installed, token env var unset, or "
+                "Vanta unreachable (``error: feature_unavailable`` / "
+                "``error: credentials_missing`` / "
+                "``error: upstream_error``)."
+            ),
+        }
+    ),
 )
 async def vanta_collect(
     payload: dict[str, Any] | None = None,
@@ -775,9 +1027,10 @@ async def vanta_collect(
             VantaCollectorError,
         )
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
                 "Vanta collector not installed. The collector is "
                 "part of the base evidentia-collectors install — "
                 "if this fires, check the package install "
@@ -801,16 +1054,20 @@ async def vanta_collect(
         try:
             max_vendors = int(raw_max_vendors)
         except (TypeError, ValueError) as e:
-            raise HTTPException(
-                status_code=400,
-                detail=f"max_vendors must be int; got {raw_max_vendors!r}",
+            raise api_error(
+                400,
+                "invalid_field",
+                f"max_vendors must be int; got {raw_max_vendors!r}",
+                field="max_vendors",
             ) from e
         if max_vendors < 1 or max_vendors > 100_000:
-            raise HTTPException(
-                status_code=400,
-                detail=(
+            raise api_error(
+                400,
+                "invalid_field",
+                (
                     f"max_vendors must be in [1, 100000]; got {max_vendors}"
                 ),
+                field="max_vendors",
             )
     token_env = (
         str(body.get("token_env") or "VANTA_API_TOKEN").strip()
@@ -818,14 +1075,16 @@ async def vanta_collect(
     )
     api_token = os.environ.get(token_env)
     if not api_token:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "credentials_missing",
+            (
                 f"Env var '{token_env}' is not set or is empty. "
                 "Set it server-side before invoking this endpoint. "
                 "The Vanta token MUST NOT flow through the "
                 "request body."
             ),
+            env_var=token_env,
         )
 
     try:
@@ -837,12 +1096,13 @@ async def vanta_collect(
         ) as collector:
             findings = collector.collect()
     except VantaCollectorError as e:
-        raise HTTPException(status_code=503, detail=str(e)) from e
+        raise api_error(503, "upstream_error", str(e)) from e
     except Exception as e:
         logger.exception("Vanta collector failed")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Vanta collector failed: {e}",
+        raise api_error(
+            500,
+            "collector_failed",
+            f"Vanta collector failed: {e}",
         ) from e
 
     return findings
@@ -851,6 +1111,24 @@ async def vanta_collect(
 @router.post(
     "/collectors/drata/collect",
     response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            400: (
+                "Invalid ``max_vendors`` body field "
+                "(``error: invalid_field``)."
+            ),
+            500: (
+                "Unexpected collector failure "
+                "(``error: collector_failed``)."
+            ),
+            503: (
+                "Collector not installed, token env var unset, or "
+                "Drata unreachable (``error: feature_unavailable`` / "
+                "``error: credentials_missing`` / "
+                "``error: upstream_error``)."
+            ),
+        }
+    ),
 )
 async def drata_collect(
     payload: dict[str, Any] | None = None,
@@ -890,9 +1168,10 @@ async def drata_collect(
             DrataCollectorError,
         )
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
                 "Drata collector not installed. The collector is "
                 "part of the base evidentia-collectors install — "
                 "if this fires, check the package install "
@@ -916,16 +1195,20 @@ async def drata_collect(
         try:
             max_vendors = int(raw_max_vendors)
         except (TypeError, ValueError) as e:
-            raise HTTPException(
-                status_code=400,
-                detail=f"max_vendors must be int; got {raw_max_vendors!r}",
+            raise api_error(
+                400,
+                "invalid_field",
+                f"max_vendors must be int; got {raw_max_vendors!r}",
+                field="max_vendors",
             ) from e
         if max_vendors < 1 or max_vendors > 100_000:
-            raise HTTPException(
-                status_code=400,
-                detail=(
+            raise api_error(
+                400,
+                "invalid_field",
+                (
                     f"max_vendors must be in [1, 100000]; got {max_vendors}"
                 ),
+                field="max_vendors",
             )
     token_env = (
         str(body.get("token_env") or "DRATA_API_TOKEN").strip()
@@ -933,14 +1216,16 @@ async def drata_collect(
     )
     api_token = os.environ.get(token_env)
     if not api_token:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "credentials_missing",
+            (
                 f"Env var '{token_env}' is not set or is empty. "
                 "Set it server-side before invoking this endpoint. "
                 "The Drata token MUST NOT flow through the "
                 "request body."
             ),
+            env_var=token_env,
         )
 
     try:
@@ -952,12 +1237,13 @@ async def drata_collect(
         ) as collector:
             findings = collector.collect()
     except DrataCollectorError as e:
-        raise HTTPException(status_code=503, detail=str(e)) from e
+        raise api_error(503, "upstream_error", str(e)) from e
     except Exception as e:
         logger.exception("Drata collector failed")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Drata collector failed: {e}",
+        raise api_error(
+            500,
+            "collector_failed",
+            f"Drata collector failed: {e}",
         ) from e
 
     return findings
@@ -966,6 +1252,24 @@ async def drata_collect(
 @router.post(
     "/collectors/bitsight/collect",
     response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            400: (
+                "Invalid ``max_companies`` / ``rating_threshold`` "
+                "body field (``error: invalid_field``)."
+            ),
+            500: (
+                "Unexpected collector failure "
+                "(``error: collector_failed``)."
+            ),
+            503: (
+                "Collector not installed, token env var unset, or "
+                "BitSight unreachable (``error: feature_unavailable`` "
+                "/ ``error: credentials_missing`` / "
+                "``error: upstream_error``)."
+            ),
+        }
+    ),
 )
 async def bitsight_collect(
     payload: dict[str, Any] | None = None,
@@ -998,9 +1302,10 @@ async def bitsight_collect(
             BitSightCollectorError,
         )
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
                 "BitSight collector not installed. The collector "
                 "is part of the base evidentia-collectors install."
             ),
@@ -1020,24 +1325,30 @@ async def bitsight_collect(
         try:
             max_companies = int(raw_max_companies)
         except (TypeError, ValueError) as e:
-            raise HTTPException(
-                status_code=400,
-                detail=f"max_companies must be int; got {raw_max_companies!r}",
+            raise api_error(
+                400,
+                "invalid_field",
+                f"max_companies must be int; got {raw_max_companies!r}",
+                field="max_companies",
             ) from e
         if max_companies < 1 or max_companies > 100_000:
-            raise HTTPException(
-                status_code=400,
-                detail=(
+            raise api_error(
+                400,
+                "invalid_field",
+                (
                     f"max_companies must be in [1, 100000]; got {max_companies}"
                 ),
+                field="max_companies",
             )
     rating_threshold = int(body.get("rating_threshold") or 700)
     if not 250 <= rating_threshold <= 900:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "invalid_field",
+            (
                 "rating_threshold must be in BitSight's 250-900 range."
             ),
+            field="rating_threshold",
         )
     token_env = (
         str(body.get("token_env") or "BITSIGHT_API_TOKEN").strip()
@@ -1045,12 +1356,14 @@ async def bitsight_collect(
     )
     api_token = os.environ.get(token_env)
     if not api_token:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "credentials_missing",
+            (
                 f"Env var '{token_env}' is not set or is empty. "
                 "Set it server-side before invoking this endpoint."
             ),
+            env_var=token_env,
         )
 
     try:
@@ -1063,12 +1376,13 @@ async def bitsight_collect(
         ) as collector:
             findings = collector.collect()
     except BitSightCollectorError as e:
-        raise HTTPException(status_code=503, detail=str(e)) from e
+        raise api_error(503, "upstream_error", str(e)) from e
     except Exception as e:
         logger.exception("BitSight collector failed")
-        raise HTTPException(
-            status_code=500,
-            detail=f"BitSight collector failed: {e}",
+        raise api_error(
+            500,
+            "collector_failed",
+            f"BitSight collector failed: {e}",
         ) from e
 
     return findings
@@ -1077,6 +1391,26 @@ async def bitsight_collect(
 @router.post(
     "/collectors/securityscorecard/collect",
     response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            400: (
+                "Invalid ``portfolio_id`` / ``max_companies`` / "
+                "``score_threshold`` body field "
+                "(``error: invalid_field``)."
+            ),
+            500: (
+                "Unexpected collector failure "
+                "(``error: collector_failed``)."
+            ),
+            503: (
+                "Collector not installed, token env var unset, or "
+                "SecurityScorecard unreachable "
+                "(``error: feature_unavailable`` / "
+                "``error: credentials_missing`` / "
+                "``error: upstream_error``)."
+            ),
+        }
+    ),
 )
 async def securityscorecard_collect(
     payload: dict[str, Any] | None = None,
@@ -1115,9 +1449,10 @@ async def securityscorecard_collect(
             SecurityScorecardCollectorError,
         )
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
                 "SecurityScorecard collector not installed. The "
                 "collector is part of the base evidentia-collectors "
                 "install."
@@ -1143,7 +1478,9 @@ async def securityscorecard_collect(
         try:
             _validate_portfolio_id_shape(portfolio_id_str)
         except SecurityScorecardInvalidPortfolioIdError as e:
-            raise HTTPException(status_code=400, detail=str(e)) from e
+            raise api_error(
+                400, "invalid_field", str(e), field="portfolio_id"
+            ) from e
     base_url = (
         str(body.get("base_url") or "https://api.securityscorecard.io").strip()
         or "https://api.securityscorecard.io"
@@ -1157,22 +1494,28 @@ async def securityscorecard_collect(
         try:
             max_companies = int(raw_max_companies)
         except (TypeError, ValueError) as e:
-            raise HTTPException(
-                status_code=400,
-                detail=f"max_companies must be int; got {raw_max_companies!r}",
+            raise api_error(
+                400,
+                "invalid_field",
+                f"max_companies must be int; got {raw_max_companies!r}",
+                field="max_companies",
             ) from e
         if max_companies < 1 or max_companies > 100_000:
-            raise HTTPException(
-                status_code=400,
-                detail=(
+            raise api_error(
+                400,
+                "invalid_field",
+                (
                     f"max_companies must be in [1, 100000]; got {max_companies}"
                 ),
+                field="max_companies",
             )
     score_threshold = int(body.get("score_threshold") or 70)
     if not 0 <= score_threshold <= 100:
-        raise HTTPException(
-            status_code=400,
-            detail="score_threshold must be in SSC's 0-100 range.",
+        raise api_error(
+            400,
+            "invalid_field",
+            "score_threshold must be in SSC's 0-100 range.",
+            field="score_threshold",
         )
     token_env = (
         str(body.get("token_env") or "SECURITYSCORECARD_API_TOKEN").strip()
@@ -1180,12 +1523,14 @@ async def securityscorecard_collect(
     )
     api_token = os.environ.get(token_env)
     if not api_token:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "credentials_missing",
+            (
                 f"Env var '{token_env}' is not set or is empty. "
                 "Set it server-side before invoking this endpoint."
             ),
+            env_var=token_env,
         )
 
     try:
@@ -1199,12 +1544,13 @@ async def securityscorecard_collect(
         ) as collector:
             findings = collector.collect()
     except SecurityScorecardCollectorError as e:
-        raise HTTPException(status_code=503, detail=str(e)) from e
+        raise api_error(503, "upstream_error", str(e)) from e
     except Exception as e:
         logger.exception("SecurityScorecard collector failed")
-        raise HTTPException(
-            status_code=500,
-            detail=f"SecurityScorecard collector failed: {e}",
+        raise api_error(
+            500,
+            "collector_failed",
+            f"SecurityScorecard collector failed: {e}",
         ) from e
 
     return findings
@@ -1213,7 +1559,23 @@ async def securityscorecard_collect(
 # v0.10.12 ─────────────────────────────────────────────────────────────────
 
 
-@router.post("/collectors/ocsf/collect", response_model=list[SecurityFinding])
+@router.post(
+    "/collectors/ocsf/collect",
+    response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            400: (
+                "Bad content / URL — missing or conflicting input "
+                "mode, malformed OCSF, non-HTTPS URL, SSRF refusal, "
+                "fetch failure (``error: invalid_body``)."
+            ),
+            503: (
+                "Optional ``ocsf`` extra not installed "
+                "(``error: feature_unavailable``)."
+            ),
+        }
+    ),
+)
 async def ocsf_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     """Ingest OCSF Compliance / Detection Finding JSON (v0.10.12).
 
@@ -1254,9 +1616,10 @@ async def ocsf_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
         )
         from evidentia_collectors.ocsf.collector import _convert_ocsf_payload
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
                 "OCSF ingestion needs the optional ocsf extra. Run "
                 "`pip install 'evidentia-core[ocsf]'`."
             ),
@@ -1266,14 +1629,16 @@ async def ocsf_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     url = payload.get("url") if isinstance(payload.get("url"), str) else None
 
     if not has_content and not url:
-        raise HTTPException(
-            status_code=400,
-            detail="Request body must include either 'content' or 'url'.",
+        raise api_error(
+            400,
+            "invalid_body",
+            "Request body must include either 'content' or 'url'.",
         )
     if has_content and url:
-        raise HTTPException(
-            status_code=400,
-            detail="Provide exactly one of 'content' or 'url', not both.",
+        raise api_error(
+            400,
+            "invalid_body",
+            "Provide exactly one of 'content' or 'url', not both.",
         )
 
     try:
@@ -1292,12 +1657,29 @@ async def ocsf_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
                 url, block_private_ips=_block_private_ips(payload)
             )
     except OCSFIngestError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        raise api_error(400, "invalid_body", str(e)) from e
 
     return findings
 
 
-@router.post("/collectors/convert", response_model=list[dict[str, Any]])
+@router.post(
+    "/collectors/convert",
+    response_model=list[dict[str, Any]],
+    responses=error_responses(
+        {
+            400: (
+                "Missing ``content``, unsupported ``to_format``, or "
+                "invalid findings (``error: missing_field`` / "
+                "``error: unsupported_format`` / "
+                "``error: invalid_body``)."
+            ),
+            503: (
+                "Optional ``ocsf`` extra not installed "
+                "(``error: feature_unavailable``)."
+            ),
+        }
+    ),
+)
 async def collect_convert(payload: dict[str, Any]) -> list[dict[str, Any]]:
     """Convert a findings document between formats (v0.10.12).
 
@@ -1318,26 +1700,31 @@ async def collect_convert(payload: dict[str, Any]) -> list[dict[str, Any]]:
     """
     to_format = str(payload.get("to_format") or "ocsf").strip() or "ocsf"
     if to_format != "ocsf":
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "unsupported_format",
+            (
                 f"Unsupported to_format {to_format!r}. "
                 "v0.10.12 supports only 'ocsf'."
             ),
+            format=to_format,
         )
 
     if "content" not in payload or payload.get("content") is None:
-        raise HTTPException(
-            status_code=400,
-            detail="Request body must include 'content'.",
+        raise api_error(
+            400,
+            "missing_field",
+            "Request body must include 'content'.",
+            field="content",
         )
 
     try:
         from evidentia_core.ocsf import OCSFMappingError, finding_to_ocsf
     except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=(
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
                 "OCSF conversion needs the optional ocsf extra. Run "
                 "`pip install 'evidentia-core[ocsf]'`."
             ),
@@ -1349,15 +1736,16 @@ async def collect_convert(payload: dict[str, Any]) -> list[dict[str, Any]]:
     try:
         findings = [SecurityFinding.model_validate(item) for item in items]
     except ValidationError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid SecurityFinding in 'content': {e}",
+        raise api_error(
+            400,
+            "invalid_body",
+            f"Invalid SecurityFinding in 'content': {e}",
         ) from e
 
     try:
         bundle = [finding_to_ocsf(f) for f in findings]
     except OCSFMappingError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        raise api_error(400, "invalid_body", str(e)) from e
 
     return bundle
 
