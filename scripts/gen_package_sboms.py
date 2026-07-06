@@ -15,6 +15,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
+import subprocess
 import sys
 import uuid
 from datetime import UTC, datetime
@@ -63,6 +65,22 @@ def _dep_name(requirement: str) -> str:
     return base.strip()
 
 
+def _determinize_npm_sbom(doc: dict, purl_seed: str) -> dict:
+    """Strip volatile fields from an `npm sbom` CycloneDX doc.
+
+    npm stamps a random serialNumber + wall-clock timestamp; both would
+    break the release double-build byte-identity gate.
+    """
+    doc = dict(doc)
+    doc["serialNumber"] = (
+        f"urn:uuid:{uuid.uuid5(uuid.NAMESPACE_URL, purl_seed + '#npm')}"
+    )
+    meta = dict(doc.get("metadata", {}))
+    meta.pop("timestamp", None)
+    doc["metadata"] = meta
+    return doc
+
+
 def build_sbom(pkg: dict) -> dict:
     purl = f"pkg:pypi/{pkg['name']}@{pkg['version']}"
     bom_ref = purl
@@ -107,12 +125,48 @@ def build_sbom(pkg: dict) -> dict:
     }
 
 
+def generate_npm_sbom(api_pkg: dict, out_dir: Path) -> bool:
+    """CycloneDX SBOM of the bundled React SPA's npm closure.
+
+    The evidentia-api wheel ships the built SPA — its npm dependency
+    closure is invisible to Python tooling: the exact phantom-dependency
+    case PEP 770 exists for. Uses npm's native `npm sbom` (npm >= 9.6).
+    Returns False (skip) when npm or the lockfile is unavailable.
+    """
+    ui_dir = REPO_ROOT / "packages" / "evidentia-ui"
+    npm = shutil.which("npm")
+    if npm is None or not (ui_dir / "package-lock.json").exists():
+        print("npm sbom: skipped (npm or lockfile unavailable)")
+        return False
+    proc = subprocess.run(
+        [npm, "sbom", "--sbom-format", "cyclonedx", "--package-lock-only"],
+        cwd=ui_dir,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    doc = _determinize_npm_sbom(
+        json.loads(proc.stdout),
+        purl_seed=f"pkg:pypi/{api_pkg['name']}@{api_pkg['version']}",
+    )
+    out = out_dir / "evidentia-ui-npm.cdx.json"
+    out.write_text(json.dumps(doc, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"wrote {out}")
+    return True
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--only", help="generate for one package name only")
     parser.add_argument(
         "--out-root",
         help="write to DIR/<pkgdir>/sbom/ instead of in-tree (tests)",
+    )
+    parser.add_argument(
+        "--npm",
+        action="store_true",
+        help="also emit the evidentia-ui npm-closure SBOM into evidentia-api",
     )
     args = parser.parse_args(argv)
     count = 0
@@ -131,6 +185,8 @@ def main(argv: list[str] | None = None) -> int:
             json.dumps(doc, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
         print(f"wrote {out.relative_to(REPO_ROOT) if not args.out_root else out}")
+        if args.npm and pkg["name"] == "evidentia-api":
+            generate_npm_sbom(pkg, out_dir)
         count += 1
     if count == 0:
         print("no packages matched", file=sys.stderr)

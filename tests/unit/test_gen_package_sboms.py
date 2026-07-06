@@ -58,3 +58,22 @@ def test_timestamp_from_source_date_epoch(monkeypatch) -> None:
     pkgs = g.discover_packages(REPO_ROOT)
     doc = g.build_sbom(pkgs[0])
     assert doc["metadata"]["timestamp"] == "2023-11-14T22:13:20+00:00"
+
+
+def test_npm_sbom_determinized(tmp_path: Path, monkeypatch) -> None:
+    """_determinize_npm_sbom strips volatile fields and re-serials."""
+    raw = {
+        "bomFormat": "CycloneDX",
+        "specVersion": "1.6",
+        "serialNumber": "urn:uuid:11111111-1111-1111-1111-111111111111",
+        "metadata": {"timestamp": "2026-07-06T00:00:00Z", "tools": []},
+        "components": [{"name": "react", "type": "library"}],
+    }
+    out = g._determinize_npm_sbom(raw, purl_seed="pkg:pypi/evidentia-api@0.0.0")
+    assert out["serialNumber"] == "urn:uuid:" + str(
+        __import__("uuid").uuid5(
+            __import__("uuid").NAMESPACE_URL, "pkg:pypi/evidentia-api@0.0.0#npm"
+        )
+    )
+    assert "timestamp" not in out["metadata"]
+    assert out["components"][0]["name"] == "react"
