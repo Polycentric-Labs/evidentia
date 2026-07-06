@@ -812,7 +812,7 @@ requires-dist = [
     { name = "evidentia-eval", editable = "packages/evidentia-eval" },
     { name = "evidentia-eval", extras = ["faithfulness-semantic"], marker = "extra == 'eval-faithfulness'", editable = "packages/evidentia-eval" },
     { name = "instructor", specifier = ">=1.6" },
-    { name = "litellm", specifier = ">=1.90.2,<2.0" },
+    { name = "litellm", specifier = ">=1.91.0,<2.0" },
     { name = "tenacity", specifier = ">=9.0" },
 ]
 provides-extras = ["eval-faithfulness"]
@@ -837,7 +837,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.139.0" },
     { name = "python-multipart", specifier = ">=0.0.26" },
     { name = "sse-starlette", specifier = ">=2.1" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.50.1" },
 ]
 
 [[package]]
@@ -912,9 +912,9 @@ requires-dist = [
     { name = "oracledb", marker = "extra == 'all'", specifier = ">=2.0" },
     { name = "oracledb", marker = "extra == 'sql'", specifier = ">=2.0" },
     { name = "oracledb", marker = "extra == 'sql-oracle'", specifier = ">=2.0" },
-    { name = "psycopg", extras = ["binary"], marker = "extra == 'all'", specifier = ">=3.1" },
-    { name = "psycopg", extras = ["binary"], marker = "extra == 'sql'", specifier = ">=3.1" },
-    { name = "psycopg", extras = ["binary"], marker = "extra == 'sql-postgres'", specifier = ">=3.1" },
+    { name = "psycopg", extras = ["binary"], marker = "extra == 'all'", specifier = ">=3.3.4" },
+    { name = "psycopg", extras = ["binary"], marker = "extra == 'sql'", specifier = ">=3.3.4" },
+    { name = "psycopg", extras = ["binary"], marker = "extra == 'sql-postgres'", specifier = ">=3.3.4" },
     { name = "py-ocsf-models", marker = "extra == 'all'", specifier = ">=0.9.0,<0.10.0" },
     { name = "py-ocsf-models", marker = "extra == 'ocsf'", specifier = ">=0.9.0,<0.10.0" },
     { name = "pygithub", marker = "extra == 'all'", specifier = ">=2.4" },
@@ -984,7 +984,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "sigstore", marker = "extra == 'sigstore'", specifier = ">=3.0" },
     { name = "tenacity", specifier = ">=9.0" },
-    { name = "thefuzz", extras = ["speedup"], specifier = ">=0.22" },
+    { name = "thefuzz", extras = ["speedup"], specifier = ">=0.22.1" },
 ]
 provides-extras = ["sigstore", "xlsx", "worm-s3", "worm-azure", "worm-gcs", "ocsf"]
 
@@ -1932,7 +1932,7 @@ wheels = [
 
 [[package]]
 name = "litellm"
-version = "1.90.2"
+version = "1.91.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1948,9 +1948,9 @@ dependencies = [
     { name = "tiktoken" },
     { name = "tokenizers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/88/00/4187e33818d0de19fd602214ce15a6e1cfa5bf04fb50a6e59606214a92df/litellm-1.90.2.tar.gz", hash = "sha256:b536603894ba2a0ccd14a6f1ebeb5f46cc35b19d4537e8fda7bfdfc7757f19d3", size = 14819154, upload-time = "2026-07-01T02:29:58.397Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/86/1e/90cfeada42170986a290feebaca0a90923b3c310cddeb0f8690abd239ad4/litellm-1.91.0.tar.gz", hash = "sha256:4fd469fe7356ba8fcc86f4efdf332e3426b760962ab12331fdaf1a01aeec065f", size = 14872290, upload-time = "2026-07-04T19:18:28.466Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/24/30/3afa7b212ce1f9bb8b6fa5f58c631f437c1d7b3a025e4e4ed6b01b3d28ad/litellm-1.90.2-py3-none-any.whl", hash = "sha256:6fb46f485150cc861be62a62d670f94d33adbd26991091befeb51bcdfdad34f6", size = 16612720, upload-time = "2026-07-01T02:29:55.215Z" },
+    { url = "https://files.pythonhosted.org/packages/a4/15/81fc2d162513803fe08b359c2e2a98f7a33195034fb94b005e263e272c6b/litellm-1.91.0-py3-none-any.whl", hash = "sha256:c3eb52dd2c6a5779e9efd67350f3640f9055d9c05d4b572fc1dd01a217e562ad", size = 16669331, upload-time = "2026-07-04T19:18:25.203Z" },
 ]
 
 [[package]]
@@ -4448,15 +4448,15 @@ wheels = [
 
 [[package]]
 name = "uvicorn"
-version = "0.49.0"
+version = "0.50.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "h11" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c4/1f/fa18009dea8469069cca78a4e877a008ab78f08b064bfc9ab891579077ff/uvicorn-0.49.0.tar.gz", hash = "sha256:ebf4271aa580d9de97f93192d4595176df6e91f9aae919ca73e4fc07df1e66a3", size = 91284, upload-time = "2026-06-03T22:01:30.448Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/61/bb/88735238d7ead151c28d5432551170f17746c70c257aa66e8d7e64eca7a3/uvicorn-0.50.1.tar.gz", hash = "sha256:ccb3061887829fd8471cfa6fc65b2594689342ee00792e5d257d34871755b09f", size = 93722, upload-time = "2026-07-06T07:52:25.238Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/fa/e1388bbcf24ef3274f45c0c1c7b501fd14971037c1b6ee23610553307497/uvicorn-0.49.0-py3-none-any.whl", hash = "sha256:ba3d14c3ee7e41c6c654c46c9eb489d33213cdd30aa1696eab1374337c13f68f", size = 71376, upload-time = "2026-06-03T22:01:29.037Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/59/02c7859295b001e77b8079fc9df9f8161b7c872cbf7ea8dab70cf51d61f1/uvicorn-0.50.1-py3-none-any.whl", hash = "sha256:8139bce59602f55d497c9ed77af3117b0b5fa033e3e887193fa00a5968c38c57", size = 72843, upload-time = "2026-07-06T07:52:23.62Z" },
 ]
 
 [package.optional-dependencies]
