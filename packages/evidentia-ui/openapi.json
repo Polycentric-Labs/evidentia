@@ -1785,7 +1785,39 @@
       },
       "EvidenceRef": {
         "additionalProperties": false,
-        "description": "Reference to a Sigstore-signed evidence artifact attached to a vendor.\n\nTwo-modes:\n\n1. **Internal reference** (preferred): set ``artifact_id`` to point\n   at an existing :class:`evidentia_core.models.evidence.EvidenceArtifact`\n   in the evidence-store. Sigstore signing is whatever the parent\n   artifact already carries.\n\n2. **External reference** (fallback): set ``file_path`` + ``sha256``\n   (+ ``sigstore_bundle_path`` if signed) for evidence stored\n   outside the evidence-store. Useful for ad-hoc vendor uploads\n   (SOC 2 reports, ISO 27001 certificates, completed SIG/CAIQ\n   questionnaires) that haven't been formally ingested.\n\nAt least one of (``artifact_id``, ``file_path``) must be set;\nenforced in :meth:`model_validator` below.",
+        "anyOf": [
+          {
+            "properties": {
+              "artifact_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "artifact_id"
+            ]
+          },
+          {
+            "properties": {
+              "file_path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "file_path"
+            ]
+          }
+        ],
+        "description": "Reference to a Sigstore-signed evidence artifact attached to a vendor.\n\nTwo-modes:\n\n1. **Internal reference** (preferred): set ``artifact_id`` to point\n   at an existing :class:`evidentia_core.models.evidence.EvidenceArtifact`\n   in the evidence-store. Sigstore signing is whatever the parent\n   artifact already carries.\n\n2. **External reference** (fallback): set ``file_path`` + ``sha256``\n   (+ ``sigstore_bundle_path`` if signed) for evidence stored\n   outside the evidence-store. Useful for ad-hoc vendor uploads\n   (SOC 2 reports, ISO 27001 certificates, completed SIG/CAIQ\n   questionnaires) that haven't been formally ingested.\n\nAt least one of (``artifact_id``, ``file_path``) must be set;\nenforced in :meth:`model_validator` below and mirrored into the\npublished JSON Schema via ``json_schema_extra``.",
+        "if": {
+          "properties": {
+            "file_path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "file_path"
+          ]
+        },
         "properties": {
           "artifact_id": {
             "anyOf": [
@@ -1864,6 +1896,16 @@
         "required": [
           "title"
         ],
+        "then": {
+          "properties": {
+            "sha256": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "sha256"
+          ]
+        },
         "title": "EvidenceRef",
         "type": "object"
       },

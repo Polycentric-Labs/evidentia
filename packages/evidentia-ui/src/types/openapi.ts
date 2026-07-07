@@ -4223,7 +4223,8 @@ export interface components {
          *        questionnaires) that haven't been formally ingested.
          *
          *     At least one of (``artifact_id``, ``file_path``) must be set;
-         *     enforced in :meth:`model_validator` below.
+         *     enforced in :meth:`model_validator` below and mirrored into the
+         *     published JSON Schema via ``json_schema_extra``.
          */
         EvidenceRef: {
             /**
@@ -4262,6 +4263,10 @@ export interface components {
              * @description Human-readable label — e.g., 'SOC 2 Type II Report — FY2025', 'ISO 27001 Cert (expires 2027-03)', 'Completed SIG-Lite questionnaire 2025-Q4'.
              */
             title: string;
+        } | {
+            artifact_id: string;
+        } | {
+            file_path: string;
         };
         /**
          * EvidenceSufficiency
