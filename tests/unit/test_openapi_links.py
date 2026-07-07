@@ -16,24 +16,25 @@ PUT /api/ai-gov/systems/{system_id}.
 
 from __future__ import annotations
 
-import os
-import tempfile
+from pathlib import Path
 from typing import Any
 
 import pytest
 
 
 @pytest.fixture
-def openapi_schema() -> dict[str, Any]:
+def openapi_schema(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> dict[str, Any]:
     """Build the OpenAPI schema with an isolated AI registry dir.
 
     Mirrors the isolation pattern used elsewhere (an isolated
     ``EVIDENTIA_AI_REGISTRY_DIR`` set before app construction) so this
-    test never touches a developer's real registry store.
+    test never touches a developer's real registry store. Uses
+    ``monkeypatch`` so the env var is restored after the test rather
+    than leaking process-wide.
     """
-    os.environ["EVIDENTIA_AI_REGISTRY_DIR"] = tempfile.mkdtemp(
-        prefix="evidentia-openapi-links-test-"
-    )
+    monkeypatch.setenv("EVIDENTIA_AI_REGISTRY_DIR", str(tmp_path / "ai_registry"))
     from evidentia_api.app import create_app
 
     return create_app(offline=True).openapi()

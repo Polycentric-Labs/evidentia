@@ -20,8 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **DAST-driven API schema + error-contract hardening** — several
   fixes surfaced while building the stateful-DAST harness: OpenAPI
   `links` on the ai-gov register→get/put/delete and catalog
-  import→delete lifecycles; `UpdateSystemRequest` and `EvidenceRef`
-  cross-field rules mirrored into the published schema (`anyOf`);
+  import→delete lifecycles; `UpdateSystemRequest`'s
+  at-least-one-field rule mirrored into the published schema (`anyOf`);
   a non-whitespace `pattern` on the AI-system descriptor
   `name`/`purpose` so the schema matches the strip+`min_length`
   runtime; the `system_id` UUID shape documented on the lifecycle ops;

@@ -6315,10 +6315,13 @@
         "operationId": "ai_gov_delete_system_api_ai_gov_systems__system_id__delete",
         "parameters": [
           {
+            "description": "Registered AI system ID (UUID).",
             "in": "path",
             "name": "system_id",
             "required": true,
             "schema": {
+              "description": "Registered AI system ID (UUID).",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
               "title": "System Id",
               "type": "string"
             }
@@ -6368,10 +6371,13 @@
         "operationId": "ai_gov_get_system_api_ai_gov_systems__system_id__get",
         "parameters": [
           {
+            "description": "Registered AI system ID (UUID).",
             "in": "path",
             "name": "system_id",
             "required": true,
             "schema": {
+              "description": "Registered AI system ID (UUID).",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
               "title": "System Id",
               "type": "string"
             }
@@ -6431,10 +6437,13 @@
         "operationId": "ai_gov_update_system_api_ai_gov_systems__system_id__put",
         "parameters": [
           {
+            "description": "Registered AI system ID (UUID).",
             "in": "path",
             "name": "system_id",
             "required": true,
             "schema": {
+              "description": "Registered AI system ID (UUID).",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
               "title": "System Id",
               "type": "string"
             }
