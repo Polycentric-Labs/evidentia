@@ -31,9 +31,13 @@ class TestGapAnalyze:
             "/api/gap/analyze",
             json={"frameworks": ["soc2-tsc"]},
         )
-        # 400 (not 422) — runtime body-content validation; matches
-        # OpenAPI `{detail: string}` shape (F-V08-DAST-3).
+        # 400 (not 422) — runtime body-content validation; structured
+        # detail shape (F-V08-DAST-3 status normalization; 2026-07-06
+        # error-shape convergence).
         assert r.status_code == 400
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_body"
+        assert "inventory_path or inventory_content" in detail["message"]
 
     def test_runs_with_inline_content(
         self, api_client: TestClient, meridian_inventory: str
@@ -127,7 +131,10 @@ class TestGapExport:
             json={"format": "console", "report": report},
         )
         assert r.status_code == 400
-        assert "Unsupported format" in r.json()["detail"]
+        detail = r.json()["detail"]
+        assert detail["error"] == "unsupported_format"
+        assert detail["format"] == "console"
+        assert "Unsupported format" in detail["message"]
 
     def test_requires_exactly_one_source(
         self, api_client: TestClient, meridian_inventory: str
@@ -205,6 +212,9 @@ class TestGapExport:
             json={"format": "json", "report_key": "0123456789abcdef"},
         )
         assert r.status_code == 404
+        detail = r.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert detail["resource"] == "gap_report"
 
     def test_filename_is_sanitized(
         self, api_client: TestClient, meridian_inventory: str
@@ -229,9 +239,13 @@ class TestGapDiff:
             "/api/gap/diff",
             json={"base_key": "not-a-hex-key", "head_key": "also-bad"},
         )
-        # 400 (not 422) — runtime body-content validation; matches
-        # OpenAPI `{detail: string}` shape (F-V08-DAST-3).
+        # 400 (not 422) — runtime body-content validation; structured
+        # detail shape (F-V08-DAST-3 status normalization; 2026-07-06
+        # error-shape convergence).
         assert r.status_code == 400
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_id"
+        assert detail["resource"] == "gap_report"
 
     def test_missing_report_returns_404(
         self, api_client: TestClient
@@ -271,3 +285,25 @@ class TestGapDiff:
         assert summary["closed"] == 0
         assert summary["severity_increased"] == 0
         assert summary["severity_decreased"] == 0
+
+
+class TestGapsOpenApiErrorDocs:
+    """2026-07-06 error-shape convergence: every deliberate 4xx the
+    gaps router raises is documented on its OpenAPI operation."""
+
+    def test_gaps_error_statuses_documented_in_openapi(
+        self, api_client: TestClient
+    ) -> None:
+        schema = api_client.get("/api/openapi.json").json()
+        expected: list[tuple[str, str, list[str]]] = [
+            ("/api/gap/analyze", "post", ["400"]),
+            ("/api/gap/export", "post", ["400", "404"]),
+            ("/api/gap/reports/{key}", "get", ["400", "404"]),
+            ("/api/gap/diff", "post", ["400", "404"]),
+        ]
+        for path, method, statuses in expected:
+            responses = schema["paths"][path][method]["responses"]
+            for status in statuses:
+                assert status in responses, (
+                    f"{method.upper()} {path} missing {status}"
+                )

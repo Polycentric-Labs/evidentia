@@ -19,6 +19,7 @@ Public submodules + subpackages of `evidentia_api` (import directly, e.g. `from 
 - `evidentia_api.auth_middleware`
 - `evidentia_api.cli`
 - `evidentia_api.deps`
+- `evidentia_api.errors`
 - `evidentia_api.rate_limit`
 - `evidentia_api.rbac_dependency`
 - `evidentia_api.routers`

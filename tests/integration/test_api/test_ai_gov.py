@@ -170,17 +170,42 @@ class TestRegisterListGetDelete:
         assert minimal.status_code == 200
         assert len(minimal.json()) == 1
 
-    def test_unknown_tier_returns_400(
+    def test_unknown_tier_returns_structured_400(
         self, api_client: TestClient
     ) -> None:
+        """2026-07-06 DAST (schemathesis) follow-up: the unknown-tier
+        400 must carry the structured ``detail`` shape the API uses
+        for machine-readable errors (cf. ``rbac_denied``), not a bare
+        string."""
         resp = api_client.get("/api/ai-gov/systems?tier=bogus")
         assert resp.status_code == 400
+        detail = resp.json()["detail"]
+        assert detail["error"] == "unknown_tier"
+        assert detail["tier"] == "bogus"
+        assert detail["valid"] == [
+            "unacceptable",
+            "high",
+            "limited",
+            "minimal",
+        ]
+        assert "message" in detail
+
+    def test_unknown_tier_400_documented_in_openapi(
+        self, api_client: TestClient
+    ) -> None:
+        """Companion to the structured-400 test: schemathesis also
+        flagged the 400 as undocumented (missing from the operation's
+        ``responses``)."""
+        schema = api_client.get("/api/openapi.json").json()
+        op = schema["paths"]["/api/ai-gov/systems"]["get"]
+        assert "400" in op["responses"]
 
     def test_invalid_uuid_returns_400(
         self, api_client: TestClient
     ) -> None:
         resp = api_client.get("/api/ai-gov/systems/not-a-uuid")
         assert resp.status_code == 400
+        assert resp.json()["detail"]["error"] == "invalid_id"
 
     def test_unknown_uuid_returns_404(
         self, api_client: TestClient
@@ -189,6 +214,9 @@ class TestRegisterListGetDelete:
             "/api/ai-gov/systems/11111111-1111-4111-8111-111111111111"
         )
         assert resp.status_code == 404
+        detail = resp.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert detail["resource"] == "ai_system"
 
     def test_delete_unknown_id_is_idempotent(
         self, api_client: TestClient
@@ -269,7 +297,9 @@ class TestIdempotency:
             headers={"X-Idempotency-Key": "test-key-2"},
         )
         assert second.status_code == 409
-        assert "test-key-2" in second.json()["detail"]
+        detail = second.json()["detail"]
+        assert detail["error"] == "idempotency_key_conflict"
+        assert "test-key-2" in detail["message"]
 
     def test_no_key_creates_fresh_entry_each_call(
         self, api_client: TestClient
@@ -352,7 +382,9 @@ class TestRateLimit:
             "/api/ai-gov/classify", json=self._SAMPLE_CLASSIFY_BODY
         )
         assert resp.status_code == 429
-        assert "Rate limit" in resp.json()["detail"]
+        detail = resp.json()["detail"]
+        assert detail["error"] == "rate_limited"
+        assert "Rate limit" in detail["message"]
         assert resp.headers.get("Retry-After") == "5"
 
     def test_get_endpoints_not_rate_limited(

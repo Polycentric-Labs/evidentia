@@ -278,14 +278,21 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 else "unknown"
             )
             if not self._limiter.check(client_host):
+                # 2026-07-06 error-shape convergence: structured,
+                # machine-readable detail (see evidentia_api.errors).
+                # Built inline — this is a middleware JSONResponse,
+                # not an HTTPException, so api_error() does not apply.
                 return JSONResponse(
                     status_code=429,
                     content={
-                        "detail": (
-                            "Rate limit exceeded for "
-                            f"{request.method} {request.url.path}. "
-                            "Retry after a short delay."
-                        )
+                        "detail": {
+                            "error": "rate_limited",
+                            "message": (
+                                "Rate limit exceeded for "
+                                f"{request.method} {request.url.path}. "
+                                "Retry after a short delay."
+                            ),
+                        }
                     },
                     headers={"Retry-After": "5"},
                 )

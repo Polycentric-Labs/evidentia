@@ -27,9 +27,10 @@ Design choices that close obvious abuse surfaces:
     reported as ``"skipped (offline)"`` rather than attempted — the
     digest + local-GPG checks still run. This keeps an air-gapped GUI
     from hanging on a Rekor round-trip.
-  - **G-9: no path / secret leak.** Parse + validation errors return a
-    plain string detail that never echoes the temp path or any secret.
-    The temp file is always cleaned up.
+  - **G-9: no path / secret leak.** Parse + validation errors return
+    the structured ``detail`` object from :mod:`evidentia_api.errors`
+    whose ``message`` never echoes the temp path or any secret. The
+    temp file is always cleaned up.
 
 Auth posture: open (no RBAC). Verification is a read — anyone who can
 reach the API can check an AR they already hold. Matches the open
@@ -46,8 +47,10 @@ from typing import Any
 
 from evidentia_core.network_guard import is_offline
 from evidentia_core.oscal.verify import verify_ar_file
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
+
+from evidentia_api.errors import api_error, error_responses
 
 router = APIRouter()
 
@@ -123,7 +126,18 @@ def _api_offline() -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
-@router.post("/oscal/verify")
+@router.post(
+    "/oscal/verify",
+    responses=error_responses(
+        {
+            400: (
+                "Both-or-neither pinning violation "
+                "(``error: invalid_body``) or unparseable ``content`` "
+                "(``error: verification_failed``)."
+            ),
+        }
+    ),
+)
 async def verify_assessment_result(payload: VerifyRequest) -> dict[str, Any]:
     """Verify an inline OSCAL Assessment Result document. READ-ONLY.
 
@@ -147,9 +161,10 @@ async def verify_assessment_result(payload: VerifyRequest) -> dict[str, Any]:
     if (payload.expected_sigstore_identity is None) != (
         payload.expected_sigstore_issuer is None
     ):
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "invalid_body",
+            (
                 "expected_sigstore_identity and expected_sigstore_issuer "
                 "must be provided together; identity pinning requires "
                 "both (cosign model)."
@@ -157,22 +172,25 @@ async def verify_assessment_result(payload: VerifyRequest) -> dict[str, Any]:
         )
 
     if (payload.dsse_envelope is None) != (payload.verify_public_key is None):
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "invalid_body",
+            (
                 "dsse_envelope and verify_public_key must be provided together "
                 "(pinned-key DSSE verification)."
             ),
         )
 
     # Parse BEFORE touching disk so malformed input never creates a temp
-    # file. A clean 400 with a generic string detail (no path / secret).
+    # file. A clean 400 whose structured detail carries a generic
+    # message (no path / secret).
     try:
         json.loads(payload.content)
     except json.JSONDecodeError as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Content is not valid JSON: {exc.msg} (line {exc.lineno}).",
+        raise api_error(
+            400,
+            "verification_failed",
+            f"Content is not valid JSON: {exc.msg} (line {exc.lineno}).",
         ) from exc
 
     offline = _api_offline()

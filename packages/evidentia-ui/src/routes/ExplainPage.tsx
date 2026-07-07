@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { api } from "@/lib/api";
+import { api, extractApiErrorMessage } from "@/lib/api";
 import { IS_DEMO } from "@/lib/demo";
 import { simulateSse } from "@/lib/demo/demo-api";
 import { DEMO_EXPLANATION } from "@/lib/demo/fixtures";
@@ -141,8 +141,8 @@ export function ExplainPage() {
         // (evidentia-ai unavailable) as JSON before the stream opens.
         let detail = "";
         try {
-          const body = (await res.json()) as { detail?: unknown };
-          if (typeof body.detail === "string") detail = body.detail;
+          const body: unknown = await res.json();
+          detail = extractApiErrorMessage(body) ?? "";
         } catch {
           detail = (await res.text().catch(() => "")) || `HTTP ${res.status}`;
         }

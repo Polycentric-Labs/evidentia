@@ -39,14 +39,18 @@ class TestCollectorsStatus:
 class TestGithubCollectEndpoint:
     def test_rejects_malformed_repo(self, api_client: TestClient) -> None:
         r = api_client.post("/api/collectors/github/collect", json={"repo": "notaformat"})
-        # 400 (not 422) — runtime body-content validation; matches
-        # OpenAPI `{detail: string}` shape (F-V08-DAST-3).
+        # 400 (not 422) — runtime body-content validation; structured
+        # detail shape (F-V08-DAST-3 status normalization; 2026-07-06
+        # error-shape convergence).
         assert r.status_code == 400
-        assert "owner/repo" in r.json()["detail"]
+        detail = r.json()["detail"]
+        assert detail["error"] == "missing_field"
+        assert "owner/repo" in detail["message"]
 
     def test_missing_repo_returns_400(self, api_client: TestClient) -> None:
         r = api_client.post("/api/collectors/github/collect", json={})
         assert r.status_code == 400
+        assert r.json()["detail"]["error"] == "missing_field"
 
 
 class TestSQLiteCollectEndpointSafeRoot:
@@ -77,7 +81,9 @@ class TestSQLiteCollectEndpointSafeRoot:
         )
         # SQLiteCollectorError -> 503 with "outside safe_root" detail
         assert r.status_code == 503
-        assert "outside safe_root" in r.json()["detail"]
+        detail = r.json()["detail"]
+        assert detail["error"] == "upstream_error"
+        assert "outside safe_root" in detail["message"]
 
     def test_accepts_path_inside_safe_root(
         self,
@@ -139,9 +145,13 @@ class TestSnowflakeCollectEndpoint:
             "/api/collectors/snowflake/collect",
             json={"user": "EVIDENTIA_AUDIT_RO"},
         )
-        # 400 (not 422) — body-content validation. F-V08-DAST-3.
+        # 400 (not 422) — body-content validation. F-V08-DAST-3
+        # status normalization; structured detail per the 2026-07-06
+        # error-shape convergence.
         assert r.status_code == 400
-        assert "account" in r.json()["detail"]
+        detail = r.json()["detail"]
+        assert detail["error"] == "missing_field"
+        assert "account" in detail["message"]
 
     def test_missing_user_returns_400(
         self, api_client: TestClient
@@ -151,7 +161,9 @@ class TestSnowflakeCollectEndpoint:
             json={"account": "acme-prod"},
         )
         assert r.status_code == 400
-        assert "user" in r.json()["detail"]
+        detail = r.json()["detail"]
+        assert detail["error"] == "missing_field"
+        assert "user" in detail["message"]
 
     def test_missing_password_env_returns_400(
         self,
@@ -169,7 +181,9 @@ class TestSnowflakeCollectEndpoint:
         )
         # 400 because the password env var resolves to nothing.
         assert r.status_code == 400
-        assert "SNOWFLAKE_PASSWORD" in r.json()["detail"]
+        detail = r.json()["detail"]
+        assert detail["error"] == "credentials_missing"
+        assert "SNOWFLAKE_PASSWORD" in detail["message"]
 
     def test_status_endpoint_includes_snowflake_entry(
         self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
@@ -224,13 +238,16 @@ class TestSecurityScorecardCollectEndpointSSRFGuard:
             "/api/collectors/securityscorecard/collect",
             json={"portfolio_id": bad_portfolio_id},
         )
-        # 400 (not 422) — early-fail at the REST boundary; matches
-        # the OpenAPI {detail: string} shape (F-V08-DAST-3 pattern).
+        # 400 (not 422) — early-fail at the REST boundary; structured
+        # detail shape (F-V08-DAST-3 status normalization; 2026-07-06
+        # error-shape convergence).
         assert r.status_code == 400, (
             f"Expected 400 for portfolio_id={bad_portfolio_id!r}, "
             f"got {r.status_code}: {r.text}"
         )
-        assert "portfolio_id" in r.json()["detail"].lower()
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_field"
+        assert "portfolio_id" in detail["message"].lower()
 
 
 # A minimal-but-valid OCSF Compliance Finding (class_uid 2003). Lifted from
@@ -306,7 +323,9 @@ class TestOcsfCollectEndpoint:
     ) -> None:
         r = api_client.post("/api/collectors/ocsf/collect", json={})
         assert r.status_code == 400
-        assert "content" in r.json()["detail"].lower()
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_body"
+        assert "content" in detail["message"].lower()
 
     def test_bad_content_returns_400(self, api_client: TestClient) -> None:
         pytest.importorskip("py_ocsf_models")
@@ -316,7 +335,9 @@ class TestOcsfCollectEndpoint:
             json={"content": {"class_uid": 9999, "category_uid": 2}},
         )
         assert r.status_code == 400
-        assert "ocsf" in r.json()["detail"].lower()
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_body"
+        assert "ocsf" in detail["message"].lower()
 
     def test_url_mode_rejects_http(self, api_client: TestClient) -> None:
         r = api_client.post(
@@ -324,7 +345,7 @@ class TestOcsfCollectEndpoint:
             json={"url": "http://example.com/ocsf.json"},
         )
         assert r.status_code == 400
-        assert "https" in r.json()["detail"].lower()
+        assert "https" in r.json()["detail"]["message"].lower()
 
     def test_url_mode_metadata_endpoint_refused_by_default(
         self, api_client: TestClient
@@ -337,9 +358,9 @@ class TestOcsfCollectEndpoint:
             json={"url": "https://169.254.169.254/latest/meta-data/"},
         )
         assert r.status_code == 400, r.text
-        detail = r.json()["detail"]
-        assert "169.254" in detail
-        assert "link-local" in detail or "private" in detail
+        message = r.json()["detail"]["message"]
+        assert "169.254" in message
+        assert "link-local" in message or "private" in message
 
     @pytest.mark.parametrize(
         "url",
@@ -358,9 +379,11 @@ class TestOcsfCollectEndpoint:
             json={"url": url},
         )
         assert r.status_code == 400, r.text
-        detail = r.json()["detail"].lower()
+        message = r.json()["detail"]["message"].lower()
         assert (
-            "private" in detail or "loopback" in detail or "link-local" in detail
+            "private" in message
+            or "loopback" in message
+            or "link-local" in message
         )
 
     def test_url_mode_allowed_only_with_block_private_ips_false(
@@ -380,10 +403,10 @@ class TestOcsfCollectEndpoint:
         # Connection-refused / fetch failure → the collector raises
         # OCSFIngestError, which the router maps to 400 (bad url/content).
         assert r.status_code == 400, r.text
-        detail = r.json()["detail"].lower()
-        assert "private" not in detail
-        assert "loopback" not in detail
-        assert "fetch failed" in detail or "fetch" in detail
+        message = r.json()["detail"]["message"].lower()
+        assert "private" not in message
+        assert "loopback" not in message
+        assert "fetch failed" in message or "fetch" in message
 
 
 class TestConvertEndpoint:
@@ -440,7 +463,9 @@ class TestConvertEndpoint:
             },
         )
         assert r.status_code == 400
-        assert "format" in r.json()["detail"].lower()
+        detail = r.json()["detail"]
+        assert detail["error"] == "unsupported_format"
+        assert "format" in detail["message"].lower()
 
     def test_convert_missing_content_returns_400(
         self, api_client: TestClient
@@ -450,7 +475,9 @@ class TestConvertEndpoint:
             json={"to_format": "ocsf"},
         )
         assert r.status_code == 400
-        assert "content" in r.json()["detail"].lower()
+        detail = r.json()["detail"]
+        assert detail["error"] == "missing_field"
+        assert "content" in detail["message"].lower()
 
     def test_convert_bad_finding_returns_400(
         self, api_client: TestClient
@@ -464,5 +491,52 @@ class TestConvertEndpoint:
             },
         )
         assert r.status_code == 400
-        detail = r.json()["detail"].lower()
-        assert "finding" in detail or "invalid" in detail
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_body"
+        message = detail["message"].lower()
+        assert "finding" in message or "invalid" in message
+
+
+def test_collectors_error_statuses_documented_in_openapi(
+    api_client: TestClient,
+) -> None:
+    """Every deliberate 4xx/5xx a collectors route raises is documented
+    in its OpenAPI ``responses`` (2026-07-06 error-shape convergence —
+    schemathesis can hold undocumented-status noise to the contract)."""
+    schema = api_client.get("/api/openapi.json").json()
+    expected: list[tuple[str, str, list[str]]] = [
+        ("/api/collectors/aws/collect", "post", ["500", "503"]),
+        (
+            "/api/collectors/github/collect",
+            "post",
+            ["400", "404", "502", "503"],
+        ),
+        ("/api/collectors/okta/collect", "post", ["400", "500", "503"]),
+        (
+            "/api/collectors/sql/postgres/collect",
+            "post",
+            ["400", "500", "503"],
+        ),
+        ("/api/collectors/sql/mysql/collect", "post", ["400", "500", "503"]),
+        ("/api/collectors/sql/mssql/collect", "post", ["400", "500", "503"]),
+        ("/api/collectors/sql/oracle/collect", "post", ["400", "500", "503"]),
+        ("/api/collectors/sql/sqlite/collect", "post", ["400", "500", "503"]),
+        ("/api/collectors/databricks/collect", "post", ["400", "500", "503"]),
+        ("/api/collectors/snowflake/collect", "post", ["400", "500", "503"]),
+        ("/api/collectors/vanta/collect", "post", ["400", "500", "503"]),
+        ("/api/collectors/drata/collect", "post", ["400", "500", "503"]),
+        ("/api/collectors/bitsight/collect", "post", ["400", "500", "503"]),
+        (
+            "/api/collectors/securityscorecard/collect",
+            "post",
+            ["400", "500", "503"],
+        ),
+        ("/api/collectors/ocsf/collect", "post", ["400", "503"]),
+        ("/api/collectors/convert", "post", ["400", "503"]),
+    ]
+    for path, method, statuses in expected:
+        op = schema["paths"][path][method]
+        for status in statuses:
+            assert status in op["responses"], (
+                f"{method.upper()} {path} missing documented {status}"
+            )

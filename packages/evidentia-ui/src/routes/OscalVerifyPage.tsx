@@ -14,7 +14,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { api, ApiError, type OscalVerifyRequest } from "@/lib/api";
+import {
+  api,
+  ApiError,
+  extractApiErrorMessage,
+  type OscalVerifyRequest,
+} from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 /**
@@ -82,14 +87,12 @@ function readDigestChecks(v: Verdict): DigestCheckRow[] {
 /** Surface an ApiError payload (or any error) as readable text. */
 function apiErrorText(error: unknown): string {
   if (error instanceof ApiError) {
-    // The router returns a plain `{detail: "..."}` for 400 (unparseable AR /
-    // both-or-neither identity violation) and a structured body for 422.
-    const payload = error.payload;
-    if (payload && typeof payload === "object" && "detail" in payload) {
-      const detail = (payload as { detail: unknown }).detail;
-      if (typeof detail === "string") return detail;
-    }
-    if (payload != null) return JSON.stringify(payload);
+    // The router returns the structured `{detail: {error, ..., message}}`
+    // shape for 400 (unparseable AR / both-or-neither identity violation)
+    // and Pydantic's array-shape body for 422.
+    const detail = extractApiErrorMessage(error.payload);
+    if (detail) return detail;
+    if (error.payload != null) return JSON.stringify(error.payload);
     return error.message;
   }
   return String(error);

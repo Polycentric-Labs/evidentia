@@ -41,6 +41,33 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Pull the human-readable message out of an API error body.
+ *
+ * Deliberate 4xx/5xx responses carry the structured
+ * `{detail: {error, ..., message}}` shape (2026-07-06 error-shape
+ * convergence — see `evidentia_api.errors`); the legacy
+ * `{detail: string}` shape is still accepted for robustness. Returns
+ * `undefined` for anything else (e.g. Pydantic 422 array details) so
+ * callers keep their own fallback.
+ */
+export function extractApiErrorMessage(payload: unknown): string | undefined {
+  if (!payload || typeof payload !== "object" || !("detail" in payload)) {
+    return undefined;
+  }
+  const detail = (payload as { detail: unknown }).detail;
+  if (typeof detail === "string") return detail;
+  if (
+    detail &&
+    typeof detail === "object" &&
+    "message" in detail &&
+    typeof (detail as { message: unknown }).message === "string"
+  ) {
+    return (detail as { message: string }).message;
+  }
+  return undefined;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...init,
@@ -514,12 +541,7 @@ async function realExportGapReport(
       /* empty body is fine */
     }
     const detail =
-      payload &&
-      typeof payload === "object" &&
-      "detail" in payload &&
-      typeof (payload as { detail: unknown }).detail === "string"
-        ? (payload as { detail: string }).detail
-        : `Export failed (${response.status})`;
+      extractApiErrorMessage(payload) ?? `Export failed (${response.status})`;
     throw new ApiError(detail, response.status, payload);
   }
 

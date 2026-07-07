@@ -276,6 +276,10 @@ class TestListChallenges:
     ) -> None:
         r = gov_client.get("/api/governance/challenges?outcome=bogus")
         assert r.status_code == 400
+        detail = r.json()["detail"]
+        assert detail["error"] == "unknown_outcome"
+        assert detail["outcome"] == "bogus"
+        assert "message" in detail
 
 
 class TestGetChallenge:
@@ -292,6 +296,9 @@ class TestGetChallenge:
             "00000000-0000-0000-0000-000000000000"
         )
         assert r.status_code == 404
+        detail = r.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert detail["resource"] == "challenge"
 
     def test_invalid_id_returns_404(self, gov_client: TestClient) -> None:
         r = gov_client.get("/api/governance/challenges/not-a-uuid")
@@ -403,6 +410,10 @@ class TestListMetrics:
     def test_invalid_kind_returns_400(self, gov_client: TestClient) -> None:
         r = gov_client.get("/api/governance/metrics?kind=bogus")
         assert r.status_code == 400
+        detail = r.json()["detail"]
+        assert detail["error"] == "unknown_kind"
+        assert detail["kind"] == "bogus"
+        assert "message" in detail
 
 
 class TestMetricReportOrdering:
@@ -539,7 +550,9 @@ class TestAdvanceWorkflow:
             },
         )
         assert r.status_code == 400
-        assert "active step" in r.json()["detail"]
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_body"
+        assert "active step" in detail["message"]
 
     def test_advance_unknown_workflow_returns_404(
         self, gov_client: TestClient
@@ -743,3 +756,61 @@ class TestCreateEmptyIdReturns422:
             json={**_workflow_payload(), "id": ""},
         )
         assert r.status_code == 422, r.text
+
+
+# ════════════════════════════════════════════════════════════════════
+# OpenAPI error documentation (2026-07-06 error-shape convergence)
+# ════════════════════════════════════════════════════════════════════
+
+
+class TestGovernanceOpenApiErrorDocs:
+    """Every deliberate 4xx the governance router raises is documented
+    on its OpenAPI operation (schemathesis undocumented-status noise →
+    contract). Uses the project-wide app so the schema reflects the
+    registered router."""
+
+    def test_governance_error_statuses_documented_in_openapi(
+        self, api_client: TestClient
+    ) -> None:
+        schema = api_client.get("/api/openapi.json").json()
+        expected: list[tuple[str, str, list[str]]] = [
+            ("/api/governance/challenges", "post", ["403", "422"]),
+            ("/api/governance/challenges", "get", ["400"]),
+            ("/api/governance/challenges/{challenge_id}", "get", ["404"]),
+            ("/api/governance/metrics", "post", ["403", "422"]),
+            (
+                "/api/governance/metrics/{metric_id}/observations",
+                "post",
+                ["403", "404"],
+            ),
+            ("/api/governance/metrics", "get", ["400"]),
+            ("/api/governance/metrics/{metric_id}", "get", ["404"]),
+            (
+                "/api/governance/metrics/{metric_id}",
+                "delete",
+                ["403", "404"],
+            ),
+            ("/api/governance/workflows", "post", ["403", "422"]),
+            (
+                "/api/governance/workflows/{workflow_id}/advance",
+                "post",
+                ["400", "403", "404"],
+            ),
+            ("/api/governance/workflows/{workflow_id}", "get", ["404"]),
+            (
+                "/api/governance/workflows/{workflow_id}/log",
+                "get",
+                ["404"],
+            ),
+            (
+                "/api/governance/workflows/{workflow_id}",
+                "delete",
+                ["403", "404"],
+            ),
+        ]
+        for path, method, statuses in expected:
+            responses = schema["paths"][path][method]["responses"]
+            for status in statuses:
+                assert status in responses, (
+                    f"{method.upper()} {path} missing {status}"
+                )

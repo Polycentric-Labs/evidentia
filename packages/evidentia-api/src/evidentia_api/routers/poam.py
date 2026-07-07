@@ -3,8 +3,11 @@
 Surfaces the v0.9.0 P1 POA&M data layer over HTTP under the
 ``/api/poam`` prefix. Mirrors the v0.7.9 P0.1.4 TPRM router shape +
 inherits the same error-normalization conventions (400 for runtime
-body-content errors per v0.7.8 F-V08-DAST-3; 404 for shape-violation
-+ not-found IDs per v0.7.9 P0.1 H-3 widening).
+body-content errors per the v0.7.8 F-V08-DAST-3 status
+normalization, with the structured object ``detail`` per the
+2026-07-06 error-shape convergence — see
+:mod:`evidentia_api.errors`; 404 for shape-violation + not-found IDs
+per v0.7.9 P0.1 H-3 widening).
 
 Endpoints:
 
@@ -51,8 +54,10 @@ from evidentia_core.poam_store import (
     load_poam_by_id,
     save_poam,
 )
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
+
+from evidentia_api.errors import api_error, error_responses
 
 router = APIRouter()
 _log = get_logger("evidentia.api.poam")
@@ -91,7 +96,18 @@ def _filter_poams(
 # ── POA&M item CRUD ────────────────────────────────────────────────
 
 
-@router.get("/poam/items")
+@router.get(
+    "/poam/items",
+    responses=error_responses(
+        {
+            400: (
+                "Unknown ``severity`` / ``status`` filter value "
+                "(``error: unknown_severity`` / ``unknown_status``); "
+                "``detail`` carries the field + ``valid``."
+            ),
+        }
+    ),
+)
 async def list_poam_items(
     skip: int = Query(0, ge=0, description="Pagination offset."),
     limit: int = Query(
@@ -136,20 +152,26 @@ async def list_poam_items(
     count).
     """
     if severity and severity not in {e.value for e in GapSeverity}:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "unknown_severity",
+            (
                 f"Unknown severity {severity!r}; valid: "
                 f"{sorted(e.value for e in GapSeverity)}"
             ),
+            severity=severity,
+            valid=sorted(e.value for e in GapSeverity),
         )
     if status and status not in {e.value for e in GapStatus}:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "unknown_status",
+            (
                 f"Unknown status {status!r}; valid: "
                 f"{sorted(e.value for e in GapStatus)}"
             ),
+            status=status,
+            valid=sorted(e.value for e in GapStatus),
         )
 
     all_poams = list_poams()
@@ -166,7 +188,19 @@ async def list_poam_items(
     }
 
 
-@router.post("/poam/items", response_model=ControlGap, status_code=201)
+@router.post(
+    "/poam/items",
+    response_model=ControlGap,
+    status_code=201,
+    responses=error_responses(
+        {
+            422: (
+                "Body-content semantic failure "
+                "(``error: invalid_body``)."
+            ),
+        }
+    ),
+)
 async def create_poam_item(payload: ControlGap) -> ControlGap:
     """Create a POA&M item.
 
@@ -181,7 +215,7 @@ async def create_poam_item(payload: ControlGap) -> ControlGap:
     except (InvalidPoamIdError, ValueError) as exc:
         # A client-supplied empty/malformed id must be a 422, not an unhandled
         # 500 (F-V1012-S4-1; mirrors the GET/PUT paths in this router).
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise api_error(422, "invalid_body", str(exc)) from exc
     _log.info(
         action=EventAction.POAM_CREATED,
         outcome=EventOutcome.SUCCESS,
@@ -197,7 +231,18 @@ async def create_poam_item(payload: ControlGap) -> ControlGap:
     return poam
 
 
-@router.get("/poam/items/{poam_id}", response_model=ControlGap)
+@router.get(
+    "/poam/items/{poam_id}",
+    response_model=ControlGap,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``poam_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
+)
 async def get_poam_item(poam_id: str) -> ControlGap:
     """Fetch a single POA&M by ID."""
     try:
@@ -205,19 +250,36 @@ async def get_poam_item(poam_id: str) -> ControlGap:
     except InvalidPoamIdError as exc:
         # Match the TPRM widening pattern: shape violation
         # normalizes to 404 from the client's perspective.
-        raise HTTPException(
-            status_code=404,
-            detail=f"POA&M {poam_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"POA&M {poam_id!r} not found.",
+            resource="poam_item",
+            resource_id=poam_id,
         ) from exc
     if poam is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"POA&M {poam_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"POA&M {poam_id!r} not found.",
+            resource="poam_item",
+            resource_id=poam_id,
         )
     return poam
 
 
-@router.put("/poam/items/{poam_id}", response_model=ControlGap)
+@router.put(
+    "/poam/items/{poam_id}",
+    response_model=ControlGap,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``poam_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
+)
 async def replace_poam_item(poam_id: str, payload: ControlGap) -> ControlGap:
     """Full-replace a POA&M item.
 
@@ -230,14 +292,20 @@ async def replace_poam_item(poam_id: str, payload: ControlGap) -> ControlGap:
     try:
         existing = load_poam_by_id(poam_id)
     except InvalidPoamIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"POA&M {poam_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"POA&M {poam_id!r} not found.",
+            resource="poam_item",
+            resource_id=poam_id,
         ) from exc
     if existing is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"POA&M {poam_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"POA&M {poam_id!r} not found.",
+            resource="poam_item",
+            resource_id=poam_id,
         )
     prior_status = existing.status
     poam = payload.model_copy(
@@ -275,20 +343,37 @@ async def replace_poam_item(poam_id: str, payload: ControlGap) -> ControlGap:
     return poam
 
 
-@router.delete("/poam/items/{poam_id}", status_code=204)
+@router.delete(
+    "/poam/items/{poam_id}",
+    status_code=204,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``poam_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
+)
 async def delete_poam_item(poam_id: str) -> None:
     """Delete a POA&M item. 204 on success, 404 on shape-violation OR unknown."""
     try:
         removed = delete_poam(poam_id)
     except InvalidPoamIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"POA&M {poam_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"POA&M {poam_id!r} not found.",
+            resource="poam_item",
+            resource_id=poam_id,
         ) from exc
     if not removed:
-        raise HTTPException(
-            status_code=404,
-            detail=f"POA&M {poam_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"POA&M {poam_id!r} not found.",
+            resource="poam_item",
+            resource_id=poam_id,
         )
 
 
@@ -327,6 +412,14 @@ class MilestoneUpdatePayload(BaseModel):
 @router.post(
     "/poam/items/{poam_id}/milestones",
     response_model=ControlGap,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``poam_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def add_milestone(
     poam_id: str,
@@ -336,14 +429,20 @@ async def add_milestone(
     try:
         poam = load_poam_by_id(poam_id)
     except InvalidPoamIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"POA&M {poam_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"POA&M {poam_id!r} not found.",
+            resource="poam_item",
+            resource_id=poam_id,
         ) from exc
     if poam is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"POA&M {poam_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"POA&M {poam_id!r} not found.",
+            resource="poam_item",
+            resource_id=poam_id,
         )
     ms = Milestone(
         target_date=payload.target_date,
@@ -373,6 +472,18 @@ async def add_milestone(
 @router.patch(
     "/poam/items/{poam_id}/milestones/{milestone_id}",
     response_model=ControlGap,
+    responses=error_responses(
+        {
+            400: (
+                "Backward/invalid state transition "
+                "(``error: invalid_body``)."
+            ),
+            404: (
+                "Unknown or malformed ``poam_id``, or unknown "
+                "``milestone_id`` (``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def update_milestone(
     poam_id: str,
@@ -383,34 +494,44 @@ async def update_milestone(
     try:
         poam = load_poam_by_id(poam_id)
     except InvalidPoamIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"POA&M {poam_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"POA&M {poam_id!r} not found.",
+            resource="poam_item",
+            resource_id=poam_id,
         ) from exc
     if poam is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"POA&M {poam_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"POA&M {poam_id!r} not found.",
+            resource="poam_item",
+            resource_id=poam_id,
         )
     target_ms: Milestone | None = next(
         (m for m in poam.poam_milestones if m.id == milestone_id),
         None,
     )
     if target_ms is None:
-        raise HTTPException(
-            status_code=404,
-            detail=(
+        raise api_error(
+            404,
+            "not_found",
+            (
                 f"Milestone {milestone_id!r} not found on POA&M "
                 f"{poam_id!r}."
             ),
+            resource="milestone",
+            resource_id=milestone_id,
         )
     prior_state = POAMState(target_ms.status)
 
     if payload.status is not None and payload.status != prior_state:
         if not is_valid_transition(prior_state, payload.status):
-            raise HTTPException(
-                status_code=400,
-                detail=(
+            raise api_error(
+                400,
+                "invalid_body",
+                (
                     f"Invalid state transition "
                     f"{prior_state.value} → {payload.status.value}; "
                     f"backward transitions blocked. File a new "
@@ -510,7 +631,18 @@ async def update_milestone(
 # ── calendar (read-only attention surface) ─────────────────────────
 
 
-@router.get("/poam/calendar")
+@router.get(
+    "/poam/calendar",
+    responses=error_responses(
+        {
+            400: (
+                "Non-ISO-8601 ``today`` override "
+                "(``error: invalid_field``); ``detail`` carries "
+                "``field``."
+            ),
+        }
+    ),
+)
 async def get_calendar(
     today_override: str | None = Query(
         None,
@@ -526,12 +658,14 @@ async def get_calendar(
         try:
             today_val = date.fromisoformat(today_override)
         except ValueError as exc:
-            raise HTTPException(
-                status_code=400,
-                detail=(
+            raise api_error(
+                400,
+                "invalid_field",
+                (
                     f"--today must be ISO-8601 YYYY-MM-DD; got "
                     f"{today_override!r}: {exc}"
                 ),
+                field="today",
             ) from exc
     else:
         today_val = datetime.now(tz=UTC).date()

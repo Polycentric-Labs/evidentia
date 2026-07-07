@@ -51,6 +51,9 @@ class TestGetFramework:
     def test_unknown_framework_returns_404(self, api_client: TestClient) -> None:
         r = api_client.get("/api/frameworks/does-not-exist-xyz")
         assert r.status_code == 404
+        detail = r.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert detail["resource"] == "framework"
 
 
 class TestGetControl:
@@ -65,7 +68,10 @@ class TestGetControl:
     def test_unknown_control_returns_404(self, api_client: TestClient) -> None:
         r = api_client.get("/api/frameworks/nist-800-53-mod/controls/NOPE-999")
         assert r.status_code == 404
-        assert "not found" in r.json()["detail"].lower()
+        detail = r.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert detail["resource"] == "control"
+        assert "not found" in detail["message"].lower()
 
     def test_unknown_framework_id_returns_404_not_500(
         self, api_client: TestClient
@@ -80,4 +86,30 @@ class TestGetControl:
         """
         r = api_client.get("/api/frameworks/0/controls/0")
         assert r.status_code == 404
-        assert "not found" in r.json()["detail"].lower()
+        detail = r.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert "not found" in detail["message"].lower()
+
+
+class TestFrameworksOpenApiErrorDocs:
+    """2026-07-06 error-shape convergence: every deliberate 4xx the
+    frameworks router raises is documented on its OpenAPI operation."""
+
+    def test_frameworks_error_statuses_documented_in_openapi(
+        self, api_client: TestClient
+    ) -> None:
+        schema = api_client.get("/api/openapi.json").json()
+        expected: list[tuple[str, str, list[str]]] = [
+            ("/api/frameworks/{framework_id}", "get", ["404"]),
+            (
+                "/api/frameworks/{framework_id}/controls/{control_id}",
+                "get",
+                ["404"],
+            ),
+        ]
+        for path, method, statuses in expected:
+            responses = schema["paths"][path][method]["responses"]
+            for status in statuses:
+                assert status in responses, (
+                    f"{method.upper()} {path} missing {status}"
+                )

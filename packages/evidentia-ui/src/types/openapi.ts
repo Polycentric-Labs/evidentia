@@ -1336,8 +1336,9 @@ export interface paths {
          *
          *     Returns a summary dict mirroring the CLI ``save`` output. WORM
          *     enforcement: re-saving a persisted version raises
-         *     :class:`EvidenceWORMViolation` → HTTP 409 with the canonical
-         *     ``next_version`` recovery hint. A malformed lineage id → 404.
+         *     :class:`EvidenceWORMViolation` → HTTP 409 with the structured
+         *     ``worm_violation`` detail carrying the canonical ``next_version``
+         *     recovery hint. A malformed lineage id → 404.
          */
         post: operations["save_evidence_artifact_api_evidence_post"];
         delete?: never;
@@ -2746,6 +2747,10 @@ export interface paths {
         /**
          * Generate
          * @description Generate risk statements for selected gaps, streaming progress via SSE.
+         *
+         *     The 400 / 404 documented above are raised by the ``_load_report``
+         *     lookup BEFORE the stream starts; mid-stream failures ride inside
+         *     the event stream as ``phase: error`` messages instead.
          */
         post: operations["generate_api_risk_generate_post"];
         delete?: never;
@@ -2947,10 +2952,12 @@ export interface paths {
          *
          *       - 404 on shape-violation OR well-formed-unknown ``vendor_id``
          *         (F-V08-DAST-1 widening pattern). The endpoint is vendor-scoped.
-         *       - 400 (string detail, F-V08-DAST-3 invariant) when the
-         *         questionnaire content is unparseable or correlates to no
-         *         responses (nothing to ingest). Pydantic auto-validation 422s
-         *         (wrong-typed body) keep their array-shape detail.
+         *       - 400 (F-V08-DAST-3 status normalization; structured detail per
+         *         the 2026-07-06 error-shape convergence, see
+         *         :mod:`evidentia_api.errors`) when the questionnaire content is
+         *         unparseable or correlates to no responses (nothing to ingest).
+         *         Pydantic auto-validation 422s (wrong-typed body) keep their
+         *         array-shape detail.
          *
          *     No ``require_role("write")`` gate: a parse is a read-style operation
          *     (no vendor mutation), so it is open like the other read endpoints on
@@ -4031,6 +4038,38 @@ export interface components {
              * @description Efficiency value score = total_gaps_closed / effort_weight
              */
             value_score: number;
+        };
+        /**
+         * ErrorDetail
+         * @description Machine-readable ``detail`` payload of a deliberate 4xx/5xx.
+         *
+         *     ``extra="allow"`` — sites attach context fields between ``error``
+         *     and ``message`` (``next_version``, ``valid``, ``resource``, …).
+         */
+        ErrorDetail: {
+            /**
+             * Error
+             * @description Stable snake_case error key (see the registry in evidentia_api.errors). Clients dispatch on this.
+             */
+            error: string;
+            /**
+             * Message
+             * @description Human-readable explanation of the failure.
+             */
+            message: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * ErrorEnvelope
+         * @description Wire shape of a deliberate error response: ``{"detail": {...}}``.
+         *
+         *     FastAPI wraps ``HTTPException.detail`` under a top-level
+         *     ``detail`` key; this model documents that envelope for OpenAPI
+         *     ``responses`` declarations (via :func:`error_responses`).
+         */
+        ErrorEnvelope: {
+            detail: components["schemas"]["ErrorDetail"];
         };
         /**
          * EvidenceArtifact
@@ -6791,6 +6830,15 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
+            /** @description Per-client token-bucket throttle (``error: rate_limited``). Carries a ``Retry-After`` header. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     ai_gov_register_api_ai_gov_register_post: {
@@ -6820,6 +6868,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description ``X-Idempotency-Key`` reuse with a different body (``error: idempotency_key_conflict``). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -6827,6 +6884,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Per-client token-bucket throttle (``error: rate_limited``). Carries a ``Retry-After`` header. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -6852,6 +6918,15 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     }[];
+                };
+            };
+            /** @description Unknown ``tier`` filter value (``error: unknown_tier``); ``detail`` carries ``tier`` + ``valid``. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -6885,6 +6960,24 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Malformed ``system_id`` (``error: invalid_id``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No such registered system (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -6924,6 +7017,33 @@ export interface operations {
                     };
                 };
             };
+            /** @description Empty update or domain-validation failure (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No such registered system (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -6955,6 +7075,15 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Malformed ``system_id`` (``error: invalid_id``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -6994,6 +7123,33 @@ export interface operations {
                     };
                 };
             };
+            /** @description FIPS 199 domain-validation failure, e.g. an ``overall`` high-water-mark mismatch (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No such registered system (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7025,6 +7181,24 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No such registered system (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -7064,6 +7238,33 @@ export interface operations {
                     };
                 };
             };
+            /** @description M-25-21 domain-validation failure (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No such registered system (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7099,6 +7300,24 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No such registered system (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -7174,6 +7393,24 @@ export interface operations {
                     };
                 };
             };
+            /** @description Malformed ``framework_id``, invalid ``tier``, unsupported ``format``, unparseable/invalid catalog content, or a duplicate import without ``force`` (``error: invalid_id`` / ``invalid_field`` / ``unsupported_format`` / ``invalid_body`` / ``already_exists``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7205,6 +7442,24 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Malformed ``framework_id`` (``error: invalid_id``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unknown framework (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -7241,6 +7496,24 @@ export interface operations {
                     };
                 };
             };
+            /** @description Malformed ``framework_id`` (``error: invalid_id``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unknown framework (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7269,6 +7542,33 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Malformed ``framework_id`` (``error: invalid_id``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No user-imported framework under that ID (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -7314,6 +7614,24 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
+            /** @description Unexpected collector failure (``error: collector_failed``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description AWS collector not installed or AWS unreachable (``error: feature_unavailable`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     bitsight_collect_api_collectors_bitsight_collect_post: {
@@ -7340,6 +7658,15 @@ export interface operations {
                     "application/json": components["schemas"]["SecurityFinding"][];
                 };
             };
+            /** @description Invalid ``max_companies`` / ``rating_threshold`` body field (``error: invalid_field``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7347,6 +7674,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Unexpected collector failure (``error: collector_failed``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collector not installed, token env var unset, or BitSight unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7377,6 +7722,15 @@ export interface operations {
                     }[];
                 };
             };
+            /** @description Missing ``content``, unsupported ``to_format``, or invalid findings (``error: missing_field`` / ``error: unsupported_format`` / ``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7384,6 +7738,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Optional ``ocsf`` extra not installed (``error: feature_unavailable``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7412,6 +7775,15 @@ export interface operations {
                     "application/json": components["schemas"]["SecurityFinding"][];
                 };
             };
+            /** @description Missing ``workspace_url`` body field (``error: missing_field``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7419,6 +7791,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Unexpected collector failure (``error: collector_failed``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collector not installed or workspace unreachable (``error: feature_unavailable`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7447,6 +7837,15 @@ export interface operations {
                     "application/json": components["schemas"]["SecurityFinding"][];
                 };
             };
+            /** @description Invalid ``max_vendors`` body field (``error: invalid_field``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7454,6 +7853,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Unexpected collector failure (``error: collector_failed``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collector not installed, token env var unset, or Drata unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7482,6 +7899,24 @@ export interface operations {
                     "application/json": components["schemas"]["SecurityFinding"][];
                 };
             };
+            /** @description Missing or malformed ``repo`` body field (``error: missing_field``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Repository not found (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7489,6 +7924,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description GitHub API call failed (``error: upstream_error``). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description GitHub collector import failed (``error: feature_unavailable``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7517,6 +7970,15 @@ export interface operations {
                     "application/json": components["schemas"]["SecurityFinding"][];
                 };
             };
+            /** @description Bad content / URL — missing or conflicting input mode, malformed OCSF, non-HTTPS URL, SSRF refusal, fetch failure (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7524,6 +7986,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Optional ``ocsf`` extra not installed (``error: feature_unavailable``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7552,6 +8023,15 @@ export interface operations {
                     "application/json": components["schemas"]["SecurityFinding"][];
                 };
             };
+            /** @description Missing ``org_url`` body field (``error: missing_field``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7559,6 +8039,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Unexpected collector failure (``error: collector_failed``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collector import failed, ``OKTA_API_TOKEN`` unset, or Okta unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7587,6 +8085,15 @@ export interface operations {
                     "application/json": components["schemas"]["SecurityFinding"][];
                 };
             };
+            /** @description Invalid ``portfolio_id`` / ``max_companies`` / ``score_threshold`` body field (``error: invalid_field``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7594,6 +8101,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Unexpected collector failure (``error: collector_failed``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collector not installed, token env var unset, or SecurityScorecard unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7622,6 +8147,15 @@ export interface operations {
                     "application/json": components["schemas"]["SecurityFinding"][];
                 };
             };
+            /** @description Missing ``account`` / ``user`` body field or password env var unset (``error: missing_field`` / ``error: credentials_missing``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7629,6 +8163,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Unexpected collector failure (``error: collector_failed``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collector not installed or Snowflake unreachable (``error: feature_unavailable`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7657,6 +8209,15 @@ export interface operations {
                     "application/json": components["schemas"]["SecurityFinding"][];
                 };
             };
+            /** @description Missing ``connection_uri`` body field (``error: missing_field``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7664,6 +8225,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Unexpected collector failure (``error: collector_failed``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collector not installed, password env var unset, or database unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7692,6 +8271,15 @@ export interface operations {
                     "application/json": components["schemas"]["SecurityFinding"][];
                 };
             };
+            /** @description Missing ``connection_uri`` body field (``error: missing_field``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7699,6 +8287,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Unexpected collector failure (``error: collector_failed``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collector not installed, password env var unset, or database unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7727,6 +8333,15 @@ export interface operations {
                     "application/json": components["schemas"]["SecurityFinding"][];
                 };
             };
+            /** @description Missing ``connection_uri`` body field (``error: missing_field``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7734,6 +8349,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Unexpected collector failure (``error: collector_failed``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collector not installed, password env var unset, or database unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7762,6 +8395,15 @@ export interface operations {
                     "application/json": components["schemas"]["SecurityFinding"][];
                 };
             };
+            /** @description Missing ``connection_uri`` body field (``error: missing_field``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7769,6 +8411,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Unexpected collector failure (``error: collector_failed``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collector not installed, password env var unset, or database unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7797,6 +8457,15 @@ export interface operations {
                     "application/json": components["schemas"]["SecurityFinding"][];
                 };
             };
+            /** @description Missing ``database_path`` body field (``error: missing_field``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7804,6 +8473,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Unexpected collector failure (``error: collector_failed``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collector import failed or database not readable / outside safe_root (``error: feature_unavailable`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7854,6 +8541,15 @@ export interface operations {
                     "application/json": components["schemas"]["SecurityFinding"][];
                 };
             };
+            /** @description Invalid ``max_vendors`` body field (``error: invalid_field``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7861,6 +8557,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Unexpected collector failure (``error: collector_failed``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collector not installed, token env var unset, or Vanta unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7914,6 +8628,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Config file write failure (``error: internal_error``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -7972,6 +8695,15 @@ export interface operations {
                     "application/json": {
                         [key: string]: string | null;
                     };
+                };
+            };
+            /** @description Unknown cadence ``slug`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -8041,6 +8773,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description History file not configured or missing (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -8072,6 +8813,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Status file not configured, missing, or unparseable (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     list_conmon_dedup_api_conmon_dedup_list_get: {
@@ -8097,6 +8847,15 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Alert-dedup file not configured (``error: feature_unavailable``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -8167,6 +8926,24 @@ export interface operations {
                     "application/json": components["schemas"]["MarkCompletedResponse"];
                 };
             };
+            /** @description State file not configured (``error: feature_unavailable``) or unknown cadence ``slug`` (``error: invalid_field``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -8198,6 +8975,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NextDueResponse"];
+                };
+            };
+            /** @description Unknown cadence ``slug`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -8277,6 +9063,33 @@ export interface operations {
                     };
                 };
             };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Malformed lineage id (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description WORM collision — the version already exists (``error: worm_violation``); ``detail`` carries the canonical ``next_version`` recovery hint. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -8310,6 +9123,24 @@ export interface operations {
                     };
                 };
             };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Malformed lineage id (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -8341,6 +9172,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EvidenceArtifact"];
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Malformed lineage id OR no such version (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -8380,6 +9229,15 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
+            /** @description Unknown ``framework`` or ``control_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -8387,6 +9245,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description evidentia-ai import failure (``error: feature_unavailable``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -8447,6 +9314,15 @@ export interface operations {
                     "application/json": components["schemas"]["ControlCatalog"];
                 };
             };
+            /** @description Unknown ``framework_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -8477,6 +9353,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CatalogControl"];
+                };
+            };
+            /** @description Unknown ``framework_id`` or ``control_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -8512,6 +9397,15 @@ export interface operations {
                     "application/json": components["schemas"]["GapAnalysisReport"];
                 };
             };
+            /** @description Missing/invalid inventory input or a failed inventory parse (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -8545,6 +9439,24 @@ export interface operations {
                     "application/json": components["schemas"]["GapDiff"];
                 };
             };
+            /** @description Malformed ``base_key`` / ``head_key`` (``error: invalid_id``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Base or head report not found (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -8576,6 +9488,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Unsupported/unavailable ``format``, ambiguous report source, or a malformed report key (``error: unsupported_format`` / ``feature_unavailable`` / ``invalid_body`` / ``invalid_id``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unknown ``report_key`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -8631,6 +9561,24 @@ export interface operations {
                     "application/json": components["schemas"]["GapAnalysisReport"];
                 };
             };
+            /** @description Malformed report ``key`` (``error: invalid_id``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No saved report under ``key`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -8671,6 +9619,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Unknown ``outcome`` filter value (``error: unknown_outcome``); ``detail`` carries ``outcome`` + ``valid``. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -8704,13 +9661,22 @@ export interface operations {
                     "application/json": components["schemas"]["EffectiveChallenge"];
                 };
             };
-            /** @description Validation Error */
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Client-supplied empty/malformed ``id`` (``error: invalid_body``). */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorEnvelope"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -8733,6 +9699,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EffectiveChallenge"];
+                };
+            };
+            /** @description Unknown or malformed ``challenge_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -8806,6 +9781,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Unknown ``kind`` filter value (``error: unknown_kind``); ``detail`` carries ``kind`` + ``valid``. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -8841,13 +9825,22 @@ export interface operations {
                     };
                 };
             };
-            /** @description Validation Error */
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Client-supplied empty/malformed ``id`` (``error: invalid_body``). */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorEnvelope"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -8894,6 +9887,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Unknown or malformed ``metric_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -8922,6 +9924,24 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unknown or malformed ``metric_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -8958,6 +9978,24 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unknown or malformed ``metric_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -9029,13 +10067,22 @@ export interface operations {
                     "application/json": components["schemas"]["Workflow"];
                 };
             };
-            /** @description Validation Error */
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Client-supplied empty/malformed ``id`` (``error: invalid_body``). */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorEnvelope"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -9058,6 +10105,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Workflow"];
+                };
+            };
+            /** @description Unknown or malformed ``workflow_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -9088,6 +10144,24 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unknown or malformed ``workflow_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -9124,6 +10198,33 @@ export interface operations {
                     "application/json": components["schemas"]["Workflow"];
                 };
             };
+            /** @description Workflow-rule violation on the step transition (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unknown or malformed ``workflow_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -9153,6 +10254,15 @@ export interface operations {
                 };
                 content: {
                     "text/plain": string;
+                };
+            };
+            /** @description Unknown or malformed ``workflow_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -9208,6 +10318,15 @@ export interface operations {
                     "application/json": components["schemas"]["InitWizardCommitResponse"];
                 };
             };
+            /** @description Unknown ``preset`` (``error: unknown_preset``); ``detail`` carries ``preset`` + ``valid``. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -9239,6 +10358,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InitWizardResponse"];
+                };
+            };
+            /** @description Unknown ``preset`` (``error: unknown_preset``); ``detail`` carries ``preset`` + ``valid``. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -9280,6 +10408,24 @@ export interface operations {
                     };
                 };
             };
+            /** @description Malformed ``report_key`` (``error: invalid_id``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No such stored report (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -9287,6 +10433,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Jira env configuration incomplete (``error: credentials_missing``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -9359,6 +10514,24 @@ export interface operations {
                     };
                 };
             };
+            /** @description Malformed ``report_key`` (``error: invalid_id``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No such stored report (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -9366,6 +10539,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Jira env configuration incomplete (``error: credentials_missing``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -9398,6 +10580,24 @@ export interface operations {
                     };
                 };
             };
+            /** @description Malformed ``report_key`` (``error: invalid_id``); missing ``workspace_id`` / ``tenant_id`` / ``client_id`` (``error: missing_field``); bad ``risks`` (``error: invalid_field``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No such stored report (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -9405,6 +10605,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Unexpected publish failure (``error: internal_error``); ``detail`` carries ``request_id``. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Power BI integration not installed (``error: feature_unavailable``) or upstream Power BI API failure (``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -9437,6 +10655,24 @@ export interface operations {
                     };
                 };
             };
+            /** @description Malformed ``report_key`` (``error: invalid_id``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No such stored report (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -9444,6 +10680,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description ServiceNow integration not installed (``error: feature_unavailable``) or env configuration incomplete (``error: credentials_missing``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -9498,6 +10743,24 @@ export interface operations {
                     };
                 };
             };
+            /** @description Malformed ``report_key`` (``error: invalid_id``); missing ``server_url`` (``error: missing_field``); SSRF/offline-refused ``server_url`` or bad ``risks`` (``error: invalid_field``); invalid Tableau configuration (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No such stored report (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -9505,6 +10768,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Unexpected publish failure (``error: internal_error``); ``detail`` carries ``request_id``. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Tableau integration not installed (``error: feature_unavailable``) or upstream Tableau API failure (``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -9580,6 +10861,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Unknown ``tier`` / ``methodology`` / ``vendor_or_internal`` filter value (``error: unknown_tier`` / ``unknown_methodology`` / ``unknown_vendor_or_internal``); ``detail`` carries the field + ``valid``. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -9613,13 +10903,13 @@ export interface operations {
                     "application/json": components["schemas"]["ModelInventory"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Body-content semantic failure (``error: invalid_body``). */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorEnvelope"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -9642,6 +10932,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ModelInventory"];
+                };
+            };
+            /** @description Unknown or malformed ``model_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -9679,6 +10978,15 @@ export interface operations {
                     "application/json": components["schemas"]["ModelInventory"];
                 };
             };
+            /** @description Unknown or malformed ``model_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -9707,6 +11015,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Unknown or malformed ``model_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -9737,6 +11054,15 @@ export interface operations {
                 };
                 content: {
                     "text/plain": string;
+                };
+            };
+            /** @description Unknown or malformed ``model_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -9772,6 +11098,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Unknown or malformed ``model_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -9801,6 +11136,15 @@ export interface operations {
                 };
                 content: {
                     "text/plain": string;
+                };
+            };
+            /** @description Unknown or malformed ``model_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -9838,6 +11182,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Both-or-neither pinning violation (``error: invalid_body``) or unparseable ``content`` (``error: verification_failed``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -9870,6 +11223,15 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Non-ISO-8601 ``today`` override (``error: invalid_field``); ``detail`` carries ``field``. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -9916,6 +11278,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Unknown ``severity`` / ``status`` filter value (``error: unknown_severity`` / ``unknown_status``); ``detail`` carries the field + ``valid``. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -9949,13 +11320,13 @@ export interface operations {
                     "application/json": components["schemas"]["ControlGap"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Body-content semantic failure (``error: invalid_body``). */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorEnvelope"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -9978,6 +11349,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ControlGap"];
+                };
+            };
+            /** @description Unknown or malformed ``poam_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -10015,6 +11395,15 @@ export interface operations {
                     "application/json": components["schemas"]["ControlGap"];
                 };
             };
+            /** @description Unknown or malformed ``poam_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -10043,6 +11432,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Unknown or malformed ``poam_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -10079,6 +11477,15 @@ export interface operations {
                     "application/json": components["schemas"]["ControlGap"];
                 };
             };
+            /** @description Unknown or malformed ``poam_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -10113,6 +11520,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ControlGap"];
+                };
+            };
+            /** @description Backward/invalid state transition (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unknown or malformed ``poam_id``, or unknown ``milestone_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -10155,6 +11580,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Unknown ``classification`` / ``lifecycle`` filter value (``error: unknown_classification`` / ``unknown_lifecycle``); ``detail`` carries the field + ``valid``. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -10186,6 +11620,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RetentionMetadata"];
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -10239,6 +11682,15 @@ export interface operations {
                     "application/json": components["schemas"]["RetentionMetadata"];
                 };
             };
+            /** @description Unknown or malformed ``retention_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -10267,6 +11719,24 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unknown or malformed ``retention_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -10301,6 +11771,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RetentionMetadata"];
+                };
+            };
+            /** @description WORM shorten attempt (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unknown or malformed ``retention_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -10338,6 +11835,33 @@ export interface operations {
                     "application/json": components["schemas"]["RetentionMetadata"];
                 };
             };
+            /** @description Illegal lifecycle transition (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unknown or malformed ``retention_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -10369,6 +11893,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Malformed ``report_key`` (``error: invalid_id``); raised before the SSE stream starts. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No such stored report (``error: not_found``); raised before the SSE stream starts. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -10404,6 +11946,15 @@ export interface operations {
                     "application/json": components["schemas"]["OpenFairQuantifyResponse"] | components["schemas"]["FairMcQuantifyResponse"];
                 };
             };
+            /** @description Unknown ``method`` (``error: unknown_method``; ``detail`` carries ``method`` + ``valid``) or a degenerate/invalid Monte Carlo run (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -10436,6 +11987,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConcentrationReport"];
+                };
+            };
+            /** @description Empty ``by`` (``error: invalid_field``) or unsupported dimension(s) (``error: unknown_dimension``; ``detail`` carries ``dimensions`` + ``valid``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -10478,6 +12038,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Unknown ``criticality_tier`` / ``type`` filter value (``error: unknown_criticality_tier`` / ``unknown_type``); ``detail`` carries the field + ``valid``. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -10511,13 +12080,13 @@ export interface operations {
                     "application/json": components["schemas"]["Vendor"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Body-content semantic failure (``error: invalid_body``). */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorEnvelope"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -10540,6 +12109,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Vendor"];
+                };
+            };
+            /** @description Unknown or malformed ``vendor_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -10577,6 +12155,15 @@ export interface operations {
                     "application/json": components["schemas"]["Vendor"];
                 };
             };
+            /** @description Unknown or malformed ``vendor_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -10605,6 +12192,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Unknown or malformed ``vendor_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -10640,6 +12236,24 @@ export interface operations {
                     "application/json": components["schemas"]["Questionnaire"];
                 };
             };
+            /** @description Unknown questionnaire ``format`` (``error: unknown_format``); ``detail`` carries ``format`` + ``valid``. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unknown or malformed ``vendor_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -10647,6 +12261,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description SIG / SIG-Lite stub formats (``error: not_implemented``). */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -10675,6 +12298,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DDQuestionnaireIngestResult"];
+                };
+            };
+            /** @description Malformed questionnaire content — unparseable or zero correlated responses (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unknown or malformed ``vendor_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -10710,6 +12351,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Unknown or malformed ``vendor_id`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -10743,6 +12393,15 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Schema-valid matrix with no mappings — nothing to emit (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */

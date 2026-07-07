@@ -1510,6 +1510,42 @@
         "title": "EfficiencyOpportunity",
         "type": "object"
       },
+      "ErrorDetail": {
+        "additionalProperties": true,
+        "description": "Machine-readable ``detail`` payload of a deliberate 4xx/5xx.\n\n``extra=\"allow\"`` — sites attach context fields between ``error``\nand ``message`` (``next_version``, ``valid``, ``resource``, …).",
+        "properties": {
+          "error": {
+            "description": "Stable snake_case error key (see the registry in evidentia_api.errors). Clients dispatch on this.",
+            "title": "Error",
+            "type": "string"
+          },
+          "message": {
+            "description": "Human-readable explanation of the failure.",
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "message"
+        ],
+        "title": "ErrorDetail",
+        "type": "object"
+      },
+      "ErrorEnvelope": {
+        "additionalProperties": false,
+        "description": "Wire shape of a deliberate error response: ``{\"detail\": {...}}``.\n\nFastAPI wraps ``HTTPException.detail`` under a top-level\n``detail`` key; this model documents that envelope for OpenAPI\n``responses`` declarations (via :func:`error_responses`).",
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorEnvelope",
+        "type": "object"
+      },
       "EvidenceArtifact": {
         "additionalProperties": false,
         "description": "A single piece of compliance evidence.\n\nAn artifact represents one discrete piece of proof that a control is\nimplemented and operating effectively. Artifacts are collected by\ncollectors (automated) or uploaded manually.",
@@ -5968,6 +6004,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Per-client token-bucket throttle (``error: rate_limited``). Carries a ``Retry-After`` header."
           }
         },
         "summary": "Ai Gov Classify",
@@ -6024,6 +6070,16 @@
             },
             "description": "Successful Response"
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "``X-Idempotency-Key`` reuse with a different body (``error: idempotency_key_conflict``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6033,6 +6089,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Per-client token-bucket throttle (``error: rate_limited``). Carries a ``Retry-After`` header."
           }
         },
         "summary": "Ai Gov Register",
@@ -6081,6 +6147,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown ``tier`` filter value (``error: unknown_tier``); ``detail`` carries ``tier`` + ``valid``."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6126,6 +6202,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed ``system_id`` (``error: invalid_id``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6168,6 +6254,26 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed ``system_id`` (``error: invalid_id``)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No such registered system (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -6221,6 +6327,36 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Empty update or domain-validation failure (``error: invalid_body``)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No such registered system (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -6277,6 +6413,36 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "FIPS 199 domain-validation failure, e.g. an ``overall`` high-water-mark mismatch (``error: invalid_body``)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No such registered system (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6321,6 +6487,26 @@
               }
             },
             "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No such registered system (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -6377,6 +6563,36 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "M-25-21 domain-validation failure (``error: invalid_body``)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No such registered system (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6431,6 +6647,26 @@
               }
             },
             "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No such registered system (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -6545,6 +6781,26 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed ``framework_id``, invalid ``tier``, unsupported ``format``, unparseable/invalid catalog content, or a duplicate import without ``force`` (``error: invalid_id`` / ``invalid_field`` / ``unsupported_format`` / ``invalid_body`` / ``already_exists``)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6589,6 +6845,26 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed ``framework_id`` (``error: invalid_id``)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown framework (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -6637,6 +6913,26 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed ``framework_id`` (``error: invalid_id``)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown framework (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6672,6 +6968,36 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed ``framework_id`` (``error: invalid_id``)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No user-imported framework under that ID (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -6736,6 +7062,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unexpected collector failure (``error: collector_failed``)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "AWS collector not installed or AWS unreachable (``error: feature_unavailable`` / ``error: upstream_error``)."
           }
         },
         "summary": "Aws Collect",
@@ -6781,6 +7127,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid ``max_companies`` / ``rating_threshold`` body field (``error: invalid_field``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6790,6 +7146,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unexpected collector failure (``error: collector_failed``)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collector not installed, token env var unset, or BitSight unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``)."
           }
         },
         "summary": "Bitsight Collect",
@@ -6830,6 +7206,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing ``content``, unsupported ``to_format``, or invalid findings (``error: missing_field`` / ``error: unsupported_format`` / ``error: invalid_body``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6839,6 +7225,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Optional ``ocsf`` extra not installed (``error: feature_unavailable``)."
           }
         },
         "summary": "Collect Convert",
@@ -6878,6 +7274,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing ``workspace_url`` body field (``error: missing_field``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6887,6 +7293,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unexpected collector failure (``error: collector_failed``)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collector not installed or workspace unreachable (``error: feature_unavailable`` / ``error: upstream_error``)."
           }
         },
         "summary": "Databricks Collect",
@@ -6932,6 +7358,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid ``max_vendors`` body field (``error: invalid_field``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6941,6 +7377,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unexpected collector failure (``error: collector_failed``)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collector not installed, token env var unset, or Drata unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``)."
           }
         },
         "summary": "Drata Collect",
@@ -6980,6 +7436,26 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing or malformed ``repo`` body field (``error: missing_field``)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Repository not found (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6989,6 +7465,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "GitHub API call failed (``error: upstream_error``)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "GitHub collector import failed (``error: feature_unavailable``)."
           }
         },
         "summary": "Github Collect",
@@ -7028,6 +7524,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad content / URL — missing or conflicting input mode, malformed OCSF, non-HTTPS URL, SSRF refusal, fetch failure (``error: invalid_body``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7037,6 +7543,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Optional ``ocsf`` extra not installed (``error: feature_unavailable``)."
           }
         },
         "summary": "Ocsf Collect",
@@ -7076,6 +7592,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing ``org_url`` body field (``error: missing_field``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7085,6 +7611,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unexpected collector failure (``error: collector_failed``)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collector import failed, ``OKTA_API_TOKEN`` unset, or Okta unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``)."
           }
         },
         "summary": "Okta Collect",
@@ -7130,6 +7676,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid ``portfolio_id`` / ``max_companies`` / ``score_threshold`` body field (``error: invalid_field``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7139,6 +7695,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unexpected collector failure (``error: collector_failed``)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collector not installed, token env var unset, or SecurityScorecard unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``)."
           }
         },
         "summary": "Securityscorecard Collect",
@@ -7178,6 +7754,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing ``account`` / ``user`` body field or password env var unset (``error: missing_field`` / ``error: credentials_missing``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7187,6 +7773,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unexpected collector failure (``error: collector_failed``)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collector not installed or Snowflake unreachable (``error: feature_unavailable`` / ``error: upstream_error``)."
           }
         },
         "summary": "Snowflake Collect",
@@ -7226,6 +7832,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing ``connection_uri`` body field (``error: missing_field``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7235,6 +7851,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unexpected collector failure (``error: collector_failed``)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collector not installed, password env var unset, or database unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``)."
           }
         },
         "summary": "Mssql Collect",
@@ -7274,6 +7910,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing ``connection_uri`` body field (``error: missing_field``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7283,6 +7929,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unexpected collector failure (``error: collector_failed``)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collector not installed, password env var unset, or database unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``)."
           }
         },
         "summary": "Mysql Collect",
@@ -7322,6 +7988,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing ``connection_uri`` body field (``error: missing_field``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7331,6 +8007,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unexpected collector failure (``error: collector_failed``)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collector not installed, password env var unset, or database unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``)."
           }
         },
         "summary": "Oracle Collect",
@@ -7370,6 +8066,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing ``connection_uri`` body field (``error: missing_field``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7379,6 +8085,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unexpected collector failure (``error: collector_failed``)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collector not installed, password env var unset, or database unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``)."
           }
         },
         "summary": "Postgres Collect",
@@ -7418,6 +8144,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing ``database_path`` body field (``error: missing_field``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7427,6 +8163,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unexpected collector failure (``error: collector_failed``)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collector import failed or database not readable / outside safe_root (``error: feature_unavailable`` / ``error: upstream_error``)."
           }
         },
         "summary": "Sqlite Collect",
@@ -7496,6 +8252,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid ``max_vendors`` body field (``error: invalid_field``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7505,6 +8271,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unexpected collector failure (``error: collector_failed``)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collector not installed, token env var unset, or Vanta unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``)."
           }
         },
         "summary": "Vanta Collect",
@@ -7567,6 +8353,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Config file write failure (``error: internal_error``)."
           }
         },
         "summary": "Put Config",
@@ -7678,6 +8474,16 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown cadence ``slug`` (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7770,6 +8576,16 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "History file not configured or missing (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7803,6 +8619,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Status file not configured, missing, or unparseable (``error: not_found``)."
           }
         },
         "summary": "Conmon Daemon Status Endpoint",
@@ -7860,6 +8686,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Alert-dedup file not configured (``error: feature_unavailable``)."
           },
           "422": {
             "content": {
@@ -7947,6 +8783,26 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "State file not configured (``error: feature_unavailable``) or unknown cadence ``slug`` (``error: invalid_field``)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7988,6 +8844,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown cadence ``slug`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -8054,7 +8920,7 @@
     },
     "/api/evidence": {
       "post": {
-        "description": "Persist an evidence artifact (new lineage or new version).\n\nBody shape is the full :class:`EvidenceArtifact` model. For a new\nlineage, leave ``lineage_id`` + ``predecessor_id`` unset and\n``version=1`` (the defaults). For a new version in an existing\nchain, set ``lineage_id`` to the chain root + ``predecessor_id``\nto the prior version's ``id`` + ``version=N+1`` (use\n:meth:`EvidenceArtifact.new_version` client-side to construct it).\n\nReturns a summary dict mirroring the CLI ``save`` output. WORM\nenforcement: re-saving a persisted version raises\n:class:`EvidenceWORMViolation` → HTTP 409 with the canonical\n``next_version`` recovery hint. A malformed lineage id → 404.",
+        "description": "Persist an evidence artifact (new lineage or new version).\n\nBody shape is the full :class:`EvidenceArtifact` model. For a new\nlineage, leave ``lineage_id`` + ``predecessor_id`` unset and\n``version=1`` (the defaults). For a new version in an existing\nchain, set ``lineage_id`` to the chain root + ``predecessor_id``\nto the prior version's ``id`` + ``version=N+1`` (use\n:meth:`EvidenceArtifact.new_version` client-side to construct it).\n\nReturns a summary dict mirroring the CLI ``save`` output. WORM\nenforcement: re-saving a persisted version raises\n:class:`EvidenceWORMViolation` → HTTP 409 with the structured\n``worm_violation`` detail carrying the canonical ``next_version``\nrecovery hint. A malformed lineage id → 404.",
         "operationId": "save_evidence_artifact_api_evidence_post",
         "requestBody": {
           "content": {
@@ -8078,6 +8944,36 @@
               }
             },
             "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed lineage id (``error: not_found``)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "WORM collision — the version already exists (``error: worm_violation``); ``detail`` carries the canonical ``next_version`` recovery hint."
           },
           "422": {
             "content": {
@@ -8123,6 +9019,26 @@
               }
             },
             "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed lineage id (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -8178,6 +9094,26 @@
               }
             },
             "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed lineage id OR no such version (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -8259,6 +9195,16 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown ``framework`` or ``control_id`` (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -8268,6 +9214,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "evidentia-ai import failure (``error: feature_unavailable``)."
           }
         },
         "summary": "Explain",
@@ -8374,6 +9330,16 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown ``framework_id`` (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -8426,6 +9392,16 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown ``framework_id`` or ``control_id`` (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -8467,6 +9443,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing/invalid inventory input or a failed inventory parse (``error: invalid_body``)."
           },
           "422": {
             "content": {
@@ -8510,6 +9496,26 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed ``base_key`` / ``head_key`` (``error: invalid_id``)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Base or head report not found (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -8549,6 +9555,26 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unsupported/unavailable ``format``, ambiguous report source, or a malformed report key (``error: unsupported_format`` / ``feature_unavailable`` / ``invalid_body`` / ``invalid_id``)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown ``report_key`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -8616,6 +9642,26 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed report ``key`` (``error: invalid_id``)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No saved report under ``key`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -8716,6 +9762,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown ``outcome`` filter value (``error: unknown_outcome``); ``detail`` carries ``outcome`` + ``valid``."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -8756,15 +9812,32 @@
             },
             "description": "Successful Response"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorEnvelope"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Client-supplied empty/malformed ``id`` (``error: invalid_body``)."
           }
         },
         "summary": "Create Challenge",
@@ -8798,6 +9871,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``challenge_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -8926,6 +10009,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown ``kind`` filter value (``error: unknown_kind``); ``detail`` carries ``kind`` + ``valid``."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -8968,15 +10061,32 @@
             },
             "description": "Successful Response"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorEnvelope"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Client-supplied empty/malformed ``id`` (``error: invalid_body``)."
           }
         },
         "summary": "Create Metric",
@@ -9026,6 +10136,26 @@
           "204": {
             "description": "Successful Response"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``metric_id`` (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -9068,6 +10198,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``metric_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -9123,6 +10263,26 @@
               }
             },
             "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``metric_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -9227,15 +10387,32 @@
             },
             "description": "Successful Response"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorEnvelope"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Client-supplied empty/malformed ``id`` (``error: invalid_body``)."
           }
         },
         "summary": "Run Workflow",
@@ -9262,6 +10439,26 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``workflow_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -9303,6 +10500,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``workflow_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -9357,6 +10564,36 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Workflow-rule violation on the step transition (``error: invalid_body``)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``workflow_id`` (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -9399,6 +10636,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``workflow_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -9464,6 +10711,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown ``preset`` (``error: unknown_preset``); ``detail`` carries ``preset`` + ``valid``."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -9505,6 +10762,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown ``preset`` (``error: unknown_preset``); ``detail`` carries ``preset`` + ``valid``."
           },
           "422": {
             "content": {
@@ -9569,6 +10836,26 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed ``report_key`` (``error: invalid_id``)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No such stored report (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -9578,6 +10865,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Jira env configuration incomplete (``error: credentials_missing``)."
           }
         },
         "summary": "Jira Push",
@@ -9667,6 +10964,26 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed ``report_key`` (``error: invalid_id``)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No such stored report (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -9676,6 +10993,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Jira env configuration incomplete (``error: credentials_missing``)."
           }
         },
         "summary": "Jira Sync",
@@ -9724,6 +11051,26 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed ``report_key`` (``error: invalid_id``); missing ``workspace_id`` / ``tenant_id`` / ``client_id`` (``error: missing_field``); bad ``risks`` (``error: invalid_field``)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No such stored report (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -9733,6 +11080,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unexpected publish failure (``error: internal_error``); ``detail`` carries ``request_id``."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Power BI integration not installed (``error: feature_unavailable``) or upstream Power BI API failure (``error: upstream_error``)."
           }
         },
         "summary": "Powerbi Publish",
@@ -9787,6 +11154,26 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed ``report_key`` (``error: invalid_id``)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No such stored report (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -9796,6 +11183,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "ServiceNow integration not installed (``error: feature_unavailable``) or env configuration incomplete (``error: credentials_missing``)."
           }
         },
         "summary": "Servicenow Push",
@@ -9868,6 +11265,26 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed ``report_key`` (``error: invalid_id``); missing ``server_url`` (``error: missing_field``); SSRF/offline-refused ``server_url`` or bad ``risks`` (``error: invalid_field``); invalid Tableau configuration (``error: invalid_body``)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No such stored report (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -9877,6 +11294,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unexpected publish failure (``error: internal_error``); ``detail`` carries ``request_id``."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Tableau integration not installed (``error: feature_unavailable``) or upstream Tableau API failure (``error: upstream_error``)."
           }
         },
         "summary": "Tableau Publish",
@@ -10029,6 +11466,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown ``tier`` / ``methodology`` / ``vendor_or_internal`` filter value (``error: unknown_tier`` / ``unknown_methodology`` / ``unknown_vendor_or_internal``); ``detail`` carries the field + ``valid``."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -10073,11 +11520,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorEnvelope"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Body-content semantic failure (``error: invalid_body``)."
           }
         },
         "summary": "Create Model",
@@ -10104,6 +11558,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``model_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -10145,6 +11609,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``model_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -10197,6 +11671,16 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``model_id`` (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -10239,6 +11723,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``model_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -10294,6 +11788,16 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``model_id`` (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -10336,6 +11840,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``model_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -10380,6 +11894,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Both-or-neither pinning violation (``error: invalid_body``) or unparseable ``content`` (``error: verification_failed``)."
           },
           "422": {
             "content": {
@@ -10434,6 +11958,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Non-ISO-8601 ``today`` override (``error: invalid_field``); ``detail`` carries ``field``."
           },
           "422": {
             "content": {
@@ -10570,6 +12104,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown ``severity`` / ``status`` filter value (``error: unknown_severity`` / ``unknown_status``); ``detail`` carries the field + ``valid``."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -10614,11 +12158,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorEnvelope"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Body-content semantic failure (``error: invalid_body``)."
           }
         },
         "summary": "Create Poam Item",
@@ -10645,6 +12196,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``poam_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -10686,6 +12247,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``poam_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -10737,6 +12308,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``poam_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -10790,6 +12371,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``poam_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -10852,6 +12443,26 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Backward/invalid state transition (``error: invalid_body``)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``poam_id``, or unknown ``milestone_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -10952,6 +12563,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown ``classification`` / ``lifecycle`` filter value (``error: unknown_classification`` / ``unknown_lifecycle``); ``detail`` carries the field + ``valid``."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -10991,6 +12612,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
           },
           "422": {
             "content": {
@@ -11050,6 +12681,26 @@
           "204": {
             "description": "Successful Response"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``retention_id`` (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -11090,6 +12741,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``retention_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -11144,6 +12805,36 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "WORM shorten attempt (``error: invalid_body``)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``retention_id`` (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -11197,6 +12888,36 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Illegal lifecycle transition (``error: invalid_body``)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``retention_id`` (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -11216,7 +12937,7 @@
     },
     "/api/risk/generate": {
       "post": {
-        "description": "Generate risk statements for selected gaps, streaming progress via SSE.",
+        "description": "Generate risk statements for selected gaps, streaming progress via SSE.\n\nThe 400 / 404 documented above are raised by the ``_load_report``\nlookup BEFORE the stream starts; mid-stream failures ride inside\nthe event stream as ``phase: error`` messages instead.",
         "operationId": "generate_api_risk_generate_post",
         "requestBody": {
           "content": {
@@ -11236,6 +12957,26 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed ``report_key`` (``error: invalid_id``); raised before the SSE stream starts."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No such stored report (``error: not_found``); raised before the SSE stream starts."
           },
           "422": {
             "content": {
@@ -11286,6 +13027,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown ``method`` (``error: unknown_method``; ``detail`` carries ``method`` + ``valid``) or a degenerate/invalid Monte Carlo run (``error: invalid_body``)."
           },
           "422": {
             "content": {
@@ -11352,6 +13103,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Empty ``by`` (``error: invalid_field``) or unsupported dimension(s) (``error: unknown_dimension``; ``detail`` carries ``dimensions`` + ``valid``)."
           },
           "422": {
             "content": {
@@ -11452,6 +13213,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown ``criticality_tier`` / ``type`` filter value (``error: unknown_criticality_tier`` / ``unknown_type``); ``detail`` carries the field + ``valid``."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -11496,11 +13267,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorEnvelope"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Body-content semantic failure (``error: invalid_body``)."
           }
         },
         "summary": "Create Vendor",
@@ -11527,6 +13305,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``vendor_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -11568,6 +13356,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``vendor_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -11619,6 +13417,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``vendor_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -11675,6 +13483,26 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown questionnaire ``format`` (``error: unknown_format``); ``detail`` carries ``format`` + ``valid``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``vendor_id`` (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -11684,6 +13512,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "SIG / SIG-Lite stub formats (``error: not_implemented``)."
           }
         },
         "summary": "Generate Dd Questionnaire",
@@ -11694,7 +13532,7 @@
     },
     "/api/tprm/vendors/{vendor_id}/dd-questionnaire/ingest": {
       "post": {
-        "description": "Parse + correlate a completed DD questionnaire (parse-only).\n\nMatches the ``evidentia tprm dd-questionnaire ingest`` CLI verb\nexactly: PARSES the posted completed-questionnaire document and\nCORRELATES the responses to the vendor record, then RETURNS the\ncorrelation result. It does NOT mutate or save the vendor and does\nNOT create an :class:`EvidenceRef` — persistence stays deferred,\nmatching the CLI's documented scope (the CLI parses + correlates,\nthen prints for review).\n\nThe core :func:`parse_completed_questionnaire` is file-based\n(extension-dispatched). Over HTTP the body IS the document, so it is\nwritten to an ephemeral ``.json`` temp file, parsed, and the temp\nfile is removed in a ``finally`` — no path/secret leakage and no\npersistent on-disk state.\n\nLocal parse only — no credentials, no network. Returns the parsed\n:class:`DDQuestionnaireIngestResult`.\n\nError contract (matches the rest of this router):\n\n  - 404 on shape-violation OR well-formed-unknown ``vendor_id``\n    (F-V08-DAST-1 widening pattern). The endpoint is vendor-scoped.\n  - 400 (string detail, F-V08-DAST-3 invariant) when the\n    questionnaire content is unparseable or correlates to no\n    responses (nothing to ingest). Pydantic auto-validation 422s\n    (wrong-typed body) keep their array-shape detail.\n\nNo ``require_role(\"write\")`` gate: a parse is a read-style operation\n(no vendor mutation), so it is open like the other read endpoints on\nthis router.",
+        "description": "Parse + correlate a completed DD questionnaire (parse-only).\n\nMatches the ``evidentia tprm dd-questionnaire ingest`` CLI verb\nexactly: PARSES the posted completed-questionnaire document and\nCORRELATES the responses to the vendor record, then RETURNS the\ncorrelation result. It does NOT mutate or save the vendor and does\nNOT create an :class:`EvidenceRef` — persistence stays deferred,\nmatching the CLI's documented scope (the CLI parses + correlates,\nthen prints for review).\n\nThe core :func:`parse_completed_questionnaire` is file-based\n(extension-dispatched). Over HTTP the body IS the document, so it is\nwritten to an ephemeral ``.json`` temp file, parsed, and the temp\nfile is removed in a ``finally`` — no path/secret leakage and no\npersistent on-disk state.\n\nLocal parse only — no credentials, no network. Returns the parsed\n:class:`DDQuestionnaireIngestResult`.\n\nError contract (matches the rest of this router):\n\n  - 404 on shape-violation OR well-formed-unknown ``vendor_id``\n    (F-V08-DAST-1 widening pattern). The endpoint is vendor-scoped.\n  - 400 (F-V08-DAST-3 status normalization; structured detail per\n    the 2026-07-06 error-shape convergence, see\n    :mod:`evidentia_api.errors`) when the questionnaire content is\n    unparseable or correlates to no responses (nothing to ingest).\n    Pydantic auto-validation 422s (wrong-typed body) keep their\n    array-shape detail.\n\nNo ``require_role(\"write\")`` gate: a parse is a read-style operation\n(no vendor mutation), so it is open like the other read endpoints on\nthis router.",
         "operationId": "ingest_dd_questionnaire_api_tprm_vendors__vendor_id__dd_questionnaire_ingest_post",
         "parameters": [
           {
@@ -11730,6 +13568,26 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed questionnaire content — unparseable or zero correlated responses (``error: invalid_body``)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``vendor_id`` (``error: not_found``)."
           },
           "422": {
             "content": {
@@ -11785,6 +13643,16 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown or malformed ``vendor_id`` (``error: not_found``)."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -11828,6 +13696,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Schema-valid matrix with no mappings — nothing to emit (``error: invalid_body``)."
           },
           "422": {
             "content": {

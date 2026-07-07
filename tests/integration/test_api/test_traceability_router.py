@@ -151,13 +151,16 @@ class TestEmitInvalidInput:
         self, trace_client: TestClient
     ) -> None:
         # A schema-valid matrix with no mappings is insufficient to emit
-        # (mirrors the CLI's "nothing to emit" guard) → 400 string detail.
+        # (mirrors the CLI's "nothing to emit" guard) → 400 with the
+        # structured detail from evidentia_api.errors.
         r = trace_client.post(
             "/api/traceability/emit",
             json=_matrix_payload(with_mappings=False),
         )
         assert r.status_code == 400, r.text
-        assert isinstance(r.json()["detail"], str)
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_body"
+        assert "message" in detail
 
     def test_missing_required_field_returns_422(
         self, trace_client: TestClient
@@ -209,3 +212,25 @@ class TestSigningKnobsRejected:
         payload = {**_matrix_payload(), "sign_with_sigstore": True}
         r = trace_client.post("/api/traceability/emit", json=payload)
         assert r.status_code == 422, r.text
+
+
+# ════════════════════════════════════════════════════════════════════
+# OpenAPI error-status documentation (2026-07-06 convergence)
+# ════════════════════════════════════════════════════════════════════
+
+
+def test_traceability_error_statuses_documented_in_openapi(
+    trace_client: TestClient,
+) -> None:
+    """Every status the traceability route deliberately raises is
+    documented on the operation's ``responses`` in the OpenAPI schema.
+    The hermetic app serves its schema at ``/openapi.json`` (the
+    ``/api`` prefix applies to the routes, not the schema endpoint)."""
+    schema = trace_client.get("/openapi.json").json()
+    expected = [
+        ("/api/traceability/emit", "post", ["400"]),
+    ]
+    for path, method, statuses in expected:
+        responses = schema["paths"][path][method]["responses"]
+        for status in statuses:
+            assert status in responses, (path, method, status)

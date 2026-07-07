@@ -73,6 +73,10 @@ class TestGetCadence:
     ) -> None:
         resp = api_client.get("/api/conmon/cadences/nonexistent-slug")
         assert resp.status_code == 404
+        detail = resp.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert detail["resource"] == "cadence"
+        assert detail["resource_id"] == "nonexistent-slug"
 
 
 class TestNextDue:
@@ -112,6 +116,9 @@ class TestNextDue:
             },
         )
         assert resp.status_code == 404
+        detail = resp.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert detail["resource"] == "cadence"
 
     def test_last_day_clamping(self, api_client: TestClient) -> None:
         resp = api_client.post(
@@ -386,9 +393,9 @@ class TestDaemonStatusEndpoint:
         )
         resp = api_client.get("/api/conmon/daemon-status")
         assert resp.status_code == 404
-        assert (
-            "EVIDENTIA_CONMON_DAEMON_STATUS_FILE" in resp.json()["detail"]
-        )
+        detail = resp.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert "EVIDENTIA_CONMON_DAEMON_STATUS_FILE" in detail["message"]
 
     def test_returns_404_when_file_missing(
         self,
@@ -402,7 +409,7 @@ class TestDaemonStatusEndpoint:
         )
         resp = api_client.get("/api/conmon/daemon-status")
         assert resp.status_code == 404
-        assert "missing" in resp.json()["detail"]
+        assert "missing" in resp.json()["detail"]["message"]
 
     def test_returns_payload_when_file_present(
         self,
@@ -535,10 +542,9 @@ class TestDaemonHistoryEndpoint:
         )
         resp = api_client.get("/api/conmon/daemon-history")
         assert resp.status_code == 404
-        assert (
-            "EVIDENTIA_CONMON_DAEMON_HISTORY_FILE"
-            in resp.json()["detail"]
-        )
+        detail = resp.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert "EVIDENTIA_CONMON_DAEMON_HISTORY_FILE" in detail["message"]
 
     def test_returns_404_when_file_missing(
         self,
@@ -835,6 +841,9 @@ class TestMarkCompleted:
             json={"slug": "no-such-cadence", "when": "2026-05-15"},
         )
         assert resp.status_code == 400, resp.text
+        detail = resp.json()["detail"]
+        assert detail["error"] == "invalid_field"
+        assert detail["field"] == "slug"
         # State file must not be created for a rejected mark.
         assert not state_file.exists()
 
@@ -880,7 +889,9 @@ class TestMarkCompleted:
             json={"slug": "nist-800-53-rev5-ca7", "when": "2026-05-15"},
         )
         assert resp.status_code == 400
-        assert "EVIDENTIA_CONMON_STATE_FILE" in resp.json()["detail"]
+        detail = resp.json()["detail"]
+        assert detail["error"] == "feature_unavailable"
+        assert "EVIDENTIA_CONMON_STATE_FILE" in detail["message"]
 
 
 # ── v0.10.12: dedup-list endpoint ───────────────────────────────────
@@ -983,7 +994,9 @@ class TestDedupList:
         )
         resp = api_client.get("/api/conmon/dedup-list")
         assert resp.status_code == 400
-        assert "EVIDENTIA_CONMON_ALERT_DEDUP_FILE" in resp.json()["detail"]
+        detail = resp.json()["detail"]
+        assert detail["error"] == "feature_unavailable"
+        assert "EVIDENTIA_CONMON_ALERT_DEDUP_FILE" in detail["message"]
 
 
 # ── v0.10.12: RBAC enforcement (proves the write gate bites) ────────
@@ -1046,3 +1059,31 @@ class TestConmonRBAC:
         resp = conmon_readonly_client.get("/api/conmon/dedup-list")
         assert resp.status_code == 200, resp.text
         assert resp.json()["count"] == 0
+
+
+# ── 2026-07-06 error-shape convergence: OpenAPI error docs ──────────
+
+
+class TestConmonOpenApiErrorDocs:
+    """Every deliberate 4xx the conmon router raises is documented on
+    its OpenAPI operation (schemathesis undocumented-status noise →
+    contract)."""
+
+    def test_conmon_error_statuses_documented_in_openapi(
+        self, api_client: TestClient
+    ) -> None:
+        schema = api_client.get("/api/openapi.json").json()
+        expected: list[tuple[str, str, list[str]]] = [
+            ("/api/conmon/cadences/{slug}", "get", ["404"]),
+            ("/api/conmon/next", "post", ["404"]),
+            ("/api/conmon/daemon-status", "get", ["404"]),
+            ("/api/conmon/daemon-history", "get", ["404"]),
+            ("/api/conmon/mark-completed", "post", ["400", "403"]),
+            ("/api/conmon/dedup-list", "get", ["400"]),
+        ]
+        for path, method, statuses in expected:
+            responses = schema["paths"][path][method]["responses"]
+            for status in statuses:
+                assert status in responses, (
+                    f"{method.upper()} {path} missing {status}"
+                )

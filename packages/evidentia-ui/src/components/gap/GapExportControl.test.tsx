@@ -116,8 +116,11 @@ describe("GapExportControl", () => {
     fetchMock.mockResolvedValue(
       jsonResponse(
         {
-          detail:
-            "Format 'ocsf' is unavailable: ocsf extra missing. Install the server's [ocsf] extra.",
+          detail: {
+            error: "feature_unavailable",
+            message:
+              "Format 'ocsf' is unavailable: ocsf extra missing. Install the server's [ocsf] extra.",
+          },
         },
         400,
       ),

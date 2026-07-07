@@ -42,10 +42,11 @@ from evidentia_core.risk_quant.open_fair import (
     compute_loss_magnitude,
 )
 from evidentia_core.security.paths import PathTraversalError
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sse_starlette.sse import EventSourceResponse
 
+from evidentia_api.errors import api_error, error_responses
 from evidentia_api.schemas import RiskGenerateRequest
 
 logger = logging.getLogger(__name__)
@@ -68,12 +69,19 @@ def _load_report(key: str) -> GapAnalysisReport:
         report = load_report_by_key(key)
     except (InvalidReportKeyError, PathTraversalError) as exc:
         # Both errors reflect client-supplied bad keys; normalize to
-        # 400 with `{detail: string}` shape (matches OpenAPI
-        # declaration — closes F-V08-DAST-3).
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        # 400 (the F-V08-DAST-3 status normalization is unchanged)
+        # with the structured detail object from
+        # :mod:`evidentia_api.errors`.
+        raise api_error(
+            400, "invalid_id", str(exc), resource="gap_report"
+        ) from exc
     if report is None:
-        raise HTTPException(
-            status_code=404, detail=f"Report {key} not found."
+        raise api_error(
+            404,
+            "not_found",
+            f"Report {key} not found.",
+            resource="gap_report",
+            resource_id=key,
         )
     return report
 
@@ -218,9 +226,28 @@ async def _stream_risk_generation(
     yield json.dumps({"phase": "done", "generated": generated, "failed": failed})
 
 
-@router.post("/risk/generate")
+@router.post(
+    "/risk/generate",
+    responses=error_responses(
+        {
+            400: (
+                "Malformed ``report_key`` (``error: invalid_id``); "
+                "raised before the SSE stream starts."
+            ),
+            404: (
+                "No such stored report (``error: not_found``); "
+                "raised before the SSE stream starts."
+            ),
+        }
+    ),
+)
 async def generate(payload: RiskGenerateRequest) -> EventSourceResponse:
-    """Generate risk statements for selected gaps, streaming progress via SSE."""
+    """Generate risk statements for selected gaps, streaming progress via SSE.
+
+    The 400 / 404 documented above are raised by the ``_load_report``
+    lookup BEFORE the stream starts; mid-stream failures ride inside
+    the event stream as ``phase: error`` messages instead.
+    """
     report = _load_report(payload.report_key)
     selected = _pick_gaps(report, payload.gap_ids, payload.top_n)
 
@@ -328,6 +355,16 @@ class FairMcQuantifyResponse(BaseModel):
 @router.post(
     "/risk/quantify",
     response_model=OpenFairQuantifyResponse | FairMcQuantifyResponse,
+    responses=error_responses(
+        {
+            400: (
+                "Unknown ``method`` (``error: unknown_method``; "
+                "``detail`` carries ``method`` + ``valid``) or a "
+                "degenerate/invalid Monte Carlo run "
+                "(``error: invalid_body``)."
+            ),
+        }
+    ),
 )
 def quantify(
     payload: RiskQuantifyRequest,
@@ -340,14 +377,18 @@ def quantify(
     local computation — no credentials, no network, no persisted state.
     """
     if payload.method not in _QUANTIFY_METHODS:
-        # Runtime body-content error → 400 with {detail: string} per the
-        # F-V08-DAST-3 normalization convention (not Pydantic's 422 array).
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        # Runtime body-content error → 400 (not Pydantic's 422 array;
+        # the F-V08-DAST-3 status normalization is unchanged) with the
+        # structured detail object from evidentia_api.errors.
+        raise api_error(
+            400,
+            "unknown_method",
+            (
                 "method must be one of "
                 f"{', '.join(_QUANTIFY_METHODS)} (got {payload.method!r})."
             ),
+            method=payload.method,
+            valid=list(_QUANTIFY_METHODS),
         )
 
     if payload.method == "open-fair":
@@ -384,8 +425,9 @@ def quantify(
         ]
     except (ValueError, ValidationError) as exc:
         # simulate_ale raises ValueError on a degenerate / invalid run;
-        # normalize to 400 string-detail like the rest of the surface.
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        # normalize to a 400 structured detail like the rest of the
+        # surface.
+        raise api_error(400, "invalid_body", str(exc)) from exc
 
     return FairMcQuantifyResponse(
         scenario_count=len(simulations),

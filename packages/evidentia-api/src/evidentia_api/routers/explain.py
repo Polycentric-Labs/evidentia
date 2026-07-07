@@ -17,14 +17,30 @@ import json
 import logging
 from collections.abc import AsyncIterator
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from sse_starlette.sse import EventSourceResponse
+
+from evidentia_api.errors import api_error, error_responses
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/explain/{framework}/{control_id:path}")
+@router.post(
+    "/explain/{framework}/{control_id:path}",
+    responses=error_responses(
+        {
+            404: (
+                "Unknown ``framework`` or ``control_id`` "
+                "(``error: not_found``)."
+            ),
+            500: (
+                "evidentia-ai import failure "
+                "(``error: feature_unavailable``)."
+            ),
+        }
+    ),
+)
 async def explain(
     framework: str,
     control_id: str,
@@ -42,9 +58,10 @@ async def explain(
     try:
         from evidentia_ai.explain import ExplanationGenerator
     except ImportError as e:  # pragma: no cover — evidentia-ai is required
-        raise HTTPException(
-            status_code=500,
-            detail=f"evidentia-ai unavailable: {e}",
+        raise api_error(
+            500,
+            "feature_unavailable",
+            f"evidentia-ai unavailable: {e}",
         ) from e
 
     from evidentia_core.catalogs.registry import FrameworkRegistry
@@ -53,15 +70,22 @@ async def explain(
     try:
         catalog = registry.get_catalog(framework)
     except (FileNotFoundError, KeyError, ValueError) as e:
-        raise HTTPException(
-            status_code=404, detail=f"Framework '{framework}' not found."
+        raise api_error(
+            404,
+            "not_found",
+            f"Framework '{framework}' not found.",
+            resource="framework",
+            resource_id=framework,
         ) from e
 
     control = catalog.get_control(control_id)
     if control is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Control '{control_id}' not found in '{framework}'.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Control '{control_id}' not found in '{framework}'.",
+            resource="control",
+            resource_id=control_id,
         )
 
     gen = ExplanationGenerator(model=model) if model else ExplanationGenerator()

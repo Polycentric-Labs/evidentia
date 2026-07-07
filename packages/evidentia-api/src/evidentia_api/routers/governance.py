@@ -101,10 +101,15 @@ from evidentia_core.workflow_store import (
     load_workflow_by_id,
     save_workflow,
 )
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
+from evidentia_api.errors import (
+    RBAC_DENIED_403,
+    api_error,
+    error_responses,
+)
 from evidentia_api.rbac_dependency import require_role
 
 router = APIRouter()
@@ -134,6 +139,15 @@ def _metric_with_status(metric: Metric) -> dict[str, Any]:
     response_model=EffectiveChallenge,
     status_code=201,
     dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            403: RBAC_DENIED_403,
+            422: (
+                "Client-supplied empty/malformed ``id`` "
+                "(``error: invalid_body``)."
+            ),
+        }
+    ),
 )
 async def create_challenge(payload: EffectiveChallenge) -> EffectiveChallenge:
     """Log a new effective-challenge record.
@@ -151,7 +165,7 @@ async def create_challenge(payload: EffectiveChallenge) -> EffectiveChallenge:
         # reaches the store's id-shape validation. Return 422 rather than letting
         # it propagate as an unhandled 500 — a response-contract fix mirroring
         # the GET/PUT paths in this router (F-V1012-S4-1).
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise api_error(422, "invalid_body", str(exc)) from exc
     _log.info(
         action=EventAction.GOVERNANCE_CHALLENGE_CREATED,
         outcome=EventOutcome.SUCCESS,
@@ -168,7 +182,18 @@ async def create_challenge(payload: EffectiveChallenge) -> EffectiveChallenge:
     return challenge
 
 
-@router.get("/governance/challenges")
+@router.get(
+    "/governance/challenges",
+    responses=error_responses(
+        {
+            400: (
+                "Unknown ``outcome`` filter value (``error: "
+                "unknown_outcome``); ``detail`` carries ``outcome`` "
+                "+ ``valid``."
+            ),
+        }
+    ),
+)
 async def list_challenge_records(
     skip: int = Query(0, ge=0, description="Pagination offset."),
     limit: int = Query(
@@ -190,12 +215,15 @@ async def list_challenge_records(
     count).
     """
     if outcome and outcome not in {o.value for o in ChallengeOutcome}:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "unknown_outcome",
+            (
                 f"Unknown outcome {outcome!r}; valid: "
                 f"{sorted(o.value for o in ChallengeOutcome)}"
             ),
+            outcome=outcome,
+            valid=sorted(o.value for o in ChallengeOutcome),
         )
     challenges = list_challenges()
     if subject_model_id:
@@ -219,20 +247,34 @@ async def list_challenge_records(
 @router.get(
     "/governance/challenges/{challenge_id}",
     response_model=EffectiveChallenge,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``challenge_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def get_challenge(challenge_id: str) -> EffectiveChallenge:
     """Fetch a single challenge by ID. 404 on unknown OR malformed ID."""
     try:
         challenge = load_challenge_by_id(challenge_id)
     except InvalidChallengeIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Challenge {challenge_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Challenge {challenge_id!r} not found.",
+            resource="challenge",
+            resource_id=challenge_id,
         ) from exc
     if challenge is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Challenge {challenge_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Challenge {challenge_id!r} not found.",
+            resource="challenge",
+            resource_id=challenge_id,
         )
     return challenge
 
@@ -258,6 +300,15 @@ class MetricObservationPayload(BaseModel):
     "/governance/metrics",
     status_code=201,
     dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            403: RBAC_DENIED_403,
+            422: (
+                "Client-supplied empty/malformed ``id`` "
+                "(``error: invalid_body``)."
+            ),
+        }
+    ),
 )
 async def create_metric(payload: Metric) -> dict[str, Any]:
     """Define a new KRI / KPI / KGI metric.
@@ -279,7 +330,7 @@ async def create_metric(payload: Metric) -> dict[str, Any]:
     except (InvalidMetricIdError, ValueError) as exc:
         # See create_challenge — a client-supplied empty/malformed id must be a
         # 422, not an unhandled 500 (F-V1012-S4-1).
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise api_error(422, "invalid_body", str(exc)) from exc
     _log.info(
         action=EventAction.GOVERNANCE_METRIC_CREATED,
         outcome=EventOutcome.SUCCESS,
@@ -295,6 +346,15 @@ async def create_metric(payload: Metric) -> dict[str, Any]:
 @router.post(
     "/governance/metrics/{metric_id}/observations",
     dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            403: RBAC_DENIED_403,
+            404: (
+                "Unknown or malformed ``metric_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def observe_metric(
     metric_id: str, payload: MetricObservationPayload
@@ -309,14 +369,20 @@ async def observe_metric(
     try:
         metric = load_metric_by_id(metric_id)
     except InvalidMetricIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Metric {metric_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Metric {metric_id!r} not found.",
+            resource="metric",
+            resource_id=metric_id,
         ) from exc
     if metric is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Metric {metric_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Metric {metric_id!r} not found.",
+            resource="metric",
+            resource_id=metric_id,
         )
     new_obs = MetricObservation(
         observed_at=payload.observed_at,
@@ -343,7 +409,18 @@ async def observe_metric(
     return _metric_with_status(metric)
 
 
-@router.get("/governance/metrics")
+@router.get(
+    "/governance/metrics",
+    responses=error_responses(
+        {
+            400: (
+                "Unknown ``kind`` filter value (``error: "
+                "unknown_kind``); ``detail`` carries ``kind`` + "
+                "``valid``."
+            ),
+        }
+    ),
+)
 async def list_metric_records(
     skip: int = Query(0, ge=0, description="Pagination offset."),
     limit: int = Query(
@@ -360,12 +437,15 @@ async def list_metric_records(
     alongside the persisted fields.
     """
     if kind and kind not in {k.value for k in MetricKind}:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "unknown_kind",
+            (
                 f"Unknown kind {kind!r}; valid: "
                 f"{sorted(k.value for k in MetricKind)}"
             ),
+            kind=kind,
+            valid=sorted(k.value for k in MetricKind),
         )
     metrics = list_metrics()
     if kind:
@@ -392,20 +472,36 @@ async def metrics_report() -> str:
     return generate_metrics_report(list_metrics())
 
 
-@router.get("/governance/metrics/{metric_id}")
+@router.get(
+    "/governance/metrics/{metric_id}",
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``metric_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
+)
 async def get_metric(metric_id: str) -> dict[str, Any]:
     """Fetch a single metric with computed status. 404 on unknown/malformed."""
     try:
         metric = load_metric_by_id(metric_id)
     except InvalidMetricIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Metric {metric_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Metric {metric_id!r} not found.",
+            resource="metric",
+            resource_id=metric_id,
         ) from exc
     if metric is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Metric {metric_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Metric {metric_id!r} not found.",
+            resource="metric",
+            resource_id=metric_id,
         )
     return _metric_with_status(metric)
 
@@ -414,20 +510,35 @@ async def get_metric(metric_id: str) -> dict[str, Any]:
     "/governance/metrics/{metric_id}",
     status_code=204,
     dependencies=[require_role("admin")],
+    responses=error_responses(
+        {
+            403: RBAC_DENIED_403,
+            404: (
+                "Unknown or malformed ``metric_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def delete_metric_record(metric_id: str) -> None:
     """Delete a metric by ID. 204 on success, 404 on unknown/malformed."""
     try:
         removed = delete_metric(metric_id)
     except InvalidMetricIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Metric {metric_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Metric {metric_id!r} not found.",
+            resource="metric",
+            resource_id=metric_id,
         ) from exc
     if not removed:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Metric {metric_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Metric {metric_id!r} not found.",
+            resource="metric",
+            resource_id=metric_id,
         )
     _log.info(
         action=EventAction.GOVERNANCE_METRIC_DELETED,
@@ -464,6 +575,15 @@ class WorkflowAdvancePayload(BaseModel):
     response_model=Workflow,
     status_code=201,
     dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            403: RBAC_DENIED_403,
+            422: (
+                "Client-supplied empty/malformed ``id`` "
+                "(``error: invalid_body``)."
+            ),
+        }
+    ),
 )
 async def run_workflow(payload: Workflow) -> Workflow:
     """Instantiate + persist a workflow run.
@@ -496,7 +616,7 @@ async def run_workflow(payload: Workflow) -> Workflow:
     except (InvalidWorkflowIdError, ValueError) as exc:
         # See create_challenge — a client-supplied empty/malformed id must be a
         # 422, not an unhandled 500 (F-V1012-S4-1).
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise api_error(422, "invalid_body", str(exc)) from exc
     _log.info(
         action=EventAction.GOVERNANCE_WORKFLOW_RUN,
         outcome=EventOutcome.SUCCESS,
@@ -517,6 +637,19 @@ async def run_workflow(payload: Workflow) -> Workflow:
     "/governance/workflows/{workflow_id}/advance",
     response_model=Workflow,
     dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            400: (
+                "Workflow-rule violation on the step transition "
+                "(``error: invalid_body``)."
+            ),
+            403: RBAC_DENIED_403,
+            404: (
+                "Unknown or malformed ``workflow_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def advance_workflow(
     workflow_id: str, payload: WorkflowAdvancePayload
@@ -531,14 +664,20 @@ async def advance_workflow(
     try:
         wf = load_workflow_by_id(workflow_id)
     except InvalidWorkflowIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Workflow {workflow_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Workflow {workflow_id!r} not found.",
+            resource="workflow",
+            resource_id=workflow_id,
         ) from exc
     if wf is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Workflow {workflow_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Workflow {workflow_id!r} not found.",
+            resource="workflow",
+            resource_id=workflow_id,
         )
     try:
         new_wf = advance_workflow_step(
@@ -549,7 +688,7 @@ async def advance_workflow(
             note=payload.note,
         )
     except WorkflowAdvanceError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise api_error(400, "invalid_body", str(exc)) from exc
     save_workflow(new_wf)
     _log.info(
         action=EventAction.GOVERNANCE_WORKFLOW_ADVANCED,
@@ -591,20 +730,34 @@ async def list_workflow_records(
 @router.get(
     "/governance/workflows/{workflow_id}",
     response_model=Workflow,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``workflow_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def get_workflow(workflow_id: str) -> Workflow:
     """Fetch a single workflow by ID. 404 on unknown OR malformed ID."""
     try:
         wf = load_workflow_by_id(workflow_id)
     except InvalidWorkflowIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Workflow {workflow_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Workflow {workflow_id!r} not found.",
+            resource="workflow",
+            resource_id=workflow_id,
         ) from exc
     if wf is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Workflow {workflow_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Workflow {workflow_id!r} not found.",
+            resource="workflow",
+            resource_id=workflow_id,
         )
     return wf
 
@@ -612,6 +765,14 @@ async def get_workflow(workflow_id: str) -> Workflow:
 @router.get(
     "/governance/workflows/{workflow_id}/log",
     response_class=PlainTextResponse,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown or malformed ``workflow_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def workflow_log(workflow_id: str) -> str:
     """Return the Markdown workflow audit-log as plain text.
@@ -622,14 +783,20 @@ async def workflow_log(workflow_id: str) -> str:
     try:
         wf = load_workflow_by_id(workflow_id)
     except InvalidWorkflowIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Workflow {workflow_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Workflow {workflow_id!r} not found.",
+            resource="workflow",
+            resource_id=workflow_id,
         ) from exc
     if wf is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Workflow {workflow_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Workflow {workflow_id!r} not found.",
+            resource="workflow",
+            resource_id=workflow_id,
         )
     return generate_workflow_log(wf)
 
@@ -638,20 +805,35 @@ async def workflow_log(workflow_id: str) -> str:
     "/governance/workflows/{workflow_id}",
     status_code=204,
     dependencies=[require_role("admin")],
+    responses=error_responses(
+        {
+            403: RBAC_DENIED_403,
+            404: (
+                "Unknown or malformed ``workflow_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def delete_workflow_record(workflow_id: str) -> None:
     """Delete a workflow by ID. 204 on success, 404 on unknown/malformed."""
     try:
         removed = delete_workflow(workflow_id)
     except InvalidWorkflowIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Workflow {workflow_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Workflow {workflow_id!r} not found.",
+            resource="workflow",
+            resource_id=workflow_id,
         ) from exc
     if not removed:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Workflow {workflow_id!r} not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Workflow {workflow_id!r} not found.",
+            resource="workflow",
+            resource_id=workflow_id,
         )
     _log.info(
         action=EventAction.GOVERNANCE_WORKFLOW_DELETED,

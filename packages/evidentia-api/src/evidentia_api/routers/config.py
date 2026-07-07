@@ -23,7 +23,9 @@ from evidentia_core.config import (
     find_config_file,
     load_config,
 )
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
+
+from evidentia_api.errors import api_error, error_responses
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -39,7 +41,18 @@ async def get_config() -> EvidentiaConfig:
     return load_config()
 
 
-@router.put("/config", response_model=EvidentiaConfig)
+@router.put(
+    "/config",
+    response_model=EvidentiaConfig,
+    responses=error_responses(
+        {
+            500: (
+                "Config file write failure "
+                "(``error: internal_error``)."
+            ),
+        }
+    ),
+)
 async def put_config(payload: EvidentiaConfig) -> EvidentiaConfig:
     """Persist ``evidentia.yaml`` with the validated payload.
 
@@ -59,9 +72,10 @@ async def put_config(payload: EvidentiaConfig) -> EvidentiaConfig:
         target.write_text(yaml_text, encoding="utf-8")
     except OSError as e:
         logger.error("Failed to write %s: %s", target, e)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Could not write config to {target}: {e}",
+        raise api_error(
+            500,
+            "internal_error",
+            f"Could not write config to {target}: {e}",
         ) from e
 
     # Clear the LRU cache so subsequent reads see the new contents.

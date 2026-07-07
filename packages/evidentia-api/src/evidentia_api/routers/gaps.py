@@ -35,8 +35,9 @@ from evidentia_core.security.paths import (
     PathTraversalError,
     validate_within,
 )
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, Response
 
+from evidentia_api.errors import api_error, error_responses
 from evidentia_api.schemas import (
     GAP_EXPORT_FORMATS,
     GapAnalyzeRequest,
@@ -96,7 +97,18 @@ def _materialize_inventory_content(
         fd.close()
 
 
-@router.post("/gap/analyze", response_model=GapAnalysisReport)
+@router.post(
+    "/gap/analyze",
+    response_model=GapAnalysisReport,
+    responses=error_responses(
+        {
+            400: (
+                "Missing/invalid inventory input or a failed "
+                "inventory parse (``error: invalid_body``)."
+            ),
+        }
+    ),
+)
 async def analyze(payload: GapAnalyzeRequest) -> GapAnalysisReport:
     """Run gap analysis and persist the result to the gap store.
 
@@ -105,9 +117,10 @@ async def analyze(payload: GapAnalyzeRequest) -> GapAnalysisReport:
     endpoint after this call completes.
     """
     if not payload.inventory_path and not payload.inventory_content:
-        raise HTTPException(
-            status_code=400,
-            detail="Either inventory_path or inventory_content must be provided.",
+        raise api_error(
+            400,
+            "invalid_body",
+            "Either inventory_path or inventory_content must be provided.",
         )
 
     tmp_path: Path | None = None
@@ -130,17 +143,18 @@ async def analyze(payload: GapAnalyzeRequest) -> GapAnalysisReport:
                     Path(payload.inventory_path), Path.cwd()
                 )
             except PathTraversalError as exc:
-                raise HTTPException(status_code=400, detail=str(exc)) from exc
+                raise api_error(400, "invalid_body", str(exc)) from exc
 
         try:
             inventory = load_inventory(inventory_source)
         except (FileNotFoundError, ValueError) as e:
-            # Use 400 (not 422) for runtime body-content validation errors
-            # so the response shape (`{detail: string}`) matches the
-            # OpenAPI declaration. 422 is reserved for Pydantic
-            # auto-validation responses, which use `{detail: array}`.
-            # Closes F-V08-DAST-3 schema-fidelity finding cluster.
-            raise HTTPException(status_code=400, detail=str(e)) from e
+            # Use 400 (not 422) for runtime body-content validation
+            # errors — the F-V08-DAST-3 status normalization. 422 stays
+            # reserved for Pydantic auto-validation responses (array-
+            # shape ``detail``); deliberate errors carry the structured
+            # object ``detail`` from ``evidentia_api.errors``
+            # (2026-07-06 error-shape convergence).
+            raise api_error(400, "invalid_body", str(e)) from e
 
         # CLI-style overrides
         if payload.organization:
@@ -174,7 +188,20 @@ def _safe_filename_stem(organization: str) -> str:
     return cleaned or "gap-report"
 
 
-@router.post("/gap/export")
+@router.post(
+    "/gap/export",
+    responses=error_responses(
+        {
+            400: (
+                "Unsupported/unavailable ``format``, ambiguous report "
+                "source, or a malformed report key (``error: "
+                "unsupported_format`` / ``feature_unavailable`` / "
+                "``invalid_body`` / ``invalid_id``)."
+            ),
+            404: "Unknown ``report_key`` (``error: not_found``).",
+        }
+    ),
+)
 async def export(payload: GapExportRequest) -> Response:
     """Export a gap report in an engine-supported format as a download.
 
@@ -190,18 +217,22 @@ async def export(payload: GapExportRequest) -> Response:
     """
     fmt = payload.format
     if fmt not in GAP_EXPORT_FORMATS:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "unsupported_format",
+            (
                 f"Unsupported format {fmt!r}. "
                 f"Expected one of: {', '.join(GAP_EXPORT_FORMATS)}."
             ),
+            format=fmt,
+            supported=list(GAP_EXPORT_FORMATS),
         )
 
     if (payload.report is None) == (payload.report_key is None):
-        raise HTTPException(
-            status_code=400,
-            detail="Provide exactly one of 'report' or 'report_key'.",
+        raise api_error(
+            400,
+            "invalid_body",
+            "Provide exactly one of 'report' or 'report_key'.",
         )
 
     report: GapAnalysisReport
@@ -212,11 +243,16 @@ async def export(payload: GapExportRequest) -> Response:
         try:
             loaded = load_report_by_key(payload.report_key)
         except (InvalidReportKeyError, PathTraversalError) as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
+            raise api_error(
+                400, "invalid_id", str(exc), resource="gap_report"
+            ) from exc
         if loaded is None:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Report {payload.report_key} not found.",
+            raise api_error(
+                404,
+                "not_found",
+                f"Report {payload.report_key} not found.",
+                resource="gap_report",
+                resource_id=payload.report_key,
             )
         report = loaded
 
@@ -241,17 +277,19 @@ async def export(payload: GapExportRequest) -> Response:
             # (py-ocsf-models) is not installed on the server. Surface a
             # 400 with install guidance rather than a 500 — this is an
             # operator-config issue, not a server fault.
-            raise HTTPException(
-                status_code=400,
-                detail=(
+            raise api_error(
+                400,
+                "feature_unavailable",
+                (
                     f"Format {fmt!r} is unavailable: {exc}. "
                     "Install the server's [ocsf] extra "
                     "(pip install 'evidentia-core[ocsf]') to enable "
                     "OCSF export formats."
                 ),
+                format=fmt,
             ) from exc
         except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
+            raise api_error(400, "invalid_body", str(exc)) from exc
 
         data = tmp_path.read_bytes()
     finally:
@@ -301,23 +339,53 @@ async def get_reports() -> dict[str, object]:
     return {"total": len(entries), "reports": entries, "store_dir": str(get_gap_store_dir())}
 
 
-@router.get("/gap/reports/{key}", response_model=GapAnalysisReport)
+@router.get(
+    "/gap/reports/{key}",
+    response_model=GapAnalysisReport,
+    responses=error_responses(
+        {
+            400: "Malformed report ``key`` (``error: invalid_id``).",
+            404: "No saved report under ``key`` (``error: not_found``).",
+        }
+    ),
+)
 async def get_report(key: str) -> GapAnalysisReport:
     """Load a saved gap report by its storage key."""
     try:
         report = load_report_by_key(key)
     except (InvalidReportKeyError, PathTraversalError) as exc:
         # Both InvalidReportKeyError + PathTraversalError reflect
-        # client-supplied bad keys; both normalize to 400 with a
-        # `{detail: string}` shape (matches OpenAPI declaration —
-        # closes F-V08-DAST-3 schema-fidelity finding cluster).
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        # client-supplied bad keys; both normalize to 400 — the
+        # F-V08-DAST-3 status normalization — with the structured
+        # ``detail`` from ``evidentia_api.errors`` (2026-07-06
+        # error-shape convergence).
+        raise api_error(
+            400, "invalid_id", str(exc), resource="gap_report"
+        ) from exc
     if report is None:
-        raise HTTPException(status_code=404, detail=f"Report {key} not found.")
+        raise api_error(
+            404,
+            "not_found",
+            f"Report {key} not found.",
+            resource="gap_report",
+            resource_id=key,
+        )
     return report
 
 
-@router.post("/gap/diff", response_model=GapDiff)
+@router.post(
+    "/gap/diff",
+    response_model=GapDiff,
+    responses=error_responses(
+        {
+            400: (
+                "Malformed ``base_key`` / ``head_key`` "
+                "(``error: invalid_id``)."
+            ),
+            404: "Base or head report not found (``error: not_found``).",
+        }
+    ),
+)
 async def diff(payload: GapDiffRequest) -> GapDiff:
     """Compute a diff between two saved gap reports.
 
@@ -330,19 +398,26 @@ async def diff(payload: GapDiffRequest) -> GapDiff:
         try:
             report = load_report_by_key(key)
         except InvalidReportKeyError as exc:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid {label} key: {exc}",
+            raise api_error(
+                400,
+                "invalid_id",
+                f"Invalid {label} key: {exc}",
+                resource="gap_report",
             ) from exc
         except PathTraversalError as exc:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid {label} key: {exc}",
+            raise api_error(
+                400,
+                "invalid_id",
+                f"Invalid {label} key: {exc}",
+                resource="gap_report",
             ) from exc
         if report is None:
-            raise HTTPException(
-                status_code=404,
-                detail=f"{label.capitalize()} report {key} not found.",
+            raise api_error(
+                404,
+                "not_found",
+                f"{label.capitalize()} report {key} not found.",
+                resource="gap_report",
+                resource_id=key,
             )
         loaded[label] = report
 

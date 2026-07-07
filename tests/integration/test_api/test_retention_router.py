@@ -201,12 +201,23 @@ class TestListRetention:
     ) -> None:
         r = api_client.get("/api/retention?classification=bogus")
         assert r.status_code == 400, r.text
+        # F-V08-DAST-3 status normalization: manual 4xx carries the
+        # structured object detail (2026-07-06 convergence) — still
+        # distinguishable from Pydantic's 422 array.
+        detail = r.json()["detail"]
+        assert detail["error"] == "unknown_classification"
+        assert detail["classification"] == "bogus"
+        assert "message" in detail
 
     def test_list_unknown_lifecycle_filter_returns_400(
         self, api_client: TestClient
     ) -> None:
         r = api_client.get("/api/retention?lifecycle=bogus")
         assert r.status_code == 400, r.text
+        detail = r.json()["detail"]
+        assert detail["error"] == "unknown_lifecycle"
+        assert detail["lifecycle"] == "bogus"
+        assert "message" in detail
 
 
 # ── GET /api/retention/{id} (show) ─────────────────────────────────
@@ -259,6 +270,9 @@ class TestExtendRetention:
             json={"new_lock_until": earlier},
         )
         assert r.status_code == 400, r.text
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_body"
+        assert "WORM forbids shortening" in detail["message"]
 
     def test_extend_missing_returns_404(
         self, api_client: TestClient
@@ -297,6 +311,9 @@ class TestTransitionRetention:
             json={"new_stage": "active"},
         )
         assert r.status_code == 400, r.text
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_body"
+        assert "message" in detail
 
     def test_transition_missing_returns_404(
         self, api_client: TestClient
@@ -407,3 +424,40 @@ class TestRetentionRBAC:
         r = readonly_api_client.get("/api/retention")
         assert r.status_code == 200, r.text
         assert r.json()["total"] == 1
+
+
+# ── OpenAPI error-status documentation (2026-07-06 convergence) ─────
+
+
+def test_retention_error_statuses_documented_in_openapi(
+    api_client: TestClient,
+) -> None:
+    """Every status the retention router deliberately raises is
+    documented on the operation's ``responses`` (schemathesis
+    undocumented-status noise → contract; companion to the ai_gov
+    openapi test). The local fixture app is a bare ``FastAPI()``, so
+    its schema lives at ``/openapi.json`` (the routes keep the
+    ``/api`` prefix)."""
+    schema = api_client.get("/openapi.json").json()
+    expected: list[tuple[str, str, list[str]]] = [
+        ("/api/retention", "post", ["403"]),
+        ("/api/retention", "get", ["400"]),
+        ("/api/retention/{retention_id}", "get", ["404"]),
+        (
+            "/api/retention/{retention_id}/extend",
+            "post",
+            ["400", "403", "404"],
+        ),
+        (
+            "/api/retention/{retention_id}/transition",
+            "post",
+            ["400", "403", "404"],
+        ),
+        ("/api/retention/{retention_id}", "delete", ["403", "404"]),
+    ]
+    for path, method, statuses in expected:
+        op = schema["paths"][path][method]
+        for status in statuses:
+            assert status in op["responses"], (
+                f"{method.upper()} {path} missing documented {status}"
+            )

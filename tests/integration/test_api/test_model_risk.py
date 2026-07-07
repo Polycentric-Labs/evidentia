@@ -159,7 +159,13 @@ class TestListModels:
     ) -> None:
         r = api_client.get("/api/model-risk/models?tier=tier_99")
         assert r.status_code == 400
-        assert isinstance(r.json()["detail"], str)
+        # F-V08-DAST-3 status normalization: manual 4xx carries the
+        # structured object detail (2026-07-06 convergence) — still
+        # distinguishable from Pydantic's 422 array.
+        detail = r.json()["detail"]
+        assert detail["error"] == "unknown_tier"
+        assert detail["tier"] == "tier_99"
+        assert "message" in detail
 
 
 # ── GET /api/model-risk/models/{id} ────────────────────────────────
@@ -368,3 +374,76 @@ class TestValidationReportEndpoint:
             "00000000-0000-0000-0000-000000000000/validation-report"
         )
         assert r.status_code == 404
+        detail = r.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert detail["resource"] == "model"
+
+
+# ── OpenAPI error-status documentation (2026-07-06 convergence) ─────
+
+
+def test_model_risk_error_statuses_documented_in_openapi(
+    api_client: TestClient,
+) -> None:
+    """Every status the model-risk router deliberately raises is
+    documented on the operation's ``responses`` (schemathesis
+    undocumented-status noise → contract; companion to the ai_gov
+    openapi test)."""
+    schema = api_client.get("/api/openapi.json").json()
+    expected: list[tuple[str, str, list[str]]] = [
+        ("/api/model-risk/models", "get", ["400"]),
+        ("/api/model-risk/models", "post", ["422"]),
+        ("/api/model-risk/models/{model_id}", "get", ["404"]),
+        ("/api/model-risk/models/{model_id}", "put", ["404"]),
+        ("/api/model-risk/models/{model_id}", "delete", ["404"]),
+        (
+            "/api/model-risk/models/{model_id}/next-validation-due",
+            "get",
+            ["404"],
+        ),
+        (
+            "/api/model-risk/models/{model_id}/documentation",
+            "get",
+            ["404"],
+        ),
+        (
+            "/api/model-risk/models/{model_id}/validation-report",
+            "get",
+            ["404"],
+        ),
+    ]
+    for path, method, statuses in expected:
+        op = schema["paths"][path][method]
+        for status in statuses:
+            assert status in op["responses"], (
+                f"{method.upper()} {path} missing documented {status}"
+            )
+
+
+def test_model_risk_create_422_documents_union_shape(
+    api_client: TestClient,
+) -> None:
+    """POST /model-risk/models can 422 two ways: FastAPI's own request-
+    validation (array-shape ``HTTPValidationError``) for a schema-invalid
+    body, or this router's manual ``api_error(422, "invalid_body", ...)``
+    (object-shape ``ErrorEnvelope``) for a save-time domain/id failure.
+    The documented 422 response must union both shapes rather than
+    over-claiming only the object shape (review finding: 422 schema
+    mis-advertised the response as always object-shaped)."""
+    schema = api_client.get("/api/openapi.json").json()
+    response_422 = schema["paths"]["/api/model-risk/models"]["post"][
+        "responses"
+    ]["422"]
+    content_schema = response_422["content"]["application/json"]["schema"]
+    assert "anyOf" in content_schema
+    refs = {entry["$ref"] for entry in content_schema["anyOf"]}
+    assert refs == {
+        "#/components/schemas/ErrorEnvelope",
+        "#/components/schemas/HTTPValidationError",
+    }
+    # Both refs must resolve — no dangling $ref (schemathesis/openapi validity).
+    for ref in refs:
+        component_name = ref.rsplit("/", 1)[-1]
+        assert component_name in schema["components"]["schemas"], (
+            f"dangling $ref: {ref}"
+        )

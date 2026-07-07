@@ -10,9 +10,10 @@ from __future__ import annotations
 
 from evidentia_core.catalogs.registry import FrameworkRegistry
 from evidentia_core.models.catalog import CatalogControl, ControlCatalog
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 
 from evidentia_api.deps import get_registry
+from evidentia_api.errors import api_error, error_responses
 
 router = APIRouter()
 
@@ -38,7 +39,13 @@ async def list_frameworks(
     return {"total": len(entries), "frameworks": entries}
 
 
-@router.get("/frameworks/{framework_id}", response_model=ControlCatalog)
+@router.get(
+    "/frameworks/{framework_id}",
+    response_model=ControlCatalog,
+    responses=error_responses(
+        {404: "Unknown ``framework_id`` (``error: not_found``)."}
+    ),
+)
 async def get_framework(
     framework_id: str,
     registry: FrameworkRegistry = Depends(get_registry),
@@ -52,15 +59,26 @@ async def get_framework(
     try:
         return registry.get_catalog(framework_id)
     except (FileNotFoundError, KeyError, ValueError) as e:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Framework '{framework_id}' not found in registered catalogs.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Framework '{framework_id}' not found in registered catalogs.",
+            resource="framework",
+            resource_id=framework_id,
         ) from e
 
 
 @router.get(
     "/frameworks/{framework_id}/controls/{control_id}",
     response_model=CatalogControl,
+    responses=error_responses(
+        {
+            404: (
+                "Unknown ``framework_id`` or ``control_id`` "
+                "(``error: not_found``)."
+            ),
+        }
+    ),
 )
 async def get_control(
     framework_id: str,
@@ -80,18 +98,24 @@ async def get_control(
         # FileNotFoundError + KeyError cover late-stage failures during
         # catalog file resolution. All three normalize to 404 from the
         # client's perspective.
-        raise HTTPException(
-            status_code=404,
-            detail=f"Framework '{framework_id}' not found.",
+        raise api_error(
+            404,
+            "not_found",
+            f"Framework '{framework_id}' not found.",
+            resource="framework",
+            resource_id=framework_id,
         ) from e
 
     control = catalog.get_control(control_id)
     if control is None:
-        raise HTTPException(
-            status_code=404,
-            detail=(
+        raise api_error(
+            404,
+            "not_found",
+            (
                 f"Control '{control_id}' not found in framework '{framework_id}'. "
                 f"Try one of: {', '.join(c.id for c in catalog.controls[:5])}..."
             ),
+            resource="control",
+            resource_id=control_id,
         )
     return control

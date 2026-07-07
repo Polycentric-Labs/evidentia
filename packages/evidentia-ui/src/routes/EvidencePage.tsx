@@ -67,7 +67,8 @@ const EVIDENCE_TYPE_LABELS: Record<EvidenceType, string> =
  *
  * FastAPI nests an `HTTPException(detail=...)` body under a top-level
  * `detail` key, so the 409 WORM-collision payload is
- * `{ detail: { detail, next_version } }`. Be defensive: accept either the
+ * `{ detail: { error: "worm_violation", ..., next_version, message } }`
+ * (2026-07-06 error-shape convergence). Be defensive: accept either the
  * nested shape or a flat `{ next_version }` and return the integer if
  * present.
  */

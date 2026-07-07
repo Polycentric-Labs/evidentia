@@ -123,6 +123,13 @@ class TestListPoams:
     ) -> None:
         r = api_client.get("/api/poam/items?severity=not-real")
         assert r.status_code == 400
+        # F-V08-DAST-3 status normalization: manual 4xx carries the
+        # structured object detail (2026-07-06 convergence) — still
+        # distinguishable from Pydantic's 422 array.
+        detail = r.json()["detail"]
+        assert detail["error"] == "unknown_severity"
+        assert detail["severity"] == "not-real"
+        assert "message" in detail
 
     def test_pagination(self, api_client: TestClient) -> None:
         for i in range(5):
@@ -286,7 +293,9 @@ class TestUpdateMilestone:
             json={"status": "in_progress"},
         )
         assert r.status_code == 400
-        assert "Invalid state transition" in r.json()["detail"]
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_body"
+        assert "Invalid state transition" in detail["message"]
 
     def test_update_unknown_milestone_returns_404(
         self, api_client: TestClient
@@ -336,3 +345,38 @@ class TestCalendar:
     ) -> None:
         r = api_client.get("/api/poam/calendar?today=not-a-date")
         assert r.status_code == 400
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_field"
+        assert detail["field"] == "today"
+
+
+# ── OpenAPI error-status documentation (2026-07-06 convergence) ─────
+
+
+def test_poam_error_statuses_documented_in_openapi(
+    api_client: TestClient,
+) -> None:
+    """Every status the poam router deliberately raises is documented
+    on the operation's ``responses`` (schemathesis undocumented-status
+    noise → contract; companion to the ai_gov openapi test)."""
+    schema = api_client.get("/api/openapi.json").json()
+    expected: list[tuple[str, str, list[str]]] = [
+        ("/api/poam/items", "get", ["400"]),
+        ("/api/poam/items", "post", ["422"]),
+        ("/api/poam/items/{poam_id}", "get", ["404"]),
+        ("/api/poam/items/{poam_id}", "put", ["404"]),
+        ("/api/poam/items/{poam_id}", "delete", ["404"]),
+        ("/api/poam/items/{poam_id}/milestones", "post", ["404"]),
+        (
+            "/api/poam/items/{poam_id}/milestones/{milestone_id}",
+            "patch",
+            ["400", "404"],
+        ),
+        ("/api/poam/calendar", "get", ["400"]),
+    ]
+    for path, method, statuses in expected:
+        op = schema["paths"][path][method]
+        for status in statuses:
+            assert status in op["responses"], (
+                f"{method.upper()} {path} missing documented {status}"
+            )

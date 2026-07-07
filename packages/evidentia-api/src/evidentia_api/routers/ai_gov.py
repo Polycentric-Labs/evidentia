@@ -60,9 +60,15 @@ from evidentia_core.ai_governance.registry_store import (
 )
 from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.security import FileLock, atomic_write_text
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, Header, Query
 from pydantic import BaseModel, Field, ValidationError
 
+from evidentia_api.errors import (
+    RATE_LIMITED_429,
+    RBAC_DENIED_403,
+    api_error,
+    error_responses,
+)
 from evidentia_api.rbac_dependency import require_role
 
 router = APIRouter()
@@ -210,7 +216,10 @@ def _save_idempotency_store(store: dict[str, dict[str, str]]) -> None:
 # ── classify ──────────────────────────────────────────────────────
 
 
-@router.post("/ai-gov/classify")
+@router.post(
+    "/ai-gov/classify",
+    responses=error_responses({429: RATE_LIMITED_429}),
+)
 async def ai_gov_classify(
     descriptor: AISystemDescriptor,
 ) -> AISystemClassification:
@@ -234,7 +243,18 @@ async def ai_gov_classify(
 # ── register ──────────────────────────────────────────────────────
 
 
-@router.post("/ai-gov/register")
+@router.post(
+    "/ai-gov/register",
+    responses=error_responses(
+        {
+            409: (
+                "``X-Idempotency-Key`` reuse with a different body "
+                "(``error: idempotency_key_conflict``)."
+            ),
+            429: RATE_LIMITED_429,
+        }
+    ),
+)
 async def ai_gov_register(
     body: RegisterRequest,
     x_idempotency_key: str | None = Header(
@@ -298,9 +318,10 @@ async def ai_gov_register(
                         ),
                         "idempotent_replay": True,
                     }
-                raise HTTPException(
-                    status_code=409,
-                    detail=(
+                raise api_error(
+                    409,
+                    "idempotency_key_conflict",
+                    (
                         f"Idempotency-Key {x_idempotency_key!r} was "
                         f"previously used with a different request "
                         f"body. Use a fresh key or send the original "
@@ -362,7 +383,18 @@ async def ai_gov_register(
 # ── list ──────────────────────────────────────────────────────────
 
 
-@router.get("/ai-gov/systems")
+@router.get(
+    "/ai-gov/systems",
+    responses=error_responses(
+        {
+            400: (
+                "Unknown ``tier`` filter value (``error: "
+                "unknown_tier``); ``detail`` carries ``tier`` + "
+                "``valid``."
+            ),
+        }
+    ),
+)
 async def ai_gov_list_systems(
     tier: str | None = Query(
         default=None,
@@ -378,12 +410,18 @@ async def ai_gov_list_systems(
         try:
             tier_enum = EUAIActTier(tier)
         except ValueError as exc:
-            raise HTTPException(
-                status_code=400,
-                detail=(
+            # 2026-07-06 DAST (schemathesis) follow-up: structured,
+            # machine-readable detail (cf. rbac_denied) — the 400 is
+            # documented on the route decorator's ``responses``.
+            raise api_error(
+                400,
+                "unknown_tier",
+                (
                     f"Unknown tier {tier!r}; valid: "
                     f"{', '.join(t.value for t in EUAIActTier)}"
                 ),
+                tier=tier,
+                valid=[t.value for t in EUAIActTier],
             ) from exc
         # v0.9.3 F-V93-Q7 review fix: drop redundant str() — Pydantic
         # round-trips eu_ai_act_tier as the raw string value (the model
@@ -400,17 +438,30 @@ async def ai_gov_list_systems(
 # ── show ──────────────────────────────────────────────────────────
 
 
-@router.get("/ai-gov/systems/{system_id}")
+@router.get(
+    "/ai-gov/systems/{system_id}",
+    responses=error_responses(
+        {
+            400: "Malformed ``system_id`` (``error: invalid_id``).",
+            404: "No such registered system (``error: not_found``).",
+        }
+    ),
+)
 async def ai_gov_get_system(system_id: str) -> dict[str, Any]:
     """Fetch a single registered AI system by ID."""
     try:
         entry = AIRegistryStore().load(system_id)
     except InvalidAISystemIdError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise api_error(
+            400, "invalid_id", str(exc), resource="ai_system"
+        ) from exc
     if entry is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No registered AI system with ID {system_id!r}",
+        raise api_error(
+            404,
+            "not_found",
+            f"No registered AI system with ID {system_id!r}",
+            resource="ai_system",
+            resource_id=system_id,
         )
     return entry.model_dump(mode="json")
 
@@ -418,14 +469,21 @@ async def ai_gov_get_system(system_id: str) -> dict[str, Any]:
 # ── delete ────────────────────────────────────────────────────────
 
 
-@router.delete("/ai-gov/systems/{system_id}")
+@router.delete(
+    "/ai-gov/systems/{system_id}",
+    responses=error_responses(
+        {400: "Malformed ``system_id`` (``error: invalid_id``)."}
+    ),
+)
 async def ai_gov_delete_system(system_id: str) -> dict[str, Any]:
     """Remove a registered AI system. Returns whether a record was
     actually removed (idempotent: no-op on unknown ID)."""
     try:
         removed = AIRegistryStore().delete(system_id)
     except InvalidAISystemIdError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise api_error(
+            400, "invalid_id", str(exc), resource="ai_system"
+        ) from exc
     if removed:
         # v0.9.4 Step 5.A F-V94-Q12 closure: emit the new
         # AI_SYSTEM_DELETED action (instead of overloading
@@ -459,14 +517,20 @@ def _load_entry_or_404(system_id: str) -> AISystemRegistryEntry:
     try:
         entry = AIRegistryStore().load(system_id)
     except InvalidAISystemIdError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No registered AI system with ID {system_id!r}",
+        raise api_error(
+            404,
+            "not_found",
+            f"No registered AI system with ID {system_id!r}",
+            resource="ai_system",
+            resource_id=system_id,
         ) from exc
     if entry is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No registered AI system with ID {system_id!r}",
+        raise api_error(
+            404,
+            "not_found",
+            f"No registered AI system with ID {system_id!r}",
+            resource="ai_system",
+            resource_id=system_id,
         )
     return entry
 
@@ -556,6 +620,16 @@ class HighImpactRequest(BaseModel):
 @router.put(
     "/ai-gov/systems/{system_id}",
     dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            400: (
+                "Empty update or domain-validation failure "
+                "(``error: invalid_body``)."
+            ),
+            403: RBAC_DENIED_403,
+            404: "No such registered system (``error: not_found``).",
+        }
+    ),
 )
 async def ai_gov_update_system(
     system_id: str, body: UpdateSystemRequest
@@ -580,9 +654,10 @@ async def ai_gov_update_system(
         updates["ssp_reference"] = body.ssp_reference
 
     if not updates:
-        raise HTTPException(
-            status_code=400,
-            detail=(
+        raise api_error(
+            400,
+            "invalid_body",
+            (
                 "No fields to update — supply at least one of owner / "
                 "provider / deployment_status / ssp_reference."
             ),
@@ -595,7 +670,7 @@ async def ai_gov_update_system(
     try:
         updated = type(entry).model_validate(merged)
     except (ValidationError, ValueError) as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise api_error(400, "invalid_body", str(exc)) from exc
     AIRegistryStore().save(updated)
 
     _log.info(
@@ -620,6 +695,12 @@ async def ai_gov_update_system(
 @router.post(
     "/ai-gov/systems/{system_id}/retire",
     dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            403: RBAC_DENIED_403,
+            404: "No such registered system (``error: not_found``).",
+        }
+    ),
 )
 async def ai_gov_retire_system(system_id: str) -> dict[str, Any]:
     """Retire a registered AI system (deployment_status=retired).
@@ -667,6 +748,17 @@ async def ai_gov_retire_system(system_id: str) -> dict[str, Any]:
 @router.post(
     "/ai-gov/systems/{system_id}/categorize-fips",
     dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            400: (
+                "FIPS 199 domain-validation failure, e.g. an "
+                "``overall`` high-water-mark mismatch "
+                "(``error: invalid_body``)."
+            ),
+            403: RBAC_DENIED_403,
+            404: "No such registered system (``error: not_found``).",
+        }
+    ),
 )
 async def ai_gov_categorize_fips(
     system_id: str, body: FIPS199CategorizeRequest
@@ -688,7 +780,7 @@ async def ai_gov_categorize_fips(
             rationale=body.rationale,
         )
     except (ValidationError, ValueError) as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise api_error(400, "invalid_body", str(exc)) from exc
 
     updated = entry.model_copy(update={"fips_199_categorization": cat})
     AIRegistryStore().save(updated)
@@ -717,6 +809,12 @@ async def ai_gov_categorize_fips(
 @router.post(
     "/ai-gov/systems/{system_id}/set-omb-impact",
     dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            403: RBAC_DENIED_403,
+            404: "No such registered system (``error: not_found``).",
+        }
+    ),
 )
 async def ai_gov_set_omb_impact(
     system_id: str, body: OMBImpactRequest
@@ -749,6 +847,16 @@ async def ai_gov_set_omb_impact(
 @router.post(
     "/ai-gov/systems/{system_id}/set-high-impact",
     dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            400: (
+                "M-25-21 domain-validation failure "
+                "(``error: invalid_body``)."
+            ),
+            403: RBAC_DENIED_403,
+            404: "No such registered system (``error: not_found``).",
+        }
+    ),
 )
 async def ai_gov_set_high_impact(
     system_id: str, body: HighImpactRequest
@@ -768,7 +876,7 @@ async def ai_gov_set_high_impact(
             rationale=body.rationale,
         )
     except (ValidationError, ValueError) as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise api_error(400, "invalid_body", str(exc)) from exc
 
     updated = entry.model_copy(update={"omb_high_impact": assessment})
     AIRegistryStore().save(updated)
