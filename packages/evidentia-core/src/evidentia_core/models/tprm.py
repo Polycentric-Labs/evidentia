@@ -40,7 +40,7 @@ import calendar
 from datetime import date, datetime
 from enum import Enum
 
-from pydantic import Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from evidentia_core.models.common import (
     EvidentiaModel,
@@ -194,8 +194,39 @@ class EvidenceRef(EvidentiaModel):
        questionnaires) that haven't been formally ingested.
 
     At least one of (``artifact_id``, ``file_path``) must be set;
-    enforced in :meth:`model_validator` below.
+    enforced in :meth:`model_validator` below and mirrored into the
+    published JSON Schema via ``json_schema_extra``.
     """
+
+    model_config = ConfigDict(
+        # JSON-Schema mirror of ``_enforce_reference_invariants``
+        # below, so the published OpenAPI contract expresses the
+        # two-mode rule instead of 422-ing schema-valid bodies
+        # (2026-07-06 schemathesis RejectedPositiveData finding on
+        # POST /api/model-risk/models). Each branch requires the field
+        # present AND non-null, matching the validator's ``is None``
+        # checks. Keep both in sync.
+        json_schema_extra={
+            "anyOf": [
+                {
+                    "required": ["artifact_id"],
+                    "properties": {"artifact_id": {"type": "string"}},
+                },
+                {
+                    "required": ["file_path"],
+                    "properties": {"file_path": {"type": "string"}},
+                },
+            ],
+            "if": {
+                "required": ["file_path"],
+                "properties": {"file_path": {"type": "string"}},
+            },
+            "then": {
+                "required": ["sha256"],
+                "properties": {"sha256": {"type": "string"}},
+            },
+        }
+    )
 
     title: str = Field(
         description=(

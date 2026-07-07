@@ -269,6 +269,45 @@ class TestEvidenceRef:
         assert ref.file_path == "/var/evidentia/x.pdf"
 
 
+class TestEvidenceRefJSONSchema:
+    """The published JSON Schema must express the same two-mode
+    contract ``_enforce_reference_invariants`` enforces at construction
+    time. Otherwise schema-driven consumers (GUI type generation,
+    schemathesis/DAST data generation) produce schema-valid bodies the
+    API then rejects with 422 — flagged as RejectedPositiveData in the
+    2026-07-06 schemathesis scoping run against POST
+    /api/model-risk/models.
+
+    Each branch requires the field to be present AND a string (not
+    null), matching the validator's ``is None`` checks — a bare
+    ``required`` would wrongly accept ``{"artifact_id": null}``.
+    """
+
+    def test_schema_requires_at_least_one_reference_mode(self) -> None:
+        schema = EvidenceRef.model_json_schema()
+        assert schema["anyOf"] == [
+            {
+                "required": ["artifact_id"],
+                "properties": {"artifact_id": {"type": "string"}},
+            },
+            {
+                "required": ["file_path"],
+                "properties": {"file_path": {"type": "string"}},
+            },
+        ]
+
+    def test_schema_pairs_file_path_with_sha256(self) -> None:
+        schema = EvidenceRef.model_json_schema()
+        assert schema["if"] == {
+            "required": ["file_path"],
+            "properties": {"file_path": {"type": "string"}},
+        }
+        assert schema["then"] == {
+            "required": ["sha256"],
+            "properties": {"sha256": {"type": "string"}},
+        }
+
+
 # ── Integration: Vendor with embedded sub-models ───────────────────
 
 
