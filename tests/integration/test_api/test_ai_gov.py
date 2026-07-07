@@ -228,6 +228,166 @@ class TestRegisterListGetDelete:
         assert resp.json()["removed"] is False
 
 
+class TestRegisterWhitespaceOnlyFields:
+    """2026-07-06 stateful-DAST prep (Step 1): whitespace-only
+    ``provider``/``owner`` pass ``RegisterRequest``'s raw
+    ``Field(min_length=1, ...)`` (no ``str_strip_whitespace`` on that
+    model) but then fail ``AISystemRegistryEntry`` construction, whose
+    base ``EvidentiaModel`` DOES set ``str_strip_whitespace=True`` — the
+    stripped string is empty, violating its own ``min_length=1``. That
+    raised a ``pydantic.ValidationError`` with no try/except around
+    either ``AISystemRegistryEntry(...)`` call site in
+    ``ai_gov_register``, surfacing as an unauthenticated 500. Fixed by
+    wrapping both construction sites in the same
+    ``except (ValidationError, ValueError)`` idiom the PUT handler
+    (``ai_gov_update_system``) already uses."""
+
+    _BASE_DESCRIPTOR: ClassVar[dict] = {
+        "name": "resume-screener",
+        "purpose": "Score job applicants",
+        "annex_iii_domain": "employment",
+    }
+
+    def test_whitespace_only_provider_no_idempotency_key_returns_400(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            "/api/ai-gov/register",
+            json={
+                "descriptor": self._BASE_DESCRIPTOR,
+                "provider": "   ",
+                "owner": "hr-team",
+            },
+        )
+        assert resp.status_code == 400, resp.text
+        assert resp.json()["detail"]["error"] == "invalid_body"
+
+    def test_whitespace_only_owner_no_idempotency_key_returns_400(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            "/api/ai-gov/register",
+            json={
+                "descriptor": self._BASE_DESCRIPTOR,
+                "provider": "acme-ai",
+                "owner": "\n",
+            },
+        )
+        assert resp.status_code == 400, resp.text
+        assert resp.json()["detail"]["error"] == "invalid_body"
+
+    def test_whitespace_only_provider_via_idempotent_fresh_create_returns_400(
+        self, api_client: TestClient
+    ) -> None:
+        """Same bug, but through the ``with FileLock(...)`` fresh-create
+        branch (i.e. a request carrying a never-seen-before
+        ``X-Idempotency-Key``) rather than the no-idempotency-key
+        standard-create path."""
+        resp = api_client.post(
+            "/api/ai-gov/register",
+            json={
+                "descriptor": self._BASE_DESCRIPTOR,
+                "provider": "   ",
+                "owner": "hr-team",
+            },
+            headers={"X-Idempotency-Key": "whitespace-fresh-key"},
+        )
+        assert resp.status_code == 400, resp.text
+        assert resp.json()["detail"]["error"] == "invalid_body"
+
+    def test_normal_register_still_succeeds(
+        self, api_client: TestClient
+    ) -> None:
+        """No-regression check: a well-formed register still 200s."""
+        resp = api_client.post(
+            "/api/ai-gov/register",
+            json={
+                "descriptor": self._BASE_DESCRIPTOR,
+                "provider": "acme-ai",
+                "owner": "hr-team",
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["system_id"]
+
+
+class TestBodyParseErrorNormalization:
+    """2026-07-06 stateful-DAST finding (H-2 Step 4): FastAPI's own
+    hardcoded body-decode 400 ("There was an error parsing the body",
+    raised from its routing catch-all BEFORE route code runs) is
+    normalized app-wide to the structured ``ErrorEnvelope`` shape by
+    ``evidentia_api.errors.body_parse_error_handler`` — while every
+    OTHER deliberate ``api_error(...)`` 400 still flows through FastAPI's
+    default handler unchanged (the handler delegates non-target cases)."""
+
+    def test_undecodable_body_returns_structured_400(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            "/api/ai-gov/register",
+            # High bytes that fail the body UTF-8 decode BEFORE JSON
+            # parsing, hitting FastAPI's "There was an error parsing the
+            # body" catch-all (a later json_invalid instead surfaces as a
+            # normal 422 array — a different, already-correct path).
+            content=b"\x80\x81",
+            headers={"Content-Type": "application/json"},
+        )
+        assert resp.status_code == 400, resp.text
+        assert resp.json()["detail"]["error"] == "body_parse_error"
+
+    def test_other_400s_keep_their_own_error_key(
+        self, api_client: TestClient
+    ) -> None:
+        """The handler must DELEGATE non-target HTTPExceptions: a normal
+        domain 400 keeps its own key, proving the app-wide handler does
+        not hijack every 400."""
+        resp = api_client.post(
+            "/api/ai-gov/register",
+            json={
+                "descriptor": {"name": "x", "purpose": "y"},
+                "provider": "   ",
+                "owner": "hr-team",
+            },
+        )
+        assert resp.status_code == 400, resp.text
+        assert resp.json()["detail"]["error"] == "invalid_body"
+
+
+class TestRegisterDescriptorWhitespaceRejected:
+    """2026-07-06 stateful-DAST true-fix (H-2 Step 3): ``pattern=r"\\S"``
+    on ``AISystemDescriptor.name``/``purpose`` mirrors the
+    ``str_strip_whitespace`` + ``min_length`` runtime behaviour into the
+    published schema, so a whitespace-only value is rejected (Pydantic
+    request-validation 422, array-shape detail) instead of over-promising
+    acceptance in the schema."""
+
+    def test_whitespace_only_descriptor_name_rejected(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            "/api/ai-gov/register",
+            json={
+                "descriptor": {"name": "\t", "purpose": "Score applicants"},
+                "provider": "acme-ai",
+                "owner": "hr-team",
+            },
+        )
+        assert resp.status_code == 422, resp.text
+
+    def test_whitespace_only_descriptor_purpose_rejected(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            "/api/ai-gov/register",
+            json={
+                "descriptor": {"name": "resume-screener", "purpose": "\n"},
+                "provider": "acme-ai",
+                "owner": "hr-team",
+            },
+        )
+        assert resp.status_code == 422, resp.text
+
+
 # ── v0.9.4 P1.3: rate-limit + idempotency on register ───────────────
 
 

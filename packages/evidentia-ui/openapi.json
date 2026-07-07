@@ -87,6 +87,7 @@
             "description": "Human-readable AI system name (free text).",
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "\\S",
             "title": "Name",
             "type": "string"
           },
@@ -94,6 +95,7 @@
             "description": "Plain-English description of what the system does.",
             "maxLength": 2048,
             "minLength": 1,
+            "pattern": "\\S",
             "title": "Purpose",
             "type": "string"
           }
@@ -4456,6 +4458,17 @@
         "type": "string"
       },
       "RegisterRequest": {
+        "examples": [
+          {
+            "deployment_status": "production",
+            "descriptor": {
+              "name": "resume-screener",
+              "purpose": "Score job applicants for interview shortlisting"
+            },
+            "owner": "risk-team",
+            "provider": "acme-corp"
+          }
+        ],
         "properties": {
           "deployment_status": {
             "$ref": "#/components/schemas/DeploymentStatus",
@@ -5165,6 +5178,56 @@
         "type": "object"
       },
       "UpdateSystemRequest": {
+        "anyOf": [
+          {
+            "properties": {
+              "owner": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "owner"
+            ]
+          },
+          {
+            "properties": {
+              "provider": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "provider"
+            ]
+          },
+          {
+            "properties": {
+              "deployment_status": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "deployment_status"
+            ]
+          },
+          {
+            "properties": {
+              "ssp_reference": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "ssp_reference"
+            ]
+          }
+        ],
         "description": "Body for ``PUT /ai-gov/systems/{system_id}`` (partial update).\n\nAll fields optional — only the supplied ones are changed\n(partial-update semantics matching the ``ai-gov update`` CLI verb).\nAn empty body (no fields) is a 400 (nothing to update).",
         "properties": {
           "deployment_status": {
@@ -6110,7 +6173,37 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "Successful Response",
+            "links": {
+              "DeleteSystem": {
+                "operationId": "ai_gov_delete_system_api_ai_gov_systems__system_id__delete",
+                "parameters": {
+                  "system_id": "$response.body#/system_id"
+                }
+              },
+              "GetSystem": {
+                "operationId": "ai_gov_get_system_api_ai_gov_systems__system_id__get",
+                "parameters": {
+                  "system_id": "$response.body#/system_id"
+                }
+              },
+              "UpdateSystem": {
+                "operationId": "ai_gov_update_system_api_ai_gov_systems__system_id__put",
+                "parameters": {
+                  "system_id": "$response.body#/system_id"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Body-content/id validation failure (``error: invalid_body``), or an undecodable request body (Request body could not be decoded (e.g. invalid UTF-8) before route-level validation ran (``error: body_parse_error``).)."
           },
           "409": {
             "content": {
@@ -6378,7 +6471,7 @@
                 }
               }
             },
-            "description": "Empty update or domain-validation failure (``error: invalid_body``)."
+            "description": "Empty update or domain-validation failure (``error: invalid_body``), or an undecodable request body (Request body could not be decoded (e.g. invalid UTF-8) before route-level validation ran (``error: body_parse_error``).)."
           },
           "403": {
             "content": {
@@ -6821,7 +6914,15 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "Successful Response",
+            "links": {
+              "DeleteCatalog": {
+                "operationId": "remove_catalog_api_catalog__framework_id__delete",
+                "parameters": {
+                  "framework_id": "$response.body#/framework_id"
+                }
+              }
+            }
           },
           "400": {
             "content": {
@@ -6831,7 +6932,7 @@
                 }
               }
             },
-            "description": "Malformed ``framework_id``, invalid ``tier``, unsupported ``format``, unparseable/invalid catalog content, or a duplicate import without ``force`` (``error: invalid_id`` / ``invalid_field`` / ``unsupported_format`` / ``invalid_body`` / ``already_exists``)."
+            "description": "Malformed ``framework_id``, invalid ``tier``, unsupported ``format``, unparseable/invalid catalog content, a duplicate import without ``force``, or an undecodable request body (``error: invalid_id`` / ``invalid_field`` / ``unsupported_format`` / ``invalid_body`` / ``already_exists``; Request body could not be decoded (e.g. invalid UTF-8) before route-level validation ran (``error: body_parse_error``).)."
           },
           "403": {
             "content": {

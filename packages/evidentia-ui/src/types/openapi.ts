@@ -6318,6 +6318,14 @@ export interface components {
             provider?: string | null;
             /** Ssp Reference */
             ssp_reference?: string | null;
+        } | {
+            owner: unknown;
+        } | {
+            provider: unknown;
+        } | {
+            deployment_status: unknown;
+        } | {
+            ssp_reference: unknown;
         };
         /** ValidationError */
         ValidationError: {
@@ -6871,6 +6879,15 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Body-content/id validation failure (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description ``X-Idempotency-Key`` reuse with a different body (``error: idempotency_key_conflict``). */

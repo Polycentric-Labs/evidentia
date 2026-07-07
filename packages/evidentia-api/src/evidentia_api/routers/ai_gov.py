@@ -61,9 +61,11 @@ from evidentia_core.ai_governance.registry_store import (
 from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.security import FileLock, atomic_write_text
 from fastapi import APIRouter, Header, Query
-from pydantic import BaseModel, Field, ValidationError
+from fastapi import Path as FastAPIPath
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from evidentia_api.errors import (
+    BODY_PARSE_ERROR_400,
     RATE_LIMITED_429,
     RBAC_DENIED_403,
     api_error,
@@ -81,7 +83,60 @@ _log = get_logger("evidentia_api.routers.ai_gov")
 # ── request / response models ─────────────────────────────────────
 
 
+_SYSTEM_ID_UUID_PATTERN = (
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}"
+    r"-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
+
+_SYSTEM_ID_PATH = FastAPIPath(
+    description="Registered AI system ID (UUID).",
+    # 2026-07-06 stateful-DAST finding (H-2 Step 4): the path param was
+    # undecorated ``str`` — any string is "positive data" per the
+    # published schema, so schemathesis's positive_data_acceptance
+    # check flagged the route's legitimate 400 (``invalid_id``, via
+    # ``_validate_id_shape``'s ``UUID(system_id)`` parse) as rejecting
+    # schema-valid data. ``json_schema_extra`` (NOT ``pattern=``,
+    # which Pydantic would enforce as an ACTUAL request-validation
+    # constraint, turning today's manual 400/404 into an automatic
+    # 422 — a real behavior change this deliverable must not make)
+    # documents the shape for schemathesis/the OpenAPI doc with zero
+    # runtime effect, mirroring the docs-only json_schema_extra
+    # pattern used elsewhere (EvidenceRef, UpdateSystemRequest). The
+    # pattern mirrors the DOMINANT accepted shape (canonical hyphenated
+    # UUID); it's narrower than ``uuid.UUID()`` itself (which also
+    # accepts hyphen-less/URN/brace-wrapped forms) but that's fine —
+    # the goal is to steer generation toward realistic positive
+    # examples, not exhaustively enumerate every tolerated textual
+    # form. Applied only to the three ops this DAST suite's OpenAPI
+    # links target (GET/PUT/DELETE); the other system_id-bearing verbs
+    # (retire/categorize-fips/set-omb-impact/set-high-impact) are out
+    # of this deliverable's scope.
+    json_schema_extra={"pattern": _SYSTEM_ID_UUID_PATTERN},
+)
+
+
 class RegisterRequest(BaseModel):
+    # A documented valid example: seeds schemathesis's explicit phase so
+    # the stateful DAST suite can reliably create a system (the complex
+    # descriptor body is otherwise rarely generated valid) and then walk
+    # the register -> get/put/delete lifecycle. Also improves the
+    # generated OpenAPI docs / UI "try it out" defaults.
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "descriptor": {
+                        "name": "resume-screener",
+                        "purpose": "Score job applicants for interview shortlisting",
+                    },
+                    "provider": "acme-corp",
+                    "owner": "risk-team",
+                    "deployment_status": "production",
+                }
+            ]
+        }
+    )
+
     descriptor: AISystemDescriptor
     provider: str = Field(min_length=1, max_length=256)
     owner: str = Field(min_length=1, max_length=256)
@@ -247,6 +302,11 @@ async def ai_gov_classify(
     "/ai-gov/register",
     responses=error_responses(
         {
+            400: (
+                "Body-content/id validation failure "
+                "(``error: invalid_body``), or an undecodable request "
+                f"body ({BODY_PARSE_ERROR_400})."
+            ),
             409: (
                 "``X-Idempotency-Key`` reuse with a different body "
                 "(``error: idempotency_key_conflict``)."
@@ -254,6 +314,48 @@ async def ai_gov_classify(
             429: RATE_LIMITED_429,
         }
     ),
+    # 2026-07-06 stateful-DAST prep (Step 2): OpenAPI ``links`` giving
+    # schemathesis's stateful state machine real create -> read/update/
+    # delete transitions to walk over the ai-gov lifecycle, chaining off
+    # this response's ``system_id``. FastAPI deep-merges ``openapi_extra``
+    # onto the operation object, so this coexists with the ``responses=``
+    # 4xx documentation above rather than clobbering it (verified via
+    # ``scripts/dump_openapi.py`` post-merge).
+    openapi_extra={
+        "responses": {
+            "200": {
+                "links": {
+                    "GetSystem": {
+                        "operationId": (
+                            "ai_gov_get_system_api_ai_gov_systems"
+                            "__system_id__get"
+                        ),
+                        "parameters": {
+                            "system_id": "$response.body#/system_id"
+                        },
+                    },
+                    "UpdateSystem": {
+                        "operationId": (
+                            "ai_gov_update_system_api_ai_gov_systems"
+                            "__system_id__put"
+                        ),
+                        "parameters": {
+                            "system_id": "$response.body#/system_id"
+                        },
+                    },
+                    "DeleteSystem": {
+                        "operationId": (
+                            "ai_gov_delete_system_api_ai_gov_systems"
+                            "__system_id__delete"
+                        ),
+                        "parameters": {
+                            "system_id": "$response.body#/system_id"
+                        },
+                    },
+                }
+            }
+        }
+    },
 )
 async def ai_gov_register(
     body: RegisterRequest,
@@ -331,13 +433,20 @@ async def ai_gov_register(
 
             # Fresh key path: create entry, then record.
             classification = classify(body.descriptor)
-            entry = AISystemRegistryEntry(
-                descriptor=body.descriptor,
-                classification=classification,
-                provider=body.provider,
-                owner=body.owner,
-                deployment_status=body.deployment_status,
-            )
+            try:
+                entry = AISystemRegistryEntry(
+                    descriptor=body.descriptor,
+                    classification=classification,
+                    provider=body.provider,
+                    owner=body.owner,
+                    deployment_status=body.deployment_status,
+                )
+            except (ValidationError, ValueError) as exc:
+                # A field that passes RegisterRequest's raw min_length
+                # but fails the registry model's post-strip validation
+                # (e.g. whitespace-only provider/owner) must normalize
+                # to 400, not crash to 500 — mirrors the PUT handler.
+                raise api_error(400, "invalid_body", str(exc)) from exc
             AIRegistryStore().save(entry)
             store[x_idempotency_key] = {
                 "body_hash": body_hash,
@@ -348,13 +457,18 @@ async def ai_gov_register(
     else:
         # No idempotency key: standard create path.
         classification = classify(body.descriptor)
-        entry = AISystemRegistryEntry(
-            descriptor=body.descriptor,
-            classification=classification,
-            provider=body.provider,
-            owner=body.owner,
-            deployment_status=body.deployment_status,
-        )
+        try:
+            entry = AISystemRegistryEntry(
+                descriptor=body.descriptor,
+                classification=classification,
+                provider=body.provider,
+                owner=body.owner,
+                deployment_status=body.deployment_status,
+            )
+        except (ValidationError, ValueError) as exc:
+            # See the fresh-key path above: post-strip validation
+            # failure normalizes to 400, not a 500.
+            raise api_error(400, "invalid_body", str(exc)) from exc
         AIRegistryStore().save(entry)
 
     _log.info(
@@ -447,7 +561,9 @@ async def ai_gov_list_systems(
         }
     ),
 )
-async def ai_gov_get_system(system_id: str) -> dict[str, Any]:
+async def ai_gov_get_system(
+    system_id: str = _SYSTEM_ID_PATH,
+) -> dict[str, Any]:
     """Fetch a single registered AI system by ID."""
     try:
         entry = AIRegistryStore().load(system_id)
@@ -475,7 +591,9 @@ async def ai_gov_get_system(system_id: str) -> dict[str, Any]:
         {400: "Malformed ``system_id`` (``error: invalid_id``)."}
     ),
 )
-async def ai_gov_delete_system(system_id: str) -> dict[str, Any]:
+async def ai_gov_delete_system(
+    system_id: str = _SYSTEM_ID_PATH,
+) -> dict[str, Any]:
     """Remove a registered AI system. Returns whether a record was
     actually removed (idempotent: no-op on unknown ID)."""
     try:
@@ -542,6 +660,48 @@ class UpdateSystemRequest(BaseModel):
     (partial-update semantics matching the ``ai-gov update`` CLI verb).
     An empty body (no fields) is a 400 (nothing to update).
     """
+
+    # 2026-07-06 stateful-DAST prep (Step 3): JSON-Schema mirror of the
+    # handler's ``if not updates: raise api_error(400, "invalid_body",
+    # ...)`` check (``ai_gov_update_system``, ~line 656-664 pre-Step-3) —
+    # "at least one of these 4 fields must be present and non-null" isn't
+    # otherwise expressible in vanilla JSON Schema (every field here is
+    # optional/nullable), so schemathesis generated ``{}`` as schema-valid
+    # positive data and flagged the handler's 400 as a
+    # ``positive_data_acceptance`` violation on PUT
+    # /api/ai-gov/systems/{system_id} (the analogous EvidenceRef fix in
+    # ``evidentia_core.models.tprm`` cites the same finding shape on POST
+    # /api/model-risk/models). Each branch uses ``{"not": {"type":
+    # "null"}}`` rather than a type re-assertion (cf. EvidenceRef) because
+    # ``deployment_status`` is an enum $ref, not a plain string — "present
+    # AND non-null" is the uniform semantics that matches the handler's
+    # ``is not None`` checks across all 4 fields. Keep both in sync.
+    model_config = ConfigDict(
+        json_schema_extra={
+            "anyOf": [
+                {
+                    "required": ["owner"],
+                    "properties": {"owner": {"not": {"type": "null"}}},
+                },
+                {
+                    "required": ["provider"],
+                    "properties": {"provider": {"not": {"type": "null"}}},
+                },
+                {
+                    "required": ["deployment_status"],
+                    "properties": {
+                        "deployment_status": {"not": {"type": "null"}}
+                    },
+                },
+                {
+                    "required": ["ssp_reference"],
+                    "properties": {
+                        "ssp_reference": {"not": {"type": "null"}}
+                    },
+                },
+            ]
+        }
+    )
 
     owner: str | None = Field(default=None, min_length=1, max_length=256)
     provider: str | None = Field(default=None, min_length=1, max_length=256)
@@ -624,7 +784,8 @@ class HighImpactRequest(BaseModel):
         {
             400: (
                 "Empty update or domain-validation failure "
-                "(``error: invalid_body``)."
+                "(``error: invalid_body``), or an undecodable request "
+                f"body ({BODY_PARSE_ERROR_400})."
             ),
             403: RBAC_DENIED_403,
             404: "No such registered system (``error: not_found``).",
@@ -632,7 +793,7 @@ class HighImpactRequest(BaseModel):
     ),
 )
 async def ai_gov_update_system(
-    system_id: str, body: UpdateSystemRequest
+    body: UpdateSystemRequest, system_id: str = _SYSTEM_ID_PATH
 ) -> dict[str, Any]:
     """Partially update a registered AI system.
 

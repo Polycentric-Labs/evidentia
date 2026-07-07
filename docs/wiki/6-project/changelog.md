@@ -10,8 +10,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Unauthenticated 500 on `POST /api/ai-gov/register`** — a
+  whitespace-only `provider`/`owner` passed the request model's raw
+  `min_length` but failed the whitespace-stripping registry model,
+  raising an uncaught `ValidationError`. Now normalized to a structured
+  400, matching the sibling update handler. Found by the new DAST work.
+
 ### Added
 
+- **DAST-driven API schema + error-contract hardening** — several
+  fixes surfaced while building the stateful-DAST harness: OpenAPI
+  `links` on the ai-gov register→get/put/delete and catalog
+  import→delete lifecycles; `UpdateSystemRequest` and `EvidenceRef`
+  cross-field rules mirrored into the published schema (`anyOf`);
+  a non-whitespace `pattern` on the AI-system descriptor
+  `name`/`purpose` so the schema matches the strip+`min_length`
+  runtime; the `system_id` UUID shape documented on the lifecycle ops;
+  and an app-wide handler normalizing FastAPI's hardcoded body-decode
+  400 to the structured `ErrorEnvelope` shape every other deliberate
+  error already carries.
 - **`EvidenceRef` two-mode contract in the published schema** — the
   at-least-one-of (`artifact_id`, `file_path`) and `file_path`→`sha256`
   business rules, previously enforced only by a Pydantic model validator,

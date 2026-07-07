@@ -94,8 +94,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
 class ErrorDetail(BaseModel):
@@ -219,3 +221,78 @@ RATE_LIMITED_429 = (
     "Carries a ``Retry-After`` header."
 )
 """Shared ``responses`` description for rate-limited paths."""
+
+BODY_PARSE_ERROR_400 = (
+    "Request body could not be decoded (e.g. invalid UTF-8) before "
+    "route-level validation ran (``error: body_parse_error``)."
+)
+"""Shared ``responses`` description for the app-wide body-parse-error 400.
+
+Route decorators on body-bearing operations should include this in
+their ``error_responses()`` call alongside their own domain-specific
+400s so the documented response set matches what FastAPI can actually
+return (see :func:`body_parse_error_handler`).
+"""
+
+
+async def body_parse_error_handler(
+    request: Request, exc: Exception
+) -> JSONResponse:
+    """Normalize FastAPI's own body-decode 400 to the structured shape.
+
+    2026-07-06 stateful-DAST finding (Step 4 of the H-2 deliverable):
+    when a request body fails to decode (e.g. invalid UTF-8 bytes sent
+    with a ``Content-Type: application/json`` header), FastAPI's routing
+    layer raises a hardcoded ``HTTPException(400, "There was an error
+    parsing the body")`` from its own ``except Exception`` catch-all in
+    ``fastapi.routing`` — BEFORE any route code (or its documented
+    ``responses=``) ever runs. That bare string violates the
+    :class:`ErrorEnvelope` shape every OTHER deliberate 400 in this API
+    carries, so schemathesis's ``response_schema_conformance`` check
+    flagged it as a schema violation on ``PUT
+    /api/ai-gov/systems/{system_id}`` (and it is reachable identically
+    on every body-bearing route in the API — not specific to ai-gov).
+
+    Registering a handler on ``starlette.exceptions.HTTPException``
+    REPLACES FastAPI's own default handler app-wide (Starlette allows
+    exactly one handler per exception class, keyed by exact class
+    identity — NOT ``fastapi.HTTPException``, which is a subclass and
+    would never match: the ``except Exception`` catch-all in
+    ``fastapi/routing.py`` raises the STARLETTE base class directly,
+    and FastAPI's own default handler is itself registered under that
+    same base-class key per ``fastapi/applications.py``) — so every
+    OTHER deliberate ``api_error(...)`` raise (a ``fastapi.HTTPException``,
+    which IS an instance of the Starlette base class via inheritance)
+    also flows through here. Non-matching exceptions are handled by
+    delegating to ``fastapi.exception_handlers.http_exception_handler``
+    (FastAPI's own default) rather than re-raising — re-raising here
+    would escape Starlette's exception middleware entirely and crash
+    the request instead of falling through to the default behavior.
+    """
+    if (
+        isinstance(exc, StarletteHTTPException)
+        and exc.status_code == 400
+        and exc.detail == "There was an error parsing the body"
+    ):
+        return JSONResponse(
+            status_code=400,
+            content={
+                "detail": {
+                    "error": "body_parse_error",
+                    "message": (
+                        "Request body could not be decoded (invalid "
+                        "encoding or malformed content)."
+                    ),
+                }
+            },
+        )
+    # Not our target shape — delegate to FastAPI's own default
+    # HTTPException handler so every other deliberate api_error(...)
+    # raise (and any other HTTPException) behaves exactly as if this
+    # handler were never registered.
+    from fastapi.exception_handlers import (
+        http_exception_handler as _default_http_exception_handler,
+    )
+
+    assert isinstance(exc, StarletteHTTPException)  # narrows for the call
+    return await _default_http_exception_handler(request, exc)  # type: ignore[return-value]
