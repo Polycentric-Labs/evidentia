@@ -5856,7 +5856,18 @@ export interface components {
          * @enum {string}
          */
         QuestionnaireFormat: "evidentia-generic" | "caiq-lite" | "caiq-full" | "sig" | "sig-lite";
-        /** RegisterRequest */
+        /**
+         * RegisterRequest
+         * @example {
+         *       "deployment_status": "production",
+         *       "descriptor": {
+         *         "name": "resume-screener",
+         *         "purpose": "Score job applicants for interview shortlisting"
+         *       },
+         *       "owner": "risk-team",
+         *       "provider": "acme-corp"
+         *     }
+         */
         RegisterRequest: {
             /** @default proposed */
             deployment_status: components["schemas"]["DeploymentStatus"];
@@ -6318,6 +6329,14 @@ export interface components {
             provider?: string | null;
             /** Ssp Reference */
             ssp_reference?: string | null;
+        } | {
+            owner: unknown;
+        } | {
+            provider: unknown;
+        } | {
+            deployment_status: unknown;
+        } | {
+            ssp_reference: unknown;
         };
         /** ValidationError */
         ValidationError: {
@@ -6873,6 +6892,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Body-content/id validation failure (``error: invalid_body``), or an undecodable request body (Request body could not be decoded (e.g. invalid UTF-8) before route-level validation ran (``error: body_parse_error``).). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description ``X-Idempotency-Key`` reuse with a different body (``error: idempotency_key_conflict``). */
             409: {
                 headers: {
@@ -6950,6 +6978,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description Registered AI system ID (UUID). */
                 system_id: string;
             };
             cookie?: never;
@@ -7001,6 +7030,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description Registered AI system ID (UUID). */
                 system_id: string;
             };
             cookie?: never;
@@ -7022,7 +7052,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description Empty update or domain-validation failure (``error: invalid_body``). */
+            /** @description Empty update or domain-validation failure (``error: invalid_body``), or an undecodable request body (Request body could not be decoded (e.g. invalid UTF-8) before route-level validation ran (``error: body_parse_error``).). */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -7065,6 +7095,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description Registered AI system ID (UUID). */
                 system_id: string;
             };
             cookie?: never;
@@ -7398,7 +7429,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description Malformed ``framework_id``, invalid ``tier``, unsupported ``format``, unparseable/invalid catalog content, or a duplicate import without ``force`` (``error: invalid_id`` / ``invalid_field`` / ``unsupported_format`` / ``invalid_body`` / ``already_exists``). */
+            /** @description Malformed ``framework_id``, invalid ``tier``, unsupported ``format``, unparseable/invalid catalog content, a duplicate import without ``force``, or an undecodable request body (``error: invalid_id`` / ``invalid_field`` / ``unsupported_format`` / ``invalid_body`` / ``already_exists``; Request body could not be decoded (e.g. invalid UTF-8) before route-level validation ran (``error: body_parse_error``).). */
             400: {
                 headers: {
                     [name: string]: unknown;

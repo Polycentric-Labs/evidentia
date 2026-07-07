@@ -64,6 +64,7 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
 
 from evidentia_api.errors import (
+    BODY_PARSE_ERROR_400,
     RBAC_DENIED_403,
     api_error,
     error_responses,
@@ -292,14 +293,35 @@ class CatalogImportPayload(BaseModel):
             400: (
                 "Malformed ``framework_id``, invalid ``tier``, "
                 "unsupported ``format``, unparseable/invalid catalog "
-                "content, or a duplicate import without ``force`` "
+                "content, a duplicate import without ``force``, or an "
+                "undecodable request body "
                 "(``error: invalid_id`` / ``invalid_field`` / "
                 "``unsupported_format`` / ``invalid_body`` / "
-                "``already_exists``)."
+                f"``already_exists``; {BODY_PARSE_ERROR_400})."
             ),
             403: RBAC_DENIED_403,
         }
     ),
+    # 2026-07-06 stateful-DAST prep (Step 2): OpenAPI link chaining this
+    # response's ``framework_id`` into the DELETE lifecycle op, mirroring
+    # the ai-gov register links above.
+    openapi_extra={
+        "responses": {
+            "201": {
+                "links": {
+                    "DeleteCatalog": {
+                        "operationId": (
+                            "remove_catalog_api_catalog"
+                            "__framework_id__delete"
+                        ),
+                        "parameters": {
+                            "framework_id": "$response.body#/framework_id"
+                        },
+                    }
+                }
+            }
+        }
+    },
 )
 async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
     """Import a user-supplied catalog into the local user catalog dir.

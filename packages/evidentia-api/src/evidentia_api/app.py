@@ -37,8 +37,10 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from evidentia_api import __version__
+from evidentia_api.errors import body_parse_error_handler
 
 if TYPE_CHECKING:
     from evidentia_core.plugins.auth import AuthProvider
@@ -220,6 +222,21 @@ def create_app(
         # the explicit-injection path didn't pre-populate it).
         lifespan=_auth_lifespan,
     )
+
+    # 2026-07-06 stateful-DAST finding (H-2 Step 4): normalize FastAPI's
+    # own hardcoded body-decode 400 ("There was an error parsing the
+    # body", raised from fastapi.routing's generic Exception catch-all
+    # before any route code runs) to the same structured ErrorEnvelope
+    # shape every deliberate api_error(...) 400 in this API carries. See
+    # evidentia_api.errors.body_parse_error_handler's docstring for the
+    # full mechanism. MUST register under starlette.exceptions.
+    # HTTPException (not fastapi.HTTPException) — that generic-Exception
+    # catch-all in fastapi/routing.py raises the STARLETTE base class
+    # directly, and FastAPI's own default handler is itself registered
+    # under that same base-class key (fastapi/applications.py imports
+    # HTTPException from starlette.exceptions), so this is the exact
+    # dict key that must be overwritten for the handler to fire at all.
+    app.add_exception_handler(StarletteHTTPException, body_parse_error_handler)
 
     # v0.8.2 F-V81-S2: pre-populate app.state.auth_provider with
     # the explicit-injection value (if any). The lifespan only

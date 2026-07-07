@@ -129,11 +129,26 @@ class AISystemDescriptor(EvidentiaModel):
     name: str = Field(
         min_length=1,
         max_length=256,
+        # 2026-07-06 stateful-DAST finding (H-2 Step 4): EvidentiaModel
+        # sets str_strip_whitespace=True, so a whitespace-only value
+        # (e.g. "\t") passes this raw min_length=1 in the PUBLISHED
+        # schema but fails post-strip validation at runtime -> a
+        # schema-valid-per-the-doc request gets rejected, which
+        # schemathesis's positive_data_acceptance check (correctly)
+        # flags as RejectedPositiveData on POST /api/ai-gov/register
+        # (AISystemDescriptor is RegisterRequest.descriptor). ``\S``
+        # (unanchored — JSON Schema ``pattern`` is a search, not a
+        # fullmatch) mirrors "at least one non-whitespace character"
+        # so the published schema matches the strip+min_length runtime
+        # behavior instead of over-promising. Mirror in ``purpose``
+        # below; keep both in sync with EvidentiaModel's strip config.
+        pattern=r"\S",
         description="Human-readable AI system name (free text).",
     )
     purpose: str = Field(
         min_length=1,
         max_length=2048,
+        pattern=r"\S",
         description="Plain-English description of what the system does.",
     )
     annex_iii_domain: AnnexIIIDomain = Field(
