@@ -47,6 +47,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Stateful DAST suite + `dast.yml` sentinel** — a schemathesis
+  state-machine test (`tests/dast/test_openapi_stateful.py`) walks
+  create→read→update→delete link chains over the ai-gov and catalog
+  lifecycles (hunting IDOR / state-leak / stale-reference /
+  sequence-dependent 5xx classes that stateless per-operation fuzzing
+  cannot reach), complementing the existing stateless
+  `test_openapi_fuzz.py`. A new non-required `dast.yml` workflow runs
+  both on a weekly cron, manual dispatch, and API-surface PRs
+  (observe-first; not a merge gate).
 - **DAST-driven API schema + error-contract hardening** — several
   fixes surfaced while building the stateful-DAST harness: OpenAPI
   `links` on the ai-gov register→get/put/delete and catalog

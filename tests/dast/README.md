@@ -1,4 +1,4 @@
-# Evidentia DAST tests (v0.9.5 P1.2)
+# Evidentia DAST tests (v0.9.5 P1.2; stateful suite added Horizon-A H-2)
 
 Dynamic Application Security Testing scaffolding for the
 pre-release-review Step 4 capability-matrix DAST sub-step.
@@ -8,6 +8,20 @@ pre-release-review Step 4 capability-matrix DAST sub-step.
 - `test_openapi_fuzz.py` — Schemathesis fuzz the FastAPI OpenAPI
   spec; surfaces input-validation gaps the unit tests don't cover
   (large strings, unicode edge cases, schema-violation requests).
+  STATELESS: each operation is fuzzed independently.
+- `test_openapi_stateful.py` (Horizon-A H-2) — Schemathesis STATEFUL
+  suite: walks create -> read -> update -> delete operation sequences
+  over the ai-gov (`register` -> `GET`/`PUT`/`DELETE
+  /systems/{system_id}`) and catalog (`import` -> `DELETE
+  /{framework_id}`) lifecycles via the OpenAPI `links` this deliverable
+  added to those routes. Runs schemathesis's FULL DEFAULT CHECK SET
+  (no `excluded_checks`) — catches IDOR / state-leak / stale-reference
+  / sequence-dependent 5xx classes that stateless per-operation fuzzing
+  cannot reach, since those require a real prior response's ID to
+  chain off of. See the module docstring for the source-side fixes
+  (whitespace-only field 500, OpenAPI links, schema-mirrored business
+  rules, body-parse-error normalization) this suite's green run
+  depends on.
 - `playwright.config.ts` — Playwright config for end-to-end UI
   probing against a locally-running `evidentia serve` instance.
 
@@ -26,8 +40,11 @@ uv run playwright install        # downloads chromium/firefox/webkit
 ## Running
 
 ```bash
-# OpenAPI fuzz only (faster):
+# OpenAPI fuzz only (faster, stateless):
 uv run pytest tests/dast/test_openapi_fuzz.py -v
+
+# Stateful lifecycle fuzz (ai-gov + catalog link-chains):
+uv run pytest tests/dast/test_openapi_stateful.py -v
 
 # Playwright UI probing only (requires `evidentia serve` running):
 uv run pytest tests/dast/test_playwright_e2e.py -v
@@ -54,6 +71,9 @@ review). It catches:
 - Error-message information leakage (stack traces, file paths)
 - Authentication bypasses through malformed inputs
 - CORS misconfigurations
+- (stateful suite) IDOR / state-leak / stale-reference /
+  sequence-dependent bugs across a create -> read -> update -> delete
+  lifecycle, which stateless per-operation fuzzing cannot reach
 
 It does NOT catch:
 
