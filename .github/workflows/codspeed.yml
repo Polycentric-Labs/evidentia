@@ -1,0 +1,61 @@
+# CodSpeed performance-regression gate — Horizon-A H-4.
+#
+# NON-required, observe-first: runs the opt-in pytest-codspeed micro-benchmarks
+# (tests/benchmarks/, excluded from the default collection) under CodSpeed's
+# instruction-counting runner and reports per-PR perf deltas. Never a merge
+# gate (this job name is not in the branch ruleset's required checks, and it is
+# continue-on-error).
+#
+# INERT UNTIL REGISTERED: the benchmarks run + the action executes, but results
+# publish only once the repo is registered on codspeed.io (the CodSpeed GitHub
+# App, free OSS tier). Until then the upload no-ops and continue-on-error keeps
+# the job green. Public repo -> the upload token is omitted (tokenless);
+# id-token: write enables CodSpeed's OpenID Connect authentication.
+name: codspeed
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # workflow_dispatch lets CodSpeed trigger a backtest to seed initial data.
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codspeed-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  benchmarks:
+    name: codspeed benchmarks (pilot, non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+      id-token: write  # OpenID Connect auth for the tokenless CodSpeed upload
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3  # v8.3.0
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync workspace
+        env:
+          EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
+        run: uv sync --all-packages
+
+      - name: Run CodSpeed benchmarks
+        uses: CodSpeedHQ/action@9f3a37ece7abc84992501a7fcd54d1704f3458fa  # v4.18.4
+        with:
+          run: uv run --no-sync python -m pytest tests/benchmarks/ --codspeed

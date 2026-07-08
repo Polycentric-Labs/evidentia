@@ -165,6 +165,7 @@ dev = [
     # tests/fuzz/test_parser_robustness.py rides on the existing
     # `hypothesis` dev dep above and needs no Linux marker.
     "atheris>=2.3.0 ; sys_platform == 'linux'",
+    "pytest-codspeed>=5.0.3",
 ]
 docs = [
     # v0.10.7: in-repo wiki at docs/wiki/ rendered via Material for MkDocs.
@@ -260,7 +261,12 @@ asyncio_mode = "auto"
 # default collection and SHOULD NOT include DAST per the
 # README scope. See `tests/dast/README.md` for the per-suite
 # invocation guidance.
-addopts = "--ignore=tests/dast"
+#
+# tests/benchmarks/ is likewise opt-in: pytest-codspeed micro-benchmarks
+# run under CodSpeed in codspeed.yml (or `pytest tests/benchmarks/` on
+# demand), never in the default gate — they are perf measurements, not
+# pass/fail correctness tests.
+addopts = "--ignore=tests/dast --ignore=tests/benchmarks"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
