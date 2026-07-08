@@ -133,14 +133,41 @@ _SECRET_PATTERNS = [
 def _scrub(message: str) -> str:
     """Replace well-known secret patterns in free-text with ``[REDACTED]``.
 
-    Operates on message strings only. Structured field values are the
-    collector's responsibility — the scrubber is a safety net for
-    exception stringification and ad-hoc log lines that might inline a
-    credential accidentally.
+    A safety net for exception stringification and ad-hoc log lines that
+    might inline a credential accidentally. Applied to the free-text
+    ``message`` and (via :func:`_scrub_structured`) to the ``error`` field's
+    string values.
     """
     for pattern in _SECRET_PATTERNS:
         message = pattern.sub("[REDACTED]", message)
     return message
+
+
+def _escape_newlines(message: str) -> str:
+    """Neutralize CR/LF so attacker-controlled content cannot forge a second
+    log line (CWE-117 log injection) when the message is rendered by a
+    plaintext formatter (the default, non-JSON stdlib handler uses
+    ``%(message)s`` verbatim). JSON emission via :class:`ECSFormatter`
+    already escapes newlines through ``json.dumps``; this covers the
+    plaintext path where the raw message argument becomes the log line.
+    """
+    return message.replace("\r", "\\r").replace("\n", "\\n")
+
+
+def _scrub_structured(obj: Any) -> Any:
+    """Recursively apply :func:`_scrub` to the string leaves of a JSON-like
+    structure (dict / list / str). Used for the ``error`` field so a
+    credential inlined into an exception string is redacted in the structured
+    record too — ``_scrub`` on the free-text ``message`` alone left the
+    sibling ``error.message`` (``str(exc)``) in cleartext (CWE-312).
+    """
+    if isinstance(obj, str):
+        return _scrub(obj)
+    if isinstance(obj, dict):
+        return {k: _scrub_structured(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_scrub_structured(v) for v in obj]
+    return obj
 
 
 def _build_ecs_record(
@@ -231,7 +258,10 @@ def _build_ecs_record(
         record["cloud"] = scope["cloud"]
 
     if error is not None:
-        record["error"] = error
+        # Scrub credentials that may be inlined in an exception string
+        # (error.message = str(exc)) — the free-text ``message`` above is
+        # scrubbed, but the structured error mirror was not (CWE-312).
+        record["error"] = _scrub_structured(error)
 
     evidentia_payload: dict[str, Any] = {}
     if "evidentia" in scope:
@@ -363,9 +393,14 @@ class EvidentiaLogger:
         # stream stay in sync. The level check is identical to
         # what stdlib `Logger.log` does internally before emit.
         if self._stdlib.isEnabledFor(stdlib_level):
+            # Escape CR/LF on the plaintext-rendered message argument so a
+            # crafted message cannot forge a log line (CWE-117). The
+            # structured ``ecs_record`` is emitted only via json.dumps
+            # (ECSFormatter), which is already newline-safe, so it keeps the
+            # message verbatim.
             self._stdlib.log(
                 stdlib_level,
-                _scrub(message),
+                _escape_newlines(_scrub(message)),
                 extra={"ecs_record": ecs_record},
             )
             # v0.8.0 P1 G3 / v0.8.1 F-V08-CR-1: tap event into the

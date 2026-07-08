@@ -2,11 +2,11 @@
 #
 # Replaces GitHub's default CodeQL setup with an advanced workflow so a
 # config-file can load a local Models-as-Data data extension
-# (.github/codeql/path-injection-barriers.model.yml) that models
-# `validate_within` / `resolve_catalog_path` as `py/path-injection`
-# barriers — clearing that false-positive class at the analysis layer
-# rather than by per-instance dismissal. See codeql-config.yml for why
-# MaD replaced the earlier (never-loading) custom `.qll` sanitizer pack.
+# (.github/codeql/path-injection-barriers.model.yml) plus own the
+# paths-ignore filter. NOTE: py/path-injection does NOT yet consume MaD
+# barrierModel (verified 2026-07-08), so that FP class is dismissal-managed
+# today and the model is a forward-looking hook — see codeql-config.yml for
+# the full history (and why the earlier `.qll` sanitizer pack never loaded).
 #
 # Default setup must be disabled in repo Settings -> Code security
 # and analysis BEFORE this workflow takes over. While both are

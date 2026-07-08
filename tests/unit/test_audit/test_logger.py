@@ -16,6 +16,7 @@ from evidentia_core.audit.events import (
 from evidentia_core.audit.logger import (
     ECS_VERSION,
     ECSFormatter,
+    _build_ecs_record,
     _reset_for_tests,
     _scrub,
     enable_json_logs,
@@ -276,3 +277,45 @@ def test_formatter_output_is_single_line() -> None:
     assert "\n" not in output
     parsed = json.loads(output)
     assert parsed["message"] == "multi\nline\nmessage"
+
+
+def test_plaintext_emit_escapes_newlines_preventing_log_forging(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """CWE-117: in the default (non-JSON) mode the audit message is rendered
+    raw by the stdlib formatter (``%(message)s``), so attacker-controlled
+    CR/LF in the message could forge a second log line. The emitted message
+    must have its newlines neutralized (escaped), not passed through raw.
+    """
+    log = get_logger("evidentia.test")
+    with caplog.at_level(logging.INFO, logger="evidentia.test"):
+        log.info(
+            action=EventAction.COLLECT_STARTED,
+            message="ok\n2026-01-01 [ERROR] evidentia: FORGED admin action\rx",
+        )
+    rendered = caplog.records[-1].getMessage()
+    assert "\n" not in rendered
+    assert "\r" not in rendered
+    assert "\\n" in rendered  # newline preserved as an escaped literal
+
+
+def test_build_ecs_record_scrubs_secrets_in_error_field() -> None:
+    """CWE-312: ``_scrub`` covered only ``message``; a credential embedded in
+    an exception string reaches the log verbatim via ``error.message``. The
+    error dict's string values must also be scrubbed before emit.
+    """
+    record = _build_ecs_record(
+        level="error",
+        logger_name="evidentia.test",
+        message="collector failed",
+        action=EventAction.COLLECT_FAILED,
+        outcome=EventOutcome.FAILURE,
+        error={
+            "message": "provider rejected: token=leakedsecretvalue99",
+            "type": "APIError",
+        },
+    )
+    assert "leakedsecretvalue99" not in json.dumps(record)
+    assert "[REDACTED]" in record["error"]["message"]
+    # Non-secret structured fields are preserved verbatim.
+    assert record["error"]["type"] == "APIError"

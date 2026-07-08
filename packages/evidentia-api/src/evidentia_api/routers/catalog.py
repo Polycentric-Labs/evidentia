@@ -96,11 +96,11 @@ def _validate_framework_id(framework_id: str) -> str:
     first-line *shape* guard (fast 400 on a malformed id). It is NOT the
     CodeQL barrier for the import write-path: CodeQL's ``py/path-injection``
     traces ``payload.framework_id`` THROUGH this helper (it returns its arg)
-    into ``out_path``. The actual modeled barrier is downstream — ``out_path``
-    is routed through ``evidentia_core.security.paths.validate_within``
-    (write-path containment), which is modeled as a ``path-injection``
-    barrier via the Models-as-Data data extension
-    ``.github/codeql/path-injection-barriers.model.yml``.
+    into ``out_path``. Runtime containment is downstream — ``out_path`` is
+    routed through ``evidentia_core.security.paths.validate_within``
+    (resolve + assert is_relative_to). CodeQL's ``py/path-injection`` still
+    flags this class (path-injection does not consume the MaD barrier model);
+    the finding is a dismissed false positive.
     """
     if ".." in framework_id or not _FRAMEWORK_ID_RE.match(framework_id):
         raise api_error(
@@ -384,20 +384,16 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
     placeholder = bool(data.get("placeholder", False))
 
     user_dir = ensure_user_dir()
-    # Write-path containment (CWE-22) — defense-in-depth AND the CodeQL barrier.
+    # Write-path containment (CWE-22) — runtime defense-in-depth.
     # ``framework_id`` is regex-validated above (no '..', no separators), so the
     # join already lands inside the user catalog dir; wrapping it in
     # ``validate_within`` (resolve() + assert is_relative_to(user_dir)) makes that
     # containment EXPLICIT and is the write-side analog of the resolve_catalog_path
-    # read-side guard. Because validate_within is modeled as a py/path-injection
-    # barrier via Models-as-Data (.github/codeql/path-injection-barriers.model.yml,
-    # barrierModel), routing out_path through it clears the
-    # py/path-injection finding on the read-back loader at the analysis layer
+    # read-side guard for the read-back loader path
     # (alert #164: payload.framework_id -> out_path -> load_evidentia_catalog ->
-    # _load_catalog_data -> read_text). NB: a *raw* ``.resolve()`` here would
-    # instead be flagged by CodeQL as a path op on caller input — using the
-    # modeled helper is what makes the guard a barrier, not a new finding.
-    # validate_within returns the resolved path.
+    # _load_catalog_data -> read_text). CodeQL's py/path-injection does not
+    # recognize this guard (it ignores the MaD barrier model), so the finding is
+    # a dismissed false positive; validate_within returns the resolved path.
     out_path = validate_within(user_dir / f"{framework_id}.json", user_dir)
     if out_path.exists() and not payload.force:
         raise api_error(

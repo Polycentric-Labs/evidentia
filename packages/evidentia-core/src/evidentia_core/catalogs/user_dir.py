@@ -129,9 +129,10 @@ def resolve_catalog_path(
         # checked is what lets CodeQL's built-in ``py/path-injection`` barrier
         # recognize the guard — previously the check ran on ``path.resolve()``
         # but the *unchecked* ``path`` was returned, so the loader's
-        # ``read_text`` was flagged (alert #164). The return is ALSO modeled as a
-        # py/path-injection barrier via Models-as-Data
-        # (.github/codeql/path-injection-barriers.model.yml, barrierModel).
+        # ``read_text`` was flagged (alert #164). The returned value is the
+        # containment-checked path; CodeQL's py/path-injection does not
+        # recognize the guard (it ignores the MaD barrier model), so the
+        # finding is a dismissed false positive.
         resolved = path.resolve()
         if not resolved.is_relative_to(user_dir.resolve()):
             raise ValueError(

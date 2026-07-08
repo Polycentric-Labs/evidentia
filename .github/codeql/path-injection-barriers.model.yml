@@ -1,28 +1,31 @@
-# CodeQL Models-as-Data (MaD) — path-injection barriers for Evidentia.
+# CodeQL Models-as-Data (MaD) — path-injection barrier models for Evidentia.
 #
-# Replaces the never-loading `.qll` sanitizer pack. An external library
-# pack of `PathInjection::Sanitizer` subclasses can NOT inject sanitizers
-# into the stock `py/path-injection` query: a query only applies barriers
-# it transitively imports, and the stock query does not import our pack.
-# The supported no-fork mechanism is a data extension consumed by the
-# stock query at analysis time (`barrierModel`, GA in CodeQL 2.25.2; our
-# code-scanning runner is 2.25.6). This file is loaded by the
-# `dataExtensions:` key in codeql-config.yml (a local, in-repo path — the
-# `packs:` key only accepts published registry specs, which is why the old
-# `packs: ./.github/codeql/python-sanitizers` was logged as an "Invalid
-# CodeQL pack specification" and silently ignored).
+# STATUS: forward-looking / currently INERT for py/path-injection.
+# This data extension loads cleanly (the `barrierModel` predicate is GA in
+# CodeQL 2.25.2+; our code-scanning runner is 2.26.0), BUT the stock
+# `py/path-injection` query does NOT yet consume MaD `barrierModel` rows: it
+# recognizes sanitizers only via the QL classes `PathInjection::Sanitizer`,
+# `Path::PathNormalization::Range`, and `Path::SafeAccessCheck::Range` (see
+# the PathInjectionCustomizations module, which states it deliberately does
+# not expose a simple Sanitizer for MaD). Empirically verified 2026-07-08:
+# these rows do NOT clear the validate_within / resolve_catalog_path
+# py/path-injection false positives — that class is managed by per-instance
+# dismissal with a written rationale. The model is kept as a forward-looking
+# hook: if/when CodeQL wires py/path-injection to consume MaD barriers, it
+# activates with no further change. Loaded via the config `dataExtensions:` key.
 #
-# `barrierModel(type, path, kind)` marks the value at `type`/`path` as a
-# taint barrier for the given query `kind`. `kind: path-injection` matches
-# the sink kind the `py/path-injection` query uses.
+# (History: this replaced a custom `.qll` PathInjection::Sanitizer pack that
+# NEVER loaded — `packs:` accepts only published registry specs, so the local
+# path was logged as an "Invalid CodeQL pack specification" and ignored; and
+# an external library pack cannot inject a sanitizer into a stock query it
+# does not compile. The `.qll` Sanitizer subclass was actually the RIGHT
+# mechanism for path-injection, but there is no no-fork way to load it into
+# the stock query — hence dismissal-managed today.)
 #
-# Modeled barriers:
-#   - evidentia_core.security.paths.validate_within(candidate, safe_root)
-#     resolves the candidate and raises PathTraversalError unless it is
-#     is_relative_to(safe_root); its return is a containment-checked Path.
-#   - evidentia_core.catalogs.user_dir.resolve_catalog_path(...) returns
-#     (path, entry, source); the path (element 0) is either derived from
-#     the trusted package manifest or is_relative_to-checked before return.
+# `barrierModel(type, path, kind)` marks the value at `type`/`path` as a taint
+# barrier for query `kind` (here `path-injection`):
+#   - validate_within(candidate, safe_root) -> containment-checked Path.
+#   - resolve_catalog_path(...) -> (path, entry, source); the path is element 0.
 extensions:
   - addsTo:
       pack: codeql/python-all
