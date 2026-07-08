@@ -85,11 +85,19 @@ schemathesis = pytest.importorskip("schemathesis")
 
 from hypothesis import HealthCheck, Phase, settings  # noqa: E402
 
-# Isolate the AI registry BEFORE the app/schema are constructed below.
-# Module-level, not a fixture: the state machine is built at import time,
-# and AIRegistryStore reads this env var per request.
+# Isolate the AI registry AND the user-catalog store BEFORE the app/schema
+# are constructed below. Module-level, not a fixture: the state machine is
+# built at import time, and both stores read these env vars per request.
+# The state machine walks BOTH lifecycles — ai-gov register (AIRegistryStore,
+# EVIDENTIA_AI_REGISTRY_DIR) and catalog import/delete (get_user_catalog_dir,
+# EVIDENTIA_CATALOG_DIR) — so a run left un-isolated would write fuzz catalogs,
+# rewrite the real frameworks.yaml manifest, and could unlink a real
+# user-imported catalog in the developer's actual store.
 os.environ["EVIDENTIA_AI_REGISTRY_DIR"] = tempfile.mkdtemp(
-    prefix="evidentia-dast-stateful-"
+    prefix="evidentia-dast-stateful-registry-"
+)
+os.environ["EVIDENTIA_CATALOG_DIR"] = tempfile.mkdtemp(
+    prefix="evidentia-dast-stateful-catalog-"
 )
 
 # Neutralize the token-bucket rate limiter for the fuzz. The limiter
