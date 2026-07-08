@@ -44,6 +44,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **CodSpeed performance-regression gate (non-required, observe-first)** —
+  a `pytest-codspeed` micro-benchmark suite (`tests/benchmarks/`, excluded
+  from the default collection) over the hot paths from `docs/benchmarks.md`:
+  gap analysis (1 + 2 frameworks), catalog load, report serialization, and
+  two API request paths (health + gap-reports). A new `codspeed.yml`
+  workflow runs them under CodSpeed's instruction-counting runner and
+  reports per-PR perf deltas. `continue-on-error` and not a required check;
+  it lands inert until the repo is registered on codspeed.io (free OSS
+  tier), then activates with no further change.
 - **`uv` supply-chain pilots (non-required, observe-first)** — two uv
   preview features run in `test.yml` as second opinions to the
   authoritative `osv-scanner` SBOM gate, both `continue-on-error` so they

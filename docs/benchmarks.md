@@ -12,6 +12,14 @@ M4 (performance benchmarks). v0.7.7+ runs will add AI generation
 TTFT/P95, AWS/GitHub collector concurrency, and FastAPI sustained-
 load numbers as those surfaces stabilize.
 
+> **Continuous tracking (CodSpeed).** A subset of these paths — gap
+> analysis (1 + 2 frameworks), catalog load, report serialization, and
+> the health + gap-reports API endpoints — is tracked per-PR by
+> `pytest-codspeed` micro-benchmarks (`tests/benchmarks/`) run under the
+> `codspeed.yml` workflow. That gate is non-required and observe-first:
+> it surfaces instruction-count regressions for review, it does not block
+> merges. The tables below remain the wall-clock reference baseline.
+
 ---
 
 ## Hardware + software baseline (v0.7.6 reference run)
