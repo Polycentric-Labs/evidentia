@@ -1,30 +1,36 @@
 # CodeQL config for Evidentia advanced setup.
 #
-# Loads the security-extended query suite (matching what default setup
-# runs) PLUS a local Models-as-Data (MaD) data extension that models
-# Evidentia's path-containment helpers as `py/path-injection` barriers
-# at the analysis layer — so the whole `validate_within` /
-# `resolve_catalog_path` false-positive class clears in the query
-# results instead of relying on per-instance dismissals.
+# Loads the security-extended query suite (matching what default setup runs)
+# PLUS a local Models-as-Data (MaD) data extension that models Evidentia's
+# path-containment helpers as `py/path-injection` barriers.
+#
+# IMPORTANT — the barrier model is currently INERT (forward-looking):
+#   The stock `py/path-injection` query does NOT consume MaD `barrierModel`
+#   rows (verified empirically 2026-07-08 on CodeQL 2.26.0). It recognizes
+#   sanitizers only via QL classes (PathInjection::Sanitizer /
+#   PathNormalization::Range / SafeAccessCheck::Range). So the
+#   validate_within / resolve_catalog_path py/path-injection false-positive
+#   class is NOT cleared at the analysis layer today — it is managed by
+#   per-instance dismissal with a written rationale. The model.yml is kept as
+#   a forward-looking hook (see its header) and loads cleanly.
 #
 # HISTORY / why MaD and not a `.qll` sanitizer pack:
-#   The earlier approach shipped a custom QL pack of
-#   `PathInjection::Sanitizer` subclasses and referenced it via
-#   `packs: - ./.github/codeql/python-sanitizers`. That never worked, for
-#   TWO reasons: (1) the `packs:` key only accepts published registry pack
-#   specs (`scope/name[@range]`), so a local path was logged as an
-#   "Invalid CodeQL pack specification" and ignored; (2) even loaded, an
-#   external library pack cannot inject a sanitizer into the stock
-#   `py/path-injection` query — a query only applies barriers it imports.
-#   The supported no-fork fix is a data extension the stock query consumes
-#   at analysis time (`barrierModel`, GA in CodeQL 2.25.2; runner 2.25.6).
+#   The earlier approach shipped a custom QL pack of PathInjection::Sanitizer
+#   subclasses and referenced it via `packs: - ./.github/codeql/python-sanitizers`.
+#   That never worked: (1) `packs:` accepts only published registry specs, so
+#   the local path was logged as an "Invalid CodeQL pack specification" and
+#   ignored; (2) an external library pack cannot inject a sanitizer into the
+#   stock `py/path-injection` query (a query applies only barriers it imports).
+#   The `.qll` Sanitizer subclass was the correct MECHANISM for path-injection,
+#   but there is no no-fork way to load it into the stock query — hence the
+#   forward-looking MaD model + dismissal-managed FP class today.
 #
 # `dataExtensions:` takes repo-local paths (relative to this config file);
-# see path-injection-barriers.model.yml for the modeled helpers.
+# see path-injection-barriers.model.yml.
 #
 # Default setup must be disabled in repo Settings -> Code security and
 # analysis; the advanced workflow (.github/workflows/codeql.yml) owns the
-# canonical alert stream.
+# canonical alert stream (and the paths-ignore below).
 #
 # References:
 # - https://github.blog/changelog/2026-04-21-codeql-now-supports-sanitizers-and-validators-in-models-as-data/

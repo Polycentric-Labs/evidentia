@@ -7,19 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Audit log CR/LF injection + credential leakage hardened**
+  (`evidentia_core.audit.logger`). Two defects surfaced by an
+  adversarial review of CodeQL 2.26.0 findings: (1) CWE-117 — in the
+  default (non-JSON) logging mode the message is rendered verbatim by
+  the stdlib formatter, so attacker-controlled CR/LF (e.g. a `Metric`
+  `name` via `POST /api/governance/metrics`) could forge log lines;
+  the plaintext-rendered message now escapes newlines. (2) CWE-312 —
+  the secret scrubber covered only the free-text `message`, leaving a
+  credential inlined in an exception string (`error.message =
+  str(exc)`) in cleartext in the structured record; the `error` field's
+  string values are now scrubbed too. Structured JSON emission was
+  already newline-safe via `json.dumps` and is unchanged.
+
 ### Fixed
 
-- **CodeQL custom path-injection barrier now actually loads** — the
-  `validate_within` / `resolve_catalog_path` `py/path-injection`
-  false-positive class was being held down by per-instance dismissals
-  because the custom `.qll` sanitizer pack never loaded: `packs:` only
-  accepts published registry specs (a local path was logged as an
-  "Invalid CodeQL pack specification" and ignored), and an external
-  library pack cannot inject a barrier into a stock query anyway.
-  Replaced it with a Models-as-Data data extension (`barrierModel`,
-  loaded via the config's `dataExtensions:` key) that the stock
-  `py/path-injection` query consumes at analysis time, clearing the
-  class at the analysis layer instead of by dismissal.
+- **CodeQL custom path-injection sanitizer pack removed (never loaded)**
+  — the `validate_within` / `resolve_catalog_path` `py/path-injection`
+  false-positive class was held down by per-instance dismissals because
+  the custom `.qll` sanitizer pack never loaded: `packs:` accepts only
+  published registry specs (a local path was logged as "Invalid CodeQL
+  pack specification" and ignored), and an external library pack cannot
+  inject a barrier into a stock query anyway. Replaced with a
+  Models-as-Data `barrierModel` extension (loaded via the config's
+  `dataExtensions:` key, which does resolve cleanly). NOTE:
+  `py/path-injection` does not yet consume MaD `barrierModel`, so the
+  model is a forward-looking hook and this FP class remains
+  dismissal-managed for now.
 - **Unauthenticated 500 on `POST /api/ai-gov/register`** — a
   whitespace-only `provider`/`owner` passed the request model's raw
   `min_length` but failed the whitespace-stripping registry model,
