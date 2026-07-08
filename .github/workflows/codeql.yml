@@ -1,10 +1,12 @@
-# Advanced CodeQL setup for Evidentia (v0.7.7 CF3).
+# Advanced CodeQL setup for Evidentia.
 #
-# Replaces GitHub's default CodeQL setup with an advanced workflow
-# that pulls in a custom QL pack declaring `validate_within` as a
-# sanitizer for the `py/path-injection` query. This closes the
-# 3 false-positive HIGH alerts (#71/#72/#73) at the analysis layer
-# rather than per-instance dismissal.
+# Replaces GitHub's default CodeQL setup with an advanced workflow so a
+# config-file can load a local Models-as-Data data extension
+# (.github/codeql/path-injection-barriers.model.yml) that models
+# `validate_within` / `resolve_catalog_path` as `py/path-injection`
+# barriers — clearing that false-positive class at the analysis layer
+# rather than by per-instance dismissal. See codeql-config.yml for why
+# MaD replaced the earlier (never-loading) custom `.qll` sanitizer pack.
 #
 # Default setup must be disabled in repo Settings -> Code security
 # and analysis BEFORE this workflow takes over. While both are
@@ -13,7 +15,7 @@
 #
 # References:
 # - https://docs.github.com/en/code-security/code-scanning/creating-an-advanced-setup-for-code-scanning
-# - https://docs.github.com/en/code-security/codeql-cli/using-the-codeql-cli/extending-the-default-codeql-suite-with-custom-queries
+# - https://codeql.github.com/docs/codeql-language-guides/customizing-library-models-for-python/
 # - https://github.com/github/codeql-action
 
 name: CodeQL

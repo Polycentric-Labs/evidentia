@@ -1,44 +1,41 @@
-# CodeQL config for Evidentia advanced setup (v0.7.7 CF3).
+# CodeQL config for Evidentia advanced setup.
 #
-# Loads the security-extended query suite (matching what default
-# setup runs) PLUS our custom python-sanitizers pack which declares
-# path-injection sanitizers at the analysis layer (a custom-`.qll`
-# sanitizer is the "systemic false positives go in committed config,
-# not per-instance dismissals" mechanism — and a code refactor that
-# routes a path through a MODELED sanitizer is even better, see #164):
-#   - `evidentia_core.security.paths.validate_within`
-#     (ValidateWithinSanitizer) — closes the false-positive HIGH
-#     alerts #71/#72/#73, AND is the modeled barrier the catalog
-#     import write-path routes through (alert #164, see below).
-#   - `evidentia_core.catalogs.user_dir.resolve_catalog_path`
-#     (ResolveCatalogPathSanitizer) — models the containment-checked /
-#     trusted-manifest path this helper returns (defense-in-depth for
-#     the catalog read path).
+# Loads the security-extended query suite (matching what default setup
+# runs) PLUS a local Models-as-Data (MaD) data extension that models
+# Evidentia's path-containment helpers as `py/path-injection` barriers
+# at the analysis layer — so the whole `validate_within` /
+# `resolve_catalog_path` false-positive class clears in the query
+# results instead of relying on per-instance dismissals.
 #
-# NOTE on #164 (catalog loader read_text): a primary-source CodeQL
-# investigation (the SARIF code-flow) showed #164's source is the API
-# import endpoint's `payload.framework_id`, flowing
-# payload.framework_id -> out_path -> load_evidentia_catalog ->
-# read_text. The catalog router's `_validate_framework_id` is the
-# first-line shape guard, but an `API::moduleImport(...).getACall()`
-# sanitizer does NOT match its INTRA-module callsites, so a `.qll`
-# model for it could not fire. The robust fix is therefore a code
-# refactor: the import endpoint routes `out_path` through the already-
-# modeled `validate_within` (write-path containment), which clears
-# #164 via ValidateWithinSanitizer rather than a non-firing model.
+# HISTORY / why MaD and not a `.qll` sanitizer pack:
+#   The earlier approach shipped a custom QL pack of
+#   `PathInjection::Sanitizer` subclasses and referenced it via
+#   `packs: - ./.github/codeql/python-sanitizers`. That never worked, for
+#   TWO reasons: (1) the `packs:` key only accepts published registry pack
+#   specs (`scope/name[@range]`), so a local path was logged as an
+#   "Invalid CodeQL pack specification" and ignored; (2) even loaded, an
+#   external library pack cannot inject a sanitizer into the stock
+#   `py/path-injection` query — a query only applies barriers it imports.
+#   The supported no-fork fix is a data extension the stock query consumes
+#   at analysis time (`barrierModel`, GA in CodeQL 2.25.2; runner 2.25.6).
 #
-# To verify the sanitizer is firing, look at the CodeQL job logs
-# after a push: the `Analyze` step should show the python-sanitizers
-# pack being loaded; the analysis should NOT re-flag the
-# validate_within callsites that previously produced #71/#72/#73.
+# `dataExtensions:` takes repo-local paths (relative to this config file);
+# see path-injection-barriers.model.yml for the modeled helpers.
+#
+# Default setup must be disabled in repo Settings -> Code security and
+# analysis; the advanced workflow (.github/workflows/codeql.yml) owns the
+# canonical alert stream.
+#
+# References:
+# - https://github.blog/changelog/2026-04-21-codeql-now-supports-sanitizers-and-validators-in-models-as-data/
+# - https://codeql.github.com/docs/codeql-language-guides/customizing-library-models-for-python/
+# - https://docs.github.com/en/code-security/reference/code-scanning/workflow-configuration-options
 
 name: "Evidentia CodeQL config"
 
-# Add our local sanitizer pack alongside the default query suites.
-# `packs:` accepts both registry-published packs and on-disk paths.
-packs:
-  python:
-    - ./.github/codeql/python-sanitizers
+# Local MaD data extension(s) — repo-relative to this config file.
+dataExtensions:
+  - path-injection-barriers.model.yml
 
 # Path filters: skip generated SPA bundle artifacts; include only
 # our source.

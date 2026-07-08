@@ -1,0 +1,32 @@
+# CodeQL Models-as-Data (MaD) — path-injection barriers for Evidentia.
+#
+# Replaces the never-loading `.qll` sanitizer pack. An external library
+# pack of `PathInjection::Sanitizer` subclasses can NOT inject sanitizers
+# into the stock `py/path-injection` query: a query only applies barriers
+# it transitively imports, and the stock query does not import our pack.
+# The supported no-fork mechanism is a data extension consumed by the
+# stock query at analysis time (`barrierModel`, GA in CodeQL 2.25.2; our
+# code-scanning runner is 2.25.6). This file is loaded by the
+# `dataExtensions:` key in codeql-config.yml (a local, in-repo path — the
+# `packs:` key only accepts published registry specs, which is why the old
+# `packs: ./.github/codeql/python-sanitizers` was logged as an "Invalid
+# CodeQL pack specification" and silently ignored).
+#
+# `barrierModel(type, path, kind)` marks the value at `type`/`path` as a
+# taint barrier for the given query `kind`. `kind: path-injection` matches
+# the sink kind the `py/path-injection` query uses.
+#
+# Modeled barriers:
+#   - evidentia_core.security.paths.validate_within(candidate, safe_root)
+#     resolves the candidate and raises PathTraversalError unless it is
+#     is_relative_to(safe_root); its return is a containment-checked Path.
+#   - evidentia_core.catalogs.user_dir.resolve_catalog_path(...) returns
+#     (path, entry, source); the path (element 0) is either derived from
+#     the trusted package manifest or is_relative_to-checked before return.
+extensions:
+  - addsTo:
+      pack: codeql/python-all
+      extensible: barrierModel
+    data:
+      - ["evidentia_core.security.paths", "Member[validate_within].ReturnValue", "path-injection"]
+      - ["evidentia_core.catalogs.user_dir", "Member[resolve_catalog_path].ReturnValue.Element[0]", "path-injection"]
