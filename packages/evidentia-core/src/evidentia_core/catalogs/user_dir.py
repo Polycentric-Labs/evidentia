@@ -129,8 +129,9 @@ def resolve_catalog_path(
         # checked is what lets CodeQL's built-in ``py/path-injection`` barrier
         # recognize the guard — previously the check ran on ``path.resolve()``
         # but the *unchecked* ``path`` was returned, so the loader's
-        # ``read_text`` was flagged (alert #164). ``ResolveCatalogPathSanitizer``
-        # (the custom QL pack) models this return as a second, explicit barrier.
+        # ``read_text`` was flagged (alert #164). The return is ALSO modeled as a
+        # py/path-injection barrier via Models-as-Data
+        # (.github/codeql/path-injection-barriers.model.yml, barrierModel).
         resolved = path.resolve()
         if not resolved.is_relative_to(user_dir.resolve()):
             raise ValueError(

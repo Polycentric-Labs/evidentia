@@ -77,8 +77,8 @@ repository:
           conformance tracked in OSPS-CONFORMANCE.md (Maturity 3, CI-gated).
           OpenSSF Best Practices: Silver (project 12724). Additional CI security
           tooling beyond the SCA entries below: CodeQL (security-extended +
-          custom python-sanitizers), OpenSSF Scorecard, and gitleaks secret
-          scanning.
+          custom path-injection barrier models via Models-as-Data data
+          extensions), OpenSSF Scorecard, and gitleaks secret scanning.
     tools:
       - name: osv-scanner
         type: SCA

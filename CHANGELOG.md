@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **CodeQL custom path-injection barrier now actually loads** — the
+  `validate_within` / `resolve_catalog_path` `py/path-injection`
+  false-positive class was being held down by per-instance dismissals
+  because the custom `.qll` sanitizer pack never loaded: `packs:` only
+  accepts published registry specs (a local path was logged as an
+  "Invalid CodeQL pack specification" and ignored), and an external
+  library pack cannot inject a barrier into a stock query anyway.
+  Replaced it with a Models-as-Data data extension (`barrierModel`,
+  loaded via the config's `dataExtensions:` key) that the stock
+  `py/path-injection` query consumes at analysis time, clearing the
+  class at the analysis layer instead of by dismissal.
 - **Unauthenticated 500 on `POST /api/ai-gov/register`** — a
   whitespace-only `provider`/`owner` passed the request model's raw
   `min_length` but failed the whitespace-stripping registry model,

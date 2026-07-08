@@ -96,11 +96,11 @@ def _validate_framework_id(framework_id: str) -> str:
     first-line *shape* guard (fast 400 on a malformed id). It is NOT the
     CodeQL barrier for the import write-path: CodeQL's ``py/path-injection``
     traces ``payload.framework_id`` THROUGH this helper (it returns its arg)
-    into ``out_path``, and an ``API::moduleImport(...).getACall()`` sanitizer
-    cannot match this helper's INTRA-module callsites. The actual modeled
-    barrier is downstream — ``out_path`` is routed through the CodeQL-modeled
-    ``evidentia_core.security.paths.validate_within`` (write-path containment),
-    which is what clears alert #164.
+    into ``out_path``. The actual modeled barrier is downstream — ``out_path``
+    is routed through ``evidentia_core.security.paths.validate_within``
+    (write-path containment), which is modeled as a ``path-injection``
+    barrier via the Models-as-Data data extension
+    ``.github/codeql/path-injection-barriers.model.yml``.
     """
     if ".." in framework_id or not _FRAMEWORK_ID_RE.match(framework_id):
         raise api_error(
@@ -389,8 +389,9 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
     # join already lands inside the user catalog dir; wrapping it in
     # ``validate_within`` (resolve() + assert is_relative_to(user_dir)) makes that
     # containment EXPLICIT and is the write-side analog of the resolve_catalog_path
-    # read-side guard. Because validate_within is the project's CodeQL-MODELED path
-    # sanitizer (ValidateWithinSanitizer), routing out_path through it clears the
+    # read-side guard. Because validate_within is modeled as a py/path-injection
+    # barrier via Models-as-Data (.github/codeql/path-injection-barriers.model.yml,
+    # barrierModel), routing out_path through it clears the
     # py/path-injection finding on the read-back loader at the analysis layer
     # (alert #164: payload.framework_id -> out_path -> load_evidentia_catalog ->
     # _load_catalog_data -> read_text). NB: a *raw* ``.resolve()`` here would
