@@ -44,6 +44,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`uv` supply-chain pilots (non-required, observe-first)** — two uv
+  preview features run in `test.yml` as second opinions to the
+  authoritative `osv-scanner` SBOM gate, both `continue-on-error` so they
+  never block a merge: a `uv audit` advisory scan, and a
+  `UV_MALWARE_CHECK=1` sync that queries OSV MAL advisories for the locked
+  closure (a resolution-time tripwire for known-malicious packages). The
+  malware check runs in its own non-required job rather than on the
+  required sync steps while the feature is in preview.
 - **Stateful DAST suite + `dast.yml` sentinel** — a schemathesis
   state-machine test (`tests/dast/test_openapi_stateful.py`) walks
   create→read→update→delete link chains over the ai-gov and catalog

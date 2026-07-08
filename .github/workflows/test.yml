@@ -280,6 +280,77 @@ jobs:
       - name: Run osv-scanner SBOM gate
         run: uv run --no-sync python scripts/run_osv_scan.py
 
+  # ── Supply-chain pilots (NON-required, observe-first) ────────────────
+  # Layered model: osv-scanner (above) is the AUTHORITATIVE, enforcing SBOM
+  # gate. The two jobs below are uv PREVIEW features run as second opinions
+  # with continue-on-error, so a finding / preview breakage / feed issue is
+  # OBSERVED, never a merge blocker. Neither job name is in the branch
+  # ruleset's required checks. See docs/engineering-practices.md.
+  uv-audit:
+    name: uv audit (pilot, non-blocking)
+    runs-on: ubuntu-latest
+    # uv's native advisory audit (preview) as a second opinion to osv-scanner.
+    # `uv audit` exits non-zero when advisories are present, so continue-on-
+    # error keeps it observe-first. Baseline (accepted): cryptography
+    # GHSA-537c (dev-SBOM-scoped) + torch GHSA-rrmf (no fix upstream).
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3  # v8.3.0
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: uv audit (locked)
+        # Ignore the accepted baseline so the pilot is GREEN normally and RED
+        # only on a NEW advisory (a perpetually-red continue-on-error job would
+        # mask new findings). Parity with the osv-scanner allowlist for the same
+        # IDs: GHSA-537c (cryptography) is dev-SBOM-scoped + accepted (plain
+        # --ignore); GHSA-rrmf (torch) has no upstream fix, so
+        # --ignore-until-fixed auto-expires and goes red the moment one ships.
+        run: >-
+          uv audit --preview-features audit --locked
+          --ignore GHSA-537c-gmf6-5ccf
+          --ignore-until-fixed GHSA-rrmf-rvhw-rf47
+
+  uv-malware-check:
+    name: uv malware check (pilot, non-blocking)
+    runs-on: ubuntu-latest
+    # Opt-in uv malware check (preview): a sync with UV_MALWARE_CHECK=1 queries
+    # OSV MAL advisories for the locked resolution and aborts before install if
+    # a package matches known malware. Kept OBSERVE-first in this dedicated
+    # non-required job (NOT on the required sync steps) because it's a preview
+    # feature performing a live OSV lookup — a match / false positive / feed
+    # issue surfaces as a visible signal without blocking merges. Graduate to
+    # fail-closed on the required syncs once the feature is GA + observed stable.
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3  # v8.3.0
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync with OSV malware check
+        env:
+          EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
+          UV_MALWARE_CHECK: "1"
+        run: uv sync --all-packages --preview-features malware-check
+
   typecheck:
     name: mypy
     runs-on: ubuntu-latest

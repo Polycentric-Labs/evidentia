@@ -124,6 +124,18 @@ Evidentia's releases are designed to be independently verifiable end to end:
   regeneration consumes the committed input file (never overwriting it, which
   would drop manually-added security floors) and asserts the expected pins are
   present afterward.
+- **Supply-chain scanning is layered, with one authoritative gate.**
+  `osv-scanner` (above) is the single *enforcing* SBOM gate — a required check.
+  Alongside it run two `uv` *preview* features as observe-first pilots
+  (`continue-on-error`, deliberately absent from the required-check set, so a
+  finding, a preview-feature breakage, or an advisory-feed hiccup is surfaced,
+  never a merge blocker): **`uv audit`** — a uv-native advisory audit that is a
+  fast second opinion to `osv-scanner`; and a **`UV_MALWARE_CHECK=1` sync** — a
+  resolution-time tripwire that queries OSV *MAL* advisories for the locked
+  closure and would abort a sync before a known-malicious package installs. The
+  malware check is kept in its own non-required job rather than on the required
+  sync steps precisely because it is preview and performs a live OSV lookup;
+  it graduates to fail-closed on the required syncs once GA and observed stable.
 - **Dependency updates are automated with guardrails.** Dependabot proposes
   weekly, grouped, cooldown-delayed version updates (a freshly-published release
   is held a few days, so a yanked or hot-fixed bad release is superseded before it
