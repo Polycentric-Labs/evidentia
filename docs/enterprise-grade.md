@@ -1,11 +1,11 @@
-# Enterprise-grade credibility checklist (v0.7.0 baseline · maintenance summary last refreshed v0.10.12, current release v0.10.16)
+# Enterprise-grade credibility checklist (v0.7.0 baseline · maintenance summary last refreshed v0.10.16, current release v0.10.16)
 
 Evidentia's v0.7.0 release established the quality bar that Big-4 audit
 firms (Deloitte, PwC, KPMG, EY), FedRAMP Third-Party Assessor
 Organizations (3PAOs), and senior GRC officers at regulated companies
 would consider production-grade for evidence collection. That baseline
 has stayed closed and been extended every cycle since; the
-**[Status through v0.10.12](#status-through-v01012-maintenance-summary)**
+**[Status through v0.10.16](#status-through-v01016-maintenance-summary)**
 summary below captures what has advanced, while the per-tier tables remain
 the original v0.7.0 baseline snapshot (later status changes noted there
 or in the summary).
@@ -29,7 +29,7 @@ Priority tiers:
 - **MEDIUM** — desirable, often documented as "on the roadmap"
 - **LOW** — nice-to-have
 
-## Status through v0.10.12 (maintenance summary)
+## Status through v0.10.16 (maintenance summary)
 
 The BLOCKER baseline has remained closed since v0.7.0. The enterprise
 posture has advanced materially across the v0.8.x–v0.10.x line:
@@ -63,11 +63,19 @@ posture has advanced materially across the v0.8.x–v0.10.x line:
   integrations, and the Tableau publish path.
 - **95 bundled framework catalogs** across four redistribution tiers
   (updates **L4**'s "82 frameworks" count).
+- **Release + CI hardening (v0.10.13–v0.10.16)** — a distroless
+  **Docker Hardened Images** runtime base (v0.10.16), **air-gapped DSSE /
+  in-toto signing** (cryptography-native Ed25519 / RSA-PSS, v0.10.16),
+  **PEP 770 per-wheel SBOMs**, a merge-queue PR flow with 19+ required
+  checks, and self-guarding CI sentinels (post-publish rescan, base-image
+  freshness, workflow-liveness, dependency-ceiling watch) further harden
+  the build + release path beyond the six shipped release credentials.
 
-The v0.7.0 BLOCKER-complete, enterprise-ready classification holds;
-v0.10.12 extends it across breadth (collectors, consoles, federal
-surface), supply-chain depth (all six credentials + continuous fuzzing),
-and product-layer anti-tamper (WORM evidence lineage).
+The v0.7.0 BLOCKER-complete, enterprise-ready classification holds; the
+v0.8.x–v0.10.x line extends it across breadth (collectors, consoles,
+federal surface), supply-chain depth (all six credentials + continuous
+fuzzing + a hardened release path), and product-layer anti-tamper (WORM
+evidence lineage).
 
 ## BLOCKER items
 

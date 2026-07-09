@@ -32,7 +32,6 @@ jobs:
   benchmarks:
     name: codspeed benchmarks (pilot, non-blocking)
     runs-on: ubuntu-latest
-    continue-on-error: true
     permissions:
       contents: read
       id-token: write  # OpenID Connect auth for the tokenless CodSpeed upload
@@ -56,6 +55,12 @@ jobs:
         run: uv sync --all-packages
 
       - name: Run CodSpeed benchmarks
+        # step-level continue-on-error: keep the JOB green (not red-non-blocking)
+        # while the repo is unregistered on codspeed.io — the upload step fails
+        # until registration, but that must not surface as a red PR check. Once
+        # registered the upload succeeds; CodSpeed reports perf deltas via its
+        # dashboard + PR comment, not by failing this step.
+        continue-on-error: true
         uses: CodSpeedHQ/action@9f3a37ece7abc84992501a7fcd54d1704f3458fa  # v4.18.4
         with:
           run: uv run --no-sync python -m pytest tests/benchmarks/ --codspeed
