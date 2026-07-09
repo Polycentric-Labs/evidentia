@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Release-pipeline preflight dry-run** — `release.yml` now accepts a manual
+  `workflow_dispatch` that runs the full pre-publish path (the SSOT gate suite +
+  wheels + per-package SBOMs + the reproducible-build double-build + the
+  container-built-from-local-wheels + the image smoke tests) **without publishing**,
+  so the failure classes that previously surfaced only at tag time (a base/dep
+  regression, a `uvx` exit-127, a `pip-compile` hash mismatch — the v0.10.14 /
+  v0.10.15 ghost-tag failures) can be caught on-demand before a tag is cut
+  (`gh workflow run release.yml --ref main`). The dry-run is structurally incapable
+  of publishing: `tag-guard` and both publish jobs require `github.event_name ==
+  'push'`, so a dispatch — even one selected on a `v*` tag ref — yields
+  `publishable=false` and `publish-pypi` / `publish-container` skip. As a second,
+  platform-level belt the `pypi` and `ghcr` deployment environments are restricted
+  to `v*` **tag** refs with required reviewers, so a real release now also pauses
+  for an explicit deployment approval. See `docs/release-checklist.md` Step 5.6.
+
 ### Changed
 
 - **Refreshed the DHI runtime base image digest** — the pinned

@@ -4,6 +4,16 @@ on:
   push:
     tags:
       - "v*"
+  # Preflight dry-run. A manual dispatch runs the FULL gate + build/validate path
+  # (wheels + per-package SBOMs + reproducible-build check + container-from-local-
+  # wheels + smoke tests) WITHOUT publishing, so the classes that only ever ran at
+  # tag time (a base/dep regression, a uvx exit-127, a pip-compile hash mismatch)
+  # surface on-demand BEFORE a tag is cut. publish-pypi/publish-container require
+  # github.event_name == 'push' (see tag-guard + their `if:`), so a dispatch — even
+  # one selected on a v* tag ref — is STRUCTURALLY incapable of publishing. The
+  # pypi/ghcr deployment environments are independently restricted to v* tag refs
+  # as a second, platform-level belt (see docs/release-checklist.md).
+  workflow_dispatch: {}
 
 # Workflow-level least-privilege default. Each publish job elevates locally.
 # Closes OpenSSF Scorecard alert #30 (no top-level permission defined).
@@ -51,10 +61,14 @@ concurrency:
 # ---------------------------------------------------------------------------
 
 jobs:
-  # Accidental-publish hardening (v0.10.12 Wave 0b). The trigger is tags:['v*'],
-  # so any v-prefixed tag — a typo, an rcN, a fork mirror — would otherwise reach
-  # the publish jobs. This guard makes publishing structurally conditional on
-  # (a) the canonical repo AND (b) a strict vX.Y.Z semver tag.
+  # Accidental-publish hardening (v0.10.12 Wave 0b; v0.10.17 preflight). The trigger
+  # set is tags:['v*'] + workflow_dispatch, so a v-prefixed tag — a typo, an rcN, a
+  # fork mirror — OR a manual preflight dispatch would otherwise reach the publish
+  # jobs. This guard makes publishing structurally conditional on (a) a real tag
+  # PUSH (github.event_name == 'push', NOT a workflow_dispatch — including a dispatch
+  # selected on a v* tag ref), (b) the canonical repo, AND (c) a strict vX.Y.Z semver
+  # tag. The publish jobs re-assert event_name == 'push' in their own `if:` so no
+  # single edit to this guard can re-open a dispatch publish path.
   tag-guard:
     name: Validate publish trigger (canonical repo + semver tag)
     runs-on: ubuntu-latest
@@ -65,12 +79,13 @@ jobs:
         id: check
         run: |
           publishable=false
-          if [ "${{ github.repository }}" = "Polycentric-Labs/evidentia" ] \
+          if [ "${{ github.event_name }}" = "push" ] \
+             && [ "${{ github.repository }}" = "Polycentric-Labs/evidentia" ] \
              && printf '%s' "$GITHUB_REF" | grep -Eq '^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$'; then
             publishable=true
           fi
           echo "publishable=$publishable" >> "$GITHUB_OUTPUT"
-          echo "repository=${{ github.repository }} ref=$GITHUB_REF -> publishable=$publishable"
+          echo "event=${{ github.event_name }} repository=${{ github.repository }} ref=$GITHUB_REF -> publishable=$publishable"
 
   # Tag-time pre-publish gate (v0.10.8 A1). Runs the full SSOT gate suite
   # (scripts/run_gate_suite.py --scope full) on the exact tagged commit. `build`
@@ -122,7 +137,13 @@ jobs:
   build:
     name: Build + validate all artifacts (wheels + container)
     needs: [gate, tag-guard]
-    if: ${{ needs.tag-guard.outputs.publishable == 'true' }}
+    # Runs on a real release (publishable) AND on a preflight dispatch (dry-run):
+    # the whole point of the preflight is to exercise THIS exact build/validate job
+    # on-demand. It stays credential-free — permissions: contents:read only, no
+    # environment:, push:false — so producing artifacts on a dispatch grants no
+    # publish capability (publish-pypi/publish-container require event_name=='push').
+    # NOTE: never hoist packages:/id-token: write into this job (load-bearing).
+    if: ${{ needs.tag-guard.outputs.publishable == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -155,12 +176,25 @@ jobs:
       - name: Sync workspace
         run: uv sync --all-packages
 
-      - name: Extract version from tag
+      - name: Extract version
         id: version
         run: |
-          REF="${GITHUB_REF_NAME}"
-          echo "tag=${REF}" >> "$GITHUB_OUTPUT"
-          echo "semver=${REF#v}" >> "$GITHUB_OUTPUT"
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            # Real release: the pushed tag name IS the version (bump_version set it).
+            tag="${GITHUB_REF_NAME}"
+            semver="${tag#v}"
+          else
+            # Preflight dispatch (any ref): GITHUB_REF_NAME on a branch dispatch is
+            # e.g. 'main', not a version, which would fail the container version
+            # smoke-test below. Derive the version from the workspace manifest (the
+            # version-consistency SSOT) — the built wheels carry exactly this, so the
+            # smoke-test matches and a preflight on `main` runs green.
+            semver="$(grep -m1 '^version = ' pyproject.toml | sed -E 's/^version = "(.*)"/\1/')"
+            tag="v${semver}"
+          fi
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "semver=${semver}" >> "$GITHUB_OUTPUT"
+          echo "event=${GITHUB_EVENT_NAME} -> tag=${tag} semver=${semver}"
 
       # SOURCE_DATE_EPOCH-driven reproducible builds (v0.8.3 G4): byte-identical
       # wheels across hosts, which also makes the local-wheel hashes pip-compile
@@ -390,7 +424,11 @@ jobs:
       - name: Upload release-dist (wheels + sdists + SBOM)
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: release-dist
+          # On a preflight dispatch, suffix the name so the artifact can't be mistaken
+          # for a real-release artifact (publish-* skip on dispatch, so the plain name
+          # is never needed there). On a real push the name stays `release-dist` so the
+          # publish jobs download it unchanged.
+          name: release-dist${{ github.event_name == 'workflow_dispatch' && format('-preflight-{0}', github.run_id) || '' }}
           path: |
             dist/
             evidentia-sbom.cdx.json
@@ -400,7 +438,9 @@ jobs:
       - name: Upload release-image (validated container tarball)
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: release-image
+          # Preflight dispatch -> suffixed name (see release-dist above); real push
+          # -> plain `release-image` so publish-container downloads it unchanged.
+          name: release-image${{ github.event_name == 'workflow_dispatch' && format('-preflight-{0}', github.run_id) || '' }}
           path: evidentia-image.tar.gz
           if-no-files-found: error
           retention-days: 7
@@ -413,7 +453,10 @@ jobs:
   publish-pypi:
     name: Publish wheels to PyPI
     needs: [build, tag-guard]
-    if: ${{ success() && needs.tag-guard.outputs.publishable == 'true' }}
+    # Redundant, INDEPENDENT event gate (defense-in-depth): publishing requires a
+    # real tag PUSH at TWO orthogonal points (here + tag-guard's publishable), so no
+    # single future edit to tag-guard can re-open a workflow_dispatch publish path.
+    if: ${{ success() && github.event_name == 'push' && needs.tag-guard.outputs.publishable == 'true' }}
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -495,7 +538,10 @@ jobs:
   publish-container:
     name: Publish container image to ghcr.io + create the GitHub Release
     needs: [publish-pypi, tag-guard]
-    if: ${{ success() && needs.tag-guard.outputs.publishable == 'true' }}
+    # Redundant, INDEPENDENT event gate (see publish-pypi): event_name == 'push' AND
+    # publishable, so a workflow_dispatch (even one selected on a v* tag ref) can
+    # never reach the GHCR push / cosign-sign / Release-create steps.
+    if: ${{ success() && github.event_name == 'push' && needs.tag-guard.outputs.publishable == 'true' }}
     runs-on: ubuntu-latest
     environment:
       name: ghcr
