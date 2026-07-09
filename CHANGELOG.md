@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Refreshed the DHI runtime base image digest** — the pinned
+  `dhi.io/python:3.13` base advanced to `sha256:b41747df…`, picking up the
+  latest Docker Hardened Images patches; the release rebuilds on the fresh
+  base (closes the base-freshness sentinel nudge, issue #143).
+- **`Documentation` URL repointed to the owned docs domain** — the
+  `evidentia` package's project URL now points at `https://docs.evidentiagrc.com`
+  (the published docs site on an owned domain) instead of an un-owned host.
+- **Content currency** — added the OMB M-24-10 → M-25-21 deprecation row to
+  the deprecation calendar; refreshed the enterprise-grade maintenance
+  summary through v0.10.16; de-dangled a stale cross-reference in the
+  v0.9.1 security-review backfill.
+
+### Fixed
+
+- **CodSpeed pilot job now lands inert-green, not inert-red** — moved
+  `continue-on-error` to the CodSpeed step so the job stays green while the
+  repo is unregistered on codspeed.io (the upload step fails until
+  registration); it was previously a red-but-non-blocking check.
+
 ### Security
 
 - **Audit log CR/LF injection + credential leakage hardened**

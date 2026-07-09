@@ -65,7 +65,7 @@ cb = "evidentia.cli.main:app"
 
 [project.urls]
 Homepage = "https://github.com/polycentric-labs/evidentia"
-Documentation = "https://evidentia.dev"
+Documentation = "https://docs.evidentiagrc.com"
 Repository = "https://github.com/polycentric-labs/evidentia"
 Changelog = "https://github.com/polycentric-labs/evidentia/blob/main/CHANGELOG.md"
 

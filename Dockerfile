@@ -56,7 +56,7 @@ RUN set -eux; \
       /opt/venv/pyvenv.cfg
 
 # ---- final: distroless DHI runtime, nonroot uid 65532 -----------------------
-FROM dhi.io/python:3.13@sha256:f97073bcfd7f380ad2479fc49371709a345763b10687b5bb4b61bbc9a318bfd9 AS final
+FROM dhi.io/python:3.13@sha256:b41747dfe4f249fd0a72ee0b1dd974476e8adf7eac95c920d1d3ff31e7b794cf AS final
 COPY --from=venv-fix --chown=65532:65532 /opt/venv /opt/venv
 COPY --from=venv-fix --chown=65532:65532 /build/home/ /home/nonroot/
 ENV PATH="/opt/venv/bin:${PATH}" \

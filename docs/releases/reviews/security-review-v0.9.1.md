@@ -58,7 +58,7 @@ This backfill differs from the v0.9.3+ pre-release-review v4 cycle artifacts in 
 
 ## Cross-references
 
-- [`docs/v0.9.0-shipped.md`](v0.9.0-shipped.md) — the preceding ship (federal-compliance theme)
+- The preceding ship (v0.9.0, federal-compliance theme) — recorded in the private memory store (`evidentia_v0_9_0_shipped.md`); its contemporaneous review is linked below.
 - [`docs/security-review-v0.9.0.md`](security-review-v0.9.0.md) — the last contemporaneous review before this backfill
 - [`docs/security-review-v0.9.2.md`](security-review-v0.9.2.md) — the next contemporaneous-but-also-backfilled review (post-org-migration feature ship)
 - [`docs/ROADMAP.md`](../../ROADMAP.md) §v0.9.1 — cycle-scope narrative
