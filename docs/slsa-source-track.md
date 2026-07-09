@@ -75,7 +75,7 @@ All facts below were read from the live GitHub configuration of
    *"main — PR flow (required checks + merge queue)"*, Repository-level,
    **active**) — targets the default branch. Rules: `pull_request`
    (allowed merge methods: `squash`), `required_status_checks`
-   (**19** required checks), `merge_queue` (SQUASH), `required_linear_history`,
+   (**21** required checks), `merge_queue` (SQUASH), `required_linear_history`,
    `required_signatures`, `non_fast_forward`. `bypass_actors: []`,
    `current_user_can_bypass: never`.
 
@@ -144,14 +144,14 @@ flag the formal-VSA gap honestly in
 
 | Requirement | Evidence | Status |
 |-------------|----------|--------|
-| Org enforces customized technical controls on specific named refs | Repo ruleset `18097115` on `main`: PR-required, 19 required status checks, merge queue, signed commits, linear history; tag ruleset `18175057` on `v*` | ✅ |
+| Org enforces customized technical controls on specific named refs | Repo ruleset `18097115` on `main`: PR-required, 21 required status checks, merge queue, signed commits, linear history; tag ruleset `18175057` on `v*` | ✅ |
 | Controls enforced **continuously** (no lapse) | Rulesets are `enforcement: active`; org baseline active since 2026-05-25; bypass lists empty — there is no actor who can silently disable enforcement for a single change | ✅ |
 | Controls documented (their meaning) | This document + [`docs/scorecard-posture.md`](scorecard-posture.md) + `SECURITY.md` define the enforced controls and their intent | ✅ |
 | Continuity tracked from a start revision | Org baseline ruleset `created_at` 2026-05-25; repo PR-flow ruleset `created_at` 2026-06-24; tag ruleset `created_at` 2026-06-26 — each establishes a continuity start point | ✅ |
 
 **L3 is met.** Evidentia enforces a customized, documented set of technical
 controls on its protected `main` and `v*` references, continuously and without
-bypass. The required-status-checks gate (19 contexts including CodeQL SAST,
+bypass. The required-status-checks gate (21 contexts including CodeQL SAST,
 cross-platform pytest, ruff, mypy, OSV/SBOM scan, gitleaks secret-scan, OpenAPI
 + CLI↔GUI drift gates, and workflow-permission audit) is itself part of the
 enforced control surface.
@@ -170,13 +170,13 @@ enforced control surface.
 |-------------|---------|--------|
 | Changes to protected branches agreed to by **two or more trusted persons** | **Single maintainer.** The `main` ruleset requires a PR (`pull_request` rule), but `required_approving_review_count` is **0** — because GitHub does not permit an author to approve their own PR, a non-zero requirement on a solo project would deadlock every merge. There is no second trusted person to review. | ❌ |
 | Uploader and reviewer are different trusted persons (or two reviewers) | Not satisfiable with one maintainer | ❌ |
-| Informed review covering security-relevant properties | Partially substituted by automated gates (19 required checks incl. CodeQL SAST) + a mandatory `/pre-release-review` before every tag, but these are **automated controls, not a second human reviewer** | ⚠️ substitute only |
+| Informed review covering security-relevant properties | Partially substituted by automated gates (21 required checks incl. CodeQL SAST) + a mandatory `/pre-release-review` before every tag, but these are **automated controls, not a second human reviewer** | ⚠️ substitute only |
 
 **L4 is not met, and we do not claim it.** The honest gap is **two-person
 review**. Evidentia is a single-maintainer project; GitHub structurally blocks
 self-approval, so the "two trusted persons" requirement cannot be satisfied no
 matter how the ruleset is configured. The PR-flow ruleset enforces the *process*
-(every change is a PR through the merge queue, with 19 required checks and an
+(every change is a PR through the merge queue, with 21 required checks and an
 empty bypass list), but the *human* two-party-review control at the heart of L4
 is absent. We surface this rather than papering over it with automated-gate
 substitutes.
@@ -240,11 +240,11 @@ special permissions needed for public ruleset metadata):
 # 1. Org default-branch baseline (signed commits + no force-push/delete, org-wide)
 gh api orgs/Polycentric-Labs/rulesets/16831409
 
-# 2. main PR-flow ruleset: PR required, 19 status checks, merge queue,
+# 2. main PR-flow ruleset: PR required, 21 status checks, merge queue,
 #    signed commits, linear history, EMPTY bypass_actors, can_bypass=never
 gh api repos/Polycentric-Labs/evidentia/rulesets/18097115
 
-#    Count the required status checks (expect 19):
+#    Count the required status checks (expect 21):
 gh api repos/Polycentric-Labs/evidentia/rulesets/18097115 \
   --jq '.rules[] | select(.type=="required_status_checks")
         | .parameters.required_status_checks | length'
@@ -264,7 +264,7 @@ git config --get gpg.format       # -> ssh
 
 Expected results (as of this writing): ruleset 16831409 has rules
 `deletion` + `non_fast_forward` + `required_signatures` with empty
-`bypass_actors`; ruleset 18097115 reports 19 required status checks, an empty
+`bypass_actors`; ruleset 18097115 reports 21 required status checks, an empty
 `bypass_actors`, and `current_user_can_bypass: "never"`; ruleset 18175057
 protects `refs/tags/v*` with `deletion` + `non_fast_forward` +
 `required_signatures`; and `main`'s HEAD verifies (`verified: true`,

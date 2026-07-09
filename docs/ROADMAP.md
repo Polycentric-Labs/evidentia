@@ -1,6 +1,6 @@
 # Evidentia roadmap
 
-**Last updated: v0.10.16 (planning, July 2026).**
+**Last updated: v0.10.17 (planning, July 2026).**
 
 > **Engineering practices** — how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
@@ -8,10 +8,15 @@
 
 This roadmap synthesizes community feedback with the architecture plan
 at the project root. Versions v0.3.0 through v0.7.16 + v0.8.0-v0.8.7
-+ v0.9.0-v0.9.9 + v0.10.0-v0.10.13 have shipped; v0.10.16 is the current
-release (cryptography-native DSSE air-gap signing + the distroless DHI
-container base hardening, following v0.10.12's CLI↔GUI parity build-out + the
-OMB M-25-21 AI-governance migration), before the v0.11 federal-compliance theme. **v0.9.0 opened the
++ v0.9.0-v0.9.9 + v0.10.0-v0.10.16 have shipped; v0.10.17 is the current
+release — the **v0.10.x hardening close-out**: a publish-safe release-pipeline
+preflight dry-run + `v*`-tag-only PyPI/GHCR deployment environments with
+required-reviewer approval, two real audit-logger security fixes (CWE-117 log
+injection + CWE-312 cleartext credential), the Tier-1 demo image reworked to a
+shell-free distroless build, and CodSpeed perf reporting — following v0.10.16's
+cryptography-native DSSE air-gap signing + distroless DHI container base and
+v0.10.12's CLI↔GUI parity build-out + OMB M-25-21 AI-governance migration,
+before the v0.11 federal-compliance theme. **v0.9.0 opened the
 v0.9.x "federal compliance" line** with POA&M + CONMON read-only
 library; v0.9.1 landed the Polycentric Labs org migration; v0.9.2
 added the CONMON REST router + federal corpus + LLM rater + federal

@@ -423,10 +423,16 @@ suppress duplicates via `--no-security-headers`.
 
 ### v0.7.7 (shipped)
 
-- **CF3** — CodeQL custom sanitizer pack: contribute a `.qll`
-  declaring `validate_within` as a `BarrierGuard` to close the
-  3 path-injection false positives (#71/#72/#73) at the analysis
-  layer rather than dismissing each instance.
+- **CF3** — CodeQL path-injection barrier (superseded outcome).
+  The original `.qll` `BarrierGuard` sanitizer pack was built but
+  **never loaded** (the `packs:` config key takes only published
+  registry specs, and an external library pack cannot inject a
+  barrier into a stock query); it was removed in v0.10.17 and
+  replaced with a Models-as-Data `barrierModel` extension
+  (`.github/codeql/path-injection-barriers.model.yml`). NOTE: the
+  stock `py/path-injection` query does not yet consume MaD
+  `barrierModel`, so this FP class remains **dismissal-managed**
+  for now; the model is a forward-looking hook.
 - **CF4** (this doc) — public threat model elevation. ✅
 - **C1 partial** — character-set regex allowlist for `COLLECTOR_*`
   env vars (optional; depends on cycle headroom alongside the

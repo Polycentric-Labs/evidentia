@@ -28,7 +28,7 @@ Verify the install:
 
 ```bash
 evidentia version
-# → Evidentia v0.10.16
+# → Evidentia v0.10.17
 # → Python 3.12.x
 ```
 
@@ -83,9 +83,9 @@ Every release publishes a cosign-signed multi-arch image to GitHub Container
 Registry:
 
 ```bash
-docker pull ghcr.io/polycentric-labs/evidentia:v0.10.16
-docker run --rm ghcr.io/polycentric-labs/evidentia:v0.10.16 version
-# → Evidentia v0.10.16
+docker pull ghcr.io/polycentric-labs/evidentia:v0.10.17
+docker run --rm ghcr.io/polycentric-labs/evidentia:v0.10.17 version
+# → Evidentia v0.10.17
 # → Python 3.13.x
 ```
 
@@ -93,7 +93,7 @@ To run a gap analysis against a local inventory, mount your working directory:
 
 ```bash
 docker run --rm -v "$PWD:/work" -w /work \
-  ghcr.io/polycentric-labs/evidentia:v0.10.16 \
+  ghcr.io/polycentric-labs/evidentia:v0.10.17 \
   gap analyze --inventory my-controls.yaml \
   --frameworks nist-800-53-rev5-moderate --output gap-report.json
 ```
@@ -102,7 +102,7 @@ On **Windows PowerShell**, use PowerShell's backtick line-continuation instead o
 
 ```powershell
 docker run --rm -v "${PWD}:/work" -w /work `
-  ghcr.io/polycentric-labs/evidentia:v0.10.16 `
+  ghcr.io/polycentric-labs/evidentia:v0.10.17 `
   gap analyze --inventory my-controls.yaml `
   --frameworks nist-800-53-rev5-moderate --output gap-report.json
 ```
@@ -112,7 +112,7 @@ The image is keyless-signed via Fulcio + Rekor. Verify it before you trust it:
 **Bash / Linux / macOS**
 
 ```bash
-cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.16 \
+cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.17 \
   --certificate-identity-regexp 'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 # → "The cosign claims were validated"
@@ -121,7 +121,7 @@ cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.16 \
 **PowerShell (Windows)**
 
 ```powershell
-cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.16 `
+cosign verify ghcr.io/polycentric-labs/evidentia:v0.10.17 `
   --certificate-identity-regexp 'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' `
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 # → "The cosign claims were validated"
