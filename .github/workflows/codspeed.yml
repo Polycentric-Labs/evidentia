@@ -6,11 +6,13 @@
 # gate (this job name is not in the branch ruleset's required checks, and it is
 # continue-on-error).
 #
-# INERT UNTIL REGISTERED: the benchmarks run + the action executes, but results
-# publish only once the repo is registered on codspeed.io (the CodSpeed GitHub
-# App, free OSS tier). Until then the upload no-ops and continue-on-error keeps
-# the job green. Public repo -> the upload token is omitted (tokenless);
-# id-token: write enables CodSpeed's OpenID Connect authentication.
+# REPORTING: the repo is registered on codspeed.io (the CodSpeed GitHub App,
+# free OSS tier), so the action uploads instruction-count results and reports
+# per-PR perf deltas via the CodSpeed dashboard + PR comment. Public repo ->
+# the upload token is omitted (tokenless); id-token: write enables CodSpeed's
+# OpenID Connect authentication. continue-on-error keeps a transient upload
+# failure non-blocking (observe-first); perf-regression signal comes from the
+# PR comment, not from failing this step.
 name: codspeed
 
 on:
@@ -55,12 +57,16 @@ jobs:
         run: uv sync --all-packages
 
       - name: Run CodSpeed benchmarks
-        # step-level continue-on-error: keep the JOB green (not red-non-blocking)
-        # while the repo is unregistered on codspeed.io — the upload step fails
-        # until registration, but that must not surface as a red PR check. Once
-        # registered the upload succeeds; CodSpeed reports perf deltas via its
-        # dashboard + PR comment, not by failing this step.
+        # step-level continue-on-error: this is an observe-first, non-required
+        # pilot — a transient CodSpeed upload/outage must not surface as a red PR
+        # check. CodSpeed reports perf deltas via its dashboard + PR comment, not
+        # by failing this step, so keeping it non-blocking loses no regression signal.
         continue-on-error: true
         uses: CodSpeedHQ/action@9f3a37ece7abc84992501a7fcd54d1704f3458fa  # v4.18.4
         with:
+          # v4 requires an explicit instrument mode. `simulation` is the Valgrind
+          # instruction-counting instrument (deterministic, hardware-independent)
+          # that runs on standard ubuntu-latest runners; `walltime` would require
+          # dedicated CodSpeed macro runners. (v4 renamed the old `instrumentation`.)
+          mode: simulation
           run: uv run --no-sync python -m pytest tests/benchmarks/ --codspeed
