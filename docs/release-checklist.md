@@ -302,6 +302,41 @@ Apply via Grep/Edit; commit as a single
 
 ---
 
+## Step 5.6 — Release preflight dry-run (optional pre-tag validation, v0.10.17+)
+
+For a higher-fidelity pre-tag check than the local Step-5 gate — especially
+when `release.yml`, the `Dockerfile`, or the dependency closure changed — run
+the **release preflight**: a `workflow_dispatch` on `release.yml` that executes
+the FULL pre-publish path on a runner (the SSOT gate suite + wheels + per-package
+SBOMs + the reproducible-build double-build + the container-built-FROM-LOCAL-WHEELS
++ all the image smoke tests) **without publishing anything**. It catches the
+classes that historically surfaced only at tag time — a base/dep regression, a
+`uvx` exit-127, a `pip-compile` hash mismatch (the v0.10.14 / v0.10.15 ghost-tag
+failures).
+
+```bash
+# Run the preflight on the branch you're about to tag from (usually main):
+gh workflow run release.yml --ref main
+# then watch it:
+gh run watch "$(gh run list --workflow release.yml --event workflow_dispatch \
+  --limit 1 --json databaseId --jq '.[0].databaseId')"
+```
+
+Publish-safe by construction: `tag-guard` and both publish jobs require
+`github.event_name == 'push'`, so a dispatch — even one selected on a `v*` tag
+ref — yields `publishable=false` and `publish-pypi` / `publish-container` SKIP.
+The `pypi` / `ghcr` deployment environments are independently restricted to `v*`
+**tag** refs (with required reviewers), a second, platform-level belt.
+
+Acceptance:
+
+- [ ] The preflight dispatch run is GREEN through `build` (gate + build +
+      reproducible-build check + container smoke all pass)
+- [ ] `publish-pypi` and `publish-container` show **skipped** — confirm nothing
+      published on the dispatch
+
+---
+
 ## Step 6 — Inconsistency scour
 
 Per the testing-playbook 3-pass scour pattern:
@@ -440,6 +475,17 @@ git push origin main          # if main has unpushed commits
 git push origin vX.Y.Z         # the tag triggers release.yml
 gh run watch                   # monitor the release workflow
 ```
+
+> **v0.10.17+ — deployment approval gate.** The `pypi` and `ghcr` deployment
+> environments carry **required reviewers** (Allen; self-review allowed), so
+> after the tag push the `release.yml` run PAUSES at `publish-pypi` (and again at
+> `publish-container`) awaiting an "Approve deployment" click in the Actions run
+> UI — the Tier-4 per-publish approval enforced by the platform, not just by
+> discipline. Approve each once the preceding jobs are green. These environments
+> are also restricted to `v*` **tag** refs and are consumed ONLY by `release.yml`;
+> do not re-add a branch policy or point another workflow at them without
+> re-checking this guard (a `custom_branch_policies:true` environment with zero
+> matching policies blocks ALL deployments → a wheels-only half-release).
 
 If the release.yml workflow fails:
 
