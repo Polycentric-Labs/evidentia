@@ -108,16 +108,26 @@ enable a significant, measurable reduction in the prevalence of one or more
 entire classes of vulnerability across the manufacturer's products.
 
 **How Evidentia aligns.** This is the goal where the project invests most
-heavily, with multiple *class-eliminating* controls (not per-instance fixes):
+heavily, favoring *class-eliminating* controls over per-instance fixes wherever
+the tooling allows (and saying so honestly where it does not yet):
 
-- **Static analysis — CodeQL `security-extended` + a custom sanitizer pack.**
-  The advanced CodeQL setup runs the `security-extended` query suite across
-  Python, JavaScript/TypeScript, and GitHub Actions, *plus* a project-authored
-  QL pack that declares `evidentia_core.security.paths.validate_within` as a
-  sanitizer for the `py/path-injection` query — closing path-traversal
-  (CWE-22) false-positives at the analysis layer rather than dismissing alerts
-  one by one. Evidence: `.github/workflows/codeql.yml`,
-  `.github/codeql/codeql-config.yml`, `.github/codeql/python-sanitizers/`.
+- **Static analysis — CodeQL `security-extended` + a Models-as-Data barrier
+  extension.** The advanced CodeQL setup runs the `security-extended` query
+  suite across Python, JavaScript/TypeScript, and GitHub Actions. It ships a
+  Models-as-Data `barrierModel` extension
+  (`.github/codeql/path-injection-barriers.model.yml`, loaded via the config's
+  `dataExtensions:` key) declaring `evidentia_core.security.paths.validate_within`
+  and `resolve_catalog_path` as `py/path-injection` barriers. **Honest scope:**
+  the stock `py/path-injection` query does not yet consume Models-as-Data
+  `barrierModel` (it uses the QL `PathInjection::Sanitizer` classes), so the
+  extension is a forward-looking hook and this specific CWE-22 false-positive
+  class is currently **dismissal-managed** (per-instance dismissals with written
+  reasons, e.g. `#170`/`#171`) rather than eliminated at the analysis layer. The
+  earlier project-authored `.qll` sanitizer pack was removed in v0.10.17 — it
+  never loaded (the `packs:` config key takes only published registry specs, and
+  an external library pack cannot inject a barrier into a stock query). Evidence:
+  `.github/workflows/codeql.yml`, `.github/codeql/codeql-config.yml`,
+  `.github/codeql/path-injection-barriers.model.yml`.
 - **SSRF guard (CWE-918), secure-by-default + anti-DNS-rebinding.** A single
   reusable outbound-request chokepoint (`enforce_public_host`) refuses any host
   that resolves to a private / loopback / link-local / reserved address,

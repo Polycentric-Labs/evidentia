@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.17] - 2026-07-09
+
+**Theme**: *v0.10.x hardening close-out.* The final v0.10.x release, completing the Horizon-A elite-engineering-practice arc. Lands a publish-safe release-pipeline **preflight dry-run** — a `workflow_dispatch` that runs the full build/validate path (gate + wheels + per-package SBOMs + reproducible double-build + container-from-local-wheels + smoke tests) but is *structurally unable to publish* (the publish jobs require `github.event_name == 'push'`) — backed by `v*`-tag-only PyPI/GHCR deployment environments with required-reviewer approval, so a real release now pauses for an explicit deployment sign-off. Also: **two real audit-logger security fixes** surfaced by an adversarial review of the CodeQL 2.26.0 findings (CWE-117 log CR/LF injection + CWE-312 cleartext credential in an exception field); the dead CodeQL `.qll` path-injection sanitizer pack replaced with a Models-as-Data `barrierModel` extension (honestly dismissal-managed until the stock query consumes it); the Tier-1 demo image reworked to a **shell-free distroless multi-stage build**; CodSpeed perf reporting activated; CI job timeout caps; and a refreshed distroless base digest. No package API changes.
+
 ### Added
 
 - **Release-pipeline preflight dry-run** — `release.yml` now accepts a manual
