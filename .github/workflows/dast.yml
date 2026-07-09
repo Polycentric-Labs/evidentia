@@ -41,6 +41,11 @@ jobs:
   dast:
     name: schemathesis (stateless + stateful)
     runs-on: ubuntu-latest
+    # Bound the fuzz workload: the stateful schemathesis suite (max_examples=200 +
+    # derandomize) and the stateless sweep are open-ended and could hang on a
+    # pathological state-machine path; cap the run so a stuck job can't tie up a
+    # runner indefinitely (mirrors mutmut.yml's cap on the other heavy suite).
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
