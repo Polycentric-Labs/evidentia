@@ -23,10 +23,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **CodSpeed pilot job now lands inert-green, not inert-red** — moved
-  `continue-on-error` to the CodSpeed step so the job stays green while the
-  repo is unregistered on codspeed.io (the upload step fails until
-  registration); it was previously a red-but-non-blocking check.
+- **CodSpeed perf-regression pilot now reports** — added the `mode: simulation`
+  input that CodSpeed Action v4 now requires (the Valgrind instruction-counting
+  instrument for standard GitHub-hosted runners; without it the step errored out
+  before ever benchmarking, and step-level `continue-on-error` silently masked
+  it as green). With the repo now registered on codspeed.io, the job benchmarks
+  `tests/benchmarks/` and reports per-PR perf deltas via the CodSpeed dashboard
+  and PR comment. `continue-on-error` stays at the step level so a transient
+  CodSpeed upload/outage remains non-blocking (observe-first); the
+  perf-regression signal comes from the PR comment, not from failing the check.
 
 ### Security
 
