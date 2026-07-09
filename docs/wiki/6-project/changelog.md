@@ -29,6 +29,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`docker/Dockerfile.demo` reworked to a shell-free multi-stage build** — the
+  Tier-1 hosted-demo image (the real CLI behind an argv allowlist) now builds its
+  final stage FROM the distroless signed release base with `COPY` + `ENV` + `USER`
+  + exec-form `ENTRYPOINT` only — no `RUN`, no `/bin/sh`. All the build-time shell
+  work (vendoring `pyyaml`) moved to a `python:3.13-slim` `assets` builder stage,
+  and the launcher + namespace shim are now committed files (`docker/demo/`) rather
+  than `printf`-generated. It drops privileges to the distroless nonroot uid
+  **65532** (numeric — no `useradd`), replacing the pre-DHI `USER evidentia`
+  (uid 1000) assumption that broke on the distroless migration. Runtime behavior is
+  unchanged (still refuses a raw shell / off-allowlist argv, forced `--offline`,
+  credential-empty); locally smoke-validated with `--build-arg BASE=python:3.13-slim`.
 - **Refreshed the DHI runtime base image digest** — the pinned
   `dhi.io/python:3.13` base advanced to `sha256:b41747df…`, picking up the
   latest Docker Hardened Images patches; the release rebuilds on the fresh
