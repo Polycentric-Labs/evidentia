@@ -34,6 +34,11 @@ jobs:
   benchmarks:
     name: codspeed benchmarks (pilot, non-blocking)
     runs-on: ubuntu-latest
+    # Bound the run: the CodSpeed Valgrind instrumentation of tests/benchmarks/
+    # plus the workspace sync is open-ended; cap it so a stuck benchmark or a
+    # hung upload can't tie up a runner (this observe-first pilot is non-blocking,
+    # but a hang would still consume minutes).
+    timeout-minutes: 20
     permissions:
       contents: read
       id-token: write  # OpenID Connect auth for the tokenless CodSpeed upload

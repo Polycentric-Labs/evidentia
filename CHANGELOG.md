@@ -26,6 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`timeout-minutes` caps added to the `dast` and `codspeed` jobs** — the two
+  observe-first suites added this cycle ran open-ended (schemathesis stateful
+  fuzzing and CodSpeed Valgrind instrumentation), so a pathological path or a hung
+  upload could tie up a runner indefinitely. Both now carry an explicit cap (dast
+  30 min, codspeed 20 min), mirroring `mutmut.yml`'s existing cap on the other
+  heavy suite.
 - **`docker/Dockerfile.demo` reworked to a shell-free multi-stage build** — the
   Tier-1 hosted-demo image (the real CLI behind an argv allowlist) now builds its
   final stage FROM the distroless signed release base with `COPY` + `ENV` + `USER`
