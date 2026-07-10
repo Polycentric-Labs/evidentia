@@ -138,6 +138,17 @@ _CONSISTENCY_CHECKS: tuple[Check, ...] = (
         "wiki_api_docs_drift",
         ("python", "scripts/wiki/sync_api_docs.py", "--check"),
     ),
+    # ROADMAP↔CHANGELOG currency gate (v0.11 cycle-open; engineering-practices
+    # lesson 11). Status headings must agree with the CHANGELOG's shipped
+    # blocks (four shipped releases sat mis-marked PLANNED through v0.10.17),
+    # exactly one cycle may be open, and the open cycle must link an on-disk
+    # plan doc. Pure-filesystem (reads docs/ROADMAP.md + CHANGELOG.md, stats
+    # plan-doc paths — deliberately NOT git tags, which the shallow CI
+    # checkout cannot see), so it stays in the fast consistency scope.
+    Check(
+        "roadmap_currency",
+        ("python", "scripts/check_roadmap_currency.py"),
+    ),
 )
 
 # The heavyweight gates, appended to the consistency tuple to form

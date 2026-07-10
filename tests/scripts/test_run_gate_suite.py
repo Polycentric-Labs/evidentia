@@ -28,7 +28,13 @@ def test_scopes_are_declarative() -> None:
     full = {c.name for c in g.checks_for_scope("full")}
     consistency = {c.name for c in g.checks_for_scope("consistency")}
     # The staleness guards are the consistency scope and a subset of full.
-    assert {"version_consistency", "docs_health", "readme_releases"} <= consistency
+    # roadmap_currency is the v0.11 cycle-open doc-currency gate (lesson 11).
+    assert {
+        "version_consistency",
+        "docs_health",
+        "readme_releases",
+        "roadmap_currency",
+    } <= consistency
     assert consistency < full
     assert {"pytest", "mypy", "ruff", "osv", "parity"} <= full
     # parity is full-only (v0.10.9 item D): the tag-time gate hard-blocks a
