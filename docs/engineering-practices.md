@@ -295,6 +295,16 @@ they drive a change. The atomic-release design in this document, for example,
 was pressure-tested by the multi-model review described above, which caught two
 real defects before any of it reached the release pipeline.
 
+**Quarterly practice delta.** The engineering-practice baseline itself is
+re-validated on a quarterly cadence, carried as an item on the scheduled
+safeguards-resweep tracking issue: independent models propose adopt/retire
+candidates against the current ecosystem, every candidate is verified against
+a primary source before it is actioned, and refuted or unverifiable claims
+are recorded rather than actioned (the model fleet generates ideas; only
+primary sources produce facts — the 2026-07 pass quarantined several
+fabricated tool and PEP names on exactly this rule). Adopted practice extends
+this document; it never starts a parallel one.
+
 ---
 
 ## Documentation discipline
@@ -499,6 +509,34 @@ sufficient when other transitive gates remain. The same audit applies to every
 ignore/ceiling rule in the dependency-update config: state the exact class it
 is meant to catch, and verify that class against the tool's actual
 classification of the change, not an assumption about what "major" means.
+
+**11. Shipped releases sat marked "planned" in the public roadmap.** A
+release cycle closed and its retrospective found the roadmap disagreeing with
+reality in every direction at once: four shipped releases still carried a
+PLANNED heading, the shipped cycle's umbrella heading itself said PLANNED
+while holding SHIPPED entries beneath it, four shipped patches had no entry
+at all, and two other documents' "current as of release X" prose lines had
+quietly drifted stale — none of it caught by machinery, all of it
+hand-discovered after the fact. *Root cause:* a document's **currency
+claims** — a status word on a heading, a "current release" line — carried no
+enforcement; for the prose half, the enforcement mechanism (the
+version-anchor overlay) already existed and had simply never been pointed at
+those lines. *The lesson, stated as a rule:* **a doc's currency claim is a
+gate or it is a lie** — prose that asserts "this reflects release X" or "this
+is planned" rots silently unless some check fails the moment it stops being
+true. *Prevention:* the live prose markers are registered as version anchors
+(force-updated on every bump, hard-failed on drift), and a roadmap-currency
+gate (`scripts/check_roadmap_currency.py`, in the required consistency scope
+and the pre-push hook) cross-checks every roadmap status heading against the
+CHANGELOG's shipped blocks — the source of truth a shallow CI checkout can
+actually see (deliberately not git tags: the CI checkout fetches none, and
+unpublished ghost tags must not demand entries) — requires exactly one open
+cycle, and requires that cycle to link its on-disk plan doc. Per lesson 9's
+rule the gate was run against the still-broken tree first and observed
+firing on the real defects — an observation that immediately tightened the
+gate itself (its plan-doc assertion had to be scoped to the cycle's intro,
+or old per-patch plan links inside the section would satisfy it) — before
+the tree was fixed.
 
 ---
 
