@@ -15,7 +15,7 @@
 ## 1. Purpose
 
 Evidentia speaks the **standards layer** of GRC well — OSCAL 1.2.1,
-CycloneDX 1.6, Sigstore / PEP 740, the Model Context Protocol. Its
+CycloneDX (1.7 SBOMs, 1.6 VEX), Sigstore / PEP 740, the Model Context Protocol. Its
 thinner surfaces are two:
 
 1. **The findings-ingestion layer** — getting heterogeneous scanner,
