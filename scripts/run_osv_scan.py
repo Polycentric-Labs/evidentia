@@ -24,7 +24,7 @@ Exit codes:
 
 Prerequisites:
     * ``osv-scanner`` on PATH. CI installs a pinned, checksum-verified
-      v2.3.8 binary; operators install it once (see
+      v2.4.0 binary; operators install it once (see
       ``docs/release-checklist.md`` Step 5).
     * Run via ``uv run`` against a synced workspace so the SBOM
       reflects the full dependency closure.

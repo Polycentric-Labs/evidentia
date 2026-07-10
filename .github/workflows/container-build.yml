@@ -252,16 +252,16 @@ jobs:
           grep -A2 "^evidentia\[gui\]==" docker/requirements.txt | head -4
 
       # Copied VERBATIM from the osv-scan job in test.yml / release.yml
-      # (same v2.3.8 binary + SHA256) so this container gate scans with
+      # (same v2.4.0 binary + SHA256) so this container gate scans with
       # an identically-pinned scanner. Pinned by version + SHA256-
       # verified for the OpenSSF Scorecard Pinned-Dependencies signal.
-      - name: Install osv-scanner (v2.3.8, checksum-verified)
+      - name: Install osv-scanner (v2.4.0, checksum-verified)
         if: steps.relevant.outputs.relevant == 'true'
         run: |
           mkdir -p "$HOME/.local/bin"
-          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.3.8/osv-scanner_linux_amd64 \
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.4.0/osv-scanner_linux_amd64 \
             -o "$HOME/.local/bin/osv-scanner"
-          echo "bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc  $HOME/.local/bin/osv-scanner" | sha256sum -c -
+          echo "15314940c10d26af9c6649f150b8a47c1262e8fc7e17b1d1029b0e479e8ed8a0  $HOME/.local/bin/osv-scanner" | sha256sum -c -
           chmod +x "$HOME/.local/bin/osv-scanner"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 

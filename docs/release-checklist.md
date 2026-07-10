@@ -195,7 +195,7 @@ uvx twine check dist/*
 # v0.9.9 — supply-chain gate. Generates the CycloneDX SBOM and scans
 # it with osv-scanner: surfaces transitive + DISPUTED advisories the
 # Dependabot alert feed suppresses. Requires osv-scanner on PATH (the
-# pinned v2.3.8 binary from github.com/google/osv-scanner/releases, or
+# pinned v2.4.0 binary from github.com/google/osv-scanner/releases, or
 # `brew install osv-scanner`). This is the SAME shared script CI's
 # `osv-scan` job runs — gate and CI stay in lockstep by construction.
 uv run --no-sync python scripts/run_osv_scan.py
