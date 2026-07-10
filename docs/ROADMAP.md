@@ -1589,12 +1589,16 @@ the operator self-test + demo/pitch phase.
 **3250 tests / 14 skipped / mypy strict 261 of 261 source files /
 ruff clean.**
 
-## v0.10.x — Research-driven integration & AI-governance line — PLANNED
+## v0.10.x — Research-driven integration & AI-governance line — SHIPPED
 
 Opened 2026-05-21 following a competitive/integration research pass
 (see [`docs/integration-survey.md`](integration-survey.md) and
 [`docs/positioning-and-value.md`](positioning-and-value.md) §5.5 /
-§5.6.A). The v0.10.x line is the home for the research-driven feature
+§5.6.A). **Closed 2026-07-09 with v0.10.17** — 16 published releases
+(v0.10.0 – v0.10.13 + v0.10.16 + v0.10.17; the v0.10.14 / v0.10.15
+tags were never published: the atomic-release gate stopped both runs
+with nothing shipped — see the v0.10.16 entry below). The v0.10.x
+line is the home for the research-driven feature
 surface: because it brings meaningful new feature surface, it is a
 minor bump from v0.9.9 rather than a continuation of v0.9.x patches.
 
@@ -1636,7 +1640,7 @@ referenced in the v0.9.9 entry above; it runs before the v1.0
 domain-expert walk-through, and any gaps it surfaces feed back into the
 backlog.
 
-### v0.10.5 — OSS first-mover artifacts — PLANNED (added 2026-05-24)
+### v0.10.5 — OSS first-mover artifacts — SHIPPED (released 2026-05-26)
 
 Sourced from the Phase B audit re-run + 6-stream Evidentia-integration
 research synthesis (`~/.claude/skills/pre-release-review/_audits/evidentia-integration-plan-2026-05-24.md`).
@@ -1893,7 +1897,7 @@ its size limit), and research-resync cadence.
 - Pre-push gate L1 / L3 — defer-or-skip; revisit if a new pattern
   justifies them.
 
-### v0.10.9 — Debt + robustness patch — PLANNED
+### v0.10.9 — Debt + robustness patch — SHIPPED (released 2026-06-10)
 
 Theme: close the v0.10.8 ship findings and skill-iteration debt, and
 harden the release machinery that cycle built. Full plan:
@@ -1934,7 +1938,23 @@ harden the release machinery that cycle built. Full plan:
   last full pass at v0.9.5) runs alongside the cycle; outputs land in
   `docs/positioning-and-value.md`.
 
-### v0.10.11 — Public demo completion + traceability + hygiene — PLANNED
+### v0.10.10 — Supply-chain hardening + the public demo suite + FDA 524B pack — SHIPPED (released 2026-06-15)
+
+Patch (v0.10.9 → v0.10.10). Container base Python 3.14 → 3.13 (removes
+three container CVEs at the root, incl. a litellm HIGH); the collectors
+SSRF guard lifted into a shared, default-on
+`evidentia_core.network_guard.enforce_public_host` across all 13
+outbound collectors, made DNS-rebind-resistant by pinning the validated
+resolution through the actual connection; `tuf` 6 → 7; a container
+osv-gate in `release.yml` + `container-build.yml`; the **FDA Section
+524B medical-device pack** (the `fda-524b-appendix1` Tier-A catalog,
+ISO 14971 / AAMI SW96 license-respecting stubs, two illustrative
+crosswalks, a demo-gated `#/demo/fda` console route, and the wiki
+guide); and the in-repo artifacts for the three-tier **public demo
+suite** (static demo-mode console build, asciinema cast, constrained
+Tier-1 runner + demo-profile Dockerfile).
+
+### v0.10.11 — Public demo completion + traceability + hygiene — SHIPPED (released 2026-06-17)
 
 Patch (0.10.10 → 0.10.11). Per-cycle detail: [`v0.10.11-plan.md`](releases/plans/v0.10.11-plan.md). Three tracks:
 
@@ -1942,16 +1962,70 @@ Patch (0.10.10 → 0.10.11). Per-cycle detail: [`v0.10.11-plan.md`](releases/pla
 - **Control↔Threat Traceability Matrix** — promote the threat→control→evidence view from a rendered demo into a first-class GUI + CLI capability that emits a **Sigstore-signable OSCAL** matrix (builds on `models/threat.py`; the OSCAL slice here sets up the v0.11 TM-BOM). Generalist OSS.
 - **Hygiene** — collector guard-before-driver-import + mock-driver SSRF test (the proper fix behind the v0.10.10 CI extras hotfix); the `MetricCard` `<p>`→`<div>` DOM-nesting fix (carried in the shipped `#/demo/fda`); the `oscal sign`→`gap analyze --sign-with-*` correction in `threat-model.md` + `troubleshooting.md`; `GapExportControl` jsdom `Blob.stream` cleanup; a CI `--no-extras` pytest fidelity smoke (the gate the v0.10.10 push exposed).
 
-### v0.10.12 — Full CLI↔GUI parity build-out — PLANNED (dedicated session)
+### v0.10.12 — Full CLI↔GUI parity build-out — SHIPPED (released 2026-06-23)
 
 A single, heavily-planned, subagent-driven, multi-step-verified push to bring the web console to (near-)full CLI parity in one sitting (the v0.10.7 GUI-rebuild / wiki-population playbook). **Planning deliverable: a comprehensive surface × tier matrix** — for every capability, decide its presence and scope on each surface (**CLI** / self-hosted **GUI** / hosted **web app**), and adopt a standing rule that every *new* feature gets an explicit surface decision. (The detailed breakdown is a private planning artifact, not this public roadmap.) The planning pass reconciles the prior surface/tier research via project-file synthesis + dedicated `polycentric-labcoat` research fleets. (Keeps v0.11 reserved for the federal theme below.) The cycle **closes with a docs/ curation + CHANGELOG trim** once the console is at parity — archive the accumulated per-cycle plan + security-review docs and tighten the CHANGELOG (housekeeping, run last).
 
 Also folded in (additive, backward-compatible): the AI-governance module **migrates from the rescinded OMB M-24-10 to the M-25-21 "high-impact AI" model**. M-24-10 (2024-03-28) was rescinded 2025-04-03 by M-25-21, which collapses the old rights-impacting / safety-impacting split into one **high-impact AI** category across six bases (civil rights/liberties/privacy, access to essential services, critical government resources, health & safety, critical infrastructure, strategic assets). New `evidentia_core.ai_governance.omb_m_25_21` module (`HighImpactDetermination` + `HighImpactBasis` enums + `OMBHighImpactAssessment` model + `triggers_minimum_practices()` + `crosswalk_from_legacy()`), `evidentia ai-gov set-high-impact` CLI verb, `POST /api/ai-gov/systems/{system_id}/set-high-impact` REST route, `AI_SYSTEM_HIGH_IMPACT_CLASSIFIED` audit event, and an additive `omb_high_impact` registry field. The legacy M-24-10 module + `OMBImpactCategory` + `set-omb-impact` CLI/REST verb + `omb_impact` field remain DEPRECATED-but-functional (no behaviour change). The seven M-25-21 minimum risk-management practices are DOCUMENTED this cycle; structured per-practice tracking is deferred to v0.11 (see below).
 
-### v0.11 — Federal-compliance theme + AI governance — PLANNED (post-deep-dive)
+### v0.10.13 — Container-base restore patch — SHIPPED (released 2026-06-23)
 
-Sourced from Phase B audit v3 + integration plan §"Per-release
-detailed integration plan" §v0.11. Substantive minor (~6-8 weeks):
+Patch on v0.10.12, same day. v0.10.12 published to PyPI cleanly but its
+container build failed afterward: a Dependabot bump to
+`python:3.14-slim` meant the resolver could only reach a CVE-carrying
+litellm, so the CVE-clean pin was uninstallable. Reverts the base to the
+digest-pinned `python:3.13-slim` and un-breaks the container smoke test
+that should have caught it (it had silently exited at version-extraction
+since v0.10.11 — the chronically-red-gate failure class; it now reads
+the version from PyPI, self-correcting). The Python packages are
+identical to v0.10.12. This packages-only half-release is the direct
+spur for the v0.10.16 atomic-release reorder.
+
+### v0.10.16 — Engineering hardening + distroless container base — SHIPPED (released 2026-07-02)
+
+*Never ship a failed test again.* Cryptography-native **DSSE/in-toto
+air-gap signing** (`--sign-with-key`, Ed25519 / RSA-PSS, fail-closed
+pinned-key verify — works inside distroless containers with no `gpg`
+binary); the **atomic validate-before-publish release pipeline** (every
+artifact builds and validates before anything publishes); the published
+container migrated to a distroless **Docker Hardened Images** base
+(`dhi.io/python:3.13`, nonroot uid 65532, no shell / `curl` / `gpg`)
+with a scheduled base-freshness sentinel; **PR-flow + merge queue** on
+`main` with an empty bypass list; the fixable-only post-publish
+container-rescan gate; and the public
+[`docs/engineering-practices.md`](engineering-practices.md) + security
+posture docs (SECURE-BY-DESIGN-PLEDGE, slsa-source-track, GHSA/rollback
+runbooks, `security-insights.yml`). **The v0.10.14 and v0.10.15 tags
+were never published**: the atomic gate stopped both runs with nothing
+shipped (a `pip-compile` hash-reuse, then a missing tool in the publish
+job's first-ever live execution) — v0.10.16 is the same release content
+plus both pipeline fixes, so those two versions have no CHANGELOG block
+by design.
+
+### v0.10.17 — v0.10.x hardening close-out — SHIPPED (released 2026-07-09)
+
+The final v0.10.x release. A publish-safe **release preflight dry-run**
+(`workflow_dispatch` runs the full build/validate path but is
+structurally unable to publish) backed by `v*`-tag-only PyPI/GHCR
+deployment environments with **required-reviewer approval** — the gate
+paused for sign-off twice on its first live release, as designed; **two
+real audit-logger security fixes** (CWE-117 log CR/LF injection +
+CWE-312 cleartext credential in an exception field) surfaced by an
+adversarial review of the CodeQL 2.26.0 findings; the Tier-1 demo image
+reworked to a shell-free distroless multi-stage build; CodSpeed
+performance reporting activated (its prior "green" job had never
+uploaded — a lesson-9 catch); CI job timeout caps; and three
+doc-accuracy fixes.
+
+## v0.11 — Federal-compliance theme + AI governance — PLANNED
+
+**The open cycle** (opened 2026-07-09). Full plan:
+[`v0.11-plan.md`](releases/plans/v0.11-plan.md) — wave sequencing, the
+cycle-hygiene track (the 2026-07 practice-delta adoptions + the
+v0.10.17 deferred queue), the medical-device row split, and the
+ratification asks. Sourced from Phase B audit v3 + integration plan
+§"Per-release detailed integration plan" §v0.11. Substantive minor
+(~6-8 weeks):
 
 - **KSI (Key Security Indicators) emission** per FedRAMP's
   machine-readable schemas (FRMR JSON; the `FedRAMP/schemas`

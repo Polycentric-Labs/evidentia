@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **ROADMAP-currency gate** (`scripts/check_roadmap_currency.py`) — the
+  roadmap's status headings must agree with the CHANGELOG's shipped
+  `## [X.Y.Z]` blocks: nothing PLANNED/RESERVED that has shipped, no SHIPPED
+  entries inside a PLANNED cycle umbrella, exactly one open cycle, and the
+  open cycle must link an on-disk plan doc (plus an advisory that every
+  release in the latest cycle has its entry). CHANGELOG blocks are the
+  source of truth — deliberately not git tags, which the shallow CI checkout
+  cannot see and which unpublished ghost tags would poison. Runs in the
+  required `consistency` scope and the pre-push hook, and was observed
+  firing on the real v0.10.x roadmap drift (four shipped releases
+  mis-marked PLANNED) before the tree was fixed. Two prose currency anchors
+  registered alongside it (the deprecation-calendar closing line and the
+  enterprise-grade maintenance-summary claim), so those live lines now
+  force-update on every version bump and hard-fail when stale. Recorded as
+  lesson 11 in `docs/engineering-practices.md`: *a doc's currency claim is
+  a gate or it is a lie.*
+
+### Changed
+
+- **ROADMAP restructured at the v0.11 cycle open** — the v0.10.x line is
+  closed SHIPPED (16 published releases), the four mis-marked entries
+  (v0.10.5 / v0.10.9 / v0.10.11 / v0.10.12) are corrected to SHIPPED, the
+  four missing entries (v0.10.10 / v0.10.13 / v0.10.16 / v0.10.17) are
+  backfilled, and v0.11 is promoted to the open cycle linking its plan doc
+  (`docs/releases/plans/v0.11-plan.md`, ratified 2026-07-09).
+  `docs/enterprise-grade.md`'s header is restructured so its live currency
+  claim sits on a single anchorable line. The quarterly safeguards-resweep
+  issue template gains a practice-delta item (method recorded in
+  `docs/engineering-practices.md` §Research rigor).
+
 ## [0.10.17] - 2026-07-09
 
 **Theme**: *v0.10.x hardening close-out.* The final v0.10.x release, completing the Horizon-A elite-engineering-practice arc. Lands a publish-safe release-pipeline **preflight dry-run** — a `workflow_dispatch` that runs the full build/validate path (gate + wheels + per-package SBOMs + reproducible double-build + container-from-local-wheels + smoke tests) but is *structurally unable to publish* (the publish jobs require `github.event_name == 'push'`) — backed by `v*`-tag-only PyPI/GHCR deployment environments with required-reviewer approval, so a real release now pauses for an explicit deployment sign-off. Also: **two real audit-logger security fixes** surfaced by an adversarial review of the CodeQL 2.26.0 findings (CWE-117 log CR/LF injection + CWE-312 cleartext credential in an exception field); the dead CodeQL `.qll` path-injection sanitizer pack replaced with a Models-as-Data `barrierModel` extension (honestly dismissal-managed until the stock query consumes it); the Tier-1 demo image reworked to a **shell-free distroless multi-stage build**; CodSpeed perf reporting activated; CI job timeout caps; and a refreshed distroless base digest. No package API changes.
