@@ -112,8 +112,13 @@ COPY docker/demo/launch.py              /opt/evidentia-demo/launch.py
 # base-agnostic — the interpreter is Python 3.13 on both the slim and DHI bases,
 # and safe_load never touches the libyaml C extension. The runner's scrubbed
 # subprocess omits PYTHONPATH, so the real `evidentia` binary uses the base's own
-# installed pyyaml, unaffected by this overlay copy.
-RUN pip install --no-cache-dir --target /opt/evidentia-demo "pyyaml==6.0.2"
+# installed pyyaml, unaffected by this overlay copy. Hash-pinned via the
+# committed requirements file (alert #180): --require-hashes makes pip verify
+# the downloaded artifact's sha256, so a registry-side substitution of the
+# pinned version fails the build (same mechanism as the main Dockerfile).
+COPY docker/demo/requirements.txt /tmp/demo-requirements.txt
+RUN pip install --no-cache-dir --require-hashes --target /opt/evidentia-demo \
+    -r /tmp/demo-requirements.txt
 
 # ── final: FROM the (distroless) signed release base — NO shell, no RUN ───────
 # BASE is the global ARG declared above the assets stage (a non-resolvable

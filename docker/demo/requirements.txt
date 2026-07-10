@@ -1,0 +1,24 @@
+# Hash-pinned requirement for the demo image's vendored pyyaml overlay
+# (Dockerfile.demo `assets` stage). Closes the pinned-dependencies gap on
+# the demo image's only network install (code-scanning alert #180, demo
+# pip install pinned by version but not hash; same mechanism as
+# .github/workflows/requirements/verify-osps-conformance.txt and the main
+# Dockerfile's pip-compile --generate-hashes closure): with
+# `--require-hashes`, pip verifies each downloaded artifact's sha256
+# before installation, so a registry-side substitution of the pinned
+# version fails the build instead of landing in the image.
+#
+# Hashes sourced from pypi.org/pypi/pyyaml/6.0.2/json on 2026-07-10.
+# Wheels cover the builder stage's python:3.13-slim on linux/amd64 and
+# linux/arm64 (Docker Desktop on Apple silicon); the sdist hash is the
+# fallback for any other platform.
+#
+# When bumping the pyyaml version, re-fetch hashes from PyPI:
+#   curl -s https://pypi.org/pypi/pyyaml/<version>/json | jq -r '.urls[]
+#     | select(.filename | endswith(".tar.gz") or
+#       (contains("cp313") and contains("manylinux_2_17"))) |
+#     "\(.filename) \(.digests.sha256)"'
+pyyaml==6.0.2 \
+    --hash=sha256:70b189594dbe54f75ab3a1acec5f1e3faa7e8cf2f1e08d9b561cb41b845f69d5 \
+    --hash=sha256:0ffe8360bab4910ef1b9e87fb812d8bc0a308b0d0eef8c8f44e0254ab3b07133 \
+    --hash=sha256:d584d9ec91ad65861cc08d42e834324ef890a082e591037abe114850ff7bbc3e

@@ -1,7 +1,7 @@
 header:
   schema-version: 2.2.0
-  last-updated: '2026-06-26'
-  last-reviewed: '2026-06-26'
+  last-updated: '2026-07-10'
+  last-reviewed: '2026-07-10'
   url: https://github.com/Polycentric-Labs/evidentia/raw/main/security-insights.yml
   comment: |
     Single-repository OpenSSF Security Insights manifest for Evidentia, an
@@ -83,6 +83,8 @@ repository:
     tools:
       - name: osv-scanner
         type: SCA
+        rulesets:
+          - osv-scanner.toml (repo-root allowlist; every IgnoredVulns entry carries a security-review-traceable reason + ignoreUntil expiry)
         integration:
           adhoc: false
           ci: true
@@ -91,6 +93,8 @@ repository:
           SBOM-based SCA gate run in CI and at release time (release.yml).
       - name: Dependabot
         type: SCA
+        rulesets:
+          - .github/dependabot.yml (grouped updates, cooldown, python-framework isolation)
         integration:
           adhoc: false
           ci: true

@@ -31,6 +31,7 @@ on:
       - "pyproject.toml"
       - "CHANGELOG.md"
       - "scripts/extract_changelog_block.py"
+      - "scripts/check_changelog_vs_commits.py"
       - ".github/workflows/verify-changelog.yml"
   pull_request:
     branches: [main]
@@ -38,6 +39,7 @@ on:
       - "pyproject.toml"
       - "CHANGELOG.md"
       - "scripts/extract_changelog_block.py"
+      - "scripts/check_changelog_vs_commits.py"
       - ".github/workflows/verify-changelog.yml"
   # Allow manual re-runs from the Actions UI for diagnostic purposes.
   workflow_dispatch:
@@ -53,6 +55,11 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           persist-credentials: false
+          # Full history + tags for the ADVISORY commits-vs-CHANGELOG diff
+          # below (it needs the previous release tag as the log baseline).
+          # The presence gate itself needs no history; the advisory script
+          # fail-softs to a skip if tags are ever absent.
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6
@@ -110,3 +117,14 @@ jobs:
           echo "::notice::CHANGELOG block for [$version] looks healthy ($body_size bytes)."
         env:
           STEPS_WORKSPACE_VERSION_OUTPUTS_VERSION: ${{ steps.workspace-version.outputs.version }}
+
+      # v0.11 H6 (#18): purely ADVISORY diff — at release-prep time (version
+      # bumped, not yet tagged), list commits since the last release tag
+      # whose (#NNN) PR ref the new CHANGELOG block never mentions (the
+      # shape of a shipped-but-undocumented change). ALWAYS exits 0: a
+      # curated block may fold or omit deliberately (entry-COMPLETE cannot
+      # be a hard gate without lying); the value is the visible checklist
+      # in the release-prep PR's CI log. On non-release changes the script
+      # self-skips (version already tagged).
+      - name: Advisory — commits since last tag vs the CHANGELOG block
+        run: python scripts/check_changelog_vs_commits.py
