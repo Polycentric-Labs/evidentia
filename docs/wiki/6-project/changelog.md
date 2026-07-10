@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (v0.10.5 / v0.10.9 / v0.10.11 / v0.10.12) are corrected to SHIPPED, the
   four missing entries (v0.10.10 / v0.10.13 / v0.10.16 / v0.10.17) are
   backfilled, and v0.11 is promoted to the open cycle linking its plan doc
-  (`docs/releases/plans/v0.11-plan.md`, pending ratification).
+  (`docs/releases/plans/v0.11-plan.md`, ratified 2026-07-09).
   `docs/enterprise-grade.md`'s header is restructured so its live currency
   claim sits on a single anchorable line. The quarterly safeguards-resweep
   issue template gains a practice-delta item (method recorded in
