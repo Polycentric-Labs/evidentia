@@ -286,7 +286,7 @@ jobs:
           uvx --from cyclonedx-bom cyclonedx-py environment \
             -o evidentia-sbom.cdx.json \
             --of JSON \
-            --sv 1.6 \
+            --sv 1.7 \
             --pyproject packages/evidentia-core/pyproject.toml \
             "$(uv run python -c 'import sys; print(sys.executable)')"
           echo "SBOM generated:"

@@ -74,7 +74,7 @@ def generate_sbom(sbom_path: Path) -> bool:
                 "uvx", "--from", "cyclonedx-bom", "cyclonedx-py", "environment",
                 "-o", str(sbom_path),
                 "--of", "JSON",
-                "--sv", "1.6",
+                "--sv", "1.7",
                 "--pyproject", "packages/evidentia-core/pyproject.toml",
                 sys.executable,
             ],

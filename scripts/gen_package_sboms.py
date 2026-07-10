@@ -116,7 +116,7 @@ def build_sbom(pkg: dict) -> dict:
         dep_refs.append(ref)
     return {
         "bomFormat": "CycloneDX",
-        "specVersion": "1.6",
+        "specVersion": "1.7",
         "serialNumber": f"urn:uuid:{uuid.uuid5(uuid.NAMESPACE_URL, purl)}",
         "version": 1,
         "metadata": metadata,

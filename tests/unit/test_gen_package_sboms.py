@@ -24,7 +24,7 @@ def test_sbom_is_valid_minimal_cyclonedx(tmp_path: Path) -> None:
     core = next(p for p in pkgs if p["name"] == "evidentia-core")
     doc = g.build_sbom(core)
     assert doc["bomFormat"] == "CycloneDX"
-    assert doc["specVersion"] == "1.6"
+    assert doc["specVersion"] == "1.7"
     assert doc["serialNumber"].startswith("urn:uuid:")
     comp = doc["metadata"]["component"]
     assert comp["type"] == "library"

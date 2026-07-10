@@ -33,7 +33,7 @@ architectural patterns — observed in peer projects and emerging standards
 | Surface | Detail |
 |---|---|
 | **OSCAL 1.2.1** | First-class emit: catalog, profile, assessment-results, POA&M, CONMON state. Import: catalog, profile, component-definition (ingest-only). SCR notification is RFC-0007 flat JSON, not an OSCAL model |
-| **Supply chain** | CycloneDX 1.6 SBOM; Sigstore/Rekor + PEP 740 attestations; cosign-signed container; SLSA L3 build provenance |
+| **Supply chain** | CycloneDX 1.7 SBOM; Sigstore/Rekor + PEP 740 attestations; cosign-signed container; SLSA L3 build provenance |
 | **MCP server** | 8 tools (`list_frameworks`, `get_control`, `gap_analyze`, `gap_diff`, `conmon_list_cadences`, `conmon_next_due`, `conmon_check_state`, `conmon_health`); stdio / SSE / HTTP transports; per-tool CIMD scope enforcement; `SignedToolOutput` envelope |
 | **REST API** | FastAPI; `/api/poam/*`, `/api/conmon/*`, `/api/gaps`, `/api/metrics`; auth middleware |
 | **CI** | Bundled composite GitHub Action (`gap-analysis`) |

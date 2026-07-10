@@ -119,7 +119,7 @@ jobs:
           uvx --from cyclonedx-bom cyclonedx-py environment \
             -o /tmp/published-sbom.cdx.json \
             --of JSON \
-            --sv 1.6 \
+            --sv 1.7 \
             --pyproject packages/evidentia-core/pyproject.toml \
             /tmp/rescan/bin/python
           echo "SBOM:"; ls -la /tmp/published-sbom.cdx.json
