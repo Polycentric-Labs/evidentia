@@ -1,12 +1,15 @@
-# Enterprise-grade credibility checklist (v0.7.0 baseline · maintenance summary last refreshed v0.10.17, current release v0.10.17)
+# Enterprise-grade credibility checklist
+
+> Baseline established at v0.7.0 (historical).
+> Maintenance summary current as of release v0.10.17.
 
 Evidentia's v0.7.0 release established the quality bar that Big-4 audit
 firms (Deloitte, PwC, KPMG, EY), FedRAMP Third-Party Assessor
 Organizations (3PAOs), and senior GRC officers at regulated companies
 would consider production-grade for evidence collection. That baseline
 has stayed closed and been extended every cycle since; the
-**[Status through v0.10.17](#status-through-v01017-maintenance-summary)**
-summary below captures what has advanced, while the per-tier tables remain
+**[Maintenance summary](#maintenance-summary)**
+below captures what has advanced, while the per-tier tables remain
 the original v0.7.0 baseline snapshot (later status changes noted there
 or in the summary).
 
@@ -29,7 +32,7 @@ Priority tiers:
 - **MEDIUM** — desirable, often documented as "on the roadmap"
 - **LOW** — nice-to-have
 
-## Status through v0.10.17 (maintenance summary)
+## Maintenance summary
 
 The BLOCKER baseline has remained closed since v0.7.0. The enterprise
 posture has advanced materially across the v0.8.x–v0.10.x line:

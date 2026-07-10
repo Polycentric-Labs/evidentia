@@ -369,6 +369,29 @@ anchors:
       example in the "Verify a release wheel" block — a LIVE verification recipe
       that must name the current wheel. Single in-family literal on the line.
 
+  # ── docs/deprecation-calendar.md (frozen via docs/**) ──────────────────
+  - path: "docs/deprecation-calendar.md"
+    line_contains: "No other surfaces are currently deprecated as of"
+    desc: >-
+      The closing "No other surfaces are currently deprecated as of vX.Y.Z"
+      line under the Active-deprecations table — a LIVE "the table above is
+      complete at release X" claim. It drifted stale across two releases
+      before the v0.11 cycle-open registered it (the machinery existed; the
+      anchor was simply never added). Single in-family literal on the line.
+
+  # ── docs/enterprise-grade.md (frozen via docs/**) ──────────────────────
+  - path: "docs/enterprise-grade.md"
+    line_contains: "Maintenance summary current as of release"
+    desc: >-
+      The header blockquote's "Maintenance summary current as of release
+      vX.Y.Z." line — the doc's LIVE currency claim. Restructured at the
+      v0.11 cycle-open so the live claim sits alone on a single-literal line
+      (the old h1 carried three in-family literals, which trips the
+      EXACTLY-ONE >1 guard) and the old versioned "Status through vX.Y.Z"
+      heading is de-versioned (an anchor can rewrite a heading's literal but
+      never its generated TOC slug, so a versioned heading breaks its own
+      anchor link on every bump). Single in-family literal on the line.
+
   # ── docs/ROADMAP.md (frozen via docs/**) ───────────────────────────────
   - path: "docs/ROADMAP.md"
     line_contains: "Last updated:"
