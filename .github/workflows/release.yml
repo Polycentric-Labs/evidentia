@@ -292,6 +292,22 @@ jobs:
           echo "SBOM generated:"
           ls -la evidentia-sbom.cdx.json
 
+      # #17: cyclonedx-py environment emits the first-party surface anonymous
+      # (no metadata.supplier; evidentia* components carry no purl, so
+      # osv-scanner skips them). Deterministic post-process fills supplier +
+      # publisher + purl + vcs ref for the root and the 8 first-party
+      # components; third-party components are never touched.
+      - name: Enrich release SBOM with first-party identity
+        run: uv run python scripts/enrich_release_sbom.py evidentia-sbom.cdx.json
+
+      # H4: NTIA minimum-elements gate — fail the build (BEFORE any publish)
+      # if the release SBOM is structurally present but useless (missing
+      # supplier / version / unique-ID / dependency graph). First-party
+      # checker because ntia-conformance-checker is SPDX-only (v5.0.3) and
+      # cannot parse CycloneDX; rationale in the script docstring.
+      - name: NTIA minimum-elements gate on the release SBOM
+        run: uv run python scripts/check_sbom_ntia.py evidentia-sbom.cdx.json
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c  # v4.2.0
 
