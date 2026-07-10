@@ -33,9 +33,12 @@ Assertions:
   A2 — a ``PLANNED`` umbrella h2 contains no ``SHIPPED`` entry inside its own
        section (structural self-consistency, CHANGELOG-independent — the
        v0.10.x umbrella sat PLANNED over three SHIPPED h3s).
-  A3 — the top ``PLANNED`` h2 links a ``releases/plans/v<x>-plan.md`` whose
-       version matches its cycle and which EXISTS on disk (an open cycle
-       without a plan doc is unratified work).
+  A3 — the top ``PLANNED`` h2's INTRO (the text before its first sub-heading)
+       links a ``releases/plans/v<x>-plan.md`` whose version matches its cycle
+       and which EXISTS on disk (an open cycle without a plan doc is
+       unratified work). Intro-scoped deliberately: an umbrella's h3 bodies
+       legitimately link OLD per-patch plan docs, which must not satisfy the
+       cycle-level claim.
   A4 — ADVISORY (reported, never failing): every CHANGELOG version in the
        LATEST shipped cycle has a concrete ``SHIPPED`` heading. Advisory-first
        per the wiring rule — a check that becomes required must be observed
@@ -231,13 +234,28 @@ def check_a2_planned_umbrella_pure(
     return failures
 
 
+def _intro_end(start_line: int, roadmap_lines: list[str], section_end: int) -> int:
+    """The last line (inclusive) of a heading's INTRO — up to its first
+    sub-heading (any ``##``/``###`` line, status-bearing or not), fence-aware.
+    """
+    in_fence = False
+    for idx in range(start_line + 1, section_end + 1):
+        line = roadmap_lines[idx - 1]
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if not in_fence and line.startswith("##"):
+            return idx - 1
+    return section_end
+
+
 def check_a3_open_cycle_has_plan(
     headings: list[Heading],
     h2_lines: list[int],
     roadmap_lines: list[str],
     docs_dir: Path,
 ) -> list[str]:
-    """A3 — the top PLANNED h2 links an on-disk, version-matching plan doc."""
+    """A3 — the top PLANNED h2's intro links an on-disk, version-matching plan doc."""
     planned_h2 = [h for h in headings if h.level == 2 and h.status == "PLANNED"]
     if not planned_h2:
         return [
@@ -245,14 +263,15 @@ def check_a3_open_cycle_has_plan(
             "(see the A0 failure)"
         ]
     top = min(planned_h2, key=lambda h: h.line_no)
-    end = _section_end(top.line_no, h2_lines, len(roadmap_lines))
-    section = "\n".join(roadmap_lines[top.line_no - 1 : end])
-    links = _PLAN_LINK_RE.findall(section)
+    section_end = _section_end(top.line_no, h2_lines, len(roadmap_lines))
+    end = _intro_end(top.line_no, roadmap_lines, section_end)
+    intro = "\n".join(roadmap_lines[top.line_no - 1 : end])
+    links = _PLAN_LINK_RE.findall(intro)
     if not links:
         return [
             f"line {top.line_no}: the open cycle '{top.text}' links no "
-            f"releases/plans/v<x>-plan.md — the current cycle must link its "
-            f"plan doc"
+            f"releases/plans/v<x>-plan.md in its intro (before the first "
+            f"sub-heading) — the current cycle must link its plan doc"
         ]
     expected = f"v{top.version if not top.is_umbrella else top.cycle}"
     problems: list[str] = []

@@ -288,6 +288,25 @@ def test_a3_link_must_live_inside_the_open_cycle_section(rc, tmp_path: Path) -> 
     assert len(failures) == 1
 
 
+def test_a3_is_intro_scoped_a_sub_entry_plan_link_does_not_count(
+    rc, tmp_path: Path
+) -> None:
+    """The exact v0.10.x shape: the PLANNED umbrella's own intro links no plan
+    doc, while a sub-h3 body links an OLD per-patch plan — that must NOT
+    satisfy the cycle-level claim."""
+    text = (
+        "## v0.10.x — research line — PLANNED\n"
+        "Umbrella intro with no plan link.\n"
+        "### v0.10.5 — artifacts — PLANNED\n"
+        "Full plan at [v0.10.5-plan.md](releases/plans/v0.10.5-plan.md).\n"
+    )
+    headings, h2_lines = rc.parse_roadmap(text)
+    failures = rc.check_a3_open_cycle_has_plan(
+        headings, h2_lines, text.splitlines(), _docs_tree(tmp_path, "v0.10.5-plan.md")
+    )
+    assert len(failures) == 1 and "links no" in failures[0]
+
+
 def test_a3_concrete_planned_h2_expects_full_version(rc, tmp_path: Path) -> None:
     text = (
         "## v0.11.2 — hot patch — PLANNED\n"
@@ -346,15 +365,16 @@ def test_broken_tree_shape_fires_a1_a2_a3(rc, tmp_path: Path) -> None:
     roadmap = (
         "## v0.10.x — research line — PLANNED\n"
         "### v0.10.5 — artifacts — PLANNED (added 2026-05-24)\n"
+        "Full plan at [v0.10.5-plan.md](releases/plans/v0.10.5-plan.md).\n"
         "### v0.10.6 — crosswalks — SHIPPED\n"
         "### v0.11 — federal theme — PLANNED (post-deep-dive)\n"
     )
     report = rc.run_checks(
-        roadmap, changelog("0.10.5", "0.10.6"), _docs_tree(tmp_path)
+        roadmap, changelog("0.10.5", "0.10.6"), _docs_tree(tmp_path, "v0.10.5-plan.md")
     )
     assert len(report.a1) == 2  # the PLANNED umbrella + the PLANNED v0.10.5
     assert len(report.a2) == 1  # SHIPPED v0.10.6 inside the PLANNED umbrella
-    assert len(report.a3) == 1  # the open cycle links no plan doc
+    assert len(report.a3) == 1  # the cycle's own intro links no plan doc
     assert report.failures
 
 
