@@ -2037,9 +2037,23 @@ ratification asks. Sourced from Phase B audit v3 + integration plan
   Stream E4: OSS engine for the audit-quality middle layer between
   Trestle (raw OSCAL SDK) and RegScale (commercial FedRAMP package
   generator).
-- **Evaluate OSCAL 1.2.1 → 1.2.2** — OSCAL 1.2.2 released
-  2026-04-30; assess the schema delta against the current 1.2.1
-  surface before adopting.
+- **Evaluate OSCAL 1.2.1 → 1.2.2** — DONE; **VERDICT (ratified
+  2026-07-13): DEFER-WITH-TRIGGER — stay on 1.2.1 for emitted
+  documents.** The 1.2.2 delta is content-free for every surface
+  Evidentia emits (all nine published JSON schemas byte-identical to
+  1.2.1 except the `$id` version string; verified by release-artifact
+  diff), while the ecosystem hard-rejects 1.2.2 today:
+  compliance-trestle v4.2.0 pins `OSCAL_VERSION_REGEX ^1\.2\.[0-1]$`
+  (its 1.2.2 support PR #2216 is unmerged) and oscal-cli v3.2.0
+  deliberately ships 1.2.1 bindings — adopting would break the B7
+  round-trip tests and every consumer running the published
+  `trestle validate` recipe, for zero capability. Adoption triggers:
+  a trestle release accepting 1.2.2 (primary; corroborate with
+  oscal-cli 1.2.2 bindings at adopt time), any external 1.2.2
+  requirement, and a standing re-check at each quarterly
+  practice-delta pass (next 2026-10-01). Full verdict + adopt-time
+  touchpoint list: `docs/releases/plans/v0.11-plan.md` §Wave 1.
+  OSCAL-emitting v0.11 work proceeds on 1.2.1.
 - **`evidentia incident emit --format dora-art-17`** (DoraIncident
   Pydantic record + `classify_dora()` per RTS 2024/1772 Art. 8 +
   Art. 9; auto-POA&M creation for 4h/24h/72h/1-month reporting
