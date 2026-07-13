@@ -1,0 +1,77 @@
+# Pilot-graduation watcher for the uv preview features this repo runs as
+# observe-first pilots (v0.11 hygiene H5). test.yml's `uv-audit` +
+# `uv-malware-check` jobs are continue-on-error BECAUSE the features are
+# preview (Astral, 2026-06-08); their own comments promise "graduate to
+# fail-closed once GA + observed stable" — but nothing watched for GA. A
+# pilot that never graduates is noise. This sentinel NUDGES (opens/updates
+# a single tracking issue) when either feature graduates: a functional
+# probe (`uv audit` without its preview flag stops warning "experimental")
+# plus a uv-CHANGELOG stabilization-language scan for the malware-check
+# path, which is silently ignored without its flag and so cannot be probed
+# functionally. Detect-and-nudge only: it never edits workflows. Clones the
+# python-ceiling-watch.yml pattern; its own liveness is covered by the G10
+# dead-trigger detector (base-freshness.yml).
+name: uv pilot watch
+
+on:
+  schedule:
+    - cron: "53 8 * * 5"   # Fridays 08:53 UTC (Mon rescan / Tue base-freshness / Wed python-ceiling / Thu dast / Fri 10:07 verify-recipes)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uv-pilot-watch
+  cancel-in-progress: false
+
+jobs:
+  sentinel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Single-job workflow — write scope lives at the job level, not repeated
+    # at the workflow level (zizmor excessive-permissions).
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      # `version: latest` deliberately: the probe asks "has CURRENT uv
+      # graduated the pilots", so it must run the newest uv, not a pin.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3  # v8.3.0
+        with:
+          version: "latest"
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Probe uv pilot graduation (audit + malware-check)
+        run: |
+          python scripts/check_uv_pilot_graduation.py \
+            --output graduation-findings.md
+
+      - name: Open or update the tracking issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ ! -s graduation-findings.md ]; then
+            echo "No graduation findings — pilots stay observe-first."
+            exit 0
+          fi
+          TITLE="uv audit / UV_MALWARE_CHECK graduated from preview — promote the pilots"
+          BODY=$(printf '%s\n\n%s\n' \
+            "$(cat graduation-findings.md)" \
+            "Action: drop the --preview-features flags in test.yml (uv-audit / uv-malware-check jobs) + .pre-commit-config.yaml, then decide per pilot whether it leaves continue-on-error (the audit pilot) / moves onto the required sync steps (the malware check). This is a scheduled sentinel — not a gate.")
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "in:title \"$TITLE\"" --json number -q '.[0].number' || echo "")
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --body "$BODY"
+            echo "Updated issue #$existing"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$BODY"
+          fi
