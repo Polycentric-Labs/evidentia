@@ -70,7 +70,7 @@ Repository = "https://github.com/polycentric-labs/evidentia"
 Changelog = "https://github.com/polycentric-labs/evidentia/blob/main/CHANGELOG.md"
 
 [build-system]
-requires = ["hatchling>=1.28"]
+requires = ["hatchling>=1.31.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
