@@ -113,15 +113,15 @@ jobs:
           EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
         run: uv sync --all-extras --all-packages
 
-      # Copied VERBATIM from the osv-scan job in test.yml (same v2.3.8 binary +
+      # Copied VERBATIM from the osv-scan job in test.yml (same v2.4.0 binary +
       # SHA256) so run_gate_suite.py's `osv` check finds an identically-pinned
       # scanner on PATH. Pinned by version + SHA256 for Scorecard.
-      - name: Install osv-scanner (v2.3.8, checksum-verified)
+      - name: Install osv-scanner (v2.4.0, checksum-verified)
         run: |
           mkdir -p "$HOME/.local/bin"
-          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.3.8/osv-scanner_linux_amd64 \
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.4.0/osv-scanner_linux_amd64 \
             -o "$HOME/.local/bin/osv-scanner"
-          echo "bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc  $HOME/.local/bin/osv-scanner" | sha256sum -c -
+          echo "15314940c10d26af9c6649f150b8a47c1262e8fc7e17b1d1029b0e479e8ed8a0  $HOME/.local/bin/osv-scanner" | sha256sum -c -
           chmod +x "$HOME/.local/bin/osv-scanner"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
@@ -286,7 +286,7 @@ jobs:
           uvx --from cyclonedx-bom cyclonedx-py environment \
             -o evidentia-sbom.cdx.json \
             --of JSON \
-            --sv 1.6 \
+            --sv 1.7 \
             --pyproject packages/evidentia-core/pyproject.toml \
             "$(uv run python -c 'import sys; print(sys.executable)')"
           echo "SBOM generated:"
@@ -345,12 +345,12 @@ jobs:
           echo "Regenerated docker/requirements.txt; evidentia[gui]==${VERSION} pin:"
           grep -E "^evidentia==" docker/requirements.txt | head -2
 
-      - name: Install osv-scanner (v2.3.8, checksum-verified)
+      - name: Install osv-scanner (v2.4.0, checksum-verified)
         run: |
           mkdir -p "$HOME/.local/bin"
-          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.3.8/osv-scanner_linux_amd64 \
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.4.0/osv-scanner_linux_amd64 \
             -o "$HOME/.local/bin/osv-scanner"
-          echo "bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc  $HOME/.local/bin/osv-scanner" | sha256sum -c -
+          echo "15314940c10d26af9c6649f150b8a47c1262e8fc7e17b1d1029b0e479e8ed8a0  $HOME/.local/bin/osv-scanner" | sha256sum -c -
           chmod +x "$HOME/.local/bin/osv-scanner"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 

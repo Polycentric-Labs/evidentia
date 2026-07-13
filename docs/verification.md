@@ -5,7 +5,7 @@ Every Evidentia release produces:
 - 8 PyPI wheels with PEP 740 attestations
 - 1 cosign-signed container image at `ghcr.io/polycentric-labs/evidentia`
 - 1 SLSA Provenance v1 attestation per the container
-- 1 CycloneDX 1.6 SBOM attached to the GitHub Release
+- 1 CycloneDX 1.7 SBOM attached to the GitHub Release
 
 All four can be verified by consumers using standard open-source tooling.
 This doc covers the recipes.

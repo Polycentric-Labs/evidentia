@@ -21,7 +21,7 @@
 #   + others — see https://github.com/ossf/scorecard#scorecard-checks
 #
 # v0.7.0 enterprise-grade work already covers many of these:
-#   - SBOM ✅ (CycloneDX 1.6 attached to every GitHub Release)
+#   - SBOM ✅ (CycloneDX 1.7 attached to every GitHub Release)
 #   - Signed-Releases ✅ (PEP 740 + Sigstore via release.yml OIDC)
 #   - Security-Policy ✅ (SECURITY.md present)
 #   - Code-Review ✅ (PR-based + branch-protection on main)

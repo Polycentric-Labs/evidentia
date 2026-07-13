@@ -164,7 +164,7 @@ Every Evidentia release ships with cryptographic provenance:
 - **PEP 740 attestations** on every wheel + sdist, signed via the
   GitHub Actions OIDC identity (Sigstore + Rekor public
   transparency log).
-- **CycloneDX 1.6 SBOM** generated from `uv.lock`, attached to
+- **CycloneDX 1.7 SBOM** generated from `uv.lock`, attached to
   every GitHub Release.
 - **Sigstore/Rekor signing** of every OSCAL Assessment Results
   document (or GPG `.asc` signatures in air-gap mode).
