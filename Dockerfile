@@ -14,7 +14,7 @@
 ARG INSTALL_SOURCE=pypi
 
 # ---- base-builder: slim + venv + install toolchain (has a shell) ------------
-FROM python:3.13-slim@sha256:c33f0bc4364a6881bed1ec0cc2665e6c53c87a43e774aaeab88e6f17af105e4f AS base-builder
+FROM python:3.13-slim@sha256:eb43ff125d8d58d7449dcba7d336c23bcac412f526d861db493b9994d8010280 AS base-builder
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONDONTWRITEBYTECODE=1
 RUN python -m venv /opt/venv
@@ -56,7 +56,7 @@ RUN set -eux; \
       /opt/venv/pyvenv.cfg
 
 # ---- final: distroless DHI runtime, nonroot uid 65532 -----------------------
-FROM dhi.io/python:3.13@sha256:b41747dfe4f249fd0a72ee0b1dd974476e8adf7eac95c920d1d3ff31e7b794cf AS final
+FROM dhi.io/python:3.13@sha256:1842a6b9ce76177a8df5b5c9dbde6e0be15bfc317055d66b340ae5d8eada6470 AS final
 COPY --from=venv-fix --chown=65532:65532 /opt/venv /opt/venv
 COPY --from=venv-fix --chown=65532:65532 /build/home/ /home/nonroot/
 ENV PATH="/opt/venv/bin:${PATH}" \
