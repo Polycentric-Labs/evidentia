@@ -3,7 +3,7 @@
 
 # Evidentia roadmap
 
-**Last updated: v0.10.17 (planning, July 2026).**
+**Last updated: v0.10.18 (planning, July 2026).**
 
 > **Engineering practices** — how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
@@ -1597,10 +1597,11 @@ ruff clean.**
 Opened 2026-05-21 following a competitive/integration research pass
 (see [`docs/integration-survey.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/integration-survey.md) and
 [`docs/positioning-and-value.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/positioning-and-value.md) §5.5 /
-§5.6.A). **Closed 2026-07-09 with v0.10.17** — 16 published releases
-(v0.10.0 – v0.10.13 + v0.10.16 + v0.10.17; the v0.10.14 / v0.10.15
-tags were never published: the atomic-release gate stopped both runs
-with nothing shipped — see the v0.10.16 entry below). The v0.10.x
+§5.6.A). **Closed 2026-07-09 with v0.10.17**, followed post-close by a
+day-N container-rebuild patch (v0.10.18, 2026-07-13) — 17 published
+releases (v0.10.0 – v0.10.13 + v0.10.16 – v0.10.18; the v0.10.14 /
+v0.10.15 tags were never published: the atomic-release gate stopped
+both runs with nothing shipped — see the v0.10.16 entry below). The v0.10.x
 line is the home for the research-driven feature
 surface: because it brings meaningful new feature surface, it is a
 minor bump from v0.9.9 rather than a continuation of v0.9.x patches.
@@ -2019,6 +2020,17 @@ reworked to a shell-free distroless multi-stage build; CodSpeed
 performance reporting activated (its prior "green" job had never
 uploaded — a lesson-9 catch); CI job timeout caps; and three
 doc-accuracy fixes.
+
+### v0.10.18 — Day-N container rebuild — SHIPPED (released 2026-07-13)
+
+Rebuild-only patch fired by the post-publish rescan's fixable-only
+gate: DEBIAN-CVE-2026-34743 (xz-utils 5.8.1-1, Medium 5.3) became
+fixable in the published v0.10.17 image, so both pinned bases move to
+their current digests (the drift the base-freshness sentinel flagged
+in issue #182) and the container is rebuilt, re-signed, and
+re-attested. Also carries the v0.11 cycle-open gate work
+(ROADMAP-currency gate + ROADMAP restructure) that landed on `main`
+after v0.10.17. No package code changes.
 
 ## v0.11 — Federal-compliance theme + AI governance — PLANNED
 
