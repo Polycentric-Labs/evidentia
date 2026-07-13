@@ -2043,7 +2043,9 @@ add|update` / `delete` / `calendar`). NEW `/api/poam/*` FastAPI
 router (8 endpoints). NEW
 `evidentia_core.oscal.poam_exporter.gap_report_to_oscal_poam()`
 emitting OSCAL 1.1.2 plan-of-action-and-milestones JSON with
-back-matter SHA-256 integrity protection.
+back-matter SHA-256 integrity protection. (Version as recorded at
+v0.9.0; the emitter has tracked `OSCAL_SCHEMA_VERSION` since —
+1.2.1 as of v0.9.6.)
 
 **Threat coverage**:
 
