@@ -13,8 +13,24 @@
 # image's graph, so the pypi path never evaluates docker/wheels/.
 ARG INSTALL_SOURCE=pypi
 
+# ---- TEMPORARY DIAGNOSTIC (drop before merge): probe the new DHI layout -----
+# The new dhi.io/python:3.13 digest broke the /opt/python interpreter path the
+# venv-fix stage hardwires (`exec /opt/venv/bin/evidentia: no such file or
+# directory`). The runner can pull dhi.io anonymously (local cannot), so this
+# probe lists the new base's python layout in the CI log, then is removed.
+FROM dhi.io/python:3.13@sha256:1842a6b9ce76177a8df5b5c9dbde6e0be15bfc317055d66b340ae5d8eada6470 AS dhi-probe
+
 # ---- base-builder: slim + venv + install toolchain (has a shell) ------------
 FROM python:3.13-slim@sha256:eb43ff125d8d58d7449dcba7d336c23bcac412f526d861db493b9994d8010280 AS base-builder
+COPY --from=dhi-probe / /dhi-rootfs
+RUN set -x; \
+    echo "== DHI os-release =="; \
+    cat /dhi-rootfs/etc/os-release 2>/dev/null | head -3; \
+    echo "== python-ish paths (maxdepth 4) =="; \
+    find /dhi-rootfs -maxdepth 4 \( -name "python*" -o -name "pip*" \) 2>/dev/null | sort | head -60; \
+    echo "== /dhi-rootfs/opt =="; ls -la /dhi-rootfs/opt 2>&1 | head -10; \
+    echo "== /dhi-rootfs/usr/local/bin =="; ls -la /dhi-rootfs/usr/local/bin 2>&1 | head -15; \
+    rm -rf /dhi-rootfs
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONDONTWRITEBYTECODE=1
 RUN python -m venv /opt/venv
