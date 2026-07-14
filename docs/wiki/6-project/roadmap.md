@@ -2023,14 +2023,22 @@ doc-accuracy fixes.
 
 ### v0.10.18 — Day-N container rebuild — SHIPPED (released 2026-07-14)
 
-Rebuild-only patch fired by the post-publish rescan's fixable-only
-gate: DEBIAN-CVE-2026-34743 (xz-utils 5.8.1-1, Medium 5.3) became
-fixable in the published v0.10.17 image, so both pinned bases move to
-their current digests (the drift the base-freshness sentinel flagged
-in issue #182) and the container is rebuilt, re-signed, and
-re-attested. Also carries the v0.11 cycle-open gate work
-(ROADMAP-currency gate + ROADMAP restructure) that landed on `main`
-after v0.10.17. No package code changes.
+Day-N patch fired by the post-publish rescan's fixable-only gate:
+DEBIAN-CVE-2026-34743 (xz-utils 5.8.1-1, Medium 5.3) became fixable
+in the published v0.10.17 image, so both pinned bases move to their
+current digests (the drift the base-freshness sentinel flagged in
+issue #182 — including DHI's `/opt/python` → `/usr` layout
+restructuring, caught by the container gate) and the container is
+rebuilt, re-signed, and re-attested. Also ships the v0.11 cycle-open
+gate work AND the **entire v0.11 hygiene track (H1–H6)** — CycloneDX
+1.7 SBOMs + osv-scanner v2.4.0, the dependency-review PR gate, the
+weekly verify-recipes CI test, release-SBOM first-party enrichment +
+the NTIA minimum-elements gate, the uv-pilot graduation watcher, the
+four small deferrals — plus the recorded Wave 1 OSCAL 1.2.2
+DEFER-WITH-TRIGGER verdict and a same-day setuptools 83.0.0 fix
+(PYSEC-2026-3447). The hygiene PRs merged ahead of the tag, so
+v0.11.0's boundary re-cuts to Waves 1–2. No package
+(`packages/*/src`) code changes.
 
 ## v0.11 — Federal-compliance theme + AI governance — PLANNED
 

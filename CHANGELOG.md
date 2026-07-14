@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.10.18] - 2026-07-14
 
-**Theme**: *Container rebuild on a fresh hardened base (day-N CVE response).* A rebuild-only patch fired by the post-publish rescan's fixable-only gate: the 2026-07-13 weekly rescan of the published v0.10.17 image surfaced **DEBIAN-CVE-2026-34743** (xz-utils/liblzma 5.8.1-1, Medium 5.3) with a fix published upstream (`5.8.1-1+deb13u1`), and the standing policy is *"a fix is now available → rebuild the published image on a fresh base"*. Both pinned bases move to their current digests (the same drift the base-freshness sentinel flagged in issue #182) and the image is rebuilt, smoke-tested, re-signed, and re-attested end-to-end; the post-publish rescan re-verifies the published image's CVE posture after release. This tag also ships the v0.11 cycle-open gate work that landed on `main` after v0.10.17 (the ROADMAP-currency gate + ROADMAP restructure below, previously tracked as Unreleased). No package code changes beyond the version bump.
+**Theme**: *Container rebuild on a fresh hardened base (day-N CVE response).* A rebuild-only patch fired by the post-publish rescan's fixable-only gate: the 2026-07-13 weekly rescan of the published v0.10.17 image surfaced **DEBIAN-CVE-2026-34743** (xz-utils/liblzma 5.8.1-1, Medium 5.3) with a fix published upstream (`5.8.1-1+deb13u1`), and the standing policy is *"a fix is now available → rebuild the published image on a fresh base"*. Both pinned bases move to their current digests (the same drift the base-freshness sentinel flagged in issue #182) and the image is rebuilt, smoke-tested, re-signed, and re-attested end-to-end; the post-publish rescan re-verifies the published image's CVE posture after release. This tag also ships everything that merged to `main` between v0.10.17 and the tag: the v0.11 cycle-open gate work (ROADMAP-currency gate + ROADMAP restructure, previously tracked as Unreleased) **and the entire v0.11 hygiene track (H1–H6, below)** — the hygiene PRs merged ahead of the tag, so the v0.11 plan's release boundary re-cuts to v0.11.0 = Waves 1–2. No package (`packages/*/src`) code changes beyond the version bump.
 
 ### Added
 
@@ -30,8 +30,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   lesson 11 in `docs/engineering-practices.md`: *a doc's currency claim is
   a gate or it is a lie.*
 
+### Added (v0.11 hygiene track — H1–H6, merged ahead of this tag)
+
+- **H2 — `dependency-review.yml`**: GitHub-native diff-level dependency gate on
+  every PR (`actions/dependency-review-action` v5.0.0, SHA-pinned,
+  `fail-on-severity: low`) — blocks a PR introducing a known-vulnerable
+  dependency before it lands in a lockfile.
+- **H3 — `verify-recipes.yml`**: the published consumer-verification recipes
+  (PEP 740 wheel attestations, cosign signature + SLSA provenance,
+  `gh attestation verify`, SBOM download + osv-scan) now run weekly against
+  the latest Release with coverage assertions (8/8 wheels) and a recipe-drift
+  guard coupling the workflow to `docs/verification.md`. Its dry-run already
+  fixed real doc rot: the SBOM recipe moves off the deprecated
+  `osv-scanner scan --sbom` form to `scan source -L`.
+- **H4 — release-SBOM enrichment + NTIA gate** (`enrich_release_sbom.py` +
+  `check_sbom_ntia.py`, wired into `release.yml` and active in THIS release's
+  build): the release-asset SBOM gains `metadata.supplier`/`authors` and
+  first-party supplier/publisher/purl identity (osv-scanner previously
+  skipped all 8 `evidentia*` components — "Neither CPE nor PURL found"), then
+  an NTIA minimum-elements gate fails the build if the SBOM is structurally
+  present but useless. Observed firing with 18 findings on the real v0.10.17
+  SBOM before the enrichment.
+- **H5 — `uv-pilot-watch.yml`**: weekly graduation sentinel for the `uv audit`
+  / `UV_MALWARE_CHECK` preview pilots (functional no-preview-flag probe + uv
+  CHANGELOG stabilization scan; detect-and-nudge, never a gate).
+- **H6 — four small deferrals**: #18 changelog-vs-commits advisory diff (in
+  `verify-changelog.yml`, always-exit-0); `security-insights.yml` CI-validated
+  against the official OpenSSF v2.2.0 CUE schema (`cue vet`, vendored
+  byte-identical schema — the gate fired on a real missing required
+  `rulesets` field, fixed honestly); demo-image pyyaml hash-pin
+  (`--require-hashes`); `cflite-batch.yml` 60-minute runtime cap.
+- **Wave 1 OSCAL 1.2.2 verdict recorded** (ROADMAP + v0.11 plan):
+  **DEFER-WITH-TRIGGER — emitted documents stay on OSCAL 1.2.1** (the 1.2.2
+  schema delta is byte-identical for every emitted surface, while
+  compliance-trestle v4.2.0 hard-rejects `oscal-version: 1.2.2`); plus fixes
+  for live docs still claiming the POA&M emitter produces OSCAL 1.1.2 (false
+  since v0.9.6).
+
 ### Changed
 
+- **Emitted CycloneDX SBOMs move 1.6 → 1.7 (H1)** across all four emission
+  sites (release asset, post-publish rescan, SSOT osv gate,
+  PEP 770 per-wheel SBOMs), with the pinned **osv-scanner bumped
+  v2.3.8 → v2.4.0** at all six install sites — v2.3.8 rejects CycloneDX 1.7
+  ("invalid specification version"), a break the local full gate suite caught
+  before it could ship; v2.4.0 verified against the repo's exact SSOT
+  invocation. The gap-analyzer CycloneDX **VEX** emitter deliberately stays
+  1.6 (a product schema surface, moving only with its own review).
+- **setuptools floated to 83.0.0** (PYSEC-2026-3447, Medium 6.1, published
+  2026-07-14 — the fixable-means-upgrade policy applied same-day), floating
+  torch 2.11.0 → 2.13.0 + triton in the dev closure; two osv allowlist
+  entries whose documented removal triggers fired were removed
+  (GHSA-rrmf-rvhw-rf47: torch 2.13.0 exits the advisory's last_affected
+  2.12.0; PYSEC-2025-183: the disputed pyjwt advisory was bounded upstream to
+  last_affected 2.10.1, below the locked 2.13.0).
 - **Container base digests refreshed (day-N CVE rebuild)** — the
   `dhi.io/python:3.13` distroless runtime pin moves
   `b41747df…` → `1842a6b9…`, and the `python:3.13-slim` builder pin moves
@@ -41,7 +93,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `container-build.yml`). Fired by the post-publish rescan's fixable-only
   policy on DEBIAN-CVE-2026-34743; the 28 unfixable base-OS advisories
   remain notify-only per that policy, and the rescan re-verifies the
-  published image after this release.
+  published image after this release. The fresh DHI digest also
+  **restructured the base's python layout** (`/opt/python` → the standard
+  `/usr/bin` + `/usr/lib/python3.13`) — caught by the PR's container gate
+  (`exec /opt/venv/bin/evidentia: no such file or directory`),
+  CI-probe-verified against the exact pinned digest, and fixed by repointing
+  the `venv-fix` stage's interpreter symlinks + `pyvenv.cfg` at `/usr`.
 - **ROADMAP restructured at the v0.11 cycle open** — the v0.10.x line is
   closed SHIPPED (16 published releases), the four mis-marked entries
   (v0.10.5 / v0.10.9 / v0.10.11 / v0.10.12) are corrected to SHIPPED, the
