@@ -65,7 +65,7 @@ jobs:
           persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3  # v8.3.0
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990  # v8.3.2
         with:
           version: "latest"
 
@@ -74,15 +74,15 @@ jobs:
         with:
           python-version: "3.13"
 
-      # Copied VERBATIM from release.yml / test.yml (same v2.3.8 binary + SHA256)
+      # Copied VERBATIM from release.yml / test.yml (same v2.4.0 binary + SHA256)
       # so the re-scan uses the identically-pinned scanner the gate uses.
-      - name: Install osv-scanner (v2.3.8, checksum-verified)
+      - name: Install osv-scanner (v2.4.0, checksum-verified)
         run: |
           set -euo pipefail
           mkdir -p "$HOME/.local/bin"
-          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.3.8/osv-scanner_linux_amd64 \
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.4.0/osv-scanner_linux_amd64 \
             -o "$HOME/.local/bin/osv-scanner"
-          echo "bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc  $HOME/.local/bin/osv-scanner" | sha256sum -c -
+          echo "15314940c10d26af9c6649f150b8a47c1262e8fc7e17b1d1029b0e479e8ed8a0  $HOME/.local/bin/osv-scanner" | sha256sum -c -
           chmod +x "$HOME/.local/bin/osv-scanner"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
@@ -119,7 +119,7 @@ jobs:
           uvx --from cyclonedx-bom cyclonedx-py environment \
             -o /tmp/published-sbom.cdx.json \
             --of JSON \
-            --sv 1.6 \
+            --sv 1.7 \
             --pyproject packages/evidentia-core/pyproject.toml \
             /tmp/rescan/bin/python
           echo "SBOM:"; ls -la /tmp/published-sbom.cdx.json
@@ -149,13 +149,13 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install osv-scanner (v2.3.8, checksum-verified)
+      - name: Install osv-scanner (v2.4.0, checksum-verified)
         run: |
           set -euo pipefail
           mkdir -p "$HOME/.local/bin"
-          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.3.8/osv-scanner_linux_amd64 \
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.4.0/osv-scanner_linux_amd64 \
             -o "$HOME/.local/bin/osv-scanner"
-          echo "bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc  $HOME/.local/bin/osv-scanner" | sha256sum -c -
+          echo "15314940c10d26af9c6649f150b8a47c1262e8fc7e17b1d1029b0e479e8ed8a0  $HOME/.local/bin/osv-scanner" | sha256sum -c -
           chmod +x "$HOME/.local/bin/osv-scanner"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 

@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-integrations"
-version = "0.10.17"
+version = "0.10.18"
 description = "Output integrations for Jira and ServiceNow"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
@@ -18,7 +18,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "evidentia-core>=0.10.17,<0.11.0",
+    "evidentia-core>=0.10.18,<0.11.0",
     "httpx>=0.27",
 ]
 
@@ -50,7 +50,7 @@ Issues = "https://github.com/polycentric-labs/evidentia/issues"
 Changelog = "https://github.com/polycentric-labs/evidentia/blob/main/CHANGELOG.md"
 
 [build-system]
-requires = ["hatchling>=1.28"]
+requires = ["hatchling>=1.31.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]

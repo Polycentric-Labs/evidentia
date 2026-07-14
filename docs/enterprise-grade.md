@@ -1,7 +1,7 @@
 # Enterprise-grade credibility checklist
 
 > Baseline established at v0.7.0 (historical).
-> Maintenance summary current as of release v0.10.17.
+> Maintenance summary current as of release v0.10.18.
 
 Evidentia's v0.7.0 release established the quality bar that Big-4 audit
 firms (Deloitte, PwC, KPMG, EY), FedRAMP Third-Party Assessor
@@ -40,7 +40,7 @@ posture has advanced materially across the v0.8.x–v0.10.x line:
 - **Supply chain — all six release credentials ship and are independently
   verifiable** on every release: PEP 740 attestations, Sigstore/Rekor
   signing, SLSA L3 build provenance, a cosign-signed container, a
-  CycloneDX 1.6 SBOM, and a public OpenSSF Scorecard. This closes the
+  CycloneDX 1.7 SBOM, and a public OpenSSF Scorecard. This closes the
   v0.7.0 ⚠️ on **H2** (SLSA L3 was "planned") and **H7** (PyPI Trusted
   Publisher OIDC was "planned").
 - **Continuous fuzzing** — six `atheris` harnesses + ClusterFuzzLite CI +

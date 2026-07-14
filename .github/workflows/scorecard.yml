@@ -21,7 +21,7 @@
 #   + others — see https://github.com/ossf/scorecard#scorecard-checks
 #
 # v0.7.0 enterprise-grade work already covers many of these:
-#   - SBOM ✅ (CycloneDX 1.6 attached to every GitHub Release)
+#   - SBOM ✅ (CycloneDX 1.7 attached to every GitHub Release)
 #   - Signed-Releases ✅ (PEP 740 + Sigstore via release.yml OIDC)
 #   - Security-Policy ✅ (SECURITY.md present)
 #   - Code-Review ✅ (PR-based + branch-protection on main)
@@ -101,6 +101,6 @@ jobs:
           retention-days: 5
 
       - name: Upload to code-scanning dashboard
-        uses: github/codeql-action/upload-sarif@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a  # v4.36.3
+        uses: github/codeql-action/upload-sarif@99df26d4f13ea111d4ec1a7dddef6063f76b97e9  # v4.37.0
         with:
           sarif_file: results.sarif

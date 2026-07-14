@@ -6,7 +6,7 @@ Evidentia ships the first publicly-distributed NIST OSCAL Catalog 1.2.1 serializ
 
 - **3 per-maturity YAML catalogs** at `packages/evidentia-core/src/evidentia_core/catalogs/data/international/osps-baseline-m{1,2,3}.yaml`. Maturity 1 = 25 assessment-requirements (17 top-level controls); Maturity 2 = 42 assessment-requirements (32 top-level controls); Maturity 3 = 63 assessment-requirements (40 top-level controls). Total 41 unique top-level controls across all 3 maturity levels.
 
-- **1 OSCAL Catalog 1.2.1 serialization** at `osps-baseline.oscal.json`. Top-level-control granularity (41 controls). Validates against `compliance-trestle 4.0.3` Pydantic models.
+- **1 OSCAL Catalog 1.2.1 serialization** at `osps-baseline.oscal.json`. Top-level-control granularity (41 controls). Validates against `compliance-trestle` Pydantic models (re-validated at 4.2.0, 2026-07-10).
 
 - **5 inter-framework crosswalks** at `mappings/osps-baseline_to_{nist-ssdf-800-218,nist-csf-2.0,eu-cra,pci-dss-4.0,nist-800-161}.json`. Row counts: 115 / 52 / 107 / 200 / 200. All carry `provenance: upstream-osps-guidelines` and `verification: self-attested-via-upstream` (auto-extracted from upstream OSPS Baseline `guidelines[]` array at the pinned commit; not independently hand-verified — see verification posture below).
 

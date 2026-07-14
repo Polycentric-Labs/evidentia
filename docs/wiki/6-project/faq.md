@@ -150,7 +150,7 @@ tooling — exactly how Evidentia's own
 
 Every tagged release ships PEP 740 attestations on the wheels + sdist
 (Sigstore-signed, Rekor-logged), a cosign SLSA Provenance v1 attestation
-on the container, and a CycloneDX 1.6 SBOM attached to the GitHub
+on the container, and a CycloneDX 1.7 SBOM attached to the GitHub
 Release. Consumer-side recipes for `pip`/`pypi-attestations`, `cosign`,
 `osv-scanner`, and SLSA provenance verification are in
 [Project → Verification](../6-project/verification.md). The supply-chain

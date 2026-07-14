@@ -1,0 +1,49 @@
+# Dependency-review PR gate (v0.11 hygiene H2).
+#
+# GitHub-native diff-level dependency gate: blocks a PR that INTRODUCES a
+# known-vulnerable dependency before it can land in uv.lock / package-lock.json.
+# Complements the existing layers rather than duplicating them:
+#   - Dependabot reacts AFTER a vulnerable dependency is already in the tree;
+#     this gate rejects it at the PR boundary.
+#   - osv-scanner (test.yml / release.yml) scans the CURRENT lockfile closure;
+#     this gate scans the PR's dependency DELTA via the Dependency Graph diff
+#     API, so a new-dep regression is attributed to the PR that adds it.
+#
+# The action needs no checkout (it queries the dependency-diff REST API for
+# base..head) and no write scope (findings land in the check run + job
+# summary; no PR comment, keeping the workflow read-only).
+#
+# v5.0.0 runs on node24 and needs Actions Runner >= v2.327.1 — GitHub-hosted
+# runners are well past that (2.335.x observed on this repo's runs).
+#
+# NOT in the required-checks ruleset (that is a separate, Allen-gated settings
+# action); as a plain PR check a red run is visible on the PR without stalling
+# the merge queue, which is also why there is no merge_group trigger — the
+# action requires pull_request context for its base/head diff.
+name: dependency-review
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-review:
+    name: Dependency review (PR delta)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Review PR dependency changes
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294  # v5.0.0
+        with:
+          # Block any severity — a KNOWN-vulnerable NEW dependency has no
+          # business landing regardless of score; the existing osv-scanner
+          # allowlist (osv-scanner.toml) governs already-present advisories,
+          # which this diff-level gate never re-litigates.
+          fail-on-severity: low

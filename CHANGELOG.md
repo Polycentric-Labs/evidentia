@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.18] - 2026-07-14
+
+**Theme**: *Container rebuild on a fresh hardened base (day-N CVE response).* A rebuild-only patch fired by the post-publish rescan's fixable-only gate: the 2026-07-13 weekly rescan of the published v0.10.17 image surfaced **DEBIAN-CVE-2026-34743** (xz-utils/liblzma 5.8.1-1, Medium 5.3) with a fix published upstream (`5.8.1-1+deb13u1`), and the standing policy is *"a fix is now available → rebuild the published image on a fresh base"*. Both pinned bases move to their current digests (the same drift the base-freshness sentinel flagged in issue #182) and the image is rebuilt, smoke-tested, re-signed, and re-attested end-to-end; the post-publish rescan re-verifies the published image's CVE posture after release. This tag also ships the v0.11 cycle-open gate work that landed on `main` after v0.10.17 (the ROADMAP-currency gate + ROADMAP restructure below, previously tracked as Unreleased). No package code changes beyond the version bump.
+
 ### Added
 
 - **ROADMAP-currency gate** (`scripts/check_roadmap_currency.py`) — the
@@ -28,6 +32,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Container base digests refreshed (day-N CVE rebuild)** — the
+  `dhi.io/python:3.13` distroless runtime pin moves
+  `b41747df…` → `1842a6b9…`, and the `python:3.13-slim` builder pin moves
+  `c33f0bc4…` → `eb43ff12…` in lockstep across its four sites (the main
+  Dockerfile, the demo Dockerfile's `assets` stage, and the two
+  interpreter-parity `pip-compile` runner pins in `release.yml` /
+  `container-build.yml`). Fired by the post-publish rescan's fixable-only
+  policy on DEBIAN-CVE-2026-34743; the 28 unfixable base-OS advisories
+  remain notify-only per that policy, and the rescan re-verifies the
+  published image after this release.
 - **ROADMAP restructured at the v0.11 cycle open** — the v0.10.x line is
   closed SHIPPED (16 published releases), the four mis-marked entries
   (v0.10.5 / v0.10.9 / v0.10.11 / v0.10.12) are corrected to SHIPPED, the

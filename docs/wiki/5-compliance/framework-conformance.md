@@ -108,7 +108,7 @@ frameworks:
 |---|---|
 | **PEP 740** attestations on every wheel + sdist | Sigstore-signed, Rekor-logged |
 | **Sigstore / cosign** SLSA Provenance v1 on the container | SLSA Build L3 |
-| **CycloneDX 1.6 SBOM** attached to each GitHub Release | NIST SP 800-218 PS.3 / SR controls |
+| **CycloneDX 1.7 SBOM** attached to each GitHub Release | NIST SP 800-218 PS.3 / SR controls |
 | **OpenSSF Scorecard 6.5+** | Supply-chain hygiene baseline |
 
 Consumer-side recipes to verify each of these yourself are in

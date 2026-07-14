@@ -15,10 +15,12 @@
 # once it lapses the gate fails until the entry is re-affirmed or
 # removed. osv-scanner also suppresses aliases of an ignored id.
 
-[[IgnoredVulns]]
-id = "PYSEC-2025-183"
-ignoreUntil = 2026-11-21
-reason = "pyjwt CVE-2025-45768: DISPUTED, no fix exists. The pyjwt maintainer disputes the advisory (HMAC key length is the calling application's choice, not a library defect); every pyjwt release is flagged, so there is no first_patched version. pyjwt reaches Evidentia only transitively (sigstore / mcp / msal / okta / pygithub / snowflake-connector-python) and Evidentia exposes no operator-chosen-key JWT-minting surface. Operator-confirmed accept 2026-05-21 (docs/releases/reviews/security-review-v0.9.8.md); re-affirmed for v0.9.9. Re-validate by 2026-11-21."
+# (v0.10.18) The disputed pyjwt entry (PYSEC-2025-183, accepted 2026-05-21,
+# re-affirmed v0.9.9) was REMOVED 2026-07-14: the advisory's affected range was
+# bounded upstream to last_affected 2.10.1 (previously every release was
+# flagged with no first_patched version), and the locked pyjwt is 2.13.0 —
+# outside the range (OSV API confirmed; osv-scanner reported the entry as an
+# unused ignore). Re-add with a fresh disposition if the range widens again.
 
 # (v0.10.10) The accepted tuf MEDIUM (GHSA-qp9x-wp8f-qgjj, "platform-dependent
 # delegation path matching", accepted 2026-05-29 in the v0.10.7 cycle) was
@@ -33,15 +35,12 @@ reason = "pyjwt CVE-2025-45768: DISPUTED, no fix exists. The pyjwt maintainer di
 # relaxed the exact `aiohttp==3.13.4` pin to `aiohttp<4.0,>=3.10`, so aiohttp
 # now floats to 3.14.1 (>= the 3.14.0 fix release) in uv.lock.
 
-# Accepted LOW (GitHub-reviewed severity LOW; CVSS3.1 5.3 AV:L). No fixed
-# version exists (the affected range runs through the latest torch 2.12.0),
-# so there is no upgrade path to clear it. REMOVAL TRIGGER: torch ships a
-# release excluded from GHSA-rrmf-rvhw-rf47's affected range (or the
-# advisory is withdrawn).
-[[IgnoredVulns]]
-id = "GHSA-rrmf-rvhw-rf47"
-ignoreUntil = 2026-12-10
-reason = "torch 2.11.0 (CVE-2025-3000 / PYSEC-2025-194, CVSS3.1 5.3 AV:L, CWE-119): local-only memory corruption in torch.jit.script on attacker-supplied script input (VulDB-sourced, pytorch/pytorch#149623). NVD-published 2025-03-31 but only GitHub-reviewed 2026-06-10 (github_reviewed_at 18:02 UTC), which is why it first surfaces in this scan. NO FIX EXISTS: the affected range covers every torch release through the latest 2.12.0, so no upgrade clears it. NOT REACHABLE from Evidentia: torch is transitive-only (sentence-transformers <- evidentia-eval [faithfulness-semantic] optional extra), zero 'torch' references in any packages/*/src source (grep-confirmed 2026-06-10), Evidentia never invokes torch.jit.script and never compiles TorchScript from untrusted input -- sentence-transformers uses torch for embedding inference on operator-chosen models only; the attack additionally requires local code execution (AV:L), at which point the attacker already runs code locally. Operator-confirmed accept 2026-06-10 (v0.10.9 cycle). Re-validate by 2026-12-10."
+# (v0.10.18) The accepted torch LOW (GHSA-rrmf-rvhw-rf47 / CVE-2025-3000,
+# accepted 2026-06-10 in the v0.10.9 cycle) was REMOVED 2026-07-14: its
+# documented removal trigger fired — torch 2.13.0 (floated by the setuptools
+# PYSEC-2026-3447 fix bump) is outside the advisory's affected range
+# (last_affected 2.12.0, OSV API confirmed; osv-scanner reported the entry as
+# an unused ignore).
 
 # (v0.10.14 / P2 DHI migration) Accepted nominal HIGH, availability-only, that is FIXED
 # in the shipped container as of P1 (cryptography is now a direct evidentia-core dep

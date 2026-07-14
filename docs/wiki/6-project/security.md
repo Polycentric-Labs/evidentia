@@ -73,7 +73,7 @@ a vulnerability in Evidentia's own code.
 
 | Version | Status | Reason |
 |---------|--------|--------|
-| **`0.10.17`** | ✅ **Supported** | Latest patch. See the [CHANGELOG](https://github.com/Polycentric-Labs/evidentia/blob/main/CHANGELOG.md) and the latest `docs/releases/reviews/security-review-*.md` for what shipped and the CVE posture at this release. |
+| **`0.10.18`** | ✅ **Supported** | Latest patch. See the [CHANGELOG](https://github.com/Polycentric-Labs/evidentia/blob/main/CHANGELOG.md) and the latest `docs/releases/reviews/security-review-*.md` for what shipped and the CVE posture at this release. |
 | Earlier patches | ❌ Deprecated | Pre-v1.0 single-supported-patch policy; upgrade to the latest patch. |
 | Legacy `controlbridge*` packages | ❌ Yanked from PyPI | Every version of every legacy package was yanked at the v0.6.0 rename. Upgrade path documented in [`RENAMED.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/archive/RENAMED.md). |
 
@@ -164,7 +164,7 @@ Every Evidentia release ships with cryptographic provenance:
 - **PEP 740 attestations** on every wheel + sdist, signed via the
   GitHub Actions OIDC identity (Sigstore + Rekor public
   transparency log).
-- **CycloneDX 1.6 SBOM** generated from `uv.lock`, attached to
+- **CycloneDX 1.7 SBOM** generated from `uv.lock`, attached to
   every GitHub Release.
 - **Sigstore/Rekor signing** of every OSCAL Assessment Results
   document (or GPG `.asc` signatures in air-gap mode).
@@ -175,7 +175,7 @@ Verify a release wheel:
 pip install pypi-attestations
 pypi-attestations verify pypi \
   --repository https://github.com/Polycentric-Labs/evidentia \
-  "pypi:evidentia-0.10.17-py3-none-any.whl"
+  "pypi:evidentia-0.10.18-py3-none-any.whl"
 ```
 
 If verification fails, **stop and report immediately** via the

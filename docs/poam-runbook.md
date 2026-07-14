@@ -7,7 +7,7 @@ Plan-of-Action-and-Milestones (POA&M) is the federal-compliance
 mechanism for tracking the remediation of identified gaps. This
 runbook walks an operator through the end-to-end Evidentia POA&M
 workflow: bootstrap from a gap report → track milestones → emit
-OSCAL POA&M 1.1.2 for auditor handoff.
+OSCAL POA&M 1.2.1 for auditor handoff.
 
 ## Quick reference
 
@@ -158,7 +158,7 @@ passed.
 
 ## Workflow 5 — OSCAL POA&M emit
 
-For auditor handoff, emit OSCAL POA&M 1.1.2 JSON:
+For auditor handoff, emit OSCAL POA&M 1.2.1 JSON:
 
 ```python
 from evidentia_core.gap_store import load_latest_report
@@ -172,7 +172,7 @@ print(json.dumps(poam_doc, indent=2))
 
 The emit includes:
 
-- **`metadata`** — title, organization, oscal-version 1.1.2,
+- **`metadata`** — title, organization, oscal-version 1.2.1,
   cross-references to the source gap report
 - **`observations[]`** — one per POA&M item (the "what we noticed")
 - **`risks[]`** — one per POA&M item with milestones as
