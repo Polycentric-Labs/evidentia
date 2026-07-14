@@ -97,6 +97,7 @@ jobs:
         run: |
           set -euo pipefail
           fail=0
+          # tool-check: ok require  (a shell function defined on the next line, not an external tool)
           require() {
             local file="$1"; local token="$2"
             if ! grep -qF -- "$token" "$file"; then
@@ -198,6 +199,7 @@ jobs:
             --repo Polycentric-Labs/evidentia
           test -s evidentia-sbom.cdx.json
           rc=0
+          # tool-check: ok osv-scanner  (installed by the prior curl step "Install osv-scanner" in this job)
           osv-scanner scan source -L evidentia-sbom.cdx.json > osv-recipe.out 2>&1 || rc=$?
           cat osv-recipe.out
           if [ "$rc" -gt 1 ]; then
