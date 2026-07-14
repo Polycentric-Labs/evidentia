@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.10.18] - 2026-07-13
+## [0.10.18] - 2026-07-14
 
 **Theme**: *Container rebuild on a fresh hardened base (day-N CVE response).* A rebuild-only patch fired by the post-publish rescan's fixable-only gate: the 2026-07-13 weekly rescan of the published v0.10.17 image surfaced **DEBIAN-CVE-2026-34743** (xz-utils/liblzma 5.8.1-1, Medium 5.3) with a fix published upstream (`5.8.1-1+deb13u1`), and the standing policy is *"a fix is now available → rebuild the published image on a fresh base"*. Both pinned bases move to their current digests (the same drift the base-freshness sentinel flagged in issue #182) and the image is rebuilt, smoke-tested, re-signed, and re-attested end-to-end; the post-publish rescan re-verifies the published image's CVE posture after release. This tag also ships the v0.11 cycle-open gate work that landed on `main` after v0.10.17 (the ROADMAP-currency gate + ROADMAP restructure below, previously tracked as Unreleased). No package code changes beyond the version bump.
 

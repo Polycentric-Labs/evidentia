@@ -120,7 +120,7 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 
 ## Recent Releases
 
-**v0.10.18 (2026-07-13)** — *Container rebuild on a fresh hardened base*. **ROADMAP-currency gate** (`scripts/check_roadmap_currency.py`), the roadmap's status headings must agree with the CHANGELOG's shipped `## [X.Y.Z]` blocks: nothing PLANNED/RESERVED that has shipped, no SHIPPED entries inside a PLANNED cycle umbrella, exactly one open cycle, and the open cycle must link an on-disk plan doc.
+**v0.10.18 (2026-07-14)** — *Container rebuild on a fresh hardened base*. **ROADMAP-currency gate** (`scripts/check_roadmap_currency.py`), the roadmap's status headings must agree with the CHANGELOG's shipped `## [X.Y.Z]` blocks: nothing PLANNED/RESERVED that has shipped, no SHIPPED entries inside a PLANNED cycle umbrella, exactly one open cycle, and the open cycle must link an on-disk plan doc.
 
 **v0.10.17 (2026-07-09)** — *v0.10.x hardening close-out*. **Release-pipeline preflight dry-run**, `release.yml` now accepts a manual `workflow_dispatch` that runs the full pre-publish path (the SSOT gate suite + wheels + per-package SBOMs + the reproducible-build double-build + the container-built-from-local-wheels + the image smoke tests) **without publishing**, so the failure classes that previously surfaced only at tag time (a base/dep regression, a `uvx` exit-127, a `pip-compile` hash mismatch, the v0.10.14 / v0.10.15 ghost-tag failures) can be caught on-demand before a tag is cut.
 

@@ -1595,7 +1595,7 @@ Opened 2026-05-21 following a competitive/integration research pass
 (see [`docs/integration-survey.md`](integration-survey.md) and
 [`docs/positioning-and-value.md`](positioning-and-value.md) §5.5 /
 §5.6.A). **Closed 2026-07-09 with v0.10.17**, followed post-close by a
-day-N container-rebuild patch (v0.10.18, 2026-07-13) — 17 published
+day-N container-rebuild patch (v0.10.18, 2026-07-14) — 17 published
 releases (v0.10.0 – v0.10.13 + v0.10.16 – v0.10.18; the v0.10.14 /
 v0.10.15 tags were never published: the atomic-release gate stopped
 both runs with nothing shipped — see the v0.10.16 entry below). The v0.10.x
@@ -2018,7 +2018,7 @@ performance reporting activated (its prior "green" job had never
 uploaded — a lesson-9 catch); CI job timeout caps; and three
 doc-accuracy fixes.
 
-### v0.10.18 — Day-N container rebuild — SHIPPED (released 2026-07-13)
+### v0.10.18 — Day-N container rebuild — SHIPPED (released 2026-07-14)
 
 Rebuild-only patch fired by the post-publish rescan's fixable-only
 gate: DEBIAN-CVE-2026-34743 (xz-utils 5.8.1-1, Medium 5.3) became
