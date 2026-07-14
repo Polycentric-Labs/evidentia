@@ -115,6 +115,7 @@ jobs:
 
       - name: Validate security-insights.yml against the Security Insights v2.2.0 schema
         run: |
+          # tool-check: ok cue  (installed by the prior curl step "Install cue" in this job)
           cue vet -d '#SecurityInsights' \
             .github/schemas/security-insights-v2.2.0.cue security-insights.yml
           echo "security-insights.yml conforms to Security Insights v2.2.0."
