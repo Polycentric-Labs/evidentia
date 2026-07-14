@@ -28,6 +28,11 @@ permissions: read-all
 jobs:
   batch-fuzzing:
     runs-on: ubuntu-latest
+    # Runtime cap (same rationale as the dast/codspeed caps, PR #172): the
+    # fuzz budget is fuzz-seconds=1800 (30 min) + fuzzer build time, so a
+    # healthy run fits well under 60 minutes — a hung build or a wedged
+    # fuzzer should not burn the 6-hour default ceiling on a DAILY cron.
+    timeout-minutes: 60
     steps:
       - name: Build Fuzzers
         id: build

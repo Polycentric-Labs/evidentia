@@ -91,3 +91,31 @@ jobs:
           else
             echo "::warning::.local/pre-release-review/osps-conformance.yaml not present (gitignored — won't exist on fresh clones). Skipping schema check."
           fi
+
+      # v0.11 H6: gate security-insights.yml against the OFFICIAL OpenSSF
+      # Security Insights v2.2.0 schema, so a manifest edit (or a stale field)
+      # that stops conforming fails PR CI instead of silently degrading what
+      # the OSPS Baseline tooling / CLOMonitor / LFX Insights can read. The
+      # spec publishes CUE, not JSON Schema — the vendored copy at
+      # .github/schemas/security-insights-v2.2.0.cue is byte-identical to
+      # spec/schema.cue at ossf/security-insights-spec tag v2.2.0
+      # (sha256 4e4b61470b5484fc8969f2a8a77ffbe0712a7c8a870c2079188f246c14cd58b1);
+      # bump the vendored file together with header.schema-version. First
+      # local vet fired RED on the real manifest (missing required
+      # security.tools[].rulesets) before the fix — the gate demonstrably
+      # checks something.
+      - name: Install cue (v0.17.0, checksum-verified)
+        run: |
+          curl -sSfL https://github.com/cue-lang/cue/releases/download/v0.17.0/cue_v0.17.0_linux_amd64.tar.gz \
+            -o /tmp/cue.tar.gz
+          echo "e22219a1cb520ab3d660a486ed2222bb7b8e9cb9502a951ce6b8ac668695713f  /tmp/cue.tar.gz" | sha256sum -c -
+          mkdir -p "$HOME/.local/bin"
+          tar -xzf /tmp/cue.tar.gz -C "$HOME/.local/bin" cue
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Validate security-insights.yml against the Security Insights v2.2.0 schema
+        run: |
+          # tool-check: ok cue  (installed by the prior curl step "Install cue" in this job)
+          cue vet -d '#SecurityInsights' \
+            .github/schemas/security-insights-v2.2.0.cue security-insights.yml
+          echo "security-insights.yml conforms to Security Insights v2.2.0."
