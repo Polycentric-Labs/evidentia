@@ -106,7 +106,7 @@ gh release download v0.10.18 --pattern 'evidentia-sbom.cdx.json' \
   --repo Polycentric-Labs/evidentia
 
 # Scan for vulnerabilities
-osv-scanner scan --sbom evidentia-sbom.cdx.json
+osv-scanner scan source -L evidentia-sbom.cdx.json
 
 # Expected output: "No issues found" (or surfaced advisories with severities).
 ```
@@ -119,7 +119,7 @@ gh release download v0.10.18 --pattern 'evidentia-sbom.cdx.json' `
   --repo Polycentric-Labs/evidentia
 
 # Scan for vulnerabilities
-osv-scanner scan --sbom evidentia-sbom.cdx.json
+osv-scanner scan source -L evidentia-sbom.cdx.json
 
 # Expected output: "No issues found" (or surfaced advisories with severities).
 ```

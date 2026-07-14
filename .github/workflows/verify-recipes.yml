@@ -1,0 +1,229 @@
+# CI-test of the PUBLISHED consumer-verification recipes (v0.11 hygiene H3).
+#
+# docs/verification.md (and the Release-body stanza release.yml assembles)
+# publish the exact commands a consumer runs to verify a release: PEP 740
+# wheel attestations, the cosign container signature, the SLSA provenance
+# attestation, `gh attestation verify`, and the SBOM download + osv-scan.
+# Until now those recipes were exercised once, by hand, at post-tag time —
+# nothing stopped them rotting between releases (a cosign flag rename, a
+# PyPI filename change, an osv-scanner CLI shift). This workflow runs the
+# published recipes weekly against the LATEST GitHub Release, so a broken
+# recipe surfaces as a red run instead of in a consumer's terminal.
+# On-thesis: a compliance tool proves its own provenance stays verifiable.
+#
+# Lesson-9 coverage discipline (a green job that exercised nothing is a
+# lie): every step asserts WHAT it covered, not just that commands exited
+# 0 — the PEP 740 sweep must verify exactly the 8 published packages, and
+# the recipe-drift guard fails the run if docs/verification.md no longer
+# contains the command shapes this workflow re-states (so the doc cannot
+# drift away from what is being tested without this workflow noticing).
+#
+# Hard-fail posture (verify-osps-conformance precedent, NOT detect-and-
+# nudge): a failing verification of published artifacts is always
+# actionable — either the recipe rotted (fix the doc + this workflow
+# together) or verification infrastructure is down (re-run). Weekly
+# Fridays 10:07 UTC — offset from rescan (Mon), base-freshness (Tue),
+# python-ceiling (Wed), dast (Thu).
+name: verify-recipes
+
+on:
+  schedule:
+    - cron: "7 10 * * 5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-recipes
+  cancel-in-progress: false
+
+jobs:
+  verify-published-recipes:
+    name: Run the published verification recipes against the latest Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout (for docs/verification.md + release.yml drift guard)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      # uvx runs pypi-attestations below. Cache disabled: nothing here is
+      # sync-heavy, and this job handles release artifacts (verification
+      # only, but keep the artifact-adjacent-job convention: no shared cache).
+      - name: Install uv
+        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3  # v8.3.0
+        with:
+          version: "latest"
+          enable-cache: false
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6  # v4.1.2
+        with:
+          cosign-release: 'v2.4.1'
+
+      # Same pinned scanner the osv gate / rescan use (version + SHA256).
+      - name: Install osv-scanner (v2.4.0, checksum-verified)
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin"
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.4.0/osv-scanner_linux_amd64 \
+            -o "$HOME/.local/bin/osv-scanner"
+          echo "15314940c10d26af9c6649f150b8a47c1262e8fc7e17b1d1029b0e479e8ed8a0  $HOME/.local/bin/osv-scanner" | sha256sum -c -
+          chmod +x "$HOME/.local/bin/osv-scanner"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Resolve the latest published Release
+        id: latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG=$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq .tag_name)
+          case "$TAG" in
+            v[0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "::error::latest release tag '$TAG' is not a vX.Y.Z tag"; exit 1 ;;
+          esac
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "Verifying recipes against ${TAG}"
+
+      # Recipe-drift guard: this workflow re-states the doc's commands (with
+      # the version substituted), so the doc must still publish the same
+      # command shapes. A doc edit that changes a recipe without updating
+      # this workflow — or vice versa — fails here, loudly.
+      - name: Assert docs still publish the recipes this workflow tests
+        run: |
+          set -euo pipefail
+          fail=0
+          # tool-check: ok require  (a shell function defined on the next line, not an external tool)
+          require() {
+            local file="$1"; local token="$2"
+            if ! grep -qF -- "$token" "$file"; then
+              echo "::error file=$file::published recipe drifted: expected token not found: $token"
+              fail=1
+            fi
+          }
+          require docs/verification.md "pypi-attestations verify pypi"
+          require docs/verification.md "--repository https://github.com/Polycentric-Labs/evidentia"
+          require docs/verification.md "cosign verify ghcr.io/polycentric-labs/evidentia"
+          require docs/verification.md "--certificate-oidc-issuer"
+          require docs/verification.md "cosign verify-attestation"
+          require docs/verification.md "--type slsaprovenance1"
+          require docs/verification.md "gh release download"
+          require docs/verification.md "osv-scanner scan source -L evidentia-sbom.cdx.json"
+          require .github/workflows/release.yml "gh attestation verify oci://ghcr.io/polycentric-labs/evidentia"
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::update docs/verification.md and this workflow TOGETHER"
+            exit 1
+          fi
+          echo "Recipe-drift guard: all published command shapes present."
+
+      # docs/verification.md §"Verifying PEP 740 attestations" — the 8-package
+      # sweep. Coverage assertion: exactly 8 OK lines, or the run fails.
+      - name: 'Recipe 1 — PEP 740: verify all 8 wheels on PyPI'
+        env:
+          VERSION: ${{ steps.latest.outputs.version }}
+        run: |
+          set -euo pipefail
+          ok=0
+          for pkg in evidentia evidentia_ai evidentia_api evidentia_collectors \
+                     evidentia_core evidentia_eval evidentia_integrations evidentia_mcp; do
+            out=$(uvx --from pypi-attestations==0.0.29 pypi-attestations verify pypi \
+              --repository https://github.com/Polycentric-Labs/evidentia \
+              "pypi:${pkg}-${VERSION}-py3-none-any.whl")
+            echo "$out"
+            echo "$out" | grep -q "^OK: ${pkg}-${VERSION}-py3-none-any.whl" && ok=$((ok + 1))
+          done
+          if [ "$ok" -ne 8 ]; then
+            echo "::error::PEP 740 sweep verified ${ok}/8 wheels — coverage assertion failed"
+            exit 1
+          fi
+          echo "PEP 740 coverage: 8/8 wheels verified OK."
+
+      # docs/verification.md §"Verifying the cosign-signed container".
+      - name: 'Recipe 2 — cosign: verify the container signature'
+        env:
+          TAG: ${{ steps.latest.outputs.tag }}
+        run: |
+          set -euo pipefail
+          cosign verify "ghcr.io/polycentric-labs/evidentia:${TAG}" \
+            --certificate-identity-regexp "https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/${TAG}" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            > cosign-verify.json
+          # Coverage assertion: at least one verified signature payload came back.
+          python3 -c "import json,sys; sigs=json.load(open('cosign-verify.json')); sys.exit(0 if len(sigs)>=1 else 1)" \
+            || { echo "::error::cosign verify returned no verified signatures"; exit 1; }
+          echo "cosign signature verified for ${TAG}."
+
+      # docs/verification.md §"Verifying SLSA Provenance v1".
+      - name: 'Recipe 3 — cosign: verify the SLSA provenance attestation'
+        env:
+          TAG: ${{ steps.latest.outputs.tag }}
+        run: |
+          set -euo pipefail
+          cosign verify-attestation "ghcr.io/polycentric-labs/evidentia:${TAG}" \
+            --certificate-identity-regexp "https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/${TAG}" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            --type slsaprovenance1 \
+            > cosign-attestation.json
+          python3 -c "import json,sys; atts=json.load(open('cosign-attestation.json')); sys.exit(0 if atts else 1)" \
+            || { echo "::error::cosign verify-attestation returned no attestation"; exit 1; }
+          echo "SLSA provenance attestation verified for ${TAG}."
+
+      # The Release-body stanza recipe (assembled in release.yml).
+      - name: 'Recipe 4 — gh attestation verify (Release-body stanza)'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.latest.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh attestation verify "oci://ghcr.io/polycentric-labs/evidentia:${TAG}" \
+            -R Polycentric-Labs/evidentia
+          echo "gh attestation verify passed for ${TAG}."
+
+      # docs/verification.md §"Verifying the CycloneDX SBOM". The doc tells
+      # consumers advisories are possible output ("No issues found" OR
+      # surfaced advisories) — so exit 1 (findings) is the recipe WORKING;
+      # any other non-zero exit is the recipe broken. Consumers run without
+      # the repo allowlist, so a known, dispositioned advisory (e.g. the
+      # osv-scanner.toml-accepted dev-closure entry) legitimately appears.
+      - name: 'Recipe 5 — SBOM: download + osv-scan'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.latest.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release download "${TAG}" --pattern 'evidentia-sbom.cdx.json' \
+            --repo Polycentric-Labs/evidentia
+          test -s evidentia-sbom.cdx.json
+          rc=0
+          # tool-check: ok osv-scanner  (installed by the prior curl step "Install osv-scanner" in this job)
+          osv-scanner scan source -L evidentia-sbom.cdx.json > osv-recipe.out 2>&1 || rc=$?
+          cat osv-recipe.out
+          if [ "$rc" -gt 1 ]; then
+            echo "::error::osv-scanner recipe broke (exit $rc, not a findings exit)"
+            exit 1
+          fi
+          # Coverage assertion: the scanner actually parsed THIS SBOM.
+          grep -q "evidentia-sbom.cdx.json" osv-recipe.out \
+            || { echo "::error::osv-scanner output never references the SBOM — recipe did not scan it"; exit 1; }
+          echo "SBOM recipe works (exit ${rc}; findings, if any, are documented consumer-visible output)."
+
+      - name: Coverage summary
+        env:
+          TAG: ${{ steps.latest.outputs.tag }}
+        run: |
+          {
+            echo "## verify-recipes — ${TAG}"
+            echo ""
+            echo "| Published recipe | Coverage asserted |"
+            echo "|---|---|"
+            echo "| PEP 740 wheel attestations | 8/8 packages verified OK |"
+            echo "| cosign container signature | >=1 verified signature payload |"
+            echo "| cosign SLSA provenance (slsaprovenance1) | attestation body present |"
+            echo "| gh attestation verify (Release stanza) | exit 0 |"
+            echo "| SBOM download + osv-scan | SBOM parsed by scanner |"
+            echo "| Recipe-drift guard | doc command shapes intact |"
+          } >> "$GITHUB_STEP_SUMMARY"
