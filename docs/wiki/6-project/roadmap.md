@@ -3,7 +3,7 @@
 
 # Evidentia roadmap
 
-**Last updated: v0.10.17 (planning, July 2026).**
+**Last updated: v0.10.18 (planning, July 2026).**
 
 > **Engineering practices** — how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
@@ -1597,10 +1597,11 @@ ruff clean.**
 Opened 2026-05-21 following a competitive/integration research pass
 (see [`docs/integration-survey.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/integration-survey.md) and
 [`docs/positioning-and-value.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/positioning-and-value.md) §5.5 /
-§5.6.A). **Closed 2026-07-09 with v0.10.17** — 16 published releases
-(v0.10.0 – v0.10.13 + v0.10.16 + v0.10.17; the v0.10.14 / v0.10.15
-tags were never published: the atomic-release gate stopped both runs
-with nothing shipped — see the v0.10.16 entry below). The v0.10.x
+§5.6.A). **Closed 2026-07-09 with v0.10.17**, followed post-close by a
+day-N container-rebuild patch (v0.10.18, 2026-07-14) — 17 published
+releases (v0.10.0 – v0.10.13 + v0.10.16 – v0.10.18; the v0.10.14 /
+v0.10.15 tags were never published: the atomic-release gate stopped
+both runs with nothing shipped — see the v0.10.16 entry below). The v0.10.x
 line is the home for the research-driven feature
 surface: because it brings meaningful new feature surface, it is a
 minor bump from v0.9.9 rather than a continuation of v0.9.x patches.
@@ -2020,6 +2021,17 @@ performance reporting activated (its prior "green" job had never
 uploaded — a lesson-9 catch); CI job timeout caps; and three
 doc-accuracy fixes.
 
+### v0.10.18 — Day-N container rebuild — SHIPPED (released 2026-07-14)
+
+Rebuild-only patch fired by the post-publish rescan's fixable-only
+gate: DEBIAN-CVE-2026-34743 (xz-utils 5.8.1-1, Medium 5.3) became
+fixable in the published v0.10.17 image, so both pinned bases move to
+their current digests (the drift the base-freshness sentinel flagged
+in issue #182) and the container is rebuilt, re-signed, and
+re-attested. Also carries the v0.11 cycle-open gate work
+(ROADMAP-currency gate + ROADMAP restructure) that landed on `main`
+after v0.10.17. No package code changes.
+
 ## v0.11 — Federal-compliance theme + AI governance — PLANNED
 
 **The open cycle** (opened 2026-07-09). Full plan:
@@ -2040,9 +2052,23 @@ ratification asks. Sourced from Phase B audit v3 + integration plan
   Stream E4: OSS engine for the audit-quality middle layer between
   Trestle (raw OSCAL SDK) and RegScale (commercial FedRAMP package
   generator).
-- **Evaluate OSCAL 1.2.1 → 1.2.2** — OSCAL 1.2.2 released
-  2026-04-30; assess the schema delta against the current 1.2.1
-  surface before adopting.
+- **Evaluate OSCAL 1.2.1 → 1.2.2** — DONE; **VERDICT (ratified
+  2026-07-13): DEFER-WITH-TRIGGER — stay on 1.2.1 for emitted
+  documents.** The 1.2.2 delta is content-free for every surface
+  Evidentia emits (all nine published JSON schemas byte-identical to
+  1.2.1 except the `$id` version string; verified by release-artifact
+  diff), while the ecosystem hard-rejects 1.2.2 today:
+  compliance-trestle v4.2.0 pins `OSCAL_VERSION_REGEX ^1\.2\.[0-1]$`
+  (its 1.2.2 support PR #2216 is unmerged) and oscal-cli v3.2.0
+  deliberately ships 1.2.1 bindings — adopting would break the B7
+  round-trip tests and every consumer running the published
+  `trestle validate` recipe, for zero capability. Adoption triggers:
+  a trestle release accepting 1.2.2 (primary; corroborate with
+  oscal-cli 1.2.2 bindings at adopt time), any external 1.2.2
+  requirement, and a standing re-check at each quarterly
+  practice-delta pass (next 2026-10-01). Full verdict + adopt-time
+  touchpoint list: `docs/releases/plans/v0.11-plan.md` §Wave 1.
+  OSCAL-emitting v0.11 work proceeds on 1.2.1.
 - **`evidentia incident emit --format dora-art-17`** (DoraIncident
   Pydantic record + `classify_dora()` per RTS 2024/1772 Art. 8 +
   Art. 9; auto-POA&M creation for 4h/24h/72h/1-month reporting

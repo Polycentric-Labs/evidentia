@@ -23,7 +23,7 @@
 | `evidentia_core.models.finding.SecurityFinding` (library class name) | `evidentia_core.models.finding.Finding` (same class, new canonical name) | v0.10.1 (2026-05-23) | **v1.0.0** (earliest major bump) | The `SecurityFinding` name is kept as a backward-compatible alias for ≥ 1 minor cycle per the deprecation policy. Both names refer to the same class — no runtime difference, no behavior change, `isinstance(obj, SecurityFinding)` and `isinstance(obj, Finding)` both succeed. The rename aligns with OCSF's "Finding" terminology (Compliance Finding, Detection Finding). No `DeprecationWarning` is emitted in v0.10.1 to avoid spamming the ~50+ existing call sites — the alias is silent. Operators / integrators are encouraged to switch to `Finding` in new code; existing code keeps working unchanged. |
 | `evidentia ai-gov set-omb-impact` (CLI) + `OMBImpactRequest` / `POST …/omb-impact` (API) — OMB **M-24-10** impact leveling | `evidentia ai-gov set-high-impact` + `HighImpactRequest` — OMB **M-25-21** high-impact determination | v0.10.12 (2026-06-23) | **v1.0.0** | OMB M-24-10 was rescinded 2025-04-03 and superseded by M-25-21. The legacy M-24-10 surface is retained as a backward-compatible alias per the deprecation policy; new code should record the M-25-21 high-impact determination instead. |
 
-No other surfaces are currently deprecated as of v0.10.17.
+No other surfaces are currently deprecated as of v0.10.18.
 
 ---
 

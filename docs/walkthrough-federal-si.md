@@ -316,7 +316,7 @@ authorization-package workflow.
 
 For the federal-SI workflow, the **OSCAL POA&M** is the headline
 artifact. The persona's monthly heartbeat is: run gap analysis →
-emit POA&M items → format as OSCAL 1.1.2 plan-of-action-and-
+emit POA&M items → format as OSCAL 1.2.1 plan-of-action-and-
 milestones → submit to FedRAMP PMO via the RFC-0024-compliant
 machine-readable channel.
 
@@ -342,7 +342,7 @@ evidentia gap analyze \
 #    file-backed POA&M store:
 evidentia poam create --from-gap-report /tmp/walkthrough-gap-report.json
 
-# 3. Emit OSCAL 1.1.2 plan-of-action-and-milestones. This is a
+# 3. Emit OSCAL 1.2.1 plan-of-action-and-milestones. This is a
 #    LIBRARY function — gap_report_to_oscal_poam() in
 #    evidentia_core.oscal.poam_exporter — with no dedicated CLI verb
 #    in v0.10.6. It consumes the gap report directly:
@@ -381,10 +381,9 @@ OSCAL emit preserves via OSCAL's prop+annotation mechanism. The
 v3.0 template's MS Excel form remains the FedRAMP PMO ingest
 channel; FedRAMP CR26 + RFC-0024 (Class D / High-impact: Nov 1
 2027 initial-compliance; Sept 30 2027 full final) transitions the
-PMO to machine-readable JSON. OSCAL 1.1.2 emit interoperates with
-both. (Note: Evidentia is on OSCAL 1.1.2; the upstream
-compliance-trestle library moved to OSCAL 1.2.1 in April 2026 —
-v0.9.6 upgrade target.)
+PMO to machine-readable JSON. OSCAL 1.2.1 emit interoperates with
+both. (Evidentia has emitted OSCAL 1.2.1 since v0.9.6, aligned with
+the upstream compliance-trestle library.)
 
 ## What this walk-through validates
 
@@ -398,7 +397,7 @@ v0.9.6 upgrade target.)
 | 5 | AI registry persistence — file-backed atomic write | OMB M-25-21 AI Use Case Inventory |
 | 6 | Registry query with tier filter | Inventory roll-ups |
 | 7 | Lifecycle CLI verbs (v0.9.4 P2.3) — update + retire firing audit events | SI compliance ops; pairs with SCR Form out-of-band |
-| 8 | POA&M emit + OSCAL 1.1.2 plan-of-action-and-milestones | 3PAO annual assessment; FedRAMP PMO monthly POA&M; RFC-0024 |
+| 8 | POA&M emit + OSCAL 1.2.1 plan-of-action-and-milestones | 3PAO annual assessment; FedRAMP PMO monthly POA&M; RFC-0024 |
 
 If any step diverges from "expected", file a v0.9.6 bug ticket
 with the actual output. The integration test

@@ -24,7 +24,7 @@ Exit codes:
 
 Prerequisites:
     * ``osv-scanner`` on PATH. CI installs a pinned, checksum-verified
-      v2.3.8 binary; operators install it once (see
+      v2.4.0 binary; operators install it once (see
       ``docs/release-checklist.md`` Step 5).
     * Run via ``uv run`` against a synced workspace so the SBOM
       reflects the full dependency closure.
@@ -74,7 +74,7 @@ def generate_sbom(sbom_path: Path) -> bool:
                 "uvx", "--from", "cyclonedx-bom", "cyclonedx-py", "environment",
                 "-o", str(sbom_path),
                 "--of", "JSON",
-                "--sv", "1.6",
+                "--sv", "1.7",
                 "--pyproject", "packages/evidentia-core/pyproject.toml",
                 sys.executable,
             ],
