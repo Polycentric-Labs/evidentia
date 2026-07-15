@@ -24,6 +24,7 @@ Public submodules + subpackages of `evidentia_core` (import directly, e.g. `from
 - `evidentia_core.evidence_store`
 - `evidentia_core.evidence_store_worm`
 - `evidentia_core.factory_resolver`
+- `evidentia_core.fedramp`
 - `evidentia_core.gap_analyzer`
 - `evidentia_core.gap_diff`
 - `evidentia_core.gap_store`

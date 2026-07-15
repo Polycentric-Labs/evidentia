@@ -3,12 +3,13 @@
 
 > **Auto-generated page.** This page is generated from the live Evidentia codebase by [`scripts/wiki/sync_reference.py`](https://github.com/Polycentric-Labs/evidentia/blob/main/scripts/wiki/sync_reference.py). Do not edit it by hand; change the underlying code/data and re-run the generator (`uv run python scripts/wiki/sync_reference.py`).
 
-Evidentia bundles **15** framework crosswalks (883 control-to-control mapping rows in total). A crosswalk maps controls in a source framework to related controls in a target framework, powering cross-framework gap-analysis efficiency. The **verification** column records the posture: crosswalks marked `self-attested-via-upstream` are auto-extracted from an upstream source and not independently hand-verified; an empty posture marks an Evidentia-authored concordance. Always verify a mapping before relying on it for an audit.
+Evidentia bundles **16** framework crosswalks (1,169 control-to-control mapping rows in total). A crosswalk maps controls in a source framework to related controls in a target framework, powering cross-framework gap-analysis efficiency. The **verification** column records the posture: crosswalks marked `self-attested-via-upstream` are auto-extracted from an upstream source and not independently hand-verified; an empty posture marks an Evidentia-authored concordance. Always verify a mapping before relying on it for an audit.
 
 | Crosswalk file | Source framework | Target framework | Verification | Mapping rows |
 | --- | --- | --- | --- | --- |
 | `fda-524b-appendix1_to_aami-sw96.json` | `fda-524b-appendix1` | `aami-sw96` | self-attested | 9 |
 | `fda-524b-appendix1_to_iso-14971.json` | `fda-524b-appendix1` | `iso-14971` | self-attested | 10 |
+| `fedramp-ksi-2026_to_nist-800-53-rev5.json` | `fedramp-ksi-2026` | `nist-800-53-rev5` | self-attested-via-upstream | 286 |
 | `fedramp-rev5-moderate_to_cmmc-2-l2.json` | `fedramp-rev5-moderate` | `cmmc-2-l2` | — | 32 |
 | `iso-27001-2022_to_nist-800-53-mod.json` | `iso-27001-2022` | `nist-800-53-mod` | — | 23 |
 | `nist-800-53-mod_to_hipaa-security.json` | `nist-800-53-mod` | `hipaa-security` | — | 20 |

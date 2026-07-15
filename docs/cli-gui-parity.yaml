@@ -512,6 +512,11 @@ commands:
     gui: null
     status: exempt
     reason: "Long-running poll daemon; the API exposes read-only daemon-status/history, not a start verb."
+  - cli: "conmon ksi"
+    api: null
+    gui: null
+    status: exempt
+    reason: "Offline document emitter: writes a schema-validated FedRAMP CR26 SDR JSON to local disk (air-gap-first artifact generation, v0.11 Wave 2); no server surface by design."
   - cli: "oscal verify"
     api: "POST /api/oscal/verify"
     gui: "/oscal"

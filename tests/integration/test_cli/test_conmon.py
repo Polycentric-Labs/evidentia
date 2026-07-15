@@ -840,3 +840,138 @@ class TestConmonDedupList:
         assert rows[0]["state"] == "overdue"
         assert "last_dispatched_at" in rows[0]
         assert "suppression_remaining_minutes" in rows[0]
+
+
+# ── ksi (v0.11 Wave 2 — FedRAMP CR26 SDR emit) ────────────────────
+
+
+VALID_KSI_STATUS = """\
+certification_package_overview_uri: "https://provider.example/fedramp/cpo.json"
+document_version: "1.0.0"
+source: "CLI integration tests"
+indicators:
+  KSI-CED-RAT:
+    status: Implemented
+    implementation:
+      - "Quarterly all-hands security training."
+    tests:
+      - "test-training-coverage"
+    evidence:
+      - evidence_type: Report
+        description: "Q2 training completion report"
+        last_updated: 2026-07-01
+    persistence_cycles:
+      - cadence_slug: nist-800-53-rev5-ca7
+"""
+
+
+class TestConmonKsi:
+    def test_emits_schema_valid_sdr(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        status_file = tmp_path / "ksi-status.yaml"
+        status_file.write_text(VALID_KSI_STATUS, encoding="utf-8")
+        state_file = tmp_path / "state.yaml"
+        state_file.write_text("nist-800-53-rev5-ca7: 2026-07-01\n", encoding="utf-8")
+        out = tmp_path / "sdr.json"
+
+        result = runner.invoke(
+            app,
+            [
+                "conmon",
+                "ksi",
+                "--status-file",
+                str(status_file),
+                "--state-file",
+                str(state_file),
+                "--last-updated",
+                "2026-07-14T12:00:00+00:00",
+                "--out",
+                str(out),
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        assert "schema-valid" in _normalize(result.output)
+        assert "1/46" in _normalize(result.output)
+
+        document = json.loads(out.read_text(encoding="utf-8"))
+        assert document["certificationPackageOverviewUri"] == (
+            "https://provider.example/fedramp/cpo.json"
+        )
+        assert document["fedRampRequirements"] == []
+        entry = document["keySecurityIndicators"][0]
+        assert entry["ksiId"] == "KSI-CED-RAT"
+        assert entry["ksiImplementationStatus"] == "Implemented"
+        # The state file drove a dated persistence-cycle statement.
+        assert any(
+            "last completed 2026-07-01" in s for s in entry["ksiImplementation"]
+        )
+        assert document["metadata"]["lastUpdated"] == "2026-07-14T12:00:00+00:00"
+        # Round-trip through the vendored schema, independent of the CLI.
+        from evidentia_core.fedramp import validate_sdr_document
+
+        assert validate_sdr_document(document) == []
+
+    def test_invalid_status_file_exits_2(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        status_file = tmp_path / "bad.yaml"
+        status_file.write_text(
+            "certification_package_overview_uri: x\n", encoding="utf-8"
+        )
+        result = runner.invoke(
+            app,
+            [
+                "conmon",
+                "ksi",
+                "--status-file",
+                str(status_file),
+                "--out",
+                str(tmp_path / "sdr.json"),
+            ],
+        )
+        assert result.exit_code == 2
+        assert "not a valid KSI status file" in _normalize(result.output)
+
+    def test_unknown_indicator_id_exits_2(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        status_file = tmp_path / "unknown.yaml"
+        status_file.write_text(
+            VALID_KSI_STATUS.replace("KSI-CED-RAT", "KSI-FAKE-XXX"),
+            encoding="utf-8",
+        )
+        result = runner.invoke(
+            app,
+            [
+                "conmon",
+                "ksi",
+                "--status-file",
+                str(status_file),
+                "--out",
+                str(tmp_path / "sdr.json"),
+            ],
+        )
+        assert result.exit_code == 2
+        assert "unknown KSI indicator ID" in _normalize(result.output)
+
+    def test_bad_last_updated_exits_1(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        status_file = tmp_path / "ksi-status.yaml"
+        status_file.write_text(VALID_KSI_STATUS, encoding="utf-8")
+        result = runner.invoke(
+            app,
+            [
+                "conmon",
+                "ksi",
+                "--status-file",
+                str(status_file),
+                "--last-updated",
+                "not-a-datetime",
+                "--out",
+                str(tmp_path / "sdr.json"),
+            ],
+        )
+        assert result.exit_code == 1
+        assert "--last-updated" in _normalize(result.output)
