@@ -44,6 +44,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   v0.10.12-era assessments load unchanged (the field defaults to empty —
   reported as missing, never as satisfied).
 
+- **FedRAMP CR26 KSI emission — `evidentia conmon ksi`** (v0.11 Wave 2,
+  target re-verified against the live CR26 stack + ratified 2026-07-14; see
+  the plan's §Wave 2 re-base record): emits the `keySecurityIndicators`
+  block of a CR26 **Security Decision Record** as a standalone JSON
+  document, validated OFFLINE against
+  `fedramp-security-decision-record-schema-2026-06-24.json` before writing
+  (rules SDR-CSO-FRR / SDR-CSX-KSI / SDR-CSO-MTD; in force for 20x since
+  2026-07-04). Ships with:
+  - the **`fedramp-ksi-2026` bundled catalog** (10 families / 46 Key
+    Security Indicators, generated verbatim from `FedRAMP/rules`
+    `fedramp-consolidated-rules.json` at a pinned commit by
+    `scripts/catalogs/gen_fedramp_ksi.py`, `--check` drift mode included)
+    plus a **KSI→NIST 800-53 Rev 5 crosswalk** extracted from the upstream
+    per-indicator `controls` declarations (base-control granularity;
+    enhancement citations preserved verbatim in notes);
+  - **vendored CR26 schemas** under `evidentia_core/fedramp/schemas/` with
+    full provenance pins (`UPSTREAM.json`) and one documented local delta:
+    upstream publishes every cross-document `$ref` with the JSON Pointer in
+    the URI path, which no conforming JSON Schema 2020-12 validator can
+    resolve (FedRAMP/schemas#3; fix PR #4 unmerged) — the vendored copy
+    moves the pointer into the fragment;
+  - **CONMON cadence integration**: `persistence_cycles` entries in the
+    operator's KSI status file render the SDR-CSX-KSI "cycle for measures
+    implemented persistently" statements from the same cadence calendar the
+    rest of `evidentia conmon` runs on (last-completed / next-due dates via
+    `--state-file`);
+  - the **`fedramp-schema-watch` weekly sentinel** (Wed 09:17 UTC):
+    compares live `FedRAMP/rules` + `FedRAMP/schemas` against the
+    UPSTREAM.json pins — NOTICE drift opens/updates a tracking issue; a KSI
+    content change, MAJOR `$schemaVersion` bump, or a new dated ruleset
+    (CR27) also reds the run. Both upstream repos are 2026 Public Preview
+    drafts with same-day churn observed at vendor time — the pins rot
+    without a watcher.
+  - Operator doc: `docs/fedramp-ksi.md`. `jsonschema` + `referencing`
+    promoted from transitive to direct `evidentia-core` dependencies (the
+    offline validation path).
+
 ## [0.10.18] - 2026-07-14
 
 **Theme**: *Container rebuild on a fresh hardened base (day-N CVE response).* A rebuild-only patch fired by the post-publish rescan's fixable-only gate: the 2026-07-13 weekly rescan of the published v0.10.17 image surfaced **DEBIAN-CVE-2026-34743** (xz-utils/liblzma 5.8.1-1, Medium 5.3) with a fix published upstream (`5.8.1-1+deb13u1`), and the standing policy is *"a fix is now available → rebuild the published image on a fresh base"*. Both pinned bases move to their current digests (the same drift the base-freshness sentinel flagged in issue #182) and the image is rebuilt, smoke-tested, re-signed, and re-attested end-to-end; the post-publish rescan re-verifies the published image's CVE posture after release. This tag also ships everything that merged to `main` between v0.10.17 and the tag: the v0.11 cycle-open gate work (ROADMAP-currency gate + ROADMAP restructure, previously tracked as Unreleased) **and the entire v0.11 hygiene track (H1–H6, below)** — the hygiene PRs merged ahead of the tag, so the v0.11 plan's release boundary re-cuts to v0.11.0 = Waves 1–2. No package (`packages/*/src`) code changes beyond the version bump.
