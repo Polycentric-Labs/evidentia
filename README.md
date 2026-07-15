@@ -37,7 +37,7 @@ Evidentia turns compliance from a spreadsheet problem into a software problem. I
 Built for compliance engineers, GRC teams, and CISOs who want to:
 
 - Ship audit-grade evidence with cryptographic provenance (Sigstore + PEP 740 + SLSA Provenance v1).
-- Map controls across frameworks via **95 bundled catalogs** (NIST 800-53 Rev 5, FedRAMP, CMMC 2.0, ISO 27001, CSF 2.0, EU AI Act, DORA, NIS2, GDPR, OpenSSF OSPS Baseline, the full FFIEC stack, and all 15 comprehensive US state privacy laws).
+- Map controls across frameworks via **96 bundled catalogs** (NIST 800-53 Rev 5, FedRAMP + FedRAMP CR26 KSIs, CMMC 2.0, ISO 27001, CSF 2.0, EU AI Act, DORA, NIS2, GDPR, OpenSSF OSPS Baseline, the full FFIEC stack, and all 15 comprehensive US state privacy laws).
 - Drive AI agents (Claude Desktop, Claude Code, Cursor, Copilot CLI) deterministically via MCP tools with signed output envelopes.
 
 ## Install
@@ -90,7 +90,7 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 
 - **OSCAL-native end-to-end** — Ingest NIST OSCAL catalogs (Catalog 1.2.1); emit OSCAL Assessment Results + Plan-of-Action-and-Milestones (POA&M). Ready for FedRAMP 20x machine-readable submissions.
 - **Cryptographic evidence chain** — Sigstore keyless signing on Assessment Results; PEP 740 attestations on every published wheel; SLSA Provenance v1 on the container; CycloneDX 1.6 SBOM on every GitHub Release.
-- **95 framework catalogs + 15 crosswalks** — NIST 800-53 Rev 5 (full 1,196 controls + Low/Moderate/High/Privacy baselines), CSF 2.0, FedRAMP, CMMC 2.0 L1/L2, OpenSSF OSPS Baseline (Maturity 1/2/3 + first public OSCAL serialization), ISO 27001:2022, EU AI Act, DORA, NIS2, GDPR, all 15 US state privacy laws, full FFIEC IT Examination Handbook, OCC Bulletin 2026-13a / FRB SR 26-02. Plus 15 inter-framework crosswalks.
+- **96 framework catalogs + 16 crosswalks** — NIST 800-53 Rev 5 (full 1,196 controls + Low/Moderate/High/Privacy baselines), CSF 2.0, FedRAMP (Rev 5 baselines + CR26 Key Security Indicators), CMMC 2.0 L1/L2, OpenSSF OSPS Baseline (Maturity 1/2/3 + first public OSCAL serialization), ISO 27001:2022, EU AI Act, DORA, NIS2, GDPR, all 15 US state privacy laws, full FFIEC IT Examination Handbook, OCC Bulletin 2026-13a / FRB SR 26-02. Plus 16 inter-framework crosswalks.
 - **14 evidence collectors** — AWS, GitHub (including v0.10.6 OSPS conformance helpers), Postgres, MySQL, Oracle, SQLite, MS-SQL, Snowflake, Databricks, Okta, Vanta, Drata, BitSight, SecurityScorecard. All OCSF-aligned with `compliance_status` field.
 - **OCSF-aligned findings** — OCSF Compliance Finding (class_uid 2003) via `--format ocsf`; OCSF Detection Finding (class_uid 2004) via `--format ocsf-detection`. SARIF 2.1.0 for CI gates via `--format sarif`. CycloneDX 1.6 VEX via `--format cyclonedx-vex`.
 - **13 MCP tools** — Drive Evidentia from Claude Desktop, Claude Code, Cursor, or any MCP host. Append-only tool contract per [`docs/api-stability.md`](docs/api-stability.md) (NORMATIVE). Signed output envelopes (CIMD) per [`docs/evidence-integrity.md`](docs/evidence-integrity.md).
@@ -101,8 +101,8 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 | Surface | Count |
 |---|---|
 | Workspace packages | 9 (8 Python on PyPI + 1 TypeScript/Vite frontend) |
-| Framework catalogs | 95 |
-| Inter-framework crosswalks | 15 |
+| Framework catalogs | 96 |
+| Inter-framework crosswalks | 16 |
 | Evidence collectors | 14 |
 | MCP tools | 13 |
 | OSCAL serializations | 1 (OpenSSF OSPS Baseline; more on the v0.11+ roadmap) |

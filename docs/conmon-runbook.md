@@ -18,6 +18,7 @@ the canonical cadences and lets operators query "what's due next?"
 | `evidentia conmon list --framework <fw>` | Filter to one framework |
 | `evidentia conmon next <slug> --last-completed <date>` | Compute the next-due date |
 | `evidentia conmon check --last-completed-file state.yaml` | Report due-soon + overdue cycles from tracked state |
+| `evidentia conmon ksi --status-file ksi.yaml --out sdr.json` | Emit a FedRAMP CR26 SDR with the KSI block ([runbook](fedramp-ksi.md)) |
 
 ## Conceptual model
 

@@ -2047,16 +2047,21 @@ ratification asks. Sourced from Phase B audit v3 + integration plan
 §"Per-release detailed integration plan" §v0.11. Substantive minor
 (~6-8 weeks):
 
-- **KSI (Key Security Indicators) emission** per FedRAMP's
-  machine-readable schemas (FRMR JSON; the `FedRAMP/schemas`
-  JSON-Schema repo) — wires as third output mode on `evidentia
-  conmon` alongside the 7 bundled cadences shipped v0.9.0. (Re-based
-  2026-06-10: KSIs are FRMR JSON, not OSCAL feeds — OSCAL remains the
-  Rev5/RFC-0024 package format per NTC-0009; see
-  integration-survey §8.2.) Evidentia's natural slot per Phase B
-  Stream E4: OSS engine for the audit-quality middle layer between
-  Trestle (raw OSCAL SDK) and RegScale (commercial FedRAMP package
-  generator).
+- **KSI (Key Security Indicators) emission** — wires as third output
+  mode on `evidentia conmon` alongside the 7 bundled cadences shipped
+  v0.9.0. **Re-based 2026-07-14 (target re-verified against the live
+  CR26 stack; ratified same day):** the emit target is the
+  `keySecurityIndicators` block of the CR26 Security Decision Record
+  per `fedramp-security-decision-record-schema-2026-06-24.json`
+  (`FedRAMP/schemas`), populated from the KSI catalog in
+  `fedramp-consolidated-rules.json` (`FedRAMP/rules` — 10 families /
+  46 indicators). The earlier "FRMR JSON" framing is retired upstream;
+  still not OSCAL (nothing in the active CR26 stack pins an OSCAL
+  version — the OSCAL 1.2.1 verdict below is unaffected). Full re-base
+  record: [`v0.11-plan.md`](releases/plans/v0.11-plan.md) §Wave 2.
+  Evidentia's natural slot per Phase B Stream E4: OSS engine for the
+  audit-quality middle layer between Trestle (raw OSCAL SDK) and
+  RegScale (commercial FedRAMP package generator).
 - **Evaluate OSCAL 1.2.1 → 1.2.2** — DONE; **VERDICT (ratified
   2026-07-13): DEFER-WITH-TRIGGER — stay on 1.2.1 for emitted
   documents.** The 1.2.2 delta is content-free for every surface
