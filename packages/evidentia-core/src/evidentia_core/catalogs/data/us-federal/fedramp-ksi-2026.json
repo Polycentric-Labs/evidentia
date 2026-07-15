@@ -1,0 +1,345 @@
+{
+  "framework_id": "fedramp-ksi-2026",
+  "framework_name": "FedRAMP Key Security Indicators (Consolidated Rules for 2026)",
+  "version": "2026.07.14.01 (CR26)",
+  "source": "FedRAMP — https://github.com/FedRAMP/rules @ 12fe1b60f578 (fedramp-consolidated-rules.json)",
+  "tier": "A",
+  "category": "control",
+  "placeholder": false,
+  "families": [
+    "Cybersecurity Education",
+    "Change Management",
+    "Cloud Native Architecture",
+    "Identity and Access Management",
+    "Incident Response",
+    "Monitoring, Logging, and Auditing",
+    "Policy and Inventory",
+    "Recovery Planning",
+    "Supply Chain Risk",
+    "Service Configuration"
+  ],
+  "controls": [
+    {
+      "id": "KSI-CED-RAT",
+      "title": "Reviewing All Training",
+      "description": "The effectiveness of relevant cybersecurity education and training is persistently reviewed, including at least general training for all employees, role-specific training for employees in high risk roles, training for development and engineering staff on secure software delivery, and training for staff involved with incident response or disaster recovery.",
+      "family": "Cybersecurity Education",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): cp-3, ir-2, ps-6, at-2, at-2.2, at-2.3, at-3.5, at-4, ir-2.3, at-3, sr-11.1.\n\nRelated FedRAMP terms: Incident, Persistently, Vulnerability Response."
+    },
+    {
+      "id": "KSI-CMT-LMC",
+      "title": "Logging Changes",
+      "description": "Modifications to the cloud service offering are logged and monitored.",
+      "family": "Change Management",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): au-2, cm-3, cm-3.2, cm-4.2, cm-6, cm-8.3, ma-2.\n\nRelated FedRAMP terms: Cloud Service Offering."
+    },
+    {
+      "id": "KSI-CMT-RMV",
+      "title": "Redeploying vs Modifying",
+      "description": "Changes to machine-based information resources are executed through the redeployment of version controlled resources rather than direct modification wherever reasonable.",
+      "family": "Change Management",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): cm-2, cm-3, cm-5, cm-6, cm-7, cm-8.1, si-3.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources)."
+    },
+    {
+      "id": "KSI-CMT-RVP",
+      "title": "Reviewing Change Procedures",
+      "description": "The effectiveness of documented change management procedures is persistently reviewed.",
+      "family": "Change Management",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): cm-3, cm-3.2, cm-3.4, cm-5, cm-7.1, cm-9.\n\nRelated FedRAMP terms: Persistently."
+    },
+    {
+      "id": "KSI-CMT-VTD",
+      "title": "Validating Throughout Deployment",
+      "description": "Persistent testing and validation of changes throughout deployment is automated.",
+      "family": "Change Management",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): cm-3, cm-3.2, cm-4.2, si-2.\n\nRelated FedRAMP terms: Persistently, Validation."
+    },
+    {
+      "id": "KSI-CNA-DFP",
+      "title": "Defining Functionality and Privileges",
+      "description": "The functionality and privileges for infrastructure and services are strictly defined.",
+      "family": "Cloud Native Architecture",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): cm-2, si-3."
+    },
+    {
+      "id": "KSI-CNA-EIS",
+      "title": "Enforcing Intended State",
+      "description": "Automated services are used to persistently assess the security of all machine-based information resources and automatically enforce their intended operational state.",
+      "family": "Cloud Native Architecture",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ca-2.1, ca-7.1.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Persistently.\n\nClass-B variant statement (upstream `varies_by_class`, verbatim): **Optional:** Automated services are used to persistently assess the security of all machine-based information resources and automatically enforce their intended operational state.\n\nClass-C variant statement (upstream `varies_by_class`, verbatim): Automated services are used to persistently assess the security of all machine-based information resources and automatically enforce their intended operational state."
+    },
+    {
+      "id": "KSI-CNA-IBP",
+      "title": "Implementing Best Practices",
+      "description": "The use and configuration of third-party machine-based information resources is persistently compared against the original provider's best practices and guidance.",
+      "family": "Cloud Native Architecture",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-17.3, cm-2, pl-10.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Persistently, Provider."
+    },
+    {
+      "id": "KSI-CNA-MAT",
+      "title": "Minimizing Attack Surface",
+      "description": "Machine-based information resources are persistently reviewed to ensure they have a minimal attack surface and that lateral movement is minimized if compromised.",
+      "family": "Cloud Native Architecture",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-17.3, ac-18.1, ac-18.3, ac-20.1, ca-9, sc-7.3, sc-7.4, sc-7.5, sc-7.8, sc-8, sc-10, si-10, si-11, si-16.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Persistently."
+    },
+    {
+      "id": "KSI-CNA-OFA",
+      "title": "Optimizing for Availability",
+      "description": "Machine-based information resources are persistently reviewed to ensure they are appropriately optimized for high availability and rapid recovery.",
+      "family": "Cloud Native Architecture",
+      "guidance": "No NIST SP 800-53 Rev 5 mapping declared upstream (`controls: []` at the pinned revision).\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Persistently."
+    },
+    {
+      "id": "KSI-CNA-RNT",
+      "title": "Restricting Network Traffic",
+      "description": "Machine-based information resources are persistently reviewed to ensure they are appropriately configured to limit inbound and outbound network traffic.",
+      "family": "Cloud Native Architecture",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-17.3, ca-9, cm-7.1, sc-7.5, si-8.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Persistently."
+    },
+    {
+      "id": "KSI-CNA-RVP",
+      "title": "Reviewing Protections",
+      "description": "The effectiveness of protection against denial of service attacks and other unwanted activity for machine-based information resources is persistently reviewed.",
+      "family": "Cloud Native Architecture",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): sc-5, si-8, si-8.2.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Persistently."
+    },
+    {
+      "id": "KSI-CNA-ULN",
+      "title": "Using Logical Networking",
+      "description": "Logical networking and related capabilities are used and persistently reviewed to enforce traffic flow controls.",
+      "family": "Cloud Native Architecture",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-12, ac-17.3, ca-9, sc-4, sc-7, sc-7.7, sc-8, sc-10.\n\nRelated FedRAMP terms: Persistently."
+    },
+    {
+      "id": "KSI-IAM-AAM",
+      "title": "Automating Account Management",
+      "description": "The lifecycle and privileges of all accounts, roles, and groups are securely managed using automation.",
+      "family": "Identity and Access Management",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-2.2, ac-2.3, ac-2.13, ac-6.7, ia-4.4, ia-12, ia-12.2, ia-12.3, ia-12.5."
+    },
+    {
+      "id": "KSI-IAM-APM",
+      "title": "Adopting Passwordless Methods",
+      "description": "Secure passwordless methods are used for user authentication and authorization when feasible, otherwise strong passwords with phishing-resistant MFA is used.",
+      "family": "Identity and Access Management",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-3, ia-5.1, ia-5.2, ia-5.6, ia-6, ac-2, ia-2, ia-2.1, ia-2.2, ia-2.8, ia-5, ia-8, sc-23."
+    },
+    {
+      "id": "KSI-IAM-ELP",
+      "title": "Ensuring Least Privilege",
+      "description": "Identity and access management measures are used and persistently reviewed to ensure each user or device can only access the resources they need.",
+      "family": "Identity and Access Management",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-2.5, ac-2.6, ac-3, ac-4, ac-6, ac-12, ac-14, ac-17, ac-17.1, ac-17.2, ac-17.3, ac-20, ac-20.1, cm-2.7, cm-9, ia-2, ia-3, ia-4, ia-4.4, ia-5.2, ia-5.6, ia-11, ps-2, ps-3, ps-4, ps-5, ps-6, sc-4, sc-20, sc-21, sc-22, sc-23, sc-39, si-3.\n\nRelated FedRAMP terms: Persistently."
+    },
+    {
+      "id": "KSI-IAM-JIT",
+      "title": "Authorizing Just-in-Time",
+      "description": "A least-privileged, role and attribute-based, and just-in-time security authorization model is used and persistently reviewed for all user and non-user accounts and services.",
+      "family": "Identity and Access Management",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-2, ac-2.1, ac-2.2, ac-2.3, ac-2.4, ac-2.6, ac-3, ac-4, ac-5, ac-6, ac-6.1, ac-6.2, ac-6.5, ac-6.7, ac-6.9, ac-6.10, ac-7, ac-20.1, ac-17, au-9.4, cm-5, cm-7, cm-7.2, cm-7.5, cm-9, ia-4, ia-4.4, ia-7, ps-2, ps-3, ps-4, ps-5, ps-6, ps-9, ra-5.5, sc-2, sc-23, sc-39.\n\nRelated FedRAMP terms: Persistently."
+    },
+    {
+      "id": "KSI-IAM-SNU",
+      "title": "Securing Non-User Authentication",
+      "description": "Appropriately secure authentication methods are used and persistently reviewed for non-user accounts and services.",
+      "family": "Identity and Access Management",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-2, ac-2.2, ac-4, ac-6.5, ia-3, ia-5.2, ra-5.5.\n\nRelated FedRAMP terms: Persistently."
+    },
+    {
+      "id": "KSI-IAM-SUS",
+      "title": "Responding to Suspicious Activity",
+      "description": "Accounts with privileged access are disabled or otherwise secured in response to suspicious activity.",
+      "family": "Identity and Access Management",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-2, ac-2.1, ac-2.3, ac-2.13, ac-7, ps-4, ps-8.\n\nRelated FedRAMP terms: Vulnerability Response."
+    },
+    {
+      "id": "KSI-INR-AAR",
+      "title": "Generating After Action Reports",
+      "description": "Incident after action reports are generated and lessons learned are persistently incorporated.",
+      "family": "Incident Response",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ir-3, ir-4, ir-4.1, ir-8.\n\nRelated FedRAMP terms: Incident, Persistently."
+    },
+    {
+      "id": "KSI-INR-RIR",
+      "title": "Reviewing Incident Response Procedures",
+      "description": "The effectiveness of documented incident response procedures is persistently reviewed.",
+      "family": "Incident Response",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ir-4, ir-4.1, ir-6, ir-6.1, ir-6.3, ir-7, ir-7.1, ir-8, ir-8.1, si-4.5.\n\nRelated FedRAMP terms: Incident, Persistently, Vulnerability Response."
+    },
+    {
+      "id": "KSI-INR-RPI",
+      "title": "Reviewing Past Incidents",
+      "description": "Past incidents are persistently reviewed for patterns or vulnerabilities that were not previously apparent or identified.",
+      "family": "Incident Response",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ir-3, ir-4, ir-4.1, ir-5, ir-8.\n\nRelated FedRAMP terms: Incident, Persistently, Vulnerability."
+    },
+    {
+      "id": "KSI-MLA-ALA",
+      "title": "Authorizing Log Access",
+      "description": "A least-privileged, role and attribute-based, and just-in-time access authorization model is used and persistently reviewed for access to log data based on organizationally defined data sensitivity.",
+      "family": "Monitoring, Logging, and Auditing",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): si-11.\n\nRelated FedRAMP terms: Persistently.\n\nClass-B variant statement (upstream `varies_by_class`, verbatim): **Optional:** A least-privileged, role and attribute-based, and just-in-time access authorization model is used and persistently reviewed for access to log data based on organizationally defined data sensitivity.\n\nClass-C variant statement (upstream `varies_by_class`, verbatim): A least-privileged, role and attribute-based, and just-in-time access authorization model is used and persistently reviewed for access to log data based on organizationally defined data sensitivity."
+    },
+    {
+      "id": "KSI-MLA-EVC",
+      "title": "Evaluating Configurations",
+      "description": "The configuration of machine-based information resources, especially infrastructure as code, is persistently evaluated and tested.",
+      "family": "Monitoring, Logging, and Auditing",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ca-7, cm-2, cm-6, si-7.7.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Persistently."
+    },
+    {
+      "id": "KSI-MLA-LET",
+      "title": "Logging Event Types",
+      "description": "A list of information resources and event types that will be logged, monitored, and audited is maintained and persistently reviewed to ensure these activities occur.",
+      "family": "Monitoring, Logging, and Auditing",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-2.4, ac-6.9, ac-17.1, ac-20.1, au-2, au-7.1, au-12, si-4.4, si-4.5, si-7.7.\n\nRelated FedRAMP terms: Information Resource, Persistently."
+    },
+    {
+      "id": "KSI-MLA-OSM",
+      "title": "Operating SIEM Capability",
+      "description": "A Security Information and Event Management (SIEM) or similar system(s) is used and persistently reviewed for centralized, tamper-resistant logging of events, activities, and changes.",
+      "family": "Monitoring, Logging, and Auditing",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-17.1, ac-20.1, au-2, au-3, au-3.1, au-4, au-5, au-6.1, au-6.3, au-7, au-7.1, au-8, au-9, au-11, ir-4.1, si-4.2, si-4.4, si-7.7.\n\nRelated FedRAMP terms: Persistently."
+    },
+    {
+      "id": "KSI-MLA-RVL",
+      "title": "Reviewing Logs",
+      "description": "Logs are persistently reviewed and audited.",
+      "family": "Monitoring, Logging, and Auditing",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-2.4, ac-6.9, au-2, au-6, au-6.1, si-4, si-4.4.\n\nRelated FedRAMP terms: Persistently."
+    },
+    {
+      "id": "KSI-PIY-GIV",
+      "title": "Generating Inventories",
+      "description": "Authoritative sources are used to automatically generate real-time inventories of all information resources when needed.",
+      "family": "Policy and Inventory",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): cm-2.2, cm-7.5, cm-8, cm-8.1, cm-12, cm-12.1, cp-2.8.\n\nRelated FedRAMP terms: Information Resource."
+    },
+    {
+      "id": "KSI-PIY-RES",
+      "title": "Reviewing Executive Support",
+      "description": "Executive support for achieving the provider's security goals is persistently reviewed and demonstrated.",
+      "family": "Policy and Inventory",
+      "guidance": "No NIST SP 800-53 Rev 5 mapping declared upstream (`controls: []` at the pinned revision).\n\nRelated FedRAMP terms: Persistently, Provider."
+    },
+    {
+      "id": "KSI-PIY-RIS",
+      "title": "Reviewing Investments in Security",
+      "description": "The effectiveness of the provider's investments in achieving security goals is persistently reviewed.",
+      "family": "Policy and Inventory",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-5, ca-2, cp-2.1, cp-4.1, ir-3.2, pm-3, sa-2, sa-3, sr-2.1.\n\nRelated FedRAMP terms: Persistently, Provider."
+    },
+    {
+      "id": "KSI-PIY-RSD",
+      "title": "Reviewing Security in the SDLC",
+      "description": "The effectiveness of building security and privacy considerations into the Software Development Lifecycle and aligning with CISA Secure By Design principles is persistently reviewed.",
+      "family": "Policy and Inventory",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-5, au-3.3, cm-3.4, pl-8, pm-7, sa-3, sa-8, sc-4, sc-18, si-10, si-11, si-16.\n\nRelated FedRAMP terms: Persistently."
+    },
+    {
+      "id": "KSI-PIY-RVD",
+      "title": "Reviewing Vulnerability Disclosures",
+      "description": "The effectiveness of the provider's vulnerability disclosure program is persistently reviewed.",
+      "family": "Policy and Inventory",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ra-5.11.\n\nRelated FedRAMP terms: Persistently, Provider, Vulnerability."
+    },
+    {
+      "id": "KSI-RPL-ABO",
+      "title": "Aligning Backups with Objectives",
+      "description": "The alignment of machine-based information resource backups with defined recovery objectives is persistently reviewed.",
+      "family": "Recovery Planning",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): cm-2.3, cp-6, cp-9, cp-10, cp-10.2, si-12.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Persistently."
+    },
+    {
+      "id": "KSI-RPL-ARP",
+      "title": "Aligning Recovery Plan",
+      "description": "The alignment of recovery plans with defined recovery objectives is persistently reviewed.",
+      "family": "Recovery Planning",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): cp-2, cp-2.1, cp-2.3, cp-4.1, cp-6, cp-6.1, cp-6.3, cp-7, cp-7.1, cp-7.2, cp-7.3, cp-8, cp-8.1, cp-8.2, cp-10, cp-10.2.\n\nRelated FedRAMP terms: Persistently."
+    },
+    {
+      "id": "KSI-RPL-RRO",
+      "title": "Reviewing Recovery Objectives",
+      "description": "The desired Recovery Time Objectives (RTO) and Recovery Point Objectives (RPO) are defined and persistently reviewed for alignment with the provider's business needs and capabilities.",
+      "family": "Recovery Planning",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): cp-2.3, cp-10.\n\nRelated FedRAMP terms: Persistently, Provider."
+    },
+    {
+      "id": "KSI-RPL-TRC",
+      "title": "Testing Recovery Capabilities",
+      "description": "The capability to recover from incidents and contingencies aligned with defined recovery objectives is persistently tested.",
+      "family": "Recovery Planning",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): cp-2.1, cp-2.3, cp-4, cp-4.1, cp-6, cp-6.1, cp-9.1, cp-10, ir-3, ir-3.2.\n\nRelated FedRAMP terms: Incident, Persistently."
+    },
+    {
+      "id": "KSI-SCR-MIT",
+      "title": "Mitigating Supply Chain Risk",
+      "description": "Persistently identify, review, and mitigate potential supply chain risks.",
+      "family": "Supply Chain Risk",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-20, ra-3.1, sa-9, sa-10, sa-11, sa-15.3, sa-22, si-7.1, sr-5, sr-6, ca-7.4, sc-18.\n\nRelated FedRAMP terms: Persistently."
+    },
+    {
+      "id": "KSI-SCR-MON",
+      "title": "Monitoring Supply Chain Risk",
+      "description": "Third party software information resources are automatically monitored for upstream vulnerabilities using mechanisms that may include contractual notification requirements or active monitoring services.",
+      "family": "Supply Chain Risk",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-20, ca-3, ir-6.3, ps-7, ra-5, sa-9, si-5, sr-5, sr-6, sr-8.\n\nRelated FedRAMP terms: Information Resource, Vulnerability."
+    },
+    {
+      "id": "KSI-SVC-ACM",
+      "title": "Automating Configuration Management",
+      "description": "The configuration of machine-based information resources is managed using automation and persistently reviewed for drift.",
+      "family": "Service Configuration",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-2.4, cm-2, cm-2.2, cm-2.3, cm-6, cm-7.1, pl-9, pl-10, sa-5, si-5, sr-10.\n\nRelated FedRAMP terms: Drift, Information Resource, Machine-Based (Information Resources), Persistently."
+    },
+    {
+      "id": "KSI-SVC-ASM",
+      "title": "Automating Secret Management",
+      "description": "Management, protection, and regular rotation of digital keys, certificates, and other secrets is automated and persistently reviewed.",
+      "family": "Service Configuration",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-17.2, ia-5.2, ia-5.6, sc-12, sc-17.\n\nRelated FedRAMP terms: Persistently, Regularly."
+    },
+    {
+      "id": "KSI-SVC-EIS",
+      "title": "Evaluating and Improving Security",
+      "description": "Information resources are persistently evaluated for opportunities to improve security and those improvements are persistently made.",
+      "family": "Service Configuration",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): cm-7.1, cm-12.1, ma-2, pl-8, sc-7, sc-39, si-2.2, si-4, sr-10.\n\nRelated FedRAMP terms: Information Resource, Persistently."
+    },
+    {
+      "id": "KSI-SVC-PRR",
+      "title": "Preventing Residual Risk",
+      "description": "Plans, procedures, and the state of information resources are persistently reviewed after making changes to limit and remove unwanted residual elements that would likely negatively affect the confidentiality, integrity, or availability of federal customer data.",
+      "family": "Service Configuration",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): sc-4.\n\nRelated FedRAMP terms: Federal Customer Data, Information Resource, Likely, Persistently.\n\nClass-B variant statement (upstream `varies_by_class`, verbatim): **Optional:** Plans, procedures, and the state of information resources are persistently reviewed after making changes to limit and remove unwanted residual elements that would likely negatively affect the confidentiality, integrity, or availability of federal customer data.\n\nClass-C variant statement (upstream `varies_by_class`, verbatim): Plans, procedures, and the state of information resources are persistently reviewed after making changes to limit and remove unwanted residual elements that would likely negatively affect the confidentiality, integrity, or availability of federal customer data."
+    },
+    {
+      "id": "KSI-SVC-RUD",
+      "title": "Removing Unwanted Data",
+      "description": "Unwanted federal customer data is removed promptly when requested by an agency in alignment with customer agreements, including from backups if appropriate; this typically applies when a customer spills information or when a customer seeks to remove information from a service due to a change in usage.",
+      "family": "Service Configuration",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): si-12.3, si-18.4.\n\nRelated FedRAMP terms: Agency, Federal Customer Data, Promptly.\n\nClass-B variant statement (upstream `varies_by_class`, verbatim): **Optional:** Unwanted federal customer data is removed promptly when requested by an agency in alignment with customer agreements, including from backups if appropriate; this typically applies when a customer spills information or when a customer seeks to remove information from a service due to a change in usage.\n\nClass-C variant statement (upstream `varies_by_class`, verbatim): Unwanted federal customer data is removed promptly when requested by an agency in alignment with customer agreements, including from backups if appropriate; this typically applies when a customer spills information or when a customer seeks to remove information from a service due to a change in usage."
+    },
+    {
+      "id": "KSI-SVC-SIN",
+      "title": "Securing Information",
+      "description": "Information is encrypted or otherwise secured from unwanted access or modification.",
+      "family": "Service Configuration",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-1, ac-17.2, cp-9.8, sc-8, sc-8.1, sc-13, sc-20, sc-21, sc-22, sc-23, sc-28, sc-28.1."
+    },
+    {
+      "id": "KSI-SVC-VCM",
+      "title": "Validating Communications",
+      "description": "The authenticity and integrity of communications between machine-based information resources is persistently validated using automation.",
+      "family": "Service Configuration",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): sc-23, si-7.1.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Persistently, Validation.\n\nClass-B variant statement (upstream `varies_by_class`, verbatim): **Optional:** The authenticity and integrity of communications between machine-based information resources is persistently validated using automation.\n\nClass-C variant statement (upstream `varies_by_class`, verbatim): The authenticity and integrity of communications between machine-based information resources is persistently validated using automation."
+    },
+    {
+      "id": "KSI-SVC-VRI",
+      "title": "Validating Resource Integrity",
+      "description": "Use cryptographic methods to validate the integrity of machine-based information resources.",
+      "family": "Service Configuration",
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): cm-2.2, cm-8.3, sc-13, sc-23, si-7, si-7.1, sr-10.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Validation."
+    }
+  ]
+}

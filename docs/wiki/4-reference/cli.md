@@ -446,6 +446,17 @@ Aggregate CONMON cycle health by framework.
 | `--framework, -f` | Restrict report to a single framework (e.g., nist-800-53-rev5). |
 | `--json` | Emit machine-readable JSON instead of a rich table. |
 
+### `evidentia conmon ksi`
+
+Emit a FedRAMP CR26 Security Decision Record with the KSI block.
+
+| Flag / argument | Description |
+| --- | --- |
+| `--status-file` | YAML KSI status file (operator-authored per-KSI statements; schema: evidentia_core.models.fedramp_ksi.KsiStatusDocument). Indicator IDs are checked against the bundled fedramp-ksi-2026 catalog. |
+| `--out` | Path to write the SDR JSON document. |
+| `--state-file` | Optional CONMON state file (same YAML as `conmon check`). When set, persistence-cycle statements include last-completed and next-due dates from the cadence calendar. |
+| `--last-updated` | ISO-8601 datetime for the SDR metadata lastUpdated field (SDR-CSO-MTD). Defaults to now (UTC); pass explicitly for deterministic snapshots. |
+
 ### `evidentia conmon list`
 
 List bundled + registered CONMON cadences.

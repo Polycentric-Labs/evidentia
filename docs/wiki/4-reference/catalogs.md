@@ -3,7 +3,7 @@
 
 > **Auto-generated page.** This page is generated from the live Evidentia codebase by [`scripts/wiki/sync_reference.py`](https://github.com/Polycentric-Labs/evidentia/blob/main/scripts/wiki/sync_reference.py). Do not edit it by hand; change the underlying code/data and re-run the generator (`uv run python scripts/wiki/sync_reference.py`).
 
-Evidentia ships **95** framework catalogs in-tree. Tier-A/B catalogs carry authoritative control text; tier-C catalogs are placeholders (control text is copyrighted — only IDs + neutral titles ship, with a `license_url` to obtain the full text); tier-D catalogs are paraphrased obligation/regulation references. Use `evidentia catalog list` to enumerate them at runtime.
+Evidentia ships **96** framework catalogs in-tree. Tier-A/B catalogs carry authoritative control text; tier-C catalogs are placeholders (control text is copyrighted — only IDs + neutral titles ship, with a `license_url` to obtain the full text); tier-D catalogs are paraphrased obligation/regulation references. Use `evidentia catalog list` to enumerate them at runtime.
 
 ## Tiers
 
@@ -14,7 +14,7 @@ Evidentia ships **95** framework catalogs in-tree. Tier-A/B catalogs carry autho
 | C | C — placeholder (control text copyrighted) |
 | D | D — obligation/regulation (paraphrased) |
 
-## US Federal (39)
+## US Federal (40)
 
 | ID | Name | Version | Tier | Category |
 | --- | --- | --- | --- | --- |
@@ -26,6 +26,7 @@ Evidentia ships **95** framework catalogs in-tree. Tier-A/B catalogs carry autho
 | `cms-ars-5.1` | CMS Acceptable Risk Safeguards (ARS) 5.1 | 5.1 (2022) | A | control |
 | `fda-21-cfr-pt11` | FDA 21 CFR Part 11 — Electronic Records; Electronic Signatures | 1997 (with guidance updates) | A | control |
 | `fda-524b-appendix1` | FDA Section 524B Premarket Cybersecurity — Security Control Categories | 2026-02-03 (final guidance) | A | control |
+| `fedramp-ksi-2026` | FedRAMP Key Security Indicators (Consolidated Rules for 2026) | 2026.07.14.01 (CR26) | A | control |
 | `fedramp-rev5-high` | FedRAMP Rev 5 High Baseline | Rev 5 (2023) | A | control |
 | `fedramp-rev5-li-saas` | FedRAMP Rev 5 LI-SAAS Baseline | Rev 5 (2023) | A | control |
 | `fedramp-rev5-low` | FedRAMP Rev 5 Low Baseline | Rev 5 (2023) | A | control |
