@@ -622,7 +622,7 @@ v0.8.x → v0.9.x line.
 | 8 | `evidentia_core.ai_governance.scr.SCRForm` + `emit_scr_form` + `classify_change` | Library | FedRAMP SCR template + auto-classifier (Routine / Adaptive / Transformative) + JSON / MD writers. |
 | 9 | `evidentia ai-gov categorize-fips / set-omb-impact / set-high-impact / update --emit-scr / update --ssp-reference` | CLI | New verbs + flags for federal-tier AI-gov ops. |
 | 10 | 4 new CONMON MCP tools (`conmon_list_cadences`, `conmon_next_due`, `conmon_check_state`, `conmon_health`) | MCP | First-mover claim per v0.9.5 Q3 2026 quarterly resync. Gated by existing v0.8.6 CIMD scope enforcement. |
-| 11 | `evidentia_core.ai_governance.omb_m_25_21` (`HighImpactDetermination` + `OMBHighImpactAssessment` + `crosswalk_from_legacy()` + `triggers_minimum_practices()`) | Library | OMB M-25-21 "high-impact AI" model — single high-impact category (6 bases) superseding the M-24-10 rights/safety split. `crosswalk_from_legacy(OMBImpactCategory)` maps the deprecated row-7 enum forward; additive + backward-compatible. |
+| 11 | `evidentia_core.ai_governance.omb_m_25_21` (`HighImpactDetermination` + `OMBHighImpactAssessment` + `MinimumPractice` / `MinimumPracticeRecord` / `PracticeWaiver` + `practice_compliance()` + `crosswalk_from_legacy()` + `triggers_minimum_practices()`) | Library | OMB M-25-21 "high-impact AI" model — single high-impact category (6 bases) superseding the M-24-10 rights/safety split, plus (v0.11) structured per-practice status for the seven §4(b) minimum risk-management practices incl. §4(a)(ii) CAIO waivers (`ai-gov set-practice` CLI + API mirror). `crosswalk_from_legacy(OMBImpactCategory)` maps the deprecated row-7 enum forward; additive + backward-compatible. |
 
 **Other v0.9.6 surfaces**:
 

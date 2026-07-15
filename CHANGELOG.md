@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **OMB M-25-21 minimum-practice tracking — `evidentia ai-gov set-practice`**
+  (v0.11 Wave 2): fills the per-practice extension point reserved at
+  v0.10.12. `OMBHighImpactAssessment` gains structured status for the seven
+  §4(b) minimum risk-management practices (practice headings verified
+  against the memo text), each recordable as implemented / in_progress /
+  not_started / **waived** — waived requires a §4(a)(ii) **CAIO waiver
+  record** (written determination, granting official, annual
+  re-certification date, 30-day OMB report date), enforced by a model
+  validator. `practice_compliance()` rolls up recorded / missing /
+  satisfied without ever inventing a status for an unrecorded practice;
+  `waiver_certification_due()` / `waiver_omb_report_overdue()` evaluate the
+  memo's two waiver clocks. Ships as CLI verb + API mirror
+  (`POST /api/ai-gov/systems/{id}/set-practice`, parity `api-only` pending
+  the next GUI pass) + `AI_SYSTEM_PRACTICE_RECORDED` audit event. Persisted
+  v0.10.12-era assessments load unchanged (the field defaults to empty —
+  reported as missing, never as satisfied).
+
 ## [0.10.18] - 2026-07-14
 
 **Theme**: *Container rebuild on a fresh hardened base (day-N CVE response).* A rebuild-only patch fired by the post-publish rescan's fixable-only gate: the 2026-07-13 weekly rescan of the published v0.10.17 image surfaced **DEBIAN-CVE-2026-34743** (xz-utils/liblzma 5.8.1-1, Medium 5.3) with a fix published upstream (`5.8.1-1+deb13u1`), and the standing policy is *"a fix is now available → rebuild the published image on a fresh base"*. Both pinned bases move to their current digests (the same drift the base-freshness sentinel flagged in issue #182) and the image is rebuilt, smoke-tested, re-signed, and re-attested end-to-end; the post-publish rescan re-verifies the published image's CVE posture after release. This tag also ships everything that merged to `main` between v0.10.17 and the tag: the v0.11 cycle-open gate work (ROADMAP-currency gate + ROADMAP restructure, previously tracked as Unreleased) **and the entire v0.11 hygiene track (H1–H6, below)** — the hygiene PRs merged ahead of the tag, so the v0.11 plan's release boundary re-cuts to v0.11.0 = Waves 1–2. No package (`packages/*/src`) code changes beyond the version bump.

@@ -556,3 +556,183 @@ class TestUpdateSSPReference:
         assert show.exit_code == 0
         body = json.loads(show.output)
         assert body["ssp_reference"] == "emass://12345"
+
+
+# ── v0.11 Wave 2: ai-gov set-practice ──────────────────────────────
+
+
+class TestSetPractice:
+    def _set_high_impact(
+        self, runner: CliRunner, system_id: str
+    ) -> None:
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "set-high-impact",
+                system_id,
+                "--determination",
+                "high_impact",
+                "--basis",
+                "health_and_safety",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+
+    def test_set_practice_happy_path(
+        self,
+        runner: CliRunner,
+        registered_system_id: str,
+        isolated_registry: Path,
+    ) -> None:
+        self._set_high_impact(runner, registered_system_id)
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "set-practice",
+                registered_system_id,
+                "--practice",
+                "pre_deployment_testing",
+                "--status",
+                "implemented",
+                "--notes",
+                "Red-team + regression suite before each deploy.",
+                "--last-reviewed",
+                "2026-07-01",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        assert "pre_deployment_testing" in result.output
+        assert "1/7 recorded" in result.output.replace("\n", "")
+
+    def test_set_practice_waived_with_waiver_flags(
+        self,
+        runner: CliRunner,
+        registered_system_id: str,
+        isolated_registry: Path,
+    ) -> None:
+        self._set_high_impact(runner, registered_system_id)
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "set-practice",
+                registered_system_id,
+                "--practice",
+                "public_feedback",
+                "--status",
+                "waived",
+                "--waiver-issued-on",
+                "2026-06-01",
+                "--waiver-issued-by",
+                "Agency CAIO",
+                "--waiver-justification",
+                "Unacceptable impediment to critical agency operations.",
+                "--waiver-reported-on",
+                "2026-06-15",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        assert "waived" in result.output
+
+    def test_waived_without_waiver_flags_exits_1(
+        self,
+        runner: CliRunner,
+        registered_system_id: str,
+        isolated_registry: Path,
+    ) -> None:
+        self._set_high_impact(runner, registered_system_id)
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "set-practice",
+                registered_system_id,
+                "--practice",
+                "public_feedback",
+                "--status",
+                "waived",
+            ],
+        )
+        assert result.exit_code == 1
+        # No waiver flags at all -> the domain model's validator fires
+        # (the CLI pre-check covers the partial-flags case separately).
+        assert "requires a waiver" in result.output
+
+    def test_set_practice_without_assessment_exits_1(
+        self,
+        runner: CliRunner,
+        registered_system_id: str,
+        isolated_registry: Path,
+    ) -> None:
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "set-practice",
+                registered_system_id,
+                "--practice",
+                "impact_assessment",
+                "--status",
+                "in_progress",
+            ],
+        )
+        assert result.exit_code == 1
+        assert "set-high-impact" in result.output
+
+    def test_unknown_practice_exits_1(
+        self,
+        runner: CliRunner,
+        registered_system_id: str,
+        isolated_registry: Path,
+    ) -> None:
+        self._set_high_impact(runner, registered_system_id)
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "set-practice",
+                registered_system_id,
+                "--practice",
+                "vibes_check",
+                "--status",
+                "implemented",
+            ],
+        )
+        assert result.exit_code == 1
+        assert "unknown practice" in result.output
+
+    def test_practices_persist_on_the_entry(
+        self,
+        runner: CliRunner,
+        registered_system_id: str,
+        isolated_registry: Path,
+    ) -> None:
+        self._set_high_impact(runner, registered_system_id)
+        for practice, status in (
+            ("pre_deployment_testing", "implemented"),
+            ("ongoing_monitoring", "in_progress"),
+        ):
+            result = runner.invoke(
+                app,
+                [
+                    "ai-gov",
+                    "set-practice",
+                    registered_system_id,
+                    "--practice",
+                    practice,
+                    "--status",
+                    status,
+                ],
+            )
+            assert result.exit_code == 0, result.output
+        assert "2/7 recorded" in result.output.replace("\n", "")
+
+        from evidentia_core.ai_governance import AIRegistryStore
+
+        entry = AIRegistryStore().load(registered_system_id)
+        assert entry is not None
+        assert entry.omb_high_impact is not None
+        practices = entry.omb_high_impact.practices
+        assert len(practices) == 2

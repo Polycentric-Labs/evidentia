@@ -894,3 +894,236 @@ def ai_gov_set_high_impact(
         f"[bold]{entry.descriptor.name}[/bold] → "
         f"[cyan]{determination_enum.value}[/cyan] (bases: {basis_str})"
     )
+
+
+# ── set-practice (v0.11 Wave 2) ───────────────────────────────────
+
+
+@app.command("set-practice")
+def ai_gov_set_practice(
+    system_id: str = typer.Argument(..., help="System ID (UUID)."),
+    practice: str = typer.Option(
+        ...,
+        "--practice",
+        help=(
+            "OMB M-25-21 §4(b) minimum practice: pre_deployment_testing / "
+            "impact_assessment / ongoing_monitoring / human_training / "
+            "human_oversight / remedies_and_appeals / public_feedback."
+        ),
+    ),
+    status: str = typer.Option(
+        ...,
+        "--status",
+        help=(
+            "Practice status: implemented / in_progress / not_started / "
+            "waived (waived requires the --waiver-* flags)."
+        ),
+    ),
+    notes: str | None = typer.Option(
+        None,
+        "--notes",
+        help="Optional detail — evidence pointers, plan references.",
+    ),
+    last_reviewed: str | None = typer.Option(
+        None,
+        "--last-reviewed",
+        help="ISO-8601 date the status was last reviewed.",
+    ),
+    waiver_issued_on: str | None = typer.Option(
+        None,
+        "--waiver-issued-on",
+        help="CAIO waiver grant date (ISO-8601). Required for waived.",
+    ),
+    waiver_issued_by: str | None = typer.Option(
+        None,
+        "--waiver-issued-by",
+        help="Granting official (the agency CAIO). Required for waived.",
+    ),
+    waiver_justification: str | None = typer.Option(
+        None,
+        "--waiver-justification",
+        help=(
+            "The CAIO's written determination (M-25-21 §4(a)(ii)). "
+            "Required for waived."
+        ),
+    ),
+    waiver_certified_on: str | None = typer.Option(
+        None,
+        "--waiver-certified-on",
+        help="Most recent annual re-certification date (ISO-8601).",
+    ),
+    waiver_reported_on: str | None = typer.Option(
+        None,
+        "--waiver-reported-on",
+        help="Date the grant was reported to OMB (due within 30 days).",
+    ),
+) -> None:
+    """Record an OMB M-25-21 minimum-practice status on an entry (v0.11).
+
+    Fills the per-practice extension point reserved at v0.10.12:
+    structured status for the seven §4(b) minimum risk-management
+    practices, including §4(a)(ii) CAIO waivers. Requires an existing
+    M-25-21 assessment (run ``ai-gov set-high-impact`` first).
+    """
+    from datetime import date as _date
+
+    from evidentia_core.ai_governance import (
+        HighImpactDetermination,
+        MinimumPractice,
+        MinimumPracticeRecord,
+        PracticeStatus,
+        PracticeWaiver,
+        practice_compliance,
+    )
+    from pydantic import ValidationError
+
+    def _parse_date(value: str | None, flag: str) -> _date | None:
+        if value is None:
+            return None
+        try:
+            return _date.fromisoformat(value)
+        except ValueError as exc:
+            console.print(
+                f"[red]Error:[/red] {flag} must be ISO-8601 date "
+                f"(YYYY-MM-DD); got {value!r}: {exc}"
+            )
+            raise typer.Exit(code=1) from exc
+
+    store = AIRegistryStore()
+    try:
+        entry = store.load(system_id)
+    except ValueError as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    if entry is None:
+        console.print(
+            f"[red]Error:[/red] no registered AI system with ID "
+            f"{system_id!r}"
+        )
+        raise typer.Exit(code=1)
+
+    if entry.omb_high_impact is None:
+        console.print(
+            "[red]Error:[/red] no M-25-21 assessment on this entry yet — "
+            "record the high-impact determination first "
+            "(`evidentia ai-gov set-high-impact`)."
+        )
+        raise typer.Exit(code=1)
+
+    try:
+        practice_enum = MinimumPractice(practice.lower())
+    except ValueError:
+        console.print(
+            f"[red]Error:[/red] unknown practice {practice!r}. Valid: "
+            f"{', '.join(p.value for p in MinimumPractice)}"
+        )
+        raise typer.Exit(code=1) from None
+
+    try:
+        status_enum = PracticeStatus(status.lower())
+    except ValueError:
+        console.print(
+            f"[red]Error:[/red] unknown status {status!r}. Valid: "
+            f"{', '.join(s.value for s in PracticeStatus)}"
+        )
+        raise typer.Exit(code=1) from None
+
+    any_waiver_flag = any(
+        value is not None
+        for value in (
+            waiver_issued_on,
+            waiver_issued_by,
+            waiver_justification,
+            waiver_certified_on,
+            waiver_reported_on,
+        )
+    )
+    waiver: PracticeWaiver | None = None
+    if any_waiver_flag:
+        if not (waiver_issued_on and waiver_issued_by and waiver_justification):
+            console.print(
+                "[red]Error:[/red] a waiver needs --waiver-issued-on, "
+                "--waiver-issued-by, and --waiver-justification (the "
+                "CAIO's written determination)."
+            )
+            raise typer.Exit(code=1)
+        issued_on = _parse_date(waiver_issued_on, "--waiver-issued-on")
+        assert issued_on is not None  # guarded non-None above
+        waiver = PracticeWaiver(
+            issued_on=issued_on,
+            issued_by=waiver_issued_by,
+            justification=waiver_justification,
+            last_certified_on=_parse_date(
+                waiver_certified_on, "--waiver-certified-on"
+            ),
+            reported_to_omb_on=_parse_date(
+                waiver_reported_on, "--waiver-reported-on"
+            ),
+        )
+
+    try:
+        record = MinimumPracticeRecord(
+            status=status_enum,
+            notes=notes,
+            last_reviewed=_parse_date(last_reviewed, "--last-reviewed"),
+            waiver=waiver,
+        )
+    except (ValidationError, ValueError) as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    assessment = entry.omb_high_impact
+    practices = dict(assessment.practices)
+    practices[practice_enum] = record
+    updated_assessment = assessment.model_copy(update={"practices": practices})
+    updated = entry.model_copy(update={"omb_high_impact": updated_assessment})
+    store.save(updated)
+
+    _log.info(
+        action=EventAction.AI_SYSTEM_PRACTICE_RECORDED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"OMB M-25-21 minimum practice {practice_enum.value!r} "
+            f"recorded as {status_enum.value!r} on AI system "
+            f"{entry.descriptor.name!r}"
+        ),
+        evidentia={
+            "system_id": system_id,
+            "practice": practice_enum.value,
+            "status": status_enum.value,
+            "waived_with_record": waiver is not None,
+        },
+    )
+
+    summary = practice_compliance(updated_assessment)
+    recorded_count = summary.total - len(summary.missing)
+    tail = (
+        "[green]all satisfied[/green]"
+        if summary.satisfied
+        else f"{len(summary.missing)} unrecorded"
+    )
+    console.print(
+        f"[green]OMB M-25-21[/green] practice "
+        f"[bold]{practice_enum.value}[/bold] → "
+        f"[cyan]{status_enum.value}[/cyan] on "
+        f"[bold]{entry.descriptor.name}[/bold]"
+    )
+    console.print(
+        f"  Practices: {recorded_count}/{summary.total} recorded "
+        f"({summary.implemented} implemented, {summary.in_progress} in "
+        f"progress, {summary.not_started} not started, "
+        f"{summary.waived} waived); {tail}"
+    )
+    raw_determination = assessment.determination
+    determination_value = (
+        raw_determination
+        if isinstance(raw_determination, str)
+        else raw_determination.value
+    )
+    if determination_value != HighImpactDetermination.HIGH_IMPACT.value:
+        console.print(
+            "  [yellow]Advisory:[/yellow] determination is not "
+            "high_impact — the minimum practices are only obligatory for "
+            "high-impact AI (recording is retained for history)."
+        )

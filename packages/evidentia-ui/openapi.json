@@ -3621,6 +3621,20 @@
         "title": "MilestoneUpdatePayload",
         "type": "object"
       },
+      "MinimumPractice": {
+        "description": "One of M-25-21 §4(b)'s seven minimum risk-management practices.\n\nMember docstrings carry the memo's practice headings verbatim\n(verified against the memo text 2026-07-14). String values are\nstable across releases (persisted in inventories).",
+        "enum": [
+          "pre_deployment_testing",
+          "impact_assessment",
+          "ongoing_monitoring",
+          "human_training",
+          "human_oversight",
+          "remedies_and_appeals",
+          "public_feedback"
+        ],
+        "title": "MinimumPractice",
+        "type": "string"
+      },
       "ModelInput": {
         "additionalProperties": false,
         "description": "Documents one data source feeding the model.\n\nPer SR 11-7 §III.A.2 (Theory + Design + Data), every model\ninvocation must trace back to its inputs. ModelInput captures\nthe source-system reference + transformation lineage so the\nSR-11-7 §III.A.3 \"implementation\" write-up can auto-populate\nfrom the inventory rather than being authored from scratch.",
@@ -4331,6 +4345,73 @@
         "title": "PaginationContext",
         "type": "object"
       },
+      "PracticeStatus": {
+        "description": "Implementation status of one minimum practice for one system.\n\n``WAIVED`` is a distinct compliance state, not an absence: it\nrequires a CAIO waiver record (:class:`PracticeWaiver`) per\n§4(a)(ii). There is deliberately no \"not applicable\" — under\nM-25-21 the only sanctioned way a high-impact system does not\napply a minimum practice is a CAIO waiver.",
+        "enum": [
+          "implemented",
+          "in_progress",
+          "not_started",
+          "waived"
+        ],
+        "title": "PracticeStatus",
+        "type": "string"
+      },
+      "PracticeWaiver": {
+        "additionalProperties": false,
+        "description": "A CAIO waiver of one minimum practice for one system (§4(a)(ii)).\n\nThe memo's constraints, modelled as data + advisory helpers rather\nthan hard validation (Evidentia records the operator's state; the\nCAIO owns the determination):\n\n- a **written determination** based on a system-specific and\n  context-specific risk assessment (``justification``);\n- the CAIO must **certify ongoing validity annually**\n  (``last_certified_on``; :func:`waiver_certification_due`);\n- grants/revocations must be **reported to OMB within 30 days**\n  (``reported_to_omb_on``; :func:`waiver_omb_report_overdue`);\n- the authority is the CAIO's and may not be delegated — recorded\n  here only as provenance (``issued_by``).",
+        "properties": {
+          "issued_by": {
+            "description": "The granting official (the agency CAIO — §4(a)(ii) makes this authority non-delegable). Recorded as provenance.",
+            "title": "Issued By",
+            "type": "string"
+          },
+          "issued_on": {
+            "description": "Date the CAIO granted the waiver.",
+            "format": "date",
+            "title": "Issued On",
+            "type": "string"
+          },
+          "justification": {
+            "description": "The written determination: why fulfilling the practice would increase risks to safety or rights overall, or would create an unacceptable impediment to critical agency operations (the memo's two sanctioned grounds).",
+            "maxLength": 8000,
+            "title": "Justification",
+            "type": "string"
+          },
+          "last_certified_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Most recent annual re-certification of ongoing validity. None until the first re-certification (the anchor for the annual clock is then issued_on).",
+            "title": "Last Certified On"
+          },
+          "reported_to_omb_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date the grant was reported to OMB (due within 30 days of granting per §4(a)(iii)). None = not yet reported.",
+            "title": "Reported To Omb On"
+          }
+        },
+        "required": [
+          "issued_on",
+          "issued_by",
+          "justification"
+        ],
+        "title": "PracticeWaiver",
+        "type": "object"
+      },
       "Provenance": {
         "description": "Model provenance — who built it.\n\nInternal models follow SR 11-7 §III; vendor models additionally\nfollow §V (vendor-risk overlay). Vendor-provenance models MUST\nset `vendor_id` to cross-link to the v0.7.9 TPRM Vendor record.",
         "enum": [
@@ -5014,6 +5095,61 @@
           "source_system"
         ],
         "title": "SecurityFinding",
+        "type": "object"
+      },
+      "SetPracticeRequest": {
+        "description": "Body for ``POST /ai-gov/systems/{system_id}/set-practice``.\n\nOne OMB M-25-21 §4(b) minimum-practice status (v0.11). ``waiver``\nis required iff ``status`` is ``waived`` (enforced by the domain\nmodel's validator; violations normalize to 400 ``invalid_body``).",
+        "properties": {
+          "last_reviewed": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISO-8601 date the status was last reviewed.",
+            "title": "Last Reviewed"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "practice": {
+            "$ref": "#/components/schemas/MinimumPractice",
+            "description": "The §4(b) minimum practice: pre_deployment_testing / impact_assessment / ongoing_monitoring / human_training / human_oversight / remedies_and_appeals / public_feedback."
+          },
+          "status": {
+            "$ref": "#/components/schemas/PracticeStatus",
+            "description": "Practice status: implemented / in_progress / not_started / waived."
+          },
+          "waiver": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PracticeWaiver"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The CAIO waiver record (M-25-21 §4(a)(ii)) — required iff status is waived."
+          }
+        },
+        "required": [
+          "practice",
+          "status"
+        ],
+        "title": "SetPracticeRequest",
         "type": "object"
       },
       "Severity": {
@@ -6824,6 +6960,91 @@
           }
         },
         "summary": "Ai Gov Set Omb Impact",
+        "tags": [
+          "ai-gov"
+        ]
+      }
+    },
+    "/api/ai-gov/systems/{system_id}/set-practice": {
+      "post": {
+        "description": "Record an OMB M-25-21 minimum-practice status on a system (v0.11).\n\nFills the per-practice extension point reserved at v0.10.12.\nRequires an existing M-25-21 assessment (``set-high-impact`` first).\nReturns the updated entry plus a compliance roll-up over all seven\npractices.",
+        "operationId": "ai_gov_set_practice_api_ai_gov_systems__system_id__set_practice_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "system_id",
+            "required": true,
+            "schema": {
+              "title": "System Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPracticeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Ai Gov Set Practice Api Ai Gov Systems  System Id  Set Practice Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "M-25-21 domain-validation failure — e.g. status 'waived' without a waiver record, or no M-25-21 assessment on the entry yet (``error: invalid_body``)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No such registered system (``error: not_found``)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ai Gov Set Practice",
         "tags": [
           "ai-gov"
         ]

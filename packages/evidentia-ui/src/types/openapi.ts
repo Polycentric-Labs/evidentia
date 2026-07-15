@@ -212,6 +212,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ai-gov/systems/{system_id}/set-practice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ai Gov Set Practice
+         * @description Record an OMB M-25-21 minimum-practice status on a system (v0.11).
+         *
+         *     Fills the per-practice extension point reserved at v0.10.12.
+         *     Requires an existing M-25-21 assessment (``set-high-impact`` first).
+         *     Returns the updated entry plus a compliance roll-up over all seven
+         *     practices.
+         */
+        post: operations["ai_gov_set_practice_api_ai_gov_systems__system_id__set_practice_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/crosswalk": {
         parameters: {
             query?: never;
@@ -5269,6 +5294,16 @@ export interface components {
             target_date?: string | null;
         };
         /**
+         * MinimumPractice
+         * @description One of M-25-21 §4(b)'s seven minimum risk-management practices.
+         *
+         *     Member docstrings carry the memo's practice headings verbatim
+         *     (verified against the memo text 2026-07-14). String values are
+         *     stable across releases (persisted in inventories).
+         * @enum {string}
+         */
+        MinimumPractice: "pre_deployment_testing" | "impact_assessment" | "ongoing_monitoring" | "human_training" | "human_oversight" | "remedies_and_appeals" | "public_feedback";
+        /**
          * ModelInput
          * @description Documents one data source feeding the model.
          *
@@ -5767,6 +5802,63 @@ export interface components {
             total_pages?: number | null;
         };
         /**
+         * PracticeStatus
+         * @description Implementation status of one minimum practice for one system.
+         *
+         *     ``WAIVED`` is a distinct compliance state, not an absence: it
+         *     requires a CAIO waiver record (:class:`PracticeWaiver`) per
+         *     §4(a)(ii). There is deliberately no "not applicable" — under
+         *     M-25-21 the only sanctioned way a high-impact system does not
+         *     apply a minimum practice is a CAIO waiver.
+         * @enum {string}
+         */
+        PracticeStatus: "implemented" | "in_progress" | "not_started" | "waived";
+        /**
+         * PracticeWaiver
+         * @description A CAIO waiver of one minimum practice for one system (§4(a)(ii)).
+         *
+         *     The memo's constraints, modelled as data + advisory helpers rather
+         *     than hard validation (Evidentia records the operator's state; the
+         *     CAIO owns the determination):
+         *
+         *     - a **written determination** based on a system-specific and
+         *       context-specific risk assessment (``justification``);
+         *     - the CAIO must **certify ongoing validity annually**
+         *       (``last_certified_on``; :func:`waiver_certification_due`);
+         *     - grants/revocations must be **reported to OMB within 30 days**
+         *       (``reported_to_omb_on``; :func:`waiver_omb_report_overdue`);
+         *     - the authority is the CAIO's and may not be delegated — recorded
+         *       here only as provenance (``issued_by``).
+         */
+        PracticeWaiver: {
+            /**
+             * Issued By
+             * @description The granting official (the agency CAIO — §4(a)(ii) makes this authority non-delegable). Recorded as provenance.
+             */
+            issued_by: string;
+            /**
+             * Issued On
+             * Format: date
+             * @description Date the CAIO granted the waiver.
+             */
+            issued_on: string;
+            /**
+             * Justification
+             * @description The written determination: why fulfilling the practice would increase risks to safety or rights overall, or would create an unacceptable impediment to critical agency operations (the memo's two sanctioned grounds).
+             */
+            justification: string;
+            /**
+             * Last Certified On
+             * @description Most recent annual re-certification of ongoing validity. None until the first re-certification (the anchor for the annual clock is then issued_on).
+             */
+            last_certified_on?: string | null;
+            /**
+             * Reported To Omb On
+             * @description Date the grant was reported to OMB (due within 30 days of granting per §4(a)(iii)). None = not yet reported.
+             */
+            reported_to_omb_on?: string | null;
+        };
+        /**
          * Provenance
          * @description Model provenance — who built it.
          *
@@ -6187,6 +6279,29 @@ export interface components {
             status: components["schemas"]["FindingStatus"];
             /** Title */
             title: string;
+        };
+        /**
+         * SetPracticeRequest
+         * @description Body for ``POST /ai-gov/systems/{system_id}/set-practice``.
+         *
+         *     One OMB M-25-21 §4(b) minimum-practice status (v0.11). ``waiver``
+         *     is required iff ``status`` is ``waived`` (enforced by the domain
+         *     model's validator; violations normalize to 400 ``invalid_body``).
+         */
+        SetPracticeRequest: {
+            /**
+             * Last Reviewed
+             * @description ISO-8601 date the status was last reviewed.
+             */
+            last_reviewed?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** @description The §4(b) minimum practice: pre_deployment_testing / impact_assessment / ongoing_monitoring / human_training / human_oversight / remedies_and_appeals / public_feedback. */
+            practice: components["schemas"]["MinimumPractice"];
+            /** @description Practice status: implemented / in_progress / not_started / waived. */
+            status: components["schemas"]["PracticeStatus"];
+            /** @description The CAIO waiver record (M-25-21 §4(a)(ii)) — required iff status is waived. */
+            waiver?: components["schemas"]["PracticeWaiver"] | null;
         };
         /**
          * Severity
@@ -7336,6 +7451,70 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No such registered system (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ai_gov_set_practice_api_ai_gov_systems__system_id__set_practice_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                system_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPracticeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description M-25-21 domain-validation failure — e.g. status 'waived' without a waiver record, or no M-25-21 assessment on the entry yet (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
