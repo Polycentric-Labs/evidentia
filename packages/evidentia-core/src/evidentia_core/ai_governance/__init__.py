@@ -18,6 +18,10 @@ for refinement.
 
 from __future__ import annotations
 
+from evidentia_core.ai_governance.acquisition_store import (
+    AIAcquisitionStore,
+    get_ai_acquisition_dir,
+)
 from evidentia_core.ai_governance.classification import (
     AISystemClassification,
     AISystemDescriptor,
@@ -48,6 +52,14 @@ from evidentia_core.ai_governance.omb_m_25_21 import (
     waiver_certification_due,
     waiver_omb_report_overdue,
 )
+from evidentia_core.ai_governance.omb_m_25_22 import (
+    AcquisitionPhase,
+    AcquisitionPhaseRecord,
+    AcquisitionPhaseStatus,
+    AcquisitionProgressSummary,
+    AIAcquisition,
+    acquisition_progress,
+)
 from evidentia_core.ai_governance.registry import (
     AISystemRegistryEntry,
     ATOReference,
@@ -59,11 +71,17 @@ from evidentia_core.ai_governance.registry_store import (
 )
 
 __all__ = [
+    "AIAcquisition",
+    "AIAcquisitionStore",
     "AIRegistryStore",
     "AISystemClassification",
     "AISystemDescriptor",
     "AISystemRegistryEntry",
     "ATOReference",
+    "AcquisitionPhase",
+    "AcquisitionPhaseRecord",
+    "AcquisitionPhaseStatus",
+    "AcquisitionProgressSummary",
     "AnnexIIIDomain",
     "DeploymentStatus",
     "EUAIActTier",
@@ -79,8 +97,10 @@ __all__ = [
     "PracticeComplianceSummary",
     "PracticeStatus",
     "PracticeWaiver",
+    "acquisition_progress",
     "classify",
     "crosswalk_from_legacy",
+    "get_ai_acquisition_dir",
     "get_default_registry_store",
     "practice_compliance",
     "triggers_minimum_practices",

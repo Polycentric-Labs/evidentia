@@ -393,6 +393,21 @@ class EventAction(str, Enum):
     consequence bases. Added v0.10.12 — supersedes
     AI_SYSTEM_OMB_CLASSIFIED after M-24-10's rescission by M-25-21."""
 
+    AI_ACQUISITION_REGISTERED = "evidentia.ai_governance.acquisition_registered"
+    """Fired when an AI procurement is registered for OMB M-25-22
+    lifecycle tracking via ``evidentia ai-gov acquisition register`` (or
+    its API mirror). Payload carries the acquisition name + the initial
+    likely-high-impact determination (the M-25-21 §4(a) tie-in).
+    Added v0.11 — the first M-25-22 procurement surface."""
+
+    AI_ACQUISITION_PHASE_RECORDED = (
+        "evidentia.ai_governance.acquisition_phase_recorded"
+    )
+    """Fired when an M-25-22 §4 lifecycle-phase status is set or updated
+    via ``evidentia ai-gov acquisition set-phase`` (or its API mirror).
+    Payload carries the phase and the status (not_started / in_progress
+    / complete). Added v0.11."""
+
     AI_SYSTEM_PRACTICE_RECORDED = (
         "evidentia.ai_governance.system_practice_recorded"
     )
