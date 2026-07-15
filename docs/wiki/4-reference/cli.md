@@ -94,6 +94,23 @@ Set legacy OMB M-24-10 impact category on an AI system (v0.9.6 P3).
 | `SYSTEM_ID` | — |
 | `--category` | OMB M-24-10 §5(b) category: rights_impacting / safety_impacting / rights_and_safety_impacting / neither. |
 
+### `evidentia ai-gov set-practice`
+
+Record an OMB M-25-21 minimum-practice status on an entry (v0.11).
+
+| Flag / argument | Description |
+| --- | --- |
+| `SYSTEM_ID` | — |
+| `--practice` | OMB M-25-21 §4(b) minimum practice: pre_deployment_testing / impact_assessment / ongoing_monitoring / human_training / human_oversight / remedies_and_appeals / public_feedback. |
+| `--status` | Practice status: implemented / in_progress / not_started / waived (waived requires the --waiver-* flags). |
+| `--notes` | Optional detail — evidence pointers, plan references. |
+| `--last-reviewed` | ISO-8601 date the status was last reviewed. |
+| `--waiver-issued-on` | CAIO waiver grant date (ISO-8601). Required for waived. |
+| `--waiver-issued-by` | Granting official (the agency CAIO). Required for waived. |
+| `--waiver-justification` | The CAIO's written determination (M-25-21 §4(a)(ii)). Required for waived. |
+| `--waiver-certified-on` | Most recent annual re-certification date (ISO-8601). |
+| `--waiver-reported-on` | Date the grant was reported to OMB (due within 30 days). |
+
 ### `evidentia ai-gov show`
 
 Show one registered AI system in detail.

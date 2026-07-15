@@ -21,6 +21,9 @@ under ``/api/ai-gov`` mirror the CLI verbs:
   - ``POST   /api/ai-gov/systems/{system_id}/set-high-impact`` — set
     OMB M-25-21 high-impact determination (v0.10.12; mirrors ``ai-gov
     set-high-impact``)
+  - ``POST   /api/ai-gov/systems/{system_id}/set-practice`` — record an
+    OMB M-25-21 §4(b) minimum-practice status incl. CAIO waivers
+    (v0.11; mirrors ``ai-gov set-practice``)
   - ``DELETE /api/ai-gov/systems/{system_id}`` — remove entry
 
 Auth posture: reads are open (matches v0.9.0 POA&M router + v0.9.1
@@ -35,7 +38,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -50,9 +53,14 @@ from evidentia_core.ai_governance import (
     FIPS199Impact,
     HighImpactBasis,
     HighImpactDetermination,
+    MinimumPractice,
+    MinimumPracticeRecord,
     OMBHighImpactAssessment,
     OMBImpactCategory,
+    PracticeStatus,
+    PracticeWaiver,
     classify,
+    practice_compliance,
 )
 from evidentia_core.ai_governance.registry_store import (
     InvalidAISystemIdError,
@@ -1059,4 +1067,117 @@ async def ai_gov_set_high_impact(
     return {
         "system_id": system_id,
         "entry": updated.model_dump(mode="json"),
+    }
+
+
+class SetPracticeRequest(BaseModel):
+    """Body for ``POST /ai-gov/systems/{system_id}/set-practice``.
+
+    One OMB M-25-21 §4(b) minimum-practice status (v0.11). ``waiver``
+    is required iff ``status`` is ``waived`` (enforced by the domain
+    model's validator; violations normalize to 400 ``invalid_body``).
+    """
+
+    practice: MinimumPractice = Field(
+        description=(
+            "The §4(b) minimum practice: pre_deployment_testing / "
+            "impact_assessment / ongoing_monitoring / human_training / "
+            "human_oversight / remedies_and_appeals / public_feedback."
+        )
+    )
+    status: PracticeStatus = Field(
+        description=(
+            "Practice status: implemented / in_progress / not_started / "
+            "waived."
+        )
+    )
+    notes: str | None = Field(default=None, max_length=4000)
+    last_reviewed: date | None = Field(
+        default=None,
+        description="ISO-8601 date the status was last reviewed.",
+    )
+    waiver: PracticeWaiver | None = Field(
+        default=None,
+        description=(
+            "The CAIO waiver record (M-25-21 §4(a)(ii)) — required iff "
+            "status is waived."
+        ),
+    )
+
+
+@router.post(
+    "/ai-gov/systems/{system_id}/set-practice",
+    dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            400: (
+                "M-25-21 domain-validation failure — e.g. status "
+                "'waived' without a waiver record, or no M-25-21 "
+                "assessment on the entry yet (``error: invalid_body``)."
+            ),
+            403: RBAC_DENIED_403,
+            404: "No such registered system (``error: not_found``).",
+        }
+    ),
+)
+async def ai_gov_set_practice(
+    system_id: str, body: SetPracticeRequest
+) -> dict[str, Any]:
+    """Record an OMB M-25-21 minimum-practice status on a system (v0.11).
+
+    Fills the per-practice extension point reserved at v0.10.12.
+    Requires an existing M-25-21 assessment (``set-high-impact`` first).
+    Returns the updated entry plus a compliance roll-up over all seven
+    practices.
+    """
+    entry = _load_entry_or_404(system_id)
+
+    if entry.omb_high_impact is None:
+        raise api_error(
+            400,
+            "invalid_body",
+            (
+                "No M-25-21 assessment on this entry yet — record the "
+                "high-impact determination first (set-high-impact)."
+            ),
+        )
+
+    try:
+        record = MinimumPracticeRecord(
+            status=body.status,
+            notes=body.notes,
+            last_reviewed=body.last_reviewed,
+            waiver=body.waiver,
+        )
+    except (ValidationError, ValueError) as exc:
+        raise api_error(400, "invalid_body", str(exc)) from exc
+
+    assessment = entry.omb_high_impact
+    practices = dict(assessment.practices)
+    practices[body.practice] = record
+    updated_assessment = assessment.model_copy(update={"practices": practices})
+    updated = entry.model_copy(update={"omb_high_impact": updated_assessment})
+    AIRegistryStore().save(updated)
+
+    _log.info(
+        action=EventAction.AI_SYSTEM_PRACTICE_RECORDED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"OMB M-25-21 minimum practice {body.practice} recorded as "
+            f"{body.status} on AI system {entry.descriptor.name!r} via "
+            f"API (system_id={system_id})"
+        ),
+        evidentia={
+            "system_id": system_id,
+            "practice": str(body.practice),
+            "status": str(body.status),
+            "waived_with_record": body.waiver is not None,
+        },
+    )
+
+    summary = practice_compliance(updated_assessment)
+    return {
+        "system_id": system_id,
+        "entry": updated.model_dump(mode="json"),
+        "practice_compliance": summary.model_dump(mode="json"),
     }

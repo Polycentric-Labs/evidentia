@@ -393,6 +393,16 @@ class EventAction(str, Enum):
     consequence bases. Added v0.10.12 — supersedes
     AI_SYSTEM_OMB_CLASSIFIED after M-24-10's rescission by M-25-21."""
 
+    AI_SYSTEM_PRACTICE_RECORDED = (
+        "evidentia.ai_governance.system_practice_recorded"
+    )
+    """Fired when an OMB M-25-21 §4(b) minimum-practice status is set or
+    updated via ``evidentia ai-gov set-practice`` (or its API mirror).
+    Payload carries the practice, the status (implemented / in_progress /
+    not_started / waived), and whether a CAIO waiver record rode along.
+    Added v0.11 — fills the per-practice extension point reserved at
+    v0.10.12 on OMBHighImpactAssessment."""
+
     AI_SYSTEM_SCR_EMITTED = "evidentia.ai_governance.system_scr_emitted"
     """Fired when a Significant Change Request form is emitted via
     ``evidentia ai-gov update --emit-scr <path>``. Payload carries

@@ -825,3 +825,270 @@ class TestRFC0007Alignment:
         blob = json.dumps(notif)
         round_tripped = json.loads(blob)
         assert round_tripped == notif
+
+
+# ── v0.11 Wave 2: M-25-21 minimum-practice tracking ────────────────
+
+
+class TestMinimumPractice:
+    def test_seven_practices_present(self) -> None:
+        from evidentia_core.ai_governance import MinimumPractice
+
+        assert len(MinimumPractice) == 7
+
+    def test_practice_values_stable(self) -> None:
+        """String values are persisted in inventories — never change them."""
+        from evidentia_core.ai_governance import MinimumPractice
+
+        assert {p.value for p in MinimumPractice} == {
+            "pre_deployment_testing",
+            "impact_assessment",
+            "ongoing_monitoring",
+            "human_training",
+            "human_oversight",
+            "remedies_and_appeals",
+            "public_feedback",
+        }
+
+
+class TestMinimumPracticeRecord:
+    def test_waived_requires_waiver_record(self) -> None:
+        import pytest
+        from evidentia_core.ai_governance import (
+            MinimumPracticeRecord,
+            PracticeStatus,
+        )
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError, match="waived"):
+            MinimumPracticeRecord(status=PracticeStatus.WAIVED)
+
+    def test_waiver_requires_waived_status(self) -> None:
+        from datetime import date
+
+        import pytest
+        from evidentia_core.ai_governance import (
+            MinimumPracticeRecord,
+            PracticeStatus,
+            PracticeWaiver,
+        )
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError, match="waiver record"):
+            MinimumPracticeRecord(
+                status=PracticeStatus.IMPLEMENTED,
+                waiver=PracticeWaiver(
+                    issued_on=date(2026, 6, 1),
+                    issued_by="Agency CAIO",
+                    justification="x",
+                ),
+            )
+
+    def test_valid_waived_record_round_trips(self) -> None:
+        from datetime import date
+
+        from evidentia_core.ai_governance import (
+            MinimumPracticeRecord,
+            PracticeStatus,
+            PracticeWaiver,
+        )
+
+        record = MinimumPracticeRecord(
+            status=PracticeStatus.WAIVED,
+            waiver=PracticeWaiver(
+                issued_on=date(2026, 6, 1),
+                issued_by="Agency CAIO",
+                justification=(
+                    "Fulfilling the practice would create an unacceptable "
+                    "impediment to critical agency operations."
+                ),
+                reported_to_omb_on=date(2026, 6, 15),
+            ),
+        )
+        back = MinimumPracticeRecord.model_validate(
+            record.model_dump(mode="json")
+        )
+        assert back.waiver is not None
+        assert back.waiver.issued_by == "Agency CAIO"
+
+
+class TestPracticeCompliance:
+    def test_empty_practices_all_missing_not_satisfied(self) -> None:
+        from evidentia_core.ai_governance import (
+            HighImpactDetermination,
+            OMBHighImpactAssessment,
+            practice_compliance,
+        )
+
+        summary = practice_compliance(
+            OMBHighImpactAssessment(
+                determination=HighImpactDetermination.HIGH_IMPACT
+            )
+        )
+        assert summary.total == 7
+        assert len(summary.missing) == 7
+        assert not summary.satisfied
+
+    def test_all_implemented_or_waived_is_satisfied(self) -> None:
+        from datetime import date
+
+        from evidentia_core.ai_governance import (
+            HighImpactDetermination,
+            MinimumPractice,
+            MinimumPracticeRecord,
+            OMBHighImpactAssessment,
+            PracticeStatus,
+            PracticeWaiver,
+            practice_compliance,
+        )
+
+        waiver = PracticeWaiver(
+            issued_on=date(2026, 6, 1),
+            issued_by="Agency CAIO",
+            justification="System-specific risk assessment.",
+        )
+        practices = {
+            p: MinimumPracticeRecord(status=PracticeStatus.IMPLEMENTED)
+            for p in MinimumPractice
+        }
+        practices[MinimumPractice.PUBLIC_FEEDBACK] = MinimumPracticeRecord(
+            status=PracticeStatus.WAIVED, waiver=waiver
+        )
+        summary = practice_compliance(
+            OMBHighImpactAssessment(
+                determination=HighImpactDetermination.HIGH_IMPACT,
+                practices=practices,
+            )
+        )
+        assert summary.satisfied
+        assert summary.implemented == 6
+        assert summary.waived == 1
+        assert summary.missing == []
+
+    def test_in_progress_blocks_satisfaction(self) -> None:
+        from evidentia_core.ai_governance import (
+            HighImpactDetermination,
+            MinimumPractice,
+            MinimumPracticeRecord,
+            OMBHighImpactAssessment,
+            PracticeStatus,
+            practice_compliance,
+        )
+
+        practices = {
+            p: MinimumPracticeRecord(status=PracticeStatus.IMPLEMENTED)
+            for p in MinimumPractice
+        }
+        practices[MinimumPractice.HUMAN_TRAINING] = MinimumPracticeRecord(
+            status=PracticeStatus.IN_PROGRESS
+        )
+        summary = practice_compliance(
+            OMBHighImpactAssessment(
+                determination=HighImpactDetermination.HIGH_IMPACT,
+                practices=practices,
+            )
+        )
+        assert not summary.satisfied
+        assert summary.in_progress == 1
+
+    def test_v0_10_12_era_assessment_without_practices_loads(self) -> None:
+        """Persisted pre-v0.11 assessments (no practices key) still load."""
+        from evidentia_core.ai_governance import (
+            OMBHighImpactAssessment,
+            practice_compliance,
+        )
+
+        legacy = OMBHighImpactAssessment.model_validate(
+            {
+                "determination": "high_impact",
+                "bases": ["health_and_safety"],
+                "rationale": None,
+            }
+        )
+        assert legacy.practices == {}
+        assert not practice_compliance(legacy).satisfied
+
+    def test_string_keyed_practices_from_persisted_json(self) -> None:
+        """Registry persistence round-trips enum keys as strings."""
+        from evidentia_core.ai_governance import (
+            OMBHighImpactAssessment,
+            practice_compliance,
+        )
+
+        loaded = OMBHighImpactAssessment.model_validate(
+            {
+                "determination": "high_impact",
+                "practices": {
+                    "ongoing_monitoring": {"status": "implemented"},
+                },
+            }
+        )
+        summary = practice_compliance(loaded)
+        assert summary.implemented == 1
+        assert len(summary.missing) == 6
+
+
+class TestPracticeWaiverClocks:
+    def test_certification_due_anchors_on_issue_until_first_cert(self) -> None:
+        from datetime import date
+
+        from evidentia_core.ai_governance import (
+            PracticeWaiver,
+            waiver_certification_due,
+        )
+
+        waiver = PracticeWaiver(
+            issued_on=date(2025, 6, 1),
+            issued_by="Agency CAIO",
+            justification="x",
+        )
+        assert waiver_certification_due(waiver, date(2026, 7, 14))
+        assert not waiver_certification_due(waiver, date(2026, 5, 1))
+
+    def test_certification_clock_resets_on_recertification(self) -> None:
+        from datetime import date
+
+        from evidentia_core.ai_governance import (
+            PracticeWaiver,
+            waiver_certification_due,
+        )
+
+        waiver = PracticeWaiver(
+            issued_on=date(2025, 6, 1),
+            issued_by="Agency CAIO",
+            justification="x",
+            last_certified_on=date(2026, 6, 1),
+        )
+        assert not waiver_certification_due(waiver, date(2026, 7, 14))
+
+    def test_omb_report_overdue_after_30_days(self) -> None:
+        from datetime import date
+
+        from evidentia_core.ai_governance import (
+            PracticeWaiver,
+            waiver_omb_report_overdue,
+        )
+
+        waiver = PracticeWaiver(
+            issued_on=date(2026, 6, 1),
+            issued_by="Agency CAIO",
+            justification="x",
+        )
+        assert waiver_omb_report_overdue(waiver, date(2026, 7, 14))
+        assert not waiver_omb_report_overdue(waiver, date(2026, 6, 20))
+
+    def test_omb_report_never_overdue_once_reported(self) -> None:
+        from datetime import date
+
+        from evidentia_core.ai_governance import (
+            PracticeWaiver,
+            waiver_omb_report_overdue,
+        )
+
+        waiver = PracticeWaiver(
+            issued_on=date(2026, 1, 1),
+            issued_by="Agency CAIO",
+            justification="x",
+            reported_to_omb_on=date(2026, 3, 1),
+        )
+        assert not waiver_omb_report_overdue(waiver, date(2026, 7, 14))

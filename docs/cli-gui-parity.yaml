@@ -362,6 +362,11 @@ commands:
     api: "POST /api/ai-gov/systems/{system_id}/set-high-impact"
     gui: "/ai-gov"
     status: full
+  - cli: "ai-gov set-practice"
+    api: "POST /api/ai-gov/systems/{system_id}/set-practice"
+    gui: null
+    status: api-only
+    reason: "v0.11 Wave 2: M-25-21 minimum-practice recording; the /ai-gov GUI form flip rides the next parity pass (v0.10.8 Wave-2 pattern)."
   - cli: "catalog crosswalk"
     api: "GET /api/catalog/crosswalk"
     gui: "/catalog"

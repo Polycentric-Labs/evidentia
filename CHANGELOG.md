@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **OMB M-25-21 minimum-practice tracking — `evidentia ai-gov set-practice`**
+  (v0.11 Wave 2): fills the per-practice extension point reserved at
+  v0.10.12. `OMBHighImpactAssessment` gains structured status for the seven
+  §4(b) minimum risk-management practices (practice headings verified
+  against the memo text), each recordable as implemented / in_progress /
+  not_started / **waived** — waived requires a §4(a)(ii) **CAIO waiver
+  record** (written determination, granting official, annual
+  re-certification date, 30-day OMB report date), enforced by a model
+  validator. `practice_compliance()` rolls up recorded / missing /
+  satisfied without ever inventing a status for an unrecorded practice;
+  `waiver_certification_due()` / `waiver_omb_report_overdue()` evaluate the
+  memo's two waiver clocks. Ships as CLI verb + API mirror
+  (`POST /api/ai-gov/systems/{id}/set-practice`, parity `api-only` pending
+  the next GUI pass) + `AI_SYSTEM_PRACTICE_RECORDED` audit event. Persisted
+  v0.10.12-era assessments load unchanged (the field defaults to empty —
+  reported as missing, never as satisfied).
 - **FedRAMP CR26 KSI emission — `evidentia conmon ksi`** (v0.11 Wave 2,
   target re-verified against the live CR26 stack + ratified 2026-07-14; see
   the plan's §Wave 2 re-base record): emits the `keySecurityIndicators`

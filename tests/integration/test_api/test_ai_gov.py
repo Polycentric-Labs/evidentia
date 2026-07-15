@@ -906,3 +906,114 @@ class TestAiGovRBAC:
         )
         assert resp.status_code == 403, resp.text
         assert resp.json()["detail"]["error"] == "rbac_denied"
+
+
+class TestSetPractice:
+    """POST /ai-gov/systems/{system_id}/set-practice — OMB M-25-21 v0.11."""
+
+    def _set_high_impact(self, api_client: TestClient, system_id: str) -> None:
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-high-impact",
+            json={"determination": "high_impact"},
+        )
+        assert resp.status_code == 200, resp.text
+
+    def test_set_practice_mutates_persists_and_rolls_up(
+        self, api_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client)
+        self._set_high_impact(api_client, system_id)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-practice",
+            json={
+                "practice": "pre_deployment_testing",
+                "status": "implemented",
+                "notes": "Red-team + regression suite before each deploy.",
+                "last_reviewed": "2026-07-01",
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        practices = body["entry"]["omb_high_impact"]["practices"]
+        assert practices["pre_deployment_testing"]["status"] == "implemented"
+        rollup = body["practice_compliance"]
+        assert rollup["total"] == 7
+        assert rollup["implemented"] == 1
+        assert rollup["satisfied"] is False
+
+        got = api_client.get(f"/api/ai-gov/systems/{system_id}").json()
+        assert (
+            got["omb_high_impact"]["practices"]["pre_deployment_testing"][
+                "status"
+            ]
+            == "implemented"
+        )
+
+    def test_waived_practice_carries_waiver_record(
+        self, api_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client)
+        self._set_high_impact(api_client, system_id)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-practice",
+            json={
+                "practice": "public_feedback",
+                "status": "waived",
+                "waiver": {
+                    "issued_on": "2026-06-01",
+                    "issued_by": "Agency CAIO",
+                    "justification": (
+                        "Unacceptable impediment to critical agency "
+                        "operations."
+                    ),
+                    "reported_to_omb_on": "2026-06-15",
+                },
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        record = resp.json()["entry"]["omb_high_impact"]["practices"][
+            "public_feedback"
+        ]
+        assert record["status"] == "waived"
+        assert record["waiver"]["issued_by"] == "Agency CAIO"
+
+    def test_waived_without_waiver_returns_400(
+        self, api_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client)
+        self._set_high_impact(api_client, system_id)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-practice",
+            json={"practice": "public_feedback", "status": "waived"},
+        )
+        assert resp.status_code == 400
+        assert resp.json()["detail"]["error"] == "invalid_body"
+
+    def test_no_assessment_yet_returns_400(
+        self, api_client: TestClient
+    ) -> None:
+        system_id = _register_system(api_client)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-practice",
+            json={"practice": "impact_assessment", "status": "in_progress"},
+        )
+        assert resp.status_code == 400
+        assert "set-high-impact" in resp.json()["detail"]["message"]
+
+    def test_unknown_system_returns_404(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{_UNKNOWN_UUID}/set-practice",
+            json={"practice": "impact_assessment", "status": "implemented"},
+        )
+        assert resp.status_code == 404
+
+    def test_bad_practice_returns_422(self, api_client: TestClient) -> None:
+        system_id = _register_system(api_client)
+        self._set_high_impact(api_client, system_id)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-practice",
+            json={"practice": "vibes_check", "status": "implemented"},
+        )
+        assert resp.status_code == 422
