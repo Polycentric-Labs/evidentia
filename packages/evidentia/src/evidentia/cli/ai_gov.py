@@ -1335,11 +1335,17 @@ def acquisition_show(
     table.add_column("Status")
     table.add_column("Last reviewed")
     table.add_column("Notes")
-    recorded = {
-        (phase if isinstance(phase, str) else phase.value): rec
+    from evidentia_core.ai_governance import (
+        AcquisitionPhase,
+        AcquisitionPhaseRecord,
+    )
+
+    # Persisted records round-trip enum keys as plain strings
+    # (use_enum_values); normalize either shape to the string value.
+    recorded: dict[str, AcquisitionPhaseRecord] = {
+        (phase.value if isinstance(phase, AcquisitionPhase) else phase): rec
         for phase, rec in record.phases.items()
     }
-    from evidentia_core.ai_governance import AcquisitionPhase
 
     for phase in AcquisitionPhase:
         rec = recorded.get(phase.value)

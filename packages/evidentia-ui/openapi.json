@@ -107,6 +107,29 @@
         "title": "AISystemDescriptor",
         "type": "object"
       },
+      "AcquisitionPhase": {
+        "description": "One of M-25-22 §4's six AI-acquisition lifecycle phases.\n\nMember docstrings carry the memo's phase headings verbatim\n(verified 2026-07-14). String values are stable across releases\n(persisted in acquisition records).",
+        "enum": [
+          "identification_of_requirements",
+          "market_research_and_planning",
+          "solicitation_development",
+          "selection_and_award",
+          "contract_administration",
+          "contract_closeout"
+        ],
+        "title": "AcquisitionPhase",
+        "type": "string"
+      },
+      "AcquisitionPhaseStatus": {
+        "description": "Progress state of one lifecycle phase for one acquisition.",
+        "enum": [
+          "not_started",
+          "in_progress",
+          "complete"
+        ],
+        "title": "AcquisitionPhaseStatus",
+        "type": "string"
+      },
       "AirGapCheck": {
         "additionalProperties": false,
         "description": "One subsystem's air-gap posture.",
@@ -4538,6 +4561,75 @@
         "title": "QuestionnaireFormat",
         "type": "string"
       },
+      "RegisterAcquisitionRequest": {
+        "description": "Body for ``POST /ai-gov/acquisitions``.\n\nRegisters an AI procurement for OMB M-25-22 lifecycle tracking.\n``likely_high_impact`` is the §4(a) initial determination in\nM-25-21 vocabulary (defaults to ``not_assessed``).",
+        "properties": {
+          "covered_note": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Covered Note"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "likely_high_impact": {
+            "$ref": "#/components/schemas/HighImpactDetermination",
+            "default": "not_assessed",
+            "description": "M-25-22 §4(a) initial determination (M-25-21 vocabulary): high_impact / not_high_impact / not_assessed."
+          },
+          "linked_system_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "AI-registry system_id this acquisition delivers.",
+            "title": "Linked System Id"
+          },
+          "name": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "solicitation_reference": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Solicitation Reference"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "RegisterAcquisitionRequest",
+        "type": "object"
+      },
       "RegisterRequest": {
         "examples": [
           {
@@ -5095,6 +5187,50 @@
           "source_system"
         ],
         "title": "SecurityFinding",
+        "type": "object"
+      },
+      "SetAcquisitionPhaseRequest": {
+        "description": "Body for ``POST /ai-gov/acquisitions/{acquisition_id}/set-phase``.",
+        "properties": {
+          "last_reviewed": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISO-8601 date the status was last reviewed.",
+            "title": "Last Reviewed"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "phase": {
+            "$ref": "#/components/schemas/AcquisitionPhase",
+            "description": "M-25-22 §4 phase: identification_of_requirements / market_research_and_planning / solicitation_development / selection_and_award / contract_administration / contract_closeout."
+          },
+          "status": {
+            "$ref": "#/components/schemas/AcquisitionPhaseStatus",
+            "description": "Phase status: not_started / in_progress / complete."
+          }
+        },
+        "required": [
+          "phase",
+          "status"
+        ],
+        "title": "SetAcquisitionPhaseRequest",
         "type": "object"
       },
       "SetPracticeRequest": {
@@ -6211,6 +6347,232 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/ai-gov/acquisitions": {
+      "get": {
+        "description": "List tracked AI acquisitions (M-25-22 lifecycle records).",
+        "operationId": "ai_gov_list_acquisitions_api_ai_gov_acquisitions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Ai Gov List Acquisitions Api Ai Gov Acquisitions Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Ai Gov List Acquisitions",
+        "tags": [
+          "ai-gov"
+        ]
+      },
+      "post": {
+        "description": "Register an AI procurement for M-25-22 lifecycle tracking (v0.11).",
+        "operationId": "ai_gov_register_acquisition_api_ai_gov_acquisitions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterAcquisitionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Ai Gov Register Acquisition Api Ai Gov Acquisitions Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "M-25-22 domain-validation failure (``error: invalid_body``)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ai Gov Register Acquisition",
+        "tags": [
+          "ai-gov"
+        ]
+      }
+    },
+    "/api/ai-gov/acquisitions/{acquisition_id}": {
+      "get": {
+        "description": "Get one acquisition + its lifecycle progress roll-up.",
+        "operationId": "ai_gov_get_acquisition_api_ai_gov_acquisitions__acquisition_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "acquisition_id",
+            "required": true,
+            "schema": {
+              "title": "Acquisition Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Ai Gov Get Acquisition Api Ai Gov Acquisitions  Acquisition Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No such tracked acquisition (``error: not_found``)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ai Gov Get Acquisition",
+        "tags": [
+          "ai-gov"
+        ]
+      }
+    },
+    "/api/ai-gov/acquisitions/{acquisition_id}/set-phase": {
+      "post": {
+        "description": "Record an M-25-22 §4 lifecycle-phase status on an acquisition.",
+        "operationId": "ai_gov_set_acquisition_phase_api_ai_gov_acquisitions__acquisition_id__set_phase_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "acquisition_id",
+            "required": true,
+            "schema": {
+              "title": "Acquisition Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAcquisitionPhaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Ai Gov Set Acquisition Phase Api Ai Gov Acquisitions  Acquisition Id  Set Phase Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "M-25-22 domain-validation failure (``error: invalid_body``)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "No such tracked acquisition (``error: not_found``)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ai Gov Set Acquisition Phase",
+        "tags": [
+          "ai-gov"
+        ]
+      }
+    },
     "/api/ai-gov/classify": {
       "post": {
         "description": "One-shot AI system classification. No persistence.",

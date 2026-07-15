@@ -25,6 +25,52 @@ Applied to every command (pass before the subcommand, e.g. `evidentia --offline 
 
 AI governance — EU AI Act + NIST AI RMF classification + AI system inventory (v0.9.3 P2).
 
+### `evidentia ai-gov acquisition`
+
+OMB M-25-22 AI acquisition-lifecycle tracking (v0.11): register procurements and track them through the six §4 phases.
+
+### `evidentia ai-gov acquisition list`
+
+List tracked AI acquisitions.
+
+| Flag / argument | Description |
+| --- | --- |
+| `--json` | Emit machine-readable JSON instead of a rich table. |
+
+### `evidentia ai-gov acquisition register`
+
+Register an AI procurement for M-25-22 lifecycle tracking (v0.11).
+
+| Flag / argument | Description |
+| --- | --- |
+| `NAME` | — |
+| `--solicitation-ref` | Solicitation / contract-vehicle reference (RFP, task order). |
+| `--description` | What is being acquired and why. |
+| `--likely-high-impact` | M-25-22 §4(a) initial determination (M-25-21 vocabulary): high_impact / not_high_impact / not_assessed. |
+| `--covered-note` | Coverage/exclusion note (CFO-Act applicability, IC/NSS). |
+| `--link-system` | AI-registry system_id this acquisition delivers (optional). |
+
+### `evidentia ai-gov acquisition set-phase`
+
+Record an M-25-22 lifecycle-phase status on an acquisition (v0.11).
+
+| Flag / argument | Description |
+| --- | --- |
+| `ACQUISITION_ID` | — |
+| `--phase` | M-25-22 §4 phase: identification_of_requirements / market_research_and_planning / solicitation_development / selection_and_award / contract_administration / contract_closeout. |
+| `--status` | Phase status: not_started / in_progress / complete. |
+| `--notes` | Optional detail — team notes, artifact pointers. |
+| `--last-reviewed` | ISO-8601 date the status was last reviewed. |
+
+### `evidentia ai-gov acquisition show`
+
+Show one acquisition + its lifecycle progress.
+
+| Flag / argument | Description |
+| --- | --- |
+| `ACQUISITION_ID` | — |
+| `--json` | Emit machine-readable JSON instead of human form. |
+
 ### `evidentia ai-gov categorize-fips`
 
 Set FIPS 199 categorization on an AI system registry entry (v0.9.6 P3).

@@ -4,6 +4,70 @@
  */
 
 export interface paths {
+    "/api/ai-gov/acquisitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ai Gov List Acquisitions
+         * @description List tracked AI acquisitions (M-25-22 lifecycle records).
+         */
+        get: operations["ai_gov_list_acquisitions_api_ai_gov_acquisitions_get"];
+        put?: never;
+        /**
+         * Ai Gov Register Acquisition
+         * @description Register an AI procurement for M-25-22 lifecycle tracking (v0.11).
+         */
+        post: operations["ai_gov_register_acquisition_api_ai_gov_acquisitions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai-gov/acquisitions/{acquisition_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ai Gov Get Acquisition
+         * @description Get one acquisition + its lifecycle progress roll-up.
+         */
+        get: operations["ai_gov_get_acquisition_api_ai_gov_acquisitions__acquisition_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai-gov/acquisitions/{acquisition_id}/set-phase": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ai Gov Set Acquisition Phase
+         * @description Record an M-25-22 §4 lifecycle-phase status on an acquisition.
+         */
+        post: operations["ai_gov_set_acquisition_phase_api_ai_gov_acquisitions__acquisition_id__set_phase_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ai-gov/classify": {
         parameters: {
             query?: never;
@@ -3162,6 +3226,22 @@ export interface components {
             purpose: string;
         };
         /**
+         * AcquisitionPhase
+         * @description One of M-25-22 §4's six AI-acquisition lifecycle phases.
+         *
+         *     Member docstrings carry the memo's phase headings verbatim
+         *     (verified 2026-07-14). String values are stable across releases
+         *     (persisted in acquisition records).
+         * @enum {string}
+         */
+        AcquisitionPhase: "identification_of_requirements" | "market_research_and_planning" | "solicitation_development" | "selection_and_award" | "contract_administration" | "contract_closeout";
+        /**
+         * AcquisitionPhaseStatus
+         * @description Progress state of one lifecycle phase for one acquisition.
+         * @enum {string}
+         */
+        AcquisitionPhaseStatus: "not_started" | "in_progress" | "complete";
+        /**
          * AirGapCheck
          * @description One subsystem's air-gap posture.
          */
@@ -5949,6 +6029,34 @@ export interface components {
          */
         QuestionnaireFormat: "evidentia-generic" | "caiq-lite" | "caiq-full" | "sig" | "sig-lite";
         /**
+         * RegisterAcquisitionRequest
+         * @description Body for ``POST /ai-gov/acquisitions``.
+         *
+         *     Registers an AI procurement for OMB M-25-22 lifecycle tracking.
+         *     ``likely_high_impact`` is the §4(a) initial determination in
+         *     M-25-21 vocabulary (defaults to ``not_assessed``).
+         */
+        RegisterAcquisitionRequest: {
+            /** Covered Note */
+            covered_note?: string | null;
+            /** Description */
+            description?: string | null;
+            /**
+             * @description M-25-22 §4(a) initial determination (M-25-21 vocabulary): high_impact / not_high_impact / not_assessed.
+             * @default not_assessed
+             */
+            likely_high_impact: components["schemas"]["HighImpactDetermination"];
+            /**
+             * Linked System Id
+             * @description AI-registry system_id this acquisition delivers.
+             */
+            linked_system_id?: string | null;
+            /** Name */
+            name: string;
+            /** Solicitation Reference */
+            solicitation_reference?: string | null;
+        };
+        /**
          * RegisterRequest
          * @example {
          *       "deployment_status": "production",
@@ -6279,6 +6387,23 @@ export interface components {
             status: components["schemas"]["FindingStatus"];
             /** Title */
             title: string;
+        };
+        /**
+         * SetAcquisitionPhaseRequest
+         * @description Body for ``POST /ai-gov/acquisitions/{acquisition_id}/set-phase``.
+         */
+        SetAcquisitionPhaseRequest: {
+            /**
+             * Last Reviewed
+             * @description ISO-8601 date the status was last reviewed.
+             */
+            last_reviewed?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** @description M-25-22 §4 phase: identification_of_requirements / market_research_and_planning / solicitation_development / selection_and_award / contract_administration / contract_closeout. */
+            phase: components["schemas"]["AcquisitionPhase"];
+            /** @description Phase status: not_started / in_progress / complete. */
+            status: components["schemas"]["AcquisitionPhaseStatus"];
         };
         /**
          * SetPracticeRequest
@@ -6938,6 +7063,187 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    ai_gov_list_acquisitions_api_ai_gov_acquisitions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    ai_gov_register_acquisition_api_ai_gov_acquisitions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterAcquisitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description M-25-22 domain-validation failure (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ai_gov_get_acquisition_api_ai_gov_acquisitions__acquisition_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                acquisition_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description No such tracked acquisition (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ai_gov_set_acquisition_phase_api_ai_gov_acquisitions__acquisition_id__set_phase_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                acquisition_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetAcquisitionPhaseRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description M-25-22 domain-validation failure (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description No such tracked acquisition (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     ai_gov_classify_api_ai_gov_classify_post: {
         parameters: {
             query?: never;

@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **OMB M-25-22 AI acquisition-lifecycle tracking — `evidentia ai-gov
+  acquisition`** (v0.11 Wave 2; spec ratified 2026-07-14, lifecycle phases
+  verified verbatim against the memo text): Evidentia's first procurement
+  surface. `AIAcquisition` records track a procurement through the six §4
+  phases (Identification of Requirements → Market Research & Planning →
+  Solicitation Development → Selection and Award → Contract Administration
+  → Contract Closeout) with status-only per-phase records (M-25-22 defines
+  no waiver mechanism) and carry the §4(a) initial likely-high-impact
+  determination in M-25-21 vocabulary plus an optional AI-registry link
+  (acquisitions may precede registration). `AIAcquisitionStore` clones the
+  registry-store pattern (UUID filenames, traversal guard, atomic writes,
+  trusted-directory boundary, `EVIDENTIA_AI_ACQUISITION_DIR`).
+  CLI `ai-gov acquisition register|list|show|set-phase` + API mirror under
+  `/api/ai-gov/acquisitions` (parity `api-only` pending the next GUI pass);
+  `acquisition_progress()` roll-up never fabricates a status for an
+  unrecorded phase; `AI_ACQUISITION_REGISTERED` /
+  `AI_ACQUISITION_PHASE_RECORDED` audit events.
+
 - **OMB M-25-21 minimum-practice tracking — `evidentia ai-gov set-practice`**
   (v0.11 Wave 2): fills the per-practice extension point reserved at
   v0.10.12. `OMBHighImpactAssessment` gains structured status for the seven

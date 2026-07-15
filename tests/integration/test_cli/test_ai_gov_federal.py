@@ -736,3 +736,126 @@ class TestSetPractice:
         assert entry.omb_high_impact is not None
         practices = entry.omb_high_impact.practices
         assert len(practices) == 2
+
+
+# ── v0.11 Wave 2: ai-gov acquisition (OMB M-25-22) ─────────────────
+
+
+def _normalize(output: str) -> str:
+    """Strip ANSI escapes + collapse whitespace (rich wraps at ~80 cols
+    on CI runners; mirrors tests/integration/test_cli/test_conmon.py)."""
+    import re as _re
+
+    return " ".join(_re.sub(r"\[[0-9;]*m", "", output).split())
+
+
+@pytest.fixture()
+def isolated_acquisitions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> Path:
+    """Isolated M-25-22 acquisition store per test."""
+    store_dir = tmp_path / "ai_acquisitions"
+    monkeypatch.setenv("EVIDENTIA_AI_ACQUISITION_DIR", str(store_dir))
+    return store_dir
+
+
+class TestAcquisition:
+    def _register(self, runner: CliRunner) -> str:
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "acquisition",
+                "register",
+                "Case-triage LLM service",
+                "--solicitation-ref",
+                "RFP-26-0141",
+                "--likely-high-impact",
+                "high_impact",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        import re
+
+        match = re.search(r"ID:\s+([0-9a-f-]{36})", result.output)
+        assert match, result.output
+        return match.group(1)
+
+    def test_register_and_show(
+        self, runner: CliRunner, isolated_acquisitions: Path
+    ) -> None:
+        acquisition_id = self._register(runner)
+        result = runner.invoke(
+            app, ["ai-gov", "acquisition", "show", acquisition_id]
+        )
+        assert result.exit_code == 0, result.output
+        normalized = _normalize(result.output)
+        assert "Case-triage LLM service" in normalized
+        assert "high_impact" in normalized
+        assert "not recorded" in normalized
+
+    def test_set_phase_and_progress(
+        self, runner: CliRunner, isolated_acquisitions: Path
+    ) -> None:
+        acquisition_id = self._register(runner)
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "acquisition",
+                "set-phase",
+                acquisition_id,
+                "--phase",
+                "identification_of_requirements",
+                "--status",
+                "complete",
+                "--last-reviewed",
+                "2026-07-10",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        assert "1/6 recorded" in _normalize(result.output)
+
+    def test_unknown_phase_exits_1(
+        self, runner: CliRunner, isolated_acquisitions: Path
+    ) -> None:
+        acquisition_id = self._register(runner)
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "acquisition",
+                "set-phase",
+                acquisition_id,
+                "--phase",
+                "vibes_alignment",
+                "--status",
+                "complete",
+            ],
+        )
+        assert result.exit_code == 1
+        assert "unknown phase" in _normalize(result.output)
+
+    def test_unknown_id_exits_1(
+        self, runner: CliRunner, isolated_acquisitions: Path
+    ) -> None:
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "acquisition",
+                "show",
+                "11111111-1111-4111-8111-111111111111",
+            ],
+        )
+        assert result.exit_code == 1
+
+    def test_list_json(
+        self, runner: CliRunner, isolated_acquisitions: Path
+    ) -> None:
+        self._register(runner)
+        result = runner.invoke(app, ["ai-gov", "acquisition", "list", "--json"])
+        assert result.exit_code == 0, result.output
+        records = json.loads(result.output)
+        assert len(records) == 1
+        assert records[0]["name"] == "Case-triage LLM service"
