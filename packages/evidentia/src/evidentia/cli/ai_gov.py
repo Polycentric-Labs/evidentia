@@ -1127,3 +1127,374 @@ def ai_gov_set_practice(
             "high_impact — the minimum practices are only obligatory for "
             "high-impact AI (recording is retained for history)."
         )
+
+
+# ── acquisition (v0.11 Wave 2 — OMB M-25-22 lifecycle) ────────────
+
+acquisition_app = typer.Typer(
+    help=(
+        "OMB M-25-22 AI acquisition-lifecycle tracking (v0.11): register "
+        "procurements and track them through the six §4 phases."
+    )
+)
+app.add_typer(acquisition_app, name="acquisition")
+
+
+@acquisition_app.command("register")
+def acquisition_register(
+    name: str = typer.Argument(
+        ..., help="Operator-facing name for the procurement."
+    ),
+    solicitation_ref: str | None = typer.Option(
+        None,
+        "--solicitation-ref",
+        help="Solicitation / contract-vehicle reference (RFP, task order).",
+    ),
+    description: str | None = typer.Option(
+        None,
+        "--description",
+        help="What is being acquired and why.",
+    ),
+    likely_high_impact: str = typer.Option(
+        "not_assessed",
+        "--likely-high-impact",
+        help=(
+            "M-25-22 §4(a) initial determination (M-25-21 vocabulary): "
+            "high_impact / not_high_impact / not_assessed."
+        ),
+    ),
+    covered_note: str | None = typer.Option(
+        None,
+        "--covered-note",
+        help="Coverage/exclusion note (CFO-Act applicability, IC/NSS).",
+    ),
+    link_system: str | None = typer.Option(
+        None,
+        "--link-system",
+        help="AI-registry system_id this acquisition delivers (optional).",
+    ),
+) -> None:
+    """Register an AI procurement for M-25-22 lifecycle tracking (v0.11)."""
+    from evidentia_core.ai_governance import AIAcquisition, AIAcquisitionStore
+    from evidentia_core.ai_governance.omb_m_25_21 import (
+        HighImpactDetermination,
+    )
+    from pydantic import ValidationError
+
+    try:
+        determination = HighImpactDetermination(likely_high_impact.lower())
+    except ValueError:
+        console.print(
+            f"[red]Error:[/red] unknown determination "
+            f"{likely_high_impact!r}. Valid: "
+            f"{', '.join(d.value for d in HighImpactDetermination)}"
+        )
+        raise typer.Exit(code=1) from None
+
+    try:
+        acquisition = AIAcquisition(
+            name=name,
+            solicitation_reference=solicitation_ref,
+            description=description,
+            likely_high_impact=determination,
+            covered_note=covered_note,
+            linked_system_id=link_system,
+        )
+    except (ValidationError, ValueError) as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    store = AIAcquisitionStore()
+    store.save(acquisition)
+
+    _log.info(
+        action=EventAction.AI_ACQUISITION_REGISTERED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"AI acquisition {name!r} registered for OMB M-25-22 "
+            f"lifecycle tracking"
+        ),
+        evidentia={
+            "acquisition_id": acquisition.acquisition_id,
+            "likely_high_impact": determination.value,
+        },
+    )
+    console.print(
+        f"[green]Registered[/green] acquisition [bold]{name}[/bold]\n"
+        f"  ID: [cyan]{acquisition.acquisition_id}[/cyan]\n"
+        f"  Initial high-impact determination (M-25-21 vocabulary): "
+        f"{determination.value}"
+    )
+
+
+@acquisition_app.command("list")
+def acquisition_list(
+    output_json: bool = typer.Option(
+        False,
+        "--json",
+        help="Emit machine-readable JSON instead of a rich table.",
+    ),
+) -> None:
+    """List tracked AI acquisitions."""
+    from evidentia_core.ai_governance import (
+        AIAcquisitionStore,
+        acquisition_progress,
+    )
+
+    records = AIAcquisitionStore().list_all()
+    if output_json:
+        typer.echo(
+            json.dumps(
+                [json.loads(r.model_dump_json()) for r in records],
+                indent=2,
+            )
+        )
+        return
+
+    if not records:
+        console.print("[dim]No tracked acquisitions.[/dim]")
+        return
+
+    table = Table(title=f"AI acquisitions ({len(records)} total)")
+    table.add_column("ID", style="cyan")
+    table.add_column("Name", style="bold")
+    table.add_column("Likely high-impact")
+    table.add_column("Phases recorded", justify="right")
+    for record in records:
+        progress = acquisition_progress(record)
+        determination = record.likely_high_impact
+        table.add_row(
+            record.acquisition_id,
+            record.name,
+            determination
+            if isinstance(determination, str)
+            else determination.value,
+            f"{progress.total - len(progress.missing)}/{progress.total}",
+        )
+    console.print(table)
+
+
+@acquisition_app.command("show")
+def acquisition_show(
+    acquisition_id: str = typer.Argument(..., help="Acquisition ID (UUID)."),
+    output_json: bool = typer.Option(
+        False,
+        "--json",
+        help="Emit machine-readable JSON instead of human form.",
+    ),
+) -> None:
+    """Show one acquisition + its lifecycle progress."""
+    from evidentia_core.ai_governance import (
+        AIAcquisitionStore,
+        acquisition_progress,
+    )
+
+    try:
+        record = AIAcquisitionStore().load(acquisition_id)
+    except ValueError as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    if record is None:
+        console.print(
+            f"[red]Error:[/red] no tracked acquisition with ID "
+            f"{acquisition_id!r}"
+        )
+        raise typer.Exit(code=1)
+
+    progress = acquisition_progress(record)
+    if output_json:
+        typer.echo(
+            json.dumps(
+                {
+                    "acquisition": json.loads(record.model_dump_json()),
+                    "progress": json.loads(progress.model_dump_json()),
+                },
+                indent=2,
+            )
+        )
+        return
+
+    console.print(f"[bold]{record.name}[/bold] ({record.acquisition_id})")
+    if record.solicitation_reference:
+        console.print(f"  Solicitation:  {record.solicitation_reference}")
+    if record.description:
+        console.print(f"  Description:   {record.description}")
+    if record.linked_system_id:
+        console.print(f"  Linked system: {record.linked_system_id}")
+    determination = record.likely_high_impact
+    console.print(
+        f"  Likely high-impact: "
+        f"{determination if isinstance(determination, str) else determination.value}"
+    )
+    if record.covered_note:
+        console.print(f"  Coverage note: {record.covered_note}")
+
+    table = Table(title="M-25-22 §4 lifecycle")
+    table.add_column("Phase", style="bold")
+    table.add_column("Status")
+    table.add_column("Last reviewed")
+    table.add_column("Notes")
+    from evidentia_core.ai_governance import (
+        AcquisitionPhase,
+        AcquisitionPhaseRecord,
+    )
+
+    # Persisted records round-trip enum keys as plain strings
+    # (use_enum_values); normalize either shape to the string value.
+    recorded: dict[str, AcquisitionPhaseRecord] = {
+        (phase.value if isinstance(phase, AcquisitionPhase) else phase): rec
+        for phase, rec in record.phases.items()
+    }
+
+    for phase in AcquisitionPhase:
+        rec = recorded.get(phase.value)
+        if rec is None:
+            table.add_row(phase.value, "[dim]— not recorded —[/dim]", "", "")
+        else:
+            status = rec.status if isinstance(rec.status, str) else rec.status.value
+            table.add_row(
+                phase.value,
+                status,
+                rec.last_reviewed.isoformat() if rec.last_reviewed else "",
+                (rec.notes or "")[:60],
+            )
+    console.print(table)
+    console.print(
+        f"  Lifecycle: {progress.complete} complete, "
+        f"{progress.in_progress} in progress, "
+        f"{progress.not_started} not started, "
+        f"{len(progress.missing)} unrecorded"
+        + (" — [green]complete[/green]" if progress.lifecycle_complete else "")
+    )
+
+
+@acquisition_app.command("set-phase")
+def acquisition_set_phase(
+    acquisition_id: str = typer.Argument(..., help="Acquisition ID (UUID)."),
+    phase: str = typer.Option(
+        ...,
+        "--phase",
+        help=(
+            "M-25-22 §4 phase: identification_of_requirements / "
+            "market_research_and_planning / solicitation_development / "
+            "selection_and_award / contract_administration / "
+            "contract_closeout."
+        ),
+    ),
+    status: str = typer.Option(
+        ...,
+        "--status",
+        help="Phase status: not_started / in_progress / complete.",
+    ),
+    notes: str | None = typer.Option(
+        None,
+        "--notes",
+        help="Optional detail — team notes, artifact pointers.",
+    ),
+    last_reviewed: str | None = typer.Option(
+        None,
+        "--last-reviewed",
+        help="ISO-8601 date the status was last reviewed.",
+    ),
+) -> None:
+    """Record an M-25-22 lifecycle-phase status on an acquisition (v0.11)."""
+    from datetime import date as _date
+
+    from evidentia_core.ai_governance import (
+        AcquisitionPhase,
+        AcquisitionPhaseRecord,
+        AcquisitionPhaseStatus,
+        AIAcquisitionStore,
+        acquisition_progress,
+    )
+    from pydantic import ValidationError
+
+    store = AIAcquisitionStore()
+    try:
+        record = store.load(acquisition_id)
+    except ValueError as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    if record is None:
+        console.print(
+            f"[red]Error:[/red] no tracked acquisition with ID "
+            f"{acquisition_id!r}"
+        )
+        raise typer.Exit(code=1)
+
+    try:
+        phase_enum = AcquisitionPhase(phase.lower())
+    except ValueError:
+        console.print(
+            f"[red]Error:[/red] unknown phase {phase!r}. Valid: "
+            f"{', '.join(p.value for p in AcquisitionPhase)}"
+        )
+        raise typer.Exit(code=1) from None
+
+    try:
+        status_enum = AcquisitionPhaseStatus(status.lower())
+    except ValueError:
+        console.print(
+            f"[red]Error:[/red] unknown status {status!r}. Valid: "
+            f"{', '.join(s.value for s in AcquisitionPhaseStatus)}"
+        )
+        raise typer.Exit(code=1) from None
+
+    parsed_reviewed: _date | None = None
+    if last_reviewed is not None:
+        try:
+            parsed_reviewed = _date.fromisoformat(last_reviewed)
+        except ValueError as exc:
+            console.print(
+                f"[red]Error:[/red] --last-reviewed must be ISO-8601 date "
+                f"(YYYY-MM-DD); got {last_reviewed!r}: {exc}"
+            )
+            raise typer.Exit(code=1) from exc
+
+    try:
+        phase_record = AcquisitionPhaseRecord(
+            status=status_enum,
+            notes=notes,
+            last_reviewed=parsed_reviewed,
+        )
+    except (ValidationError, ValueError) as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    phases = dict(record.phases)
+    phases[phase_enum] = phase_record
+    updated = record.model_copy(update={"phases": phases})
+    store.save(updated)
+
+    _log.info(
+        action=EventAction.AI_ACQUISITION_PHASE_RECORDED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"M-25-22 lifecycle phase {phase_enum.value!r} recorded as "
+            f"{status_enum.value!r} on acquisition {record.name!r}"
+        ),
+        evidentia={
+            "acquisition_id": acquisition_id,
+            "phase": phase_enum.value,
+            "status": status_enum.value,
+        },
+    )
+
+    progress = acquisition_progress(updated)
+    console.print(
+        f"[green]M-25-22[/green] phase [bold]{phase_enum.value}[/bold] → "
+        f"[cyan]{status_enum.value}[/cyan] on [bold]{record.name}[/bold]"
+    )
+    console.print(
+        f"  Lifecycle: {progress.total - len(progress.missing)}/"
+        f"{progress.total} recorded ({progress.complete} complete, "
+        f"{progress.in_progress} in progress, {progress.not_started} not "
+        f"started)"
+        + (
+            "; [green]lifecycle complete[/green]"
+            if progress.lifecycle_complete
+            else ""
+        )
+    )

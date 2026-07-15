@@ -24,6 +24,11 @@ under ``/api/ai-gov`` mirror the CLI verbs:
   - ``POST   /api/ai-gov/systems/{system_id}/set-practice`` — record an
     OMB M-25-21 §4(b) minimum-practice status incl. CAIO waivers
     (v0.11; mirrors ``ai-gov set-practice``)
+  - ``POST   /api/ai-gov/acquisitions`` + ``GET /api/ai-gov/acquisitions``
+    + ``GET /api/ai-gov/acquisitions/{acquisition_id}`` +
+    ``POST /api/ai-gov/acquisitions/{acquisition_id}/set-phase`` — OMB
+    M-25-22 acquisition-lifecycle tracking (v0.11; mirrors ``ai-gov
+    acquisition register|list|show|set-phase``)
   - ``DELETE /api/ai-gov/systems/{system_id}`` — remove entry
 
 Auth posture: reads are open (matches v0.9.0 POA&M router + v0.9.1
@@ -43,6 +48,11 @@ from pathlib import Path
 from typing import Any
 
 from evidentia_core.ai_governance import (
+    AcquisitionPhase,
+    AcquisitionPhaseRecord,
+    AcquisitionPhaseStatus,
+    AIAcquisition,
+    AIAcquisitionStore,
     AIRegistryStore,
     AISystemClassification,
     AISystemDescriptor,
@@ -59,8 +69,12 @@ from evidentia_core.ai_governance import (
     OMBImpactCategory,
     PracticeStatus,
     PracticeWaiver,
+    acquisition_progress,
     classify,
     practice_compliance,
+)
+from evidentia_core.ai_governance.acquisition_store import (
+    InvalidAcquisitionIdError,
 )
 from evidentia_core.ai_governance.registry_store import (
     InvalidAISystemIdError,
@@ -1180,4 +1194,200 @@ async def ai_gov_set_practice(
         "system_id": system_id,
         "entry": updated.model_dump(mode="json"),
         "practice_compliance": summary.model_dump(mode="json"),
+    }
+
+
+# ── acquisitions (v0.11 Wave 2 — OMB M-25-22 lifecycle) ───────────
+
+
+class RegisterAcquisitionRequest(BaseModel):
+    """Body for ``POST /ai-gov/acquisitions``.
+
+    Registers an AI procurement for OMB M-25-22 lifecycle tracking.
+    ``likely_high_impact`` is the §4(a) initial determination in
+    M-25-21 vocabulary (defaults to ``not_assessed``).
+    """
+
+    name: str = Field(min_length=1, max_length=256)
+    solicitation_reference: str | None = Field(default=None, max_length=256)
+    description: str | None = Field(default=None, max_length=4000)
+    likely_high_impact: HighImpactDetermination = Field(
+        default=HighImpactDetermination.NOT_ASSESSED,
+        description=(
+            "M-25-22 §4(a) initial determination (M-25-21 vocabulary): "
+            "high_impact / not_high_impact / not_assessed."
+        ),
+    )
+    covered_note: str | None = Field(default=None, max_length=2000)
+    linked_system_id: str | None = Field(
+        default=None,
+        description="AI-registry system_id this acquisition delivers.",
+    )
+
+
+class SetAcquisitionPhaseRequest(BaseModel):
+    """Body for ``POST /ai-gov/acquisitions/{acquisition_id}/set-phase``."""
+
+    phase: AcquisitionPhase = Field(
+        description=(
+            "M-25-22 §4 phase: identification_of_requirements / "
+            "market_research_and_planning / solicitation_development / "
+            "selection_and_award / contract_administration / "
+            "contract_closeout."
+        )
+    )
+    status: AcquisitionPhaseStatus = Field(
+        description="Phase status: not_started / in_progress / complete."
+    )
+    notes: str | None = Field(default=None, max_length=4000)
+    last_reviewed: date | None = Field(
+        default=None,
+        description="ISO-8601 date the status was last reviewed.",
+    )
+
+
+def _load_acquisition_or_404(acquisition_id: str) -> AIAcquisition:
+    """Load an acquisition; normalize bad-shape + unknown IDs to 404."""
+    try:
+        record = AIAcquisitionStore().load(acquisition_id)
+    except InvalidAcquisitionIdError as exc:
+        raise api_error(
+            404,
+            "not_found",
+            f"No tracked acquisition with ID {acquisition_id!r}.",
+        ) from exc
+    if record is None:
+        raise api_error(
+            404,
+            "not_found",
+            f"No tracked acquisition with ID {acquisition_id!r}.",
+        )
+    return record
+
+
+@router.post(
+    "/ai-gov/acquisitions",
+    dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            400: (
+                "M-25-22 domain-validation failure "
+                "(``error: invalid_body``)."
+            ),
+            403: RBAC_DENIED_403,
+        }
+    ),
+)
+async def ai_gov_register_acquisition(
+    body: RegisterAcquisitionRequest,
+) -> dict[str, Any]:
+    """Register an AI procurement for M-25-22 lifecycle tracking (v0.11)."""
+    try:
+        acquisition = AIAcquisition(
+            name=body.name,
+            solicitation_reference=body.solicitation_reference,
+            description=body.description,
+            likely_high_impact=body.likely_high_impact,
+            covered_note=body.covered_note,
+            linked_system_id=body.linked_system_id,
+        )
+    except (ValidationError, ValueError) as exc:
+        raise api_error(400, "invalid_body", str(exc)) from exc
+
+    AIAcquisitionStore().save(acquisition)
+
+    _log.info(
+        action=EventAction.AI_ACQUISITION_REGISTERED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"AI acquisition {body.name!r} registered for OMB M-25-22 "
+            f"lifecycle tracking via API"
+        ),
+        evidentia={
+            "acquisition_id": acquisition.acquisition_id,
+            "likely_high_impact": str(body.likely_high_impact),
+        },
+    )
+    return {
+        "acquisition_id": acquisition.acquisition_id,
+        "acquisition": acquisition.model_dump(mode="json"),
+    }
+
+
+@router.get("/ai-gov/acquisitions")
+async def ai_gov_list_acquisitions() -> dict[str, Any]:
+    """List tracked AI acquisitions (M-25-22 lifecycle records)."""
+    records = AIAcquisitionStore().list_all()
+    return {
+        "count": len(records),
+        "acquisitions": [r.model_dump(mode="json") for r in records],
+    }
+
+
+@router.get(
+    "/ai-gov/acquisitions/{acquisition_id}",
+    responses=error_responses(
+        {404: "No such tracked acquisition (``error: not_found``)."}
+    ),
+)
+async def ai_gov_get_acquisition(acquisition_id: str) -> dict[str, Any]:
+    """Get one acquisition + its lifecycle progress roll-up."""
+    record = _load_acquisition_or_404(acquisition_id)
+    return {
+        "acquisition": record.model_dump(mode="json"),
+        "progress": acquisition_progress(record).model_dump(mode="json"),
+    }
+
+
+@router.post(
+    "/ai-gov/acquisitions/{acquisition_id}/set-phase",
+    dependencies=[require_role("write")],
+    responses=error_responses(
+        {
+            400: (
+                "M-25-22 domain-validation failure "
+                "(``error: invalid_body``)."
+            ),
+            403: RBAC_DENIED_403,
+            404: "No such tracked acquisition (``error: not_found``).",
+        }
+    ),
+)
+async def ai_gov_set_acquisition_phase(
+    acquisition_id: str, body: SetAcquisitionPhaseRequest
+) -> dict[str, Any]:
+    """Record an M-25-22 §4 lifecycle-phase status on an acquisition."""
+    record = _load_acquisition_or_404(acquisition_id)
+
+    try:
+        phase_record = AcquisitionPhaseRecord(
+            status=body.status,
+            notes=body.notes,
+            last_reviewed=body.last_reviewed,
+        )
+    except (ValidationError, ValueError) as exc:
+        raise api_error(400, "invalid_body", str(exc)) from exc
+
+    phases = dict(record.phases)
+    phases[body.phase] = phase_record
+    updated = record.model_copy(update={"phases": phases})
+    AIAcquisitionStore().save(updated)
+
+    _log.info(
+        action=EventAction.AI_ACQUISITION_PHASE_RECORDED,
+        outcome=EventOutcome.SUCCESS,
+        message=(
+            f"M-25-22 lifecycle phase {body.phase} recorded as "
+            f"{body.status} on acquisition {record.name!r} via API"
+        ),
+        evidentia={
+            "acquisition_id": acquisition_id,
+            "phase": str(body.phase),
+            "status": str(body.status),
+        },
+    )
+    return {
+        "acquisition_id": acquisition_id,
+        "acquisition": updated.model_dump(mode="json"),
+        "progress": acquisition_progress(updated).model_dump(mode="json"),
     }

@@ -20,6 +20,10 @@ def isolated_registry(
     """Per-test isolated AI registry; matches CLI test fixture."""
     registry_dir = tmp_path / "ai_registry"
     monkeypatch.setenv("EVIDENTIA_AI_REGISTRY_DIR", str(registry_dir))
+    # v0.11: acquisitions store isolation (M-25-22 lifecycle records).
+    monkeypatch.setenv(
+        "EVIDENTIA_AI_ACQUISITION_DIR", str(tmp_path / "ai_acquisitions")
+    )
     return registry_dir
 
 
@@ -1015,5 +1019,85 @@ class TestSetPractice:
         resp = api_client.post(
             f"/api/ai-gov/systems/{system_id}/set-practice",
             json={"practice": "vibes_check", "status": "implemented"},
+        )
+        assert resp.status_code == 422
+
+
+class TestAcquisitions:
+    """The /ai-gov/acquisitions surface — OMB M-25-22 v0.11."""
+
+    def _register(self, api_client: TestClient) -> str:
+        resp = api_client.post(
+            "/api/ai-gov/acquisitions",
+            json={
+                "name": "Case-triage LLM service",
+                "solicitation_reference": "RFP-26-0141",
+                "likely_high_impact": "high_impact",
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        acquisition_id: str = resp.json()["acquisition_id"]
+        return acquisition_id
+
+    def test_register_get_list_round_trip(
+        self, api_client: TestClient
+    ) -> None:
+        acquisition_id = self._register(api_client)
+
+        got = api_client.get(f"/api/ai-gov/acquisitions/{acquisition_id}")
+        assert got.status_code == 200, got.text
+        body = got.json()
+        assert body["acquisition"]["name"] == "Case-triage LLM service"
+        assert body["acquisition"]["likely_high_impact"] == "high_impact"
+        assert body["progress"]["total"] == 6
+        assert len(body["progress"]["missing"]) == 6
+
+        listing = api_client.get("/api/ai-gov/acquisitions")
+        assert listing.status_code == 200
+        assert listing.json()["count"] == 1
+
+    def test_set_phase_mutates_and_rolls_up(
+        self, api_client: TestClient
+    ) -> None:
+        acquisition_id = self._register(api_client)
+        resp = api_client.post(
+            f"/api/ai-gov/acquisitions/{acquisition_id}/set-phase",
+            json={
+                "phase": "identification_of_requirements",
+                "status": "complete",
+                "last_reviewed": "2026-07-10",
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert (
+            body["acquisition"]["phases"]["identification_of_requirements"][
+                "status"
+            ]
+            == "complete"
+        )
+        assert body["progress"]["complete"] == 1
+        assert body["progress"]["lifecycle_complete"] is False
+
+    def test_unknown_acquisition_returns_404(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.get(
+            f"/api/ai-gov/acquisitions/{_UNKNOWN_UUID}"
+        )
+        assert resp.status_code == 404
+        assert resp.json()["detail"]["error"] == "not_found"
+
+    def test_traversal_shaped_id_returns_404(
+        self, api_client: TestClient
+    ) -> None:
+        resp = api_client.get("/api/ai-gov/acquisitions/not-a-uuid")
+        assert resp.status_code == 404
+
+    def test_bad_phase_returns_422(self, api_client: TestClient) -> None:
+        acquisition_id = self._register(api_client)
+        resp = api_client.post(
+            f"/api/ai-gov/acquisitions/{acquisition_id}/set-phase",
+            json={"phase": "vibes_alignment", "status": "complete"},
         )
         assert resp.status_code == 422

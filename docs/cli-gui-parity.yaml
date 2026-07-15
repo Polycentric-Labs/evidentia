@@ -367,6 +367,26 @@ commands:
     gui: null
     status: api-only
     reason: "v0.11 Wave 2: M-25-21 minimum-practice recording; the /ai-gov GUI form flip rides the next parity pass (v0.10.8 Wave-2 pattern)."
+  - cli: "ai-gov acquisition register"
+    api: "POST /api/ai-gov/acquisitions"
+    gui: null
+    status: api-only
+    reason: "v0.11 Wave 2: M-25-22 acquisition registration; GUI screen rides the next parity pass."
+  - cli: "ai-gov acquisition list"
+    api: "GET /api/ai-gov/acquisitions"
+    gui: null
+    status: api-only
+    reason: "v0.11 Wave 2: M-25-22 acquisition listing; GUI screen rides the next parity pass."
+  - cli: "ai-gov acquisition show"
+    api: "GET /api/ai-gov/acquisitions/{acquisition_id}"
+    gui: null
+    status: api-only
+    reason: "v0.11 Wave 2: M-25-22 acquisition detail + lifecycle progress; GUI screen rides the next parity pass."
+  - cli: "ai-gov acquisition set-phase"
+    api: "POST /api/ai-gov/acquisitions/{acquisition_id}/set-phase"
+    gui: null
+    status: api-only
+    reason: "v0.11 Wave 2: M-25-22 lifecycle-phase recording; GUI screen rides the next parity pass."
   - cli: "catalog crosswalk"
     api: "GET /api/catalog/crosswalk"
     gui: "/catalog"
