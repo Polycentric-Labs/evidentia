@@ -28,6 +28,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the next GUI pass) + `AI_SYSTEM_PRACTICE_RECORDED` audit event. Persisted
   v0.10.12-era assessments load unchanged (the field defaults to empty —
   reported as missing, never as satisfied).
+- **FedRAMP CR26 KSI emission — `evidentia conmon ksi`** (v0.11 Wave 2,
+  target re-verified against the live CR26 stack + ratified 2026-07-14; see
+  the plan's §Wave 2 re-base record): emits the `keySecurityIndicators`
+  block of a CR26 **Security Decision Record** as a standalone JSON
+  document, validated OFFLINE against
+  `fedramp-security-decision-record-schema-2026-06-24.json` before writing
+  (rules SDR-CSO-FRR / SDR-CSX-KSI / SDR-CSO-MTD; in force for 20x since
+  2026-07-04). Ships with:
+  - the **`fedramp-ksi-2026` bundled catalog** (10 families / 46 Key
+    Security Indicators, generated verbatim from `FedRAMP/rules`
+    `fedramp-consolidated-rules.json` at a pinned commit by
+    `scripts/catalogs/gen_fedramp_ksi.py`, `--check` drift mode included)
+    plus a **KSI→NIST 800-53 Rev 5 crosswalk** extracted from the upstream
+    per-indicator `controls` declarations (base-control granularity;
+    enhancement citations preserved verbatim in notes);
+  - **vendored CR26 schemas** under `evidentia_core/fedramp/schemas/` with
+    full provenance pins (`UPSTREAM.json`) and one documented local delta:
+    upstream publishes every cross-document `$ref` with the JSON Pointer in
+    the URI path, which no conforming JSON Schema 2020-12 validator can
+    resolve (FedRAMP/schemas#3; fix PR #4 unmerged) — the vendored copy
+    moves the pointer into the fragment;
+  - **CONMON cadence integration**: `persistence_cycles` entries in the
+    operator's KSI status file render the SDR-CSX-KSI "cycle for measures
+    implemented persistently" statements from the same cadence calendar the
+    rest of `evidentia conmon` runs on (last-completed / next-due dates via
+    `--state-file`);
+  - the **`fedramp-schema-watch` weekly sentinel** (Wed 09:17 UTC):
+    compares live `FedRAMP/rules` + `FedRAMP/schemas` against the
+    UPSTREAM.json pins — NOTICE drift opens/updates a tracking issue; a KSI
+    content change, MAJOR `$schemaVersion` bump, or a new dated ruleset
+    (CR27) also reds the run. Both upstream repos are 2026 Public Preview
+    drafts with same-day churn observed at vendor time — the pins rot
+    without a watcher.
+  - Operator doc: `docs/fedramp-ksi.md`. `jsonschema` + `referencing`
+    promoted from transitive to direct `evidentia-core` dependencies (the
+    offline validation path).
 
 ## [0.10.18] - 2026-07-14
 

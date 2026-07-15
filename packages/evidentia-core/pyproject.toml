@@ -35,6 +35,14 @@ dependencies = [
     # unconditional dep so the signing path works in the slim (and future
     # gpg-free distroless/DHI) install. Resolved 46.0.7; floor pinned low.
     "cryptography>=44.0",
+    # v0.11 Wave 2: offline Draft 2020-12 validation of emitted FedRAMP
+    # CR26 SDR documents against the vendored schemas (fedramp/schemas/).
+    # Both were already in the resolved graph transitively; promoted to
+    # direct deps because evidentia_core.fedramp imports them
+    # unconditionally (referencing supplies the local $id registry that
+    # keeps validation network-free).
+    "jsonschema>=4.23",
+    "referencing>=0.35",
 ]
 
 [project.optional-dependencies]

@@ -1,0 +1,45 @@
+{
+  "comment": "Provenance pins for the vendored FedRAMP CR26 artifacts. Single source of truth for scripts/check_fedramp_upstream_drift.py (the fedramp-schema-watch sentinel baseline) and for scripts/catalogs/gen_fedramp_ksi.py (the KSI catalog generator pin). Update ONLY via a deliberate re-sync: re-vendor, re-verify, and re-run the generator together. See README.md in this directory.",
+  "verified_at": "2026-07-14",
+  "rules": {
+    "repo": "FedRAMP/rules",
+    "commit": "12fe1b60f578ab448c26d143baac99d16d8bfe14",
+    "file": "fedramp-consolidated-rules.json",
+    "dataset_version": "2026.07.14.01",
+    "blob_sha": "feb400956d10dd8b8a3c9563da62d616b4a1cc05",
+    "sha256": "135707003f0aaa5ceb10d7d32c2681e5b1585a4eaf4403d0d135837787e5ae8e",
+    "ksi_section_sha256": "e11ee13f1d418ccea97b26046f0c85f10224736c69e54fd327457ad53bae3ffa",
+    "ksi_families": 10,
+    "ksi_indicators": 46
+  },
+  "schemas": {
+    "repo": "FedRAMP/schemas",
+    "commit": "d6f69b81392ef369bc216c228bde51713209a6bf",
+    "ruleset_date": "2026-06-24",
+    "schema_versions": {
+      "fedramp-accepted-vulnerability-info-schema-2026-06-24.json": "0.1.0",
+      "fedramp-advisor-information-schema-2026-06-24.json": "0.1.0",
+      "fedramp-assessor-information-schema-2026-06-24.json": "0.1.0",
+      "fedramp-certification-package-overview-schema-2026-06-24.json": "0.1.1",
+      "fedramp-common-definitions-schema-2026-06-24.json": "0.1.0",
+      "fedramp-historical-ver-activity-schema-2026-06-24.json": "0.1.0",
+      "fedramp-incident-report-schema-2026-06-24.json": "0.1.0",
+      "fedramp-ongoing-certification-report-schema-2026-06-24.json": "0.1.0",
+      "fedramp-security-decision-record-schema-2026-06-24.json": "0.1.0",
+      "fedramp-significant-change-notifications-schema-2026-06-24.json": "0.1.0",
+      "fedramp-vulnerability-detail-report-schema-2026-06-24.json": "0.1.0"
+    },
+    "vendored": {
+      "fedramp-security-decision-record-schema-2026-06-24.json": {
+        "blob_sha": "e35c7862b97da9654b83048781ab8ed435be5d9c",
+        "sha256_upstream": "968b887431d5c9e3b5c3d0b62d836113061b190893ceca6f2fd3d14f0c7dd517",
+        "local_delta": "One cross-document $ref rewritten from '...json/$defs/certificationPackageOverviewUri' to '...json#/$defs/certificationPackageOverviewUri' (JSON Pointer moved into the URI fragment, as JSON Schema 2020-12 requires). Upstream defect: FedRAMP/schemas issue #3, fix PR #4 (unmerged at vendor time). Drop this delta when the upstream fix merges and re-vendor byte-identical."
+      },
+      "fedramp-common-definitions-schema-2026-06-24.json": {
+        "blob_sha": "db532e342230b01a531b3cb66dbae7f4f7a0dba6",
+        "sha256_upstream": "26e637a9ee0cde2c4b6794d3f4cb3d56cc026780227c3e92fcab98dc2e354083",
+        "local_delta": null
+      }
+    }
+  }
+}

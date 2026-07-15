@@ -43,7 +43,7 @@ import signal
 import sys
 import threading
 import warnings
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import typer
@@ -956,6 +956,151 @@ def conmon_mark_completed(
         )
     if cadence.citation:
         console.print(f"  [dim]Citation: {cadence.citation}[/dim]")
+
+
+# ── ksi (v0.11 Wave 2 — FedRAMP CR26 SDR emit) ────────────────────
+
+
+@app.command("ksi")
+def conmon_ksi(
+    status_file: Path = typer.Option(
+        ...,
+        "--status-file",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help=(
+            "YAML KSI status file (operator-authored per-KSI statements; "
+            "schema: evidentia_core.models.fedramp_ksi.KsiStatusDocument). "
+            "Indicator IDs are checked against the bundled "
+            "fedramp-ksi-2026 catalog."
+        ),
+    ),
+    output: Path = typer.Option(
+        ...,
+        "--out",
+        file_okay=True,
+        dir_okay=False,
+        help="Path to write the SDR JSON document.",
+    ),
+    state_file: Path | None = typer.Option(
+        None,
+        "--state-file",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help=(
+            "Optional CONMON state file (same YAML as `conmon check`). "
+            "When set, persistence-cycle statements include last-completed "
+            "and next-due dates from the cadence calendar."
+        ),
+    ),
+    last_updated: str | None = typer.Option(
+        None,
+        "--last-updated",
+        help=(
+            "ISO-8601 datetime for the SDR metadata lastUpdated field "
+            "(SDR-CSO-MTD). Defaults to now (UTC); pass explicitly for "
+            "deterministic snapshots."
+        ),
+    ),
+) -> None:
+    """Emit a FedRAMP CR26 Security Decision Record with the KSI block.
+
+    Third `conmon` output mode (v0.11 Wave 2): assembles the operator's
+    KSI status file into a Security Decision Record JSON document per
+    ``fedramp-security-decision-record-schema-2026-06-24.json`` and
+    validates it offline against the vendored schema before writing
+    (SDR-CSO-FRR / SDR-CSX-KSI / SDR-CSO-MTD). Reports bundled-catalog
+    coverage — FedRAMP recommends addressing all Key Security
+    Indicators across the Minimum Assessment Scope (FRC-CSX-MAS).
+    """
+    import yaml as yaml_mod  # lazy import — keeps the CLI lean
+    from evidentia_core.fedramp import (
+        build_sdr_document,
+        ksi_coverage,
+        validate_sdr_document,
+    )
+    from evidentia_core.models.fedramp_ksi import KsiStatusDocument
+    from pydantic import ValidationError
+
+    try:
+        raw = yaml_mod.safe_load(status_file.read_text(encoding="utf-8"))
+    except yaml_mod.YAMLError as exc:
+        console.print(f"[red]Error:[/red] could not parse {status_file}: {exc}")
+        raise typer.Exit(code=2) from exc
+
+    try:
+        status = KsiStatusDocument.model_validate(raw)
+    except ValidationError as exc:
+        console.print(
+            f"[red]Error:[/red] {status_file} is not a valid KSI status "
+            f"file:\n{exc}"
+        )
+        raise typer.Exit(code=2) from exc
+
+    if last_updated is not None:
+        try:
+            last_updated_dt = datetime.fromisoformat(last_updated)
+        except ValueError as exc:
+            console.print(
+                f"[red]Error:[/red] --last-updated must be ISO-8601 "
+                f"datetime; got {last_updated!r}: {exc}"
+            )
+            raise typer.Exit(code=1) from exc
+    else:
+        last_updated_dt = datetime.now(tz=UTC)
+
+    last_completed = (
+        _load_last_completed_map(state_file) if state_file is not None else None
+    )
+
+    try:
+        document = build_sdr_document(
+            status,
+            last_updated=last_updated_dt,
+            last_completed=last_completed,
+        )
+    except ValueError as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    errors = validate_sdr_document(document)
+    if errors:
+        console.print(
+            "[red]Error:[/red] emitted document failed schema validation "
+            "(this is a bug in the emitter, not your status file — please "
+            "report it):"
+        )
+        for error in errors:
+            console.print(f"  {error}")
+        raise typer.Exit(code=1)
+
+    output.write_text(
+        json.dumps(document, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+    coverage = ksi_coverage(status)
+    console.print(
+        f"[green]Wrote[/green] SDR with "
+        f"{len(document['keySecurityIndicators'])} KSI entr"
+        f"{'y' if len(document['keySecurityIndicators']) == 1 else 'ies'} "
+        f"to [bold]{output}[/bold] (schema-valid)."
+    )
+    console.print(
+        f"  Catalog coverage: {coverage.addressed}/{coverage.total} "
+        f"indicators addressed."
+    )
+    if not coverage.complete:
+        console.print(
+            f"  [yellow]{len(coverage.missing)} indicator(s) not yet "
+            f"addressed[/yellow] (FedRAMP FRC-CSX-MAS: apply ALL KSIs "
+            f"across the Minimum Assessment Scope — SHOULD). First few: "
+            f"{', '.join(coverage.missing[:5])}"
+        )
 
 
 # ── health (v0.9.3 P1.3) ──────────────────────────────────────────

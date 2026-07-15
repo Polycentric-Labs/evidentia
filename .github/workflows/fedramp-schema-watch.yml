@@ -1,0 +1,82 @@
+# FedRAMP upstream drift sentinel (v0.11 Wave 2). The `evidentia conmon
+# ksi` emitter validates against schemas vendored from FedRAMP/schemas
+# and a KSI catalog generated from FedRAMP/rules — both "2026 Public
+# Preview" drafts that move frequently (same-day commits observed at
+# vendor time). This sentinel compares live upstream against the pins in
+# packages/evidentia-core/src/evidentia_core/fedramp/schemas/UPSTREAM.json
+# weekly: NOTICE-level drift (minor/patch $schemaVersion bumps, vendored
+# blob drift such as the upstream $ref-defect fix merging) opens/updates
+# a single tracking issue; MAJOR drift (KSI content hash change, a MAJOR
+# $schemaVersion bump, the CR26 dated fileset changing) additionally
+# turns the run red until the pins are deliberately re-verified. Clones
+# the python-ceiling-watch.yml / uv-pilot-watch.yml sentinel pattern; its
+# own liveness is covered by the G10 dead-trigger detector
+# (base-freshness.yml).
+name: fedramp schema watch
+
+on:
+  schedule:
+    - cron: "17 9 * * 3"   # Wednesdays 09:17 UTC (Mon rescan / Tue base-freshness / Wed 08:41 python-ceiling / Thu dast / Fri uv-pilot + verify-recipes)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fedramp-schema-watch
+  cancel-in-progress: false
+
+jobs:
+  sentinel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Single-job workflow — write scope lives at the job level, not repeated
+    # at the workflow level (zizmor excessive-permissions).
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      # Stdlib-only probe — no uv sync needed; it reaches upstream via the
+      # preinstalled gh CLI (authenticated with the workflow token).
+      - name: Probe FedRAMP upstream against UPSTREAM.json pins
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/check_fedramp_upstream_drift.py \
+            --output drift-findings.md
+
+      - name: Open or update the tracking issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ ! -s drift-findings.md ]; then
+            echo "No drift — upstream matches the UPSTREAM.json pins."
+            exit 0
+          fi
+          TITLE="FedRAMP upstream drift — re-verify the CR26 pins (fedramp-schema-watch)"
+          BODY=$(printf '%s\n\n%s\n' \
+            "$(cat drift-findings.md)" \
+            "Action: follow the re-sync procedure in packages/evidentia-core/src/evidentia_core/fedramp/schemas/README.md (re-verify upstream, bump UPSTREAM.json, re-vendor schemas and/or re-run scripts/catalogs/gen_fedramp_ksi.py + regenerate_manifest.py, review the diff). This is a scheduled sentinel — MAJOR findings also red this run; NOTICE findings only track here.")
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "in:title \"$TITLE\"" --json number -q '.[0].number' || echo "")
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --body "$BODY"
+            echo "Updated issue #$existing"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$BODY"
+          fi
+
+      - name: Red the run on MAJOR drift
+        run: |
+          set -euo pipefail
+          if grep -q '^- \*\*MAJOR\*\*' drift-findings.md; then
+            echo "MAJOR upstream drift — failing the sentinel run (see the tracking issue)."
+            exit 1
+          fi
+          echo "No MAJOR drift."

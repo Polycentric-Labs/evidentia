@@ -943,12 +943,14 @@ version = "0.10.18"
 source = { editable = "packages/evidentia-core" }
 dependencies = [
     { name = "cryptography" },
+    { name = "jsonschema" },
     { name = "platformdirs" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-dateutil" },
     { name = "python-ulid" },
     { name = "pyyaml" },
+    { name = "referencing" },
     { name = "tenacity" },
     { name = "thefuzz" },
 ]
@@ -981,6 +983,7 @@ requires-dist = [
     { name = "boto3", marker = "extra == 'worm-s3'", specifier = ">=1.43.46" },
     { name = "cryptography", specifier = ">=44.0" },
     { name = "google-cloud-storage", marker = "extra == 'worm-gcs'", specifier = ">=2.18.0" },
+    { name = "jsonschema", specifier = ">=4.23" },
     { name = "openpyxl", marker = "extra == 'xlsx'", specifier = ">=3.1" },
     { name = "platformdirs", specifier = ">=4.3" },
     { name = "py-ocsf-models", marker = "extra == 'ocsf'", specifier = ">=0.9.0,<0.10.0" },
@@ -989,6 +992,7 @@ requires-dist = [
     { name = "python-dateutil", specifier = ">=2.9" },
     { name = "python-ulid", specifier = ">=3.0" },
     { name = "pyyaml", specifier = ">=6.0" },
+    { name = "referencing", specifier = ">=0.35" },
     { name = "sigstore", marker = "extra == 'sigstore'", specifier = ">=4.4.0" },
     { name = "tenacity", specifier = ">=9.0" },
     { name = "thefuzz", extras = ["speedup"], specifier = ">=0.22.1" },
