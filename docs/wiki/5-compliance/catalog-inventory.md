@@ -1,6 +1,6 @@
 # Catalog inventory
 
-Evidentia bundles **92 framework catalogs** in-tree. This page is the
+Evidentia bundles **96 framework catalogs** in-tree. This page is the
 compliance-angled view: it groups those catalogs by region / standard
 family and, for each group, tells you **what is production-grade
 authoritative text versus a licensing placeholder**, and **what you may
@@ -27,13 +27,13 @@ neutral control numbering:
 | **C** | Control IDs + neutral titles **only** (text is copyrighted) | ⚠️ Placeholder — you supply the licensed text | Not bundled; `license_url` points to where to obtain it |
 | **D** | Paraphrased obligation / regulation references | ✅ Usable — statutory obligations restated | Bundled (statutes/regulations are not copyrightable) |
 
-The current distribution across all 92 catalogs:
+The current distribution across all 96 catalogs:
 
 | Tier | Count | Meaning for your program |
 |---|---|---|
-| A | **48** | Drop-in. Full text bundled. Most US federal + international control frameworks. |
+| A | **50** | Drop-in. Full text bundled. Most US federal + international control frameworks. |
 | B | **4** | Drop-in with attribution. MITRE ATT&CK / CAPEC / CWE + CISA KEV. |
-| C | **20** | **Placeholder.** ISO, CIS, PCI DSS, COBIT, SOC 2, etc. — import your licensed copy via `evidentia catalog import`. |
+| C | **22** | **Placeholder.** ISO, CIS, PCI DSS, COBIT, SOC 2, etc. — import your licensed copy via `evidentia catalog import`. |
 | D | **20** | Usable. Privacy statutes + EU regulations, restated as obligations. |
 
 **The Tier-C distinction is the one to internalize.** A Tier-C catalog
@@ -42,7 +42,7 @@ public control numbering (ISO 27001 Annex A IDs, SOC 2 CC1–CC9 / A1 /
 C1 / P1–P8 / PI1, etc.) and a `license_url`. It is a **scaffold, not a
 finished catalog** — gap analysis against it will key off the right
 control IDs, but the control text your auditors read must come from your
-licensed copy. All 20 Tier-C catalogs are flagged `placeholder: true` +
+licensed copy. All 22 Tier-C catalogs are flagged `placeholder: true` +
 `license_required: true` in the manifest, so they are unambiguous at
 runtime.
 

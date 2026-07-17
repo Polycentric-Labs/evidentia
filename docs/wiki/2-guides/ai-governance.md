@@ -486,8 +486,13 @@ Valid `--determination` values: `high_impact` / `not_high_impact` /
 > risk-management practices (pre-deployment testing; AI impact assessment;
 > ongoing monitoring + adverse-impact detection; human training/competency;
 > enhanced human oversight/intervention; consistent remedies & appeals;
-> end-user/public feedback). Evidentia records the determination for downstream
-> OSCAL emit and reporting; per-practice tracking is a planned follow-up.
+> end-user/public feedback). As of v0.11, record per-practice status with
+> `evidentia ai-gov set-practice <id> --practice <name> --status <status>`
+> — including §4(a)(ii) CAIO waivers with their annual re-certification and
+> 30-day OMB-report clocks (`--waiver-*` flags). The companion M-25-22
+> acquisition surface (`evidentia ai-gov acquisition
+> register|list|show|set-phase`) tracks AI procurements through the memo's
+> six §4 lifecycle phases.
 
 > **Legacy / rescinded memo.** OMB M-24-10 was rescinded on 2025-04-03 by
 > M-25-21. The legacy `set-omb-impact <id> --category <rights_impacting /

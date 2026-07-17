@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Claim-accuracy sweep across the public docs** (pre-v0.11.0; every change
+  traced to the 2026-07-15 primary-source verification pass): CLI↔GUI parity
+  claims recomputed from the manifest (98% → **93.4%**, 99 full / 7 api-only /
+  0 cli-only — README badge, `parity-coverage.md` regenerated, positioning,
+  enterprise-grade, ROADMAP); count drift fixed to the machine-gated truths
+  (96 catalogs / 16 crosswalks / 14 collectors / 13 MCP tools / 4,900+ tests);
+  the FedRAMP first-mover registry row updated to the shipped `conmon ksi`
+  verb + CR26 SDR schema framing with explicit caveats, and two new
+  first-mover rows registered (M-25-21 practice/waiver-clock tracking,
+  M-25-22 acquisition lifecycle); the CISA SbD Pledge described as an
+  alignment self-attestation everywhere (never a signatory claim; formal
+  signing planned at v1.0); OSCAL-MCP landscape statements aligned to "one
+  of several" (CISO Assistant `ca_mcp` + trestle-mcp exist); the stale
+  "Sept 30 2026 FedRAMP mandate" framing replaced with CR26 FRC-CSO-JSN
+  (mandatory 2027-01-01) + NTC-0009 (2027-11-01, Class D High,
+  format-agnostic — never an "OSCAL mandate"); the unverifiable "18 months
+  ahead" claim removed; GovReady-Q described as dormant, not defunct;
+  OpenVEX / VSA rows moved to planned-tense with no version commitment; the
+  federal-SI walk-through refreshed (M-25-21 primary lens consistently,
+  M-26-05 rescission of the M-22-18 self-attestation form, the v0.11
+  federal-wave surfaces added, resolved limitations pruned).
+
 ### Added
 
 - **OMB M-25-22 AI acquisition-lifecycle tracking — `evidentia ai-gov

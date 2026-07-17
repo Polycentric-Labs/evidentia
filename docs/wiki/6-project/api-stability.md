@@ -459,7 +459,7 @@ The release pipeline validates API stability via:
 
 1. **Type checking** (mypy strict): catches signature changes
    that would break callers
-2. **Test suite** (2747+ tests): exercises public interfaces
+2. **Test suite** (4,900+ tests): exercises public interfaces
    against expected behavior
 3. **Import smoke test**: `scripts/check_imports.py` (reserved
    for v1.0) will validate that all documented entry points

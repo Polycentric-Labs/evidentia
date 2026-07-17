@@ -2,7 +2,7 @@
 
 Single source of truth for the OSCAL schema version Evidentia emits
 in catalog / profile / assessment-results / plan-of-action-and-
-milestones / system-security-plan metadata blocks.
+milestones metadata blocks.
 
 Lives in its own module to break the circular import that would
 otherwise arise from the per-emitter modules

@@ -55,7 +55,7 @@ Adopters (as of 2026-05-23):
 
 | Gemara component | Evidentia surface | Notes |
 |---|---|---|
-| **Catalog: Control** | `evidentia_core.models.catalog.ControlCatalog` (95 bundled — NIST 800-53, SOC 2, ISO 27001 stub, CIS, CMMC, PCI DSS, EU GDPR, EU AI Act, …) | Tier-classified (A/B/C/D — see `ATTRIBUTION.md`); JSON or YAML format (v0.10.3+ via `docs/contributing-a-catalog.md`). 1:1 conceptual match. |
+| **Catalog: Control** | `evidentia_core.models.catalog.ControlCatalog` (96 bundled — NIST 800-53, SOC 2, ISO 27001 stub, CIS, CMMC, PCI DSS, EU GDPR, EU AI Act, …) | Tier-classified (A/B/C/D — see `ATTRIBUTION.md`); JSON or YAML format (v0.10.3+ via `docs/contributing-a-catalog.md`). 1:1 conceptual match. |
 | **Catalog: Capability** | partial — `Control.implementation_status` enum (`implemented` / `partial` / `planned` / `missing`) | Evidentia tracks implementation state per control, not as a separate capability registry. Could be promoted to a first-class Capability model if Gemara conformance becomes a goal. |
 | **Catalog: Principle** | no direct equivalent | Evidentia treats principles as "tier-D obligations" inside `ObligationCatalog` (statutes, regulatory edicts). Functionally adjacent but not 1:1. |
 | **Catalog: Risk** | `evidentia_ai.risk_statements.RiskStatement` (NIST SP 800-30 Rev 1) + `evidentia_core.models.governance.AISystemClassification` (EU AI Act tiers, NIST AI RMF) | Risk catalogs in Evidentia are generated, not pre-defined — the LLM-driven `RiskStatementGenerator` produces statements from gaps + system context. Pre-defined risk catalogs are a v0.11+ candidate. |

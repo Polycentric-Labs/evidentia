@@ -37,13 +37,14 @@
 
 ## 1. Executive summary
 
-> **Section summary.** Evidentia (v0.7.8, May 2026) is the only
+> **Section summary.** Evidentia is the only
 > open-source, Python-first, library-first, OSCAL-native GRC tool
-> with bundled multi-framework catalogs (88), supply-chain-hardened
+> with bundled multi-framework catalogs (96), supply-chain-hardened
 > evidence integrity (Sigstore + SLSA L3 + PEP 740 + cosign-signed
 > container), and an air-gap-capable deployment model. It sits in a
-> near-empty competitive niche, on the right side of **four**
-> regulatory forcing functions converging in Q4 2026, and is
+> near-empty competitive niche, on the right side of a stacked
+> multi-year regulatory mandate runway (CMMC Phase 2 + EU CRA in
+> Q4 2026; FedRAMP CR26 2027-01-01; NTC-0009 2027-11-01), and is
 > intellectually descended from the Kellogg et al. ASE 2020
 > "Continuous Compliance" thesis (now extended by the Khatchadourian
 > March 2026 DFAH paper that names Evidentia's planned v0.8.0 flagship
@@ -62,7 +63,7 @@
 - **PCAOB's July 2024 Generative AI Spotlight (non-binding staff observations) + the 2024 AS 1105 amendments (technology-assisted analysis of electronic information) frame five AI-in-audit concerns; Evidentia maps its own capabilities onto all 5.** (1) Prompt + response capture — Evidentia v0.7.1 ✓; (2) Model-version tracking — v0.7.1 ✓; (3) Human-in-the-loop verification — DFAH addresses; (4) Immutable audit trails — DFAH addresses; (5) Explainability documentation — PRT addresses. **This mapping — Evidentia's own, not a PCAOB requirement — is among the strongest positioning claims Evidentia can make** in the v0.8.0 cycle (see §11).
 - **SR 11-7 superseded by SR 26-02 + OCC Bulletin 2026-13 (the "13a" PDF is the bulletin's guidance attachment) (April 17, 2026)** — and the new guidance **explicitly excludes generative AI and agentic AI**: *"Generative AI and agentic AI models are novel and rapidly evolving. As such, they are not within the scope of this guidance."* Banks are stranded with no regulatory framework for LLM deployments. **This is the precise opening for Evidentia's planned v0.7.9 model-risk module** to ship the SR-11-7-replacement-framework primitive ahead of any commercial vendor (see §7, §11).
 - **Positioning frame (revised 2026-05-25 per triple-validated procurement pressure-test): direct enumerated claims, no metaphor.** Three independent procurement-style reviewers (GPT-5.5 Fortune 500 procurement = 5/10; Grok-4.20-Multi-Agent federal-SI hostile TPRM = 2.5/10; Grok 4.3 heterodox marketing strategist = reject metaphor entirely) converged on the same diagnosis: the "Terraform/dbt of GRC" framing overclaims a multi-vendor consortium status a solo-vendor implementation cannot credibly own, and the "compliance kernel" alternative reads as developer-jargon to compliance buyers. The replacement positioning leads with six attestable supply-chain credentials (PEP 740 + Sigstore + SLSA L3 + cosign + CycloneDX 1.7 + OpenSSF Scorecard 6.5 + OpenSSF Silver MET + OSPS Baseline Maturity 2) + a concrete output enumeration (OSCAL + SARIF + OCSF Compliance Finding + OCSF Detection Finding + CycloneDX VEX) + a SOC 2 Type I in-progress signal + an honest acknowledgment of the OpenSSF Gold structural ceiling tied to the SOC 2 Type I program's segregation-of-duties controls. See §10 for the supporting messaging hierarchy.
-- **Honest gaps** (intentionally surfaced, not buried): no customer-facing trust center, no questionnaire-fill AI, **6 evidence-collection surfaces** vs Vanta's 375+ integrations (Evidentia ships AWS, GitHub, Okta, ServiceNow, 5 SQL DB adapters, Databricks, Snowflake; Azure + GCP extras declared in pyproject.toml but currently lack implementations — see §5/§6 honest gap), no auditor partnerships, no Forrester Wave / Gartner inclusion, no TPRM module (planned v0.7.9), no risk register / ERM primitive, no published reference customers, no formal SOC 2 of Evidentia itself, no IPO/exit narrative for vendor-longevity-paranoid buyers. Each has a planned remediation or an explicit "won't fix" rationale (see §6).
+- **Honest gaps** (intentionally surfaced, not buried): no customer-facing trust center, no questionnaire-fill AI, **14 evidence collectors** vs Vanta's 375+ integrations (AWS, GitHub, Okta, 5 SQL DB adapters, Databricks, Snowflake, Vanta, Drata, BitSight, SecurityScorecard; Azure + GCP remain roadmap — see §5/§6 honest gap), no auditor partnerships, no Forrester Wave / Gartner inclusion, no published reference customers, no formal SOC 2 of Evidentia itself, no IPO/exit narrative for vendor-longevity-paranoid buyers. Each has a planned remediation or an explicit "won't fix" rationale (see §6).
 - **Intellectual home**: an updated 30+ person community across NIST/GSA, OpenSSF, CISA-SBOM, Stanford CodeX, Bath/PRT, OSCAL Compass + OSCAL Foundation + Resilient Cyber / fwd:cloudsec / GRC-Engineering crowd. **NIST CSWP 53 *Charting the Course for NIST OSCAL*** (Iorga et al., December 2025 IPD) is now the canonical OSCAL strategic-direction citation, replacing older OSCAL references. Two outreach actions reach the entire community in one quarter (see §12).
 - **The 12-month direction** that compounds Evidentia's advantages: ship a DFAH-style determinism harness for risk-statement generation (academic prior art exists — Khatchadourian arXiv 2601.15322 March 2026 — but **no commercial vendor offers this**); publish the bundled multi-framework crosswalk dataset as a standalone artifact (`evidentia-catalogs`); add canonical scanner-JSON-to-OSCAL mappers; ship an MCP server (note: first-mover window for OSCAL primitives is **closed** as of Q1 2026 — IBM trestle-MCP, AWS Labs OSCAL MCP, Vanta MCP, Drata MCP, Optro MCP all live; **wide open** for SR-11-7 / FFIEC / SBOM / continuous-monitoring MCPs); ship the v0.7.9 federal-compliance overlay (TPRM + model risk + 7 new catalogs + governance primitives); pursue OSCAL Foundation membership; cut v0.8.x around AI evidence validation + multimodal evidence support; publish the **first standardized GRC LLM eval suite to Hugging Face** (HF Hub keyword searches confirm no substantive/eval-grade GRC datasets — zero OSCAL or SOC 2 hits; the lone NIST 800-53 hit is a sub-1K control-text dump — genuine first-in-class opportunity; see §13).
 
@@ -127,11 +128,13 @@ Meanwhile, the compliance workload keeps growing. A single fintech or healthcare
 
 ---
 
-## 3. Current capabilities (v0.10.12)
+## 3. Current capabilities
 
-> **Section summary.** As of v0.10.12 (June 2026), Evidentia ships **22 Typer
+> **Section summary.** As of the v0.11.0 release prep (July 2026), Evidentia ships **22 Typer
 > CLI commands** (18 groups + 4 utility verbs), **23 REST router modules**, a
-> full multi-console React web app (**22 consoles at ~98% CLI parity**) that
+> full multi-console React web app (**22 consoles at 93.4% CLI parity** — 99 of
+> 106 coverable CLI leaves; the 7 api-only leaves are the v0.11 federal
+> AI-governance verbs plus two chrome-surfaced utilities) that
 > renders its own version live from the API, **13 read-mostly MCP tools**, six
 > Python packages with public APIs + the evidentia-ui frontend that bundles into
 > the API server, **14 credentialed evidence collectors**
@@ -141,7 +144,7 @@ Meanwhile, the compliance workload keeps growing. A single fintech or healthcare
 > **4 output integrations** (Jira, ServiceNow, Tableau publish, Power BI
 > publish), AI-powered risk-statement + control-explanation generation
 > with full GenerationContext provenance (model + temperature +
-> prompt-hash + run-id), **95 bundled framework catalogs** (4 redistribution
+> prompt-hash + run-id), **96 bundled framework catalogs** (4 redistribution
 > tiers), bundled crosswalks, and **eight gap-output formats** including OSCAL
 > 1.2.1 Assessment Results with embedded SHA-256 evidence digests + Sigstore/Rekor
 > or GPG signing. Every release carries six independently attestable supply-chain
@@ -165,7 +168,7 @@ for the full subcommand set.
 | `evidentia doctor [--check-air-gap]` | System diagnostics — LLM connectivity, web-UI availability, and the per-subsystem air-gap posture report. |
 | `evidentia serve` | Launch the FastAPI server + bundled React SPA (defaults to `127.0.0.1:8000`). |
 | `evidentia gap {analyze,diff}` | Run gap analysis (eight output formats) and diff two snapshots (opened / closed / severity-changed / unchanged). |
-| `evidentia catalog {list,show,crosswalk,import,license-info}` | Browse the 95 bundled framework catalogs, show a control, map controls across frameworks, import licensed Tier-C content, inspect license posture. |
+| `evidentia catalog {list,show,crosswalk,import,license-info}` | Browse the 96 bundled framework catalogs, show a control, map controls across frameworks, import licensed Tier-C content, inspect license posture. |
 | `evidentia risk generate` | LLM-generated NIST SP 800-30 risk statements with structured output. |
 | `evidentia explain control <fw> <id>` | Plain-English, LLM-generated translation of any control's text (on-disk cached). |
 | `evidentia integrations {jira,servicenow,tableau,powerbi}` | Output integrations — push gaps to Jira / ServiceNow and publish to Tableau / Power BI. |
@@ -196,9 +199,12 @@ The web UI is a thin client over the REST API: every operator surface in
 the browser is backed one-to-one by an API endpoint, and the React app
 renders its own version live from the API rather than hardcoding it. The
 23 router modules are the full operator surface — there is no
-admin-only or paid-tier API. CLI ↔ GUI parity is roughly **98% across
-~22 in-browser consoles**: every CLI command group except the
-server-side server/`mcp`/`eval` plumbing has an equivalent console, and
+admin-only or paid-tier API. CLI ↔ GUI parity is **93.4% across the 22
+in-browser consoles** (99 of 106 coverable CLI leaves; the 7 api-only
+leaves — the v0.11 federal AI-governance verbs plus the two
+chrome-surfaced utilities — have API endpoints but no dedicated console
+yet): every CLI command group except the server-side
+server/`mcp`/`eval` plumbing has an equivalent console, and
 the operator-facing surface is fully open source.
 
 The 23 routers cover:
@@ -233,8 +239,9 @@ live in the 25-page [Guides](wiki/2-guides/index.md) section.
 `evidentia serve` launches a sidebar-driven, multi-console single-page app —
 **22 non-demo consoles** (Home plus 21 grouped consoles), each backed one-to-one
 by a REST endpoint and calling the same engine as the CLI. There is no UI-only
-analysis path and no admin-only or paid-tier surface. CLI↔GUI parity is roughly
-**98% across ~22 consoles**: every CLI command group except the server-side
+analysis path and no admin-only or paid-tier surface. CLI↔GUI parity is
+**93.4% across the 22 consoles** (7 api-only leaves pending their console
+pass): every CLI command group except the server-side
 plumbing (`serve` / `mcp` / `eval`) has an equivalent console. The app renders
 its own version live from the API (`/api/health`) rather than hardcoding it.
 
@@ -351,22 +358,22 @@ network guard described in [§3.7](#37-supply-chain--security-hardening).
 - **Tableau publish** (`[tableau]` extra) — publishes 3 datasets to Tableau Server / Cloud as CSV-based data sources: `evidentia-gaps` (one row per ControlGap), `evidentia-risks` (NIST SP 800-30 shape with AI-provenance fields), and `evidentia-collection-runs` (the CollectionContext audit trail). PAT auth via the `TABLEAU_PAT_NAME` + `TABLEAU_PAT_SECRET` env vars (never accepted as flag values). `tableauserverclient>=0.30` (pure Python). A `.hyper`-extract publish path remains a roadmap enhancement under a separate `[tableau-hyper]` extra (it would require the heavyweight `tableauhyperapi` native binary).
 - **Power BI publish** (`[powerbi]` extra) — pushes the same 3 datasets as Power BI Push Datasets via the REST API + Azure AD service-principal OAuth2 (MSAL Python). Full-refresh semantics by default (clear-then-push), 10,000-row batching per Power BI's documented limit, and schema-declared dataset auto-creation via `ensure_dataset` (idempotent re-runs). Auth: a service principal with `Dataset.ReadWrite.All`; the client secret is read from `POWERBI_CLIENT_SECRET` server-side and never appears in request bodies. `msal>=1.31` driver.
 
-### 3.6 Bundled framework catalogs (95 total, four redistribution tiers)
+### 3.6 Bundled framework catalogs (96 total, four redistribution tiers)
 
-**95 catalogs** verified by the canonical
+**96 catalogs** verified by the canonical
 `scripts/check_doc_counts.py` gate, which counts every `frameworks:`
 entry in the catalogs manifest
 (`packages/evidentia-core/src/evidentia_core/catalogs/data/frameworks.yaml`) —
-exactly the list `FrameworkRegistry.list_frameworks()` returns. Of the 95,
-**73 ship as real catalogs** (control/technique/vulnerability/obligation
+exactly the list `FrameworkRegistry.list_frameworks()` returns. Of the 96,
+**74 ship as real catalogs** (control/technique/vulnerability/obligation
 text bundled) and **22 are licensed placeholder stubs** (public clause
 numbering + neutral titles only; you load your licensed copy via
 `evidentia catalog import`). The 22 placeholders are exactly the Tier-C
 licensed frameworks; Tiers A, B, and D contain no placeholders. The
 four redistribution tiers (see [contributing a catalog](contributing-a-catalog.md)
-for the licensing model) sum to the stated total — **49 + 4 + 22 + 20 = 95**:
+for the licensing model) sum to the stated total — **50 + 4 + 22 + 20 = 96**:
 
-- **Tier A — Verbatim public-domain / open-licensed (49 frameworks)**:
+- **Tier A — Verbatim public-domain / open-licensed (50 frameworks)**:
   **39 US federal** — NIST SP 800-53 Rev 5 baselines (Low / Moderate /
   High / Privacy, 5.2.0), 800-171 r2/r3, 800-172, CSF 2.0, AI RMF 1.0,
   Privacy Framework 1.0, SSDF 800-218; FedRAMP Rev 5 baselines (Low /
@@ -629,7 +636,7 @@ The OSS GRC tier kept surging through 2025-26. **None of these is a permissively
 | **trycompai/comp** (Comp AI) | **1,620 stars (2026-06-10); daily commits**; **$2.6M pre-seed** announced 2025-08-01 (co-led by OSS Capital + Grand Ventures); 700+ companies (per trycomp.ai, 2026-06-10) | Vanta/Drata alternative; AI-native positioning; TypeScript/Next.js | AGPL-3.0 + commercial | Targets SaaS-startup SOC 2 self-serve market (different ICP); top-of-funnel awareness threat |
 | **GRCEngClub/claude-grc-engineering** | 295 stars (2026-06-10); created Dec 2025; latest tag v0.0.4 (Apr 2026) | Claude Code plugin marketplace — 63 plugins / 98 skills / 257 commands (persona + framework + connector plugins); a prompt-orchestration layer, **not** a runtime engine | MIT core (bundles CC BY-ND 4.0 SCF crosswalk data + CC BY-SA 4.0 CIS content) | **Complementary, not competitive** — a Claude-Code orchestration layer that explicitly is not an engine; its `grc-engineer` hub shells out to external tools. Interop opportunity: publish an Evidentia MCP plugin into its `grc-engineering-suite` marketplace. See [integration-survey.md](integration-survey.md) §5 |
 | **compliancecow/cowmcp** (ComplianceCow MCP) | Verified 2026-06-10; small & new project | MCP server fronting ComplianceCow's commercial GRC SaaS — exposes ~14 tools (control inventory, evidence retrieval, finding query, framework crosswalk lookup) for Claude / ChatGPT consumption | Apache-2.0 (server); ComplianceCow backend proprietary | **One of several OSS GRC MCP servers** — CISO Assistant ships a full MCP server (`cli/ca_mcp`; POC PR #1831 merged 2025-04-13, expanded through 2026-06-03) and oscal-compass/compliance-trestle-mcp also exists, alongside Evidentia's `evidentia mcp serve`. Different shape — MCP is a thin facade over a SaaS backend, whereas Evidentia is a runtime engine. Interop angle: cross-cite in the honest-landscape entry |
-| **awslabs/oscal-mcp-server** (AWS OSCAL MCP) | Verified 2026-05-24 via awslabs repo; archived `samples/` shape — not a service | MCP knowledge tool — answers OSCAL schema + 800-53 / 800-171 catalog questions via embedded references | Apache-2.0 | **Knowledge tool only — not a runtime emitter.** Evidentia goes further: emits OSCAL component-definition / SSP / assessment-results / POA&M / VEX / VSA. Useful upstream reference; not a competitor |
+| **awslabs/oscal-mcp-server** (AWS OSCAL MCP) | Verified 2026-05-24 via awslabs repo; archived `samples/` shape — not a service | MCP knowledge tool — answers OSCAL schema + 800-53 / 800-171 catalog questions via embedded references | Apache-2.0 | **Knowledge tool only — not a runtime emitter.** Evidentia goes further: a runtime engine that emits OSCAL catalog / profile / assessment-results / POA&M (plus SARIF / OCSF / CycloneDX-VEX gap outputs and the CR26 SDR KSI block). Useful upstream reference; not a competitor |
 | **simplerisk/simplerisk** | 101 stars; latest 2026-04-25 | PHP-based risk register; ~12 years old; commercial hosted version exists | Mozilla Public License 2.0 | Narrow shape — risk register only |
 | **Probo** | YC X25 batch (Spring 2025) | OSS SOC 2/ISO 27001/HIPAA platform | MIT | Service-augmented; small team |
 | **Openlane** (`theopenlane.io`) | Apache-2.0 | OSS GRC platform | Apache-2.0 | Different shape (platform vs library) |
@@ -644,7 +651,7 @@ The OSS GRC tier kept surging through 2025-26. **None of these is a permissively
 | **open-policy-agent/opa** | 11,674 stars; CNCF Graduated | Rego-based; universal policy-as-code substrate | Apache-2.0 | **Could integrate** |
 | **cedar-policy/cedar** | 1,447 stars; AWS-led; Rust-based | Authorization policy language with Lean-verified symbolic compiler | Apache-2.0 | **Could integrate** |
 | **guacsec/guac** | 1,485 stars; OpenSSF | Aggregates SBOM/provenance into a graph | Apache-2.0 | Complementary supply-chain GRC angle |
-| **GovReady-Q** | 210 stars | Django-based self-service GRC questionnaire app | GPL-3.0 | Effectively defunct (no meaningful work since 2024); Evidentia walks into the vacuum |
+| **GovReady-Q** | 210 stars | Django-based self-service GRC questionnaire app | GPL-3.0 | Dormant, not defunct (default-branch commits end 2023-06-11; last push 2024-12-10); Evidentia walks into the vacated niche |
 | **opencontrol/compliance-masonry** | 377 / maintenance | Pre-OSCAL YAML "OpenControl" docs builder | Apache-2.0 | Predecessor of OSCAL; stale |
 | **RS-Credentive/oscal-pydantic** | 23 / 5; last push 2024-04-06 (2+ years stale) | Pydantic models autogenerated from OSCAL schemas | Apache-2.0 | Functionally archived; Evidentia could supersede |
 | **Eramba** ([eramba/docker](https://github.com/eramba/docker)) | 70 stars (docker repo); latest 2026-04-22 | **Still offers Community Edition (free forever, on-premise) + paid Enterprise tier** (verified 2026-05-18 via direct WebFetch of eramba.org). Community + Enterprise both support unlimited users + unlimited frameworks. The v0.7.8 baseline claim that Eramba had "shifted to closed-source application Q1 2026" was **inaccurate** and is corrected here. | Open-source Community + commercial Enterprise dual-license | Active competitor; PHP/Laravel stack; oriented to ISO 27001 + SOC 2 audit workflows; weaker on OSCAL + AI-quality than Evidentia |
@@ -726,7 +733,7 @@ Evidentia's existing MCP / CIMD scope-enforcement substrate.
 > **eight genuine differentiators** versus every commercial tier —
 > the original seven (open-source + Python + library-first;
 > OSCAL-native; AI-optional; air-gap-capable; supply-chain-hardened
-> on the GRC tool itself; composite GitHub Action / CI-native; 88
+> on the GRC tool itself; composite GitHub Action / CI-native; 96
 > framework catalogs bundled) plus **a 5/5 capability mapping onto
 > PCAOB AS 1105 + GenAI Spotlight concerns**
 > via v0.7.1 audit trails + planned v0.8.0 DFAH + PRT (Evidentia's own
@@ -735,14 +742,13 @@ Evidentia's existing MCP / CIMD scope-enforcement substrate.
 > mapping, MCP server (commercial vendors caught up Q1 2026), evidence
 > collection from cloud APIs, CycloneDX SBOM, Sigstore signing, and
 > conventional commit + semver discipline. It is **honestly behind**
-> on the same ten surfaces as v0.7.0 (trust center; AI questionnaire
-> fill; integration breadth — 8 evidence-collection surfaces vs
-> Vanta's 375+; auditor partnerships; analyst inclusion; TPRM
-> module — planned v0.7.9; ERM/risk-register primitive; reference
-> customers; formal SOC 2 attestation; IPO/exit longevity narrative)
-> plus a NEW v0.7.8-surfaced gap: **two `[azure]` and `[gcp]`
-> optional extras declared in pyproject.toml without backing
-> implementations** (queued for v0.7.9 batch fix).
+> on the surviving honest gaps (trust center; AI questionnaire
+> fill; integration breadth — 14 evidence collectors vs
+> Vanta's 375+; auditor partnerships; analyst inclusion; reference
+> customers; formal SOC 2 attestation; IPO/exit longevity
+> narrative — TPRM and the risk-register primitive have since
+> shipped, and the once-flagged `[azure]`/`[gcp]` phantom extras
+> were removed).
 
 ### 6.1 The seven genuine differentiators (vs. all four commercial tiers)
 
@@ -754,7 +760,7 @@ Evidentia's existing MCP / CIMD scope-enforcement substrate.
 | 4 | **Air-gap-capable** | None deploy on-prem or air-gapped | OneTrust on-prem deprecated; rest cloud-only | All cloud-only | All cloud-telemetry-dependent by definition |
 | 5 | **Sigstore + PEP 740 + SBOM applied to the GRC tool itself** | None publish signed SBOM for their platform | None | None | Parity-ish with Chainguard's signed-image philosophy, but Evidentia applies it to *the GRC tool*, not just images. **Genuine differentiator at the meta-layer.** |
 | 6 | **Composite GitHub Action / CI-native** | SaaS dashboards; not pipeline-native | Workflow apps; not CI primitives | Same | Snyk/Aqua/Sysdig CI-native for *security scanning*; Evidentia CI-native for *compliance evidence* |
-| 7 | **88 framework catalogs bundled** (95+ planned for v0.7.9 with FFIEC + OCC + SR 11-7 additions) | Vanta 35+ ([Vanta frameworks](https://www.vanta.com/products/additional-frameworks)), Drata 20+, Secureframe ~12, Sprinto 200+ (claim — but with documented uneven depth — see §6.4), Comp AI 25+ | OneTrust + ServiceNow + IBM cover hundreds via paid licensed regulatory libraries | N/A (trust center vendors don't ship catalogs) | RegScale claims 60+ (parity); CISO Assistant 130+ claimed (parity) |
+| 7 | **96 framework catalogs bundled + 16 crosswalks** (machine-gated count via `scripts/check_doc_counts.py`) | Vanta 35+ ([Vanta frameworks](https://www.vanta.com/products/additional-frameworks)), Drata 20+, Secureframe ~12, Sprinto 200+ (claim — but with documented uneven depth — see §6.4), Comp AI 25+ | OneTrust + ServiceNow + IBM cover hundreds via paid licensed regulatory libraries | N/A (trust center vendors don't ship catalogs) | RegScale claims 60+ (parity); CISO Assistant 130+ claimed (parity) |
 | 8 | **5/5 capability mapping onto PCAOB AS 1105 + GenAI Spotlight concerns** (Evidentia's own mapping onto the Spotlight's non-binding staff observations; NEW v0.7.8 differentiator) | None publish an equivalent mapping | None | None | None |
 
 ### 6.1.A The moat trinity (v0.9.6 sharpened framing — May 2026)
@@ -763,13 +769,20 @@ The v0.9.5 Q3 2026 quarterly resync sharpened the differentiation
 story by collapsing the seven-vs-eight differentiator list into three
 concrete moats that compound rather than enumerate. **The moat trinity**:
 
-1. **OSCAL emission** — Evidentia is the only OSS GRC tool that
-   emits catalog / profile / assessment-results / plan-of-action-
-   and-milestones (v0.9.6 ships OSCAL 1.2.1 via the
-   `OSCAL_SCHEMA_VERSION` constant; trestle-compatible) **as
-   first-class output**, not via an exporter add-on. The Sept 30
-   2026 FedRAMP machine-readable mandate makes this the load-
-   bearing differentiator for federal-adjacent operators.
+1. **Machine-readable federal emission (OSCAL + CR26 JSON)** —
+   Evidentia is the only OSS GRC tool that emits catalog / profile /
+   assessment-results / plan-of-action-and-milestones (OSCAL 1.2.1
+   via the `OSCAL_SCHEMA_VERSION` constant; trestle-compatible) **as
+   first-class output**, not via an exporter add-on — and, as of
+   v0.11, the first production-grade OSS emitter of the FedRAMP CR26
+   Security Decision Record `keySecurityIndicators` block (official
+   2026-06-24 schemas). Two federal machine-readable rails make this
+   the load-bearing differentiator: FedRAMP CR26's JSON-MUST rules
+   (FRC-CSO-JSN; CR26 mandatory for all 20x certifications
+   2027-01-01) and NTC-0009's comprehensive machine-readable
+   requirement for Rev 5 Class D (High) by 2027-11-01
+   (format-agnostic — it names no required format; OSCAL is the
+   established package rail).
 2. **DFAH / PRT determinism** — auditor-defensible reproducibility
    on every AI-generated artifact. Khatchadourian arXiv
    2601.15322 (v2 March 2026) names this by exact terminology;
@@ -816,15 +829,15 @@ have."
 ### 6.2 Where Evidentia is at parity (don't oversell)
 
 - **AI-assisted control mapping** — Vanta AI Agent, SafeBase AI, RegScale all do this. Evidentia at parity, not advantage.
-- **Multi-framework crosswalking** — Hyperproof's Hyperintelligence and Drata's framework engine are mature. Evidentia at 95 catalogs is at parity in coverage; quality of the crosswalk graph needs more validation.
-- **Evidence collection from cloud APIs** — Tier 1 vendors and CSPM tools both do this well. Evidentia's collectors (AWS, GitHub Dependabot, IAM Access Analyzer) are at parity for the integrations shipped, behind on coverage breadth.
+- **Multi-framework crosswalking** — Hyperproof's Hyperintelligence and Drata's framework engine are mature. Evidentia at 96 catalogs is at parity in coverage; quality of the crosswalk graph needs more validation.
+- **Evidence collection from cloud APIs** — Tier 1 vendors and CSPM tools both do this well. Evidentia's 14 collectors (AWS, GitHub, Okta, 5 SQL adapters, Databricks, Snowflake, Vanta, Drata, BitSight, SecurityScorecard) are at parity for the integrations shipped, behind on coverage breadth.
 - **CycloneDX SBOM output** — Industry standard now (Anchore, Chainguard, Snyk). Parity, not ahead.
 - **Sigstore/Rekor signing of releases** — Increasingly table-stakes (Chainguard pioneered, Anchore + others adopting). Parity.
 - **Conventional commits + semver release automation** — Table-stakes in modern OSS. Parity.
 
 ### 6.3.1 Framework-count caveat (added v0.7.8)
 
-Per Stream 1's findings on commercial GRC over-promising patterns: bare framework counts (e.g., "Sprinto 200+") hide deep unevenness — vendors typically have world-class SOC 2 / ISO 27001 coverage but checklist-only mapping with little automation for FFIEC, SR 11-7, FedRAMP, CMMC. PolicyCortex's CMMC analysis is explicit: SOC-2-grade evidence "is often not sufficient for a CMMC C3PAO assessor." Evidentia's 88 catalogs claim should always be qualified with **redistribution-tier accounting** (Tier A 31 frameworks verbatim public domain + Tier D 21 statutory + Tier C 20 licensed-stubs + Tier B 4 threat catalogs at the v0.7.0 base, +6 since) and the **catalog-import flow for Tier-C licensed copies** (`evidentia catalog import` for ISO 27001, PCI DSS 4.0.1, etc.).
+Per Stream 1's findings on commercial GRC over-promising patterns: bare framework counts (e.g., "Sprinto 200+") hide deep unevenness — vendors typically have world-class SOC 2 / ISO 27001 coverage but checklist-only mapping with little automation for FFIEC, SR 11-7, FedRAMP, CMMC. PolicyCortex's CMMC analysis is explicit: SOC-2-grade evidence "is often not sufficient for a CMMC C3PAO assessor." Evidentia's 96 catalogs claim should always be qualified with **redistribution-tier accounting** (the four redistribution tiers per §3.6) and the **catalog-import flow for Tier-C licensed copies** (`evidentia catalog import` for ISO 27001, PCI DSS 4.0.1, etc.).
 
 ### 6.3.2 The ten honest gaps (intentionally surfaced)
 
@@ -834,14 +847,14 @@ These are the gaps that will get a sales-eng on a Vanta/Drata bake-off to win, a
 |---|---|---|
 | 1 | **No customer-facing trust-center module** (SafeBase / Conveyor / Vanta Trust Center are now table-stakes for B2B SaaS buyers) | v0.8.x candidate — could be a `evidentia trust-center` static-site generator that emits Sigstore-attested trust pages from Evidentia's own evidence |
 | 2 | **No questionnaire-fill AI** (Conveyor's Sue, Drata/SafeBase, Vanta Questionnaire Automation are mature) | Won't ship — explicit positioning choice; Evidentia is library-first, not RFP-fill-first |
-| 3 | **Integration breadth** (Vanta has 375+; Evidentia has 5 collectors today) | Roadmap: Okta, Azure, GCP collectors planned; community-pluggable collector pattern is documented |
+| 3 | **Integration breadth** (Vanta has 375+; Evidentia has 14 collectors today) | Roadmap: Azure, GCP collectors planned; community-pluggable collector pattern is documented |
 | 4 | **No formalized auditor partnerships / no in-platform auditor handoff** | v0.8.x candidate — `evidentia oscal export --bundle-for-auditor` workflow + curated partnership list |
 | 5 | **No published Forrester Wave / Gartner Magic Quadrant inclusion** | Realistic only after a commercial sponsor exists; OSS projects don't typically get on these without one |
-| 6 | **No third-party risk (TPRM) module** | Composable — Evidentia could ingest BitSight / SecurityScorecard data via collector pattern; not a v0.8 priority |
-| 7 | **No risk register / ERM primitive** (AuditBoard, Riskonnect, MetricStream lead with ERM) | Honest framing: Evidentia's "risk statements" are NIST SP 800-30 narratives, not a Riskonnect-class ERM register. Could add a lightweight `evidentia risk register` in v0.9.x |
+| 6 | ~~No third-party risk (TPRM) module~~ — **shipped v0.7.9** (`evidentia tprm`: vendor inventory, concentration risk, CAIQ/SIG questionnaires + BitSight / SecurityScorecard collectors) | Residual gap: TPRM data-source breadth vs dedicated TPRM suites |
+| 7 | ~~No risk register / ERM primitive~~ — a lightweight `RiskRegister` model + risk-quantify surface **shipped** (v0.9.x–v0.10.x) | Honest framing: still NIST SP 800-30-shaped, not a Riskonnect-class ERM register |
 | 8 | **No reference customers / logo wall / ARR** | Pre-traction. v0.8 priority: get 5 named adopters (consultancies, FedRAMP CSPs, defense contractors) |
 | 9 | **No formalized SOC 2 / ISO 27001 of Evidentia itself** | OSS can't *be* SOC 2 compliant (it's not an entity). Mitigation: publish a formal threat model + supply-chain attestation roadmap; if a hosted-service offering ships, pursue SOC 2 Type II for that |
-| 10 | **No IPO/exit narrative for vendor-longevity-paranoid buyers** | Mitigation: lean into "OSS = no acquisition risk; the code outlives any company"; cite GovReady-Q / Olive AI / Lacework valuation collapses as cautionary tales |
+| 10 | **No IPO/exit narrative for vendor-longevity-paranoid buyers** | Mitigation: lean into "OSS = no acquisition risk; the code outlives any company"; cite GovReady-Q dormancy + Olive AI / Lacework valuation collapses as cautionary tales |
 
 ---
 
@@ -857,7 +870,7 @@ These are the gaps that will get a sales-eng on a Vanta/Drata bake-off to win, a
 
 1. **A maintained Python OSCAL library.** `oscal-pydantic` is 2+ years stale (last push 2024-04-06, 23 stars). Compliance-trestle is opinionated workflow software, not a library. Nothing else fills the `pip install evidentia-core; from evidentia_core import GapAnalyzer` shape.
 
-2. **Bundled multi-framework crosswalk dataset.** NIST publishes 800-53 in OSCAL. CIS publishes Controls v8. ISO 27001 OSCAL ports are fragmented and unofficial. **Nobody bundles 88+ frameworks with vetted crosswalks** (Evidentia at v0.7.8; growing to 95+ in v0.7.9 with FFIEC + OCC + SR 11-7 additions). Evidentia could publish `evidentia-catalogs` as a separate Apache/CC0 repo and become the *de facto* multi-framework reference dataset, the way `oscal-content` is for NIST 800-53 alone. Includes the GovReady-Q vacated niche (210 stars; no meaningful work since 2024).
+2. **Bundled multi-framework crosswalk dataset.** NIST publishes 800-53 in OSCAL. CIS publishes Controls v8. ISO 27001 OSCAL ports are fragmented and unofficial. **Nobody bundles 96 frameworks with vetted crosswalks**. Evidentia could publish `evidentia-catalogs` as a separate Apache/CC0 repo and become the *de facto* multi-framework reference dataset, the way `oscal-content` is for NIST 800-53 alone. Includes the niche GovReady-Q left dormant (210 stars; default-branch commits end 2023-06; last push 2024-12).
 
 3. **Apache-2.0 alternative to AGPL CISO Assistant + Comp AI.** Many enterprises (defense contractors, SaaS vendors who would distribute the code, federal sub-primes) categorically refuse AGPL. There is no other permissively-licensed, library-first, OSCAL-native, multi-framework Python GRC toolkit with a cryptographically-signed evidence chain in active development today — the nearest exception at the platform level is theopenlane/core (Openlane): Apache-2.0, full-stack, Go (zero Python), very active, but its OSCAL support is schema-named fields only (no full OSCAL read/write) and it has no air-gap story. **Sharpened in v0.7.8**: CISO Assistant pulls 4,008 stars + daily commits + dual-license commercial paid SKUs; Comp AI raised a $2.6M pre-seed (announced 2025-08-01, co-led by OSS Capital + Grand Ventures) — the AGPL incumbents are well-staffed and ship daily. Evidentia's Apache 2.0 + Sigstore + SLSA L3 is the differentiable moat against them.
 
@@ -896,7 +909,7 @@ These are the gaps that will get a sales-eng on a Vanta/Drata bake-off to win, a
 > Customer flight risk creates real opening for OSS that has no
 > acquisition exposure.
 
-### 8.1 The four forcing-function dates (Q4 2026 convergence)
+### 8.1 The forcing-function dates (a stacked multi-year mandate runway)
 
 | Date | Mandate | Implication for Evidentia |
 |---|---|---|
@@ -904,7 +917,7 @@ These are the gaps that will get a sales-eng on a Vanta/Drata bake-off to win, a
 | **2026-05** target window | **HIPAA Security Rule final rule** (NPRM published 2025-01-06; OCR's regulatory agenda lists May 2026; ~4,700+ comments closed 2025-03-07; once final, 240 days to comply) | Significant uncertainty under new administration; bundled HIPAA Security catalog must be ready for revision |
 | **~~2026-08-02~~ → 2027-12-02** | **EU AI Act Annex III high-risk systems obligations DEFERRED to December 2, 2027** per the Digital Omnibus political agreement reached by the EU Council + Parliament on May 7, 2026 ([Council of EU press release](https://www.consilium.europa.eu/en/press/press-releases/2026/05/07/artificial-intelligence-council-and-parliament-agree-to-simplify-and-streamline-rules/); [IAPP coverage](https://iapp.org/news/a/ai-act-omnibus-what-just-happened-and-what-comes-next); [Hogan Lovells](https://www.hoganlovells.com/en/publications/eu-legislators-agree-to-delay-for-highrisk-ai-rules)). Article 50 transparency obligations apply from 2026-08-02 unchanged; only the Art 50(2) watermarking obligation gets a grace period to 2026-12-02 for existing systems under the May 2026 omnibus agreement. The Annex III deferral is per the 2026-05-07 political agreement (secondary-corroborated; formal adoption / OJ publication pending) but treated as the operative timeline by EU compliance counsel as of May 2026. | First likely AI Act fine pushed ≥16 months; ISO 42001 + EU AI Act crosswalks remain valuable but lose their Q3-Q4 2026 urgency; Evidentia's v0.9.3 EU AI Act tier classifier + v0.11+ ISO 42001 conformity-assessment-pack work retains relevance for the new Dec 2027 horizon |
 | **2026-09-11** | **EU CRA reporting obligations** — 24/72-hour incident + 14-day vulnerability reporting for any digital product placed on the EU market (CRA in force since 2024-12-10; full obligations including SBOMs apply 2027-12-11) | Hard demand spike for SBOM, vulnerability-tracking, incident-disclosure tooling; Evidentia's CycloneDX SBOM + collector pattern + audit-event stream is precisely positioned |
-| **~~2026-09-30~~ → 2027-11-01** | **FedRAMP machine-readable packages** — NTC-0009 (2026-03-25) superseded RFC-0024's original 2026-09-30 deadline: comprehensive machine-readable (OSCAL) packages required by **2027-11-01** for Class D (High) only, with Classes A–C submitting semi-structured data by the same date (finalized in CR26; see §11.2.A). FedRAMP Ready still retires 2026-07-28 | OSCAL remains the load-bearing federal format, but on a later, narrower timeline; near-term urgency concentrates in Class D (High) CSPs; 90%+ of incumbents still don't natively emit OSCAL |
+| **~~2026-09-30~~ → 2027-11-01** | **FedRAMP machine-readable packages** — NTC-0009 (2026-03-25) superseded RFC-0024's original 2026-09-30 deadline: comprehensive machine-readable packages (format-agnostic — NTC-0009 names no required format) required by **2027-11-01** for Class D (High) only, with Classes A–C submitting semi-structured data by the same date (finalized in CR26; see §11.2.A). FedRAMP Ready still retires 2026-07-28 | OSCAL remains a load-bearing federal rail (the Rev 5 / M-24-15 package path), with CR26's JSON schemas as the second machine-readable rail, on a later, narrower timeline; near-term urgency concentrates in Class D (High) CSPs; 90%+ of incumbents still don't natively emit OSCAL |
 | **2025-10-01** (already effective) | **Maryland MODPA** — strictest US privacy law (sale-of-sensitive-data prohibition + "reasonably necessary" data-minimization standard; $10K/violation, $25K/repeat penalties); effective 2025-10-01, with a carve-out exempting processing that occurred before 2026-04-01 | Bundled Tier-D state privacy laws now total 19 active in 2026; MODPA new high-water mark |
 | **2026-11-10** | **CMMC Phase 2** — Level 2 C3PAO third-party assessments mandatory for most DOD contractors handling CUI (Phase 1 self-assess became binding 2025-11-10) | **~80K DOD contractors need Level 2 certification (~220K total DIB) and 800-171 evidence collection**; assessment capacity: 103 authorized C3PAOs + 759 CCAs (Cyber AB, Mar 2026); Vanta/Drata at $30K+/yr unaffordable for most; Evidentia's free Apache 2.0 + air-gap support is the obvious fit |
 | **2026-11-10 to 2027-11-10** | DORA first full enforcement year — ESAs published list of **19 Critical ICT Third-Party Providers** (CTPPs) on 2025-11-18 (incl. AWS, Azure, GCP, Bloomberg, LSEG); 2026 Register of Information cycle uses 2025-12-31 reference data | EU CTPP oversight active; DORA-aware GRC tooling has captured customer base |
@@ -940,7 +953,7 @@ These are the gaps that will get a sales-eng on a Vanta/Drata bake-off to win, a
 
 ### 8.4 Why this matters for Evidentia specifically
 
-- **OSCAL-native, library-first** rides the FedRAMP machine-readable mandate (2027-11-01 for Class D High per NTC-0009; FedRAMP Ready retires 2026-07-28) at a moment when 90%+ of incumbents still don't natively emit OSCAL (Vanta added export Feb 2026 for FedRAMP 20x submissions only — the first of the Tier-1 SOC 2 automation platforms to do so; RegScale, Telos, Paramify, and C1Secure shipped commercial OSCAL tooling earlier)
+- **OSCAL-native, library-first** rides the FedRAMP machine-readable mandates (CR26 JSON-MUST rules mandatory 2027-01-01; NTC-0009's format-agnostic comprehensive machine-readable requirement, 2027-11-01 for Class D High; FedRAMP Ready retires 2026-07-28) at a moment when 90%+ of incumbents still don't natively emit OSCAL (Vanta added export Feb 2026 for FedRAMP 20x submissions only — the first of the Tier-1 SOC 2 automation platforms to do so; RegScale, Telos, Paramify, and C1Secure shipped commercial OSCAL tooling earlier)
 - **Open-source + sovereign deploy** serves EU customers facing DORA enforcement + 19 CTPP oversight (who push toward EU-hosted or on-prem) and the ~80K DOD contractors (of a ~220K-company DIB) facing CMMC Level 2 certification under Phase 2 (who can't afford SaaS GRC at $30K+/yr)
 - **Sigstore + air-gap refusal** aligns with EO 14306 retained provisions and Defense Unicorns / Big Bang / Platform One patterns
 - **CycloneDX SBOM + collector pattern** aligns with CISA 2025 SBOM minimum elements update + FDA medical-device 524B + **EU CRA September 2026 reporting obligations**
@@ -964,11 +977,11 @@ These are the gaps that will get a sales-eng on a Vanta/Drata bake-off to win, a
 > gravity wells; regulatory complexity demanding maintenance; AI hype
 > risk. None is fatal but each shapes positioning choices.
 
-1. **Vanta + Drata + Optro + OneTrust have AI moats from scale.** Hundreds of integrations, customer corpora to fine-tune AI agents, 35+ pre-mapped frameworks. An OSS tool with 8 evidence-collection surfaces looks small by comparison. **Mitigation**: lean into OSCAL/sovereign/air-gap/cryptographic-evidence-attestation angles where SaaS can't follow; federate (let users plug Evidentia into existing SaaS GRC via the v0.7.8 Tableau / Power BI publish surfaces); position as the substrate that AI agents validate against (signed evidence, OSCAL artifacts, DFAH replay).
+1. **Vanta + Drata + Optro + OneTrust have AI moats from scale.** Hundreds of integrations, customer corpora to fine-tune AI agents, 35+ pre-mapped frameworks. An OSS tool with 14 evidence collectors looks small by comparison. **Mitigation**: lean into OSCAL/sovereign/air-gap/cryptographic-evidence-attestation angles where SaaS can't follow; federate (let users plug Evidentia into existing SaaS GRC via the v0.7.8 Tableau / Power BI publish surfaces); position as the substrate that AI agents validate against (signed evidence, OSCAL artifacts, DFAH replay).
 
 2. **NEW: AI feature commoditization (Q1 2026 universal launches).** Vanta, Drata, Optro, OneTrust, Hyperproof, Workiva, ServiceNow, Anecdotes all shipped agentic AI + MCP server + citation-grounded LLM output between Sept 2025 and April 2026. **The differentiation is collapsing rapidly** into eval rigor, audit-trail quality, and OSS license posture — not "we have AI." **Mitigation**: accelerate the v0.8.0 DFAH + PRT + MCP + plugin-contract differentiators before they become parity items.
 
-3. **OSCAL adoption lags the mandate.** Zero of 100+ FedRAMP Rev5 authorizations in 2025 used OSCAL. The forcing function is real but vendors lag. **Vanta added OSCAL export Feb 2026 for FedRAMP 20x submissions only** — the first of the Tier-1 SOC 2 automation platforms to ship OSCAL export (commercial OSCAL tooling itself predates it: RegScale, Telos, Paramify, C1Secure). **Risk**: the market educates slowly; revenue follows mandate enforcement, not mandate publication. **Mitigation**: be patient; the September + November 2026 dates will pull the market forward; Evidentia is OSCAL-native and 18 months ahead of incumbent emit capability.
+3. **OSCAL adoption lags the mandate.** Zero of 100+ FedRAMP Rev5 authorizations in 2025 used OSCAL. The forcing function is real but vendors lag. **Vanta added OSCAL export Feb 2026 for FedRAMP 20x submissions only** — the first of the Tier-1 SOC 2 automation platforms to ship OSCAL export (commercial OSCAL tooling itself predates it: RegScale, Telos, Paramify, C1Secure). **Risk**: the market educates slowly; revenue follows mandate enforcement, not mandate publication. **Mitigation**: be patient; the CR26 mandatory-for-all date (2027-01-01) and the NTC-0009 machine-readable deadline (2027-11-01) will pull the market forward; Evidentia is OSCAL-native today, ahead of most incumbents' native emit capability.
 
 4. **NEW: Federal SBOM tailwind weakened (OMB M-26-05, January 2026).** [Davis Wright Tremaine analysis](https://www.dwt.com/blogs/privacy--security-law-blog/2026/02/omb-changes-course-on-software-security): M-26-05 rescinded M-22-18 + M-23-16, removing the mandatory standardized self-attestation form and shifting to risk-based agency discretion. SBOMs still recommended for cloud-runtime production environments. EO 14028 remains in force. **Mitigation**: EU CRA reporting obligations Sept 11 2026 more than offset globally; positioning toward EU-regulated digital-product manufacturers + US cloud-runtime SBOM (still mandated under M-26-05) carries the demand.
 
@@ -980,7 +993,7 @@ These are the gaps that will get a sales-eng on a Vanta/Drata bake-off to win, a
 
 8. **AI hype risk + Delve scandal cautionary baseline.** "Agentic GRC" is the hottest framing at every conference. An OSS tool that's "just a library" may look unfashionable to enterprise buyers chasing the AI checkbox. **March 2026 Delve scandal** (493/494 SOC 2 reports byte-identical; whistleblower disclosure DeepDelver; FTC + DOJ False Claims Act exposure) is the precise counter-narrative — "AI-powered" without rigor failed at scale. **Counter-positioning**: cite GRC 2020 March 2026 critique (most "agentic AI" features are AI-assisted form fills, not bounded-autonomy multi-step orchestrators); cite Magesh / Ho et al. (Stanford 2025) measured **17–33% hallucination rates** in commercial RAG-based legal research tools marketed as "hallucination-free"; cite PCAOB AS 1105 + Generative AI Spotlight as the regulator-recognized framework. Frame Evidentia's AI-optional posture as **deterministic-where-it-must-be, AI-where-it-helps**. Khatchadourian DFAH paper (March 2026, arXiv 2601.15322) provides the technical vocabulary.
 
-9. **CMMC backlash possibility.** If Phase 2 (Nov 2026) gets delayed (it has been pushed before), the urgency tailwind softens. Mitigation: don't bet messaging exclusively on CMMC; diversify across the four forcing-function dates and the regulatory-vacuum opportunity (SR 11-7 → SR 26-02 model-risk gap).
+9. **CMMC backlash possibility.** If Phase 2 (Nov 2026) gets delayed (it has been pushed before), the urgency tailwind softens. Mitigation: don't bet messaging exclusively on CMMC; diversify across the stacked forcing-function dates and the regulatory-vacuum opportunity (SR 11-7 → SR 26-02 model-risk gap).
 
 10. **Federal procurement budget pressure.** 2025-2026 saw new administration's DOGE-driven cuts to consultants and contractors hitting major federal-services-sector stocks Feb 2025; FY26 continuing resolutions have squeezed civilian-agency + consultant compliance-tool spend ([Nextgov — agency consultant culling](https://www.nextgov.com/acquisition/2025/02/trump-administration-asks-agencies-cull-consultants/403345/)). Mitigation: free Apache 2.0 OSS is precisely the budget-pressure-friendly answer.
 
@@ -1016,7 +1029,7 @@ These are the gaps that will get a sales-eng on a Vanta/Drata bake-off to win, a
 
 > *"Evidentia produces six attestable supply-chain credentials per release: PEP 740 attestations on every wheel, Sigstore-based signing, SLSA Level 3 build provenance, cosign-signed container images, CycloneDX 1.7 SBOMs, OpenSSF Scorecard 6.5+. OpenSSF Best Practices Silver MET, OSPS Baseline Maturity 2 MET. SOC 2 Type I examination in progress. Polycentric Labs LLC, Virginia."*
 
-> *"Gap analysis in five interchange formats: OSCAL Assessment Results (1.2.1), SARIF 2.1.0, OCSF Compliance Finding (class_uid 2003), OCSF Detection Finding (class_uid 2004), CycloneDX 1.6 VEX. One toolkit, five SIEM / GRC platform / supply-chain ingestion paths. 95 bundled framework catalogs."*
+> *"Gap analysis in five interchange formats: OSCAL Assessment Results (1.2.1), SARIF 2.1.0, OCSF Compliance Finding (class_uid 2003), OCSF Detection Finding (class_uid 2004), CycloneDX 1.6 VEX. One toolkit, five SIEM / GRC platform / supply-chain ingestion paths. 96 bundled framework catalogs."*
 
 > *"The puck is moving from PDFs of evidence toward signed JSON streams of evidence. Evidentia is sitting almost exactly where the regulatory and market vectors are converging in the next 12-18 months — and unlike SaaS GRC dashboards, every output artifact is independently verifiable against NIST SP 800-218 SSDF, NIST 800-53 SR/SA controls, and the CISA Secure-by-Design Pledge."*
 
@@ -1024,9 +1037,9 @@ These are the gaps that will get a sales-eng on a Vanta/Drata bake-off to win, a
 
 ### 10.3 The supporting messaging hierarchy (no metaphors)
 
-- **Primary**: *"Open-source (Apache 2.0) Python GRC toolkit by Polycentric Labs LLC (Virginia). 95 bundled framework catalogs. OSCAL 1.2.1-native. Six attestable supply-chain credentials per release (PEP 740 + Sigstore + SLSA L3 + cosign + CycloneDX 1.7 + OpenSSF Scorecard 6.5+) mapped to NIST SSDF + 800-53 + CISA SbD. Air-gap capable. AI-optional."*
+- **Primary**: *"Open-source (Apache 2.0) Python GRC toolkit by Polycentric Labs LLC (Virginia). 96 bundled framework catalogs. OSCAL 1.2.1-native. Six attestable supply-chain credentials per release (PEP 740 + Sigstore + SLSA L3 + cosign + CycloneDX 1.7 + OpenSSF Scorecard 6.5+) mapped to NIST SSDF + 800-53 + CISA SbD. Air-gap capable. AI-optional."*
 - **Secondary**: *"Five gap-analysis interchange formats: OSCAL AR + SARIF + OCSF Compliance + OCSF Detection + CycloneDX VEX. 13-tool MCP server with CIMD scope + SignedToolOutput envelope. DFAH determinism + PRT policy-reasoning-traces eval rigor (first — and only known — OSS GRC-toolkit implementation of the Khatchadourian / Imperial 2026 academic frameworks)."*
-- **Tertiary** (proof points): *"OpenSSF Best Practices Silver tier MET. OSPS Baseline Maturity 2 MET (~95% conforming, with explicit honest-gap declared for OSPS-AC-04.01/02 + OSPS-QA-07 + OSPS-GV-04 — the three solo-maintainer-structurally-unreachable controls). SOC 2 Type I examination in progress with Polycentric Labs LLC as the service organization, scope locked to development lifecycle + release pipeline + vendor management + internal IT controls. 17+ consecutive PROCEED-CLEAN releases of the v0.7.x → v0.10.x line. 3,440+ tests; mypy strict 0 issues across 278 source files; ruff clean."*
+- **Tertiary** (proof points): *"OpenSSF Best Practices Silver tier MET. OSPS Baseline Maturity 2 MET (~95% conforming, with explicit honest-gap declared for OSPS-AC-04.01/02 + OSPS-QA-07 + OSPS-GV-04 — the three solo-maintainer-structurally-unreachable controls). SOC 2 Type I examination in progress with Polycentric Labs LLC as the service organization, scope locked to development lifecycle + release pipeline + vendor management + internal IT controls. 17+ consecutive PROCEED-CLEAN releases of the v0.7.x → v0.10.x line. 4,900+ tests; mypy strict 0 issues across 292 source files; ruff clean."*
 - **Honest disclaimer** (builds credibility): *"Not a Vanta replacement for SOC-2-only buyers who want a SaaS dashboard + auditor handoff bundled together. Evidentia is the OSS toolkit for security/compliance engineers who want every evidence artifact independently verifiable. OpenSSF Gold tier is structurally unreachable for a solo maintainer (Gold requires ≥2 unassociated significant contributors + bus factor 2+; no documented exception path); this gap is being resolved through the additional governance + segregation-of-duties controls implemented as part of the in-progress SOC 2 Type I program."*
 
 ### 10.4 The acceptance-gate paragraph (procurement-ready, Fortune 500 + federal-SI dual-audience)
@@ -1134,7 +1147,7 @@ Three concrete uses:
 3. **Pre-empt the FedRAMP CR26 OSCAL machine-readable narrative**:
    add a "FedRAMP CR26 + RFC-0024 readiness" callout to README +
    capability-matrix. The relevant dates per Stream 3
-   NOTICE-0009 (March 25 2026): CR26 effective July 1 2026, mandatory
+   NOTICE-0009 (March 25 2026): CR26 launched June 25 2026 (SDR rules in force for 20x since July 4 2026), mandatory
    adoption Jan 1 2027; RFC-0024 deadline Nov 1 2027 + scope narrowed
    to Class D (High) only.
 

@@ -4,7 +4,7 @@ The compliance-tool differentiator section. What catalogs Evidentia ships, what 
 
 ## Pages in this section
 
-- **[Catalog inventory](catalog-inventory.md)** — 92 framework catalogs by region/standard family + version pin + last-update date + maintainer.
+- **[Catalog inventory](catalog-inventory.md)** — 96 framework catalogs by region/standard family + version pin + last-update date + maintainer.
 
 - **[Framework conformance](framework-conformance.md)** — standards Evidentia ITSELF conforms to (OSPS Baseline, NIST 800-53 self-assessment, OpenSSF Best Practices Silver, etc.).
 
