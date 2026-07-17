@@ -859,11 +859,17 @@ def ai_gov_set_high_impact(
             )
             raise typer.Exit(code=1) from None
 
+    # Carry recorded §4(b) practice status (incl. CAIO waiver provenance)
+    # forward across a re-determination — set-high-impact is the only verb
+    # that amends bases/rationale, and the model contract promises the
+    # practices survive it (see OMBHighImpactAssessment.practices).
+    prior = entry.omb_high_impact
     try:
         assessment = OMBHighImpactAssessment(
             determination=determination_enum,
             bases=basis_enums,
             rationale=rationale,
+            practices=dict(prior.practices) if prior is not None else {},
         )
     except ValueError as exc:
         console.print(f"[red]Error:[/red] {exc}")

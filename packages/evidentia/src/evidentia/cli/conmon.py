@@ -39,12 +39,14 @@ mode) remains reserved for v1.0.
 from __future__ import annotations
 
 import json
+import os
 import signal
 import sys
 import threading
 import warnings
 from datetime import UTC, date, datetime
 from pathlib import Path
+from typing import Any
 
 import typer
 from evidentia_core.audit import EventAction, EventOutcome, get_logger
@@ -1026,8 +1028,45 @@ def conmon_ksi(
     from evidentia_core.models.fedramp_ksi import KsiStatusDocument
     from pydantic import ValidationError
 
+    # A duplicate mapping key in the status file (e.g. the same KSI ID
+    # listed twice) is last-wins-merged by the stock YAML loader, silently
+    # dropping the earlier block from the emitted federal SDR. Reject it —
+    # a submission artifact must not lose data to a copy-paste slip.
+    class _NoDupKeyLoader(yaml_mod.SafeLoader):
+        pass
+
+    def _construct_no_dup(
+        loader: yaml_mod.SafeLoader, node: yaml_mod.MappingNode
+    ) -> dict[Any, Any]:
+        # Reject duplicate EXPLICIT keys (a copy-paste slip) before merge
+        # expansion — a `<<` merge override of a key is legal YAML and must
+        # still work, so detect dupes among the explicit key nodes only,
+        # then delegate to the stock construct_mapping (which flattens the
+        # merge keys and applies their precedence).
+        seen: set[Any] = set()
+        for key_node, _ in node.value:
+            if key_node.tag == "tag:yaml.org,2002:merge":
+                continue
+            key = loader.construct_object(key_node, deep=True)
+            if key in seen:
+                raise yaml_mod.constructor.ConstructorError(
+                    "while constructing a mapping",
+                    node.start_mark,
+                    f"found duplicate key {key!r}",
+                    key_node.start_mark,
+                )
+            seen.add(key)
+        loader.flatten_mapping(node)
+        return loader.construct_mapping(node, deep=True)
+
+    _NoDupKeyLoader.add_constructor(
+        "tag:yaml.org,2002:map", _construct_no_dup
+    )
+
     try:
-        raw = yaml_mod.safe_load(status_file.read_text(encoding="utf-8"))
+        raw = yaml_mod.load(
+            status_file.read_text(encoding="utf-8"), Loader=_NoDupKeyLoader
+        )
     except yaml_mod.YAMLError as exc:
         console.print(f"[red]Error:[/red] could not parse {status_file}: {exc}")
         raise typer.Exit(code=2) from exc
@@ -1057,6 +1096,25 @@ def conmon_ksi(
         _load_last_completed_map(state_file) if state_file is not None else None
     )
 
+    # A state-file anchor keyed by a slug that matches no bundled cadence
+    # (usually a typo) never joins onto a persistence cycle, so its
+    # last-completed / next-due dates would silently be absent from the
+    # emitted SDR. Warn — the emit still succeeds, but the operator sees
+    # which anchors were ignored rather than shipping a quietly-incomplete
+    # federal artifact.
+    if last_completed:
+        unknown = sorted(
+            slug for slug in last_completed if get_cadence(slug) is None
+        )
+        if unknown:
+            console.print(
+                f"[yellow]Warning:[/yellow] {state_file} has "
+                f"{len(unknown)} anchor(s) for unknown cadence slug(s) "
+                f"{', '.join(repr(s) for s in unknown)}; their dates will "
+                f"NOT appear in the SDR. Run `evidentia conmon list` to "
+                f"see valid slugs."
+            )
+
     try:
         document = build_sdr_document(
             status,
@@ -1078,10 +1136,20 @@ def conmon_ksi(
             console.print(f"  {error}")
         raise typer.Exit(code=1)
 
-    output.write_text(
-        json.dumps(document, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
+    payload = json.dumps(document, indent=2, ensure_ascii=False) + "\n"
+    # Atomic write via a sibling temp file + os.replace, and a clean
+    # error contract (exit 1) instead of a raw pathlib traceback when the
+    # target dir is missing or unwritable — an operator scripting this in
+    # a CONMON pipeline gets the typed exit the rest of the command keeps.
+    try:
+        tmp = output.with_name(f"{output.name}.tmp")
+        tmp.write_text(payload, encoding="utf-8")
+        os.replace(tmp, output)
+    except OSError as exc:
+        console.print(
+            f"[red]Error:[/red] could not write {output}: {exc.strerror or exc}"
+        )
+        raise typer.Exit(code=1) from exc
 
     coverage = ksi_coverage(status)
     console.print(

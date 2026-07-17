@@ -52,7 +52,7 @@ For the full workspace (AI risk-statements, REST API, all collectors, MCP server
 pip install 'evidentia[ai,api,collectors,mcp]'
 ```
 
-Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.10.18` (cosign keyless OIDC + SLSA Provenance v1 verified).
+Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.11.0` (cosign keyless OIDC + SLSA Provenance v1 verified).
 
 See the [Getting Started wiki section](https://github.com/Polycentric-Labs/evidentia/wiki/Getting-Started) for air-gapped install, virtualenv setup, and full extras matrix.
 
@@ -121,11 +121,11 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 
 ## Recent Releases
 
+**v0.11.0 (2026-07-16)** — *The federal wave — three verified federal firsts on machine-readable rails*. **OMB M-25-22 AI acquisition-lifecycle tracking, `evidentia ai-gov acquisition`** (#196) (v0.11 Wave 2; spec ratified 2026-07-14, lifecycle phases verified verbatim against the memo text): Evidentia's first procurement surface.
+
 **v0.10.18 (2026-07-14)** — *Container rebuild on a fresh hardened base*. **ROADMAP-currency gate** (`scripts/check_roadmap_currency.py`), the roadmap's status headings must agree with the CHANGELOG's shipped `## [X.Y.Z]` blocks: nothing PLANNED/RESERVED that has shipped, no SHIPPED entries inside a PLANNED cycle umbrella, exactly one open cycle, and the open cycle must link an on-disk plan doc.
 
 **v0.10.17 (2026-07-09)** — *v0.10.x hardening close-out*. **Release-pipeline preflight dry-run**, `release.yml` now accepts a manual `workflow_dispatch` that runs the full pre-publish path (the SSOT gate suite + wheels + per-package SBOMs + the reproducible-build double-build + the container-built-from-local-wheels + the image smoke tests) **without publishing**, so the failure classes that previously surfaced only at tag time (a base/dep regression, a `uvx` exit-127, a `pip-compile` hash mismatch, the v0.10.14 / v0.10.15 ghost-tag failures) can be caught on-demand before a tag is cut.
-
-**v0.10.16 (2026-07-02)** — *Engineering hardening + distroless container base — never ship a failed test again*. **Cryptography-native air-gap signing via DSSE/in-toto**, a binary-free, network-free signing path that works inside distroless and minimal-base containers.
 
 Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https://github.com/Polycentric-Labs/evidentia/releases)
 

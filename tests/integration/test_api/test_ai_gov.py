@@ -1022,6 +1022,51 @@ class TestSetPractice:
         )
         assert resp.status_code == 422
 
+    def test_set_high_impact_preserves_recorded_practices(
+        self, api_client: TestClient
+    ) -> None:
+        """Re-running set-high-impact must not wipe recorded practices.
+
+        Regression: the handler rebuilt the assessment from only
+        determination/bases/rationale, resetting ``practices`` to {} and
+        silently destroying the recorded status + CAIO waiver provenance.
+        """
+        system_id = _register_system(api_client)
+        self._set_high_impact(api_client, system_id)
+        waive = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-practice",
+            json={
+                "practice": "human_oversight",
+                "status": "waived",
+                "waiver": {
+                    "issued_on": "2026-06-01",
+                    "issued_by": "Agency CAIO",
+                    "justification": "Interim necessity per §4(a)(ii).",
+                    "reported_to_omb_on": "2026-06-15",
+                },
+            },
+        )
+        assert waive.status_code == 200, waive.text
+
+        # Amend the bases via a second set-high-impact (unrelated edit).
+        amend = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-high-impact",
+            json={
+                "determination": "high_impact",
+                "bases": ["health_and_safety", "civil_rights_liberties_privacy"],
+            },
+        )
+        assert amend.status_code == 200, amend.text
+
+        got = api_client.get(f"/api/ai-gov/systems/{system_id}").json()
+        practices = got["omb_high_impact"]["practices"]
+        assert "human_oversight" in practices, (
+            "re-determination destroyed the recorded practice"
+        )
+        assert practices["human_oversight"]["waiver"] is not None, (
+            "the CAIO waiver provenance was lost on re-determination"
+        )
+
 
 class TestAcquisitions:
     """The /ai-gov/acquisitions surface — OMB M-25-22 v0.11."""

@@ -1052,11 +1052,19 @@ async def ai_gov_set_high_impact(
     """
     entry = _load_entry_or_404(system_id)
 
+    # Carry any recorded §4(b) practice status (incl. CAIO waiver
+    # provenance) forward across a re-determination — the model contract
+    # (OMBHighImpactAssessment.practices) promises retention, and
+    # set-high-impact is the only verb that can amend bases/rationale on
+    # an already-classified system. Rebuilding without them would
+    # silently destroy the recorded practice + waiver evidence trail.
+    prior = entry.omb_high_impact
     try:
         assessment = OMBHighImpactAssessment(
             determination=body.determination,
             bases=body.bases,
             rationale=body.rationale,
+            practices=dict(prior.practices) if prior is not None else {},
         )
     except (ValidationError, ValueError) as exc:
         raise api_error(400, "invalid_body", str(exc)) from exc
@@ -1221,6 +1229,7 @@ class RegisterAcquisitionRequest(BaseModel):
     covered_note: str | None = Field(default=None, max_length=2000)
     linked_system_id: str | None = Field(
         default=None,
+        max_length=256,
         description="AI-registry system_id this acquisition delivers.",
     )
 

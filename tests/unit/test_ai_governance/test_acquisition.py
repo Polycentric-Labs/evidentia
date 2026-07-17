@@ -157,3 +157,13 @@ class TestAIAcquisitionStore:
         rogue.write_text("{not json", encoding="utf-8")
         records = store.list_all()
         assert [a.name for a in records] == ["x"]
+
+
+class TestAcquisitionFieldBounds:
+    def test_linked_system_id_is_length_bounded(self) -> None:
+        """linked_system_id is capped like every sibling string field."""
+        from pydantic import ValidationError
+
+        AIAcquisition(name="ok", linked_system_id="s" * 256)
+        with pytest.raises(ValidationError):
+            AIAcquisition(name="ok", linked_system_id="s" * 257)

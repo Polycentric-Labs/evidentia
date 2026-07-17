@@ -975,3 +975,133 @@ class TestConmonKsi:
         )
         assert result.exit_code == 1
         assert "--last-updated" in _normalize(result.output)
+
+    def test_duplicate_indicator_key_rejected(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """A duplicate KSI ID must not be silently last-wins merged.
+
+        Regression: the stock YAML loader drops the earlier block from
+        the emitted federal SDR; a submission artifact must not lose data
+        to a copy-paste slip.
+        """
+        dup = VALID_KSI_STATUS + (
+            "  KSI-CED-RAT:\n"
+            "    status: Not Implemented\n"
+            "    implementation:\n"
+            '      - "Duplicate block."\n'
+        )
+        status_file = tmp_path / "dup.yaml"
+        status_file.write_text(dup, encoding="utf-8")
+        result = runner.invoke(
+            app,
+            [
+                "conmon",
+                "ksi",
+                "--status-file",
+                str(status_file),
+                "--out",
+                str(tmp_path / "sdr.json"),
+            ],
+        )
+        assert result.exit_code == 2
+        assert "duplicate key" in _normalize(result.output)
+
+    def test_yaml_merge_keys_still_accepted(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """The duplicate-key guard must not reject legal `<<` merge keys.
+
+        Regression: a naive no-dup loader that skips flatten_mapping breaks
+        merge-key DRY sharing that the stock loader accepted.
+        """
+        # Anchor the shared block on the first KSI and merge it into the
+        # second (the model forbids extra top-level keys, so DRY sharing
+        # rides real indicator anchors — the realistic merge-key use).
+        merged = """\
+certification_package_overview_uri: "https://provider.example/fedramp/cpo.json"
+document_version: "1.0.0"
+source: "merge-key test"
+indicators:
+  KSI-CED-RAT: &shared
+    status: Implemented
+    tests: ["shared-test"]
+    evidence:
+      - evidence_type: Report
+        description: "shared evidence"
+    implementation:
+      - "Quarterly all-hands security training."
+  KSI-CMT-LMC:
+    <<: *shared
+    implementation:
+      - "Least-managed-change control in effect."
+"""
+        status_file = tmp_path / "merged.yaml"
+        status_file.write_text(merged, encoding="utf-8")
+        result = runner.invoke(
+            app,
+            [
+                "conmon",
+                "ksi",
+                "--status-file",
+                str(status_file),
+                "--out",
+                str(tmp_path / "sdr.json"),
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        assert "schema-valid" in _normalize(result.output)
+
+    def test_unknown_state_file_slug_warns(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """A state-file anchor for a non-existent cadence slug warns.
+
+        Its dates would otherwise be silently absent from the SDR.
+        """
+        status_file = tmp_path / "ksi-status.yaml"
+        status_file.write_text(VALID_KSI_STATUS, encoding="utf-8")
+        state_file = tmp_path / "state.yaml"
+        state_file.write_text(
+            "nist-800-53-rev5-ca7: 2026-07-01\n"
+            "typo-not-a-real-slug: 2026-07-02\n",
+            encoding="utf-8",
+        )
+        result = runner.invoke(
+            app,
+            [
+                "conmon",
+                "ksi",
+                "--status-file",
+                str(status_file),
+                "--state-file",
+                str(state_file),
+                "--out",
+                str(tmp_path / "sdr.json"),
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        norm = _normalize(result.output)
+        assert "unknown cadence slug" in norm
+        assert "typo-not-a-real-slug" in norm
+
+    def test_unwritable_out_path_exits_1(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """A missing --out parent dir yields a clean exit 1, not a stack
+        trace."""
+        status_file = tmp_path / "ksi-status.yaml"
+        status_file.write_text(VALID_KSI_STATUS, encoding="utf-8")
+        result = runner.invoke(
+            app,
+            [
+                "conmon",
+                "ksi",
+                "--status-file",
+                str(status_file),
+                "--out",
+                str(tmp_path / "no-such-dir" / "sdr.json"),
+            ],
+        )
+        assert result.exit_code == 1
+        assert "could not write" in _normalize(result.output)

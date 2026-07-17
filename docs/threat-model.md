@@ -3408,6 +3408,60 @@ by this entry.
 
 ---
 
+## v0.11.0 attack-surface delta — the federal wave (PRE-TAG 2026-07-16)
+
+v0.11.0 adds three surface families; none opens a new network listener
+or credential path.
+
+### Surface 1 — `evidentia conmon ksi` (CR26 SDR emission)
+
+File-in/file-out CLI verb: an operator-authored YAML status file
+(`KsiStatusDocument`, Pydantic-validated) plus an optional CONMON state
+file in, an SDR JSON document out. No network egress — validation runs
+against the **vendored** FedRAMP schemas (offline / air-gap-consistent).
+Threats + guards:
+
+- **Untrusted YAML input** — parsed with `yaml.safe_load` semantics via
+  the established loader path and validated against a strict Pydantic
+  model (unknown indicator IDs are a hard error against the bundled
+  `fedramp-ksi-2026` catalog; enum-constrained statuses/evidence types).
+- **Vendored-schema supply chain** — the schemas are upstream content
+  committed in-tree; provenance is pinned in `UPSTREAM.json` (commit +
+  blob SHA + sha256 per file, one documented local delta) and
+  drift-watched weekly by `fedramp-schema-watch`, whose blind window is
+  compensated by a fresh drift probe at every release gate.
+- **Output integrity** — deterministic snapshots via the explicit
+  `--last-updated` flag (SDR-CSO-MTD metadata); no secrets transit the
+  document.
+
+### Surface 2 — `ai-gov set-practice` (M-25-21) + `ai-gov acquisition` (M-25-22)
+
+New file-backed store (`AIAcquisitionStore`) cloned from the hardened
+registry-store pattern: UUID filenames, path-traversal guard,
+atomic writes, trusted-directory boundary via
+`EVIDENTIA_AI_ACQUISITION_DIR`. The API mirrors
+(`POST /api/ai-gov/systems/{id}/set-practice`,
+`/api/ai-gov/acquisitions*`) inherit the existing ai-gov router
+posture: localhost-bound default, RBAC write-gating (deny-by-default
+403 tests), Pydantic validation with enum-constrained
+practices/phases/statuses (every operator-supplied string field is
+`max_length`-bounded), and structured-error responses. Unlike the
+`register` / `classify` endpoints, the v0.11 mutating routes do not
+carry the `X-Idempotency-Key` body-hash dedup mechanism — a retried
+`register` acquisition creates a second record; retry-dedup for these
+routes is a tracked v0.12 item. New audit events
+(`AI_SYSTEM_PRACTICE_RECORDED`, `AI_ACQUISITION_REGISTERED`,
+`AI_ACQUISITION_PHASE_RECORDED`) ride the ECS/AU-3 audit stream.
+
+### Surface 3 — `fedramp-schema-watch.yml` (weekly CI sentinel)
+
+Read-only upstream probe (stdlib + `gh` CLI on the runner token) with
+`contents: read` and job-scoped `issues: write` for the tracking-issue
+path; zizmor/least-privilege gated like the sibling sentinels. No
+repository write access.
+
+---
+
 *First published v0.7.7 (2026-05). Origin: promoted from a
 project-internal deep-pass note to a public-surface doc to
 satisfy pre-release-review v4 G5 (threat-model existence gate)

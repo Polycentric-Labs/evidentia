@@ -1092,3 +1092,27 @@ class TestPracticeWaiverClocks:
             reported_to_omb_on=date(2026, 3, 1),
         )
         assert not waiver_omb_report_overdue(waiver, date(2026, 7, 14))
+
+
+class TestPracticeWaiverFieldBounds:
+    def test_issued_by_is_length_bounded(self) -> None:
+        """Every operator-supplied string field is capped; issued_by too.
+
+        Regression: an unbounded issued_by is persisted verbatim into the
+        registry entry and re-read on every request (stored-amplification).
+        """
+        from datetime import date
+
+        from evidentia_core.ai_governance import PracticeWaiver
+
+        PracticeWaiver(
+            issued_on=date(2026, 6, 1),
+            issued_by="A" * 256,
+            justification="x",
+        )
+        with pytest.raises(ValidationError):
+            PracticeWaiver(
+                issued_on=date(2026, 6, 1),
+                issued_by="A" * 257,
+                justification="x",
+            )
