@@ -213,6 +213,7 @@ class PracticeWaiver(EvidentiaModel):
         description="Date the CAIO granted the waiver.",
     )
     issued_by: str = Field(
+        max_length=256,
         description=(
             "The granting official (the agency CAIO — §4(a)(ii) makes "
             "this authority non-delegable). Recorded as provenance."

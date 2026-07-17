@@ -144,6 +144,7 @@ class AIAcquisition(EvidentiaModel):
     )
     linked_system_id: str | None = Field(
         default=None,
+        max_length=256,
         description=(
             "AI-registry system_id this acquisition delivered or will "
             "deliver. Optional — an acquisition may precede "

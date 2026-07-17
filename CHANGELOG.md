@@ -11,7 +11,7 @@ _No changes yet on the v0.11.x development branch._
 
 ## [0.11.0] - 2026-07-16
 
-**Theme**: *The federal wave — three verified federal firsts on machine-readable rails.* v0.11.0 ships the re-cut Wave 1-2 scope of the v0.11 plan: **FedRAMP CR26 Security Decision Record emission** — `evidentia conmon ksi` emits the SDR `keySecurityIndicators` block (10 families / 46 KSIs) conformant to FedRAMP's official 2026-06-24 schemas, vendored at pinned upstream SHAs (re-verified at the schemas' 1.0.0 graduation) and drift-watched weekly — the **first production-grade open-source emitter** of the CR26 SDR format, and the first from any established tool; **OMB M-25-21 minimum-practice tracking** — structured per-practice status for the memo's seven §4(b) practices with CAIO waiver objects carrying the annual re-certification and 30-day OMB-report clocks, structure the federal AI Use Case Inventory lacks entirely; and **OMB M-25-22 acquisition-lifecycle tracking** — Evidentia's first procurement surface, modeling the memo's six §4 phases as auditable records with the §4(a) high-impact determination tie-in. The cycle's OSCAL 1.2.1 → 1.2.2 evaluation closed with a ratified **DEFER-WITH-TRIGGER** verdict (emitted documents stay on 1.2.1; adoption triggers armed), and a pre-release **claim-accuracy sweep** re-verified every public claim against primary sources (parity restated at the live 93.4%; machine-gated counts; first-mover registry updated with explicit caveats). Test suite: 4,939 passed; mypy strict clean; ruff clean.
+**Theme**: *The federal wave — three verified federal firsts on machine-readable rails.* v0.11.0 ships the re-cut Wave 1-2 scope of the v0.11 plan: **FedRAMP CR26 Security Decision Record emission** — `evidentia conmon ksi` emits the SDR `keySecurityIndicators` block (10 families / 46 KSIs) conformant to FedRAMP's official 2026-06-24 schemas, vendored at pinned upstream SHAs (re-verified at the schemas' 1.0.0 graduation) and drift-watched weekly — the **first production-grade open-source emitter** of the CR26 SDR format, and the first from any established tool; **OMB M-25-21 minimum-practice tracking** — structured per-practice status for the memo's seven §4(b) practices with CAIO waiver objects carrying the annual re-certification and 30-day OMB-report clocks, structure the federal AI Use Case Inventory lacks entirely; and **OMB M-25-22 acquisition-lifecycle tracking** — Evidentia's first procurement surface, modeling the memo's six §4 phases as auditable records with the §4(a) high-impact determination tie-in. The cycle's OSCAL 1.2.1 → 1.2.2 evaluation closed with a ratified **DEFER-WITH-TRIGGER** verdict (emitted documents stay on 1.2.1; adoption triggers armed), and a pre-release **claim-accuracy sweep** re-verified every public claim against primary sources (parity restated at the live 93.4%; machine-gated counts; first-mover registry updated with explicit caveats). Test suite: 4,947 passed; mypy strict clean; ruff clean.
 
 **Deferred (ratified v0.12 plan re-cut, 2026-07-16 — see [`docs/releases/plans/v0.12-plan.md`](docs/releases/plans/v0.12-plan.md))**: Wave 4 phase 3 (EU-AI-Act ↔ ISO 42001 crosswalk) → v0.12-if-capacity; Wave 4 phases 1/2/4, Wave 3 DORA, and the medical-device traceability enrichment → v1.1; Waves 5-6 (OpenVEX/VSA, SARIF collector, auto-review) → post-1.0; arXiv preprint timing = open decision. The GUI parity pass for the five federal api-only verbs leads v0.12.
 
@@ -50,6 +50,24 @@ _No changes yet on the v0.11.x development branch._
   federal-SI walk-through refreshed (M-25-21 primary lens consistently,
   M-26-05 rescission of the M-22-18 self-attestation form, the v0.11
   federal-wave surfaces added, resolved limitations pruned).
+
+### Fixed
+
+- **Pre-tag review hardening of the Wave-2 federal surfaces** (found by the
+  v0.11.0 `/pre-release-review` security fan-out, fixed before tag):
+  `ai-gov set-high-impact` no longer silently discards recorded M-25-21
+  practice status + CAIO waiver provenance when a later call amends the
+  determination's bases/rationale — the practices are carried forward per the
+  model's retention contract (API + CLI; regression tests on both surfaces).
+  `conmon ksi` now rejects duplicate KSI indicator keys in the status file
+  (previously last-wins-merged, silently dropping a block from the emitted
+  SDR — while still honoring legal YAML merge keys), warns when a
+  `--state-file` anchor keys a cadence slug that matches no
+  bundled cadence (its dates would otherwise be silently absent), and writes
+  `--out` atomically with a clean error contract instead of a raw traceback on
+  a missing/unwritable path. `PracticeWaiver.issued_by` and
+  `AIAcquisition.linked_system_id` gained the `max_length` bound every sibling
+  string field already carries.
 
 ### Added
 

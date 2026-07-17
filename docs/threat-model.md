@@ -3444,8 +3444,12 @@ atomic writes, trusted-directory boundary via
 `/api/ai-gov/acquisitions*`) inherit the existing ai-gov router
 posture: localhost-bound default, RBAC write-gating (deny-by-default
 403 tests), Pydantic validation with enum-constrained
-practices/phases/statuses, structured-error responses, and the
-idempotency-key body-hash mechanism. New audit events
+practices/phases/statuses (every operator-supplied string field is
+`max_length`-bounded), and structured-error responses. Unlike the
+`register` / `classify` endpoints, the v0.11 mutating routes do not
+carry the `X-Idempotency-Key` body-hash dedup mechanism — a retried
+`register` acquisition creates a second record; retry-dedup for these
+routes is a tracked v0.12 item. New audit events
 (`AI_SYSTEM_PRACTICE_RECORDED`, `AI_ACQUISITION_REGISTERED`,
 `AI_ACQUISITION_PHASE_RECORDED`) ride the ECS/AU-3 audit stream.
 

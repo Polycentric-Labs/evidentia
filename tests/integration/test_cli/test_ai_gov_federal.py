@@ -737,6 +737,72 @@ class TestSetPractice:
         practices = entry.omb_high_impact.practices
         assert len(practices) == 2
 
+    def test_re_determination_preserves_recorded_practices(
+        self,
+        runner: CliRunner,
+        registered_system_id: str,
+        isolated_registry: Path,
+    ) -> None:
+        """A later set-high-impact must NOT wipe recorded practices.
+
+        Regression: set-high-impact is the only verb that amends
+        bases/rationale on an already-classified system; rebuilding the
+        assessment without carrying ``practices`` forward silently
+        destroyed the recorded status + CAIO waiver provenance.
+        """
+        self._set_high_impact(runner, registered_system_id)
+        waive = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "set-practice",
+                registered_system_id,
+                "--practice",
+                "human_oversight",
+                "--status",
+                "waived",
+                "--waiver-issued-on",
+                "2026-06-01",
+                "--waiver-issued-by",
+                "Agency CAIO",
+                "--waiver-justification",
+                "Interim operational necessity per §4(a)(ii).",
+                "--waiver-reported-on",
+                "2026-06-15",
+            ],
+        )
+        assert waive.exit_code == 0, waive.output
+
+        # Re-run set-high-impact to amend the bases (unrelated edit).
+        amend = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "set-high-impact",
+                registered_system_id,
+                "--determination",
+                "high_impact",
+                "--basis",
+                "health_and_safety",
+                "--basis",
+                "civil_rights_liberties_privacy",
+            ],
+        )
+        assert amend.exit_code == 0, amend.output
+
+        from evidentia_core.ai_governance import AIRegistryStore
+        from evidentia_core.ai_governance.omb_m_25_21 import MinimumPractice
+
+        entry = AIRegistryStore().load(registered_system_id)
+        assert entry is not None and entry.omb_high_impact is not None
+        practices = entry.omb_high_impact.practices
+        assert MinimumPractice.HUMAN_OVERSIGHT in practices, (
+            "the re-determination destroyed the recorded practice"
+        )
+        assert (
+            practices[MinimumPractice.HUMAN_OVERSIGHT].waiver is not None
+        ), "the CAIO waiver provenance was lost on re-determination"
+
 
 # ── v0.11 Wave 2: ai-gov acquisition (OMB M-25-22) ─────────────────
 
