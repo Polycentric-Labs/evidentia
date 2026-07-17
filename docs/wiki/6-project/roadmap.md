@@ -88,8 +88,9 @@ leads with the CLI.
   Evidentia hosts no state. Best fit for a CLI / library-shaped tool.
 - **Local writable GUI demo (pending a store-seeder):** a one-command
   `docker compose -f docker-compose.demo.yml up` with a seeded store + mock collectors.
-  The web console now surfaces ~98% of coverable CLI leaves; this is gated only on a
-  store-seeder.
+  The web console now surfaces 93.4% of coverable CLI leaves (the 7 api-only leaves are
+  the v0.11 federal AI-governance verbs plus two chrome-surfaced utilities); this is
+  gated only on a store-seeder.
 - **Not planned:** a public, hosted, *stateful* backend demo. A credentialed GRC backend
   exposed publicly is a real security surface (SSRF / secret exfiltration / prompt-injection
   via collected evidence — the class the `--block-private-ips` hardening addresses). A durable

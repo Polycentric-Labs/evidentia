@@ -1,4 +1,4 @@
-# Federal-SI walk-through (v0.9.4 P3.1 + v0.9.5 P2.1/P2.2 refinement)
+# Federal-SI walk-through
 
 > Operator persona: federal Systems Integrator (SI) procurement
 > officer at a CSP candidate. Walks the operator through a realistic
@@ -7,15 +7,20 @@
 >
 > Deferred since v0.9.0 §31.A. v0.9.4 P3.1 shipped the synthetic data
 > + the initial recipe. v0.9.5 P2.1 added AI-persona validation +
-> v0.9.5 P2.2 added the POA&M → OSCAL emit step. Smoke-tested by
-> `tests/integration/test_walkthrough_federal_si.py`.
+> v0.9.5 P2.2 added the POA&M → OSCAL emit step; refreshed for the
+> v0.11 federal wave (M-25-21 practice tracking, M-25-22 acquisition
+> lifecycle, CR26 SDR/KSI emission — see "What's new at v0.11" below).
+> Smoke-tested by `tests/integration/test_walkthrough_federal_si.py`.
 
 ## Trustworthiness of Evidentia itself (read first)
 
 Before sliding Evidentia into a federal authorization boundary,
-verify the tool meets self-attestation expectations under EO 14028
-+ OMB M-22-18 + CISA Secure by Design Pledge + NIST SP 800-218
-SSDF practice PS.3.1 (cryptographic verification of integrity):
+verify the tool meets software-supply-chain expectations under EO
+14028 (as amended by OMB M-26-05, January 2026, which rescinded the
+M-22-18 / M-23-16 self-attestation-form regime in favor of
+risk-based agency discretion) + the CISA Secure by Design Pledge +
+NIST SP 800-218 SSDF practice PS.3.1 (cryptographic verification of
+integrity):
 
 ```bash
 # 1. PyPI PEP 740 attestations (signed by GitHub Actions OIDC
@@ -36,18 +41,18 @@ cosign verify ghcr.io/polycentric-labs/evidentia:vX.Y.Z \
 #    your SBOM aggregator: Dependency-Track / Trivy / etc.).
 ```
 
-All three are required artifacts under FedRAMP RFC-0024
-(machine-readable authorization packages, **Nov 1 2027 initial-
-compliance deadline** for Class D / High-impact CSPs per NOTICE-
-0009 published March 25 2026 — the original Sept 30 2026 deadline
-was superseded + scope was narrowed) and the CISA Secure Software
-Self-Attestation Form. The companion **FedRAMP CR26** consolidated
-rules (public preview May 4 2026; effective July 1 2026;
-mandatory Jan 1 2027) replace the patchwork of post-FedRAMP-
+All three artifacts serve the FedRAMP machine-readable direction
+(NTC-0009, published March 25 2026: comprehensive machine-readable
+authorization packages by **Nov 1 2027** for Class D / High-impact
+CSPs — the original RFC-0024 Sept 30 2026 deadline was superseded +
+scope was narrowed; agencies may still request SBOMs under
+M-26-05's risk-based posture). The companion **FedRAMP CR26** consolidated
+rules (public preview May 4 2026; launched June 25 2026 with the
+SDR rules in force for 20x since July 4 2026; mandatory Jan 1 2027) replace the patchwork of post-FedRAMP-
 Authorization-Act memos with a declarative-rule format published
 in GitHub/FedRAMP/rules. Classes A/B/C only need "semi-structured
 text-based" data; Class D needs comprehensive machine-readable.
-If the verify steps fail, file a v0.9.5 supply-chain incident
+If the verify steps fail, file a supply-chain incident
 ticket against the repo — that's a stop-ship.
 
 ## Why this walk-through exists
@@ -63,7 +68,7 @@ artifacts this persona produces:
    residual-risk justifications before re-authorization signature.
 3. **FedRAMP PMO / DoD CCSP** — ingests machine-readable
    authorization packages per RFC-0024 (Class D / High-impact:
-   Nov 1 2027 initial-compliance deadline per NOTICE-0009 March 25
+   Nov 1 2027 comprehensive machine-readable deadline per NOTICE-0009 March 25
    2026; superseded the original Sept 30 2026 program-wide
    deadline); grades against the FedRAMP POA&M Template Completion
    Guide v3.0.
@@ -80,15 +85,16 @@ shipping AI-powered systems into regulated environments:
    metric that matters at the AO desk.
 2. **AI-governance attestation** for AI/ML systems the SI deploys
    to support federal contracts. The PRIMARY federal lens is
-   **OMB M-24-10** (Rights-Impacting / Safety-Impacting / Neither
-   categorization) plus **NIST AI RMF 1.0** (Govern / Map /
-   Measure / Manage functions). EU AI Act tier classification is
-   SECONDARY — useful when the same AI system also serves EU
+   **OMB M-25-21** (the single "high-impact AI" determination that
+   replaced M-24-10's Rights-Impacting / Safety-Impacting / Neither
+   categorization on 2025-04-03) plus **NIST AI RMF 1.0** (Govern /
+   Map / Measure / Manage functions). EU AI Act tier classification
+   is SECONDARY — useful when the same AI system also serves EU
    customers, but not the headline lens at a federal AO desk.
 
 Both surfaces have hard deadlines (monthly POA&M attestation;
 NIST AI RMF / AI Executive Order obligations on federal AI use
-cases; **FedRAMP CR26 effective July 1 2026 / mandatory Jan 1
+cases; **FedRAMP CR26 live since June 25 2026 / mandatory Jan 1
 2027** — the most consequential FedRAMP structural change in a
 decade; **FedRAMP RFC-0024 machine-readable Class D / High-impact
 authorization packages: Nov 1 2027** per NOTICE-0009 March 25
@@ -123,8 +129,9 @@ evidentia catalog list | grep -E "(nist|fedramp|nist-ai-rmf|eu-ai-act)"
 
 **Expected**: at minimum the bundled NIST 800-53 Rev 5 (baselines
 Low/Moderate/High; 156/323/443 controls respectively after RFC-
-0027/0030), the FedRAMP overlay, NIST AI RMF 1.0, and EU AI Act
-statutory excerpts. Evidentia ships 89 framework catalogs by
+0027/0030), the FedRAMP overlay (Rev 5 baselines + the CR26
+`fedramp-ksi-2026` KSI catalog), NIST AI RMF 1.0, and EU AI Act
+statutory excerpts. Evidentia ships 96 framework catalogs by
 default; this filter narrows to the ones the SI workflow
 exercises.
 
@@ -140,7 +147,7 @@ narrowed; Classes A/B/C only need semi-structured text-based data).
 
 ```bash
 evidentia conmon check \
-  --last-completed-file tests/data/walkthrough-federal-si/state.yaml \
+  --state-file tests/data/walkthrough-federal-si/state.yaml \
   --today 2026-05-18
 ```
 
@@ -175,10 +182,11 @@ companion `GET /api/conmon/daemon-status` health-check endpoint,
 and the v0.9.5 P2.3 `--history-file` for the
 `GET /api/conmon/daemon-history` flap-detection endpoint.
 
-> **CLI flag naming note**: `conmon check` uses `--last-completed-
-> file`; `conmon health` + `conmon watch` use `--state-file` for
-> the same on-disk YAML schema. This is a historic inconsistency
-> tracked for a v0.9.6 normalization pass.
+> **CLI flag naming note**: `conmon check` historically used
+> `--last-completed-file`; v0.9.6 normalized every conmon verb to
+> `--state-file`. The legacy flag still works but is deprecated
+> (removal targeted at v1.0.0 per
+> [`deprecation-calendar.md`](deprecation-calendar.md)).
 
 ## Step 3 — Compute framework health
 
@@ -305,7 +313,8 @@ ownership + classification.
 Federal-SI persona note: promoting a federal-AI system from
 pilot → production *within* an authorization boundary typically
 triggers a **FedRAMP Significant Change Request (SCR)** plus an
-**OMB M-24-10 AI Use Case Inventory update**. Evidentia's
+**AI Use Case Inventory update** (the inventory obligation carried
+forward under OMB M-25-21). Evidentia's
 `ai-gov update` fires the `AI_SYSTEM_UPDATED` lifecycle audit
 event for downstream automation, but does **NOT** auto-emit the
 SCR Form (the FedRAMP-PMO-required template). Operators produce
@@ -370,8 +379,9 @@ evidentia oscal verify /tmp/walkthrough-poam.oscal.json
 document with SHA-256 back-matter integrity references to every
 embedded POA&M record. This document is what the SI submits to the
 3PAO at annual assessment and to the FedRAMP PMO at the monthly
-POA&M cadence (post-RFC-0024 deadline, this is the machine-
-readable submission format).
+POA&M cadence (OSCAL POA&M is the established Rev 5 machine-readable
+package rail; NTC-0009's 2027-11-01 comprehensive machine-readable
+requirement is format-agnostic).
 
 Federal-SI persona note: the FedRAMP POA&M Template Completion
 Guide v3.0 prescribes specific column semantics (Severity,
@@ -379,18 +389,71 @@ Detection Source, POA&M Items Open, Original Detection Date,
 Risk Adjustment, Deviation Request, etc.) that Evidentia's
 OSCAL emit preserves via OSCAL's prop+annotation mechanism. The
 v3.0 template's MS Excel form remains the FedRAMP PMO ingest
-channel; FedRAMP CR26 + RFC-0024 (Class D / High-impact: Nov 1
-2027 initial-compliance; Sept 30 2027 full final) transitions the
+channel; FedRAMP CR26 + NTC-0009 (Class D / High-impact: Nov 1
+2027 comprehensive machine-readable) transitions the
 PMO to machine-readable JSON. OSCAL 1.2.1 emit interoperates with
 both. (Evidentia has emitted OSCAL 1.2.1 since v0.9.6, aligned with
 the upstream compliance-trestle library.)
+
+## What's new at v0.11 — the federal wave
+
+Three v0.11 surfaces extend the workflow above; they are additive
+(steps 1–8 are unchanged) and map directly onto this persona:
+
+1. **M-25-21 minimum-practice tracking** (extends Steps 4–5). Once a
+   system carries a high-impact determination, record per-practice
+   status for the memo's seven §4(b) minimum practices — including
+   CAIO waiver objects with the annual re-certification and 30-day
+   OMB-report clocks:
+
+   ```bash
+   EVIDENTIA_AI_REGISTRY_DIR=/tmp/walkthrough-federal-si-registry \
+   evidentia ai-gov set-practice <system_id> \
+     --practice pre_deployment_testing --status implemented
+   ```
+
+2. **M-25-22 acquisition lifecycle** (extends Step 7 — this persona
+   IS the procurement officer M-25-22 addresses). Track an AI
+   acquisition through the memo's six §4 lifecycle phases
+   (`identification_of_requirements` → `contract_closeout`), tied to
+   the §4(a) initial high-impact determination:
+
+   ```bash
+   EVIDENTIA_AI_ACQUISITION_DIR=/tmp/walkthrough-federal-si-acq \
+   evidentia ai-gov acquisition register "Resume-screener SaaS" \
+     --solicitation-ref RFP-2026-001 \
+     --likely-high-impact high_impact \
+     --link-system <system_id>
+   EVIDENTIA_AI_ACQUISITION_DIR=/tmp/walkthrough-federal-si-acq \
+   evidentia ai-gov acquisition set-phase <acquisition_id> \
+     --phase market_research_and_planning --status in_progress
+   ```
+
+3. **FedRAMP CR26 SDR / KSI emission** (extends Steps 2–3 for the
+   20x path). Emit the Security Decision Record
+   `keySecurityIndicators` block (10 families / 46 KSIs) conformant
+   to the official 2026-06-24 schemas — the machine-readable
+   companion to the OSCAL POA&M heartbeat in Step 8. Like Step 8,
+   this is operator-driven: `--status-file` takes your own
+   per-KSI status YAML (`KsiStatusDocument` schema):
+
+   ```bash
+   evidentia conmon ksi \
+     --status-file ./my-ksi-status.yaml \
+     --state-file tests/data/walkthrough-federal-si/state.yaml \
+     --out /tmp/walkthrough-sdr-skeleton.json
+   ```
+
+   See [`fedramp-ksi.md`](fedramp-ksi.md) for the status-file
+   schema, schema provenance, vendored-pin policy, and the weekly
+   drift sentinel.
 
 ## What this walk-through validates
 
 | Phase | Capability tested | Federal-SI consumer |
 |---|---|---|
 | 0 | Supply-chain trustworthiness (PEP 740 + cosign + SBOM) | Procurement officer self-attestation |
-| 1 | Catalog discovery — 89 bundled frameworks load | All |
+| 1 | Catalog discovery — 96 bundled frameworks load | All |
 | 2 | CONMON cycle classification — overdue/due_soon bucketing | SI compliance ops; internal SIEM |
 | 3 | Framework health scoring — JSON output for SIEM ingest | SI compliance ops only (NOT PMO-grade) |
 | 4 | EU AI Act tier classification — Annex III + risk attributes | Procurement evaluation; pairs with OMB M-25-21 high-impact |
@@ -399,7 +462,7 @@ the upstream compliance-trestle library.)
 | 7 | Lifecycle CLI verbs (v0.9.4 P2.3) — update + retire firing audit events | SI compliance ops; pairs with SCR Form out-of-band |
 | 8 | POA&M emit + OSCAL 1.2.1 plan-of-action-and-milestones | 3PAO annual assessment; FedRAMP PMO monthly POA&M; RFC-0024 |
 
-If any step diverges from "expected", file a v0.9.6 bug ticket
+If any step diverges from "expected", file a bug ticket
 with the actual output. The integration test
 `tests/integration/test_walkthrough_federal_si.py` runs steps 2-4
 + 6 in CI to catch regressions in the smoke surface; the full
@@ -417,7 +480,8 @@ addressed:
 - **EU AI Act-first framing**: the v0.9.4 doc led with EU AI Act
   tier classification, which is the wrong primary lens for a
   federal-SI persona. v0.9.5 reframed with OMB M-24-10 +
-  NIST AI RMF as primary, EU AI Act as secondary.
+  NIST AI RMF as primary, EU AI Act as secondary (the primary lens
+  subsequently migrated to M-25-21 at v0.10.12, reflected above).
 - **CLI flag bug in Step 2**: v0.9.4 doc referenced
   `--state-file` for `conmon check` (which actually uses
   `--last-completed-file`). Fixed in v0.9.5.
@@ -432,19 +496,20 @@ addressed:
 - **Health score conflation**: the 0.857 metric is internal
   dashboard, not PMO-grade. v0.9.5 added the explicit caveat.
 
-Limitations still open for v0.9.6+:
+Limitations still open (resolved items pruned — FIPS 199 became a
+first-class registry field at v0.9.6 via `categorize-fips`; the
+conmon flag naming was normalized to `--state-file` at v0.9.6):
 
-- **FIPS 199 categorization on AI registry**: tracked as a
-  first-class field; today carried in the `owner` sidecar or via
-  the v0.9.5 Phase 3 custom fields.
 - **SCR Form auto-emit**: Evidentia fires the lifecycle audit
   event but does not generate the FedRAMP-PMO SCR template.
   Operator produces SCR out-of-band.
-- **CLI flag naming consistency**: `conmon check` vs `conmon
-  health` use different flag names for the same on-disk schema.
+- **GUI coverage of the v0.11 federal verbs**: `ai-gov
+  set-practice` and the `ai-gov acquisition` verbs are CLI/API-only
+  pending the next console pass (see
+  [`parity-coverage.md`](parity-coverage.md)).
 - **Real federal-SI operator review**: the v0.9.5 validation was
   AI-persona-driven; a real domain-expert review remains the
-  highest-value v0.9.6 follow-up.
+  highest-value follow-up.
 
 ## See also
 
@@ -458,6 +523,11 @@ Limitations still open for v0.9.6+:
   Governance, and Public Trust (2025-04-03; rescinded + replaced
   OMB M-24-10's rights/safety-impacting model with a single
   "high-impact AI" category)
+- OMB M-25-22 — Driving Efficient Acquisition of Artificial
+  Intelligence in Government (2025-04-03; replaced M-24-18; the six
+  §4 lifecycle phases Evidentia's acquisition surface models)
+- `docs/fedramp-ksi.md` — the CR26 SDR / KSI emitter (schema
+  provenance + drift sentinel)
 - NIST AI RMF 1.0 — AI risk management framework
 - NIST SP 800-218 SSDF — Secure Software Development Framework
 - CISA Secure by Design Pledge — voluntary commitment to

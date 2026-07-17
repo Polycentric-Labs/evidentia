@@ -47,7 +47,8 @@ posture has advanced materially across the v0.8.x–v0.10.x line:
   cross-platform Hypothesis property tests (v0.10.12) harden the
   untrusted-input parsers and credit the OpenSSF Scorecard "Fuzzing"
   check (advances **M1**'s intent via coverage-guided fuzzing; classic
-  mutation testing remains unscheduled).
+  mutation testing runs weekly out-of-band via `mutmut.yml` without an
+  enforced kill-rate gate).
 - **WORM evidence store + retention / legal-hold** (v0.9.6) provide
   first-class anti-tamper evidence lineage at the product layer, advancing
   **H8** and **H13** beyond operator-only responsibility.
@@ -60,11 +61,13 @@ posture has advanced materially across the v0.8.x–v0.10.x line:
   rescinded M-24-10), and a signed Control↔Threat traceability **OSCAL
   profile** (v0.10.11 — partially addresses **L4**'s "not OSCAL Profile
   format" note).
-- **CLI↔GUI parity** — the local web console reaches ~98% parity across
-  22 consoles (v0.10.12), with a documented web-console security model and
+- **CLI↔GUI parity** — the local web console reaches 93.4% parity across
+  22 consoles (99 of 106 coverable CLI leaves; the 7 api-only leaves are
+  the v0.11 federal AI-governance verbs plus two chrome-surfaced
+  utilities), with a documented web-console security model and
   a default-on SSRF / anti-DNS-rebind network guard across collectors,
   integrations, and the Tableau publish path.
-- **95 bundled framework catalogs** across four redistribution tiers
+- **96 bundled framework catalogs** across four redistribution tiers
   (updates **L4**'s "82 frameworks" count).
 - **Release + CI hardening (v0.10.13–v0.10.17)** — a distroless
   **Docker Hardened Images** runtime base (v0.10.16), **air-gapped DSSE /
@@ -128,9 +131,9 @@ evidence lineage).
 
 | # | Item | v0.7.0 status |
 |---|---|---|
-| M1 | Mutation testing ≥ 65% | ❌ Not currently run in CI; planned for v0.8 |
+| M1 | Mutation testing ≥ 65% | ❌ Not run in CI at v0.7.0. *Later: weekly out-of-band mutmut CI runs since v0.8.2 (`mutmut.yml`: Sundays 03:00 UTC + dispatch); the ≥65% kill-rate gate is not yet enforced.* |
 | M2 | Air-gapped deployment mode | ✅ `--offline` flag refuses network egress; GPG signing works offline |
-| M3 | Multi-cloud + SaaS support | ⚠️ AWS + GitHub in v0.7.0; Okta, Azure, GCP planned |
+| M3 | Multi-cloud + SaaS support | ⚠️ AWS + GitHub at v0.7.0. *Later: grown to 14 collectors (adds Okta, 5 SQL adapters, Databricks, Snowflake, Vanta, Drata, BitSight, SecurityScorecard); Azure, GCP remain roadmap.* |
 | M4 | Performance benchmarks | ⚠️ Not documented; ad-hoc testing on 10k-resource sample |
 | M5 | Dry-run mode | ✅ `dry_run=True` kwarg on all collectors; `--dry-run` CLI flag |
 | M6 | Custom OSCAL finding fields | ✅ `back-matter.resources[].props[]` with Evidentia-namespaced prop extensions |

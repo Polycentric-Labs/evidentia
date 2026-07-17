@@ -34,17 +34,17 @@ architectural patterns — observed in peer projects and emerging standards
 |---|---|
 | **OSCAL 1.2.1** | First-class emit: catalog, profile, assessment-results, POA&M, CONMON state. Import: catalog, profile, component-definition (ingest-only). SCR notification is RFC-0007 flat JSON, not an OSCAL model |
 | **Supply chain** | CycloneDX 1.7 SBOM; Sigstore/Rekor + PEP 740 attestations; cosign-signed container; SLSA L3 build provenance |
-| **MCP server** | 8 tools (`list_frameworks`, `get_control`, `gap_analyze`, `gap_diff`, `conmon_list_cadences`, `conmon_next_due`, `conmon_check_state`, `conmon_health`); stdio / SSE / HTTP transports; per-tool CIMD scope enforcement; `SignedToolOutput` envelope |
+| **MCP server** | 13 tools (`list_frameworks`, `get_control`, `gap_analyze`, `gap_diff`, `gap_analyze_sarif`, `collect_ocsf`, `tprm_vendor_list`, `poam_list`, `verify_signed_artifact`, `conmon_list_cadences`, `conmon_next_due`, `conmon_check_state`, `conmon_health`); stdio / SSE / HTTP transports; per-tool CIMD scope enforcement; `SignedToolOutput` envelope |
 | **REST API** | FastAPI; `/api/poam/*`, `/api/conmon/*`, `/api/gaps`, `/api/metrics`; auth middleware |
 | **CI** | Bundled composite GitHub Action (`gap-analysis`) |
-| **Evidence collectors** | AWS (Config / Security Hub / IAM Access Analyzer), GitHub, Okta, ServiceNow, 5 SQL databases, Databricks, Snowflake |
+| **Evidence collectors** | 14 total — AWS (Config / Security Hub / IAM Access Analyzer), GitHub, Okta, 5 SQL databases, Databricks, Snowflake, Vanta, Drata, BitSight, SecurityScorecard (ServiceNow's collect side rides the output integration) |
 | **Output integrations** | Jira, ServiceNow, Tableau, Power BI |
 
 **The structural observation.** Each collector today emits a
 framework-shaped finding. That couples collector count to framework
 count and is the root cause of the integration-breadth gap that
 [positioning-and-value.md](positioning-and-value.md) §6.3.2 honest-gap #3
-surfaces (8 evidence collectors vs. Vanta's 375+). §4.1 below is the
+surfaces (14 evidence collectors vs. Vanta's 375+). §4.1 below is the
 structural fix — and every other integration in §3 gets cheaper once it
 is in place.
 
@@ -185,7 +185,7 @@ That makes it **complementary to Evidentia, not competitive** — they are
 adjacent layers. The opportunity:
 
 - **Publish a thin Evidentia MCP connector/plugin into the
-  `grc-engineering-suite` marketplace.** Evidentia's MCP server (8 tools,
+  `grc-engineering-suite` marketplace.** Evidentia's MCP server (13 tools,
   signed output) is exactly the deterministic backend that toolkit's
   personas lack. This reaches a growing, well-aligned audience through a
   zero-setup distribution channel (`/plugin install`) that Evidentia
@@ -287,56 +287,66 @@ v0.10.5 Phase 2 ships the conversion as an OSCAL catalog + profile pair
 for the baseline that defines OSS-project security hygiene — directly
 adjacent to where Evidentia sits in the §5.5 OSS GRC tier.
 
-### 8.2 FedRAMP 20x readiness — KSI emission posture
+### 8.2 FedRAMP 20x readiness — KSI emission posture (SHIPPED, v0.11)
 
 FedRAMP **20x** (the "machine-readable continuous-monitoring" pillar of
-the FedRAMP modernization) entered its **Moderate pilot through
-2026-03-31** and the **public rollout lands Q3 2026**. The central
-artifact is **KSIs — Key Security Indicators** delivered per FedRAMP's
-machine-readable schemas (**FRMR JSON** — FedRAMP Machine-Readable
-Documentation; JSON-Schema definitions published in the new
-`FedRAMP/schemas` repo, created 2026-06-09). OSCAL is not displaced —
-it remains the Rev5 / RFC-0024 package format per NTC-0009; FRMR JSON
-is the KSI delivery schema, not an OSCAL extension. Evidentia's
-existing OSCAL emit + CONMON daemon (v0.9.6 first-mover) + SCR
-notification surface (v0.9.7) compose into a near-direct KSI emitter,
-with FRMR JSON as the emission target. v0.11 schedules the KSI binding
-as a first-mover claim — the public rollout coincides with Evidentia's
-federal-compliance theme window. Sources: fedramp.gov 20x pages;
-github.com/FedRAMP/schemas; FedRAMP NTC-0009; RegScale OSCAL Hub.
+the FedRAMP modernization) went live with the **CR26 consolidated
+rules** (launched 2026-06-25 on the 2026-06-24 dated schema fileset;
+mandatory for all 20x certifications 2027-01-01). The central artifact
+is the **Security Decision Record (SDR)** — JSON per
+`fedramp-security-decision-record-schema-2026-06-24.json` in
+`FedRAMP/schemas`, whose `keySecurityIndicators` block carries the
+per-KSI summaries the SDR-CSX-KSI rules make a MUST. The earlier
+"FRMR JSON" framing is retired upstream. OSCAL is not displaced — it
+remains the established Rev 5 package rail (NTC-0009's
+machine-readable requirement is itself format-agnostic); the CR26
+SDR is a JSON schema, not an OSCAL extension. **Shipped in v0.11 Wave 2:**
+`evidentia conmon ksi` emits the SDR `keySecurityIndicators` block
+(10 families / 46 KSIs from the `FedRAMP/rules` consolidated dataset)
+as a schema-valid full-SDR skeleton, with the official schemas
+vendored at pinned upstream SHAs and a weekly drift sentinel
+(`fedramp-schema-watch`). Sources: fedramp.gov 20x pages;
+github.com/FedRAMP/schemas; github.com/FedRAMP/rules; FedRAMP
+NTC-0009.
 
-### 8.3 OpenVEX 0.2.0 emit (FIRST-MOVER among GRC engines)
+### 8.3 OpenVEX 0.2.0 emit (planned — would be first among OSS GRC engines)
 
 **OpenVEX v0.2.0** (CNCF; JSON-LD; status enum
 `{not_affected, affected, fixed, under_investigation}`) is the emerging
 VEX format for vulnerability-exploitability statements. **Dependency-
 Track does NOT consume OpenVEX (only CycloneDX VEX)**; GUAC is the only
-mature OSS consumer. Evidentia's planned **`evidentia vex emit`** verb
-(v0.11) makes it the first OSS GRC engine to emit OpenVEX statements
+mature OSS consumer. Evidentia's planned **`evidentia vex publish --rekor`** verb
+(roadmap-tracked, not yet scheduled) would make it the first OSS GRC
+engine to emit OpenVEX statements
 alongside its CycloneDX SBOM — the natural bridge between Evidentia's
 supply-chain artifacts (§2) and the wider supply-chain-VEX ecosystem.
 Coupled with a Grype subprocess wrapper (Grype emits neither `-o vex`
 nor `-o ocsf` natively — needs a thin wrapper) this closes the
 "vulnerability triage as compliance evidence" loop.
 
-### 8.4 CISA Secure by Design (SbD) Pledge — first OSS signatory
+### 8.4 CISA Secure by Design (SbD) Pledge — alignment statement
 
 The CISA **Secure by Design Pledge** (~100 signatories as of May 2026,
 **all commercial vendors**) has seven goals. **No OSS project has
-signed.** Evidentia is uniquely positioned to be the first — every goal
-maps onto existing Evidentia work (MFA-by-default, default deny on the
-MCP surface, vulnerability disclosure, evidence of patching cadence,
-etc.). v0.10.5 Phase 4 ships **SECURITY.md** + a **security.txt** + the
-**SbD pledge SELFATTEST** (Markdown form per CISA template) — the first
-OSS project to do so. Cross-stream signal: also closes 4 of the 8
-templates in skill v5.1's "compliance closure bundle".
+signed.** Every goal maps onto existing Evidentia work
+(MFA-by-default, default deny on the MCP surface, vulnerability
+disclosure, evidence of patching cadence, etc.). v0.10.5 Phase 4
+shipped **SECURITY.md** + a **security.txt** + the **SbD pledge
+alignment self-assessment**
+([`SECURE-BY-DESIGN-PLEDGE.md`](SECURE-BY-DESIGN-PLEDGE.md) — a
+voluntary alignment statement, explicitly **not a signatory claim**) —
+the first OSS project to publish a per-goal SbD alignment
+self-attestation. Formal Pledge signing is planned at the v1.0
+launch. Cross-stream signal: also closes 4 of the 8 templates in
+skill v5.1's "compliance closure bundle".
 
 ### 8.5 SLSA Verification Summary Attestation (VSA) emit
 
 SLSA v1.0 introduces **VSAs** as the auditable third-party verification
 artifact (distinct from build provenance). The reference OSS emitter
 (`slsa-framework/slsa-verifier --emit-vsa`) exists but is rare in
-practice. v0.11 schedules `evidentia vsa emit` so each release ships a
+practice. The roadmap tracks `evidentia oscal vsa` (not yet scheduled; emit
+targeted per SLSA v1.2) so each release would ship a
 VSA alongside its SLSA Provenance v1 + PEP 740 attestations — the
 verification-loop closure for high-trust operators. Cross-cite with
 NIST SSDF v1.2 IPD (Dec 17 2025 draft) PS.4 ("Robust and Reliable
@@ -349,20 +359,26 @@ expectation.
 |---|---|---|---|
 | OSPS Baseline OSCAL conversion + upstream PR | First OSCAL conversion of the OpenSSF OSPS Baseline | v0.10.5 P2 | OSCAL catalog + profile in `marketplace/oscal/` |
 | OSPS-CONFORMANCE.md + CI gate | First OSS project to publish a self-conformance statement against OSPS Baseline | v0.10.5 P3 | `docs/OSPS-CONFORMANCE.md` + `.github/workflows/osps-conformance.yml` |
-| CISA SbD Pledge SELFATTEST | First OSS signatory of the CISA Secure by Design Pledge | v0.10.5 P4 | `docs/SECURE-BY-DESIGN-PLEDGE.md` + signal upstream |
-| OpenVEX emit | First OSS GRC engine to emit OpenVEX 0.2.0 | v0.11 P3 | `evidentia vex emit` CLI verb |
-| FedRAMP 20x KSI emit | First OSS engine to emit Key Security Indicators per FedRAMP's machine-readable schemas (FRMR JSON). `kenithphilip/FedPy` (2026-05-28) is an evidence *collector* for KSIs (Ed25519-signed evidence, OSCAL output), not a KSI-submission *emitter* — the first-mover claim survives with that distinction stated | v0.11 P5 | `evidentia conmon ksi-emit` CLI verb |
-| SLSA VSA emit | First OSS GRC engine to emit SLSA VSAs alongside provenance | v0.11 P4 | `evidentia vsa emit` CLI verb |
+| CISA SbD Pledge alignment self-attestation | First OSS project to publish a per-goal SbD Pledge alignment self-attestation (a voluntary alignment statement, not a signatory claim; formal signing planned at v1.0) | v0.10.5 P4 | `docs/SECURE-BY-DESIGN-PLEDGE.md` |
+| OpenVEX emit | Would be the first OSS GRC engine to emit OpenVEX 0.2.0 (planned; roadmap-tracked, not yet scheduled) | planned | `evidentia vex publish --rekor` CLI verb (planned) |
+| FedRAMP CR26 SDR / KSI emit | **First production-grade OSS emitter** — and first from any established tool — of the CR26 Security Decision Record `keySecurityIndicators` block per the official 2026-06-24 schemas. Caveats stated: `Palladium-Innovations/fedramp-cr26-oscal` (CC0, experimental) emits draft CR26-from-OSCAL; `kenithphilip/FedPy` (2026-05-28) is an evidence *collector* for KSIs (Ed25519-signed evidence, OSCAL output), not an SDR *emitter*; RegScale (Excel exports + KSI→OSCAL pipeline) and Paramify (YAML + unofficial OSCAL) ship adjacent KSI tooling without official-schema conformance | v0.11 Wave 2 (SHIPPED) | `evidentia conmon ksi` CLI verb |
+| OMB M-25-21 minimum-practice tracking | First structured tracking of the memo's seven §4(b) minimum practices with **CAIO waiver objects carrying the annual re-certification + 30-day OMB-report clocks** — structure the federal AI Use Case Inventory lacks entirely. (Scope note: the inventory itself carries 9 per-practice status fields to Evidentia's 7-practice model — the first-mover claim is the waiver-clock structure, never field count) | v0.11 Wave 2 (SHIPPED) | `evidentia ai-gov set-practice` CLI verb + API mirror |
+| OMB M-25-22 acquisition lifecycle | First structured model of M-25-22's six §4 acquisition-lifecycle phases (Identification of Requirements → Contract Closeout) with the §4(a) high-impact determination tie-in — the federal inventory has no acquisition-phase structure at all | v0.11 Wave 2 (SHIPPED) | `evidentia ai-gov acquisition register\|list\|show\|set-phase` + API mirror |
+| SLSA VSA emit | Would be the first OSS GRC engine to emit SLSA VSAs alongside provenance (planned; roadmap-tracked, not yet scheduled) | planned | `evidentia oscal vsa` CLI verb (planned) |
 
 ### 8.7 AWS OSCAL MCP cross-reference
 
 `awslabs/oscal-mcp-server` (Apache-2.0; `samples/` archived shape — not
-a service) is the only other OSCAL-aware MCP server in the OSS
-ecosystem as of May 2026. Its scope is **knowledge-tool only** —
+a service) is one of several OSCAL-aware MCP servers in the OSS
+ecosystem (alongside `oscal-compass/compliance-trestle-mcp` and CISO
+Assistant's `cli/ca_mcp`). Its scope is **knowledge-tool only** —
 answers OSCAL schema + 800-53 / 800-171 catalog questions via embedded
-references; does **not** emit OSCAL artifacts. Evidentia's MCP server
-(§4.3) goes structurally further: emits component-definition / SSP /
-assessment-results / POA&M / VEX / VSA. Worth cross-citing as the only
+references; does **not** emit OSCAL artifacts. Evidentia goes
+structurally further: its MCP server (§4.3) fronts a runtime engine
+that emits OSCAL catalog / profile / assessment-results / POA&M
+(plus SARIF / OCSF / CycloneDX-VEX gap outputs and the CR26 SDR KSI
+block). Worth
+cross-citing as an
 OSCAL-MCP precedent; not a competitor. See [positioning-and-value.md
 §5.5](positioning-and-value.md) for the same cross-reference in the OSS
 GRC tier table.
@@ -370,13 +386,17 @@ GRC tier table.
 ### 8.8 ComplianceCow MCP cross-reference
 
 `compliancecow/cowmcp` (Apache-2.0 server; ComplianceCow backend
-proprietary) is the **only other OSS GRC MCP server besides Evidentia's
-`evidentia mcp serve`**. The shape difference: ComplianceCow MCP is a
+proprietary) is **one of several OSS GRC MCP servers** — CISO
+Assistant ships a full MCP server (`cli/ca_mcp`, expanded through
+2026-06) and `oscal-compass/compliance-trestle-mcp` also exists,
+alongside Evidentia's `evidentia mcp serve`. The shape difference:
+ComplianceCow MCP is a
 thin facade over a SaaS backend (14 tools, all hitting the
 ComplianceCow API), whereas Evidentia is a self-contained runtime
-engine. Worth cross-citing as the only other OSS GRC MCP — and as the
-honest-landscape entry "two OSS GRC MCP servers exist as of May 2026,
-both Apache-2.0".
+engine. Worth cross-citing in the honest-landscape entry: several OSS
+GRC MCP servers exist as of mid-2026 — Evidentia and ComplianceCow
+(Apache-2.0), CISO Assistant's `ca_mcp` (AGPL), and the
+authoring-focused trestle-mcp.
 
 ## 8.9 OSPS Baseline crosswalks (v0.10.6 Phase 5)
 

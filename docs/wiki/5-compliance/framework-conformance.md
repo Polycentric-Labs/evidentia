@@ -4,7 +4,7 @@ There are two different "conformance" questions about Evidentia, and
 they are easy to confuse:
 
 1. **Which frameworks does Evidentia ship catalogs for?** — that is the
-   [Catalog inventory](catalog-inventory.md) (92 catalogs Evidentia
+   [Catalog inventory](catalog-inventory.md) (96 catalogs Evidentia
    helps *you* assess against).
 2. **Which standards does Evidentia itself conform to, as a software
    project?** — that is *this* page.
