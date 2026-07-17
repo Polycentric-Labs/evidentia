@@ -12,6 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **FedRAMP CR26 vendored schemas re-synced to the upstream 1.0.0 graduation**
+  (`FedRAMP/schemas` @ `ae0dc43e`, 2026-07-15 — caught by a manual drift probe
+  inside the weekly sentinel's blind window): the Security Decision Record
+  schema's `$schemaVersion` moved 0.1.0 → **1.0.0**, fixing the Public-Preview
+  draft's vacuous `items` wrapper nesting so the per-KSI constraints now
+  actually enforce — constraints `evidentia conmon ksi` output already
+  satisfies (emitted documents re-validated against upstream 1.0.0, zero
+  emitter changes). `fedramp-common-definitions` re-vendored byte-identical at
+  0.1.1; `UPSTREAM.json` pins refreshed (all 11 tracked `$schemaVersion`s).
+  The documented one-line cross-document `$ref` delta is retained — upstream
+  fix PR #4 remains unmerged; the 1.0.0 graduation did not include it.
+
 - **Claim-accuracy sweep across the public docs** (pre-v0.11.0; every change
   traced to the 2026-07-15 primary-source verification pass): CLI↔GUI parity
   claims recomputed from the manifest (98% → **93.4%**, 99 full / 7 api-only /
