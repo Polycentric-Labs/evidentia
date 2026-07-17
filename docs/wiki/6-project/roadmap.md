@@ -3,7 +3,7 @@
 
 # Evidentia roadmap
 
-**Last updated: v0.10.18 (planning, July 2026).**
+**Last updated: v0.11.0 (planning, July 2026).**
 
 > **Engineering practices** — how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
@@ -2041,15 +2041,41 @@ DEFER-WITH-TRIGGER verdict and a same-day setuptools 83.0.0 fix
 v0.11.0's boundary re-cuts to Waves 1–2. No package
 (`packages/*/src`) code changes.
 
-## v0.11 — Federal-compliance theme + AI governance — PLANNED
+## v0.11 — Federal-compliance theme + AI governance — SHIPPED
 
-**The open cycle** (opened 2026-07-09). Full plan:
+Opened 2026-07-09; **closed 2026-07-16 with v0.11.0** (the re-cut
+Wave 1–2 scope per the 2026-07-14 boundary re-cut — Wave 0 + the
+hygiene track H1–H6 had shipped early inside v0.10.18). Full plan:
 [`v0.11-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.11-plan.md) — wave sequencing, the
 cycle-hygiene track (the 2026-07 practice-delta adoptions + the
 v0.10.17 deferred queue), the medical-device row split, and the
-ratification asks. Sourced from Phase B audit v3 + integration plan
-§"Per-release detailed integration plan" §v0.11. Substantive minor
-(~6-8 weeks):
+ratification record. The remaining planned waves carry the **ratified
+2026-07-16 disposition** in
+[`v0.12-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.12-plan.md) (Wave 4 phase 3 →
+v0.12-if-capacity; Wave 4 phases 1/2/4 + Wave 3 DORA + medical-device
+traceability → v1.1; Waves 5–6 → post-1.0; arXiv preprint = open
+decision).
+
+### v0.11.0 — The federal wave — SHIPPED (released 2026-07-16)
+
+Three verified federal firsts on machine-readable rails: **FedRAMP
+CR26 SDR emission** (`evidentia conmon ksi` — the SDR
+`keySecurityIndicators` block, 10 families / 46 KSIs, conformant to
+the official 2026-06-24 schemas vendored at pinned SHAs and re-verified
+at their 1.0.0 graduation; weekly `fedramp-schema-watch` drift
+sentinel; the first production-grade OSS emitter of the format),
+**OMB M-25-21 minimum-practice tracking** (`ai-gov set-practice` —
+seven §4(b) practices with CAIO waiver objects carrying the annual
+re-cert + 30-day OMB-report clocks), and **OMB M-25-22
+acquisition-lifecycle tracking** (`ai-gov acquisition` — the six §4
+phases with the §4(a) high-impact tie-in). Plus the ratified OSCAL
+1.2.2 DEFER-WITH-TRIGGER verdict and a pre-release claim-accuracy
+sweep (parity restated at the live 93.4%; first-mover registry updated
+with explicit caveats). Test suite 4,939 passed. The five federal
+api-only parity rows lead the v0.12 GUI pass.
+
+The feature bullets below are the cycle's planning record; items not
+shipped in v0.11.0 carry the ratified disposition above.
 
 - **KSI (Key Security Indicators) emission** — wires as third output
   mode on `evidentia conmon` alongside the 7 bundled cadences shipped
@@ -2240,7 +2266,7 @@ engineering-hardening batch addressed all three:
   maintainer — checked at PRR Row 21). P3 FIPS container variant stays gated on
   the federal-SI OpenPGP-interop answer.
 
-### Medical-device GRC feature line (v0.11 → v1.1+) — PLANNED (web-grounded research 2026-06-17)
+### Medical-device GRC feature line (v1.1+; re-cut 2026-07-16 from v0.11) — RESERVED (web-grounded research 2026-06-17)
 
 The medical-device-security direction the v0.10.10 FDA Section 524B catalogs opened, scanned + validated in a multi-angle web-grounded research pass. **Each feature gets a dedicated `polycentric-labcoat` research fleet at build-time** — the entries below are the high-level scan + positioning, not build specs. Effort and tier are planning-grade. The throughline: **don't rebuild commodity layers (STRIDE authoring, CBOM scanners) — ingest them; the uncontested slice is the open, signed, OSCAL/BOM-emitting evidence wrapper.**
 
@@ -2282,6 +2308,23 @@ Items deferred from Phase B audit v3 + integration plan §"v1.1+":
   pre-v1.0).
 - Architectural Tier 3 items from Phase B audit v3 (control-chart
   script ships skill-side; dynamic-install eBPF scan; etc.).
+
+## v0.12 — Pre-1.0 hardening + GUI parity — PLANNED
+
+**The open cycle** (ratified 2026-07-16 at the v0.11.0 release prep).
+Full plan: [`v0.12-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.12-plan.md) — the
+ratified disposition of the remaining v0.11 waves plus the LEAN v0.12
+scope: (1) the GUI parity pass for the five v0.11 federal api-only
+verbs (+ the `version`/`init` exempt-reclassification decision);
+(2) deprecation completions ahead of the v1.0.0 removals;
+(3) api-stability freeze-prep (the surface audit the v1.0 stability
+promise formalizes); (4) CR26 emitter coverage extension only if cheap
+(FRR statements next); (5) the CR26-fragility watches (upstream PR #4
+delta drop, additionalProperties tightening, CR27 dated-fileset MAJOR,
+the competitive-flip playbook, and the fresh-drift-probe-at-release
+lesson). The v1.0 operator self-test is scheduled at v0.12 cycle-open
+per [`v1.0-transition.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/v1.0-transition.md) so reviewer outreach can
+start while v0.12 builds.
 
 ## v1.0 — Federal compliance shipped + API stability — RESERVED
 

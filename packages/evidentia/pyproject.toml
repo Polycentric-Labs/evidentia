@@ -1,6 +1,6 @@
 [project]
 name = "evidentia"
-version = "0.10.18"
+version = "0.11.0"
 description = "Open-source GRC tool: gap analysis, risk statements, evidence collection, web UI, and compliance automation"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
@@ -18,16 +18,16 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "evidentia-core>=0.10.18,<0.11.0",
-    "evidentia-ai>=0.10.18,<0.11.0",
+    "evidentia-core>=0.11.0,<0.12.0",
+    "evidentia-ai>=0.11.0,<0.12.0",
     # v0.10.5 P9: DFAH eval harness extracted from evidentia-ai.
     # ``evidentia eval`` CLI verbs live here, so the meta-package
     # depends on evidentia-eval directly (not via the evidentia-ai
     # transitive pin) so the verbs work even when the v0.12.0
     # shim removal eventually trims evidentia-ai's runtime dep.
-    "evidentia-eval>=0.10.18,<0.11.0",
-    "evidentia-collectors>=0.10.18,<0.11.0",
-    "evidentia-integrations>=0.10.18,<0.11.0",
+    "evidentia-eval>=0.11.0,<0.12.0",
+    "evidentia-collectors>=0.11.0,<0.12.0",
+    "evidentia-integrations>=0.11.0,<0.12.0",
     # click 8.2 removed CliRunner's mix_stderr (stderr is now always a separate
     # stream) and typer 0.26 vendors its own click. The test suite and the wiki
     # reference generator (scripts/wiki/sync_reference.py) were updated to match
@@ -43,7 +43,7 @@ dependencies = [
 # Web UI — installs the FastAPI server + bundled React SPA.
 # Usage: `pip install "evidentia[gui]"` or `uv tool install "evidentia[gui]"`,
 # then `evidentia serve` to open the local web UI.
-gui = ["evidentia-api>=0.10.18,<0.11.0"]
+gui = ["evidentia-api>=0.11.0,<0.12.0"]
 # v0.7.12 P0: cloud-backed WORM storage adapters. Each extra
 # pulls in the cloud SDK + maps to the matching evidentia-core
 # extra so the WORM impl module imports cleanly. Operators
@@ -57,7 +57,7 @@ worm-gcs = ["evidentia-core[worm-gcs]>=0.10.0,<0.11.0"]
 # Code, ChatGPT Desktop, custom clients) over stdio.
 # Usage: `pip install "evidentia[mcp]"`, then `evidentia mcp
 # serve`.
-mcp = ["evidentia-mcp>=0.10.18,<0.11.0"]
+mcp = ["evidentia-mcp>=0.11.0,<0.12.0"]
 
 [project.scripts]
 evidentia = "evidentia.cli.main:app"

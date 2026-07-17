@@ -1,4 +1,4 @@
-# Evidentia capability matrix (v0.7.0 baseline · re-validated through v0.10.12)
+# Evidentia capability matrix (v0.7.0 baseline · re-validated through v0.11.0)
 
 > Step-4 deliverable from the v0.7.0 comprehensive review (2026-04-25).
 > Functional + code-review + adversarial smoke testing of every public
@@ -12,6 +12,33 @@
 > operational test loop).
 
 ---
+
+## Re-validation snapshot — 2026-07-16 (v0.11.0 PRE-TAG) — the federal wave
+
+v0.11.0 ships the re-cut Wave 1–2 scope: FedRAMP CR26 SDR emission, OMB
+M-25-21 minimum-practice tracking, and OMB M-25-22 acquisition-lifecycle
+tracking, plus the ratified OSCAL 1.2.2 DEFER-WITH-TRIGGER verdict and a
+pre-release claim-accuracy sweep. Unchanged subsystems are REUSED from the
+v0.10.x matrices; this snapshot covers the federal-wave delta.
+
+### Surface delta — new in v0.11.0
+
+| # | New surface | Kind | Verification |
+|---|---|---|---|
+| 1 | `evidentia conmon ksi` — CR26 Security Decision Record `keySecurityIndicators` emission (10 families / 46 KSIs; schema-valid full-SDR skeleton; official 2026-06-24 schemas vendored at pinned SHAs, re-verified at their 1.0.0 graduation) | CLI | 26 emitter tests incl. jsonschema round-trip against the vendored schemas; emitted output re-validated against upstream 1.0.0 at the graduation re-vendor; the 5 no-base-`statement` KSIs + 2 no-800-53-mapping KSIs covered explicitly |
+| 2 | `ai-gov set-practice` — M-25-21 seven §4(b) practices with CAIO waiver clocks (annual re-cert + 30-day OMB report) | CLI/API | 28 tests; waived-status model validator (waiver fields enforced); practice headings verified against the memo PDF; RBAC write-gated |
+| 3 | `ai-gov acquisition register\|list\|show\|set-phase` — M-25-22 six §4 lifecycle phases, §4(a) high-impact tie-in | CLI/API | 26 tests; `AIAcquisitionStore` = registry-store clone (traversal guard, atomic writes, `EVIDENTIA_AI_ACQUISITION_DIR` isolation); phases verified verbatim against the memo |
+| 4 | `fedramp-ksi-2026` catalog (46 indicators) + 800-53 rev5 crosswalk | Catalog | `gen_fedramp_ksi.py --check` CI drift gate against the pinned `FedRAMP/rules` dataset (2026.07.14.01) |
+| 5 | `fedramp-schema-watch.yml` weekly drift sentinel | CI | Fired-live lesson recorded: upstream moved inside the blind window on 2026-07-15 (SDR 0.1.0 → 1.0.0); a fresh drift probe at the release gate caught it and the schemas were re-vendored pre-tag |
+
+### Parity baseline (G27 cross-surface walk)
+
+`check_parity` is green on all 5 checks. Counts: **99 full / 7 api-only /
+0 cli-only / 11 exempt = 93.4% GUI coverage**. The 7 api-only rows are
+expected and documented: the five v0.11 federal verbs (`ai-gov
+set-practice` + the four `ai-gov acquisition` verbs — the GUI pass leads
+v0.12) plus the two legacy chrome-surfaced utilities (`version`, `init`,
+exempt-reclassification decision queued in the v0.12 plan).
 
 ## Re-validation snapshot — 2026-06-23 (v0.10.12 PRE-TAG) — full CLI↔GUI parity build-out + OMB M-25-21
 
