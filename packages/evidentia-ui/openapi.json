@@ -4385,6 +4385,7 @@
         "properties": {
           "issued_by": {
             "description": "The granting official (the agency CAIO — §4(a)(ii) makes this authority non-delegable). Recorded as provenance.",
+            "maxLength": 256,
             "title": "Issued By",
             "type": "string"
           },
@@ -4596,6 +4597,7 @@
           "linked_system_id": {
             "anyOf": [
               {
+                "maxLength": 256,
                 "type": "string"
               },
               {
