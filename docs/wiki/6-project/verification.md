@@ -132,6 +132,13 @@ osv-scanner scan source -L evidentia-sbom.cdx.json
 The container's `cosign verify` output above includes the SLSA Provenance v1
 attestation inline. To extract it:
 
+> **Requires cosign ≥ 2.6.** The provenance attestation is stored via the
+> OCI 1.1 referrers API (pushed by `actions/attest-build-provenance`); cosign
+> 2.4.x can verify the image signature but returns `no matching attestations`
+> for the referrer-stored attestation. If you are pinned to an older cosign,
+> use the tool-native `gh attestation verify oci://ghcr.io/polycentric-labs/evidentia:v0.11.0 -R Polycentric-Labs/evidentia`
+> instead (any `gh` version finds it).
+
 **Bash / Linux / macOS**
 
 ```bash
