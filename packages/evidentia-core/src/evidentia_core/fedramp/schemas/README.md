@@ -23,7 +23,7 @@ JSON Pointer in the URI **path** (`...json/$defs/x`) instead of the **fragment**
 (`...json#/$defs/x`), so no conforming JSON Schema 2020-12 validator can
 resolve them (upstream [issue #3](https://github.com/FedRAMP/schemas/issues/3),
 fix [PR #4](https://github.com/FedRAMP/schemas/pull/4) — still unmerged at the
-2026-07-16 re-vendor; the SDR schema's 0.1.0 → 1.0.0 graduation fixed the
+2026-07-18 re-vendor; the SDR schema's 0.1.0 → 1.0.0 graduation fixed the
 draft's vacuous `items` wrapper nesting and added proper **local** `#/$defs`
 refs, but left the one cross-document ref malformed). The vendored SDR schema
 carries exactly **one** such rewrite. When the

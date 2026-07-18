@@ -13,7 +13,7 @@
 
 ---
 
-## Re-validation snapshot — 2026-07-16 (v0.11.0 PRE-TAG) — the federal wave
+## Re-validation snapshot — 2026-07-18 (v0.11.0 PRE-TAG) — the federal wave
 
 v0.11.0 ships the re-cut Wave 1–2 scope: FedRAMP CR26 SDR emission, OMB
 M-25-21 minimum-practice tracking, and OMB M-25-22 acquisition-lifecycle

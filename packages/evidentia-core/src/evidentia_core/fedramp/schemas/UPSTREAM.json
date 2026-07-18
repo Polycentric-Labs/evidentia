@@ -1,6 +1,6 @@
 {
   "comment": "Provenance pins for the vendored FedRAMP CR26 artifacts. Single source of truth for scripts/check_fedramp_upstream_drift.py (the fedramp-schema-watch sentinel baseline) and for scripts/catalogs/gen_fedramp_ksi.py (the KSI catalog generator pin). Update ONLY via a deliberate re-sync: re-vendor, re-verify, and re-run the generator together. See README.md in this directory.",
-  "verified_at": "2026-07-16",
+  "verified_at": "2026-07-18",
   "rules": {
     "repo": "FedRAMP/rules",
     "commit": "12fe1b60f578ab448c26d143baac99d16d8bfe14",
@@ -33,7 +33,7 @@
       "fedramp-security-decision-record-schema-2026-06-24.json": {
         "blob_sha": "31d2b7207ec04037fb7537392375c7bb045ced9a",
         "sha256_upstream": "d598637cd4bb0f52425d7186ddc6f9463dcdda02734533623322e031d9b97b1a",
-        "local_delta": "One cross-document $ref rewritten from '...json/$defs/certificationPackageOverviewUri' to '...json#/$defs/certificationPackageOverviewUri' (JSON Pointer moved into the URI fragment, as JSON Schema 2020-12 requires). Upstream defect: FedRAMP/schemas issue #3, fix PR #4 (still unmerged at the 2026-07-16 re-vendor; the 1.0.0 graduation did NOT include it — re-verified). Drop this delta when the upstream fix merges and re-vendor byte-identical."
+        "local_delta": "One cross-document $ref rewritten from '...json/$defs/certificationPackageOverviewUri' to '...json#/$defs/certificationPackageOverviewUri' (JSON Pointer moved into the URI fragment, as JSON Schema 2020-12 requires). Upstream defect: FedRAMP/schemas issue #3, fix PR #4 (still unmerged at the 2026-07-18 re-vendor; the 1.0.0 graduation did NOT include it — re-verified). Drop this delta when the upstream fix merges and re-vendor byte-identical."
       },
       "fedramp-common-definitions-schema-2026-06-24.json": {
         "blob_sha": "534853e39c2863997ccf03245fcadbc293bcc5b3",

@@ -12,11 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet on the v0.11.x development branch._
 
-## [0.11.0] - 2026-07-16
+## [0.11.0] - 2026-07-18
 
 **Theme**: *The federal wave — three verified federal firsts on machine-readable rails.* v0.11.0 ships the re-cut Wave 1-2 scope of the v0.11 plan: **FedRAMP CR26 Security Decision Record emission** — `evidentia conmon ksi` emits the SDR `keySecurityIndicators` block (10 families / 46 KSIs) conformant to FedRAMP's official 2026-06-24 schemas, vendored at pinned upstream SHAs (re-verified at the schemas' 1.0.0 graduation) and drift-watched weekly — the **first production-grade open-source emitter** of the CR26 SDR format, and the first from any established tool; **OMB M-25-21 minimum-practice tracking** — structured per-practice status for the memo's seven §4(b) practices with CAIO waiver objects carrying the annual re-certification and 30-day OMB-report clocks, structure the federal AI Use Case Inventory lacks entirely; and **OMB M-25-22 acquisition-lifecycle tracking** — Evidentia's first procurement surface, modeling the memo's six §4 phases as auditable records with the §4(a) high-impact determination tie-in. The cycle's OSCAL 1.2.1 → 1.2.2 evaluation closed with a ratified **DEFER-WITH-TRIGGER** verdict (emitted documents stay on 1.2.1; adoption triggers armed), and a pre-release **claim-accuracy sweep** re-verified every public claim against primary sources (parity restated at the live 93.4%; machine-gated counts; first-mover registry updated with explicit caveats). Test suite: 4,947 passed; mypy strict clean; ruff clean.
 
-**Deferred (ratified v0.12 plan re-cut, 2026-07-16 — see [`docs/releases/plans/v0.12-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.12-plan.md))**: Wave 4 phase 3 (EU-AI-Act ↔ ISO 42001 crosswalk) → v0.12-if-capacity; Wave 4 phases 1/2/4, Wave 3 DORA, and the medical-device traceability enrichment → v1.1; Waves 5-6 (OpenVEX/VSA, SARIF collector, auto-review) → post-1.0; arXiv preprint timing = open decision. The GUI parity pass for the five federal api-only verbs leads v0.12.
+**Deferred (ratified v0.12 plan re-cut, 2026-07-18 — see [`docs/releases/plans/v0.12-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.12-plan.md))**: Wave 4 phase 3 (EU-AI-Act ↔ ISO 42001 crosswalk) → v0.12-if-capacity; Wave 4 phases 1/2/4, Wave 3 DORA, and the medical-device traceability enrichment → v1.1; Waves 5-6 (OpenVEX/VSA, SARIF collector, auto-review) → post-1.0; arXiv preprint timing = open decision. The GUI parity pass for the five federal api-only verbs leads v0.12.
 
 ### Changed
 
