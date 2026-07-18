@@ -61,7 +61,13 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6  # v4.1.2
         with:
-          cosign-release: 'v2.4.1'
+          # cosign >= 2.6 is required to DISCOVER the SLSA provenance
+          # attestation that actions/attest-build-provenance stores via the
+          # OCI 1.1 referrers API (Recipe 3). cosign 2.4.x verifies the image
+          # signature fine but returns "no matching attestations" for the
+          # referrer-stored attestation. gh attestation verify (any version)
+          # also finds it; this recipe uses cosign, so pin a version that can.
+          cosign-release: 'v2.6.3'
 
       # Same pinned scanner the osv gate / rescan use (version + SHA256).
       - name: Install osv-scanner (v2.4.0, checksum-verified)
