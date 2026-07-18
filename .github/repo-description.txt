@@ -1,1 +1,1 @@
-Open-source Python GRC tool: gap analysis, AI risk statements, OSCAL-first compliance automation. Enterprise-grade evidence integrity (Sigstore + GPG), CycloneDX SBOM, PyPI Trusted Publisher OIDC + PEP 740 attestations.
+Open-source Python GRC tool: gap analysis, AI risk statements, OSCAL-first compliance automation. Enterprise-grade evidence integrity (Sigstore + GPG + DSSE), CycloneDX SBOM, PyPI Trusted Publisher OIDC + PEP 740 attestations.
