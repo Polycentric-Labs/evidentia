@@ -121,7 +121,7 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 
 ## Recent Releases
 
-**v0.11.0 (2026-07-16)** — *The federal wave — three verified federal firsts on machine-readable rails*. **OMB M-25-22 AI acquisition-lifecycle tracking, `evidentia ai-gov acquisition`** (#196) (v0.11 Wave 2; spec ratified 2026-07-14, lifecycle phases verified verbatim against the memo text): Evidentia's first procurement surface.
+**v0.11.0 (2026-07-18)** — *The federal wave — three verified federal firsts on machine-readable rails*. **OMB M-25-22 AI acquisition-lifecycle tracking, `evidentia ai-gov acquisition`** (#196) (v0.11 Wave 2; spec ratified 2026-07-14, lifecycle phases verified verbatim against the memo text): Evidentia's first procurement surface.
 
 **v0.10.18 (2026-07-14)** — *Container rebuild on a fresh hardened base*. **ROADMAP-currency gate** (`scripts/check_roadmap_currency.py`), the roadmap's status headings must agree with the CHANGELOG's shipped `## [X.Y.Z]` blocks: nothing PLANNED/RESERVED that has shipped, no SHIPPED entries inside a PLANNED cycle umbrella, exactly one open cycle, and the open cycle must link an on-disk plan doc.
 

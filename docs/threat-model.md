@@ -3408,7 +3408,7 @@ by this entry.
 
 ---
 
-## v0.11.0 attack-surface delta — the federal wave (PRE-TAG 2026-07-16)
+## v0.11.0 attack-surface delta — the federal wave (PRE-TAG 2026-07-18)
 
 v0.11.0 adds three surface families; none opens a new network listener
 or credential path.

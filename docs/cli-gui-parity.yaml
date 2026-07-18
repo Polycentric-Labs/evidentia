@@ -37,7 +37,7 @@
 # (The "~30% GUI reaches the CLI" figure was API breadth: 55/98 leaves have an
 #  API; 13 are now surfaced as a dedicated GUI screen.)
 #
-# Current distribution (2026-07-16, post-v0.11 Wave 2): 99 full / 7 api-only /
+# Current distribution (2026-07-18, post-v0.11 Wave 2): 99 full / 7 api-only /
 # 0 cli-only / 11 exempt (117 leaves) = 93.4% GUI coverage. The 7 api-only rows
 # are the five v0.11 federal AI-governance verbs (`ai-gov set-practice` +
 # `ai-gov acquisition *`) pending their console pass, plus the two

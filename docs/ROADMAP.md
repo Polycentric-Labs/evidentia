@@ -2040,20 +2040,20 @@ v0.11.0's boundary re-cuts to Waves 1–2. No package
 
 ## v0.11 — Federal-compliance theme + AI governance — SHIPPED
 
-Opened 2026-07-09; **closed 2026-07-16 with v0.11.0** (the re-cut
+Opened 2026-07-09; **closed 2026-07-18 with v0.11.0** (the re-cut
 Wave 1–2 scope per the 2026-07-14 boundary re-cut — Wave 0 + the
 hygiene track H1–H6 had shipped early inside v0.10.18). Full plan:
 [`v0.11-plan.md`](releases/plans/v0.11-plan.md) — wave sequencing, the
 cycle-hygiene track (the 2026-07 practice-delta adoptions + the
 v0.10.17 deferred queue), the medical-device row split, and the
 ratification record. The remaining planned waves carry the **ratified
-2026-07-16 disposition** in
+2026-07-18 disposition** in
 [`v0.12-plan.md`](releases/plans/v0.12-plan.md) (Wave 4 phase 3 →
 v0.12-if-capacity; Wave 4 phases 1/2/4 + Wave 3 DORA + medical-device
 traceability → v1.1; Waves 5–6 → post-1.0; arXiv preprint = open
 decision).
 
-### v0.11.0 — The federal wave — SHIPPED (released 2026-07-16)
+### v0.11.0 — The federal wave — SHIPPED (released 2026-07-18)
 
 Three verified federal firsts on machine-readable rails: **FedRAMP
 CR26 SDR emission** (`evidentia conmon ksi` — the SDR
@@ -2263,7 +2263,7 @@ engineering-hardening batch addressed all three:
   maintainer — checked at PRR Row 21). P3 FIPS container variant stays gated on
   the federal-SI OpenPGP-interop answer.
 
-### Medical-device GRC feature line (v1.1+; re-cut 2026-07-16 from v0.11) — RESERVED (web-grounded research 2026-06-17)
+### Medical-device GRC feature line (v1.1+; re-cut 2026-07-18 from v0.11) — RESERVED (web-grounded research 2026-06-17)
 
 The medical-device-security direction the v0.10.10 FDA Section 524B catalogs opened, scanned + validated in a multi-angle web-grounded research pass. **Each feature gets a dedicated `polycentric-labcoat` research fleet at build-time** — the entries below are the high-level scan + positioning, not build specs. Effort and tier are planning-grade. The throughline: **don't rebuild commodity layers (STRIDE authoring, CBOM scanners) — ingest them; the uncontested slice is the open, signed, OSCAL/BOM-emitting evidence wrapper.**
 
@@ -2308,7 +2308,7 @@ Items deferred from Phase B audit v3 + integration plan §"v1.1+":
 
 ## v0.12 — Pre-1.0 hardening + GUI parity — PLANNED
 
-**The open cycle** (ratified 2026-07-16 at the v0.11.0 release prep).
+**The open cycle** (ratified 2026-07-18 at the v0.11.0 release prep).
 Full plan: [`v0.12-plan.md`](releases/plans/v0.12-plan.md) — the
 ratified disposition of the remaining v0.11 waves plus the LEAN v0.12
 scope: (1) the GUI parity pass for the five v0.11 federal api-only
