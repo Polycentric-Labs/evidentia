@@ -1218,9 +1218,12 @@ for completeness):
   levels × 8 control families; Evidentia ships the first OSCAL
   conversion (v0.10.5 Phase 2).
 - **Marino & Lane (2601.04474) follow-up:** the paper explicitly
-  invites OSS reference implementations; Evidentia's v1.0
-  transition narrative claims that mantle (see
-  [v1.0-transition.md](v1.0-transition.md)).
+  invites community development of compliance tooling ("a full
+  taxonomy of such tools will help guide and prioritize their
+  development by the research community" — verified 2026-07-19; it
+  does not use the phrase "OSS reference implementations");
+  Evidentia's v1.0 transition narrative positions itself as such an
+  implementation (see [v1.0-transition.md](v1.0-transition.md)).
 
 ### 11.2.B GRC LLM eval-suite scaffolding (v0.9.7 P4)
 
