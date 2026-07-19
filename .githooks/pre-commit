@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# pre-commit — fast wiki-mirror drift check (check-only; added 2026-07-19).
+#
+# Purpose: surface mirror drift at COMMIT time (~2s, with the exact fix
+# command) instead of first failing at push. Deliberately CHECK-ONLY —
+# this hook never writes or stages files (auto-writing hooks bite on
+# partial stages). The pre-push mirror gate remains as the backstop.
+#
+# Scope guard: runs only when a staged file is a mirror source or a
+# mirror page, so unrelated commits stay instant.
+
+set -euo pipefail
+
+staged="$(git diff --cached --name-only)"
+if ! grep -qE '^(docs/wiki/|docs/|CHANGELOG\.md|README\.md)' <<<"$staged"; then
+    exit 0
+fi
+
+export PYTHONIOENCODING=utf-8
+if ! python scripts/wiki/sync_mirrors.py --check >/dev/null 2>&1; then
+    echo "" >&2
+    echo "pre-commit: wiki mirrors are out of date with their canonical sources." >&2
+    echo "  Fix:  python scripts/wiki/sync_mirrors.py   (writes)   then re-stage + commit." >&2
+    echo "  (Check-only by design; nothing was modified. Pre-push enforces this too.)" >&2
+    exit 1
+fi
+exit 0

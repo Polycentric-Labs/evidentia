@@ -288,6 +288,16 @@ Cross-doc invariants to verify (pre-tag):
       docs/capability-matrix.md
 - [ ] **Capability-matrix freshness** — surfaces tested count +
       revalidation date current
+- [ ] **Claim-bearing deltas are verifier-sourced (G28 inversion;
+      added 2026-07-19)** — every NEW claim-bearing sentence in the
+      capability-matrix / threat-model deltas is written FROM a
+      `doc-runtime-verifier` PASS (or an equivalently exercised
+      behavior), BEFORE the release-prep commit — never drafted from
+      memory during release-prep. Rationale: all three v0.11.0
+      self-inflicted doc overclaims (F-V0110-4/6/7), and prior cycles'
+      G28 findings, were introduced at release-prep time from memory.
+      Scope: claim-bearing prose only (mechanisms, gates, active
+      behavior); CHANGELOG narrative is exempt.
 - [ ] **threat-model.md delta** — append a v{X.Y.Z}-delta sub-
       section covering any new public surface
 - [ ] **enterprise-grade.md** — every BLOCKER / HIGH / MEDIUM /
