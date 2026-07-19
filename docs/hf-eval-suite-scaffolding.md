@@ -96,7 +96,7 @@ expert annotation:
 | Subset | Framework | Target size | Source priority |
 |---|---|---|---|
 | `corpus_fedramp_high.jsonl` | FedRAMP Rev 5 High | 100+ | High — federal-SI walk-through driver |
-| `corpus_cmmc_l2.jsonl` | CMMC Level 2 | 100+ | High — Phase 2 enforcement Nov 10 2026 |
+| `corpus_cmmc_l2.jsonl` | CMMC Level 2 | 100+ | High — L2 self-assessment + 800-171 obligations continue (Phase 2 third-party assessments suspended 2026-07-13 pending DoD's reform review) |
 | `corpus_omb_m_24_10.jsonl` | OMB M-24-10 AI gov | 50+ | Medium — federal-AI inventory |
 | `corpus_eu_ai_act.jsonl` | EU AI Act Articles 9-15 | 100+ | Medium — overlap with AIReg-Bench |
 | `corpus_pcaobas1105.jsonl` | PCAOB AS 1105 + GenAI | 50+ | Low (specialized audit) |
