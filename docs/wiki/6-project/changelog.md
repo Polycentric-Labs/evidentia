@@ -10,7 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes yet on the v0.11.x development branch._
+### Changed
+- **README brand refresh** — a Polycentric Labs–family visual identity: a
+  light/dark `<picture>` banner and purpose-tiered, federal-blue-accented
+  badges, from the new Evidentia brand kit committed under `docs/brand/`
+  (banners, mark, seals, branded pills, dividers, the portable brand-token
+  sheet + the PL-repo brand template). README content — every claim, count,
+  and URL — is unchanged.
+- `readme_size_guard` budget raised 11,000 → 11,300 bytes
+  (`scripts/check_docs_health.py`, documented in-code) to seat the branded
+  README banner; the flair is image-borne, but the `<picture>` markup and
+  tiered badge rows cost ~130 bytes.
 
 ## [0.11.0] - 2026-07-18
 
