@@ -66,8 +66,8 @@ dev = [
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=5.0",
-    "ruff>=0.15.21",
-    "mypy>=2.2.0",
+    "ruff>=0.16.0",
+    "mypy>=2.3.0",
     # v0.3.0: flipped mypy CI job from advisory to strict. types-PyYAML is
     # needed to silence "Library stubs not installed for yaml" across every
     # module that parses catalog JSON / frameworks.yaml / user-dir manifests.
@@ -79,7 +79,7 @@ dev = [
     # `boto3` is the runtime dependency (also in evidentia-collectors
     # [aws] extra); having it in dev deps means collector tests run
     # without an extra install step.
-    "boto3>=1.43.46",
+    "boto3>=1.43.56",
     # Narrowed from moto[all] to the minimal service extras the suite
     # actually exercises (empirically: S3 Object Lock for the WORM +
     # GDPR-purge tests, STS for the AWS-collector connection test; the
@@ -96,7 +96,7 @@ dev = [
     # backend tests without needing the extra activated).
     "azure-storage-blob>=12.30.0",
     "azure-identity>=1.16.0",
-    "google-cloud-storage>=3.12.1",
+    "google-cloud-storage>=3.13.0",
     # v0.7.0: BLOCKER B7 (docs/enterprise-grade.md). Validates that our
     # OSCAL Assessment Results output round-trips through the NIST
     # OSCAL-Compass reference impl. Trestle is on pydantic.v1 internally
@@ -113,7 +113,7 @@ dev = [
     # case-folding, prefix-stripping, mapping cardinality) to
     # catch regressions hand-written tests would miss. Tests live
     # in tests/property/.
-    "hypothesis>=6.156.6",
+    "hypothesis>=6.161.6",
     # v0.8.2 G1: mutation testing baseline on the gap_analyzer +
     # risk_statements modules. Mutmut introduces small random
     # mutations to source code + re-runs the test suite — surviving
@@ -146,7 +146,7 @@ dev = [
     # OpenAPI spec; playwright drives the React UI for end-to-
     # end probing. Both ride in dev-deps so a fresh dev/CI venv
     # can run the DAST suite without separate install steps.
-    "schemathesis>=4.22.4",
+    "schemathesis>=4.24.3",
     "playwright>=1.61.0",
     # v0.10.0: py-ocsf-models drives the OCSF mapping layer
     # (evidentia_core.ocsf). It is an end-user extra
@@ -174,7 +174,7 @@ docs = [
     # ruff, and compliance-trestle. mkdocstrings auto-generates API
     # reference from package docstrings (verified canonical user:
     # pydantic itself).
-    "mkdocs-material>=9.5",
+    "mkdocs-material>=9.7.7",
     "mkdocstrings[python]>=1.0.6",
     # mkdocs-redirects: keeps old docs/<flat-file>.md paths resolving
     # while the wiki migration is in progress (per Stream C's
