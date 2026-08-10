@@ -69,7 +69,7 @@ xlsx = [
 # operator setup runbooks (bucket creation with Object Lock,
 # IAM policies, legal-hold workflow).
 worm-s3 = [
-    "boto3>=1.43.46",
+    "boto3>=1.43.66",
 ]
 worm-azure = [
     "azure-storage-blob>=12.19.0",
