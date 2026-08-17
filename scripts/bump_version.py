@@ -87,6 +87,33 @@ ANCHOR_VERSION_RE = re.compile(
 MANIFEST_PATH = Path(__file__).resolve().parent / "version_tracked_files.yaml"
 
 
+def builder_base_image(dockerfile: Path | None = None) -> str:
+    """Return the ``python:3.13-slim@sha256:…`` reference the Dockerfile's
+    builder stage pins.
+
+    v0.11.1: the non-Linux ``--regenerate-requirements`` path runs
+    pip-compile inside this exact image (interpreter parity with the
+    ``--require-hashes`` container install), and ``release.yml`` /
+    ``container-build.yml`` pin the same digest for the same reason. The
+    Dockerfile is the single source of truth — a second hardcoded literal
+    here had silently drifted behind the Dockerfile's pin.
+    """
+    p = dockerfile or Path("Dockerfile")
+    if not p.exists():
+        sys.exit(f"Cannot read the builder base image: {p} missing")
+    m = re.search(
+        r"^FROM\s+(python:3\.13-slim@sha256:[0-9a-f]{64})\b",
+        p.read_text(encoding="utf-8"),
+        flags=re.MULTILINE,
+    )
+    if not m:
+        sys.exit(
+            f"Cannot find the pinned `FROM python:3.13-slim@sha256:<digest>` "
+            f"builder line in {p}"
+        )
+    return m.group(1)
+
+
 def workspace_packages(pyproject_path: Path | None = None) -> list[str]:
     """Read ``[tool.uv.sources]`` from the root ``pyproject.toml``.
 
@@ -176,6 +203,13 @@ def bump_pin_range(
     The capture group ``(?P<name>...)`` preserves the package name in
     the replacement via the named back-reference ``\\g<name>``.
 
+    **v0.11.1**: the name group also admits an optional PEP 508 extras
+    bracket (``evidentia-eval[faithfulness-semantic]>=X.Y.Z,<M.(m+1).0``
+    — the ``evidentia-ai[eval-faithfulness]`` proxy extra). The bracket
+    is captured INSIDE ``name`` so ``\\g<name>`` carries it through the
+    substitution unchanged. Regression: the v0.11.0 sweep silently
+    skipped that pin, shipping an unsatisfiable extra.
+
     Hot-fix versions (X.Y.Z.W per the v0.7.4 / v0.7.7.1 precedent)
     ride the major.minor of their parent release.
     """
@@ -197,7 +231,7 @@ def bump_pin_range(
     # already-tightened pins and legacy loose ones).
     name_alt = "|".join(re.escape(p) for p in packages)
     cur_range = (
-        rf"(?P<name>{name_alt})>="
+        rf"(?P<name>(?:{name_alt})(?:\[[^\]]+\])?)>="
         rf"{cur_maj}\.{cur_min}\.\d+(?:\.\d+)?,"
         rf"<{cur_maj}\.{int(cur_min)+1}\.0"
     )
@@ -683,10 +717,22 @@ def main() -> int:
             req_in = docker_dir / "requirements.in"
             req_out = docker_dir / "requirements.txt"
 
-            # Ensure requirements.in pins the new version.
+            # Ensure requirements.in pins the new version. v0.11.1: keep
+            # every OTHER committed line (e.g. the deliberate
+            # `urllib3>=2.7.0` security floor) — release.yml preserves that
+            # floor explicitly; a full rewrite here silently dropped it.
             docker_dir.mkdir(exist_ok=True)
+            extra_in_lines: list[str] = []
+            if req_in.exists():
+                extra_in_lines = [
+                    ln
+                    for ln in req_in.read_text(encoding="utf-8").splitlines()
+                    if ln.strip()
+                    and not re.match(r"^evidentia(\[[^\]]*\])?==", ln.strip())
+                ]
             req_in.write_text(
-                f"evidentia[gui]=={args.to}\n",
+                "\n".join([f"evidentia[gui]=={args.to}", *extra_in_lines])
+                + "\n",
                 encoding="utf-8",
             )
 
@@ -789,17 +835,25 @@ def main() -> int:
                         f"  Host is {sys.platform}; invoking "
                         "pip-compile inside Docker (Linux base)"
                     )
-                    base_image = (
-                        "python:3.13-slim@sha256:"
-                        "c33f0bc4364a6881bed1ec0cc2665e6c"
-                        "53c87a43e774aaeab88e6f17af105e4f"
-                    )
-                    docker_path = subprocess.run(
-                        ["pwd", "-W"],
-                        capture_output=True,
-                        text=True,
-                        check=False,
-                    ).stdout.strip() or str(repo_root)
+                    # v0.11.1: read the pin from the Dockerfile (single
+                    # source of truth) instead of a second literal that
+                    # had drifted behind it.
+                    base_image = builder_base_image(repo_root / "Dockerfile")
+                    # `pwd -W` yields a forward-slash Windows path under
+                    # Git Bash; it does not exist under PowerShell / cmd
+                    # (FileNotFoundError), so fall back to the resolved
+                    # repo root as a POSIX-style path (Docker Desktop
+                    # accepts either form for -v mounts).
+                    try:
+                        docker_path = subprocess.run(
+                            ["pwd", "-W"],
+                            capture_output=True,
+                            text=True,
+                            check=False,
+                        ).stdout.strip()
+                    except OSError:
+                        docker_path = ""
+                    docker_path = docker_path or repo_root.resolve().as_posix()
                     compile_cmd = [
                         "docker",
                         "run",
@@ -820,7 +874,14 @@ def main() -> int:
                             # anchored to a stale preview. Matches the
                             # Linux-direct path above + release.yml +
                             # container-build.yml.
-                            "pip install -q pip-tools && "
+                            # pip-tools pinned to the same release
+                            # release.yml / container-build.yml use so
+                            # the local preview and the CI/release regens
+                            # agree. 7.6.1 (v0.11.1): 7.5.3 breaks on the
+                            # pip 26.2 shipped in the current
+                            # python:3.13-slim (`make_requirement_preparer()
+                            # missing 'allow_editables'`).
+                            "pip install -q pip-tools==7.6.1 && "
                             "pip-compile --generate-hashes "
                             "--upgrade "
                             "--find-links=/wheels "

@@ -86,10 +86,15 @@ worm-gcs = [
 # for the same slim-default-install rationale as the `sigstore` extra.
 # The mapping module lazy-imports py_ocsf_models and raises a helpful
 # error if the extra is absent (mirrors the collector extras pattern).
-# Pinned to the 0.9.x line: py-ocsf-models is pre-1.0, so a minor
-# bump may break.
+# Pinned to a bounded pre-1.0 range: py-ocsf-models is pre-1.0, so a
+# minor bump may break — each widening is validated by the OCSF mapping
+# + round-trip test suites before it lands. v0.11.1 widened 0.9.x ->
+# <0.11.0: 0.10.0 (2026-07-13) dropped the `cryptography<47` cap that
+# had pinned the full-extras dev lock at cryptography 46.0.7 (the
+# GHSA-537c-gmf6-5ccf allowlist removal trigger) and blocked the
+# CVE-2026-69247/69248/69249 fixes (cryptography >=49/50).
 ocsf = [
-    "py-ocsf-models>=0.9.0,<0.10.0",
+    "py-ocsf-models>=0.9.0,<0.11.0",
 ]
 
 [project.urls]

@@ -108,6 +108,39 @@ class TestBumpPinRange:
         # Doesn't match the new range (avoids no-op rewrite loops)
         assert not regex.fullmatch("evidentia-core>=0.8.0,<0.9.0")
 
+    def test_pin_with_pep508_extras_bracket_is_matched_and_preserved(
+        self, bump: Any
+    ) -> None:
+        """v0.11.1: a workspace pin that carries a PEP 508 extras bracket
+        (``evidentia-eval[faithfulness-semantic]>=0.11.0,<0.12.0`` — the
+        ``evidentia-ai[eval-faithfulness]`` proxy extra) must be matched
+        AND the bracket must survive the substitution unchanged.
+
+        Regression: the v0.11.0 sweep silently skipped that pin (the
+        regex required the bare member name to be followed directly by
+        ``>=``), shipping ``evidentia-ai`` with an unsatisfiable extra
+        (``evidentia-eval[...]<0.11.0`` against a 0.11.0 base dep).
+        """
+        cur_re, tgt = bump.bump_pin_range(
+            "0.11.0", "0.11.1", ["evidentia-core", "evidentia-eval"]
+        )
+        regex = re.compile(cur_re)
+        line = "evidentia-eval[faithfulness-semantic]>=0.11.0,<0.12.0"
+        assert regex.fullmatch(line)
+        assert (
+            regex.sub(tgt, line)
+            == "evidentia-eval[faithfulness-semantic]>=0.11.1,<0.12.0"
+        )
+        # A bare pin still round-trips exactly as before.
+        assert (
+            regex.sub(tgt, "evidentia-core>=0.11.0,<0.12.0")
+            == "evidentia-core>=0.11.1,<0.12.0"
+        )
+        # The bracket must belong to a workspace member — a third-party
+        # dep with extras + the same range shape stays untouched
+        # (F-V100-M1 guard still holds).
+        assert not regex.fullmatch("some-lib[extra]>=0.11.0,<0.12.0")
+
     def test_pin_pattern_does_not_match_unrelated_versions(
         self, bump: Any
     ) -> None:
@@ -143,6 +176,50 @@ class TestBumpPinRange:
         """
         _, tgt = bump.bump_pin_range(current, target, self.PKGS)
         assert tgt == expected_target_pin
+
+
+class TestBuilderBaseImage:
+    """v0.11.1: the in-Docker pip-compile path (non-Linux hosts) must run
+    inside the SAME ``python:3.13-slim@sha256:…`` the Dockerfile's builder
+    stage pins — read from the Dockerfile, not a second hardcoded literal
+    (which had silently drifted behind the Dockerfile's pin)."""
+
+    def test_reads_builder_digest_from_dockerfile(
+        self, bump: Any, tmp_path: Path
+    ) -> None:
+        digest = "a" * 64
+        dockerfile = tmp_path / "Dockerfile"
+        dockerfile.write_text(
+            "ARG INSTALL_SOURCE=pypi\n"
+            f"FROM python:3.13-slim@sha256:{digest} AS base-builder\n"
+            "FROM dhi.io/python:3.13@sha256:"
+            + "b" * 64
+            + " AS final\n",
+            encoding="utf-8",
+        )
+        assert (
+            bump.builder_base_image(dockerfile)
+            == f"python:3.13-slim@sha256:{digest}"
+        )
+
+    def test_missing_pin_is_a_clean_error(
+        self, bump: Any, tmp_path: Path
+    ) -> None:
+        dockerfile = tmp_path / "Dockerfile"
+        dockerfile.write_text("FROM scratch\n", encoding="utf-8")
+        with pytest.raises(SystemExit, match=r"python:3\.13-slim@sha256"):
+            bump.builder_base_image(dockerfile)
+
+    def test_repo_dockerfile_matches_workflow_pins(self, bump: Any) -> None:
+        """The Dockerfile builder digest is the single source of truth; the
+        two workflows that run pip-compile in that image must carry the
+        identical digest (interpreter parity for --require-hashes)."""
+        image = bump.builder_base_image(REPO_ROOT / "Dockerfile")
+        for wf in ("release.yml", "container-build.yml"):
+            text = (REPO_ROOT / ".github" / "workflows" / wf).read_text(
+                encoding="utf-8"
+            )
+            assert image in text, f"{wf} pip-compile base drifted from Dockerfile"
 
 
 class TestCurPartsStr:

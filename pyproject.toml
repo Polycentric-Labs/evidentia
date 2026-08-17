@@ -6,8 +6,9 @@ version = "0.11.0"
 # >=1.83.7,<2.0) declares requires_python "<3.14,>=3.10", so the stack cannot run on
 # 3.14+. Beyond honesty, the cap is load-bearing for RESOLUTION: without it, uv's
 # universal resolver (which Dependabot runs) explores a python_full_version>=3.15 fork
-# where py-ocsf-models 0.9.0 (via evidentia-collectors[ocsf]; caps cryptography<47)
-# collides with the newest cryptography the open floor selects -> "requirements
+# where py-ocsf-models 0.9.0 (via evidentia-collectors[ocsf]; it capped cryptography<47
+# until 0.10.0 lifted the cap — the range was widened to <0.11.0 in v0.11.1) collided
+# with the newest cryptography the open floor selects -> "requirements
 # unsatisfiable" -> every Dependabot update run errors and NO dependency PR can rebase
 # or auto-merge. Capping requires-python prunes that fork DURING resolution (uv PR
 # #8403), which unblocks Dependabot. uv workspaces take the INTERSECTION of all members'
@@ -152,8 +153,10 @@ dev = [
     # (evidentia_core.ocsf). It is an end-user extra
     # (`evidentia-core[ocsf]`); mirrored here in dev-deps so the
     # dev/CI venv runs the OCSF round-trip tests without activating
-    # the extra — same pattern as boto3 / azure / gcs above.
-    "py-ocsf-models>=0.9.0,<0.10.0",
+    # the extra — same pattern as boto3 / azure / gcs above. Range
+    # mirrors packages/evidentia-core/pyproject.toml [ocsf] (widened to
+    # <0.11.0 in v0.11.1 — see the rationale there).
+    "py-ocsf-models>=0.9.0,<0.11.0",
     # WS-D Q1 (OpenSSF Scorecard "Fuzzing" lift): atheris drives the
     # coverage-guided fuzz harnesses in tests/fuzz/fuzz_*.py, built + run
     # by ClusterFuzzLite (.clusterfuzzlite/) in CI and graduating to

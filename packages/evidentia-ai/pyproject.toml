@@ -50,8 +50,12 @@ dependencies = [
 # shim removal: when ``evidentia_ai.eval`` is deleted, operators
 # should install ``evidentia-eval[faithfulness-semantic]``
 # directly.
+# v0.11.1: this pin is now tracked by scripts/bump_version.py (the
+# workspace_pins kind admits the ``[extras]`` bracket) — the v0.11.0
+# sweep had skipped it, leaving ``<0.11.0`` against a 0.11.0 base dep
+# (unsatisfiable on a clean PyPI install of the extra).
 eval-faithfulness = [
-    "evidentia-eval[faithfulness-semantic]>=0.10.4,<0.11.0",
+    "evidentia-eval[faithfulness-semantic]>=0.11.0,<0.12.0",
 ]
 
 [project.urls]
