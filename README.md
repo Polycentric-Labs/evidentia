@@ -61,7 +61,7 @@ For the full workspace (AI risk-statements, REST API, all collectors, MCP server
 pip install 'evidentia[ai,api,collectors,mcp]'
 ```
 
-Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.11.1` (cosign keyless OIDC + SLSA Provenance v1 verified).
+Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.11.2` (cosign keyless OIDC + SLSA Provenance v1 verified).
 
 See the [Getting Started wiki section](https://github.com/Polycentric-Labs/evidentia/wiki/Getting-Started) for air-gapped install, virtualenv setup, and full extras matrix.
 
@@ -130,7 +130,7 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 
 ## Recent Releases
 
-**v0.11.1 (2026-08-16)** — *Day-N dependency sweep on a fresh hardened base*. **README brand refresh**, a Polycentric Labs family visual identity: a light/dark `<picture>` banner and purpose-tiered, federal-blue-accented badges, from the new Evidentia brand kit committed under `docs/brand/`.
+**v0.11.2 (2026-08-17)** — *Day-N dependency sweep on a fresh hardened base*. **README brand refresh**, a Polycentric Labs family visual identity: a light/dark `<picture>` banner and purpose-tiered, federal-blue-accented badges, from the new Evidentia brand kit committed under `docs/brand/`.
 
 **v0.11.0 (2026-07-18)** — *The federal wave — three verified federal firsts on machine-readable rails*. **OMB M-25-22 AI acquisition-lifecycle tracking, `evidentia ai-gov acquisition`** (#196) (v0.11 Wave 2; spec ratified 2026-07-14, lifecycle phases verified verbatim against the memo text): Evidentia's first procurement surface.
 
