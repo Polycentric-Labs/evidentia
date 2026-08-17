@@ -43,10 +43,19 @@ paths = [
     #     splits the AWS literal to dodge scanners).
     #   - test_gaps.py / test_sse_endpoints.py use fake 16-hex `report_key`
     #     test values that the generic-api-key high-entropy rule trips on.
+    #   - test_gap_report_repository_router.py / test_gap_store_repository.py
+    #     (v0.12 explicit-root gap-report repository seam) use the same fake
+    #     16-hex report-key shape (`"0123456789abcdef"` in a `key` parametrize)
+    #     — the generic-api-key rule fired on it 2026-08-17. NOTE: the CI scan
+    #     fetches every branch and runs `gitleaks git` over the whole history,
+    #     so a false positive on ANY pushed branch fails the required check
+    #     for EVERY open PR — allowlist by module here, not per-branch.
     # Scoped to these exact modules so real source/config stays fully scanned.
     '''tests/unit/test_audit/test_logger\.py''',
     '''tests/integration/test_api/test_gaps\.py''',
     '''tests/integration/test_api/test_sse_endpoints\.py''',
+    '''tests/integration/test_api/test_gap_report_repository_router\.py''',
+    '''tests/unit/test_gap_analyzer/test_gap_store_repository\.py''',
 ]
 
 # Value-precise regex allowlist (matched against the detected SECRET, NOT the
