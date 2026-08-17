@@ -538,8 +538,13 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      # v1.14.2 (v0.11.2): bundles twine 7.0.0, which accepts core-metadata
+      # 2.5. hatchling 1.32.0 (2026-08-11) bumped its default Metadata-Version
+      # to 2.5, and the v1.14.0 action's twine 6.1.0 rejected the v0.11.1 wheels
+      # at its pre-upload `twine check` ("'2.5' is not a valid metadata
+      # version") — the atomic gate stopped the publish; v0.11.1 is a ghost tag.
       - name: Publish to PyPI via Trusted Publisher (OIDC)
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # v1.14.0
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33  # v1.14.2
         with:
           packages-dir: dist/
           # skip-existing so a move-tag re-fire after a partial publish doesn't
