@@ -24,10 +24,10 @@ pip install pypi-attestations
 # Verify a single wheel
 pypi-attestations verify pypi \
   --repository https://github.com/Polycentric-Labs/evidentia \
-  pypi:evidentia_core-0.11.0-py3-none-any.whl
+  pypi:evidentia_core-0.11.1-py3-none-any.whl
 
 # Expected output:
-#   OK: evidentia_core-0.11.0-py3-none-any.whl
+#   OK: evidentia_core-0.11.1-py3-none-any.whl
 ```
 
 **PowerShell (Windows)**
@@ -39,10 +39,10 @@ pip install pypi-attestations
 # Verify a single wheel
 pypi-attestations verify pypi `
   --repository https://github.com/Polycentric-Labs/evidentia `
-  pypi:evidentia_core-0.11.0-py3-none-any.whl
+  pypi:evidentia_core-0.11.1-py3-none-any.whl
 
 # Expected output:
-#   OK: evidentia_core-0.11.0-py3-none-any.whl
+#   OK: evidentia_core-0.11.1-py3-none-any.whl
 ```
 
 Per-release sweep across all 8 packages:
@@ -54,7 +54,7 @@ for pkg in evidentia evidentia_ai evidentia_api evidentia_collectors \
            evidentia_core evidentia_eval evidentia_integrations evidentia_mcp; do
   pypi-attestations verify pypi \
     --repository https://github.com/Polycentric-Labs/evidentia \
-    "pypi:${pkg}-0.11.0-py3-none-any.whl"
+    "pypi:${pkg}-0.11.1-py3-none-any.whl"
 done
 ```
 
@@ -65,7 +65,7 @@ foreach ($pkg in 'evidentia','evidentia_ai','evidentia_api','evidentia_collector
                  'evidentia_core','evidentia_eval','evidentia_integrations','evidentia_mcp') {
   pypi-attestations verify pypi `
     --repository https://github.com/Polycentric-Labs/evidentia `
-    "pypi:${pkg}-0.11.0-py3-none-any.whl"
+    "pypi:${pkg}-0.11.1-py3-none-any.whl"
 }
 ```
 
@@ -78,8 +78,8 @@ foreach ($pkg in 'evidentia','evidentia_ai','evidentia_api','evidentia_collector
 # https://docs.sigstore.dev/system_config/installation/
 
 # Verify the container's keyless OIDC signature
-cosign verify ghcr.io/polycentric-labs/evidentia:v0.11.0 \
-  --certificate-identity-regexp "https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/v0.11.0" \
+cosign verify ghcr.io/polycentric-labs/evidentia:v0.11.1 \
+  --certificate-identity-regexp "https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/v0.11.1" \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 
 # Expected output: "The cosign claims were validated" + SLSA Provenance v1 JSON.
@@ -92,8 +92,8 @@ cosign verify ghcr.io/polycentric-labs/evidentia:v0.11.0 \
 # https://docs.sigstore.dev/system_config/installation/
 
 # Verify the container's keyless OIDC signature
-cosign verify ghcr.io/polycentric-labs/evidentia:v0.11.0 `
-  --certificate-identity-regexp "https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/v0.11.0" `
+cosign verify ghcr.io/polycentric-labs/evidentia:v0.11.1 `
+  --certificate-identity-regexp "https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/v0.11.1" `
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 
 # Expected output: "The cosign claims were validated" + SLSA Provenance v1 JSON.
@@ -105,7 +105,7 @@ cosign verify ghcr.io/polycentric-labs/evidentia:v0.11.0 `
 
 ```bash
 # Download the SBOM
-gh release download v0.11.0 --pattern 'evidentia-sbom.cdx.json' \
+gh release download v0.11.1 --pattern 'evidentia-sbom.cdx.json' \
   --repo Polycentric-Labs/evidentia
 
 # Scan for vulnerabilities
@@ -118,7 +118,7 @@ osv-scanner scan source -L evidentia-sbom.cdx.json
 
 ```powershell
 # Download the SBOM
-gh release download v0.11.0 --pattern 'evidentia-sbom.cdx.json' `
+gh release download v0.11.1 --pattern 'evidentia-sbom.cdx.json' `
   --repo Polycentric-Labs/evidentia
 
 # Scan for vulnerabilities
@@ -136,14 +136,14 @@ attestation inline. To extract it:
 > OCI 1.1 referrers API (pushed by `actions/attest-build-provenance`); cosign
 > 2.4.x can verify the image signature but returns `no matching attestations`
 > for the referrer-stored attestation. If you are pinned to an older cosign,
-> use the tool-native `gh attestation verify oci://ghcr.io/polycentric-labs/evidentia:v0.11.0 -R Polycentric-Labs/evidentia`
+> use the tool-native `gh attestation verify oci://ghcr.io/polycentric-labs/evidentia:v0.11.1 -R Polycentric-Labs/evidentia`
 > instead (any `gh` version finds it).
 
 **Bash / Linux / macOS**
 
 ```bash
-cosign verify-attestation ghcr.io/polycentric-labs/evidentia:v0.11.0 \
-  --certificate-identity-regexp "https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/v0.11.0" \
+cosign verify-attestation ghcr.io/polycentric-labs/evidentia:v0.11.1 \
+  --certificate-identity-regexp "https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/v0.11.1" \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   --type slsaprovenance1
 ```
@@ -151,8 +151,8 @@ cosign verify-attestation ghcr.io/polycentric-labs/evidentia:v0.11.0 \
 **PowerShell (Windows)**
 
 ```powershell
-cosign verify-attestation ghcr.io/polycentric-labs/evidentia:v0.11.0 `
-  --certificate-identity-regexp "https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/v0.11.0" `
+cosign verify-attestation ghcr.io/polycentric-labs/evidentia:v0.11.1 `
+  --certificate-identity-regexp "https://github.com/Polycentric-Labs/evidentia/.github/workflows/release.yml@refs/tags/v0.11.1" `
   --certificate-oidc-issuer https://token.actions.githubusercontent.com `
   --type slsaprovenance1
 ```

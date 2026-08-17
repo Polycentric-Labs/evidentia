@@ -1,6 +1,6 @@
 # Evidentia roadmap
 
-**Last updated: v0.11.0 (planning, July 2026).**
+**Last updated: v0.11.1 (planning, July 2026).**
 
 > **Engineering practices** — how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the

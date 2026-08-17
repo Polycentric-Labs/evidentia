@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-workspace"
-version = "0.11.0"
+version = "0.11.1"
 # Upper bound tracks the TRUE runnable ceiling of the workspace, which is set by the
 # tightest transitive Python cap: litellm (a hard dep of evidentia-ai, pinned
 # >=1.83.7,<2.0) declares requires_python "<3.14,>=3.10", so the stack cannot run on
