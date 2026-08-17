@@ -1,6 +1,6 @@
 # Evidentia roadmap
 
-**Last updated: v0.11.0 (planning, July 2026).**
+**Last updated: v0.11.1 (planning, July 2026).**
 
 > **Engineering practices** — how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
@@ -2070,6 +2070,27 @@ phases with the §4(a) high-impact tie-in). Plus the ratified OSCAL
 sweep (parity restated at the live 93.4%; first-mover registry updated
 with explicit caveats). Test suite 4,939 passed. The five federal
 api-only parity rows lead the v0.12 GUI pass.
+
+### v0.11.1 — Day-N dependency sweep on a fresh hardened base — SHIPPED (released 2026-08-16)
+
+Security patch: all 26 open Dependabot advisories cleared in one
+consolidated bump across `uv.lock` (cryptography 50.0.0, aiohttp
+3.14.3, pyasn1 0.6.4, pymdown-extensions 11.0.1), the web-UI lockfile
+(react-router 7.18.2 + dev-scope js-yaml / postcss / undici /
+brace-expansion) and the regenerated `docker/requirements.txt`; the
+`py-ocsf-models` range widened to `<0.11.0` (its 0.10.0 release
+dropped the `cryptography<47` cap that had pinned the dev lock — the
+GHSA-537c allowlist entry's removal trigger, leaving `osv-scanner.toml`
+with zero active entries); both pinned container bases move to their
+current digests (the drift the base-freshness sentinel flagged in
+issue #218) and the image is rebuilt, re-signed, re-attested. Also
+fixes the unsatisfiable `evidentia-ai[eval-faithfulness]` extra pin
+(bumper regex now admits `[extras]`), moves the release regen to
+pip-tools 7.6.1 (7.5.3 breaks on pip 26.2), and hardens
+`bump_version.py` (Dockerfile-sourced builder digest, preserved
+`requirements.in` floor). Unblocks the required `osv-scanner (SBOM)`
+check that had failed every open PR and drains the parked Dependabot
+queue. No package (`packages/*/src`) code changes.
 
 The feature bullets below are the cycle's planning record; items not
 shipped in v0.11.0 carry the ratified disposition above.

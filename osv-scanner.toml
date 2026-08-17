@@ -42,18 +42,20 @@
 # (last_affected 2.12.0, OSV API confirmed; osv-scanner reported the entry as
 # an unused ignore).
 
-# (v0.10.14 / P2 DHI migration) Accepted nominal HIGH, availability-only, that is FIXED
-# in the shipped container as of P1 (cryptography is now a direct evidentia-core dep
-# and the [gui] closure resolves cryptography==49.0.0, >=48.0.1). CWE-125 out-of-bounds
-# READ in the OpenSSL statically bundled into cryptography's PyPI wheels (wheel-only --
-# sdist builds use system OpenSSL). This entry is retained ONLY because the full-extras
-# DEV resolution (sigstore+ocsf+collectors) is still capped below the fix by py-ocsf-models.
-# Full reachability proof: CHANGELOG.md `## [0.10.10]` (original acceptance
-# rationale) + `## [0.10.16]` (shipped-container fix confirmation, P2 DHI
-# migration) -- v0.10.10 was a skip-by-reuse cycle with no standalone
-# docs/releases/reviews/security-review-v0.10.10.md; the nearest full review is
-# docs/releases/reviews/security-review-v0.10.12.md.
-[[IgnoredVulns]]
-id = "GHSA-537c-gmf6-5ccf"
-ignoreUntil = 2026-09-15
-reason = "cryptography GHSA-537c-gmf6-5ccf (CVSS3.1 7.5 AV:N but C:N/I:N/A:H -- availability-only DoS; CWE-125 out-of-bounds read in the OpenSSL statically bundled into cryptography PyPI wheels; wheel-only, no CVE assigned; affects >=0.5.0,<48.0.1, fixed in 48.0.1). POST-P1 STATUS CHANGE: cryptography is now a DIRECT evidentia-core dependency (evidentia-core/pyproject.toml, cryptography>=44.0, added for the cryptography-native Ed25519/RSA-PSS + DSSE/in-toto air-gap signing path) -- it IS present in the shipped container closure, so the prior 'not in any shipped artifact / both sigstore and ocsf are opt-in extras' rationale no longer holds. FIXED IN THE SHIPPED IMAGE: the container installs evidentia[gui] (= evidentia-api), and that closure resolves cryptography==49.0.0 (pinned in docker/requirements.txt, grep-confirmed) -- >=48.0.1, i.e. the FIX -- because [gui] does not pull the optional [ocsf] extra, which is the only thing capping cryptography below 47 elsewhere; the advisory does not apply to the shipped container at all. STILL PRESENT IN THE DEV SBOM: py-ocsf-models 0.9.0 -- the only release on PyPI, pulled solely by Evidentia's optional [ocsf] extra -- hard-caps cryptography>=44.0.3,<47, pinning the full-extras dev resolution (uv.lock, sigstore+ocsf+collectors[all] resolved together) at cryptography 46.0.7 (<48.0.1, vulnerable); uv cannot float cryptography to 48.x there without making the workspace lock unsatisfiable (resolver-trace-confirmed 2026-06-15). This entry exists ONLY for that dev SBOM scan, not for any shipped artifact. NOT REACHABLE from Evidentia code even in the capped dev combo: the only `import cryptography` in any packages/*/src is oscal/sigstore.py (`from cryptography import x509`) and oscal/keysign.py; the [ocsf] mapping module that pulls 46.0.7 never imports cryptography (grep-confirmed 2026-06-15 and re-confirmed 2026-06-30 for the P2 DHI migration). Installed via [sigstore] alone (no [ocsf]), cryptography floats to 48.x+ (the FIX) since only ocsf caps <47; worst case ([sigstore,ocsf] together, dev-only) is a DoS-only OOB read during an explicit operator sign/verify on a malicious Fulcio cert -- no server-side surface, no data exposure. REMOVAL TRIGGER: py-ocsf-models ships a release relaxing the cryptography<47 cap (filed upstream 2026-06-16 as prowler-cloud/py-ocsf-models#300; then `uv lock --upgrade-package py-ocsf-models --upgrade-package cryptography` floats the dev lock to >=48.0.1 too), or the advisory is withdrawn. Operator-confirmed accept 2026-06-15 (v0.10.10 cycle); re-validated for the P2 DHI container base migration 2026-06-30 (shipped-container fix confirmed via local wheel build). Re-validate by 2026-09-15."
+# (v0.11.1) The accepted cryptography nominal-HIGH, availability-only entry
+# (GHSA-537c-gmf6-5ccf, CWE-125 OOB read in the OpenSSL statically bundled into
+# cryptography PyPI wheels, fixed in 48.0.1; accepted 2026-06-15 in the v0.10.10
+# cycle, re-validated 2026-06-30 for the P2 DHI migration; dev-SBOM-only -- the
+# shipped container's [gui] closure already resolved >=48.0.1) was REMOVED
+# 2026-08-16: its documented removal trigger fired -- py-ocsf-models 0.10.0
+# (PyPI 2026-07-13; upstream prowler-cloud/py-ocsf-models#300) dropped the
+# `cryptography>=44.0.3,<47` cap, Evidentia widened its py-ocsf-models range to
+# <0.11.0, and `uv lock --upgrade-package py-ocsf-models --upgrade-package
+# cryptography` floated the full-extras dev lock from 46.0.7 to 50.0.0 (also
+# clearing CVE-2026-69247 / -69248 / -69249, fixed in 50.0.0 / 49.0.0). Re-add
+# with a fresh disposition only if a future cap re-pins the dev lock below a fix.
+# Full original reachability proof: CHANGELOG.md `## [0.10.10]` + `## [0.10.16]`
+# (v0.10.10 was a skip-by-reuse cycle; nearest full review is
+# docs/releases/reviews/security-review-v0.10.12.md).
+#
+# No active [[IgnoredVulns]] entries as of v0.11.1.

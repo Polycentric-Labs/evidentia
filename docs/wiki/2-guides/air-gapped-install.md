@@ -38,8 +38,8 @@ Pull the cosign-signed image on the connected host, save it to a tarball, and
 carry the tarball across the air gap:
 
 ```bash
-docker pull ghcr.io/polycentric-labs/evidentia:v0.11.0
-docker save ghcr.io/polycentric-labs/evidentia:v0.11.0 -o evidentia.tar
+docker pull ghcr.io/polycentric-labs/evidentia:v0.11.1
+docker save ghcr.io/polycentric-labs/evidentia:v0.11.1 -o evidentia.tar
 ```
 
 On the air-gapped host: `docker load -i evidentia.tar`.
@@ -56,7 +56,7 @@ index disabled so pip never reaches for the network:
 python -m venv .venv && source .venv/bin/activate
 pip install --no-index --find-links ./evidentia-wheelhouse evidentia
 evidentia version
-# → Evidentia v0.11.0 / Python 3.12.x
+# → Evidentia v0.11.1 / Python 3.12.x
 ```
 
 **PowerShell (Windows)**
@@ -65,7 +65,7 @@ evidentia version
 python -m venv .venv ; .\.venv\Scripts\Activate.ps1
 pip install --no-index --find-links ./evidentia-wheelhouse evidentia
 evidentia version
-# → Evidentia v0.11.0 / Python 3.12.x
+# → Evidentia v0.11.1 / Python 3.12.x
 ```
 
 ## Step 3 — Validate the air-gap posture

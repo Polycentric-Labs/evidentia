@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-collectors"
-version = "0.11.0"
+version = "0.11.1"
 description = "Evidence collection agents for AWS, Databricks, GitHub, Okta, Snowflake, SQL databases, and vendor-risk APIs (Vanta, Drata, BitSight, SecurityScorecard)"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
@@ -18,7 +18,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "evidentia-core>=0.11.0,<0.12.0",
+    "evidentia-core>=0.11.1,<0.12.0",
     "httpx>=0.27",
 ]
 
@@ -65,7 +65,7 @@ snowflake = ["snowflake-connector-python>=3.10"]
 # evidentia_core.ocsf (which lazy-imports py-ocsf-models). Mirrored
 # under [ocsf] so `pip install 'evidentia-collectors[ocsf]'` Just Works
 # — same operator-facing pattern as [aws] / [github] / etc.
-ocsf = ["py-ocsf-models>=0.9.0,<0.10.0"]
+ocsf = ["py-ocsf-models>=0.9.0,<0.11.0"]
 all = [
     "boto3>=1.43.46",
     "pygithub>=2.4",
@@ -76,7 +76,7 @@ all = [
     "oracledb>=2.0",
     "databricks-sdk>=0.30",
     "snowflake-connector-python>=3.10",
-    "py-ocsf-models>=0.9.0,<0.10.0",
+    "py-ocsf-models>=0.9.0,<0.11.0",
 ]
 
 [project.urls]

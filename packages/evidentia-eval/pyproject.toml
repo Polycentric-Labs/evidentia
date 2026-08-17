@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-eval"
-version = "0.11.0"
+version = "0.11.1"
 description = "DFAH (Decision-Faithfulness Assessment Harness) determinism + faithfulness eval harness for Evidentia — dev-time AI-output quality gates"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
@@ -18,7 +18,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "evidentia-core>=0.11.0,<0.12.0",
+    "evidentia-core>=0.11.1,<0.12.0",
 ]
 
 [project.optional-dependencies]
