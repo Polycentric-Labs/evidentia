@@ -29,7 +29,7 @@ dependencies = [
 # Jaccard baseline are unaffected (no extra needed). Heavyweight;
 # intentionally extra-gated.
 faithfulness-semantic = [
-    "sentence-transformers>=3.0",
+    "sentence-transformers>=5.7.0",
     "numpy>=2.5.1",
 ]
 
