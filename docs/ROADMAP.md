@@ -2331,6 +2331,22 @@ Items deferred from Phase B audit v3 + integration plan §"v1.1+":
   pre-v1.0).
 - Architectural Tier 3 items from Phase B audit v3 (control-chart
   script ships skill-side; dynamic-install eBPF scan; etc.).
+- **`mcp` SDK 2.0 migration** (tracked 2026-08-20). mcp 2.0.0 is the
+  stable v2 line supporting the 2026-07-28 protocol revision; 1.x is in
+  maintenance (security + critical fixes only). Known work:
+  `signed_dispatch.py`'s snake_case attribute access and the `McpError`
+  relocation. Until it lands, the root dev-dep is capped
+  `mcp>=1.28.1,<2.0` — the SDK's own recommendation for projects not yet
+  migrated — with a matching `ignore` in `.github/dependabot.yml`,
+  because the uncapped re-lock kept dragging the major into the routine
+  python-dev batch and putting the whole PR red. **Drop the cap and the
+  ignore in the migration's own PR.**
+- **`@tanstack/react-table` v9 migration (`GapTable.tsx`)** (tracked
+  2026-08-20). v9 restructures the table API the gap table is built on —
+  a deliberate migration, not a bump. Majors are ignored in
+  `.github/dependabot.yml` until it lands, for the same
+  batch-poisoning reason (it was holding 19 unrelated npm-runtime bumps
+  hostage). **Drop the ignore in the migration's own PR.**
 
 ## v0.12 — Pre-1.0 hardening + GUI parity — PLANNED
 

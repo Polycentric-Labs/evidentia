@@ -86,6 +86,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking majors no longer poison the routine Dependabot batches.** A
+  group's `update-types: [minor, patch]` filter does not reliably keep a
+  major out of a **uv re-lock**: an uncapped direct dependency can still
+  move to a new major when the group's lock is regenerated. `mcp`
+  1.28.1 → 2.0.0 did exactly that, riding the routine `python-dev` batch and
+  putting PRs #236, #243 and #249 red on pytest + mypy in turn — 12 innocent
+  dev bumps blocked behind one breaking major. On the npm side
+  `@tanstack/react-table` 8.21.3 → 9.1.2 did the same to the 20-package
+  `npm-runtime` group (#234, #242), failing the frontend build and holding 19
+  unrelated bumps hostage. Fixes: the root dev-dep is capped
+  `mcp>=1.28.1,<2.0` (the SDK's own published recommendation for projects
+  not yet migrated — 1.x stays supported for security and critical fixes),
+  and `.github/dependabot.yml` gains matching major-`ignore` entries for both
+  packages. Each carries an explicit removal trigger, and both migrations are
+  now tracked items in `docs/ROADMAP.md` (`mcp` SDK 2.0 — `signed_dispatch.py`
+  snake_case attributes + the `McpError` relocation; react-table v9 —
+  `GapTable.tsx`). The caps come off in those migrations' own PRs.
 - **`evidentia ai-gov set-omb-impact` now emits a real `DeprecationWarning`.**
   The verb has been deprecated since v0.10.12 (OMB M-24-10 rescinded
   2025-04-03, superseded by M-25-21), but through v0.11.x the only signal was
