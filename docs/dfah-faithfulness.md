@@ -4,7 +4,7 @@
 > (P1.1) + LLM atomic-claim extraction (P1.2) + 50-entry
 > calibration corpus + threshold-tuning script (P1.3) on top of
 > the v0.8.2 stdlib Jaccard baseline. Library APIs:
-> `evidentia_ai.eval.{faithfulness, faithfulness_semantic,
+> `evidentia_eval.{faithfulness, faithfulness_semantic,
 > claim_extraction}`. Sister docs: `docs/eval-harness.md`
 > (determinism + replay), §25/§26 plan (cycle context).
 
@@ -59,7 +59,7 @@ For paraphrase-tolerant scoring, see "Future work" below.
 ## Library API
 
 ```python
-from evidentia_ai.eval import faithfulness_score
+from evidentia_eval import faithfulness_score
 
 result = faithfulness_score(
     claim="The system enforces account management procedures",
@@ -133,7 +133,7 @@ pip install 'evidentia-ai[eval-faithfulness]'
 Library API mirrors the stdlib Jaccard baseline:
 
 ```python
-from evidentia_ai.eval import faithfulness_score_semantic
+from evidentia_eval import faithfulness_score_semantic
 
 result = faithfulness_score_semantic(
     claim="MFA is required for admin accounts",
@@ -159,7 +159,7 @@ embeddings vs ~0.05 via token-overlap.
 ### LLM atomic-claim extraction (P1.2)
 
 ```python
-from evidentia_ai.eval import extract_claims
+from evidentia_eval import extract_claims
 
 claims = extract_claims(
     "The system enforces account management procedures + "
@@ -177,7 +177,7 @@ Operators wire this into their own loop alongside
 `faithfulness_score()` (or `faithfulness_score_semantic()`):
 
 ```python
-from evidentia_ai.eval import extract_claims, faithfulness_score
+from evidentia_eval import extract_claims, faithfulness_score
 
 claims = extract_claims(generated_text)
 results = [
@@ -256,7 +256,7 @@ update their explicit `threshold=` parameter at call sites.
 ## References
 
 - arXiv 2601.15322 — DFAH framework
-- `evidentia_ai.eval.faithfulness` — library implementation
+- `evidentia_eval.faithfulness` — library implementation
 - `tests/unit/test_eval/test_faithfulness.py` — invariants +
   example inputs
 - §25.2 P3.1 / §25.3 step 6 (v0.8.2 cycle plan)

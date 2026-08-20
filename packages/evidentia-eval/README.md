@@ -75,12 +75,17 @@ this package contributes the underlying library.
 | `sign_eval_result` | Sigstore-sign an `EvalResult` JSON |
 | `verify_eval_result` | Verify a previously-signed eval bundle |
 
-## Backward-compat shim
+## Migrating from `evidentia_ai.eval`
 
-For external scripts that still import `from evidentia_ai.eval
-import ...`, `evidentia-ai` ships a deprecation shim that
-re-exports from `evidentia_eval`. The shim warns once at import
-time and is scheduled for removal in **v0.12.0**.
+The v0.10.5 P9 extraction left `evidentia_ai.eval.*` in place as
+re-export shims that warned once at import time. **They were
+removed in v0.12.0** as announced, together with the
+unconditional `evidentia-eval` dependency on `evidentia-ai`.
+Replace every `from evidentia_ai.eval import X` with
+`from evidentia_eval import X` — same symbols, same signatures.
+
+The `evidentia-ai[eval-faithfulness]` install extra still works;
+only the import path is gone.
 
 ## License
 

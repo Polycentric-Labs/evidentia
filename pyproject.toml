@@ -47,9 +47,11 @@ members = [
     # v0.10.5 P9: DFAH eval harness extracted from evidentia-ai
     # so air-gap installs of the production risk-statement runtime
     # don't pull the dev-time eval stack (sentence-transformers,
-    # numpy, etc.). The ``evidentia-ai.eval`` import path keeps
-    # working via deprecation shims through v0.11.x; removal in
-    # v0.12.0.
+    # numpy, etc.). The ``evidentia_ai.eval`` shims that kept the
+    # old import path working through v0.11.x were removed in
+    # v0.12.0, along with evidentia-ai's unconditional dependency
+    # on this package — ``evidentia_eval`` is now the only import
+    # path. See docs/deprecation-calendar.md § Recently removed.
     "packages/evidentia-eval",
     # v0.7.0: shim-controlbridge-* workspace members removed per the
     # public contract documented in README.md, RENAMED.md, and CHANGELOG.md.
@@ -123,8 +125,11 @@ dev = [
     # Runs out-of-band (weekly cron + on-demand workflow_dispatch)
     # because full mutmut runs are slow (~30-60 min per module).
     "mutmut>=3.6.0",
-    # v0.8.3 P1.1: numpy is used by evidentia_ai.eval.
-    # faithfulness_semantic for cosine-similarity computation.
+    # v0.8.3 P1.1: numpy is used by evidentia_eval.
+    # faithfulness_semantic for cosine-similarity computation
+    # (the module lived at evidentia_ai.eval.faithfulness_semantic
+    # until the v0.10.5 P9 extraction; the shim path was removed
+    # in v0.12.0).
     # Production runtime gates on the [eval-faithfulness] extra
     # which carries sentence-transformers + numpy together; dev
     # deps surface numpy directly so tests can mock the
