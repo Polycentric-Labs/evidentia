@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`evidentia_core.gap_store.GapReportRepository`** — an explicit-root
+  handle on the gap-report store. A frozen-slots dataclass whose mandatory
+  `root` is resolved once through `get_gap_store_dir(root)`, with `save` /
+  `load_latest` / `list` / `load_by_key` delegating to the existing module
+  functions under that bound root, so a caller can hold a store handle
+  instead of depending on ambient process state. Ships with
+  `GapStoreRootChangedError` and an optional `root_revalidator` hook. New
+  companion `evidentia_api.routers.gaps.create_stored_report_read_router(repository)`
+  builds a narrow read-only router (`GET /gap/reports/{key}`) over one
+  repository — an embedding seam, **not mounted by `create_app()`**, so no
+  route or OpenAPI surface changes. The existing stored-report route is
+  refactored onto the same shared helpers, behaviour-preserving. Additive:
+  three new public symbols, nothing renamed or removed. Documented **public,
+  provisional** — see
+  [`v1.0-freeze-candidates.md`](docs/v1.0-freeze-candidates.md) §4, which
+  flags `root_revalidator` for removal rather than freeze if it still has no
+  caller at v1.0.
 - **`scripts/check_public_surface.py` — the api-stability contract is now
   mechanically enforced.** `docs/api-stability.md` has been NORMATIVE since
   v0.9.7, but nothing had ever verified it. The new gate (a) executes every
