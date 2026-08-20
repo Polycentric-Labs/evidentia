@@ -86,6 +86,10 @@ from fastapi import APIRouter, Header, Query
 from fastapi import Path as FastAPIPath
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from evidentia_api.deprecation import (
+    DeprecationAwareRoute,
+    successor_version,
+)
 from evidentia_api.errors import (
     BODY_PARSE_ERROR_400,
     RATE_LIMITED_429,
@@ -95,7 +99,12 @@ from evidentia_api.errors import (
 )
 from evidentia_api.rbac_dependency import require_role
 
-router = APIRouter()
+# ``route_class`` makes the stock FastAPI ``deprecated=True`` flag
+# drive wire behaviour as well as the OpenAPI document: routes marked
+# deprecated gain the RFC 8594 ``Deprecation`` / ``Link`` response
+# headers required by docs/deprecation-calendar.md. Non-deprecated
+# routes are untouched.
+router = APIRouter(route_class=DeprecationAwareRoute)
 # v0.9.3 F-V93-Q2 review fix: REST surface emits audit events at
 # parity with the CLI surface (cli/ai_gov.py). Auditors filtering on
 # event.action:evidentia.ai_governance.* see both surfaces.
@@ -992,6 +1001,15 @@ async def ai_gov_categorize_fips(
 @router.post(
     "/ai-gov/systems/{system_id}/set-omb-impact",
     dependencies=[require_role("write")],
+    # DEPRECATED since v0.10.12; removal targeted at v1.0.0 per
+    # docs/deprecation-calendar.md. v0.12.0 makes the announcement
+    # machine-readable: this flag drives both the OpenAPI
+    # ``deprecated: true`` marker and — via the router's
+    # DeprecationAwareRoute class — the RFC 8594 response headers.
+    deprecated=True,
+    openapi_extra=successor_version(
+        "/api/ai-gov/systems/{system_id}/set-high-impact"
+    ),
     responses=error_responses(
         {
             403: RBAC_DENIED_403,
@@ -1002,7 +1020,13 @@ async def ai_gov_categorize_fips(
 async def ai_gov_set_omb_impact(
     system_id: str, body: OMBImpactRequest
 ) -> dict[str, Any]:
-    """Set the OMB M-24-10 impact category on a registered AI system."""
+    """Set the OMB M-24-10 impact category on a registered AI system.
+
+    DEPRECATED (v0.10.12): OMB M-24-10 was rescinded 2025-04-03 and
+    superseded by M-25-21. Use ``set-high-impact`` instead; this
+    operation is scheduled for removal in v1.0.0 and responds with
+    RFC 8594 ``Deprecation`` / ``Link`` headers.
+    """
     entry = _load_entry_or_404(system_id)
 
     updated = entry.model_copy(update={"omb_impact": body.category})

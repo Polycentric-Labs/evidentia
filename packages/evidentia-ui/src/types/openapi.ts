@@ -267,7 +267,13 @@ export interface paths {
         put?: never;
         /**
          * Ai Gov Set Omb Impact
+         * @deprecated
          * @description Set the OMB M-24-10 impact category on a registered AI system.
+         *
+         *     DEPRECATED (v0.10.12): OMB M-24-10 was rescinded 2025-04-03 and
+         *     superseded by M-25-21. Use ``set-high-impact`` instead; this
+         *     operation is scheduled for removal in v1.0.0 and responds with
+         *     RFC 8594 ``Deprecation`` / ``Link`` headers.
          */
         post: operations["ai_gov_set_omb_impact_api_ai_gov_systems__system_id__set_omb_impact_post"];
         delete?: never;

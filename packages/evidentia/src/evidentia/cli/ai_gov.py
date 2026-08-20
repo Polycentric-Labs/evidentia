@@ -729,9 +729,26 @@ def ai_gov_set_omb_impact(
 
     DEPRECATED (v0.10.12): M-24-10 was rescinded 2025-04-03 by M-25-21.
     Use ``ai-gov set-high-impact`` for new work. Retained so existing
-    workflows + persisted M-24-10 inventories keep working.
+    workflows + persisted M-24-10 inventories keep working; removal is
+    targeted at v1.0.0 per ``docs/deprecation-calendar.md``.
     """
+    import warnings
+
     from evidentia_core.ai_governance import OMBImpactCategory
+
+    # v0.12.0: the calendar's § How removals are sequenced requires a
+    # real DeprecationWarning, not just the Rich note below — the note
+    # is invisible to ``python -W error``, to log scrapers, and to any
+    # operator piping this command in a script. Emitted before the
+    # store lookup so the signal fires even on an unknown system_id.
+    warnings.warn(
+        "`evidentia ai-gov set-omb-impact` is deprecated: OMB M-24-10 "
+        "was rescinded 2025-04-03 and superseded by M-25-21. Use "
+        "`evidentia ai-gov set-high-impact` instead. This command is "
+        "scheduled for removal in v1.0.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     store = AIRegistryStore()
     try:

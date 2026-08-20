@@ -7256,7 +7256,8 @@
     },
     "/api/ai-gov/systems/{system_id}/set-omb-impact": {
       "post": {
-        "description": "Set the OMB M-24-10 impact category on a registered AI system.",
+        "deprecated": true,
+        "description": "Set the OMB M-24-10 impact category on a registered AI system.\n\nDEPRECATED (v0.10.12): OMB M-24-10 was rescinded 2025-04-03 and\nsuperseded by M-25-21. Use ``set-high-impact`` instead; this\noperation is scheduled for removal in v1.0.0 and responds with\nRFC 8594 ``Deprecation`` / ``Link`` headers.",
         "operationId": "ai_gov_set_omb_impact_api_ai_gov_systems__system_id__set_omb_impact_post",
         "parameters": [
           {
@@ -7326,7 +7327,8 @@
         "summary": "Ai Gov Set Omb Impact",
         "tags": [
           "ai-gov"
-        ]
+        ],
+        "x-successor-version": "/api/ai-gov/systems/{system_id}/set-high-impact"
       }
     },
     "/api/ai-gov/systems/{system_id}/set-practice": {

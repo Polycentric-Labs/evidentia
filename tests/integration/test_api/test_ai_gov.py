@@ -792,6 +792,98 @@ class TestSetOmbImpact:
         assert resp.status_code == 422
 
 
+class TestSetOmbImpactDeprecationSignalling:
+    """RFC 8594 machine-readable deprecation signalling (v0.12.0).
+
+    ``set-omb-impact`` has been deprecated since v0.10.12 (OMB
+    M-24-10 was rescinded 2025-04-03 and superseded by M-25-21),
+    with a target removal of v1.0.0 per
+    ``docs/deprecation-calendar.md``. Through v0.11.x the REST
+    surface carried NO machine-readable signal at all — the
+    deprecation lived only in prose. v0.12.0 is the final minor
+    before the removal, so the announcement becomes discoverable
+    by clients: RFC 8594 response headers plus the OpenAPI
+    ``deprecated`` flag.
+    """
+
+    def test_response_carries_deprecation_header(
+        self, api_client: TestClient
+    ) -> None:
+        """RFC 8594 §2: ``Deprecation: true`` on a deprecated resource."""
+        system_id = _register_system(api_client)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-omb-impact",
+            json={"category": "rights_impacting"},
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.headers.get("Deprecation") == "true"
+
+    def test_response_links_the_successor_version(
+        self, api_client: TestClient
+    ) -> None:
+        """RFC 8594 §4: a ``successor-version`` Link to the replacement."""
+        system_id = _register_system(api_client)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-omb-impact",
+            json={"category": "rights_impacting"},
+        )
+        link = resp.headers.get("Link", "")
+        assert 'rel="successor-version"' in link, link
+        assert "/api/ai-gov/systems/{system_id}/set-high-impact" in link, link
+
+    def test_no_sunset_header_without_a_committed_date(
+        self, api_client: TestClient
+    ) -> None:
+        """RFC 8594 §3 ``Sunset`` states a DATE, which we do not have.
+
+        The calendar commits to a removal *release* (v1.0.0), not a
+        calendar date. Emitting a fabricated ``Sunset`` timestamp
+        would be a false machine-readable promise, so the helper
+        omits the header until a real date exists.
+        """
+        system_id = _register_system(api_client)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-omb-impact",
+            json={"category": "rights_impacting"},
+        )
+        assert "Sunset" not in resp.headers
+
+    def test_error_responses_also_carry_the_header(
+        self, api_client: TestClient
+    ) -> None:
+        """A client probing an unknown ID still learns the verb is going away."""
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{_UNKNOWN_UUID}/set-omb-impact",
+            json={"category": "neither"},
+        )
+        assert resp.status_code == 404
+        assert resp.headers.get("Deprecation") == "true"
+
+    def test_successor_route_is_not_marked_deprecated(
+        self, api_client: TestClient
+    ) -> None:
+        """The M-25-21 replacement must NOT inherit the signal."""
+        system_id = _register_system(api_client)
+        resp = api_client.post(
+            f"/api/ai-gov/systems/{system_id}/set-high-impact",
+            json={"determination": "not_high_impact"},
+        )
+        assert resp.status_code == 200, resp.text
+        assert "Deprecation" not in resp.headers
+
+    def test_openapi_marks_the_operation_deprecated(
+        self, api_client: TestClient
+    ) -> None:
+        """The generated schema flags the operation for SDK/codegen users."""
+        schema = api_client.get("/api/openapi.json").json()
+        op = schema["paths"]["/api/ai-gov/systems/{system_id}/set-omb-impact"]
+        assert op["post"].get("deprecated") is True
+        successor = schema["paths"][
+            "/api/ai-gov/systems/{system_id}/set-high-impact"
+        ]
+        assert successor["post"].get("deprecated") is not True
+
+
 class TestSetHighImpact:
     """POST /ai-gov/systems/{system_id}/set-high-impact — OMB M-25-21."""
 

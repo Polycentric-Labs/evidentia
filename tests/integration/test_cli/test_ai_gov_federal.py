@@ -925,3 +925,107 @@ class TestAcquisition:
         records = json.loads(result.output)
         assert len(records) == 1
         assert records[0]["name"] == "Case-triage LLM service"
+
+
+# ── set-omb-impact deprecation signalling (v0.12.0) ────────────────
+
+
+class TestSetOMBImpactDeprecationWarning:
+    """``ai-gov set-omb-impact`` must emit a real ``DeprecationWarning``.
+
+    The verb has been deprecated since v0.10.12 (OMB M-24-10 was
+    rescinded 2025-04-03 and superseded by M-25-21), with removal
+    targeted at v1.0.0 per ``docs/deprecation-calendar.md``. Through
+    v0.11.x the only signal was a dim Rich note on stdout — invisible
+    to `python -W error`, to log scrapers, and to any operator piping
+    the command in a script. v0.12.0, the final minor before removal,
+    raises it to the ``DeprecationWarning`` the calendar's § How
+    removals are sequenced step 4 requires.
+
+    Direct-call pattern (mirrors ``TestConmonCheckDeprecation`` in
+    ``tests/unit/test_cli/test_rbac_cli.py``): CliRunner mediation can
+    swallow warnings depending on pytest config, so the underlying
+    function is invoked directly for a predictable warnings filter.
+    """
+
+    def test_deprecation_warning_emitted(
+        self,
+        registered_system_id: str,
+        isolated_registry: Path,
+    ) -> None:
+        import contextlib
+        import warnings
+
+        import typer
+        from evidentia.cli.ai_gov import ai_gov_set_omb_impact
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            # Audit-event side effects may exit under some
+            # configurations; only the warning matters here.
+            with contextlib.suppress(SystemExit, typer.Exit):
+                ai_gov_set_omb_impact(
+                    system_id=registered_system_id,
+                    category="rights_impacting",
+                )
+
+        deprecation_warnings = [
+            w for w in caught if issubclass(w.category, DeprecationWarning)
+        ]
+        assert len(deprecation_warnings) >= 1, (
+            "ai-gov set-omb-impact must emit a DeprecationWarning "
+            f"(caught: {[str(w.message) for w in caught]})"
+        )
+        message = str(deprecation_warnings[0].message)
+        assert "set-omb-impact" in message
+        assert "set-high-impact" in message
+
+    def test_successor_verb_emits_no_deprecation_warning(
+        self,
+        registered_system_id: str,
+        isolated_registry: Path,
+    ) -> None:
+        """``set-high-impact`` is the replacement — it must stay clean."""
+        import contextlib
+        import warnings
+
+        import typer
+        from evidentia.cli.ai_gov import ai_gov_set_high_impact
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            with contextlib.suppress(SystemExit, typer.Exit):
+                ai_gov_set_high_impact(
+                    system_id=registered_system_id,
+                    determination="not_high_impact",
+                    basis=[],
+                    rationale=None,
+                )
+
+        assert not [
+            w for w in caught if issubclass(w.category, DeprecationWarning)
+        ]
+
+    def test_command_still_succeeds_and_persists(
+        self,
+        runner: CliRunner,
+        registered_system_id: str,
+    ) -> None:
+        """Announcing a removal must not break the surface being announced."""
+        result = runner.invoke(
+            app,
+            [
+                "ai-gov",
+                "set-omb-impact",
+                registered_system_id,
+                "--category",
+                "rights_impacting",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+
+        show = runner.invoke(
+            app, ["ai-gov", "show", registered_system_id, "--json"]
+        )
+        assert show.exit_code == 0
+        assert json.loads(show.output)["omb_impact"] == "rights_impacting"
