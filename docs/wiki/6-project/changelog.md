@@ -36,6 +36,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`docs/releases/reviews/safeguards-resweep-2026-Q3.md`** — the quarterly
   safeguards re-sweep record (issue #134): every scheduled safeguard
   confirmed still enforced, plus the findings below.
+- **`docs/releases/plans/v1.0-review-protocol.md`** — the acceptance program
+  v1.0.0 must pass: three reviewer lenses (GRC domain expert, hands-on
+  operator, security/supply-chain), the frozen-candidate rule (`rc.N`, and a
+  release is a re-tag of the reviewed tree), an 8-scenario pack with
+  expected-output fixtures, a 7-dimension rubric where any score of 1 blocks
+  the release, a reproducible issue ledger, the exit rule, and explicit
+  rules of engagement — reviewer identities are never published without that
+  reviewer's separate written authorization, and acceptance testing is not
+  marketing permission. Reviewers are identified by role, never by name. The
+  document is LIVING, with update triggers on every release tag in the
+  v0.12 → v1.0 window. It authorizes no reviewer contact; outreach is a
+  separate maintainer gate.
 - **RFC 8594 deprecation signalling for REST operations** — new
   `evidentia_api.deprecation` module with `deprecation_headers()` (pure
   header construction) and `DeprecationAwareRoute`, an `APIRoute` subclass
