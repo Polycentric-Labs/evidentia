@@ -10,7 +10,119 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes yet on the v0.12.x development branch._
+### Added
+
+- **`scripts/check_public_surface.py` — the api-stability contract is now
+  mechanically enforced.** `docs/api-stability.md` has been NORMATIVE since
+  v0.9.7, but nothing had ever verified it. The new gate (a) executes every
+  import statement in §5's frozen list, (b) diffs the frozen MCP tool table
+  against the tools `build_server()` actually registers, and (c) asserts
+  every frozen env var still appears in `packages/*/src`. It is *doc-driven*
+  — expectations are parsed out of `api-stability.md` rather than duplicated
+  in the script — so the document cannot drift away from its own
+  enforcement. Wired into the `consistency` gate scope (`run_gate_suite.py`,
+  so it blocks in `consistency.yml` on push/PR/merge_group) and the pre-push
+  hook, which goes from 16 to 17 blocking checks.
+- **`docs/v1.0-freeze-candidates.md`** — the surface delta between what the
+  NORMATIVE contract covers and what actually ships, with a proposed
+  disposition (FREEZE / FREEZE-provisional / LEAVE UNFROZEN / DECIDE) for
+  each candidate: 43 unfrozen env vars grouped by the promise each deserves,
+  the v0.11.0 federal library surfaces, the new gap-report repository seam,
+  and the `Finding` / `SecurityFinding` **inversion** — where the published
+  "remove the alias at v1.0.0" plan is really a class rename that would
+  change the OpenAPI schema title, with a three-step non-breaking plan to
+  execute it. Freeze decisions land in `api-stability.md`; this document is
+  a proposal register, not a contract.
+- **`docs/releases/reviews/safeguards-resweep-2026-Q3.md`** — the quarterly
+  safeguards re-sweep record (issue #134): every scheduled safeguard
+  confirmed still enforced, plus the findings below.
+- **RFC 8594 deprecation signalling for REST operations** — new
+  `evidentia_api.deprecation` module with `deprecation_headers()` (pure
+  header construction) and `DeprecationAwareRoute`, an `APIRoute` subclass
+  that makes FastAPI's existing `deprecated=True` flag drive wire behaviour
+  as well as the OpenAPI document. Applied to `POST
+  /api/ai-gov/systems/{system_id}/set-omb-impact`, which now answers with
+  `Deprecation: true` and `Link: </api/ai-gov/systems/{system_id}/set-high-impact>;
+  rel="successor-version"` on success *and* on deliberately-raised 4xx (a
+  client probing an unknown ID still learns the verb is going away). The
+  operation is flagged `deprecated: true` in `openapi.json`, which carries
+  through to the generated TypeScript types as `@deprecated`, and carries an
+  `x-successor-version` extension naming its replacement. **No `Sunset`
+  header is emitted**: `docs/deprecation-calendar.md` commits to a removal
+  *release* (v1.0.0), not a calendar date, and RFC 8594 §3 `Sunset` is an
+  HTTP-date — publishing a guessed timestamp would be a machine-readable
+  promise the project has not made.
+
+### Fixed
+
+- **`docs/api-stability.md` §5 listed four import paths that never resolved.**
+  The new public-surface gate's first run found them; each raised
+  `ImportError` / `ModuleNotFoundError` on every release that shipped the
+  list. `GapFinding` → **`GapStatus`** (no `GapFinding` symbol has ever
+  existed in the codebase — the same phantom is corrected in §1's `gap.py`
+  row); `from evidentia_core.poam import POAMState, Milestone` →
+  **`from evidentia_core.models.gap import …`** (the `poam` package exports
+  state *helpers*, not the models); `evidentia_collectors.vendor_risk` → the
+  real per-vendor modules **`evidentia_collectors.bitsight`** and
+  **`evidentia_collectors.securityscorecard`** (no `vendor_risk` module has
+  ever existed), **dropping `RiskReconCollector` and `UpGuardCollector`,
+  which were never built**; `SmtpChannel` / `WebhookChannel` → the real
+  **`SMTPAlertChannel`** / **`WebhookAlertChannel`** (plus `SMTPConfig` /
+  `WebhookConfig`). **Not a breaking change** — a path that never resolved
+  cannot have been depended on; this retires a false promise in a NORMATIVE
+  document. Recorded in the api-stability revision history.
+- **`docs/pre-push-gate.md` documented 7 blocking checks; the hook ran 16.**
+  The doc had not been updated since v0.10.7 while the hook grew each cycle.
+  The table now enumerates all 17 (including the new
+  `check_public_surface`), numbering matches the hook's own header comment,
+  and that header is named as the authoritative list.
+- **`docs/v1.0-transition.md` currency** — the v1.0 acceptance gates sat
+  all-unchecked from v0.8.6 through v0.11.2 although three had been
+  satisfied for releases. Each gate now states its evidence, the unmet ones
+  state what blocks them, and the stale "`docs/api-stability.md` (TBD doc)"
+  parenthetical is retired (that doc has been NORMATIVE since v0.9.7). The
+  v0.8.5-era narrative body is deliberately preserved as authored, with a
+  header explaining that it is read as history.
+
+### Changed
+
+- **`evidentia ai-gov set-omb-impact` now emits a real `DeprecationWarning`.**
+  The verb has been deprecated since v0.10.12 (OMB M-24-10 rescinded
+  2025-04-03, superseded by M-25-21), but through v0.11.x the only signal was
+  a dim Rich note on stdout — invisible to `python -W error`, to log
+  scrapers, and to anything consuming the command in a script. The note
+  stays; the warning is what the deprecation calendar's § How removals are
+  sequenced step 4 has required all along. Behaviour is otherwise unchanged
+  and the verb keeps working through its v1.0.0 removal target.
+  These two entries close the gap where `docs/deprecation-calendar.md`
+  documented machine-readable signalling that no REST surface actually
+  implemented.
+
+### Removed
+
+- **`evidentia_ai.eval.*` deprecation shims — the first scheduled removal
+  under the NORMATIVE api-stability contract.** The shim package
+  (`evidentia_ai.eval` plus `claim_extraction`, `faithfulness`,
+  `faithfulness_semantic`, `harness`, `metrics`, `seeds`, `signing`) is
+  deleted, executing the removal announced for v0.12.0 in v0.10.5 P9 —
+  simultaneously in the shim docstring, `docs/api-stability.md` §5, and the
+  `evidentia-ai` dependency comment. The v0.10.5 P9 extraction had already
+  moved the DFAH determinism + faithfulness harness to the dedicated
+  `evidentia-eval` package; these shims only re-exported it while emitting a
+  `DeprecationWarning`. **Migration**: replace `from evidentia_ai.eval import
+  X` with `from evidentia_eval import X` — same symbols, same signatures, no
+  behaviour change. Migration window was 3 minor cycles (v0.10.5 announce →
+  v0.11.x maintain → v0.12.0 remove), above the 1-cycle policy minimum.
+- **`evidentia-eval` is no longer an unconditional dependency of
+  `evidentia-ai`.** The pin existed solely to keep the shims importable, so it
+  goes with them: a production `evidentia-ai` install no longer resolves the
+  dev-time eval stack at all — the air-gap-weight win the v0.10.5 extraction
+  set up. The **`evidentia-ai[eval-faithfulness]` extra is deliberately
+  retained** (it is a packaging alias, not an import path) and still proxies to
+  `evidentia-eval[faithfulness-semantic]`; `evidentia-eval` also remains
+  installable on its own.
+  `docs/deprecation-calendar.md` gains its first "Recently removed" row and
+  `docs/api-stability.md` its v0.12.0 revision-history row.
 
 ## [0.11.2] - 2026-08-17
 

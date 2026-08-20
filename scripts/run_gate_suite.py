@@ -149,6 +149,20 @@ _CONSISTENCY_CHECKS: tuple[Check, ...] = (
         "roadmap_currency",
         ("python", "scripts/check_roadmap_currency.py"),
     ),
+    # api-stability↔code drift gate (v0.12 freeze-prep). docs/api-stability.md
+    # has been NORMATIVE since v0.9.7 with nothing mechanically enforcing it;
+    # the gate's first run found four §5 frozen imports that had never
+    # resolved on any shipped release. It executes every §5 import, compares
+    # the frozen MCP tool table against the live server, and asserts every
+    # frozen env var still appears in packages/*/src. Needs the workspace
+    # importable (it spawns subprocesses that import evidentia_mcp), which the
+    # `uv run --all-extras --all-packages` env in _run_check + consistency.yml's
+    # `uv sync --all-packages` both provide — same requirement as the wiki
+    # drift checks above, so it belongs in the same fast scope.
+    Check(
+        "public_surface",
+        ("python", "scripts/check_public_surface.py"),
+    ),
 )
 
 # The heavyweight gates, appended to the consistency tuple to form

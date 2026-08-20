@@ -24,7 +24,7 @@
 |---|---|---|---|---|
 | `evidentia conmon check --last-completed-file` (CLI flag) | `--state-file` | v0.9.6 (2026-05-18) | **v1.0.0** | Normalized to match `conmon watch`, `conmon health`, `conmon mark-completed`. DeprecationWarning emitted when used; specifying both flags exits with code 2. |
 | `evidentia_core.models.finding.SecurityFinding` (library class name) | `evidentia_core.models.finding.Finding` (same class, new canonical name) | v0.10.1 (2026-05-23) | **v1.0.0** (earliest major bump) | The `SecurityFinding` name is kept as a backward-compatible alias for ≥ 1 minor cycle per the deprecation policy. Both names refer to the same class — no runtime difference, no behavior change, `isinstance(obj, SecurityFinding)` and `isinstance(obj, Finding)` both succeed. The rename aligns with OCSF's "Finding" terminology (Compliance Finding, Detection Finding). No `DeprecationWarning` is emitted in v0.10.1 to avoid spamming the ~50+ existing call sites — the alias is silent. Operators / integrators are encouraged to switch to `Finding` in new code; existing code keeps working unchanged. |
-| `evidentia ai-gov set-omb-impact` (CLI) + `OMBImpactRequest` / `POST …/omb-impact` (API) — OMB **M-24-10** impact leveling | `evidentia ai-gov set-high-impact` + `HighImpactRequest` — OMB **M-25-21** high-impact determination | v0.10.12 (2026-06-23) | **v1.0.0** | OMB M-24-10 was rescinded 2025-04-03 and superseded by M-25-21. The legacy M-24-10 surface is retained as a backward-compatible alias per the deprecation policy; new code should record the M-25-21 high-impact determination instead. |
+| `evidentia ai-gov set-omb-impact` (CLI) + `OMBImpactRequest` / `POST /api/ai-gov/systems/{system_id}/set-omb-impact` (API) — OMB **M-24-10** impact leveling | `evidentia ai-gov set-high-impact` + `HighImpactRequest` / `POST /api/ai-gov/systems/{system_id}/set-high-impact` — OMB **M-25-21** high-impact determination | v0.10.12 (2026-06-23) | **v1.0.0** | OMB M-24-10 was rescinded 2025-04-03 and superseded by M-25-21. The legacy M-24-10 surface is retained as a backward-compatible alias per the deprecation policy; new code should record the M-25-21 high-impact determination instead. **v0.12.0 made the announcement machine-readable** (step 4 of § How removals are sequenced, previously satisfied only in prose): the CLI verb emits a `DeprecationWarning`, and the REST operation is flagged `deprecated: true` in OpenAPI (so generated SDKs mark it too) and answers with the RFC 8594 `Deprecation: true` header plus a `Link: …; rel="successor-version"` pointing at `set-high-impact`. No `Sunset` header is sent: the commitment is to a removal *release*, not a date, and a fabricated timestamp would be a false machine-readable promise. |
 
 No other surfaces are currently deprecated as of v0.11.2.
 
@@ -32,10 +32,12 @@ No other surfaces are currently deprecated as of v0.11.2.
 
 ## Recently removed (history)
 
-No surfaces removed yet — this is the first deprecation calendar
-revision. Future removals (each tied to a major-version bump)
-will be listed here for ≥ 2 minor releases past the removal so
-operators searching their CHANGELOG can find the trail.
+Removals stay listed here for ≥ 2 minor releases past the removal
+so operators searching their CHANGELOG can find the trail.
+
+| Surface | Replacement | Deprecated since | Removed in | Notes |
+|---|---|---|---|---|
+| `evidentia_ai.eval` + its 7 submodules (`claim_extraction`, `faithfulness`, `faithfulness_semantic`, `harness`, `metrics`, `seeds`, `signing`) — library import path | `evidentia_eval` (same symbols, same signatures) | v0.10.5 (2026-05-25) | **v0.12.0** | The v0.10.5 P9 extraction moved the DFAH determinism + faithfulness harness to the dedicated `evidentia-eval` workspace package so air-gap installs of the production risk-statement runtime stopped pulling the dev-time eval stack. The old paths were retained as re-export shims emitting a `DeprecationWarning` at import time, with removal announced for v0.12.0 in the shim docstring, [api-stability.md](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/api-stability.md) §5, and the `evidentia-ai` dependency comment. v0.12.0 executes it: the shim package is deleted and the unconditional `evidentia-eval` base dependency on `evidentia-ai` goes with it. **Migration**: replace `from evidentia_ai.eval import X` with `from evidentia_eval import X`. The `evidentia-ai[eval-faithfulness]` **install extra is NOT removed** — it is a packaging alias, not an import path, and still proxies to `evidentia-eval[faithfulness-semantic]`. Note this row is backfilled: the deprecation predates this calendar's first revision (v0.9.7) in announcement but was never carried in the Active table, so the earlier "no surfaces removed yet" statement described the table, not the project's full deprecation history. |
 
 ---
 
