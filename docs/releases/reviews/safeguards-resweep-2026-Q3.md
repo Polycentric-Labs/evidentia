@@ -85,20 +85,27 @@ FIXABLE — util-linux 2.41-5+dhi3:
 | pinned (`Dockerfile:65`, what v0.11.2 shipped on) | `sha256:0815063751f2b1909fd76f1efe5e17396a7e9d00bfa494a652708e9603debc6a` |
 | current upstream `dhi.io/python:3.13` | `sha256:e512071462b6f002ac3d6f4d31bdf7d20fe6ffce3b5ce4f684b5e50d14dba217` |
 
-**Required action, and why it is not done in this batch**: bumping the
-base pin is a release-shaped change — `docker/requirements.txt` is
-regenerated against the new base and `container-build.yml` validates it,
-and DHI digests only resolve in CI, so a half-done bump here would be
-worse than none. It is therefore recorded as a **blocking v0.12.0
-release-prep step**: bump `Dockerfile:65` to the then-current digest and
-let the release rebuild + republish. Leaving the stale pin would ship
-v0.12.0 on the same base and keep the rescan red.
+**Action taken**: the base pin is bumped to
+`sha256:e512071462b6…` in the v0.12 batch-2 branch (maintainer decision,
+2026-08-20), rather than deferred to release prep. Rationale: doing it
+now gets `container-build.yml` to validate the new base in CI while
+there is room to react, instead of discovering a problem during a tag.
+DHI digests resolve only in CI, so CI is the verification — if the
+digest has drifted again by then, re-bump; it is a one-line change.
 
-This also bears on `SECURITY.md` § Supported versions, which promises
-the latest patch is free of disclosed advisories — currently true for
-the Python closure (Dependabot alerts: 0) but not for the container's
-base-OS layer. If v0.12.0 slips materially, a patch release to rebuild
-is the alternative. **Allen's call.**
+**Still a release-prep step**: re-confirm the pinned digest is current
+immediately before tagging v0.12.0, and regenerate
+`docker/requirements.txt` as the release flow already does. Shipping
+v0.12.0 on a stale base would keep the rescan red.
+
+This bears on `SECURITY.md` § Supported versions, which promises the
+latest patch is free of disclosed advisories — currently true for the
+Python closure (Dependabot alerts: 0) but not for the container's
+base-OS layer, and it stays untrue until a release actually rebuilds
+the image. Reachability is low (distroless: no shell, no apt, and the
+Python process never invokes these binaries), which is why this is not
+being treated as an emergency. **If v0.12.0 slips beyond ~2–3 weeks, cut
+a v0.11.3 patch to rebuild instead of letting the gap sit.**
 
 ### 2.3 `fedramp-schema-watch` failing — expected, tracked
 

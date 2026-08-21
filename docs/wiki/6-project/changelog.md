@@ -119,6 +119,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Container base rebuilt on the current DHI digest** (`Dockerfile`
+  `sha256:0815063751f2…` → `sha256:e512071462b6…`), closing issue **#248**.
+  The `post-publish-rescan` sentinel had failed three consecutive weeks on
+  **7 fixable `util-linux` advisories** in the published v0.11.2 image
+  (DEBIAN-CVE-2025-14104, -2026-13595, -2026-27456, and -2026-53612 through
+  -53615) — the "a fix is now available, rebuild the image" signal the gate
+  exists to raise. The 2026-08-17 rescan ran 67 minutes *after* v0.11.2
+  published, so it was scanning the current image, and the base-freshness
+  sentinel confirmed a fresher base existed a day later. Reachability is low
+  — the image is distroless, with no shell or `apt`, and the Python process
+  never invokes these binaries — but `SECURITY.md` § Supported versions
+  promises the latest patch carries no disclosed advisories, so it does not
+  get to sit. Found by the quarterly safeguards re-sweep (see
+  `docs/releases/reviews/safeguards-resweep-2026-Q3.md` §2.2, which also
+  records the release-prep re-check).
 - **`docs/api-stability.md` §5 listed four import paths that never resolved.**
   The new public-surface gate's first run found them; each raised
   `ImportError` / `ModuleNotFoundError` on every release that shipped the
