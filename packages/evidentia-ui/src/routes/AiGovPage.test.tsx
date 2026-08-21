@@ -26,6 +26,7 @@ vi.mock("@/lib/api", async () => {
       categorizeFipsAiSystem: vi.fn(),
       setOmbImpactAiSystem: vi.fn(),
       setHighImpactAiSystem: vi.fn(),
+      setPracticeAiSystem: vi.fn(),
     },
   };
 });
@@ -227,5 +228,129 @@ describe("AiGovPage", () => {
         bases: ["essential_services_access"],
       }),
     );
+  });
+});
+
+// ── M-25-21 minimum practices (v0.12 GUI parity) ───────────────────────
+
+describe("AiGovPage — set minimum practice", () => {
+  // A system that already carries an M-25-21 assessment. The API 400s on a
+  // practice update without one, so the console gates the form on it.
+  const HIGH_IMPACT_SYSTEM: AISystemEntry = {
+    ...SYSTEM,
+    omb_high_impact: {
+      determination: "high_impact",
+      bases: ["essential_services_access"],
+    },
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  async function openDetail(system: AISystemEntry) {
+    mockedApi.listAiSystems.mockResolvedValue([system]);
+    renderWithClient(<AiGovPage />);
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", {
+        name: /System Credit adjudication assistant/i,
+      }),
+    );
+    await screen.findByLabelText(/System detail/i);
+    return user;
+  }
+
+  it("offers the practice form once a high-impact assessment exists", async () => {
+    await openDetail(HIGH_IMPACT_SYSTEM);
+
+    expect(
+      await screen.findByRole("form", { name: /set minimum practice/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the form and explains why when no assessment exists", async () => {
+    await openDetail(SYSTEM);
+
+    await screen.findByRole("form", { name: /set high-impact AI/i });
+    expect(
+      screen.queryByRole("form", { name: /set minimum practice/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/before recording minimum practices/i),
+    ).toBeInTheDocument();
+  });
+
+  it("submits the selected practice and status", async () => {
+    mockedApi.setPracticeAiSystem.mockResolvedValue({
+      system_id: "sys-1",
+      entry: HIGH_IMPACT_SYSTEM,
+      practice_compliance: {
+        total: 7,
+        implemented: 1,
+        in_progress: 0,
+        not_started: 0,
+        waived: 0,
+        missing: [],
+        satisfied: false,
+      },
+      // Double cast: the fixture is the loose `AISystemEntry` shape the
+      // registry verbs return, not a fully-populated registry entry. The
+      // form does not read `entry` back — it invalidates and refetches.
+    } as unknown as Awaited<ReturnType<typeof api.setPracticeAiSystem>>);
+    const user = await openDetail(HIGH_IMPACT_SYSTEM);
+
+    const form = await screen.findByRole("form", {
+      name: /set minimum practice/i,
+    });
+    await user.click(
+      within(form).getByRole("radio", { name: /human oversight/i }),
+    );
+    await user.click(within(form).getByRole("radio", { name: /in progress/i }));
+    await user.click(within(form).getByRole("button", { name: /set practice/i }));
+
+    await waitFor(() => {
+      expect(mockedApi.setPracticeAiSystem).toHaveBeenCalledWith("sys-1", {
+        practice: "human_oversight",
+        status: "in_progress",
+      });
+    });
+  });
+
+  it("collects the CAIO waiver only when status is waived", async () => {
+    const user = await openDetail(HIGH_IMPACT_SYSTEM);
+
+    const form = await screen.findByRole("form", {
+      name: /set minimum practice/i,
+    });
+    // Not shown for the default (implemented) status …
+    expect(
+      within(form).queryByLabelText(/issued by/i),
+    ).not.toBeInTheDocument();
+
+    // … and revealed by selecting `waived`, per M-25-21 §4(a)(ii).
+    await user.click(within(form).getByRole("radio", { name: /^waived$/i }));
+    expect(within(form).getByLabelText(/issued by/i)).toBeInTheDocument();
+    expect(within(form).getByLabelText(/justification/i)).toBeInTheDocument();
+  });
+
+  it("surfaces a failed practice update", async () => {
+    mockedApi.setPracticeAiSystem.mockRejectedValue(
+      new Error("no M-25-21 assessment"),
+    );
+    const user = await openDetail(HIGH_IMPACT_SYSTEM);
+
+    const form = await screen.findByRole("form", {
+      name: /set minimum practice/i,
+    });
+    await user.click(within(form).getByRole("button", { name: /set practice/i }));
+
+    expect(
+      await screen.findByText(/could not set minimum practice/i),
+    ).toBeInTheDocument();
   });
 });

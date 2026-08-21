@@ -4,16 +4,25 @@ Assembles the operator's :class:`~evidentia_core.models.fedramp_ksi.
 KsiStatusDocument` into a schema-valid SDR JSON document with the
 ``keySecurityIndicators`` block populated, per
 ``fedramp-security-decision-record-schema-2026-06-24.json`` (vendored
-under :mod:`evidentia_core.fedramp.schemas`; upstream pins + the one
-documented ``$ref`` local delta in ``schemas/UPSTREAM.json``).
+under :mod:`evidentia_core.fedramp.schemas`; upstream pins in
+``schemas/UPSTREAM.json`` — byte-identical to upstream since the v0.12
+re-vendor retired the interim ``$ref`` local delta).
 
-Design decisions (v0.11 Wave 2 re-based spec, ratified 2026-07-14):
+Design decisions (v0.11 Wave 2 re-based spec, ratified 2026-07-14;
+``fedRampRequirements`` revised in v0.12):
 
 - **Full-document emit.** The SDR schema's document-level ``required``
-  is ``certificationPackageOverviewUri`` + ``fedRampRequirements``; an
-  empty ``fedRampRequirements`` array satisfies it, so the emitted
-  document validates standalone. FRR statements are out of scope for
-  the KSI emitter (they are hand-authored governance prose).
+  is ``certificationPackageOverviewUri`` + ``fedRampRequirements``.
+  v0.11 emitted the latter as an empty array: schema-valid, but
+  ``SDR-CSO-FRR`` (MUST) says the SDR "MUST include at least" an
+  explanation, verification, and validation *for each applicable
+  FedRAMP rule*, so the document was rule-incomplete. v0.12 emits the
+  block from the status file's ``requirements`` map, with IDs checked
+  against the bundled ``fedramp-frr-2026`` catalog (provider-facing
+  rules only) and coverage reported — the same pattern as the KSI
+  block. The statements stay operator-authored; nothing is invented.
+  An absent ``requirements`` map still emits ``[]`` so v0.11 files keep
+  validating; the coverage report is what surfaces the gap.
 - **Top-level ``metadata`` block.** SDR-CSO-MTD (MUST) requires
   version / last-update / source metadata, but the published schema
   models no metadata property. The schema does not set
@@ -42,6 +51,7 @@ from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
 from evidentia_core.models.fedramp_ksi import (
+    FrrRequirementEntry,
     KsiIndicatorEntry,
     KsiStatusDocument,
 )
@@ -49,8 +59,9 @@ from evidentia_core.models.fedramp_ksi import (
 if TYPE_CHECKING:
     from evidentia_core.models.catalog import ControlCatalog
 
-#: The bundled catalog generated from the pinned FedRAMP/rules dataset.
+#: The bundled catalogs generated from the pinned FedRAMP/rules dataset.
 KSI_CATALOG_ID = "fedramp-ksi-2026"
+FRR_CATALOG_ID = "fedramp-frr-2026"
 
 _SCHEMA_DIR = Path(__file__).parent / "schemas"
 SDR_SCHEMA_PATH = _SCHEMA_DIR / "fedramp-security-decision-record-schema-2026-06-24.json"
@@ -76,6 +87,13 @@ def load_ksi_catalog() -> ControlCatalog:
     from evidentia_core.catalogs.loader import load_catalog
 
     return load_catalog(KSI_CATALOG_ID)
+
+
+def load_frr_catalog() -> ControlCatalog:
+    """Load the bundled ``fedramp-frr-2026`` catalog (provider-facing rules)."""
+    from evidentia_core.catalogs.loader import load_catalog
+
+    return load_catalog(FRR_CATALOG_ID)
 
 
 @lru_cache(maxsize=1)
@@ -121,6 +139,40 @@ def ksi_coverage(status: KsiStatusDocument) -> KsiCoverage:
         addressed=len(addressed),
         missing=missing,
     )
+
+
+def frr_coverage(status: KsiStatusDocument) -> KsiCoverage:
+    """Report how much of the provider-facing FRR catalog the file addresses.
+
+    SDR-CSO-FRR is a MUST, so unaddressed rules are the operator's
+    to-do list — reported, never errors, mirroring the KSI treatment.
+    """
+    catalog = load_frr_catalog()
+    catalog_ids = {control.id for control in catalog.controls}
+    addressed = set(status.requirements) & catalog_ids
+    missing = tuple(sorted(catalog_ids - set(status.requirements)))
+    return KsiCoverage(
+        total=len(catalog_ids),
+        addressed=len(addressed),
+        missing=missing,
+    )
+
+
+def _validate_requirement_ids(status: KsiStatusDocument) -> None:
+    """Reject FRR IDs that are not in the bundled provider-facing catalog."""
+    if not status.requirements:
+        return
+    catalog = load_frr_catalog()
+    catalog_ids = {control.id for control in catalog.controls}
+    unknown = sorted(set(status.requirements) - catalog_ids)
+    if unknown:
+        raise ValueError(
+            f"unknown FRR requirement ID(s): {', '.join(unknown)}. "
+            f"Valid IDs come from the bundled '{FRR_CATALOG_ID}' catalog "
+            f"(provider-facing rules only; e.g. "
+            f"{', '.join(sorted(catalog_ids)[:3])}, ...); run "
+            f"`evidentia catalog show {FRR_CATALOG_ID}` to list them."
+        )
 
 
 def _validate_indicator_ids(status: KsiStatusDocument) -> None:
@@ -191,6 +243,19 @@ def _evidence_to_sdr(entry: KsiIndicatorEntry) -> list[dict[str, Any]]:
     return items
 
 
+def _requirement_to_sdr(frr_id: str, entry: FrrRequirementEntry) -> dict[str, Any]:
+    """Map a requirement entry onto the SDR ``fedRampRequirements`` item."""
+    item: dict[str, Any] = {
+        "frrID": frr_id,
+        "frrImplementation": list(entry.implementation),
+        "frrValidation": list(entry.validation),
+        "frrAssessment": list(entry.assessment),
+    }
+    if entry.status is not None:
+        item["frrImplementationStatus"] = entry.status
+    return item
+
+
 def build_sdr_document(
     status: KsiStatusDocument,
     *,
@@ -208,6 +273,7 @@ def build_sdr_document(
     emittable content.
     """
     _validate_indicator_ids(status)
+    _validate_requirement_ids(status)
 
     indicators: list[dict[str, Any]] = []
     for ksi_id in sorted(status.indicators):
@@ -230,7 +296,10 @@ def build_sdr_document(
         "certificationPackageOverviewUri": (
             status.certification_package_overview_uri
         ),
-        "fedRampRequirements": [],
+        "fedRampRequirements": [
+            _requirement_to_sdr(frr_id, status.requirements[frr_id])
+            for frr_id in sorted(status.requirements)
+        ],
         "keySecurityIndicators": indicators,
         "metadata": {
             "version": status.document_version,

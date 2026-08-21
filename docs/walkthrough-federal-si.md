@@ -131,7 +131,7 @@ evidentia catalog list | grep -E "(nist|fedramp|nist-ai-rmf|eu-ai-act)"
 Low/Moderate/High; 156/323/443 controls respectively after RFC-
 0027/0030), the FedRAMP overlay (Rev 5 baselines + the CR26
 `fedramp-ksi-2026` KSI catalog), NIST AI RMF 1.0, and EU AI Act
-statutory excerpts. Evidentia ships 96 framework catalogs by
+statutory excerpts. Evidentia ships 97 framework catalogs by
 default; this filter narrows to the ones the SI workflow
 exercises.
 
@@ -453,7 +453,7 @@ Three v0.11 surfaces extend the workflow above; they are additive
 | Phase | Capability tested | Federal-SI consumer |
 |---|---|---|
 | 0 | Supply-chain trustworthiness (PEP 740 + cosign + SBOM) | Procurement officer self-attestation |
-| 1 | Catalog discovery — 96 bundled frameworks load | All |
+| 1 | Catalog discovery — 97 bundled frameworks load | All |
 | 2 | CONMON cycle classification — overdue/due_soon bucketing | SI compliance ops; internal SIEM |
 | 3 | Framework health scoring — JSON output for SIEM ingest | SI compliance ops only (NOT PMO-grade) |
 | 4 | EU AI Act tier classification — Annex III + risk attributes | Procurement evaluation; pairs with OMB M-25-21 high-impact |

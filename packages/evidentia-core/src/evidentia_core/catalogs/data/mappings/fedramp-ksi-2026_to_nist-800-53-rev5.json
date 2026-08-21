@@ -3,7 +3,7 @@
   "target_framework": "nist-800-53-rev5",
   "version": "FedRAMP Consolidated Rules 2026.07.14.01 / NIST 800-53 Rev 5",
   "generated_at": "2026-07-14",
-  "source": "https://github.com/FedRAMP/rules @ 12fe1b60f578 (fedramp-consolidated-rules.json, dataset version 2026.07.14.01)",
+  "source": "https://github.com/FedRAMP/rules @ 58efbf3d8984 (fedramp-consolidated-rules.json, dataset version 2026.07.14.01)",
   "verification": "self-attested-via-upstream",
   "verification_note": "Control mappings are declared by FedRAMP itself in each KSI indicator's `controls` field; extracted verbatim at the pinned revision, folded to base-control granularity (the bundled nist-800-53-rev5 catalog carries base controls only) with the exact upstream citation preserved in notes.",
   "mappings": [

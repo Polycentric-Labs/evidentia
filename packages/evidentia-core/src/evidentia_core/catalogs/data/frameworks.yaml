@@ -89,13 +89,21 @@ frameworks:
     submissions to include a vulnerability-management plan, secure-by-design processes covering updates and patches, and a software bill of materials (SBOM). U.S. Government work, not subject to copyright
     (17 U.S.C. 105); category names reproduced verbatim, characterizations written in Evidentia''s own words.'
   refresh: monthly
+- id: fedramp-frr-2026
+  name: FedRAMP Requirements — provider-facing rules (Consolidated Rules for 2026)
+  version: 2026.07.14.01 (CR26)
+  tier: A
+  category: control
+  path: us-federal/fedramp-frr-2026.json
+  source_url: FedRAMP — https://github.com/FedRAMP/rules @ 58efbf3d8984 (fedramp-consolidated-rules.json)
+  refresh: monthly
 - id: fedramp-ksi-2026
   name: FedRAMP Key Security Indicators (Consolidated Rules for 2026)
   version: 2026.07.14.01 (CR26)
   tier: A
   category: control
   path: us-federal/fedramp-ksi-2026.json
-  source_url: FedRAMP — https://github.com/FedRAMP/rules @ 12fe1b60f578 (fedramp-consolidated-rules.json)
+  source_url: FedRAMP — https://github.com/FedRAMP/rules @ 58efbf3d8984 (fedramp-consolidated-rules.json)
   refresh: monthly
 - id: fedramp-rev5-high
   name: FedRAMP Rev 5 High Baseline

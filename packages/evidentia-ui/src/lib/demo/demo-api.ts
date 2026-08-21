@@ -72,6 +72,13 @@ import type {
   FIPS199CategorizeRequest,
   OMBImpactRequest,
   HighImpactRequest,
+  SetPracticeRequest,
+  SetPracticeResponse,
+  RegisterAcquisitionRequest,
+  RegisterAcquisitionResponse,
+  ListAcquisitionsResponse,
+  AcquisitionDetailResponse,
+  SetAcquisitionPhaseRequest,
   OscalVerifyRequest,
   TraceabilityMatrix,
   SecurityFinding,
@@ -432,6 +439,60 @@ const DEMO_AI_SYSTEMS: AISystemEntry[] = [
     eu_ai_act_tier: "minimal",
   },
 ];
+
+/** M-25-21's seven minimum practices; the roll-up counts against these. */
+const DEMO_MINIMUM_PRACTICES: SetPracticeRequest["practice"][] = [
+  "pre_deployment_testing",
+  "impact_assessment",
+  "ongoing_monitoring",
+  "human_training",
+  "human_oversight",
+  "remedies_and_appeals",
+  "public_feedback",
+];
+const DEMO_MINIMUM_PRACTICE_COUNT = DEMO_MINIMUM_PRACTICES.length;
+
+// Baked M-25-22 acquisition-lifecycle records. The demo runs with no
+// server, so these stand in for the acquisition store.
+const DEMO_ACQUISITIONS: AcquisitionDetailResponse["acquisition"][] = [
+  {
+    acquisition_id: "demo-acq-credit-model-refresh",
+    name: "Credit adjudication model refresh",
+    solicitation_reference: "MER-2026-AI-004",
+    description:
+      "Recompete of the consumer-credit adjudication model and its MLOps support.",
+    likely_high_impact: "high_impact",
+    phases: {
+      identification_of_requirements: { status: "complete" },
+      market_research_and_planning: { status: "complete" },
+      solicitation_development: { status: "in_progress" },
+    },
+  } as AcquisitionDetailResponse["acquisition"],
+  {
+    acquisition_id: "demo-acq-helpdesk-llm",
+    name: "IT helpdesk LLM subscription",
+    solicitation_reference: "MER-2026-AI-011",
+    description: "Commercial LLM subscription for the internal IT helpdesk.",
+    likely_high_impact: "not_high_impact",
+    phases: {
+      identification_of_requirements: { status: "complete" },
+    },
+  } as AcquisitionDetailResponse["acquisition"],
+];
+
+// Roll-up matching the first fixture: 6 M-25-22 §4 phases, 2 complete.
+const DEMO_ACQUISITION_PROGRESS: AcquisitionDetailResponse["progress"] = {
+  total: 6,
+  complete: 2,
+  in_progress: 1,
+  not_started: 0,
+  missing: [
+    "selection_and_award",
+    "contract_administration",
+    "contract_closeout",
+  ],
+  lifecycle_complete: false,
+} as AcquisitionDetailResponse["progress"];
 
 // Baked classification verdict for the one-shot classify verb.
 const DEMO_AI_CLASSIFICATION: AISystemClassification = {
@@ -1207,6 +1268,86 @@ export const demoApi = {
       ...clone(base),
       id: systemId,
       omb_high_impact: clone(body),
+    });
+  },
+  // M-25-21 minimum practices (v0.12 GUI parity). The demo has no
+  // server, so the response is synthesized from the posted body: the
+  // console reads `practice_compliance` to render the roll-up, and the
+  // counts below reflect this single practice being recorded.
+  setPracticeAiSystem: (
+    systemId: string,
+    body: SetPracticeRequest,
+  ): Promise<SetPracticeResponse> => {
+    const base =
+      DEMO_AI_SYSTEMS.find((s) => s.id === systemId) ?? DEMO_AI_SYSTEMS[0];
+    return Promise.resolve({
+      system_id: systemId,
+      // The demo's AI-system fixtures are the loose `AISystemEntry`
+      // (Record<string, unknown>) shape the older ai-gov verbs return,
+      // not a fully-populated registry entry. The console does not read
+      // `entry` off this response — the form invalidates and refetches —
+      // so a double cast keeps the fixture honest about what it is
+      // rather than inventing descriptor/classification sub-objects.
+      entry: {
+        ...clone(base),
+        id: systemId,
+      } as unknown as SetPracticeResponse["entry"],
+      practice_compliance: {
+        total: DEMO_MINIMUM_PRACTICE_COUNT,
+        implemented: body.status === "implemented" ? 1 : 0,
+        in_progress: body.status === "in_progress" ? 1 : 0,
+        not_started: body.status === "not_started" ? 1 : 0,
+        waived: body.status === "waived" ? 1 : 0,
+        // `missing` is the list of practices with no recorded status —
+        // every practice except the one just posted.
+        missing: DEMO_MINIMUM_PRACTICES.filter((p) => p !== body.practice),
+        satisfied: false,
+      } as SetPracticeResponse["practice_compliance"],
+    });
+  },
+
+  // ── AI acquisitions (OMB M-25-22 lifecycle; v0.12 GUI parity) ─────────
+  listAcquisitions: (): Promise<ListAcquisitionsResponse> =>
+    Promise.resolve({
+      count: DEMO_ACQUISITIONS.length,
+      acquisitions: clone(DEMO_ACQUISITIONS),
+    }),
+  getAcquisition: (
+    acquisitionId: string,
+  ): Promise<AcquisitionDetailResponse> => {
+    const record =
+      DEMO_ACQUISITIONS.find((a) => a.acquisition_id === acquisitionId) ??
+      DEMO_ACQUISITIONS[0];
+    return Promise.resolve({
+      acquisition: clone(record),
+      progress: clone(DEMO_ACQUISITION_PROGRESS),
+    });
+  },
+  registerAcquisition: (
+    body: RegisterAcquisitionRequest,
+  ): Promise<RegisterAcquisitionResponse> => {
+    // The store assigns the id server-side; the demo bakes one so the
+    // console can navigate straight to the new record's detail view.
+    const acquisitionId = "demo-acq-registered";
+    return Promise.resolve({
+      acquisition_id: acquisitionId,
+      acquisition: {
+        ...clone(DEMO_ACQUISITIONS[0]),
+        acquisition_id: acquisitionId,
+        name: body.name,
+      } as AcquisitionDetailResponse["acquisition"],
+    });
+  },
+  setAcquisitionPhase: (
+    acquisitionId: string,
+    _body: SetAcquisitionPhaseRequest,
+  ): Promise<AcquisitionDetailResponse> => {
+    const record =
+      DEMO_ACQUISITIONS.find((a) => a.acquisition_id === acquisitionId) ??
+      DEMO_ACQUISITIONS[0];
+    return Promise.resolve({
+      acquisition: clone(record),
+      progress: clone(DEMO_ACQUISITION_PROGRESS),
     });
   },
 

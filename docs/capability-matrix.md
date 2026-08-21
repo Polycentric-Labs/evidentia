@@ -33,12 +33,17 @@ v0.10.x matrices; this snapshot covers the federal-wave delta.
 
 ### Parity baseline (G27 cross-surface walk)
 
-`check_parity` is green on all 5 checks. Counts: **99 full / 7 api-only /
-0 cli-only / 11 exempt = 93.4% GUI coverage**. The 7 api-only rows are
-expected and documented: the five v0.11 federal verbs (`ai-gov
-set-practice` + the four `ai-gov acquisition` verbs — the GUI pass leads
-v0.12) plus the two legacy chrome-surfaced utilities (`version`, `init`,
-exempt-reclassification decision queued in the v0.12 plan).
+`check_parity` is green on all 5 checks. Counts (v0.12): **104 full /
+0 api-only / 0 cli-only / 13 exempt = 100.0% GUI coverage**. Read that
+honestly as *104 shipped consoles plus 13 by-design exemptions*, not as
+"every verb has a route". v0.12 closed the last five api-only rows by
+SHIPPING the console — `ai-gov set-practice` as a gated form in the
+`/ai-gov` detail panel, and the four `ai-gov acquisition` verbs as the new
+`/ai-gov/acquisitions` screen. The two remaining rows moved to `exempt`
+rather than `full`: `version` is chrome rendered in the sidebar on every
+screen, and `init`'s wizard IS shipped but sits at the index route, which
+has no `path=` attribute for the route check to match. Both carry that
+reasoning in `docs/cli-gui-parity.yaml`.
 
 ## Re-validation snapshot — 2026-06-23 (v0.10.12 PRE-TAG) — full CLI↔GUI parity build-out + OMB M-25-21
 

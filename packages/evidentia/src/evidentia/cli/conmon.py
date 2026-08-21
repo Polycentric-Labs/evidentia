@@ -1022,6 +1022,7 @@ def conmon_ksi(
     import yaml as yaml_mod  # lazy import — keeps the CLI lean
     from evidentia_core.fedramp import (
         build_sdr_document,
+        frr_coverage,
         ksi_coverage,
         validate_sdr_document,
     )
@@ -1152,14 +1153,17 @@ def conmon_ksi(
         raise typer.Exit(code=1) from exc
 
     coverage = ksi_coverage(status)
+    requirements = frr_coverage(status)
+    n_ksi = len(document["keySecurityIndicators"])
+    n_frr = len(document["fedRampRequirements"])
     console.print(
         f"[green]Wrote[/green] SDR with "
-        f"{len(document['keySecurityIndicators'])} KSI entr"
-        f"{'y' if len(document['keySecurityIndicators']) == 1 else 'ies'} "
+        f"{n_ksi} KSI entr{'y' if n_ksi == 1 else 'ies'} and "
+        f"{n_frr} FRR entr{'y' if n_frr == 1 else 'ies'} "
         f"to [bold]{output}[/bold] (schema-valid)."
     )
     console.print(
-        f"  Catalog coverage: {coverage.addressed}/{coverage.total} "
+        f"  KSI coverage: {coverage.addressed}/{coverage.total} "
         f"indicators addressed."
     )
     if not coverage.complete:
@@ -1168,6 +1172,22 @@ def conmon_ksi(
             f"addressed[/yellow] (FedRAMP FRC-CSX-MAS: apply ALL KSIs "
             f"across the Minimum Assessment Scope — SHOULD). First few: "
             f"{', '.join(coverage.missing[:5])}"
+        )
+    # SDR-CSO-FRR is a MUST: the SDR "MUST include at least" an
+    # explanation, verification, and validation for each applicable rule.
+    # An empty block is schema-valid and rule-incomplete, so the gap is
+    # always reported — and more loudly than the KSI SHOULD above.
+    console.print(
+        f"  FRR coverage: {requirements.addressed}/{requirements.total} "
+        f"provider-facing requirements addressed."
+    )
+    if not requirements.complete:
+        console.print(
+            f"  [yellow]{len(requirements.missing)} requirement(s) not yet "
+            f"addressed[/yellow] (FedRAMP SDR-CSO-FRR — MUST: the SDR must "
+            f"cover each applicable rule; an empty block validates against "
+            f"the schema but does not satisfy the rule). First few: "
+            f"{', '.join(requirements.missing[:5])}"
         )
 
 

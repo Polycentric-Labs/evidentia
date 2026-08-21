@@ -51,6 +51,7 @@ from evidentia_core.ai_governance import (
     AcquisitionPhase,
     AcquisitionPhaseRecord,
     AcquisitionPhaseStatus,
+    AcquisitionProgressSummary,
     AIAcquisition,
     AIAcquisitionStore,
     AIRegistryStore,
@@ -67,6 +68,7 @@ from evidentia_core.ai_governance import (
     MinimumPracticeRecord,
     OMBHighImpactAssessment,
     OMBImpactCategory,
+    PracticeComplianceSummary,
     PracticeStatus,
     PracticeWaiver,
     acquisition_progress,
@@ -1151,9 +1153,31 @@ class SetPracticeRequest(BaseModel):
     )
 
 
+class SetPracticeResponse(BaseModel):
+    """200 body for ``POST /ai-gov/systems/{system_id}/set-practice``.
+
+    Declared explicitly rather than left as ``dict[str, Any]``: the web
+    console is generated from ``openapi.json``, and an unannotated dict
+    renders as a bare index signature carrying no field information —
+    which is how a field rename reaches the UI silently.
+    """
+
+    system_id: str = Field(description="The registered system's UUID.")
+    entry: AISystemRegistryEntry = Field(
+        description="The full registry entry after the update."
+    )
+    practice_compliance: PracticeComplianceSummary = Field(
+        description=(
+            "M-25-21 minimum-practice roll-up recomputed from the "
+            "updated assessment."
+        )
+    )
+
+
 @router.post(
     "/ai-gov/systems/{system_id}/set-practice",
     dependencies=[require_role("write")],
+    response_model=SetPracticeResponse,
     responses=error_responses(
         {
             400: (
@@ -1298,9 +1322,45 @@ def _load_acquisition_or_404(acquisition_id: str) -> AIAcquisition:
     return record
 
 
+class RegisterAcquisitionResponse(BaseModel):
+    """201-shaped 200 body for ``POST /ai-gov/acquisitions``."""
+
+    acquisition_id: str = Field(
+        description="UUID of the newly tracked acquisition."
+    )
+    acquisition: AIAcquisition = Field(
+        description="The stored M-25-22 lifecycle record."
+    )
+
+
+class ListAcquisitionsResponse(BaseModel):
+    """200 body for ``GET /ai-gov/acquisitions``."""
+
+    count: int = Field(description="Number of tracked acquisitions.")
+    acquisitions: list[AIAcquisition] = Field(
+        description="Every tracked M-25-22 lifecycle record."
+    )
+
+
+class AcquisitionDetailResponse(BaseModel):
+    """200 body for the acquisition show + set-phase verbs.
+
+    Both return the same record-plus-roll-up pair, so they share one
+    model — the console renders a single detail view for either.
+    """
+
+    acquisition: AIAcquisition = Field(
+        description="The M-25-22 lifecycle record."
+    )
+    progress: AcquisitionProgressSummary = Field(
+        description="§4 phase-completion roll-up derived from the record."
+    )
+
+
 @router.post(
     "/ai-gov/acquisitions",
     dependencies=[require_role("write")],
+    response_model=RegisterAcquisitionResponse,
     responses=error_responses(
         {
             400: (
@@ -1347,7 +1407,10 @@ async def ai_gov_register_acquisition(
     }
 
 
-@router.get("/ai-gov/acquisitions")
+@router.get(
+    "/ai-gov/acquisitions",
+    response_model=ListAcquisitionsResponse,
+)
 async def ai_gov_list_acquisitions() -> dict[str, Any]:
     """List tracked AI acquisitions (M-25-22 lifecycle records)."""
     records = AIAcquisitionStore().list_all()
@@ -1359,6 +1422,7 @@ async def ai_gov_list_acquisitions() -> dict[str, Any]:
 
 @router.get(
     "/ai-gov/acquisitions/{acquisition_id}",
+    response_model=AcquisitionDetailResponse,
     responses=error_responses(
         {404: "No such tracked acquisition (``error: not_found``)."}
     ),
@@ -1375,6 +1439,7 @@ async def ai_gov_get_acquisition(acquisition_id: str) -> dict[str, Any]:
 @router.post(
     "/ai-gov/acquisitions/{acquisition_id}/set-phase",
     dependencies=[require_role("write")],
+    response_model=AcquisitionDetailResponse,
     responses=error_responses(
         {
             400: (

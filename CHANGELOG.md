@@ -9,6 +9,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`conmon ksi` now emits the SDR's `fedRampRequirements` block (SDR-CSO-FRR);
+  new `fedramp-frr-2026` catalog — 97 bundled catalogs.** The v0.12 plan gated
+  the "FRR statements" extra on a cheapness re-verify against the post-08-14
+  schema set. The re-verify found something the plan missed: **`SDR-CSO-FRR`
+  is a MUST** — the SDR "MUST include at least" an explanation, verification,
+  validation, and related statements *for each applicable FedRAMP rule* — and
+  the v0.11 emitter wrote `fedRampRequirements: []`. That satisfies the
+  *schema* (the array is required, its contents are not) but not the *rule*:
+  an emitted SDR was schema-valid and rule-incomplete, and the emitter's own
+  docstring framed FRR as "out of scope" rather than as a gap. v0.12 closes it
+  structurally, mirroring the KSI block exactly: the operator's status file
+  gains a `requirements:` map keyed by FRR ID (`FrrRequirementEntry`: status +
+  implementation / validation / assessment statements), IDs are checked
+  against the new **`fedramp-frr-2026`** catalog, and the block is emitted in
+  sorted-ID order with coverage reported on the console — separately from,
+  and more loudly than, the KSI coverage, since the KSI obligation is a SHOULD
+  and this one is a MUST. Back-compat: v0.11 status files with no
+  `requirements` key still load and emit `[]`; the coverage line is what
+  surfaces the gap. **Nothing is invented** — the statements are
+  operator-authored governance prose, exactly as KSI statements are.
+  The catalog (`scripts/catalogs/gen_fedramp_frr.py`, a `--check`-gated
+  generator that reuses the KSI generator's pinned fetch + sha256 check so the
+  two cannot disagree about the dataset) holds the **180 CR26 rules whose
+  upstream `affects` names Providers, across 15 families**. Rules addressed to
+  FedRAMP itself, assessors, or agencies are deliberately excluded: an SDR is
+  the provider's record, and listing obligations a provider cannot implement
+  would make the coverage report noise. Each entry carries the rule's force
+  (MUST / SHOULD / MAY), its applicability (all / 20x / rev5), and upstream's
+  `following_information` sub-points verbatim; the 29 rules defined only per
+  certification class (`varies_by_class`) take the class-C statement as the
+  description with every variant preserved in guidance — the same handling
+  the KSI catalog uses. `evidentia catalog show fedramp-frr-2026` is therefore
+  a prioritised to-do list. Tests: 14 new emitter/model/coverage tests (RED
+  first), 4 CLI tests, 7 catalog-content tests. Catalog-count claims updated
+  96 → 97 across README, the console's nav rail (which had been sitting at a
+  stale 95), and the living docs; dated ship records are left as written.
+- **The five v0.11 federal AI-governance verbs now have a web console — CLI↔GUI
+  parity reaches 100%.** `ai-gov set-practice` ships as a form in the `/ai-gov`
+  system detail panel, gated on the system already carrying an M-25-21
+  high-impact assessment (the API 400s without one, so the console shows
+  guidance instead of letting the operator hit that error) and revealing the
+  CAIO waiver fields only for `waived` status, per M-25-21 §4(a)(ii). The four
+  `ai-gov acquisition` verbs ship as a new **`/ai-gov/acquisitions`** console:
+  register form, list, and a detail panel carrying the M-25-22 §4
+  lifecycle-progress roll-up plus the set-phase form.
+  **Backend first**: the five routes previously returned bare
+  `dict[str, Any]`, so `openapi.json` described them as
+  `{"additionalProperties": true}` and the generated TypeScript was an index
+  signature with no field information — the console would have been typed
+  against `unknown`. They now declare real response models
+  (`SetPracticeResponse`, `RegisterAcquisitionResponse`,
+  `ListAcquisitionsResponse`, and `AcquisitionDetailResponse`, shared by show
+  and set-phase), so the regenerated types carry actual fields. A new
+  `tests/unit/test_openapi_response_models.py` pins this, including that a
+  named-but-empty model cannot satisfy it vacuously.
+  `AppLayout`'s nav matching also becomes longest-prefix: a nested route like
+  `/ai-gov/acquisitions` no longer lights up its parent's rail entry and take
+  its breadcrumb.
+- **`version` and `init` reclassified from `api-only` to `exempt`.** Neither is
+  GUI debt. `version` is chrome — the running version renders in the sidebar
+  footer on every screen, read live from `GET /api/version` — and a dedicated
+  route would duplicate always-visible chrome. `init`'s onboarding wizard **is**
+  shipped in the GUI; it lives at the index route, which has no `path=`
+  attribute for the parity checker's route model to match. Both carry that
+  reasoning in `docs/cli-gui-parity.yaml`.
+  Net distribution: **104 full / 0 api-only / 0 cli-only / 13 exempt = 100.0%
+  GUI coverage** (was 99 / 7 / 0 / 11 = 93.4%). Five of the seven closed by
+  shipping console; two by honest reclassification. The parity claims in
+  `capability-matrix.md`, `enterprise-grade.md`, `positioning-and-value.md` and
+  `ROADMAP.md` are updated to match, and state the honest reading — *104
+  shipped consoles plus 13 by-design exemptions*, not "every verb has a route".
 - **`evidentia_core.gap_store.GapReportRepository`** — an explicit-root
   handle on the gap-report store. A frozen-slots dataclass whose mandatory
   `root` is resolved once through `get_gap_store_dir(root)`, with `save` /
@@ -81,6 +152,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Container base rebuilt on the current DHI digest** (`Dockerfile`
+  `sha256:0815063751f2…` → `sha256:e512071462b6…`), closing issue **#248**.
+  The `post-publish-rescan` sentinel had failed three consecutive weeks on
+  **7 fixable `util-linux` advisories** in the published v0.11.2 image
+  (DEBIAN-CVE-2025-14104, -2026-13595, -2026-27456, and -2026-53612 through
+  -53615) — the "a fix is now available, rebuild the image" signal the gate
+  exists to raise. The 2026-08-17 rescan ran 67 minutes *after* v0.11.2
+  published, so it was scanning the current image, and the base-freshness
+  sentinel confirmed a fresher base existed a day later. Reachability is low
+  — the image is distroless, with no shell or `apt`, and the Python process
+  never invokes these binaries — but `SECURITY.md` § Supported versions
+  promises the latest patch carries no disclosed advisories, so it does not
+  get to sit. Found by the quarterly safeguards re-sweep (see
+  `docs/releases/reviews/safeguards-resweep-2026-Q3.md` §2.2, which also
+  records the release-prep re-check).
 - **`docs/api-stability.md` §5 listed four import paths that never resolved.**
   The new public-surface gate's first run found them; each raised
   `ImportError` / `ModuleNotFoundError` on every release that shipped the
@@ -112,6 +198,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Vendored FedRAMP CR26 schemas re-synced to upstream `ae43ae29`
+  (2026-08-15); the `$ref` local delta is retired.** Upstream fixed the
+  cross-document `$ref` defect on 2026-08-11 (their issue #11 → PR #15: the
+  JSON Pointer moved from the URI path into the fragment, as JSON Schema
+  2020-12 requires) — exactly the rewrite the vendored SDR schema had carried
+  locally since the 2026-07-18 re-vendor. Both vendored files
+  (`fedramp-security-decision-record-schema-2026-06-24.json` 1.0.0 → 1.0.3,
+  `fedramp-common-definitions-schema-2026-06-24.json` 0.1.1 → 0.2.1) are now
+  **byte-identical to upstream**, verifiable by `git hash-object` against the
+  `blob_sha` pins in `UPSTREAM.json`, which records `local_delta: null` for
+  both. The same sync absorbs upstream's 2026-08-14 five-schema
+  description/validation pass and the advisor/assessor 0.1.1 → 1.0.1
+  Marketplace-field moves that had the `fedramp-schema-watch` sentinel red as
+  MAJOR drift since 2026-08-12. The schema changes are additive for the
+  emitter's purposes — the only new `required` (`isOverdue` on
+  `vulnerabilityDetail.overdueStatus`) is in a definition `conmon ksi` never
+  emits — and `additionalProperties` remains absent, so the emitted metadata
+  block stays valid. The FedRAMP/rules consolidated-rules blob is unchanged,
+  so the bundled `fedramp-ksi-2026` catalog content is identical; only the
+  repo-commit pin moved. The drift sentinel runs clean against the new pins;
+  the 16 emitter and 8 CLI round-trip tests validate offline against the
+  re-vendored copies. Closes #239.
 - **Breaking majors no longer poison the routine Dependabot batches.** A
   group's `update-types: [minor, patch]` filter does not reliably keep a
   major out of a **uv re-lock**: an uncapped direct dependency can still

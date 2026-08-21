@@ -62,7 +62,17 @@ RUN set -eux; \
       /opt/venv/pyvenv.cfg
 
 # ---- final: distroless DHI runtime, nonroot uid 65532 -----------------------
-FROM dhi.io/python:3.13@sha256:0815063751f2b1909fd76f1efe5e17396a7e9d00bfa494a652708e9603debc6a AS final
+# Digest bumped 2026-08-20 (v0.12), closing issue #248. The base-freshness
+# sentinel reported the pin drifted on 2026-08-18, and post-publish-rescan
+# had been failing three consecutive weeks on 7 FIXABLE util-linux
+# advisories in the published v0.11.2 image (DEBIAN-CVE-2025-14104,
+# -2026-13595, -2026-27456, -2026-53612/-53613/-53614/-53615) — i.e. an
+# upstream fix existed and only a rebuild could take it. Reachability is
+# low (distroless: no shell, no apt, the Python process never invokes
+# these binaries), but SECURITY.md § Supported versions promises the
+# latest patch carries no disclosed advisories, so it does not get to sit.
+# See docs/releases/reviews/safeguards-resweep-2026-Q3.md § 2.2.
+FROM dhi.io/python:3.13@sha256:e512071462b6f002ac3d6f4d31bdf7d20fe6ffce3b5ce4f684b5e50d14dba217 AS final
 COPY --from=venv-fix --chown=65532:65532 /opt/venv /opt/venv
 COPY --from=venv-fix --chown=65532:65532 /build/home/ /home/nonroot/
 ENV PATH="/opt/venv/bin:${PATH}" \

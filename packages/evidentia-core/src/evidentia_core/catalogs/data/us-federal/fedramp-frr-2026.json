@@ -1,0 +1,1288 @@
+{
+  "framework_id": "fedramp-frr-2026",
+  "framework_name": "FedRAMP Requirements — provider-facing rules (Consolidated Rules for 2026)",
+  "version": "2026.07.14.01 (CR26)",
+  "source": "FedRAMP — https://github.com/FedRAMP/rules @ 58efbf3d8984 (fedramp-consolidated-rules.json)",
+  "tier": "A",
+  "category": "control",
+  "placeholder": false,
+  "families": [
+    "Addressing FedRAMP Communication",
+    "Collaborative Continuous Monitoring",
+    "Certification Data Sharing",
+    "Cryptographic Module Use",
+    "Certification Package Overview",
+    "FedRAMP Certification",
+    "Incident Evaluation and Communication",
+    "Independent Verification and Validation",
+    "Minimum Assessment Scope",
+    "Marketplace Listing",
+    "Secure Configuration Guide",
+    "Significant Change Notification",
+    "Security Decision Record",
+    "Vulnerability Detection and Response",
+    "Vulnerability Evaluation and Reporting"
+  ],
+  "controls": [
+    {
+      "id": "AFC-CSO-ACK",
+      "title": "Acknowledge Receipt",
+      "description": "Providers SHOULD promptly and automatically acknowledge the receipt of messages received from FedRAMP in their FedRAMP Security Inbox.",
+      "family": "Addressing FedRAMP Communication",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: FedRAMP Security Inbox, Promptly, Provider."
+    },
+    {
+      "id": "AFC-CSO-CRA",
+      "title": "Complete Required Actions",
+      "description": "Providers MUST complete the required actions in Emergency or Emergency Test designated messages sent by FedRAMP within the timeframe included in the message.",
+      "family": "Addressing FedRAMP Communication",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): Timeframes may vary by FedRAMP Certification class.\n\nRelated FedRAMP terms: Certification Class, Provider."
+    },
+    {
+      "id": "AFC-CSO-EMR",
+      "title": "Emergency Message Routing",
+      "description": "Providers MUST route Emergency designated messages sent by FedRAMP to a senior security official for their awareness.",
+      "family": "Addressing FedRAMP Communication",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): Senior security officials are determined by the provider.\n\nRelated FedRAMP terms: Provider."
+    },
+    {
+      "id": "AFC-CSO-IMA",
+      "title": "Important Message Actions",
+      "description": "Providers SHOULD complete the required actions in Important designated messages sent by FedRAMP within the timeframe specified in the message.",
+      "family": "Addressing FedRAMP Communication",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): Timeframes may vary by FedRAMP Certification class.\n\nRelated FedRAMP terms: Certification Class, Provider."
+    },
+    {
+      "id": "AFC-CSO-INB",
+      "title": "Maintain a FedRAMP Security Inbox",
+      "description": "Providers MUST establish and maintain an email address to receive messages from FedRAMP; this inbox is a FedRAMP Security Inbox (FSI).",
+      "family": "Addressing FedRAMP Communication",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: FedRAMP Security Inbox, Provider."
+    },
+    {
+      "id": "AFC-CSO-NOC",
+      "title": "Notification of Changes",
+      "description": "Providers MUST immediately notify FedRAMP of any changes to the email address for their FedRAMP Security Inbox.",
+      "family": "Addressing FedRAMP Communication",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: FedRAMP Security Inbox, Provider."
+    },
+    {
+      "id": "AFC-CSO-RCV",
+      "title": "Receive Email Without Disruption",
+      "description": "Providers MUST receive and react to email messages from FedRAMP without disruption and without requiring additional actions from FedRAMP.",
+      "family": "Addressing FedRAMP Communication",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): This requirement is intended to prevent cloud service providers from requiring FedRAMP to complete a CAPTCHA, log into a customer portal, or otherwise take service-specific actions that might prevent the security team from receiving the message.\n\nRelated FedRAMP terms: Provider."
+    },
+    {
+      "id": "AFC-CSO-TFG",
+      "title": "Trust @fedramp.gov and @gsa.gov",
+      "description": "Providers MUST treat any email originating from an @fedramp.gov or @gsa.gov email address as if it was sent from FedRAMP by default; if such a message is confirmed to originate from someone other than FedRAMP then the FedRAMP Security Inbox rules no longer apply.",
+      "family": "Addressing FedRAMP Communication",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: FedRAMP Security Inbox, Provider."
+    },
+    {
+      "id": "CCM-OCR-AFS",
+      "title": "Anonymized Feedback Summary",
+      "description": "Providers MUST supply an anonymized and desensitized summary of the feedback, questions, and answers about each Ongoing Certification Report as an addendum to the Ongoing Certification Report OR in the next Ongoing Certification Report.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): This is intended to encourage sharing of information and decrease the burden on the cloud service provider - providing this summary will reduce duplicate questions from agencies and ensure FedRAMP has access to this information. It is generally in the provider's interest to update this addendum frequently throughout the quarter.\n\nRelated FedRAMP terms: Agency, FedRAMP Certification Report, Ongoing Certification, Ongoing Certification Report (OCR), Provider."
+    },
+    {
+      "id": "CCM-OCR-AVL",
+      "title": "Report Availability",
+      "description": "Providers MUST supply an Ongoing Certification Report to all necessary parties every 3 months, covering the entire period since the previous summary, in a consistent format that is human readable; this report MUST include high-level summaries of at least the following information:",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Changes to FedRAMP Certification Data\n- Planned changes to FedRAMP Certification Data during at least the next 3 months\n- Accepted vulnerabilities\n- Transformative changes\n- Updated recommendations or best practices for security, configuration, usage, or similar aspects of the cloud service offering\n- A list of all agencies that are directly using the product\n- FedRAMP Reportable Incidents or an attestation that no such incidents occurred\n- Lessons learned and changes planned or made as a result of FedRAMP Reportable Incidents (if such occurred)\n\nRelated FedRAMP terms: Accepted Vulnerability, Agency, All Necessary Parties, Certification Data, Cloud Service Offering, FedRAMP Certification Report, FedRAMP Reportable Incident, Incident, Ongoing Certification, Ongoing Certification Report (OCR), Provider, Transformative Change, Vulnerability.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-ongoing-certification-report-schema-2026-06-24.json"
+    },
+    {
+      "id": "CCM-OCR-FBM",
+      "title": "Feedback Mechanism",
+      "description": "Providers MUST supply an asynchronous mechanism for all necessary parties to provide feedback or ask questions about each Ongoing Certification Report.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): This could be email by default but providers are encouraged to consider something more interactive as appropriate.\n\nRelated FedRAMP terms: All Necessary Parties, FedRAMP Certification Report, Ongoing Certification, Ongoing Certification Report (OCR), Provider."
+    },
+    {
+      "id": "CCM-OCR-LSI",
+      "title": "Limit Sensitive Information",
+      "description": "Providers MUST NOT irresponsibly disclose sensitive information in an Ongoing Certification Report that would likely have an adverse effect on the cloud service offering.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: MUST NOT.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, FedRAMP Certification Report, Likely, Ongoing Certification, Ongoing Certification Report (OCR), Provider."
+    },
+    {
+      "id": "CCM-OCR-NRD",
+      "title": "Next Report Date",
+      "description": "Providers MUST supply the target date for their next Ongoing Certification Report with other public FedRAMP Certification Data.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Certification Data, FedRAMP Certification Report, Ongoing Certification, Ongoing Certification Report (OCR), Provider."
+    },
+    {
+      "id": "CCM-OCR-RPS",
+      "title": "Responsible Public Certification Report Sharing",
+      "description": "Providers MAY responsibly supply some or all of the information an Ongoing Certification Report to the public or other parties if the provider determines doing so will NOT likely have an adverse effect on the cloud service offering.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, FedRAMP Certification Report, Likely, Ongoing Certification, Ongoing Certification Report (OCR), Provider, Responsibly."
+    },
+    {
+      "id": "CCM-OCR-SOR",
+      "title": "Spread Out Reports",
+      "description": "Providers SHOULD establish a regular 3 month cycle for Ongoing Certification Reports that is spread out from the beginning, middle, or end of each quarter.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): This recommendation is intended to discourage hundreds of cloud service providers from releasing their Ongoing Certification Reports during the first or last week of each quarter because that is the easiest way for a single provider to track this deliverable; the result would overwhelm agencies with many cloud services. Widely used cloud service providers are encouraged to work with their customers to identify ideal timeframes for this cycle.\n\nRelated FedRAMP terms: Agency, Ongoing Certification, Provider, Regularly."
+    },
+    {
+      "id": "CCM-QTR-ACT",
+      "title": "Additional Content",
+      "description": "Providers SHOULD supply additional information in Quarterly Reviews that the provider determines is of interest, use, or otherwise relevant to agencies.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Agency, Provider, Quarterly Review."
+    },
+    {
+      "id": "CCM-QTR-MTG",
+      "title": "Quarterly Review Meeting",
+      "description": "Providers with Class C Certifications MUST host a synchronous Quarterly Review every 3 months, open to all necessary parties, to review aspects of the most recent Ongoing Certification Reports that the provider determines are of the most relevance to agencies.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class A Certifications MAY host a synchronous Quarterly Review every 3 months, open to all necessary parties, to review aspects of the most recent Ongoing Certification Reports that the provider determines are of the most relevance to agencies.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class B Certifications SHOULD host a synchronous Quarterly Review every 3 months, open to all necessary parties, to review aspects of the most recent Ongoing Certification Reports that the provider determines are of the most relevance to agencies.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class C Certifications MUST host a synchronous Quarterly Review every 3 months, open to all necessary parties, to review aspects of the most recent Ongoing Certification Reports that the provider determines are of the most relevance to agencies.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class D Certifications MUST host a synchronous Quarterly Review every 3 months, open to all necessary parties, to review aspects of the most recent Ongoing Certification Reports that the provider determines are of the most relevance to agencies.\n\nRelated FedRAMP terms: Agency, All Necessary Parties, Ongoing Certification, Provider, Quarterly Review."
+    },
+    {
+      "id": "CCM-QTR-NID",
+      "title": "No Irresponsible Disclosure",
+      "description": "Providers MUST NOT irresponsibly disclose sensitive information in a Quarterly Review that would likely have an adverse effect on the cloud service offering.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: MUST NOT.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, Likely, Provider, Quarterly Review."
+    },
+    {
+      "id": "CCM-QTR-NRD",
+      "title": "Next Review Date",
+      "description": "Providers MUST publicly supply the target date for their next Quarterly Review with other public FedRAMP Certification Data.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Certification Data, Provider, Quarterly Review."
+    },
+    {
+      "id": "CCM-QTR-REG",
+      "title": "Meeting Registration Info",
+      "description": "Providers MUST supply either a registration link or a downloadable calendar file with meeting information for Quarterly Reviews to all necessary parties.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: All Necessary Parties, Provider, Quarterly Review."
+    },
+    {
+      "id": "CCM-QTR-RTP",
+      "title": "Restrict Third Parties",
+      "description": "Providers SHOULD NOT invite third parties to attend Quarterly Reviews intended for agencies unless they have specific relevance.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: SHOULD NOT.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): This is because agencies are less likely to actively participate in meetings with third parties; the cloud service provider's independent assessor should be considered relevant by default.\n\nRelated FedRAMP terms: Agency, Assessor, Likely, Provider, Quarterly Review."
+    },
+    {
+      "id": "CCM-QTR-RTR",
+      "title": "Record/Transcribe Reviews",
+      "description": "Providers SHOULD record or transcribe Quarterly Reviews and supply them to all necessary parties.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: All Necessary Parties, Provider, Quarterly Review."
+    },
+    {
+      "id": "CCM-QTR-SAR",
+      "title": "Schedule Around Reports",
+      "description": "Providers SHOULD regularly schedule Quarterly Reviews to occur at least 3 business days after releasing an Ongoing Certification Report AND within 10 business days of such release.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: FedRAMP Certification Report, Ongoing Certification, Ongoing Certification Report (OCR), Provider, Quarterly Review, Regularly."
+    },
+    {
+      "id": "CCM-QTR-SCR",
+      "title": "Share Content Responsibly",
+      "description": "Providers MAY responsibly supply content prepared for a Quarterly Review to the public or other parties if the provider determines doing so will NOT likely have an adverse effect on the cloud service offering.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, Likely, Provider, Quarterly Review, Responsibly."
+    },
+    {
+      "id": "CCM-QTR-SRR",
+      "title": "Share Recordings Responsibly",
+      "description": "Providers MAY responsibly supply recordings or transcriptions of Quarterly Reviews to the public or other parties ONLY if the provider removes all agency information (comments, questions, names, etc.) AND determines doing so will NOT likely have an adverse effect on the cloud service offering.",
+      "family": "Collaborative Continuous Monitoring",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Agency, Cloud Service Offering, Likely, Provider, Quarterly Review, Responsibly."
+    },
+    {
+      "id": "CDS-CSF-TCM",
+      "title": "Trust Center Migration",
+      "description": "Providers MUST notify all necessary parties when migrating to a trust center and MUST provide information in their existing USDA Connect Community Portal secure folders explaining how to use the trust center to obtain FedRAMP Certification Data.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP Rev 5 authorizations.\n\nRelated FedRAMP terms: All Necessary Parties, Certification Data, Provider, Trust Center."
+    },
+    {
+      "id": "CDS-CSO-AVR",
+      "title": "Availability Reporting",
+      "description": "Providers with Class C Certifications MUST maintain a web service, available to all necessary parties, that indicates current and historical availability of core services within the cloud service offering over at least the past 30 days, including availability incidents, in both human-readable and machine-readable formats; this service MUST be available even if the primary cloud service offering is unavailable.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class A Certifications SHOULD maintain a web service, available to all necessary parties, that indicates current and historical availability of core services within the cloud service offering over at least the past 30 days, including availability incidents, in both human-readable and machine-readable formats; this service SHOULD be available even if the primary cloud service offering is unavailable.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class B Certifications MUST maintain a web service, available to all necessary parties, that indicates current and historical availability of core services within the cloud service offering over at least the past 30 days, including availability incidents, in both human-readable and machine-readable formats; this service MUST be available even if the primary cloud service offering is unavailable.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class C Certifications MUST maintain a web service, available to all necessary parties, that indicates current and historical availability of core services within the cloud service offering over at least the past 30 days, including availability incidents, in both human-readable and machine-readable formats; this service MUST be available even if the primary cloud service offering is unavailable.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class D Certifications MUST maintain a web service, available to all necessary parties, that indicates current and historical availability of core services within the cloud service offering over at least the past 30 days, including availability incidents, in both human-readable and machine-readable formats; this service MUST be available even if the primary cloud service offering is unavailable.\n\nRelated FedRAMP terms: All Necessary Parties, Cloud Service Offering, Incident, Machine-Readable, Provider."
+    },
+    {
+      "id": "CDS-CSO-CBF",
+      "title": "Consistency Between Formats",
+      "description": "Providers MUST use automation to ensure information remains consistent between human-readable and machine-readable formats when FedRAMP Certification Data is provided in both formats.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Certification Data, Machine-Readable, Provider."
+    },
+    {
+      "id": "CDS-CSO-FID",
+      "title": "Always Include FedRAMP ID",
+      "description": "Providers MUST always include the FedRAMP ID of the related cloud service offering in all FedRAMP Certification Data once assigned, including all reports, notifications, and other communication that results from FedRAMP rules.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Certification Data, Cloud Service Offering, Provider."
+    },
+    {
+      "id": "CDS-CSO-FRC",
+      "title": "FedRAMP Certification Reports",
+      "description": "Providers MUST include FedRAMP Certification Reports with their FedRAMP Certification Data without inappropriate modifications, and make such reports available within 2 weeks of receiving the materials from FedRAMP.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): FedRAMP provides Certification Reports for all cloud service offerings following the Program Certification path as part of the initial and ongoing FedRAMP Certification process, and may provide Certification Reports for cloud service offerings following the Agency Certification path.\n\nRelated FedRAMP terms: Agency, Certification Data, Certification Path, Cloud Service Offering, Provider."
+    },
+    {
+      "id": "CDS-CSO-HAD",
+      "title": "Historical FedRAMP Certification Data",
+      "description": "Providers MUST supply snapshots of FedRAMP Certification Data aligned to Ongoing Certification Reports to all necessary parties; these snapshots MUST be available for the duration of FedRAMP Certification.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): Historical snapshots do not need to be reconstructed for periods before the provider's first Ongoing Certification Report, but should be maintained for all subsequent Ongoing Certification Reports.\n\nRelated FedRAMP terms: All Necessary Parties, Certification Data, FedRAMP Certification Report, Ongoing Certification, Ongoing Certification Report (OCR), Provider."
+    },
+    {
+      "id": "CDS-CSO-IRP",
+      "title": "Include Relevant Policies",
+      "description": "Providers MUST supply all relevant policies and procedures in the FedRAMP Certification Data, including a human-readable and machine-readable reference that explains at least the following about each included policy and procedure:",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Name of policy or procedure\n- Name of file, document, web page, etc.\n- Brief summary of policy or procedure\n- Word count of document\n- Current version\n- Date of last update\n- Related FedRAMP Practices (if applicable)\n\nRelated FedRAMP terms: Certification Data, FedRAMP Practices, Machine-Readable, Provider."
+    },
+    {
+      "id": "CDS-CSO-PSM",
+      "title": "Per-Service Certification Materials",
+      "description": "Providers with Class C Certifications MAY supply per-service FedRAMP Certification materials.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class A Certifications MAY supply per-service FedRAMP Certification materials.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class B Certifications MAY supply per-service FedRAMP Certification materials.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class C Certifications MAY supply per-service FedRAMP Certification materials.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class D Certifications MUST supply per-service FedRAMP Certification materials.\n\nRelated FedRAMP terms: Agency, Provider."
+    },
+    {
+      "id": "CDS-CSO-PUB",
+      "title": "Public Information",
+      "description": "Providers MUST publicly share up-to-date information about the cloud service offering in both human-readable and JSON formats, including at least the following information that is available and applicable:",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- FedRAMP ID\n- Service Model\n- Deployment Model\n- Business Category\n- UEI Number\n- Sales Contact Information\n- Security Contact Information\n- Product Website Link\n- Link to Product Logo\n- Overall Service Description\n- Detailed list of specific services and their security categories (see CDS-CSO-SVC (Public Service List) (Service List))\n- Link to Secure Configuration Guidance\n- Overview of documentation supplied by the provider for the cloud service offering\n- Link to Trust Center landing page that includes instructions on accessing information in the trust center\n- Next Ongoing Certification Report date (see CCM-OCR-NRD (Next Report Date))\n- Current FedRAMP Recognized independent assessment service\n\nUpstream note (verbatim): Generally, this information should be available on a public webpage or publicly shared in a FedRAMP-compatible trust center.\n\nRelated FedRAMP terms: Cloud Service Offering, FedRAMP Certification Report, FedRAMP Recognized, Ongoing Certification, Ongoing Certification Report (OCR), Provider, Security Category, Trust Center.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-certification-package-overview-schema-2026-06-24.json"
+    },
+    {
+      "id": "CDS-CSO-RIS",
+      "title": "Responsible Information Sharing",
+      "description": "Providers MUST provide sufficient information in FedRAMP Certification Data to support agency authorization decisions but SHOULD NOT include sensitive information that would likely enable a threat actor to gain unauthorized access, cause harm, disrupt operations, or otherwise have a negative adverse impact on the cloud service offering.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): This is not a license to exclude accurate risk information, but specifics that would likely lead to compromise should be abstracted. A breach of confidentiality with FedRAMP Certification Data should be anticipated by a secure cloud service provider.\n\nRelated FedRAMP terms: Agency, Certification Data, Cloud Service Offering, Likely, Provider."
+    },
+    {
+      "id": "CDS-CSO-RPS",
+      "title": "Responsible Public Package Sharing",
+      "description": "Providers MAY responsibly share some or all of the information in a FedRAMP Certification Package publicly or with other parties if the provider determines doing so will NOT likely have an adverse effect on the cloud service offering.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Certification Package, Cloud Service Offering, Likely, Provider, Responsibly."
+    },
+    {
+      "id": "CDS-CSO-SVC",
+      "title": "Public Service List",
+      "description": "Providers MUST publicly share a detailed list of specific services and their security categories that are included in the cloud service offering using clear feature or service names that align with standard public marketing materials; this list MUST be complete enough for a potential customer to determine which services are and are not included in the FedRAMP Minimum Assessment Scope without requesting access to underlying FedRAMP Certification Data.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Certification Data, Cloud Service Offering, Provider, Security Category.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-certification-package-overview-schema-2026-06-24.json"
+    },
+    {
+      "id": "CDS-CSO-UTC",
+      "title": "Use Trust Centers",
+      "description": "Providers MUST use a FedRAMP-compatible trust center to store and share FedRAMP Certification Data with all necessary parties.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): Rules for FedRAMP-Compatible Trust Centers are explained in the Certification Data Sharing Rules under the FedRAMP-Compatible Trust Centers section (id: CDS-TRC).\n\nRelated FedRAMP terms: All Necessary Parties, Certification Data, Provider, Trust Center.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-certification-package-overview-schema-2026-06-24.json"
+    },
+    {
+      "id": "CDS-TRC-AAI",
+      "title": "Agency Access Inventory",
+      "description": "Trust centers MUST maintain an inventory and history of federal agency users or systems with access to FedRAMP Certification Data and MUST make this information available to FedRAMP upon request.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Agency, Certification Data, Trust Center."
+    },
+    {
+      "id": "CDS-TRC-ACL",
+      "title": "Access Logging",
+      "description": "Trust centers MUST log access to FedRAMP Certification Data and store summaries of access for at least six months; such information, as it pertains to specific parties, SHOULD be made available upon request by those parties.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Certification Data, Trust Center."
+    },
+    {
+      "id": "CDS-TRC-HMR",
+      "title": "Human and Machine-Readable Certification Data",
+      "description": "Trust centers SHOULD make FedRAMP Certification Data available to view and download in both human-readable and machine-readable formats.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Certification Data, Machine-Readable, Trust Center."
+    },
+    {
+      "id": "CDS-TRC-PAC",
+      "title": "Programmatic Access",
+      "description": "Trust centers MUST provide documented programmatic access to all FedRAMP Certification Data, including programmatic access to human-readable materials.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Certification Data, Trust Center."
+    },
+    {
+      "id": "CDS-TRC-SSM",
+      "title": "Self-Service Access Management",
+      "description": "Trust centers SHOULD include features that encourage all necessary parties to provision and manage access to FedRAMP Certification Data for their users and services directly.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: All Necessary Parties, Certification Data, Trust Center."
+    },
+    {
+      "id": "CDS-TRC-USH",
+      "title": "Uninterrupted Sharing",
+      "description": "Trust centers MUST share FedRAMP Certification Data with all necessary parties without interruption.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): \"Without interruption\" means that parties should not have to request manual approval each time they need to access FedRAMP Certification Data or go through a complicated process. The preferred way of ensuring access without interruption is to use on-demand just-in-time access provisioning.\n\nRelated FedRAMP terms: All Necessary Parties, Certification Data, Trust Center."
+    },
+    {
+      "id": "CDS-UTC-AAD",
+      "title": "Agency Access Denial",
+      "description": "Providers MUST notify FedRAMP within 5 business days of denying an agency access request for FedRAMP Certification Data.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Agency, Certification Data, Provider."
+    },
+    {
+      "id": "CDS-UTC-AGA",
+      "title": "Agency Access",
+      "description": "Providers SHOULD supply access to the FedRAMP Certification Package with agencies upon request.",
+      "family": "Certification Data Sharing",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Agency, Certification Package, Provider."
+    },
+    {
+      "id": "CMU-CSO-CAT",
+      "title": "Configuration of Agency Tenants",
+      "description": "Providers SHOULD configure agency tenants by default to use cryptographic services that use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when such modules are available.",
+      "family": "Cryptographic Module Use",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Agency, Provider, Validation."
+    },
+    {
+      "id": "CMU-CSO-CMD",
+      "title": "Cryptographic Module Documentation",
+      "description": "Providers MUST document the cryptographic modules used in each service (or groups of services that use the same modules) where cryptographic services are used to protect federal customer data, including whether these modules are validated under the NIST Cryptographic Module Validation Program or are update streams of such modules.",
+      "family": "Cryptographic Module Use",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Federal Customer Data, Provider, Validation."
+    },
+    {
+      "id": "CMU-CSO-UVM",
+      "title": "Using Validated Cryptographic Modules",
+      "description": "Providers with Class C Certifications SHOULD use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when using cryptographic services to protect federal customer data.",
+      "family": "Cryptographic Module Use",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class A Certifications MAY use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when using cryptographic services to protect federal customer data.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class B Certifications MAY use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when using cryptographic services to protect federal customer data.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class C Certifications SHOULD use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when using cryptographic services to protect federal customer data.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class D Certifications MUST use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when using cryptographic services to protect federal customer data.\n\nRelated FedRAMP terms: Federal Customer Data, Provider, Validation."
+    },
+    {
+      "id": "CPO-CSF-CPM",
+      "title": "Certification Package Maintenance for Rev5",
+      "description": "Providers with Rev5 Class C Certifications MUST persistently maintain their FedRAMP Certification Package to ensure it is up to date and complete at least once every year.",
+      "family": "Certification Package Overview",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP Rev 5 authorizations.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Rev5 Class B Certifications MUST persistently maintain their FedRAMP Certification Package to ensure it is up to date and complete at least once every year.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Rev5 Class C Certifications MUST persistently maintain their FedRAMP Certification Package to ensure it is up to date and complete at least once every year.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Rev5 Class D Certifications MUST persistently maintain their FedRAMP Certification Package to ensure it is up to date and complete at least once every six months.\n\nRelated FedRAMP terms: Certification Package, Persistently, Provider, Significant Change, Transformative Change."
+    },
+    {
+      "id": "CPO-CSO-MTD",
+      "title": "Certification Package Overview Metadata",
+      "description": "Providers MUST also include the following basic metadata in their Certification Package Overview:",
+      "family": "Certification Package Overview",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Name, title, and contact information of official that is responsible and accountable for the FedRAMP Certification Package\n- Version\n- Date and time of last update\n- Source of update\n\nRelated FedRAMP terms: Certification Package, Provider."
+    },
+    {
+      "id": "CPO-CSO-OSA",
+      "title": "Overall Summary of Assessment in Certification Package",
+      "description": "Providers seeking Class C Certification MUST also include the overall summary of their FedRAMP independent assessment, supplied by the assessor per IVV-IAS-OSA (Overall Summary of Assessment), in their Certification Package Overview.",
+      "family": "Certification Package Overview",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers seeking Class A Certification MAY also include an overall summary of their FedRAMP independent assessment in their Certification Package Overview.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MUST): Providers seeking Class B Certification MUST also include the overall summary of their FedRAMP independent assessment, supplied by the assessor per IVV-IAS-OSA (Overall Summary of Assessment), in their Certification Package Overview.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers seeking Class C Certification MUST also include the overall summary of their FedRAMP independent assessment, supplied by the assessor per IVV-IAS-OSA (Overall Summary of Assessment), in their Certification Package Overview.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers seeking Class D Certification MUST also include the overall summary of their FedRAMP independent assessment, supplied by the assessor per IVV-IAS-OSA (Overall Summary of Assessment), in their Certification Package Overview.\n\nRelated FedRAMP terms: Assessor, Certification Package, FedRAMP Independent Assessment, Provider."
+    },
+    {
+      "id": "CPO-CSO-OVR",
+      "title": "Overview of the Cloud Service Offering",
+      "description": "Providers MUST supply a Certification Package Overview within their FedRAMP Certification Package, in both human-readable and JSON formats, that includes at least all of the information required by the following rules:",
+      "family": "Certification Package Overview",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Certification Package Overview: CPO-CSO-MTD (Certification Package Overview Metadata)\n- Certification Data Sharing: CDS-CSO-PUB (Public Information)\n- Certification Data Sharing: CDS-CSO-SVC (Public Service List)\n- Certification Data Sharing: CDS-CSO-IRP (Include Relevant Policies)\n- Minimum Assessment Scope: MAS-CSO-IIR (Identify Information Resources)\n- Minimum Assessment Scope: MAS-CSO-FLO (Information Flows and Security Categories)\n- Minimum Assessment Scope: MAS-CSO-TPR (Third-Party Information Resources)\n- Using Cryptographic Modules: CMU-CSO-CMD (Cryptographic Module Documentation)\n- Independent Verification and Validation: IVV-CSO-ICP (Inclusion in Certification Package)\n\nRelated FedRAMP terms: Certification Class, Certification Data, Certification Package, Information Resource, Initial Incident Report (IIR), Provider, Security Category, Third-Party Information Resource, Validation, Verification.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-certification-package-overview-schema-2026-06-24.json"
+    },
+    {
+      "id": "CPO-CSX-CPM",
+      "title": "Certification Package Maintenance for 20x",
+      "description": "Providers with 20x Class C Certifications MUST persistently maintain their FedRAMP Certification Package to ensure it is up to date and complete at least once every 2 weeks.",
+      "family": "Certification Package Overview",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP 20x authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with 20x Class A Certifications SHOULD persistently maintain their FedRAMP Certification Package to ensure it is up to date and complete at least once every 3 months.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MUST): Providers with 20x Class B Certifications MUST persistently maintain their FedRAMP Certification Package to ensure it is up to date and complete at least once every month.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers with 20x Class C Certifications MUST persistently maintain their FedRAMP Certification Package to ensure it is up to date and complete at least once every 2 weeks.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with 20x Class D Certifications MUST persistently maintain their FedRAMP Certification Package to ensure it is up to date and complete at least once every week.\n\nRelated FedRAMP terms: Certification Package, Persistently, Provider."
+    },
+    {
+      "id": "FRC-APP-AFC",
+      "title": "Applying for FedRAMP Certification",
+      "description": "Providers MUST complete the FedRAMP Certification Application Form in full to request an initial assessment by FedRAMP.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Provider."
+    },
+    {
+      "id": "FRC-APP-FCP",
+      "title": "Fresh FedRAMP Certification Package",
+      "description": "Providers MUST supply a fresh initial FedRAMP Certification Package that shows the current status of the cloud service offering as verified and validated by the provider within the previous 7 days.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Certification Package, Cloud Service Offering, Provider, Validation, Verification."
+    },
+    {
+      "id": "FRC-APP-FIA",
+      "title": "Fresh Independent Assessment",
+      "description": "Providers seeking Class C Certification MUST supply a fresh initial FedRAMP independent assessment that was completed by a FedRAMP Recognized independent assessment service within the previous 3 months.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers seeking Class A Certification MAY supply a fresh initial FedRAMP independent assessment that was completed by a FedRAMP Recognized independent assessment service within the previous 3 months.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MUST): Providers seeking Class B Certification MUST supply a fresh initial FedRAMP independent assessment that was completed by a FedRAMP Recognized independent assessment service within the previous 3 months.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers seeking Class C Certification MUST supply a fresh initial FedRAMP independent assessment that was completed by a FedRAMP Recognized independent assessment service within the previous 3 months.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers seeking Class D Certification MUST supply a fresh initial FedRAMP independent assessment that was completed by a FedRAMP Recognized independent assessment service within the previous 3 months.\n\nRelated FedRAMP terms: FedRAMP Independent Assessment, FedRAMP Recognized, Provider."
+    },
+    {
+      "id": "FRC-APP-MLF",
+      "title": "Marketplace Listing First",
+      "description": "Providers MUST be listed in the FedRAMP Marketplace before applying for FedRAMP Certification, including:",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- FedRAMP Marketplace: MKT-CSO-MLR (Marketplace Listing Requirements),\n- FedRAMP Marketplace: MKT-CSO-PML (Provider Marketplace Listing Requests)\n- FedRAMP Marketplace: MKT-IIP-AGU (Agency Use Cases)\n- FedRAMP Marketplace: MKT-IIP-DCP (Demonstrating Continuous Progress)\n\nRelated FedRAMP terms: Agency, Provider."
+    },
+    {
+      "id": "FRC-APP-NTP",
+      "title": "No Third-Party Applicants",
+      "description": "Providers MUST NOT use a third party to apply for a FedRAMP Certification on their behalf; this includes independent assessment services.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST NOT.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Provider."
+    },
+    {
+      "id": "FRC-APP-USA",
+      "title": "Updating Stale Assessments",
+      "description": "Providers MAY freshen a stale initial independent verification and validation assessment by having a FedRAMP Recognized independent assessment service review any changes between the original assessment and the current status of the cloud service offering in place of a full re-assessment, UNLESS the stale assessment is more than 9 months old.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, FedRAMP Recognized, Provider, Validation, Verification."
+    },
+    {
+      "id": "FRC-APS-ATO",
+      "title": "Agency Authorization to Operate",
+      "description": "Providers seeking a FedRAMP Rev5 Agency Certification MUST have completed the Authorization to Operate (ATO) process with their agency sponsor for the cloud service offering, concluding with a formal signed ATO letter that the agency has sent over official government channels to FedRAMP.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Agency, Cloud Service Offering, Provider."
+    },
+    {
+      "id": "FRC-CCL-DCC",
+      "title": "Downgrading Certification Class",
+      "description": "Providers MUST apply for a new FedRAMP Certification to downgrade their Certification Class.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: All Necessary Parties, Certification Class, Provider."
+    },
+    {
+      "id": "FRC-CCL-DNP",
+      "title": "Downgrade Notification Period",
+      "description": "Providers SHOULD notify all necessary parties at least 120 days in advance of an intended downgrade or cancellation of FedRAMP Certification.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): Downgrading or canceling FedRAMP Certification will have severe negative consequences for the provider and their agency customers and should only be done after careful consideration and planning... but if it must be done, notify all necessary parties as soon as possible.\n\nRelated FedRAMP terms: Agency, All Necessary Parties, Provider."
+    },
+    {
+      "id": "FRC-CCL-UCC",
+      "title": "Upgrading Certification Class",
+      "description": "Providers MUST apply for a new FedRAMP Certification to upgrade their Certification Class; all applicable requirements MUST be met in advance.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Certification Class, Provider."
+    },
+    {
+      "id": "FRC-CLA-ASF",
+      "title": "Approved Alternative Security Frameworks",
+      "description": "Providers seeking a FedRAMP Class A Certification MUST have completed a certification or equivalent process, including an independent assessment if applicable, from one of the following alternative security frameworks within the past 12 months:",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- FedRAMP Rev5 (including FedRAMP Ready) at any historical Impact Level\n- SOC 2 Type II\n- GovRAMP at any Impact Level\n\nRelated FedRAMP terms: Provider, Security Category."
+    },
+    {
+      "id": "FRC-CLA-EAM",
+      "title": "External Assessment Materials",
+      "description": "Providers seeking a FedRAMP Class A Certification MUST supply the following materials from their alternative security framework assessment to all necessary parties:",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- SOC 2 Type II: Complete report, bridge or gap letter (if applicable), verified audit engagement documentation, estimated schedule for upcoming report, supplemental compliance evidence (if applicable)\n- FedRAMP Ready: Readiness Assessment Report, Security Assessment Plan, and any other materials required by FedRAMP.\n- GovRAMP: Readiness Assessment Report, Security Assessment Plan, and any other materials required by GovRAMP.\n\nRelated FedRAMP terms: All Necessary Parties, Provider, Verification."
+    },
+    {
+      "id": "FRC-CLA-IVV",
+      "title": "Optional Independent Verification and Validation",
+      "description": "Providers seeking a FedRAMP Class A Certification MAY have the FedRAMP Certification Package independently verified and validated by a FedRAMP Recognized assessor before submission to FedRAMP.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Assessor, Certification Package, FedRAMP Recognized, Provider, Validation, Verification."
+    },
+    {
+      "id": "FRC-CLA-MFR",
+      "title": "Mandatory FedRAMP Rules for Class A",
+      "description": "Providers seeking a Class A FedRAMP Certification MUST address all rules in this FedRAMP Class A Certification subset (FRC-CLA) AND the following additional FedRAMP Class A rules; the appropriate artifacts or information mapping for all rules MUST be supplied in the FedRAMP Certification Package.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- FedRAMP Certification: FRC-CSO-PKG (FedRAMP Certification Package)\n- FedRAMP Certification: FRC-CSO-JSN (FedRAMP JSON Schemas)\n- FedRAMP Certification: FRC-CSO-POP (Pick One Program Certification Type)\n- Minimum Assessment Scope: MAS-CSO-IIR (Identify Information Resources)\n- Certification Data Sharing: CDS-CSO-PUB (Public Information)\n- Certification Data Sharing: CDS-CSO-UTC (Use Trust Centers)\n- Certification Data Sharing: CDS-UTC-AAD (Agency Access Denial)\n- Addressing FedRAMP Communication: AFC-CSO-INB (Maintain a FedRAMP Security Inbox)\n- Addressing FedRAMP Communication: AFC-CSO-RCV (Receive Email Without Disruption)\n- Addressing FedRAMP Communication: AFC-CSO-CRA (Complete Required Actions)\n- Incident Evaluation and Communication: IEC-CSO-EFR (Evaluate FedRAMP Reportability)\n- Incident Evaluation and Communication: IEC-CSO-FIR (Final Incident Report)\n- Vulnerability Detection and Response: VDR-CSO-DET (Vulnerability Detection)\n- Collaborative Continuous Monitoring: CCM-OCR-AVL (Report Availability)\n- Collaborative Continuous Monitoring: CCM-OCR-NRD (Next Report Date)\n- Independent Verification and Validation: IVV-CSX-AIA (Annual Independent Assessments for 20x)\n- Key Security Indicators: KSI-CMT-LMC (Logging Changes)\n- Key Security Indicators: KSI-CNA-RNT (Restricting Network Traffic)\n- Key Security Indicators: KSI-CED-RAT (Reviewing All Training)\n- Key Security Indicators: KSI-IAM-AAM (Automating Account Management)\n- Key Security Indicators: KSI-IAM-APM (Adopting Passwordless Methods)\n- Key Security Indicators: KSI-INR-RIR (Reviewing Incident Response Procedures)\n- Key Security Indicators: KSI-SVC-SIN (Securing Information)\n\nRelated FedRAMP terms: Agency, Artifacts, Certification Data, Certification Package, Certification Path, Certification Type, FedRAMP Security Inbox, Final Incident Report (FIR), Incident, Information Resource, Initial Incident Report (IIR), Ongoing Certification Report (OCR), Provider, Trust Center, Validation, Verification, Vulnerability, Vulnerability Detection, Vulnerability Response."
+    },
+    {
+      "id": "FRC-CLA-OFR",
+      "title": "Address Optional FedRAMP Rules for Class A",
+      "description": "Providers seeking a Class A FedRAMP Certification MAY address the following additional optional FedRAMP Class A rules (if applicable):",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Collaborative Continuous Monitoring: CCM-QTR-MTG (Quarterly Review Meeting)\n- Certification Data Sharing: CDS-CSO-PSM (Per-Service Certification Materials)\n- Cryptographic Module Use: CMU-CSO-UVM (Using Validated Cryptographic Modules)\n- FedRAMP Certification: FRC-APP-FIA (Fresh Independent Assessment)\n- Independent Verification and Validation: IVV-CSO-FIA (FedRAMP Independent Assessments)\n- Security Decision Record: SDR-CSX-KMT (Key Security Indicator Metrics)\n- Vulnerability Evaluation and Reporting: VER-TFR-IRI (Internet-Reachable Incidents)\n- Vulnerability Evaluation and Reporting: VER-TFR-MRH (Historical Activity)\n- Vulnerability Evaluation and Reporting: VER-TFR-NRI (Non-Internet-Reachable Incidents)\n\nRelated FedRAMP terms: Certification Data, FedRAMP Independent Assessment, Incident, Provider, Quarterly Review, Security Decision Record (SDR), Validation, Verification, Vulnerability."
+    },
+    {
+      "id": "FRC-CLA-RFR",
+      "title": "Recommended FedRAMP Rules for Class A",
+      "description": "Providers seeking a Class A FedRAMP Certification SHOULD address the following additional recommended FedRAMP Class A rules (if applicable):",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Certification Data Sharing: CDS-CSO-AVR (Availability Reporting)\n- Certification Package Overview: CPO-CSF-CPM (Certification Package Maintenance for Rev5)\n- Certification Package Overview: CPO-CSX-CPM (Certification Package Maintenance for 20x)\n- Incident Evaluation and Communication: IEC-CSO-IIR (Initial Incident Report)\n- Incident Evaluation and Communication: IEC-CSO-OIR (Ongoing Incident Reports)\n- Vulnerability Detection and Response: VDR-TFR-MVX (Persistent Machine Verification and Validation for 20x)\n- Vulnerability Detection and Response: VDR-TFR-PCD (Persistently Complete Detection)\n- Vulnerability Detection and Response: VDR-TFR-PDD (Persistent Drift Detection)\n- Vulnerability Detection and Response: VDR-TFR-PSD (Persistent Sample Detection)\n- Vulnerability Detection and Response: VDR-TFR-PVR (Mitigation and Remediation Expectations)\n- Vulnerability Evaluation and Reporting: VER-TFR-EVU (Evaluate Vulnerabilities Quickly)\n\nRelated FedRAMP terms: Certification Data, Certification Package, Drift, Incident, Initial Incident Report (IIR), Ongoing Incident Report (OIR), Persistently, Provider, Validation, Verification, Vulnerability, Vulnerability Detection, Vulnerability Response."
+    },
+    {
+      "id": "FRC-CSF-ACP",
+      "title": "Assign Control Parameters",
+      "description": "Providers MUST assign all organization-defined control parameters, following FedRAMP Rev5 Controls Guidance, and ensure that all control parameter assignments are documented in the Security Decision Record (SDR).",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP Rev 5 authorizations.\n\nRelated FedRAMP terms: Provider, Security Decision Record (SDR)."
+    },
+    {
+      "id": "FRC-CSF-BSL",
+      "title": "FedRAMP Rev5 Baselines",
+      "description": "Providers seeking FedRAMP Rev5 Class C Certification MUST include at least the following NIST SP 800-53 Rev. 5 controls in their Security Decision Record:",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP Rev 5 authorizations.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MUST): Providers seeking FedRAMP Rev5 Class B Certification MUST include at least the following NIST SP 800-53 Rev. 5 controls in their Security Decision Record:\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers seeking FedRAMP Rev5 Class C Certification MUST include at least the following NIST SP 800-53 Rev. 5 controls in their Security Decision Record:\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers seeking FedRAMP Rev5 Class D Certification MUST include at least the following NIST SP 800-53 Rev. 5 controls in their Security Decision Record:\n\nRelated FedRAMP terms: Provider, Security Decision Record (SDR)."
+    },
+    {
+      "id": "FRC-CSF-FFG",
+      "title": "Follow FedRAMP Rev5 Controls Guidance",
+      "description": "Providers MUST follow FedRAMP Rev5 Controls Guidance for the implementation and documentation of all applicable controls.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP Rev 5 authorizations.\n\nRelated FedRAMP terms: Provider."
+    },
+    {
+      "id": "FRC-CSF-RDY",
+      "title": "FedRAMP Ready Conversion",
+      "description": "Providers with FedRAMP Rev5 Ready status MUST convert to a FedRAMP Certification by whichever of the follow dates is later: the expiration of their annual assessment or November 17, 2026 (the legacy FedRAMP Ready status will be entirely removed on December 31, 2027).",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP Rev 5 authorizations.\n\nRelated FedRAMP terms: Provider."
+    },
+    {
+      "id": "FRC-CSO-FCP",
+      "title": "FedRAMP Certification Profile",
+      "description": "Providers MUST identify a target FedRAMP Certification Profile and apply all relevant FedRAMP Practices to the cloud service offering.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): Information resources (including third-party information resources) MAY vary by security category as appropriate to the type of information handled by or impacted by the information resource.\n\nRelated FedRAMP terms: Certification Profile, Cloud Service Offering, FedRAMP Practices, Handle, Information Resource, Provider, Security Category, Third-Party Information Resource."
+    },
+    {
+      "id": "FRC-CSO-JSN",
+      "title": "FedRAMP JSON Schemas",
+      "description": "Providers MUST supply machine-readable information in JSON documents that are valid against the corresponding JSON schema when a rule contains a FedRAMP JSON schema, UNLESS otherwise specified in the rule.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): FedRAMP JSON schemas are designed to be lightweight and flexible to establish a minimum set of structured information while allowing providers to improve on the format and structure of the information as needed to meet their needs and the needs of their customers.\n\nRelated FedRAMP terms: Machine-Readable, Provider."
+    },
+    {
+      "id": "FRC-CSO-MRA",
+      "title": "Maintain Responsibility and Accountability",
+      "description": "Providers MUST maintain responsibility and accountability for the accuracy and completeness of all information in the FedRAMP Certification Package, especially when they engage a third party (such as an independent assessor, advisory service, or external tools) to supply information on their behalf.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Assessor, Certification Package, Provider."
+    },
+    {
+      "id": "FRC-CSO-PKG",
+      "title": "FedRAMP Certification Package",
+      "description": "Providers seeking a Certification MUST supply a complete FedRAMP Certification Package to FedRAMP for initial certification; the FedRAMP Certification Package MUST include at least the following information:",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Information about the Cloud Service Offering following CPO-CSO-OVR (Overview of the Cloud Service Offering)\n- Implementation, Validation, and Assessment information for each relevant FedRAMP requirement/control/ksi as defined in SDR-CSO-FRR (FedRAMP Rules)\n- A real or example Ongoing Certification Report following CCM-OCR-AVL (Report Availability)\n\nRelated FedRAMP terms: Certification Package, Cloud Service Offering, FedRAMP Certification Report, Initial Certification, Ongoing Certification, Ongoing Certification Report (OCR), Provider, Security Decision Record (SDR), Validation.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-certification-package-overview-schema-2026-06-24.json"
+    },
+    {
+      "id": "FRC-CSO-POP",
+      "title": "Pick One Program Certification Type",
+      "description": "Providers MUST NOT seek both FedRAMP Rev5 Program Certification and FedRAMP 20x Program Certification for the same cloud service offering; pick one type.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST NOT.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): This rule does not prevent a provider from seeking and maintaining a FedRAMP Rev5 Agency Certification and a FedRAMP 20x Program Certification for the same cloud service offering, however, doing so is strongly discouraged due to the increased complexity and risk of confusion for all parties.\n\nRelated FedRAMP terms: Agency, Cloud Service Offering, Provider."
+    },
+    {
+      "id": "FRC-CSX-MAS",
+      "title": "Application within MAS",
+      "description": "Providers SHOULD apply ALL Key Security Indicators to ALL aspects of their cloud service offering that are within the FedRAMP Minimum Assessment Scope.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: SHOULD.\n\nApplies to FedRAMP 20x authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, Provider."
+    },
+    {
+      "id": "FRC-CSX-MOT",
+      "title": "Metrics Over Time for Key Security Indicators",
+      "description": "Providers seeking 20x Class C Certification MUST supply historical metrics including status from persistent validation over at least the past 6 months for all Key Security Indicators.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP 20x authorizations.\n\nUpstream note (verbatim): For initial FedRAMP Certification, providers will need to have mechanisms in place and agree to meet this requirement in the event the cloud service has not been operating with related metrics available for the required period prior to applying for initial certification.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers seeking 20x Class A Certification MAY supply historical metrics for Key Security Indicators.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers seeking 20x Class B Certification SHOULD supply historical metrics for Key Security Indicators.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers seeking 20x Class C Certification MUST supply historical metrics including status from persistent validation over at least the past 6 months for all Key Security Indicators.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers seeking 20x Class D Certification MUST provide historical metrics including status from persistent validation over at least the past 18 months for all Key Security Indicators.\n\nRelated FedRAMP terms: Initial Certification, Persistently, Provider, Validation."
+    },
+    {
+      "id": "FRC-CSX-VVK",
+      "title": "Automated Verification and Validation of Key Security Indicators",
+      "description": "Providers seeking 20x Class C Certification MUST implement automated methods to persistently verify and validate the accuracy and completeness of Key Security Indicators with at least 2 automated methods for each Key Security Indicator.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP 20x authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers seeking 20x Class A Certification MAY implement automated methods to persistently verify and validate the accuracy and completeness of Key Security Indicators.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers seeking 20x Class B Certification SHOULD implement automated methods to persistently verify and validate the accuracy and completeness of Key Security Indicators with at least 1 automated method for each Key Security Indicator.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers seeking 20x Class C Certification MUST implement automated methods to persistently verify and validate the accuracy and completeness of Key Security Indicators with at least 2 automated methods for each Key Security Indicator.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers seeking 20x Class D Certification MUST implement automated methods to persistently verify and validate the accuracy and completeness of Key Security Indicators with at least 4 automated methods for each Key Security Indicator.\n\nRelated FedRAMP terms: Persistently, Provider, Validation, Verification."
+    },
+    {
+      "id": "FRC-CSX-VVR",
+      "title": "Automated Verification and Validation of FedRAMP Rules",
+      "description": "Providers seeking 20x Class C Certification SHOULD implement automated methods to persistently verify and validate the accuracy and completeness of the Security Decision Record for FedRAMP rules when applicable.",
+      "family": "FedRAMP Certification",
+      "guidance": "Force: SHOULD.\n\nApplies to FedRAMP 20x authorizations.\n\nUpstream note (verbatim): Different rules will be easy to automate for different providers, depending on the implementation, so FedRAMP generally leaves this implementation up to providers based on what makes the most sense for their own business and approach.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers seeking 20x Class A Certification MAY implement automated methods to persistently verify and validate the accuracy and completeness of the Security Decision Record for FedRAMP rules when applicable.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers seeking 20x Class B Certification SHOULD implement automated methods to persistently verify and validate the accuracy and completeness of the Security Decision Record for FedRAMP rules when applicable.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers seeking 20x Class C Certification SHOULD implement automated methods to persistently verify and validate the accuracy and completeness of the Security Decision Record for FedRAMP rules when applicable.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers seeking 20x Class D Certification SHOULD implement automated methods to persistently verify and validate the accuracy and completeness of the Security Decision Record for FedRAMP rules when applicable.\n\nRelated FedRAMP terms: Persistently, Provider, Security Decision Record (SDR), Validation, Verification."
+    },
+    {
+      "id": "IEC-CSO-AIR",
+      "title": "Automated Incident Reporting",
+      "description": "Providers SHOULD use automation to minimize human intervention in the process of reporting FedRAMP Reportable Incidents to all affected parties.",
+      "family": "Incident Evaluation and Communication",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: All Affected Parties, FedRAMP Reportable Incident, Incident, Provider."
+    },
+    {
+      "id": "IEC-CSO-DPR",
+      "title": "Default PAIN Rating",
+      "description": "Providers MUST treat FedRAMP Reportable Incidents as if they have a Potential Agency Impact N-rating (PAIN) of 5 UNLESS they promptly estimate the PAIN rating following the rule in IEC-CSO-EFI (Estimate Federal Impact).",
+      "family": "Incident Evaluation and Communication",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Agency, FedRAMP Reportable Incident, Incident, Potential Agency Impact, Promptly, Provider."
+    },
+    {
+      "id": "IEC-CSO-EFI",
+      "title": "Estimate Federal Impact",
+      "description": "Providers SHOULD promptly estimate the likely adverse impact of an incident on agency customers to assign a Potential Agency Impact N-rating; this step is called Incident Rating.",
+      "family": "Incident Evaluation and Communication",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): All incidents must be assigned a default PAIN-5 as required by IEC-CSO-DPR (Default PAIN Rating) if this step is not completed.\n\nRelated FedRAMP terms: Agency, Debilitating Customer Effect, Disruptive Customer Effect, Incident, Likely, Minimal Customer Effect, Narrow Customer Effect, Potential Agency Impact, Promptly, Provider.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-incident-report-schema-2026-06-24.json"
+    },
+    {
+      "id": "IEC-CSO-EFR",
+      "title": "Evaluate FedRAMP Reportability",
+      "description": "Providers MUST promptly evaluate incidents to determine if they affect confidentiality or integrity of federal customer data or are likely to affect confidentiality or integrity of federal customer data; such incidents are FedRAMP Reportable Incidents and must be reported following the FedRAMP Incident Evaluation and Communication rules.",
+      "family": "Incident Evaluation and Communication",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: FedRAMP Reportable Incident, Federal Customer Data, Incident, Likely, Promptly, Provider."
+    },
+    {
+      "id": "IEC-CSO-FIR",
+      "title": "Final Incident Report",
+      "description": "Providers with Class C Certifications MUST responsibly notify all affected parties by providing a Final Incident Report once the incident has been resolved and recovery is complete, including final updates to all previously reported information.",
+      "family": "Incident Evaluation and Communication",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class A Certifications MUST responsibly notify all affected parties by providing a Final Incident Report once the incident has been resolved and recovery is complete, including final updates to all previously reported information.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class B Certifications MUST responsibly notify all affected parties by providing a Final Incident Report once the incident has been resolved and recovery is complete, including final updates to all previously reported information.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class C Certifications MUST responsibly notify all affected parties by providing a Final Incident Report once the incident has been resolved and recovery is complete, including final updates to all previously reported information.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class D Certifications MUST responsibly notify all affected parties by providing a Final Incident Report once the incident has been resolved and recovery is complete, including final updates to all previously reported information.\n\nRelated FedRAMP terms: All Affected Parties, Final Incident Report (FIR), Incident, Provider, Responsibly.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-incident-report-schema-2026-06-24.json"
+    },
+    {
+      "id": "IEC-CSO-IIR",
+      "title": "Initial Incident Report",
+      "description": "Providers with Class C Certifications MUST responsibly notify all affected parties after identifying FedRAMP Reportable Incidents by providing an Initial Incident Report with as much of the following information that is available at the time of reporting and/or the current relevant status for each item:",
+      "family": "Incident Evaluation and Communication",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class A Certifications SHOULD responsibly notify all affected parties after identifying FedRAMP Reportable Incidents by providing an Initial Incident Report with as much of the following information that is available at the time of reporting and/or the current relevant status for each item:\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class B Certifications MUST responsibly notify all affected parties after identifying FedRAMP Reportable Incidents by providing an Initial Incident Report with as much of the following information that is available at the time of reporting and/or the current relevant status for each item:\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class C Certifications MUST responsibly notify all affected parties after identifying FedRAMP Reportable Incidents by providing an Initial Incident Report with as much of the following information that is available at the time of reporting and/or the current relevant status for each item:\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class D Certifications MUST responsibly notify all affected parties after identifying FedRAMP Reportable Incidents by providing an Initial Incident Report with as much of the following information that is available at the time of reporting and/or the current relevant status for each item:\n\nRelated FedRAMP terms: All Affected Parties, FedRAMP Reportable Incident, Incident, Initial Incident Report (IIR), Provider, Responsibly.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-incident-report-schema-2026-06-24.json"
+    },
+    {
+      "id": "IEC-CSO-OIR",
+      "title": "Ongoing Incident Reports",
+      "description": "Providers with Class C Certifications MUST responsibly notify all affected parties of ongoing activity as new information becomes available during incident response for FedRAMP Reportable Incidents, including updates (or lack of updates) to all previously reported information and as much of the the following additional information that is available and/or the current relevant status for each item:",
+      "family": "Incident Evaluation and Communication",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class A Certifications SHOULD responsibly notify all affected parties of ongoing activity as new information becomes available during incident response for FedRAMP Reportable Incidents, including updates (or lack of updates) to all previously reported information and as much of the the following additional information that is available and/or the current relevant status for each item:\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class B Certifications MUST responsibly notify all affected parties of ongoing activity as new information becomes available during incident response for FedRAMP Reportable Incidents, including updates (or lack of updates) to all previously reported information and as much of the the following additional information that is available and/or the current relevant status for each item:\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class C Certifications MUST responsibly notify all affected parties of ongoing activity as new information becomes available during incident response for FedRAMP Reportable Incidents, including updates (or lack of updates) to all previously reported information and as much of the the following additional information that is available and/or the current relevant status for each item:\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class D Certifications MUST responsibly notify all affected parties of ongoing activity as new information becomes available during incident response for FedRAMP Reportable Incidents, including updates (or lack of updates) to all previously reported information and as much of the the following additional information that is available and/or the current relevant status for each item:\n\nRelated FedRAMP terms: All Affected Parties, FedRAMP Reportable Incident, Incident, Provider, Responsibly, Vulnerability Response.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-incident-report-schema-2026-06-24.json"
+    },
+    {
+      "id": "IVV-CSF-ACF",
+      "title": "Assessment of Rev5 Controls with Findings",
+      "description": "Providers MUST have Rev5 Controls with negative findings from the previous FedRAMP independent assessment included in the next FedRAMP independent assessment.",
+      "family": "Independent Verification and Validation",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP Rev 5 authorizations.\n\nRelated FedRAMP terms: FedRAMP Independent Assessment, Provider."
+    },
+    {
+      "id": "IVV-CSF-AIA",
+      "title": "Annual Independent Assessments for Rev5",
+      "description": "Providers with Rev5 Class C Certifications MUST include the following Rev5 Controls in a FedRAMP independent assessment at least once per year:",
+      "family": "Independent Verification and Validation",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP Rev 5 authorizations.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Rev5 Class B Certifications MUST include the following Rev5 Controls in a FedRAMP independent assessment at least once per year:\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Rev5 Class C Certifications MUST include the following Rev5 Controls in a FedRAMP independent assessment at least once per year:\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Rev5 Class D Certifications MUST include the following Rev5 Controls in a FedRAMP independent assessment at least once per year:\n\nRelated FedRAMP terms: FedRAMP Independent Assessment, Provider."
+    },
+    {
+      "id": "IVV-CSF-MCA",
+      "title": "Mandatory Control Assessment",
+      "description": "Providers MUST have all applicable Rev5 Controls included in FedRAMP independent assessments every 3 years but are not required to have all Rev5 Controls included in the same FedRAMP independent assessment.",
+      "family": "Independent Verification and Validation",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP Rev 5 authorizations.\n\nUpstream note (verbatim): Traditionally this has been done by reviewing a rotating selection of Rev5 Controls at each annual assessment, however this requirement is a ceiling and not a floor. See IVV-CSF-PCA (Preferred Control Assessment) for FedRAMP's recommended approach to Rev5 control assessments.\n\nRelated FedRAMP terms: FedRAMP Independent Assessment, Provider."
+    },
+    {
+      "id": "IVV-CSF-PCA",
+      "title": "Preferred Control Assessment",
+      "description": "Providers SHOULD include all applicable Rev5 Controls in each FedRAMP independent assessment.",
+      "family": "Independent Verification and Validation",
+      "guidance": "Force: SHOULD.\n\nApplies to FedRAMP Rev 5 authorizations.\n\nRelated FedRAMP terms: FedRAMP Independent Assessment, Provider."
+    },
+    {
+      "id": "IVV-CSO-DUS",
+      "title": "Document Use of Representative Samples",
+      "description": "Providers MUST document and explain the use of representative samples during verification and validation when using representative samples as allowed by IVV-CSO-USR (Use Representative Samples).",
+      "family": "Independent Verification and Validation",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Provider, Validation, Verification."
+    },
+    {
+      "id": "IVV-CSO-FIA",
+      "title": "FedRAMP Independent Assessments",
+      "description": "Providers with Class C Certifications MUST persistently complete an independent verification and validation assessment of all applicable FedRAMP rules with a FedRAMP Recognized independent assessment service OR FedRAMP at least once per year; this is a FedRAMP independent assessment.",
+      "family": "Independent Verification and Validation",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class A Certifications MAY persistently complete an independent verification and validation assessment of all applicable FedRAMP rules with a FedRAMP Recognized independent assessment service OR FedRAMP at least once per year; this is a FedRAMP independent assessment.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class B Certifications MUST persistently complete an independent verification and validation assessment of all applicable FedRAMP rules with a FedRAMP Recognized independent assessment service OR FedRAMP at least once per year; this is a FedRAMP independent assessment.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class C Certifications MUST persistently complete an independent verification and validation assessment of all applicable FedRAMP rules with a FedRAMP Recognized independent assessment service OR FedRAMP at least once per year; this is a FedRAMP independent assessment.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class D Certifications MUST persistently complete an independent verification and validation assessment of all applicable FedRAMP rules with a FedRAMP Recognized independent assessment service OR FedRAMP at least once per year; this is a FedRAMP independent assessment.\n\nRelated FedRAMP terms: Certification Class, FedRAMP Independent Assessment, FedRAMP Recognized, Persistently, Provider, Validation, Verification."
+    },
+    {
+      "id": "IVV-CSO-ICP",
+      "title": "Inclusion in Certification Package",
+      "description": "Providers MUST supply the results of FedRAMP independent assessments in their FedRAMP Certification Package without inappropriate modification.",
+      "family": "Independent Verification and Validation",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Certification Package, FedRAMP Independent Assessment, Provider, Verification."
+    },
+    {
+      "id": "IVV-CSO-RAA",
+      "title": "Receiving Assessor Advice",
+      "description": "Providers MAY ask for and accept advice from their assessor during assessment regarding techniques and procedures that will improve their security posture or the effectiveness, clarity, and accuracy of their verification, validation and reporting procedures, UNLESS doing so is likely to compromise the objectivity and integrity of the assessment.",
+      "family": "Independent Verification and Validation",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Assessor, Likely, Provider, Validation, Verification."
+    },
+    {
+      "id": "IVV-CSO-SEE",
+      "title": "Supply Evidence of Effectiveness",
+      "description": "Providers MUST supply evidence to all necessary assessors of the effectiveness of the measures that have been implemented to meet FedRAMP Practices; this evidence is the result of validation.",
+      "family": "Independent Verification and Validation",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): For example, after verifying that firewalls are configured to block traffic following IVV-CSO-SEI (Supply Evidence of Implementation), the provider would validate that traffic is actually being blocked and supply evidence of that validation to assessors (such as by allowing them to see metrics on the traffic that is blocked vs not).\n\nRelated FedRAMP terms: All Necessary Assessors, Assessor, FedRAMP Practices, Provider, Validation."
+    },
+    {
+      "id": "IVV-CSO-SEI",
+      "title": "Supply Evidence of Implementation",
+      "description": "Providers MUST supply evidence to all necessary assessors of the implementation of the measures that have been documented to meet FedRAMP Practices; this evidence is the result of verification.",
+      "family": "Independent Verification and Validation",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): For example, if the documentation says that firewall rules are used to block traffic then the cloud service provider would verify that firewall rules are in place to block traffic and supply that evidence to assessors (preferably by allowing them to see how firewall configurations are deployed from a source of truth).\n\nRelated FedRAMP terms: All Necessary Assessors, Assessor, FedRAMP Practices, Provider, Verification."
+    },
+    {
+      "id": "IVV-CSO-STE",
+      "title": "Supply Technical Explanations",
+      "description": "Providers SHOULD supply all necessary assessors with technical explanations, demonstrations, and other relevant supporting information about the technical capabilities they employ to address FedRAMP rules; this SHOULD be supplied as necessary to ensure the assessor can effectively complete verification and validation.",
+      "family": "Independent Verification and Validation",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: All Necessary Assessors, Assessor, Provider, Validation, Verification."
+    },
+    {
+      "id": "IVV-CSO-USR",
+      "title": "Use Representative Samples",
+      "description": "Providers MAY use representative samples as appropriate during verification and validation.",
+      "family": "Independent Verification and Validation",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): Many modern cloud services using effective automation do not need to use representative sampling and are capable of persistently verifying and validating the majority of their security measures automatically.\n\nRelated FedRAMP terms: Persistently, Provider, Validation, Verification."
+    },
+    {
+      "id": "IVV-CSX-AIA",
+      "title": "Annual Independent Assessments for 20x",
+      "description": "Providers with 20x Class C Certifications MUST include all Key Security Indicators in a FedRAMP independent assessment at least once per year.",
+      "family": "Independent Verification and Validation",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP 20x authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MUST): Providers with 20x Class A Certifications MUST meet the expectations of their underlying alternative security framework as part of their persistent independent verification and validation assessment.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MUST): Providers with 20x Class B Certifications MUST include all Key Security Indicators in a FedRAMP independent assessment at least once per year.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers with 20x Class C Certifications MUST include all Key Security Indicators in a FedRAMP independent assessment at least once per year.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with 20x Class D Certifications MUST include all Key Security Indicators in a FedRAMP independent assessment at least once per year.\n\nRelated FedRAMP terms: FedRAMP Independent Assessment, Persistently, Provider, Validation, Verification."
+    },
+    {
+      "id": "MAS-CSO-FLO",
+      "title": "Information Flows and Security Categories",
+      "description": "Providers MUST clearly identify, document, and explain information flows and security categories for ALL information resources or sets of information resources in the cloud service offering.",
+      "family": "Minimum Assessment Scope",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): Information resources (including third-party information resources) MAY vary by security category as appropriate to the type of information handled by or impacted by the information resource.\n\nRelated FedRAMP terms: Cloud Service Offering, Handle, Information Resource, Provider, Security Category, Third-Party Information Resource."
+    },
+    {
+      "id": "MAS-CSO-IIR",
+      "title": "Identify Information Resources",
+      "description": "Providers MUST identify a set of information resources to assess for FedRAMP Certification that includes all information resources that are likely to handle federal customer data or likely to impact the confidentiality, integrity, or availability of federal customer data handled by the cloud service offering; this set of information resources is the cloud service offering.",
+      "family": "Minimum Assessment Scope",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Agency, Certification Package, Cloud Service Offering, Federal Customer Data, Handle, Information Resource, Likely, Provider."
+    },
+    {
+      "id": "MAS-CSO-MDI",
+      "title": "Metadata Inclusion",
+      "description": "Providers MUST include metadata (including metadata about federal customer data) in the Minimum Assessment Scope ONLY IF MAS-CSO-IIR (Identify Information Resources) APPLIES.",
+      "family": "Minimum Assessment Scope",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Federal Customer Data, Information Resource, Initial Incident Report (IIR), Provider."
+    },
+    {
+      "id": "MAS-CSO-SUP",
+      "title": "Supplemental Information",
+      "description": "Providers MAY include additional materials about other information resources that are not part of the cloud service offering in a FedRAMP Certification Package supplement; these resources will not be FedRAMP Certified and MUST be clearly marked and separated from the cloud service offering.",
+      "family": "Minimum Assessment Scope",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): This is intended to allow inclusion of things like security materials for apps, supplemental marketing collateral, and other information that is not part of the cloud service offering but may be useful to agencies.\n\nRelated FedRAMP terms: Agency, Certification Package, Cloud Service Offering, FedRAMP Certified, Information Resource, Provider."
+    },
+    {
+      "id": "MAS-CSO-TPR",
+      "title": "Third-Party Information Resources",
+      "description": "Providers MUST address the potential impact to federal customer data from third-party information resources used by the cloud service offering, ONLY IF MAS-CSO-IIR (Identify Information Resources) APPLIES, by documenting the following information about each applicable third-party information resource:",
+      "family": "Minimum Assessment Scope",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- General usage and configuration\n- Explanation or justification for use\n- Mitigation measures in place to reduce the potential impact to federal customer data\n- Compensating controls in place to reduce the potential impact to federal customer data\n\nRelated FedRAMP terms: Cloud Service Offering, Federal Customer Data, Information Resource, Initial Incident Report (IIR), Provider, Third-Party Information Resource.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-certification-package-overview-schema-2026-06-24.json"
+    },
+    {
+      "id": "MKT-CSO-MLR",
+      "title": "Marketplace Listing Requirements",
+      "description": "Providers MUST address at least these FedRAMP rules to apply for a new FedRAMP Marketplace listing OR to request updates to an existing listing:",
+      "family": "Marketplace Listing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Certification Data Sharing: CDS-CSO-PUB (Public Information)\n\nRelated FedRAMP terms: Certification Data, Provider."
+    },
+    {
+      "id": "MKT-CSO-PML",
+      "title": "Provider Marketplace Listing Requests",
+      "description": "Providers MUST notify FedRAMP using the FedRAMP Marketplace Providing Listing Request Form to request a listing in the FedRAMP Marketplace.",
+      "family": "Marketplace Listing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): FedRAMP does not accept applications for a FedRAMP Marketplace Listing via email!\n\nRelated FedRAMP terms: Provider."
+    },
+    {
+      "id": "MKT-IIP-AGU",
+      "title": "Agency Use Cases",
+      "description": "Providers MUST demonstrate that a cloud service offering is intended for one of the following use cases:",
+      "family": "Marketplace Listing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Direct Use: The product will be used directly by agency customers for integration into a federal information system that falls within the scope of 44 USC § 3506 and will receive an agency Authorization to Operate.\n- Indirect Use: The product will be included as a third-party information resource in other cloud service offerings that are directly used by agency customers.\n\nRelated FedRAMP terms: Agency, Cloud Service Offering, Information Resource, Provider, Third-Party Information Resource."
+    },
+    {
+      "id": "MKT-IIP-DCP",
+      "title": "Demonstrating Continuous Progress",
+      "description": "Providers MUST demonstrate continuous progress towards a FedRAMP Certification, documented in their Trust Center or website and updated at least quarterly; progress is measured by the provider against documented goals and milestones.",
+      "family": "Marketplace Listing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): This is an opportunity for a business to showcase its goals and progress, and should be seen as a marketing and customer experience challenge instead of a compliance challenge.\n\nRelated FedRAMP terms: Provider, Trust Center."
+    },
+    {
+      "id": "MKT-IIP-DLA",
+      "title": "Deadline for Assessment",
+      "description": "Providers MUST demonstrate that an assessment for a FedRAMP Certification Class B, C, or D has been scheduled within 2 years of initial listing in the Initial Implementation Phase.",
+      "family": "Marketplace Listing",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Certification Class, Provider."
+    },
+    {
+      "id": "SCG-CSO-AUP",
+      "title": "Use Instructions",
+      "description": "Providers MUST include instructions in the FedRAMP Certification Package that explain how to obtain and use the Secure Configuration Guide.",
+      "family": "Secure Configuration Guide",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): These instructions may appear in a variety of ways; it is up to the provider to do so in the most appropriate and effective ways for their specific customer needs.\n\nRelated FedRAMP terms: Certification Package, Provider."
+    },
+    {
+      "id": "SCG-CSO-PUB",
+      "title": "Public Secure Configuration Guidance",
+      "description": "Providers SHOULD make the Secure Configuration Guide available publicly.",
+      "family": "Secure Configuration Guide",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Provider."
+    },
+    {
+      "id": "SCG-CSO-RSC",
+      "title": "Recommended Secure Configuration",
+      "description": "Providers MUST create, maintain, and make available recommendations for securely configuring their cloud services (the Secure Configuration Guide) that includes at least the following information:",
+      "family": "Secure Configuration Guide",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Required: Instructions on how to securely access, configure, operate, and decommission top-level administrative accounts that control enterprise access to the entire cloud service offering.\n- Required: Explanations of security-related settings that can be operated only by top-level administrative accounts and their security implications.\n- Recommended: Explanations of security-related settings that can be operated only by privileged accounts and their security implications.\n\nRelated FedRAMP terms: Cloud Service Offering, Privileged Account, Provider, Top-Level Administrative Account.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-certification-package-overview-schema-2026-06-24.json"
+    },
+    {
+      "id": "SCG-CSO-SDF",
+      "title": "Secure Defaults",
+      "description": "Providers SHOULD set all settings to their recommended secure defaults for top-level administrative accounts and privileged accounts when initially provisioned.",
+      "family": "Secure Configuration Guide",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Privileged Account, Provider, Top-Level Administrative Account."
+    },
+    {
+      "id": "SCG-ENH-API",
+      "title": "API Capability",
+      "description": "Providers SHOULD offer the capability to view and adjust security settings via an API or similar capability.",
+      "family": "Secure Configuration Guide",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Provider."
+    },
+    {
+      "id": "SCG-ENH-CMP",
+      "title": "Comparison Capability",
+      "description": "Providers SHOULD offer the capability to compare all current settings for top-level administrative accounts and privileged accounts to the recommended secure defaults.",
+      "family": "Secure Configuration Guide",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Privileged Account, Provider, Top-Level Administrative Account."
+    },
+    {
+      "id": "SCG-ENH-EXP",
+      "title": "Export Capability",
+      "description": "Providers SHOULD offer the capability to export all security settings in a machine-readable format.",
+      "family": "Secure Configuration Guide",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Machine-Readable, Provider."
+    },
+    {
+      "id": "SCG-ENH-MRG",
+      "title": "Machine-Readable Guidance",
+      "description": "Providers SHOULD also provide the Secure Configuration Guide in a machine-readable format that can be used by customers or third-party tools to compare against current settings.",
+      "family": "Secure Configuration Guide",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Machine-Readable, Provider."
+    },
+    {
+      "id": "SCG-ENH-VRH",
+      "title": "Versioning and Release History",
+      "description": "Providers SHOULD provide versioning and a release history for recommended secure default settings for top-level administrative accounts and privileged accounts as they are adjusted over time.",
+      "family": "Secure Configuration Guide",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Privileged Account, Provider, Top-Level Administrative Account."
+    },
+    {
+      "id": "SCN-ADP-NTF",
+      "title": "Notification Requirements",
+      "description": "Providers MUST notify all necessary parties within 10 business days after finishing adaptive changes, also including the following information:",
+      "family": "Significant Change Notification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Summary of any new risks identified and/or vulnerabilities resulting from the change (if applicable)\n\nRelated FedRAMP terms: Adaptive Change, All Necessary Parties, Provider, Regularly, Significant Change, Vulnerability."
+    },
+    {
+      "id": "SCN-CSO-ARI",
+      "title": "Additional Relevant Information",
+      "description": "Providers MAY include additional relevant information in Significant Change Notifications.",
+      "family": "Significant Change Notification",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): This allows providers to convey whatever additional information they think is relevant without worrying about negative consequences from not following an exact template.\n\nRelated FedRAMP terms: Provider, Significant Change."
+    },
+    {
+      "id": "SCN-CSO-EMG",
+      "title": "Emergency Changes",
+      "description": "Providers MAY execute significant changes (including transformative changes) during an emergency or incident without following the Significant Change Notification rules in advance. In such emergencies, providers MUST follow all relevant procedures, notify all necessary parties, retroactively provide all Significant Change Notification materials, and complete appropriate assessment after the incident.",
+      "family": "Significant Change Notification",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): Procedures for emergency changes should be documented in the FedRAMP Certification Package.\n\nRelated FedRAMP terms: All Necessary Parties, Certification Package, Incident, Provider, Significant Change, Transformative Change."
+    },
+    {
+      "id": "SCN-CSO-EVA",
+      "title": "Evaluate Changes",
+      "description": "Providers MUST evaluate all potential significant changes to determine the type of significant change and follow the appropriate Significant Change Notification rules.",
+      "family": "Significant Change Notification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Is it a significant change? --> Continue evaluation and follow the Significant Change Notification rules.\n- If it is, is it an FedRAMP Certification class change?  --> This requires a new assessment and cannot be done under the Significant Change Notification rules.\n- If it is not, is it a routine recurring change? --> Follow the Routine Recurring Change rules (SCN-RTR Routine Recurring Changes).\n- If it is not, is it a transformative change? --> Follow the Transformative Change rules (SCN-TRF Transformative Changes).\n- If it is not, then it is an adaptive change --> Follow the Adaptive Change rules (SCN-ADP Adaptive Changes).\n\nRelated FedRAMP terms: Adaptive Change, Certification Class, Certification Class Change, Provider, Routine Recurring Change, Significant Change, Transformative Change.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-significant-change-notifications-schema-2026-06-24.json"
+    },
+    {
+      "id": "SCN-CSO-HIS",
+      "title": "Historical Notifications",
+      "description": "Providers MUST keep 12 months of historical Significant Change Notifications available with their FedRAMP Certification Data.",
+      "family": "Significant Change Notification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Certification Data, Provider, Significant Change."
+    },
+    {
+      "id": "SCN-CSO-HRM",
+      "title": "Human and Machine-Readable Notifications",
+      "description": "Providers MUST make ALL Significant Change Notifications and related audit records available in human-readable and JSON formats.",
+      "family": "Significant Change Notification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Provider, Significant Change.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-significant-change-notifications-schema-2026-06-24.json"
+    },
+    {
+      "id": "SCN-CSO-INF",
+      "title": "Required Information",
+      "description": "Providers MUST include at least the following information in Significant Change Notifications:",
+      "family": "Significant Change Notification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Service Offering FedRAMP ID\n- Assessor Name (if applicable)\n- Related Vulnerability (if applicable)\n- Significant Change type and explanation of categorization\n- Short description of change\n- Reason for change\n- Summary of customer impact, including changes to services and customer configuration responsibilities\n- Plan and timeline for the change, including for the verification, assessment, and/or validation of impacted Key Security Indicators or Rev5 Controls\n- Copy of the business or security impact analysis\n- Name and title of approver\n\nUpstream note (verbatim): Structure of the information may vary depending on how the provider tracks this internally.\n\nRelated FedRAMP terms: Assessor, Provider, Significant Change, Validation, Verification, Vulnerability.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-significant-change-notifications-schema-2026-06-24.json"
+    },
+    {
+      "id": "SCN-CSO-MAR",
+      "title": "Maintain Audit Records",
+      "description": "Providers MUST maintain auditable records of the significant change evaluation activities required by SCN-CSO-EVA (Evaluate Changes) and make them available to FedRAMP as requested.",
+      "family": "Significant Change Notification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): These audit records must be available to FedRAMP on request; these records do not need to be included in the FedRAMP Certification Package by default and do not need to be emailed to FedRAMP continuously.\n\nRelated FedRAMP terms: Certification Package, Provider, Significant Change."
+    },
+    {
+      "id": "SCN-CSO-NOM",
+      "title": "Notification Mechanisms",
+      "description": "Providers MAY notify necessary parties in a variety of ways as long as the mechanism for notification is clearly documented in the FedRAMP Certification Package and easily accessible.",
+      "family": "Significant Change Notification",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Agency, Certification Package, Provider."
+    },
+    {
+      "id": "SCN-RTR-NNR",
+      "title": "No Notification Requirements",
+      "description": "Providers SHOULD NOT make formal Significant Change Notifications for routine recurring changes; this type of change is exempted from notification requirements.",
+      "family": "Significant Change Notification",
+      "guidance": "Force: SHOULD NOT.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Incident, Provider, Regularly, Routine Recurring Change, Significant Change, Vulnerability."
+    },
+    {
+      "id": "SCN-TRF-NAF",
+      "title": "Notification After Finishing",
+      "description": "Providers MUST notify all necessary parties within 5 business days after finishing transformative changes, including updates to all previously sent information.",
+      "family": "Significant Change Notification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: All Necessary Parties, Provider, Transformative Change."
+    },
+    {
+      "id": "SCN-TRF-NAV",
+      "title": "Notification After Verification",
+      "description": "Providers MUST notify all necessary parties within 5 business days after completing the verification, assessment, and/or validation of transformative changes, also including the following information:",
+      "family": "Significant Change Notification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Updates to all previously sent information\n- Summary of any new risks identified and/or vulnerabilities resulting from the change (if applicable)\n- Copy of the security assessment report (if applicable)\n\nRelated FedRAMP terms: All Necessary Parties, Provider, Transformative Change, Validation, Verification, Vulnerability."
+    },
+    {
+      "id": "SCN-TRF-NFP",
+      "title": "Notification of Final Plans",
+      "description": "Providers MUST notify all necessary parties of final plans for transformative changes at least 10 business days before starting transformative changes, including updates to all previously sent information.",
+      "family": "Significant Change Notification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: All Necessary Parties, Provider, Transformative Change."
+    },
+    {
+      "id": "SCN-TRF-NIP",
+      "title": "Notification of Initial Plans",
+      "description": "Providers MUST notify all necessary parties of initial plans for transformative changes at least 30 business days before starting transformative changes, including a summary of any likely security impacts or changes in risk.",
+      "family": "Significant Change Notification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: All Necessary Parties, Likely, Provider, Transformative Change."
+    },
+    {
+      "id": "SCN-TRF-TPR",
+      "title": "Third-Party Review",
+      "description": "Providers SHOULD engage a third-party assessor to review the scope and impact of the planned change before starting transformative changes if human validation is necessary; such reviews SHOULD be limited to security decisions that require human validation.",
+      "family": "Significant Change Notification",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): Activities that match the transformative significant change type are rare for a cloud service offering, adjusted for the size, scale, and complexity of the service. Small cloud service offerings may go years without transformative changes, while hyperscale providers may release multiple transformative changes per year.\n\nRelated FedRAMP terms: Assessor, Cloud Service Offering, Provider, Significant Change, Transformative Change, Validation."
+    },
+    {
+      "id": "SCN-TRF-UPD",
+      "title": "Update Documentation",
+      "description": "Providers MUST publish updated service documentation and other materials to reflect transformative changes within 30 business days after finishing transformative changes.",
+      "family": "Significant Change Notification",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): This requirement is focused on service documentation like user guides, information listed in the marketplace, and other such materials; it does not require updating the system security plan or FedRAMP Certification Package.\n\nRelated FedRAMP terms: Certification Package, Provider, Transformative Change."
+    },
+    {
+      "id": "SDR-CSF-CTF",
+      "title": "Rev5 Controls",
+      "description": "Providers MUST also include short and simple high-level summaries of at least the following for each applicable Rev5 Control:",
+      "family": "Security Decision Record",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP Rev 5 authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Any organization-defined parameter values.\n- Implementation status, one of Implemented, Partially Implemented, Planned, Alternative Implementation, or Not Applicable.\n- The mechanisms or activities that address the control, including inheritance from another cloud service offering if applicable.\n- The verification that is in place to ensure the implementation is appropriate for the control.\n- The validation that is in place to ensure the implementation is working as intended.\n- Independent verification.\n- Independent validation.\n- Any responses or clarifications to the comments in the independent verification or validation.\n- Control-specific artifacts (if applicable).\n\nRelated FedRAMP terms: Artifacts, Cloud Service Offering, Provider, Validation, Verification."
+    },
+    {
+      "id": "SDR-CSO-FRR",
+      "title": "FedRAMP Rules",
+      "description": "Providers MUST supply a Security Decision Record, in both human-readable and JSON formats, that includes at least all of the following information for each applicable FedRAMP rule:",
+      "family": "Security Decision Record",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Explanation of how the rule is followed, or an explanation of the reason and resulting risk to customers for not following the rule.\n- Verification that the implementation is appropriate for the rule, or that the reason for not implementing is accepted by a senior official.\n- Validation that the implementation is in place and working as intended, or that the reason for not implementing is accepted by a senior official.\n- Independent verification.\n- Independent validation.\n- Any responses or clarifications to the comments in the independent verification or validation.\n- Rule-specific artifacts (if applicable).\n\nRelated FedRAMP terms: Artifacts, Provider, Security Decision Record (SDR), Validation, Verification.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-security-decision-record-schema-2026-06-24.json"
+    },
+    {
+      "id": "SDR-CSO-MTD",
+      "title": "Security Decision Record Metadata",
+      "description": "Providers MUST also include the following basic metadata in their Security Decision Record:",
+      "family": "Security Decision Record",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Version\n- Date and time of last update\n- Source of update\n\nRelated FedRAMP terms: Provider, Security Decision Record (SDR)."
+    },
+    {
+      "id": "SDR-CSX-KMT",
+      "title": "Key Security Indicator Metrics",
+      "description": "Providers with 20x Class C Certifications MUST also include historical metrics in their Security Decision Record, supplying at least the following information for each applicable Key Security Indicator:",
+      "family": "Security Decision Record",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP 20x authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers with 20x Class A Certifications MAY also include historical metrics in their Security Decision Record.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MUST): Providers with 20x Class B Certifications MUST also include historical metrics in their Security Decision Record, supplying at least the following information for each applicable Key Security Indicator:\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers with 20x Class C Certifications MUST also include historical metrics in their Security Decision Record, supplying at least the following information for each applicable Key Security Indicator:\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with 20x Class D Certifications MUST significantly supersede the minimum requirements for lower Classes, with specifics to be set during the 20x Phase 4 Pilot.\n\nRelated FedRAMP terms: Provider, Security Decision Record (SDR).\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-security-decision-record-schema-2026-06-24.json"
+    },
+    {
+      "id": "SDR-CSX-KSI",
+      "title": "Key Security Indicators",
+      "description": "Providers MUST also include short and simple high-level summaries of at least the following for each applicable Key Security Indicator:",
+      "family": "Security Decision Record",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP 20x authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Explanation of measures (and their objectives) that demonstrate the Key Security Indicator, or an explanation of the reason and resulting risk to customers for not having measures available for that Key Security Indicator.\n- Explanation of the cycle for any measures that are implemented persistently (if applicable).\n- Verification that the measures demonstrate the Key Security Indicator, or that the reason for not having them is accepted.\n- Verification that the automation in place is accurate and sufficient to demonstrate appropriate measures for the Key Security Indicator, or that automation is not necessary for each measure.\n- Validation that the measures are accurately produced and are in place and working as intended, or that the reason for not having them is valid.\n\nRelated FedRAMP terms: Persistently, Provider, Validation, Verification.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-security-decision-record-schema-2026-06-24.json"
+    },
+    {
+      "id": "VDR-CSO-ADT",
+      "title": "Automate Detection",
+      "description": "Providers SHOULD use automated services to improve and streamline vulnerability detection and response.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Provider, Vulnerability, Vulnerability Detection, Vulnerability Response."
+    },
+    {
+      "id": "VDR-CSO-AKE",
+      "title": "Avoid KEVs",
+      "description": "Providers SHOULD NOT deploy or otherwise activate new machine-based information resources with Known Exploited Vulnerabilities.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: SHOULD NOT.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Information Resource, Known Exploited Vulnerability (KEV), Machine-Based (Information Resources), Provider, Vulnerability."
+    },
+    {
+      "id": "VDR-CSO-DAC",
+      "title": "Detect After Changes",
+      "description": "Providers SHOULD automatically perform vulnerability detection on representative samples of new or significantly changed information resources.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Information Resource, Provider, Vulnerability, Vulnerability Detection."
+    },
+    {
+      "id": "VDR-CSO-DET",
+      "title": "Vulnerability Detection",
+      "description": "Providers MUST systematically, persistently, and promptly discover and identify vulnerabilities within their cloud service offering using appropriate techniques such as assessment, scanning, threat intelligence, vulnerability disclosure mechanisms, bug bounties, penetration testing, incident response, automated control testing, supply chain monitoring, and other relevant capabilities; this process is called vulnerability detection. Vulnerability detection includes persistently verifying and validating that information resources and processes are operating as intended and documented for FedRAMP Practices.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, FedRAMP Practices, Incident, Information Resource, Persistently, Promptly, Provider, Vulnerability, Vulnerability Detection, Vulnerability Response."
+    },
+    {
+      "id": "VDR-CSO-DFR",
+      "title": "Design For Resilience",
+      "description": "Providers SHOULD make design and architecture decisions for their cloud service offering that mitigate the risk of vulnerabilities by default AND decrease the risk and complexity of vulnerability detection and response.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, Provider, Vulnerability, Vulnerability Detection, Vulnerability Response."
+    },
+    {
+      "id": "VDR-CSO-FAV",
+      "title": "Failures Are Vulnerabilities",
+      "description": "Providers MUST treat problems or failures with their vulnerability detection and response processes as vulnerabilities.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Provider, Vulnerability, Vulnerability Detection, Vulnerability Response."
+    },
+    {
+      "id": "VDR-CSO-MSP",
+      "title": "Maintain Security",
+      "description": "Providers SHOULD NOT weaken the security of information resources to facilitate vulnerability scanning, detection, or assessment activities.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: SHOULD NOT.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Information Resource, Provider, Vulnerability, Vulnerability Detection."
+    },
+    {
+      "id": "VDR-CSO-RES",
+      "title": "Vulnerability Response",
+      "description": "Providers MUST systematically, persistently, and promptly track, evaluate, monitor, mitigate, remediate, assess exploitation of, report, and otherwise manage all detected vulnerabilities within their cloud service offering; this process is called vulnerability response.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, Fully Mitigated Vulnerability, Partially Mitigated Vulnerability, Persistently, Promptly, Provider, Remediated Vulnerability, Vulnerability, Vulnerability Detection, Vulnerability Response."
+    },
+    {
+      "id": "VDR-CSO-SIR",
+      "title": "Sampling",
+      "description": "Providers MAY sample effectively identical information resources, especially machine-based information resources, when performing vulnerability detection UNLESS doing so would decrease the efficiency or effectiveness of vulnerability detection.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Provider, Vulnerability, Vulnerability Detection."
+    },
+    {
+      "id": "VDR-TFR-KEV",
+      "title": "Remediate KEVs",
+      "description": "Providers SHOULD remediate Known Exploited Vulnerabilities according to the due dates in the CISA Known Exploited Vulnerabilities Catalog (even if the vulnerability has been fully mitigated) as required by CISA Binding Operational Directive (BOD) 26-04 or any successor guidance from CISA.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Known Exploited Vulnerability (KEV), Provider, Vulnerability."
+    },
+    {
+      "id": "VDR-TFR-MVF",
+      "title": "Persistent Machine Verification and Validation for Rev5",
+      "description": "Providers of FedRAMP Rev5 Class C offerings MUST verify and validate the status of machine-based information resources at least once every month.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP Rev 5 authorizations.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers of FedRAMP Rev5 Class B offerings SHOULD verify and validate the status of machine-based information resources at least once every month.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers of FedRAMP Rev5 Class C offerings MUST verify and validate the status of machine-based information resources at least once every month.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers of FedRAMP Rev5 Class D offerings MUST verify and validate the status of machine-based information resources at least once every month.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Provider, Validation, Verification."
+    },
+    {
+      "id": "VDR-TFR-MVX",
+      "title": "Persistent Machine Verification and Validation for 20x",
+      "description": "Providers of FedRAMP 20x Class C offerings MUST verify and validate the status of machine-based information resources at least once every 3 days.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP 20x authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers of FedRAMP 20x Class A offerings SHOULD verify and validate the status of machine-based information resources at least once every month.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MUST): Providers of FedRAMP 20x Class B offerings MUST verify and validate the status of machine-based information resources at least once every 7 days.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers of FedRAMP 20x Class C offerings MUST verify and validate the status of machine-based information resources at least once every 3 days.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Provider, Validation, Verification."
+    },
+    {
+      "id": "VDR-TFR-NMV",
+      "title": "Non-Machine Verification and Validation",
+      "description": "Providers MUST verify and validate the status of non-machine-based information resources at least once every 3 months.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Provider, Validation, Verification."
+    },
+    {
+      "id": "VDR-TFR-PCD",
+      "title": "Persistently Complete Detection",
+      "description": "Providers with Class C Certifications SHOULD persistently perform vulnerability detection on all information resources that are NOT likely to drift, at least once every month.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class A Certifications SHOULD persistently perform vulnerability detection on all information resources that are NOT likely to drift, at least once every 6 months.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class B Certifications SHOULD persistently perform vulnerability detection on all information resources that are NOT likely to drift, at least once every 6 months.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class C Certifications SHOULD persistently perform vulnerability detection on all information resources that are NOT likely to drift, at least once every month.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class D Certifications SHOULD persistently perform vulnerability detection on all information resources that are NOT likely to drift, at least once every month.\n\nRelated FedRAMP terms: Drift, Information Resource, Likely, Persistently, Provider, Vulnerability, Vulnerability Detection."
+    },
+    {
+      "id": "VDR-TFR-PDD",
+      "title": "Persistent Drift Detection",
+      "description": "Providers with Class C Certifications SHOULD persistently perform vulnerability detection on all information resources that are likely to drift, at least once every 14 days.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class A Certifications SHOULD persistently perform vulnerability detection on all information resources that are likely to drift, at least once every 3 months.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class B Certifications SHOULD persistently perform vulnerability detection on all information resources that are likely to drift, at least once every month.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class C Certifications SHOULD persistently perform vulnerability detection on all information resources that are likely to drift, at least once every 14 days.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class D Certifications SHOULD persistently perform vulnerability detection on all information resources that are likely to drift, at least once every 7 days.\n\nRelated FedRAMP terms: Drift, Information Resource, Likely, Persistently, Provider, Vulnerability, Vulnerability Detection."
+    },
+    {
+      "id": "VDR-TFR-PSD",
+      "title": "Persistent Sample Detection",
+      "description": "Providers with Class C Certifications SHOULD persistently perform vulnerability detection on representative samples of similar machine-based information resources, at least once every 3 days.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class A Certifications SHOULD persistently perform vulnerability detection on representative samples of similar machine-based information resources, at least once every 14 days.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class B Certifications SHOULD persistently perform vulnerability detection on representative samples of similar machine-based information resources, at least once every 7 days.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class C Certifications SHOULD persistently perform vulnerability detection on representative samples of similar machine-based information resources, at least once every 3 days.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class D Certifications SHOULD persistently perform vulnerability detection on representative samples of similar machine-based information resources, at least once per day.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Persistently, Provider, Vulnerability, Vulnerability Detection."
+    },
+    {
+      "id": "VDR-TFR-PVR",
+      "title": "Mitigation and Remediation Expectations",
+      "description": "Providers with Class C Certifications SHOULD partially mitigate vulnerabilities, fully mitigate vulnerabilities, or remediate vulnerabilities to a lower Potential Agency Impact N-rating within the timeframes from evaluation shown below, factoring for the current Potential Agency Impact N-rating as defined in VER-EVA-EPA (Estimate Potential Agency Impact), internet reachability, and likely exploitability:",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class A Certifications SHOULD partially mitigate vulnerabilities, fully mitigate vulnerabilities, or remediate vulnerabilities to a lower potential agency impact within the timeframes from evaluation shown below, factoring for the current Potential Agency Impact N-rating as defined in VER-EVA-EPA (Estimate Potential Agency Impact), internet reachability, and likely exploitability.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class B Certifications SHOULD partially mitigate vulnerabilities, fully mitigate vulnerabilities, or remediate vulnerabilities to a lower potential agency impact within the timeframes from evaluation shown below, factoring for the current Potential Agency Impact N-rating as defined in VER-EVA-EPA (Estimate Potential Agency Impact), internet reachability, and likely exploitability:\n\nClass-C variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class C Certifications SHOULD partially mitigate vulnerabilities, fully mitigate vulnerabilities, or remediate vulnerabilities to a lower Potential Agency Impact N-rating within the timeframes from evaluation shown below, factoring for the current Potential Agency Impact N-rating as defined in VER-EVA-EPA (Estimate Potential Agency Impact), internet reachability, and likely exploitability:\n\nClass-D variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class D Certifications SHOULD partially mitigate vulnerabilities, fully mitigate vulnerabilities, or remediate vulnerabilities to a lower Potential Agency Impact N-rating within the maximum timeframes from evaluation shown below, factoring for the current Potential Agency Impact N-rating as defined in VER-EVA-EPA (Estimate Potential Agency Impact), internet reachability, and likely exploitability:\n\nRelated FedRAMP terms: Agency, Fully Mitigated Vulnerability, Likely, Partially Mitigated Vulnerability, Potential Agency Impact, Provider, Remediated Vulnerability, Vulnerability."
+    },
+    {
+      "id": "VDR-TFR-RMN",
+      "title": "Remaining Vulnerabilities",
+      "description": "Providers SHOULD mitigate or remediate remaining vulnerabilities during routine operations as determined necessary by the provider.",
+      "family": "Vulnerability Detection and Response",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Provider, Vulnerability."
+    },
+    {
+      "id": "VER-EVA-AIA",
+      "title": "Assume It's Automatable",
+      "description": "Providers MUST assume the exploitation of vulnerabilities can be automated UNLESS they have evidence proving otherwise.",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Provider, Vulnerability."
+    },
+    {
+      "id": "VER-EVA-EFA",
+      "title": "Evaluation Factors",
+      "description": "Providers SHOULD consider at least the following factors when considering the context of the cloud service offering to evaluate detected vulnerabilities:",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- **Criticality**: How important are the systems or information that might be impacted by the vulnerability?\n- **Reachability**: How might a threat actor reach the vulnerability and how likely is that?\n- **Exploitability**: How easy is it for a threat actor to exploit the vulnerability and how likely is that?\n- **Detectability**: How easy is it for a threat actor to become aware of the vulnerability and how likely is that?\n- **Prevalence**: How much of the cloud service offering is affected by the vulnerability?\n- **Privilege**: How much privileged authority or access is granted or can be gained from exploiting the vulnerability?\n- **Proximate Vulnerabilities**: How does this vulnerability interact with previously detected vulnerabilities, especially partially or fully mitigated vulnerabilities?\n- **Known Threats**: How might already known threats leverage the vulnerability and how likely is that?\n\nRelated FedRAMP terms: Cloud Service Offering, Fully Mitigated Vulnerability, Likely, Provider, Vulnerability, Vulnerability Detection."
+    },
+    {
+      "id": "VER-EVA-EFP",
+      "title": "Evaluate False Positives",
+      "description": "Providers SHOULD evaluate detected vulnerabilities, considering the context of the cloud service offering, to determine if they are false positive vulnerabilities.",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, False Positive Vulnerability, Provider, Vulnerability, Vulnerability Detection."
+    },
+    {
+      "id": "VER-EVA-EIR",
+      "title": "Evaluate Internet-Reachability",
+      "description": "Providers MUST evaluate detected vulnerabilities, considering the context of the cloud service offering, to determine if they are internet-reachable vulnerabilities.",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, FedRAMP Certified, Internet-Reachable Vulnerability (IRV), Provider, Vulnerability, Vulnerability Detection."
+    },
+    {
+      "id": "VER-EVA-ELX",
+      "title": "Evaluate Exploitability",
+      "description": "Providers MUST evaluate detected vulnerabilities, considering the context of the cloud service offering, to determine if they are likely exploitable vulnerabilities.",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, Likely, Likely Exploitable Vulnerability (LEV), Provider, Regularly, Vulnerability, Vulnerability Detection."
+    },
+    {
+      "id": "VER-EVA-EPA",
+      "title": "Estimate Potential Agency Impact",
+      "description": "Providers MUST evaluate detected vulnerabilities, considering the context of the cloud service offering, to estimate the potential agency impact of exploitation on government customers AND assign one of the following Potential Agency Impact N-ratings (PAIN):",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Agency, Cloud Service Offering, Debilitating Customer Effect, Disruptive Customer Effect, Minimal Customer Effect, Narrow Customer Effect, Potential Agency Impact, Provider, Vulnerability, Vulnerability Detection."
+    },
+    {
+      "id": "VER-EVA-GRV",
+      "title": "Group Vulnerabilities",
+      "description": "Providers SHOULD evaluate detected vulnerabilities, considering the context of the cloud service offering, to identify logical groupings of affected information resources that may improve the efficiency and effectiveness of vulnerability response by consolidating further activity; FedRAMP Vulnerability Detection and Response rules are then applied to these consolidated groupings of vulnerabilities instead of each individual detected instance.",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, Information Resource, Provider, Vulnerability, Vulnerability Detection, Vulnerability Response."
+    },
+    {
+      "id": "VER-RPT-AVI",
+      "title": "Accepted Vulnerability Info",
+      "description": "Providers MUST include the following information on accepted vulnerabilities when reporting on vulnerability detection and response activity:",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Provider's internally assigned tracking identifier\n- Time and source of the detection\n- Time of completed evaluation\n- Is it an internet-reachable vulnerability or not?\n- Is it a likely exploitable vulnerability or not?\n- Currently estimated Potential Agency Impact N-rating\n- Explanation of why this is an accepted vulnerability\n- Any supplementary information the provider determines will responsibly help federal agencies assess or mitigate the risk to their federal customer data within the cloud service offering resulting from the accepted vulnerability\n\nRelated FedRAMP terms: Accepted Vulnerability, Agency, Cloud Service Offering, Federal Customer Data, Internet-Reachable Vulnerability (IRV), Likely, Likely Exploitable Vulnerability (LEV), Potential Agency Impact, Provider, Responsibly, Vulnerability, Vulnerability Detection, Vulnerability Response.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-accepted-vulnerability-info-schema-2026-06-24.json"
+    },
+    {
+      "id": "VER-RPT-HLO",
+      "title": "High-Level Overviews",
+      "description": "Providers SHOULD include high-level overviews of ALL vulnerability detection and response activities conducted during this period for the cloud service offering; this includes vulnerability disclosure programs, bug bounty programs, penetration testing, assessments, etc.",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, Provider, Vulnerability, Vulnerability Detection, Vulnerability Response."
+    },
+    {
+      "id": "VER-RPT-NID",
+      "title": "Responsible Disclosure",
+      "description": "Providers MUST NOT irresponsibly disclose specific sensitive information about vulnerabilities that would likely lead to exploitation, but MUST disclose sufficient information for informed risk-based decision-making to all necessary parties.",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: MUST NOT.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): This requirement will be superseded in the event of formal action related to an investigation or corrective action plan.\n\nRelated FedRAMP terms: All Necessary Parties, Likely, Provider, Vulnerability."
+    },
+    {
+      "id": "VER-RPT-PER",
+      "title": "Persistent Reporting",
+      "description": "Providers MUST report vulnerability detection and response activity (including persistent verification and validation) to all necessary parties persistently, summarizing ALL activity since the previous report; these reports are FedRAMP Certification Data and are subject to FedRAMP Certification Data Sharing rules.",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: All Necessary Parties, Certification Data, Persistently, Provider, Validation, Verification, Vulnerability, Vulnerability Detection, Vulnerability Response.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-vulnerability-detail-report-schema-2026-06-24.json"
+    },
+    {
+      "id": "VER-RPT-RPD",
+      "title": "Responsible Public Disclosure",
+      "description": "Providers MAY responsibly disclose vulnerabilities publicly or with other parties if the provider determines doing so will NOT likely lead to exploitation.",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Likely, Provider, Responsibly, Vulnerability."
+    },
+    {
+      "id": "VER-RPT-VDT",
+      "title": "Vulnerability Details",
+      "description": "Providers MUST include the following information (if applicable) on detected vulnerabilities when reporting on vulnerability detection and response activity, UNLESS it is an accepted vulnerability:",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Provider's internally assigned tracking identifier\n- Time and source of the detection\n- Time of completed evaluation\n- Is it an internet-reachable vulnerability or not?\n- Is it a likely exploitable vulnerability or not?\n- Historically and currently estimated Potential Agency Impact N-rating of exploitation\n- Time and Potential Agency Impact N-rating of each completed and evaluated reduction in Potential Agency Impact N-rating\n- Estimated time and target Potential Agency Impact N-rating of next reduction in Potential Agency Impact N-rating\n- Is it currently or is it likely to become an overdue vulnerability or not? If so, explain.\n- Any supplementary information the provider responsibly determines will help federal agencies assess or mitigate the risk to their federal customer data within the cloud service offering resulting from the vulnerability\n- Final disposition of the vulnerability\n\nRelated FedRAMP terms: Accepted Vulnerability, Agency, Cloud Service Offering, Federal Customer Data, Internet-Reachable Vulnerability (IRV), Likely, Likely Exploitable Vulnerability (LEV), Overdue Vulnerability, Potential Agency Impact, Provider, Responsibly, Vulnerability, Vulnerability Detection, Vulnerability Response.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-vulnerability-detail-report-schema-2026-06-24.json"
+    },
+    {
+      "id": "VER-TFR-EVU",
+      "title": "Evaluate Vulnerabilities Quickly",
+      "description": "Providers with Class C Certifications SHOULD evaluate ALL vulnerabilities as required by VER-EVA (Evaluation) within 5 days of detection.",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class A Certifications SHOULD evaluate ALL vulnerabilities as required by VER-EVA (Evaluation) within 14 days of detection.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class B Certifications SHOULD evaluate ALL vulnerabilities as required by VER-EVA (Evaluation) within 7 days of detection.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class C Certifications SHOULD evaluate ALL vulnerabilities as required by VER-EVA (Evaluation) within 5 days of detection.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class D Certifications SHOULD evaluate ALL vulnerabilities as required by VER-EVA (Evaluation) within 2 days of detection.\n\nRelated FedRAMP terms: Provider, Vulnerability, Vulnerability Detection."
+    },
+    {
+      "id": "VER-TFR-IRI",
+      "title": "Internet-Reachable Incidents",
+      "description": "Providers with Class C Certifications SHOULD treat internet-reachable likely exploitable vulnerabilities where Potential Agency Impact N-rating > 3 as a FedRAMP Reportable Incident until they are partially mitigated vulnerabilities at N3 or below.",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class A Certifications MAY treat internet-reachable likely exploitable vulnerabilities where Potential Agency Impact N-rating > 3 as a FedRAMP Reportable Incident until they are partially mitigated vulnerabilities at N3 or below.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class B Certifications MAY treat internet-reachable likely exploitable vulnerabilities where Potential Agency Impact N-rating > 3 as a FedRAMP Reportable Incident until they are partially mitigated vulnerabilities at N3 or below.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class C Certifications SHOULD treat internet-reachable likely exploitable vulnerabilities where Potential Agency Impact N-rating > 3 as a FedRAMP Reportable Incident until they are partially mitigated vulnerabilities at N3 or below.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class D Certifications SHOULD treat internet-reachable likely exploitable vulnerabilities where Potential Agency Impact N-rating > 3 as a FedRAMP Reportable Incident until they are partially mitigated vulnerabilities at N3 or below.\n\nRelated FedRAMP terms: Agency, FedRAMP Reportable Incident, Incident, Likely, Likely Exploitable Vulnerability (LEV), Partially Mitigated Vulnerability, Potential Agency Impact, Provider, Vulnerability."
+    },
+    {
+      "id": "VER-TFR-MAV",
+      "title": "Mark Accepted Vulnerabilities",
+      "description": "Providers MUST categorize any vulnerability that is not or will not be fully mitigated or remediated within 192 days of evaluation as an accepted vulnerability.",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Accepted Vulnerability, Provider, Vulnerability."
+    },
+    {
+      "id": "VER-TFR-MHR",
+      "title": "Monthly Activity Report",
+      "description": "Providers MUST report vulnerability detection and response activity to all necessary parties in a consistent format that is human readable at least monthly.",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: All Necessary Parties, Provider, Vulnerability, Vulnerability Detection, Vulnerability Response."
+    },
+    {
+      "id": "VER-TFR-MRH",
+      "title": "Historical Activity",
+      "description": "Providers with Class C Certifications SHOULD make all recent historical vulnerability detection and response activity available in JSON format for automated retrieval by all necessary parties (e.g. using an API service or similar); this information SHOULD be updated persistently, at least once every 14 days.",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class A Certifications MAY make all recent historical vulnerability detection and response activity available in JSON format for automated retrieval by all necessary parties (e.g. using an API service or similar); this information MAY be updated persistently, at least once every month.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class B Certifications SHOULD make all recent historical vulnerability detection and response activity available in JSON format for automated retrieval by all necessary parties (e.g. using an API service or similar); this information SHOULD be updated persistently, at least once every month.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class C Certifications SHOULD make all recent historical vulnerability detection and response activity available in JSON format for automated retrieval by all necessary parties (e.g. using an API service or similar); this information SHOULD be updated persistently, at least once every 14 days.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class D Certifications SHOULD make all recent historical vulnerability detection and response activity available in JSON format for automated retrieval by all necessary parties (e.g. using an API service or similar); this information SHOULD be updated persistently, at least once every 7 days.\n\nRelated FedRAMP terms: All Necessary Parties, Persistently, Provider, Vulnerability, Vulnerability Detection, Vulnerability Response.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-historical-ver-activity-schema-2026-06-24.json"
+    },
+    {
+      "id": "VER-TFR-NRI",
+      "title": "Non-Internet-Reachable Incidents",
+      "description": "Providers with Class C Certifications MAY treat likely exploitable vulnerabilities that are NOT internet-reachable where Potential Agency Impact N-rating = 5 as a FedRAMP Reportable Incident until they are partially mitigated vulnerabilities at N4 or below.",
+      "family": "Vulnerability Evaluation and Reporting",
+      "guidance": "Force: MAY.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class A Certifications MAY treat likely exploitable vulnerabilities that are NOT internet-reachable where Potential Agency Impact N-rating = 5 as a FedRAMP Reportable Incident until they are partially mitigated vulnerabilities at N4 or below.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class B Certifications MAY treat likely exploitable vulnerabilities that are NOT internet-reachable where Potential Agency Impact N-rating = 5 as a FedRAMP Reportable Incident until they are partially mitigated vulnerabilities at N4 or below.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class C Certifications MAY treat likely exploitable vulnerabilities that are NOT internet-reachable where Potential Agency Impact N-rating = 5 as a FedRAMP Reportable Incident until they are partially mitigated vulnerabilities at N4 or below.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class D Certifications SHOULD treat likely exploitable vulnerabilities that are NOT internet-reachable where Potential Agency Impact N-rating = 5 as a FedRAMP Reportable Incident until they are partially mitigated vulnerabilities at N4 or below.\n\nRelated FedRAMP terms: Agency, FedRAMP Reportable Incident, Incident, Likely, Likely Exploitable Vulnerability (LEV), Partially Mitigated Vulnerability, Potential Agency Impact, Provider, Vulnerability."
+    }
+  ]
+}

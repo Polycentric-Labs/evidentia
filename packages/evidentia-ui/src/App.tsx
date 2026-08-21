@@ -13,6 +13,11 @@ import { IS_DEMO, IS_DEMO_FDA_INDEX } from "@/lib/demo";
 const AiGovPage = lazy(() =>
   import("@/routes/AiGovPage").then((m) => ({ default: m.AiGovPage })),
 );
+const AcquisitionsPage = lazy(() =>
+  import("@/routes/AcquisitionsPage").then((m) => ({
+    default: m.AcquisitionsPage,
+  })),
+);
 const CatalogPage = lazy(() =>
   import("@/routes/CatalogPage").then((m) => ({ default: m.CatalogPage })),
 );
@@ -175,6 +180,7 @@ export function App() {
           <Route path="evidence" element={<EvidencePage />} />
           <Route path="model-risk" element={<ModelRiskPage />} />
           <Route path="ai-gov" element={<AiGovPage />} />
+          <Route path="ai-gov/acquisitions" element={<AcquisitionsPage />} />
           {/* v0.10.12 Wave 3 — live read-only OSCAL verify (verify an uploaded
            * Assessment Result) + unsigned traceability emit. Signing stays an
            * air-gap CLI operation; these consoles never sign. */}
