@@ -113,6 +113,9 @@ export function AppLayout() {
   const { pathname } = useLocation();
   const { theme, toggle } = useTheme();
   const dark = theme === "dark";
+  // Resolved once per render rather than per nav item: the rail maps over
+  // every key, and each lookup would otherwise re-scan the whole set.
+  const activeKey = activeNavKey(pathname);
 
   const { data: health, isError: healthError } = useQuery({
     queryKey: ["health"],
@@ -167,7 +170,7 @@ export function AppLayout() {
                 </div>
               )}
               {group.items.map((to) => {
-                const active = to === activeNavKey(pathname);
+                const active = to === activeKey;
                 const m = NAV_META[to];
                 if (!m) return null;
                 const Icon = m.icon;
