@@ -9,7 +9,12 @@ provenance pins there).
 Obligation anchor (FedRAMP Consolidated Rules for 2026, ``FedRAMP/rules``):
 
 - **SDR-CSO-FRR** (MUST): the SDR is supplied in both human-readable and
-  JSON forms, per the published schema.
+  JSON forms, per the published schema, and "MUST include at least" an
+  explanation, verification, validation, and related statements *for
+  each applicable FedRAMP rule*. v0.12 added the ``requirements`` block
+  below so the emitted ``fedRampRequirements`` array can carry them;
+  through v0.11.x it was emitted empty, which satisfied the schema but
+  not this rule.
 - **SDR-CSX-KSI** (MUST, 20x): per-KSI high-level summaries — measures
   and objectives, the cycle for persistently implemented measures,
   verification, automation-accuracy verification, and validation.
@@ -131,6 +136,46 @@ class KsiIndicatorEntry(EvidentiaModel):
     )
 
 
+#: SDR requirement-status vocabulary (schema `frrImplementationStatus` enum).
+FrrImplementationStatus = Literal[
+    "Implemented",
+    "Partially Implemented",
+    "Not Implemented",
+]
+
+
+class FrrRequirementEntry(EvidentiaModel):
+    """Operator statements for a single provider-facing FedRAMP rule.
+
+    Mirrors :class:`KsiIndicatorEntry` for the SDR's
+    ``fedRampRequirements`` block (SDR-CSO-FRR). The schema item has no
+    tests/evidence sub-structures, so neither does this entry.
+    """
+
+    status: FrrImplementationStatus | None = Field(
+        default=None,
+        description="Requirement implementation status (optional in the SDR schema)",
+    )
+    implementation: list[str] = Field(
+        min_length=1,
+        description=(
+            "Implementation statements — how the rule is followed, or the "
+            "reason and resulting customer risk for not following it "
+            "(SDR-CSO-FRR; Markdown allowed). At least one is required — "
+            "a requirement entry with no implementation statement says "
+            "nothing."
+        ),
+    )
+    validation: list[str] = Field(
+        default_factory=list,
+        description="Validation statements (CSP-internal; Markdown allowed)",
+    )
+    assessment: list[str] = Field(
+        default_factory=list,
+        description="Assessment statements (independent assessor; Markdown allowed)",
+    )
+
+
 class KsiStatusDocument(EvidentiaModel):
     """The operator's KSI status file (YAML) — input to `evidentia conmon ksi`."""
 
@@ -151,5 +196,16 @@ class KsiStatusDocument(EvidentiaModel):
         description=(
             "Per-KSI entries keyed by KSI indicator ID (e.g. 'KSI-CED-RAT'); "
             "IDs are checked against the bundled fedramp-ksi-2026 catalog"
+        ),
+    )
+    requirements: dict[str, FrrRequirementEntry] = Field(
+        default_factory=dict,
+        description=(
+            "Per-rule entries keyed by FedRAMP Requirement ID (e.g. "
+            "'SDR-CSO-FRR'); IDs are checked against the bundled "
+            "fedramp-frr-2026 catalog (provider-facing rules only). "
+            "Optional so v0.11 status files keep loading, but SDR-CSO-FRR "
+            "is a MUST — an SDR with an empty block is schema-valid and "
+            "rule-incomplete; `conmon ksi` reports the coverage gap."
         ),
     )

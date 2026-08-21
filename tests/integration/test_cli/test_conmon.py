@@ -1105,3 +1105,80 @@ indicators:
         )
         assert result.exit_code == 1
         assert "could not write" in _normalize(result.output)
+
+
+# ── conmon ksi: fedRampRequirements block (v0.12, SDR-CSO-FRR) ──────
+
+STATUS_WITH_REQUIREMENTS = VALID_KSI_STATUS + """\
+requirements:
+  SDR-CSO-FRR:
+    status: Implemented
+    implementation:
+      - "SDR emitted by `evidentia conmon ksi` in JSON; human-readable rendering via the web console."
+    validation:
+      - "Schema round-trip on every emit."
+"""
+
+
+class TestConmonKsiRequirements:
+    def _emit(self, runner: CliRunner, tmp_path: Path, status_yaml: str) -> tuple[int, str, dict]:
+        status_file = tmp_path / "ksi-status.yaml"
+        status_file.write_text(status_yaml, encoding="utf-8")
+        out = tmp_path / "sdr.json"
+        result = runner.invoke(
+            app,
+            [
+                "conmon",
+                "ksi",
+                "--status-file",
+                str(status_file),
+                "--out",
+                str(out),
+                "--last-updated",
+                "2026-08-21T12:00:00+00:00",
+            ],
+        )
+        doc = json.loads(out.read_text(encoding="utf-8")) if out.exists() else {}
+        return result.exit_code, result.output, doc
+
+    def test_requirements_emit_into_the_sdr(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        code, output, doc = self._emit(runner, tmp_path, STATUS_WITH_REQUIREMENTS)
+        assert code == 0, output
+        [item] = doc["fedRampRequirements"]
+        assert item["frrID"] == "SDR-CSO-FRR"
+        assert item["frrImplementationStatus"] == "Implemented"
+
+    def test_reports_frr_coverage_separately_from_ksi(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """The operator needs to see the rule-completeness gap, not just KSIs."""
+        code, output, _ = self._emit(runner, tmp_path, STATUS_WITH_REQUIREMENTS)
+        assert code == 0, output
+        assert "1 KSI entry" in output
+        assert "1 FRR entry" in output
+        assert "requirements addressed" in output
+        assert "SDR-CSO-FRR" in output  # the MUST is cited
+
+    def test_v011_status_file_without_requirements_still_emits(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """Back-compat: an older file loads, emits [], and is told why that matters."""
+        code, output, doc = self._emit(runner, tmp_path, VALID_KSI_STATUS)
+        assert code == 0, output
+        assert doc["fedRampRequirements"] == []
+        assert "0 FRR entries" in output
+        assert "SDR-CSO-FRR" in output
+
+    def test_unknown_requirement_id_exits_2(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        bad = VALID_KSI_STATUS + """\
+requirements:
+  AFC-FRP-VRE:
+    implementation: ["not a provider rule"]
+"""
+        code, output, _ = self._emit(runner, tmp_path, bad)
+        assert code == 2
+        assert "unknown FRR" in output

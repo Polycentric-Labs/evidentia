@@ -62,7 +62,7 @@ jobs:
           TITLE="FedRAMP upstream drift — re-verify the CR26 pins (fedramp-schema-watch)"
           BODY=$(printf '%s\n\n%s\n' \
             "$(cat drift-findings.md)" \
-            "Action: follow the re-sync procedure in packages/evidentia-core/src/evidentia_core/fedramp/schemas/README.md (re-verify upstream, bump UPSTREAM.json, re-vendor schemas and/or re-run scripts/catalogs/gen_fedramp_ksi.py + regenerate_manifest.py, review the diff). This is a scheduled sentinel — MAJOR findings also red this run; NOTICE findings only track here.")
+            "Action: follow the re-sync procedure in packages/evidentia-core/src/evidentia_core/fedramp/schemas/README.md (re-verify upstream, bump UPSTREAM.json, re-vendor schemas and/or re-run scripts/catalogs/gen_fedramp_ksi.py + gen_fedramp_frr.py + regenerate_manifest.py, review the diff). This is a scheduled sentinel — MAJOR findings also red this run; NOTICE findings only track here.")
           existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
             --search "in:title \"$TITLE\"" --json number -q '.[0].number' || echo "")
           if [ -n "$existing" ]; then

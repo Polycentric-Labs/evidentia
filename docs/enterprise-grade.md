@@ -68,7 +68,7 @@ posture has advanced materially across the v0.8.x–v0.10.x line:
   security model and
   a default-on SSRF / anti-DNS-rebind network guard across collectors,
   integrations, and the Tableau publish path.
-- **96 bundled framework catalogs** across four redistribution tiers
+- **97 bundled framework catalogs** across four redistribution tiers
   (updates **L4**'s "82 frameworks" count).
 - **Release + CI hardening (v0.10.13–v0.10.17)** — a distroless
   **Docker Hardened Images** runtime base (v0.10.16), **air-gapped DSSE /

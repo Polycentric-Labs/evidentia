@@ -45,7 +45,7 @@ const NAV_META: Record<string, NavMeta> = {
   "/": { label: "Home", description: "Welcome + onboarding", crumb: "Welcome to Evidentia", icon: Home },
   "/demo": { label: "Watch it run", description: "CLI recording (Tier 0 cast)", crumb: "CLI recording", icon: PlayCircle },
   "/dashboard": { label: "Dashboard", description: "Saved gap reports", crumb: "Saved gap reports", icon: LayoutDashboard },
-  "/frameworks": { label: "Frameworks", description: "95 bundled catalogs", crumb: "Catalog browser", icon: Layers },
+  "/frameworks": { label: "Frameworks", description: "97 bundled catalogs", crumb: "Catalog browser", icon: Layers },
   "/gap/analyze": { label: "Gap Analyze", description: "Run a gap analysis", crumb: "Run a gap analysis", icon: ScanLine },
   "/gap/diff": { label: "Gap Diff", description: "Compare two reports", crumb: "Compare two reports", icon: GitCompare },
   "/risk/generate": { label: "Risk Generate", description: "AI risk statements", crumb: "AI risk statements", icon: Sparkles },

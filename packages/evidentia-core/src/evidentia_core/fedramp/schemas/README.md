@@ -6,8 +6,11 @@ its emitted **Security Decision Record (SDR)** documents against, vendored from
 offline / air-gapped. Exact upstream pins (commit, blob SHAs, sha256 hashes,
 the `$schemaVersion` baseline for all 11 CR26 schemas) live in
 [`UPSTREAM.json`](UPSTREAM.json) — that file is the single source of truth for
-both the `fedramp-schema-watch` drift sentinel and the
-`scripts/catalogs/gen_fedramp_ksi.py` catalog generator.
+the `fedramp-schema-watch` drift sentinel and both catalog generators
+(`scripts/catalogs/gen_fedramp_ksi.py` for the KSI catalog,
+`scripts/catalogs/gen_fedramp_frr.py` for the provider-facing
+Requirements catalog; the FRR generator reuses the KSI generator's fetch
+and sha256 check so the two cannot disagree about the dataset).
 
 ## Files
 

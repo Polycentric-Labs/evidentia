@@ -12,6 +12,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`conmon ksi` now emits the SDR's `fedRampRequirements` block (SDR-CSO-FRR);
+  new `fedramp-frr-2026` catalog — 97 bundled catalogs.** The v0.12 plan gated
+  the "FRR statements" extra on a cheapness re-verify against the post-08-14
+  schema set. The re-verify found something the plan missed: **`SDR-CSO-FRR`
+  is a MUST** — the SDR "MUST include at least" an explanation, verification,
+  validation, and related statements *for each applicable FedRAMP rule* — and
+  the v0.11 emitter wrote `fedRampRequirements: []`. That satisfies the
+  *schema* (the array is required, its contents are not) but not the *rule*:
+  an emitted SDR was schema-valid and rule-incomplete, and the emitter's own
+  docstring framed FRR as "out of scope" rather than as a gap. v0.12 closes it
+  structurally, mirroring the KSI block exactly: the operator's status file
+  gains a `requirements:` map keyed by FRR ID (`FrrRequirementEntry`: status +
+  implementation / validation / assessment statements), IDs are checked
+  against the new **`fedramp-frr-2026`** catalog, and the block is emitted in
+  sorted-ID order with coverage reported on the console — separately from,
+  and more loudly than, the KSI coverage, since the KSI obligation is a SHOULD
+  and this one is a MUST. Back-compat: v0.11 status files with no
+  `requirements` key still load and emit `[]`; the coverage line is what
+  surfaces the gap. **Nothing is invented** — the statements are
+  operator-authored governance prose, exactly as KSI statements are.
+  The catalog (`scripts/catalogs/gen_fedramp_frr.py`, a `--check`-gated
+  generator that reuses the KSI generator's pinned fetch + sha256 check so the
+  two cannot disagree about the dataset) holds the **180 CR26 rules whose
+  upstream `affects` names Providers, across 15 families**. Rules addressed to
+  FedRAMP itself, assessors, or agencies are deliberately excluded: an SDR is
+  the provider's record, and listing obligations a provider cannot implement
+  would make the coverage report noise. Each entry carries the rule's force
+  (MUST / SHOULD / MAY), its applicability (all / 20x / rev5), and upstream's
+  `following_information` sub-points verbatim; the 29 rules defined only per
+  certification class (`varies_by_class`) take the class-C statement as the
+  description with every variant preserved in guidance — the same handling
+  the KSI catalog uses. `evidentia catalog show fedramp-frr-2026` is therefore
+  a prioritised to-do list. Tests: 14 new emitter/model/coverage tests (RED
+  first), 4 CLI tests, 7 catalog-content tests. Catalog-count claims updated
+  96 → 97 across README, the console's nav rail (which had been sitting at a
+  stale 95), and the living docs; dated ship records are left as written.
 - **The five v0.11 federal AI-governance verbs now have a web console — CLI↔GUI
   parity reaches 100%.** `ai-gov set-practice` ships as a form in the `/ai-gov`
   system detail panel, gated on the system already carrying an M-25-21
