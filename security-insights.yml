@@ -21,9 +21,9 @@ project:
       primary: true
   documentation:
     detailed-guide: https://github.com/Polycentric-Labs/evidentia/blob/main/README.md
-    code-of-conduct: https://github.com/Polycentric-Labs/evidentia/blob/main/CODE_OF_CONDUCT.md
+    code-of-conduct: https://github.com/Polycentric-Labs/evidentia/blob/main/.github/CODE_OF_CONDUCT.md
     release-process: https://github.com/Polycentric-Labs/evidentia/blob/main/docs/release-checklist.md
-    support-policy: https://github.com/Polycentric-Labs/evidentia/blob/main/EOL.md
+    support-policy: https://github.com/Polycentric-Labs/evidentia/blob/main/docs/EOL.md
     signature-verification: https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md
   repositories:
     - name: evidentia
@@ -58,7 +58,7 @@ repository:
       email: allen@allenfbyrd.com
       primary: true
   documentation:
-    contributing-guide: https://github.com/Polycentric-Labs/evidentia/blob/main/CONTRIBUTING.md
+    contributing-guide: https://github.com/Polycentric-Labs/evidentia/blob/main/.github/CONTRIBUTING.md
     governance: https://github.com/Polycentric-Labs/evidentia/blob/main/GOVERNANCE.md
     security-policy: https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md
   license:
@@ -74,7 +74,7 @@ repository:
           surface changes; otherwise a right-sized reuse-based review is
           performed and logged in the release's per-run record.
           Threat model: docs/threat-model.md (NORMATIVE). OSPS Baseline
-          conformance tracked in OSPS-CONFORMANCE.md (Maturity 3, CI-gated).
+          conformance tracked in docs/OSPS-CONFORMANCE.md (Maturity 3, CI-gated).
           OpenSSF Best Practices: Silver (project 12724). Additional CI security
           tooling beyond the SCA entries below: CodeQL (security-extended;
           a forward-looking Models-as-Data path-injection barrier model is

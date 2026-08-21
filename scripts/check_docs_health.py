@@ -55,7 +55,7 @@ PHRASE AUDIT (config-driven; layered base + private overlay):
                               or returns empty).
 
 Config (layered, docs-airtightness A1.5):
-  * ``check-docs-health-patterns.yaml`` (repo root) — the committed, PUBLIC
+  * ``scripts/check-docs-health-patterns.yaml`` — the committed, PUBLIC
     base. Ships the reclaimable-vendor-host patterns so that grep runs in
     EVERY environment (CI, fresh clones).
   * ``private/check-docs-health-patterns.yaml`` (gitignored) — the PRIVATE
@@ -126,7 +126,7 @@ REPO_ROOT = Path.cwd().resolve()
 #   * PHRASE_CONFIG_PATH — the gitignored PRIVATE overlay. Merged on top of the
 #     base when present; it WINS/EXTENDS (its patterns append, its scalar/list
 #     keys override the base's). Absent for fresh clones / collaborators.
-BASE_CONFIG_PATH = Path("check-docs-health-patterns.yaml")
+BASE_CONFIG_PATH = Path("scripts/check-docs-health-patterns.yaml")
 PHRASE_CONFIG_PATH = Path("private/check-docs-health-patterns.yaml")
 
 # ── README header Title-Case invariant (v0.10.7 E5c) ───────────────────────

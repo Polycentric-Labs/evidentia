@@ -115,8 +115,8 @@ MIRRORS: tuple[Mirror, ...] = (
     Mirror("docs/deprecation-calendar.md", "docs/wiki/6-project/deprecation-policy.md"),
     Mirror("GOVERNANCE.md", "docs/wiki/6-project/governance.md"),
     Mirror("SECURITY.md", "docs/wiki/6-project/security.md"),
-    Mirror("CONTRIBUTING.md", "docs/wiki/6-project/contributing.md"),
-    Mirror("EOL.md", "docs/wiki/6-project/eol.md"),
+    Mirror(".github/CONTRIBUTING.md", "docs/wiki/6-project/contributing.md"),
+    Mirror("docs/EOL.md", "docs/wiki/6-project/eol.md"),
     Mirror("docs/verification.md", "docs/wiki/6-project/verification.md"),
     # --- 5-compliance (4) ---
     Mirror("docs/ocsf-mapping.md", "docs/wiki/5-compliance/ocsf-mapping.md"),

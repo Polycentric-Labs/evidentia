@@ -104,7 +104,7 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 - **14 evidence collectors** — AWS, GitHub (including v0.10.6 OSPS conformance helpers), Postgres, MySQL, Oracle, SQLite, MS-SQL, Snowflake, Databricks, Okta, Vanta, Drata, BitSight, SecurityScorecard. All OCSF-aligned with `compliance_status` field.
 - **OCSF-aligned findings** — OCSF Compliance Finding (class_uid 2003) via `--format ocsf`; OCSF Detection Finding (class_uid 2004) via `--format ocsf-detection`. SARIF 2.1.0 for CI gates via `--format sarif`. CycloneDX 1.6 VEX via `--format cyclonedx-vex`.
 - **13 MCP tools** — Drive Evidentia from Claude Desktop, Claude Code, Cursor, or any MCP host. Append-only tool contract per [`docs/api-stability.md`](docs/api-stability.md) (NORMATIVE). Signed output envelopes (CIMD) per [`docs/evidence-integrity.md`](docs/evidence-integrity.md).
-- **OSPS Baseline conformance** — First public open-source project to ship a machine-readable per-control OSPS Baseline conformance attestation ([`OSPS-CONFORMANCE.md`](OSPS-CONFORMANCE.md)) with a CI gate that re-validates every evidence link on push/PR/cron.
+- **OSPS Baseline conformance** — First public open-source project to ship a machine-readable per-control OSPS Baseline conformance attestation ([`OSPS-CONFORMANCE.md`](docs/OSPS-CONFORMANCE.md)) with a CI gate that re-validates every evidence link on push/PR/cron.
 
 ## What's in the Box
 
@@ -123,9 +123,9 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 - [**Wiki**](https://github.com/Polycentric-Labs/evidentia/wiki) — Getting Started, Guides, Concepts, Reference, Compliance, Project meta (auto-synced from `docs/wiki/` on every push to main)
 - [`docs/api-stability.md`](docs/api-stability.md) — append-only contract; what's frozen vs evolving
 - [`docs/architecture/`](docs/architecture/) — system design + extension points
-- [`OSPS-CONFORMANCE.md`](OSPS-CONFORMANCE.md) — OpenSSF OSPS Baseline self-attestation + CI gate
+- [`OSPS-CONFORMANCE.md`](docs/OSPS-CONFORMANCE.md) — OpenSSF OSPS Baseline self-attestation + CI gate
 - [`docs/verification.md`](docs/verification.md) — consumer-side recipes for PEP 740 + cosign + osv-scanner + SLSA Provenance v1
-- [`EOL.md`](EOL.md) — version support windows + cessation comms policy
+- [`EOL.md`](docs/EOL.md) — version support windows + cessation comms policy
 - [`docs/engineering-practices.md`](docs/engineering-practices.md) — how Evidentia is built, tested, and shipped: the safeguard stack and the candid failures that shaped it
 
 ## Recent Releases
@@ -141,9 +141,9 @@ Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https:/
 ## Community & Governance
 
 - [`GOVERNANCE.md`](GOVERNANCE.md) — project governance + decision-making
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to contribute (issues, PRs, catalogs)
+- [`CONTRIBUTING.md`](.github/CONTRIBUTING.md) — how to contribute (issues, PRs, catalogs)
 - [`SECURITY.md`](SECURITY.md) — vulnerability reporting policy (private via [GHSA](https://github.com/Polycentric-Labs/evidentia/security/advisories/new))
-- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Code of Conduct](.github/CODE_OF_CONDUCT.md)
 - [FAQ (wiki)](https://github.com/Polycentric-Labs/evidentia/wiki/Project) — frequent operator questions
 
 ## AI Assistance

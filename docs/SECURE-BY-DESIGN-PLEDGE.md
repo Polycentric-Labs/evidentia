@@ -343,4 +343,4 @@ For the authoritative pledge text, see CISA's
 Evidentia's broader security posture, see
 [`SECURITY.md`](../SECURITY.md), [`docs/threat-model.md`](threat-model.md),
 [`docs/engineering-practices.md`](engineering-practices.md), and
-[`OSPS-CONFORMANCE.md`](../OSPS-CONFORMANCE.md).
+[`OSPS-CONFORMANCE.md`](OSPS-CONFORMANCE.md).

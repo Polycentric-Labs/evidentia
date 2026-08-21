@@ -157,5 +157,5 @@ cosign verify-attestation ghcr.io/polycentric-labs/evidentia:v0.11.2 `
 ## Cross-references
 
 - [`SECURITY.md`](../SECURITY.md) — vulnerability reporting policy
-- [`EOL.md`](../EOL.md) — version support windows
+- [`EOL.md`](EOL.md) — version support windows
 - [`docs/sigstore-quickstart.md`](sigstore-quickstart.md) — Sigstore introduction

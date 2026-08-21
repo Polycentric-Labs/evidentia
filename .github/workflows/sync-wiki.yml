@@ -68,8 +68,8 @@ on:
       - "docs/deprecation-calendar.md"
       - "GOVERNANCE.md"
       - "SECURITY.md"
-      - "CONTRIBUTING.md"
-      - "EOL.md"
+      - ".github/CONTRIBUTING.md"
+      - "docs/EOL.md"
       - "docs/verification.md"
       #   5-compliance (4):
       - "docs/ocsf-mapping.md"

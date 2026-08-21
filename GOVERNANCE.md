@@ -22,7 +22,7 @@ Evidentia is currently a single-maintainer project. The maintainer
   publish to PyPI / GHCR.
 - **Security disclosure handling** — triage, fix coordination, CVE
   assignment, advisory publication (per [`SECURITY.md`](SECURITY.md)).
-- **Code of Conduct enforcement** — see [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+- **Code of Conduct enforcement** — see [`CODE_OF_CONDUCT.md`](.github/CODE_OF_CONDUCT.md).
 
 This is the BDFL ("benevolent dictator for life") pattern, common for
 early-stage open-source projects. It is not a permanent structure;
@@ -80,7 +80,7 @@ When a second maintainer joins, the following roles will be defined:
 
 ## Becoming a contributor
 
-Anyone can contribute. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for
+Anyone can contribute. See [`CONTRIBUTING.md`](.github/CONTRIBUTING.md) for
 the contribution workflow (PRs, coding standards, test policy).
 
 There are no project-level CLA / DCO requirements at this stage

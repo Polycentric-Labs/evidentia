@@ -11,7 +11,7 @@ canonical docs:
 - Project status and history: [`CHANGELOG.md`](../../CHANGELOG.md) and
   [`docs/ROADMAP.md`](../ROADMAP.md)
 - Security policy and supported versions: [`SECURITY.md`](../../SECURITY.md)
-- Architecture: [`Evidentia-Architecture-and-Implementation-Plan.md`](../../Evidentia-Architecture-and-Implementation-Plan.md)
+- Architecture: [`Evidentia-Architecture-and-Implementation-Plan.md`](../architecture/Evidentia-Architecture-and-Implementation-Plan.md)
 
 ## Contents
 

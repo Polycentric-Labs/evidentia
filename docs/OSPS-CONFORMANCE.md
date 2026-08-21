@@ -54,7 +54,7 @@ HONEST_GAP with concrete resolution paths (see §Honest gaps below).
 Each row references the upstream OSPS Baseline assessment-requirement
 ID. Evidence links resolve to Evidentia's `Polycentric-Labs/evidentia`
 repository at `main` HEAD. The
-[`.github/workflows/verify-osps-conformance.yml`](.github/workflows/verify-osps-conformance.yml)
+[`.github/workflows/verify-osps-conformance.yml`](../.github/workflows/verify-osps-conformance.yml)
 CI gate re-validates every claimed-PASS evidence link on every push
 to `main`. Each link is translated to the GitHub REST API endpoint
 that authoritatively answers "does this resource exist on this ref"
@@ -97,7 +97,7 @@ for HTTP 200 via `gh api`; HTTP 404 on any link fails the workflow.
 | Control | Title | Verdict | Evidence |
 |---|---|---|---|
 | OSPS-DO-01.01 | Publish User Guides for Basic Functionality | ✅ PASS | [README.md](https://github.com/Polycentric-Labs/evidentia/blob/main/README.md) |
-| OSPS-DO-02.01 | Provide Mechanisms for Reporting Defects | ✅ PASS | [CONTRIBUTING.md](https://github.com/Polycentric-Labs/evidentia/blob/main/CONTRIBUTING.md) |
+| OSPS-DO-02.01 | Provide Mechanisms for Reporting Defects | ✅ PASS | [CONTRIBUTING.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/CONTRIBUTING.md) |
 | OSPS-DO-03.01 | Publish Provenance Verification Instructions (integrity/authenticity) | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md) |
 | OSPS-DO-03.02 | Publish Provenance Verification Instructions (signer identity) | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md) |
 | OSPS-DO-04.01 | Publish Support Scope and Duration | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md) |
@@ -111,9 +111,9 @@ for HTTP 200 via `gh api`; HTTP 404 on any link fails the workflow.
 |---|---|---|---|
 | OSPS-GV-01.01 | Publish Project Roles and Responsibilities (member list) | ✅ PASS | [GOVERNANCE.md](https://github.com/Polycentric-Labs/evidentia/blob/main/GOVERNANCE.md) |
 | OSPS-GV-01.02 | Publish Project Roles and Responsibilities (role descriptions) | ✅ PASS | [GOVERNANCE.md](https://github.com/Polycentric-Labs/evidentia/blob/main/GOVERNANCE.md) |
-| OSPS-GV-02.01 | Provide Public Discussion Mechanisms | ✅ PASS | [CONTRIBUTING.md](https://github.com/Polycentric-Labs/evidentia/blob/main/CONTRIBUTING.md) |
-| OSPS-GV-03.01 | Publish Contribution Guide (process) | ✅ PASS | [CONTRIBUTING.md](https://github.com/Polycentric-Labs/evidentia/blob/main/CONTRIBUTING.md) |
-| OSPS-GV-03.02 | Publish Contribution Guide (acceptance requirements) | ✅ PASS | [CONTRIBUTING.md](https://github.com/Polycentric-Labs/evidentia/blob/main/CONTRIBUTING.md) |
+| OSPS-GV-02.01 | Provide Public Discussion Mechanisms | ✅ PASS | [CONTRIBUTING.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/CONTRIBUTING.md) |
+| OSPS-GV-03.01 | Publish Contribution Guide (process) | ✅ PASS | [CONTRIBUTING.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/CONTRIBUTING.md) |
+| OSPS-GV-03.02 | Publish Contribution Guide (acceptance requirements) | ✅ PASS | [CONTRIBUTING.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/CONTRIBUTING.md) |
 | OSPS-GV-04.01 | Require Formal Review of Permission Grants | ⚠ HONEST_GAP | (see Honest gaps below) |
 
 ### OSPS-LE (Legal)
@@ -140,15 +140,15 @@ for HTTP 200 via `gh api`; HTTP 404 on any link fails the workflow.
 | OSPS-QA-05.01 | Prevent Executables in the Codebase (no generated executables) | ✅ PASS | [.gitignore](https://github.com/Polycentric-Labs/evidentia/blob/main/.gitignore) |
 | OSPS-QA-05.02 | Prevent Executables in the Codebase (no unreviewable binaries) | ✅ PASS | [.gitignore](https://github.com/Polycentric-Labs/evidentia/blob/main/.gitignore) |
 | OSPS-QA-06.01 | Use Automated Testing in CI/CD Pipelines (run on commit) | ✅ PASS | [test.yml](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/workflows/test.yml) |
-| OSPS-QA-06.02 | Use Automated Testing in CI/CD Pipelines (test policy doc) | ✅ PASS | [CONTRIBUTING.md](https://github.com/Polycentric-Labs/evidentia/blob/main/CONTRIBUTING.md) |
-| OSPS-QA-06.03 | Use Automated Testing in CI/CD Pipelines (test-update policy) | ✅ PASS | [CONTRIBUTING.md](https://github.com/Polycentric-Labs/evidentia/blob/main/CONTRIBUTING.md) |
+| OSPS-QA-06.02 | Use Automated Testing in CI/CD Pipelines (test policy doc) | ✅ PASS | [CONTRIBUTING.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/CONTRIBUTING.md) |
+| OSPS-QA-06.03 | Use Automated Testing in CI/CD Pipelines (test-update policy) | ✅ PASS | [CONTRIBUTING.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/CONTRIBUTING.md) |
 | OSPS-QA-07.01 | Require Merge Approvals (two-person review) | ⚠ HONEST_GAP | (see Honest gaps below) |
 
 ### OSPS-SA (Security Assessment)
 
 | Control | Title | Verdict | Evidence |
 |---|---|---|---|
-| OSPS-SA-01.01 | Publish Design Descriptions of System Actors and Actions | ✅ PASS | [Evidentia-Architecture-and-Implementation-Plan.md](https://github.com/Polycentric-Labs/evidentia/blob/main/Evidentia-Architecture-and-Implementation-Plan.md) |
+| OSPS-SA-01.01 | Publish Design Descriptions of System Actors and Actions | ✅ PASS | [Evidentia-Architecture-and-Implementation-Plan.md](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/architecture/Evidentia-Architecture-and-Implementation-Plan.md) |
 | OSPS-SA-02.01 | Publish External Interface Descriptions | ✅ PASS | [api-stability.md](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/api-stability.md) |
 | OSPS-SA-03.01 | Maintain a Project Security Assessment | ✅ PASS | [threat-model.md](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/threat-model.md) |
 | OSPS-SA-03.02 | Maintain a Project Security Assessment (threat model + attack surface) | ✅ PASS | [threat-model.md](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/threat-model.md) |
@@ -175,7 +175,7 @@ Each gap has a documented resolution path. The first four are
 **structurally unreachable in Evidentia's current single-maintainer
 posture** — they require ≥2 unassociated contributors and are tied
 to the SOC 2 Type I program's segregation-of-duties + additional-governance
-milestone (see [`docs/v1.0-transition.md`](docs/v1.0-transition.md)).
+milestone (see [`docs/v1.0-transition.md`](v1.0-transition.md)).
 
 | Control | Applicability | Reason | Resolution path |
 |---|---|---|---|
@@ -191,7 +191,7 @@ milestone (see [`docs/v1.0-transition.md`](docs/v1.0-transition.md)).
 
 This conformance claim is re-validated automatically on every push to
 `main` by
-[`.github/workflows/verify-osps-conformance.yml`](.github/workflows/verify-osps-conformance.yml).
+[`.github/workflows/verify-osps-conformance.yml`](../.github/workflows/verify-osps-conformance.yml).
 Every claimed-PASS evidence link in the per-control evidence tables
 above is translated to its corresponding GitHub REST API endpoint
 (contents API for blob/tree URLs, releases API for release-tag URLs,
@@ -221,7 +221,7 @@ companion exists for skill-side tooling that wants structured access
 to the same attestation).
 
 A separate schema validator at
-[`scripts/validate_osps_conformance_yaml.py`](scripts/validate_osps_conformance_yaml.py)
+[`scripts/validate_osps_conformance_yaml.py`](../scripts/validate_osps_conformance_yaml.py)
 checks the YAML companion's schema when it's present (CI emits a
 warning when it's absent, since it's gitignored and won't exist on
 fresh clones — that's expected).
@@ -238,20 +238,20 @@ fresh clones — that's expected).
   (the pinned commit walked for this attestation).
 - Catalog format: the same OSPS Baseline shipped as 3 Evidentia
   framework catalogs at
-  [`packages/evidentia-core/src/evidentia_core/catalogs/data/international/osps-baseline-m{1,2,3}.yaml`](packages/evidentia-core/src/evidentia_core/catalogs/data/international/)
+  [`packages/evidentia-core/src/evidentia_core/catalogs/data/international/osps-baseline-m{1,2,3}.yaml`](../packages/evidentia-core/src/evidentia_core/catalogs/data/international/)
   (added in v0.10.6 Phase 1 / commit C1).
 - OSCAL conversion: machine-readable OSCAL Catalog v1.2.0 of the
   OSPS Baseline at
-  [`packages/evidentia-core/src/evidentia_core/catalogs/data/international/osps-baseline.oscal.json`](packages/evidentia-core/src/evidentia_core/catalogs/data/international/osps-baseline.oscal.json)
+  [`packages/evidentia-core/src/evidentia_core/catalogs/data/international/osps-baseline.oscal.json`](../packages/evidentia-core/src/evidentia_core/catalogs/data/international/osps-baseline.oscal.json)
   (added in v0.10.6 Phase 1 / commit C1).
 - SOC 2 Type I + second-maintainer onboarding milestones:
-  [`docs/v1.0-transition.md`](docs/v1.0-transition.md).
+  [`docs/v1.0-transition.md`](v1.0-transition.md).
 - Security policy (CVD + GHSA Private Vulnerability Reporting):
-  [`SECURITY.md`](SECURITY.md) + [`.well-known/security.txt`](.well-known/security.txt).
+  [`SECURITY.md`](../SECURITY.md) + [`.well-known/security.txt`](../.well-known/security.txt).
 - Project governance (roles, contribution process, DCO posture):
-  [`GOVERNANCE.md`](GOVERNANCE.md).
+  [`GOVERNANCE.md`](../GOVERNANCE.md).
 - Threat model (workflow guards for the verify-osps-conformance.yml
-  surface): [`docs/threat-model.md`](docs/threat-model.md) §"v0.10.6
+  surface): [`docs/threat-model.md`](threat-model.md) §"v0.10.6
   attack-surface delta".
 
 ---

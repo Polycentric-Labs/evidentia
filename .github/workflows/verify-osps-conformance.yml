@@ -1,8 +1,8 @@
-# Re-validates every claimed-PASS evidence link in OSPS-CONFORMANCE.md
+# Re-validates every claimed-PASS evidence link in docs/OSPS-CONFORMANCE.md
 # on every push to main, every PR, and weekly to catch link rot.
 #
 # If any evidence link returns HTTP 404 from `gh api`, this workflow
-# fails — OSPS-CONFORMANCE.md must be updated (fix the link, restore
+# fails — docs/OSPS-CONFORMANCE.md must be updated (fix the link, restore
 # the missing file, or downgrade the verdict to HONEST_GAP) before
 # the next release.
 #
@@ -69,7 +69,7 @@ jobs:
       - name: Install pyyaml
         run: pip install -r .github/workflows/requirements/verify-osps-conformance.txt --require-hashes
 
-      - name: Parse OSPS-CONFORMANCE.md and verify evidence claims
+      - name: Parse docs/OSPS-CONFORMANCE.md and verify evidence claims
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # v0.10.7 (D2.3): the parse + translate_url + 404-probe logic was

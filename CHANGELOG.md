@@ -198,6 +198,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Repo-root tidy (Option B-lite): seven files move out of the root.** The
+  root is the first thing a visitor and every tooling scan sees; it had grown
+  to 19 tracked non-dot files, most of them project process documents that
+  belong with the docs they describe. Moves, all `git mv` (history
+  preserved): `Evidentia-Architecture-and-Implementation-Plan.md` →
+  `docs/architecture/`; `OSPS-CONFORMANCE.md` and `EOL.md` → `docs/`;
+  `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md` → `.github/` (GitHub's
+  community-profile detection honours that location natively, and the
+  repo's own OSPS collector already probes both the root and `.github/`
+  paths); `codecov.yml` → `.github/` (a documented Codecov config location);
+  `check-docs-health-patterns.yaml` → `scripts/`, beside the script that
+  reads it. Root tracked non-dot files 19 → 12. `README.md`, `SECURITY.md`,
+  `GOVERNANCE.md`, `LICENSE`, `CITATION.cff`, `CHANGELOG.md`, and
+  `.well-known/security.txt` are deliberately unchanged — they are the
+  surfaces external tooling and the security-contact standard locate by
+  fixed path.
+  Every referencer was updated by category rather than by blanket
+  substitution, because several hits are OSPS Baseline *catalog data* where
+  the filename is control text, not a path: the three path constants
+  (`check_docs_health.BASE_CONFIG_PATH`, `verify_osps_conformance.CONFORMANCE_DOC`,
+  the OSPS conformance test), the wiki-mirror `MIRRORS` tuple and the
+  `sync-wiki.yml` paths filter, `version_tracked_files.yaml`, the
+  `security-insights.yml` policy URLs, and **seven absolute evidence URLs in
+  `OSPS-CONFORMANCE.md` itself** — those last ones passed the local verifier
+  only because `main` still carried the old paths at the time; they would
+  have 404'd, and turned the required `verify-osps-conformance` check red,
+  the moment this merged. All 17 distinct evidence targets now resolve
+  against the post-move tree. The 36 relative cross-links the docs-health
+  gate flagged are rewritten; the `filename:OSPS-CONFORMANCE.md` first-mover
+  search claim is unaffected (GitHub's `filename:` qualifier matches the
+  basename in any directory).
+
 - **Vendored FedRAMP CR26 schemas re-synced to upstream `ae43ae29`
   (2026-08-15); the `$ref` local delta is retired.** Upstream fixed the
   cross-document `$ref` defect on 2026-08-11 (their issue #11 → PR #15: the

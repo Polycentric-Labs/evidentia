@@ -57,7 +57,7 @@ OWNER_REPO = "Polycentric-Labs/evidentia"
 
 # The conformance doc, resolved relative to the repo root (this file lives
 # in scripts/, so the repo root is one parent up).
-CONFORMANCE_DOC = Path(__file__).resolve().parent.parent / "OSPS-CONFORMANCE.md"
+CONFORMANCE_DOC = Path(__file__).resolve().parent.parent / "docs" / "OSPS-CONFORMANCE.md"
 
 # Table-row matcher. Matches rows of the form:
 #   | OSPS-XX-NN | <title> | <check> PASS | [link-text](URL) ... |
