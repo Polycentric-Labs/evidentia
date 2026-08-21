@@ -73,7 +73,7 @@ Frozen models (48+ classes across 18 modules; v0.10.0-confirmed):
 | `control.py` | `Control`, `ControlFamily`, `ControlImplementation`, `ControlInventory`, `ControlStatus` |
 | `evidence.py` | `EvidenceArtifact`, `EvidenceBundle`, `EvidenceType`, `EvidenceSufficiency`. v0.9.5+ adds `EvidenceArtifact.version` / `lineage_id` / `predecessor_id` Optional fields + `new_version()` factory helper; these are now frozen. |
 | `finding.py` (v0.10.0+) | `SecurityFinding`, `Finding` (v0.10.1 alias — both names refer to the same class), `FindingStatus`, `ComplianceStatus`. Frozen following the v0.10.0 OCSF-alignment evolution — field changes are additive-only. v0.10.0 added the `compliance_status` + `remediation` Optional fields. v0.10.1 introduces `Finding` as the canonical name alongside `SecurityFinding`; the `SecurityFinding` alias is retained for ≥1 minor cycle per the deprecation policy. Target removal of the `SecurityFinding` alias: v1.0.0 (the earliest major bump). See [deprecation-calendar.md](deprecation-calendar.md). v0.10.5 Phase 10 adds the **deterministic-`id` derivation contract**: when a `SecurityFinding` is constructed with both `source_system` and `source_finding_id` present and no explicit `id=`, the `id` field derives as `uuid5(NAMESPACE_EVIDENTIA_FINDING, f"{source_system}\x00{source_finding_id}")`. The `NAMESPACE_EVIDENTIA_FINDING` UUID is pinned forever (`c81bcb44-9b41-5b18-9f10-72b3b9b4d3d6`). Two `collect()` calls against an unchanged source produce findings with byte-identical `id` values. Per-collector verdicts in [collector-idempotency-audit.md](collector-idempotency-audit.md). |
-| `gap.py` | `GapFinding`, `GapSeverity`, `GapAnalysisReport`, `ControlGap`, `Milestone`, `POAMState`. v0.9.5 adds `Milestone.owner` / `Milestone.reviewer` Optional fields; these are now frozen. |
+| `gap.py` | `GapStatus`, `GapSeverity`, `GapAnalysisReport`, `ControlGap`, `Milestone`, `POAMState`. v0.9.5 adds `Milestone.owner` / `Milestone.reviewer` Optional fields; these are now frozen. |
 | `vendor.py` | `VendorProfile`, `VendorRiskTier` |
 | `vendor_finding.py` | `VendorFinding` |
 | `vendor_manifest.py` | `VendorManifest` |
@@ -202,11 +202,11 @@ Public importable paths that operators and integrators use:
 ```python
 # Core analysis + data models
 from evidentia_core.gap_analyzer import GapAnalyzer
-from evidentia_core.models import ControlGap, GapFinding, ...
+from evidentia_core.models import ControlGap, GapAnalysisReport, GapSeverity, GapStatus
 from evidentia_core.audit.events import EventAction
 from evidentia_core.catalogs.registry import FrameworkRegistry
 from evidentia_core.conmon import derive_status, BUNDLED_CADENCES
-from evidentia_core.poam import POAMState, Milestone
+from evidentia_core.models.gap import POAMState, Milestone
 from evidentia_core.poam_store import save_poam, load_poam_by_id
 from evidentia_core.plugins import AuthProvider, StorageBackend, ...
 
@@ -263,23 +263,35 @@ from evidentia_core.gap_analyzer.ocsf_detection import (
 # v0.10.5+ Gap-report CycloneDX 1.6 VEX emit (no extra required)
 from evidentia_core.gap_analyzer.vex import gap_report_to_cyclonedx_vex
 
+# v0.12.0+ Explicit-root gap-report store handle. PUBLIC, PROVISIONAL:
+# documented so integrators may build on it, with the freeze decision
+# deliberately deferred to the v1.0 candidate review — see
+# docs/v1.0-freeze-candidates.md §4.
+from evidentia_core.gap_store import (
+    GapReportRepository, GapStoreRootChangedError,
+)
+
 # AI features (production runtime)
 from evidentia_ai.risk_statements import RiskStatementGenerator
 
 # v0.10.5+ DFAH determinism + faithfulness harness (dev-time;
 # extracted from evidentia_ai.eval to a dedicated workspace
 # package so air-gap installs of the production runtime no
-# longer pull the dev-time eval stack). The
-# evidentia_ai.eval.* path remains as a deprecation shim
-# through v0.11.x; removal scheduled for v0.12.0.
+# longer pull the dev-time eval stack). This is now the ONLY
+# import path: the evidentia_ai.eval.* re-export shims were
+# removed in v0.12.0 as announced, along with the unconditional
+# evidentia-eval dependency on evidentia-ai. See
+# docs/deprecation-calendar.md § Recently removed.
 from evidentia_eval import DFAHarness, faithfulness_score
 
 # Collectors + integrations
-from evidentia_collectors.vendor_risk import (
-    BitSightCollector, SecurityScorecardCollector,
-    RiskReconCollector, UpGuardCollector,
+from evidentia_collectors.bitsight import BitSightCollector
+from evidentia_collectors.securityscorecard import (
+    SecurityScorecardCollector,
 )
-from evidentia_integrations.alerting import SmtpChannel, WebhookChannel
+from evidentia_integrations.alerting import (
+    SMTPAlertChannel, SMTPConfig, WebhookAlertChannel, WebhookConfig,
+)
 
 # API + MCP entry points
 from evidentia_api.app import create_app
@@ -554,3 +566,6 @@ cycle.
 | **NORMATIVE** | **2026-05-27** | **v0.10.6 Phase 5 (commit C5): CrosswalkDefinition extended with 3 optional fields — `provenance: str \| None`, `verification: Literal["self-attested-via-upstream", "hand-checked"] \| None`, `verification_note: str \| None`. Additive-only per frozen-surface contract; the existing 8 in-tree crosswalks load unchanged (new fields default to `None`). 5 new OSPS-Baseline crosswalks land alongside in `catalogs/data/mappings/`: `osps-baseline_to_nist-ssdf-800-218.json`, `osps-baseline_to_nist-csf-2.0.json`, `osps-baseline_to_eu-cra.json`, `osps-baseline_to_pci-dss-4.0.json`, `osps-baseline_to_nist-800-161.json`. Mappings auto-extracted from the OpenSSF OSPS Baseline `guidelines[]` array at upstream commit `ac6bbec`; carry `provenance="upstream-osps-guidelines"` + `verification="self-attested-via-upstream"`. Consumers requiring independent verification should plan a hand-check pass. See `docs/v0.10.6-plan.md` §Phase 5 + §12.1 for the brainstorm-vs-codebase pre-correction rationale.** |
 | **NORMATIVE** | **2026-05-27** | **v0.10.6 Phase 6 (commit C6): new `evidentia_collectors.github.osps` module with 16 `populate_osps_*(client, owner, repo) -> SecurityFinding` helpers covering OSPS-AC/BR/DO/GV/LE/QA/VM family controls via GitHub REST API. Each helper sets `compliance_status` (PASS/FAIL/WARNING/NOT_APPLICABLE/UNKNOWN) + an `osps-baseline` `ControlMapping` plus optional NIST SP 800-53 Rev 5 cross-walk mappings; `source_finding_id` follows the deterministic `osps-<id>:<owner>/<repo>[:<scope>]` pattern that feeds the v0.10.5 P10 idempotent-id derivation. Coverage registry exposed as `evidentia_collectors.github.osps.OSPS_COVERAGE: dict[str, str]`. Additive-only per frozen-surface contract — existing `GitHubCollector` + `DependabotCollector` entry points unchanged. `GitHubClient` extended additively with 4 small probe methods: `list_releases`, `are_vulnerability_alerts_enabled`, `is_code_scanning_enabled`, `list_security_advisories`. OSPS-VM-05.03 helper is intentionally complementary to the existing `DependabotCollector` (posture-finding vs per-CVE evidence chain); both emit findings, neither subsumes the other. The 16 OSPS ids covered: OSPS-AC-03.01/03.02, OSPS-BR-06.01, OSPS-DO-02.01, OSPS-GV-03.01, OSPS-LE-02.01/03.01, OSPS-QA-01.01/01.02/02.01/03.01, OSPS-VM-02.01/03.01/04.01/05.03/06.02.** |
 | **NORMATIVE** | **2026-07-06** | **Error-shape convergence: deliberate 4xx/5xx REST error responses now carry the structured `{"detail": {"error": <snake_case key>, ..., "message": <human text>}}` payload across all 19 error-raising routers + the rate-limit 429, generalizing the v0.9.5 `rbac_denied` shape and retiring the bare-string majority + the evidence `{detail, next_version}` 409 (the `next_version` hint keeps its key beside `error: worm_violation`). `error` keys are a stable additions-only vocabulary (registry: `evidentia_api.errors`); `message` texts + context fields are informative, not frozen. Pydantic 422 arrays unchanged; the F-V08-DAST-3 status normalization (manual body errors → 400 in most routers, except the documented F-V1012-S4-1 manual-422 convention on model_risk/tprm/poam/governance) unchanged. Every operation now documents its deliberately-raised 4xx/5xx in OpenAPI `responses` — 422 responses that can occur both ways document the union of the manual `ErrorEnvelope` and FastAPI's auto `HTTPValidationError` shapes. Human-readable texts preserved verbatim in `message`.** |
+| **NORMATIVE** | **2026-08-20** | **v0.12.0: FIRST SCHEDULED REMOVAL under this contract. The `evidentia_ai.eval` deprecation shim package (`evidentia_ai.eval` + `claim_extraction`, `faithfulness`, `faithfulness_semantic`, `harness`, `metrics`, `seeds`, `signing`) is deleted, executing the removal announced in the v0.10.5 Phase 9 row above. `evidentia_eval` — unchanged since v0.10.5 — is the sole supported import path; §5's frozen-import list already named it. The unconditional `evidentia-eval` base dependency on `evidentia-ai` is dropped with the shims, so a production `evidentia-ai` install no longer resolves the dev-time eval stack at all. The `evidentia-ai[eval-faithfulness]` install extra is deliberately RETAINED (packaging alias, not an import path). Breaking under §1 for any caller still on the shim, with a 3-minor-cycle migration window (v0.10.5 announce → v0.11.x maintain → v0.12.0 remove) exceeding the 1-cycle minimum. See [deprecation-calendar.md](deprecation-calendar.md) § Recently removed.** |
+| **NORMATIVE** | **2026-08-20** | **v0.12.0 freeze-prep: §5 CORRECTED against the code, and the new `scripts/check_public_surface.py` gate wired in so it cannot drift again.** This document has been NORMATIVE since v0.9.7, but nothing had ever executed §5's frozen import list — and four of its entries had never resolved at all. Corrected: `GapFinding` → `GapStatus` (no `GapFinding` symbol has ever existed in the codebase; the same phantom is fixed in §1's `gap.py` row); `from evidentia_core.poam import POAMState, Milestone` → `from evidentia_core.models.gap import …` (the `poam` package exports state *helpers*, not the models); `evidentia_collectors.vendor_risk` → the real per-vendor modules `evidentia_collectors.bitsight` / `evidentia_collectors.securityscorecard` (no `vendor_risk` module has ever existed), **dropping `RiskReconCollector` and `UpGuardCollector`, which were never built** (they appear as v0.10.1-plan scope that did not land; the only other mentions in the docs are of RiskRecon/UpGuard as third-party vendors, which is accurate); `SmtpChannel` / `WebhookChannel` → the real `SMTPAlertChannel` / `WebhookAlertChannel` (plus their `SMTPConfig` / `WebhookConfig`). **This is not a breaking change**: every corrected path raised `ImportError`/`ModuleNotFoundError` on every release that shipped it, so no operator could have depended on one. It was a false promise in a NORMATIVE document, and the correction retires it. `scripts/check_public_surface.py` now (a) executes every §5 import, (b) compares the frozen MCP tool table against the live server's registrations, and (c) asserts every frozen env var still appears in `packages/*/src`; it runs in the `consistency` gate scope and the pre-push hook. |
+| **NORMATIVE** | **2026-08-20** | **v0.12.0: `evidentia_core.gap_store.GapReportRepository` + `GapStoreRootChangedError` join §5 as PUBLIC, PROVISIONAL.** An explicit-root handle on the gap-report store (frozen-slots dataclass; mandatory `root` resolved once via `get_gap_store_dir(root)`; `save` / `load_latest` / `list` / `load_by_key` delegate under that bound root), plus `evidentia_api.routers.gaps.create_stored_report_read_router(repository)`, a narrow read-only router that `create_app()` does **not** mount — an embedding seam, so no route or OpenAPI surface changed. Additive under §1: three new public symbols, nothing renamed or removed. "Provisional" is deliberate and narrower than the rest of §5: these paths are documented so integrators may build on them, but the freeze decision is deferred to the v1.0 candidate review, where the optional `root_revalidator` hook is a removal candidate if it still has no in-tree caller. See [v1.0-freeze-candidates.md](v1.0-freeze-candidates.md) §4. |

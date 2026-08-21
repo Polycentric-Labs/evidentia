@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import logging
 import tempfile
+from collections.abc import Callable
 from datetime import UTC
 from pathlib import Path
 
@@ -22,6 +23,7 @@ from evidentia_core.gap_analyzer.analyzer import GapAnalyzer
 from evidentia_core.gap_analyzer.inventory import load_inventory
 from evidentia_core.gap_diff import compute_gap_diff
 from evidentia_core.gap_store import (
+    GapReportRepository,
     InvalidReportKeyError,
     get_gap_store_dir,
     list_reports,
@@ -64,6 +66,69 @@ _EXPORT_MEDIA: dict[str, tuple[str, str]] = {
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _stored_report_read_responses() -> dict[int | str, dict[str, object]]:
+    return error_responses(
+        {
+            400: "Malformed report ``key`` (``error: invalid_id``).",
+            404: "No saved report under ``key`` (``error: not_found``).",
+        }
+    )
+
+
+def _load_stored_report(
+    key: str,
+    load_by_key: Callable[[str], GapAnalysisReport | None],
+) -> GapAnalysisReport:
+    try:
+        report = load_by_key(key)
+    except (InvalidReportKeyError, PathTraversalError) as exc:
+        # Both InvalidReportKeyError + PathTraversalError reflect
+        # client-supplied bad keys; both normalize to 400 — the
+        # F-V08-DAST-3 status normalization — with the structured
+        # ``detail`` from ``evidentia_api.errors`` (2026-07-06
+        # error-shape convergence).
+        raise api_error(
+            400, "invalid_id", str(exc), resource="gap_report"
+        ) from exc
+    if report is None:
+        raise api_error(
+            404,
+            "not_found",
+            f"Report {key} not found.",
+            resource="gap_report",
+            resource_id=key,
+        )
+    return report
+
+
+def create_stored_report_read_router(
+    repository: GapReportRepository,
+) -> APIRouter:
+    """Build the exact-key report-read route around ``repository``.
+
+    This factory intentionally exposes no report list, analyze, diff, export,
+    risk, or integration route. The repository is captured at construction,
+    so request handling never consults ambient store selection.
+    """
+    if repository is None:
+        raise TypeError(
+            "create_stored_report_read_router requires a repository."
+        )
+
+    report_router = APIRouter()
+
+    @report_router.get(
+        "/gap/reports/{key}",
+        response_model=GapAnalysisReport,
+        responses=_stored_report_read_responses(),
+    )
+    async def get_report(key: str) -> GapAnalysisReport:
+        """Load a saved gap report by its storage key."""
+        return _load_stored_report(key, repository.load_by_key)
+
+    return report_router
 
 
 def _materialize_inventory_content(
@@ -342,35 +407,11 @@ async def get_reports() -> dict[str, object]:
 @router.get(
     "/gap/reports/{key}",
     response_model=GapAnalysisReport,
-    responses=error_responses(
-        {
-            400: "Malformed report ``key`` (``error: invalid_id``).",
-            404: "No saved report under ``key`` (``error: not_found``).",
-        }
-    ),
+    responses=_stored_report_read_responses(),
 )
 async def get_report(key: str) -> GapAnalysisReport:
     """Load a saved gap report by its storage key."""
-    try:
-        report = load_report_by_key(key)
-    except (InvalidReportKeyError, PathTraversalError) as exc:
-        # Both InvalidReportKeyError + PathTraversalError reflect
-        # client-supplied bad keys; both normalize to 400 — the
-        # F-V08-DAST-3 status normalization — with the structured
-        # ``detail`` from ``evidentia_api.errors`` (2026-07-06
-        # error-shape convergence).
-        raise api_error(
-            400, "invalid_id", str(exc), resource="gap_report"
-        ) from exc
-    if report is None:
-        raise api_error(
-            404,
-            "not_found",
-            f"Report {key} not found.",
-            resource="gap_report",
-            resource_id=key,
-        )
-    return report
+    return _load_stored_report(key, load_report_by_key)
 
 
 @router.post(

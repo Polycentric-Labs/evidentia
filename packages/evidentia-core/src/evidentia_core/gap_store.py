@@ -28,6 +28,8 @@ from __future__ import annotations
 import hashlib
 import logging
 import os
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from platformdirs import user_data_dir
@@ -52,6 +54,71 @@ class InvalidReportKeyError(ValueError):
     Subclasses :class:`ValueError` so existing ``except ValueError``
     handlers continue to work.
     """
+
+
+class GapStoreRootChangedError(RuntimeError):
+    """Raised when operation-time validation returns a different root."""
+
+
+@dataclass(frozen=True, slots=True)
+class GapReportRepository:
+    """Root-bound access to persisted gap reports.
+
+    ``root`` is mandatory and resolved once at construction, so later
+    environment changes cannot redirect repository operations. Callers with
+    stronger path-identity requirements may supply ``root_revalidator``; it is
+    invoked immediately before every store operation and must return the same
+    canonical root.
+    """
+
+    root: Path
+    root_revalidator: Callable[[], Path] | None = field(
+        default=None,
+        repr=False,
+        compare=False,
+    )
+
+    def __post_init__(self) -> None:
+        if self.root is None:
+            raise TypeError("GapReportRepository requires an explicit root.")
+        object.__setattr__(self, "root", get_gap_store_dir(self.root))
+
+    def _operation_root(self) -> Path:
+        if self.root_revalidator is None:
+            return self.root
+        candidate = self.root_revalidator()
+        if candidate is None:
+            raise GapStoreRootChangedError(
+                "Gap report repository root changed during operation-time "
+                "revalidation."
+            )
+        revalidated = get_gap_store_dir(candidate)
+        if revalidated != self.root:
+            raise GapStoreRootChangedError(
+                "Gap report repository root changed during operation-time "
+                "revalidation."
+            )
+        return self.root
+
+    def save(self, report: GapAnalysisReport) -> Path:
+        """Persist ``report`` beneath this repository's explicit root."""
+        return save_report(report, gap_store_dir=self._operation_root())
+
+    def load_latest(self) -> GapAnalysisReport | None:
+        """Load the newest report beneath this repository's explicit root."""
+        return load_latest_report(gap_store_dir=self._operation_root())
+
+    def list(self) -> list[Path]:
+        """List report paths beneath this repository's explicit root."""
+        return list_reports(gap_store_dir=self._operation_root())
+
+    def load_by_key(self, key: str) -> GapAnalysisReport | None:
+        """Load ``key`` beneath this repository's explicit root."""
+        _validate_key_shape(key)
+        return load_report_by_key(
+            key,
+            gap_store_dir=self._operation_root(),
+        )
 
 
 def _validate_key_shape(key: str) -> None:
@@ -188,6 +255,8 @@ def load_report_by_key(
 
 __all__ = [
     "GAP_STORE_ENV_VAR",
+    "GapReportRepository",
+    "GapStoreRootChangedError",
     "InvalidReportKeyError",
     "PathTraversalError",
     "get_gap_store_dir",

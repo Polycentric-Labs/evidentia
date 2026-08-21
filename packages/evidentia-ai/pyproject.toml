@@ -19,14 +19,17 @@ classifiers = [
 ]
 dependencies = [
     "evidentia-core>=0.11.2,<0.12.0",
-    # v0.10.5 P9: the DFAH eval harness was extracted to the
+    # v0.10.5 P9 extracted the DFAH eval harness to the
     # ``evidentia-eval`` workspace package so air-gap installs of
     # the production risk-statement runtime no longer pull the
-    # dev-time eval stack. The package is kept as a runtime
-    # dependency here so the v0.10.5 deprecation shims (``from
-    # evidentia_ai.eval import …``) continue to work through
-    # v0.11.x; v0.12.0 removes both the shims and this pin.
-    "evidentia-eval>=0.11.2,<0.12.0",
+    # dev-time eval stack; ``evidentia-eval`` was retained as an
+    # unconditional dependency only to keep the
+    # ``evidentia_ai.eval.*`` deprecation shims importable through
+    # v0.11.x. v0.12.0 removed those shims (see
+    # docs/deprecation-calendar.md § Recently removed), so the
+    # unconditional pin is gone with them — the harness now
+    # installs solely via the ``eval-faithfulness`` extra below or
+    # by depending on ``evidentia-eval`` directly.
     # v0.7.0 Step-3 review: pin LiteLLM above the compromised
     # 1.82.7 / 1.82.8 versions from the March 24, 2026 PyPI supply
     # chain incident (~40-min compromise window before quarantine).
@@ -46,10 +49,13 @@ dependencies = [
 # to ``evidentia-eval[faithfulness-semantic]``. Installing
 # ``evidentia-ai[eval-faithfulness]`` continues to pull the same
 # sentence-transformers + numpy stack — the heavy deps just
-# live on the eval package now. Scheduled to track the v0.12.0
-# shim removal: when ``evidentia_ai.eval`` is deleted, operators
-# should install ``evidentia-eval[faithfulness-semantic]``
-# directly.
+# live on the eval package now.
+# v0.12.0: the ``evidentia_ai.eval.*`` import shims were removed,
+# but this INSTALL surface is deliberately retained — it is a
+# packaging alias, not an import path, and nothing in the v0.10.5
+# deprecation notice scheduled it for removal. Import sites must
+# use ``evidentia_eval``; the extra keeps working for operators
+# who pin ``evidentia-ai[eval-faithfulness]`` in requirements.
 # v0.11.1: this pin is now tracked by scripts/bump_version.py (the
 # workspace_pins kind admits the ``[extras]`` bracket) — the v0.11.0
 # sweep had skipped it, leaving ``<0.11.0`` against a 0.11.0 base dep

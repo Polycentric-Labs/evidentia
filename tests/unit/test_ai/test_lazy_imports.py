@@ -12,10 +12,13 @@ top-level import path of ``evidentia_ai``, this test fails
 loudly.
 
 The v0.10.5 P9 extraction (DFAH harness moved into
-``evidentia-eval``) also relies on this contract: the
-deprecation shim ``evidentia_ai.eval`` re-exports from
-``evidentia_eval`` but must not be triggered by a bare
-``import evidentia_ai``.
+``evidentia-eval``) also relies on this contract. v0.12.0
+completed it by removing the ``evidentia_ai.eval`` re-export
+shim and the unconditional ``evidentia-eval`` dependency (see
+``test_eval_shim_removed.py``), so ``evidentia_eval`` is now
+absent from a production ``evidentia-ai`` install entirely —
+these assertions stay as the regression guard that keeps it
+that way.
 """
 
 from __future__ import annotations
@@ -72,14 +75,14 @@ def test_evidentia_ai_top_level_does_not_load_sentence_transformers() -> None:
 
 
 def test_evidentia_ai_top_level_does_not_load_evidentia_harness() -> None:
-    """``import evidentia_ai`` must NOT trigger the harness shim.
+    """``import evidentia_ai`` must NOT pull the eval harness stack.
 
-    The v0.10.5 P9 deprecation shim re-exports from
-    ``evidentia_eval``. The shim fires a ``DeprecationWarning``
-    at import time, so accidentally pulling it on every
-    ``import evidentia_ai`` would be both a correctness
-    regression (warnings every air-gap install) and a
-    performance regression (loads the whole harness stack).
+    v0.10.5 P9 moved the harness to ``evidentia-eval`` and
+    v0.12.0 removed the last import path back into it. Pulling
+    ``evidentia_eval`` on a bare ``import evidentia_ai`` would be
+    a performance regression (loads the whole harness stack) and,
+    on an air-gap production install that no longer ships the
+    package at all, an outright ImportError.
     """
     rc, out, err = _run_isolated(
         "import sys; import evidentia_ai; "

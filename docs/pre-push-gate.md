@@ -20,7 +20,7 @@ v0.10.7.** Layers 1 and 3 are explicitly deferred.
 | Layer | Purpose | Status |
 |---|---|---|
 | **L1 — local Scorecard sweep** | Run an OpenSSF Scorecard pass locally before push | **DEFERRED to v0.10.8+** — duplicates the scheduled CI Scorecard workflow with no new signal |
-| **L2 — blocking checks** | 7 fast checks that BLOCK the push on failure | **SHIPPED v0.10.7** |
+| **L2 — blocking checks** | 17 fast checks that BLOCK the push on failure | **SHIPPED v0.10.7**; grown each cycle since |
 | **L3 — warning-only** | actionlint + online pinact advisories | **DEFERRED to v0.10.8+** — catches syntax errors the GitHub Actions UI already surfaces |
 
 The marginal value of L1 + L3 did not justify the added push latency +
@@ -29,7 +29,7 @@ justifies them.
 
 ---
 
-## Layer 2 — the seven blocking checks
+## Layer 2 — the blocking checks
 
 The orchestrator is [`.githooks/pre-push`](../.githooks/pre-push). It runs
 every check below, collects the failures, and exits non-zero if any
@@ -37,15 +37,29 @@ blocking check failed — so a single push surfaces **all** problems at once,
 not just the first. Each individual check lives under `scripts/pre_push/`
 (or reuses an existing repo script).
 
+The set shipped with 7 checks in v0.10.7 and has grown every cycle since;
+the hook's own header comment is the authoritative list, and this table is
+kept in step with it. Numbering matches that header.
+
 | # | Check | Script | Blocks on |
 |---|---|---|---|
 | 1 | `check_action_pins` | `scripts/pre_push/check_action_pins.sh` | an unpinned `uses:` in `.github/workflows/` (only when `pinact` is installed — see below) |
 | 2 | `check_secrets` | `scripts/pre_push/check_secrets.sh` | a secret-shaped filename or content pattern in the push range |
 | 3 | `check_changelog_present` | `scripts/pre_push/check_changelog_present.py` | a `pyproject.toml` version bump with no matching `## [X.Y.Z]` CHANGELOG block |
 | 4 | `check_docs_health` | `scripts/check_docs_health.py --strict` | any doc-health FAIL (exit 2) |
-| 5 | `check_workflow_perms` | `scripts/audit_workflow_permissions.py --strict` | an un-justified workflow `write` permission (exit 2) |
-| 6 | `check_uv_lock_pin_drift` | `scripts/pre_push/check_uv_lock_pin_drift.py` | a third-party pin that moved alongside a workspace version bump |
-| 7 | `check_osps_crosswalk_drift` | `scripts/catalogs/gen_osps_crosswalks.py --check` | OSPS crosswalk drift (only when an OSPS file is in the push range) |
+| 5 | `check_wiki_mirrors_drift` | `scripts/wiki/sync_mirrors.py --check` | a canonical source page differing from its committed wiki mirror |
+| 6 | `check_wiki_reference_drift` | `scripts/wiki/sync_reference.py --check` | a CLI-reference wiki page differing from the live Typer app |
+| 7 | `check_wiki_api_docs_drift` | `scripts/wiki/sync_api_docs.py --check` | an API wiki page differing from the packages' source |
+| 8 | `check_workflow_perms` | `scripts/audit_workflow_permissions.py --strict` | an un-justified workflow `write` permission (exit 2) |
+| 9 | `check_uv_lock_pin_drift` | `scripts/pre_push/check_uv_lock_pin_drift.py` | a third-party pin that moved alongside a workspace version bump |
+| 10 | `check_osps_crosswalk_drift` | `scripts/catalogs/gen_osps_crosswalks.py --check` | OSPS crosswalk drift (only when an OSPS file is in the push range) |
+| 11 | `check_version_consistency` | `scripts/check_version_consistency.py` | a tracked file missing the current version, or an unclassified version literal |
+| 12 | `check_commit_signatures` | inline (`git log --format=%G?`) | any unsigned commit in the push range (closes the F-V107-1 admin-bypass path) |
+| 13 | `check_readme_regen` | `scripts/gen_readme_releases.py` | a stale README Recent-Releases block |
+| 14 | `check_doc_counts` | `scripts/check_doc_counts.py` | a README at-a-glance count that disagrees with code-derived truth |
+| 15 | `check_ruff` | `ruff check . --no-cache` | any lint error (shifted left from CI so a cached pass cannot hide one) |
+| 16 | `check_roadmap_currency` | `scripts/check_roadmap_currency.py` | a ROADMAP status heading disagreeing with the CHANGELOG, more than one open cycle, or an open cycle with no on-disk plan doc |
+| 17 | `check_public_surface` | `scripts/check_public_surface.py` | a §5 frozen import that no longer resolves, an MCP frozen-tool/live-server mismatch, or a frozen env var that vanished from `packages/*/src` |
 
 ### 1. check_action_pins — and the pinact SKIP-vs-BLOCK rule
 
@@ -94,7 +108,7 @@ config/foo.txt`). Content scans always use `grep -l` (filenames-only) so a
 matching line is never echoed. This is a hard requirement: a secret-scanner
 that leaks the secret in its error output is worse than no scanner.
 
-### 6. check_uv_lock_pin_drift
+### 9. check_uv_lock_pin_drift
 
 Guards against the v0.10.0 third-party-pin-over-bump pattern: a workspace
 version bump (the 8 `evidentia-*` packages plus the workspace root) must
@@ -105,7 +119,7 @@ A genuine dependency add/remove is not flagged (only version movement of an
 existing pin). Commit a deliberate dependency change separately from a
 version bump.
 
-### 7. check_osps_crosswalk_drift
+### 10. check_osps_crosswalk_drift
 
 Runs `gen_osps_crosswalks.py --check` only when a
 `mappings/osps-baseline_*.json` or `_osps_upstream.py` file is in the push
@@ -113,6 +127,21 @@ range (skipped otherwise for speed). Pre-push is the architecturally
 correct home for this drift gate rather than CI: the regenerator needs the
 `.local/`-cached upstream OSPS YAMLs (or a live `gh api` fetch), which a
 clean CI runner would not have without an extra fetch + auth step.
+
+### 17. check_public_surface
+
+Runs `check_public_surface.py`, the v0.12 freeze-prep gate that holds
+[`api-stability.md`](api-stability.md) to the code. It executes every
+import statement in §5's frozen list, diffs the frozen MCP tool table
+against the tools `build_server()` actually registers, and asserts every
+frozen env var still appears in `packages/*/src`. Live env vars that are
+NOT frozen do not fail — they are counted as freeze candidates for the
+v1.0 decision (see [`v1.0-freeze-candidates.md`](v1.0-freeze-candidates.md)).
+
+The gate is doc-driven: expectations are parsed out of `api-stability.md`
+rather than duplicated in the script, so the document cannot drift away
+from its own enforcement. Its first run found four §5 imports that had
+never resolved on any shipped release.
 
 ---
 

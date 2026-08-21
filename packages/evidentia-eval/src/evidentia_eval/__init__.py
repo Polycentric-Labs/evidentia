@@ -63,7 +63,10 @@ risk-statement runtime from pulling sentence-transformers /
 numpy / instructor heavy-dep stacks. The dev-time eval harness
 now installs separately (or via ``pip install
 evidentia-eval[faithfulness-semantic]`` for the optional
-semantic path).
+semantic path). v0.12.0 completed the extraction by removing the
+``evidentia_ai.eval.*`` re-export shims and the unconditional
+``evidentia-eval`` dependency on ``evidentia-ai``; this module is
+the sole supported import path.
 """
 
 from __future__ import annotations

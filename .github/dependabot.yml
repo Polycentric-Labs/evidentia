@@ -94,6 +94,23 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    # A group's `update-types` filter does not reliably keep a major out
+    # of a uv re-lock: an uncapped direct dependency can still move to a
+    # new major when the group's lock is regenerated. `mcp` did exactly
+    # that — 1.28.1 -> 2.0.0 rode the routine python-dev batch and put
+    # PRs #236, #243 and #249 red on pytest + mypy in turn, blocking 12
+    # innocent dev bumps behind one breaking major. The root pyproject
+    # now caps `mcp>=1.28.1,<2.0` (the SDK's own recommendation for
+    # projects not yet migrated), which is the real fix; this ignore is
+    # the belt-and-braces half, so a future uncapped path cannot
+    # reintroduce the same batch-poisoning.
+    # REMOVAL TRIGGER: the tracked "mcp SDK 2.0 migration" item in
+    # docs/ROADMAP.md lands — then drop this entry AND the pyproject cap
+    # together, in that migration's own PR.
+    ignore:
+      - dependency-name: "mcp"
+        update-types:
+          - "version-update:semver-major"
 
   # ---------------------------------------------------------------------
   # Frontend (npm — packages/evidentia-ui)
@@ -130,6 +147,18 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    # Same batch-poisoning pattern as `mcp` above, on the npm side:
+    # @tanstack/react-table 8.21.3 -> 9.1.2 is a breaking major that rode
+    # the 20-package npm-runtime group (PRs #234, #242), failing the
+    # frontend typecheck + build check and holding 19 unrelated runtime
+    # bumps hostage. v9 restructures the table API that GapTable.tsx is
+    # built on, so it is a deliberate migration, not a bump.
+    # REMOVAL TRIGGER: the tracked "react-table v9 migration (GapTable)"
+    # item in docs/ROADMAP.md lands — drop this entry in that PR.
+    ignore:
+      - dependency-name: "@tanstack/react-table"
+        update-types:
+          - "version-update:semver-major"
 
   # ---------------------------------------------------------------------
   # GitHub Actions (workflow files in .github/workflows/)

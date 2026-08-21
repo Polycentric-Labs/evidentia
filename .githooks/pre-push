@@ -53,6 +53,12 @@
 #                                  headings must agree with the CHANGELOG's
 #                                  shipped blocks; exactly one open cycle,
 #                                  which must link an on-disk plan doc)
+#  17. check_public_surface       (v0.12 freeze-prep: docs/api-stability.md is
+#                                  NORMATIVE but nothing enforced it — this
+#                                  executes every §5 frozen import, diffs the
+#                                  frozen MCP tool table against the live
+#                                  server, and asserts every frozen env var
+#                                  still appears in packages/*/src)
 #
 # All checks run before the hook exits, so the operator sees every
 # failure at once.
@@ -378,6 +384,14 @@ run_check "check_ruff" run_ruff check . --no-cache || true
 #     cycle must link an on-disk plan doc. Pure-filesystem; always runs.
 run_check "check_roadmap_currency" \
     run_py "${REPO_ROOT}/scripts/check_roadmap_currency.py" || true
+
+# 17. Public-surface contract (v0.12 freeze-prep): docs/api-stability.md has
+#     been NORMATIVE since v0.9.7 with nothing mechanically enforcing it. The
+#     gate's first run found four §5 frozen imports that had never resolved on
+#     any shipped release. It imports the workspace in subprocesses, so it needs
+#     the same environment the wiki-drift checks above already require.
+run_check "check_public_surface" \
+    run_py "${REPO_ROOT}/scripts/check_public_surface.py" || true
 
 # ---------------------------------------------------------------------------
 # Verdict.

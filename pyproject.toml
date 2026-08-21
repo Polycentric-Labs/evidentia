@@ -47,9 +47,11 @@ members = [
     # v0.10.5 P9: DFAH eval harness extracted from evidentia-ai
     # so air-gap installs of the production risk-statement runtime
     # don't pull the dev-time eval stack (sentence-transformers,
-    # numpy, etc.). The ``evidentia-ai.eval`` import path keeps
-    # working via deprecation shims through v0.11.x; removal in
-    # v0.12.0.
+    # numpy, etc.). The ``evidentia_ai.eval`` shims that kept the
+    # old import path working through v0.11.x were removed in
+    # v0.12.0, along with evidentia-ai's unconditional dependency
+    # on this package — ``evidentia_eval`` is now the only import
+    # path. See docs/deprecation-calendar.md § Recently removed.
     "packages/evidentia-eval",
     # v0.7.0: shim-controlbridge-* workspace members removed per the
     # public contract documented in README.md, RENAMED.md, and CHANGELOG.md.
@@ -107,7 +109,19 @@ dev = [
     # props in back-matter are accepted unchanged. Guarded with
     # pytest.importorskip so the test suite runs on minimal installs.
     "compliance-trestle>=4.2.0,<5.0",
-    "mcp>=1.28.1",
+    # Upper bound is deliberate and matches the SDK's own guidance. mcp
+    # 2.0.0 (2026-08) is the stable v2 line; its release notes tell
+    # projects that are not ready to migrate to "keep a <2 upper bound on
+    # your requirement (for example mcp>=1.28,<2)". Without the cap the
+    # uv re-lock drags 2.0.0 into the routine python-dev group bump, which
+    # is how Dependabot PRs #236/#243/#249 each landed red on pytest +
+    # mypy — a breaking major buried in a 13-package batch, exactly the
+    # class the group isolation strategy above exists to prevent.
+    # 1.x remains supported for security + critical fixes.
+    # REMOVAL TRIGGER: the tracked "mcp SDK 2.0 migration" item
+    # (docs/ROADMAP.md) — signed_dispatch.py's snake_case attribute
+    # access and the McpError relocation are the known work.
+    "mcp>=1.28.1,<2.0",
     # v0.8.2 G2: property-based tests on the gap-analyzer
     # normalizer + the catalogs crosswalk engine. Generates
     # randomized inputs against canonical invariants (idempotence,
@@ -123,8 +137,11 @@ dev = [
     # Runs out-of-band (weekly cron + on-demand workflow_dispatch)
     # because full mutmut runs are slow (~30-60 min per module).
     "mutmut>=3.6.0",
-    # v0.8.3 P1.1: numpy is used by evidentia_ai.eval.
-    # faithfulness_semantic for cosine-similarity computation.
+    # v0.8.3 P1.1: numpy is used by evidentia_eval.
+    # faithfulness_semantic for cosine-similarity computation
+    # (the module lived at evidentia_ai.eval.faithfulness_semantic
+    # until the v0.10.5 P9 extraction; the shim path was removed
+    # in v0.12.0).
     # Production runtime gates on the [eval-faithfulness] extra
     # which carries sentence-transformers + numpy together; dev
     # deps surface numpy directly so tests can mock the
