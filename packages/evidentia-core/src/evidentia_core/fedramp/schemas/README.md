@@ -13,23 +13,30 @@ both the `fedramp-schema-watch` drift sentinel and the
 
 | File | Upstream fidelity |
 |------|-------------------|
-| `fedramp-security-decision-record-schema-2026-06-24.json` | **One documented local delta** (below) |
+| `fedramp-security-decision-record-schema-2026-06-24.json` | Byte-identical to upstream (since the 2026-08-21 re-vendor) |
 | `fedramp-common-definitions-schema-2026-06-24.json` | Byte-identical to upstream |
 
-## The local delta (drop when upstream fixes it)
+Both copies are verifiable against upstream by git blob SHA: `git
+hash-object <file>` must equal the `blob_sha` recorded in `UPSTREAM.json`.
 
-As published, every cross-document `$ref` in the CR26 schema set places the
+## History: the `$ref` local delta (2026-07-18 → 2026-08-21, now retired)
+
+As published, every cross-document `$ref` in the CR26 schema set placed the
 JSON Pointer in the URI **path** (`...json/$defs/x`) instead of the **fragment**
-(`...json#/$defs/x`), so no conforming JSON Schema 2020-12 validator can
-resolve them (upstream [issue #3](https://github.com/FedRAMP/schemas/issues/3),
-fix [PR #4](https://github.com/FedRAMP/schemas/pull/4) — still unmerged at the
-2026-07-18 re-vendor; the SDR schema's 0.1.0 → 1.0.0 graduation fixed the
-draft's vacuous `items` wrapper nesting and added proper **local** `#/$defs`
-refs, but left the one cross-document ref malformed). The vendored SDR schema
-carries exactly **one** such rewrite. When the
-upstream fix merges, re-vendor byte-identical and clear the `local_delta` note
-in `UPSTREAM.json`. The `fedramp-schema-watch` sentinel flags upstream movement
-on these files, so the merge will surface on its own.
+(`...json#/$defs/x`), so no conforming JSON Schema 2020-12 validator could
+resolve them. Evidentia carried a single documented rewrite of that ref in the
+vendored SDR schema from the 2026-07-18 re-vendor onward, so `conmon ksi`
+could validate offline while the defect stood upstream.
+
+Upstream fixed it on 2026-08-11 ([issue
+#11](https://github.com/FedRAMP/schemas/issues/11) → [PR
+#15](https://github.com/FedRAMP/schemas/pull/15), "Fix unresolvable
+cross-schema $refs (path form → URI fragment)"). The 2026-08-21 re-vendor
+picked up that commit, confirmed the upstream ref is now byte-for-byte what
+the local delta had been, and retired the delta: the vendored SDR schema is
+byte-identical to upstream again and `UPSTREAM.json` records `local_delta:
+null` for both files. The `fedramp-schema-watch` sentinel surfaced the merge
+exactly as designed.
 
 ## Re-sync procedure
 

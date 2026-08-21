@@ -162,6 +162,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Vendored FedRAMP CR26 schemas re-synced to upstream `ae43ae29`
+  (2026-08-15); the `$ref` local delta is retired.** Upstream fixed the
+  cross-document `$ref` defect on 2026-08-11 (their issue #11 → PR #15: the
+  JSON Pointer moved from the URI path into the fragment, as JSON Schema
+  2020-12 requires) — exactly the rewrite the vendored SDR schema had carried
+  locally since the 2026-07-18 re-vendor. Both vendored files
+  (`fedramp-security-decision-record-schema-2026-06-24.json` 1.0.0 → 1.0.3,
+  `fedramp-common-definitions-schema-2026-06-24.json` 0.1.1 → 0.2.1) are now
+  **byte-identical to upstream**, verifiable by `git hash-object` against the
+  `blob_sha` pins in `UPSTREAM.json`, which records `local_delta: null` for
+  both. The same sync absorbs upstream's 2026-08-14 five-schema
+  description/validation pass and the advisor/assessor 0.1.1 → 1.0.1
+  Marketplace-field moves that had the `fedramp-schema-watch` sentinel red as
+  MAJOR drift since 2026-08-12. The schema changes are additive for the
+  emitter's purposes — the only new `required` (`isOverdue` on
+  `vulnerabilityDetail.overdueStatus`) is in a definition `conmon ksi` never
+  emits — and `additionalProperties` remains absent, so the emitted metadata
+  block stays valid. The FedRAMP/rules consolidated-rules blob is unchanged,
+  so the bundled `fedramp-ksi-2026` catalog content is identical; only the
+  repo-commit pin moved. The drift sentinel runs clean against the new pins;
+  the 16 emitter and 8 CLI round-trip tests validate offline against the
+  re-vendored copies. Closes #239.
 - **Breaking majors no longer poison the routine Dependabot batches.** A
   group's `update-types: [minor, patch]` filter does not reliably keep a
   major out of a **uv re-lock**: an uncapped direct dependency can still
