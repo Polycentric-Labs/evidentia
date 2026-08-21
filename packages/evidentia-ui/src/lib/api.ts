@@ -382,6 +382,49 @@ export type HighImpactDetermination =
 /** M-25-21 high-impact consequence basis. */
 export type HighImpactBasis = components["schemas"]["HighImpactBasis"];
 
+// ── M-25-21 minimum practices + M-25-22 acquisitions (v0.12 GUI parity) ──
+// Unlike the older ai-gov verbs above, these carry real response models
+// server-side (v0.12 WU-3), so the generated types have actual fields —
+// the console is typed against them rather than Record<string, unknown>.
+
+/** M-25-21 §4(b) minimum-practice body ({practice, status, notes?, ...}). */
+export type SetPracticeRequest = components["schemas"]["SetPracticeRequest"];
+/** `{system_id, entry, practice_compliance}` after a practice update. */
+export type SetPracticeResponse = components["schemas"]["SetPracticeResponse"];
+/** One of the M-25-21 minimum practices. */
+export type MinimumPractice = components["schemas"]["MinimumPractice"];
+/** Practice status (implemented / in_progress / not_started / waived). */
+export type PracticeStatus = components["schemas"]["PracticeStatus"];
+/** Per-practice compliance roll-up over an M-25-21 assessment. */
+export type PracticeComplianceSummary =
+  components["schemas"]["PracticeComplianceSummary"];
+
+/** M-25-22 acquisition-registration body. */
+export type RegisterAcquisitionRequest =
+  components["schemas"]["RegisterAcquisitionRequest"];
+/** `{acquisition_id, acquisition}` after registration. */
+export type RegisterAcquisitionResponse =
+  components["schemas"]["RegisterAcquisitionResponse"];
+/** `{count, acquisitions}` list envelope. */
+export type ListAcquisitionsResponse =
+  components["schemas"]["ListAcquisitionsResponse"];
+/** `{acquisition, progress}` — shared by show and set-phase. */
+export type AcquisitionDetailResponse =
+  components["schemas"]["AcquisitionDetailResponse"];
+/** M-25-22 §4 lifecycle-phase body ({phase, status, notes?, ...}). */
+export type SetAcquisitionPhaseRequest =
+  components["schemas"]["SetAcquisitionPhaseRequest"];
+/** A tracked M-25-22 acquisition lifecycle record. */
+export type AIAcquisition = components["schemas"]["AIAcquisition"];
+/** M-25-22 §4 phase. */
+export type AcquisitionPhase = components["schemas"]["AcquisitionPhase"];
+/** M-25-22 §4 phase status. */
+export type AcquisitionPhaseStatus =
+  components["schemas"]["AcquisitionPhaseStatus"];
+/** §4 phase-completion roll-up derived from an acquisition record. */
+export type AcquisitionProgressSummary =
+  components["schemas"]["AcquisitionProgressSummary"];
+
 /**
  * A registered AI system as returned by the registry endpoints. The server
  * serializes the stored entry as a free-form object (no dedicated response
@@ -1113,6 +1156,35 @@ const realApi = {
   setHighImpactAiSystem: (systemId: string, body: HighImpactRequest) =>
     request<AISystemEntry>(
       `/api/ai-gov/systems/${encodeURIComponent(systemId)}/set-high-impact`,
+      { method: "POST", body: JSON.stringify(body) },
+    ),
+  // M-25-21 §4(b) minimum practices. The API 400s unless the system
+  // already carries an M-25-21 assessment, so the console gates the form
+  // on `omb_high_impact` being present rather than surfacing that error.
+  setPracticeAiSystem: (systemId: string, body: SetPracticeRequest) =>
+    request<SetPracticeResponse>(
+      `/api/ai-gov/systems/${encodeURIComponent(systemId)}/set-practice`,
+      { method: "POST", body: JSON.stringify(body) },
+    ),
+
+  // ── AI acquisitions (OMB M-25-22 lifecycle) ───────────────────────────
+  listAcquisitions: () =>
+    request<ListAcquisitionsResponse>("/api/ai-gov/acquisitions"),
+  getAcquisition: (acquisitionId: string) =>
+    request<AcquisitionDetailResponse>(
+      `/api/ai-gov/acquisitions/${encodeURIComponent(acquisitionId)}`,
+    ),
+  registerAcquisition: (body: RegisterAcquisitionRequest) =>
+    request<RegisterAcquisitionResponse>("/api/ai-gov/acquisitions", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  setAcquisitionPhase: (
+    acquisitionId: string,
+    body: SetAcquisitionPhaseRequest,
+  ) =>
+    request<AcquisitionDetailResponse>(
+      `/api/ai-gov/acquisitions/${encodeURIComponent(acquisitionId)}/set-phase`,
       { method: "POST", body: JSON.stringify(body) },
     ),
 

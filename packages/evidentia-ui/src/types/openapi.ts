@@ -3145,6 +3145,66 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AIAcquisition
+         * @description One AI procurement tracked through the M-25-22 lifecycle.
+         */
+        AIAcquisition: {
+            /**
+             * Acquisition Id
+             * @description Stable UUID v4 string; assigned at registration time.
+             */
+            acquisition_id?: string;
+            /**
+             * Covered Note
+             * @description Operator note on M-25-22 coverage/exclusions for this procurement (e.g. CFO-Act applicability, IC/NSS exclusion rationale).
+             */
+            covered_note?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             * @description Registration timestamp; never mutated.
+             */
+            created_at?: string;
+            /**
+             * Description
+             * @description What is being acquired and why (free text).
+             */
+            description?: string | null;
+            /**
+             * @description The §4(a) initial determination of whether the system is likely to host high-impact AI use cases, as defined by M-25-21. not_assessed marks the open inventory action.
+             * @default not_assessed
+             */
+            likely_high_impact: components["schemas"]["HighImpactDetermination"];
+            /**
+             * Linked System Id
+             * @description AI-registry system_id this acquisition delivered or will deliver. Optional — an acquisition may precede registration; link it once the system is registered.
+             */
+            linked_system_id?: string | null;
+            /**
+             * Name
+             * @description Operator-facing name for the procurement.
+             */
+            name: string;
+            /**
+             * Phases
+             * @description Per-phase lifecycle status keyed by §4 phase. An absent key means 'not recorded' — distinct from an affirmative NOT_STARTED.
+             */
+            phases?: {
+                [key: string]: components["schemas"]["AcquisitionPhaseRecord"];
+            };
+            /**
+             * Solicitation Reference
+             * @description Solicitation / contract vehicle reference (RFP number, task-order ID, or similar), once one exists.
+             */
+            solicitation_reference?: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description Last persistence timestamp; bumped on save.
+             */
+            updated_at?: string;
+        };
+        /**
          * AISystemClassification
          * @description Result of classifying an :class:`AISystemDescriptor`.
          *
@@ -3232,6 +3292,135 @@ export interface components {
             purpose: string;
         };
         /**
+         * AISystemRegistryEntry
+         * @description One AI system in the operator's governance inventory.
+         */
+        AISystemRegistryEntry: {
+            /** @description Reference to the parent federal information system's Authorization to Operate decision per NIST SP 800-37 Rev 2. Operators with cATO / ongoing-auth postures leave expiry_date as None. */
+            ato_reference?: components["schemas"]["ATOReference"] | null;
+            /** @description Result of running the classifier over the descriptor. Re-classify + persist via `evidentia ai-gov update` when the descriptor changes. */
+            classification: components["schemas"]["AISystemClassification"];
+            /**
+             * Created At
+             * Format: date-time
+             * @description Registration timestamp; never mutated.
+             */
+            created_at?: string;
+            /**
+             * @description Where in the lifecycle this system sits.
+             * @default proposed
+             */
+            deployment_status: components["schemas"]["DeploymentStatus"];
+            /** @description Operator-supplied use-case attributes. */
+            descriptor: components["schemas"]["AISystemDescriptor"];
+            /** @description FIPS 199 impact categorization (C / I / A → high-water-mark overall) per NIST SP 800-60 worked-examples mapping. Required for federal systems; optional elsewhere. */
+            fips_199_categorization?: components["schemas"]["FIPS199Categorization"] | null;
+            /**
+             * Last Assessed At
+             * @description When the operator last reviewed the descriptor + classification against the live system. Null on initial registration; bump on each review.
+             */
+            last_assessed_at?: string | null;
+            /**
+             * Linked Controls
+             * @description Catalog control IDs (e.g., 'AIA.Art.9', 'GOVERN-1.1') the operator considers applicable to this system. Free-form; not validated against catalog content here.
+             */
+            linked_controls?: string[];
+            /** @description OMB M-25-21 high-impact AI assessment (determination + consequence bases). Supersedes ``omb_impact`` after the M-24-10 rescission. Optional → backward-compat with entries that pre-date the M-25-21 migration. Operators determine via their Chief AI Officer review path. */
+            omb_high_impact?: components["schemas"]["OMBHighImpactAssessment"] | null;
+            /** @description DEPRECATED (v0.10.12): legacy OMB M-24-10 §5(b) impact category (rights / safety / both / neither). M-24-10 was rescinded 2025-04-03 by M-25-21 — use ``omb_high_impact``. Retained so persisted M-24-10 inventories keep loading; map forward with ``omb_m_25_21.crosswalk_from_legacy``. */
+            omb_impact?: components["schemas"]["OMBImpactCategory"] | null;
+            /**
+             * Owner
+             * @description Responsible person or team within operator org.
+             */
+            owner: string;
+            /**
+             * Provider
+             * @description Who built or supplies the AI system (vendor name, in-house team name, or 'self-built').
+             */
+            provider: string;
+            /**
+             * Ssp Reference
+             * @description URI / handle pointing at the System Security Plan document. Format is operator-defined (eMASS link, internal docstore handle, etc.); Evidentia does NOT resolve or fetch it.
+             */
+            ssp_reference?: string | null;
+            /**
+             * System Id
+             * @description Stable UUID v4 string; assigned at registration time.
+             */
+            system_id?: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description Last persistence timestamp; bumped on save.
+             */
+            updated_at?: string;
+        };
+        /**
+         * ATOReference
+         * @description Reference to an Authorization to Operate (ATO) decision (v0.9.6 P3).
+         *
+         *     OMB M-24-10 inventory entries link back to the parent federal
+         *     information system's ATO. ATO decisions are issued by an
+         *     Authorizing Official (AO) per NIST SP 800-37 Rev 2 §3.6 and have
+         *     a finite lifecycle (initial → annual reauthorization → expiry).
+         *
+         *     Evidentia carries the minimum fields needed for cross-reference:
+         *     the system name as recorded in the SSP, the AO identity (who
+         *     signed), the date the ATO took effect, and the expiry date
+         *     (typically 3 years out under traditional RMF; OngoingAuth /
+         *     cATO models replace the expiry with continuous monitoring
+         *     cadence). Operators with cATO-style authorizations leave
+         *     ``expiry_date`` as None and document the continuous-auth
+         *     posture in ``notes``.
+         */
+        ATOReference: {
+            /**
+             * Ato Date
+             * Format: date
+             * @description Date the ATO took effect (ISO-8601 YYYY-MM-DD).
+             */
+            ato_date: string;
+            /**
+             * Ato Letter Uri
+             * @description Optional URI / handle pointing at the signed ATO letter in document storage (eMASS, SharePoint, etc.).
+             */
+            ato_letter_uri?: string | null;
+            /**
+             * Authorizing Official
+             * @description Name + title of the Authorizing Official (AO) who issued the ATO. Free-form to accommodate org-specific title conventions.
+             */
+            authorizing_official: string;
+            /**
+             * Expiry Date
+             * @description Date the ATO expires. None signals an ongoing-auth / cATO posture (continuous monitoring replaces fixed expiry).
+             */
+            expiry_date?: string | null;
+            /**
+             * Notes
+             * @description Free-text notes (cATO posture, scope caveats, conditional approvals, etc.).
+             */
+            notes?: string | null;
+            /**
+             * System Name
+             * @description System name as recorded in the SSP / ATO letter.
+             */
+            system_name: string;
+        };
+        /**
+         * AcquisitionDetailResponse
+         * @description 200 body for the acquisition show + set-phase verbs.
+         *
+         *     Both return the same record-plus-roll-up pair, so they share one
+         *     model — the console renders a single detail view for either.
+         */
+        AcquisitionDetailResponse: {
+            /** @description The M-25-22 lifecycle record. */
+            acquisition: components["schemas"]["AIAcquisition"];
+            /** @description §4 phase-completion roll-up derived from the record. */
+            progress: components["schemas"]["AcquisitionProgressSummary"];
+        };
+        /**
          * AcquisitionPhase
          * @description One of M-25-22 §4's six AI-acquisition lifecycle phases.
          *
@@ -3242,11 +3431,74 @@ export interface components {
          */
         AcquisitionPhase: "identification_of_requirements" | "market_research_and_planning" | "solicitation_development" | "selection_and_award" | "contract_administration" | "contract_closeout";
         /**
+         * AcquisitionPhaseRecord
+         * @description Status of one lifecycle phase for one acquisition.
+         *
+         *     Mirrors the M-25-21
+         *     :class:`~evidentia_core.ai_governance.omb_m_25_21.MinimumPracticeRecord`
+         *     pattern, minus waivers (M-25-22 has no waiver mechanism).
+         */
+        AcquisitionPhaseRecord: {
+            /**
+             * Last Reviewed
+             * @description When the operator last reviewed this status.
+             */
+            last_reviewed?: string | null;
+            /**
+             * Notes
+             * @description Optional detail — cross-functional-team notes, artifact pointers, solicitation references.
+             */
+            notes?: string | null;
+            /** @description Progress state of this phase. */
+            status: components["schemas"]["AcquisitionPhaseStatus"];
+        };
+        /**
          * AcquisitionPhaseStatus
          * @description Progress state of one lifecycle phase for one acquisition.
          * @enum {string}
          */
         AcquisitionPhaseStatus: "not_started" | "in_progress" | "complete";
+        /**
+         * AcquisitionProgressSummary
+         * @description Roll-up of one acquisition's lifecycle state (advisory).
+         *
+         *     Mirrors the M-25-21 ``PracticeComplianceSummary`` posture:
+         *     unrecorded phases are ``missing`` — Evidentia never fabricates a
+         *     status for them; ``complete`` requires all six phases recorded AND
+         *     complete.
+         */
+        AcquisitionProgressSummary: {
+            /**
+             * Complete
+             * @description Phases recorded COMPLETE.
+             */
+            complete: number;
+            /**
+             * In Progress
+             * @description Phases recorded IN_PROGRESS.
+             */
+            in_progress: number;
+            /**
+             * Lifecycle Complete
+             * @description True iff all six phases are recorded and each is COMPLETE.
+             */
+            lifecycle_complete: boolean;
+            /**
+             * Missing
+             * @description Phases with no recorded status.
+             */
+            missing: components["schemas"]["AcquisitionPhase"][];
+            /**
+             * Not Started
+             * @description Phases recorded NOT_STARTED.
+             */
+            not_started: number;
+            /**
+             * Total
+             * @description Total lifecycle phases (always 6).
+             */
+            total: number;
+        };
         /**
          * AirGapCheck
          * @description One subsystem's air-gap posture.
@@ -4455,6 +4707,44 @@ export interface components {
             [key: string]: unknown;
         };
         /**
+         * FIPS199Categorization
+         * @description FIPS 199 impact categorization for an AI system or component.
+         *
+         *     Carries the three per-objective ratings + the high-water-mark
+         *     overall. The :meth:`compute_overall` validator enforces the
+         *     invariant: if ``overall`` is supplied explicitly, it MUST equal
+         *     the high-water-mark of the per-objective ratings. If omitted,
+         *     it is computed automatically. This prevents operators from
+         *     accidentally publishing an entry where ``overall=LOW`` while
+         *     one of the objectives is HIGH (an obvious paperwork error that
+         *     would otherwise pass schema validation).
+         *
+         *     Example::
+         *
+         *         cat = FIPS199Categorization(
+         *             confidentiality_impact=FIPS199Impact.MODERATE,
+         *             integrity_impact=FIPS199Impact.HIGH,
+         *             availability_impact=FIPS199Impact.LOW,
+         *         )
+         *         # overall computed automatically:
+         *         assert cat.overall == FIPS199Impact.HIGH
+         */
+        FIPS199Categorization: {
+            /** @description Impact of DISRUPTION OF ACCESS per FIPS 199. */
+            availability_impact: components["schemas"]["FIPS199Impact"];
+            /** @description Impact of unauthorized DISCLOSURE per FIPS 199. Operators rate per NIST SP 800-60 worked-examples. */
+            confidentiality_impact: components["schemas"]["FIPS199Impact"];
+            /** @description Impact of unauthorized MODIFICATION per FIPS 199. */
+            integrity_impact: components["schemas"]["FIPS199Impact"];
+            /** @description FIPS 199 §3 high-water-mark: max of the three per-objective ratings. Auto-computed when omitted; if supplied explicitly, MUST equal the high-water-mark (validator rejects mismatches as paperwork errors). */
+            overall?: components["schemas"]["FIPS199Impact"] | null;
+            /**
+             * Rationale
+             * @description Free-text justification linking the impact ratings to the underlying information types per NIST SP 800-60.
+             */
+            rationale?: string | null;
+        };
+        /**
          * FIPS199CategorizeRequest
          * @description Body for ``POST /ai-gov/systems/{system_id}/categorize-fips``.
          *
@@ -5069,6 +5359,22 @@ export interface components {
          */
         LineOfDefense: "first" | "second" | "third";
         /**
+         * ListAcquisitionsResponse
+         * @description 200 body for ``GET /ai-gov/acquisitions``.
+         */
+        ListAcquisitionsResponse: {
+            /**
+             * Acquisitions
+             * @description Every tracked M-25-22 lifecycle record.
+             */
+            acquisitions: components["schemas"]["AIAcquisition"][];
+            /**
+             * Count
+             * @description Number of tracked acquisitions.
+             */
+            count: number;
+        };
+        /**
          * LlmProviderState
          * @description Per-provider configuration state (no key values).
          */
@@ -5390,6 +5696,31 @@ export interface components {
          */
         MinimumPractice: "pre_deployment_testing" | "impact_assessment" | "ongoing_monitoring" | "human_training" | "human_oversight" | "remedies_and_appeals" | "public_feedback";
         /**
+         * MinimumPracticeRecord
+         * @description Status of one minimum practice for one registered system.
+         *
+         *     Operator-supplied metadata, same threat-model boundary as the
+         *     high-impact determination itself: Evidentia surfaces it for
+         *     inventory and reporting but does not validate it against the
+         *     system's actual behavior.
+         */
+        MinimumPracticeRecord: {
+            /**
+             * Last Reviewed
+             * @description When the operator last reviewed this status.
+             */
+            last_reviewed?: string | null;
+            /**
+             * Notes
+             * @description Optional free-text detail — evidence pointers, plan references, scope notes.
+             */
+            notes?: string | null;
+            /** @description Implementation status of this practice. */
+            status: components["schemas"]["PracticeStatus"];
+            /** @description The CAIO waiver in force — required iff status is WAIVED. */
+            waiver?: components["schemas"]["PracticeWaiver"] | null;
+        };
+        /**
          * ModelInput
          * @description Documents one data source feeding the model.
          *
@@ -5599,6 +5930,44 @@ export interface components {
          * @enum {string}
          */
         OLIRRelationship: "equivalent-to" | "equal-to" | "subset-of" | "superset-of" | "intersects-with" | "related-to";
+        /**
+         * OMBHighImpactAssessment
+         * @description OMB M-25-21 high-impact AI assessment for one registered system.
+         *
+         *     Carries the operator's high-impact determination plus the
+         *     consequence bases supporting it. Mirrors the
+         *     :class:`~evidentia_core.ai_governance.fips199.FIPS199Categorization`
+         *     sub-model pattern (a small, self-describing record attached to a
+         *     registry entry).
+         *
+         *     v0.11 fills the per-practice extension point reserved at v0.10.12:
+         *     :attr:`practices` carries structured status for the seven §4(b)
+         *     minimum practices, including §4(a)(ii) CAIO waivers. Persisted
+         *     v0.10.12-era assessments without the field still load (it defaults
+         *     to empty — "nothing recorded yet", which
+         *     :func:`practice_compliance` reports as missing, never as satisfied).
+         */
+        OMBHighImpactAssessment: {
+            /**
+             * Bases
+             * @description The consequence areas that make the system high-impact. Meaningful only when determination is HIGH_IMPACT; left empty otherwise. Advisory, not enforced — an operator may record a HIGH_IMPACT determination before pinning every basis.
+             */
+            bases?: components["schemas"]["HighImpactBasis"][];
+            /** @description The M-25-21 high-impact determination. HIGH_IMPACT triggers the minimum risk-management practices. */
+            determination: components["schemas"]["HighImpactDetermination"];
+            /**
+             * Practices
+             * @description Structured per-practice status for the seven M-25-21 §4(b) minimum practices (v0.11). Keyed by practice; an absent key means 'not recorded' — distinct from an affirmative NOT_STARTED. Meaningful when determination is HIGH_IMPACT; recording against other determinations is permitted (e.g. practices retained after a re-determination) but reported as advisory only.
+             */
+            practices?: {
+                [key: string]: components["schemas"]["MinimumPracticeRecord"];
+            };
+            /**
+             * Rationale
+             * @description Optional free-text justification linking the determination to the system's use case (or noting a legacy-crosswalk origin per :func:`crosswalk_from_legacy`).
+             */
+            rationale?: string | null;
+        };
         /**
          * OMBImpactCategory
          * @description OMB M-24-10 §5(b) AI impact classification.
@@ -5888,6 +6257,52 @@ export interface components {
             total_pages?: number | null;
         };
         /**
+         * PracticeComplianceSummary
+         * @description Roll-up of one assessment's per-practice state (advisory).
+         *
+         *     ``satisfied`` is deliberately strict: every one of the seven
+         *     practices must be recorded AND be either IMPLEMENTED or WAIVED.
+         *     Unrecorded practices are ``missing`` — Evidentia never fabricates a
+         *     status for them.
+         */
+        PracticeComplianceSummary: {
+            /**
+             * Implemented
+             * @description Practices recorded IMPLEMENTED.
+             */
+            implemented: number;
+            /**
+             * In Progress
+             * @description Practices recorded IN_PROGRESS.
+             */
+            in_progress: number;
+            /**
+             * Missing
+             * @description Practices with no recorded status.
+             */
+            missing: components["schemas"]["MinimumPractice"][];
+            /**
+             * Not Started
+             * @description Practices recorded NOT_STARTED.
+             */
+            not_started: number;
+            /**
+             * Satisfied
+             * @description True iff all seven practices are recorded and each is IMPLEMENTED or WAIVED.
+             */
+            satisfied: boolean;
+            /**
+             * Total
+             * @description Total minimum practices (always 7).
+             */
+            total: number;
+            /**
+             * Waived
+             * @description Practices recorded WAIVED.
+             */
+            waived: number;
+        };
+        /**
          * PracticeStatus
          * @description Implementation status of one minimum practice for one system.
          *
@@ -6061,6 +6476,19 @@ export interface components {
             name: string;
             /** Solicitation Reference */
             solicitation_reference?: string | null;
+        };
+        /**
+         * RegisterAcquisitionResponse
+         * @description 201-shaped 200 body for ``POST /ai-gov/acquisitions``.
+         */
+        RegisterAcquisitionResponse: {
+            /** @description The stored M-25-22 lifecycle record. */
+            acquisition: components["schemas"]["AIAcquisition"];
+            /**
+             * Acquisition Id
+             * @description UUID of the newly tracked acquisition.
+             */
+            acquisition_id: string;
         };
         /**
          * RegisterRequest
@@ -6433,6 +6861,26 @@ export interface components {
             status: components["schemas"]["PracticeStatus"];
             /** @description The CAIO waiver record (M-25-21 §4(a)(ii)) — required iff status is waived. */
             waiver?: components["schemas"]["PracticeWaiver"] | null;
+        };
+        /**
+         * SetPracticeResponse
+         * @description 200 body for ``POST /ai-gov/systems/{system_id}/set-practice``.
+         *
+         *     Declared explicitly rather than left as ``dict[str, Any]``: the web
+         *     console is generated from ``openapi.json``, and an unannotated dict
+         *     renders as a bare index signature carrying no field information —
+         *     which is how a field rename reaches the UI silently.
+         */
+        SetPracticeResponse: {
+            /** @description The full registry entry after the update. */
+            entry: components["schemas"]["AISystemRegistryEntry"];
+            /** @description M-25-21 minimum-practice roll-up recomputed from the updated assessment. */
+            practice_compliance: components["schemas"]["PracticeComplianceSummary"];
+            /**
+             * System Id
+             * @description The registered system's UUID.
+             */
+            system_id: string;
         };
         /**
          * Severity
@@ -7084,9 +7532,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["ListAcquisitionsResponse"];
                 };
             };
         };
@@ -7110,9 +7556,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["RegisterAcquisitionResponse"];
                 };
             };
             /** @description M-25-22 domain-validation failure (``error: invalid_body``). */
@@ -7161,9 +7605,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["AcquisitionDetailResponse"];
                 };
             };
             /** @description No such tracked acquisition (``error: not_found``). */
@@ -7207,9 +7649,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["AcquisitionDetailResponse"];
                 };
             };
             /** @description M-25-22 domain-validation failure (``error: invalid_body``). */
@@ -7815,9 +8255,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["SetPracticeResponse"];
                 };
             };
             /** @description M-25-21 domain-validation failure — e.g. status 'waived' without a waiver record, or no M-25-21 assessment on the entry yet (``error: invalid_body``). */

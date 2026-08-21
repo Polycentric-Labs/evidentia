@@ -24,7 +24,10 @@ import {
   type AISystemRegisterRequest,
   type FIPS199CategorizeRequest,
   type HighImpactRequest,
+  type MinimumPractice,
   type OMBImpactRequest,
+  type PracticeStatus,
+  type SetPracticeRequest,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import type { components } from "@/types/openapi";
@@ -94,6 +97,23 @@ const DETERMINATION_PICKER_OPTIONS: [HighImpactDetermination, string][] = [
   ["high_impact", "High-impact"],
   ["not_high_impact", "Not high-impact"],
   ["not_assessed", "Not assessed"],
+];
+
+const PRACTICE_PICKER_OPTIONS: [MinimumPractice, string][] = [
+  ["pre_deployment_testing", "Pre-deployment testing"],
+  ["impact_assessment", "Impact assessment"],
+  ["ongoing_monitoring", "Ongoing monitoring"],
+  ["human_training", "Human training"],
+  ["human_oversight", "Human oversight"],
+  ["remedies_and_appeals", "Remedies & appeals"],
+  ["public_feedback", "Public feedback"],
+];
+
+const PRACTICE_STATUS_PICKER_OPTIONS: [PracticeStatus, string][] = [
+  ["implemented", "Implemented"],
+  ["in_progress", "In progress"],
+  ["not_started", "Not started"],
+  ["waived", "Waived"],
 ];
 
 const BASIS_PICKER_OPTIONS: [HighImpactBasis, string][] = [
@@ -1094,6 +1114,18 @@ function SystemDetailPanel({
 
             <HighImpactForm systemId={systemId} onSaved={invalidate} />
 
+            {/* M-25-21 minimum practices attach to an existing high-impact
+                assessment; the API 400s without one, so the form is gated
+                rather than letting the operator hit that error. */}
+            {system.highImpact ? (
+              <SetPracticeForm systemId={systemId} onSaved={invalidate} />
+            ) : (
+              <p className="muted text-sm border-t pt-4">
+                Set an OMB M-25-21 high-impact determination before recording
+                minimum practices.
+              </p>
+            )}
+
             <OmbImpactForm systemId={systemId} onSaved={invalidate} />
           </div>
         )}
@@ -1484,6 +1516,175 @@ function HighImpactForm({
       {mutation.isError && (
         <Alert variant="destructive">
           <AlertTitle>Could not set high-impact AI</AlertTitle>
+          <AlertDescription>{apiErrorText(mutation.error)}</AlertDescription>
+        </Alert>
+      )}
+    </form>
+  );
+}
+
+/** Record an OMB M-25-21 §4(b) minimum-practice status on a system.
+ *
+ * Rendered only when the system already carries a high-impact
+ * assessment — the API rejects a practice update without one, and
+ * `SystemDetailPanel` gates on that rather than surfacing the 400.
+ *
+ * The CAIO waiver (M-25-21 §4(a)(ii)) is required iff status is
+ * `waived`, so its fields appear only for that status and are sent
+ * only then.
+ */
+function SetPracticeForm({
+  systemId,
+  onSaved,
+}: {
+  systemId: string;
+  onSaved: () => void;
+}) {
+  const [practice, setPractice] = useState<MinimumPractice>(
+    "pre_deployment_testing",
+  );
+  const [status, setStatus] = useState<PracticeStatus>("implemented");
+  const [notes, setNotes] = useState("");
+  const [waiverIssuedOn, setWaiverIssuedOn] = useState("");
+  const [waiverIssuedBy, setWaiverIssuedBy] = useState("");
+  const [waiverJustification, setWaiverJustification] = useState("");
+
+  const mutation = useMutation({
+    mutationFn: (body: SetPracticeRequest) =>
+      api.setPracticeAiSystem(systemId, body),
+    onSuccess: onSaved,
+  });
+
+  const waived = status === "waived";
+
+  return (
+    <form
+      className="stack-4 border-t pt-4"
+      aria-label="Set minimum practice"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (mutation.isPending) return;
+        mutation.mutate({
+          practice,
+          status,
+          ...(notes.trim() ? { notes: notes.trim() } : {}),
+          ...(waived
+            ? {
+                waiver: {
+                  issued_on: waiverIssuedOn,
+                  issued_by: waiverIssuedBy.trim(),
+                  justification: waiverJustification.trim(),
+                },
+              }
+            : {}),
+        });
+      }}
+    >
+      <h3 className="section-num">Set minimum practice (OMB M-25-21)</h3>
+
+      <div className="stack-2">
+        <span className="text-sm font-medium leading-none">Practice</span>
+        <div
+          className="row wrap gap-2"
+          role="radiogroup"
+          aria-label="Minimum practice"
+        >
+          {PRACTICE_PICKER_OPTIONS.map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={practice === value}
+              onClick={() => setPractice(value)}
+              className={cn("pill", practice === value && "on")}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="stack-2">
+        <span className="text-sm font-medium leading-none">Status</span>
+        <div
+          className="row wrap gap-2"
+          role="radiogroup"
+          aria-label="Practice status"
+        >
+          {PRACTICE_STATUS_PICKER_OPTIONS.map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={status === value}
+              onClick={() => setStatus(value)}
+              className={cn("pill", status === value && "on")}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {waived && (
+        <div className="stack-4" aria-label="CAIO waiver">
+          <h4 className="text-sm font-medium leading-none">
+            CAIO waiver <span className="muted">(M-25-21 §4(a)(ii))</span>
+          </h4>
+          <div className="stack-2">
+            <Label htmlFor="practice-waiver-issued-on">Issued on</Label>
+            <Input
+              id="practice-waiver-issued-on"
+              type="date"
+              required
+              value={waiverIssuedOn}
+              onChange={(e) => setWaiverIssuedOn(e.target.value)}
+            />
+          </div>
+          <div className="stack-2">
+            <Label htmlFor="practice-waiver-issued-by">Issued by</Label>
+            <Input
+              id="practice-waiver-issued-by"
+              required
+              value={waiverIssuedBy}
+              onChange={(e) => setWaiverIssuedBy(e.target.value)}
+              placeholder="Chief AI Officer"
+            />
+          </div>
+          <div className="stack-2">
+            <Label htmlFor="practice-waiver-justification">
+              Justification
+            </Label>
+            <Textarea
+              id="practice-waiver-justification"
+              required
+              value={waiverJustification}
+              onChange={(e) => setWaiverJustification(e.target.value)}
+              placeholder="Why the practice is waived for this system."
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="stack-2">
+        <Label htmlFor="practice-notes">Notes (optional)</Label>
+        <Textarea
+          id="practice-notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Evidence, owner, or review context."
+        />
+      </div>
+
+      <div className="row-end">
+        <Button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? "Saving..." : "Set practice"}
+        </Button>
+      </div>
+
+      {mutation.isError && (
+        <Alert variant="destructive">
+          <AlertTitle>Could not set minimum practice</AlertTitle>
           <AlertDescription>{apiErrorText(mutation.error)}</AlertDescription>
         </Alert>
       )}

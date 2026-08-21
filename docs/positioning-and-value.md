@@ -135,9 +135,10 @@ Meanwhile, the compliance workload keeps growing. A single fintech or healthcare
 
 > **Section summary.** As of the v0.11.0 release prep (July 2026), Evidentia ships **22 Typer
 > CLI commands** (18 groups + 4 utility verbs), **23 REST router modules**, a
-> full multi-console React web app (**22 consoles at 93.4% CLI parity** — 99 of
-> 106 coverable CLI leaves; the 7 api-only leaves are the v0.11 federal
-> AI-governance verbs plus two chrome-surfaced utilities) that
+> full multi-console React web app (**23 consoles at 100% CLI parity** — 104 of
+> 104 coverable CLI leaves, with 13 further leaves `exempt` by design:
+> daemons, the server launcher, sidebar chrome, and the index-route
+> onboarding wizard) that
 > renders its own version live from the API, **13 read-mostly MCP tools**, six
 > Python packages with public APIs + the evidentia-ui frontend that bundles into
 > the API server, **14 credentialed evidence collectors**
@@ -202,11 +203,13 @@ The web UI is a thin client over the REST API: every operator surface in
 the browser is backed one-to-one by an API endpoint, and the React app
 renders its own version live from the API rather than hardcoding it. The
 23 router modules are the full operator surface — there is no
-admin-only or paid-tier API. CLI ↔ GUI parity is **93.4% across the 22
-in-browser consoles** (99 of 106 coverable CLI leaves; the 7 api-only
-leaves — the v0.11 federal AI-governance verbs plus the two
-chrome-surfaced utilities — have API endpoints but no dedicated console
-yet): every CLI command group except the server-side
+admin-only or paid-tier API. CLI ↔ GUI parity is **100% across the 23
+in-browser consoles** (104 of 104 coverable CLI leaves; v0.12 closed the
+last five by shipping the federal AI-governance consoles). A further 13
+leaves are `exempt` by design rather than covered — daemons, the server
+launcher, sidebar chrome, and the index-route onboarding wizard — so the
+honest reading is "104 shipped consoles plus 13 documented exemptions":
+every CLI command group except the server-side
 server/`mcp`/`eval` plumbing has an equivalent console, and
 the operator-facing surface is fully open source.
 
@@ -243,8 +246,8 @@ live in the 25-page [Guides](wiki/2-guides/index.md) section.
 **22 non-demo consoles** (Home plus 21 grouped consoles), each backed one-to-one
 by a REST endpoint and calling the same engine as the CLI. There is no UI-only
 analysis path and no admin-only or paid-tier surface. CLI↔GUI parity is
-**93.4% across the 22 consoles** (7 api-only leaves pending their console
-pass): every CLI command group except the server-side
+**100% across the 23 consoles** (104 of 104 coverable leaves; 13 further
+leaves are `exempt` by design): every CLI command group except the server-side
 plumbing (`serve` / `mcp` / `eval`) has an equivalent console. The app renders
 its own version live from the API (`/api/health`) rather than hardcoding it.
 

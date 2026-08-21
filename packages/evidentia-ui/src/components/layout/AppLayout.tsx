@@ -24,6 +24,7 @@ import {
   Scale,
   ScanLine,
   Settings,
+  ShoppingCart,
   Sparkles,
   Sun,
 } from "lucide-react";
@@ -57,6 +58,7 @@ const NAV_META: Record<string, NavMeta> = {
   "/evidence": { label: "Evidence", description: "WORM evidence store", crumb: "Evidence lineage", icon: FileArchive },
   "/model-risk": { label: "Model Risk", description: "SR 11-7 model inventory", crumb: "Model risk inventory", icon: Boxes },
   "/ai-gov": { label: "AI Governance", description: "EU AI Act / NIST AI RMF registry", crumb: "AI governance", icon: Bot },
+  "/ai-gov/acquisitions": { label: "AI Acquisitions", description: "OMB M-25-22 procurement lifecycle", crumb: "AI acquisitions", icon: ShoppingCart },
   "/traceability": { label: "Traceability", description: "Control ↔ threat matrix", crumb: "Traceability matrix", icon: Network },
   "/collect": { label: "Collect", description: "Evidence collectors", crumb: "Evidence collection", icon: DownloadCloud },
   "/integrations": { label: "Integrations", description: "Jira / ServiceNow / BI", crumb: "Integrations", icon: Plug },
@@ -73,7 +75,7 @@ const NAV_META: Record<string, NavMeta> = {
 const NAV_GROUPS: { label: string | null; items: string[] }[] = [
   { label: null, items: IS_DEMO ? ["/", "/demo"] : ["/"] },
   { label: "Analyze", items: ["/gap/analyze", "/gap/diff", "/risk/generate", "/risk/quantify", "/explain"] },
-  { label: "Govern", items: ["/poam", "/conmon", "/tprm", "/governance", "/retention", "/evidence", "/model-risk", "/ai-gov", "/oscal", "/traceability"] },
+  { label: "Govern", items: ["/poam", "/conmon", "/tprm", "/governance", "/retention", "/evidence", "/model-risk", "/ai-gov", "/ai-gov/acquisitions", "/oscal", "/traceability"] },
   { label: "Connect", items: ["/collect", "/integrations"] },
   { label: "Library", items: ["/dashboard", "/frameworks", "/catalog"] },
   { label: "Configure", items: ["/settings"] },
@@ -83,11 +85,26 @@ function isActive(to: string, path: string): boolean {
   return to === "/" ? path === "/" : path.startsWith(to);
 }
 
+/**
+ * The single most specific nav key matching `path` — longest prefix wins.
+ *
+ * Nested routes (`/ai-gov/acquisitions` under `/ai-gov`) would otherwise
+ * match their parent too, lighting up two rail entries and picking the
+ * parent's breadcrumb.
+ */
+function activeNavKey(path: string): string {
+  return (
+    NAV_GROUPS.flatMap((g) => g.items)
+      .filter((k) => isActive(k, path))
+      .sort((a, b) => b.length - a.length)[0] ?? "/"
+  );
+}
+
 function crumbFor(path: string): { label: string; crumb: string } {
   if (path.startsWith("/frameworks/")) {
     return { label: "Frameworks", crumb: "Catalog detail" };
   }
-  const key = NAV_GROUPS.flatMap((g) => g.items).find((k) => isActive(k, path)) ?? "/";
+  const key = activeNavKey(path);
   const m = NAV_META[key];
   return m ? { label: m.label, crumb: m.crumb } : { label: "Evidentia", crumb: "" };
 }
@@ -150,7 +167,7 @@ export function AppLayout() {
                 </div>
               )}
               {group.items.map((to) => {
-                const active = isActive(to, pathname);
+                const active = to === activeNavKey(pathname);
                 const m = NAV_META[to];
                 if (!m) return null;
                 const Icon = m.icon;

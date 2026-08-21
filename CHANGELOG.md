@@ -9,6 +9,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The five v0.11 federal AI-governance verbs now have a web console — CLI↔GUI
+  parity reaches 100%.** `ai-gov set-practice` ships as a form in the `/ai-gov`
+  system detail panel, gated on the system already carrying an M-25-21
+  high-impact assessment (the API 400s without one, so the console shows
+  guidance instead of letting the operator hit that error) and revealing the
+  CAIO waiver fields only for `waived` status, per M-25-21 §4(a)(ii). The four
+  `ai-gov acquisition` verbs ship as a new **`/ai-gov/acquisitions`** console:
+  register form, list, and a detail panel carrying the M-25-22 §4
+  lifecycle-progress roll-up plus the set-phase form.
+  **Backend first**: the five routes previously returned bare
+  `dict[str, Any]`, so `openapi.json` described them as
+  `{"additionalProperties": true}` and the generated TypeScript was an index
+  signature with no field information — the console would have been typed
+  against `unknown`. They now declare real response models
+  (`SetPracticeResponse`, `RegisterAcquisitionResponse`,
+  `ListAcquisitionsResponse`, and `AcquisitionDetailResponse`, shared by show
+  and set-phase), so the regenerated types carry actual fields. A new
+  `tests/unit/test_openapi_response_models.py` pins this, including that a
+  named-but-empty model cannot satisfy it vacuously.
+  `AppLayout`'s nav matching also becomes longest-prefix: a nested route like
+  `/ai-gov/acquisitions` no longer lights up its parent's rail entry and take
+  its breadcrumb.
+- **`version` and `init` reclassified from `api-only` to `exempt`.** Neither is
+  GUI debt. `version` is chrome — the running version renders in the sidebar
+  footer on every screen, read live from `GET /api/version` — and a dedicated
+  route would duplicate always-visible chrome. `init`'s onboarding wizard **is**
+  shipped in the GUI; it lives at the index route, which has no `path=`
+  attribute for the parity checker's route model to match. Both carry that
+  reasoning in `docs/cli-gui-parity.yaml`.
+  Net distribution: **104 full / 0 api-only / 0 cli-only / 13 exempt = 100.0%
+  GUI coverage** (was 99 / 7 / 0 / 11 = 93.4%). Five of the seven closed by
+  shipping console; two by honest reclassification. The parity claims in
+  `capability-matrix.md`, `enterprise-grade.md`, `positioning-and-value.md` and
+  `ROADMAP.md` are updated to match, and state the honest reading — *104
+  shipped consoles plus 13 by-design exemptions*, not "every verb has a route".
 - **`evidentia_core.gap_store.GapReportRepository`** — an explicit-root
   handle on the gap-report store. A frozen-slots dataclass whose mandatory
   `root` is resolved once through `get_gap_store_dir(root)`, with `save` /
