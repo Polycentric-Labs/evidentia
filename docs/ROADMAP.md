@@ -1,6 +1,6 @@
 # Evidentia roadmap
 
-**Last updated: v0.11.2 (planning, July 2026).**
+**Last updated: v0.12.0 (planning, July 2026).**
 
 > **Engineering practices** — how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
@@ -2348,24 +2348,57 @@ Items deferred from Phase B audit v3 + integration plan §"v1.1+":
   batch-poisoning reason (it was holding 19 unrelated npm-runtime bumps
   hostage). **Drop the ignore in the migration's own PR.**
 
-## v0.12 — Pre-1.0 hardening + GUI parity — PLANNED
+## v0.12 — Pre-1.0 hardening + GUI parity — SHIPPED
 
-**The open cycle** (ratified 2026-07-18 at the v0.11.0 release prep).
-Full plan: [`v0.12-plan.md`](releases/plans/v0.12-plan.md) — the
-ratified disposition of the remaining v0.11 waves plus the LEAN v0.12
-scope: (1) the GUI parity pass for the five v0.11 federal api-only
-verbs (+ the `version`/`init` exempt-reclassification decision);
-(2) deprecation completions ahead of the v1.0.0 removals;
-(3) api-stability freeze-prep (the surface audit the v1.0 stability
-promise formalizes); (4) CR26 emitter coverage extension only if cheap
-(FRR statements next); (5) the CR26-fragility watches (upstream PR #4
-delta drop, additionalProperties tightening, CR27 dated-fileset MAJOR,
-the competitive-flip playbook, and the fresh-drift-probe-at-release
-lesson). The v1.0 operator self-test is scheduled at v0.12 cycle-open
-per [`v1.0-transition.md`](v1.0-transition.md) so reviewer outreach can
-start while v0.12 builds.
+Opened 2026-07-18; **closed 2026-08-22 with v0.12.0**. Full plan:
+[`v0.12-plan.md`](releases/plans/v0.12-plan.md). Every ratified scope
+item landed, and each of the three NORMATIVE documents that gained
+mechanical enforcement found something when it did: (1) GUI parity
+reached **100%** by shipping the five federal AI-governance consoles
+(`version`/`init` moved to `exempt` with reasoning); (2) the
+deprecation calendar executed its first scheduled removal (the
+`evidentia_ai.eval` shims) and its first REST deprecation became
+machine-readable (RFC 8594 on `set-omb-impact`); (3) the api-stability
+contract gained `check_public_surface.py`, whose first run exposed four
+§5 frozen imports that had never resolved on any release — corrected,
+with the remaining delta registered in
+[`v1.0-freeze-candidates.md`](v1.0-freeze-candidates.md); (4) the FRR
+"cheapness" re-verify found `SDR-CSO-FRR` is a MUST the emitter had left
+empty — closed by the `fedramp-frr-2026` catalog and the
+`fedRampRequirements` block; (5) the CR26 watches cleared: upstream
+merged the `$ref` fix, the vendored schemas are byte-identical to
+upstream again, `additionalProperties` still absent, no CR27. The
+EU-AI-Act ↔ ISO/IEC 42001 crosswalk was NOT built (licensed-text
+verdict recorded in the plan → v1.1). Also: the v1.0 review protocol
+committed, the Q3 safeguards sweep recorded, the container rebuilt on
+the current DHI base, and the repo root tidied 19 → 12 tracked files.
 
-## v1.0 — Federal compliance shipped + API stability — RESERVED
+### v0.12.0 — Pre-1.0 hardening: the project's promises become enforceable — SHIPPED (released 2026-08-22)
+
+Three PRs through the merge queue (#250 freeze-prep + deprecations,
+#251 GUI parity + CR26 + the FRR block, #252 root tidy). First
+scheduled removal under the NORMATIVE contract (`evidentia_ai.eval`);
+first RFC 8594 REST deprecation (`set-omb-impact`); the
+`check_public_surface` gate (caught four never-resolving §5 imports);
+`fedramp-frr-2026` (180 provider-facing CR26 rules) + the SDR
+`fedRampRequirements` block closing the `SDR-CSO-FRR` MUST-gap; five
+federal AI-gov consoles → parity 100%; CR26 schemas byte-identical to
+upstream again; DHI base rebuilt; Dependabot major-isolation; the v1.0
+review protocol + freeze-candidate register committed; 97 catalogs.
+Full suite 5046 passed; four issues closed.
+
+## v1.0 — Federal compliance shipped + API stability — PLANNED
+
+**The open cycle** (opened 2026-08-22 at the v0.12.0 release prep;
+ratification of the sequencing is its first item). Full plan:
+[`v1.0-prep-plan.md`](releases/plans/v1.0-prep-plan.md) — CONVERGE, not
+expand: execute the freeze-candidate register into `api-stability.md`;
+execute the `Finding`/`SecurityFinding` rename via the three-step
+non-breaking plan (the schema title stays `SecurityFinding` through
+`ConfigDict(title=…)`); settle the review protocol's open questions; cut
+the frozen `v1.0.0-rc.N` candidate; reviewer outreach (its own explicit
+gate); the review loop; the three scheduled v1.0.0 removals in the final
+rc; then `v1.0.0` as a re-tag of the final reviewed tree.
 
 See [`docs/v1.0-transition.md`](v1.0-transition.md) for the full
 narrative. v1.0 combines Candidate A (federal-compliance theme

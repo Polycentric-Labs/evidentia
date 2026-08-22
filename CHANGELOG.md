@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_No changes yet on the v1.0-prep development branch._
+
+## [0.12.0] - 2026-08-22
+
+**Theme**: *Pre-1.0 hardening — the project's promises become enforceable.*
+The ratified LEAN cycle between the v0.11 federal wave and the v1.0
+candidate line. Its through-line is that three NORMATIVE documents which had
+been binding on paper since v0.9.7 gained mechanical teeth, and each one
+found something when it did: the api-stability contract gained a gate
+(`check_public_surface.py`) whose first run exposed four §5 frozen imports
+that had never resolved on any shipped release, two of them naming
+collectors that were never built; the deprecation calendar executed its
+first scheduled removal (the `evidentia_ai.eval` shims) and made its first
+REST deprecation machine-readable (RFC 8594 on `set-omb-impact`); and the
+FedRAMP CR26 emitter's "cheapness" re-verify found that `SDR-CSO-FRR` is a
+MUST the v0.11 emitter had left empty, closed by the new `fedramp-frr-2026`
+catalog and `fedRampRequirements` block. Alongside: CLI↔GUI parity reaches
+**100%** by shipping the five federal AI-governance consoles rather than
+reclassifying them; the vendored CR26 schemas are re-synced byte-identical
+to upstream now that FedRAMP has merged the `$ref` fix Evidentia carried as
+a local delta; the container rebuilds on the current DHI base; the
+Dependabot batches stop being poisoned by uncapped majors; the v1.0
+professional-review protocol and the freeze-candidate register are
+committed; and the repo root is tidied from 19 to 12 tracked files — a
+move that itself exposed, and fixed, a fidelity bug in the required OSPS
+evidence gate. 97 bundled catalogs. Four issues closed (#134, #219, #239,
+#248). Full suite 5046 passed. Three PRs (#250, #251, #252), all through the
+merge queue green.
+
 ### Added
 
 - **`conmon ksi` now emits the SDR's `fedRampRequirements` block (SDR-CSO-FRR);
