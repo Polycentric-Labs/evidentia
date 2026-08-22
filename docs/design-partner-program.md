@@ -7,4 +7,4 @@ path keep resolving instead of 404ing.
 For partnership or engagement inquiries, contact
 [Allen Byrd](mailto:allen@allenfbyrd.com) (see [`SECURITY.md`](../SECURITY.md)
 for the same contact) or open a discussion via
-[`CONTRIBUTING.md`](../CONTRIBUTING.md).
+[`CONTRIBUTING.md`](../.github/CONTRIBUTING.md).

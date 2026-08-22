@@ -124,7 +124,7 @@ def test_osps_conformance_md_has_first_mover_claim() -> None:
     assertion fails so the doc + narrative get reconciled in the same
     commit.
     """
-    doc = (REPO_ROOT / "OSPS-CONFORMANCE.md").read_text(encoding="utf-8")
+    doc = (REPO_ROOT / "docs" / "OSPS-CONFORMANCE.md").read_text(encoding="utf-8")
     assert "First-mover claim" in doc
     assert "filename:OSPS-CONFORMANCE.md" in doc
     # Tight phrase: the exact gh-api search-result count that backs the
@@ -152,7 +152,7 @@ def test_osps_conformance_md_lists_known_honest_gaps() -> None:
     missing from the conformance doc, the verify-osps-conformance.yml
     CI gate would silently accept a hollowed-out attestation.
     """
-    doc = (REPO_ROOT / "OSPS-CONFORMANCE.md").read_text(encoding="utf-8")
+    doc = (REPO_ROOT / "docs" / "OSPS-CONFORMANCE.md").read_text(encoding="utf-8")
     for ctrl in (
         "OSPS-AC-04.01",
         "OSPS-AC-04.02",

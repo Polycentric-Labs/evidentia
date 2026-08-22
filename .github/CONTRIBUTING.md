@@ -31,7 +31,7 @@ places to contribute right now:
 3. **Phase 2 collectors.** AWS, GitHub, and Okta are the highest priority.
    The collector base class and contract are specified in the canonical
    architecture plan; see
-   [`Evidentia-Architecture-and-Implementation-Plan.md`](Evidentia-Architecture-and-Implementation-Plan.md).
+   [`Evidentia-Architecture-and-Implementation-Plan.md`](../docs/architecture/Evidentia-Architecture-and-Implementation-Plan.md).
 
 4. **Test coverage.** Particularly edge cases in CSV header matching,
    OSCAL parsing with unusual catalog structures, and status normalization
@@ -55,11 +55,11 @@ Evidentia follows established style guides, mechanically enforced in CI:
 
 - **Python**: PEP 8 (style), PEP 257 (docstrings), PEP 484 / PEP 604 (type
   hints). Enforced by `ruff` (rule groups E/W/F/I/B/UP/RUF/SIM) + `mypy
-  --strict` with the Pydantic plugin. Configuration: [`pyproject.toml`](pyproject.toml).
+  --strict` with the Pydantic plugin. Configuration: [`pyproject.toml`](../pyproject.toml).
 - **TypeScript** (`packages/evidentia-ui/`): ESLint with the
   `@typescript-eslint/recommended` ruleset + Prettier formatting.
   Configuration: `packages/evidentia-ui/eslint.config.js`.
-- **Pre-commit hooks** ([`.pre-commit-config.yaml`](.pre-commit-config.yaml))
+- **Pre-commit hooks** ([`.pre-commit-config.yaml`](../.pre-commit-config.yaml))
   catch most issues before commit-time. Install with `pre-commit install`.
 
 Beyond the style guides:
@@ -94,7 +94,7 @@ Beyond the style guides:
 ## Reporting security issues
 
 **Security issues do not belong in public bug reports.** See
-[`SECURITY.md`](SECURITY.md) for the private vulnerability
+[`SECURITY.md`](../SECURITY.md) for the private vulnerability
 disclosure process — GitHub Private Vulnerability Reporting is
 the preferred channel; email is documented as a backup.
 
@@ -112,4 +112,4 @@ report template for vulnerabilities.
 ## License
 
 By contributing to Evidentia, you agree that your contributions will be
-licensed under the [Apache License 2.0](LICENSE).
+licensed under the [Apache License 2.0](../LICENSE).

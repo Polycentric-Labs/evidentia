@@ -9,11 +9,11 @@
 > **This is the original v0.7.0-era architecture baseline, retained for
 > design context. It is NOT a live status document and is intentionally
 > not version-bumped each release.** For the current shipped state and
-> forward plan see [`CHANGELOG.md`](CHANGELOG.md) and
-> [`docs/ROADMAP.md`](docs/ROADMAP.md); for current positioning and the
+> forward plan see [`CHANGELOG.md`](../../CHANGELOG.md) and
+> [`docs/ROADMAP.md`](../ROADMAP.md); for current positioning and the
 > capability matrix see
-> [`docs/positioning-and-value.md`](docs/positioning-and-value.md) and
-> [`docs/capability-matrix.md`](docs/capability-matrix.md). The body below
+> [`docs/positioning-and-value.md`](../positioning-and-value.md) and
+> [`docs/capability-matrix.md`](../capability-matrix.md). The body below
 > describes the v0.7.0 design baseline; later releases extended specific
 > subsystems without changing the core architecture.
 
@@ -104,7 +104,7 @@
 >
 > ### Future direction (v0.8.0+)
 >
-> See [`docs/v0.8.0-plan.md`](docs/releases/plans/v0.8.0-plan.md). The
+> See [`docs/v0.8.0-plan.md`](../releases/plans/v0.8.0-plan.md). The
 > `evidentia-ai` package gains a new `eval/` submodule (DFAH
 > determinism harness), `risk_statements/` gains a `--emit-trace`
 > mode (Policy Reasoning Traces with structured clause citations

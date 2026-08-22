@@ -48,6 +48,21 @@ OWNER_REPO = "Polycentric-Labs/evidentia"
 BASE = f"https://github.com/{OWNER_REPO}"
 
 
+@pytest.fixture(autouse=True)
+def _no_commit_under_test(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pin the default translation contract to its ``main``-HEAD form.
+
+    ``translate_url`` probes ``blob``/``tree`` evidence against
+    ``GITHUB_SHA`` when Actions sets it, and ``main`` otherwise (see the
+    ``verification_ref`` tests below). The shape tests in this module
+    assert the ``main`` form, so they must not inherit a ``GITHUB_SHA``
+    from the CI environment — which is exactly how they failed on all
+    three OS runners the first time the ref became dynamic. Tests that
+    exercise the commit-under-test path set the variable explicitly.
+    """
+    monkeypatch.delenv("GITHUB_SHA", raising=False)
+
+
 def test_translate_blob_simple(voc: Any) -> None:
     endpoint, shape = voc.translate_url(f"{BASE}/blob/main/SECURITY.md")
     assert shape == "blob"
@@ -169,3 +184,64 @@ def test_main_returns_2_when_doc_missing(voc: Any, tmp_path: Path) -> None:
     # Passing a non-existent path returns exit code 2 (file-not-found).
     missing = tmp_path / "nope.md"
     assert voc.main([str(missing)]) == 2
+
+
+# ── the verification ref (v0.12 root-tidy finding) ────────────────────
+#
+# The doc's URLs say ``blob/main/...`` — correct for human readers. But
+# the PR gate must answer "will these links resolve once THIS change
+# lands?", which means probing the commit under test, not main. With
+# ``?ref=main`` hardcoded, a PR that correctly moves an evidence file
+# could never pass: main still had the old path, the new path 404'd, and
+# the required check went red on a change that was right. The workflow's
+# own header says its purpose is catching renames of evidence files; it
+# has to be able to pass the rename that fixes the links, too.
+
+
+def test_blob_probe_uses_the_commit_under_test_when_set(
+    voc: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GITHUB_SHA", "0123456789abcdef0123456789abcdef01234567")
+    endpoint, shape = voc.translate_url(f"{BASE}/blob/main/.github/CONTRIBUTING.md")
+    assert shape == "blob"
+    assert endpoint == (
+        f"repos/{OWNER_REPO}/contents/.github/CONTRIBUTING.md"
+        "?ref=0123456789abcdef0123456789abcdef01234567"
+    )
+
+
+def test_tree_probe_uses_the_commit_under_test_when_set(
+    voc: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GITHUB_SHA", "0123456789abcdef0123456789abcdef01234567")
+    endpoint, _ = voc.translate_url(f"{BASE}/tree/main/docs/")
+    assert endpoint.endswith("?ref=0123456789abcdef0123456789abcdef01234567")
+
+
+def test_probe_falls_back_to_main_without_a_commit(
+    voc: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The weekly cron and local runs keep the original main-HEAD semantics."""
+    monkeypatch.delenv("GITHUB_SHA", raising=False)
+    endpoint, _ = voc.translate_url(f"{BASE}/blob/main/SECURITY.md")
+    assert endpoint == f"repos/{OWNER_REPO}/contents/SECURITY.md?ref=main"
+
+
+def test_blank_github_sha_falls_back_to_main(
+    voc: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An empty env var must not produce ``?ref=`` (which GitHub treats as default branch anyway, but explicitly)."""
+    monkeypatch.setenv("GITHUB_SHA", "")
+    endpoint, _ = voc.translate_url(f"{BASE}/blob/main/SECURITY.md")
+    assert endpoint.endswith("?ref=main")
+
+
+def test_release_tag_and_branch_probes_ignore_the_commit(
+    voc: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Tags and branch refs are repo-level objects, not tree contents."""
+    monkeypatch.setenv("GITHUB_SHA", "0123456789abcdef0123456789abcdef01234567")
+    tag_endpoint, _ = voc.translate_url(f"{BASE}/releases/tag/v0.10.5")
+    assert "ref=" not in tag_endpoint
+    branch_endpoint, _ = voc.translate_url(f"{BASE}/commits/main")
+    assert "ref=" not in branch_endpoint

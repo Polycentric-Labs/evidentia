@@ -7,7 +7,7 @@ transitioning to **latest patch of each supported minor** after v1.0.
 
 - The single latest patch is supported (no backports).
 - Older patches in the same minor are deprecated the moment a successor ships.
-- See [`SECURITY.md`](SECURITY.md) Supported-versions table for current state.
+- See [`SECURITY.md`](../SECURITY.md) Supported-versions table for current state.
 
 ## Post-1.0 (v1.x line; planned)
 
@@ -30,6 +30,6 @@ If Evidentia is sunset or transferred:
 
 ## Versioning policy reference
 
-Semantic Versioning 2.0.0 per [`README.md`](README.md). Pre-1.0:
+Semantic Versioning 2.0.0 per [`README.md`](../README.md). Pre-1.0:
 minor bumps reserved for meaningful new feature surface; patches for
 hardening, bug fixes, doc work, and supply-chain polish.

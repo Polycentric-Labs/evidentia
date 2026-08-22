@@ -525,5 +525,5 @@ This mirrors the §5 "adopt patterns, not bundled data" stance.
 
 *Cross-link to: [positioning-and-value.md](positioning-and-value.md)
 (competitive landscape + 12-month direction), [ROADMAP.md](ROADMAP.md)
-(version-level plan), [Evidentia-Architecture-and-Implementation-Plan.md](../Evidentia-Architecture-and-Implementation-Plan.md)
+(version-level plan), [Evidentia-Architecture-and-Implementation-Plan.md](architecture/Evidentia-Architecture-and-Implementation-Plan.md)
 (canonical design doc).*

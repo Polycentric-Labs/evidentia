@@ -75,10 +75,10 @@ def test_rewrite_relative_link_from_docs_sourced_doc(mod: Any) -> None:
 
 def test_rewrite_relative_link_from_root_sourced_doc(mod: Any) -> None:
     # A root doc links to a docs/ child and a root sibling.
-    content = "[overlay](docs/financial-sector-overlay.md) and [eol](EOL.md)."
+    content = "[overlay](docs/financial-sector-overlay.md) and [eol](docs/EOL.md)."
     out = mod.rewrite_links(content, "CHANGELOG.md", FIXTURE_BASE)
     assert f"[overlay]({FIXTURE_BASE}/docs/financial-sector-overlay.md)" in out
-    assert f"[eol]({FIXTURE_BASE}/EOL.md)" in out
+    assert f"[eol]({FIXTURE_BASE}/docs/EOL.md)" in out
 
 
 def test_rewrite_passes_through_external_and_anchor_links(mod: Any) -> None:
