@@ -48,6 +48,21 @@ OWNER_REPO = "Polycentric-Labs/evidentia"
 BASE = f"https://github.com/{OWNER_REPO}"
 
 
+@pytest.fixture(autouse=True)
+def _no_commit_under_test(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pin the default translation contract to its ``main``-HEAD form.
+
+    ``translate_url`` probes ``blob``/``tree`` evidence against
+    ``GITHUB_SHA`` when Actions sets it, and ``main`` otherwise (see the
+    ``verification_ref`` tests below). The shape tests in this module
+    assert the ``main`` form, so they must not inherit a ``GITHUB_SHA``
+    from the CI environment — which is exactly how they failed on all
+    three OS runners the first time the ref became dynamic. Tests that
+    exercise the commit-under-test path set the variable explicitly.
+    """
+    monkeypatch.delenv("GITHUB_SHA", raising=False)
+
+
 def test_translate_blob_simple(voc: Any) -> None:
     endpoint, shape = voc.translate_url(f"{BASE}/blob/main/SECURITY.md")
     assert shape == "blob"
