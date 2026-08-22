@@ -229,6 +229,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gate flagged are rewritten; the `filename:OSPS-CONFORMANCE.md` first-mover
   search claim is unaffected (GitHub's `filename:` qualifier matches the
   basename in any directory).
+- **`verify_osps_conformance.py` now probes evidence against the commit under
+  test, not a hardcoded `main`.** The chore above exposed a fidelity bug in the
+  required `verify-conformance-evidence` gate: its `blob`/`tree` probes were
+  built with `?ref=main`, so any PR that correctly *moved* an evidence file
+  could never pass — `main` still had the old path, the new path 404'd, and
+  the check went red on a change that was right. Yet the workflow's own header
+  says its purpose is catching renames of evidence files; it has to be able to
+  pass the rename that fixes the links, too. The probe ref is now
+  `GITHUB_SHA` when set (the PR's merge commit on `pull_request`, the queue
+  candidate on `merge_group`, the pushed commit on `push`), falling back to
+  `main` when absent (the weekly cron and local runs keep the original
+  main-HEAD link-rot semantics). Tags and branch refs are repo-level objects
+  and are unaffected. Proven against real refs: the same document yields
+  **7 × 404** probed against `main` and **57/57 resolved** probed against the
+  chore commit. Five new unit tests pin the ref selection (RED first).
 
 - **Vendored FedRAMP CR26 schemas re-synced to upstream `ae43ae29`
   (2026-08-15); the `$ref` local delta is retired.** Upstream fixed the

@@ -44,6 +44,7 @@ is read-only — it never edits, pushes, tags, or publishes.
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -54,6 +55,30 @@ from pathlib import Path
 # the script stays functional if a fork triggers the workflow via PR —
 # evidence URLs in this doc always point at the upstream repo.
 OWNER_REPO = "Polycentric-Labs/evidentia"
+
+
+def verification_ref() -> str:
+    """The git ref that ``blob``/``tree`` evidence is probed against.
+
+    The doc's URLs say ``blob/main/…`` — correct for human readers. But a
+    PR gate must answer "will these links resolve once THIS change
+    lands?", which means probing the commit under test, not ``main``.
+    With ``main`` hardcoded, a PR that correctly moved an evidence file
+    could never pass: ``main`` still had the old path, the new path
+    404'd, and the required check went red on a change that was right
+    (v0.12 root-tidy, 2026-08-21). The workflow's own header says its job
+    is catching renames of evidence files; it has to be able to pass the
+    rename that fixes the links, too.
+
+    ``GITHUB_SHA`` is the commit GitHub Actions checked out — the PR's
+    merge commit on ``pull_request``, the queue's candidate on
+    ``merge_group``, the pushed commit on ``push``. Absent (the weekly
+    cron runs on the default branch; local runs), fall back to ``main``,
+    which keeps the original main-HEAD semantics for link-rot detection.
+    Tags and branch refs are repo-level objects and ignore this.
+    """
+    sha = os.environ.get("GITHUB_SHA", "").strip()
+    return sha or "main"
 
 # The conformance doc, resolved relative to the repo root (this file lives
 # in scripts/, so the repo root is one parent up).
@@ -110,14 +135,15 @@ def translate_url(url: str) -> tuple[str, str]:
     resource is missing). New URL shapes MUST be added to ``translate_url``
     before they're cited as evidence.
     """
+    ref = verification_ref()
     m = _HTML_BLOB_RE.match(url)
     if m:
         path = m.group(1)
-        return (f"repos/{OWNER_REPO}/contents/{path}?ref=main", "blob")
+        return (f"repos/{OWNER_REPO}/contents/{path}?ref={ref}", "blob")
     m = _HTML_TREE_RE.match(url)
     if m:
         path = m.group(1).rstrip("/")
-        return (f"repos/{OWNER_REPO}/contents/{path}?ref=main", "tree")
+        return (f"repos/{OWNER_REPO}/contents/{path}?ref={ref}", "tree")
     m = _HTML_RELEASE_TAG_RE.match(url)
     if m:
         tag = m.group(1)
