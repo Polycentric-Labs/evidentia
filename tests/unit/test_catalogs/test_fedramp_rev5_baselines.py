@@ -1,11 +1,12 @@
 """Regression tests for the bundled FedRAMP Rev 5 baseline catalogs.
 
-Through v0.12.0 all four baselines shipped with WRONG control membership. The
+Through v0.11.2 all four baselines shipped with WRONG control membership. The
 generator derived Low and LI-SaaS as a truncation of Moderate
 (``[c for c in FEDRAMP_MODERATE if "(" not in c][:125]`` and ``[:150]``), and
 because the source list is family-ordered that silently dropped every family
 from PS onward. The shipped Low baseline was missing PS, RA, SA, SC, SI and SR
-in their entirety, 69 controls including ``RA-5``, ``SC-7`` and ``SI-2``, while
+in their entirety, 57 controls including ``RA-5``, ``SC-7`` and ``SI-2`` (69
+are restored in total, the rest from families the truncation cut mid-way), while
 carrying 33 PM-family controls that SP 800-53B allocates to no baseline.
 
 The control TEXT was correct throughout, which is why the defect was invisible
@@ -141,3 +142,27 @@ def test_vendored_provenance_is_recorded(vendored: dict) -> None:
     assert prov["published"] and prov["retrieved"]
     for key in ("low", "moderate", "high", "li-saas"):
         assert len(prov["files"][key]["sha256"]) == 64
+
+
+@pytest.mark.parametrize("name", sorted(BASELINES))
+def test_declared_families_are_exactly_the_populated_ones(name: str) -> None:
+    """``families`` lists the families this baseline actually has controls in.
+
+    ``ControlCatalog.families`` is documented as "control families in this
+    catalog", and for OSCAL-sourced catalogs the loader derives it from the
+    groups that exist. The FedRAMP pointer catalogs hardcoded all 20 NIST
+    families, which became false the moment the PM/PT removal landed: the GUI
+    renders ``catalog.families.length`` verbatim, so FedRAMP Moderate
+    advertised "(20 families)" while covering 18, naming Program Management
+    and PII Processing as in scope when SP 800-53B allocates neither to any
+    baseline.
+    """
+    data = json.loads((DATA_DIR / BASELINES[name]).read_text(encoding="utf-8"))
+    declared = {fam.split(maxsplit=1)[0] for fam in data["families"]}
+    populated = {cid.split("-", 1)[0] for cid in _ids(name)}
+    assert declared == populated, (
+        f"{name}: declared families {sorted(declared - populated)} have no "
+        f"controls; families {sorted(populated - declared)} have controls but "
+        "are not declared"
+    )
+    assert "PM" not in declared and "PT" not in declared

@@ -409,7 +409,7 @@ def test_a5_passes_on_descending_h2_order(rc) -> None:
 
 
 def test_a5_fires_on_ascending_h2_order(rc) -> None:
-    """The pre-v0.12.1 shape: oldest at the top, which buried the open cycle
+    """The through-v0.11.2 shape: oldest at the top, which buried the open cycle
     2,300 lines down and left a stale wish list sitting below v1.0."""
     headings, _ = rc.parse_roadmap(
         "## v0.3.0 — first — SHIPPED\n"

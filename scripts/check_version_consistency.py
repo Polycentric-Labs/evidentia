@@ -445,6 +445,95 @@ def check_requires_python_in_sync(bump: Any) -> list[str]:
     return failures
 
 
+# A PEP 508 requirement naming a workspace sibling, with the lower bound of
+# its pin range captured. The optional ``[extras]`` bracket mirrors the one
+# ``bump_version.bump_pin_range`` admits.
+_SIBLING_PIN_RE_TMPL = r"^(?P<name>(?:{alt}))(?:\[[^\]]+\])?>=(?P<low>\d+\.\d+\.\d+(?:\.\d+)?),"
+
+
+def check_sibling_pins_at_current(bump: Any, current: str) -> list[str]:
+    """Assert every intra-workspace pin's LOWER bound equals the current version.
+
+    This is the distance-independent companion to
+    ``bump_version.bump_pin_range``. That function builds its search regex from
+    the version being bumped FROM, so it only ever matches a pin sitting in the
+    immediately-preceding minor. The consequence is a one-way trap: a pin the
+    sweep misses once falls two minors behind, stops matching on every
+    subsequent bump, and is then invisible forever. Nothing re-derives it,
+    because the bumper only knows how to look one step back.
+
+    That is not hypothetical. The three ``evidentia[worm-*]`` extras were left
+    at ``evidentia-core[worm-*]>=0.10.0,<0.11.0`` while the base dependency
+    moved to ``>=0.11.2,<0.12.0``. The intersection of those two ranges is
+    empty, so ``pip install "evidentia[worm-s3]"`` failed outright with
+    ResolutionImpossible, and it shipped that way in v0.11.0 and v0.11.2
+    because every gate in the battery was, like the bumper, looking only one
+    minor back.
+
+    So this check ignores ranges entirely and asserts the one property that
+    holds no matter how far a pin has drifted: a sibling pin's lower bound is
+    the current project version. Scans ``[project.dependencies]`` and every
+    ``[project.optional-dependencies]`` group across the root and all members.
+
+    Returns a list of human-readable failure strings (empty == pass).
+    """
+    failures: list[str] = []
+    siblings = bump.workspace_packages()
+    if not siblings:
+        return [
+            "no [tool.uv.sources] workspace members found; cannot verify "
+            "inter-package pins; fix the root pyproject.toml"
+        ]
+
+    pin_re = re.compile(
+        _SIBLING_PIN_RE_TMPL.format(
+            alt="|".join(re.escape(p) for p in sorted(siblings, key=len, reverse=True))
+        )
+    )
+
+    # ``expand_manifest_path`` yields REPO-RELATIVE paths; keep the root entry
+    # in the same shape so reporting and reading are uniform.
+    all_tracked = bump.tracked_files()
+    paths = [
+        Path("pyproject.toml"),
+        *sorted(bump.expand_manifest_path("packages/*/pyproject.toml", all_tracked)),
+    ]
+
+    for p in paths:
+        posix = p.as_posix()
+        try:
+            data = tomllib.loads((REPO_ROOT / p).read_text(encoding="utf-8"))
+        except (OSError, tomllib.TOMLDecodeError) as exc:
+            failures.append(f"cannot read/parse {posix}: {exc}")
+            continue
+        project = data.get("project", {})
+
+        groups: list[tuple[str, Any]] = [
+            ("dependencies", project.get("dependencies") or [])
+        ]
+        for group_name, reqs in (project.get("optional-dependencies") or {}).items():
+            groups.append((f"optional-dependencies.{group_name}", reqs))
+
+        for where, reqs in groups:
+            if not isinstance(reqs, list):
+                continue
+            for req in reqs:
+                if not isinstance(req, str):
+                    continue
+                m = pin_re.match(req.strip())
+                if m is None:
+                    continue
+                if m.group("low") != current:
+                    failures.append(
+                        f"{posix} [{where}]: {req!r} pins sibling "
+                        f"{m.group('name')} at >={m.group('low')}, but the "
+                        f"project is at {current}. A sibling pin's lower bound "
+                        "must be the current version, or the published extra "
+                        "is unsatisfiable against its own base dependency."
+                    )
+    return failures
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -462,6 +551,7 @@ def main(argv: list[str] | None = None) -> int:
     decisions_failures = check_decisions_documented(manifest)
     frontend_failures = check_frontend_no_hardcoded_version(bump)
     requires_python_failures = check_requires_python_in_sync(bump)
+    sibling_pin_failures = check_sibling_pins_at_current(bump, current)
     all_failures = (
         coverage_failures
         + never_skip_failures
@@ -469,6 +559,7 @@ def main(argv: list[str] | None = None) -> int:
         + decisions_failures
         + frontend_failures
         + requires_python_failures
+        + sibling_pin_failures
     )
 
     if args.json:
@@ -481,6 +572,7 @@ def main(argv: list[str] | None = None) -> int:
             "decisions_failures": decisions_failures,
             "frontend_failures": frontend_failures,
             "requires_python_failures": requires_python_failures,
+            "sibling_pin_failures": sibling_pin_failures,
         }
         print(json.dumps(report, indent=2))
         return 0 if not all_failures else 1
@@ -542,6 +634,17 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print(
             "  requires-python: PASS — root + all member packages agree."
+        )
+
+    if sibling_pin_failures:
+        print()
+        print(f"SIBLING-PIN FAILURES ({len(sibling_pin_failures)}):")
+        for f in sibling_pin_failures:
+            print(f"  - {f}")
+    else:
+        print(
+            "  sibling pins: PASS. Every intra-workspace pin's lower bound "
+            "is the current version."
         )
 
     print()

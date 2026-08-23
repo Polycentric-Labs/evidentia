@@ -32,9 +32,15 @@ Dependabot batches stop being poisoned by uncapped majors; the v1.0
 professional-review protocol and the freeze-candidate register are
 committed; and the repo root is tidied from 19 to 12 tracked files — a
 move that itself exposed, and fixed, a fidelity bug in the required OSPS
-evidence gate. 97 bundled catalogs. Four issues closed (#134, #219, #239,
-#248). Full suite 5046 passed. Three PRs (#250, #251, #252), all through the
-merge queue green.
+evidence gate. Late in the cycle the same instinct was turned on the bundled
+data itself, and it found the largest defect of the release: **all four
+FedRAMP Rev 5 baselines had the wrong control membership**, the Low baseline
+missing six entire families because a generator truncated a family-ordered
+list. That correction changes FedRAMP gap-analysis output for every existing
+user and is the first entry under *Fixed*. 97 bundled catalogs. Four issues
+closed (#134, #219, #239, #248). Full suite 5087 passed.
+Three PRs (#250, #251, #252) plus the release-preparation branch, all through
+the merge queue green.
 
 ### Added
 
@@ -180,6 +186,67 @@ merge queue green.
   promise the project has not made.
 
 ### Fixed
+
+- **All four bundled FedRAMP Rev 5 baselines had wrong control membership;
+  every one is corrected. Control counts change, so FedRAMP gap-analysis
+  output changes for existing users.** Low **125 → 156**, Moderate
+  **329 → 323**, High **404 (401 unique) → 410**, LI-SaaS **150 → 156**.
+  The generator derived Low and LI-SaaS by truncating Moderate
+  (`[c for c in FEDRAMP_MODERATE if "(" not in c][:125]` and `[:150]`), and
+  because the source list is family-ordered that silently dropped **every
+  family from PS onward**: the shipped Low baseline was missing **PS, RA, SA,
+  SC, SI and SR in their entirety**: 57 controls, including `RA-5`
+  (vulnerability monitoring), `SC-7` (boundary protection) and `SI-2` (flaw
+  remediation). The truncation also cut through the families either side
+  of the boundary, so Low gains **69 controls in total** and sheds 38 (12 of
+  them `PM`) for a net 125 → 156. Independently, Moderate and High carried
+  33 `PM` and 9 `PT`
+  controls that **SP 800-53B Tables 3-13 and 3-15 allocate to no baseline**,
+  all four carried four controls **withdrawn** in Rev 5 (`CM-8(5)`,
+  `CP-2(4)`, `SA-12`, `SC-13(1)`), and High listed `AC-4(21)`, `AC-6(7)` and
+  `MA-3(3)` twice. The control *text* was correct throughout, which is why
+  this survived many releases invisibly: nothing asserted membership.
+  **What this means for you:** a `gap` run against `fedramp-rev5-low` now
+  evaluates 156 controls where v0.11.2 evaluated 125, so a stored coverage
+  percentage from a prior release is **not comparable** to a v0.12.0 one;
+  the denominator moved, and previously it was wrong. Re-run any FedRAMP gap
+  report you rely on. Membership now comes from the FedRAMP PMO's own OSCAL
+  profiles (published 2024-09-24), vendored with provenance and per-file
+  SHA-256 at `scripts/catalogs/upstream/fedramp-rev5-baselines.json`, and is
+  held there by build-time invariants plus regression tests asserting counts,
+  uniqueness, strict Low ⊆ Moderate ⊆ High nesting, no `PM`/`PT`, no
+  withdrawn ids, and the presence of the specific controls the truncation
+  dropped. `GSA/fedramp-automation` has been deleted upstream, so the
+  provenance points at `OSCAL-Foundation/fedramp-resources`. **Known
+  limitation:** LI-SaaS selects the same control set as Low; the FedRAMP
+  Tailored distinction lives in a per-control method property (ATTEST /
+  ASSESS / CONDITIONAL / NSO / FED) which the pointer catalog does not yet
+  represent.
+
+- **`evidentia[worm-s3]`, `[worm-azure]` and `[worm-gcs]` were
+  uninstallable, and had been since v0.11.0.** Each extra pinned
+  `evidentia-core[worm-*]>=0.10.0,<0.11.0` while the base dependency moved
+  with the release, so the two ranges no longer intersected and
+  `pip install "evidentia[worm-s3]"` failed outright with
+  `ResolutionImpossible`, on a documented install path that
+  `docs/worm-backends.md`, `docs/audit-chain-of-custody.md` and the README
+  all tell operators to use. The version sweep could not see it: the bumper
+  builds its search pattern from the version being bumped *from*, so a pin
+  that falls one minor behind stops matching and is then invisible to every
+  later bump. Both the pins and that blind spot are fixed:
+  `check_version_consistency.py` now asserts, independently of range shape or
+  how far a pin has drifted, that **every intra-workspace pin's lower bound
+  is the current version**, across `[project.dependencies]` and every
+  `[project.optional-dependencies]` group.
+
+- **FedRAMP baselines advertised 20 control families while covering 18.**
+  Removing the `PM` and `PT` controls left both families declared with zero
+  members, and `ControlCatalog.families` is documented as the families *in
+  this catalog*, and the GUI renders that count verbatim, so FedRAMP Moderate
+  read "323 top-level controls (20 families)", naming Program Management and
+  PII Processing as in scope when neither is. The generator now derives the
+  family list from the controls actually present, matching what the loader
+  already does for OSCAL-sourced catalogs.
 
 - **Container base rebuilt on the current DHI digest** (`Dockerfile`
   `sha256:0815063751f2…` → `sha256:e512071462b6…`), closing issue **#248**.

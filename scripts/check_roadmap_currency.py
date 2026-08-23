@@ -66,6 +66,7 @@ import json
 import re
 import sys
 from dataclasses import dataclass
+from itertools import pairwise
 from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).resolve().parent
@@ -91,7 +92,7 @@ def check_a5_descending_version_order(headings: list[Heading]) -> list[str]:
     """A5, h2 version headings appear in strictly DESCENDING version order.
 
     The roadmap reads newest-first: the open cycle and the most recent releases
-    are at the top, the oldest at the bottom. Before v0.12.1 the file was
+    are at the top, the oldest at the bottom. Through v0.11.2 the file was
     ascending, which put a stale `v0.7.0+` wish list BELOW the v1.0 section and
     made the reader scroll 2,300 lines to find current work. Ordering is a
     structural claim like any other, so it is gated rather than trusted.
@@ -118,7 +119,7 @@ def check_a5_descending_version_order(headings: list[Heading]) -> list[str]:
 
     h2s = [h for h in headings if h.level == 2]
     failures: list[str] = []
-    for earlier, later in zip(h2s, h2s[1:]):
+    for earlier, later in pairwise(h2s):
         if order_key(later.version) >= order_key(earlier.version):
             failures.append(
                 f"line {later.line_no}: v{later.version} must sort BELOW "

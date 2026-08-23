@@ -8,12 +8,13 @@ Baseline MEMBERSHIP is NOT authored here. It is read from the vendored
 provenance file `upstream/fedramp-rev5-baselines.json`, extracted from the
 FedRAMP PMO's own OSCAL profiles. Do not hand-edit the membership lists.
 
-History, so the mistake is not repeated: through v0.12.0 the Low and LI-SaaS
+History, so the mistake is not repeated: through v0.11.2 the Low and LI-SaaS
 lists were derived as `[c for c in FEDRAMP_MODERATE if "(" not in c][:125]`
 and `[:150]`. Because the source list is family-ordered, that truncation
 silently dropped every family from PS onward, so the shipped Low baseline was
-missing PS, RA, SA, SC, SI and SR in their entirety (69 controls, including
-RA-5, SC-7 and SI-2) while carrying 33 PM-family controls that SP 800-53B does
+missing PS, RA, SA, SC, SI and SR in their entirety (57 controls, including
+RA-5, SC-7 and SI-2; 69 controls are restored in total, the rest from families
+the truncation cut through mid-way) while carrying 33 PM-family controls that SP 800-53B does
 not allocate to any baseline. The control TEXT was correct, which made the
 membership error invisible on inspection. `_assert_baseline_invariants()`
 below now makes that class of error a build failure.
@@ -76,8 +77,8 @@ _WITHDRAWN = {"CM-8(5)", "CP-2(4)", "SA-12", "SC-13(1)"}
 def _assert_baseline_invariants() -> None:
     """Fail the build if the vendored membership violates a known-true property.
 
-    Every assertion here corresponds to a defect actually shipped before
-    v0.12.1, so each one is a regression test rather than a theoretical check.
+    Every assertion here corresponds to a defect actually shipped through
+    v0.11.2, so each one is a regression test rather than a theoretical check.
     Sources: the FedRAMP PMO OSCAL profiles for the counts and the nesting, and
     NIST SP 800-53B Table 3-13 (PM) and Table 3-15 (PT) for the exclusions.
     """
@@ -115,6 +116,27 @@ def _assert_baseline_invariants() -> None:
 
 
 _assert_baseline_invariants()
+
+
+def _families_present_in(controls: list[str]) -> list[str]:
+    """The subset of ``NIST_800_53_FAMILIES`` this baseline actually populates.
+
+    ``ControlCatalog.families`` is documented as "control families in this
+    catalog", and for OSCAL-sourced catalogs the loader DERIVES it from the
+    groups that really exist. A pointer catalog that hardcodes all 20 NIST
+    families breaks that contract the moment a baseline excludes one.
+
+    It does, now. Removing the 33 PM and 9 PT controls that SP 800-53B
+    Tables 3-13 and 3-15 allocate to no baseline leaves PM and PT declared
+    with zero members, so the GUI renders "323 top-level controls
+    (20 families)" for a catalog covering 18, telling an operator FedRAMP
+    Moderate covers Program Management and PII Processing when it does not.
+    Deriving the list keeps the count true for whatever the profiles say.
+
+    Order follows ``NIST_800_53_FAMILIES`` so output stays deterministic.
+    """
+    present = {cid.split("-", 1)[0] for cid in controls}
+    return [fam for fam in NIST_800_53_FAMILIES if fam.split(maxsplit=1)[0] in present]
 
 
 def _baseline_source(baseline_name: str) -> str:
@@ -160,7 +182,7 @@ for baseline_name, baseline_controls in [
         framework_name=f"FedRAMP Rev 5 {baseline_name.upper() if baseline_name=='li-saas' else baseline_name.capitalize()} Baseline",
         version="Rev 5 (profiles published 2024-09-24)",
         source=_baseline_source(baseline_name),
-        families=NIST_800_53_FAMILIES,
+        families=_families_present_in(baseline_controls),
         controls=[_make_pointer_control(c) for c in baseline_controls],
         tier="A",
     )

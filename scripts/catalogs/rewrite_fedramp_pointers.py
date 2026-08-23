@@ -7,7 +7,7 @@ full NIST catalog is bundled (see ``fetch_nist_oscal.py``), we can
 populate real titles and descriptions by control-ID lookup.
 
 A control that does not resolve against the bundled NIST catalog FAILS the
-run (exit 1). Through v0.12.0 this script only logged such controls, which is
+run (exit 1). Through v0.11.2 this script only logged such controls, which is
 how four withdrawn Rev 5 ids (CM-8(5), CP-2(4), SA-12, SC-13(1)) sat in the
 shipped baselines unnoticed while the membership itself was wrong. A baseline
 that claims a nonexistent control is a defect, so it is now loud.

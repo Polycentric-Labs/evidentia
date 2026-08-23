@@ -28,10 +28,10 @@ Evidentia ships **97** framework catalogs in-tree. Tier-A/B catalogs carry autho
 | `fda-524b-appendix1` | FDA Section 524B Premarket Cybersecurity — Security Control Categories | 2026-02-03 (final guidance) | A | control |
 | `fedramp-frr-2026` | FedRAMP Requirements — provider-facing rules (Consolidated Rules for 2026) | 2026.07.14.01 (CR26) | A | control |
 | `fedramp-ksi-2026` | FedRAMP Key Security Indicators (Consolidated Rules for 2026) | 2026.07.14.01 (CR26) | A | control |
-| `fedramp-rev5-high` | FedRAMP Rev 5 High Baseline | Rev 5 (2023) | A | control |
-| `fedramp-rev5-li-saas` | FedRAMP Rev 5 LI-SAAS Baseline | Rev 5 (2023) | A | control |
-| `fedramp-rev5-low` | FedRAMP Rev 5 Low Baseline | Rev 5 (2023) | A | control |
-| `fedramp-rev5-moderate` | FedRAMP Rev 5 Moderate Baseline | Rev 5 (2023) | A | control |
+| `fedramp-rev5-high` | FedRAMP Rev 5 High Baseline | Rev 5 (profiles published 2024-09-24) | A | control |
+| `fedramp-rev5-li-saas` | FedRAMP Rev 5 LI-SAAS Baseline | Rev 5 (profiles published 2024-09-24) | A | control |
+| `fedramp-rev5-low` | FedRAMP Rev 5 Low Baseline | Rev 5 (profiles published 2024-09-24) | A | control |
+| `fedramp-rev5-moderate` | FedRAMP Rev 5 Moderate Baseline | Rev 5 (profiles published 2024-09-24) | A | control |
 | `ffiec-audit` | FFIEC IT Examination Handbook — Audit booklet | April 2012 | A | control |
 | `ffiec-cat` | FFIEC Cybersecurity Assessment Tool | 2017 (representative subset) | A | control |
 | `ffiec-information-security` | FFIEC IT Examination Handbook — Information Security booklet | September 2016 | A | control |

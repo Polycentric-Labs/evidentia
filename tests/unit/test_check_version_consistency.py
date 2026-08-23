@@ -792,3 +792,78 @@ def test_real_repo_requires_python_in_sync_passes(check: Any) -> None:
     requires-python (the v2026-07 member-caps closeout acceptance gate)."""
     bump = check._load_bump_module()
     assert check.check_requires_python_in_sync(bump) == []
+
+
+# ── SIBLING PINS (v0.12.0) ─────────────────────────────────────────────
+
+
+def _write_pkg(root: Path, rel: str, body: str) -> None:
+    p = root / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(body, encoding="utf-8")
+
+
+def test_sibling_pins_pass_when_lower_bound_is_current(
+    check: Any, bump: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _write_pkg(tmp_path, "pyproject.toml", '[project]\nname = "root"\n')
+    _write_pkg(
+        tmp_path,
+        "packages/evidentia/pyproject.toml",
+        '[project]\n'
+        'dependencies = ["evidentia-core>=0.12.0,<0.13.0"]\n'
+        '[project.optional-dependencies]\n'
+        'worm-s3 = ["evidentia-core[worm-s3]>=0.12.0,<0.13.0"]\n',
+    )
+    monkeypatch.setattr(check, "REPO_ROOT", tmp_path)
+    _make_bump_with_tracked(
+        bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"]
+    )
+    assert check.check_sibling_pins_at_current(bump, "0.12.0") == []
+
+
+def test_sibling_pins_fail_on_the_worm_extra_regression(
+    check: Any, bump: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The exact shape that shipped broken in v0.11.0 and v0.11.2.
+
+    The base dependency moved with the release; the extra did not. Their
+    ranges no longer intersect, so ``pip install "evidentia[worm-s3]"`` fails
+    with ResolutionImpossible. ``bump_pin_range`` could not catch it because
+    it searches for the version being bumped FROM, and this pin was already
+    two minors behind, so it matched nothing.
+    """
+    _write_pkg(tmp_path, "pyproject.toml", '[project]\nname = "root"\n')
+    _write_pkg(
+        tmp_path,
+        "packages/evidentia/pyproject.toml",
+        '[project]\n'
+        'dependencies = ["evidentia-core>=0.12.0,<0.13.0"]\n'
+        '[project.optional-dependencies]\n'
+        'worm-s3 = ["evidentia-core[worm-s3]>=0.10.0,<0.11.0"]\n',
+    )
+    monkeypatch.setattr(check, "REPO_ROOT", tmp_path)
+    _make_bump_with_tracked(
+        bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"]
+    )
+    failures = check.check_sibling_pins_at_current(bump, "0.12.0")
+    assert len(failures) == 1
+    assert "optional-dependencies.worm-s3" in failures[0]
+    assert ">=0.10.0" in failures[0]
+
+
+def test_sibling_pins_ignore_third_party_lookalikes(
+    check: Any, bump: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A third-party dep sharing the range shape must not be flagged (F-V100-M1)."""
+    _write_pkg(tmp_path, "pyproject.toml", '[project]\nname = "root"\n')
+    _write_pkg(
+        tmp_path,
+        "packages/evidentia/pyproject.toml",
+        '[project]\ndependencies = ["py-ocsf-models>=0.9.0,<0.10.0"]\n',
+    )
+    monkeypatch.setattr(check, "REPO_ROOT", tmp_path)
+    _make_bump_with_tracked(
+        bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"]
+    )
+    assert check.check_sibling_pins_at_current(bump, "0.12.0") == []
