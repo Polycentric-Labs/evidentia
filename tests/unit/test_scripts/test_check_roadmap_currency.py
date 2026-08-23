@@ -379,20 +379,70 @@ def test_broken_tree_shape_fires_a1_a2_a3(rc, tmp_path: Path) -> None:
 
 
 def test_fixed_tree_shape_is_green(rc, tmp_path: Path) -> None:
+    """The green shape is newest-first: h2 versions descend down the file (A5)."""
     roadmap = (
-        "## v0.10.x — research line — SHIPPED\n"
-        "### v0.10.5 — artifacts — SHIPPED\n"
-        "### v0.10.6 — crosswalks — SHIPPED\n"
+        "## v1.0 — stability — RESERVED\n"
         "## v0.11 — federal theme — PLANNED\n"
         "Full plan: [v0.11-plan.md](releases/plans/v0.11-plan.md).\n"
         "### v1.1+ — later — RESERVED\n"
-        "## v1.0 — stability — RESERVED\n"
+        "## v0.10.x — research line — SHIPPED\n"
+        "### v0.10.5 — artifacts — SHIPPED\n"
+        "### v0.10.6 — crosswalks — SHIPPED\n"
     )
     report = rc.run_checks(
         roadmap, changelog("0.10.5", "0.10.6"), _docs_tree(tmp_path, "v0.11-plan.md")
     )
     assert report.failures == []
     assert report.a4_advisory == []
+
+
+# ── A5 descending version order ─────────────────────────────────────────────
+
+
+def test_a5_passes_on_descending_h2_order(rc) -> None:
+    headings, _ = rc.parse_roadmap(
+        "## v1.0 — stability — RESERVED\n"
+        "## v0.12 — hardening — SHIPPED\n"
+        "## v0.9.9 — hygiene — SHIPPED\n"
+    )
+    assert rc.check_a5_descending_version_order(headings) == []
+
+
+def test_a5_fires_on_ascending_h2_order(rc) -> None:
+    """The through-v0.11.2 shape: oldest at the top, which buried the open cycle
+    2,300 lines down and left a stale wish list sitting below v1.0."""
+    headings, _ = rc.parse_roadmap(
+        "## v0.3.0 — first — SHIPPED\n"
+        "## v0.9.0 — federal — SHIPPED\n"
+        "## v1.0 — stability — PLANNED\n"
+    )
+    failures = rc.check_a5_descending_version_order(headings)
+    assert len(failures) == 2
+    assert "must sort BELOW" in failures[0]
+
+
+def test_a5_tolerates_umbrella_and_plus_forms(rc) -> None:
+    """``_numeric_key`` raises on ``x``; A5 carries its own key so ``v0.10.x``
+    and ``v1.1+`` do not crash the gate."""
+    headings, _ = rc.parse_roadmap(
+        "## v1.1+ — later — RESERVED\n"
+        "## v0.10.x — research line — SHIPPED\n"
+        "## v0.10.5 — artifacts — SHIPPED\n"
+    )
+    assert rc.check_a5_descending_version_order(headings) == []
+
+
+def test_a5_counts_toward_gate_failure(rc, tmp_path: Path) -> None:
+    """A5 is a failing assertion, not an advisory like A4."""
+    report = rc.run_checks(
+        "## v0.11 — theme — PLANNED\n"
+        "Full plan: [p](releases/plans/v0.11-plan.md).\n"
+        "## v1.0 — later — RESERVED\n",
+        changelog("0.10.5"),
+        _docs_tree(tmp_path, "v0.11-plan.md"),
+    )
+    assert report.a5
+    assert report.failures
 
 
 def test_real_repo_documents_parse(rc) -> None:

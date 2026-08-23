@@ -66,6 +66,7 @@ import json
 import re
 import sys
 from dataclasses import dataclass
+from itertools import pairwise
 from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).resolve().parent
@@ -84,6 +85,48 @@ _CHANGELOG_VERSION_RE = re.compile(r"^## \[(\d+\.\d+\.\d+(?:\.\d+)?)\]", re.MULT
 # A markdown link target of the form `releases/plans/v<...>.md` (hrefs in the
 # ROADMAP are docs/-relative).
 _PLAN_LINK_RE = re.compile(r"\(((?:\./)?releases/plans/v[0-9][\w.+-]*\.md)\)")
+
+
+
+def check_a5_descending_version_order(headings: list[Heading]) -> list[str]:
+    """A5, h2 version headings appear in strictly DESCENDING version order.
+
+    The roadmap reads newest-first: the open cycle and the most recent releases
+    are at the top, the oldest at the bottom. Through v0.11.2 the file was
+    ascending, which put a stale `v0.7.0+` wish list BELOW the v1.0 section and
+    made the reader scroll 2,300 lines to find current work. Ordering is a
+    structural claim like any other, so it is gated rather than trusted.
+
+    Only h2 headings participate. h3 entries nest inside their cycle and are
+    deliberately not constrained here.
+    """
+    def order_key(version: str) -> tuple[int, int, int]:
+        """Sortable key tolerant of the umbrella forms `_numeric_key` rejects.
+
+        `v0.10.x` (a whole line) sorts ABOVE its concrete patches; a bare cycle
+        like `v0.11` sorts BELOW them, which is where the file already puts it.
+        """
+        core = version.rstrip("+")
+        parts = core.split(".")
+        major, minor = int(parts[0]), int(parts[1])
+        if len(parts) < 3:
+            patch = -1
+        elif parts[2] == "x":
+            patch = 10_000
+        else:
+            patch = int(parts[2])
+        return (major, minor, patch)
+
+    h2s = [h for h in headings if h.level == 2]
+    failures: list[str] = []
+    for earlier, later in pairwise(h2s):
+        if order_key(later.version) >= order_key(earlier.version):
+            failures.append(
+                f"line {later.line_no}: v{later.version} must sort BELOW "
+                f"v{earlier.version} (line {earlier.line_no}); the roadmap is "
+                f"newest-first, so h2 versions descend down the file"
+            )
+    return failures
 
 
 @dataclass(frozen=True)
@@ -322,12 +365,13 @@ class Report:
     a2: list[str]
     a3: list[str]
     a4_advisory: list[str]
+    a5: list[str]
     heading_count: int
     shipped_count: int
 
     @property
     def failures(self) -> list[str]:
-        return self.a0 + self.a1 + self.a2 + self.a3
+        return self.a0 + self.a1 + self.a2 + self.a3 + self.a5
 
 
 def run_checks(roadmap_text: str, changelog_text: str, docs_dir: Path) -> Report:
@@ -341,6 +385,7 @@ def run_checks(roadmap_text: str, changelog_text: str, docs_dir: Path) -> Report
         a2=check_a2_planned_umbrella_pure(headings, h2_lines, len(roadmap_lines)),
         a3=check_a3_open_cycle_has_plan(headings, h2_lines, roadmap_lines, docs_dir),
         a4_advisory=check_a4_latest_cycle_backfilled(headings, shipped),
+        a5=check_a5_descending_version_order(headings),
         heading_count=len(headings),
         shipped_count=len(shipped),
     )
@@ -351,6 +396,7 @@ _SECTIONS = (
     ("a1", "A1 planned-never-shipped", "no PLANNED/RESERVED heading has shipped."),
     ("a2", "A2 umbrella-consistency", "no PLANNED umbrella holds SHIPPED entries."),
     ("a3", "A3 open-cycle-plan-doc", "the open cycle links an on-disk plan doc."),
+    ("a5", "A5 descending-version-order", "h2 versions descend down the file (newest first)."),
 )
 
 
@@ -379,6 +425,7 @@ def main(argv: list[str] | None = None) -> int:
                     "a1_failures": report.a1,
                     "a2_failures": report.a2,
                     "a3_failures": report.a3,
+                    "a5_failures": report.a5,
                     "a4_advisory": report.a4_advisory,
                 },
                 indent=2,

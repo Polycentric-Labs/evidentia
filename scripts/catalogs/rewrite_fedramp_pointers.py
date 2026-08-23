@@ -6,9 +6,11 @@ pointer-only — each control's description was the literal placeholder
 full NIST catalog is bundled (see ``fetch_nist_oscal.py``), we can
 populate real titles and descriptions by control-ID lookup.
 
-Controls that don't exist in the bundled NIST catalog (rare — usually
-FedRAMP-specific enhancements) are left with their original pointer
-text and flagged in the script output so a human can review.
+A control that does not resolve against the bundled NIST catalog FAILS the
+run (exit 1). Through v0.11.2 this script only logged such controls, which is
+how four withdrawn Rev 5 ids (CM-8(5), CP-2(4), SA-12, SC-13(1)) sat in the
+shipped baselines unnoticed while the membership itself was wrong. A baseline
+that claims a nonexistent control is a defect, so it is now loud.
 
 Run via: ``uv run python scripts/catalogs/rewrite_fedramp_pointers.py``
 """
@@ -73,8 +75,16 @@ def _load_nist_lookup() -> dict:
     return lookup, _normalize_control_id
 
 
-def rewrite_fedramp(path: Path, nist_lookup, normalize) -> None:
-    """In-place rewrite: replace pointer descriptions with NIST content."""
+def rewrite_fedramp(path: Path, nist_lookup, normalize) -> list[str]:
+    """In-place rewrite: replace pointer descriptions with NIST content.
+
+    Returns the control IDs that could not be resolved against the bundled NIST
+    catalog. An unresolved ID is a DEFECT, not a curiosity: it means a baseline
+    claims a control that does not exist in NIST SP 800-53 Rev 5, which is how
+    the four withdrawn controls (CM-8(5), CP-2(4), SA-12, SC-13(1)) survived in
+    the shipped baselines while the membership itself was wrong. The caller
+    fails the run on any unresolved ID.
+    """
     data = json.loads(path.read_text(encoding="utf-8"))
     controls = data.get("controls", [])
 
@@ -109,10 +119,11 @@ def rewrite_fedramp(path: Path, nist_lookup, normalize) -> None:
         unresolved_count,
     )
     if unresolved_ids:
-        logger.info(
-            "  unresolved IDs (kept pointer text): %s",
-            ", ".join(unresolved_ids[:10]) + ("..." if len(unresolved_ids) > 10 else ""),
+        logger.error(
+            "  UNRESOLVED IDs (no such active control in NIST SP 800-53 Rev 5): %s",
+            ", ".join(unresolved_ids),
         )
+    return unresolved_ids
 
 
 def main() -> None:
@@ -120,13 +131,28 @@ def main() -> None:
         level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
     )
     nist_lookup, normalize = _load_nist_lookup()
+    unresolved: dict[str, list[str]] = {}
     for fname in FEDRAMP_FILES:
         path = DATA_DIR / fname
         if not path.exists():
             logger.warning("Skipping missing file: %s", path)
             continue
-        rewrite_fedramp(path, nist_lookup, normalize)
-    logger.info("Done. Re-run scripts/catalogs/regenerate_manifest.py.")
+        bad = rewrite_fedramp(path, nist_lookup, normalize)
+        if bad:
+            unresolved[fname] = bad
+    if unresolved:
+        logger.error(
+            "FAILED: %d baseline file(s) reference controls that do not exist in "
+            "NIST SP 800-53 Rev 5. A baseline must never claim a withdrawn or "
+            "nonexistent control. Fix the membership in "
+            "scripts/catalogs/upstream/fedramp-rev5-baselines.json, do not "
+            "suppress this check.",
+            len(unresolved),
+        )
+        for fname, ids in unresolved.items():
+            logger.error("  %s: %s", fname, ", ".join(ids))
+        raise SystemExit(1)
+    logger.info("Done, every control resolved. Re-run scripts/catalogs/regenerate_manifest.py.")
 
 
 if __name__ == "__main__":

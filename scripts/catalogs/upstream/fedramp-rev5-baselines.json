@@ -1,0 +1,1596 @@
+{
+  "_comment": "Vendored FedRAMP Rev 5 baseline membership. Source of truth for scripts/catalogs/gen_fedramp_cmmc.py. Do NOT hand-edit: regenerate with the builder described in provenance.builder. The four baselines nest strictly (low == li-saas as sets; low < moderate < high; union == high), which the generator asserts at build time.",
+  "provenance": {
+    "source_name": "FedRAMP Rev 5 baselines, OSCAL profiles authored by the FedRAMP PMO",
+    "source_url": "https://raw.githubusercontent.com/OSCAL-Foundation/fedramp-resources/main/baselines/rev5/json/",
+    "republisher": "OSCAL-Foundation/fedramp-resources (GSA/fedramp-automation was taken down; HTTP 404)",
+    "published": "2024-09-24T02:24:00Z",
+    "retrieved": "2026-08-22",
+    "validation": "Membership cross-validated three ways by the research pass (profile with-ids, resolved-catalog walk, and Internet Archive copies of the deleted GSA originals, identical in set and order), then independently re-extracted here from the profiles and re-checked against every invariant.",
+    "builder": "build_fedramp_vendor.py (maintainer-side extractor; re-derives this file from the source_url profiles and re-checks every invariant in gen_fedramp_cmmc.py::_assert_baseline_invariants)",
+    "files": {
+      "low": {
+        "file": "FedRAMP_rev5_LOW-baseline_profile.json",
+        "sha256": "2466a03f41d7ce73aeafbb5632124edf2a5e473e70231e194ba8d3cb54ce0c7f",
+        "bytes": 48936,
+        "git_blob_sha": "346b774ea09fc63c39fba15ad901566de4daab66",
+        "oscal_version": "1.1.3",
+        "profile_version": "fedramp-3.0.0rc1-oscal-1.1.2"
+      },
+      "moderate": {
+        "file": "FedRAMP_rev5_MODERATE-baseline_profile.json",
+        "sha256": "9a31036e9f66e0d8cd9d15a981a9f956e9043562a882f44bd78048c7a86820e2",
+        "bytes": 69812,
+        "git_blob_sha": "86f802c587eef9ee1e8ada848a518ea38c1580bf",
+        "oscal_version": "1.1.3",
+        "profile_version": "fedramp-3.0.0rc1-oscal-1.1.2"
+      },
+      "high": {
+        "file": "FedRAMP_rev5_HIGH-baseline_profile.json",
+        "sha256": "aca424c31a1c633758d22fc0cef6e80c43bd8300d01acd240b59c8318e0d4545",
+        "bytes": 77673,
+        "git_blob_sha": "7b311df3497935cf8ab610206ed3e39b06e6ae91",
+        "oscal_version": "1.1.3",
+        "profile_version": "fedramp-3.0.0rc1-oscal-1.1.2"
+      },
+      "li-saas": {
+        "file": "FedRAMP_rev5_LI-SaaS-baseline_profile.json",
+        "sha256": "c0e2b602c12456a307d8a36d35ec135d2b30e603a6e343082f565bde8d933305",
+        "bytes": 193706,
+        "git_blob_sha": "f16124ffca016d81964cd546b360c15926b96b82",
+        "oscal_version": "1.1.3",
+        "profile_version": "fedramp-3.0.0rc1-oscal-1.1.2"
+      }
+    },
+    "shelf_life": "Rev 5 is on FedRAMP's legacy track (20x and CR26 lead). The upstream that would have signalled change (GSA/fedramp-automation) no longer exists, so any freshness sentinel must point at OSCAL-Foundation/fedramp-resources."
+  },
+  "notes": {
+    "pm_pt_excluded": "SP 800-53B Table 3-13 (PM) and Table 3-15 (PT): not allocated to the security control baselines. Neither family appears in any FedRAMP baseline.",
+    "li_saas": "LI-SaaS selects exactly the same 156 control ids as Low, in the same order. The FedRAMP Tailored tailoring is NOT a smaller control set: it is the per-control `method` property carried in li_saas_methods below. A catalog that stores only ids cannot express attest-versus-assess.",
+    "withdrawn": "CM-8(5), CP-2(4), SA-12 and SC-13(1) are withdrawn in NIST SP 800-53 Rev 5 and must never appear in a baseline."
+  },
+  "baselines": {
+    "low": [
+      "AC-1",
+      "AC-2",
+      "AC-3",
+      "AC-7",
+      "AC-8",
+      "AC-14",
+      "AC-17",
+      "AC-18",
+      "AC-19",
+      "AC-20",
+      "AC-22",
+      "AT-1",
+      "AT-2",
+      "AT-2(2)",
+      "AT-3",
+      "AT-4",
+      "AU-1",
+      "AU-2",
+      "AU-3",
+      "AU-4",
+      "AU-5",
+      "AU-6",
+      "AU-8",
+      "AU-9",
+      "AU-11",
+      "AU-12",
+      "CA-1",
+      "CA-2",
+      "CA-2(1)",
+      "CA-3",
+      "CA-5",
+      "CA-6",
+      "CA-7",
+      "CA-7(4)",
+      "CA-8",
+      "CA-9",
+      "CM-1",
+      "CM-2",
+      "CM-4",
+      "CM-5",
+      "CM-6",
+      "CM-7",
+      "CM-8",
+      "CM-10",
+      "CM-11",
+      "CP-1",
+      "CP-2",
+      "CP-3",
+      "CP-4",
+      "CP-9",
+      "CP-10",
+      "IA-1",
+      "IA-2",
+      "IA-2(1)",
+      "IA-2(2)",
+      "IA-2(8)",
+      "IA-2(12)",
+      "IA-4",
+      "IA-5",
+      "IA-5(1)",
+      "IA-6",
+      "IA-7",
+      "IA-8",
+      "IA-8(1)",
+      "IA-8(2)",
+      "IA-8(4)",
+      "IA-11",
+      "IR-1",
+      "IR-2",
+      "IR-4",
+      "IR-5",
+      "IR-6",
+      "IR-7",
+      "IR-8",
+      "MA-1",
+      "MA-2",
+      "MA-4",
+      "MA-5",
+      "MP-1",
+      "MP-2",
+      "MP-6",
+      "MP-7",
+      "PE-1",
+      "PE-2",
+      "PE-3",
+      "PE-6",
+      "PE-8",
+      "PE-12",
+      "PE-13",
+      "PE-14",
+      "PE-15",
+      "PE-16",
+      "PL-1",
+      "PL-2",
+      "PL-4",
+      "PL-4(1)",
+      "PL-8",
+      "PL-10",
+      "PL-11",
+      "PS-1",
+      "PS-2",
+      "PS-3",
+      "PS-4",
+      "PS-5",
+      "PS-6",
+      "PS-7",
+      "PS-8",
+      "PS-9",
+      "RA-1",
+      "RA-2",
+      "RA-3",
+      "RA-3(1)",
+      "RA-5",
+      "RA-5(2)",
+      "RA-5(11)",
+      "RA-7",
+      "SA-1",
+      "SA-2",
+      "SA-3",
+      "SA-4",
+      "SA-4(10)",
+      "SA-5",
+      "SA-8",
+      "SA-9",
+      "SA-22",
+      "SC-1",
+      "SC-5",
+      "SC-7",
+      "SC-8",
+      "SC-8(1)",
+      "SC-12",
+      "SC-13",
+      "SC-15",
+      "SC-20",
+      "SC-21",
+      "SC-22",
+      "SC-28",
+      "SC-28(1)",
+      "SC-39",
+      "SI-1",
+      "SI-2",
+      "SI-3",
+      "SI-4",
+      "SI-5",
+      "SI-12",
+      "SR-1",
+      "SR-2",
+      "SR-2(1)",
+      "SR-3",
+      "SR-5",
+      "SR-8",
+      "SR-10",
+      "SR-11",
+      "SR-11(1)",
+      "SR-11(2)",
+      "SR-12"
+    ],
+    "moderate": [
+      "AC-1",
+      "AC-2",
+      "AC-2(1)",
+      "AC-2(2)",
+      "AC-2(3)",
+      "AC-2(4)",
+      "AC-2(5)",
+      "AC-2(7)",
+      "AC-2(9)",
+      "AC-2(12)",
+      "AC-2(13)",
+      "AC-3",
+      "AC-4",
+      "AC-4(21)",
+      "AC-5",
+      "AC-6",
+      "AC-6(1)",
+      "AC-6(2)",
+      "AC-6(5)",
+      "AC-6(7)",
+      "AC-6(9)",
+      "AC-6(10)",
+      "AC-7",
+      "AC-8",
+      "AC-11",
+      "AC-11(1)",
+      "AC-12",
+      "AC-14",
+      "AC-17",
+      "AC-17(1)",
+      "AC-17(2)",
+      "AC-17(3)",
+      "AC-17(4)",
+      "AC-18",
+      "AC-18(1)",
+      "AC-18(3)",
+      "AC-19",
+      "AC-19(5)",
+      "AC-20",
+      "AC-20(1)",
+      "AC-20(2)",
+      "AC-21",
+      "AC-22",
+      "AT-1",
+      "AT-2",
+      "AT-2(2)",
+      "AT-2(3)",
+      "AT-3",
+      "AT-4",
+      "AU-1",
+      "AU-2",
+      "AU-3",
+      "AU-3(1)",
+      "AU-4",
+      "AU-5",
+      "AU-6",
+      "AU-6(1)",
+      "AU-6(3)",
+      "AU-7",
+      "AU-7(1)",
+      "AU-8",
+      "AU-9",
+      "AU-9(4)",
+      "AU-11",
+      "AU-12",
+      "CA-1",
+      "CA-2",
+      "CA-2(1)",
+      "CA-2(3)",
+      "CA-3",
+      "CA-5",
+      "CA-6",
+      "CA-7",
+      "CA-7(1)",
+      "CA-7(4)",
+      "CA-8",
+      "CA-8(1)",
+      "CA-8(2)",
+      "CA-9",
+      "CM-1",
+      "CM-2",
+      "CM-2(2)",
+      "CM-2(3)",
+      "CM-2(7)",
+      "CM-3",
+      "CM-3(2)",
+      "CM-3(4)",
+      "CM-4",
+      "CM-4(2)",
+      "CM-5",
+      "CM-5(1)",
+      "CM-5(5)",
+      "CM-6",
+      "CM-6(1)",
+      "CM-7",
+      "CM-7(1)",
+      "CM-7(2)",
+      "CM-7(5)",
+      "CM-8",
+      "CM-8(1)",
+      "CM-8(3)",
+      "CM-9",
+      "CM-10",
+      "CM-11",
+      "CM-12",
+      "CM-12(1)",
+      "CP-1",
+      "CP-2",
+      "CP-2(1)",
+      "CP-2(3)",
+      "CP-2(8)",
+      "CP-3",
+      "CP-4",
+      "CP-4(1)",
+      "CP-6",
+      "CP-6(1)",
+      "CP-6(3)",
+      "CP-7",
+      "CP-7(1)",
+      "CP-7(2)",
+      "CP-7(3)",
+      "CP-8",
+      "CP-8(1)",
+      "CP-8(2)",
+      "CP-9",
+      "CP-9(1)",
+      "CP-9(8)",
+      "CP-10",
+      "CP-10(2)",
+      "IA-1",
+      "IA-2",
+      "IA-2(1)",
+      "IA-2(2)",
+      "IA-2(5)",
+      "IA-2(6)",
+      "IA-2(8)",
+      "IA-2(12)",
+      "IA-3",
+      "IA-4",
+      "IA-4(4)",
+      "IA-5",
+      "IA-5(1)",
+      "IA-5(2)",
+      "IA-5(6)",
+      "IA-5(7)",
+      "IA-6",
+      "IA-7",
+      "IA-8",
+      "IA-8(1)",
+      "IA-8(2)",
+      "IA-8(4)",
+      "IA-11",
+      "IA-12",
+      "IA-12(2)",
+      "IA-12(3)",
+      "IA-12(5)",
+      "IR-1",
+      "IR-2",
+      "IR-3",
+      "IR-3(2)",
+      "IR-4",
+      "IR-4(1)",
+      "IR-5",
+      "IR-6",
+      "IR-6(1)",
+      "IR-6(3)",
+      "IR-7",
+      "IR-7(1)",
+      "IR-8",
+      "IR-9",
+      "IR-9(2)",
+      "IR-9(3)",
+      "IR-9(4)",
+      "MA-1",
+      "MA-2",
+      "MA-3",
+      "MA-3(1)",
+      "MA-3(2)",
+      "MA-3(3)",
+      "MA-4",
+      "MA-5",
+      "MA-5(1)",
+      "MA-6",
+      "MP-1",
+      "MP-2",
+      "MP-3",
+      "MP-4",
+      "MP-5",
+      "MP-6",
+      "MP-7",
+      "PE-1",
+      "PE-2",
+      "PE-3",
+      "PE-4",
+      "PE-5",
+      "PE-6",
+      "PE-6(1)",
+      "PE-8",
+      "PE-9",
+      "PE-10",
+      "PE-11",
+      "PE-12",
+      "PE-13",
+      "PE-13(1)",
+      "PE-13(2)",
+      "PE-14",
+      "PE-15",
+      "PE-16",
+      "PE-17",
+      "PL-1",
+      "PL-2",
+      "PL-4",
+      "PL-4(1)",
+      "PL-8",
+      "PL-10",
+      "PL-11",
+      "PS-1",
+      "PS-2",
+      "PS-3",
+      "PS-3(3)",
+      "PS-4",
+      "PS-5",
+      "PS-6",
+      "PS-7",
+      "PS-8",
+      "PS-9",
+      "RA-1",
+      "RA-2",
+      "RA-3",
+      "RA-3(1)",
+      "RA-5",
+      "RA-5(2)",
+      "RA-5(3)",
+      "RA-5(5)",
+      "RA-5(11)",
+      "RA-7",
+      "RA-9",
+      "SA-1",
+      "SA-2",
+      "SA-3",
+      "SA-4",
+      "SA-4(1)",
+      "SA-4(2)",
+      "SA-4(9)",
+      "SA-4(10)",
+      "SA-5",
+      "SA-8",
+      "SA-9",
+      "SA-9(1)",
+      "SA-9(2)",
+      "SA-9(5)",
+      "SA-10",
+      "SA-11",
+      "SA-11(1)",
+      "SA-11(2)",
+      "SA-15",
+      "SA-15(3)",
+      "SA-22",
+      "SC-1",
+      "SC-2",
+      "SC-4",
+      "SC-5",
+      "SC-7",
+      "SC-7(3)",
+      "SC-7(4)",
+      "SC-7(5)",
+      "SC-7(7)",
+      "SC-7(8)",
+      "SC-7(12)",
+      "SC-7(18)",
+      "SC-8",
+      "SC-8(1)",
+      "SC-10",
+      "SC-12",
+      "SC-13",
+      "SC-15",
+      "SC-17",
+      "SC-18",
+      "SC-20",
+      "SC-21",
+      "SC-22",
+      "SC-23",
+      "SC-28",
+      "SC-28(1)",
+      "SC-39",
+      "SC-45",
+      "SC-45(1)",
+      "SI-1",
+      "SI-2",
+      "SI-2(2)",
+      "SI-2(3)",
+      "SI-3",
+      "SI-4",
+      "SI-4(1)",
+      "SI-4(2)",
+      "SI-4(4)",
+      "SI-4(5)",
+      "SI-4(16)",
+      "SI-4(18)",
+      "SI-4(23)",
+      "SI-5",
+      "SI-6",
+      "SI-7",
+      "SI-7(1)",
+      "SI-7(7)",
+      "SI-8",
+      "SI-8(2)",
+      "SI-10",
+      "SI-11",
+      "SI-12",
+      "SI-16",
+      "SR-1",
+      "SR-2",
+      "SR-2(1)",
+      "SR-3",
+      "SR-5",
+      "SR-6",
+      "SR-8",
+      "SR-10",
+      "SR-11",
+      "SR-11(1)",
+      "SR-11(2)",
+      "SR-12"
+    ],
+    "high": [
+      "AC-1",
+      "AC-2",
+      "AC-2(1)",
+      "AC-2(2)",
+      "AC-2(3)",
+      "AC-2(4)",
+      "AC-2(5)",
+      "AC-2(7)",
+      "AC-2(9)",
+      "AC-2(11)",
+      "AC-2(12)",
+      "AC-2(13)",
+      "AC-3",
+      "AC-4",
+      "AC-4(4)",
+      "AC-4(21)",
+      "AC-5",
+      "AC-6",
+      "AC-6(1)",
+      "AC-6(2)",
+      "AC-6(3)",
+      "AC-6(5)",
+      "AC-6(7)",
+      "AC-6(8)",
+      "AC-6(9)",
+      "AC-6(10)",
+      "AC-7",
+      "AC-8",
+      "AC-10",
+      "AC-11",
+      "AC-11(1)",
+      "AC-12",
+      "AC-14",
+      "AC-17",
+      "AC-17(1)",
+      "AC-17(2)",
+      "AC-17(3)",
+      "AC-17(4)",
+      "AC-18",
+      "AC-18(1)",
+      "AC-18(3)",
+      "AC-18(4)",
+      "AC-18(5)",
+      "AC-19",
+      "AC-19(5)",
+      "AC-20",
+      "AC-20(1)",
+      "AC-20(2)",
+      "AC-21",
+      "AC-22",
+      "AT-1",
+      "AT-2",
+      "AT-2(2)",
+      "AT-2(3)",
+      "AT-3",
+      "AT-4",
+      "AU-1",
+      "AU-2",
+      "AU-3",
+      "AU-3(1)",
+      "AU-4",
+      "AU-5",
+      "AU-5(1)",
+      "AU-5(2)",
+      "AU-6",
+      "AU-6(1)",
+      "AU-6(3)",
+      "AU-6(4)",
+      "AU-6(5)",
+      "AU-6(6)",
+      "AU-6(7)",
+      "AU-7",
+      "AU-7(1)",
+      "AU-8",
+      "AU-9",
+      "AU-9(2)",
+      "AU-9(3)",
+      "AU-9(4)",
+      "AU-10",
+      "AU-11",
+      "AU-12",
+      "AU-12(1)",
+      "AU-12(3)",
+      "CA-1",
+      "CA-2",
+      "CA-2(1)",
+      "CA-2(2)",
+      "CA-2(3)",
+      "CA-3",
+      "CA-3(6)",
+      "CA-5",
+      "CA-6",
+      "CA-7",
+      "CA-7(1)",
+      "CA-7(4)",
+      "CA-8",
+      "CA-8(1)",
+      "CA-8(2)",
+      "CA-9",
+      "CM-1",
+      "CM-2",
+      "CM-2(2)",
+      "CM-2(3)",
+      "CM-2(7)",
+      "CM-3",
+      "CM-3(1)",
+      "CM-3(2)",
+      "CM-3(4)",
+      "CM-3(6)",
+      "CM-4",
+      "CM-4(1)",
+      "CM-4(2)",
+      "CM-5",
+      "CM-5(1)",
+      "CM-5(5)",
+      "CM-6",
+      "CM-6(1)",
+      "CM-6(2)",
+      "CM-7",
+      "CM-7(1)",
+      "CM-7(2)",
+      "CM-7(5)",
+      "CM-8",
+      "CM-8(1)",
+      "CM-8(2)",
+      "CM-8(3)",
+      "CM-8(4)",
+      "CM-9",
+      "CM-10",
+      "CM-11",
+      "CM-12",
+      "CM-12(1)",
+      "CM-14",
+      "CP-1",
+      "CP-2",
+      "CP-2(1)",
+      "CP-2(2)",
+      "CP-2(3)",
+      "CP-2(5)",
+      "CP-2(8)",
+      "CP-3",
+      "CP-3(1)",
+      "CP-4",
+      "CP-4(1)",
+      "CP-4(2)",
+      "CP-6",
+      "CP-6(1)",
+      "CP-6(2)",
+      "CP-6(3)",
+      "CP-7",
+      "CP-7(1)",
+      "CP-7(2)",
+      "CP-7(3)",
+      "CP-7(4)",
+      "CP-8",
+      "CP-8(1)",
+      "CP-8(2)",
+      "CP-8(3)",
+      "CP-8(4)",
+      "CP-9",
+      "CP-9(1)",
+      "CP-9(2)",
+      "CP-9(3)",
+      "CP-9(5)",
+      "CP-9(8)",
+      "CP-10",
+      "CP-10(2)",
+      "CP-10(4)",
+      "IA-1",
+      "IA-2",
+      "IA-2(1)",
+      "IA-2(2)",
+      "IA-2(5)",
+      "IA-2(6)",
+      "IA-2(8)",
+      "IA-2(12)",
+      "IA-3",
+      "IA-4",
+      "IA-4(4)",
+      "IA-5",
+      "IA-5(1)",
+      "IA-5(2)",
+      "IA-5(6)",
+      "IA-5(7)",
+      "IA-5(8)",
+      "IA-5(13)",
+      "IA-6",
+      "IA-7",
+      "IA-8",
+      "IA-8(1)",
+      "IA-8(2)",
+      "IA-8(4)",
+      "IA-11",
+      "IA-12",
+      "IA-12(2)",
+      "IA-12(3)",
+      "IA-12(4)",
+      "IA-12(5)",
+      "IR-1",
+      "IR-2",
+      "IR-2(1)",
+      "IR-2(2)",
+      "IR-3",
+      "IR-3(2)",
+      "IR-4",
+      "IR-4(1)",
+      "IR-4(2)",
+      "IR-4(4)",
+      "IR-4(6)",
+      "IR-4(11)",
+      "IR-5",
+      "IR-5(1)",
+      "IR-6",
+      "IR-6(1)",
+      "IR-6(3)",
+      "IR-7",
+      "IR-7(1)",
+      "IR-8",
+      "IR-9",
+      "IR-9(2)",
+      "IR-9(3)",
+      "IR-9(4)",
+      "MA-1",
+      "MA-2",
+      "MA-2(2)",
+      "MA-3",
+      "MA-3(1)",
+      "MA-3(2)",
+      "MA-3(3)",
+      "MA-4",
+      "MA-4(3)",
+      "MA-5",
+      "MA-5(1)",
+      "MA-6",
+      "MP-1",
+      "MP-2",
+      "MP-3",
+      "MP-4",
+      "MP-5",
+      "MP-6",
+      "MP-6(1)",
+      "MP-6(2)",
+      "MP-6(3)",
+      "MP-7",
+      "PE-1",
+      "PE-2",
+      "PE-3",
+      "PE-3(1)",
+      "PE-4",
+      "PE-5",
+      "PE-6",
+      "PE-6(1)",
+      "PE-6(4)",
+      "PE-8",
+      "PE-8(1)",
+      "PE-9",
+      "PE-10",
+      "PE-11",
+      "PE-11(1)",
+      "PE-12",
+      "PE-13",
+      "PE-13(1)",
+      "PE-13(2)",
+      "PE-14",
+      "PE-14(2)",
+      "PE-15",
+      "PE-15(1)",
+      "PE-16",
+      "PE-17",
+      "PE-18",
+      "PL-1",
+      "PL-2",
+      "PL-4",
+      "PL-4(1)",
+      "PL-8",
+      "PL-10",
+      "PL-11",
+      "PS-1",
+      "PS-2",
+      "PS-3",
+      "PS-3(3)",
+      "PS-4",
+      "PS-4(2)",
+      "PS-5",
+      "PS-6",
+      "PS-7",
+      "PS-8",
+      "PS-9",
+      "RA-1",
+      "RA-2",
+      "RA-3",
+      "RA-3(1)",
+      "RA-5",
+      "RA-5(2)",
+      "RA-5(3)",
+      "RA-5(4)",
+      "RA-5(5)",
+      "RA-5(8)",
+      "RA-5(11)",
+      "RA-7",
+      "RA-9",
+      "SA-1",
+      "SA-2",
+      "SA-3",
+      "SA-4",
+      "SA-4(1)",
+      "SA-4(2)",
+      "SA-4(5)",
+      "SA-4(9)",
+      "SA-4(10)",
+      "SA-5",
+      "SA-8",
+      "SA-9",
+      "SA-9(1)",
+      "SA-9(2)",
+      "SA-9(5)",
+      "SA-10",
+      "SA-11",
+      "SA-11(1)",
+      "SA-11(2)",
+      "SA-15",
+      "SA-15(3)",
+      "SA-16",
+      "SA-17",
+      "SA-21",
+      "SA-22",
+      "SC-1",
+      "SC-2",
+      "SC-3",
+      "SC-4",
+      "SC-5",
+      "SC-7",
+      "SC-7(3)",
+      "SC-7(4)",
+      "SC-7(5)",
+      "SC-7(7)",
+      "SC-7(8)",
+      "SC-7(10)",
+      "SC-7(12)",
+      "SC-7(18)",
+      "SC-7(20)",
+      "SC-7(21)",
+      "SC-8",
+      "SC-8(1)",
+      "SC-10",
+      "SC-12",
+      "SC-12(1)",
+      "SC-13",
+      "SC-15",
+      "SC-17",
+      "SC-18",
+      "SC-20",
+      "SC-21",
+      "SC-22",
+      "SC-23",
+      "SC-24",
+      "SC-28",
+      "SC-28(1)",
+      "SC-39",
+      "SC-45",
+      "SC-45(1)",
+      "SI-1",
+      "SI-2",
+      "SI-2(2)",
+      "SI-2(3)",
+      "SI-3",
+      "SI-4",
+      "SI-4(1)",
+      "SI-4(2)",
+      "SI-4(4)",
+      "SI-4(5)",
+      "SI-4(10)",
+      "SI-4(11)",
+      "SI-4(12)",
+      "SI-4(14)",
+      "SI-4(16)",
+      "SI-4(18)",
+      "SI-4(19)",
+      "SI-4(20)",
+      "SI-4(22)",
+      "SI-4(23)",
+      "SI-5",
+      "SI-5(1)",
+      "SI-6",
+      "SI-7",
+      "SI-7(1)",
+      "SI-7(2)",
+      "SI-7(5)",
+      "SI-7(7)",
+      "SI-7(15)",
+      "SI-8",
+      "SI-8(2)",
+      "SI-10",
+      "SI-11",
+      "SI-12",
+      "SI-16",
+      "SR-1",
+      "SR-2",
+      "SR-2(1)",
+      "SR-3",
+      "SR-5",
+      "SR-6",
+      "SR-8",
+      "SR-9",
+      "SR-9(1)",
+      "SR-10",
+      "SR-11",
+      "SR-11(1)",
+      "SR-11(2)",
+      "SR-12"
+    ],
+    "li-saas": [
+      "AC-1",
+      "AC-2",
+      "AC-3",
+      "AC-7",
+      "AC-8",
+      "AC-14",
+      "AC-17",
+      "AC-18",
+      "AC-19",
+      "AC-20",
+      "AC-22",
+      "AT-1",
+      "AT-2",
+      "AT-2(2)",
+      "AT-3",
+      "AT-4",
+      "AU-1",
+      "AU-2",
+      "AU-3",
+      "AU-4",
+      "AU-5",
+      "AU-6",
+      "AU-8",
+      "AU-9",
+      "AU-11",
+      "AU-12",
+      "CA-1",
+      "CA-2",
+      "CA-2(1)",
+      "CA-3",
+      "CA-5",
+      "CA-6",
+      "CA-7",
+      "CA-7(4)",
+      "CA-8",
+      "CA-9",
+      "CM-1",
+      "CM-2",
+      "CM-4",
+      "CM-5",
+      "CM-6",
+      "CM-7",
+      "CM-8",
+      "CM-10",
+      "CM-11",
+      "CP-1",
+      "CP-2",
+      "CP-3",
+      "CP-4",
+      "CP-9",
+      "CP-10",
+      "IA-1",
+      "IA-2",
+      "IA-2(1)",
+      "IA-2(2)",
+      "IA-2(8)",
+      "IA-2(12)",
+      "IA-4",
+      "IA-5",
+      "IA-5(1)",
+      "IA-6",
+      "IA-7",
+      "IA-8",
+      "IA-8(1)",
+      "IA-8(2)",
+      "IA-8(4)",
+      "IA-11",
+      "IR-1",
+      "IR-2",
+      "IR-4",
+      "IR-5",
+      "IR-6",
+      "IR-7",
+      "IR-8",
+      "MA-1",
+      "MA-2",
+      "MA-4",
+      "MA-5",
+      "MP-1",
+      "MP-2",
+      "MP-6",
+      "MP-7",
+      "PE-1",
+      "PE-2",
+      "PE-3",
+      "PE-6",
+      "PE-8",
+      "PE-12",
+      "PE-13",
+      "PE-14",
+      "PE-15",
+      "PE-16",
+      "PL-1",
+      "PL-2",
+      "PL-4",
+      "PL-4(1)",
+      "PL-8",
+      "PL-10",
+      "PL-11",
+      "PS-1",
+      "PS-2",
+      "PS-3",
+      "PS-4",
+      "PS-5",
+      "PS-6",
+      "PS-7",
+      "PS-8",
+      "PS-9",
+      "RA-1",
+      "RA-2",
+      "RA-3",
+      "RA-3(1)",
+      "RA-5",
+      "RA-5(2)",
+      "RA-5(11)",
+      "RA-7",
+      "SA-1",
+      "SA-2",
+      "SA-3",
+      "SA-4",
+      "SA-4(10)",
+      "SA-5",
+      "SA-8",
+      "SA-9",
+      "SA-22",
+      "SC-1",
+      "SC-5",
+      "SC-7",
+      "SC-8",
+      "SC-8(1)",
+      "SC-12",
+      "SC-13",
+      "SC-15",
+      "SC-20",
+      "SC-21",
+      "SC-22",
+      "SC-28",
+      "SC-28(1)",
+      "SC-39",
+      "SI-1",
+      "SI-2",
+      "SI-3",
+      "SI-4",
+      "SI-5",
+      "SI-12",
+      "SR-1",
+      "SR-2",
+      "SR-2(1)",
+      "SR-3",
+      "SR-5",
+      "SR-8",
+      "SR-10",
+      "SR-11",
+      "SR-11(1)",
+      "SR-11(2)",
+      "SR-12"
+    ]
+  },
+  "li_saas_methods": {
+    "AC-1": [
+      "ATTEST"
+    ],
+    "AC-14": [
+      "FED"
+    ],
+    "AC-17": [
+      "ASSESS"
+    ],
+    "AC-18": [
+      "NSO"
+    ],
+    "AC-19": [
+      "NSO"
+    ],
+    "AC-2": [
+      "ASSESS"
+    ],
+    "AC-20": [
+      "ATTEST"
+    ],
+    "AC-22": [
+      "ASSESS"
+    ],
+    "AC-3": [
+      "ASSESS"
+    ],
+    "AC-7": [
+      "NSO",
+      "ASSESS"
+    ],
+    "AC-8": [
+      "FED"
+    ],
+    "AT-1": [
+      "ATTEST"
+    ],
+    "AT-2": [
+      "ATTEST"
+    ],
+    "AT-2(2)": [
+      "ATTEST"
+    ],
+    "AT-3": [
+      "ATTEST"
+    ],
+    "AT-4": [
+      "ATTEST"
+    ],
+    "AU-1": [
+      "ATTEST"
+    ],
+    "AU-11": [
+      "NSO"
+    ],
+    "AU-12": [
+      "ATTEST"
+    ],
+    "AU-2": [
+      "ATTEST"
+    ],
+    "AU-3": [
+      "ASSESS"
+    ],
+    "AU-4": [
+      "NSO"
+    ],
+    "AU-5": [
+      "ASSESS"
+    ],
+    "AU-6": [
+      "ASSESS"
+    ],
+    "AU-8": [
+      "ATTEST"
+    ],
+    "AU-9": [
+      "ATTEST"
+    ],
+    "CA-1": [
+      "ATTEST"
+    ],
+    "CA-2": [
+      "ASSESS"
+    ],
+    "CA-2(1)": [
+      "ATTEST"
+    ],
+    "CA-3": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "CA-5": [
+      "ATTEST"
+    ],
+    "CA-6": [
+      "ASSESS"
+    ],
+    "CA-7": [
+      "ASSESS"
+    ],
+    "CA-7(4)": [
+      "ASSESS"
+    ],
+    "CA-8": [
+      "ASSESS"
+    ],
+    "CA-9": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "CM-1": [
+      "ATTEST"
+    ],
+    "CM-10": [
+      "NSO"
+    ],
+    "CM-11": [
+      "NSO"
+    ],
+    "CM-2": [
+      "ATTEST"
+    ],
+    "CM-4": [
+      "ASSESS"
+    ],
+    "CM-5": [
+      "ASSESS"
+    ],
+    "CM-6": [
+      "ASSESS"
+    ],
+    "CM-7": [
+      "ATTEST"
+    ],
+    "CM-8": [
+      "ASSESS"
+    ],
+    "CP-1": [
+      "ATTEST"
+    ],
+    "CP-10": [
+      "NSO"
+    ],
+    "CP-2": [
+      "NSO"
+    ],
+    "CP-3": [
+      "NSO"
+    ],
+    "CP-4": [
+      "NSO"
+    ],
+    "CP-9": [
+      "ASSESS"
+    ],
+    "IA-1": [
+      "ATTEST"
+    ],
+    "IA-11": [
+      "ATTEST"
+    ],
+    "IA-2": [
+      "NSO",
+      "ATTEST"
+    ],
+    "IA-2(1)": [
+      "ASSESS"
+    ],
+    "IA-2(2)": [
+      "ASSESS"
+    ],
+    "IA-2(8)": [
+      "ASSESS"
+    ],
+    "IA-4": [
+      "ATTEST"
+    ],
+    "IA-5": [
+      "ATTEST"
+    ],
+    "IA-5(1)": [
+      "ATTEST"
+    ],
+    "IA-6": [
+      "ASSESS"
+    ],
+    "IA-7": [
+      "ASSESS"
+    ],
+    "IA-8": [
+      "ATTEST"
+    ],
+    "IA-8(1)": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "IA-8(2)": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "IA-8(4)": [
+      "ATTEST"
+    ],
+    "IR-1": [
+      "ATTEST"
+    ],
+    "IR-2": [
+      "ATTEST"
+    ],
+    "IR-4": [
+      "ASSESS"
+    ],
+    "IR-5": [
+      "ATTEST"
+    ],
+    "IR-6": [
+      "ASSESS"
+    ],
+    "IR-7": [
+      "ATTEST"
+    ],
+    "IR-8": [
+      "ATTEST"
+    ],
+    "MA-1": [
+      "ATTEST"
+    ],
+    "MA-2": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "MA-4": [
+      "ATTEST"
+    ],
+    "MA-5": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "MP-1": [
+      "ATTEST"
+    ],
+    "MP-2": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "MP-6": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "MP-7": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "PE-1": [
+      "ATTEST"
+    ],
+    "PE-12": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "PE-13": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "PE-14": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "PE-15": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "PE-16": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "PE-2": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "PE-3": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "PE-6": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "PE-8": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "PL-1": [
+      "ATTEST"
+    ],
+    "PL-10": [
+      "ATTEST"
+    ],
+    "PL-11": [
+      "ATTEST"
+    ],
+    "PL-2": [
+      "ASSESS"
+    ],
+    "PL-4": [
+      "ATTEST"
+    ],
+    "PL-4(1)": [
+      "ATTEST"
+    ],
+    "PL-8": [
+      "ASSESS"
+    ],
+    "PS-1": [
+      "ATTEST"
+    ],
+    "PS-2": [
+      "FED"
+    ],
+    "PS-3": [
+      "ASSESS"
+    ],
+    "PS-4": [
+      "ATTEST"
+    ],
+    "PS-5": [
+      "ATTEST"
+    ],
+    "PS-6": [
+      "ATTEST"
+    ],
+    "PS-7": [
+      "ATTEST"
+    ],
+    "PS-8": [
+      "ATTEST"
+    ],
+    "PS-9": [
+      "ATTEST"
+    ],
+    "RA-1": [
+      "ATTEST"
+    ],
+    "RA-2": [
+      "ASSESS"
+    ],
+    "RA-3": [
+      "ASSESS"
+    ],
+    "RA-3(1)": [
+      "ATTEST"
+    ],
+    "RA-5": [
+      "ASSESS"
+    ],
+    "RA-5(11)": [
+      "ASSESS"
+    ],
+    "RA-5(2)": [
+      "ASSESS"
+    ],
+    "RA-7": [
+      "ASSESS"
+    ],
+    "SA-1": [
+      "ATTEST"
+    ],
+    "SA-2": [
+      "ATTEST"
+    ],
+    "SA-22": [
+      "ASSESS"
+    ],
+    "SA-3": [
+      "ATTEST"
+    ],
+    "SA-4": [
+      "ATTEST"
+    ],
+    "SA-4(10)": [
+      "ATTEST"
+    ],
+    "SA-5": [
+      "ATTEST"
+    ],
+    "SA-8": [
+      "ATTEST"
+    ],
+    "SA-9": [
+      "ASSESS"
+    ],
+    "SC-1": [
+      "ATTEST"
+    ],
+    "SC-12": [
+      "ASSESS"
+    ],
+    "SC-13": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "SC-15": [
+      "NSO"
+    ],
+    "SC-20": [
+      "ATTEST"
+    ],
+    "SC-21": [
+      "ATTEST"
+    ],
+    "SC-22": [
+      "ATTEST"
+    ],
+    "SC-28": [
+      "ASSESS"
+    ],
+    "SC-28(1)": [
+      "ASSESS"
+    ],
+    "SC-39": [
+      "ATTEST"
+    ],
+    "SC-5": [
+      "ASSESS",
+      "CONDITIONAL"
+    ],
+    "SC-7": [
+      "ASSESS"
+    ],
+    "SC-8": [
+      "ASSESS"
+    ],
+    "SC-8(1)": [
+      "ASSESS"
+    ],
+    "SI-1": [
+      "ATTEST"
+    ],
+    "SI-12": [
+      "ATTEST"
+    ],
+    "SI-2": [
+      "ASSESS"
+    ],
+    "SI-3": [
+      "ASSESS"
+    ],
+    "SI-4": [
+      "ASSESS"
+    ],
+    "SI-5": [
+      "ATTEST"
+    ],
+    "SR-1": [
+      "ATTEST"
+    ],
+    "SR-10": [
+      "ATTEST"
+    ],
+    "SR-11": [
+      "ATTEST"
+    ],
+    "SR-11(1)": [
+      "ATTEST"
+    ],
+    "SR-11(2)": [
+      "ATTEST"
+    ],
+    "SR-12": [
+      "ATTEST"
+    ],
+    "SR-2": [
+      "ATTEST"
+    ],
+    "SR-2(1)": [
+      "ATTEST"
+    ],
+    "SR-3": [
+      "ATTEST"
+    ],
+    "SR-5": [
+      "ATTEST"
+    ],
+    "SR-8": [
+      "ATTEST"
+    ]
+  }
+}

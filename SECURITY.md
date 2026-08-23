@@ -70,7 +70,7 @@ a vulnerability in Evidentia's own code.
 
 | Version | Status | Reason |
 |---------|--------|--------|
-| **`0.11.2`** | ✅ **Supported** | Latest patch. See the [CHANGELOG](CHANGELOG.md) and the latest `docs/releases/reviews/security-review-*.md` for what shipped and the CVE posture at this release. |
+| **`0.12.0`** | ✅ **Supported** | Latest patch. See the [CHANGELOG](CHANGELOG.md) and the latest `docs/releases/reviews/security-review-*.md` for what shipped and the CVE posture at this release. |
 | Earlier patches | ❌ Deprecated | Pre-v1.0 single-supported-patch policy; upgrade to the latest patch. |
 | Legacy `controlbridge*` packages | ❌ Yanked from PyPI | Every version of every legacy package was yanked at the v0.6.0 rename. Upgrade path documented in [`RENAMED.md`](docs/archive/RENAMED.md). |
 
@@ -172,7 +172,7 @@ Verify a release wheel:
 pip install pypi-attestations
 pypi-attestations verify pypi \
   --repository https://github.com/Polycentric-Labs/evidentia \
-  "pypi:evidentia-0.11.2-py3-none-any.whl"
+  "pypi:evidentia-0.12.0-py3-none-any.whl"
 ```
 
 If verification fails, **stop and report immediately** via the

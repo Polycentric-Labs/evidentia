@@ -107,35 +107,40 @@ frameworks:
   refresh: monthly
 - id: fedramp-rev5-high
   name: FedRAMP Rev 5 High Baseline
-  version: Rev 5 (2023)
+  version: Rev 5 (profiles published 2024-09-24)
   tier: A
   category: control
   path: us-federal/fedramp-rev5-high.json
-  source_url: FedRAMP PMO — https://www.fedramp.gov (U.S. Government work, public domain). Baseline is a tailored subset of NIST SP 800-53 Rev 5.
+  source_url: FedRAMP PMO, https://www.fedramp.gov (U.S. Government work, public domain). Baseline is a tailored subset of NIST SP 800-53 Rev 5. Control membership extracted from the FedRAMP PMO OSCAL profiles
+    published 2024-09-24, retrieved 2026-08-22 from OSCAL-Foundation/fedramp-resources.
   refresh: monthly
 - id: fedramp-rev5-li-saas
   name: FedRAMP Rev 5 LI-SAAS Baseline
-  version: Rev 5 (2023)
+  version: Rev 5 (profiles published 2024-09-24)
   tier: A
   category: control
   path: us-federal/fedramp-rev5-li-saas.json
-  source_url: FedRAMP PMO — https://www.fedramp.gov (U.S. Government work, public domain). Baseline is a tailored subset of NIST SP 800-53 Rev 5.
+  source_url: 'FedRAMP PMO, https://www.fedramp.gov (U.S. Government work, public domain). Baseline is a tailored subset of NIST SP 800-53 Rev 5. Control membership extracted from the FedRAMP PMO OSCAL
+    profiles published 2024-09-24, retrieved 2026-08-22 from OSCAL-Foundation/fedramp-resources. NOTE: LI-SaaS selects the same control set as Low. The FedRAMP Tailored distinction is carried by a per-control
+    method property (ATTEST, ASSESS, CONDITIONAL, NSO, FED) which this pointer catalog does not yet represent.'
   refresh: monthly
 - id: fedramp-rev5-low
   name: FedRAMP Rev 5 Low Baseline
-  version: Rev 5 (2023)
+  version: Rev 5 (profiles published 2024-09-24)
   tier: A
   category: control
   path: us-federal/fedramp-rev5-low.json
-  source_url: FedRAMP PMO — https://www.fedramp.gov (U.S. Government work, public domain). Baseline is a tailored subset of NIST SP 800-53 Rev 5.
+  source_url: FedRAMP PMO, https://www.fedramp.gov (U.S. Government work, public domain). Baseline is a tailored subset of NIST SP 800-53 Rev 5. Control membership extracted from the FedRAMP PMO OSCAL profiles
+    published 2024-09-24, retrieved 2026-08-22 from OSCAL-Foundation/fedramp-resources.
   refresh: monthly
 - id: fedramp-rev5-moderate
   name: FedRAMP Rev 5 Moderate Baseline
-  version: Rev 5 (2023)
+  version: Rev 5 (profiles published 2024-09-24)
   tier: A
   category: control
   path: us-federal/fedramp-rev5-moderate.json
-  source_url: FedRAMP PMO — https://www.fedramp.gov (U.S. Government work, public domain). Baseline is a tailored subset of NIST SP 800-53 Rev 5.
+  source_url: FedRAMP PMO, https://www.fedramp.gov (U.S. Government work, public domain). Baseline is a tailored subset of NIST SP 800-53 Rev 5. Control membership extracted from the FedRAMP PMO OSCAL profiles
+    published 2024-09-24, retrieved 2026-08-22 from OSCAL-Foundation/fedramp-resources.
   refresh: monthly
 - id: ffiec-audit
   name: FFIEC IT Examination Handbook — Audit booklet

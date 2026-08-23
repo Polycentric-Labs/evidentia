@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-ai"
-version = "0.11.2"
+version = "0.12.0"
 description = "LLM-powered risk statement generator and evidence validator for Evidentia"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
@@ -18,7 +18,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "evidentia-core>=0.11.2,<0.12.0",
+    "evidentia-core>=0.12.0,<0.13.0",
     # v0.10.5 P9 extracted the DFAH eval harness to the
     # ``evidentia-eval`` workspace package so air-gap installs of
     # the production risk-statement runtime no longer pull the
@@ -61,7 +61,7 @@ dependencies = [
 # sweep had skipped it, leaving ``<0.11.0`` against a 0.11.0 base dep
 # (unsatisfiable on a clean PyPI install of the extra).
 eval-faithfulness = [
-    "evidentia-eval[faithfulness-semantic]>=0.11.2,<0.12.0",
+    "evidentia-eval[faithfulness-semantic]>=0.12.0,<0.13.0",
 ]
 
 [project.urls]
