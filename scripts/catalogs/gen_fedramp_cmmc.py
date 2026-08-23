@@ -1,9 +1,22 @@
-"""Generate FedRAMP baselines + CMMC 2.0 levels — Tier A (US Government work).
+"""Generate FedRAMP baselines + CMMC 2.0 levels, Tier A (US Government work).
 
-FedRAMP baselines are tailored subsets of NIST 800-53 Rev 5. We ship
-pointer catalogs that reference the NIST control IDs; the full resolved
-baselines are produced via the OSCAL profile resolver in v0.2.x once
-we bundle the full NIST 800-53 Rev 5 catalog (~323 controls).
+FedRAMP baselines are tailored subsets of NIST 800-53 Rev 5. We ship pointer
+catalogs that reference the NIST control IDs; `rewrite_fedramp_pointers.py`
+then fills in the real control text from the bundled NIST catalog.
+
+Baseline MEMBERSHIP is NOT authored here. It is read from the vendored
+provenance file `upstream/fedramp-rev5-baselines.json`, extracted from the
+FedRAMP PMO's own OSCAL profiles. Do not hand-edit the membership lists.
+
+History, so the mistake is not repeated: through v0.12.0 the Low and LI-SaaS
+lists were derived as `[c for c in FEDRAMP_MODERATE if "(" not in c][:125]`
+and `[:150]`. Because the source list is family-ordered, that truncation
+silently dropped every family from PS onward, so the shipped Low baseline was
+missing PS, RA, SA, SC, SI and SR in their entirety (69 controls, including
+RA-5, SC-7 and SI-2) while carrying 33 PM-family controls that SP 800-53B does
+not allocate to any baseline. The control TEXT was correct, which made the
+membership error invisible on inspection. `_assert_baseline_invariants()`
+below now makes that class of error a build failure.
 
 CMMC levels are the DoD's tailored CUI-protection baselines derived from
 NIST 800-171 + 800-172. Published by DoD, public domain.
@@ -11,27 +24,13 @@ NIST 800-171 + 800-172. Published by DoD, public domain.
 
 from __future__ import annotations
 
+import json
+import pathlib
+
 from _generators import emit_control_catalog  # type: ignore[import-not-found]
 
 FEDRAMP_URL = "https://www.fedramp.gov"
 CMMC_URL = "https://dodcio.defense.gov/CMMC/"
-
-
-# ---------------------------------------------------------------------------
-# FedRAMP Low / Moderate / High / LI-SaaS baselines
-# ---------------------------------------------------------------------------
-# Published FedRAMP Rev 5 baseline control counts (approximate):
-#   Low:        ~149 controls
-#   Moderate:   ~323 controls
-#   High:       ~422 controls
-#   LI-SaaS:    ~150 controls
-#
-# Since we don't yet ship the full NIST 800-53 Rev 5 catalog, these
-# baselines are authored as pointer lists: each control entry is just the
-# ID + family, with description = "See nist-800-53-rev5 catalog". Full
-# content resolution is an OSCAL profile job — use:
-#     evidentia catalog import --profile fedramp-mod-profile.json \
-#         --catalog nist-800-53-rev5.json
 
 
 # Control families in NIST 800-53 Rev 5 (common across all baselines)
@@ -58,88 +57,82 @@ NIST_800_53_FAMILIES = [
     "SR — Supply Chain Risk Management",
 ]
 
-# FedRAMP Moderate baseline — the most commonly assessed tier.
-# Authored from the FedRAMP Rev 5 baseline workbook (public).
-FEDRAMP_MODERATE = [
-    # AC
-    "AC-1", "AC-2", "AC-2(1)", "AC-2(2)", "AC-2(3)", "AC-2(4)", "AC-2(5)", "AC-2(12)", "AC-2(13)",
-    "AC-3", "AC-4", "AC-4(21)", "AC-5", "AC-6", "AC-6(1)", "AC-6(2)", "AC-6(5)", "AC-6(7)", "AC-6(9)", "AC-6(10)",
-    "AC-7", "AC-8", "AC-11", "AC-11(1)", "AC-12", "AC-14", "AC-17", "AC-17(1)", "AC-17(2)", "AC-17(3)", "AC-17(4)",
-    "AC-18", "AC-18(1)", "AC-19", "AC-19(5)", "AC-20", "AC-20(1)", "AC-20(2)", "AC-21", "AC-22",
-    # AT
-    "AT-1", "AT-2", "AT-2(2)", "AT-3", "AT-4",
-    # AU
-    "AU-1", "AU-2", "AU-3", "AU-3(1)", "AU-4", "AU-5", "AU-6", "AU-6(1)", "AU-6(3)", "AU-7", "AU-7(1)",
-    "AU-8", "AU-9", "AU-9(4)", "AU-11", "AU-12",
-    # CA
-    "CA-1", "CA-2", "CA-2(1)", "CA-3", "CA-3(6)", "CA-5", "CA-6", "CA-7", "CA-7(1)", "CA-8", "CA-9",
-    # CM
-    "CM-1", "CM-2", "CM-2(2)", "CM-2(3)", "CM-2(7)", "CM-3", "CM-3(2)", "CM-3(4)", "CM-4", "CM-5", "CM-5(1)",
-    "CM-6", "CM-7", "CM-7(1)", "CM-7(2)", "CM-7(5)", "CM-8", "CM-8(1)", "CM-8(3)", "CM-8(5)", "CM-9",
-    "CM-10", "CM-11",
-    # CP
-    "CP-1", "CP-2", "CP-2(1)", "CP-2(3)", "CP-2(8)", "CP-3", "CP-4", "CP-4(1)", "CP-6", "CP-6(1)", "CP-6(3)",
-    "CP-7", "CP-7(1)", "CP-7(2)", "CP-7(3)", "CP-8", "CP-8(1)", "CP-8(2)", "CP-9", "CP-9(1)", "CP-9(8)", "CP-10",
-    # IA
-    "IA-1", "IA-2", "IA-2(1)", "IA-2(2)", "IA-2(8)", "IA-2(12)", "IA-3", "IA-4", "IA-5", "IA-5(1)", "IA-5(2)",
-    "IA-5(6)", "IA-6", "IA-7", "IA-8", "IA-8(1)", "IA-8(2)", "IA-8(4)", "IA-11", "IA-12", "IA-12(2)", "IA-12(3)", "IA-12(5)",
-    # IR
-    "IR-1", "IR-2", "IR-3", "IR-3(2)", "IR-4", "IR-4(1)", "IR-5", "IR-6", "IR-6(1)", "IR-7", "IR-7(1)", "IR-8",
-    # MA
-    "MA-1", "MA-2", "MA-3", "MA-3(1)", "MA-3(2)", "MA-3(3)", "MA-4", "MA-5", "MA-6",
-    # MP
-    "MP-1", "MP-2", "MP-3", "MP-4", "MP-5", "MP-6", "MP-7",
-    # PE
-    "PE-1", "PE-2", "PE-3", "PE-4", "PE-5", "PE-6", "PE-6(1)", "PE-8", "PE-9", "PE-10", "PE-11", "PE-12",
-    "PE-13", "PE-13(1)", "PE-14", "PE-15", "PE-16", "PE-17",
-    # PL
-    "PL-1", "PL-2", "PL-4", "PL-4(1)", "PL-8", "PL-10", "PL-11",
-    # PM
-    "PM-1", "PM-2", "PM-3", "PM-4", "PM-5", "PM-5(1)", "PM-6", "PM-7", "PM-8", "PM-9", "PM-10", "PM-11",
-    "PM-12", "PM-13", "PM-14", "PM-15", "PM-16", "PM-17", "PM-18", "PM-19", "PM-20", "PM-21", "PM-22",
-    "PM-23", "PM-24", "PM-25", "PM-26", "PM-27", "PM-28", "PM-29", "PM-30", "PM-31", "PM-32",
-    # PS
-    "PS-1", "PS-2", "PS-3", "PS-4", "PS-5", "PS-6", "PS-7", "PS-8", "PS-9",
-    # PT
-    "PT-1", "PT-2", "PT-3", "PT-4", "PT-5", "PT-5(1)", "PT-6", "PT-7", "PT-8",
-    # RA
-    "RA-1", "RA-2", "RA-3", "RA-3(1)", "RA-5", "RA-5(2)", "RA-5(5)", "RA-5(11)", "RA-7", "RA-9",
-    # SA
-    "SA-1", "SA-2", "SA-3", "SA-4", "SA-4(1)", "SA-4(2)", "SA-4(9)", "SA-4(10)", "SA-5", "SA-8", "SA-9", "SA-9(2)",
-    "SA-10", "SA-11", "SA-15", "SA-16", "SA-17", "SA-21", "SA-22",
-    # SC
-    "SC-1", "SC-2", "SC-4", "SC-5", "SC-7", "SC-7(3)", "SC-7(4)", "SC-7(5)", "SC-7(7)", "SC-7(8)", "SC-7(12)",
-    "SC-8", "SC-8(1)", "SC-10", "SC-12", "SC-13", "SC-15", "SC-17", "SC-18", "SC-20", "SC-21", "SC-22",
-    "SC-23", "SC-28", "SC-28(1)", "SC-39",
-    # SI
-    "SI-1", "SI-2", "SI-2(2)", "SI-3", "SI-4", "SI-4(2)", "SI-4(4)", "SI-4(5)", "SI-5", "SI-7", "SI-7(1)",
-    "SI-7(7)", "SI-8", "SI-8(2)", "SI-10", "SI-11", "SI-12", "SI-16",
-    # SR
-    "SR-1", "SR-2", "SR-2(1)", "SR-3", "SR-5", "SR-6", "SR-8", "SR-10", "SR-11", "SR-11(1)", "SR-11(2)",
-    "SR-12",
-]
+# ---------------------------------------------------------------------------
+# Baseline membership: vendored from the FedRAMP PMO OSCAL profiles.
+# ---------------------------------------------------------------------------
+_UPSTREAM_PATH = pathlib.Path(__file__).resolve().parent / "upstream" / "fedramp-rev5-baselines.json"
+_UPSTREAM = json.loads(_UPSTREAM_PATH.read_text(encoding="utf-8"))
 
-FEDRAMP_LOW = [c for c in FEDRAMP_MODERATE if "(" not in c][:125]  # baseline subset
-FEDRAMP_HIGH = FEDRAMP_MODERATE + [
-    # High adds additional enhancements beyond Moderate
-    "AC-4(4)", "AC-4(17)", "AC-4(21)", "AC-6(7)",
-    "AU-4(1)", "AU-9(2)", "AU-9(3)", "AU-10", "AU-12(1)", "AU-12(3)",
-    "CM-3(6)", "CM-5(5)", "CM-6(1)", "CM-6(2)", "CM-8(2)", "CM-8(4)",
-    "CP-2(2)", "CP-2(4)", "CP-2(5)", "CP-3(1)", "CP-4(2)", "CP-4(3)", "CP-6(2)",
-    "CP-7(4)", "CP-8(3)", "CP-8(4)", "CP-9(2)", "CP-9(3)", "CP-9(5)", "CP-10(2)", "CP-10(4)",
-    "IA-2(5)", "IA-4(4)", "IA-5(7)", "IA-5(8)",
-    "IR-2(1)", "IR-2(2)", "IR-3(1)", "IR-4(3)", "IR-4(4)", "IR-4(6)", "IR-4(8)",
-    "MA-3(3)", "MA-4(3)",
-    "MP-6(1)", "MP-6(2)", "MP-6(3)",
-    "PE-3(1)", "PE-6(4)", "PE-13(2)",
-    "RA-5(4)",
-    "SA-4(7)", "SA-8(9)", "SA-8(22)", "SA-8(23)", "SA-10(1)", "SA-12",
-    "SC-7(9)", "SC-7(10)", "SC-7(11)", "SC-7(18)", "SC-7(20)", "SC-7(21)",
-    "SC-12(1)", "SC-13(1)", "SC-24",
-    "SI-3(8)", "SI-4(11)", "SI-4(18)", "SI-4(19)", "SI-4(20)", "SI-4(22)", "SI-4(23)", "SI-4(24)", "SI-6",
-]
+FEDRAMP_LOW: list[str] = _UPSTREAM["baselines"]["low"]
+FEDRAMP_MODERATE: list[str] = _UPSTREAM["baselines"]["moderate"]
+FEDRAMP_HIGH: list[str] = _UPSTREAM["baselines"]["high"]
+FEDRAMP_LI_SAAS: list[str] = _UPSTREAM["baselines"]["li-saas"]
 
-FEDRAMP_LI_SAAS = [c for c in FEDRAMP_MODERATE if "(" not in c][:150]
+# NIST SP 800-53 Rev 5 withdrawn controls. None may appear in a baseline: they
+# do not exist as active controls and cannot resolve against the Rev 5 catalog.
+_WITHDRAWN = {"CM-8(5)", "CP-2(4)", "SA-12", "SC-13(1)"}
+
+
+def _assert_baseline_invariants() -> None:
+    """Fail the build if the vendored membership violates a known-true property.
+
+    Every assertion here corresponds to a defect actually shipped before
+    v0.12.1, so each one is a regression test rather than a theoretical check.
+    Sources: the FedRAMP PMO OSCAL profiles for the counts and the nesting, and
+    NIST SP 800-53B Table 3-13 (PM) and Table 3-15 (PT) for the exclusions.
+    """
+    low, mod = set(FEDRAMP_LOW), set(FEDRAMP_MODERATE)
+    high, li = set(FEDRAMP_HIGH), set(FEDRAMP_LI_SAAS)
+    every = low | mod | high | li
+
+    expected = {"low": 156, "moderate": 323, "high": 410, "li-saas": 156}
+    actual = {
+        "low": len(FEDRAMP_LOW), "moderate": len(FEDRAMP_MODERATE),
+        "high": len(FEDRAMP_HIGH), "li-saas": len(FEDRAMP_LI_SAAS),
+    }
+    assert actual == expected, f"baseline counts changed: {actual} != {expected}"
+
+    for name, ids in (
+        ("low", FEDRAMP_LOW), ("moderate", FEDRAMP_MODERATE),
+        ("high", FEDRAMP_HIGH), ("li-saas", FEDRAMP_LI_SAAS),
+    ):
+        assert len(ids) == len(set(ids)), f"{name} contains duplicate control ids"
+
+    # LI-SaaS selects the SAME ids as Low. The FedRAMP Tailored distinction is
+    # carried by a per-control `method` property, not by a smaller control set.
+    assert low == li, "LI-SaaS membership must equal Low"
+    assert low < mod, "Low must be a strict subset of Moderate"
+    assert mod < high, "Moderate must be a strict subset of High"
+    assert every == high, "the union of all baselines must equal High"
+
+    pm = sorted(i for i in every if i.startswith("PM-"))
+    pt = sorted(i for i in every if i.startswith("PT-"))
+    assert not pm, f"PM controls are not allocated to security baselines (SP 800-53B Table 3-13): {pm}"
+    assert not pt, f"PT controls are not allocated to security baselines (SP 800-53B Table 3-15): {pt}"
+
+    withdrawn = sorted(every & _WITHDRAWN)
+    assert not withdrawn, f"withdrawn Rev 5 controls cannot appear in a baseline: {withdrawn}"
+
+
+_assert_baseline_invariants()
+
+
+def _baseline_source(baseline_name: str) -> str:
+    """Provenance string for a baseline catalog, including the LI-SaaS caveat."""
+    prov = _UPSTREAM["provenance"]
+    base = (
+        f"FedRAMP PMO, {FEDRAMP_URL} (U.S. Government work, public domain). "
+        f"Baseline is a tailored subset of NIST SP 800-53 Rev 5. Control membership "
+        f"extracted from the FedRAMP PMO OSCAL profiles published {prov['published'][:10]}, "
+        f"retrieved {prov['retrieved']} from {prov['republisher'].split(' (')[0]}."
+    )
+    if baseline_name == "li-saas":
+        base += (
+            " NOTE: LI-SaaS selects the same control set as Low. The FedRAMP Tailored "
+            "distinction is carried by a per-control method property (ATTEST, ASSESS, "
+            "CONDITIONAL, NSO, FED) which this pointer catalog does not yet represent."
+        )
+    return base
 
 
 def _make_pointer_control(cid: str) -> dict:
@@ -165,8 +158,8 @@ for baseline_name, baseline_controls in [
     emit_control_catalog(
         framework_id=f"fedramp-rev5-{baseline_name}",
         framework_name=f"FedRAMP Rev 5 {baseline_name.upper() if baseline_name=='li-saas' else baseline_name.capitalize()} Baseline",
-        version="Rev 5 (2023)",
-        source=f"FedRAMP PMO — {FEDRAMP_URL} (U.S. Government work, public domain). Baseline is a tailored subset of NIST SP 800-53 Rev 5.",
+        version="Rev 5 (profiles published 2024-09-24)",
+        source=_baseline_source(baseline_name),
         families=NIST_800_53_FAMILIES,
         controls=[_make_pointer_control(c) for c in baseline_controls],
         tier="A",
