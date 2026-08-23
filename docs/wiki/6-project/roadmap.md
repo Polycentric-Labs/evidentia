@@ -135,7 +135,10 @@ first RFC 8594 REST deprecation (`set-omb-impact`); the
 federal AI-gov consoles → parity 100%; CR26 schemas byte-identical to
 upstream again; DHI base rebuilt; Dependabot major-isolation; the v1.0
 review protocol + freeze-candidate register committed; 97 catalogs.
-Full suite 5046 passed; four issues closed.
+All four bundled FedRAMP Rev 5 baselines corrected (Low 125 to 156,
+Moderate 329 to 323, High 404 to 410, LI-SaaS 150 to 156) after a
+generator truncation was found to have dropped six whole families
+from Low. Full suite 5099 passed; four issues closed.
 
 ## v0.11 - Federal-compliance theme + AI governance - SHIPPED
 

@@ -38,7 +38,7 @@ FedRAMP Rev 5 baselines had the wrong control membership**, the Low baseline
 missing six entire families because a generator truncated a family-ordered
 list. That correction changes FedRAMP gap-analysis output for every existing
 user and is the first entry under *Fixed*. 97 bundled catalogs. Four issues
-closed (#134, #219, #239, #248). Full suite 5087 passed.
+closed (#134, #219, #239, #248). Full suite 5099 passed.
 Three PRs (#250, #251, #252) plus the release-preparation branch, all through
 the merge queue green.
 
@@ -202,9 +202,9 @@ the merge queue green.
   them `PM`) for a net 125 → 156. Independently, Moderate and High carried
   33 `PM` and 9 `PT`
   controls that **SP 800-53B Tables 3-13 and 3-15 allocate to no baseline**,
-  all four carried four controls **withdrawn** in Rev 5 (`CM-8(5)`,
-  `CP-2(4)`, `SA-12`, `SC-13(1)`), and High listed `AC-4(21)`, `AC-6(7)` and
-  `MA-3(3)` twice. The control *text* was correct throughout, which is why
+  High carried all four controls **withdrawn** in Rev 5 (`CM-8(5)`,
+  `CP-2(4)`, `SA-12`, `SC-13(1)`) and Moderate carried `CM-8(5)`, and High
+  listed `AC-4(21)`, `AC-6(7)` and `MA-3(3)` twice. The control *text* was correct throughout, which is why
   this survived many releases invisibly: nothing asserted membership.
   **What this means for you:** a `gap` run against `fedramp-rev5-low` now
   evaluates 156 controls where v0.11.2 evaluated 125, so a stored coverage
@@ -234,9 +234,9 @@ the merge queue green.
   builds its search pattern from the version being bumped *from*, so a pin
   that falls one minor behind stops matching and is then invisible to every
   later bump. Both the pins and that blind spot are fixed:
-  `check_version_consistency.py` now asserts, independently of range shape or
-  how far a pin has drifted, that **every intra-workspace pin's lower bound
-  is the current version**, across `[project.dependencies]` and every
+  `check_version_consistency.py` now asserts, no matter how far a pin has
+  drifted, that **every intra-workspace pin's lower bound is the current
+  version**, across `[project.dependencies]` and every
   `[project.optional-dependencies]` group.
 
 - **FedRAMP baselines advertised 20 control families while covering 18.**

@@ -867,3 +867,81 @@ def test_sibling_pins_ignore_third_party_lookalikes(
         bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"]
     )
     assert check.check_sibling_pins_at_current(bump, "0.12.0") == []
+
+
+# Every one of these is legal PEP 508 and genuinely unsatisfiable against a
+# 0.12.0 base. The first shape is the one that actually shipped broken; the
+# rest are variants the FIRST version of this gate silently passed, found by
+# the v0.12.0 pre-release security review.
+_STALE_SHAPES = [
+    ("house_style", 'evidentia-core[worm-s3]>=0.10.0,<0.11.0'),
+    ("space_before_op", 'evidentia-core[worm-s3] >=0.10.0,<0.11.0'),
+    ("space_after_op", 'evidentia-core[worm-s3]>= 0.10.0,<0.11.0'),
+    ("equality_pin", 'evidentia-core==0.10.0'),
+    ("compatible_release", 'evidentia-core~=0.10.0'),
+    ("underscore_name", 'evidentia_core>=0.10.0,<0.11.0'),
+    ("bare_lower_bound", 'evidentia-core>=0.10.0'),
+    ("environment_marker", 'evidentia-core>=0.10.0; python_version >= "3.12"'),
+]
+
+_ACCEPTABLE_SHAPES = [
+    ("current_house_style", 'evidentia-core[worm-s3]>=0.12.0,<0.13.0'),
+    ("current_spaced", 'evidentia-core >= 0.12.0, <0.13.0'),
+    ("third_party_lookalike", 'py-ocsf-models>=0.9.0,<0.10.0'),
+]
+
+
+@pytest.mark.parametrize("label,req", _STALE_SHAPES, ids=[s[0] for s in _STALE_SHAPES])
+def test_sibling_pins_catch_every_stale_shape(
+    label: str, req: str, check: Any, bump: Any, tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A gate that only knows the house style fails OPEN on legal variants."""
+    _write_pkg(tmp_path, "pyproject.toml", '[project]\nname = "root"\n')
+    _write_pkg(
+        tmp_path, "packages/evidentia/pyproject.toml",
+        f'[project]\ndependencies = ["{req}"]\n',
+    )
+    monkeypatch.setattr(check, "REPO_ROOT", tmp_path)
+    _make_bump_with_tracked(
+        bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"]
+    )
+    failures = check.check_sibling_pins_at_current(bump, "0.12.0")
+    assert failures, f"{label}: stale pin {req!r} was NOT caught (gate failed open)"
+
+
+@pytest.mark.parametrize(
+    "label,req", _ACCEPTABLE_SHAPES, ids=[s[0] for s in _ACCEPTABLE_SHAPES]
+)
+def test_sibling_pins_accept_current_and_third_party(
+    label: str, req: str, check: Any, bump: Any, tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Widening the pattern must not make the gate cry wolf."""
+    _write_pkg(tmp_path, "pyproject.toml", '[project]\nname = "root"\n')
+    _write_pkg(
+        tmp_path, "packages/evidentia/pyproject.toml",
+        f'[project]\ndependencies = ["{req}"]\n',
+    )
+    monkeypatch.setattr(check, "REPO_ROOT", tmp_path)
+    _make_bump_with_tracked(
+        bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"]
+    )
+    assert check.check_sibling_pins_at_current(bump, "0.12.0") == [], label
+
+
+def test_sibling_name_alternation_survives_re_escape() -> None:
+    r"""PEP 503 separators become a class WITHOUT a stray escape.
+
+    Substituting into an already-``re.escape``d name yields ``\[-_.]``, which
+    turns the character class into a literal ``[`` and breaks every match.
+    This asserts the alternation is built the other way round.
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("cvc_alt", CHECK_PATH)
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    alt = mod._sibling_name_alternation(["evidentia-core", "evidentia"])
+    assert alt == "evidentia[-_.]core|evidentia"
+    assert r"\[" not in alt

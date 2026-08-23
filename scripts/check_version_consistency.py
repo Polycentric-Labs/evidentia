@@ -445,10 +445,43 @@ def check_requires_python_in_sync(bump: Any) -> list[str]:
     return failures
 
 
-# A PEP 508 requirement naming a workspace sibling, with the lower bound of
-# its pin range captured. The optional ``[extras]`` bracket mirrors the one
+# A PEP 508 requirement naming a workspace sibling, with its version operator
+# and lower bound captured. The optional ``[extras]`` bracket mirrors the one
 # ``bump_version.bump_pin_range`` admits.
-_SIBLING_PIN_RE_TMPL = r"^(?P<name>(?:{alt}))(?:\[[^\]]+\])?>=(?P<low>\d+\.\d+\.\d+(?:\.\d+)?),"
+#
+# Deliberately LOOSER than the house style. A gate that only recognises the
+# shape the codebase happens to use today fails OPEN the moment someone writes
+# a legal variant: ``evidentia-core[worm-s3] >=0.10.0`` (one space) is valid
+# PEP 508, still unsatisfiable against a 0.12.0 base, and would sail past a
+# tighter pattern. So whitespace is optional either side of the operator,
+# ``==``/``~=``/``>`` are recognised alongside ``>=``, and the trailing comma
+# is not required (a bare lower bound with no upper bound still pins).
+# PEP 503 name normalisation is applied by ``_sibling_name_alternation``,
+# which swaps each separator for ``[-_.]`` so ``evidentia_core`` is caught
+# too: pip treats it as the same project, so the gate must as well.
+_SIBLING_PIN_RE_TMPL = (
+    r"^(?P<name>(?:{alt}))(?:\[[^\]]+\])?\s*(?P<op>>=|==|~=|>)\s*"
+    r"(?P<low>\d+\.\d+(?:\.\d+)*)"
+)
+
+
+def _sibling_name_alternation(siblings: list[str]) -> str:
+    """Regex alternation matching each sibling under PEP 503 name equivalence.
+
+    ``-``, ``_`` and ``.`` are interchangeable in a distribution name, so
+    ``evidentia_core`` and ``evidentia-core`` are the same project to pip and
+    must be the same project to this gate. Longest-first ordering is belt and
+    braces: the pattern already requires an operator directly after the name,
+    so ``evidentia`` cannot swallow ``evidentia-core``.
+    """
+    parts = []
+    for name in sorted(siblings, key=len, reverse=True):
+        # Split on the separators FIRST, then escape each literal piece. Doing
+        # it the other way round is a trap: ``re.escape`` backslash-escapes the
+        # ``-``, so substituting into the escaped string yields ``\[-_.]``,
+        # where the stray backslash turns the class into a literal ``[``.
+        parts.append("[-_.]".join(re.escape(piece) for piece in re.split(r"[-_.]", name)))
+    return "|".join(parts)
 
 
 def check_sibling_pins_at_current(bump: Any, current: str) -> list[str]:
@@ -486,9 +519,8 @@ def check_sibling_pins_at_current(bump: Any, current: str) -> list[str]:
         ]
 
     pin_re = re.compile(
-        _SIBLING_PIN_RE_TMPL.format(
-            alt="|".join(re.escape(p) for p in sorted(siblings, key=len, reverse=True))
-        )
+        _SIBLING_PIN_RE_TMPL.format(alt=_sibling_name_alternation(siblings)),
+        re.IGNORECASE,
     )
 
     # ``expand_manifest_path`` yields REPO-RELATIVE paths; keep the root entry

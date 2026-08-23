@@ -1,5 +1,5 @@
 {
-  "_comment": "Vendored FedRAMP Rev 5 baseline membership. Source of truth for scripts/catalogs/gen_fedramp_cmmc.py. Do NOT hand-edit: regenerate with the builder recorded in provenance.builder. The four baselines nest strictly (low == li-saas as sets; low < moderate < high; union == high), which the generator asserts at build time.",
+  "_comment": "Vendored FedRAMP Rev 5 baseline membership. Source of truth for scripts/catalogs/gen_fedramp_cmmc.py. Do NOT hand-edit: regenerate with the builder described in provenance.builder. The four baselines nest strictly (low == li-saas as sets; low < moderate < high; union == high), which the generator asserts at build time.",
   "provenance": {
     "source_name": "FedRAMP Rev 5 baselines, OSCAL profiles authored by the FedRAMP PMO",
     "source_url": "https://raw.githubusercontent.com/OSCAL-Foundation/fedramp-resources/main/baselines/rev5/json/",
@@ -7,7 +7,7 @@
     "published": "2024-09-24T02:24:00Z",
     "retrieved": "2026-08-22",
     "validation": "Membership cross-validated three ways by the research pass (profile with-ids, resolved-catalog walk, and Internet Archive copies of the deleted GSA originals, identical in set and order), then independently re-extracted here from the profiles and re-checked against every invariant.",
-    "builder": ".local/labcoat/sector-expansion-2026-08/_internal/build_fedramp_vendor.py",
+    "builder": "build_fedramp_vendor.py (maintainer-side extractor; re-derives this file from the source_url profiles and re-checks every invariant in gen_fedramp_cmmc.py::_assert_baseline_invariants)",
     "files": {
       "low": {
         "file": "FedRAMP_rev5_LOW-baseline_profile.json",
