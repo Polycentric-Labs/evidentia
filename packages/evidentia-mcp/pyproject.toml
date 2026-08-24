@@ -26,7 +26,7 @@ dependencies = [
     # was tested against during v0.8.0 P0.3 development);
     # capped below 2.0 until the SDK reaches a stable 1.x and
     # we have evidence of breaking changes warranting a bump.
-    "mcp>=1.28.1,<2.0",
+    "mcp>=1.28.1,<3.0",
 ]
 
 [project.urls]
