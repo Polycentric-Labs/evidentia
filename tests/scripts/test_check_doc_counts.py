@@ -134,3 +134,71 @@ def test_count_collector_endpoints_excludes_ocsf_ingest() -> None:
         }
     }
     assert c.count_collector_endpoints(openapi) == 1
+
+
+# ── parity badge (v0.12.1) ────────────────────────────────────────────────
+
+_BADGE = (
+    '<a href="docs/parity-coverage.md"><img src="https://img.shields.io/badge/'
+    'CLI%E2%86%94GUI%20parity-{pct}%25-brightgreen.svg" alt="CLI↔GUI parity"></a>'
+)
+
+
+def _patch_live_pct(monkeypatch, pct: float) -> None:
+    """Stand in for the check_parity import so the test needs no manifest."""
+    import types
+
+    fake = types.SimpleNamespace(
+        load_manifest=lambda *a, **k: {"commands": []},
+        status_counts=lambda rows: {},
+        coverage_pct=lambda counts: pct,
+    )
+
+    class _Loader:
+        @staticmethod
+        def exec_module(mod) -> None:
+            mod.load_manifest = fake.load_manifest
+            mod.status_counts = fake.status_counts
+            mod.coverage_pct = fake.coverage_pct
+
+    class _Spec:
+        loader = _Loader()
+
+    monkeypatch.setattr(
+        c.importlib.util, "spec_from_file_location", lambda *a, **k: _Spec()
+    )
+    monkeypatch.setattr(
+        c.importlib.util, "module_from_spec", lambda spec: types.SimpleNamespace()
+    )
+
+
+def test_parity_badge_passes_when_it_matches_live(monkeypatch) -> None:
+    _patch_live_pct(monkeypatch, 100.0)
+    assert c.check_parity_badge(_BADGE.format(pct=100)) == []
+
+
+def test_parity_badge_fails_on_the_real_v0120_drift(monkeypatch) -> None:
+    """The exact defect: badge frozen at 93 while parity reached 100.
+
+    The badge was hardcoded during the pre-v0.11.0 claim sweep and nothing
+    compared it to the live number, so it understated a shipped capability by
+    seven points on the project's most public surface for a full release.
+    """
+    _patch_live_pct(monkeypatch, 100.0)
+    errs = c.check_parity_badge(_BADGE.format(pct=93))
+    assert len(errs) == 1
+    assert "93%" in errs[0] and "100.0%" in errs[0]
+
+
+def test_parity_badge_tolerates_rounding(monkeypatch) -> None:
+    """A whole-percent badge may legally round a fractional coverage number."""
+    _patch_live_pct(monkeypatch, 93.4)
+    assert c.check_parity_badge(_BADGE.format(pct=93)) == []
+
+
+def test_parity_badge_fails_when_the_badge_is_missing(monkeypatch) -> None:
+    """A removed or reformatted badge must fail loudly, not silently pass."""
+    _patch_live_pct(monkeypatch, 100.0)
+    errs = c.check_parity_badge("# Evidentia\n\nNo badge here.\n")
+    assert len(errs) == 1
+    assert "no CLI<->GUI parity badge" in errs[0]
