@@ -43,6 +43,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 import sys
@@ -203,6 +204,65 @@ def load_code_counts() -> dict[str, int]:
 # ─────────────────────────────── main ────────────────────────────────────
 
 
+_PARITY_BADGE_RE = re.compile(
+    r"CLI%E2%86%94GUI%20parity-(?P<pct>\d+(?:\.\d+)?)%25"
+)
+
+
+def check_parity_badge(readme_text: str) -> list[str]:
+    """Assert the README's CLI<->GUI parity badge matches the live parity number.
+
+    The badge is a hand-written literal in the README header. It was set to 93%
+    during the pre-v0.11.0 claim sweep, when parity really was 93.4%. Parity
+    reached 100% in v0.12 batch 2 and the badge did not move, because nothing
+    compared the two: this script gated catalogs, crosswalks, collectors and MCP
+    tools, and ``check_parity.py`` never looked at the README. So the most
+    prominent number on the project's most public surface understated a shipped
+    capability by seven points, silently, for a full release.
+
+    That is the same defect class the v0.12.0 review was written to catch, so it
+    gets the same treatment: the claim is derived from the code and compared,
+    rather than trusted because someone typed it once.
+
+    Rounding: the badge carries whole percent (``100%``), while
+    ``check_parity.py`` reports a float (``100.0``). Compare on the rounded
+    integer so a 93.4 -> 93 badge stays legal.
+    """
+    m = _PARITY_BADGE_RE.search(readme_text)
+    if m is None:
+        return [
+            "README.md has no CLI<->GUI parity badge matching the expected "
+            "shields.io pattern; the badge was removed or reformatted, so the "
+            "gate can no longer verify it"
+        ]
+
+    # Derive from docs/cli-gui-parity.yaml, the same source of truth
+    # check_parity.py uses. NOT from docs/parity-coverage.md: that file is
+    # generated on demand and is itself drift-gated by nothing, so comparing
+    # to it would chain one ungated claim to another.
+    try:
+        spec = importlib.util.spec_from_file_location(
+            "check_parity_for_badge", SCRIPTS_DIR / "check_parity.py"
+        )
+        if spec is None or spec.loader is None:  # pragma: no cover - import guard
+            raise ImportError("cannot load scripts/check_parity.py")
+        parity = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(parity)
+        rows = parity.load_manifest()["commands"]
+        live = parity.coverage_pct(parity.status_counts(rows))
+    except Exception as exc:  # pragma: no cover - import/IO guard
+        return [f"cannot compute live parity coverage for the badge check: {exc}"]
+
+    badge = float(m.group("pct"))
+    if round(badge) != round(live):
+        return [
+            f"README parity badge says {m.group('pct')}%, but check_parity.py "
+            f"reports {live:.1f}%. Update the badge in README.md (and re-run "
+            "scripts/wiki/sync_mirrors.py if a mirror carries it)."
+        ]
+    return []
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -213,7 +273,8 @@ def main(argv: list[str] | None = None) -> int:
 
     code = load_code_counts()
     readme = parse_readme_counts(README_PATH.read_text(encoding="utf-8"))
-    errors = compare_counts(code, readme)
+    readme_text = README_PATH.read_text(encoding="utf-8")
+    errors = compare_counts(code, readme) + check_parity_badge(readme_text)
 
     if args.json:
         print(
@@ -229,6 +290,8 @@ def main(argv: list[str] | None = None) -> int:
         cval = code.get(key, "?")
         rval = readme.get(key, "?")
         print(f"  {key:<11} code={cval!s:>4}  readme={rval!s:>4}")
+    badge = _PARITY_BADGE_RE.search(readme_text)
+    print(f"  {'parity badge':<11} readme={badge.group('pct') + '%' if badge else '?':>5}")
     print()
     if errors:
         print(f"check_doc_counts: FAIL ({len(errors)} issue(s)).")

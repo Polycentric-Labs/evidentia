@@ -21,7 +21,7 @@
   <a href="https://pypi.org/project/evidentia/"><img src="https://img.shields.io/pypi/v/evidentia.svg" alt="PyPI version"></a>
   <a href="https://github.com/Polycentric-Labs/evidentia/actions/workflows/test.yml"><img src="https://github.com/Polycentric-Labs/evidentia/actions/workflows/test.yml/badge.svg?branch=main" alt="tests"></a>
   <a href="https://codecov.io/gh/Polycentric-Labs/evidentia"><img src="https://codecov.io/gh/Polycentric-Labs/evidentia/branch/main/graph/badge.svg" alt="codecov"></a>
-  <a href="docs/parity-coverage.md"><img src="https://img.shields.io/badge/CLI%E2%86%94GUI%20parity-93%25-brightgreen.svg" alt="CLI↔GUI parity"></a>
+  <a href="docs/parity-coverage.md"><img src="https://img.shields.io/badge/CLI%E2%86%94GUI%20parity-100%25-brightgreen.svg" alt="CLI↔GUI parity"></a>
 </p>
 
 <p>
@@ -115,8 +115,8 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 | Inter-framework crosswalks | 16 |
 | Evidence collectors | 14 |
 | MCP tools | 13 |
-| OSCAL serializations | 1 (OpenSSF OSPS Baseline; more on the v0.11+ roadmap) |
-| Test suite | 4,900+ tests; mypy strict; ruff clean |
+| OSCAL serializations | 1 (OpenSSF OSPS Baseline; more on the roadmap) |
+| Test suite | 5,000+ tests; mypy strict; ruff clean |
 
 ## Documentation
 
