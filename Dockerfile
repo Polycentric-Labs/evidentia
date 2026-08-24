@@ -72,7 +72,7 @@ RUN set -eux; \
 # these binaries), but SECURITY.md § Supported versions promises the
 # latest patch carries no disclosed advisories, so it does not get to sit.
 # See docs/releases/reviews/safeguards-resweep-2026-Q3.md § 2.2.
-FROM dhi.io/python:3.13@sha256:e512071462b6f002ac3d6f4d31bdf7d20fe6ffce3b5ce4f684b5e50d14dba217 AS final
+FROM dhi.io/python:3.13@sha256:e16ab55c341bfd0e7da665bc2d48939cff890b43a41867fe6e1f0690638ceb7c AS final
 COPY --from=venv-fix --chown=65532:65532 /opt/venv /opt/venv
 COPY --from=venv-fix --chown=65532:65532 /build/home/ /home/nonroot/
 ENV PATH="/opt/venv/bin:${PATH}" \
