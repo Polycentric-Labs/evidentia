@@ -432,6 +432,64 @@ def test_a5_tolerates_umbrella_and_plus_forms(rc) -> None:
     assert rc.check_a5_descending_version_order(headings) == []
 
 
+def test_a5_plus_form_ranks_above_its_bare_version(rc) -> None:
+    """``v1.1+`` ("this version and beyond") ranks ABOVE plain ``v1.1``. The
+    old key erased the ``+`` and treated the two as equal, so this valid
+    layout wrongly failed the gate."""
+    headings, _ = rc.parse_roadmap(
+        "## v1.1+ - beyond - RESERVED\n"
+        "## v1.1 - cycle - SHIPPED\n"
+    )
+    assert rc.check_a5_descending_version_order(headings) == []
+
+
+def test_a5_fires_when_bare_version_sits_above_its_plus_form(rc) -> None:
+    headings, _ = rc.parse_roadmap(
+        "## v1.1 - cycle - SHIPPED\n"
+        "## v1.1+ - beyond - RESERVED\n"
+    )
+    failures = rc.check_a5_descending_version_order(headings)
+    assert len(failures) == 1
+    assert "must sort BELOW" in failures[0]
+
+
+def test_a5_bare_cycle_umbrella_ranks_above_its_concrete_releases(rc) -> None:
+    """A bare cycle heading (``v0.11``) is an umbrella and ranks ABOVE its
+    own concrete releases, exactly like the ``.x`` form, because that is how
+    the file lays every cycle out: umbrella first, patches inside or below.
+    The old key ranked a bare cycle BELOW its patches (patch = -1), the
+    opposite of the layout, and its docstring asserted the wrong thing."""
+    headings, _ = rc.parse_roadmap(
+        "## v0.11 - cycle - SHIPPED\n"
+        "## v0.11.2 - patch - SHIPPED\n"
+    )
+    assert rc.check_a5_descending_version_order(headings) == []
+
+
+def test_a5_fires_on_equal_versions(rc) -> None:
+    """The ``>=`` branch: two h2s carrying the SAME version are flagged as a
+    violation, never tolerated as a tie."""
+    headings, _ = rc.parse_roadmap(
+        "## v0.12 - one - SHIPPED\n"
+        "## v0.12 - two - SHIPPED\n"
+    )
+    failures = rc.check_a5_descending_version_order(headings)
+    assert len(failures) == 1
+    assert "must sort BELOW" in failures[0]
+
+
+def test_a5_ignores_headings_without_version_token_or_status(rc) -> None:
+    """Malformed and non-status headings never reach A5: no leading version
+    token, or no trailing status word, means the heading is not tracked."""
+    headings, _ = rc.parse_roadmap(
+        "## version notes\n"
+        "## v1.0 - open - PLANNED\n"
+        "## v0.9.x has no status word here\n"
+    )
+    assert [h.version for h in headings] == ["1.0"]
+    assert rc.check_a5_descending_version_order(headings) == []
+
+
 def test_a5_counts_toward_gate_failure(rc, tmp_path: Path) -> None:
     """A5 is a failing assertion, not an advisory like A4."""
     report = rc.run_checks(

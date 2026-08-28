@@ -1,8 +1,8 @@
 {
-  "framework_id": "occ-sr-26-02",
-  "framework_name": "OCC Bulletin 2026-13a / FRB SR 26-02 — Supervisory Guidance on Model Risk Management",
+  "framework_id": "occ-sr-26-2",
+  "framework_name": "OCC Bulletin 2026-13 / FRB SR 26-2 — Supervisory Guidance on Model Risk Management",
   "version": "April 17, 2026 (supersedes OCC 2011-12 / SR 11-7)",
-  "source": "https://www.federalreserve.gov/supervisionreg/srletters/sr2602.htm (parallel: OCC Bulletin 2026-13a)",
+  "source": "https://www.federalreserve.gov/supervisionreg/srletters/sr2602.htm (parallel: OCC Bulletin 2026-13)",
   "tier": "A",
   "category": "control",
   "placeholder": false,
@@ -33,7 +33,7 @@
     {
       "id": "I.3",
       "title": "GenAI / Agentic AI Out of Scope",
-      "description": "Generative AI + agentic AI models are explicitly excluded from the SR 26-02 / OCC 2026-13a framework as 'novel + rapidly evolving'; future RFI promised. Operators should apply self-imposed discipline pending regulatory clarification.",
+      "description": "Generative AI + agentic AI models are explicitly excluded from the SR 26-2 / OCC 2026-13 framework as 'novel + rapidly evolving'; future RFI promised. Operators should apply self-imposed discipline pending regulatory clarification.",
       "family": "I. Scope + Definitions"
     },
     {
@@ -135,7 +135,7 @@
     {
       "id": "III.D.3",
       "title": "Validation Scope",
-      "description": "Validation covers conceptual soundness, ongoing monitoring, + outcomes analysis dimensions per SR 26-02 §III.D.",
+      "description": "Validation covers conceptual soundness, ongoing monitoring, + outcomes analysis dimensions per SR 26-2 §III.D.",
       "family": "III. Validation"
     },
     {
@@ -165,7 +165,7 @@
     {
       "id": "IV.2",
       "title": "Vendor Model Documentation Sufficiency",
-      "description": "Vendor-provided model documentation is reviewed for SR-26-02 sufficiency; gaps are addressed via institution-side supplemental documentation.",
+      "description": "Vendor-provided model documentation is reviewed for SR-26-2 sufficiency; gaps are addressed via institution-side supplemental documentation.",
       "family": "IV. Vendor Models"
     },
     {
@@ -237,7 +237,7 @@
     {
       "id": "VI.4",
       "title": "GenAI / LLM Self-Imposed Discipline",
-      "description": "Generative AI + agentic AI deployments — outside SR 26-02 scope — operate under documented self-imposed discipline: model inventory entries, prompt-hash provenance, run-id audit correlation, validation + effective-challenge regardless of regulatory mandate. See Evidentia's GenerationContext + RiskStatement.model_inventory_ref features.",
+      "description": "Generative AI + agentic AI deployments — outside SR 26-2 scope — operate under documented self-imposed discipline: model inventory entries, prompt-hash provenance, run-id audit correlation, validation + effective-challenge regardless of regulatory mandate. See Evidentia's GenerationContext + RiskStatement.model_inventory_ref features.",
       "family": "VI. AI / ML Specific Considerations"
     }
   ]

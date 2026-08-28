@@ -47,6 +47,7 @@ from evidentia_core.conmon.calendar import (
     CycleAttentionState,
     derive_status,
     get_cadence,
+    migrate_deprecated_slugs,
     next_due,
 )
 from evidentia_core.security.atomic_write import atomic_write_text
@@ -376,7 +377,7 @@ def load_state_file(
             raise ValueError(
                 f"{slug!r} -> {value!r}: expected ISO-8601 date string"
             )
-    return out
+    return migrate_deprecated_slugs(out)
 
 
 def save_state_file(path: Path, state: dict[str, date]) -> None:

@@ -38,7 +38,7 @@ Allen Byrd builds Evidentia, an open-source GRC tool focused on cryptographic ev
 ## Abstract 2 — GovForward FedRAMP Summit 2026
 
 **Title** (≤80 chars):
-Open-source FedRAMP 20x readiness: OSCAL, cryptographic CIMD, and the Sept 2026 mandate
+Open-source FedRAMP 20x readiness: OSCAL, signed evidence, and the Sept 2026 mandate
 
 **Track**: FedRAMP 20x track — Tooling & Automation
 

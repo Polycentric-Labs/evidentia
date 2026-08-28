@@ -101,7 +101,9 @@ accepted by domain expert) and Candidate B (public API contract
 frozen). Acceptance gates include: domain-expert walk-through
 completed, 1+ external operator validation, API stability docs
 published, deprecation calendar, OpenSSF Gold tier (if achievable),
-cryptographic CIMD signatures, and pre-release-review PROCEED-CLEAN.
+signed MCP tool output attested under its real name (`SignedToolOutput`,
+shipped v0.9.7/v0.9.8; formerly mislabelled "cryptographic CIMD
+signatures"), and pre-release-review PROCEED-CLEAN.
 Post-v1.0 packaging and distribution direction is tracked outside this
 public roadmap.
 

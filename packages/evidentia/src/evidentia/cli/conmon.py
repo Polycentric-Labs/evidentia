@@ -64,6 +64,7 @@ from evidentia_core.conmon import (
     list_cadences,
     make_alert_handler,
     mark_completed,
+    migrate_deprecated_slugs,
     next_due,
     resolve_secret,
     run_daemon,
@@ -148,7 +149,7 @@ def _load_last_completed_map(
                 f"ISO-8601 date string"
             )
             raise typer.Exit(code=1)
-    return out
+    return migrate_deprecated_slugs(out)
 
 
 # ── list ───────────────────────────────────────────────────────────

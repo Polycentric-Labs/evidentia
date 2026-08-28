@@ -30,6 +30,21 @@ import pathlib
 
 from _generators import emit_control_catalog  # type: ignore[import-not-found]
 
+# Emit ONLY when run as a script. Importing this module (to reuse the
+# baseline membership lists or to exercise _assert_baseline_invariants)
+# must never write catalog files: the FedRAMP emits below are STAGE 1 of a
+# two-stage pipeline, and a stage-1 write without the
+# rewrite_fedramp_pointers.py enrichment strips every FedRAMP title and
+# description. The v0.13 cycle-open session reproduced exactly that by
+# importing this module, which is why this guard exists.
+_RUN_AS_SCRIPT = __name__ == "__main__"
+
+
+def _emit(**kwargs: object) -> None:
+    """Write-through to :func:`emit_control_catalog`, script-run only."""
+    if _RUN_AS_SCRIPT:
+        emit_control_catalog(**kwargs)
+
 FEDRAMP_URL = "https://www.fedramp.gov"
 CMMC_URL = "https://dodcio.defense.gov/CMMC/"
 
@@ -77,11 +92,19 @@ _WITHDRAWN = {"CM-8(5)", "CP-2(4)", "SA-12", "SC-13(1)"}
 def _assert_baseline_invariants() -> None:
     """Fail the build if the vendored membership violates a known-true property.
 
-    Every assertion here corresponds to a defect actually shipped through
+    Every check here corresponds to a defect actually shipped through
     v0.11.2, so each one is a regression test rather than a theoretical check.
     Sources: the FedRAMP PMO OSCAL profiles for the counts and the nesting, and
     NIST SP 800-53B Table 3-13 (PM) and Table 3-15 (PT) for the exclusions.
+
+    Raises ``RuntimeError`` rather than using bare ``assert``: this gate must
+    survive ``python -O``, which compiles assert statements away entirely.
     """
+
+    def _require(condition: bool, message: str) -> None:
+        if not condition:
+            raise RuntimeError(f"baseline invariant violated: {message}")
+
     low, mod = set(FEDRAMP_LOW), set(FEDRAMP_MODERATE)
     high, li = set(FEDRAMP_HIGH), set(FEDRAMP_LI_SAAS)
     every = low | mod | high | li
@@ -91,28 +114,28 @@ def _assert_baseline_invariants() -> None:
         "low": len(FEDRAMP_LOW), "moderate": len(FEDRAMP_MODERATE),
         "high": len(FEDRAMP_HIGH), "li-saas": len(FEDRAMP_LI_SAAS),
     }
-    assert actual == expected, f"baseline counts changed: {actual} != {expected}"
+    _require(actual == expected, f"baseline counts changed: {actual} != {expected}")
 
     for name, ids in (
         ("low", FEDRAMP_LOW), ("moderate", FEDRAMP_MODERATE),
         ("high", FEDRAMP_HIGH), ("li-saas", FEDRAMP_LI_SAAS),
     ):
-        assert len(ids) == len(set(ids)), f"{name} contains duplicate control ids"
+        _require(len(ids) == len(set(ids)), f"{name} contains duplicate control ids")
 
     # LI-SaaS selects the SAME ids as Low. The FedRAMP Tailored distinction is
     # carried by a per-control `method` property, not by a smaller control set.
-    assert low == li, "LI-SaaS membership must equal Low"
-    assert low < mod, "Low must be a strict subset of Moderate"
-    assert mod < high, "Moderate must be a strict subset of High"
-    assert every == high, "the union of all baselines must equal High"
+    _require(low == li, "LI-SaaS membership must equal Low")
+    _require(low < mod, "Low must be a strict subset of Moderate")
+    _require(mod < high, "Moderate must be a strict subset of High")
+    _require(every == high, "the union of all baselines must equal High")
 
     pm = sorted(i for i in every if i.startswith("PM-"))
     pt = sorted(i for i in every if i.startswith("PT-"))
-    assert not pm, f"PM controls are not allocated to security baselines (SP 800-53B Table 3-13): {pm}"
-    assert not pt, f"PT controls are not allocated to security baselines (SP 800-53B Table 3-15): {pt}"
+    _require(not pm, f"PM controls are not allocated to security baselines (SP 800-53B Table 3-13): {pm}")
+    _require(not pt, f"PT controls are not allocated to security baselines (SP 800-53B Table 3-15): {pt}")
 
     withdrawn = sorted(every & _WITHDRAWN)
-    assert not withdrawn, f"withdrawn Rev 5 controls cannot appear in a baseline: {withdrawn}"
+    _require(not withdrawn, f"withdrawn Rev 5 controls cannot appear in a baseline: {withdrawn}")
 
 
 _assert_baseline_invariants()
@@ -177,7 +200,7 @@ for baseline_name, baseline_controls in [
     ("high", FEDRAMP_HIGH),
     ("li-saas", FEDRAMP_LI_SAAS),
 ]:
-    emit_control_catalog(
+    _emit(
         framework_id=f"fedramp-rev5-{baseline_name}",
         framework_name=f"FedRAMP Rev 5 {baseline_name.upper() if baseline_name=='li-saas' else baseline_name.capitalize()} Baseline",
         version="Rev 5 (profiles published 2024-09-24)",
@@ -212,7 +235,7 @@ CMMC_L1 = [
     ("SI.L1-3.14.5", "System & File Scanning", "System and Information Integrity"),
 ]
 
-emit_control_catalog(
+_emit(
     framework_id="cmmc-2-l1",
     framework_name="CMMC 2.0 Level 1 (Foundational)",
     version="2.0 (2024 Final Rule)",
@@ -342,7 +365,7 @@ CMMC_L2 = [
     ]
 ]
 
-emit_control_catalog(
+_emit(
     framework_id="cmmc-2-l2",
     framework_name="CMMC 2.0 Level 2 (Advanced)",
     version="2.0 (2024 Final Rule)",
@@ -377,7 +400,7 @@ CMMC_L3_ADDS = [
     ("SI.L3-3.14.6e", "Use threat indicator information for intrusion detection", "System and Information Integrity"),
 ]
 
-emit_control_catalog(
+_emit(
     framework_id="cmmc-2-l3",
     framework_name="CMMC 2.0 Level 3 (Expert)",
     version="2.0 (2024 Final Rule)",

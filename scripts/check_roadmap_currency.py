@@ -100,22 +100,22 @@ def check_a5_descending_version_order(headings: list[Heading]) -> list[str]:
     Only h2 headings participate. h3 entries nest inside their cycle and are
     deliberately not constrained here.
     """
-    def order_key(version: str) -> tuple[int, int, int]:
+    def order_key(version: str) -> tuple[int, int, int, int]:
         """Sortable key tolerant of the umbrella forms `_numeric_key` rejects.
 
-        `v0.10.x` (a whole line) sorts ABOVE its concrete patches; a bare cycle
-        like `v0.11` sorts BELOW them, which is where the file already puts it.
+        Umbrella headings rank ABOVE the concrete releases they cover, which
+        is how the file lays every cycle out: `v0.10.x` and a bare cycle like
+        `v0.11` both rank above their own patches, and a plus form (`v1.1+`,
+        this version and beyond) ranks above the same version without the
+        plus. (Through v0.12 the bare-cycle rule was inverted, patch = -1,
+        and the erased `+` made `vX.Y+` collide with `vX.Y`.)
         """
+        plus = 1 if version.endswith("+") else 0
         core = version.rstrip("+")
         parts = core.split(".")
         major, minor = int(parts[0]), int(parts[1])
-        if len(parts) < 3:
-            patch = -1
-        elif parts[2] == "x":
-            patch = 10_000
-        else:
-            patch = int(parts[2])
-        return (major, minor, patch)
+        patch = 10_000 if len(parts) < 3 or parts[2] == "x" else int(parts[2])
+        return (major, minor, patch, plus)
 
     h2s = [h for h in headings if h.level == 2]
     failures: list[str] = []

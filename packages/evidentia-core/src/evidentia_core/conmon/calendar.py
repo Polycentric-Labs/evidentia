@@ -28,6 +28,7 @@ templates; runtime registration shadows them per-process.
 from __future__ import annotations
 
 import calendar as stdlib_calendar
+import warnings
 from datetime import date, timedelta
 from enum import Enum
 
@@ -107,7 +108,7 @@ class ConmonCadence(EvidentiaModel):
         description=(
             "Framework identifier (matches the gap-analyzer + catalog "
             "convention: ``nist-800-53-rev5`` / ``fedramp-rev5-mod`` "
-            "/ ``cmmc-v2`` / ``dod-rmf`` / ``occ-2026-13a`` / etc.)."
+            "/ ``cmmc-v2`` / ``dod-rmf`` / ``occ-2026-13`` / etc.)."
         ),
     )
     activity: str = Field(
@@ -218,24 +219,59 @@ BUNDLED_CADENCES: list[ConmonCadence] = [
         citation="DoDI 8510.01 §3.5.b",
     ),
     ConmonCadence(
-        slug="occ-2026-13a-model-risk",
-        framework="occ-2026-13a",
+        slug="occ-2026-13-model-risk",
+        framework="occ-2026-13",
         activity="model-risk-review",
         frequency=CadenceFrequency.ANNUAL,
         description=(
-            "OCC Bulletin 2026-13a + FRB SR 26-02 annual model-"
+            "OCC Bulletin 2026-13 + FRB SR 26-2 annual model-"
             "risk review. Validation of model inventory, "
             "documentation, ongoing-performance-monitoring + "
             "effective-challenge evidence. Excludes generative + "
             "agentic AI per the April 2026 scope clarification."
         ),
-        citation="OCC Bulletin 2026-13a (April 2026); FRB SR 26-02",
+        citation="OCC Bulletin 2026-13 (April 2026); FRB SR 26-2",
     ),
 ]
 """Bundled CONMON cadences shipped with v0.9.0 P3."""
 
 
 _REGISTRY: dict[str, ConmonCadence] = {c.slug: c for c in BUNDLED_CADENCES}
+
+
+DEPRECATED_SLUG_ALIASES: dict[str, str] = {
+    # v0.13 designator correction: the OCC bulletin is 2026-13 (no "a"
+    # suffix), so the bundled model-risk cadence slug was renamed. Old
+    # operator state files keep working through this read-time alias.
+    # See docs/deprecation-calendar.md (target removal v1.0.0).
+    "occ-2026-13a-model-risk": "occ-2026-13-model-risk",
+}
+"""Deprecated cadence slugs, old form -> canonical. Consulted by every
+state-file reader so a state file written before a rename keeps satisfying
+the renamed cadence."""
+
+
+def migrate_deprecated_slugs[V](state: dict[str, V]) -> dict[str, V]:
+    """Translate deprecated cadence-slug keys to their canonical form.
+
+    Emits a :class:`DeprecationWarning` per deprecated key found. When both
+    the old and the new key are present, the new key's value wins and the
+    old key is dropped, so a half-migrated state file can never regress a
+    newer completion date. Mutates and returns ``state``.
+    """
+    for old, new in DEPRECATED_SLUG_ALIASES.items():
+        if old not in state:
+            continue
+        warnings.warn(
+            f"conmon state key {old!r} is deprecated; rename it to {new!r} "
+            "(see docs/deprecation-calendar.md - scheduled for removal in "
+            "v1.0.0)",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        value = state.pop(old)
+        state.setdefault(new, value)
+    return state
 
 
 # ── public helpers ─────────────────────────────────────────────────
