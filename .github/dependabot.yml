@@ -225,15 +225,17 @@ updates:
           - "patch"
     ignore:
       # python base-image VERSION bumps (3.13 -> 3.14 is semver-MINOR in
-      # Dependabot's classification — the major stays 3 — so major-only
+      # Dependabot's classification, the major stays 3, so major-only
       # ignoring would not catch it; #127 arrived through the minor+patch
-      # group). litellm's `requires-python <3.14` makes a 3.14 base
-      # structurally uninstallable (the v0.10.12 container break,
-      # engineering-practices lesson 1; PR #127 closed on this basis).
-      # Digest bumps are NOT version-updates and continue to flow.
-      # Revisit when the AI stack supports 3.14.
-      # Both FROM lines are covered: the python:3.13-slim builder AND the
-      # dhi.io/python runtime base.
+      # group). Base-image moves stay a deliberate maintainer decision even
+      # now that the stack itself runs on 3.14 (requires-python <3.15 since
+      # v0.13): the v0.10.12 container break (engineering-practices lesson 1;
+      # PR #127 closed on this basis) came from an unreviewed base bump, and
+      # the DHI runtime digest must move in step with the builder tag, so a
+      # 3.14 base is a scheduled migration once DHI 3.14 coverage is
+      # confirmed, not a Dependabot PR. Digest bumps are NOT version-updates
+      # and continue to flow. Both FROM lines are covered: the
+      # python:3.13-slim builder AND the dhi.io/python runtime base.
       - dependency-name: "python"
         update-types:
           - "version-update:semver-major"

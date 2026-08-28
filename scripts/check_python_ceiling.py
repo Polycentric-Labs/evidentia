@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Self-lift watcher for the workspace's ``requires-python<3.14`` cap.
+"""Self-lift watcher for the workspace's ``requires-python<3.15`` cap.
 
-The workspace's true Python ceiling is ``<3.14`` because litellm
-(evidentia-ai dep) declares ``requires_python "<3.14,>=3.10"``; the root
-``pyproject.toml`` was capped to ``>=3.12,<3.14`` to unblock Dependabot. This
+The workspace's true Python ceiling is ``<3.15`` because litellm
+(evidentia-ai dep) declares ``requires_python "<3.15,>=3.10"``; the root
+``pyproject.toml`` is capped to ``>=3.12,<3.15`` to keep Dependabot's
+resolver out of the unsatisfiable ``>=3.15`` fork. This
 sentinel WATCHES litellm's published ``requires_python`` on PyPI and NUDGES
 (opens a tracking issue) once it relaxes past the target Python — the signal
 that the cap can be lifted.
@@ -34,7 +35,7 @@ from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import InvalidVersion
 
 DEFAULT_PACKAGE = "litellm"
-DEFAULT_TARGET = "3.14.0"
+DEFAULT_TARGET = "3.15.0"
 
 _Opener = Callable[..., Any]
 
@@ -97,7 +98,7 @@ def main(argv: list[str] | None = None) -> int:
     if ceiling_allows(requires_python, args.target):
         finding = (
             f"- **{args.package}** now declares `requires_python = \"{requires_python}\"`, "
-            f"which allows Python {args.target} — the `requires-python<3.14` cap in the "
+            f"which allows Python {args.target}, so the `requires-python<3.15` cap in the "
             "root `pyproject.toml` can be lifted."
         )
         Path(args.output).write_text(finding + "\n", encoding="utf-8")

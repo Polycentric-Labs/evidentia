@@ -1,7 +1,7 @@
-# Self-lift watcher for the workspace's `requires-python<3.14` cap. The
-# workspace's true Python ceiling is <3.14 because litellm (evidentia-ai dep)
-# declares requires_python "<3.14,>=3.10"; the root pyproject.toml was capped
-# to >=3.12,<3.14 to unblock Dependabot. This sentinel WATCHES litellm's
+# Self-lift watcher for the workspace's `requires-python<3.15` cap. The
+# workspace's true Python ceiling is <3.15 because litellm (evidentia-ai dep)
+# declares requires_python "<3.15,>=3.10"; the root pyproject.toml is capped
+# to >=3.12,<3.15 to keep Dependabot resolvable. This sentinel WATCHES litellm's
 # published requires_python on PyPI and NUDGES (opens/updates a single
 # tracking issue) once it relaxes past the target Python — the signal that
 # the cap can be lifted. Detect-and-nudge only: it never edits pyproject.toml
@@ -62,7 +62,7 @@ jobs:
             echo "No ceiling findings — nothing to do."
             exit 0
           fi
-          TITLE="litellm relaxed its Python ceiling past 3.14 — lift the requires-python cap"
+          TITLE="litellm relaxed its Python ceiling past 3.15 - lift the requires-python cap"
           BODY=$(printf '%s\n\n%s\n' \
             "$(cat ceiling-findings.md)" \
             "Action: bump root pyproject.toml's requires-python cap and re-run uv lock (scripts/bump_version.py does not touch this — it's a manual pyproject.toml edit). This is a scheduled sentinel — not a gate.")

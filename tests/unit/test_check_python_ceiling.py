@@ -1,7 +1,7 @@
 """Tests for ``scripts/check_python_ceiling.py`` — the self-lift watcher for
-the ``requires-python<3.14`` cap (litellm currently declares
-``requires_python "<3.14,>=3.10"``; when it relaxes past 3.14 the cap can
-lift).
+the ``requires-python<3.15`` cap (litellm currently declares
+``requires_python "<3.15,>=3.10"``; when it relaxes past 3.15 the cap can
+lift again).
 
 Detect-and-nudge, fail-soft: a PyPI fetch failure or malformed payload must
 never turn this sentinel red (mirrors ``check_workflow_liveness.py``). All
@@ -38,11 +38,11 @@ def cpc() -> Any:
 
 
 def test_ceiling_allows_false_when_still_capped_below_target(cpc: Any) -> None:
-    assert cpc.ceiling_allows("<3.14,>=3.10") is False
+    assert cpc.ceiling_allows("<3.15,>=3.10") is False
 
 
 def test_ceiling_allows_true_when_relaxed_past_target(cpc: Any) -> None:
-    assert cpc.ceiling_allows("<3.15,>=3.10") is True
+    assert cpc.ceiling_allows("<3.16,>=3.10") is True
 
 
 def test_ceiling_allows_true_when_unbounded_above(cpc: Any) -> None:
@@ -146,7 +146,7 @@ def test_fetch_requires_python_none_on_missing_info(cpc: Any) -> None:
 def test_main_writes_nudge_when_ceiling_allows(
     cpc: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setattr(cpc, "fetch_requires_python", lambda package, opener=None: "<3.15,>=3.10")
+    monkeypatch.setattr(cpc, "fetch_requires_python", lambda package, opener=None: "<3.16,>=3.10")
     out = tmp_path / "ceiling-findings.md"
     rc = cpc.main(["--output", str(out)])
     assert rc == 0
@@ -158,7 +158,7 @@ def test_main_writes_nudge_when_ceiling_allows(
 def test_main_writes_empty_file_when_still_capped(
     cpc: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setattr(cpc, "fetch_requires_python", lambda package, opener=None: "<3.14,>=3.10")
+    monkeypatch.setattr(cpc, "fetch_requires_python", lambda package, opener=None: "<3.15,>=3.10")
     out = tmp_path / "ceiling-findings.md"
     rc = cpc.main(["--output", str(out)])
     assert rc == 0

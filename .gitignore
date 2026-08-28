@@ -56,8 +56,9 @@ wheels/
 *.egg
 MANIFEST
 
-# Virtual environments
-.venv/
+# Virtual environments (.venv* covers parallel per-Python envs, e.g. the
+# .venv314 used to run the suite on the 3.14 matrix leg locally)
+.venv*/
 venv/
 ENV/
 env/
