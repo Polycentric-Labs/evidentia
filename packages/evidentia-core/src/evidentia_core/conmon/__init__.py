@@ -30,7 +30,7 @@ Bundled cadences (v0.9.0 P3 baseline; operator-extensible via
 - ``fedramp-conmon-annual``     — annual SAR
 - ``cmmc-l2-triennial``         — triennial reassessment
 - ``dod-rmf-annual``            — annual control assessment
-- ``occ-2026-13a-model-risk``   — annual model-risk review
+- ``occ-2026-13-model-risk``    — annual model-risk review
 
 Pure functions; no I/O; no persistence side-effects. Audit-trail
 emit (``EventAction.CONMON_CYCLE_DUE`` /
@@ -51,12 +51,14 @@ from evidentia_core.conmon.alerting import (
 from evidentia_core.conmon.calendar import (
     BUNDLED_CADENCES,
     CONMON_FREQUENCIES,
+    DEPRECATED_SLUG_ALIASES,
     CadenceFrequency,
     ConmonCadence,
     CycleAttentionState,
     derive_status,
     get_cadence,
     list_cadences,
+    migrate_deprecated_slugs,
     next_due,
     register_cadence,
 )
@@ -85,6 +87,7 @@ __all__ = [
     "CONMON_FREQUENCIES",
     "DEFAULT_POLL_INTERVAL_SECONDS",
     "DEFAULT_SUPPRESSION_HOURS",
+    "DEPRECATED_SLUG_ALIASES",
     "MIN_POLL_INTERVAL_SECONDS",
     "AlertChannel",
     "AlertDeduper",
@@ -105,6 +108,7 @@ __all__ = [
     "load_state_file",
     "make_alert_handler",
     "mark_completed",
+    "migrate_deprecated_slugs",
     "next_due",
     "poll_once",
     "register_cadence",

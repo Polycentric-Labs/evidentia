@@ -23,7 +23,7 @@ finding. Evidentia v0.7.11 ships:
 | Protected health information | HIPAA Privacy Rule §164.530(j) | 6 years |
 | Bank records | GLBA + FFIEC IT Handbook + 12 CFR 30 Appendix B | 5 years (most categories) |
 | Cardholder data logs | PCI DSS 10.7 | 1 year (3 months online) |
-| Model documentation | OCC Bulletin 2011-12 / FRB SR 11-7 + SR 26-02 | Life of model + 7 years |
+| Model documentation | OCC Bulletin 2011-12 / FRB SR 11-7 + SR 26-2 | Life of model + 7 years |
 | Personal data | GDPR / CCPA | Purpose-limited (operator-set) |
 | Generic | Defensive default | 7 years |
 
@@ -257,7 +257,7 @@ collection pipelines per their institutional retention policy.
 | HIPAA Privacy Rule §164.530(j) | 6-year default |
 | GLBA + FFIEC | 5-year default; FFIEC Outsourcing booklet bundled |
 | PCI DSS 10.7 | 1-year default |
-| OCC 2011-12 / SR 11-7 / OCC 2026-13a / SR 26-02 | "life + 7 years" — operator extends past life |
+| OCC 2011-12 / SR 11-7 / OCC 2026-13 / SR 26-2 | "life + 7 years" — operator extends past life |
 | GDPR Article 5(1)(e) | Purpose-limited (default 0; operator must set) |
 
 ## See also

@@ -796,9 +796,10 @@ concrete moats that compound rather than enumerate. **The moat trinity**:
    v0.7.8-surfaced AI-feature-commoditization thesis: when every
    incumbent ships "agentic" features, the differentiator
    collapses into eval rigor + audit trails.
-3. **Cryptographic provenance (CIMD + Sigstore + PEP 740)** —
-   per-tool CIMD scope enforcement at the MCP protocol layer
-   (v0.8.5 P4) + Sigstore-signed eval output (v0.8.2) + PEP 740
+3. **Cryptographic provenance (Sigstore + PEP 740 + signed MCP tool
+   output)**: `SignedToolOutput` envelopes at the FastMCP dispatch
+   layer (v0.9.7 groundwork, v0.9.8 dispatch wrap; opt-in,
+   operator-supplied signer) + Sigstore-signed eval output (v0.8.2) + PEP 740
    attestations on every released wheel. The Mini Shai-Hulud
    supply-chain attack (the 2026-05-11 TanStack wave: 400+
    malicious package versions across 169+ packages on npm + PyPI,
@@ -820,8 +821,8 @@ Guided Experiences**, **Anecdotes** — all converged on the
 "agentic" vocabulary in the same quarter. **Drata's own May 11
 2026 essay "From Prompt Engineering to Harness Engineering"
 implicitly concedes the harder problem is verifiable harness,
-not agents** — directly validating Evidentia's DFAH + PRT + CIMD
-framing.
+not agents** — directly validating Evidentia's DFAH + PRT +
+signed-output framing.
 
 **v0.9.6 positioning posture**: Evidentia explicitly does NOT
 chase "agentic" vocabulary. The leading frame is **"deterministic,

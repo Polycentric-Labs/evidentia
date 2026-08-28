@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import logging
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -37,6 +38,34 @@ logger = logging.getLogger(__name__)
 
 # Path to bundled data directory
 DATA_DIR = Path(__file__).parent / "data"
+
+# Deprecated framework-id aliases, old id -> canonical id. Every row here has
+# a matching "Active deprecations" entry in docs/deprecation-calendar.md and
+# is removed at its declared target release.
+_FRAMEWORK_ID_ALIASES: dict[str, str] = {
+    # v0.13 designator correction: the FRB letter is SR 26-2 (no leading
+    # zero) and the OCC bulletin is 2026-13 (no "a" suffix).
+    "occ-sr-26-02": "occ-sr-26-2",
+}
+
+
+def resolve_framework_id_alias(framework_id: str) -> str:
+    """Translate a deprecated framework id to its canonical id.
+
+    Emits a :class:`DeprecationWarning` when a deprecated id is used; ids
+    with no alias entry pass through untouched.
+    """
+    canonical = _FRAMEWORK_ID_ALIASES.get(framework_id)
+    if canonical is None:
+        return framework_id
+    warnings.warn(
+        f"framework id {framework_id!r} is deprecated; use {canonical!r} "
+        "(see docs/deprecation-calendar.md - scheduled for removal in "
+        "v1.0.0)",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+    return canonical
 
 # CWE-674 guard: the OSCAL control/part trees are recursive, so a
 # pathologically deep document could exhaust Python's recursion limit
@@ -391,7 +420,12 @@ def load_catalog(framework_id: str, custom_path: Path | None = None) -> ControlC
 
     First checks for a custom path, then looks in the bundled data directory.
     Auto-detects format (OSCAL vs Evidentia) based on file contents.
+
+    Deprecated framework ids are translated to their canonical form (with a
+    ``DeprecationWarning``) before resolution, so operator pipelines written
+    against a renamed id keep working through the deprecation window.
     """
+    framework_id = resolve_framework_id_alias(framework_id)
     if custom_path:
         path = custom_path
     else:

@@ -198,7 +198,8 @@ contributor environment. With the
 installed in VS Code or Cursor, click "Reopen in Container" after
 cloning and you get:
 
-- Python 3.12 (matches CI matrix + `[tool.ruff]` target)
+- Python 3.12 (the primary CI matrix version + `[tool.ruff]` target; CI also
+  runs a 3.14 leg since the v0.13 cap lift)
 - Node 20 (matches release.yml + test.yml `actions/setup-node` pin)
 - `uv` (Astral) — primary Python package + project manager
 - `gh` (GitHub CLI) — for the publishing-authority workflow

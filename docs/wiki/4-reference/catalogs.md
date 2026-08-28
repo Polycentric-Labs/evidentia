@@ -58,7 +58,7 @@ Evidentia ships **97** framework catalogs in-tree. Tier-A/B catalogs carry autho
 | `nist-privacy-framework-1.0` | NIST Privacy Framework 1.0 | 1.0 (Jan 2020) | A | control |
 | `nist-ssdf-800-218` | NIST SP 800-218 Secure Software Development Framework (SSDF) | 1.1 (Feb 2022) | A | control |
 | `ny-dfs-500` | NY DFS 23 NYCRR Part 500 — Cybersecurity Requirements | Amendment 2 (Nov 2023) | A | control |
-| `occ-sr-26-02` | OCC Bulletin 2026-13a / FRB SR 26-02 — Supervisory Guidance on Model Risk Management | April 17, 2026 (supersedes OCC 2011-12 / SR 11-7) | A | control |
+| `occ-sr-26-2` | OCC Bulletin 2026-13 / FRB SR 26-2 — Supervisory Guidance on Model Risk Management | April 17, 2026 (supersedes OCC 2011-12 / SR 11-7) | A | control |
 
 ## International (15)
 

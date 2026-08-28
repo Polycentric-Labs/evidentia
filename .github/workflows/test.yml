@@ -73,7 +73,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.12"]
+        # 3.12 legs are the required checks; the 3.14 legs run on every PR but
+        # are not yet in the ruleset's required list (promotion is a deliberate
+        # ruleset change, tracked at the v0.13 cycle open).
+        python-version: ["3.12", "3.14"]
 
     steps:
       - name: Checkout

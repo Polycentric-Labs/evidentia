@@ -833,7 +833,7 @@ export const DEMO_FRAMEWORKS: FrameworkListResponse = {
     {
       id: "fedramp-rev5-moderate",
       name: "FedRAMP Rev 5 Moderate Baseline",
-      version: "Rev 5 (2023)",
+      version: "Rev 5 (profiles published 2024-09-24)",
       tier: "A",
       category: "control",
       placeholder: "false",

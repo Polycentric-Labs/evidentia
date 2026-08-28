@@ -1,8 +1,16 @@
-"""Generate OCC Bulletin 2026-13a / FRB SR 26-02 model-risk catalog.
+"""Generate OCC Bulletin 2026-13 / FRB SR 26-2 model-risk catalog.
 
-Authoritative source: OCC Bulletin 2026-13a + FRB SR 26-02
+Authoritative source: OCC Bulletin 2026-13 + FRB SR 26-2
 ("Supervisory Guidance on Model Risk Management"), April 17, 2026
 supersession of OCC Bulletin 2011-12 / FRB SR 11-7.
+
+Designator note (v0.13, V13-15): the catalog originally shipped as
+``occ-sr-26-02`` naming "OCC Bulletin 2026-13a / FRB SR 26-02". Both
+designators were wrong: the FRB letter carries no leading zero (SR 26-2,
+matching the SR 11-7 style) and the OCC bulletin number carries no "a"
+suffix (2026-13). The id is now ``occ-sr-26-2``; the old id resolves
+through a deprecated alias in ``evidentia_core.catalogs.loader`` until
+v1.0.0 per docs/deprecation-calendar.md.
 
 Public domain — works of US federal government per 17 USC §105.
 
@@ -33,11 +41,11 @@ def _ctl(id_: str, title: str, description: str, family: str) -> dict[str, str]:
 
 OCC_SR_URL = (
     "https://www.federalreserve.gov/supervisionreg/srletters/sr2602.htm "
-    "(parallel: OCC Bulletin 2026-13a)"
+    "(parallel: OCC Bulletin 2026-13)"
 )
 
 
-OCC_SR_26_02_CONTROLS: list[dict[str, str]] = [
+OCC_SR_26_2_CONTROLS: list[dict[str, str]] = [
     # --- I. Scope + Definitions ---
     _ctl("I.1", "Model Definition",
          "Quantitative method, system, or approach that applies "
@@ -54,7 +62,7 @@ OCC_SR_26_02_CONTROLS: list[dict[str, str]] = [
          "I. Scope + Definitions"),
     _ctl("I.3", "GenAI / Agentic AI Out of Scope",
          "Generative AI + agentic AI models are explicitly excluded "
-         "from the SR 26-02 / OCC 2026-13a framework as 'novel + "
+         "from the SR 26-2 / OCC 2026-13 framework as 'novel + "
          "rapidly evolving'; future RFI promised. Operators should apply "
          "self-imposed discipline pending regulatory clarification.",
          "I. Scope + Definitions"),
@@ -136,7 +144,7 @@ OCC_SR_26_02_CONTROLS: list[dict[str, str]] = [
          "III. Validation"),
     _ctl("III.D.3", "Validation Scope",
          "Validation covers conceptual soundness, ongoing monitoring, + "
-         "outcomes analysis dimensions per SR 26-02 §III.D.",
+         "outcomes analysis dimensions per SR 26-2 §III.D.",
          "III. Validation"),
     _ctl("III.D.4", "Validation Findings + Disposition",
          "Validation findings are classified by severity + tracked to "
@@ -158,7 +166,7 @@ OCC_SR_26_02_CONTROLS: list[dict[str, str]] = [
          "reference to the institution's TPRM vendor record.",
          "IV. Vendor Models"),
     _ctl("IV.2", "Vendor Model Documentation Sufficiency",
-         "Vendor-provided model documentation is reviewed for SR-26-02 "
+         "Vendor-provided model documentation is reviewed for SR-26-2 "
          "sufficiency; gaps are addressed via institution-side "
          "supplemental documentation.",
          "IV. Vendor Models"),
@@ -215,7 +223,7 @@ OCC_SR_26_02_CONTROLS: list[dict[str, str]] = [
          "or counterfactual explanation capability.",
          "VI. AI / ML Specific Considerations"),
     _ctl("VI.4", "GenAI / LLM Self-Imposed Discipline",
-         "Generative AI + agentic AI deployments — outside SR 26-02 "
+         "Generative AI + agentic AI deployments — outside SR 26-2 "
          "scope — operate under documented self-imposed discipline: "
          "model inventory entries, prompt-hash provenance, run-id audit "
          "correlation, validation + effective-challenge regardless of "
@@ -226,11 +234,11 @@ OCC_SR_26_02_CONTROLS: list[dict[str, str]] = [
 
 
 def main() -> None:
-    """Emit the OCC 2026-13a / FRB SR 26-02 model-risk catalog."""
+    """Emit the OCC 2026-13 / FRB SR 26-2 model-risk catalog."""
     emit_control_catalog(
-        framework_id="occ-sr-26-02",
+        framework_id="occ-sr-26-2",
         framework_name=(
-            "OCC Bulletin 2026-13a / FRB SR 26-02 — Supervisory "
+            "OCC Bulletin 2026-13 / FRB SR 26-2 — Supervisory "
             "Guidance on Model Risk Management"
         ),
         version="April 17, 2026 (supersedes OCC 2011-12 / SR 11-7)",
@@ -246,7 +254,7 @@ def main() -> None:
             "V. Governance",
             "VI. AI / ML Specific Considerations",
         ],
-        controls=OCC_SR_26_02_CONTROLS,
+        controls=OCC_SR_26_2_CONTROLS,
         tier="A",
     )
 

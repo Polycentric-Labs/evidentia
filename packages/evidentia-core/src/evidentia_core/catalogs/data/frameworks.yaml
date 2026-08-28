@@ -351,13 +351,13 @@ frameworks:
   path: us-federal/ny-dfs-500.json
   source_url: NYS Department of Financial Services — 23 NYCRR 500 (state regulation)
   refresh: monthly
-- id: occ-sr-26-02
-  name: OCC Bulletin 2026-13a / FRB SR 26-02 — Supervisory Guidance on Model Risk Management
+- id: occ-sr-26-2
+  name: OCC Bulletin 2026-13 / FRB SR 26-2 — Supervisory Guidance on Model Risk Management
   version: April 17, 2026 (supersedes OCC 2011-12 / SR 11-7)
   tier: A
   category: control
-  path: us-federal/occ-sr-26-02.json
-  source_url: 'https://www.federalreserve.gov/supervisionreg/srletters/sr2602.htm (parallel: OCC Bulletin 2026-13a)'
+  path: us-federal/occ-sr-26-2.json
+  source_url: 'https://www.federalreserve.gov/supervisionreg/srletters/sr2602.htm (parallel: OCC Bulletin 2026-13)'
   refresh: monthly
 - id: au-essential-8
   name: Australian Essential Eight

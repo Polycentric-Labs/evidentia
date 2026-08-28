@@ -25,7 +25,7 @@ the canonical cadences and lets operators query "what's due next?"
 A **ConmonCadence** is a unique combination of:
 
 - **Framework** — `nist-800-53-rev5`, `fedramp-rev5-mod`, `cmmc-v2`,
-  `dod-rmf`, `occ-2026-13a`, etc.
+  `dod-rmf`, `occ-2026-13`, etc.
 - **Activity** — `continuous-monitoring`, `poam-update`,
   `security-assessment`, `model-risk-review`, etc.
 - **Frequency** — `monthly` / `quarterly` / `annual` / `biennial` /
@@ -48,7 +48,7 @@ list --json` for the current catalog):
 | `fedramp-conmon-annual` | fedramp-rev5-mod | security-assessment | annual |
 | `cmmc-l2-triennial` | cmmc-v2 | reassessment | triennial |
 | `dod-rmf-annual` | dod-rmf | control-assessment | annual |
-| `occ-2026-13a-model-risk` | occ-2026-13a | model-risk-review | annual |
+| `occ-2026-13-model-risk` | occ-2026-13 | model-risk-review | annual |
 
 Each carries a citation to the regulatory or policy authority that
 establishes it.

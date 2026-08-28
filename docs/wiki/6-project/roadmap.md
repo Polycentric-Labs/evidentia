@@ -3,7 +3,7 @@
 
 # Evidentia roadmap
 
-**Last updated: 2026-08-23, at the v0.12.0 release.**
+**Last updated: 2026-08-28, at the v0.13 cycle open; current release v0.12.0.**
 
 > **Engineering practices**, how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
@@ -11,8 +11,10 @@
 
 ## How to read this document
 
-Sections run **newest first**: the open cycle is at the top, the oldest shipped
-release at the bottom. That ordering is mechanically enforced by assertion A5 in
+Sections run **newest first**: the highest version at the top, the oldest
+shipped release at the bottom. The open `PLANNED` cycle therefore sits at the
+top of the 0.x line, just below any `RESERVED` future milestone whose version
+number is higher. That ordering is mechanically enforced by assertion A5 in
 `scripts/check_roadmap_currency.py`, which fails the `consistency` gate if an
 h2 version heading ever sorts above a newer one.
 
@@ -75,12 +77,17 @@ leads with the CLI.
 Validated via a structured research pass (multi-model fleet + a primary-source survey of
 comparable tools + a 3-way adversarial validation).
 
-## v1.0 - Federal compliance shipped + API stability - PLANNED
+## v1.0 - Federal compliance shipped + API stability - RESERVED
 
-**The open cycle** (opened 2026-08-22 at the v0.12.0 release prep;
-ratification of the sequencing is its first item). Full plan:
-[`v1.0-prep-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v1.0-prep-plan.md), CONVERGE, not
-expand: execute the freeze-candidate register into `api-stability.md`;
+**The destination of the 0.x line** (re-homed 2026-08-28 at the v0.13 cycle
+open; previously the open cycle). The trajectory decision recorded in
+[`v0.13-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.13-plan.md) moves feature expansion ahead
+of convergence: v1.0.0 tags when the feature surface is built out and
+hardened, so the API-stability freeze freezes something whole. No locked
+external clock forces v1.0 to come sooner; the plan verified that rather than
+assuming it. Content here is unchanged and stays CONVERGE, not expand. Full
+plan: [`v1.0-prep-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v1.0-prep-plan.md): execute the
+freeze-candidate register into `api-stability.md`;
 execute the `Finding`/`SecurityFinding` rename via the three-step
 non-breaking plan (the schema title stays `SecurityFinding` through
 `ConfigDict(title=…)`); settle the review protocol's open questions; cut
@@ -94,9 +101,55 @@ accepted by domain expert) and Candidate B (public API contract
 frozen). Acceptance gates include: domain-expert walk-through
 completed, 1+ external operator validation, API stability docs
 published, deprecation calendar, OpenSSF Gold tier (if achievable),
-cryptographic CIMD signatures, and pre-release-review PROCEED-CLEAN.
+signed MCP tool output attested under its real name (`SignedToolOutput`,
+shipped v0.9.7/v0.9.8; formerly mislabelled "cryptographic CIMD
+signatures"), and pre-release-review PROCEED-CLEAN.
 Post-v1.0 packaging and distribution direction is tracked outside this
 public roadmap.
+
+## v0.13 - The shared spine and the correctness debt - PLANNED
+
+**The open cycle** (opened 2026-08-28, ratified the same day with all twelve
+of its open questions answered). Full plan:
+[`v0.13-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.13-plan.md). Scope philosophy is EXPAND,
+on the reuse ordering: build what three or more sectors share, fix what is
+already wrong, and sequence nothing ahead of the licence answer or
+partnership it depends on. Single-sector work waits.
+
+The cycle leads with the temporal continuity and cadence assertion layer
+(V13-01), the capability both research programmes reached independently: a
+gap-free dated evidence series over the append-only store, satisfying
+recurring-cadence obligations from PCI DSS 11.6.1's weekly series to NERC
+CIP-007 R2's thirty-five-day clock, with the vulnerability-scan ingest
+(V13-05) built alongside as its first consumer. Around that primitive, four
+groups:
+
+- **Collectors, the shared spine**: Microsoft Entra ID / M365 posture (the
+  most-cited gap in the sector research, 15 of 17 files), an Okta extension
+  plus Google Workspace, immutable-storage and retention configuration,
+  incident-clock ingest (ServiceNow, Jira, PagerDuty), and the
+  zero-credential public-registry resolvers behind a single selector leaf.
+- **Catalogs**: ingest the four already-machine-readable open corpora
+  (Australian ISM, CISA SCuBA, FINOS CCC, and BSI Grundschutz++ with
+  share-alike segregation), and fix the currency defects the project ships
+  today (`cisa-cpgs` 2.0, `swift-cscf` v2026, `nerc-cip-v7` designators,
+  `cjis-v6` 6.1 with per-CSA audit versions, and the rest of the V13-09
+  table).
+- **The correctness debt**: `api-stability.md` §1 repaired with the gate
+  extended to cover it; the "cryptographic CIMD signatures" misnomer
+  retired; crosswalk and catalog-truth defects; the `catalog pin` phantom
+  verb (documents corrected, verb not built); `occ-sr-26-02` renamed to the
+  canonical SR 26-2 / OCC 2026-13 with an alias; a time-boxed `mcp` SDK 2.0
+  migration attempt; FedRAMP SCN schema conformance on the shipped SCR
+  emitter; the react-table v9 migration; an in-repo regeneration path for
+  the vendored FedRAMP upstream; Python 3.14 support with `requires-python`
+  lifted to `<3.15`; and root-directory cleanup round two behind a fidelity
+  gate.
+- **The permission track**: the thirteen licence letters go out at cycle
+  start. Maintainer-sent correspondence; the answers gate v0.14 onward.
+
+Parity discipline for the cycle: every coverable new CLI leaf lands `full`,
+and 100% GUI coverage is a per-cycle exit condition at the tag.
 
 ## v0.12 - Pre-1.0 hardening + GUI parity - SHIPPED
 

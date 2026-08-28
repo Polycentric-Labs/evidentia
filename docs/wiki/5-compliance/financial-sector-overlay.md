@@ -24,16 +24,16 @@ multi-layered supervisory framework:
 | Third-party risk | OCC Bulletin 2013-29; FRB SR 13-19; FFIEC IT Examination Handbook (Outsourcing booklet) | `evidentia tprm vendor` (v0.7.9 P0.1) |
 | Vendor due diligence | Shared Assessments SIG / SIG-Lite; CSA CAIQ | `evidentia tprm dd-questionnaire` (v0.7.9 P0.2) |
 | Concentration risk | OCC + FRB + FFIEC outsourcing concentration expectations | `evidentia tprm concentration-report` (v0.7.9 P0.3) |
-| Model risk | OCC Bulletin 2011-12 / FRB SR 11-7 (active 2011-2026); OCC Bulletin 2026-13a / FRB SR 26-02 (April 2026 supersession) | `evidentia model-risk model` (v0.7.10 P0.6) |
+| Model risk | OCC Bulletin 2011-12 / FRB SR 11-7 (active 2011-2026); OCC Bulletin 2026-13 / FRB SR 26-2 (April 2026 supersession) | `evidentia model-risk model` (v0.7.10 P0.6) |
 | Three Lines of Defense | IIA Three Lines Model 2020 revision; FFIEC IT Examination Handbook (Management booklet) | `evidentia governance lines-report` (v0.7.10 P1.5 G1) |
-| Effective challenge | SR 11-7 §III.D + SR 26-02 + OCC 2026-13a effective-challenge requirements | `evidentia governance challenge` (v0.7.10 P1.5 G2) |
-| AI / LLM governance | SR 26-02 / OCC 2026-13a **explicit GenAI exclusion** — regulator-vacuum gap | Evidentia GenerationContext + `RiskStatement.model_inventory_ref` (v0.7.1 + v0.7.10 P0.6.4) |
+| Effective challenge | SR 11-7 §III.D + SR 26-2 + OCC 2026-13 effective-challenge requirements | `evidentia governance challenge` (v0.7.10 P1.5 G2) |
+| AI / LLM governance | SR 26-2 / OCC 2026-13 **explicit GenAI exclusion** — regulator-vacuum gap | Evidentia GenerationContext + `RiskStatement.model_inventory_ref` (v0.7.1 + v0.7.10 P0.6.4) |
 | Audit chain-of-custody | Regulator examination-evidence requirements; Sarbanes-Oxley §404 | OSCAL emit + Sigstore signing + (v0.7.11) WORM backends |
 
 ## The composition story
 
 A regulated bank deploying ML/AI to make consumer-facing decisions
-needs to satisfy SR 11-7 / SR 26-02 model-risk expectations
+needs to satisfy SR 11-7 / SR 26-2 model-risk expectations
 while ALSO satisfying TPRM expectations for any vendor-supplied
 component AND demonstrating proper Three Lines of Defense
 separation AND maintaining effective-challenge documentation.
@@ -42,7 +42,7 @@ Pre-Evidentia, this required:
 
 - A vendor management SaaS (Vanta / Drata / etc.) for TPRM
 - A separate model risk management product (SS&C Algorithmics /
-  SAS / proprietary build) for SR 11-7 / SR 26-02
+  SAS / proprietary build) for SR 11-7 / SR 26-2
 - A governance / GRC platform (RSA Archer / Optro / OneTrust)
   for 3LOD + effective challenge logging
 - Spreadsheet-driven concentration reporting
@@ -78,7 +78,7 @@ Model inventory                      Risk statement (AI-generated)
                 traces back to the model inventory
                 entry that documents tier classification,
                 validation history, and approval chain.
-                SR 11-7 / SR 26-02 audit trace-back
+                SR 11-7 / SR 26-2 audit trace-back
                 becomes deterministic.
 ```
 
@@ -225,7 +225,7 @@ chain-of-custody integrity. Examiners load the file in
 
 ## The GenAI regulator-vacuum positioning
 
-The April 2026 supersession (OCC Bulletin 2026-13a / FRB SR 26-02)
+The April 2026 supersession (OCC Bulletin 2026-13 / FRB SR 26-2)
 **explicitly excludes** generative AI and agentic AI from the
 SR 11-7 framework's scope. Banks deploying LLM-driven controls
 operate without a regulatory framework — which means they also
@@ -247,7 +247,7 @@ LLMs can present Evidentia's audit trail as a self-imposed
 discipline that satisfies the regulator's intent even though
 the formal framework isn't there yet.
 
-When SR 26-02 / OCC 2026-13a are eventually amended to include
+When SR 26-2 / OCC 2026-13 are eventually amended to include
 generative AI in scope, Evidentia operators are already producing
 the right evidence — no migration cost.
 
@@ -287,5 +287,5 @@ The financial-services overlay continues to grow:
 - `docs/model-risk.md` — Model Risk Management module deep dive
 - `docs/threat-model.md` — STRIDE threat model with v0.7.10 surface
 - `docs/positioning-and-value.md` — strategic positioning context
-  including the SR 26-02 GenAI-exclusion regulator-vacuum gap
+  including the SR 26-2 GenAI-exclusion regulator-vacuum gap
 - `docs/v0.7.10-plan.md` — release plan for the current cycle

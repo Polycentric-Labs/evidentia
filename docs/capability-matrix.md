@@ -594,7 +594,7 @@ remaining v0.9.x line. One of eight v1.0 acceptance gates per
 | 1 | `EVIDENTIA_EVIDENCE_AUTO_MIRROR_WORM` + `EVIDENTIA_EVIDENCE_WORM_BACKEND_FACTORY` env vars | Library | Closes F-V96-worm-app-layer. Auto-mirror to cloud-WORM backend after local write. |
 | 2 | `evidentia mcp cimd-migrate <registry>` CLI verb | CLI | Closes F-V96-conmon-mcp-cimd-migration. Idempotent + dry-run + atomic write. |
 | 3 | `evidentia_core.rbac.multi_tenant.TenantRBACPolicy` + helpers | Library | Multi-tenant RBAC primitives (data model + decision function). CLI + REST integration deferred to v1.0. |
-| 4 | `evidentia_mcp.signatures.SignedToolOutput` envelope + helpers | Library | CIMD signatures groundwork. Signer-agnostic; operator-supplied via dotted-path factory. |
+| 4 | `evidentia_mcp.signatures.SignedToolOutput` envelope + helpers | Library | MCP tool-output signing groundwork (historically labelled "CIMD signatures"; CIMD itself signs nothing). Signer-agnostic; operator-supplied via dotted-path factory. |
 | 5 | `EVIDENTIA_MCP_SIGN_OUTPUTS` + `EVIDENTIA_MCP_SIGNER_FACTORY` env vars | Library | Opt-in MCP output signing. |
 | 6 | `SCRForm` RFC-0007 fields (8 Optional fields) + `to_oscal_scr_notification()` method | Library | FedRAMP RFC-0007 Significant Change Notification standard alignment. |
 | 7 | `evidentia_core.oscal.OSCAL_SCHEMA_VERSION` constant | Library (v0.9.6 NEW; v0.9.7 frozen via api-stability NORMATIVE) | Single source of truth for the emit version. |
@@ -1255,7 +1255,7 @@ v0.7.16 — no functional changes in v0.8.0):
 | OSCAL Assessment Results emit | Carry-forward; +risk_statements_with_traces kwarg (additive) |
 | Evidence collectors (AWS/GitHub/Jira/Okta/SQL/Cloud-DW/BI) | Carry-forward |
 | TPRM module (vendor inventory + DD questionnaire + concentration report) | Carry-forward |
-| Model Risk Management overlay (SR 11-7 / SR 26-02) | Carry-forward |
+| Model Risk Management overlay (SR 11-7 / SR 26-2) | Carry-forward |
 | Governance primitives (Three Lines of Defense + Effective Challenge + KRI/KPI/KGI + Open FAIR) | Carry-forward |
 | Audit chain-of-custody + WORM backends (S3 + Azure + GCS) | Carry-forward |
 | GDPR Article 17 purge flow | Carry-forward |

@@ -10,7 +10,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes yet on the v1.0-prep development branch._
+### Added
+
+- **Python 3.14 support** (closes #212): `requires-python` lifted to
+  `>=3.12,<3.15` across the workspace after litellm 1.98.x raised its own
+  ceiling (the documented removal trigger), with 3.13/3.14 trove
+  classifiers and 3.14 pytest legs on all three OSes. The cap deliberately
+  stays at `<3.15`, matching litellm, because it prunes the resolver fork
+  that used to error every Dependabot run.
+- A drift gate for the web console's demo fixtures: every catalog entry in
+  `fixtures.ts` must name a real `frameworks.yaml` id and carry its exact
+  version string (the stale "Rev 5 (2023)" string it now prevents is
+  fixed).
+
+### Changed
+
+- The model-risk catalog's designators are corrected (V13-15): the catalog
+  id is now `occ-sr-26-2`, naming "OCC Bulletin 2026-13 / FRB SR 26-2"
+  (the FRB letter carries no leading zero and the OCC bulletin no "a"
+  suffix), and the bundled ConMon cadence slug is now
+  `occ-2026-13-model-risk`. Live docs swept to the corrected designators.
+- The "cryptographic CIMD signatures" misnomer is retired from every live
+  document (V13-12): the real mechanism is `SignedToolOutput` at the
+  FastMCP dispatch layer (shipped v0.9.7/v0.9.8). CIMD is an OAuth
+  client-metadata document and signs nothing.
+
+### Deprecated
+
+- Framework id `occ-sr-26-02`: resolves through a loader alias with a
+  `DeprecationWarning`; scheduled for removal in v1.0.0.
+- ConMon state key `occ-2026-13a-model-risk`: both state-file readers
+  migrate it to `occ-2026-13-model-risk` on read (the new key's value wins
+  when both are present) with a `DeprecationWarning`; scheduled for
+  removal in v1.0.0.
+
+### Fixed
+
+- `check_roadmap_currency.py`'s A5 ordering key (V13-21): a bare cycle
+  heading now ranks above its own concrete releases, matching the file's
+  actual layout, and `vX.Y+` no longer collides with `vX.Y`.
+- The FedRAMP baseline invariant gate in `gen_fedramp_cmmc.py` raises
+  `RuntimeError` instead of bare `assert`, so `python -O` can no longer
+  compile the gate away (V13-21).
+- `gen_fedramp_cmmc.py` no longer writes catalog files at import time: the
+  emits run only under `__main__`. Importing the module used to silently
+  regenerate the four FedRAMP baselines as stage-1 pointer files, stripping
+  every title and description until the stage-2 enrichment reran.
 
 ## [0.12.0] - 2026-08-22
 

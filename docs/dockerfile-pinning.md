@@ -163,8 +163,10 @@ file. This was a deliberate trade-off rather than an oversight.
 **Regeneration**: `scripts/bump_version.py --regenerate-requirements
 --to A.B.C` updates the pin in `requirements.in` + invokes
 `pip-compile`. Run inside the pinned base-image
-(`python:3.13-slim@sha256:...` — 3.13, not 3.14, because the AI stack
-requires `python <3.14`; see the Dockerfile comment) so platform-specific
+(`python:3.13-slim@sha256:...`; 3.13 today: the stack supports 3.14 since
+v0.13 (`requires-python <3.15`), but the base moves only as a deliberate
+migration once DHI 3.14 coverage is confirmed; see the Dockerfile comment
+and the dependabot.yml docker ignore rule) so platform-specific
 transitives (uvloop, etc.) resolve correctly:
 
 ```bash
