@@ -625,7 +625,7 @@ wheels = [
 
 [[package]]
 name = "compliance-trestle"
-version = "4.2.0"
+version = "5.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -648,9 +648,9 @@ dependencies = [
     { name = "ruamel-yaml" },
     { name = "securesystemslib", extra = ["crypto"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b1/5f/815e9d071d4297f0b26f065572f601fc07162c5e477f19939e7ad90b48b1/compliance_trestle-4.2.0.tar.gz", hash = "sha256:6e8de526367dacc951b864447d1628667e2e77d60863bda370fb041ac7994dbd", size = 353601, upload-time = "2026-07-02T13:46:34.237Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7a/2b/c4ba2bfe2b06f111d6235652bb50a4f3dcfc841ab970c69414159c1472d1/compliance_trestle-5.0.0.tar.gz", hash = "sha256:ca1d219126444e374c93be27734810e4b077bf5461deb64fc87567a75ae2b32d", size = 378789, upload-time = "2026-08-07T11:30:00.259Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9f/45/1be6ed010c922401cf1439fc96593cdf94593e78372ba4f4c0a4c92ba925/compliance_trestle-4.2.0-py3-none-any.whl", hash = "sha256:324c3a232a1f319ceb5f07eaa2165a4a59049ab85098dea1c582bcd8996d3da9", size = 506633, upload-time = "2026-07-02T13:46:32.515Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/3e/615323a2428e185ac6ed59b4bb147f5e2660e904aaf80d29faaceee84e57/compliance_trestle-5.0.0-py3-none-any.whl", hash = "sha256:99fe5babd6c46231b7c277831f2ae8dad5c14d76fcef916b6699fdce7907b0ae", size = 536630, upload-time = "2026-08-07T11:29:58.562Z" },
 ]
 
 [[package]]
@@ -1316,7 +1316,7 @@ dev = [
     { name = "azure-identity", specifier = ">=1.16.0" },
     { name = "azure-storage-blob", specifier = ">=12.30.0" },
     { name = "boto3", specifier = ">=1.43.46" },
-    { name = "compliance-trestle", specifier = ">=4.2.0,<5.0" },
+    { name = "compliance-trestle", specifier = ">=4.2.0,<6.0" },
     { name = "google-cloud-storage", specifier = ">=3.12.1" },
     { name = "hypothesis", specifier = ">=6.156.6" },
     { name = "mcp", specifier = ">=1.28.1,<2.0" },
