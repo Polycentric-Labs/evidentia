@@ -162,6 +162,35 @@ def gap_report_to_oscal_ar(
     findings_output = [_gap_to_finding(gap) for gap in report.gaps]
     observations = [_gap_to_observation(gap, resource_by_control) for gap in report.gaps]
 
+    result_entry: dict[str, Any] = {
+        "uuid": result_uuid,
+        "title": "Evidentia Gap Analysis Result",
+        "description": (
+            f"Automated gap analysis of {report.organization} "
+            f"against {', '.join(report.frameworks_analyzed)}."
+        ),
+        "start": report.analyzed_at.isoformat(),
+        "end": report.analyzed_at.isoformat(),
+        "reviewed-controls": {
+            "control-selections": [
+                {
+                    "description": (f"Controls from {fw}"),
+                    "include-all": {},
+                }
+                for fw in report.frameworks_analyzed
+            ],
+        },
+    }
+    # OSCAL minItems=1: ``observations`` and ``findings`` are OPTIONAL
+    # arrays that must be OMITTED when empty, never emitted as ``[]``.
+    # Trestle 4.2 tolerated the empty form; trestle >= 5.0 enforces the
+    # schema and rejects it (caught by the round-trip conformance test
+    # when the isolated 5.0.0 bump arrived, 2026-08-29).
+    if observations:
+        result_entry["observations"] = observations
+    if findings_output:
+        result_entry["findings"] = findings_output
+
     ar_doc: dict[str, Any] = {
         "assessment-results": {
             "uuid": ar_uuid,
@@ -208,35 +237,14 @@ def gap_report_to_oscal_ar(
             "import-ap": {
                 "href": "#assessment-plan-placeholder",
             },
-            "results": [
-                {
-                    "uuid": result_uuid,
-                    "title": "Evidentia Gap Analysis Result",
-                    "description": (
-                        f"Automated gap analysis of {report.organization} "
-                        f"against {', '.join(report.frameworks_analyzed)}."
-                    ),
-                    "start": report.analyzed_at.isoformat(),
-                    "end": report.analyzed_at.isoformat(),
-                    "reviewed-controls": {
-                        "control-selections": [
-                            {
-                                "description": (f"Controls from {fw}"),
-                                "include-all": {},
-                            }
-                            for fw in report.frameworks_analyzed
-                        ],
-                    },
-                    "observations": observations,
-                    "findings": findings_output,
-                }
-            ],
+            "results": [result_entry],
         }
     }
 
-    # OSCAL 1.1.2 allows an optional top-level ``back-matter`` alongside
-    # ``results``. Only emit it when there are resources to attach —
-    # empty arrays are valid OSCAL but add noise to the diff.
+    # ``back-matter`` is optional alongside ``results``; emit it only when
+    # there are resources to attach. Like observations/findings above, an
+    # empty ``resources`` array would violate OSCAL's minItems constraint
+    # (the earlier claim here that empty arrays are valid OSCAL was wrong).
     if back_matter_resources:
         ar_doc["assessment-results"]["back-matter"] = {
             "resources": back_matter_resources,

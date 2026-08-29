@@ -180,11 +180,20 @@ def gap_report_to_oscal_poam(
             "import-ssp": {
                 "href": "#system-security-plan-placeholder",
             },
-            "observations": observations,
-            "risks": risks,
             "poam-items": poam_items,
         }
     }
+
+    # OSCAL minItems=1: ``observations`` and ``risks`` are OPTIONAL arrays
+    # that must be OMITTED when the severity filter selects no gaps, never
+    # emitted as ``[]`` (trestle >= 5.0 enforces what the 4.x line
+    # tolerated). ``poam-items`` is REQUIRED and stays unconditional: a
+    # POA&M with nothing materialized failing schema validation is correct
+    # signal, not a shape to paper over.
+    if observations:
+        doc["plan-of-action-and-milestones"]["observations"] = observations
+    if risks:
+        doc["plan-of-action-and-milestones"]["risks"] = risks
 
     if back_matter_resources:
         doc["plan-of-action-and-milestones"]["back-matter"] = {

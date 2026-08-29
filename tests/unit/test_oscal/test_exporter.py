@@ -489,3 +489,35 @@ def test_vendor_resource_with_findings_coexist() -> None:
             h["algorithm"] == "SHA-256"
             for h in r["rlinks"][0]["hashes"]
         )
+
+
+class TestEmptyArrayOmission:
+    """OSCAL minItems=1: optional arrays are OMITTED when empty, never
+    emitted as ``[]``. Trestle 4.2 tolerated an empty observations/findings
+    array; trestle >= 5.0 enforces the schema and rejects it, which is how
+    the isolated compliance-trestle 5.0.0 bump exposed the defect (V13
+    cycle, 2026-08-29)."""
+
+    def _zero_gap_report(self) -> GapAnalysisReport:
+        return _make_report().model_copy(
+            update={
+                "gaps": [],
+                "total_gaps": 0,
+                "high_gaps": 0,
+                "medium_gaps": 0,
+                "prioritized_roadmap": [],
+                "coverage_percentage": 100.0,
+            }
+        )
+
+    def test_zero_gap_ar_omits_observations_and_findings(self) -> None:
+        result = gap_report_to_oscal_ar(self._zero_gap_report())
+        res = result["assessment-results"]["results"][0]
+        assert "observations" not in res
+        assert "findings" not in res
+
+    def test_gapful_ar_keeps_observations_and_findings(self) -> None:
+        result = gap_report_to_oscal_ar(_make_report())
+        res = result["assessment-results"]["results"][0]
+        assert len(res["observations"]) == 2
+        assert len(res["findings"]) == 2
