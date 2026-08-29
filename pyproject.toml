@@ -112,7 +112,7 @@ dev = [
     # additionalProperties). Custom `ns="https://evidentia.dev/oscal"`
     # props in back-matter are accepted unchanged. Guarded with
     # pytest.importorskip so the test suite runs on minimal installs.
-    "compliance-trestle>=4.2.0,<5.0",
+    "compliance-trestle>=4.2.0,<6.0",
     # Upper bound is deliberate and matches the SDK's own guidance. mcp
     # 2.0.0 (2026-08) is the stable v2 line; its release notes tell
     # projects that are not ready to migrate to "keep a <2 upper bound on
