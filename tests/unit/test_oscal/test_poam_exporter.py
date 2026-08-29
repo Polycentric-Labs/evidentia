@@ -346,3 +346,29 @@ class TestDeterminism:
         # (Other top-level UUIDs differ between emits — only the
         # back-matter digest is integrity-bound to the record.)
         assert digest1 == digest2
+
+
+class TestEmptyArrayOmission:
+    """OSCAL minItems=1: the optional ``observations`` and ``risks`` arrays
+    are OMITTED when the severity filter selects no gaps, never emitted as
+    ``[]`` (trestle >= 5.0 rejects empty arrays the 4.x line tolerated).
+    ``poam-items`` is a REQUIRED field and stays as-is: a POA&M with no
+    materialized items failing schema validation is correct signal, not a
+    shape to paper over."""
+
+    def test_filtered_to_empty_poam_omits_optional_arrays(self) -> None:
+        # MEDIUM-only gaps: the default CRITICAL+HIGH filter selects none.
+        report = _make_report([_make_gap(severity=GapSeverity.MEDIUM)])
+        doc = gap_report_to_oscal_poam(report)
+        poam = doc["plan-of-action-and-milestones"]
+        assert "observations" not in poam
+        assert "risks" not in poam
+        assert poam["poam-items"] == []
+
+    def test_selected_gaps_keep_observations_and_risks(self) -> None:
+        report = _make_report([_make_gap(severity=GapSeverity.HIGH)])
+        doc = gap_report_to_oscal_poam(report)
+        poam = doc["plan-of-action-and-milestones"]
+        assert len(poam["observations"]) == 1
+        assert len(poam["risks"]) == 1
+        assert len(poam["poam-items"]) == 1

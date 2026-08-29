@@ -43,6 +43,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The OSCAL emitters no longer write empty optional arrays: a zero-gap
+  Assessment Results omits `observations`/`findings`, and a POA&M whose
+  severity filter selects no gaps omits `observations`/`risks` (OSCAL
+  minItems=1 forbids the empty form; trestle >= 5.0 enforces what the 4.x
+  line tolerated, and the round-trip conformance test caught it the moment
+  the isolated trestle 5.0.0 bump arrived). Verified against both trestle
+  4.2 and a 5.0 overlay.
 - `check_roadmap_currency.py`'s A5 ordering key (V13-21): a bare cycle
   heading now ranks above its own concrete releases, matching the file's
   actual layout, and `vX.Y+` no longer collides with `vX.Y`.
