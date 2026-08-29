@@ -177,10 +177,14 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+    # Dependabot's validator (observed 2026-08-28) rejects the per-semver
+    # cooldown keys for this ecosystem; only default-days is supported here.
+    # 7 days replaces the old 7/3/2 split at its conservative end: a settle
+    # window before adopting a freshly published action release is a
+    # supply-chain control (the compromised-release class), and the weekly
+    # grouped schedule means it costs at most one cycle.
     cooldown:
-      semver-major-days: 7
-      semver-minor-days: 3
-      semver-patch-days: 2
+      default-days: 7
     groups:
       github-actions:
         applies-to: version-updates
@@ -211,10 +215,15 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+    # Dependabot's validator (observed 2026-08-28) rejects the per-semver
+    # cooldown keys for this ecosystem; only default-days is supported here.
+    # 3 days replaces the old 14/7/3 split at its fast end deliberately:
+    # python base VERSION bumps are blocked by the ignore rules below (the
+    # real #83-class guard, with the build smoke test), so what actually
+    # flows is digest bumps carrying CVE fixes, which should not sit in a
+    # two-week cooldown.
     cooldown:
-      semver-major-days: 14
-      semver-minor-days: 7
-      semver-patch-days: 3
+      default-days: 3
     groups:
       docker:
         applies-to: version-updates
