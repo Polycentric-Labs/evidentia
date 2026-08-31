@@ -161,6 +161,16 @@ attrs==26.1.0 \
     #   aiohttp
     #   jsonschema
     #   referencing
+boto3==1.43.83 \
+    --hash=sha256:6413d6e99f716af5d333a732db140e4b3359cac005a1271b11777b6d9ca82194 \
+    --hash=sha256:73a3564f737d4516625964eee709a498fa98ccee6aca929febad2b0b5fbeae1e
+    # via litellm
+botocore==1.43.83 \
+    --hash=sha256:bf75a6cf587c22d968e43e79fe122c39f82deafbe9c3422bc5d3e80b6210fc98 \
+    --hash=sha256:d9389b3b74400c34219965a2fb858c1d48744718865ee0496fd03bd5b21b943f
+    # via
+    #   boto3
+    #   s3transfer
 certifi==2026.7.22 \
     --hash=sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775 \
     --hash=sha256:741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55
@@ -999,6 +1009,12 @@ jiter==0.14.0 \
     # via
     #   instructor
     #   openai
+jmespath==1.1.0 \
+    --hash=sha256:472c87d80f36026ae83c6ddd0f1d05d4e510134ed462851fd5f754c8c3cbb88d \
+    --hash=sha256:a5663118de4908c91729bea0acadca56526eb2698e83de10cd116ae0f4e97c64
+    # via
+    #   boto3
+    #   botocore
 jsonschema==4.26.0 \
     --hash=sha256:0c26707e2efad8aa1bfc5b7ce170f3fccc2e4918ff85989ba9ffa9facb2be326 \
     --hash=sha256:d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce
@@ -1009,15 +1025,15 @@ jsonschema-specifications==2025.9.1 \
     --hash=sha256:98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe \
     --hash=sha256:b540987f239e745613c7a9176f3edb72b832a4ac465cf02712288397832b5e8d
     # via jsonschema
-litellm==1.97.0 \
-    --hash=sha256:2983b40ed5d8b1bcbbfbc0d66fefa21b04db91b87c05dd680ae77cba74e561ef \
-    --hash=sha256:3c4f1dd45e14127f2303769a7ae79482697823e329ae503513d014ceea4dd704 \
-    --hash=sha256:5b56dce7df44a6a9e6caf5379de2578a8cb82831ceabd3d71cc99b370a1015e7 \
-    --hash=sha256:6b360ddc3162c2ed39b64d3f9957a7af70cd9c60cf71f7a4dfa355a0bf05bebc \
-    --hash=sha256:6f7ce326a2e5385ef850e0b0768d41f502ec79278860090a838511cea067b067 \
-    --hash=sha256:dce3377207234fc5c5b275a5e234ba056a5051fd178ae8e9a6aeb5d056f12095 \
-    --hash=sha256:e3a1f70d693716b4e8a8108f0a464b0e2c555e274ddbb8ef89c4c59c80be14ed \
-    --hash=sha256:ff401dd5d66f54b9b474f0652c419fb7bf883fbf5ca64c0bc363acdc98b758b5
+litellm==1.98.0 \
+    --hash=sha256:0e6ba5d645a73ca6d0ffb4e8ec539d94b6e8fad691f2a54c6819011e6d0de8bf \
+    --hash=sha256:150993180bf049feafa3e20cf46ca0978c69cc66e2ef1639a47e852c682a4721 \
+    --hash=sha256:1daac9a9a9d052fdbe58ee711c9924dc81d349d4621286cbd96d77baa12158c4 \
+    --hash=sha256:3a95260f087a4cf763da85bbeeb2efa82caec243ad2394c9e6362ff747963738 \
+    --hash=sha256:54d0bc2aba84644de5e84a265f24e5d436d91592ca5b7cc61cee478db297b0c3 \
+    --hash=sha256:5e546d4af197c257d320299af11f4619f8e5a29f9bb7ce2d9974dd4b1e045499 \
+    --hash=sha256:9fda3497f1ec4686c943ce2aeab5767f8fb4a5989305d4b28d6d5d7e488b850c \
+    --hash=sha256:b89b6a0fc179d881191579f5309e622173dca802ee991b92e382acb918eea437
     # via evidentia-ai
 markdown-it-py==4.2.0 \
     --hash=sha256:04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49 \
@@ -1278,9 +1294,9 @@ packaging==26.3 \
     --hash=sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79 \
     --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
     # via huggingface-hub
-platformdirs==4.11.4 \
-    --hash=sha256:e34ff91a24bcddc6d939b878bdf3f5c437c9c46fe9e212b1bf455fdf1ee57586 \
-    --hash=sha256:f3373be828247211d0febabea97e238c3dfde8a60b3c90c32756fb52cb21556d
+platformdirs==4.11.5 \
+    --hash=sha256:89f8d42695853b89c7170bd49bc3dc593f98a71e695ede88e06a3b247bc4563b \
+    --hash=sha256:e8b31f4f8bcbbedef91a6b57a706255e4f148d2a4e01648382a0a47342539173
     # via evidentia-core
 propcache==0.5.2 \
     --hash=sha256:01c4fc7480cd0598bb4b57022df55b9ca296da7fc5a8760bd8451a7e63a7d427 \
@@ -1558,7 +1574,9 @@ pygments==2.21.0 \
 python-dateutil==2.9.0.post0 \
     --hash=sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3 \
     --hash=sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427
-    # via evidentia-core
+    # via
+    #   botocore
+    #   evidentia-core
 python-dotenv==1.2.3 \
     --hash=sha256:904552145e8bfed22162c09dab1c2b9b54fefa7b23ba780f4f26ca0316b0f0d9 \
     --hash=sha256:a20a594dabeaa385725aa239d5244871c143ecb356add8a20fcf23773a6c3a35
@@ -1993,6 +2011,10 @@ rpds-py==2026.6.3 \
     # via
     #   jsonschema
     #   referencing
+s3transfer==0.19.2 \
+    --hash=sha256:ba0309fd86be3c27dbf78cdd813c13c5e1df16e5874b99d2535ebbdfb9892993 \
+    --hash=sha256:d8168eccca828cbb2cd573675333f3bddd254313a9c42494b84c76b539e8ba25
+    # via boto3
 shellingham==1.5.4 \
     --hash=sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686 \
     --hash=sha256:8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de
@@ -2150,6 +2172,7 @@ urllib3==2.7.0 \
     --hash=sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897
     # via
     #   -r docker/requirements.in
+    #   botocore
     #   requests
 uvicorn==0.52.4 \
     --hash=sha256:73acfee47a0b133c5de13d219492d62d8a31e935f4fe6e41a232451a15379f86 \
