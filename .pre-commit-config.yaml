@@ -56,13 +56,16 @@ repos:
   # ---------------------------------------------------------------
   # Python — ruff (check + format) + mypy.
   # ---------------------------------------------------------------
-  # `ruff-pre-commit` ships both `ruff` (check) and `ruff-format`
+  # `ruff-pre-commit` ships both `ruff-check` (lint) and `ruff-format`
   # (format) hooks. They share the project's `[tool.ruff]` config in
   # the root pyproject.toml so editor + CI + hook all behave identically.
+  # Keep `rev` on the ruff version uv.lock pins (0.16.5 at the time of
+  # writing): formatter output changes between ruff releases, and a stale
+  # rev would undo the repo-wide format applied in the v0.13 cycle.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.7.4
+    rev: v0.16.5
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: ['--fix']
       - id: ruff-format
 

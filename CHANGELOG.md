@@ -59,6 +59,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Whole-repository `ruff format`.** `ruff format --check .` had failed on `main` for
+  many releases while `ruff check .` stayed clean: 500 of 989 files still carried
+  hand-wrapped lines narrower than the configured 120 columns, and neither CI nor the
+  pre-push hook ever ran the formatter (the testing playbook had carried this as
+  "format-the-world" debt since v0.7.0). One dedicated commit applies the unmodified
+  output of `uv run ruff format .` under the locked ruff 0.16.5: 481 Python files and
+  19 Markdown files (ruff 0.16 formats the Python code fences in Markdown; prose
+  outside the fences is untouched). The AST of every changed Python file is identical
+  to its previous version once docstring whitespace is normalized, so behavior does
+  not change. `.pre-commit-config.yaml` moves from ruff-pre-commit v0.7.4 to v0.16.5
+  (hook id `ruff-check`) so an opt-in pre-commit run formats the same way as the
+  locked ruff instead of fighting it.
 - **Whitespace-only text is rejected at the API boundary with the standard 422** on
   the six request fields that carried a bare `minLength: 1`:
   `CatalogImportPayload.content`, `NextDueRequest.slug`, `MarkCompletedRequest.slug`,
