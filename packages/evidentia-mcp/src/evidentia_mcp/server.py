@@ -261,9 +261,7 @@ def run_http(
 # ── Tool implementations ──────────────────────────────────────────
 
 
-def _register_tools(
-    server: FastMCP, *, allow_root: Path | None = None
-) -> None:
+def _register_tools(server: FastMCP, *, allow_root: Path | None = None) -> None:
     """Wire the tool surface onto the server.
 
     Each tool is a regular Python function with a structured
@@ -283,9 +281,7 @@ def _register_tools(
     # tool-call resolution is cheap. The resolved root is what
     # ``validate_within`` will compare ``candidate.resolve()``
     # against.
-    resolved_allow_root: Path | None = (
-        allow_root.resolve(strict=False) if allow_root is not None else None
-    )
+    resolved_allow_root: Path | None = allow_root.resolve(strict=False) if allow_root is not None else None
 
     @server.tool()
     def list_frameworks() -> list[dict[str, str]]:
@@ -311,9 +307,7 @@ def _register_tools(
         return list(registry.list_frameworks())
 
     @server.tool()
-    def get_control(
-        framework_id: str, control_id: str
-    ) -> dict[str, Any]:
+    def get_control(framework_id: str, control_id: str) -> dict[str, Any]:
         """Return the raw catalog entry for a single control.
 
         Args:
@@ -388,9 +382,7 @@ def _register_tools(
         else:
             path = candidate.resolve(strict=False)
         if not path.exists():
-            raise FileNotFoundError(
-                f"Inventory file not found: {path}"
-            )
+            raise FileNotFoundError(f"Inventory file not found: {path}")
         inventory = load_inventory(path)
         analyzer = GapAnalyzer()
         report = analyzer.analyze(
@@ -401,9 +393,7 @@ def _register_tools(
         return report.model_dump(mode="json")
 
     @server.tool()
-    def gap_diff(
-        base_report_path: str, head_report_path: str
-    ) -> dict[str, Any]:
+    def gap_diff(base_report_path: str, head_report_path: str) -> dict[str, Any]:
         """Diff two gap analysis reports.
 
         Useful for tracking compliance posture changes over time
@@ -435,39 +425,25 @@ def _register_tools(
         base_candidate = Path(base_report_path).expanduser()
         head_candidate = Path(head_report_path).expanduser()
         if resolved_allow_root is not None:
-            base_path = validate_within(
-                base_candidate, resolved_allow_root
-            )
-            head_path = validate_within(
-                head_candidate, resolved_allow_root
-            )
+            base_path = validate_within(base_candidate, resolved_allow_root)
+            head_path = validate_within(head_candidate, resolved_allow_root)
         else:
             base_path = base_candidate.resolve(strict=False)
             head_path = head_candidate.resolve(strict=False)
         if not base_path.exists():
-            raise FileNotFoundError(
-                f"Base report not found: {base_path}"
-            )
+            raise FileNotFoundError(f"Base report not found: {base_path}")
         if not head_path.exists():
-            raise FileNotFoundError(
-                f"Head report not found: {head_path}"
-            )
+            raise FileNotFoundError(f"Head report not found: {head_path}")
         base_data = json.loads(base_path.read_text(encoding="utf-8"))
         head_data = json.loads(head_path.read_text(encoding="utf-8"))
         try:
             base_report = GapAnalysisReport.model_validate(base_data)
         except Exception as exc:
-            raise ValueError(
-                f"Base report at {base_path} cannot be parsed as "
-                f"GapAnalysisReport: {exc}"
-            ) from exc
+            raise ValueError(f"Base report at {base_path} cannot be parsed as GapAnalysisReport: {exc}") from exc
         try:
             head_report = GapAnalysisReport.model_validate(head_data)
         except Exception as exc:
-            raise ValueError(
-                f"Head report at {head_path} cannot be parsed as "
-                f"GapAnalysisReport: {exc}"
-            ) from exc
+            raise ValueError(f"Head report at {head_path} cannot be parsed as GapAnalysisReport: {exc}") from exc
         diff = compute_gap_diff(base=base_report, head=head_report)
         return diff.model_dump(mode="json")
 
@@ -511,9 +487,7 @@ def _register_tools(
         return [c.model_dump(mode="json") for c in cadences]
 
     @server.tool()
-    def conmon_next_due(
-        slug: str, last_completed: str
-    ) -> dict[str, Any]:
+    def conmon_next_due(slug: str, last_completed: str) -> dict[str, Any]:
         """Compute the next-due date for a single CONMON cadence.
 
         Args:
@@ -538,15 +512,13 @@ def _register_tools(
         cadence = get_cadence(slug)
         if cadence is None:
             raise ValueError(
-                f"Unknown CONMON cadence slug: {slug!r}. Use "
-                "conmon_list_cadences to discover valid slugs."
+                f"Unknown CONMON cadence slug: {slug!r}. Use conmon_list_cadences to discover valid slugs."
             )
         try:
             anchor = _date.fromisoformat(last_completed)
         except ValueError as exc:
             raise ValueError(
-                f"last_completed must be ISO-8601 date "
-                f"(YYYY-MM-DD); got {last_completed!r}: {exc}"
+                f"last_completed must be ISO-8601 date (YYYY-MM-DD); got {last_completed!r}: {exc}"
             ) from exc
         due = next_due(slug, anchor)
         return {
@@ -594,19 +566,13 @@ def _register_tools(
         else:
             path = candidate.resolve(strict=False)
         if not path.exists():
-            raise FileNotFoundError(
-                f"State file not found: {path}"
-            )
+            raise FileNotFoundError(f"State file not found: {path}")
         try:
             raw = yaml_mod.safe_load(path.read_text(encoding="utf-8")) or {}
         except yaml_mod.YAMLError as exc:
-            raise ValueError(
-                f"Could not parse state file {path}: {exc}"
-            ) from exc
+            raise ValueError(f"Could not parse state file {path}: {exc}") from exc
         if not isinstance(raw, dict):
-            raise ValueError(
-                f"State file {path} must contain a mapping at top level"
-            )
+            raise ValueError(f"State file {path} must contain a mapping at top level")
 
         today = _date.today()
         overdue: list[dict[str, str]] = []
@@ -670,14 +636,125 @@ def _register_tools(
         else:
             path = candidate.resolve(strict=False)
         if not path.exists():
-            raise FileNotFoundError(
-                f"State file not found: {path}"
-            )
+            raise FileNotFoundError(f"State file not found: {path}")
         report = health_from_state_file(path)
         # HealthReport is a frozen dataclass — convert via
         # dataclasses.asdict for JSON-serializable output (mirrors
         # the conmon-health CLI verb's JSON serialization path).
         return dataclasses.asdict(report)
+
+    @server.tool()
+    def conmon_series(
+        slug: str,
+        evidence_store_dir: str | None = None,
+        since: str | None = None,
+        until: str | None = None,
+        lookback_days: int = 365,
+        tolerance_days: int | None = None,
+    ) -> dict[str, Any]:
+        """Assert the cadence evidence series for a slug over a window (v0.13).
+
+        Reads artifacts linked to ``slug`` via ``metadata.cadence_slug``
+        from the evidence store, inside the resolved window, then asserts
+        the dated series. A gap-free series is evidence of cadence and
+        nothing more; the reported counts are what the evidence store
+        holds, not what was actually performed.
+
+        Args:
+            slug: Cadence slug (e.g., 'pci-dss-11-6-1-weekly').
+            evidence_store_dir: Optional evidence-store root directory.
+                When ``None`` (default), resolves through
+                ``EVIDENTIA_EVIDENCE_STORE_DIR``, else the platform
+                user-data directory. Resolved against ``--allow-root``
+                when set.
+            since: ISO-8601 date; window start. When both ``since`` and
+                ``until`` are omitted, the window is the last
+                ``lookback_days`` days ending today. When only one of
+                the two is given, the other is filled from that same
+                default window (not derived from the given bound).
+            until: ISO-8601 date; window end. See ``since`` for the
+                fill rule.
+            lookback_days: Look-back window in days. Default 365.
+            tolerance_days: Grace period (days) added to the cadence's
+                interval before a spacing counts as a gap. ``None``
+                (default) uses the cadence-appropriate default.
+
+        Returns:
+            ``{"series": <CadenceSeries as a dict>, "description": <str>}``.
+
+        Raises:
+            ValueError: ``slug`` is not a registered cadence, ``since``/
+                ``until`` are not valid ISO-8601 dates, ``until``
+                precedes ``since``, or (when ``--allow-root`` is set)
+                ``evidence_store_dir`` resolves outside the bound root.
+        """
+        from datetime import UTC
+        from datetime import date as _date
+        from datetime import datetime as _datetime
+        from datetime import time as _time
+
+        from evidentia_core.conmon import get_cadence
+        from evidentia_core.conmon.series import (
+            CADENCE_SLUG_METADATA_KEY,
+            assert_series,
+            default_window,
+        )
+        from evidentia_core.evidence_store import (
+            get_evidence_store_dir,
+            iter_artifacts,
+        )
+
+        cadence = get_cadence(slug)
+        if cadence is None:
+            raise ValueError(f"Unknown CONMON cadence slug {slug!r}; run conmon_list_cadences to see available.")
+
+        def _parse_iso_date(value: str | None, flag: str) -> _date | None:
+            if value is None:
+                return None
+            try:
+                return _date.fromisoformat(value)
+            except ValueError as exc:
+                raise ValueError(f"{flag} must be an ISO-8601 date (YYYY-MM-DD); got {value!r}") from exc
+
+        since_parsed = _parse_iso_date(since, "since")
+        until_parsed = _parse_iso_date(until, "until")
+
+        default_start, default_end = default_window(lookback_days=lookback_days)
+        start_date = since_parsed if since_parsed is not None else default_start.date()
+        end_date = until_parsed if until_parsed is not None else default_end.date()
+        if end_date < start_date:
+            raise ValueError(f"until ({end_date.isoformat()}) is before since ({start_date.isoformat()})")
+        window_start = _datetime.combine(start_date, _time.min, tzinfo=UTC)
+        window_end = _datetime.combine(end_date, _time.max, tzinfo=UTC)
+
+        if evidence_store_dir is not None:
+            candidate = Path(evidence_store_dir).expanduser()
+            store = (
+                validate_within(candidate, resolved_allow_root)
+                if resolved_allow_root is not None
+                else candidate.resolve(strict=False)
+            )
+        else:
+            store = None
+        resolved_store = get_evidence_store_dir(store)
+
+        artifacts = iter_artifacts(
+            resolved_store,
+            since=window_start,
+            until=window_end,
+            metadata={CADENCE_SLUG_METADATA_KEY: slug},
+        )
+        series = assert_series(
+            slug,
+            artifacts,
+            window_start=window_start,
+            window_end=window_end,
+            tolerance_days=tolerance_days,
+        )
+        return {
+            "series": series.model_dump(mode="json"),
+            "description": series.describe(),
+        }
 
     # v0.10.2 Phase 1 — MCP tool surface expansion. These four
     # additions cover the highest-leverage gaps identified in the
@@ -728,9 +805,7 @@ def _register_tools(
         else:
             path = candidate.resolve(strict=False)
         if not path.exists():
-            raise FileNotFoundError(
-                f"Inventory file not found: {path}"
-            )
+            raise FileNotFoundError(f"Inventory file not found: {path}")
         inventory = load_inventory(path)
         report = GapAnalyzer().analyze(
             inventory=inventory,
@@ -779,9 +854,7 @@ def _register_tools(
         else:
             path = candidate.resolve(strict=False)
         if not path.exists():
-            raise FileNotFoundError(
-                f"OCSF input file not found: {path}"
-            )
+            raise FileNotFoundError(f"OCSF input file not found: {path}")
         findings = collect_ocsf_file(path)
         return [f.model_dump(mode="json") for f in findings]
 
@@ -911,9 +984,7 @@ def _register_tools(
         # guard here — FastMCP surfaces the raise as a structured tool
         # error (same pattern as the FileNotFoundError below), not a
         # stack trace.
-        if (expected_sigstore_identity is None) != (
-            expected_sigstore_issuer is None
-        ):
+        if (expected_sigstore_identity is None) != (expected_sigstore_issuer is None):
             raise ValueError(
                 "expected_sigstore_identity and "
                 "expected_sigstore_issuer must be provided together; "

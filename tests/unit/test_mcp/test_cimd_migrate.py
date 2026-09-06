@@ -31,9 +31,7 @@ def registry_file(tmp_path: Path) -> Path:
             "claude-desktop": {
                 "client_id": "claude-desktop",
                 "client_name": "Claude Desktop",
-                "scope": (
-                    "list_frameworks get_control gap_analyze gap_diff"
-                ),
+                "scope": ("list_frameworks get_control gap_analyze gap_diff"),
                 "redirect_uris": [],
                 "policy_uri": None,
                 "tos_uri": None,
@@ -95,10 +93,9 @@ class TestCIMDMigrate:
                 "conmon_next_due",
                 "conmon_check_state",
                 "conmon_health",
+                "conmon_series",
             ):
-                assert tool in scope, (
-                    f"{cid} missing {tool} after migration"
-                )
+                assert tool in scope, f"{cid} missing {tool} after migration"
 
     def test_apply_preserves_existing_scope(
         self,
@@ -154,14 +151,8 @@ class TestCIMDMigrate:
         assert result.exit_code == 0, result.output
         updated = json.loads(registry_file.read_text(encoding="utf-8"))
         # readonly-agent updated; claude-desktop UNCHANGED.
-        assert (
-            "conmon_list_cadences"
-            in updated["clients"]["readonly-agent"]["scope"].split()
-        )
-        assert (
-            "conmon_list_cadences"
-            not in updated["clients"]["claude-desktop"]["scope"].split()
-        )
+        assert "conmon_list_cadences" in updated["clients"]["readonly-agent"]["scope"].split()
+        assert "conmon_list_cadences" not in updated["clients"]["claude-desktop"]["scope"].split()
 
     def test_unknown_client_id_exits_1(
         self,
