@@ -15,7 +15,7 @@ Run before every commit:
 ```bash
 uv sync --all-extras --all-packages   # incl. sigstore + trestle dev-deps
 uv run --no-sync ruff check                   # lint — ENFORCED in CI
-uv run --no-sync ruff format --check .        # formatting (not yet gated; see below)
+uv run --no-sync ruff format --check .        # formatting, ENFORCED in CI + pre-push
 uv run --no-sync python -m mypy packages/evidentia-core packages/evidentia-collectors packages/evidentia-api packages/evidentia-ai packages/evidentia-integrations packages/evidentia
 uv run --no-sync python -m pytest -q --no-header
 ```
@@ -29,9 +29,9 @@ one dedicated commit applied the formatter to the 500 files that still
 carried hand-wrapped lines, and `ruff format --check .` now reports
 nothing to change. Run `uv run --no-sync ruff format .` before
 committing so it stays that way. Ruff 0.16 also formats Python code
-fences inside Markdown, so the check covers `docs/` as well. Only
-`ruff check` is gated in CI and pre-push today; the format check is
-not yet enforced.
+fences inside Markdown, so the check covers `docs/` as well. Both
+`ruff check` and `ruff format --check .` are gated in CI (the `ruff`
+job) and by the pre-push hook (`check_ruff` and `check_ruff_format`).
 
 ## Pre-release smoke test sequence
 

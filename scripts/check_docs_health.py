@@ -188,11 +188,13 @@ TITLECASE_PRESERVE: dict[str, str] = {
 # skip in find_code_block_ranges handles ``` blocks; this catches inline
 # `code` cases on a per-line basis).
 CROSS_LINK_LINE_ALLOWLIST: dict[str, set[int]] = {
-    # release-checklist line 284 illustrates the link syntax to check
+    # release-checklist line 286 illustrates the link syntax to check
     # for: "every `[link](other.md)` points at an existing file". (Line
     # shifted from 271 -> 284 in v0.10.7 D4.4 when the Step 5 test-gate
-    # block gained the audit_workflow_permissions.py --strict check.)
-    "docs/release-checklist.md": {284},
+    # block gained the audit_workflow_permissions.py --strict check, and
+    # from 284 -> 286 in v0.13 when Step 5 gained the ruff format check
+    # and its acceptance line.)
+    "docs/release-checklist.md": {286},
 }
 
 # Files exempt from cross-link broken-target FAILs:

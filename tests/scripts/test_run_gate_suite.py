@@ -36,7 +36,7 @@ def test_scopes_are_declarative() -> None:
         "roadmap_currency",
     } <= consistency
     assert consistency < full
-    assert {"pytest", "mypy", "ruff", "osv", "parity"} <= full
+    assert {"pytest", "mypy", "ruff", "ruff_format", "osv", "parity"} <= full
     # parity is full-only (v0.10.9 item D): the tag-time gate hard-blocks a
     # parity regression; the fast consistency scope stays staleness-only.
     assert "parity" not in consistency

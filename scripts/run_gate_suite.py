@@ -27,7 +27,7 @@ Scopes
   ``wiki_reference_drift`` + ``wiki_api_docs_drift``). This is the set the
   pre-push hook and the push/PR ``consistency.yml`` enforce on every change.
 * ``full`` — ``consistency`` PLUS the heavyweight gates
-  (``pytest`` + ``mypy`` + ``ruff`` + ``osv`` + ``parity``). This is
+  (``pytest`` + ``mypy`` + ``ruff`` + ``ruff_format`` + ``osv`` + ``parity``). This is
   the set the tag-time ``gate`` job runs before any artifact is
   published.
 
@@ -172,6 +172,7 @@ _FULL_ONLY_CHECKS: tuple[Check, ...] = (
     Check("pytest", ("python", "-m", "pytest", "tests/", "-q")),
     Check("mypy", ("mypy", *_MYPY_PACKAGES, "--strict-optional")),
     Check("ruff", ("ruff", "check", ".")),
+    Check("ruff_format", ("ruff", "format", "--check", ".")),
     Check("osv", ("python", "scripts/run_osv_scan.py")),
     # The CLI<->GUI parity gate (v0.10.9 item D: advisory -> blocking).
     # Full-only because it imports the live CLI app for the leaf walk —

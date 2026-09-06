@@ -60,6 +60,7 @@ kept in step with it. Numbering matches that header.
 | 15 | `check_ruff` | `ruff check . --no-cache` | any lint error (shifted left from CI so a cached pass cannot hide one) |
 | 16 | `check_roadmap_currency` | `scripts/check_roadmap_currency.py` | a ROADMAP status heading disagreeing with the CHANGELOG, more than one open cycle, or an open cycle with no on-disk plan doc |
 | 17 | `check_public_surface` | `scripts/check_public_surface.py` | a §5 frozen import that no longer resolves, an MCP frozen-tool/live-server mismatch, or a frozen env var that vanished from `packages/*/src` |
+| 18 | `check_ruff_format` | `ruff format --check . --no-cache` | any file the formatter would change (the tree has been format-clean since the v0.13 whole-repo reformat) |
 
 ### 1. check_action_pins — and the pinact SKIP-vs-BLOCK rule
 
@@ -142,6 +143,18 @@ The gate is doc-driven: expectations are parsed out of `api-stability.md`
 rather than duplicated in the script, so the document cannot drift away
 from its own enforcement. Its first run found four §5 imports that had
 never resolved on any shipped release.
+
+---
+
+### 18. check_ruff_format
+
+Runs `ruff format --check . --no-cache`. One dedicated commit in the v0.13
+cycle reformatted the whole repository (500 files; the testing playbook
+had carried the debt as "format-the-world" since v0.7.0), and from then
+on this check and the format step in the CI `ruff` job both refuse a tree
+the formatter would change. Fix: `uv run --no-sync ruff format .`, then
+re-stage and commit. Ruff 0.16 also formats Python code fences inside
+Markdown, so a drifted snippet under `docs/` trips this check as well.
 
 ---
 

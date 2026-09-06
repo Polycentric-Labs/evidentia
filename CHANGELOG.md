@@ -70,7 +70,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to its previous version once docstring whitespace is normalized, so behavior does
   not change. `.pre-commit-config.yaml` moves from ruff-pre-commit v0.7.4 to v0.16.5
   (hook id `ruff-check`) so an opt-in pre-commit run formats the same way as the
-  locked ruff instead of fighting it.
+  locked ruff instead of fighting it. `ruff format --check .` now runs as a second
+  step of the CI `ruff` job, as pre-push check 18 (`check_ruff_format`) and in the
+  tag-time gate suite's `full` scope, so the drift cannot come back.
 - **Whitespace-only text is rejected at the API boundary with the standard 422** on
   the six request fields that carried a bare `minLength: 1`:
   `CatalogImportPayload.content`, `NextDueRequest.slug`, `MarkCompletedRequest.slug`,
