@@ -1,6 +1,6 @@
 {
   "comment": "Provenance pins for the vendored FedRAMP CR26 artifacts. Single source of truth for scripts/check_fedramp_upstream_drift.py (the fedramp-schema-watch sentinel baseline) and for scripts/catalogs/gen_fedramp_ksi.py (the KSI catalog generator pin). Update ONLY via a deliberate re-sync: re-vendor, re-verify, and re-run the generator together. See README.md in this directory.",
-  "verified_at": "2026-08-21",
+  "verified_at": "2026-09-06",
   "rules": {
     "repo": "FedRAMP/rules",
     "commit": "58efbf3d898496dd4a3a419eba78e458bbad5cb6",
@@ -14,30 +14,30 @@
   },
   "schemas": {
     "repo": "FedRAMP/schemas",
-    "commit": "ae43ae2952c5dd5c56d54d12e8b92c7db1b3710a",
+    "commit": "c3ed146492d71cac6b663b652112ad8f088deb97",
     "ruleset_date": "2026-06-24",
     "schema_versions": {
       "fedramp-accepted-vulnerability-info-schema-2026-06-24.json": "0.1.1",
       "fedramp-advisor-information-schema-2026-06-24.json": "1.0.1",
       "fedramp-assessor-information-schema-2026-06-24.json": "1.0.1",
-      "fedramp-certification-package-overview-schema-2026-06-24.json": "0.1.3",
-      "fedramp-common-definitions-schema-2026-06-24.json": "0.2.1",
+      "fedramp-certification-package-overview-schema-2026-06-24.json": "0.1.4",
+      "fedramp-common-definitions-schema-2026-06-24.json": "0.3.0",
       "fedramp-historical-ver-activity-schema-2026-06-24.json": "0.1.1",
       "fedramp-incident-report-schema-2026-06-24.json": "0.2.0",
       "fedramp-ongoing-certification-report-schema-2026-06-24.json": "0.2.0",
-      "fedramp-security-decision-record-schema-2026-06-24.json": "1.0.3",
+      "fedramp-security-decision-record-schema-2026-06-24.json": "1.1.1",
       "fedramp-significant-change-notifications-schema-2026-06-24.json": "0.1.2",
       "fedramp-vulnerability-detail-report-schema-2026-06-24.json": "0.1.1"
     },
     "vendored": {
       "fedramp-security-decision-record-schema-2026-06-24.json": {
-        "blob_sha": "e09b7652f4909359cf7c4948c178940e5fd5d5c5",
-        "sha256_upstream": "aba4386befcd9e6642fafee02821857f4a0daa11eafd5051a52bce209443040f",
+        "blob_sha": "4e5b5f30788cde6e541896cc70fddde124222e27",
+        "sha256_upstream": "94580404e8d4276ee3ced2a3c39cce5cc6565df6ae38a91f60f26cb96d833188",
         "local_delta": null
       },
       "fedramp-common-definitions-schema-2026-06-24.json": {
-        "blob_sha": "798c7359933810b6a9319af4cc7188fb7daf6a6c",
-        "sha256_upstream": "13bed0a781e5e75c5cb923fc2b7d9e10330c06e0f21260a738dc8ed4d3349455",
+        "blob_sha": "6f3a53739dd6382634aeac138c86a603d08049ca",
+        "sha256_upstream": "ed810d60584580fb86cda3f846d94504a14e09538122c27c5b5231d41151d6de",
         "local_delta": null
       }
     }

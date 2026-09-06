@@ -24,10 +24,11 @@ Design decisions (v0.11 Wave 2 re-based spec, ratified 2026-07-14;
   An absent ``requirements`` map still emits ``[]`` so v0.11 files keep
   validating; the coverage report is what surfaces the gap.
 - **Top-level ``metadata`` block.** SDR-CSO-MTD (MUST) requires
-  version / last-update / source metadata, but the published schema
-  models no metadata property. The schema does not set
-  ``additionalProperties: false``, so the emitter adds a ``metadata``
-  object — rule-required, schema-permitted (asserted by test).
+  version / last-update / source metadata. Since SDR schema 1.1.0
+  (upstream issue #20, re-vendored 2026-09-06) the schema models an
+  optional ``metadata`` object whose ``version``, ``lastUpdated`` and
+  ``updateSource`` keys are required, and the emitter writes exactly
+  that shape (the status file's operator-facing field stays ``source``).
 - **Validation is offline.** Draft 2020-12 validation resolves the one
   cross-document ``$ref`` through a local registry of the two vendored
   schemas; no network fetch ever happens.
@@ -304,6 +305,6 @@ def build_sdr_document(
         "metadata": {
             "version": status.document_version,
             "lastUpdated": last_updated.isoformat(),
-            "source": status.source,
+            "updateSource": status.source,
         },
     }
