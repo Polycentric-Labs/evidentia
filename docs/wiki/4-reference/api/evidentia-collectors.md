@@ -3,7 +3,7 @@
 
 > **Auto-generated page.** This public-surface index is generated from the package source by [`scripts/wiki/sync_api_docs.py`](https://github.com/Polycentric-Labs/evidentia/blob/main/scripts/wiki/sync_api_docs.py). Do not edit it by hand; change the package and re-run the generator (`uv run python scripts/wiki/sync_api_docs.py`).
 
-Evidence collection agents for AWS, Databricks, GitHub, Okta, Snowflake, SQL databases, and vendor-risk APIs (Vanta, Drata, BitSight, SecurityScorecard)
+Evidence collection agents for AWS, Databricks, GitHub, Okta, Google Workspace, Snowflake, SQL databases, and vendor-risk APIs (Vanta, Drata, BitSight, SecurityScorecard)
 
 Install: `pip install evidentia-collectors`. Import root: `evidentia_collectors`.
 
@@ -20,6 +20,7 @@ Public submodules + subpackages of `evidentia_collectors` (import directly, e.g.
 - `evidentia_collectors.databricks`
 - `evidentia_collectors.drata`
 - `evidentia_collectors.github`
+- `evidentia_collectors.google_workspace`
 - `evidentia_collectors.greenbone`
 - `evidentia_collectors.nessus`
 - `evidentia_collectors.ocsf`

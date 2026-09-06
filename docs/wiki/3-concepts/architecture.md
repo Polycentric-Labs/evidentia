@@ -36,7 +36,7 @@ Evidence collectors pull raw signals from source systems (AWS API, GitHub API, P
 |---|---|---|
 | `evidentia` | CLI orchestration | Top-level Click CLI; routes verbs to per-domain modules. Entry-point package on PyPI. |
 | `evidentia-core` | Foundation | `SecurityFinding` + `ControlGap` + `CrosswalkDefinition` Pydantic models; catalog engine; crosswalk engine; OCSF mapping (`evidentia_core.ocsf`); audit event emitter; GPG-detached OSCAL signing (`evidentia_core.oscal.signing`); WORM evidence store. The single import other packages depend on. |
-| `evidentia-collectors` | Adapters | 14 evidence collectors (AWS, GitHub + GitHub OSPS extension, Postgres, MySQL, Oracle, SQLite, MS-SQL, Snowflake, Databricks, Okta, Vanta, Drata, BitSight, SecurityScorecard). All emit `SecurityFinding` with full `CollectionContext`. The v0.10.0+ `compliance_status` is set explicitly. |
+| `evidentia-collectors` | Adapters | 15 evidence collectors (AWS, GitHub + GitHub OSPS extension, Postgres, MySQL, Oracle, SQLite, MS-SQL, Snowflake, Databricks, Okta, Google Workspace, Vanta, Drata, BitSight, SecurityScorecard). All emit `SecurityFinding` with full `CollectionContext`. The v0.10.0+ `compliance_status` is set explicitly. |
 | `evidentia-ai` | LLM features (opt-in) | Risk-statement generator + control explainer via LiteLLM (Claude / OpenAI / Anthropic / Bedrock / etc.). DFAH (Determinism, Faithfulness, And Harness) calibration applies. |
 | `evidentia-eval` | Evaluation harness | DFAH calibration corpus + benchmark runner. Extracted to its own package v0.10.5 P9 so the air-gap install posture is preserved (lazy-import contract). |
 | `evidentia-api` | REST + frontend | FastAPI REST endpoints + `evidentia-ui` (TS/JS Vite frontend bundled at wheel-assembly time). |

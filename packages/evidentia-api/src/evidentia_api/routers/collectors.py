@@ -273,6 +273,216 @@ async def okta_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
 
 @router.post(
+    "/collectors/google-workspace/collect",
+    response_model=list[SecurityFinding],
+    responses=error_responses(
+        {
+            400: (
+                "Invalid ``customer`` / ``inactive_threshold_days`` / "
+                "``max_users`` / ``login_window_days`` / "
+                "``max_login_events`` body field "
+                "(``error: invalid_field``)."
+            ),
+            500: (
+                "Unexpected collector failure "
+                "(``error: collector_failed``)."
+            ),
+            503: (
+                "Collector not installed, token env var unset, or "
+                "Google Workspace unreachable "
+                "(``error: feature_unavailable`` / "
+                "``error: credentials_missing`` / "
+                "``error: upstream_error``)."
+            ),
+        }
+    ),
+)
+async def google_workspace_collect(
+    payload: dict[str, Any] | None = None,
+) -> list[SecurityFinding]:
+    """Run the Google Workspace collector (v0.13 batch 7).
+
+    Request body (optional):
+
+    - ``customer``: Directory API customer id (default ``my_customer``).
+    - ``base_url``: override the Admin SDK base URL (default
+      ``https://admin.googleapis.com``).
+    - ``inactive_threshold_days``: int, default 90.
+    - ``max_users``: int, default 10000.
+    - ``login_window_days``: int, default 30; 0 skips the Reports API
+      entirely (no login-activity finding).
+    - ``max_login_events``: int, default 10000.
+    - ``token_env``: name of the env var holding a pre-minted Google
+      Workspace OAuth 2.0 access token (default
+      ``GOOGLE_WORKSPACE_ACCESS_TOKEN``). The API server reads this env
+      var server-side; the token NEVER flows through the request body.
+
+    Auth: a pre-minted OAuth 2.0 access token carrying
+    admin.directory.user.readonly, and admin.reports.audit.readonly
+    when login_window_days is greater than 0. Per CLAUDE.md
+    secret-handling protocol, the token MUST come from a server-side
+    env var.
+
+    Response: list of SecurityFinding objects covering six evidence
+    sources: user inventory, inactive accounts, admin accounts, super
+    admin 2-Step Verification enrollment, tenant-wide 2-Step
+    Verification enrollment, and login activity.
+
+    Mappings: NIST 800-53 AC-2, AC-6, IA-2, AU-6, AC-7, SI-4.
+    """
+    try:
+        from evidentia_collectors.google_workspace import (
+            GoogleWorkspaceCollector,
+            GoogleWorkspaceCollectorError,
+        )
+    except ImportError as e:
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
+                "Google Workspace collector not installed. The "
+                "collector is part of the base evidentia-collectors "
+                "install; if this fires, check the package install "
+                "completed cleanly."
+            ),
+        ) from e
+
+    body = payload or {}
+    base_url = str(body.get("base_url") or "https://admin.googleapis.com").strip() or "https://admin.googleapis.com"
+    customer = str(body.get("customer") or "my_customer").strip()
+    if not customer:
+        raise api_error(
+            400,
+            "invalid_field",
+            "customer must not be blank.",
+            field="customer",
+        )
+
+    raw_inactive_threshold_days = body.get("inactive_threshold_days")
+    if raw_inactive_threshold_days is None:
+        inactive_threshold_days = 90
+    else:
+        try:
+            inactive_threshold_days = int(raw_inactive_threshold_days)
+        except (TypeError, ValueError) as e:
+            raise api_error(
+                400,
+                "invalid_field",
+                f"inactive_threshold_days must be int; got {raw_inactive_threshold_days!r}",
+                field="inactive_threshold_days",
+            ) from e
+        if inactive_threshold_days < 1:
+            raise api_error(
+                400,
+                "invalid_field",
+                f"inactive_threshold_days must be >= 1; got {inactive_threshold_days}",
+                field="inactive_threshold_days",
+            )
+
+    raw_max_users = body.get("max_users")
+    if raw_max_users is None:
+        max_users = 10_000
+    else:
+        try:
+            max_users = int(raw_max_users)
+        except (TypeError, ValueError) as e:
+            raise api_error(
+                400,
+                "invalid_field",
+                f"max_users must be int; got {raw_max_users!r}",
+                field="max_users",
+            ) from e
+        if max_users < 1 or max_users > 100_000:
+            raise api_error(
+                400,
+                "invalid_field",
+                f"max_users must be in [1, 100000]; got {max_users}",
+                field="max_users",
+            )
+
+    raw_login_window_days = body.get("login_window_days")
+    if raw_login_window_days is None:
+        login_window_days = 30
+    else:
+        try:
+            login_window_days = int(raw_login_window_days)
+        except (TypeError, ValueError) as e:
+            raise api_error(
+                400,
+                "invalid_field",
+                f"login_window_days must be int; got {raw_login_window_days!r}",
+                field="login_window_days",
+            ) from e
+        if login_window_days < 0 or login_window_days > 180:
+            raise api_error(
+                400,
+                "invalid_field",
+                f"login_window_days must be in [0, 180]; got {login_window_days}",
+                field="login_window_days",
+            )
+
+    raw_max_login_events = body.get("max_login_events")
+    if raw_max_login_events is None:
+        max_login_events = 10_000
+    else:
+        try:
+            max_login_events = int(raw_max_login_events)
+        except (TypeError, ValueError) as e:
+            raise api_error(
+                400,
+                "invalid_field",
+                f"max_login_events must be int; got {raw_max_login_events!r}",
+                field="max_login_events",
+            ) from e
+        if max_login_events < 1 or max_login_events > 100_000:
+            raise api_error(
+                400,
+                "invalid_field",
+                f"max_login_events must be in [1, 100000]; got {max_login_events}",
+                field="max_login_events",
+            )
+
+    token_env = str(body.get("token_env") or "GOOGLE_WORKSPACE_ACCESS_TOKEN").strip() or "GOOGLE_WORKSPACE_ACCESS_TOKEN"
+    api_token = os.environ.get(token_env)
+    if not api_token:
+        raise api_error(
+            503,
+            "credentials_missing",
+            (
+                f"Env var '{token_env}' is not set or is empty. "
+                "Set it server-side before invoking this endpoint. "
+                "The Google Workspace token MUST NOT flow through the "
+                "request body."
+            ),
+            env_var=token_env,
+        )
+
+    try:
+        with GoogleWorkspaceCollector(
+            api_token=api_token,
+            base_url=base_url,
+            customer=customer,
+            inactive_threshold_days=inactive_threshold_days,
+            max_users=max_users,
+            login_window_days=login_window_days,
+            max_login_events=max_login_events,
+            block_private_ips=_block_private_ips(body),
+        ) as collector:
+            findings = collector.collect()
+    except GoogleWorkspaceCollectorError as e:
+        raise api_error(503, "upstream_error", str(e)) from e
+    except Exception as e:
+        logger.exception("Google Workspace collector failed")
+        raise api_error(
+            500,
+            "collector_failed",
+            f"Google Workspace collector failed: {e}",
+        ) from e
+
+    return findings
+
+
+@router.post(
     "/collectors/sql/postgres/collect",
     response_model=list[SecurityFinding],
     responses=error_responses(
@@ -2055,6 +2265,7 @@ async def collectors_status() -> dict[str, Any]:
     aws_installed = False
     github_installed = False
     okta_installed = False
+    google_workspace_installed = False
     postgres_installed = False
     mysql_installed = False
     sqlite_installed = False
@@ -2084,6 +2295,14 @@ async def collectors_status() -> dict[str, Any]:
         import evidentia_collectors.okta
 
         okta_installed = True
+    except ImportError:
+        pass
+    try:
+        # Google Workspace uses httpx (already a base dep): same pattern
+        # as Vanta/Drata/BitSight/SecurityScorecard.
+        import evidentia_collectors.google_workspace
+
+        google_workspace_installed = True
     except ImportError:
         pass
     try:
@@ -2236,6 +2455,19 @@ async def collectors_status() -> dict[str, Any]:
                 if os.environ.get("OKTA_API_TOKEN")
                 else None
             ),
+        },
+        "google-workspace": {
+            "installed": google_workspace_installed,
+            "credentials_hint": (
+                "Pre-minted Google Workspace OAuth 2.0 access token "
+                "carrying admin.directory.user.readonly, plus "
+                "admin.reports.audit.readonly when login_window_days is "
+                "greater than 0. Set the token via the "
+                "GOOGLE_WORKSPACE_ACCESS_TOKEN env var (or override with "
+                "token_env in the request body). The collector NEVER "
+                "accepts a token via the request body."
+            ),
+            "default_token_env_configured": bool(os.environ.get("GOOGLE_WORKSPACE_ACCESS_TOKEN")),
         },
         "postgres": {
             "installed": postgres_installed,

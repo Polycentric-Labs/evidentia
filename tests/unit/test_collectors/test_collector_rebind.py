@@ -14,7 +14,9 @@ i.e. the rebind is defeated. The socket ``connect`` is stubbed to capture the
 dialed address without opening a real socket.
 
 Covered transport classes:
-- httpx           — via ``BaseSaaSCollector`` (the Vanta subclass)
+- httpx           via ``BaseSaaSCollector`` (the Vanta subclass; every other
+                    BaseSaaSCollector subclass, including the v0.13 batch 7
+                    Google Workspace collector, shares the same chokepoint)
 - urllib          — via the OCSF URL collector
 - psycopg (SQL)   — via the Postgres collector (also asserts the libpq
                     ``hostaddr`` pin)

@@ -145,6 +145,12 @@ groups:
 - **The permission track**: the thirteen licence letters go out at cycle
   start. Maintainer-sent correspondence; the answers gate v0.14 onward.
 
+Pulled forward on 2026-09-06 from the provisional v0.14 to v0.16 sketches
+(V13-25 to V13-28 in the plan): STIG and SCAP results ingest, the CycloneDX
+VEX 1.7 opt-in flag, an RFC 9116 `security.txt` probe inside the
+registry-selector leaf, and patch cadence from release APIs. The whole plan
+ships in this cycle; Entra ID / M365 builds on recorded fixtures.
+
 Parity discipline for the cycle: every coverable new CLI leaf lands `full`,
 and 100% GUI coverage is a per-cycle exit condition at the tag.
 

@@ -37,14 +37,14 @@ architectural patterns — observed in peer projects and emerging standards
 | **MCP server** | 14 tools (`list_frameworks`, `get_control`, `gap_analyze`, `gap_diff`, `gap_analyze_sarif`, `collect_ocsf`, `tprm_vendor_list`, `poam_list`, `verify_signed_artifact`, `conmon_list_cadences`, `conmon_next_due`, `conmon_check_state`, `conmon_health`, `conmon_series`); stdio / SSE / HTTP transports; per-tool CIMD scope enforcement; `SignedToolOutput` envelope |
 | **REST API** | FastAPI; `/api/poam/*`, `/api/conmon/*`, `/api/gaps`, `/api/metrics`; auth middleware |
 | **CI** | Bundled composite GitHub Action (`gap-analysis`) |
-| **Evidence collectors** | 14 total — AWS (Config / Security Hub / IAM Access Analyzer), GitHub, Okta, 5 SQL databases, Databricks, Snowflake, Vanta, Drata, BitSight, SecurityScorecard (ServiceNow's collect side rides the output integration) |
+| **Evidence collectors** | 15 total — AWS (Config / Security Hub / IAM Access Analyzer), GitHub, Okta, Google Workspace, 5 SQL databases, Databricks, Snowflake, Vanta, Drata, BitSight, SecurityScorecard (ServiceNow's collect side rides the output integration) |
 | **Output integrations** | Jira, ServiceNow, Tableau, Power BI |
 
 **The structural observation.** Each collector today emits a
 framework-shaped finding. That couples collector count to framework
 count and is the root cause of the integration-breadth gap that
 [positioning-and-value.md](positioning-and-value.md) §6.3.2 honest-gap #3
-surfaces (14 evidence collectors vs. Vanta's 375+). §4.1 below is the
+surfaces (15 evidence collectors vs. Vanta's 375+). §4.1 below is the
 structural fix — and every other integration in §3 gets cheaper once it
 is in place.
 

@@ -49,6 +49,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from the numeric score with the threat label as fallback, the same RA-5 and SI-2
   mappings) plus a manifest and one evidence artifact for `conmon series`;
   `POST /api/collectors/greenbone/collect` and a console tab mirror the Nessus surfaces.
+- **Google Workspace collector (V13-03).** `evidentia collect google-workspace` reads a
+  pre-minted OAuth 2.0 access token from `GOOGLE_WORKSPACE_ACCESS_TOKEN` and pulls the
+  Directory API and, when `--login-window-days` is greater than 0, the Reports API,
+  emitting six NIST-mapped findings: user inventory, inactive accounts, admin accounts,
+  super admin 2-Step Verification enrollment, tenant-wide 2-Step Verification
+  enrollment, and login activity. `POST /api/collectors/google-workspace/collect` and a
+  Collect-page console entry mirror the CLI; four blind spots document the token's lack
+  of a refresh path, the coarse 2SV signal, the Reports API's retention window, and the
+  enumeration caps. The evidence-collector count moves from 14 to 15. See
+  `docs/designs/google-workspace-collector-design.md`.
 
 ### Changed
 
@@ -63,6 +73,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SDR `metadata.updateSource`.** The FedRAMP Security Decision Record emitter writes
   the third metadata key as `updateSource`, the name SDR schema 1.1.0 requires; the
   status file's operator-facing field is still `source`.
+- **`SaaSCollectorError` carries the HTTP status that produced it**, and
+  `build_retrying`/`with_retry` accept an optional `retry_predicate` that replaces the
+  type-based retry check with one driven by that status, so a caller can retry a 429 or
+  a transient 5xx without retrying an auth failure or another 4xx.
+- **The Okta collector (V13-03).** Every finding now carries authored `control_mappings`
+  instead of the discarding `control_ids` shim; every request is wrapped in the new
+  bounded retry (429 and the transient 5xx class); the manifest's coverage counts move
+  from a hardcoded single row to four real per-resource-type rows; and the
+  user-inventory finding's `raw_data` gains a full `status_counts` breakdown. No CLI, API
+  or console surface changed.
 
 ### Removed
 

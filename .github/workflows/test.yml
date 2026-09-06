@@ -73,9 +73,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        # 3.12 legs are the required checks; the 3.14 legs run on every PR but
-        # are not yet in the ruleset's required list (promotion is a deliberate
-        # ruleset change, tracked at the v0.13 cycle open).
+        # Both the 3.12 and the 3.14 legs are required checks on main: the 3.14
+        # legs were promoted in the ruleset on 2026-09-06 after three green
+        # main runs (v0.13, V13-22 follow-through).
         python-version: ["3.12", "3.14"]
 
     steps:

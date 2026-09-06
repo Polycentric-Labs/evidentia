@@ -30,6 +30,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
       collectAws: vi.fn(),
       collectGithub: vi.fn(),
       collectOkta: vi.fn(),
+      collectGoogleWorkspace: vi.fn(),
       collectSql: vi.fn(),
       collectDatabricks: vi.fn(),
       collectSnowflake: vi.fn(),
@@ -48,6 +49,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
 
 const healthMock = vi.mocked(api.health);
 const collectGithubMock = vi.mocked(api.collectGithub);
+const collectGoogleWorkspaceMock = vi.mocked(api.collectGoogleWorkspace);
 const collectOcsfMock = vi.mocked(api.collectOcsf);
 const collectNessusMock = vi.mocked(api.collectNessus);
 const collectGreenboneMock = vi.mocked(api.collectGreenbone);
@@ -137,6 +139,7 @@ describe("CollectPage", () => {
   beforeEach(() => {
     healthMock.mockReset();
     collectGithubMock.mockReset();
+    collectGoogleWorkspaceMock.mockReset();
     collectOcsfMock.mockReset();
     collectNessusMock.mockReset();
     collectGreenboneMock.mockReset();
@@ -204,6 +207,46 @@ describe("CollectPage", () => {
 
     await waitFor(() => expect(collectGithubMock).toHaveBeenCalledTimes(1));
     expect(collectGithubMock).toHaveBeenCalledWith({ repo: "octocat/hello" });
+
+    // The returned finding renders.
+    expect(await screen.findByText("Public S3 bucket")).toBeInTheDocument();
+    expect(screen.getByText(/1 finding returned/i)).toBeInTheDocument();
+  });
+
+  it("runs the matching collect* method when authed (Google Workspace)", async () => {
+    const user = userEvent.setup();
+    healthMock.mockResolvedValue(healthValue(true));
+    collectGoogleWorkspaceMock.mockResolvedValue([FINDING]);
+
+    renderWithClient(<CollectPage />);
+
+    // Wait until the auth query resolves and the Run button enables.
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /run collector/i }),
+      ).toBeEnabled(),
+    );
+
+    // Default selected collector is the first (AWS). Switch to Google Workspace.
+    const picker = screen.getByRole("radiogroup", { name: "Collector" });
+    await user.click(
+      within(picker).getByRole("radio", { name: "Google Workspace" }),
+    );
+
+    // The Customer field is not required; fill it anyway so the request
+    // body assertion below is meaningful.
+    await user.type(screen.getByLabelText("Customer"), "my_customer");
+
+    // Run -> confirmation step -> confirm.
+    await user.click(screen.getByRole("button", { name: /run collector/i }));
+    await user.click(await screen.findByRole("button", { name: /^confirm/i }));
+
+    await waitFor(() =>
+      expect(collectGoogleWorkspaceMock).toHaveBeenCalledTimes(1),
+    );
+    expect(collectGoogleWorkspaceMock).toHaveBeenCalledWith({
+      customer: "my_customer",
+    });
 
     // The returned finding renders.
     expect(await screen.findByText("Public S3 bucket")).toBeInTheDocument();

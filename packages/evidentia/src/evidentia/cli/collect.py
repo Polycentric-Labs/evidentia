@@ -256,6 +256,129 @@ def collect_okta(
     _write_findings(findings, output, title=f"Okta findings ({org_url})")
 
 
+@app.command("google-workspace")
+def collect_google_workspace(
+    token_env: str = typer.Option(
+        "GOOGLE_WORKSPACE_ACCESS_TOKEN",
+        "--token-env",
+        help=(
+            "Name of the env var holding a pre-minted Google Workspace "
+            "OAuth 2.0 access token. The CLI reads from this env var "
+            "rather than accepting the token as a flag (per "
+            "secret-handling protocol). Defaults to "
+            "GOOGLE_WORKSPACE_ACCESS_TOKEN. The token must carry the "
+            "admin.directory.user.readonly scope, and the "
+            "admin.reports.audit.readonly scope when --login-window-days "
+            "is greater than 0."
+        ),
+    ),
+    customer: str = typer.Option(
+        "my_customer",
+        "--customer",
+        help=("Directory API customer id. Default my_customer (Google's literal alias for the caller's own tenant)."),
+    ),
+    inactive_threshold_days: int = typer.Option(
+        90,
+        "--inactive-threshold-days",
+        min=1,
+        help="Days since last activity that mark an active account inactive. Default: 90 (per AC-2(3)).",
+    ),
+    max_users: int = typer.Option(
+        10_000,
+        "--max-users",
+        min=1,
+        max=100_000,
+        help="Hard cap on Directory user enumeration. Default 10000.",
+    ),
+    login_window_days: int = typer.Option(
+        30,
+        "--login-window-days",
+        min=0,
+        max=180,
+        help=(
+            "How many days back the Reports API login-activity pull "
+            "covers. 0 skips the Reports API entirely (no "
+            "login-activity finding). Default 30, range [0, 180]."
+        ),
+    ),
+    max_login_events: int = typer.Option(
+        10_000,
+        "--max-login-events",
+        min=1,
+        max=100_000,
+        help="Hard cap on Reports API login-event enumeration. Default 10000.",
+    ),
+    base_url: str = typer.Option(
+        "https://admin.googleapis.com",
+        "--base-url",
+        help="Google Workspace Admin SDK base URL. Override for testing.",
+    ),
+    block_private_ips: bool = SSRF_BLOCK_OPTION,
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Where to write the findings JSON. Default: stdout.",
+    ),
+) -> None:
+    """Collect evidence from a Google Workspace tenant (read-only).
+
+    v0.13 batch 7 ships six evidence sources against the Directory API and
+    the Reports API: user inventory, inactive accounts, admin accounts
+    (super admin + delegated admin), super admin 2-Step Verification
+    enrollment, tenant-wide 2-Step Verification enrollment, and login
+    activity, mapped to NIST AC-2, AC-6, IA-2, AU-6, AC-7 and SI-4.
+
+    Auth: a pre-minted OAuth 2.0 access token carrying two read-only
+    scopes, admin.directory.user.readonly and (when --login-window-days
+    is greater than 0) admin.reports.audit.readonly. The collector never
+    mints or refreshes a token itself and never accepts one via a CLI
+    flag; it is sourced from the --token-env env var only.
+    """
+    try:
+        from evidentia_collectors.google_workspace import (
+            GoogleWorkspaceCollector,
+            GoogleWorkspaceCollectorError,
+        )
+    except ImportError as e:
+        console.print(
+            "[red]Error:[/red] Google Workspace collector module not importable. "
+            "Run [cyan]pip install evidentia-collectors[/cyan]."
+        )
+        raise typer.Exit(code=1) from e
+
+    api_token = os.environ.get(token_env)
+    if not api_token:
+        console.print(
+            f"[red]Error:[/red] env var [cyan]{token_env}[/cyan] "
+            "is not set or is empty. Set it to a pre-minted Google "
+            "Workspace OAuth 2.0 access token."
+        )
+        raise typer.Exit(code=1)
+
+    try:
+        with GoogleWorkspaceCollector(
+            api_token=api_token,
+            base_url=base_url,
+            customer=customer,
+            inactive_threshold_days=inactive_threshold_days,
+            max_users=max_users,
+            login_window_days=login_window_days,
+            max_login_events=max_login_events,
+            block_private_ips=block_private_ips,
+        ) as collector:
+            findings = collector.collect()
+    except GoogleWorkspaceCollectorError as e:
+        console.print(f"[red]Google Workspace collection failed:[/red] {e}")
+        raise typer.Exit(code=1) from e
+
+    _write_findings(
+        findings,
+        output,
+        title=f"Google Workspace findings ({customer})",
+    )
+
+
 @app.command("sql")
 def collect_sql(
     adapter: str = typer.Option(

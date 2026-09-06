@@ -502,6 +502,87 @@ def test_vanta_collector_is_idempotent() -> None:
     _assert_idempotent(run_once(), run_once())
 
 
+def _google_workspace_handler() -> Any:
+    """Return an httpx handler serving a small, deterministic Google
+    Workspace tenant (a super admin plus one ordinary active user),
+    keyed off a frozen anchor rather than wall-clock time, plus a
+    single Reports login-activity page."""
+    from datetime import UTC, datetime, timedelta
+    from urllib.parse import parse_qs, urlparse
+
+    anchor = datetime(2026, 5, 25, 12, 0, 0, tzinfo=UTC)
+
+    def iso_ago(days: int) -> str:
+        return (anchor - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+
+    users = [
+        {
+            "id": "gw01",
+            "primaryEmail": "admin@example.com",
+            "suspended": False,
+            "archived": False,
+            "isAdmin": True,
+            "isDelegatedAdmin": False,
+            "isEnrolledIn2Sv": True,
+            "isEnforcedIn2Sv": True,
+            "lastLoginTime": iso_ago(1),
+            "creationTime": iso_ago(500),
+        },
+        {
+            "id": "gw02",
+            "primaryEmail": "user@example.com",
+            "suspended": False,
+            "archived": False,
+            "isAdmin": False,
+            "isDelegatedAdmin": False,
+            "isEnrolledIn2Sv": True,
+            "isEnforcedIn2Sv": True,
+            "lastLoginTime": iso_ago(2),
+            "creationTime": iso_ago(500),
+        },
+    ]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == "/admin/directory/v1/users":
+            return httpx.Response(200, json={"users": users})
+        if path == "/admin/reports/v1/activity/users/all/applications/login":
+            params = parse_qs(urlparse(str(request.url)).query)
+            if params.get("pageToken"):
+                return httpx.Response(200, json={"items": []})
+            return httpx.Response(
+                200,
+                json={
+                    "items": [
+                        {
+                            "actor": {"email": "admin@example.com"},
+                            "events": [{"name": "login_success"}],
+                        }
+                    ]
+                },
+            )
+        return httpx.Response(404, json={"error": f"unstubbed {path!r}"})
+
+    return handler, anchor
+
+
+def test_google_workspace_collector_is_idempotent() -> None:
+    from evidentia_collectors.google_workspace import GoogleWorkspaceCollector
+
+    handler, anchor = _google_workspace_handler()
+
+    def run_once() -> list[SecurityFinding]:
+        client = httpx.Client(
+            transport=httpx.MockTransport(handler),
+            base_url="https://admin.googleapis.com",
+            headers={"Authorization": "Bearer test-token"},
+        )
+        with GoogleWorkspaceCollector(client=client, now=anchor) as c:
+            return c.collect()
+
+    _assert_idempotent(run_once(), run_once())
+
+
 def test_drata_collector_is_idempotent() -> None:
     from evidentia_collectors.drata import DrataCollector
 

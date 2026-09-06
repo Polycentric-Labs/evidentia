@@ -176,8 +176,8 @@ the SIEM-ingest path.
 - **Run the full gap workflow**: [Guides → Run a gap analysis](../2-guides/run-gap-analysis.md).
 - **Try a cloud collector**: `evidentia collect aws` pulls AWS Config + Security
   Hub findings; see the [CLI reference](../4-reference/cli.md) for the full
-  collector matrix (Okta, SQL, Snowflake, Databricks, Vanta, Drata, BitSight,
-  SecurityScorecard).
+  collector matrix (Okta, Google Workspace, SQL, Snowflake, Databricks, Vanta,
+  Drata, BitSight, SecurityScorecard).
 - **Self-assess this repo's open-source posture**: [Guides → OSPS self-assessment](../2-guides/osps-self-assessment.md)
   uses the GitHub collector's OSPS Baseline helpers.
 

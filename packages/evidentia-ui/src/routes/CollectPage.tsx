@@ -276,6 +276,20 @@ const COLLECTORS: CollectorSpec[] = [
     run: (body) => api.collectOkta(body),
   },
   {
+    id: "google-workspace",
+    label: "Google Workspace",
+    description:
+      "Google Workspace user posture: Directory accounts, 2-Step Verification, admins, login events. Token via server $GOOGLE_WORKSPACE_ACCESS_TOKEN.",
+    fields: [
+      {
+        key: "customer",
+        label: "Customer",
+        placeholder: "my_customer",
+      },
+    ],
+    run: (body) => api.collectGoogleWorkspace(body),
+  },
+  {
     id: "sql-postgres",
     label: "PostgreSQL",
     description:

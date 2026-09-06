@@ -1248,8 +1248,9 @@ const realApi = {
   // ── Collectors (evidence collection) ──────────────────────────────────
   // Every collect verb returns a bare `SecurityFinding[]`. NO secrets in the
   // body — credentials are server-side; the body carries only non-secret
-  // params (region / repo / host / options). `aws`/`okta`/the vendor-risk
-  // collectors accept an optional body; `github`/`sql` require one.
+  // params (region / repo / host / options). `aws`/`okta`/`google-workspace`/
+  // the vendor-risk collectors accept an optional body; `github`/`sql`
+  // require one.
   collectAws: (body?: Record<string, unknown>) =>
     request<SecurityFinding[]>("/api/collectors/aws/collect", {
       method: "POST",
@@ -1262,6 +1263,11 @@ const realApi = {
     }),
   collectOkta: (body?: Record<string, unknown>) =>
     request<SecurityFinding[]>("/api/collectors/okta/collect", {
+      method: "POST",
+      body: JSON.stringify(body ?? {}),
+    }),
+  collectGoogleWorkspace: (body?: Record<string, unknown>) =>
+    request<SecurityFinding[]>("/api/collectors/google-workspace/collect", {
       method: "POST",
       body: JSON.stringify(body ?? {}),
     }),

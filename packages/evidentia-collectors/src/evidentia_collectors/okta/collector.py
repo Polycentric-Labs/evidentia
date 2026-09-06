@@ -25,6 +25,7 @@ from evidentia_core.audit import (
     EventCategory,
     EventOutcome,
     EventType,
+    build_retrying,
     get_logger,
     new_run_id,
 )
@@ -75,7 +76,30 @@ class OktaConnectionError(OktaCollectorError):
 class OktaQueryError(OktaCollectorError):
     """A specific API call failed (permission denied, missing
     resource, rate-limit). The collector continues with remaining
-    queries; the error is recorded in the manifest."""
+    queries; the error is recorded in the manifest.
+
+    ``status_code`` carries the HTTP status that produced the error,
+    when one exists, so a retry predicate can decide whether to retry
+    without re-parsing the message string.
+    """
+
+    def __init__(self, message: str, *, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
+# HTTP statuses a bounded retry should retry: rate limiting (429) and the
+# transient 5xx class. Auth errors and other 4xx never retry.
+_RETRYABLE_STATUS_CODES = frozenset({429, 500, 502, 503, 504})
+
+
+def _is_retryable(exc: BaseException) -> bool:
+    """Retry predicate for the bounded-retry wrapper around every request."""
+    if isinstance(exc, OktaConnectionError):
+        return True
+    if isinstance(exc, OktaQueryError):
+        return exc.status_code in _RETRYABLE_STATUS_CODES
+    return False
 
 
 # ── BLIND_SPOTS list ────────────────────────────────────────────────
@@ -102,12 +126,14 @@ BLIND_SPOTS: list[dict[str, str]] = [
             "API rate limits may produce partial enumeration"
         ),
         "description": (
-            "Okta's per-org rate limits (Concurrent Rate, Org Rate) "
-            "can throttle large user/group enumerations. The "
-            "collector handles HTTP 429 with backoff but for very "
-            "large orgs (>50k users) collection time may exceed "
-            "1 hour. Operator-supplied paginated CSV exports are "
-            "an alternative for periodic offline runs."
+            "Okta's per-org rate limits (Concurrent Rate, Org Rate) can "
+            "throttle large user or group enumerations. Every request "
+            "retries a 429 or a transient 5xx with exponential backoff "
+            "and jitter, up to five attempts. If the org is still "
+            "rate-limited after that, the affected sub-check's error is "
+            "recorded and the run continues, so the manifest reports "
+            "that sub-check as incomplete rather than the whole run "
+            "failing."
         ),
     },
     {
@@ -176,6 +202,13 @@ class OktaCollector:
         # injected test client (the caller owns its destination).
         self._pinned_host: str = ""
         self._pinned_ips: list[str] = []
+        # Per-run coverage counts, reset at the top of collect_v2 and
+        # populated by the sub-checks below; read by collect_v2 to build
+        # the manifest's coverage_counts.
+        self._users_listed = 0
+        self._admin_assignments_listed = 0
+        self._mfa_users_sampled = 0
+        self._policies_listed = 0
 
     # ── Lifecycle ───────────────────────────────────────────────────
 
@@ -237,9 +270,15 @@ class OktaCollector:
         )
         return self._client
 
-    def _api_get(
+    def _request_once(
         self, path: str, params: dict[str, Any] | None = None
-    ) -> Any:
+    ) -> httpx.Response:
+        """One GET attempt: pin the resolution, map connection failures,
+        and raise a status-code-carrying OktaQueryError for >= 400.
+        Returns the raw response (not parsed JSON) so a caller needing
+        response headers, like the paginated user list's Link header,
+        can read them.
+        """
         from evidentia_core.network_guard import pin_resolved_host
 
         client = self._ensure_client()
@@ -255,9 +294,32 @@ class OktaCollector:
             ) from e
         if response.status_code >= 400:
             raise OktaQueryError(
-                f"GET {path} returned HTTP {response.status_code}"
+                f"GET {path} returned HTTP {response.status_code}",
+                status_code=response.status_code,
             )
-        return response.json()
+        return response
+
+    def _request(
+        self, path: str, params: dict[str, Any] | None = None
+    ) -> httpx.Response:
+        """_request_once wrapped in a bounded retry: retries
+        OktaConnectionError outright, and OktaQueryError only when its
+        carried HTTP status is in _RETRYABLE_STATUS_CODES (429 and the
+        transient 5xx class). Auth errors and other 4xx never retry.
+        """
+        retrying = build_retrying(
+            function_name="okta_get",
+            retry_predicate=_is_retryable,
+        )
+        for attempt in retrying:
+            with attempt:
+                return self._request_once(path, params)
+        raise RuntimeError("unreachable")  # pragma: no cover
+
+    def _api_get(
+        self, path: str, params: dict[str, Any] | None = None
+    ) -> Any:
+        return self._request(path, params).json()
 
     # ── Context + provenance ────────────────────────────────────────
 
@@ -325,6 +387,12 @@ class OktaCollector:
         context = self._build_context(run_id)
         errors: list[str] = []
         findings: list[SecurityFinding] = []
+        # Fresh per-run coverage counts (a collector instance re-used
+        # across two collect_v2() calls must not accumulate them).
+        self._users_listed = 0
+        self._admin_assignments_listed = 0
+        self._mfa_users_sampled = 0
+        self._policies_listed = 0
 
         with _log.scope(
             trace_id=run_id,
@@ -408,10 +476,28 @@ class OktaCollector:
             filters_applied={"org_url": self._org_url or "unknown"},
             coverage_counts=[
                 CoverageCount(
-                    resource_type="okta-org",
-                    scanned=1,
-                    matched_filter=1,
-                    collected=1,
+                    resource_type="okta-user",
+                    scanned=self._users_listed,
+                    matched_filter=self._users_listed,
+                    collected=self._users_listed,
+                ),
+                CoverageCount(
+                    resource_type="okta-admin-assignment",
+                    scanned=self._admin_assignments_listed,
+                    matched_filter=self._admin_assignments_listed,
+                    collected=self._admin_assignments_listed,
+                ),
+                CoverageCount(
+                    resource_type="okta-mfa-sample",
+                    scanned=self._mfa_users_sampled,
+                    matched_filter=self._mfa_users_sampled,
+                    collected=self._mfa_users_sampled,
+                ),
+                CoverageCount(
+                    resource_type="okta-policy",
+                    scanned=self._policies_listed,
+                    matched_filter=self._policies_listed,
+                    collected=self._policies_listed,
                 ),
             ],
             total_findings=len(findings),
@@ -425,25 +511,11 @@ class OktaCollector:
 
     def _list_all_users(self) -> list[dict[str, Any]]:
         """Paginate /api/v1/users until exhausted or max_users."""
-        from evidentia_core.network_guard import pin_resolved_host
-
         users: list[dict[str, Any]] = []
         path: str | None = "/api/v1/users"
         params: dict[str, Any] | None = {"limit": 200}
         while path is not None and len(users) < self._max_users:
-            client = self._ensure_client()
-            # F-V1010-S1: pin resolution across each paginated request.
-            try:
-                with pin_resolved_host(self._pinned_host, self._pinned_ips):
-                    response = client.get(path, params=params)
-            except httpx.HTTPError as e:
-                raise OktaConnectionError(
-                    f"GET {path} failed: {e}"
-                ) from e
-            if response.status_code >= 400:
-                raise OktaQueryError(
-                    f"GET {path} returned HTTP {response.status_code}"
-                )
+            response = self._request(path, params)
             users.extend(response.json())
             # Okta paginates via Link header: rel="next"
             link = response.headers.get("link", "") or response.headers.get(
@@ -466,7 +538,9 @@ class OktaCollector:
                 params = None
             else:
                 path = None
-        return users[: self._max_users]
+        result = users[: self._max_users]
+        self._users_listed = len(result)
+        return result
 
     def _user_inventory_findings(
         self, context: CollectionContext
@@ -477,6 +551,17 @@ class OktaCollector:
         deprovisioned = [
             u for u in users if u.get("status") == "DEPROVISIONED"
         ]
+        # Full status breakdown: every distinct Okta status seen among
+        # the enumerated users (a superset of the three named above:
+        # covers STAGED, PROVISIONED, RECOVERY, LOCKED_OUT and
+        # PASSWORD_EXPIRED too), sorted keys.
+        status_counts: dict[str, int] = {}
+        for u in users:
+            status = u.get("status")
+            if not status:
+                continue
+            status_counts[status] = status_counts.get(status, 0) + 1
+        status_counts = dict(sorted(status_counts.items()))
 
         threshold = utc_now() - timedelta(
             days=self._inactive_threshold_days
@@ -526,7 +611,7 @@ class OktaCollector:
                 source_finding_id=f"user-inventory:{context.source_system_id}",
                 resource_type="Okta::Org",
                 resource_id=str(context.source_system_id),
-                control_ids=[m.control_id for m in USER_INVENTORY_MAPPINGS],
+                control_mappings=list(USER_INVENTORY_MAPPINGS),
                 collection_context=context,
                 raw_data={
                     "total_users": len(users),
@@ -535,6 +620,7 @@ class OktaCollector:
                     "deprovisioned_count": len(deprovisioned),
                     "max_users_cap": self._max_users,
                     "result_capped": len(users) >= self._max_users,
+                    "status_counts": status_counts,
                 },
             )
         )
@@ -575,9 +661,7 @@ class OktaCollector:
                     ),
                     resource_type="Okta::Org",
                     resource_id=str(context.source_system_id),
-                    control_ids=[
-                        m.control_id for m in INACTIVE_ACCOUNT_MAPPINGS
-                    ],
+                    control_mappings=list(INACTIVE_ACCOUNT_MAPPINGS),
                     collection_context=context,
                     raw_data={
                         "inactive_count": len(inactive),
@@ -605,6 +689,7 @@ class OktaCollector:
         admin_count = (
             len(assignees) if isinstance(assignees, list) else 0
         )
+        self._admin_assignments_listed = admin_count
         return [
             SecurityFinding(
                 title=(
@@ -644,9 +729,7 @@ class OktaCollector:
                 ),
                 resource_type="Okta::Org",
                 resource_id=str(context.source_system_id),
-                control_ids=[
-                    m.control_id for m in PRIVILEGED_ACCOUNT_MAPPINGS
-                ],
+                control_mappings=list(PRIVILEGED_ACCOUNT_MAPPINGS),
                 collection_context=context,
                 raw_data={"admin_count": admin_count},
             )
@@ -668,6 +751,7 @@ class OktaCollector:
         # to 100 active users to estimate the enrollment rate, then
         # surface the sample-based metric.
         sample_size = min(100, len(active))
+        self._mfa_users_sampled = sample_size
         sample = active[:sample_size]
         users_with_factors = 0
         for u in sample:
@@ -730,7 +814,7 @@ class OktaCollector:
                 ),
                 resource_type="Okta::Org",
                 resource_id=str(context.source_system_id),
-                control_ids=[m.control_id for m in MFA_MAPPINGS],
+                control_mappings=list(MFA_MAPPINGS),
                 collection_context=context,
                 raw_data={
                     "sample_size": sample_size,
@@ -749,9 +833,11 @@ class OktaCollector:
             )
         except OktaQueryError as e:
             raise OktaQueryError(
-                f"Could not query /api/v1/policies?type=PASSWORD: {e}"
+                f"Could not query /api/v1/policies?type=PASSWORD: {e}",
+                status_code=e.status_code,
             ) from e
 
+        self._policies_listed += len(policies or [])
         active_policies = [
             p for p in (policies or []) if p.get("status") == "ACTIVE"
         ]
@@ -818,9 +904,7 @@ class OktaCollector:
                 ),
                 resource_type="Okta::Policy",
                 resource_id=str(first.get("id") if first else "unknown"),
-                control_ids=[
-                    m.control_id for m in PASSWORD_POLICY_MAPPINGS
-                ],
+                control_mappings=list(PASSWORD_POLICY_MAPPINGS),
                 collection_context=context,
                 raw_data={
                     "active_policy_count": len(active_policies),
@@ -840,9 +924,11 @@ class OktaCollector:
             )
         except OktaQueryError as e:
             raise OktaQueryError(
-                f"Could not query /api/v1/policies?type=OKTA_SIGN_ON: {e}"
+                f"Could not query /api/v1/policies?type=OKTA_SIGN_ON: {e}",
+                status_code=e.status_code,
             ) from e
 
+        self._policies_listed += len(policies or [])
         active_policies = [
             p for p in (policies or []) if p.get("status") == "ACTIVE"
         ]
@@ -897,9 +983,7 @@ class OktaCollector:
                 ),
                 resource_type="Okta::Policy",
                 resource_id=str(context.source_system_id),
-                control_ids=[
-                    m.control_id for m in SIGN_ON_POLICY_MAPPINGS
-                ],
+                control_mappings=list(SIGN_ON_POLICY_MAPPINGS),
                 collection_context=context,
                 raw_data={
                     "active_policy_count": len(active_policies),

@@ -65,7 +65,7 @@
 - **PCAOB's July 2024 Generative AI Spotlight (non-binding staff observations) + the 2024 AS 1105 amendments (technology-assisted analysis of electronic information) frame five AI-in-audit concerns; Evidentia maps its own capabilities onto all 5.** (1) Prompt + response capture — Evidentia v0.7.1 ✓; (2) Model-version tracking — v0.7.1 ✓; (3) Human-in-the-loop verification — DFAH addresses; (4) Immutable audit trails — DFAH addresses; (5) Explainability documentation — PRT addresses. **This mapping — Evidentia's own, not a PCAOB requirement — is among the strongest positioning claims Evidentia can make** in the v0.8.0 cycle (see §11).
 - **SR 11-7 superseded by SR 26-02 + OCC Bulletin 2026-13 (the "13a" PDF is the bulletin's guidance attachment) (April 17, 2026)** — and the new guidance **explicitly excludes generative AI and agentic AI**: *"Generative AI and agentic AI models are novel and rapidly evolving. As such, they are not within the scope of this guidance."* Banks are stranded with no regulatory framework for LLM deployments. **This is the precise opening for Evidentia's planned v0.7.9 model-risk module** to ship the SR-11-7-replacement-framework primitive ahead of any commercial vendor (see §7, §11).
 - **Positioning frame (revised 2026-05-25 per triple-validated procurement pressure-test): direct enumerated claims, no metaphor.** Three independent procurement-style reviewers (GPT-5.5 Fortune 500 procurement = 5/10; Grok-4.20-Multi-Agent federal-SI hostile TPRM = 2.5/10; Grok 4.3 heterodox marketing strategist = reject metaphor entirely) converged on the same diagnosis: the "Terraform/dbt of GRC" framing overclaims a multi-vendor consortium status a solo-vendor implementation cannot credibly own, and the "compliance kernel" alternative reads as developer-jargon to compliance buyers. The replacement positioning leads with six attestable supply-chain credentials (PEP 740 + Sigstore + SLSA L3 + cosign + CycloneDX 1.7 + OpenSSF Scorecard 6.5 + OpenSSF Silver MET + OSPS Baseline Maturity 2) + a concrete output enumeration (OSCAL + SARIF + OCSF Compliance Finding + OCSF Detection Finding + CycloneDX VEX) + a SOC 2 Type I in-progress signal + an honest acknowledgment of the OpenSSF Gold structural ceiling tied to the SOC 2 Type I program's segregation-of-duties controls. See §10 for the supporting messaging hierarchy.
-- **Honest gaps** (intentionally surfaced, not buried): no customer-facing trust center, no questionnaire-fill AI, **14 evidence collectors** vs Vanta's 375+ integrations (AWS, GitHub, Okta, 5 SQL DB adapters, Databricks, Snowflake, Vanta, Drata, BitSight, SecurityScorecard; Azure + GCP remain roadmap — see §5/§6 honest gap), no auditor partnerships, no Forrester Wave / Gartner inclusion, no published reference customers, no formal SOC 2 of Evidentia itself, no IPO/exit narrative for vendor-longevity-paranoid buyers. Each has a planned remediation or an explicit "won't fix" rationale (see §6).
+- **Honest gaps** (intentionally surfaced, not buried): no customer-facing trust center, no questionnaire-fill AI, **15 evidence collectors** vs Vanta's 375+ integrations (AWS, GitHub, Okta, Google Workspace, 5 SQL DB adapters, Databricks, Snowflake, Vanta, Drata, BitSight, SecurityScorecard; Azure + GCP remain roadmap — see §5/§6 honest gap), no auditor partnerships, no Forrester Wave / Gartner inclusion, no published reference customers, no formal SOC 2 of Evidentia itself, no IPO/exit narrative for vendor-longevity-paranoid buyers. Each has a planned remediation or an explicit "won't fix" rationale (see §6).
 - **Intellectual home**: an updated 30+ person community across NIST/GSA, OpenSSF, CISA-SBOM, Stanford CodeX, Bath/PRT, OSCAL Compass + OSCAL Foundation + Resilient Cyber / fwd:cloudsec / GRC-Engineering crowd. **NIST CSWP 53 *Charting the Course for NIST OSCAL*** (Iorga et al., December 2025 IPD) is now the canonical OSCAL strategic-direction citation, replacing older OSCAL references. Two outreach actions reach the entire community in one quarter (see §12).
 - **The 12-month direction** that compounds Evidentia's advantages: ship a DFAH-style determinism harness for risk-statement generation (academic prior art exists — Khatchadourian arXiv 2601.15322 March 2026 — but **no commercial vendor offers this**); publish the bundled multi-framework crosswalk dataset as a standalone artifact (`evidentia-catalogs`); add canonical scanner-JSON-to-OSCAL mappers; ship an MCP server (note: first-mover window for OSCAL primitives is **closed** as of Q1 2026 — IBM trestle-MCP, AWS Labs OSCAL MCP, Vanta MCP, Drata MCP, Optro MCP all live; **wide open** for SR-11-7 / FFIEC / SBOM / continuous-monitoring MCPs); ship the v0.7.9 federal-compliance overlay (TPRM + model risk + 7 new catalogs + governance primitives); pursue OSCAL Foundation membership; cut v0.8.x around AI evidence validation + multimodal evidence support; publish the **first standardized GRC LLM eval suite to Hugging Face** (HF Hub keyword searches confirm no substantive/eval-grade GRC datasets — zero OSCAL or SOC 2 hits; the lone NIST 800-53 hit is a sub-1K control-text dump — genuine first-in-class opportunity; see §13).
 
@@ -139,10 +139,10 @@ Meanwhile, the compliance workload keeps growing. A single fintech or healthcare
 > 104 coverable CLI leaves, with 13 further leaves `exempt` by design:
 > daemons, the server launcher, sidebar chrome, and the index-route
 > onboarding wizard) that
-> renders its own version live from the API, **13 read-mostly MCP tools**, six
+> renders its own version live from the API, **14 read-mostly MCP tools**, six
 > Python packages with public APIs + the evidentia-ui frontend that bundles into
-> the API server, **14 credentialed evidence collectors**
-> (AWS, GitHub, Okta, 5 SQL DB adapters [Postgres / MySQL /
+> the API server, **15 credentialed evidence collectors**
+> (AWS, GitHub, Okta, Google Workspace, 5 SQL DB adapters [Postgres / MySQL /
 > SQLite / MSSQL / Oracle], Databricks, Snowflake, Vanta, Drata,
 > BitSight, SecurityScorecard — with a separate OCSF importer alongside),
 > **4 output integrations** (Jira, ServiceNow, Tableau publish, Power BI
@@ -176,7 +176,7 @@ for the full subcommand set.
 | `evidentia risk generate` | LLM-generated NIST SP 800-30 risk statements with structured output. |
 | `evidentia explain control <fw> <id>` | Plain-English, LLM-generated translation of any control's text (on-disk cached). |
 | `evidentia integrations {jira,servicenow,tableau,powerbi}` | Output integrations — push gaps to Jira / ServiceNow and publish to Tableau / Power BI. |
-| `evidentia collect {aws,github,okta,…,ocsf}` | Run the 14 credentialed evidence collectors plus the OCSF importer path. |
+| `evidentia collect {aws,github,okta,google-workspace,…,ocsf}` | Run the 15 credentialed evidence collectors plus the OCSF importer path. |
 | `evidentia oscal {verify,sign}` | OSCAL integrity tooling — verify SHA-256 evidence digests and Sigstore/Rekor or GPG signatures on an Assessment Result. |
 | `evidentia tprm` | Third-Party Risk Management — vendor inventory, concentration risk, CAIQ/SIG questionnaires. |
 | `evidentia model-risk` | Model Risk Management — SR 11-7 model inventory and metadata. |
@@ -322,17 +322,18 @@ Two cross-cutting safety properties apply to the whole set:
   environment variables / driver credential chains, never accepted as
   CLI flag values or echoed into logs or request bodies.
 
-There are **14 credentialed collectors**:
+There are **15 credentialed collectors**:
 
 - **AWS** (`[aws]` extra) — Config compliance rules + Security Hub findings + IAM Access Analyzer (5 explicit blind-spot disclosures: KMS grants, S3 ACL/BPA interactions, service-linked roles, unsupported resource types, finding-generation latency). Standard boto3 credential chain.
 - **GitHub** (`[github]` extra) — branch protection + CODEOWNERS + repo visibility + Dependabot alerts (100-page safety cap on pagination). `GITHUB_TOKEN` env var.
 - **Okta** (`[okta]` extra) — user inventory + MFA enforcement + inactive-user detection + privileged-account counts, mapped to NIST AC-2, IA-2, IA-5. `okta>=2.9` driver.
+- **Google Workspace**: Directory user inventory + inactive accounts + admin accounts + super admin and tenant-wide 2-Step Verification enrollment + Reports API login activity, mapped to NIST AC-2, AC-6, IA-2, AU-6, AC-7, SI-4. A pre-minted OAuth 2.0 access token via `GOOGLE_WORKSPACE_ACCESS_TOKEN`; no new dependency.
 - **5 SQL DB adapters** (`[sql-postgres]`, `[sql-mysql]`, `[sql-sqlite]`, `[sql-mssql]`, `[sql-oracle]`) — DB-resident compliance evidence (user privileges, audit-log status, encryption posture, schema change history) mapped to NIST AC-2 / AC-3 / AC-6 / AU-2 / AU-3 / SC-12 / SC-28. SQLite uses the stdlib (no extra). MSSQL requires the OS-level Microsoft ODBC Driver 18. Oracle uses the `oracledb>=2.0` thin driver (pure Python).
 - **Databricks** (`[databricks]` extra) — PAT inventory + lifecycle (long-lived / never-expires findings); cluster compliance (runtime version + libraries + init scripts) → CM-2 / CM-3 / CM-8 / SI-2; service-principal inventory + active/inactive → AC-2 / AC-2(3) / AC-3; secret-scope inventory (Databricks-backed vs Azure Key Vault-backed) → SC-12 / IA-5. Auth via the `databricks-sdk>=0.30` unified resolver (PAT, OAuth M2M, Azure AD, AWS IAM, `.databrickscfg`). 7 documented blind spots.
 - **Snowflake** (`[snowflake]` extra) — LOGIN_HISTORY (per-user inventory + per-failed-login row over a 90-day window) → AC-7 / AU-2 / AU-3 / IR-4; USERS inventory + MFA enforcement + disabled-account + never-logged-in findings → AC-2 / AC-2(3) / IA-2(1)/(2); GRANTS_TO_USERS inventory + privileged-role grants (ACCOUNTADMIN / SECURITYADMIN / ORGADMIN) → AC-3 / AC-6 / AC-6(7); network-policy inventory + account-level baseline → SC-7 / SC-7(5); masking + row-access-policy inventory per database → AC-3 / AC-3(7) / SC-28; operator-attested key-rotation status → SC-12. Auth via `snowflake-connector-python>=3.10` (key-pair auth preferred for production; Snowflake is deprecating password auth). 7 documented blind spots.
 - **Vanta**, **Drata**, **BitSight**, **SecurityScorecard** — read-only TPRM / security-rating collectors that normalize each vendor's posture into Evidentia's `compliance_status` shape (the same field every collector now populates).
 
-Alongside the 14 collectors, **`evidentia collect ocsf`** ingests
+Alongside the 15 collectors, **`evidentia collect ocsf`** ingests
 third-party OCSF Compliance Finding (class 2003) and Detection Finding
 (class 2004) JSON — e.g. from Prowler or AWS Security Hub — and
 **`evidentia collect convert`** re-emits a `SecurityFinding` set into
@@ -749,7 +750,7 @@ Evidentia's existing MCP / CIMD scope-enforcement substrate.
 > collection from cloud APIs, CycloneDX SBOM, Sigstore signing, and
 > conventional commit + semver discipline. It is **honestly behind**
 > on the surviving honest gaps (trust center; AI questionnaire
-> fill; integration breadth — 14 evidence collectors vs
+> fill; integration breadth — 15 evidence collectors vs
 > Vanta's 375+; auditor partnerships; analyst inclusion; reference
 > customers; formal SOC 2 attestation; IPO/exit longevity
 > narrative — TPRM and the risk-register primitive have since
@@ -837,7 +838,7 @@ have."
 
 - **AI-assisted control mapping** — Vanta AI Agent, SafeBase AI, RegScale all do this. Evidentia at parity, not advantage.
 - **Multi-framework crosswalking** — Hyperproof's Hyperintelligence and Drata's framework engine are mature. Evidentia at 97 catalogs is at parity in coverage; quality of the crosswalk graph needs more validation.
-- **Evidence collection from cloud APIs** — Tier 1 vendors and CSPM tools both do this well. Evidentia's 14 collectors (AWS, GitHub, Okta, 5 SQL adapters, Databricks, Snowflake, Vanta, Drata, BitSight, SecurityScorecard) are at parity for the integrations shipped, behind on coverage breadth.
+- **Evidence collection from cloud APIs** — Tier 1 vendors and CSPM tools both do this well. Evidentia's 15 collectors (AWS, GitHub, Okta, Google Workspace, 5 SQL adapters, Databricks, Snowflake, Vanta, Drata, BitSight, SecurityScorecard) are at parity for the integrations shipped, behind on coverage breadth.
 - **CycloneDX SBOM output** — Industry standard now (Anchore, Chainguard, Snyk). Parity, not ahead.
 - **Sigstore/Rekor signing of releases** — Increasingly table-stakes (Chainguard pioneered, Anchore + others adopting). Parity.
 - **Conventional commits + semver release automation** — Table-stakes in modern OSS. Parity.
@@ -854,7 +855,7 @@ These are the gaps that will get a sales-eng on a Vanta/Drata bake-off to win, a
 |---|---|---|
 | 1 | **No customer-facing trust-center module** (SafeBase / Conveyor / Vanta Trust Center are now table-stakes for B2B SaaS buyers) | v0.8.x candidate — could be a `evidentia trust-center` static-site generator that emits Sigstore-attested trust pages from Evidentia's own evidence |
 | 2 | **No questionnaire-fill AI** (Conveyor's Sue, Drata/SafeBase, Vanta Questionnaire Automation are mature) | Won't ship — explicit positioning choice; Evidentia is library-first, not RFP-fill-first |
-| 3 | **Integration breadth** (Vanta has 375+; Evidentia has 14 collectors today) | Roadmap: Azure, GCP collectors planned; community-pluggable collector pattern is documented |
+| 3 | **Integration breadth** (Vanta has 375+; Evidentia has 15 collectors today) | Roadmap: Azure, GCP collectors planned; community-pluggable collector pattern is documented |
 | 4 | **No formalized auditor partnerships / no in-platform auditor handoff** | v0.8.x candidate — `evidentia oscal export --bundle-for-auditor` workflow + curated partnership list |
 | 5 | **No published Forrester Wave / Gartner Magic Quadrant inclusion** | Realistic only after a commercial sponsor exists; OSS projects don't typically get on these without one |
 | 6 | ~~No third-party risk (TPRM) module~~ — **shipped v0.7.9** (`evidentia tprm`: vendor inventory, concentration risk, CAIQ/SIG questionnaires + BitSight / SecurityScorecard collectors) | Residual gap: TPRM data-source breadth vs dedicated TPRM suites |
@@ -984,7 +985,7 @@ These are the gaps that will get a sales-eng on a Vanta/Drata bake-off to win, a
 > gravity wells; regulatory complexity demanding maintenance; AI hype
 > risk. None is fatal but each shapes positioning choices.
 
-1. **Vanta + Drata + Optro + OneTrust have AI moats from scale.** Hundreds of integrations, customer corpora to fine-tune AI agents, 35+ pre-mapped frameworks. An OSS tool with 14 evidence collectors looks small by comparison. **Mitigation**: lean into OSCAL/sovereign/air-gap/cryptographic-evidence-attestation angles where SaaS can't follow; federate (let users plug Evidentia into existing SaaS GRC via the v0.7.8 Tableau / Power BI publish surfaces); position as the substrate that AI agents validate against (signed evidence, OSCAL artifacts, DFAH replay).
+1. **Vanta + Drata + Optro + OneTrust have AI moats from scale.** Hundreds of integrations, customer corpora to fine-tune AI agents, 35+ pre-mapped frameworks. An OSS tool with 15 evidence collectors looks small by comparison. **Mitigation**: lean into OSCAL/sovereign/air-gap/cryptographic-evidence-attestation angles where SaaS can't follow; federate (let users plug Evidentia into existing SaaS GRC via the v0.7.8 Tableau / Power BI publish surfaces); position as the substrate that AI agents validate against (signed evidence, OSCAL artifacts, DFAH replay).
 
 2. **NEW: AI feature commoditization (Q1 2026 universal launches).** Vanta, Drata, Optro, OneTrust, Hyperproof, Workiva, ServiceNow, Anecdotes all shipped agentic AI + MCP server + citation-grounded LLM output between Sept 2025 and April 2026. **The differentiation is collapsing rapidly** into eval rigor, audit-trail quality, and OSS license posture — not "we have AI." **Mitigation**: accelerate the v0.8.0 DFAH + PRT + MCP + plugin-contract differentiators before they become parity items.
 

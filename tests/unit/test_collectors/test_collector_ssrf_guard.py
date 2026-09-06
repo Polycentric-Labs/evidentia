@@ -87,8 +87,9 @@ class TestOktaSSRF:
         collector.close()
 
 
-# ── SaaS collectors (Vanta / Drata / BitSight / SecurityScorecard) ──
-# All four share BaseSaaSCollector._ensure_client, so the guard lives in
+# ── SaaS collectors (Vanta / Drata / BitSight / SecurityScorecard /
+# Google Workspace) ──
+# All five share BaseSaaSCollector._ensure_client, so the guard lives in
 # one chokepoint — we exercise it through each subclass.
 
 
@@ -104,6 +105,11 @@ _SAAS_CASES = [
         "evidentia_collectors.securityscorecard",
         "SecurityScorecardCollector",
         "SecurityScorecardConnectionError",
+    ),
+    (
+        "evidentia_collectors.google_workspace",
+        "GoogleWorkspaceCollector",
+        "GoogleWorkspaceConnectionError",
     ),
 ]
 

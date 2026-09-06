@@ -53,6 +53,60 @@ class TestGithubCollectEndpoint:
         assert r.json()["detail"]["error"] == "missing_field"
 
 
+class TestGoogleWorkspaceCollect:
+    """Smoke coverage for /api/collectors/google-workspace/collect (v0.13 batch 7).
+
+    No live Google Workspace tenant; we validate the env-var gate, body
+    validation, and the status entry, mirroring the Snowflake and
+    SecurityScorecard endpoint tests in this file (each of these fires
+    before the collector ever opens a connection, so no network occurs).
+    """
+
+    def test_missing_token_env_gives_503_credentials_missing(
+        self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("GOOGLE_WORKSPACE_ACCESS_TOKEN", raising=False)
+        r = api_client.post("/api/collectors/google-workspace/collect", json={})
+        assert r.status_code == 503
+        detail = r.json()["detail"]
+        assert detail["error"] == "credentials_missing"
+        assert "GOOGLE_WORKSPACE_ACCESS_TOKEN" in detail["message"]
+
+    def test_max_users_zero_returns_400_invalid_field(
+        self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("GOOGLE_WORKSPACE_ACCESS_TOKEN", "gw_test")
+        r = api_client.post(
+            "/api/collectors/google-workspace/collect",
+            json={"max_users": 0},
+        )
+        assert r.status_code == 400
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_field"
+        assert detail["field"] == "max_users"
+
+    def test_blank_customer_returns_400(self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("GOOGLE_WORKSPACE_ACCESS_TOKEN", "gw_test")
+        r = api_client.post(
+            "/api/collectors/google-workspace/collect",
+            json={"customer": "   "},
+        )
+        assert r.status_code == 400
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_field"
+        assert detail["field"] == "customer"
+
+    def test_status_endpoint_includes_google_workspace_entry(
+        self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("GOOGLE_WORKSPACE_ACCESS_TOKEN", raising=False)
+        r = api_client.get("/api/collectors/status")
+        assert r.status_code == 200
+        payload = r.json()
+        assert "google-workspace" in payload
+        assert payload["google-workspace"]["default_token_env_configured"] is False
+
+
 class TestSQLiteCollectEndpointSafeRoot:
     """v0.7.7 Step 5.A — F-001 path-traversal containment.
 
@@ -512,6 +566,11 @@ def test_collectors_error_statuses_documented_in_openapi(
             ["400", "404", "502", "503"],
         ),
         ("/api/collectors/okta/collect", "post", ["400", "500", "503"]),
+        (
+            "/api/collectors/google-workspace/collect",
+            "post",
+            ["400", "500", "503"],
+        ),
         (
             "/api/collectors/sql/postgres/collect",
             "post",

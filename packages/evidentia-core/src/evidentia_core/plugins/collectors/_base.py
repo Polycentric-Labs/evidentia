@@ -18,6 +18,9 @@ class SaaSCollectorError(Exception):
     error handling in callers.
     """
 
+    status_code: int | None = None
+    """HTTP status that produced the error, when one exists."""
+
 
 class SaaSAuthError(SaaSCollectorError):
     """Authentication / authorization failure.
@@ -274,16 +277,20 @@ class BaseSaaSCollector(ABC):
                 f"on GET {path}: {type(exc).__name__}"
             ) from exc
         if resp.status_code in (401, 403):
-            raise self.AUTH_ERROR_CLASS(
+            auth_err = self.AUTH_ERROR_CLASS(
                 f"{type(self).__name__} API auth failure on GET "
                 f"{path}: HTTP {resp.status_code}. Verify "
                 f"{self.TOKEN_ENV_VAR} scope + expiration."
             )
+            auth_err.status_code = resp.status_code
+            raise auth_err
         if resp.status_code >= 400:
-            raise self.QUERY_ERROR_CLASS(
+            query_err = self.QUERY_ERROR_CLASS(
                 f"{type(self).__name__} API error on GET {path}: "
                 f"HTTP {resp.status_code}"
             )
+            query_err.status_code = resp.status_code
+            raise query_err
         try:
             data = resp.json()
         except ValueError as exc:

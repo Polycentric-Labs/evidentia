@@ -648,6 +648,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/collectors/google-workspace/collect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Google Workspace Collect
+         * @description Run the Google Workspace collector (v0.13 batch 7).
+         *
+         *     Request body (optional):
+         *
+         *     - ``customer``: Directory API customer id (default ``my_customer``).
+         *     - ``base_url``: override the Admin SDK base URL (default
+         *       ``https://admin.googleapis.com``).
+         *     - ``inactive_threshold_days``: int, default 90.
+         *     - ``max_users``: int, default 10000.
+         *     - ``login_window_days``: int, default 30; 0 skips the Reports API
+         *       entirely (no login-activity finding).
+         *     - ``max_login_events``: int, default 10000.
+         *     - ``token_env``: name of the env var holding a pre-minted Google
+         *       Workspace OAuth 2.0 access token (default
+         *       ``GOOGLE_WORKSPACE_ACCESS_TOKEN``). The API server reads this env
+         *       var server-side; the token NEVER flows through the request body.
+         *
+         *     Auth: a pre-minted OAuth 2.0 access token carrying
+         *     admin.directory.user.readonly, and admin.reports.audit.readonly
+         *     when login_window_days is greater than 0. Per CLAUDE.md
+         *     secret-handling protocol, the token MUST come from a server-side
+         *     env var.
+         *
+         *     Response: list of SecurityFinding objects covering six evidence
+         *     sources: user inventory, inactive accounts, admin accounts, super
+         *     admin 2-Step Verification enrollment, tenant-wide 2-Step
+         *     Verification enrollment, and login activity.
+         *
+         *     Mappings: NIST 800-53 AC-2, AC-6, IA-2, AU-6, AC-7, SI-4.
+         */
+        post: operations["google_workspace_collect_api_collectors_google_workspace_collect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/collectors/greenbone/collect": {
         parameters: {
             query?: never;
@@ -9312,6 +9360,68 @@ export interface operations {
                 };
             };
             /** @description GitHub collector import failed (``error: feature_unavailable``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    google_workspace_collect_api_collectors_google_workspace_collect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                } | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityFinding"][];
+                };
+            };
+            /** @description Invalid ``customer`` / ``inactive_threshold_days`` / ``max_users`` / ``login_window_days`` / ``max_login_events`` body field (``error: invalid_field``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Unexpected collector failure (``error: collector_failed``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collector not installed, token env var unset, or Google Workspace unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``). */
             503: {
                 headers: {
                     [name: string]: unknown;

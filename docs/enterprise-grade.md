@@ -134,7 +134,7 @@ evidence lineage).
 |---|---|---|
 | M1 | Mutation testing ≥ 65% | ❌ Not run in CI at v0.7.0. *Later: weekly out-of-band mutmut CI runs since v0.8.2 (`mutmut.yml`: Sundays 03:00 UTC + dispatch); the ≥65% kill-rate gate is not yet enforced.* |
 | M2 | Air-gapped deployment mode | ✅ `--offline` flag refuses network egress; GPG signing works offline |
-| M3 | Multi-cloud + SaaS support | ⚠️ AWS + GitHub at v0.7.0. *Later: grown to 14 collectors (adds Okta, 5 SQL adapters, Databricks, Snowflake, Vanta, Drata, BitSight, SecurityScorecard); Azure, GCP remain roadmap.* |
+| M3 | Multi-cloud + SaaS support | ⚠️ AWS + GitHub at v0.7.0. *Later: grown to 15 collectors (adds Okta, Google Workspace, 5 SQL adapters, Databricks, Snowflake, Vanta, Drata, BitSight, SecurityScorecard); Azure, GCP remain roadmap.* |
 | M4 | Performance benchmarks | ⚠️ Not documented; ad-hoc testing on 10k-resource sample |
 | M5 | Dry-run mode | ✅ `dry_run=True` kwarg on all collectors; `--dry-run` CLI flag |
 | M6 | Custom OSCAL finding fields | ✅ `back-matter.resources[].props[]` with Evidentia-namespaced prop extensions |

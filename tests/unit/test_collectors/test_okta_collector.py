@@ -17,7 +17,9 @@ from evidentia_collectors.okta import (
     COLLECTOR_ID,
     OktaCollector,
     OktaCollectorError,
+    OktaQueryError,
 )
+from evidentia_core.models.common import OLIRRelationship, deterministic_finding_id
 from evidentia_core.models.finding import FindingStatus, Severity
 
 # ── Mock-transport infrastructure ──────────────────────────────────
@@ -373,3 +375,171 @@ def test_user_agent_header_set() -> None:
     ua = client.headers.get("User-Agent")
     assert ua and "evidentia-collectors" in ua
     coll.close()
+
+
+# ── v0.13 batch 7: authored control_mappings ships (item 1) ───────────
+
+
+def test_control_mappings_carry_authored_relationship() -> None:
+    coll, _ = _make_collector()
+    findings = coll.collect()
+    inventory = next(f for f in findings if "user inventory" in f.title)
+    assert inventory.control_mappings
+    first = inventory.control_mappings[0]
+    assert first.relationship == OLIRRelationship.SUBSET_OF
+    assert first.relationship != OLIRRelationship.RELATED_TO
+    assert first.justification
+    assert first.framework == "nist-800-53-rev5"
+
+
+def test_finding_id_unchanged_by_control_mappings_migration() -> None:
+    """The switch from control_ids=[...] to control_mappings=[...] must
+    not change a finding's deterministic id: the id derives only from
+    (source_system, source_finding_id), never from the control
+    mappings, so it equals the same UUID5 the model would derive on
+    its own."""
+    coll, _ = _make_collector()
+    findings = coll.collect()
+    inventory = next(f for f in findings if "user inventory" in f.title)
+    expected_id = deterministic_finding_id(
+        inventory.source_system, inventory.source_finding_id
+    )
+    assert inventory.id == expected_id
+
+
+# ── v0.13 batch 7: bounded retry (item 2) ──────────────────────────────
+
+
+def test_users_429_then_200_retries_and_succeeds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("EVIDENTIA_TEST_MODE", "1")
+    single_page_users = _baseline_responses()["/api/v1/users"]
+    call_count = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        call_count["n"] += 1
+        if call_count["n"] == 1:
+            return httpx.Response(429, json={"error": "rate limited"})
+        return httpx.Response(200, json=single_page_users)
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://test-org.okta.com",
+        headers={"Authorization": "SSWS test-token"},
+    )
+    coll = OktaCollector(client=client)
+    users = coll._list_all_users()
+    assert len(users) == len(single_page_users)
+    assert call_count["n"] == 2
+
+
+def test_users_404_is_not_retried(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("EVIDENTIA_TEST_MODE", "1")
+    call_count = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        call_count["n"] += 1
+        return httpx.Response(404, json={"error": "not found"})
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://test-org.okta.com",
+        headers={"Authorization": "SSWS test-token"},
+    )
+    coll = OktaCollector(client=client)
+    with pytest.raises(OktaQueryError):
+        coll._list_all_users()
+    assert call_count["n"] == 1
+
+
+def test_users_429_on_all_five_attempts_raises_with_status_code(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("EVIDENTIA_TEST_MODE", "1")
+    call_count = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        call_count["n"] += 1
+        return httpx.Response(429, json={"error": "rate limited"})
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://test-org.okta.com",
+        headers={"Authorization": "SSWS test-token"},
+    )
+    coll = OktaCollector(client=client)
+    with pytest.raises(OktaQueryError) as exc:
+        coll._list_all_users()
+    assert exc.value.status_code == 429
+    assert call_count["n"] == 5
+
+
+# ── v0.13 batch 7: real coverage counts (item 3) ───────────────────────
+
+
+def test_collect_v2_coverage_counts_reflect_real_activity() -> None:
+    coll, _ = _make_collector()
+    _findings, manifest = coll.collect_v2()
+    by_type = {c.resource_type: c for c in manifest.coverage_counts}
+    assert set(by_type) == {
+        "okta-user",
+        "okta-admin-assignment",
+        "okta-mfa-sample",
+        "okta-policy",
+    }
+    # Baseline: 4 users, 2 admin assignees, 2 ACTIVE users sampled for
+    # MFA, 1 PASSWORD + 1 OKTA_SIGN_ON policy.
+    assert by_type["okta-user"].scanned == 4
+    assert by_type["okta-admin-assignment"].scanned == 2
+    assert by_type["okta-mfa-sample"].scanned == 2
+    assert by_type["okta-policy"].scanned == 2
+    for count in by_type.values():
+        assert count.matched_filter == count.scanned
+        assert count.collected == count.scanned
+
+
+def test_coverage_counts_do_not_accumulate_across_runs() -> None:
+    """A collector instance reused across two collect_v2() calls must
+    report the SAME counts each time, not the sum of both runs."""
+    coll, _ = _make_collector()
+    _findings_1, manifest_1 = coll.collect_v2()
+    _findings_2, manifest_2 = coll.collect_v2()
+    by_type_1 = {c.resource_type: c.scanned for c in manifest_1.coverage_counts}
+    by_type_2 = {c.resource_type: c.scanned for c in manifest_2.coverage_counts}
+    assert by_type_1 == by_type_2
+
+
+# ── v0.13 batch 7: full status breakdown (item 4) ──────────────────────
+
+
+def test_status_counts_includes_locked_out_and_password_expired() -> None:
+    responses = _baseline_responses()
+    responses["/api/v1/users"] = [
+        *responses["/api/v1/users"],
+        {
+            "id": "u05",
+            "status": "LOCKED_OUT",
+            "lastLogin": _ago_iso(10),
+            "profile": {"login": "locked@example.com"},
+        },
+        {
+            "id": "u06",
+            "status": "PASSWORD_EXPIRED",
+            "lastLogin": _ago_iso(10),
+            "profile": {"login": "pwexpired@example.com"},
+        },
+    ]
+    coll, _ = _make_collector(responses)
+    findings = coll.collect()
+    inventory = next(f for f in findings if "user inventory" in f.title)
+    assert inventory.raw_data["status_counts"] == {
+        "ACTIVE": 2,
+        "DEPROVISIONED": 1,
+        "LOCKED_OUT": 1,
+        "PASSWORD_EXPIRED": 1,
+        "SUSPENDED": 1,
+    }
+    # Title stays the count summary it always was: unchanged shape.
+    assert "user inventory" in inventory.title
+    assert "6 total" in inventory.title
