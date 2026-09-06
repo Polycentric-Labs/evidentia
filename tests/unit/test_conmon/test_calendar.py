@@ -8,6 +8,7 @@ import pytest
 from evidentia_core.conmon import (
     BUNDLED_CADENCES,
     CONMON_FREQUENCIES,
+    CONMON_FREQUENCY_DAYS,
     CadenceFrequency,
     ConmonCadence,
     CycleAttentionState,
@@ -35,6 +36,7 @@ def _isolated_conmon_registry() -> object:
     yield
     cal._REGISTRY.clear()
     cal._REGISTRY.update(snapshot)
+
 
 # ── bundled cadence catalog ────────────────────────────────────────
 
@@ -123,9 +125,7 @@ class TestRegisterCadence:
 
 class TestNextDue:
     def test_monthly_adds_one_month(self) -> None:
-        result = next_due(
-            "nist-800-53-rev5-ca7", date(2026, 4, 1)
-        )
+        result = next_due("nist-800-53-rev5-ca7", date(2026, 4, 1))
         assert result == date(2026, 5, 1)
 
     def test_quarterly_adds_three_months(self) -> None:
@@ -142,43 +142,31 @@ class TestNextDue:
         # Cleanup handled by the autouse _isolated_conmon_registry fixture.
 
     def test_annual_adds_twelve_months(self) -> None:
-        result = next_due(
-            "fedramp-conmon-annual", date(2026, 4, 1)
-        )
+        result = next_due("fedramp-conmon-annual", date(2026, 4, 1))
         assert result == date(2027, 4, 1)
 
     def test_triennial_adds_thirty_six_months(self) -> None:
-        result = next_due(
-            "cmmc-l2-triennial", date(2026, 4, 1)
-        )
+        result = next_due("cmmc-l2-triennial", date(2026, 4, 1))
         assert result == date(2029, 4, 1)
 
     def test_year_roll_works(self) -> None:
         # NIST monthly cadence in December rolls year
-        result = next_due(
-            "nist-800-53-rev5-ca7", date(2026, 12, 15)
-        )
+        result = next_due("nist-800-53-rev5-ca7", date(2026, 12, 15))
         assert result == date(2027, 1, 15)
 
     def test_last_day_clamp_jan_31_plus_one_month(self) -> None:
         # 2026-01-31 + 1 month → 2026-02-28 (clamped, not invalid date)
-        result = next_due(
-            "nist-800-53-rev5-ca7", date(2026, 1, 31)
-        )
+        result = next_due("nist-800-53-rev5-ca7", date(2026, 1, 31))
         assert result == date(2026, 2, 28)
 
     def test_last_day_clamp_leap_year(self) -> None:
         # 2024 is a leap year; 2024-01-31 + 1 month → 2024-02-29
-        result = next_due(
-            "nist-800-53-rev5-ca7", date(2024, 1, 31)
-        )
+        result = next_due("nist-800-53-rev5-ca7", date(2024, 1, 31))
         assert result == date(2024, 2, 29)
 
     def test_last_day_clamp_annual(self) -> None:
         # 2024-02-29 + 12 months → 2025-02-28 (clamped)
-        result = next_due(
-            "fedramp-conmon-annual", date(2024, 2, 29)
-        )
+        result = next_due("fedramp-conmon-annual", date(2024, 2, 29))
         assert result == date(2025, 2, 28)
 
     def test_unknown_slug_raises_key_error(self) -> None:
@@ -238,15 +226,9 @@ class TestDeriveStatus:
     def test_window_zero_only_due_today_is_due_soon(self) -> None:
         today = date(2026, 5, 8)
         # Due today with window=0 → DUE_SOON
-        assert (
-            derive_status(today, today, window_days=0)
-            == CycleAttentionState.DUE_SOON
-        )
+        assert derive_status(today, today, window_days=0) == CycleAttentionState.DUE_SOON
         # Due tomorrow with window=0 → CURRENT
-        assert (
-            derive_status(date(2026, 5, 9), today, window_days=0)
-            == CycleAttentionState.CURRENT
-        )
+        assert derive_status(date(2026, 5, 9), today, window_days=0) == CycleAttentionState.CURRENT
 
 
 # ── frequency map ──────────────────────────────────────────────────
@@ -254,8 +236,11 @@ class TestDeriveStatus:
 
 class TestConmonFrequenciesMap:
     def test_map_covers_all_enum_values(self) -> None:
+        # v0.13: day-granular members live in CONMON_FREQUENCY_DAYS and CUSTOM
+        # reads ConmonCadence.interval_days; every member has exactly one home.
         for freq in CadenceFrequency:
-            assert freq in CONMON_FREQUENCIES
+            homes = [freq in CONMON_FREQUENCIES, freq in CONMON_FREQUENCY_DAYS, freq is CadenceFrequency.CUSTOM]
+            assert sum(homes) == 1, freq
 
     def test_monthly_is_one_month(self) -> None:
         assert CONMON_FREQUENCIES[CadenceFrequency.MONTHLY] == 1

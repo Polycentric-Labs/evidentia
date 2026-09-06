@@ -44,7 +44,7 @@ import signal
 import sys
 import threading
 import warnings
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, time
 from pathlib import Path
 from typing import Any
 
@@ -58,17 +58,29 @@ from evidentia_core.conmon import (
     AlertDeduper,
     CycleAttentionState,
     DaemonConfig,
+    assert_series,
+    compute_health,
+    default_window,
     derive_status,
     get_cadence,
-    health_from_state_file,
+    latest_observations,
     list_cadences,
+    load_state_file,
     make_alert_handler,
     mark_completed,
+    merge_evidence_anchors,
     migrate_deprecated_slugs,
     next_due,
     resolve_secret,
     run_daemon,
+    series_to_finding,
+    series_verdicts,
 )
+from evidentia_core.conmon.series import (
+    CADENCE_SLUG_METADATA_KEY,
+    DEFAULT_LOOKBACK_DAYS,
+)
+from evidentia_core.evidence_store import get_evidence_store_dir, iter_artifacts
 from rich.console import Console
 from rich.table import Table
 
@@ -87,10 +99,7 @@ def _parse_date_or_exit(value: str | None, flag: str) -> date | None:
     try:
         return date.fromisoformat(value)
     except ValueError as exc:
-        console.print(
-            f"[red]Error:[/red] {flag} must be ISO-8601 date "
-            f"(YYYY-MM-DD); got {value!r}: {exc}"
-        )
+        console.print(f"[red]Error:[/red] {flag} must be ISO-8601 date (YYYY-MM-DD); got {value!r}: {exc}")
         raise typer.Exit(code=1) from exc
 
 
@@ -119,18 +128,14 @@ def _load_last_completed_map(
 
     if not isinstance(raw, dict):
         console.print(
-            f"[red]Error:[/red] {path} must be a YAML mapping of "
-            f"slug → ISO-8601 date; got {type(raw).__name__}"
+            f"[red]Error:[/red] {path} must be a YAML mapping of slug → ISO-8601 date; got {type(raw).__name__}"
         )
         raise typer.Exit(code=1)
 
     out: dict[str, date] = {}
     for slug, value in raw.items():
         if not isinstance(slug, str):
-            console.print(
-                f"[red]Error:[/red] cadence keys must be strings; "
-                f"got {slug!r}"
-            )
+            console.print(f"[red]Error:[/red] cadence keys must be strings; got {slug!r}")
             raise typer.Exit(code=1)
         if isinstance(value, date):
             out[slug] = value
@@ -138,16 +143,10 @@ def _load_last_completed_map(
             try:
                 out[slug] = date.fromisoformat(value)
             except ValueError as exc:
-                console.print(
-                    f"[red]Error:[/red] {slug!r} → {value!r}: "
-                    f"expected ISO-8601 date ({exc})"
-                )
+                console.print(f"[red]Error:[/red] {slug!r} → {value!r}: expected ISO-8601 date ({exc})")
                 raise typer.Exit(code=1) from exc
         else:
-            console.print(
-                f"[red]Error:[/red] {slug!r} → {value!r}: expected "
-                f"ISO-8601 date string"
-            )
+            console.print(f"[red]Error:[/red] {slug!r} → {value!r}: expected ISO-8601 date string")
             raise typer.Exit(code=1)
     return migrate_deprecated_slugs(out)
 
@@ -161,10 +160,7 @@ def conmon_list(
         None,
         "--framework",
         "-f",
-        help=(
-            "Filter to cadences for a specific framework "
-            "(e.g., nist-800-53-rev5, fedramp-rev5-mod, cmmc-v2)."
-        ),
+        help=("Filter to cadences for a specific framework (e.g., nist-800-53-rev5, fedramp-rev5-mod, cmmc-v2)."),
     ),
     output_json: bool = typer.Option(
         False,
@@ -221,10 +217,7 @@ def conmon_next(
     """Compute the next-due date for a registered cadence."""
     cadence = get_cadence(slug)
     if cadence is None:
-        console.print(
-            f"[red]Error:[/red] unknown cadence slug {slug!r}. "
-            f"Run `evidentia conmon list` to see available."
-        )
+        console.print(f"[red]Error:[/red] unknown cadence slug {slug!r}. Run `evidentia conmon list` to see available.")
         raise typer.Exit(code=1)
 
     anchor = _parse_date_or_exit(last_completed, "--last-completed")
@@ -248,15 +241,11 @@ def conmon_next(
         )
         return
 
-    console.print(
-        f"[bold]{cadence.slug}[/bold] ({cadence.frequency})"
-    )
+    console.print(f"[bold]{cadence.slug}[/bold] ({cadence.frequency})")
     console.print(f"  Framework:       {cadence.framework}")
     console.print(f"  Activity:        {cadence.activity}")
     console.print(f"  Last completed:  {anchor.isoformat()}")
-    console.print(
-        f"  Next due:        [cyan]{due.isoformat()}[/cyan]"
-    )
+    console.print(f"  Next due:        [cyan]{due.isoformat()}[/cyan]")
     if cadence.citation:
         console.print(f"  Citation:        [dim]{cadence.citation}[/dim]")
 
@@ -297,10 +286,7 @@ def conmon_check(
     today_override: str | None = typer.Option(
         None,
         "--today",
-        help=(
-            "Override 'today' for deterministic CLI snapshots "
-            "(YYYY-MM-DD). Production operators omit this flag."
-        ),
+        help=("Override 'today' for deterministic CLI snapshots (YYYY-MM-DD). Production operators omit this flag."),
     ),
     window_days: int = typer.Option(
         14,
@@ -315,6 +301,16 @@ def conmon_check(
         False,
         "--json",
         help="Emit JSON instead of human-readable tables.",
+    ),
+    evidence_store: Path | None = typer.Option(
+        None,
+        "--evidence-store",
+        help=(
+            "Evidence store root. When given, a cadence missing from the state "
+            "file takes the date of its latest evidence artifact (matched by "
+            "metadata.cadence_slug), and every row gains a series verdict over "
+            "the last 365 days. --state-file becomes optional."
+        ),
     ),
 ) -> None:
     """Report due-soon + overdue cycles from a tracked-state YAML.
@@ -338,24 +334,34 @@ def conmon_check(
         raise typer.Exit(code=2)
     if last_completed_file is not None:
         warnings.warn(
-            "--last-completed-file is deprecated in v0.9.6 and will "
-            "be removed in v1.0. Use --state-file instead.",
+            "--last-completed-file is deprecated in v0.9.6 and will be removed in v1.0. Use --state-file instead.",
             DeprecationWarning,
             stacklevel=2,
         )
         resolved_state_file = last_completed_file
     elif state_file is not None:
         resolved_state_file = state_file
+    elif evidence_store is not None:
+        resolved_state_file = None
     else:
-        console.print(
-            "[red]Error:[/red] --state-file is required."
-        )
+        console.print("[red]Error:[/red] --state-file is required (or --evidence-store).")
         raise typer.Exit(code=2)
 
     today_parsed = _parse_date_or_exit(today_override, "--today")
     today: date = today_parsed if today_parsed is not None else date.today()
 
-    last_completed_map = _load_last_completed_map(resolved_state_file)
+    last_completed_map = _load_last_completed_map(resolved_state_file) if resolved_state_file is not None else {}
+    verdicts: dict[str, str] = {}
+    if evidence_store is not None:
+        artifacts = [
+            artifact
+            for artifact in iter_artifacts(get_evidence_store_dir(evidence_store))
+            if CADENCE_SLUG_METADATA_KEY in artifact.metadata
+        ]
+        last_completed_map = merge_evidence_anchors(last_completed_map, latest_observations(artifacts))
+        verdicts = {
+            slug: verdict.value for slug, verdict in series_verdicts(artifacts, last_completed_map, today=today).items()
+        }
 
     overdue: list[dict[str, str]] = []
     due_soon: list[dict[str, str]] = []
@@ -378,15 +384,14 @@ def conmon_check(
             "next_due": due.isoformat(),
             "days_until_due": str(days_until_due),
         }
+        if evidence_store is not None:
+            row["series"] = verdicts.get(slug, "unknown")
         if state == CycleAttentionState.OVERDUE:
             overdue.append(row)
             _log.warning(
                 action=EventAction.CONMON_CYCLE_OVERDUE,
                 outcome=EventOutcome.FAILURE,
-                message=(
-                    f"CONMON cycle {slug!r} is overdue "
-                    f"({days_until_due} days past next-due)"
-                ),
+                message=(f"CONMON cycle {slug!r} is overdue ({days_until_due} days past next-due)"),
                 evidentia={
                     "cadence_slug": slug,
                     "framework": cadence.framework,
@@ -401,10 +406,7 @@ def conmon_check(
             _log.info(
                 action=EventAction.CONMON_CYCLE_DUE,
                 outcome=EventOutcome.SUCCESS,
-                message=(
-                    f"CONMON cycle {slug!r} due within "
-                    f"{window_days} day(s) (next-due {due.isoformat()})"
-                ),
+                message=(f"CONMON cycle {slug!r} due within {window_days} day(s) (next-due {due.isoformat()})"),
                 evidentia={
                     "cadence_slug": slug,
                     "framework": cadence.framework,
@@ -432,22 +434,18 @@ def conmon_check(
 
     if unknown:
         console.print(
-            f"[yellow]Warning:[/yellow] {len(unknown)} unknown "
-            f"cadence slug(s) in the file: {', '.join(unknown)}"
+            f"[yellow]Warning:[/yellow] {len(unknown)} unknown cadence slug(s) in the file: {', '.join(unknown)}"
         )
 
     if not overdue and not due_soon:
         console.print(
-            f"[green]No CONMON cycles overdue or due within "
-            f"{window_days} day(s)[/green] as of {today.isoformat()}."
+            f"[green]No CONMON cycles overdue or due within {window_days} day(s)[/green] as of {today.isoformat()}."
         )
         return
 
     if overdue:
         table = Table(
-            title=(
-                f"OVERDUE cycles ({len(overdue)}) as of {today.isoformat()}"
-            ),
+            title=(f"OVERDUE cycles ({len(overdue)}) as of {today.isoformat()}"),
             title_style="bold red",
         )
         table.add_column("Slug", style="bold")
@@ -455,6 +453,8 @@ def conmon_check(
         table.add_column("Activity")
         table.add_column("Next due", style="red")
         table.add_column("Days past", justify="right", style="red")
+        if evidence_store is not None:
+            table.add_column("Series")
         for row in overdue:
             table.add_row(
                 row["slug"],
@@ -462,15 +462,13 @@ def conmon_check(
                 row["activity"],
                 row["next_due"],
                 row["days_until_due"],
+                *([row["series"]] if evidence_store is not None else []),
             )
         console.print(table)
 
     if due_soon:
         table = Table(
-            title=(
-                f"Due within {window_days} day(s) ({len(due_soon)}) "
-                f"as of {today.isoformat()}"
-            ),
+            title=(f"Due within {window_days} day(s) ({len(due_soon)}) as of {today.isoformat()}"),
             title_style="bold yellow",
         )
         table.add_column("Slug", style="bold")
@@ -478,6 +476,8 @@ def conmon_check(
         table.add_column("Activity")
         table.add_column("Next due", style="yellow")
         table.add_column("Days ahead", justify="right")
+        if evidence_store is not None:
+            table.add_column("Series")
         for row in due_soon:
             table.add_row(
                 row["slug"],
@@ -485,6 +485,7 @@ def conmon_check(
                 row["activity"],
                 row["next_due"],
                 row["days_until_due"],
+                *([row["series"]] if evidence_store is not None else []),
             )
         console.print(table)
 
@@ -515,10 +516,7 @@ def _build_alert_channels(
     if smtp_host is not None:
         # All SMTP flags are required together once host is set.
         if smtp_sender is None or not smtp_recipients:
-            raise typer.BadParameter(
-                "--smtp-host requires --smtp-sender and at least "
-                "one --smtp-recipient"
-            )
+            raise typer.BadParameter("--smtp-host requires --smtp-sender and at least one --smtp-recipient")
         password = resolve_secret(
             smtp_password_file,
             "EVIDENTIA_SMTP_PASSWORD",
@@ -663,19 +661,13 @@ def conmon_watch(
     smtp_recipients: list[str] | None = typer.Option(
         None,
         "--smtp-recipient",
-        help=(
-            "To: address (repeatable). At least one required when "
-            "--smtp-host is set."
-        ),
+        help=("To: address (repeatable). At least one required when --smtp-host is set."),
     ),
     # ── Webhook alerting ──────────────────────────────────────────
     webhook_url: str | None = typer.Option(
         None,
         "--webhook-url",
-        help=(
-            "HTTPS webhook URL. POSTs signed JSON payload on each "
-            "alert. Enables webhook alerting when set."
-        ),
+        help=("HTTPS webhook URL. POSTs signed JSON payload on each alert. Enables webhook alerting when set."),
     ),
     webhook_secret_file: Path | None = typer.Option(
         None,
@@ -835,10 +827,7 @@ def conmon_watch(
     handler = None
     if channels:
         if alert_dedup_file is None:
-            console.print(
-                "[red]Error:[/red] --alert-dedup-file required when "
-                "any --smtp-* or --webhook-* flag is set"
-            )
+            console.print("[red]Error:[/red] --alert-dedup-file required when any --smtp-* or --webhook-* flag is set")
             raise typer.Exit(code=1)
         deduper = AlertDeduper.from_hours(
             alert_dedup_file,
@@ -851,10 +840,7 @@ def conmon_watch(
 
     def _handle_signal(signum: int, _frame: object) -> None:
         sig_name = signal.Signals(signum).name
-        console.print(
-            f"\n[yellow]Received {sig_name}; "
-            f"finishing current poll cycle...[/yellow]"
-        )
+        console.print(f"\n[yellow]Received {sig_name}; finishing current poll cycle...[/yellow]")
         shutdown.set()
 
     signal.signal(signal.SIGINT, _handle_signal)
@@ -863,10 +849,7 @@ def conmon_watch(
         signal.signal(signal.SIGTERM, _handle_signal)
 
     alerting_note = (
-        f" alerting={len(channels)} channel(s) "
-        f"(suppression={alert_suppression_hours}h)"
-        if channels
-        else " no alerting"
+        f" alerting={len(channels)} channel(s) (suppression={alert_suppression_hours}h)" if channels else " no alerting"
     )
     console.print(
         f"[green]CONMON daemon starting[/green] (poll every "
@@ -904,10 +887,7 @@ def conmon_mark_completed(
         "--state-file",
         file_okay=True,
         dir_okay=False,
-        help=(
-            "Path to the YAML state file the daemon polls. Created "
-            "if it does not exist."
-        ),
+        help=("Path to the YAML state file the daemon polls. Created if it does not exist."),
     ),
     state_lock: bool = typer.Option(
         False,
@@ -933,14 +913,10 @@ def conmon_mark_completed(
     assert parsed_when is not None
 
     try:
-        previous = mark_completed(
-            state_file, slug, parsed_when, use_lock=state_lock
-        )
+        previous = mark_completed(state_file, slug, parsed_when, use_lock=state_lock)
     except ValueError as exc:
         console.print(f"[red]Error:[/red] {exc}")
-        console.print(
-            "[dim]Run `evidentia conmon list` to see available cadences.[/dim]"
-        )
+        console.print("[dim]Run `evidentia conmon list` to see available cadences.[/dim]")
         raise typer.Exit(code=1) from exc
 
     cadence = get_cadence(slug)
@@ -1037,9 +1013,7 @@ def conmon_ksi(
     class _NoDupKeyLoader(yaml_mod.SafeLoader):
         pass
 
-    def _construct_no_dup(
-        loader: yaml_mod.SafeLoader, node: yaml_mod.MappingNode
-    ) -> dict[Any, Any]:
+    def _construct_no_dup(loader: yaml_mod.SafeLoader, node: yaml_mod.MappingNode) -> dict[Any, Any]:
         # Reject duplicate EXPLICIT keys (a copy-paste slip) before merge
         # expansion — a `<<` merge override of a key is legal YAML and must
         # still work, so detect dupes among the explicit key nodes only,
@@ -1061,14 +1035,10 @@ def conmon_ksi(
         loader.flatten_mapping(node)
         return loader.construct_mapping(node, deep=True)
 
-    _NoDupKeyLoader.add_constructor(
-        "tag:yaml.org,2002:map", _construct_no_dup
-    )
+    _NoDupKeyLoader.add_constructor("tag:yaml.org,2002:map", _construct_no_dup)
 
     try:
-        raw = yaml_mod.load(
-            status_file.read_text(encoding="utf-8"), Loader=_NoDupKeyLoader
-        )
+        raw = yaml_mod.load(status_file.read_text(encoding="utf-8"), Loader=_NoDupKeyLoader)
     except yaml_mod.YAMLError as exc:
         console.print(f"[red]Error:[/red] could not parse {status_file}: {exc}")
         raise typer.Exit(code=2) from exc
@@ -1076,27 +1046,19 @@ def conmon_ksi(
     try:
         status = KsiStatusDocument.model_validate(raw)
     except ValidationError as exc:
-        console.print(
-            f"[red]Error:[/red] {status_file} is not a valid KSI status "
-            f"file:\n{exc}"
-        )
+        console.print(f"[red]Error:[/red] {status_file} is not a valid KSI status file:\n{exc}")
         raise typer.Exit(code=2) from exc
 
     if last_updated is not None:
         try:
             last_updated_dt = datetime.fromisoformat(last_updated)
         except ValueError as exc:
-            console.print(
-                f"[red]Error:[/red] --last-updated must be ISO-8601 "
-                f"datetime; got {last_updated!r}: {exc}"
-            )
+            console.print(f"[red]Error:[/red] --last-updated must be ISO-8601 datetime; got {last_updated!r}: {exc}")
             raise typer.Exit(code=1) from exc
     else:
         last_updated_dt = datetime.now(tz=UTC)
 
-    last_completed = (
-        _load_last_completed_map(state_file) if state_file is not None else None
-    )
+    last_completed = _load_last_completed_map(state_file) if state_file is not None else None
 
     # A state-file anchor keyed by a slug that matches no bundled cadence
     # (usually a typo) never joins onto a persistence cycle, so its
@@ -1105,9 +1067,7 @@ def conmon_ksi(
     # which anchors were ignored rather than shipping a quietly-incomplete
     # federal artifact.
     if last_completed:
-        unknown = sorted(
-            slug for slug in last_completed if get_cadence(slug) is None
-        )
+        unknown = sorted(slug for slug in last_completed if get_cadence(slug) is None)
         if unknown:
             console.print(
                 f"[yellow]Warning:[/yellow] {state_file} has "
@@ -1148,9 +1108,7 @@ def conmon_ksi(
         tmp.write_text(payload, encoding="utf-8")
         os.replace(tmp, output)
     except OSError as exc:
-        console.print(
-            f"[red]Error:[/red] could not write {output}: {exc.strerror or exc}"
-        )
+        console.print(f"[red]Error:[/red] could not write {output}: {exc.strerror or exc}")
         raise typer.Exit(code=1) from exc
 
     coverage = ksi_coverage(status)
@@ -1163,10 +1121,7 @@ def conmon_ksi(
         f"{n_frr} FRR entr{'y' if n_frr == 1 else 'ies'} "
         f"to [bold]{output}[/bold] (schema-valid)."
     )
-    console.print(
-        f"  KSI coverage: {coverage.addressed}/{coverage.total} "
-        f"indicators addressed."
-    )
+    console.print(f"  KSI coverage: {coverage.addressed}/{coverage.total} indicators addressed.")
     if not coverage.complete:
         console.print(
             f"  [yellow]{len(coverage.missing)} indicator(s) not yet "
@@ -1179,8 +1134,7 @@ def conmon_ksi(
     # An empty block is schema-valid and rule-incomplete, so the gap is
     # always reported — and more loudly than the KSI SHOULD above.
     console.print(
-        f"  FRR coverage: {requirements.addressed}/{requirements.total} "
-        f"provider-facing requirements addressed."
+        f"  FRR coverage: {requirements.addressed}/{requirements.total} provider-facing requirements addressed."
     )
     if not requirements.complete:
         console.print(
@@ -1197,8 +1151,8 @@ def conmon_ksi(
 
 @app.command("health")
 def conmon_health(
-    state_file: Path = typer.Option(
-        ...,
+    state_file: Path | None = typer.Option(
+        None,
         "--state-file",
         exists=True,
         file_okay=True,
@@ -1207,16 +1161,21 @@ def conmon_health(
         help=(
             "YAML mapping {cadence_slug: ISO-8601-date} of last-"
             "completed dates. Same schema as `evidentia conmon "
-            "check --state-file`."
+            "check --state-file`. Optional when --evidence-store is given."
+        ),
+    ),
+    evidence_store: Path | None = typer.Option(
+        None,
+        "--evidence-store",
+        help=(
+            "Evidence store root. A cadence missing from the state file takes "
+            "the date of its latest evidence artifact (metadata.cadence_slug)."
         ),
     ),
     today_override: str | None = typer.Option(
         None,
         "--today",
-        help=(
-            "Override 'today' for deterministic snapshots "
-            "(YYYY-MM-DD). Omit for real-time reports."
-        ),
+        help=("Override 'today' for deterministic snapshots (YYYY-MM-DD). Omit for real-time reports."),
     ),
     window_days: int = typer.Option(
         14,
@@ -1228,10 +1187,7 @@ def conmon_health(
         None,
         "--framework",
         "-f",
-        help=(
-            "Restrict report to a single framework "
-            "(e.g., nist-800-53-rev5)."
-        ),
+        help=("Restrict report to a single framework (e.g., nist-800-53-rev5)."),
     ),
     output_json: bool = typer.Option(
         False,
@@ -1250,8 +1206,19 @@ def conmon_health(
     today_parsed = _parse_date_or_exit(today_override, "--today")
     today: date = today_parsed if today_parsed is not None else date.today()
 
-    report = health_from_state_file(
-        state_file,
+    if state_file is None and evidence_store is None:
+        console.print("[red]Error:[/red] --state-file is required (or --evidence-store).")
+        raise typer.Exit(code=2)
+    state = load_state_file(state_file) if state_file is not None else {}
+    if evidence_store is not None:
+        artifacts = [
+            artifact
+            for artifact in iter_artifacts(get_evidence_store_dir(evidence_store))
+            if CADENCE_SLUG_METADATA_KEY in artifact.metadata
+        ]
+        state = merge_evidence_anchors(state, latest_observations(artifacts))
+    report = compute_health(
+        state=state,
         today=today,
         window_days=window_days,
         framework_filter=framework,
@@ -1284,21 +1251,15 @@ def conmon_health(
         return
 
     if not report.frameworks:
-        console.print(
-            "[yellow]No tracked cycles produced a health report.[/yellow]"
-        )
+        console.print("[yellow]No tracked cycles produced a health report.[/yellow]")
         if report.unknown_slugs:
             console.print(
-                f"  [dim]({len(report.unknown_slugs)} unknown slug(s): "
-                f"{', '.join(report.unknown_slugs)})[/dim]"
+                f"  [dim]({len(report.unknown_slugs)} unknown slug(s): {', '.join(report.unknown_slugs)})[/dim]"
             )
         return
 
     table = Table(
-        title=(
-            f"CONMON health as of {today.isoformat()} "
-            f"(window={window_days}d)"
-        ),
+        title=(f"CONMON health as of {today.isoformat()} (window={window_days}d)"),
         title_style="bold cyan",
     )
     table.add_column("Framework", style="bold")
@@ -1308,11 +1269,7 @@ def conmon_health(
     table.add_column("Overdue", justify="right", style="red")
     table.add_column("Health", justify="right")
     for fh in report.frameworks:
-        score_style = (
-            "green" if fh.health_score >= 0.95
-            else "yellow" if fh.health_score >= 0.80
-            else "red"
-        )
+        score_style = "green" if fh.health_score >= 0.95 else "yellow" if fh.health_score >= 0.80 else "red"
         table.add_row(
             fh.framework,
             str(fh.total),
@@ -1324,9 +1281,7 @@ def conmon_health(
     console.print(table)
 
     overall_style = (
-        "green" if report.overall_health_score >= 0.95
-        else "yellow" if report.overall_health_score >= 0.80
-        else "red"
+        "green" if report.overall_health_score >= 0.95 else "yellow" if report.overall_health_score >= 0.80 else "red"
     )
     console.print(
         f"\n[bold]Overall:[/bold] {report.total_cycles} cycle(s); "
@@ -1334,10 +1289,7 @@ def conmon_health(
         f"{report.overall_health_score:.0%}[/{overall_style}]"
     )
     if report.unknown_slugs:
-        console.print(
-            f"[dim]Unknown slugs ({len(report.unknown_slugs)}): "
-            f"{', '.join(report.unknown_slugs)}[/dim]"
-        )
+        console.print(f"[dim]Unknown slugs ({len(report.unknown_slugs)}): {', '.join(report.unknown_slugs)}[/dim]")
 
 
 # ── dedup-list (v0.9.4 P2.2) ──────────────────────────────────────
@@ -1395,17 +1347,13 @@ def conmon_dedup_list(
     if output_json:
         rows = []
         for s, st, ts in entries:
-            remaining_seconds = max(
-                0.0, (ts + window - now).total_seconds()
-            )
+            remaining_seconds = max(0.0, (ts + window - now).total_seconds())
             rows.append(
                 {
                     "cadence_slug": s,
                     "state": st,
                     "last_dispatched_at": ts.isoformat(),
-                    "suppression_remaining_minutes": round(
-                        remaining_seconds / 60.0, 1
-                    ),
+                    "suppression_remaining_minutes": round(remaining_seconds / 60.0, 1),
                 }
             )
         typer.echo(json.dumps(rows, indent=2))
@@ -1414,10 +1362,7 @@ def conmon_dedup_list(
     if not entries:
         console.print("[dim]No dedup entries found.[/dim]")
         if slug is not None:
-            console.print(
-                f"[dim](filtered to slug={slug!r}; try without --slug "
-                f"to confirm)[/dim]"
-            )
+            console.print(f"[dim](filtered to slug={slug!r}; try without --slug to confirm)[/dim]")
         return
 
     table = Table(title=f"Alert dedup state — {alert_dedup_file}")
@@ -1441,3 +1386,184 @@ def conmon_dedup_list(
     console.print(table)
     console.print(f"\n[dim]{len(entries)} entry/entries.[/dim]")
 
+
+# ── series (v0.13, V13-01: cadence evidence series) ──────────────
+
+
+@app.command("series")
+def conmon_series(
+    slug: str = typer.Argument(..., help="Cadence slug (e.g., 'pci-dss-11-6-1-weekly')."),
+    evidence_store: Path | None = typer.Option(
+        None,
+        "--evidence-store",
+        help=(
+            "Evidence store root directory. Defaults to "
+            "EVIDENTIA_EVIDENCE_STORE_DIR, else the platform user-data "
+            "directory (evidentia_core.evidence_store.get_evidence_store_dir)."
+        ),
+    ),
+    since: str | None = typer.Option(
+        None,
+        "--since",
+        help=(
+            "ISO-8601 date; window start. When both --since and --until "
+            "are omitted, the window is the last --lookback-days days "
+            "ending today. When only one of the two is given, the other "
+            "is filled from that same default window (not derived from "
+            "the given bound)."
+        ),
+    ),
+    until: str | None = typer.Option(
+        None,
+        "--until",
+        help="ISO-8601 date; window end. See --since for the fill rule.",
+    ),
+    lookback_days: int = typer.Option(
+        DEFAULT_LOOKBACK_DAYS,
+        "--lookback-days",
+        min=1,
+        help=(
+            f"Look-back window in days, used to fill any bound --since "
+            f"/ --until don't supply. Default {DEFAULT_LOOKBACK_DAYS}."
+        ),
+    ),
+    tolerance_days: int | None = typer.Option(
+        None,
+        "--tolerance-days",
+        min=0,
+        help=(
+            "Grace period (days) added to the cadence's interval before "
+            "a spacing counts as a gap. Omit for the cadence-appropriate "
+            "default (evidentia_core.conmon.series.default_tolerance_days)."
+        ),
+    ),
+    output_json: bool = typer.Option(
+        False,
+        "--json",
+        help="Emit machine-readable JSON instead of rich tables.",
+    ),
+    emit_findings: Path | None = typer.Option(
+        None,
+        "--emit-findings",
+        help=(
+            "Write a JSON array to this path holding the SecurityFinding "
+            "a gapped or insufficient series produces "
+            "(evidentia_core.conmon.series.series_to_finding), or an "
+            "empty array for a continuous series."
+        ),
+    ),
+) -> None:
+    """Assert the cadence evidence series for SLUG over a window.
+
+    Reads artifacts linked to SLUG via ``metadata.cadence_slug`` from the
+    evidence store (:func:`evidentia_core.evidence_store.iter_artifacts`)
+    inside the resolved window, then asserts the dated series
+    (:func:`evidentia_core.conmon.series.assert_series`). The verdict is
+    one of ``continuous``, ``gapped``, ``insufficient``, or ``unknown``.
+
+    A gap-free series is evidence of cadence and nothing more: the
+    reported counts are what the evidence store holds, not what was
+    performed. Unknown cadence slugs and an invalid window
+    (``--until`` before ``--since``) both exit 2.
+    """
+    cadence = get_cadence(slug)
+    if cadence is None:
+        console.print(f"[red]Error:[/red] unknown cadence slug {slug!r}. Run `evidentia conmon list` to see available.")
+        raise typer.Exit(code=1)
+
+    since_parsed = _parse_date_or_exit(since, "--since")
+    until_parsed = _parse_date_or_exit(until, "--until")
+
+    default_start, default_end = default_window(lookback_days=lookback_days)
+    start_date = since_parsed if since_parsed is not None else default_start.date()
+    end_date = until_parsed if until_parsed is not None else default_end.date()
+    if end_date < start_date:
+        console.print(
+            f"[red]Error:[/red] --until ({end_date.isoformat()}) is before --since ({start_date.isoformat()})."
+        )
+        raise typer.Exit(code=2)
+    window_start = datetime.combine(start_date, time.min, tzinfo=UTC)
+    window_end = datetime.combine(end_date, time.max, tzinfo=UTC)
+
+    store = get_evidence_store_dir(evidence_store)
+    artifacts = iter_artifacts(
+        store,
+        since=window_start,
+        until=window_end,
+        metadata={CADENCE_SLUG_METADATA_KEY: slug},
+    )
+    series = assert_series(
+        slug,
+        artifacts,
+        window_start=window_start,
+        window_end=window_end,
+        tolerance_days=tolerance_days,
+    )
+
+    if emit_findings is not None:
+        finding = series_to_finding(series)
+        payload = [finding.model_dump(mode="json")] if finding is not None else []
+        emit_findings.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+    if output_json:
+        typer.echo(
+            json.dumps(
+                {
+                    "series": series.model_dump(mode="json"),
+                    "description": series.describe(),
+                },
+                indent=2,
+            )
+        )
+        return
+
+    verdict_style = {
+        "continuous": "green",
+        "gapped": "red",
+        "insufficient": "yellow",
+        "unknown": "red",
+    }.get(series.verdict, "white")
+    console.print(
+        f"[bold]{series.slug}[/bold]  window "
+        f"{series.window_start.date().isoformat()} .. "
+        f"{series.window_end.date().isoformat()}  verdict: "
+        f"[{verdict_style}]{series.verdict}[/{verdict_style}]"
+    )
+
+    if series.observations:
+        obs_table = Table(title=f"Observations ({len(series.observations)})")
+        obs_table.add_column("Collected at")
+        obs_table.add_column("Lineage ID")
+        obs_table.add_column("Version", justify="right")
+        obs_table.add_column("Source system")
+        for obs in series.observations:
+            obs_table.add_row(
+                obs.collected_at.isoformat(),
+                obs.lineage_id,
+                str(obs.version),
+                obs.source_system,
+            )
+        console.print(obs_table)
+    else:
+        console.print("[dim]No observations in the window.[/dim]")
+
+    if series.gaps:
+        gaps_table = Table(title=f"Gaps ({len(series.gaps)})", title_style="bold red")
+        gaps_table.add_column("After")
+        gaps_table.add_column("Before")
+        gaps_table.add_column("Days", justify="right")
+        gaps_table.add_column("Allowed", justify="right")
+        gaps_table.add_column("Boundary")
+        for gap in series.gaps:
+            gaps_table.add_row(
+                gap.after.isoformat(),
+                gap.before.isoformat(),
+                str(gap.days),
+                str(gap.allowed_days),
+                "yes" if gap.boundary else "no",
+            )
+        console.print(gaps_table)
+
+    console.print(series.describe())
+    if emit_findings is not None:
+        console.print(f"[dim]Wrote finding array to {emit_findings}[/dim]")

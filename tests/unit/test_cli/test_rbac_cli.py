@@ -881,6 +881,7 @@ class TestConmonCheckDeprecation:
                     today_override="2026-05-18",
                     window_days=14,
                     output_json=True,
+                    evidence_store=None,
                 )
             except SystemExit:
                 # Function may exit with audit-event-emit side effects

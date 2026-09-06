@@ -193,14 +193,12 @@ def serve(
             cimd_registry = CIMDRegistry.from_file(cimd_registry_path)
         except (ValueError, FileNotFoundError) as exc:
             typer.echo(
-                f"Error loading --cimd-registry at "
-                f"{cimd_registry_path}: {exc}",
+                f"Error loading --cimd-registry at {cimd_registry_path}: {exc}",
                 err=True,
             )
             raise typer.Exit(code=2) from exc
         typer.echo(
-            f"Loaded CIMD registry from {cimd_registry_path}: "
-            f"{len(cimd_registry.clients)} client(s) registered.",
+            f"Loaded CIMD registry from {cimd_registry_path}: {len(cimd_registry.clients)} client(s) registered.",
             err=True,
         )
 
@@ -212,16 +210,10 @@ def serve(
     # so operators don't run a server that denies all tool calls.
     if default_client_id is not None and cimd_registry is None:
         typer.echo(
-            "WARNING: --default-client-id set without "
-            "--cimd-registry. Flag is ignored (no scope to "
-            "enforce against).",
+            "WARNING: --default-client-id set without --cimd-registry. Flag is ignored (no scope to enforce against).",
             err=True,
         )
-    if (
-        cimd_registry is not None
-        and default_client_id is None
-        and transport == _Transport.STDIO
-    ):
+    if cimd_registry is not None and default_client_id is None and transport == _Transport.STDIO:
         typer.echo(
             "WARNING: --cimd-registry set without "
             "--default-client-id on stdio transport. Stdio "
@@ -352,10 +344,7 @@ def doctor() -> None:
         registered = {t.name for t in tools}
         missing = expected_tools - registered
         if missing:
-            failures.append(
-                f"Expected tools missing from server: "
-                f"{sorted(missing)}"
-            )
+            failures.append(f"Expected tools missing from server: {sorted(missing)}")
     except Exception as exc:
         failures.append(f"FastMCP server build failed: {exc!r}")
 
@@ -381,6 +370,13 @@ V0_9_6_NEW_TOOLS = (
     "conmon_health",
 )
 
+#: v0.13: the cadence evidence series tool (V13-01). Same rationale as
+#: V0_9_6_NEW_TOOLS above; pre-v0.13 CIMD registries don't grant this by
+#: default. The migrate verb's default set grants both tuples together
+#: (see ``new_tools`` below); a registry already migrated for v0.9.6 just
+#: picks up the one additional tool on its next migrate run.
+V0_13_NEW_TOOLS = ("conmon_series",)
+
 
 @app.command("cimd-migrate")
 def cimd_migrate(
@@ -401,10 +397,7 @@ def cimd_migrate(
     client_id: str | None = typer.Option(
         None,
         "--client-id",
-        help=(
-            "When set, apply the migration only to this client. "
-            "Default: apply to every client in the registry."
-        ),
+        help=("When set, apply the migration only to this client. Default: apply to every client in the registry."),
     ),
     tools: str | None = typer.Option(
         None,
@@ -419,22 +412,22 @@ def cimd_migrate(
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
-        help=(
-            "Print the diff without writing. Use to preview the "
-            "changes before committing."
-        ),
+        help=("Print the diff without writing. Use to preview the changes before committing."),
     ),
 ) -> None:
-    """Migrate a CIMD registry to grant the v0.9.6 ``conmon_*`` MCP tools.
+    """Migrate a CIMD registry to grant the ``conmon_*`` MCP tools.
 
     Closes F-V96-conmon-mcp-cimd-migration (v0.9.6 cycle-close
     follow-up). The v0.9.6 CONMON MCP first-mover surface added
     four new tools (``conmon_list_cadences`` / ``conmon_next_due``
     / ``conmon_check_state`` / ``conmon_health``). Operators on
     v0.9.5 CIMD registries see these tools default-rejected at
-    dispatch until per-client ``scope`` grants them.
+    dispatch until per-client ``scope`` grants them. v0.13 adds a
+    fifth tool, ``conmon_series`` (the cadence evidence series, V13-01),
+    to the same default set; the two version tuples are granted
+    together unless ``--tools`` overrides them.
 
-    This verb adds the v0.9.6 tools to each client's ``scope``
+    This verb adds the default tools to each client's ``scope``
     field. Idempotent: a tool already in a client's scope is
     skipped (the diff output flags it as ``no-change``).
 
@@ -443,8 +436,8 @@ def cimd_migrate(
             in place after migration (atomic via .tmp + replace).
             Use ``--dry-run`` to preview without writing.
         client_id: Restrict migration to a single client.
-        tools: Override the default v0.9.6 tool set. Use to
-            migrate future tool additions.
+        tools: Override the default tool set (v0.9.6 + v0.13). Use
+            to migrate future tool additions.
         dry_run: Preview the diff; do NOT write.
 
     Exit codes:
@@ -457,11 +450,9 @@ def cimd_migrate(
 
     from evidentia_mcp.cimd import CIMDRegistry
 
-    new_tools = tuple(tools.split()) if tools else V0_9_6_NEW_TOOLS
+    new_tools = tuple(tools.split()) if tools else V0_9_6_NEW_TOOLS + V0_13_NEW_TOOLS
     if not new_tools:
-        typer.echo(
-            "ERROR: --tools resolved to an empty set", err=True
-        )
+        typer.echo("ERROR: --tools resolved to an empty set", err=True)
         raise typer.Exit(code=2)
 
     try:
@@ -470,13 +461,10 @@ def cimd_migrate(
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=1) from exc
 
-    target_clients = (
-        [client_id] if client_id is not None else list(registry.clients.keys())
-    )
+    target_clients = [client_id] if client_id is not None else list(registry.clients.keys())
     if client_id is not None and client_id not in registry.clients:
         typer.echo(
-            f"ERROR: client_id {client_id!r} not in registry "
-            f"({len(registry.clients)} clients present)",
+            f"ERROR: client_id {client_id!r} not in registry ({len(registry.clients)} clients present)",
             err=True,
         )
         raise typer.Exit(code=1)
@@ -498,40 +486,22 @@ def cimd_migrate(
     # Print the diff before any write so operators see exactly
     # what landed.
     any_added = any(added for _, added, _ in changes)
-    typer.echo(
-        f"CIMD migration plan ({'DRY RUN' if dry_run else 'APPLY'}) "
-        f"for {registry_file}:"
-    )
+    typer.echo(f"CIMD migration plan ({'DRY RUN' if dry_run else 'APPLY'}) for {registry_file}:")
     for cid, added, final in changes:
         if added:
-            typer.echo(
-                f"  + {cid}: adding {sorted(added)} "
-                f"(final scope: {final})"
-            )
+            typer.echo(f"  + {cid}: adding {sorted(added)} (final scope: {final})")
         else:
-            typer.echo(
-                f"  = {cid}: no change "
-                f"(already grants {sorted(new_tools)})"
-            )
+            typer.echo(f"  = {cid}: no change (already grants {sorted(new_tools)})")
     if not any_added:
         typer.echo("No changes required; registry is already up-to-date.")
         return
     if dry_run:
-        typer.echo(
-            "Dry run: registry file NOT modified. "
-            "Re-run without --dry-run to apply."
-        )
+        typer.echo("Dry run: registry file NOT modified. Re-run without --dry-run to apply.")
         return
 
     # Atomic write: temp file then os.replace.
     payload = registry.model_dump(mode="json")
-    tmp_path = registry_file.with_suffix(
-        registry_file.suffix + ".tmp"
-    )
-    tmp_path.write_text(
-        json.dumps(payload, indent=2), encoding="utf-8"
-    )
+    tmp_path = registry_file.with_suffix(registry_file.suffix + ".tmp")
+    tmp_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     os.replace(tmp_path, registry_file)
-    typer.echo(
-        f"Migration applied: {registry_file} updated atomically."
-    )
+    typer.echo(f"Migration applied: {registry_file} updated atomically.")

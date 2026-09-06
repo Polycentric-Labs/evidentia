@@ -7,6 +7,7 @@ Reuses the project-wide ``api_client`` fixture from conftest.
 from __future__ import annotations
 
 from collections.abc import Iterator
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -28,21 +29,15 @@ class TestListCadences:
         assert "fedramp-conmon-poam" in slugs
 
     def test_list_filter_by_framework(self, api_client: TestClient) -> None:
-        resp = api_client.get(
-            "/api/conmon/cadences", params={"framework": "fedramp-rev5-mod"}
-        )
+        resp = api_client.get("/api/conmon/cadences", params={"framework": "fedramp-rev5-mod"})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 3
         for item in data:
             assert item["framework"] == "fedramp-rev5-mod"
 
-    def test_list_filter_unknown_framework_returns_empty(
-        self, api_client: TestClient
-    ) -> None:
-        resp = api_client.get(
-            "/api/conmon/cadences", params={"framework": "nonexistent"}
-        )
+    def test_list_filter_unknown_framework_returns_empty(self, api_client: TestClient) -> None:
+        resp = api_client.get("/api/conmon/cadences", params={"framework": "nonexistent"})
         assert resp.status_code == 200
         assert resp.json() == []
 
@@ -68,9 +63,7 @@ class TestGetCadence:
         assert data["framework"] == "nist-800-53-rev5"
         assert data["frequency"] == "monthly"
 
-    def test_get_unknown_slug_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_get_unknown_slug_returns_404(self, api_client: TestClient) -> None:
         resp = api_client.get("/api/conmon/cadences/nonexistent-slug")
         assert resp.status_code == 404
         detail = resp.json()["detail"]
@@ -241,16 +234,10 @@ class TestCheck:
         )
         assert resp.status_code == 200
         data = resp.json()
-        total = (
-            len(data["overdue"])
-            + len(data["due_soon"])
-            + len(data["current"])
-        )
+        total = len(data["overdue"]) + len(data["due_soon"]) + len(data["current"])
         assert total == 3
 
-    def test_default_today_uses_real_date(
-        self, api_client: TestClient
-    ) -> None:
+    def test_default_today_uses_real_date(self, api_client: TestClient) -> None:
         resp = api_client.post(
             "/api/conmon/check",
             json={
@@ -275,10 +262,7 @@ class TestCheck:
         assert resp.status_code == 422
 
     def test_over_100_entries_returns_422(self, api_client: TestClient) -> None:
-        entries = [
-            {"slug": "nist-800-53-rev5-ca7", "last_completed": "2026-01-01"}
-            for _ in range(101)
-        ]
+        entries = [{"slug": "nist-800-53-rev5-ca7", "last_completed": "2026-01-01"} for _ in range(101)]
         resp = api_client.post(
             "/api/conmon/check",
             json={"entries": entries, "today": "2026-05-15"},
@@ -292,9 +276,7 @@ class TestCheck:
 class TestHealth:
     """POST /api/conmon/health."""
 
-    def test_overall_health_with_overdue(
-        self, api_client: TestClient
-    ) -> None:
+    def test_overall_health_with_overdue(self, api_client: TestClient) -> None:
         resp = api_client.post(
             "/api/conmon/health",
             json={
@@ -330,9 +312,7 @@ class TestHealth:
         assert len(body["frameworks"]) == 1
         assert body["frameworks"][0]["framework"] == "nist-800-53-rev5"
 
-    def test_unknown_slugs_collected(
-        self, api_client: TestClient
-    ) -> None:
+    def test_unknown_slugs_collected(self, api_client: TestClient) -> None:
         resp = api_client.post(
             "/api/conmon/health",
             json={
@@ -348,9 +328,7 @@ class TestHealth:
         assert "no-such-cadence" in body["unknown_slugs"]
         assert body["total_cycles"] == 1
 
-    def test_default_today_uses_real_date(
-        self, api_client: TestClient
-    ) -> None:
+    def test_default_today_uses_real_date(self, api_client: TestClient) -> None:
         resp = api_client.post(
             "/api/conmon/health",
             json={
@@ -362,9 +340,7 @@ class TestHealth:
         assert resp.status_code == 200
         assert resp.json()["today"] is not None
 
-    def test_empty_state_returns_perfect_health(
-        self, api_client: TestClient
-    ) -> None:
+    def test_empty_state_returns_perfect_health(self, api_client: TestClient) -> None:
         resp = api_client.post(
             "/api/conmon/health",
             json={"state": {}, "today": "2026-05-15"},
@@ -373,6 +349,150 @@ class TestHealth:
         body = resp.json()
         assert body["total_cycles"] == 0
         assert body["overall_health_score"] == 1.0
+
+
+# ── series (v0.13, V13-01: cadence evidence series) ────────────────
+
+
+def _save_evidence_artifact(
+    store: Path,
+    collected: datetime,
+    slug: str = "pci-dss-11-6-1-weekly",
+    source: str = "nessus",
+) -> Path:
+    from evidentia_core.evidence_store import save_evidence
+    from evidentia_core.models.evidence import EvidenceArtifact, EvidenceType
+
+    artifact = EvidenceArtifact.model_validate(
+        {
+            "title": f"scan {collected.date().isoformat()}",
+            "evidence_type": EvidenceType.TEST_RESULT,
+            "source_system": source,
+            "collected_by": "test-runner@example.com",
+            "collected_at": collected,
+            "content": {"ok": True},
+            "metadata": {"cadence_slug": slug},
+        }
+    )
+    return save_evidence(artifact, evidence_store_dir=store)
+
+
+class TestSeriesEndpoint:
+    """POST /api/conmon/series."""
+
+    def test_continuous_then_gapped_after_removal(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        from datetime import UTC, timedelta
+
+        store = tmp_path / "evidence"
+        monkeypatch.setenv("EVIDENTIA_EVIDENCE_STORE_DIR", str(store))
+
+        start = datetime(2026, 6, 1, 9, tzinfo=UTC)
+        lineage_dirs = [_save_evidence_artifact(store, start + timedelta(days=7 * i)).parent for i in range(4)]
+
+        resp = api_client.post(
+            "/api/conmon/series",
+            json={
+                "slug": "pci-dss-11-6-1-weekly",
+                "since": "2026-06-01",
+                "until": "2026-06-22",
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["series"]["verdict"] == "continuous"
+        assert body["series"]["gaps"] == []
+        assert len(body["series"]["observations"]) == 4
+        assert "evidence of cadence" in body["description"]
+
+        # Remove the 2026-06-15 observation's lineage -> a gap opens up.
+        import shutil
+
+        shutil.rmtree(lineage_dirs[2])
+
+        resp2 = api_client.post(
+            "/api/conmon/series",
+            json={
+                "slug": "pci-dss-11-6-1-weekly",
+                "since": "2026-06-01",
+                "until": "2026-06-22",
+            },
+        )
+        assert resp2.status_code == 200, resp2.text
+        body2 = resp2.json()
+        assert body2["series"]["verdict"] == "gapped"
+        assert len(body2["series"]["gaps"]) == 1
+
+    def test_unknown_slug_returns_404(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv("EVIDENTIA_EVIDENCE_STORE_DIR", str(tmp_path / "evidence"))
+        resp = api_client.post(
+            "/api/conmon/series",
+            json={"slug": "no-such-cadence"},
+        )
+        assert resp.status_code == 404, resp.text
+        detail = resp.json()["detail"]
+        assert detail["error"] == "not_found"
+        assert detail["resource"] == "cadence"
+        assert detail["resource_id"] == "no-such-cadence"
+
+    def test_bad_window_returns_400(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv("EVIDENTIA_EVIDENCE_STORE_DIR", str(tmp_path / "evidence"))
+        resp = api_client.post(
+            "/api/conmon/series",
+            json={
+                "slug": "nist-800-53-rev5-ca7",
+                "since": "2026-06-15",
+                "until": "2026-06-01",
+            },
+        )
+        assert resp.status_code == 400, resp.text
+        detail = resp.json()["detail"]
+        assert detail["error"] == "invalid_window"
+
+    def test_insufficient_verdict_on_empty_store(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv("EVIDENTIA_EVIDENCE_STORE_DIR", str(tmp_path / "evidence"))
+        resp = api_client.post(
+            "/api/conmon/series",
+            json={
+                "slug": "nist-800-53-rev5-ca7",
+                "since": "2026-06-01",
+                "until": "2026-06-15",
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["series"]["verdict"] == "insufficient"
+
+    def test_lookback_days_out_of_range_returns_422(
+        self,
+        api_client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv("EVIDENTIA_EVIDENCE_STORE_DIR", str(tmp_path / "evidence"))
+        resp = api_client.post(
+            "/api/conmon/series",
+            json={"slug": "nist-800-53-rev5-ca7", "lookback_days": 0},
+        )
+        assert resp.status_code == 422
 
 
 # ── v0.9.4 P2.1: daemon-status endpoint ─────────────────────────────
@@ -388,9 +508,7 @@ class TestDaemonStatusEndpoint:
         api_client: TestClient,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.delenv(
-            "EVIDENTIA_CONMON_DAEMON_STATUS_FILE", raising=False
-        )
+        monkeypatch.delenv("EVIDENTIA_CONMON_DAEMON_STATUS_FILE", raising=False)
         resp = api_client.get("/api/conmon/daemon-status")
         assert resp.status_code == 404
         detail = resp.json()["detail"]
@@ -404,9 +522,7 @@ class TestDaemonStatusEndpoint:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         status_file = tmp_path / "nonexistent.json"
-        monkeypatch.setenv(
-            "EVIDENTIA_CONMON_DAEMON_STATUS_FILE", str(status_file)
-        )
+        monkeypatch.setenv("EVIDENTIA_CONMON_DAEMON_STATUS_FILE", str(status_file))
         resp = api_client.get("/api/conmon/daemon-status")
         assert resp.status_code == 404
         assert "missing" in resp.json()["detail"]["message"]
@@ -432,9 +548,7 @@ class TestDaemonStatusEndpoint:
             "daemon_uptime_seconds": 3600,
         }
         status_file.write_text(_json.dumps(payload))
-        monkeypatch.setenv(
-            "EVIDENTIA_CONMON_DAEMON_STATUS_FILE", str(status_file)
-        )
+        monkeypatch.setenv("EVIDENTIA_CONMON_DAEMON_STATUS_FILE", str(status_file))
 
         resp = api_client.get("/api/conmon/daemon-status")
         assert resp.status_code == 200
@@ -452,9 +566,7 @@ class TestDaemonStatusEndpoint:
         """Corrupt-file reads return 404 (mid-write tolerance), NOT 500."""
         status_file = tmp_path / "daemon.status.json"
         status_file.write_text("{ not valid json")
-        monkeypatch.setenv(
-            "EVIDENTIA_CONMON_DAEMON_STATUS_FILE", str(status_file)
-        )
+        monkeypatch.setenv("EVIDENTIA_CONMON_DAEMON_STATUS_FILE", str(status_file))
         resp = api_client.get("/api/conmon/daemon-status")
         assert resp.status_code == 404
 
@@ -494,16 +606,12 @@ class TestDaemonStatusUnitHelpers:
         # daemon_uptime_seconds = polled - started = 5400s (90 min)
         assert payload["daemon_uptime_seconds"] == 5400
 
-    def test_read_returns_none_for_missing_file(
-        self, tmp_path: Path
-    ) -> None:
+    def test_read_returns_none_for_missing_file(self, tmp_path: Path) -> None:
         from evidentia_core.conmon.daemon import read_daemon_status
 
         assert read_daemon_status(tmp_path / "missing.json") is None
 
-    def test_atomic_write_uses_tmp_then_replace(
-        self, tmp_path: Path
-    ) -> None:
+    def test_atomic_write_uses_tmp_then_replace(self, tmp_path: Path) -> None:
         """Verify write goes through .tmp + replace (no half-written
         files visible to a concurrent reader)."""
         from datetime import UTC, datetime
@@ -537,9 +645,7 @@ class TestDaemonHistoryEndpoint:
         api_client: TestClient,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.delenv(
-            "EVIDENTIA_CONMON_DAEMON_HISTORY_FILE", raising=False
-        )
+        monkeypatch.delenv("EVIDENTIA_CONMON_DAEMON_HISTORY_FILE", raising=False)
         resp = api_client.get("/api/conmon/daemon-history")
         assert resp.status_code == 404
         detail = resp.json()["detail"]
@@ -553,9 +659,7 @@ class TestDaemonHistoryEndpoint:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         history_file = tmp_path / "history.jsonl"
-        monkeypatch.setenv(
-            "EVIDENTIA_CONMON_DAEMON_HISTORY_FILE", str(history_file)
-        )
+        monkeypatch.setenv("EVIDENTIA_CONMON_DAEMON_HISTORY_FILE", str(history_file))
         resp = api_client.get("/api/conmon/daemon-history")
         assert resp.status_code == 404
 
@@ -586,12 +690,8 @@ class TestDaemonHistoryEndpoint:
                 "recognized_cadence_count": 7,
             },
         ]
-        history_file.write_text(
-            "\n".join(_json.dumps(s) for s in snapshots) + "\n"
-        )
-        monkeypatch.setenv(
-            "EVIDENTIA_CONMON_DAEMON_HISTORY_FILE", str(history_file)
-        )
+        history_file.write_text("\n".join(_json.dumps(s) for s in snapshots) + "\n")
+        monkeypatch.setenv("EVIDENTIA_CONMON_DAEMON_HISTORY_FILE", str(history_file))
 
         resp = api_client.get("/api/conmon/daemon-history?limit=10")
         assert resp.status_code == 200
@@ -611,25 +711,17 @@ class TestDaemonHistoryEndpoint:
 
         history_file = tmp_path / "history.jsonl"
         snapshots = [
-            {"last_poll_at": f"2026-05-18T{h:02d}:00:00+00:00",
-             "last_poll_outcome": "success"}
-            for h in range(10)
+            {"last_poll_at": f"2026-05-18T{h:02d}:00:00+00:00", "last_poll_outcome": "success"} for h in range(10)
         ]
-        history_file.write_text(
-            "\n".join(_json.dumps(s) for s in snapshots) + "\n"
-        )
-        monkeypatch.setenv(
-            "EVIDENTIA_CONMON_DAEMON_HISTORY_FILE", str(history_file)
-        )
+        history_file.write_text("\n".join(_json.dumps(s) for s in snapshots) + "\n")
+        monkeypatch.setenv("EVIDENTIA_CONMON_DAEMON_HISTORY_FILE", str(history_file))
 
         resp = api_client.get("/api/conmon/daemon-history?limit=3")
         assert resp.status_code == 200
         body = resp.json()
         # Last 3 entries — most recent.
         assert body["count"] == 3
-        assert body["snapshots"][-1]["last_poll_at"] == (
-            "2026-05-18T09:00:00+00:00"
-        )
+        assert body["snapshots"][-1]["last_poll_at"] == ("2026-05-18T09:00:00+00:00")
 
     def test_corrupt_lines_skipped(
         self,
@@ -639,14 +731,8 @@ class TestDaemonHistoryEndpoint:
     ) -> None:
         """Partial-write tolerance: corrupt lines are skipped, not 500."""
         history_file = tmp_path / "history.jsonl"
-        history_file.write_text(
-            '{"valid": "line"}\n'
-            "{ corrupted line\n"
-            '{"another": "valid"}\n'
-        )
-        monkeypatch.setenv(
-            "EVIDENTIA_CONMON_DAEMON_HISTORY_FILE", str(history_file)
-        )
+        history_file.write_text('{"valid": "line"}\n{ corrupted line\n{"another": "valid"}\n')
+        monkeypatch.setenv("EVIDENTIA_CONMON_DAEMON_HISTORY_FILE", str(history_file))
 
         resp = api_client.get("/api/conmon/daemon-history")
         assert resp.status_code == 200
@@ -683,9 +769,7 @@ class TestDaemonHistoryHelpers:
         # Last 5 retained.
         assert [e["poll"] for e in entries] == [5, 6, 7, 8, 9]
 
-    def test_read_returns_empty_for_missing_file(
-        self, tmp_path: Path
-    ) -> None:
+    def test_read_returns_empty_for_missing_file(self, tmp_path: Path) -> None:
         from evidentia_core.conmon.daemon import read_daemon_history
 
         assert read_daemon_history(tmp_path / "missing.jsonl") == []
@@ -701,16 +785,12 @@ class TestMetricsConmonDaemonGauges:
         api_client: TestClient,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.delenv(
-            "EVIDENTIA_CONMON_DAEMON_STATUS_FILE", raising=False
-        )
+        monkeypatch.delenv("EVIDENTIA_CONMON_DAEMON_STATUS_FILE", raising=False)
         resp = api_client.get("/api/metrics")
         assert resp.status_code == 200
         # Standard gauges present, conmon-daemon gauges absent.
         assert "evidentia_app_info" in resp.text
-        assert "evidentia_conmon_daemon_last_poll_age_seconds" not in (
-            resp.text
-        )
+        assert "evidentia_conmon_daemon_last_poll_age_seconds" not in (resp.text)
 
     def test_gauges_present_when_status_file_readable(
         self,
@@ -737,25 +817,14 @@ class TestMetricsConmonDaemonGauges:
             "daemon_uptime_seconds": 3600,
         }
         status_file.write_text(_json.dumps(payload))
-        monkeypatch.setenv(
-            "EVIDENTIA_CONMON_DAEMON_STATUS_FILE", str(status_file)
-        )
+        monkeypatch.setenv("EVIDENTIA_CONMON_DAEMON_STATUS_FILE", str(status_file))
 
         resp = api_client.get("/api/metrics")
         assert resp.status_code == 200
-        assert (
-            "evidentia_conmon_daemon_last_poll_age_seconds" in resp.text
-        )
-        assert "evidentia_conmon_daemon_last_poll_success 1.0" in (
-            resp.text
-        )
-        assert (
-            "evidentia_conmon_daemon_recognized_cadence_count 7"
-            in resp.text
-        )
-        assert (
-            "evidentia_conmon_daemon_unknown_cadence_count 0" in resp.text
-        )
+        assert "evidentia_conmon_daemon_last_poll_age_seconds" in resp.text
+        assert "evidentia_conmon_daemon_last_poll_success 1.0" in (resp.text)
+        assert "evidentia_conmon_daemon_recognized_cadence_count 7" in resp.text
+        assert "evidentia_conmon_daemon_unknown_cadence_count 0" in resp.text
 
 
 # ── v0.10.12: mark-completed endpoint ───────────────────────────────
@@ -798,9 +867,7 @@ class TestMarkCompleted:
         # First mark → no previous value.
         assert body["previous_last_completed"] is None
         # State change persisted to the YAML state file.
-        assert _read_state_file(state_file) == {
-            "nist-800-53-rev5-ca7": "2026-05-15"
-        }
+        assert _read_state_file(state_file) == {"nist-800-53-rev5-ca7": "2026-05-15"}
 
     def test_records_subsequent_completion_returns_previous(
         self,
@@ -823,9 +890,7 @@ class TestMarkCompleted:
         body = resp.json()
         assert body["previous_last_completed"] == "2026-04-15"
         assert body["new_last_completed"] == "2026-05-15"
-        assert _read_state_file(state_file) == {
-            "nist-800-53-rev5-ca7": "2026-05-15"
-        }
+        assert _read_state_file(state_file) == {"nist-800-53-rev5-ca7": "2026-05-15"}
 
     def test_unknown_slug_returns_400(
         self,
@@ -854,9 +919,7 @@ class TestMarkCompleted:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         # Pydantic body validation: 'when' is required.
-        monkeypatch.setenv(
-            "EVIDENTIA_CONMON_STATE_FILE", str(tmp_path / "s.yaml")
-        )
+        monkeypatch.setenv("EVIDENTIA_CONMON_STATE_FILE", str(tmp_path / "s.yaml"))
         resp = api_client.post(
             "/api/conmon/mark-completed",
             json={"slug": "nist-800-53-rev5-ca7"},
@@ -869,9 +932,7 @@ class TestMarkCompleted:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.setenv(
-            "EVIDENTIA_CONMON_STATE_FILE", str(tmp_path / "s.yaml")
-        )
+        monkeypatch.setenv("EVIDENTIA_CONMON_STATE_FILE", str(tmp_path / "s.yaml"))
         resp = api_client.post(
             "/api/conmon/mark-completed",
             json={"slug": "nist-800-53-rev5-ca7", "when": "not-a-date"},
@@ -908,12 +969,8 @@ class TestDedupList:
         path.write_text(
             _json.dumps(
                 {
-                    "nist-800-53-rev5-ca7|overdue": (
-                        "2026-05-16T03:00:00+00:00"
-                    ),
-                    "fedramp-conmon-poam|due_soon": (
-                        "2026-05-15T09:00:00+00:00"
-                    ),
+                    "nist-800-53-rev5-ca7|overdue": ("2026-05-16T03:00:00+00:00"),
+                    "fedramp-conmon-poam|due_soon": ("2026-05-15T09:00:00+00:00"),
                 }
             )
         )
@@ -926,9 +983,7 @@ class TestDedupList:
     ) -> None:
         dedup_file = tmp_path / "dedup.json"
         self._write_dedup(dedup_file)
-        monkeypatch.setenv(
-            "EVIDENTIA_CONMON_ALERT_DEDUP_FILE", str(dedup_file)
-        )
+        monkeypatch.setenv("EVIDENTIA_CONMON_ALERT_DEDUP_FILE", str(dedup_file))
 
         resp = api_client.get("/api/conmon/dedup-list")
         assert resp.status_code == 200, resp.text
@@ -938,9 +993,7 @@ class TestDedupList:
         # Sorted by last_dispatched_at descending (newest first).
         assert entries[0]["cadence_slug"] == "nist-800-53-rev5-ca7"
         assert entries[0]["state"] == "overdue"
-        assert entries[0]["last_dispatched_at"] == (
-            "2026-05-16T03:00:00+00:00"
-        )
+        assert entries[0]["last_dispatched_at"] == ("2026-05-16T03:00:00+00:00")
         assert "suppression_remaining_minutes" in entries[0]
         assert entries[1]["cadence_slug"] == "fedramp-conmon-poam"
         assert entries[1]["state"] == "due_soon"
@@ -953,9 +1006,7 @@ class TestDedupList:
     ) -> None:
         dedup_file = tmp_path / "dedup.json"
         self._write_dedup(dedup_file)
-        monkeypatch.setenv(
-            "EVIDENTIA_CONMON_ALERT_DEDUP_FILE", str(dedup_file)
-        )
+        monkeypatch.setenv("EVIDENTIA_CONMON_ALERT_DEDUP_FILE", str(dedup_file))
 
         resp = api_client.get(
             "/api/conmon/dedup-list",
@@ -975,9 +1026,7 @@ class TestDedupList:
         # Missing dedup file yields an empty result (CLI parity: the
         # verb tolerates a not-yet-created file).
         dedup_file = tmp_path / "never-written.json"
-        monkeypatch.setenv(
-            "EVIDENTIA_CONMON_ALERT_DEDUP_FILE", str(dedup_file)
-        )
+        monkeypatch.setenv("EVIDENTIA_CONMON_ALERT_DEDUP_FILE", str(dedup_file))
         resp = api_client.get("/api/conmon/dedup-list")
         assert resp.status_code == 200
         body = resp.json()
@@ -989,9 +1038,7 @@ class TestDedupList:
         api_client: TestClient,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.delenv(
-            "EVIDENTIA_CONMON_ALERT_DEDUP_FILE", raising=False
-        )
+        monkeypatch.delenv("EVIDENTIA_CONMON_ALERT_DEDUP_FILE", raising=False)
         resp = api_client.get("/api/conmon/dedup-list")
         assert resp.status_code == 400
         detail = resp.json()["detail"]
@@ -1034,9 +1081,7 @@ class TestConmonRBAC:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.setenv(
-            "EVIDENTIA_CONMON_STATE_FILE", str(tmp_path / "state.yaml")
-        )
+        monkeypatch.setenv("EVIDENTIA_CONMON_STATE_FILE", str(tmp_path / "state.yaml"))
         resp = conmon_readonly_client.post(
             "/api/conmon/mark-completed",
             json={"slug": "nist-800-53-rev5-ca7", "when": "2026-05-15"},
@@ -1053,9 +1098,7 @@ class TestConmonRBAC:
         # dedup-list carries no require_role gate (reads are open), so
         # it returns 200 even under the read-only policy.
         dedup_file = tmp_path / "dedup.json"
-        monkeypatch.setenv(
-            "EVIDENTIA_CONMON_ALERT_DEDUP_FILE", str(dedup_file)
-        )
+        monkeypatch.setenv("EVIDENTIA_CONMON_ALERT_DEDUP_FILE", str(dedup_file))
         resp = conmon_readonly_client.get("/api/conmon/dedup-list")
         assert resp.status_code == 200, resp.text
         assert resp.json()["count"] == 0
@@ -1069,13 +1112,12 @@ class TestConmonOpenApiErrorDocs:
     its OpenAPI operation (schemathesis undocumented-status noise →
     contract)."""
 
-    def test_conmon_error_statuses_documented_in_openapi(
-        self, api_client: TestClient
-    ) -> None:
+    def test_conmon_error_statuses_documented_in_openapi(self, api_client: TestClient) -> None:
         schema = api_client.get("/api/openapi.json").json()
         expected: list[tuple[str, str, list[str]]] = [
             ("/api/conmon/cadences/{slug}", "get", ["404"]),
             ("/api/conmon/next", "post", ["404"]),
+            ("/api/conmon/series", "post", ["400", "404"]),
             ("/api/conmon/daemon-status", "get", ["404"]),
             ("/api/conmon/daemon-history", "get", ["404"]),
             ("/api/conmon/mark-completed", "post", ["400", "403"]),
@@ -1084,6 +1126,4 @@ class TestConmonOpenApiErrorDocs:
         for path, method, statuses in expected:
             responses = schema["paths"][path][method]["responses"]
             for status in statuses:
-                assert status in responses, (
-                    f"{method.upper()} {path} missing {status}"
-                )
+                assert status in responses, f"{method.upper()} {path} missing {status}"

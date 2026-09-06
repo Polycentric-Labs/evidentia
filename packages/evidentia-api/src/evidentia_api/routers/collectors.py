@@ -16,11 +16,15 @@ from __future__ import annotations
 import json
 import logging
 import os
+from datetime import datetime
 from typing import Any
 
+from evidentia_core.audit import CollectionManifest
+from evidentia_core.conmon.calendar import get_cadence
+from evidentia_core.evidence_store import get_evidence_store_dir, save_evidence
 from evidentia_core.models.finding import SecurityFinding
 from fastapi import APIRouter
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from evidentia_api.errors import api_error, error_responses
 
@@ -1662,6 +1666,297 @@ async def ocsf_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
     return findings
 
 
+class NessusEvidenceResult(BaseModel):
+    """The ``evidence`` block of :class:`NessusCollectResponse`."""
+
+    lineage_id: str
+    saved: bool
+    collected_at: datetime
+
+
+class NessusCollectResponse(BaseModel):
+    """Response body of ``POST /collectors/nessus/collect``."""
+
+    findings: list[SecurityFinding]
+    manifest: CollectionManifest
+    evidence: NessusEvidenceResult
+
+
+@router.post(
+    "/collectors/nessus/collect",
+    response_model=NessusCollectResponse,
+    responses=error_responses(
+        {
+            400: (
+                "Missing/non-string ``content``, malformed XML, a refused "
+                "entity construct, wrong root element, oversized content "
+                "(over 50 MB), or an unknown ``cadence_slug`` "
+                "(``error: invalid_body``)."
+            ),
+            503: (
+                "Optional ``scan`` extra not installed "
+                "(``error: feature_unavailable``)."
+            ),
+        }
+    ),
+)
+async def nessus_collect(payload: dict[str, Any]) -> NessusCollectResponse:
+    """Ingest a Nessus v2 XML scan export (v0.13 V13-05).
+
+    Mirrors the ``evidentia collect nessus`` CLI verb. Request body:
+
+    - ``content`` (required): the ``<NessusClientData_v2>`` XML text.
+      No path and no URL: the server never reads a client-named file;
+      this is a text-upload ingest only.
+    - ``cadence_slug`` (optional): defaults to ``fedramp-conmon-scans``.
+      Must name a registered cadence.
+    - ``save_evidence`` (optional): bool, default True. Persists the
+      scan-report ``EvidenceArtifact`` to the server's own configured
+      evidence store
+      (:func:`evidentia_core.evidence_store.get_evidence_store_dir`).
+    - ``plugin_output_max_chars`` (optional): int, default 4000.
+
+    NO credentials: file/text ingest only, mirroring the OCSF inline-
+    ``content`` mode's trust posture. Third-party XML is parsed with
+    ``defusedxml``: entity expansion and external references are
+    refused before any element is read.
+    """
+    try:
+        from evidentia_collectors.nessus import (
+            NessusIngestError,
+            collect_nessus_text,
+        )
+    except ImportError as e:
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
+                "Nessus ingestion needs the optional scan extra. Run "
+                "`pip install 'evidentia-collectors[scan]'`."
+            ),
+        ) from e
+
+    content = payload.get("content")
+    if not isinstance(content, str) or not content.strip():
+        raise api_error(
+            400,
+            "invalid_body",
+            "Request body must include 'content' (the Nessus XML text).",
+            field="content",
+        )
+
+    raw_cadence_slug = payload.get("cadence_slug")
+    if raw_cadence_slug is not None and not isinstance(raw_cadence_slug, str):
+        raise api_error(
+            400,
+            "invalid_body",
+            f"cadence_slug must be a string; got {raw_cadence_slug!r}",
+            field="cadence_slug",
+        )
+    cadence_slug = raw_cadence_slug or "fedramp-conmon-scans"
+    if get_cadence(cadence_slug) is None:
+        raise api_error(
+            400,
+            "invalid_body",
+            f"Unknown cadence slug: {cadence_slug!r}. See GET /api/conmon/cadences.",
+            field="cadence_slug",
+        )
+
+    raw_max_chars = payload.get("plugin_output_max_chars")
+    if raw_max_chars is None:
+        plugin_output_max_chars = 4000
+    else:
+        try:
+            plugin_output_max_chars = int(raw_max_chars)
+        except (TypeError, ValueError) as e:
+            raise api_error(
+                400,
+                "invalid_body",
+                f"plugin_output_max_chars must be int; got {raw_max_chars!r}",
+                field="plugin_output_max_chars",
+            ) from e
+        if plugin_output_max_chars < 0:
+            raise api_error(
+                400,
+                "invalid_body",
+                "plugin_output_max_chars must be >= 0.",
+                field="plugin_output_max_chars",
+            )
+
+    save_evidence_flag = payload.get("save_evidence", True) is not False
+
+    try:
+        findings, manifest, artifact = collect_nessus_text(
+            content,
+            source_name="inline content",
+            cadence_slug=cadence_slug,
+            plugin_output_max_chars=plugin_output_max_chars,
+        )
+    except NessusIngestError as e:
+        raise api_error(400, "invalid_body", str(e)) from e
+
+    saved = False
+    if save_evidence_flag:
+        save_evidence(artifact, get_evidence_store_dir())
+        saved = True
+
+    return NessusCollectResponse(
+        findings=findings,
+        manifest=manifest,
+        evidence=NessusEvidenceResult(
+            lineage_id=artifact.effective_lineage_id,
+            saved=saved,
+            collected_at=artifact.collected_at,
+        ),
+    )
+
+
+class GreenboneEvidenceResult(BaseModel):
+    """The ``evidence`` block of :class:`GreenboneCollectResponse`."""
+
+    lineage_id: str
+    saved: bool
+    collected_at: datetime
+
+
+class GreenboneCollectResponse(BaseModel):
+    """Response body of ``POST /collectors/greenbone/collect``."""
+
+    findings: list[SecurityFinding]
+    manifest: CollectionManifest
+    evidence: GreenboneEvidenceResult
+
+
+@router.post(
+    "/collectors/greenbone/collect",
+    response_model=GreenboneCollectResponse,
+    responses=error_responses(
+        {
+            400: (
+                "Missing/non-string ``content``, malformed XML, a refused "
+                "entity construct, wrong root element, oversized content "
+                "(over 50 MB), or an unknown ``cadence_slug`` "
+                "(``error: invalid_body``)."
+            ),
+            503: (
+                "Optional ``scan`` extra not installed "
+                "(``error: feature_unavailable``)."
+            ),
+        }
+    ),
+)
+async def greenbone_collect(payload: dict[str, Any]) -> GreenboneCollectResponse:
+    """Ingest a Greenbone GMP report XML export (v0.13 V13-05).
+
+    Mirrors the ``evidentia collect greenbone`` CLI verb. Request body:
+
+    - ``content`` (required): the GMP ``<report>`` XML text (either the
+      wrapping document or a bare inner ``<report>``).
+      No path and no URL: the server never reads a client-named file.
+      This is a text-upload ingest only.
+    - ``cadence_slug`` (optional): defaults to ``fedramp-conmon-scans``.
+      Must name a registered cadence.
+    - ``save_evidence`` (optional): bool, default True. Persists the
+      scan-report ``EvidenceArtifact`` to the server's own configured
+      evidence store
+      (:func:`evidentia_core.evidence_store.get_evidence_store_dir`).
+    - ``description_max_chars`` (optional): int, default 4000.
+
+    NO credentials: file/text ingest only, mirroring the OCSF inline-
+    ``content`` mode's trust posture. Third-party XML is parsed with
+    ``defusedxml``; entity expansion and external references are
+    refused before any element is read.
+    """
+    try:
+        from evidentia_collectors.greenbone import (
+            GreenboneIngestError,
+            collect_greenbone_text,
+        )
+    except ImportError as e:
+        raise api_error(
+            503,
+            "feature_unavailable",
+            (
+                "Greenbone ingestion needs the optional scan extra. Run "
+                "`pip install 'evidentia-collectors[scan]'`."
+            ),
+        ) from e
+
+    content = payload.get("content")
+    if not isinstance(content, str) or not content.strip():
+        raise api_error(
+            400,
+            "invalid_body",
+            "Request body must include 'content' (the Greenbone report XML text).",
+            field="content",
+        )
+
+    raw_cadence_slug = payload.get("cadence_slug")
+    if raw_cadence_slug is not None and not isinstance(raw_cadence_slug, str):
+        raise api_error(
+            400,
+            "invalid_body",
+            f"cadence_slug must be a string; got {raw_cadence_slug!r}",
+            field="cadence_slug",
+        )
+    cadence_slug = raw_cadence_slug or "fedramp-conmon-scans"
+    if get_cadence(cadence_slug) is None:
+        raise api_error(
+            400,
+            "invalid_body",
+            f"Unknown cadence slug: {cadence_slug!r}. See GET /api/conmon/cadences.",
+            field="cadence_slug",
+        )
+
+    raw_max_chars = payload.get("description_max_chars")
+    if raw_max_chars is None:
+        description_max_chars = 4000
+    else:
+        try:
+            description_max_chars = int(raw_max_chars)
+        except (TypeError, ValueError) as e:
+            raise api_error(
+                400,
+                "invalid_body",
+                f"description_max_chars must be int; got {raw_max_chars!r}",
+                field="description_max_chars",
+            ) from e
+        if description_max_chars < 0:
+            raise api_error(
+                400,
+                "invalid_body",
+                "description_max_chars must be >= 0.",
+                field="description_max_chars",
+            )
+
+    save_evidence_flag = payload.get("save_evidence", True) is not False
+
+    try:
+        findings, manifest, artifact = collect_greenbone_text(
+            content,
+            source_name="inline content",
+            cadence_slug=cadence_slug,
+            description_max_chars=description_max_chars,
+        )
+    except GreenboneIngestError as e:
+        raise api_error(400, "invalid_body", str(e)) from e
+
+    saved = False
+    if save_evidence_flag:
+        save_evidence(artifact, get_evidence_store_dir())
+        saved = True
+
+    return GreenboneCollectResponse(
+        findings=findings,
+        manifest=manifest,
+        evidence=GreenboneEvidenceResult(
+            lineage_id=artifact.effective_lineage_id,
+            saved=saved,
+            collected_at=artifact.collected_at,
+        ),
+    )
+
+
 @router.post(
     "/collectors/convert",
     response_model=list[dict[str, Any]],
@@ -1771,6 +2066,8 @@ async def collectors_status() -> dict[str, Any]:
     drata_installed = False
     bitsight_installed = False
     securityscorecard_installed = False
+    nessus_installed = False
+    greenbone_installed = False
     try:
         import evidentia_collectors.aws
 
@@ -1897,9 +2194,25 @@ async def collectors_status() -> dict[str, Any]:
         pass
     try:
         # SecurityScorecard uses httpx (already a base dep).
-        import evidentia_collectors.securityscorecard  # noqa: F401
+        import evidentia_collectors.securityscorecard
 
         securityscorecard_installed = True
+    except ImportError:
+        pass
+    try:
+        # The [scan] extra brings in defusedxml; the adapter module itself
+        # loads cleanly only once that's installed (module-level import).
+        import evidentia_collectors.nessus
+
+        nessus_installed = True
+    except ImportError:
+        pass
+    try:
+        # Same [scan] extra as Nessus: the adapter module loads cleanly
+        # only once defusedxml is installed (module-level import).
+        import evidentia_collectors.greenbone  # noqa: F401
+
+        greenbone_installed = True
     except ImportError:
         pass
 
@@ -2063,6 +2376,22 @@ async def collectors_status() -> dict[str, Any]:
             ),
             "default_token_env_configured": bool(
                 os.environ.get("SECURITYSCORECARD_API_TOKEN")
+            ),
+        },
+        "nessus": {
+            "installed": nessus_installed,
+            "credentials_hint": (
+                "No credentials: file/text ingest only. POST the "
+                "<NessusClientData_v2> XML export as 'content'; the "
+                "server never reads a client-named file path."
+            ),
+        },
+        "greenbone": {
+            "installed": greenbone_installed,
+            "credentials_hint": (
+                "No credentials: file/text ingest only. POST the GMP "
+                "<report> XML export (wrapped or bare inner form) as "
+                "'content'; the server never reads a client-named file path."
             ),
         },
     }

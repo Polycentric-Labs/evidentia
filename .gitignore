@@ -106,13 +106,6 @@ packages/*/sbom/
 !.vscode/tasks.json
 !.vscode/extensions.json
 .idea/
-
-# .cursor/ is the per-developer private Cursor workspace directory
-# (project rules under .cursor/rules/*.mdc, MCP server configs, and any
-# other Cursor IDE state). The public-facing Cursor conventions live at
-# the repo-root .cursorrules file (already version-controlled). The
-# .cursor/ directory is for per-developer extensions that should not be
-# committed.
 .cursor/
 
 # Local-only / per-developer scratch directory for working notes,

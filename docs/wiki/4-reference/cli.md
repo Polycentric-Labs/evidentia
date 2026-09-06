@@ -329,6 +329,32 @@ Collect evidence from a GitHub repository.
 | `--block-private-ips, --allow-private-ips` | Reject hosts that resolve to RFC1918 / link-local / loopback / multicast / reserved ranges before opening the connection. Default True — closes the SSRF surface that could otherwise expose AWS / GCP / Azure instance-metadata endpoints (169.254.169.254) or internal services. Use --allow-private-ips to override for trusted internal endpoints. |
 | `--output, -o` | Where to write the findings JSON. Default: stdout. |
 
+### `evidentia collect greenbone`
+
+Ingest a Greenbone Community Edition GMP report XML export (v0.13 V13-05).
+
+| Flag / argument | Description |
+| --- | --- |
+| `--file` | Path to a Greenbone GMP report XML export. |
+| `--cadence-slug` | Cadence slug the saved evidence artifact declares via metadata.cadence_slug (evidentia conmon series reads it). Must name a registered cadence; run `evidentia conmon list` to see available. |
+| `--evidence-store` | Evidence store root directory override. Defaults to EVIDENTIA_EVIDENCE_STORE_DIR, else the platform user-data directory (evidentia_core.evidence_store.get_evidence_store_dir). |
+| `--save-evidence, --no-save-evidence` | Persist the scan-report evidence artifact. Default True. |
+| `--description-max-chars` | Cap on each finding's description length. Default 4000. |
+| `--output, -o` | Where to write the converted SecurityFinding JSON. Default: stdout. |
+
+### `evidentia collect nessus`
+
+Ingest a Nessus v2 (.nessus) XML scan export (v0.13 V13-05).
+
+| Flag / argument | Description |
+| --- | --- |
+| `--file` | Path to a Nessus v2 (.nessus) XML scan export. |
+| `--cadence-slug` | Cadence slug the saved evidence artifact declares via metadata.cadence_slug (evidentia conmon series reads it). Must name a registered cadence; run `evidentia conmon list` to see available. |
+| `--evidence-store` | Evidence store root directory override. Defaults to EVIDENTIA_EVIDENCE_STORE_DIR, else the platform user-data directory (evidentia_core.evidence_store.get_evidence_store_dir). |
+| `--save-evidence, --no-save-evidence` | Persist the scan-report evidence artifact. Default True. |
+| `--plugin-output-max-chars` | Cap on plugin_output length embedded in each finding's raw_data. Default 4000. |
+| `--output, -o` | Where to write the converted SecurityFinding JSON. Default: stdout. |
+
 ### `evidentia collect ocsf`
 
 Ingest OCSF Compliance / Detection Finding JSON (v0.10.1).
@@ -422,6 +448,7 @@ Report due-soon + overdue cycles from a tracked-state YAML.
 | `--today` | Override 'today' for deterministic CLI snapshots (YYYY-MM-DD). Production operators omit this flag. |
 | `--window-days` | Due-soon window (days from today). Default: 14 days. Overdue cycles always surface regardless of this window. |
 | `--json` | Emit JSON instead of human-readable tables. |
+| `--evidence-store` | Evidence store root. When given, a cadence missing from the state file takes the date of its latest evidence artifact (matched by metadata.cadence_slug), and every row gains a series verdict over the last 365 days. --state-file becomes optional. |
 
 ### `evidentia conmon dedup-list`
 
@@ -440,7 +467,8 @@ Aggregate CONMON cycle health by framework.
 
 | Flag / argument | Description |
 | --- | --- |
-| `--state-file` | YAML mapping {cadence_slug: ISO-8601-date} of last-completed dates. Same schema as `evidentia conmon check --state-file`. |
+| `--state-file` | YAML mapping {cadence_slug: ISO-8601-date} of last-completed dates. Same schema as `evidentia conmon check --state-file`. Optional when --evidence-store is given. |
+| `--evidence-store` | Evidence store root. A cadence missing from the state file takes the date of its latest evidence artifact (metadata.cadence_slug). |
 | `--today` | Override 'today' for deterministic snapshots (YYYY-MM-DD). Omit for real-time reports. |
 | `--window-days` | Due-soon window in days. Default: 14. |
 | `--framework, -f` | Restrict report to a single framework (e.g., nist-800-53-rev5). |
@@ -486,6 +514,21 @@ Compute the next-due date for a registered cadence.
 | `SLUG` | — |
 | `--last-completed` | ISO-8601 date of the last completed cycle. |
 | `--json` | Emit JSON instead of human form. |
+
+### `evidentia conmon series`
+
+Assert the cadence evidence series for SLUG over a window.
+
+| Flag / argument | Description |
+| --- | --- |
+| `SLUG` | — |
+| `--evidence-store` | Evidence store root directory. Defaults to EVIDENTIA_EVIDENCE_STORE_DIR, else the platform user-data directory (evidentia_core.evidence_store.get_evidence_store_dir). |
+| `--since` | ISO-8601 date; window start. When both --since and --until are omitted, the window is the last --lookback-days days ending today. When only one of the two is given, the other is filled from that same default window (not derived from the given bound). |
+| `--until` | ISO-8601 date; window end. See --since for the fill rule. |
+| `--lookback-days` | Look-back window in days, used to fill any bound --since / --until don't supply. Default 365. |
+| `--tolerance-days` | Grace period (days) added to the cadence's interval before a spacing counts as a gap. Omit for the cadence-appropriate default (evidentia_core.conmon.series.default_tolerance_days). |
+| `--json` | Emit machine-readable JSON instead of rich tables. |
+| `--emit-findings` | Write a JSON array to this path holding the SecurityFinding a gapped or insufficient series produces (evidentia_core.conmon.series.series_to_finding), or an empty array for a continuous series. |
 
 ### `evidentia conmon watch`
 
@@ -969,7 +1012,7 @@ Model Context Protocol (MCP) server (v0.8.0 P0.3). Exposes gap analysis, control
 
 ### `evidentia mcp cimd-migrate`
 
-Migrate a CIMD registry to grant the v0.9.6 ``conmon_*`` MCP tools.
+Migrate a CIMD registry to grant the ``conmon_*`` MCP tools.
 
 | Flag / argument | Description |
 | --- | --- |

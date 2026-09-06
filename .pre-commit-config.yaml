@@ -2,9 +2,9 @@
 #
 # Promised in docs/ide-setup.md "Pre-commit hooks (planned for v0.7.x+)".
 # Activates the same quality gates as CI on every commit so contributors
-# don't push CI-failing changes by accident. Both Cursor and VS Code
-# pick these up automatically when `pre-commit install` has been run
-# in the contributor's local clone.
+# don't push CI-failing changes by accident. The hooks run on every
+# commit once `pre-commit install` has been run in the contributor's
+# local clone.
 #
 # Setup (once per clone):
 #
@@ -164,7 +164,7 @@ repos:
     hooks:
       - id: yamllint
         args: ['-c=.yamllint', '--strict']
-        files: '^(\.github/|\.cursor/|docs/).*\.ya?ml$'
+        files: '^(\.github/|docs/).*\.ya?ml$'
 
   # ---------------------------------------------------------------
   # Markdown — markdownlint-cli2 against in-repo docs (not

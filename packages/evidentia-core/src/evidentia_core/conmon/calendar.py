@@ -19,6 +19,12 @@ Frequency vocabulary:
 - ``biennial``   — 24 months
 - ``triennial``  — 36 months
 
+Day-granular cadences (v0.13, V13-01): ``weekly`` (7 days), ``biweekly``
+(14 days), ``semiannual`` (6 months) and ``custom`` (the interval comes from
+``ConmonCadence.interval_days``, for clocks such as NERC CIP-007 R2's
+thirty-five calendar days). Day-based cadences use plain day arithmetic;
+month-based ones keep the calendar-aware clamping below.
+
 Operators can extend the cadence registry at runtime via
 :func:`register_cadence` for organization-specific frameworks +
 internal review cycles. The bundled cadences are immutable
@@ -32,9 +38,9 @@ import warnings
 from datetime import date, timedelta
 from enum import Enum
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
-from evidentia_core.models.common import EvidentiaModel
+from evidentia_core.models.common import EvidentiaModel, NonBlankStr
 
 
 class CadenceFrequency(str, Enum):
@@ -55,6 +61,18 @@ class CadenceFrequency(str, Enum):
     TRIENNIAL = "triennial"
     """36 months between cycles."""
 
+    SEMIANNUAL = "semiannual"
+    """6 months between cycles (v0.13)."""
+
+    WEEKLY = "weekly"
+    """7 days between cycles (v0.13)."""
+
+    BIWEEKLY = "biweekly"
+    """14 days between cycles (v0.13)."""
+
+    CUSTOM = "custom"
+    """Interval given by ``ConmonCadence.interval_days`` (v0.13)."""
+
 
 CONMON_FREQUENCIES: dict[CadenceFrequency, int] = {
     CadenceFrequency.MONTHLY: 1,
@@ -62,8 +80,17 @@ CONMON_FREQUENCIES: dict[CadenceFrequency, int] = {
     CadenceFrequency.ANNUAL: 12,
     CadenceFrequency.BIENNIAL: 24,
     CadenceFrequency.TRIENNIAL: 36,
+    CadenceFrequency.SEMIANNUAL: 6,
 }
 """Mapping of cadence frequency → month delta. Stable across releases."""
+
+
+CONMON_FREQUENCY_DAYS: dict[CadenceFrequency, int] = {
+    CadenceFrequency.WEEKLY: 7,
+    CadenceFrequency.BIWEEKLY: 14,
+}
+"""Day deltas for the day-granular frequencies (v0.13). ``CUSTOM`` takes its
+interval from ``ConmonCadence.interval_days`` instead."""
 
 
 class CycleAttentionState(str, Enum):
@@ -93,8 +120,7 @@ class ConmonCadence(EvidentiaModel):
     only; semantic changes require a new slug).
     """
 
-    slug: str = Field(
-        min_length=1,
+    slug: NonBlankStr = Field(
         max_length=128,
         description=(
             "Unique cadence identifier (``framework-activity`` form, "
@@ -102,8 +128,7 @@ class ConmonCadence(EvidentiaModel):
             "key + audit-trail prop value."
         ),
     )
-    framework: str = Field(
-        min_length=1,
+    framework: NonBlankStr = Field(
         max_length=128,
         description=(
             "Framework identifier (matches the gap-analyzer + catalog "
@@ -111,8 +136,7 @@ class ConmonCadence(EvidentiaModel):
             "/ ``cmmc-v2`` / ``dod-rmf`` / ``occ-2026-13`` / etc.)."
         ),
     )
-    activity: str = Field(
-        min_length=1,
+    activity: NonBlankStr = Field(
         max_length=128,
         description=(
             "Activity within the framework (e.g., ``continuous-monitoring``"
@@ -123,8 +147,7 @@ class ConmonCadence(EvidentiaModel):
     frequency: CadenceFrequency = Field(
         description="How often the cycle repeats.",
     )
-    description: str = Field(
-        min_length=1,
+    description: NonBlankStr = Field(
         max_length=1024,
         description=(
             "Human-readable description of what the cycle covers + "
@@ -140,6 +163,25 @@ class ConmonCadence(EvidentiaModel):
             "Strategy & Guide v3.0 §3.3')."
         ),
     )
+    interval_days: int | None = Field(
+        default=None,
+        ge=1,
+        le=3660,
+        description=(
+            "Day interval for a ``custom`` cadence (35 for NERC CIP-007 R2, "
+            "for example). Required when frequency is ``custom`` and not "
+            "allowed otherwise, so a cadence has one source of truth."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def _custom_frequency_needs_interval(self) -> ConmonCadence:
+        is_custom = CadenceFrequency(self.frequency) is CadenceFrequency.CUSTOM
+        if is_custom and self.interval_days is None:
+            raise ValueError("a custom cadence needs interval_days")
+        if not is_custom and self.interval_days is not None:
+            raise ValueError("interval_days is only allowed with frequency=custom")
+        return self
 
 
 # ── bundled cadence catalog ────────────────────────────────────────
@@ -232,8 +274,66 @@ BUNDLED_CADENCES: list[ConmonCadence] = [
         ),
         citation="OCC Bulletin 2026-13 (April 2026); FRB SR 26-2",
     ),
+    ConmonCadence(
+        slug="pci-dss-11-6-1-weekly",
+        framework="pci-dss-v4",
+        activity="change-and-tamper-detection",
+        frequency=CadenceFrequency.WEEKLY,
+        description=(
+            "PCI DSS 11.6.1 change- and tamper-detection mechanism run at "
+            "least once every seven days on payment pages; the dated run "
+            "output is the evidence."
+        ),
+        citation="PCI DSS v4.0.1 Requirement 11.6.1",
+    ),
+    ConmonCadence(
+        slug="nerc-cip-007-r2-patch-evaluation",
+        framework="nerc-cip",
+        activity="security-patch-evaluation",
+        frequency=CadenceFrequency.CUSTOM,
+        interval_days=35,
+        description=(
+            "NERC CIP-007 R2 Part 2.2 evaluation of security patches for "
+            "applicability at least once every 35 calendar days."
+        ),
+        citation="NERC CIP-007-6 R2 Part 2.2",
+    ),
+    ConmonCadence(
+        slug="irs-pub-1345-weekly-asv-scan",
+        framework="irs-pub-1345",
+        activity="external-vulnerability-scan",
+        frequency=CadenceFrequency.WEEKLY,
+        description=(
+            "IRS Publication 1345 weekly external network vulnerability scan "
+            "by an Approved Scanning Vendor for authorized e-file providers."
+        ),
+        citation="IRS Publication 1345, Safeguarding IRS e-file",
+    ),
+    ConmonCadence(
+        slug="glba-314-4-d-semiannual-vulnerability-assessment",
+        framework="glba-safeguards",
+        activity="vulnerability-assessment",
+        frequency=CadenceFrequency.SEMIANNUAL,
+        description=(
+            "FTC Safeguards Rule vulnerability assessment at least every six "
+            "months, and whenever operations change materially."
+        ),
+        citation="16 CFR 314.4(d)(2)(ii)",
+    ),
+    ConmonCadence(
+        slug="glba-314-4-d-annual-penetration-test",
+        framework="glba-safeguards",
+        activity="penetration-test",
+        frequency=CadenceFrequency.ANNUAL,
+        description=(
+            "FTC Safeguards Rule annual penetration test of the information "
+            "system."
+        ),
+        citation="16 CFR 314.4(d)(2)(i)",
+    ),
 ]
-"""Bundled CONMON cadences shipped with v0.9.0 P3."""
+"""Bundled CONMON cadences: the v0.9.0 P3 set plus the v0.13 day-granular and
+GLBA additions (append-only; slugs never change meaning)."""
 
 
 _REGISTRY: dict[str, ConmonCadence] = {c.slug: c for c in BUNDLED_CADENCES}
@@ -308,13 +408,27 @@ def register_cadence(cadence: ConmonCadence) -> None:
     _REGISTRY[cadence.slug] = cadence
 
 
+def interval_days_for(cadence: ConmonCadence) -> int | None:
+    """Return the day interval of a day-granular cadence, else None.
+
+    ``weekly`` and ``biweekly`` map through :data:`CONMON_FREQUENCY_DAYS`;
+    ``custom`` reads ``interval_days``; month-based frequencies return None
+    and keep the calendar-aware month arithmetic in :func:`next_due`.
+    """
+    frequency = CadenceFrequency(cadence.frequency)
+    if frequency is CadenceFrequency.CUSTOM:
+        return cadence.interval_days
+    return CONMON_FREQUENCY_DAYS.get(frequency)
+
+
 def next_due(slug: str, last_completed: date) -> date:
     """Compute the next-due date for a registered cadence.
 
     Raises ``KeyError`` for unknown slugs (operator should
     :func:`get_cadence` first OR register a custom cadence).
 
-    Month arithmetic is calendar-aware: rolls year correctly, clamps
+    Day-granular cadences (weekly, biweekly, custom) add their day
+    interval directly. Month arithmetic is calendar-aware: rolls year correctly, clamps
     day to the last valid day of the target month. Same pattern as
     :meth:`evidentia_core.models.tprm.Vendor.compute_next_review_due`.
     """
@@ -324,6 +438,9 @@ def next_due(slug: str, last_completed: date) -> date:
             f"Unknown CONMON cadence slug {slug!r}; "
             f"available: {sorted(_REGISTRY.keys())}"
         )
+    day_interval = interval_days_for(cadence)
+    if day_interval is not None:
+        return last_completed + timedelta(days=day_interval)
     cadence_months = CONMON_FREQUENCIES[CadenceFrequency(cadence.frequency)]
     new_month = last_completed.month + cadence_months
     new_year = last_completed.year + (new_month - 1) // 12
@@ -370,11 +487,13 @@ def derive_status(
 __all__: list[str] = [
     "BUNDLED_CADENCES",
     "CONMON_FREQUENCIES",
+    "CONMON_FREQUENCY_DAYS",
     "CadenceFrequency",
     "ConmonCadence",
     "CycleAttentionState",
     "derive_status",
     "get_cadence",
+    "interval_days_for",
     "list_cadences",
     "next_due",
     "register_cadence",

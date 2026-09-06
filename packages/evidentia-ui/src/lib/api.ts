@@ -320,8 +320,7 @@ export interface RetentionListResponse {
 // ── Evidence types (mirrored from evidentia_core.models.evidence) ────────
 
 /** Evidence artifact — save body shape (caller constructs new lineage/version). */
-export type EvidenceArtifactInput =
-  components["schemas"]["EvidenceArtifact"];
+export type EvidenceArtifactInput = components["schemas"]["EvidenceArtifact"];
 /** Evidence artifact as returned by the version endpoint. */
 export type EvidenceArtifact = components["schemas"]["EvidenceArtifact"];
 
@@ -482,6 +481,41 @@ export interface OcsfCollectRequest {
   block_private_ips?: boolean;
 }
 
+/**
+ * Nessus scan-export ingest body for `POST /api/collectors/nessus/collect`.
+ * `content` is the `<NessusClientData_v2>` XML text; no path, no URL; the
+ * server never reads a client-named file. `cadence_slug` defaults server-side
+ * to `fedramp-conmon-scans`; `save_evidence` defaults server-side to `true`.
+ */
+export interface NessusCollectRequest {
+  content: string;
+  cadence_slug?: string;
+  save_evidence?: boolean;
+  plugin_output_max_chars?: number;
+}
+
+/** Response of `POST /api/collectors/nessus/collect`: findings + manifest + the saved evidence artifact's lineage. */
+export type NessusCollectResponse =
+  components["schemas"]["NessusCollectResponse"];
+
+/**
+ * Greenbone GMP report ingest body for `POST /api/collectors/greenbone/collect`.
+ * `content` is the GMP `<report>` XML text (wrapped or bare inner form): no
+ * path, no URL; the server never reads a client-named file. `cadence_slug`
+ * defaults server-side to `fedramp-conmon-scans`; `save_evidence` defaults
+ * server-side to `true`.
+ */
+export interface GreenboneCollectRequest {
+  content: string;
+  cadence_slug?: string;
+  save_evidence?: boolean;
+  description_max_chars?: number;
+}
+
+/** Response of `POST /api/collectors/greenbone/collect`: findings + manifest + the saved evidence artifact's lineage. */
+export type GreenboneCollectResponse =
+  components["schemas"]["GreenboneCollectResponse"];
+
 // ── Catalog types (mirrored from evidentia_core catalog tooling) ─────────
 
 /** Catalog import body ({framework_id, content, format?, name?, …}). */
@@ -556,6 +590,10 @@ export type ConmonMarkCompletedRequest =
 /** `POST /api/conmon/mark-completed` response. */
 export type ConmonMarkCompletedResponse =
   components["schemas"]["MarkCompletedResponse"];
+/** `POST /api/conmon/series` body ({slug, since?, until?, lookback_days, tolerance_days?}). */
+export type ConmonSeriesRequest = components["schemas"]["SeriesRequest"];
+/** `POST /api/conmon/series` response ({description, series}). */
+export type ConmonSeriesResponse = components["schemas"]["SeriesResponse"];
 
 /**
  * Request a gap-report export and return the artifact blob + the
@@ -815,15 +853,17 @@ const realApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  conmonSeries: (body: ConmonSeriesRequest) =>
+    request<ConmonSeriesResponse>("/api/conmon/series", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   conmonMarkCompleted: (body: ConmonMarkCompletedRequest) =>
     request<ConmonMarkCompletedResponse>("/api/conmon/mark-completed", {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  conmonDedupList: (params?: {
-    slug?: string;
-    suppression_hours?: number;
-  }) => {
+  conmonDedupList: (params?: { slug?: string; suppression_hours?: number }) => {
     const search = new URLSearchParams();
     if (params?.slug) search.set("slug", params.slug);
     if (params?.suppression_hours != null)
@@ -1111,9 +1151,7 @@ const realApi = {
     const search = new URLSearchParams();
     if (params?.tier) search.set("tier", params.tier);
     const qs = search.toString();
-    return request<AISystemEntry[]>(
-      `/api/ai-gov/systems${qs ? `?${qs}` : ""}`,
-    );
+    return request<AISystemEntry[]>(`/api/ai-gov/systems${qs ? `?${qs}` : ""}`);
   },
   classifyAiSystem: (descriptor: AISystemDescriptor) =>
     request<AISystemClassification>("/api/ai-gov/classify", {
@@ -1265,6 +1303,20 @@ const realApi = {
     }),
   collectOcsf: (body: OcsfCollectRequest) =>
     request<SecurityFinding[]>("/api/collectors/ocsf/collect", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  // Nessus ingest is LOCAL-ONLY (text upload, no path/URL, no credentials),
+  // mirrors OCSF's inline-`content` mode's trust posture.
+  collectNessus: (body: NessusCollectRequest) =>
+    request<NessusCollectResponse>("/api/collectors/nessus/collect", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  // Greenbone ingest is LOCAL-ONLY (text upload, no path/URL, no credentials):
+  // same trust posture as the Nessus tab.
+  collectGreenbone: (body: GreenboneCollectRequest) =>
+    request<GreenboneCollectResponse>("/api/collectors/greenbone/collect", {
       method: "POST",
       body: JSON.stringify(body),
     }),

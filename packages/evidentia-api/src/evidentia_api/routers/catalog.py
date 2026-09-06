@@ -59,6 +59,7 @@ from evidentia_core.catalogs.user_dir import (
     resolve_catalog_path,
     save_user_manifest,
 )
+from evidentia_core.models.common import NonBlankStr
 from evidentia_core.security.paths import validate_within
 from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
@@ -255,8 +256,7 @@ class CatalogImportPayload(BaseModel):
             "framework_id inside the content."
         ),
     )
-    content: str = Field(
-        min_length=1,
+    content: NonBlankStr = Field(
         max_length=20_000_000,
         description="Raw catalog document (JSON or YAML text).",
     )

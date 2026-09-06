@@ -18,6 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   api,
   ApiError,
+  type GreenboneCollectRequest,
+  type NessusCollectRequest,
   type SecurityFinding,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -35,10 +37,16 @@ import { cn } from "@/lib/utils";
  * they are disabled until `EVIDENTIA_API_AUTH_TOKEN_FILE` is set. This mirrors
  * the always-visible SecurityPostureBanner.
  *
- * Two surfaces are LOCAL-ONLY and therefore NOT auth-gated:
- *   - Convert (`collectConvert`)            — round-trips findings through the
- *                                             OCSF mapping layer; no network.
- *   - OCSF inline `content` ingest          — parses supplied JSON locally.
+ * Four surfaces are LOCAL-ONLY and therefore NOT auth-gated:
+ *   - Convert (`collectConvert`): round-trips findings through the OCSF
+ *                                 mapping layer; no network.
+ *   - OCSF inline `content` ingest: parses supplied JSON locally.
+ *   - Nessus scan ingest (`collectNessus`): parses a supplied .nessus XML
+ *                                 export; text upload only, no path, no
+ *                                 URL, no credentials.
+ *   - Greenbone scan ingest (`collectGreenbone`): parses a supplied GMP
+ *                                 report XML export; text upload only,
+ *                                 same posture as the Nessus tab.
  * OCSF `url` mode IS networked (and carries the SSRF surface), so the URL leg
  * is auth-gated like the credentialed collectors; its `block_private_ips`
  * guard defaults ON.
@@ -92,6 +100,8 @@ export function CollectPage() {
         <TabsList>
           <TabsTrigger value="collectors">Collectors</TabsTrigger>
           <TabsTrigger value="ocsf">OCSF ingest</TabsTrigger>
+          <TabsTrigger value="nessus">Nessus scan</TabsTrigger>
+          <TabsTrigger value="greenbone">Greenbone report</TabsTrigger>
           <TabsTrigger value="convert">Convert</TabsTrigger>
           <TabsTrigger value="status">Status</TabsTrigger>
         </TabsList>
@@ -101,6 +111,12 @@ export function CollectPage() {
         </TabsContent>
         <TabsContent value="ocsf">
           <OcsfTab authed={authed} />
+        </TabsContent>
+        <TabsContent value="nessus">
+          <NessusTab />
+        </TabsContent>
+        <TabsContent value="greenbone">
+          <GreenboneTab />
         </TabsContent>
         <TabsContent value="convert">
           <ConvertTab />
@@ -126,8 +142,8 @@ function CredentialsNote({ authed }: { authed: boolean }) {
         <AlertDescription>
           Collector credentials (API tokens, DB passwords, cloud profiles) are
           sourced SERVER-SIDE from environment / config — never through these
-          forms. The forms below carry only non-secret parameters (region,
-          repo, host, options).
+          forms. The forms below carry only non-secret parameters (region, repo,
+          host, options).
         </AlertDescription>
       </Alert>
 
@@ -136,8 +152,9 @@ function CredentialsNote({ authed }: { authed: boolean }) {
           <AlertTitle>Collectors disabled</AlertTitle>
           <AlertDescription>
             Collectors make credentialed external calls — configure API
-            authentication (<code className="kbd">EVIDENTIA_API_AUTH_TOKEN_FILE</code>)
-            to enable.
+            authentication (
+            <code className="kbd">EVIDENTIA_API_AUTH_TOKEN_FILE</code>) to
+            enable.
           </AlertDescription>
         </Alert>
       )}
@@ -359,8 +376,7 @@ const COLLECTORS: CollectorSpec[] = [
 
 function CollectorsTab({ authed }: { authed: boolean }) {
   const [selectedId, setSelectedId] = useState<string>(COLLECTORS[0].id);
-  const selected =
-    COLLECTORS.find((c) => c.id === selectedId) ?? COLLECTORS[0];
+  const selected = COLLECTORS.find((c) => c.id === selectedId) ?? COLLECTORS[0];
 
   return (
     <div className="stack-6">
@@ -524,7 +540,9 @@ function OcsfTab({ authed }: { authed: boolean }) {
   const isUrlMode = mode === "url";
   const runDisabled =
     mutation.isPending ||
-    (isUrlMode ? !authed || url.trim().length === 0 : content.trim().length === 0);
+    (isUrlMode
+      ? !authed || url.trim().length === 0
+      : content.trim().length === 0);
 
   const submit = () => {
     setParseError(null);
@@ -659,11 +677,242 @@ function OcsfTab({ authed }: { authed: boolean }) {
           {mutation.isError && (
             <Alert variant="destructive">
               <AlertTitle>Could not ingest OCSF</AlertTitle>
-              <AlertDescription>{apiErrorText(mutation.error)}</AlertDescription>
+              <AlertDescription>
+                {apiErrorText(mutation.error)}
+              </AlertDescription>
             </Alert>
           )}
 
           {mutation.isSuccess && <FindingsResult findings={mutation.data} />}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Nessus tab: text upload, local-only (NOT auth-gated, no path/URL)
+// ════════════════════════════════════════════════════════════════════════
+
+function NessusTab() {
+  const [content, setContent] = useState("");
+  const [cadenceSlug, setCadenceSlug] = useState("");
+  const [saveEvidence, setSaveEvidence] = useState(true);
+
+  const mutation = useMutation({
+    mutationFn: (body: NessusCollectRequest) => api.collectNessus(body),
+  });
+
+  const submit = () => {
+    const body: NessusCollectRequest = {
+      content,
+      save_evidence: saveEvidence,
+    };
+    const trimmedSlug = cadenceSlug.trim();
+    if (trimmedSlug.length > 0) body.cadence_slug = trimmedSlug;
+    mutation.mutate(body);
+  };
+
+  const canSubmit = content.trim().length > 0 && !mutation.isPending;
+
+  return (
+    <div className="stack-6">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="base">Nessus scan (.nessus XML)</CardTitle>
+          <CardDescription>
+            Ingest a Nessus v2 scan export. Text upload only; no path, no URL,
+            no credentials: parsed server-side with defusedxml.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="stack-5">
+          <div className="stack-2">
+            <Label htmlFor="nessus-content">Nessus XML</Label>
+            <p className="text-xs muted">
+              The full &lt;NessusClientData_v2&gt; export. Local-only; no
+              network, no credentials.
+            </p>
+            <Textarea
+              id="nessus-content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={6}
+              placeholder={
+                '<NessusClientData_v2>\n  <Report name="...">...</Report>\n</NessusClientData_v2>'
+              }
+            />
+          </div>
+
+          <div className="stack-2">
+            <Label htmlFor="nessus-cadence-slug">Cadence slug (optional)</Label>
+            <Input
+              id="nessus-cadence-slug"
+              value={cadenceSlug}
+              onChange={(e) => setCadenceSlug(e.target.value)}
+              placeholder="fedramp-conmon-scans"
+            />
+          </div>
+
+          <div className="row gap-2" style={{ alignItems: "center" }}>
+            <input
+              type="checkbox"
+              id="nessus-save-evidence"
+              checked={saveEvidence}
+              onChange={(e) => setSaveEvidence(e.target.checked)}
+            />
+            <Label htmlFor="nessus-save-evidence">
+              Save the scan-report evidence artifact
+            </Label>
+          </div>
+
+          <div className="row-between border-t pt-4">
+            <p className="text-xs muted">
+              Submitting parses the XML server-side and, if enabled, saves one
+              evidence artifact for `conmon series` to read.
+            </p>
+            <Button type="button" disabled={!canSubmit} onClick={submit}>
+              {mutation.isPending ? "Ingesting..." : "Ingest Nessus scan"}
+            </Button>
+          </div>
+
+          {mutation.isError && (
+            <Alert variant="destructive">
+              <AlertTitle>Could not ingest Nessus scan</AlertTitle>
+              <AlertDescription>
+                {apiErrorText(mutation.error)}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {mutation.isSuccess && (
+            <div className="stack-3">
+              <p className="text-sm font-medium">
+                Scan{" "}
+                {mutation.data.manifest.is_complete ? "complete" : "incomplete"}
+                ;{" "}
+                {mutation.data.evidence.saved
+                  ? `evidence saved (lineage ${mutation.data.evidence.lineage_id})`
+                  : "evidence not saved"}
+              </p>
+              <FindingsResult findings={mutation.data.findings} />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Greenbone tab: text upload, local-only (NOT auth-gated, no path/URL)
+// ════════════════════════════════════════════════════════════════════════
+
+function GreenboneTab() {
+  const [content, setContent] = useState("");
+  const [cadenceSlug, setCadenceSlug] = useState("");
+  const [saveEvidence, setSaveEvidence] = useState(true);
+
+  const mutation = useMutation({
+    mutationFn: (body: GreenboneCollectRequest) => api.collectGreenbone(body),
+  });
+
+  const submit = () => {
+    const body: GreenboneCollectRequest = {
+      content,
+      save_evidence: saveEvidence,
+    };
+    const trimmedSlug = cadenceSlug.trim();
+    if (trimmedSlug.length > 0) body.cadence_slug = trimmedSlug;
+    mutation.mutate(body);
+  };
+
+  const canSubmit = content.trim().length > 0 && !mutation.isPending;
+
+  return (
+    <div className="stack-6">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="base">Greenbone report (GMP XML)</CardTitle>
+          <CardDescription>
+            Ingest a Greenbone Community Edition GMP report export. Text upload
+            only: no path, no URL, no credentials, parsed server-side with
+            defusedxml.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="stack-5">
+          <div className="stack-2">
+            <Label htmlFor="greenbone-content">Greenbone XML</Label>
+            <p className="text-xs muted">
+              The GMP &lt;report&gt; export (wrapped or bare inner form).
+              Local-only: no network, no credentials.
+            </p>
+            <Textarea
+              id="greenbone-content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={6}
+              placeholder={
+                '<report id="...">\n  <report id="...">...</report>\n</report>'
+              }
+            />
+          </div>
+
+          <div className="stack-2">
+            <Label htmlFor="greenbone-cadence-slug">
+              Cadence slug (optional)
+            </Label>
+            <Input
+              id="greenbone-cadence-slug"
+              value={cadenceSlug}
+              onChange={(e) => setCadenceSlug(e.target.value)}
+              placeholder="fedramp-conmon-scans"
+            />
+          </div>
+
+          <div className="row gap-2" style={{ alignItems: "center" }}>
+            <input
+              type="checkbox"
+              id="greenbone-save-evidence"
+              checked={saveEvidence}
+              onChange={(e) => setSaveEvidence(e.target.checked)}
+            />
+            <Label htmlFor="greenbone-save-evidence">
+              Save the scan-report evidence artifact
+            </Label>
+          </div>
+
+          <div className="row-between border-t pt-4">
+            <p className="text-xs muted">
+              Submitting parses the XML server-side and, if enabled, saves one
+              evidence artifact for `conmon series` to read.
+            </p>
+            <Button type="button" disabled={!canSubmit} onClick={submit}>
+              {mutation.isPending ? "Ingesting..." : "Ingest Greenbone scan"}
+            </Button>
+          </div>
+
+          {mutation.isError && (
+            <Alert variant="destructive">
+              <AlertTitle>Could not ingest Greenbone scan</AlertTitle>
+              <AlertDescription>
+                {apiErrorText(mutation.error)}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {mutation.isSuccess && (
+            <div className="stack-3">
+              <p className="text-sm font-medium">
+                Scan{" "}
+                {mutation.data.manifest.is_complete ? "complete" : "incomplete"}
+                {". "}
+                {mutation.data.evidence.saved
+                  ? `Evidence saved (lineage ${mutation.data.evidence.lineage_id})`
+                  : "Evidence not saved"}
+              </p>
+              <FindingsResult findings={mutation.data.findings} />
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -752,7 +1001,9 @@ function ConvertTab() {
           {mutation.isError && (
             <Alert variant="destructive">
               <AlertTitle>Could not convert</AlertTitle>
-              <AlertDescription>{apiErrorText(mutation.error)}</AlertDescription>
+              <AlertDescription>
+                {apiErrorText(mutation.error)}
+              </AlertDescription>
             </Alert>
           )}
 

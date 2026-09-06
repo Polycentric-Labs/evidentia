@@ -1,8 +1,4 @@
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -17,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   api,
   ApiError,
@@ -24,6 +21,7 @@ import {
   type ConmonCheckResponse,
   type ConmonMarkCompletedResponse,
   type ConmonNextResponse,
+  type ConmonSeriesResponse,
 } from "@/lib/api";
 
 /**
@@ -218,14 +216,14 @@ function NextDuePanel() {
         </form>
 
         {next.isError && (
-          <MutationError title="Could not compute next-due date" error={next.error} />
+          <MutationError
+            title="Could not compute next-due date"
+            error={next.error}
+          />
         )}
 
         {next.isSuccess && (
-          <dl
-            className="grid grid-2 text-sm"
-            aria-label="Next-due result"
-          >
+          <dl className="grid grid-2 text-sm" aria-label="Next-due result">
             <div className="stack-2">
               <dt className="text-xs faint">Next due</dt>
               <dd className="mono tnum">{next.data.next_due}</dd>
@@ -258,16 +256,21 @@ function NextDuePanel() {
 function CheckPanel() {
   const [slug, setSlug] = useState("");
   const [lastCompleted, setLastCompleted] = useState("");
+  const [useStore, setUseStore] = useState(false);
 
   const check = useMutation<ConmonCheckResponse, unknown, void>({
     mutationFn: () =>
       api.conmonCheck({
-        entries: [{ slug: slug.trim(), last_completed: lastCompleted }],
+        entries: slug.trim()
+          ? [{ slug: slug.trim(), last_completed: lastCompleted }]
+          : [],
         window_days: 14,
+        use_evidence_store: useStore,
       }),
   });
 
-  const canSubmit = Boolean(slug.trim() && lastCompleted) && !check.isPending;
+  const canSubmit =
+    (Boolean(slug.trim() && lastCompleted) || useStore) && !check.isPending;
 
   return (
     <Card>
@@ -305,6 +308,15 @@ function CheckPanel() {
               style={{ maxWidth: "16rem" }}
             />
           </div>
+          <div className="row gap-2" style={{ alignSelf: "flex-end" }}>
+            <Switch
+              id="conmon-check-store"
+              checked={useStore}
+              onCheckedChange={setUseStore}
+              aria-label="Use evidence store"
+            />
+            <Label htmlFor="conmon-check-store">Use evidence store</Label>
+          </div>
           <Button
             type="submit"
             size="sm"
@@ -316,7 +328,10 @@ function CheckPanel() {
         </form>
 
         {check.isError && (
-          <MutationError title="Could not check cadence status" error={check.error} />
+          <MutationError
+            title="Could not check cadence status"
+            error={check.error}
+          />
         )}
 
         {check.isSuccess && (
@@ -338,6 +353,23 @@ function CheckPanel() {
                 Unknown slugs: {check.data.unknown_slugs.join(", ")}
               </p>
             )}
+            {[
+              ...check.data.overdue,
+              ...check.data.due_soon,
+              ...check.data.current,
+            ].some((row) => row.series) && (
+              <p className="text-xs muted" aria-label="Series verdicts">
+                Series:{" "}
+                {[
+                  ...check.data.overdue,
+                  ...check.data.due_soon,
+                  ...check.data.current,
+                ]
+                  .filter((row) => row.series)
+                  .map((row) => `${row.slug} ${row.series}`)
+                  .join(", ")}
+              </p>
+            )}
           </div>
         )}
       </CardContent>
@@ -354,16 +386,19 @@ function CheckPanel() {
 function HealthPanel() {
   const [slug, setSlug] = useState("");
   const [lastCompleted, setLastCompleted] = useState("");
+  const [useStore, setUseStore] = useState(false);
 
   const health = useMutation<Record<string, unknown>, unknown, void>({
     mutationFn: () =>
       api.conmonHealth({
         state: slug.trim() ? { [slug.trim()]: lastCompleted } : {},
         window_days: 14,
+        use_evidence_store: useStore,
       }),
   });
 
-  const canSubmit = Boolean(slug.trim() && lastCompleted) && !health.isPending;
+  const canSubmit =
+    (Boolean(slug.trim() && lastCompleted) || useStore) && !health.isPending;
 
   return (
     <Card>
@@ -401,6 +436,15 @@ function HealthPanel() {
               style={{ maxWidth: "16rem" }}
             />
           </div>
+          <div className="row gap-2" style={{ alignSelf: "flex-end" }}>
+            <Switch
+              id="conmon-health-store"
+              checked={useStore}
+              onCheckedChange={setUseStore}
+              aria-label="Use evidence store"
+            />
+            <Label htmlFor="conmon-health-store">Use evidence store</Label>
+          </div>
           <Button
             type="submit"
             size="sm"
@@ -412,7 +456,10 @@ function HealthPanel() {
         </form>
 
         {health.isError && (
-          <MutationError title="Could not summarize health" error={health.error} />
+          <MutationError
+            title="Could not summarize health"
+            error={health.error}
+          />
         )}
 
         {health.isSuccess && (
@@ -434,6 +481,230 @@ function HealthPanel() {
   );
 }
 
+/** Show only the date part of an ISO datetime string (e.g. "2026-06-01"). */
+function formatDateTime(value: string): string {
+  return value.split("T")[0] ?? value;
+}
+
+/**
+ * Verdict → Badge variant. `gapped` reads as destructive (a real problem);
+ * `continuous` gets the default (positive) tone; `insufficient` and `unknown`
+ * are both a plain neutral tone since neither says the cadence failed.
+ */
+function seriesVerdictVariant(
+  verdict: ConmonSeriesResponse["series"]["verdict"],
+): "default" | "destructive" | "secondary" {
+  if (verdict === "gapped") return "destructive";
+  if (verdict === "continuous") return "default";
+  return "secondary";
+}
+
+/**
+ * Series action — `POST /api/conmon/series` (CLI parity: `evidentia conmon
+ * series`). Given a cadence slug and an optional window, the server returns
+ * the dated series of evidence artifacts linked to the cadence through
+ * `metadata.cadence_slug`, judged against the look-back window into a
+ * verdict: continuous, gapped, insufficient, or unknown. This is evidence of
+ * cadence, not a compliance verdict. Read-only.
+ */
+function SeriesPanel() {
+  const [slug, setSlug] = useState("");
+  const [since, setSince] = useState("");
+  const [until, setUntil] = useState("");
+  const [lookbackDays, setLookbackDays] = useState("365");
+  const [toleranceDays, setToleranceDays] = useState("");
+
+  const series = useMutation<ConmonSeriesResponse, unknown, void>({
+    mutationFn: () =>
+      api.conmonSeries({
+        slug: slug.trim(),
+        since: since || undefined,
+        until: until || undefined,
+        lookback_days: Number(lookbackDays),
+        tolerance_days:
+          toleranceDays === "" ? undefined : Number(toleranceDays),
+      }),
+  });
+
+  const canSubmit = Boolean(slug.trim()) && !series.isPending;
+  const observations = series.data?.series.observations ?? [];
+  const gaps = series.data?.series.gaps ?? [];
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="base">Cadence evidence</CardTitle>
+        <CardDescription>
+          The dated series of evidence artifacts linked to a cadence through
+          metadata.cadence_slug, judged over a look-back window. Evidence of
+          cadence, not a compliance verdict.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="stack-4">
+        <form
+          className="row gap-2 wrap"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (canSubmit) series.mutate();
+          }}
+        >
+          <div className="stack-2">
+            <Label htmlFor="conmon-series-slug">Cadence slug</Label>
+            <Input
+              id="conmon-series-slug"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              placeholder="pci-dss-11-6-1-weekly"
+              style={{ minWidth: "16rem" }}
+            />
+          </div>
+          <div className="stack-2">
+            <Label htmlFor="conmon-series-since">Since (optional)</Label>
+            <Input
+              id="conmon-series-since"
+              type="date"
+              value={since}
+              onChange={(e) => setSince(e.target.value)}
+              style={{ maxWidth: "12rem" }}
+            />
+          </div>
+          <div className="stack-2">
+            <Label htmlFor="conmon-series-until">Until (optional)</Label>
+            <Input
+              id="conmon-series-until"
+              type="date"
+              value={until}
+              onChange={(e) => setUntil(e.target.value)}
+              style={{ maxWidth: "12rem" }}
+            />
+          </div>
+          <div className="stack-2">
+            <Label htmlFor="conmon-series-lookback">Lookback days</Label>
+            <Input
+              id="conmon-series-lookback"
+              type="number"
+              min={1}
+              value={lookbackDays}
+              onChange={(e) => setLookbackDays(e.target.value)}
+              style={{ maxWidth: "10rem" }}
+            />
+          </div>
+          <div className="stack-2">
+            <Label htmlFor="conmon-series-tolerance">
+              Tolerance days (optional)
+            </Label>
+            <Input
+              id="conmon-series-tolerance"
+              type="number"
+              min={0}
+              value={toleranceDays}
+              onChange={(e) => setToleranceDays(e.target.value)}
+              placeholder="cadence default"
+              style={{ maxWidth: "10rem" }}
+            />
+            <p className="text-xs muted">
+              Blank uses the cadence default: 2 days for weekly cadences, 5 for
+              month-based ones.
+            </p>
+          </div>
+          <Button
+            type="submit"
+            size="sm"
+            disabled={!canSubmit}
+            style={{ alignSelf: "flex-end" }}
+          >
+            {series.isPending ? "Asserting..." : "Assert series"}
+          </Button>
+        </form>
+
+        {series.isError && (
+          <MutationError
+            title="Could not assert cadence series"
+            error={series.error}
+          />
+        )}
+
+        {series.isSuccess && (
+          <div className="stack-3" aria-label="Series result">
+            <div className="row gap-2 wrap">
+              <Badge variant={seriesVerdictVariant(series.data.series.verdict)}>
+                {series.data.series.verdict}
+              </Badge>
+            </div>
+            <p className="text-sm">{series.data.description}</p>
+
+            <div className="table-wrap">
+              <table className="tbl">
+                <thead>
+                  <tr>
+                    <th>Collected at</th>
+                    <th>Lineage</th>
+                    <th>Version</th>
+                    <th>Source</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {observations.map((obs) => (
+                    <tr key={`${obs.lineage_id}:${obs.version}`}>
+                      <td className="mono tnum">
+                        {formatDateTime(obs.collected_at)}
+                      </td>
+                      <td>
+                        <code className="kbd" title={obs.lineage_id}>
+                          {obs.lineage_id.slice(0, 8)}
+                        </code>
+                      </td>
+                      <td>{obs.version}</td>
+                      <td>{obs.source_system}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {gaps.length > 0 ? (
+              <div className="table-wrap">
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>After</th>
+                      <th>Before</th>
+                      <th>Days</th>
+                      <th>Allowed</th>
+                      <th>Boundary</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {gaps.map((gap, i) => (
+                      <tr key={i}>
+                        <td className="mono tnum">
+                          {formatDateTime(gap.after)}
+                        </td>
+                        <td className="mono tnum">
+                          {formatDateTime(gap.before)}
+                        </td>
+                        <td>{gap.days}</td>
+                        <td>{gap.allowed_days}</td>
+                        <td>
+                          {gap.boundary
+                            ? "window edge"
+                            : "between observations"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-sm muted">No gaps in the window.</p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 /**
  * Mark-completed action — `POST /api/conmon/mark-completed` (CLI parity:
  * `evidentia conmon mark-completed`). The ONLY mutation on this screen: it
@@ -447,8 +718,7 @@ function MarkCompletedPanel() {
   const [when, setWhen] = useState("");
 
   const mark = useMutation<ConmonMarkCompletedResponse, unknown, void>({
-    mutationFn: () =>
-      api.conmonMarkCompleted({ slug: slug.trim(), when }),
+    mutationFn: () => api.conmonMarkCompleted({ slug: slug.trim(), when }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["conmon-cadences"] });
     },
@@ -642,9 +912,7 @@ function DedupListPanel() {
           <ul className="reset stack-3" aria-label="Dedup entries">
             {entries.map((entry, i) => {
               const key =
-                typeof entry.cadence_slug === "string"
-                  ? entry.cadence_slug
-                  : i;
+                typeof entry.cadence_slug === "string" ? entry.cadence_slug : i;
               return (
                 <li key={key} className="reset">
                   <Card style={{ height: "100%" }}>
@@ -682,8 +950,9 @@ function DedupListPanel() {
  * Continuous-Monitoring screen — a browser over the bundled + runtime-
  * registered CONMON cadences (`GET /api/conmon/cadences`), plus the ConMon
  * action surface that reaches REST parity with the `evidentia conmon` CLI
- * verbs: next-due / check / health (read-only computations), mark-completed
- * (the one mutation), and dedup-list (the daemon's alert-dedup state).
+ * verbs: next-due / check / health / series (read-only computations),
+ * mark-completed (the one mutation), and dedup-list (the daemon's
+ * alert-dedup state).
  *
  * Each cadence is a flat string→(string|null) map, so the list renders
  * defensively: it derives a human title from whatever description/id-like key
@@ -734,6 +1003,7 @@ export function ConmonPage() {
           <NextDuePanel />
           <CheckPanel />
           <HealthPanel />
+          <SeriesPanel />
           <MarkCompletedPanel />
         </div>
         <DedupListPanel />

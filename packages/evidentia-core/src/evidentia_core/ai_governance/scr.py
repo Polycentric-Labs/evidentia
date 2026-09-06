@@ -65,7 +65,7 @@ from evidentia_core.ai_governance.registry import (
     AISystemRegistryEntry,
     DeploymentStatus,
 )
-from evidentia_core.models.common import EvidentiaModel, new_id, utc_now
+from evidentia_core.models.common import EvidentiaModel, NonBlankStr, new_id, utc_now
 
 
 class SCRCategory(str, Enum):
@@ -292,13 +292,11 @@ class SCRForm(EvidentiaModel):
         default_factory=new_id,
         description="Stable UUID for cross-referencing the SCR across systems.",
     )
-    system_id: str = Field(
-        min_length=1,
+    system_id: NonBlankStr = Field(
         max_length=256,
         description="Reference to the AISystemRegistryEntry.system_id.",
     )
-    system_name: str = Field(
-        min_length=1,
+    system_name: NonBlankStr = Field(
         max_length=512,
         description="Human-readable system name from the descriptor.",
     )
@@ -311,16 +309,14 @@ class SCRForm(EvidentiaModel):
     proposed_date: date = Field(
         description="Date the change is planned to take effect.",
     )
-    summary: str = Field(
-        min_length=1,
+    summary: NonBlankStr = Field(
         max_length=8000,
         description=(
             "Human-readable summary of the change. Required field "
             "per the FedRAMP SCR template minimum-information rule."
         ),
     )
-    customer_impact: str = Field(
-        min_length=1,
+    customer_impact: NonBlankStr = Field(
         max_length=8000,
         description=(
             "Customer-impact summary: changes to services + customer "
@@ -328,8 +324,7 @@ class SCRForm(EvidentiaModel):
             "FedRAMP SCR template."
         ),
     )
-    plan_and_timeline: str = Field(
-        min_length=1,
+    plan_and_timeline: NonBlankStr = Field(
         max_length=8000,
         description=(
             "Plan + timeline for the change including verification, "

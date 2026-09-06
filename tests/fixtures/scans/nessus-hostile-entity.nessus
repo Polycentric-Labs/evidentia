@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<!DOCTYPE NessusClientData_v2 [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<NessusClientData_v2>
+<Report name="hostile-scan">
+<ReportHost name="attacker-host">
+<HostProperties>
+<tag name="host-ip">10.0.0.99</tag>
+</HostProperties>
+<ReportItem port="80" svc_name="www" protocol="tcp" severity="1" pluginID="1" pluginName="XXE probe" pluginFamily="General">
+<synopsis>&xxe;</synopsis>
+<description>&xxe;</description>
+<risk_factor>Low</risk_factor>
+</ReportItem>
+</ReportHost>
+</Report>
+</NessusClientData_v2>

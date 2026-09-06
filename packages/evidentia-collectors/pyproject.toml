@@ -68,6 +68,10 @@ snowflake = ["snowflake-connector-python>=3.10"]
 # under [ocsf] so `pip install 'evidentia-collectors[ocsf]'` Just Works
 # — same operator-facing pattern as [aws] / [github] / etc.
 ocsf = ["py-ocsf-models>=0.9.0,<0.11.0"]
+# v0.13 V13-05: Nessus v2 XML scan-export ingestion. defusedxml closes XXE /
+# entity-expansion attacks from an untrusted scan export — mirrors the [ocsf]
+# extra's operator-facing pattern (`pip install 'evidentia-collectors[scan]'`).
+scan = ["defusedxml>=0.7.1"]
 all = [
     "boto3>=1.43.46",
     "pygithub>=2.4",
@@ -79,6 +83,7 @@ all = [
     "databricks-sdk>=0.30",
     "snowflake-connector-python>=3.10",
     "py-ocsf-models>=0.9.0,<0.11.0",
+    "defusedxml>=0.7.1",
 ]
 
 [project.urls]

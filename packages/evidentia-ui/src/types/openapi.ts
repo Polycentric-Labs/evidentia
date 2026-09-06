@@ -648,6 +648,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/collectors/greenbone/collect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Greenbone Collect
+         * @description Ingest a Greenbone GMP report XML export (v0.13 V13-05).
+         *
+         *     Mirrors the ``evidentia collect greenbone`` CLI verb. Request body:
+         *
+         *     - ``content`` (required): the GMP ``<report>`` XML text (either the
+         *       wrapping document or a bare inner ``<report>``).
+         *       No path and no URL: the server never reads a client-named file.
+         *       This is a text-upload ingest only.
+         *     - ``cadence_slug`` (optional): defaults to ``fedramp-conmon-scans``.
+         *       Must name a registered cadence.
+         *     - ``save_evidence`` (optional): bool, default True. Persists the
+         *       scan-report ``EvidenceArtifact`` to the server's own configured
+         *       evidence store
+         *       (:func:`evidentia_core.evidence_store.get_evidence_store_dir`).
+         *     - ``description_max_chars`` (optional): int, default 4000.
+         *
+         *     NO credentials: file/text ingest only, mirroring the OCSF inline-
+         *     ``content`` mode's trust posture. Third-party XML is parsed with
+         *     ``defusedxml``; entity expansion and external references are
+         *     refused before any element is read.
+         */
+        post: operations["greenbone_collect_api_collectors_greenbone_collect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/collectors/nessus/collect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Nessus Collect
+         * @description Ingest a Nessus v2 XML scan export (v0.13 V13-05).
+         *
+         *     Mirrors the ``evidentia collect nessus`` CLI verb. Request body:
+         *
+         *     - ``content`` (required): the ``<NessusClientData_v2>`` XML text.
+         *       No path and no URL: the server never reads a client-named file;
+         *       this is a text-upload ingest only.
+         *     - ``cadence_slug`` (optional): defaults to ``fedramp-conmon-scans``.
+         *       Must name a registered cadence.
+         *     - ``save_evidence`` (optional): bool, default True. Persists the
+         *       scan-report ``EvidenceArtifact`` to the server's own configured
+         *       evidence store
+         *       (:func:`evidentia_core.evidence_store.get_evidence_store_dir`).
+         *     - ``plugin_output_max_chars`` (optional): int, default 4000.
+         *
+         *     NO credentials: file/text ingest only, mirroring the OCSF inline-
+         *     ``content`` mode's trust posture. Third-party XML is parsed with
+         *     ``defusedxml``: entity expansion and external references are
+         *     refused before any element is read.
+         */
+        post: operations["nessus_collect_api_collectors_nessus_collect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/collectors/ocsf/collect": {
         parameters: {
             query?: never;
@@ -1357,6 +1434,35 @@ export interface paths {
          * @description Compute the next-due date for a registered cadence.
          */
         post: operations["compute_next_due_api_conmon_next_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/conmon/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assert Conmon Series
+         * @description Assert the cadence evidence series for a slug over a window.
+         *
+         *     Reads the server's own configured evidence store
+         *     (:func:`evidentia_core.evidence_store.get_evidence_store_dir`,
+         *     honoring ``EVIDENTIA_EVIDENCE_STORE_DIR``; the request never carries
+         *     a filesystem path, for the same reason no other router here accepts
+         *     a client-supplied path) for artifacts whose ``metadata.cadence_slug``
+         *     matches ``slug`` inside the resolved window, then asserts the dated
+         *     series (:func:`evidentia_core.conmon.series.assert_series`). A
+         *     gap-free series is evidence of cadence and nothing more.
+         */
+        post: operations["assert_conmon_series_api_conmon_series_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3538,6 +3644,35 @@ export interface components {
          */
         AnnexIIIDomain: "biometrics" | "critical_infrastructure" | "education" | "employment" | "essential_services" | "law_enforcement" | "migration" | "justice" | "none";
         /**
+         * CadenceSeries
+         * @description The dated series for one cadence over a window, with its verdict.
+         */
+        CadenceSeries: {
+            /** Frequency */
+            frequency?: string | null;
+            /** Gaps */
+            gaps?: components["schemas"]["SeriesGap"][];
+            /** Interval Days */
+            interval_days?: number | null;
+            /** Observations */
+            observations?: components["schemas"]["SeriesObservation"][];
+            /** Slug */
+            slug: string;
+            /** Tolerance Days */
+            tolerance_days: number;
+            verdict: components["schemas"]["SeriesVerdict"];
+            /**
+             * Window End
+             * Format: date-time
+             */
+            window_end: string;
+            /**
+             * Window Start
+             * Format: date-time
+             */
+            window_start: string;
+        };
+        /**
          * CatalogControl
          * @description A single control from a framework catalog.
          */
@@ -3742,6 +3877,8 @@ export interface components {
              * Format: date
              */
             next_due: string;
+            /** Series */
+            series?: string | null;
             /** Slug */
             slug: string;
             /** State */
@@ -3769,6 +3906,12 @@ export interface components {
              * @description Override 'today' for deterministic snapshots. Omit for real-time checks.
              */
             today?: string | null;
+            /**
+             * Use Evidence Store
+             * @description Read the server's configured evidence store: a cadence absent from entries takes the date of its latest artifact (metadata.cadence_slug) and every row gains a series verdict over the last 365 days.
+             * @default false
+             */
+            use_evidence_store: boolean;
             /**
              * Window Days
              * @description Due-soon window in days (default: 14).
@@ -3859,6 +4002,100 @@ export interface components {
              * @description Source system instance identifier. Examples: 'aws-account:123456789012:us-east-1', 'github:org/repo', 'github:enterprise/acme'.
              */
             source_system_id: string;
+        };
+        /**
+         * CollectionManifest
+         * @description Per-run manifest attesting to collection scope and completeness.
+         *
+         *     Implements checklist item B5 (completeness attestation). One
+         *     manifest per collection run is attached to the OSCAL Assessment
+         *     Results document's ``metadata.props`` and optionally written as a
+         *     sibling ``<output>.manifest.json`` for standalone inspection.
+         *
+         *     The manifest is signed using the same signing pipeline as the AR
+         *     itself. A verified manifest establishes:
+         *
+         *     1. Which source systems were scanned.
+         *     2. Which filters were applied.
+         *     3. How many resources of each type were examined.
+         *     4. Whether any categories were intentionally empty.
+         *     5. Whether any errors truncated collection (``is_complete=False``).
+         */
+        CollectionManifest: {
+            /**
+             * Collection Finished At
+             * @description UTC timestamp when the collector finished. None while still in progress.
+             */
+            collection_finished_at?: string | null;
+            /**
+             * Collection Started At
+             * Format: date-time
+             * @description UTC timestamp when the collector began this run
+             */
+            collection_started_at: string;
+            /** Collector Id */
+            collector_id: string;
+            /** Collector Version */
+            collector_version: string;
+            /**
+             * Coverage Counts
+             * @description Per-resource-type scan/match/collect counts
+             */
+            coverage_counts?: components["schemas"]["CoverageCount"][];
+            /**
+             * Empty Categories
+             * @description Resource types explicitly scanned but yielding zero findings. Per checklist B5: an auditor cannot distinguish 'no findings' (legitimate) from 'collector skipped' (evidence gap) without this explicit attestation.
+             */
+            empty_categories?: string[];
+            /**
+             * Errors
+             * @description Fatal errors that caused specific resources to be skipped but didn't abort the run. Non-empty plus is_complete=True means 'partial success'.
+             */
+            errors?: string[];
+            /**
+             * Evidentia Version
+             * @description Version of evidentia-core that wrote this manifest
+             */
+            evidentia_version?: string;
+            /**
+             * Filters Applied
+             * @description Run-level filters. Empty dict means 'no filter'.
+             */
+            filters_applied?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Incomplete Reason
+             * @description Human-readable reason the run didn't complete. MUST be populated when ``is_complete=False``.
+             */
+            incomplete_reason?: string | null;
+            /**
+             * Is Complete
+             * @description False if any collection error, truncation, or pagination abort occurred. Auditors treat incomplete runs as evidence gaps.
+             * @default true
+             */
+            is_complete: boolean;
+            /**
+             * Run Id
+             * @description ULID matching CollectionContext.run_id on every finding produced by this run. Join key for findings↔manifest.
+             */
+            run_id: string;
+            /**
+             * Source System Ids
+             * @description All source_system_ids covered in this run
+             */
+            source_system_ids?: string[];
+            /**
+             * Total Findings
+             * @description Sum of findings emitted from this run
+             * @default 0
+             */
+            total_findings: number;
+            /**
+             * Warnings
+             * @description Non-fatal issues encountered during collection — rate-limit backoffs, skipped resources, blind-spot disclosures.
+             */
+            warnings?: string[];
         };
         /**
          * ComplianceStatus
@@ -4179,6 +4416,32 @@ export interface components {
              * @description Human-readable threat name.
              */
             threat_name?: string | null;
+        };
+        /**
+         * CoverageCount
+         * @description One resource-type's scan/match/collect counts within a run.
+         */
+        CoverageCount: {
+            /**
+             * Collected
+             * @description Findings actually produced from this resource type. May be < matched_filter if some matched resources yielded no findings.
+             */
+            collected: number;
+            /**
+             * Matched Filter
+             * @description Resources passing the collector's filter criteria
+             */
+            matched_filter: number;
+            /**
+             * Resource Type
+             * @description Source-system resource category. Examples: 'aws-iam-role', 'aws-iam-user', 'github-dependabot-alert'.
+             */
+            resource_type: string;
+            /**
+             * Scanned
+             * @description Total resources enumerated (before filtering)
+             */
+            scanned: number;
         };
         /**
          * CriticalityTier
@@ -5118,6 +5381,31 @@ export interface components {
          * @enum {string}
          */
         GapStatus: "open" | "in_progress" | "remediated" | "accepted" | "not_applicable";
+        /**
+         * GreenboneCollectResponse
+         * @description Response body of ``POST /collectors/greenbone/collect``.
+         */
+        GreenboneCollectResponse: {
+            evidence: components["schemas"]["GreenboneEvidenceResult"];
+            /** Findings */
+            findings: components["schemas"]["SecurityFinding"][];
+            manifest: components["schemas"]["CollectionManifest"];
+        };
+        /**
+         * GreenboneEvidenceResult
+         * @description The ``evidence`` block of :class:`GreenboneCollectResponse`.
+         */
+        GreenboneEvidenceResult: {
+            /**
+             * Collected At
+             * Format: date-time
+             */
+            collected_at: string;
+            /** Lineage Id */
+            lineage_id: string;
+            /** Saved */
+            saved: boolean;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -5142,6 +5430,12 @@ export interface components {
              * @description Override 'today' for deterministic snapshots. Omit for real-time reports.
              */
             today?: string | null;
+            /**
+             * Use Evidence Store
+             * @description Read the server's configured evidence store: a cadence absent from state takes the date of its latest artifact (metadata.cadence_slug).
+             * @default false
+             */
+            use_evidence_store: boolean;
             /**
              * Window Days
              * @description Due-soon window in days (default 14).
@@ -5878,6 +6172,31 @@ export interface components {
          * @enum {string}
          */
         NISTAIRMFFunction: "govern" | "map" | "measure" | "manage";
+        /**
+         * NessusCollectResponse
+         * @description Response body of ``POST /collectors/nessus/collect``.
+         */
+        NessusCollectResponse: {
+            evidence: components["schemas"]["NessusEvidenceResult"];
+            /** Findings */
+            findings: components["schemas"]["SecurityFinding"][];
+            manifest: components["schemas"]["CollectionManifest"];
+        };
+        /**
+         * NessusEvidenceResult
+         * @description The ``evidence`` block of :class:`NessusCollectResponse`.
+         */
+        NessusEvidenceResult: {
+            /**
+             * Collected At
+             * Format: date-time
+             */
+            collected_at: string;
+            /** Lineage Id */
+            lineage_id: string;
+            /** Saved */
+            saved: boolean;
+        };
         /** NextDueRequest */
         NextDueRequest: {
             /**
@@ -6822,6 +7141,98 @@ export interface components {
             /** Title */
             title: string;
         };
+        /**
+         * SeriesGap
+         * @description A spacing that exceeded the allowed interval.
+         */
+        SeriesGap: {
+            /**
+             * After
+             * Format: date-time
+             * @description Start of the gap: an observation, or the window start.
+             */
+            after: string;
+            /**
+             * Allowed Days
+             * @description Interval plus tolerance.
+             */
+            allowed_days: number;
+            /**
+             * Before
+             * Format: date-time
+             * @description End of the gap: the next observation, or the window end.
+             */
+            before: string;
+            /**
+             * Boundary
+             * @description True when one side of the gap is a window edge.
+             * @default false
+             */
+            boundary: boolean;
+            /**
+             * Days
+             * @description Whole days between the two instants.
+             */
+            days: number;
+        };
+        /**
+         * SeriesObservation
+         * @description One artifact version that counts towards the series.
+         */
+        SeriesObservation: {
+            /**
+             * Collected At
+             * Format: date-time
+             */
+            collected_at: string;
+            /** Lineage Id */
+            lineage_id: string;
+            /** Source System */
+            source_system: string;
+            /** Version */
+            version: number;
+        };
+        /** SeriesRequest */
+        SeriesRequest: {
+            /**
+             * Lookback Days
+             * @description Look-back window in days, used to fill any bound 'since' / 'until' don't supply. Default 365.
+             * @default 365
+             */
+            lookback_days: number;
+            /**
+             * Since
+             * @description Window start. When both 'since' and 'until' are omitted, the window is the last 'lookback_days' days ending today. When only one of the two is given, the other is filled from that same default window (not derived from the given bound).
+             */
+            since?: string | null;
+            /**
+             * Slug
+             * @description Cadence slug (e.g., 'pci-dss-11-6-1-weekly').
+             */
+            slug: string;
+            /**
+             * Tolerance Days
+             * @description Grace period (days) added to the cadence's interval before a spacing counts as a gap. Omit for the cadence-appropriate default.
+             */
+            tolerance_days?: number | null;
+            /**
+             * Until
+             * @description Window end. See 'since' for the fill rule.
+             */
+            until?: string | null;
+        };
+        /** SeriesResponse */
+        SeriesResponse: {
+            /** Description */
+            description: string;
+            series: components["schemas"]["CadenceSeries"];
+        };
+        /**
+         * SeriesVerdict
+         * @description What the dated series shows for the window.
+         * @enum {string}
+         */
+        SeriesVerdict: "continuous" | "gapped" | "insufficient" | "unknown";
         /**
          * SetAcquisitionPhaseRequest
          * @description Body for ``POST /ai-gov/acquisitions/{acquisition_id}/set-phase``.
@@ -8911,6 +9322,112 @@ export interface operations {
             };
         };
     };
+    greenbone_collect_api_collectors_greenbone_collect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GreenboneCollectResponse"];
+                };
+            };
+            /** @description Missing/non-string ``content``, malformed XML, a refused entity construct, wrong root element, oversized content (over 50 MB), or an unknown ``cadence_slug`` (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Optional ``scan`` extra not installed (``error: feature_unavailable``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    nessus_collect_api_collectors_nessus_collect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NessusCollectResponse"];
+                };
+            };
+            /** @description Missing/non-string ``content``, malformed XML, a refused entity construct, wrong root element, oversized content (over 50 MB), or an unknown ``cadence_slug`` (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Optional ``scan`` extra not installed (``error: feature_unavailable``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     ocsf_collect_api_collectors_ocsf_collect_post: {
         parameters: {
             query?: never;
@@ -9940,6 +10457,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NextDueResponse"];
+                };
+            };
+            /** @description Unknown cadence ``slug`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assert_conmon_series_api_conmon_series_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeriesRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesResponse"];
+                };
+            };
+            /** @description `until` precedes `since` (``error: invalid_window``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Unknown cadence ``slug`` (``error: not_found``). */

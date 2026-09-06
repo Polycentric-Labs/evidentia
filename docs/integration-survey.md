@@ -34,7 +34,7 @@ architectural patterns — observed in peer projects and emerging standards
 |---|---|
 | **OSCAL 1.2.1** | First-class emit: catalog, profile, assessment-results, POA&M, CONMON state. Import: catalog, profile, component-definition (ingest-only). SCR notification is RFC-0007 flat JSON, not an OSCAL model |
 | **Supply chain** | CycloneDX 1.7 SBOM; Sigstore/Rekor + PEP 740 attestations; cosign-signed container; SLSA L3 build provenance |
-| **MCP server** | 13 tools (`list_frameworks`, `get_control`, `gap_analyze`, `gap_diff`, `gap_analyze_sarif`, `collect_ocsf`, `tprm_vendor_list`, `poam_list`, `verify_signed_artifact`, `conmon_list_cadences`, `conmon_next_due`, `conmon_check_state`, `conmon_health`); stdio / SSE / HTTP transports; per-tool CIMD scope enforcement; `SignedToolOutput` envelope |
+| **MCP server** | 14 tools (`list_frameworks`, `get_control`, `gap_analyze`, `gap_diff`, `gap_analyze_sarif`, `collect_ocsf`, `tprm_vendor_list`, `poam_list`, `verify_signed_artifact`, `conmon_list_cadences`, `conmon_next_due`, `conmon_check_state`, `conmon_health`, `conmon_series`); stdio / SSE / HTTP transports; per-tool CIMD scope enforcement; `SignedToolOutput` envelope |
 | **REST API** | FastAPI; `/api/poam/*`, `/api/conmon/*`, `/api/gaps`, `/api/metrics`; auth middleware |
 | **CI** | Bundled composite GitHub Action (`gap-analysis`) |
 | **Evidence collectors** | 14 total — AWS (Config / Security Hub / IAM Access Analyzer), GitHub, Okta, 5 SQL databases, Databricks, Snowflake, Vanta, Drata, BitSight, SecurityScorecard (ServiceNow's collect side rides the output integration) |
@@ -185,7 +185,7 @@ That makes it **complementary to Evidentia, not competitive** — they are
 adjacent layers. The opportunity:
 
 - **Publish a thin Evidentia MCP connector/plugin into the
-  `grc-engineering-suite` marketplace.** Evidentia's MCP server (13 tools,
+  `grc-engineering-suite` marketplace.** Evidentia's MCP server (14 tools,
   signed output) is exactly the deterministic backend that toolkit's
   personas lack. This reaches a growing, well-aligned audience through a
   zero-setup distribution channel (`/plugin install`) that Evidentia

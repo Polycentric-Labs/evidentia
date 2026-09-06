@@ -47,7 +47,7 @@ Built for compliance engineers, GRC teams, and CISOs who want to:
 
 - Ship audit-grade evidence with cryptographic provenance (Sigstore + PEP 740 + SLSA Provenance v1).
 - Map controls across frameworks via **97 bundled catalogs** (NIST 800-53 Rev 5, FedRAMP + FedRAMP CR26 KSIs and provider-facing Requirements, CMMC 2.0, ISO 27001, CSF 2.0, EU AI Act, DORA, NIS2, GDPR, OpenSSF OSPS Baseline, the full FFIEC stack, and all 15 comprehensive US state privacy laws).
-- Drive AI agents (Claude Desktop, Claude Code, Cursor, Copilot CLI) deterministically via MCP tools with signed output envelopes.
+- Drive AI agents (Claude Desktop, Claude Code, Copilot CLI) deterministically via MCP tools with signed output envelopes.
 
 ## Install
 
@@ -103,7 +103,7 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 - **97 framework catalogs + 16 crosswalks** — NIST 800-53 Rev 5 (full 1,196 controls + Low/Moderate/High/Privacy baselines), CSF 2.0, FedRAMP (Rev 5 baselines + CR26 Key Security Indicators + the 180 provider-facing CR26 Requirements), CMMC 2.0 L1/L2, OpenSSF OSPS Baseline (Maturity 1/2/3 + first public OSCAL serialization), ISO 27001:2022, EU AI Act, DORA, NIS2, GDPR, all 15 US state privacy laws, full FFIEC IT Examination Handbook, OCC Bulletin 2026-13a / FRB SR 26-02. Plus 16 inter-framework crosswalks.
 - **14 evidence collectors** — AWS, GitHub (including v0.10.6 OSPS conformance helpers), Postgres, MySQL, Oracle, SQLite, MS-SQL, Snowflake, Databricks, Okta, Vanta, Drata, BitSight, SecurityScorecard. All OCSF-aligned with `compliance_status` field.
 - **OCSF-aligned findings** — OCSF Compliance Finding (class_uid 2003) via `--format ocsf`; OCSF Detection Finding (class_uid 2004) via `--format ocsf-detection`. SARIF 2.1.0 for CI gates via `--format sarif`. CycloneDX 1.6 VEX via `--format cyclonedx-vex`.
-- **13 MCP tools** — Drive Evidentia from Claude Desktop, Claude Code, Cursor, or any MCP host. Append-only tool contract per [`docs/api-stability.md`](docs/api-stability.md) (NORMATIVE). Signed output envelopes (CIMD) per [`docs/evidence-integrity.md`](docs/evidence-integrity.md).
+- **14 MCP tools** — Drive Evidentia from Claude Desktop, Claude Code, or any MCP host. Append-only tool contract per [`docs/api-stability.md`](docs/api-stability.md) (NORMATIVE). Signed output envelopes (CIMD) per [`docs/evidence-integrity.md`](docs/evidence-integrity.md).
 - **OSPS Baseline conformance** — First public open-source project to ship a machine-readable per-control OSPS Baseline conformance attestation ([`OSPS-CONFORMANCE.md`](docs/OSPS-CONFORMANCE.md)) with a CI gate that re-validates every evidence link on push/PR/cron.
 
 ## What's in the Box
@@ -114,7 +114,7 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 | Framework catalogs | 97 |
 | Inter-framework crosswalks | 16 |
 | Evidence collectors | 14 |
-| MCP tools | 13 |
+| MCP tools | 14 |
 | OSCAL serializations | 1 (OpenSSF OSPS Baseline; more on the roadmap) |
 | Test suite | 5,000+ tests; mypy strict; ruff clean |
 
@@ -150,9 +150,9 @@ Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https:/
 
 This project was developed alongside AI platforms.
 
-AI models and tools used: Claude, Codex, Cursor, LangChain, Ollama (and other local models), OpenRouter (incl. Gemini, GPT, etc.), Perplexity.
+Custom infrastructure and integrations built in-house.
 
-Custom-built infrastructure and integrations for each.
+Details, including the tools used: [`docs/ai-assistance.md`](docs/ai-assistance.md).
 
 ## License
 

@@ -10,7 +10,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes yet on the v0.13 development branch._
+### Added
+
+- **Cadence evidence series (V13-01).** `evidentia conmon series <slug>` reads the
+  evidence store, builds the dated series of artifacts linked to a cadence through
+  `metadata.cadence_slug`, and judges it `continuous`, `gapped`, `insufficient` or
+  `unknown` over a look-back window (default twelve months), with per-kind tolerance
+  and boundary gaps at both window edges. `--emit-findings` writes a finding for a
+  gapped or insufficient series (id deterministic in slug and window). The same
+  result is served by `POST /api/conmon/series` and the `conmon_series` MCP tool.
+  Wording rule enforced in code: the description never claims compliance; a
+  gap-free series is evidence of cadence and nothing more.
+- **Day-granular cadences.** `CadenceFrequency` gains `weekly`, `biweekly`,
+  `semiannual` and `custom`; `ConmonCadence.interval_days` carries the interval of a
+  custom cadence (35 days for NERC CIP-007 R2). Five bundled cadences join the set:
+  `pci-dss-11-6-1-weekly`, `nerc-cip-007-r2-patch-evaluation`,
+  `irs-pub-1345-weekly-asv-scan`, `glba-314-4-d-semiannual-vulnerability-assessment`
+  and `glba-314-4-d-annual-penetration-test`.
+- **`evidence_store.iter_artifacts`**, the filtered walk (time window, source system,
+  metadata equality) the series reads; linear over the store, no index yet.
+- **`conmon check` and `conmon health` can read the evidence store.** With
+  `--evidence-store` (CLI) or `use_evidence_store` (API), a cadence missing from the
+  state file takes the date of its latest evidence artifact, the state file wins
+  where it has a date, and check rows gain a series verdict; the state file becomes
+  optional when the store is given.
+- **Nessus scan ingest (V13-05, first half).** `evidentia collect nessus --file` parses a
+  Nessus v2 export with `defusedxml` (entities refused, 50 MB cap) into one finding per
+  report item (deterministic ids, RA-5 and SI-2 mappings, trimmed plugin output) plus a
+  collection manifest, and saves one evidence artifact whose `metadata.cadence_slug`
+  (default `fedramp-conmon-scans`) feeds `conmon series`. `POST
+  /api/collectors/nessus/collect` takes the XML text only and saves to the server's own
+  store; the console's Collect page gains a Nessus tab; the new `scan` extra carries
+  `defusedxml`. Importers do not raise the README collector count. See
+  `docs/vuln-scan-collectors.md`.
+- **Greenbone report ingest (V13-05, second half).** `evidentia collect greenbone --file`
+  parses a Greenbone Community Edition GMP report (wrapped or bare `report` element) with
+  the shared defusedxml loader into one finding per result (deterministic ids, severity
+  from the numeric score with the threat label as fallback, the same RA-5 and SI-2
+  mappings) plus a manifest and one evidence artifact for `conmon series`;
+  `POST /api/collectors/greenbone/collect` and a console tab mirror the Nessus surfaces.
+
+### Changed
+
+- **Whitespace-only text is rejected at the API boundary with the standard 422** on
+  the six request fields that carried a bare `minLength: 1`:
+  `CatalogImportPayload.content`, `NextDueRequest.slug`, `MarkCompletedRequest.slug`,
+  `WorkflowAdvancePayload.actor`, `VerifyRequest.content` and
+  `MilestoneCreatePayload.description`. Such a value used to pass validation and fail
+  later inside the stripping core model. The ai-gov register, update and acquisition
+  requests keep their documented 400 `invalid_body` and publish the same non-blank
+  pattern as documentation only.
+- **SDR `metadata.updateSource`.** The FedRAMP Security Decision Record emitter writes
+  the third metadata key as `updateSource`, the name SDR schema 1.1.0 requires; the
+  status file's operator-facing field is still `source`.
+
+### Removed
+
+- **Cursor IDE support**, following Cursor's acquisition by SpaceX. Removed: the
+  `.cursorrules` guardrail file, the Cursor sections of `docs/ide-setup.md` (now
+  a VS Code guide), the Cursor walkthrough in the wiki's MCP client setup guide,
+  the `.cursor/` yamllint scope, and the Cursor mentions in the README and the
+  editor-config comments. The `.vscode/` workspace files, `.editorconfig`, the
+  dev container, and the MCP server are unchanged; any MCP host that speaks the
+  standard `mcpServers` stdio contract still works. Historical changelog and
+  roadmap entries are left as written.
+
+### Fixed
+
+- **Published schema and runtime agree on non-blank strings.** `NonBlankStr`
+  (`evidentia_core.models.common`) carries `minLength: 1` plus the full Python
+  whitespace class, and every stripping core model uses it, so a schema-driven client
+  can no longer produce a value the runtime rejects (the 2026-09-06 stateful DAST run
+  generated a lone U+0085 owner). A regression gate over `openapi.json` fails if a new
+  `minLength: 1` string ships without the pattern.
+- **Stateful DAST harness isolation.** Each Hypothesis example starts with fresh
+  registry and catalog stores; state left behind by earlier examples changed which
+  link-derived rules were available on replay and surfaced as
+  `FlakyStrategyDefinition` in CI.
+- **FedRAMP CR26 pins re-verified (#275).** The vendored `common-definitions` (0.3.0)
+  and `security-decision-record` (1.1.1) schemas are byte-identical to
+  `FedRAMP/schemas@c3ed146` again; `FedRAMP/rules` did not move, so the KSI and FRR
+  catalogs are unchanged.
 
 ## [0.12.1] - 2026-09-05
 

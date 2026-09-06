@@ -42,6 +42,9 @@ Key                          Meaning (typical status)
                              (400); context: ``field``
 ``invalid_body``             Body-level semantic/domain validation
                              failure (400, or manual 422)
+``invalid_window``           A window's ``until`` precedes its
+                             ``since`` (400); context: ``since``,
+                             ``until``
 ``unsupported_format``       Requested format not supported (400);
                              context: ``format``, ``supported``
 ``idempotency_key_conflict`` Idempotency-key reuse with a different
@@ -111,13 +114,10 @@ class ErrorDetail(BaseModel):
 
     error: str = Field(
         description=(
-            "Stable snake_case error key (see the registry in "
-            "evidentia_api.errors). Clients dispatch on this."
+            "Stable snake_case error key (see the registry in evidentia_api.errors). Clients dispatch on this."
         )
     )
-    message: str = Field(
-        description="Human-readable explanation of the failure."
-    )
+    message: str = Field(description="Human-readable explanation of the failure.")
 
 
 class ErrorEnvelope(BaseModel):
@@ -153,9 +153,7 @@ def api_error(
     helper does not raise.
     """
     detail: dict[str, Any] = {"error": error, **context, "message": message}
-    return HTTPException(
-        status_code=status_code, detail=detail, headers=headers
-    )
+    return HTTPException(status_code=status_code, detail=detail, headers=headers)
 
 
 def error_responses(
@@ -190,12 +188,8 @@ def error_responses(
                     "application/json": {
                         "schema": {
                             "anyOf": [
-                                {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                },
+                                {"$ref": "#/components/schemas/ErrorEnvelope"},
+                                {"$ref": "#/components/schemas/HTTPValidationError"},
                             ]
                         }
                     }
@@ -216,10 +210,7 @@ RBAC_DENIED_403 = (
 )
 """Shared ``responses`` description for ``require_role``-gated routes."""
 
-RATE_LIMITED_429 = (
-    "Per-client token-bucket throttle (``error: rate_limited``). "
-    "Carries a ``Retry-After`` header."
-)
+RATE_LIMITED_429 = "Per-client token-bucket throttle (``error: rate_limited``). Carries a ``Retry-After`` header."
 """Shared ``responses`` description for rate-limited paths."""
 
 BODY_PARSE_ERROR_400 = (
@@ -235,9 +226,7 @@ return (see :func:`body_parse_error_handler`).
 """
 
 
-async def body_parse_error_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def body_parse_error_handler(request: Request, exc: Exception) -> JSONResponse:
     """Normalize FastAPI's own body-decode 400 to the structured shape.
 
     2026-07-06 stateful-DAST finding (Step 4 of the H-2 deliverable):
@@ -279,10 +268,7 @@ async def body_parse_error_handler(
             content={
                 "detail": {
                     "error": "body_parse_error",
-                    "message": (
-                        "Request body could not be decoded (invalid "
-                        "encoding or malformed content)."
-                    ),
+                    "message": ("Request body could not be decoded (invalid encoding or malformed content)."),
                 }
             },
         )

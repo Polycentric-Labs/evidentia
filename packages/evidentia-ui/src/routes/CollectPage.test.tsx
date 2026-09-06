@@ -1,11 +1,21 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/lib/api";
-import type { SecurityFinding } from "@/lib/api";
+import type {
+  GreenboneCollectResponse,
+  NessusCollectResponse,
+  SecurityFinding,
+} from "@/lib/api";
 import { CollectPage } from "@/routes/CollectPage";
 
 // Mock the typed API client. Keep the real `ApiError` export intact so the
@@ -28,6 +38,8 @@ vi.mock("@/lib/api", async (importOriginal) => {
       collectBitsight: vi.fn(),
       collectSecurityscorecard: vi.fn(),
       collectOcsf: vi.fn(),
+      collectNessus: vi.fn(),
+      collectGreenbone: vi.fn(),
       collectConvert: vi.fn(),
       collectorsStatus: vi.fn(),
     },
@@ -37,6 +49,8 @@ vi.mock("@/lib/api", async (importOriginal) => {
 const healthMock = vi.mocked(api.health);
 const collectGithubMock = vi.mocked(api.collectGithub);
 const collectOcsfMock = vi.mocked(api.collectOcsf);
+const collectNessusMock = vi.mocked(api.collectNessus);
+const collectGreenboneMock = vi.mocked(api.collectGreenbone);
 const collectConvertMock = vi.mocked(api.collectConvert);
 const collectorsStatusMock = vi.mocked(api.collectorsStatus);
 
@@ -48,6 +62,58 @@ const FINDING: SecurityFinding = {
   source_system: "aws-security-hub",
   compliance_status: "fail",
   status: "active",
+};
+
+const NESSUS_RESULT: NessusCollectResponse = {
+  findings: [FINDING],
+  manifest: {
+    run_id: "01J0000000000000000000TEST",
+    collector_id: "nessus-file",
+    collector_version: "0.13.0",
+    collection_started_at: "2026-09-01T10:22:31Z",
+    collection_finished_at: "2026-09-01T10:22:31Z",
+    source_system_ids: ["test-scan"],
+    filters_applied: {},
+    coverage_counts: [],
+    total_findings: 1,
+    is_complete: true,
+    incomplete_reason: null,
+    empty_categories: [],
+    warnings: [],
+    errors: [],
+    evidentia_version: "0.13.0",
+  },
+  evidence: {
+    lineage_id: "00000000-0000-0000-0000-000000000000",
+    saved: true,
+    collected_at: "2026-09-01T10:22:31Z",
+  },
+};
+
+const GREENBONE_RESULT: GreenboneCollectResponse = {
+  findings: [FINDING],
+  manifest: {
+    run_id: "01J0000000000000000000TES2",
+    collector_id: "greenbone-file",
+    collector_version: "0.13.0",
+    collection_started_at: "2026-09-01T10:22:31Z",
+    collection_finished_at: "2026-09-01T10:22:31Z",
+    source_system_ids: ["test-report"],
+    filters_applied: {},
+    coverage_counts: [],
+    total_findings: 1,
+    is_complete: true,
+    incomplete_reason: null,
+    empty_categories: [],
+    warnings: [],
+    errors: [],
+    evidentia_version: "0.13.0",
+  },
+  evidence: {
+    lineage_id: "00000000-0000-0000-0000-000000000001",
+    saved: true,
+    collected_at: "2026-09-01T10:22:31Z",
+  },
 };
 
 function healthValue(authConfigured: boolean) {
@@ -72,6 +138,8 @@ describe("CollectPage", () => {
     healthMock.mockReset();
     collectGithubMock.mockReset();
     collectOcsfMock.mockReset();
+    collectNessusMock.mockReset();
+    collectGreenboneMock.mockReset();
     collectConvertMock.mockReset();
     collectorsStatusMock.mockReset();
     // Default: collectors-status query resolves to an empty object so the
@@ -182,6 +250,134 @@ describe("CollectPage", () => {
     await waitFor(() => expect(collectOcsfMock).toHaveBeenCalledTimes(1));
     expect(collectOcsfMock).toHaveBeenCalledWith({
       content: [{ class_uid: 2003 }],
+    });
+  });
+
+  it("submits Nessus scan content and renders the result (local, not auth-gated)", async () => {
+    const user = userEvent.setup();
+    // Auth OFF. Nessus ingest is local-only (text upload, no path/URL) and
+    // must stay enabled just like Convert and OCSF inline content.
+    healthMock.mockResolvedValue(healthValue(false));
+    collectNessusMock.mockResolvedValue(NESSUS_RESULT);
+
+    renderWithClient(<CollectPage />);
+
+    await user.click(screen.getByRole("tab", { name: /nessus scan/i }));
+
+    const textarea = await screen.findByLabelText("Nessus XML");
+    fireEvent.change(textarea, {
+      target: { value: "<NessusClientData_v2></NessusClientData_v2>" },
+    });
+    await user.type(
+      screen.getByLabelText("Cadence slug (optional)"),
+      "fedramp-conmon-scans",
+    );
+
+    const ingestButton = screen.getByRole("button", {
+      name: /ingest nessus scan/i,
+    });
+    expect(ingestButton).toBeEnabled();
+    await user.click(ingestButton);
+
+    await waitFor(() => expect(collectNessusMock).toHaveBeenCalledTimes(1));
+    expect(collectNessusMock).toHaveBeenCalledWith({
+      content: "<NessusClientData_v2></NessusClientData_v2>",
+      save_evidence: true,
+      cadence_slug: "fedramp-conmon-scans",
+    });
+
+    expect(await screen.findByText("Public S3 bucket")).toBeInTheDocument();
+    expect(screen.getByText(/scan complete/i)).toBeInTheDocument();
+    expect(screen.getByText(/evidence saved/i)).toBeInTheDocument();
+  });
+
+  it("omits cadence_slug and flips save_evidence off from the Nessus tab", async () => {
+    const user = userEvent.setup();
+    healthMock.mockResolvedValue(healthValue(true));
+    collectNessusMock.mockResolvedValue(NESSUS_RESULT);
+
+    renderWithClient(<CollectPage />);
+
+    await user.click(screen.getByRole("tab", { name: /nessus scan/i }));
+
+    const textarea = await screen.findByLabelText("Nessus XML");
+    fireEvent.change(textarea, {
+      target: { value: "<NessusClientData_v2></NessusClientData_v2>" },
+    });
+    await user.click(screen.getByLabelText(/save the scan-report evidence/i));
+
+    await user.click(
+      screen.getByRole("button", { name: /ingest nessus scan/i }),
+    );
+
+    await waitFor(() => expect(collectNessusMock).toHaveBeenCalledTimes(1));
+    expect(collectNessusMock).toHaveBeenCalledWith({
+      content: "<NessusClientData_v2></NessusClientData_v2>",
+      save_evidence: false,
+    });
+  });
+
+  it("submits Greenbone report content and renders the result (local, not auth-gated)", async () => {
+    const user = userEvent.setup();
+    // Auth OFF: Greenbone ingest is local-only (text upload, no path/URL)
+    // and must stay enabled just like Convert, OCSF inline content, and Nessus.
+    healthMock.mockResolvedValue(healthValue(false));
+    collectGreenboneMock.mockResolvedValue(GREENBONE_RESULT);
+
+    renderWithClient(<CollectPage />);
+
+    await user.click(screen.getByRole("tab", { name: /greenbone report/i }));
+
+    const textarea = await screen.findByLabelText("Greenbone XML");
+    fireEvent.change(textarea, {
+      target: { value: "<report></report>" },
+    });
+    await user.type(
+      screen.getByLabelText("Cadence slug (optional)"),
+      "fedramp-conmon-scans",
+    );
+
+    const ingestButton = screen.getByRole("button", {
+      name: /ingest greenbone scan/i,
+    });
+    expect(ingestButton).toBeEnabled();
+    await user.click(ingestButton);
+
+    await waitFor(() => expect(collectGreenboneMock).toHaveBeenCalledTimes(1));
+    expect(collectGreenboneMock).toHaveBeenCalledWith({
+      content: "<report></report>",
+      save_evidence: true,
+      cadence_slug: "fedramp-conmon-scans",
+    });
+
+    expect(await screen.findByText("Public S3 bucket")).toBeInTheDocument();
+    expect(screen.getByText(/scan complete/i)).toBeInTheDocument();
+    expect(screen.getByText(/evidence saved/i)).toBeInTheDocument();
+  });
+
+  it("omits cadence_slug and flips save_evidence off from the Greenbone tab", async () => {
+    const user = userEvent.setup();
+    healthMock.mockResolvedValue(healthValue(true));
+    collectGreenboneMock.mockResolvedValue(GREENBONE_RESULT);
+
+    renderWithClient(<CollectPage />);
+
+    await user.click(screen.getByRole("tab", { name: /greenbone report/i }));
+
+    const textarea = await screen.findByLabelText("Greenbone XML");
+    fireEvent.change(textarea, {
+      target: { value: "<report></report>" },
+    });
+    await user.click(screen.getByLabelText(/save the scan-report evidence/i));
+
+    await user.click(
+      screen.getByRole("button", { name: /ingest greenbone scan/i }),
+    );
+
+    await waitFor(() => expect(collectGreenboneMock).toHaveBeenCalledTimes(1));
+    expect(collectGreenboneMock).toHaveBeenCalledWith({
+      content: "<report></report>",
+      save_evidence: false,
     });
   });
 

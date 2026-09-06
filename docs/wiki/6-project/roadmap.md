@@ -317,7 +317,7 @@ shipped in v0.11.0 carry the ratified disposition above.
   controls covering the AI-assisted-code-production subset of NIST
   SP 800-218A (vs the broader AI-model-development scope). Pair
   with `docs/ai-coding-policy.md` template (CLAUDE.md /
-  .cursorrules / copilot-instructions.md skeleton ready for clients
+  copilot-instructions.md skeleton ready for clients
   to fork). Strong dogfood narrative: Evidentia uses Claude Code to
   develop itself.
 - **AI-governance crosswalk enrichment** 4-phase: (Phase 1) ISO

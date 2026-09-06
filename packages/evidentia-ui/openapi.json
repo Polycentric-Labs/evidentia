@@ -64,6 +64,7 @@
             "description": "Operator-facing name for the procurement.",
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Name",
             "type": "string"
           },
@@ -302,6 +303,7 @@
             "description": "Responsible person or team within operator org.",
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Owner",
             "type": "string"
           },
@@ -309,6 +311,7 @@
             "description": "Who built or supplies the AI system (vendor name, in-house team name, or 'self-built').",
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Provider",
             "type": "string"
           },
@@ -373,6 +376,7 @@
             "description": "Name + title of the Authorizing Official (AO) who issued the ATO. Free-form to accommodate org-specific title conventions.",
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Authorizing Official",
             "type": "string"
           },
@@ -406,6 +410,7 @@
             "description": "System name as recorded in the SSP / ATO letter.",
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "System Name",
             "type": "string"
           }
@@ -615,6 +620,82 @@
         ],
         "title": "AnnexIIIDomain",
         "type": "string"
+      },
+      "CadenceSeries": {
+        "additionalProperties": false,
+        "description": "The dated series for one cadence over a window, with its verdict.",
+        "properties": {
+          "frequency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frequency"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesGap"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "interval_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interval Days"
+          },
+          "observations": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesObservation"
+            },
+            "title": "Observations",
+            "type": "array"
+          },
+          "slug": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Slug",
+            "type": "string"
+          },
+          "tolerance_days": {
+            "minimum": 0.0,
+            "title": "Tolerance Days",
+            "type": "integer"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/SeriesVerdict"
+          },
+          "window_end": {
+            "format": "date-time",
+            "title": "Window End",
+            "type": "string"
+          },
+          "window_start": {
+            "format": "date-time",
+            "title": "Window Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "window_start",
+          "window_end",
+          "tolerance_days",
+          "verdict"
+        ],
+        "title": "CadenceSeries",
+        "type": "object"
       },
       "CatalogControl": {
         "additionalProperties": false,
@@ -843,6 +924,7 @@
             "description": "Raw catalog document (JSON or YAML text).",
             "maxLength": 20000000,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Content",
             "type": "string"
           },
@@ -942,6 +1024,17 @@
             "title": "Next Due",
             "type": "string"
           },
+          "series": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Series"
+          },
           "slug": {
             "title": "Slug",
             "type": "string"
@@ -991,7 +1084,7 @@
               "$ref": "#/components/schemas/CheckEntry"
             },
             "maxItems": 100,
-            "minItems": 1,
+            "minItems": 0,
             "title": "Entries",
             "type": "array"
           },
@@ -1007,6 +1100,12 @@
             ],
             "description": "Override 'today' for deterministic snapshots. Omit for real-time checks.",
             "title": "Today"
+          },
+          "use_evidence_store": {
+            "default": false,
+            "description": "Read the server's configured evidence store: a cadence absent from entries takes the date of its latest artifact (metadata.cadence_slug) and every row gains a series verdict over the last 365 days.",
+            "title": "Use Evidence Store",
+            "type": "boolean"
           },
           "window_days": {
             "default": 14,
@@ -1139,6 +1238,128 @@
           "source_system_id"
         ],
         "title": "CollectionContext",
+        "type": "object"
+      },
+      "CollectionManifest": {
+        "additionalProperties": false,
+        "description": "Per-run manifest attesting to collection scope and completeness.\n\nImplements checklist item B5 (completeness attestation). One\nmanifest per collection run is attached to the OSCAL Assessment\nResults document's ``metadata.props`` and optionally written as a\nsibling ``<output>.manifest.json`` for standalone inspection.\n\nThe manifest is signed using the same signing pipeline as the AR\nitself. A verified manifest establishes:\n\n1. Which source systems were scanned.\n2. Which filters were applied.\n3. How many resources of each type were examined.\n4. Whether any categories were intentionally empty.\n5. Whether any errors truncated collection (``is_complete=False``).",
+        "properties": {
+          "collection_finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "UTC timestamp when the collector finished. None while still in progress.",
+            "title": "Collection Finished At"
+          },
+          "collection_started_at": {
+            "description": "UTC timestamp when the collector began this run",
+            "format": "date-time",
+            "title": "Collection Started At",
+            "type": "string"
+          },
+          "collector_id": {
+            "title": "Collector Id",
+            "type": "string"
+          },
+          "collector_version": {
+            "title": "Collector Version",
+            "type": "string"
+          },
+          "coverage_counts": {
+            "description": "Per-resource-type scan/match/collect counts",
+            "items": {
+              "$ref": "#/components/schemas/CoverageCount"
+            },
+            "title": "Coverage Counts",
+            "type": "array"
+          },
+          "empty_categories": {
+            "description": "Resource types explicitly scanned but yielding zero findings. Per checklist B5: an auditor cannot distinguish 'no findings' (legitimate) from 'collector skipped' (evidence gap) without this explicit attestation.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Empty Categories",
+            "type": "array"
+          },
+          "errors": {
+            "description": "Fatal errors that caused specific resources to be skipped but didn't abort the run. Non-empty plus is_complete=True means 'partial success'.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "evidentia_version": {
+            "description": "Version of evidentia-core that wrote this manifest",
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "filters_applied": {
+            "additionalProperties": true,
+            "description": "Run-level filters. Empty dict means 'no filter'.",
+            "title": "Filters Applied",
+            "type": "object"
+          },
+          "incomplete_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Human-readable reason the run didn't complete. MUST be populated when ``is_complete=False``.",
+            "title": "Incomplete Reason"
+          },
+          "is_complete": {
+            "default": true,
+            "description": "False if any collection error, truncation, or pagination abort occurred. Auditors treat incomplete runs as evidence gaps.",
+            "title": "Is Complete",
+            "type": "boolean"
+          },
+          "run_id": {
+            "description": "ULID matching CollectionContext.run_id on every finding produced by this run. Join key for findings↔manifest.",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "source_system_ids": {
+            "description": "All source_system_ids covered in this run",
+            "items": {
+              "type": "string"
+            },
+            "title": "Source System Ids",
+            "type": "array"
+          },
+          "total_findings": {
+            "default": 0,
+            "description": "Sum of findings emitted from this run",
+            "minimum": 0.0,
+            "title": "Total Findings",
+            "type": "integer"
+          },
+          "warnings": {
+            "description": "Non-fatal issues encountered during collection — rate-limit backoffs, skipped resources, blind-spot disclosures.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id",
+          "collector_id",
+          "collector_version",
+          "collection_started_at"
+        ],
+        "title": "CollectionManifest",
         "type": "object"
       },
       "ComplianceStatus": {
@@ -1663,6 +1884,43 @@
           "threat_framework"
         ],
         "title": "ControlThreatMapping",
+        "type": "object"
+      },
+      "CoverageCount": {
+        "additionalProperties": false,
+        "description": "One resource-type's scan/match/collect counts within a run.",
+        "properties": {
+          "collected": {
+            "description": "Findings actually produced from this resource type. May be < matched_filter if some matched resources yielded no findings.",
+            "minimum": 0.0,
+            "title": "Collected",
+            "type": "integer"
+          },
+          "matched_filter": {
+            "description": "Resources passing the collector's filter criteria",
+            "minimum": 0.0,
+            "title": "Matched Filter",
+            "type": "integer"
+          },
+          "resource_type": {
+            "description": "Source-system resource category. Examples: 'aws-iam-role', 'aws-iam-user', 'github-dependabot-alert'.",
+            "title": "Resource Type",
+            "type": "string"
+          },
+          "scanned": {
+            "description": "Total resources enumerated (before filtering)",
+            "minimum": 0.0,
+            "title": "Scanned",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "resource_type",
+          "scanned",
+          "matched_filter",
+          "collected"
+        ],
+        "title": "CoverageCount",
         "type": "object"
       },
       "CriticalityTier": {
@@ -3184,6 +3442,56 @@
         "title": "GapStatus",
         "type": "string"
       },
+      "GreenboneCollectResponse": {
+        "description": "Response body of ``POST /collectors/greenbone/collect``.",
+        "properties": {
+          "evidence": {
+            "$ref": "#/components/schemas/GreenboneEvidenceResult"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/SecurityFinding"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "manifest": {
+            "$ref": "#/components/schemas/CollectionManifest"
+          }
+        },
+        "required": [
+          "findings",
+          "manifest",
+          "evidence"
+        ],
+        "title": "GreenboneCollectResponse",
+        "type": "object"
+      },
+      "GreenboneEvidenceResult": {
+        "description": "The ``evidence`` block of :class:`GreenboneCollectResponse`.",
+        "properties": {
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "lineage_id": {
+            "title": "Lineage Id",
+            "type": "string"
+          },
+          "saved": {
+            "title": "Saved",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "lineage_id",
+          "saved",
+          "collected_at"
+        ],
+        "title": "GreenboneEvidenceResult",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -3233,6 +3541,12 @@
             ],
             "description": "Override 'today' for deterministic snapshots. Omit for real-time reports.",
             "title": "Today"
+          },
+          "use_evidence_store": {
+            "default": false,
+            "description": "Read the server's configured evidence store: a cadence absent from state takes the date of its latest artifact (metadata.cadence_slug).",
+            "title": "Use Evidence Store",
+            "type": "boolean"
           },
           "window_days": {
             "default": 14,
@@ -3685,6 +3999,7 @@
           "slug": {
             "description": "Cadence slug (e.g., 'nist-800-53-rev5-ca7').",
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Slug",
             "type": "string"
           },
@@ -3970,6 +4285,7 @@
             "description": "Human-readable milestone description. What the operator is committing to deliver. Auditors read this verbatim from the OSCAL POA&M emit; it should stand alone without the surrounding gap context.",
             "maxLength": 2048,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Description",
             "type": "string"
           },
@@ -4049,6 +4365,7 @@
             "description": "Milestone description.",
             "maxLength": 2048,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Description",
             "type": "string"
           },
@@ -4454,6 +4771,56 @@
         "title": "NISTAIRMFFunction",
         "type": "string"
       },
+      "NessusCollectResponse": {
+        "description": "Response body of ``POST /collectors/nessus/collect``.",
+        "properties": {
+          "evidence": {
+            "$ref": "#/components/schemas/NessusEvidenceResult"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/SecurityFinding"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "manifest": {
+            "$ref": "#/components/schemas/CollectionManifest"
+          }
+        },
+        "required": [
+          "findings",
+          "manifest",
+          "evidence"
+        ],
+        "title": "NessusCollectResponse",
+        "type": "object"
+      },
+      "NessusEvidenceResult": {
+        "description": "The ``evidence`` block of :class:`NessusCollectResponse`.",
+        "properties": {
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "lineage_id": {
+            "title": "Lineage Id",
+            "type": "string"
+          },
+          "saved": {
+            "title": "Saved",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "lineage_id",
+          "saved",
+          "collected_at"
+        ],
+        "title": "NessusEvidenceResult",
+        "type": "object"
+      },
       "NextDueRequest": {
         "properties": {
           "last_completed": {
@@ -4465,6 +4832,7 @@
           "slug": {
             "description": "Cadence slug (e.g., 'nist-800-53-rev5-ca7').",
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Slug",
             "type": "string"
           }
@@ -5257,6 +5625,7 @@
           "name": {
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Name",
             "type": "string"
           },
@@ -5322,12 +5691,14 @@
           "owner": {
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Owner",
             "type": "string"
           },
           "provider": {
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Provider",
             "type": "string"
           }
@@ -5858,6 +6229,174 @@
         "title": "SecurityFinding",
         "type": "object"
       },
+      "SeriesGap": {
+        "additionalProperties": false,
+        "description": "A spacing that exceeded the allowed interval.",
+        "properties": {
+          "after": {
+            "description": "Start of the gap: an observation, or the window start.",
+            "format": "date-time",
+            "title": "After",
+            "type": "string"
+          },
+          "allowed_days": {
+            "description": "Interval plus tolerance.",
+            "minimum": 0.0,
+            "title": "Allowed Days",
+            "type": "integer"
+          },
+          "before": {
+            "description": "End of the gap: the next observation, or the window end.",
+            "format": "date-time",
+            "title": "Before",
+            "type": "string"
+          },
+          "boundary": {
+            "default": false,
+            "description": "True when one side of the gap is a window edge.",
+            "title": "Boundary",
+            "type": "boolean"
+          },
+          "days": {
+            "description": "Whole days between the two instants.",
+            "minimum": 0.0,
+            "title": "Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "after",
+          "before",
+          "days",
+          "allowed_days"
+        ],
+        "title": "SeriesGap",
+        "type": "object"
+      },
+      "SeriesObservation": {
+        "additionalProperties": false,
+        "description": "One artifact version that counts towards the series.",
+        "properties": {
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "lineage_id": {
+            "title": "Lineage Id",
+            "type": "string"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "collected_at",
+          "lineage_id",
+          "version",
+          "source_system"
+        ],
+        "title": "SeriesObservation",
+        "type": "object"
+      },
+      "SeriesRequest": {
+        "properties": {
+          "lookback_days": {
+            "default": 365,
+            "description": "Look-back window in days, used to fill any bound 'since' / 'until' don't supply. Default 365.",
+            "maximum": 3660.0,
+            "minimum": 1.0,
+            "title": "Lookback Days",
+            "type": "integer"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Window start. When both 'since' and 'until' are omitted, the window is the last 'lookback_days' days ending today. When only one of the two is given, the other is filled from that same default window (not derived from the given bound).",
+            "title": "Since"
+          },
+          "slug": {
+            "description": "Cadence slug (e.g., 'pci-dss-11-6-1-weekly').",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Slug",
+            "type": "string"
+          },
+          "tolerance_days": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Grace period (days) added to the cadence's interval before a spacing counts as a gap. Omit for the cadence-appropriate default.",
+            "title": "Tolerance Days"
+          },
+          "until": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Window end. See 'since' for the fill rule.",
+            "title": "Until"
+          }
+        },
+        "required": [
+          "slug"
+        ],
+        "title": "SeriesRequest",
+        "type": "object"
+      },
+      "SeriesResponse": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "series": {
+            "$ref": "#/components/schemas/CadenceSeries"
+          }
+        },
+        "required": [
+          "series",
+          "description"
+        ],
+        "title": "SeriesResponse",
+        "type": "object"
+      },
+      "SeriesVerdict": {
+        "description": "What the dated series shows for the window.",
+        "enum": [
+          "continuous",
+          "gapped",
+          "insufficient",
+          "unknown"
+        ],
+        "title": "SeriesVerdict",
+        "type": "string"
+      },
       "SetAcquisitionPhaseRequest": {
         "description": "Body for ``POST /ai-gov/acquisitions/{acquisition_id}/set-phase``.",
         "properties": {
@@ -6211,6 +6750,7 @@
               {
                 "maxLength": 256,
                 "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                 "type": "string"
               },
               {
@@ -6224,6 +6764,7 @@
               {
                 "maxLength": 256,
                 "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                 "type": "string"
               },
               {
@@ -6686,6 +7227,7 @@
             "description": "The OSCAL Assessment Result document, inline, as a JSON string. NOT a filesystem path — the server writes this to a private temp file, verifies it, and deletes it. Bounded at ~8 MB so an oversized body is rejected (422) before any disk write, independent of any reverse-proxy body limit.",
             "maxLength": 8000000,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Content",
             "type": "string"
           },
@@ -6863,6 +7405,7 @@
           "actor": {
             "description": "Actor identity (typically email).",
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Actor",
             "type": "string"
           },
@@ -8914,6 +9457,134 @@
         ]
       }
     },
+    "/api/collectors/greenbone/collect": {
+      "post": {
+        "description": "Ingest a Greenbone GMP report XML export (v0.13 V13-05).\n\nMirrors the ``evidentia collect greenbone`` CLI verb. Request body:\n\n- ``content`` (required): the GMP ``<report>`` XML text (either the\n  wrapping document or a bare inner ``<report>``).\n  No path and no URL: the server never reads a client-named file.\n  This is a text-upload ingest only.\n- ``cadence_slug`` (optional): defaults to ``fedramp-conmon-scans``.\n  Must name a registered cadence.\n- ``save_evidence`` (optional): bool, default True. Persists the\n  scan-report ``EvidenceArtifact`` to the server's own configured\n  evidence store\n  (:func:`evidentia_core.evidence_store.get_evidence_store_dir`).\n- ``description_max_chars`` (optional): int, default 4000.\n\nNO credentials: file/text ingest only, mirroring the OCSF inline-\n``content`` mode's trust posture. Third-party XML is parsed with\n``defusedxml``; entity expansion and external references are\nrefused before any element is read.",
+        "operationId": "greenbone_collect_api_collectors_greenbone_collect_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Payload",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GreenboneCollectResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing/non-string ``content``, malformed XML, a refused entity construct, wrong root element, oversized content (over 50 MB), or an unknown ``cadence_slug`` (``error: invalid_body``)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Optional ``scan`` extra not installed (``error: feature_unavailable``)."
+          }
+        },
+        "summary": "Greenbone Collect",
+        "tags": [
+          "collectors"
+        ]
+      }
+    },
+    "/api/collectors/nessus/collect": {
+      "post": {
+        "description": "Ingest a Nessus v2 XML scan export (v0.13 V13-05).\n\nMirrors the ``evidentia collect nessus`` CLI verb. Request body:\n\n- ``content`` (required): the ``<NessusClientData_v2>`` XML text.\n  No path and no URL: the server never reads a client-named file;\n  this is a text-upload ingest only.\n- ``cadence_slug`` (optional): defaults to ``fedramp-conmon-scans``.\n  Must name a registered cadence.\n- ``save_evidence`` (optional): bool, default True. Persists the\n  scan-report ``EvidenceArtifact`` to the server's own configured\n  evidence store\n  (:func:`evidentia_core.evidence_store.get_evidence_store_dir`).\n- ``plugin_output_max_chars`` (optional): int, default 4000.\n\nNO credentials: file/text ingest only, mirroring the OCSF inline-\n``content`` mode's trust posture. Third-party XML is parsed with\n``defusedxml``: entity expansion and external references are\nrefused before any element is read.",
+        "operationId": "nessus_collect_api_collectors_nessus_collect_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Payload",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NessusCollectResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing/non-string ``content``, malformed XML, a refused entity construct, wrong root element, oversized content (over 50 MB), or an unknown ``cadence_slug`` (``error: invalid_body``)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Optional ``scan`` extra not installed (``error: feature_unavailable``)."
+          }
+        },
+        "summary": "Nessus Collect",
+        "tags": [
+          "collectors"
+        ]
+      }
+    },
     "/api/collectors/ocsf/collect": {
       "post": {
         "description": "Ingest OCSF Compliance / Detection Finding JSON (v0.10.12).\n\nMirrors the ``evidentia collect ocsf`` CLI verb. Two mutually-\nexclusive input modes:\n\n- ``content``: inline OCSF JSON — either a single OCSF finding\n  object or a JSON list of them. Local-only, no network.\n- ``url``: an ``https://`` URL the OCSF JSON is fetched from.\n\nOptional:\n\n- ``block_private_ips``: bool (default True). URL mode only.\n  SECURE-BY-DEFAULT (threat-model T2) — the URL's host is\n  pre-resolved through the shared SSRF chokepoint\n  (:func:`evidentia_core.network_guard.enforce_public_host`, via\n  :func:`evidentia_collectors.ocsf.collect_ocsf_url`) and refused\n  if it resolves to a private / loopback / link-local / metadata /\n  multicast / reserved address BEFORE any socket opens. Callers\n  ingesting from a trusted internal endpoint must explicitly send\n  ``{\"block_private_ips\": false}`` — the deliberate opt-out\n  mirroring the CLI's ``--allow-private-ips`` flag.\n\nNO credentials: OCSF ingest is file/URL only — the request body\nNEVER carries a secret. Third-party OCSF input is trust-boundary\naware (``trust_unmapped=False``) so a forged ``unmapped`` block\ncannot control Evidentia-native fields.\n\nReturns the ingested ``list[SecurityFinding]``. 400 on bad content\n/ URL (malformed JSON, unsupported class_uid, non-HTTPS URL, SSRF\nrefusal, fetch failure); 503 if the optional ``ocsf`` extra isn't\ninstalled (mirrors the aws/github import-guard pattern).",
@@ -10288,6 +10959,68 @@
           }
         },
         "summary": "Compute Next Due",
+        "tags": [
+          "conmon"
+        ]
+      }
+    },
+    "/api/conmon/series": {
+      "post": {
+        "description": "Assert the cadence evidence series for a slug over a window.\n\nReads the server's own configured evidence store\n(:func:`evidentia_core.evidence_store.get_evidence_store_dir`,\nhonoring ``EVIDENTIA_EVIDENCE_STORE_DIR``; the request never carries\na filesystem path, for the same reason no other router here accepts\na client-supplied path) for artifacts whose ``metadata.cadence_slug``\nmatches ``slug`` inside the resolved window, then asserts the dated\nseries (:func:`evidentia_core.conmon.series.assert_series`). A\ngap-free series is evidence of cadence and nothing more.",
+        "operationId": "assert_conmon_series_api_conmon_series_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeriesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "`until` precedes `since` (``error: invalid_window``)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown cadence ``slug`` (``error: not_found``)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Assert Conmon Series",
         "tags": [
           "conmon"
         ]

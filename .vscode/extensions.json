@@ -1,7 +1,7 @@
 {
   // Recommended extensions for Evidentia development. VS Code prompts
-  // contributors to install these on first open. Cursor reads the same
-  // file. See docs/ide-setup.md for the rationale per extension.
+  // contributors to install these on first open. See docs/ide-setup.md
+  // for the rationale per extension.
   "recommendations": [
     // Core Python
     "ms-python.python",

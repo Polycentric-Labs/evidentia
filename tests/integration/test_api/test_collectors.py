@@ -532,6 +532,8 @@ def test_collectors_error_statuses_documented_in_openapi(
             ["400", "500", "503"],
         ),
         ("/api/collectors/ocsf/collect", "post", ["400", "503"]),
+        ("/api/collectors/nessus/collect", "post", ["400", "503"]),
+        ("/api/collectors/greenbone/collect", "post", ["400", "503"]),
         ("/api/collectors/convert", "post", ["400", "503"]),
     ]
     for path, method, statuses in expected:

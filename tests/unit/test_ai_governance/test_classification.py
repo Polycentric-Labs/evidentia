@@ -151,35 +151,31 @@ class TestNonBlankPatternMatchesRuntimeStrip:
     def test_pattern_rejects_every_python_whitespace_code_point(self) -> None:
         import re
 
-        from evidentia_core.ai_governance.classification import _NON_BLANK_PATTERN
+        from evidentia_core.models.common import NON_BLANK_PATTERN
 
         leaked = [
             hex(cp) for cp in range(0x110000)
-            if chr(cp).isspace() and re.search(_NON_BLANK_PATTERN, chr(cp))
+            if chr(cp).isspace() and re.search(NON_BLANK_PATTERN, chr(cp))
         ]
         assert leaked == [], f"whitespace code points the pattern admits: {leaked}"
-        assert re.search(_NON_BLANK_PATTERN, "a")
-        assert re.search(_NON_BLANK_PATTERN, "\u00a0x\u00a0")
+        assert re.search(NON_BLANK_PATTERN, "a")
+        assert re.search(NON_BLANK_PATTERN, "\u00a0x\u00a0")
 
     def test_published_schema_carries_the_pattern(self) -> None:
-        from evidentia_core.ai_governance.classification import (
-            _NON_BLANK_PATTERN,
-            AISystemDescriptor,
-        )
+        from evidentia_core.ai_governance.classification import AISystemDescriptor
+        from evidentia_core.models.common import NON_BLANK_PATTERN
 
         props = AISystemDescriptor.model_json_schema()["properties"]
-        assert props["name"]["pattern"] == _NON_BLANK_PATTERN
-        assert props["purpose"]["pattern"] == _NON_BLANK_PATTERN
+        assert props["name"]["pattern"] == NON_BLANK_PATTERN
+        assert props["purpose"]["pattern"] == NON_BLANK_PATTERN
 
     def test_nbsp_only_name_is_rejected_by_runtime_and_schema_alike(self) -> None:
         import re
 
         import pytest
-        from evidentia_core.ai_governance.classification import (
-            _NON_BLANK_PATTERN,
-            AISystemDescriptor,
-        )
+        from evidentia_core.ai_governance.classification import AISystemDescriptor
+        from evidentia_core.models.common import NON_BLANK_PATTERN
 
-        assert re.search(_NON_BLANK_PATTERN, "\u00a0") is None
+        assert re.search(NON_BLANK_PATTERN, "\u00a0") is None
         with pytest.raises(ValueError):
             AISystemDescriptor(name="\u00a0", purpose="valid purpose")
