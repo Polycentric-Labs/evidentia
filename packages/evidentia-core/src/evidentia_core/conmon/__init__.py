@@ -31,6 +31,15 @@ Bundled cadences (v0.9.0 P3 baseline; operator-extensible via
 - ``cmmc-l2-triennial``         — triennial reassessment
 - ``dod-rmf-annual``            — annual control assessment
 - ``occ-2026-13-model-risk``    — annual model-risk review
+- ``pci-dss-11-6-1-weekly``: weekly (PCI DSS v4.0.1 11.6.1), v0.13
+- ``nerc-cip-007-r2-patch-evaluation``: every 35 days (NERC CIP-007-6 R2), v0.13
+- ``irs-pub-1345-weekly-asv-scan``: weekly ASV scan (IRS Pub 1345), v0.13
+- ``glba-314-4-d-semiannual-vulnerability-assessment``: semiannual, v0.13
+- ``glba-314-4-d-annual-penetration-test``: annual (16 CFR 314.4(d)(2)(i)), v0.13
+
+The v0.13 cadence evidence series (:mod:`evidentia_core.conmon.series`) reads
+the evidence store and judges a dated series continuous, gapped, insufficient
+or unknown; see docs/designs/cadence-assertion-layer-design.md.
 
 Pure functions; no I/O; no persistence side-effects. Audit-trail
 emit (``EventAction.CONMON_CYCLE_DUE`` /

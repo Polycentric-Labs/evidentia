@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Cadence evidence series (V13-01).** `evidentia conmon series <slug>` reads the
+  evidence store, builds the dated series of artifacts linked to a cadence through
+  `metadata.cadence_slug`, and judges it `continuous`, `gapped`, `insufficient` or
+  `unknown` over a look-back window (default twelve months), with per-kind tolerance
+  and boundary gaps at both window edges. `--emit-findings` writes a finding for a
+  gapped or insufficient series (id deterministic in slug and window). The same
+  result is served by `POST /api/conmon/series` and the `conmon_series` MCP tool.
+  Wording rule enforced in code: the description never claims compliance; a
+  gap-free series is evidence of cadence and nothing more.
+- **Day-granular cadences.** `CadenceFrequency` gains `weekly`, `biweekly`,
+  `semiannual` and `custom`; `ConmonCadence.interval_days` carries the interval of a
+  custom cadence (35 days for NERC CIP-007 R2). Five bundled cadences join the set:
+  `pci-dss-11-6-1-weekly`, `nerc-cip-007-r2-patch-evaluation`,
+  `irs-pub-1345-weekly-asv-scan`, `glba-314-4-d-semiannual-vulnerability-assessment`
+  and `glba-314-4-d-annual-penetration-test`.
+- **`evidence_store.iter_artifacts`**, the filtered walk (time window, source system,
+  metadata equality) the series reads; linear over the store, no index yet.
+
 ### Changed
 
 - **Whitespace-only text is rejected at the API boundary with the standard 422** on
