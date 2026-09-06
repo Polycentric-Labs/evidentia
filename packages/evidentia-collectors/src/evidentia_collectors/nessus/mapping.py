@@ -44,7 +44,7 @@ def _m(control_id: str, justification: str) -> ControlMapping:
 
 
 # Attached to every emitted SecurityFinding and to the scan-report
-# EvidenceArtifact itself — a vulnerability scan is evidence toward both
+# EvidenceArtifact itself: a vulnerability scan is evidence toward both
 # controls regardless of any single finding's severity.
 VULNERABILITY_SCAN_MAPPINGS: list[ControlMapping] = [
     _m("RA-5", "vulnerability scan output"),

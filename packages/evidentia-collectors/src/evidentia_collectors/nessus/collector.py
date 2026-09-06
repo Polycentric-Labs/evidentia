@@ -1,8 +1,8 @@
 """Nessus v2 XML scan-export ingestion (v0.13 V13-05 first half).
 
-Parses a Nessus v2 (``.nessus``) scan-export XML document — the file
+Parses a Nessus v2 (``.nessus``) scan-export XML document, the file
 Nessus Essentials / Professional / Tenable.sc write when you export a
-scan — into ``SecurityFinding`` records, a ``CollectionManifest``, and
+scan, into ``SecurityFinding`` records, a ``CollectionManifest``, and
 one scan-report ``EvidenceArtifact`` that feeds ``evidentia conmon
 series``. No network access: the input is always a local file or an
 already-in-memory XML string, matching the design's "free and
@@ -18,8 +18,8 @@ read; input is capped at 50 MB, mirroring the OCSF ingest's own cap
 Trust boundary: a Nessus export is third-party input (the scanner, not
 Evidentia, produced it). Every ``SecurityFinding`` this module emits
 gets its ``id`` from :func:`evidentia_core.models.common.
-deterministic_finding_id` via ``source_system`` + ``source_finding_id``
-— the collector never sets ``id`` directly, so nothing in the XML can
+deterministic_finding_id` via ``source_system`` + ``source_finding_id``;
+the collector never sets ``id`` directly, so nothing in the XML can
 forge a finding identity (see ``docs/collector-idempotency-audit.md``
 section 4).
 """
@@ -33,8 +33,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import defusedxml.ElementTree as DefusedET
-from defusedxml.common import DefusedXmlException
 from evidentia_core.audit import (
     CollectionContext,
     CollectionManifest,
@@ -46,6 +44,7 @@ from evidentia_core.models.common import current_version, utc_now
 from evidentia_core.models.evidence import EvidenceArtifact, EvidenceType
 from evidentia_core.models.finding import SecurityFinding
 
+from evidentia_collectors._xml import parse_defused_xml
 from evidentia_collectors.nessus.mapping import (
     VULNERABILITY_SCAN_MAPPINGS,
     nessus_severity_to_severity,
@@ -68,7 +67,7 @@ COLLECTOR_ID = "nessus-file"
 
 # The bundled cadence a scan-report artifact is assumed to satisfy when the
 # caller doesn't name one. A real, registered cadence (evidentia_core.conmon
-# .calendar.BUNDLED_CADENCES) — FedRAMP ConMon monthly vulnerability scans.
+# .calendar.BUNDLED_CADENCES). FedRAMP ConMon monthly vulnerability scans.
 DEFAULT_CADENCE_SLUG = "fedramp-conmon-scans"
 
 # Mirrors the OCSF ingest's 50 MB cap (evidentia_collectors.ocsf.collector).
@@ -77,7 +76,7 @@ DEFAULT_CADENCE_SLUG = "fedramp-conmon-scans"
 _MAX_INPUT_BYTES = 50 * 1024 * 1024
 
 # Nessus writes HOST_START / HOST_END as ctime()-style strings, e.g.
-# "Tue Sep  1 10:22:31 2026" — note the double space before a single-digit
+# "Tue Sep  1 10:22:31 2026": note the double space before a single-digit
 # day. Collapsing repeated whitespace before strptime handles that padding
 # without a custom format string per day-of-month width.
 _TIMESTAMP_FORMAT = "%a %b %d %H:%M:%S %Y"
@@ -93,7 +92,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
             "installed packages, local patch levels, or configuration "
             "files the way a credentialed (authenticated) scan can. The "
             "export carries no marker distinguishing which mode produced "
-            "it — operators should track scan-policy configuration "
+            "it: operators should track scan-policy configuration "
             "out of band."
         ),
     },
@@ -104,7 +103,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
             "The export contains exactly the hosts the scan policy "
             "targeted. A host that exists on the network but was never "
             "in scope produces no ReportHost entry and is silently "
-            "absent from both the findings and the coverage counts — "
+            "absent from both the findings and the coverage counts; "
             "this ingest cannot detect an under-scoped target list."
         ),
     },
@@ -115,7 +114,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
             "Nessus v2 XML does not carry the plugin feed's publish or "
             "sync date. A scan run against a months-stale plugin feed "
             "looks identical, on the wire, to one run the day a plugin "
-            "shipped — operators should verify feed currency in the "
+            "shipped: operators should verify feed currency in the "
             "scanner itself, not from this export."
         ),
     },
@@ -147,11 +146,11 @@ class NessusIngestError(RuntimeError):
 
 @dataclass(frozen=True)
 class NessusHost:
-    """One ``<ReportHost>`` — its name, resolved IP, and scan timestamps.
+    """One ``<ReportHost>``: its name, resolved IP, and scan timestamps.
 
     ``host_start`` / ``host_end`` are ``None`` when the ``HOST_START`` /
     ``HOST_END`` tag was absent or failed to parse (see
-    :func:`_parse_nessus_timestamp`) — the caller decides the fallback,
+    :func:`_parse_nessus_timestamp`): the caller decides the fallback,
     keeping this parse step pure and independently testable.
     """
 
@@ -163,7 +162,7 @@ class NessusHost:
 
 @dataclass(frozen=True)
 class NessusReportItem:
-    """One ``<ReportItem>`` — a single plugin result against one host."""
+    """One ``<ReportItem>``: a single plugin result against one host."""
 
     host_name: str
     host_ip: str | None
@@ -206,7 +205,7 @@ def _parse_nessus_timestamp(raw: str | None) -> datetime | None:
     ``"Tue Sep  1 10:22:31 2026"`` (a double space pads a single-digit
     day). Collapsing repeated whitespace before ``strptime`` absorbs
     that padding. Returns ``None`` (never raises) when ``raw`` is
-    empty/``None`` or doesn't match — the caller supplies the
+    empty/``None`` or doesn't match; the caller supplies the
     now/warning fallback.
     """
     if raw is None:
@@ -234,17 +233,12 @@ def parse_nessus(xml_bytes: bytes) -> ParsedScan:
 
     Uses ``defusedxml.ElementTree`` so a DOCTYPE with an ``<!ENTITY``
     declaration or an external (SYSTEM/PUBLIC) reference raises before
-    any element is read — refusing XXE and entity-expansion (billion-
+    any element is read: refusing XXE and entity-expansion (billion-
     laughs) payloads. Raises :class:`NessusIngestError` on any parse
     failure, a refused construct, or a root element other than
     ``NessusClientData_v2``.
     """
-    try:
-        root = DefusedET.fromstring(xml_bytes)
-    except DefusedXmlException as exc:
-        raise NessusIngestError(f"refused an unsafe XML construct (entity/external-reference): {exc}") from exc
-    except ET.ParseError as exc:
-        raise NessusIngestError(f"not valid XML: {exc}") from exc
+    root = parse_defused_xml(xml_bytes, error_cls=NessusIngestError)
 
     if root.tag != "NessusClientData_v2":
         raise NessusIngestError(f"unsupported root element {root.tag!r}; expected 'NessusClientData_v2'")
@@ -336,7 +330,7 @@ def _build_finding(
 ) -> SecurityFinding:
     """Map one :class:`NessusReportItem` to a :class:`SecurityFinding`.
 
-    ``id`` is never set directly — ``source_system`` + ``source_finding_id``
+    ``id`` is never set directly: ``source_system`` + ``source_finding_id``
     drive :func:`evidentia_core.models.common.deterministic_finding_id` via
     the model's own ``@model_validator``, so re-ingesting an unchanged
     export reproduces the same finding identities.
@@ -392,7 +386,7 @@ def _collect_from_bytes(
     )
 
     # Per-host resolved collected_at: the host's own HOST_END when parseable,
-    # else `now` — every finding on that host shares its host's timestamp.
+    # else `now`: every finding on that host shares its host's timestamp.
     resolved_host_end: dict[str, datetime] = {
         host.name: (host.host_end if host.host_end is not None else now) for host in parsed.hosts
     }
@@ -493,7 +487,7 @@ def collect_nessus_file(
 ) -> tuple[list[SecurityFinding], CollectionManifest, EvidenceArtifact]:
     """Read a Nessus v2 ``.nessus`` XML file and convert it.
 
-    Returns ``(findings, manifest, artifact)`` — see the module
+    Returns ``(findings, manifest, artifact)``: see the module
     docstring. Raises :class:`NessusIngestError` on an unreadable file,
     an oversized file (over 50 MB), or any parse/mapping failure.
     """

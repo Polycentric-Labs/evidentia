@@ -1,13 +1,13 @@
 """Nessus v2 XML scan-export ingestion collector (v0.13 V13-05).
 
-Reads a Nessus v2 (``.nessus``) scan-export — the file Nessus
-Essentials / Professional / Tenable.sc write on export — from a file
+Reads a Nessus v2 (``.nessus``) scan-export, the file Nessus
+Essentials / Professional / Tenable.sc write on export; from a file
 or an in-memory XML string and returns ``(list[SecurityFinding],
 CollectionManifest, EvidenceArtifact)``. The artifact feeds
 ``evidentia conmon series`` via ``metadata["cadence_slug"]``.
 
 No network access: this is a file-ingest collector, not a
-credentialed API poller. XML is parsed with ``defusedxml`` — entity
+credentialed API poller. XML is parsed with ``defusedxml``: entity
 expansion and external references are refused before any element is
 read.
 

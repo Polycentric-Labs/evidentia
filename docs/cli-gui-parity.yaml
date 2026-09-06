@@ -360,6 +360,10 @@ commands:
     api: "POST /api/collectors/nessus/collect"
     gui: "/collect"
     status: full
+  - cli: "collect greenbone"
+    api: "POST /api/collectors/greenbone/collect"
+    gui: "/collect"
+    status: full
   - cli: "collect convert"
     api: "POST /api/collectors/convert"
     gui: "/collect"

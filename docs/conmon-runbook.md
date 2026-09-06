@@ -320,10 +320,11 @@ evidence store from `EVIDENTIA_EVIDENCE_STORE_DIR` (the request never
 carries a filesystem path). MCP parity: the `conmon_series` tool
 returns the identical shape.
 
-**Where the evidence comes from.** `evidentia collect nessus` (v0.13
-V13-05) is the first collector that writes an `EvidenceArtifact` a series
-can read — see [vuln-scan-collectors.md](vuln-scan-collectors.md) for the
-Nessus ingest's mapping table, blind spots, and security notes.
+**Where the evidence comes from.** `evidentia collect nessus` and
+`evidentia collect greenbone` (v0.13 V13-05) are the first collectors that
+write an `EvidenceArtifact` a series can read. See
+[vuln-scan-collectors.md](vuln-scan-collectors.md) for both ingests'
+mapping tables, blind spots, and security notes.
 
 ### Filling the state file from the evidence store
 

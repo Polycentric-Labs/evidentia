@@ -1314,7 +1314,7 @@ def collect_nessus(
         help=(
             "Cadence slug the saved evidence artifact declares via "
             "metadata.cadence_slug (evidentia conmon series reads it). "
-            "Must name a registered cadence — run `evidentia conmon list` "
+            "Must name a registered cadence; run `evidentia conmon list` "
             "to see available."
         ),
     ),
@@ -1349,9 +1349,9 @@ def collect_nessus(
 
     One ``SecurityFinding`` per ``ReportItem`` (host + plugin + port),
     mapped to NIST RA-5 (vulnerability scanning) + SI-2 (flaw
-    remediation). Also builds one scan-report ``EvidenceArtifact`` —
+    remediation). Also builds one scan-report ``EvidenceArtifact``,
     saved to the evidence store unless ``--no-save-evidence`` is
-    given — so ``evidentia conmon series <slug>`` has something to
+    given: so ``evidentia conmon series <slug>`` has something to
     read. No network access: the input is a local file only.
 
     XML is parsed with ``defusedxml``, refusing entity expansion and
@@ -1390,6 +1390,116 @@ def collect_nessus(
         raise typer.Exit(code=1) from e
 
     _write_findings(findings, output, title="Nessus scan")
+
+    completeness = "complete" if manifest.is_complete else "incomplete"
+    if save_evidence_flag:
+        from evidentia_core.evidence_store import get_evidence_store_dir, save_evidence
+
+        store_dir = get_evidence_store_dir(evidence_store)
+        save_evidence(artifact, evidence_store_dir=evidence_store)
+        console.print(
+            f"[green]Saved evidence[/green] lineage [bold]{artifact.effective_lineage_id}[/bold] "
+            f"to {store_dir} ({completeness} scan)"
+        )
+    else:
+        console.print(f"[dim]Evidence not saved (--no-save-evidence). Scan: {completeness}.[/dim]")
+
+
+@app.command("greenbone")
+def collect_greenbone(
+    file: Path = typer.Option(
+        ...,
+        "--file",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help="Path to a Greenbone GMP report XML export.",
+    ),
+    cadence_slug: str = typer.Option(
+        "fedramp-conmon-scans",
+        "--cadence-slug",
+        help=(
+            "Cadence slug the saved evidence artifact declares via "
+            "metadata.cadence_slug (evidentia conmon series reads it). "
+            "Must name a registered cadence; run `evidentia conmon list` "
+            "to see available."
+        ),
+    ),
+    evidence_store: Path | None = typer.Option(
+        None,
+        "--evidence-store",
+        help=(
+            "Evidence store root directory override. Defaults to "
+            "EVIDENTIA_EVIDENCE_STORE_DIR, else the platform user-data "
+            "directory (evidentia_core.evidence_store.get_evidence_store_dir)."
+        ),
+    ),
+    save_evidence_flag: bool = typer.Option(
+        True,
+        "--save-evidence/--no-save-evidence",
+        help="Persist the scan-report evidence artifact. Default True.",
+    ),
+    description_max_chars: int = typer.Option(
+        4000,
+        "--description-max-chars",
+        min=0,
+        help="Cap on each finding's description length. Default 4000.",
+    ),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Where to write the converted SecurityFinding JSON. Default: stdout.",
+    ),
+) -> None:
+    """Ingest a Greenbone Community Edition GMP report XML export (v0.13 V13-05).
+
+    One ``SecurityFinding`` per ``<result>`` (host + NVT + port), mapped
+    to NIST RA-5 (vulnerability scanning) + SI-2 (flaw remediation). Also
+    builds one scan-report ``EvidenceArtifact``, saved to the evidence
+    store unless ``--no-save-evidence`` is given, so
+    ``evidentia conmon series <slug>`` has something to read. No network
+    access: the input is a local file only.
+
+    XML is parsed with ``defusedxml``, refusing entity expansion and
+    external references (XXE / billion-laughs) before any element is
+    read; input over 50 MB is refused. Accepts either the wrapping GMP
+    ``<report>`` document or a bare inner ``<report>``. See
+    ``docs/vuln-scan-collectors.md`` for the full mapping table + blind
+    spots.
+    """
+    try:
+        from evidentia_collectors.greenbone import GreenboneIngestError, collect_greenbone_file
+    except ImportError as e:
+        console.print(
+            "[red]Error:[/red] Greenbone ingestion needs the optional scan extra. "
+            "Run [cyan]pip install 'evidentia-collectors[scan]'[/cyan]."
+        )
+        raise typer.Exit(code=1) from e
+
+    from evidentia_core.conmon.calendar import get_cadence
+
+    if get_cadence(cadence_slug) is None:
+        console.print(
+            f"[red]Error:[/red] unknown cadence slug {cadence_slug!r}. "
+            "Run `evidentia conmon list` to see available."
+        )
+        raise typer.Exit(code=1)
+
+    console.print(f"[dim]Ingesting Greenbone scan from [bold]{file}[/bold]...[/dim]")
+
+    try:
+        findings, manifest, artifact = collect_greenbone_file(
+            file,
+            cadence_slug=cadence_slug,
+            description_max_chars=description_max_chars,
+        )
+    except GreenboneIngestError as e:
+        console.print(f"[red]Greenbone ingestion failed:[/red] {e}")
+        raise typer.Exit(code=1) from e
+
+    _write_findings(findings, output, title="Greenbone scan")
 
     completeness = "complete" if manifest.is_complete else "incomplete"
     if save_evidence_flag:

@@ -147,13 +147,14 @@ def count_mcp_tools(server_text: str) -> int:
 # Collector keys whose ``/collect`` endpoint is NOT a credentialed agent:
 # the OCSF ingest path shares the ``/collect`` verb but is an importer, not
 # a credentialed evidence-collection agent, so it is excluded from the count.
-# ``nessus`` (v0.13 V13-05) is the same shape — it ingests an already-
-# produced Nessus v2 XML scan export (file/text, no credentials, no network)
-# rather than reaching out to a credentialed source, so it is excluded too.
-# Per the cadence-assertion-layer design (docs/designs/cadence-assertion-
-# layer-design.md section 2.6): file-import collectors do not raise the
-# README's credentialed-collector count; API pollers do.
-_NON_COLLECTOR_INGEST = frozenset({"ocsf", "nessus"})
+# ``nessus`` and ``greenbone`` (v0.13 V13-05) are the same shape: they
+# ingest an already-produced vulnerability-scan XML export (file/text, no
+# credentials, no network) rather than reaching out to a credentialed
+# source, so both are excluded too. Per the cadence-assertion-layer design
+# (docs/designs/cadence-assertion-layer-design.md section 2.6): file-import
+# collectors do not raise the README's credentialed-collector count; API
+# pollers do.
+_NON_COLLECTOR_INGEST = frozenset({"ocsf", "nessus", "greenbone"})
 
 
 def count_collector_endpoints(openapi: dict[str, Any]) -> int:
@@ -164,10 +165,11 @@ def count_collector_endpoints(openapi: dict[str, Any]) -> int:
     but ingests already-collected OCSF JSON (file/URL, no credentials) rather
     than reaching out to a credentialed source. It is an importer, not an
     evidence-collection agent, and is excluded from this count by design (see
-    ``_NON_COLLECTOR_INGEST``). The Nessus ingest path
-    (``/api/collectors/nessus/collect``) is excluded for the identical
-    reason: a Nessus v2 XML export is already-collected third-party output,
-    ingested as text with no credentials and no network access.
+    ``_NON_COLLECTOR_INGEST``). The Nessus and Greenbone ingest paths
+    (``/api/collectors/nessus/collect``, ``/api/collectors/greenbone/collect``)
+    are excluded for the identical reason: a Nessus v2 XML export or a
+    Greenbone GMP report XML export is already-collected third-party
+    output, ingested as text with no credentials and no network access.
     """
     paths = openapi.get("paths") or {}
     total = 0

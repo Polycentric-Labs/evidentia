@@ -1,10 +1,10 @@
-"""Integration tests for `POST /api/collectors/nessus/collect` (v0.13 V13-05).
+"""Integration tests for `POST /api/collectors/greenbone/collect` (v0.13 V13-05).
 
 Reuses the project-wide ``api_client`` fixture from conftest. Every test
 that lets ``save_evidence`` reach its True default (or sets it explicitly)
 redirects ``EVIDENTIA_EVIDENCE_STORE_DIR`` to ``tmp_path`` so the run never
 touches the developer's real evidence store (mirrors
-tests/integration/test_api/test_evidence_router.py).
+tests/integration/test_api/test_collectors_nessus.py).
 """
 
 from __future__ import annotations
@@ -15,32 +15,38 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-_SAMPLE_NESSUS_XML = """<?xml version="1.0" ?>
-<NessusClientData_v2>
-<Report name="api-test-scan">
-<ReportHost name="10.0.0.50">
-<HostProperties>
-<tag name="host-ip">10.0.0.50</tag>
-<tag name="HOST_START">Tue Sep  1 09:00:00 2026</tag>
-<tag name="HOST_END">Tue Sep  1 09:05:00 2026</tag>
-</HostProperties>
-<ReportItem port="22" svc_name="ssh" protocol="tcp" severity="2" pluginID="12345" pluginName="Weak SSH Ciphers" pluginFamily="General">
-<synopsis>The remote SSH server supports weak ciphers.</synopsis>
+_SAMPLE_GREENBONE_XML = """<?xml version="1.0" ?>
+<report id="outer-wrapper" format_id="d5da9f67-8551-4e32-322c-c25a3d569742" extension="xml">
+<report id="api-test-report">
+<scan_start>2026-09-01T09:00:00Z</scan_start>
+<task id="task-1"><name>API test scan</name></task>
+<results>
+<result id="result-1">
+<name>Weak SSH Ciphers</name>
+<host>10.0.0.50<hostname>api-test-host</hostname></host>
+<port>22/tcp</port>
+<nvt oid="1.3.6.1.4.1.25623.1.0.999001">
+<name>Weak SSH Ciphers</name>
+<family>General</family>
+<cvss_base>5.3</cvss_base>
+<tags>cvss_base_vector=AV:N/AC:L/Au:N/C:P/I:N/A:N|summary=The remote SSH server supports weak ciphers.|solution=Disable weak ciphers in sshd_config.|solution_type=Mitigation</tags>
+<refs/>
+</nvt>
+<threat>Medium</threat>
+<severity>5.3</severity>
+<qod><value>80</value></qod>
 <description>The remote SSH server is configured to allow weak ciphers.</description>
-<plugin_output>Weak ciphers: arcfour, arcfour128</plugin_output>
-<risk_factor>Medium</risk_factor>
-<cvss3_base_score>5.3</cvss3_base_score>
-<solution>Disable weak ciphers in sshd_config.</solution>
-</ReportItem>
-</ReportHost>
-</Report>
-</NessusClientData_v2>
+</result>
+</results>
+<scan_end>2026-09-01T09:05:00Z</scan_end>
+</report>
+</report>
 """
 
 
 @pytest.mark.usefixtures("api_client")
-class TestNessusCollectEndpoint:
-    """v0.13 V13-05: /api/collectors/nessus/collect (text-upload, no path/URL)."""
+class TestGreenboneCollectEndpoint:
+    """v0.13 V13-05: /api/collectors/greenbone/collect (text-upload, no path/URL)."""
 
     def test_happy_path_returns_findings_manifest_and_evidence(
         self,
@@ -51,14 +57,14 @@ class TestNessusCollectEndpoint:
         pytest.importorskip("defusedxml")
         monkeypatch.setenv("EVIDENTIA_EVIDENCE_STORE_DIR", str(tmp_path / "evidence"))
         r = api_client.post(
-            "/api/collectors/nessus/collect",
-            json={"content": _SAMPLE_NESSUS_XML},
+            "/api/collectors/greenbone/collect",
+            json={"content": _SAMPLE_GREENBONE_XML},
         )
         assert r.status_code == 200, r.text
         body = r.json()
         assert len(body["findings"]) == 1
-        assert body["findings"][0]["title"] == "Weak SSH Ciphers on 10.0.0.50:22/tcp"
-        assert body["findings"][0]["source_system"] == "nessus"
+        assert body["findings"][0]["title"] == "Weak SSH Ciphers on api-test-host:22/tcp"
+        assert body["findings"][0]["source_system"] == "greenbone"
         assert body["manifest"]["is_complete"] is True
         assert body["manifest"]["total_findings"] == 1
         assert body["evidence"]["saved"] is True
@@ -74,8 +80,8 @@ class TestNessusCollectEndpoint:
         store = tmp_path / "evidence"
         monkeypatch.setenv("EVIDENTIA_EVIDENCE_STORE_DIR", str(store))
         r = api_client.post(
-            "/api/collectors/nessus/collect",
-            json={"content": _SAMPLE_NESSUS_XML, "save_evidence": False},
+            "/api/collectors/greenbone/collect",
+            json={"content": _SAMPLE_GREENBONE_XML, "save_evidence": False},
         )
         assert r.status_code == 200, r.text
         assert r.json()["evidence"]["saved"] is False
@@ -91,9 +97,9 @@ class TestNessusCollectEndpoint:
         store = tmp_path / "evidence"
         monkeypatch.setenv("EVIDENTIA_EVIDENCE_STORE_DIR", str(store))
         r = api_client.post(
-            "/api/collectors/nessus/collect",
+            "/api/collectors/greenbone/collect",
             json={
-                "content": _SAMPLE_NESSUS_XML,
+                "content": _SAMPLE_GREENBONE_XML,
                 "cadence_slug": "fedramp-conmon-scans",
             },
         )
@@ -105,10 +111,10 @@ class TestNessusCollectEndpoint:
         versions = list_lineage(lineage_id, store)
         assert len(versions) == 1
         assert versions[0].metadata["cadence_slug"] == "fedramp-conmon-scans"
-        assert versions[0].source_system == "nessus"
+        assert versions[0].source_system == "greenbone"
 
     def test_missing_content_returns_400(self, api_client: TestClient) -> None:
-        r = api_client.post("/api/collectors/nessus/collect", json={})
+        r = api_client.post("/api/collectors/greenbone/collect", json={})
         assert r.status_code == 400
         detail = r.json()["detail"]
         assert detail["error"] == "invalid_body"
@@ -117,7 +123,7 @@ class TestNessusCollectEndpoint:
     def test_malformed_xml_returns_400(self, api_client: TestClient) -> None:
         pytest.importorskip("defusedxml")
         r = api_client.post(
-            "/api/collectors/nessus/collect",
+            "/api/collectors/greenbone/collect",
             json={"content": "not xml at all <<<"},
         )
         assert r.status_code == 400
@@ -126,25 +132,25 @@ class TestNessusCollectEndpoint:
     def test_wrong_root_returns_400(self, api_client: TestClient) -> None:
         pytest.importorskip("defusedxml")
         r = api_client.post(
-            "/api/collectors/nessus/collect",
-            json={"content": "<NotNessus/>"},
+            "/api/collectors/greenbone/collect",
+            json={"content": "<NotAReport/>"},
         )
         assert r.status_code == 400
         detail = r.json()["detail"]
         assert detail["error"] == "invalid_body"
-        assert "NessusClientData_v2" in detail["message"]
+        assert "report" in detail["message"]
 
     def test_hostile_entity_declaration_returns_400(self, api_client: TestClient) -> None:
         pytest.importorskip("defusedxml")
         hostile = (
             '<?xml version="1.0" ?>\n'
-            "<!DOCTYPE NessusClientData_v2 [\n"
+            "<!DOCTYPE report [\n"
             '  <!ENTITY xxe SYSTEM "file:///etc/passwd">\n'
             "]>\n"
-            "<NessusClientData_v2>&xxe;</NessusClientData_v2>\n"
+            "<report>&xxe;</report>\n"
         )
         r = api_client.post(
-            "/api/collectors/nessus/collect",
+            "/api/collectors/greenbone/collect",
             json={"content": hostile},
         )
         assert r.status_code == 400
@@ -153,9 +159,9 @@ class TestNessusCollectEndpoint:
     def test_unknown_cadence_slug_returns_400(self, api_client: TestClient) -> None:
         pytest.importorskip("defusedxml")
         r = api_client.post(
-            "/api/collectors/nessus/collect",
+            "/api/collectors/greenbone/collect",
             json={
-                "content": _SAMPLE_NESSUS_XML,
+                "content": _SAMPLE_GREENBONE_XML,
                 "cadence_slug": "not-a-real-cadence",
             },
         )
@@ -166,13 +172,13 @@ class TestNessusCollectEndpoint:
 
     def test_content_over_cap_returns_400(self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
         """The 50 MB cap is exercised via a monkeypatched threshold; a real
-        50 MB JSON round-trip would make this test needlessly slow; the
+        50 MB JSON round-trip would make this test needlessly slow, and the
         collector-unit tests already prove the real 50 MB constant."""
         pytest.importorskip("defusedxml")
-        monkeypatch.setattr("evidentia_collectors.nessus.collector._MAX_INPUT_BYTES", 100)
+        monkeypatch.setattr("evidentia_collectors.greenbone.collector._MAX_INPUT_BYTES", 100)
         r = api_client.post(
-            "/api/collectors/nessus/collect",
-            json={"content": _SAMPLE_NESSUS_XML},
+            "/api/collectors/greenbone/collect",
+            json={"content": _SAMPLE_GREENBONE_XML},
         )
         assert r.status_code == 400
         detail = r.json()["detail"]
@@ -184,15 +190,15 @@ class TestNessusCollectEndpoint:
         raise ImportError: the hermetic way to simulate the [scan] extra
         being absent (mirrors tests/unit/test_collectors/
         test_collector_ssrf_guard.py's driver-absent simulation)."""
-        monkeypatch.setitem(sys.modules, "evidentia_collectors.nessus", None)
+        monkeypatch.setitem(sys.modules, "evidentia_collectors.greenbone", None)
         r = api_client.post(
-            "/api/collectors/nessus/collect",
-            json={"content": _SAMPLE_NESSUS_XML},
+            "/api/collectors/greenbone/collect",
+            json={"content": _SAMPLE_GREENBONE_XML},
         )
         assert r.status_code == 503
         assert r.json()["detail"]["error"] == "feature_unavailable"
 
-    def test_status_endpoint_includes_nessus_entry(self, api_client: TestClient) -> None:
+    def test_status_endpoint_includes_greenbone_entry(self, api_client: TestClient) -> None:
         r = api_client.get("/api/collectors/status")
         assert r.status_code == 200
-        assert "nessus" in r.json()
+        assert "greenbone" in r.json()
