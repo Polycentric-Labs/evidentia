@@ -59,18 +59,22 @@ from evidentia_core.conmon import (
     CycleAttentionState,
     DaemonConfig,
     assert_series,
+    compute_health,
     default_window,
     derive_status,
     get_cadence,
-    health_from_state_file,
+    latest_observations,
     list_cadences,
+    load_state_file,
     make_alert_handler,
     mark_completed,
+    merge_evidence_anchors,
     migrate_deprecated_slugs,
     next_due,
     resolve_secret,
     run_daemon,
     series_to_finding,
+    series_verdicts,
 )
 from evidentia_core.conmon.series import (
     CADENCE_SLUG_METADATA_KEY,
@@ -298,6 +302,16 @@ def conmon_check(
         "--json",
         help="Emit JSON instead of human-readable tables.",
     ),
+    evidence_store: Path | None = typer.Option(
+        None,
+        "--evidence-store",
+        help=(
+            "Evidence store root. When given, a cadence missing from the state "
+            "file takes the date of its latest evidence artifact (matched by "
+            "metadata.cadence_slug), and every row gains a series verdict over "
+            "the last 365 days. --state-file becomes optional."
+        ),
+    ),
 ) -> None:
     """Report due-soon + overdue cycles from a tracked-state YAML.
 
@@ -327,14 +341,27 @@ def conmon_check(
         resolved_state_file = last_completed_file
     elif state_file is not None:
         resolved_state_file = state_file
+    elif evidence_store is not None:
+        resolved_state_file = None
     else:
-        console.print("[red]Error:[/red] --state-file is required.")
+        console.print("[red]Error:[/red] --state-file is required (or --evidence-store).")
         raise typer.Exit(code=2)
 
     today_parsed = _parse_date_or_exit(today_override, "--today")
     today: date = today_parsed if today_parsed is not None else date.today()
 
-    last_completed_map = _load_last_completed_map(resolved_state_file)
+    last_completed_map = _load_last_completed_map(resolved_state_file) if resolved_state_file is not None else {}
+    verdicts: dict[str, str] = {}
+    if evidence_store is not None:
+        artifacts = [
+            artifact
+            for artifact in iter_artifacts(get_evidence_store_dir(evidence_store))
+            if CADENCE_SLUG_METADATA_KEY in artifact.metadata
+        ]
+        last_completed_map = merge_evidence_anchors(last_completed_map, latest_observations(artifacts))
+        verdicts = {
+            slug: verdict.value for slug, verdict in series_verdicts(artifacts, last_completed_map, today=today).items()
+        }
 
     overdue: list[dict[str, str]] = []
     due_soon: list[dict[str, str]] = []
@@ -357,6 +384,8 @@ def conmon_check(
             "next_due": due.isoformat(),
             "days_until_due": str(days_until_due),
         }
+        if evidence_store is not None:
+            row["series"] = verdicts.get(slug, "unknown")
         if state == CycleAttentionState.OVERDUE:
             overdue.append(row)
             _log.warning(
@@ -424,6 +453,8 @@ def conmon_check(
         table.add_column("Activity")
         table.add_column("Next due", style="red")
         table.add_column("Days past", justify="right", style="red")
+        if evidence_store is not None:
+            table.add_column("Series")
         for row in overdue:
             table.add_row(
                 row["slug"],
@@ -431,6 +462,7 @@ def conmon_check(
                 row["activity"],
                 row["next_due"],
                 row["days_until_due"],
+                *([row["series"]] if evidence_store is not None else []),
             )
         console.print(table)
 
@@ -444,6 +476,8 @@ def conmon_check(
         table.add_column("Activity")
         table.add_column("Next due", style="yellow")
         table.add_column("Days ahead", justify="right")
+        if evidence_store is not None:
+            table.add_column("Series")
         for row in due_soon:
             table.add_row(
                 row["slug"],
@@ -451,6 +485,7 @@ def conmon_check(
                 row["activity"],
                 row["next_due"],
                 row["days_until_due"],
+                *([row["series"]] if evidence_store is not None else []),
             )
         console.print(table)
 
@@ -1116,8 +1151,8 @@ def conmon_ksi(
 
 @app.command("health")
 def conmon_health(
-    state_file: Path = typer.Option(
-        ...,
+    state_file: Path | None = typer.Option(
+        None,
         "--state-file",
         exists=True,
         file_okay=True,
@@ -1126,7 +1161,15 @@ def conmon_health(
         help=(
             "YAML mapping {cadence_slug: ISO-8601-date} of last-"
             "completed dates. Same schema as `evidentia conmon "
-            "check --state-file`."
+            "check --state-file`. Optional when --evidence-store is given."
+        ),
+    ),
+    evidence_store: Path | None = typer.Option(
+        None,
+        "--evidence-store",
+        help=(
+            "Evidence store root. A cadence missing from the state file takes "
+            "the date of its latest evidence artifact (metadata.cadence_slug)."
         ),
     ),
     today_override: str | None = typer.Option(
@@ -1163,8 +1206,19 @@ def conmon_health(
     today_parsed = _parse_date_or_exit(today_override, "--today")
     today: date = today_parsed if today_parsed is not None else date.today()
 
-    report = health_from_state_file(
-        state_file,
+    if state_file is None and evidence_store is None:
+        console.print("[red]Error:[/red] --state-file is required (or --evidence-store).")
+        raise typer.Exit(code=2)
+    state = load_state_file(state_file) if state_file is not None else {}
+    if evidence_store is not None:
+        artifacts = [
+            artifact
+            for artifact in iter_artifacts(get_evidence_store_dir(evidence_store))
+            if CADENCE_SLUG_METADATA_KEY in artifact.metadata
+        ]
+        state = merge_evidence_anchors(state, latest_observations(artifacts))
+    report = compute_health(
+        state=state,
         today=today,
         window_days=window_days,
         framework_filter=framework,

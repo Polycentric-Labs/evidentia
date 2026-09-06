@@ -103,7 +103,10 @@ from evidentia_core.conmon.series import (
     assert_series,
     default_tolerance_days,
     default_window,
+    latest_observations,
+    merge_evidence_anchors,
     series_to_finding,
+    series_verdicts,
 )
 
 __all__ = [
@@ -140,10 +143,12 @@ __all__ = [
     "get_cadence",
     "health_from_state_file",
     "interval_days_for",
+    "latest_observations",
     "list_cadences",
     "load_state_file",
     "make_alert_handler",
     "mark_completed",
+    "merge_evidence_anchors",
     "migrate_deprecated_slugs",
     "next_due",
     "poll_once",
@@ -152,4 +157,5 @@ __all__ = [
     "run_daemon",
     "save_state_file",
     "series_to_finding",
+    "series_verdicts",
 ]
