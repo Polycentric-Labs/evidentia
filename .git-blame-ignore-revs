@@ -1,0 +1,6 @@
+# Commits to skip in git blame: whole-tree mechanical changes whose authorship
+# is noise. GitHub's blame view reads this file automatically; locally run
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# PR #289 (2026-09-06): whole-repository ruff format
+9df4a43150aafe1861b81f8b1faae4a463fa9eba
