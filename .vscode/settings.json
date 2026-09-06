@@ -1,8 +1,6 @@
 {
   // Evidentia VS Code workspace settings — version-controlled.
   // See docs/ide-setup.md for the full IDE setup walkthrough.
-  // Cursor reads the same .vscode/ directory, so these settings
-  // apply to both editors.
 
   // Python interpreter — auto-discovered by the Python extension from
   // the workspace .venv/ regardless of OS. We deliberately do NOT
@@ -80,8 +78,7 @@
 
   // File associations
   "files.associations": {
-    "*.yml": "yaml",
-    ".cursorrules": "markdown"
+    "*.yml": "yaml"
   },
 
   // Workspace etiquette

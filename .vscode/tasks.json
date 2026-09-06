@@ -1,6 +1,6 @@
 {
   // Evidentia VS Code task definitions — version-controlled.
-  // Cursor reads this same file. See docs/ide-setup.md for usage.
+  // See docs/ide-setup.md for usage.
   // Run via: Ctrl+Shift+B (default build task) OR
   // Ctrl+Shift+P → "Tasks: Run Task" → pick from list.
   "version": "2.0.0",
