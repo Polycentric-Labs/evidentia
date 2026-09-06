@@ -87,6 +87,8 @@ import type {
   OcsfCollectRequest,
   NessusCollectRequest,
   NessusCollectResponse,
+  GreenboneCollectRequest,
+  GreenboneCollectResponse,
 } from "@/lib/api";
 import type {
   AirGapCheckResponse,
@@ -632,6 +634,55 @@ const DEMO_NESSUS_COLLECT_RESULT: NessusCollectResponse = {
   },
   evidence: {
     lineage_id: "00000000-0000-0000-0000-000000000000",
+    saved: false,
+    collected_at: "2026-09-01T10:22:31Z",
+  },
+};
+
+// Baked Greenbone scan-ingest result: a representative finding + manifest +
+// evidence stub. `saved: false` because the demo never touches a real
+// evidence store.
+const DEMO_GREENBONE_COLLECT_RESULT: GreenboneCollectResponse = {
+  findings: [
+    {
+      title: "SSH Weak Key Exchange Algorithms Enabled on demo-host-02:22/tcp",
+      description:
+        "The remote SSH server is configured to allow weak key exchange algorithms. (Demo finding, illustrative only.)",
+      severity: "high",
+      source_system: "greenbone",
+      status: "active",
+      compliance_status: "unknown",
+      resource_type: "host",
+      resource_id: "10.0.0.22",
+    },
+  ],
+  manifest: {
+    run_id: "01J0000000000000000000DEM2",
+    collector_id: "greenbone-file",
+    collector_version: "0.13.0",
+    collection_started_at: "2026-09-01T10:22:31Z",
+    collection_finished_at: "2026-09-01T10:22:31Z",
+    source_system_ids: ["demo-gb-report"],
+    filters_applied: {},
+    coverage_counts: [
+      { resource_type: "host", scanned: 1, matched_filter: 1, collected: 1 },
+      {
+        resource_type: "result",
+        scanned: 1,
+        matched_filter: 1,
+        collected: 1,
+      },
+    ],
+    total_findings: 1,
+    is_complete: true,
+    incomplete_reason: null,
+    empty_categories: [],
+    warnings: [],
+    errors: [],
+    evidentia_version: "0.13.0",
+  },
+  evidence: {
+    lineage_id: "00000000-0000-0000-0000-000000000001",
     saved: false,
     collected_at: "2026-09-01T10:22:31Z",
   },
@@ -1493,6 +1544,10 @@ export const demoApi = {
     _body: NessusCollectRequest,
   ): Promise<NessusCollectResponse> =>
     Promise.resolve(clone(DEMO_NESSUS_COLLECT_RESULT)),
+  collectGreenbone: (
+    _body: GreenboneCollectRequest,
+  ): Promise<GreenboneCollectResponse> =>
+    Promise.resolve(clone(DEMO_GREENBONE_COLLECT_RESULT)),
   collectConvert: (
     _body: Record<string, unknown>,
   ): Promise<Record<string, unknown>[]> =>

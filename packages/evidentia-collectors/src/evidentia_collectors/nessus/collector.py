@@ -33,8 +33,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import defusedxml.ElementTree as DefusedET
-from defusedxml.common import DefusedXmlException
 from evidentia_core.audit import (
     CollectionContext,
     CollectionManifest,
@@ -46,6 +44,7 @@ from evidentia_core.models.common import current_version, utc_now
 from evidentia_core.models.evidence import EvidenceArtifact, EvidenceType
 from evidentia_core.models.finding import SecurityFinding
 
+from evidentia_collectors._xml import parse_defused_xml
 from evidentia_collectors.nessus.mapping import (
     VULNERABILITY_SCAN_MAPPINGS,
     nessus_severity_to_severity,
@@ -239,12 +238,7 @@ def parse_nessus(xml_bytes: bytes) -> ParsedScan:
     failure, a refused construct, or a root element other than
     ``NessusClientData_v2``.
     """
-    try:
-        root = DefusedET.fromstring(xml_bytes)
-    except DefusedXmlException as exc:
-        raise NessusIngestError(f"refused an unsafe XML construct (entity/external-reference): {exc}") from exc
-    except ET.ParseError as exc:
-        raise NessusIngestError(f"not valid XML: {exc}") from exc
+    root = parse_defused_xml(xml_bytes, error_cls=NessusIngestError)
 
     if root.tag != "NessusClientData_v2":
         raise NessusIngestError(f"unsupported root element {root.tag!r}; expected 'NessusClientData_v2'")

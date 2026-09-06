@@ -1,7 +1,7 @@
 # Vulnerability-scan collectors
 
-> *Status: Nessus ships in v0.13 (V13-05 first half). Greenbone follows in a
-> later batch of the same item.*
+> *Status: Nessus and Greenbone both ship in v0.13 (V13-05, first and second
+> half of the same item).*
 
 File-ingest collectors for vulnerability-scanner exports. Unlike the
 credentialed collectors (AWS, Okta, the SQL adapters, …), these read an
@@ -116,6 +116,111 @@ python -c "from evidentia_collectors.nessus import BLIND_SPOTS; \
   textarea for the XML, an optional cadence-slug field, and a
   save-evidence toggle. Local-only, like the OCSF tab's inline-content
   mode — not gated behind API authentication.
+
+## Greenbone (`collect greenbone`)
+
+Parses a Greenbone Community Edition (OpenVAS) GMP report XML export (the
+`<report>` document `gvm-cli` or the Greenbone web UI write when you export
+a scan report) into one `SecurityFinding` per `<result>` (host, NVT,
+port), plus a `CollectionManifest` and one scan-report `EvidenceArtifact`.
+
+### What the ingest reads
+
+The document is either a wrapping `<report id=... format_id=...
+extension="xml">` around an inner `<report id=...>`, or a bare inner
+`<report>` on its own. Both are accepted; the id, timestamps, task, and
+results all come from the inner report.
+
+| GMP report element | Read as |
+|---|---|
+| `<report>` (outer, optional) / `<report id=...>` (inner, required) | Wrapping document / the report itself; `id` comes from the inner element |
+| `<task><name>` | Scan/task name (`EvidenceArtifact.metadata.task_name`) |
+| `<scan_start>` / `<scan_end>` (ISO-8601) | Scan window; `scan_end` is every finding's `collected_at` |
+| `<results><result id=...>` | One finding per result |
+| `<host>` (text) / `<host><hostname>` | The host's IP (`resource_id`) / its optional hostname (used in the title when present) |
+| `<port>` | The service, e.g. `22/tcp` or `general/tcp` |
+| `<nvt oid=...><name>`, `<family>`, `<cvss_base>` | NVT identity, family, and base score |
+| `<nvt><tags>` (pipe-separated `key=value`) | `cvss_base_vector`, `summary`, `solution`, `solution_type` |
+| `<nvt><refs><ref type="cve" id="...">` (repeatable) | CVE list |
+| `<threat>` (Log/Low/Medium/High/Critical), `<severity>` (float) | Severity; see the mapping table below |
+| `<qod><value>` | Quality of Detection percentage |
+| `<description>` | Fallback description when the NVT `summary` tag is absent |
+
+### Finding mapping
+
+| `SecurityFinding` field | Value |
+|---|---|
+| `source_system` | `"greenbone"` |
+| `source_finding_id` | `f"{report_id}:{host_ip}:{nvt_oid}:{port}"`: the model derives the deterministic `id` from `source_system` + this string (see [collector-idempotency-audit.md](collector-idempotency-audit.md) section 4); the collector never sets `id` directly |
+| `title` | `f"{nvt name} on {host}:{port}"`, where `host` is the `<hostname>` when present, else the IP |
+| `description` | The NVT `summary` tag when non-empty, else the result's `<description>`, trimmed to `description_max_chars` (default 4000) |
+| `severity` | From the numeric `<severity>`: `9.0`+ critical, `7.0`+ high, `4.0`+ medium, above `0` low, `0` informational; falls back to `<threat>` when `<severity>` is absent or unparseable |
+| `compliance_status` | Left at its default (`unknown`): a vulnerability observation is not a pass/fail control check |
+| `resource_type` / `resource_id` | `"host"` / the host's IP |
+| `control_mappings` | The same `nist-800-53-rev5` `RA-5` + `SI-2` `subset-of` mappings Nessus uses, reused directly rather than redefined |
+| `raw_data` | `family`, `cvss_base`, `cvss_base_vector`, `qod`, `cve` (list), `solution_type` |
+| `collection_context.collected_at`, `first_observed`, `last_observed` | The report's `<scan_end>` (report-level, shared by every finding); falls back to `<scan_start>`, then the collection time, with a manifest warning on either fallback |
+
+### The evidence artifact + `conmon series`
+
+Each ingest also builds one `EvidenceArtifact` (`evidence_type` test result,
+`source_system="greenbone"`, `metadata.cadence_slug` from `--cadence-slug` /
+`cadence_slug` or the bundled default `fedramp-conmon-scans`) summarizing
+the report (hosts scanned, results by severity, scan start/end, run id) and
+carrying the same two control mappings. Persisting it is the caller's
+choice: the CLI saves it by default (`--no-save-evidence` to skip); the
+API's `save_evidence` body field defaults to `true`. It reads into
+`evidentia conmon series <slug>` exactly like the Nessus artifact does;
+see [conmon-runbook.md](conmon-runbook.md#cadence-evidence-series).
+
+### Blind spots
+
+```sh
+python -c "from evidentia_collectors.greenbone import BLIND_SPOTS; \
+    import json; print(json.dumps(BLIND_SPOTS, indent=2))"
+```
+
+- **Unauthenticated scans see less than credentialed ones.** Same caveat as
+  Nessus: a scan run without host credentials cannot enumerate installed
+  packages or local patch levels the way a credentialed scan can, and the
+  report carries no marker distinguishing which mode produced it.
+- **Hosts outside the target list are absent.** The report contains
+  exactly the hosts the scan's target list named; an under-scoped target
+  list is invisible to this ingest.
+- **Results below the report's QoD threshold are hidden.** Greenbone's
+  Quality of Detection score reflects detection confidence. A report
+  generated with a QoD filter never includes results under that floor;
+  this ingest sees only what the report already chose to include.
+- **NVT feed staleness is not in the export.** The GMP report XML does not
+  carry the NVT feed's publish or sync date; a scan against a stale feed
+  looks identical, on the wire, to one run the day an NVT shipped.
+
+### Security notes
+
+- XML is parsed with `defusedxml` (via the same shared loader Nessus uses,
+  `evidentia_collectors._xml`), so a DOCTYPE with an `<!ENTITY` declaration
+  or an external (SYSTEM / PUBLIC) reference is refused before any element
+  is read, closing XXE and entity-expansion (billion-laughs) attacks from
+  an untrusted export.
+- Input is capped at 50 MB, mirroring the Nessus and OCSF ingests' own cap.
+- The API endpoint takes no path and no URL: only inline XML text in the
+  request body. The server never reads a client-named file.
+- Requires the optional `scan` extra (the same extra Nessus uses):
+  `pip install 'evidentia-collectors[scan]'`.
+
+### CLI / API / console surfaces
+
+- CLI: `evidentia collect greenbone --file report.xml [--cadence-slug SLUG]
+  [--evidence-store DIR] [--no-save-evidence]
+  [--description-max-chars N] [--output FILE]`.
+- API: `POST /api/collectors/greenbone/collect`, body
+  `{"content": "<xml text>", "cadence_slug"?, "save_evidence"?,
+  "description_max_chars"?}`; returns
+  `{"findings": [...], "manifest": {...}, "evidence": {"lineage_id", "saved", "collected_at"}}`.
+- Console: the `/collect` page's "Greenbone report (GMP XML)" tab: a
+  textarea for the XML, an optional cadence-slug field, and a
+  save-evidence toggle. Local-only, like the Nessus tab; not gated behind
+  API authentication.
 
 ## Related documents
 

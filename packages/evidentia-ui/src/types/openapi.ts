@@ -648,6 +648,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/collectors/greenbone/collect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Greenbone Collect
+         * @description Ingest a Greenbone GMP report XML export (v0.13 V13-05).
+         *
+         *     Mirrors the ``evidentia collect greenbone`` CLI verb. Request body:
+         *
+         *     - ``content`` (required): the GMP ``<report>`` XML text (either the
+         *       wrapping document or a bare inner ``<report>``).
+         *       No path and no URL: the server never reads a client-named file.
+         *       This is a text-upload ingest only.
+         *     - ``cadence_slug`` (optional): defaults to ``fedramp-conmon-scans``.
+         *       Must name a registered cadence.
+         *     - ``save_evidence`` (optional): bool, default True. Persists the
+         *       scan-report ``EvidenceArtifact`` to the server's own configured
+         *       evidence store
+         *       (:func:`evidentia_core.evidence_store.get_evidence_store_dir`).
+         *     - ``description_max_chars`` (optional): int, default 4000.
+         *
+         *     NO credentials: file/text ingest only, mirroring the OCSF inline-
+         *     ``content`` mode's trust posture. Third-party XML is parsed with
+         *     ``defusedxml``; entity expansion and external references are
+         *     refused before any element is read.
+         */
+        post: operations["greenbone_collect_api_collectors_greenbone_collect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/collectors/nessus/collect": {
         parameters: {
             query?: never;
@@ -5342,6 +5381,31 @@ export interface components {
          * @enum {string}
          */
         GapStatus: "open" | "in_progress" | "remediated" | "accepted" | "not_applicable";
+        /**
+         * GreenboneCollectResponse
+         * @description Response body of ``POST /collectors/greenbone/collect``.
+         */
+        GreenboneCollectResponse: {
+            evidence: components["schemas"]["GreenboneEvidenceResult"];
+            /** Findings */
+            findings: components["schemas"]["SecurityFinding"][];
+            manifest: components["schemas"]["CollectionManifest"];
+        };
+        /**
+         * GreenboneEvidenceResult
+         * @description The ``evidence`` block of :class:`GreenboneCollectResponse`.
+         */
+        GreenboneEvidenceResult: {
+            /**
+             * Collected At
+             * Format: date-time
+             */
+            collected_at: string;
+            /** Lineage Id */
+            lineage_id: string;
+            /** Saved */
+            saved: boolean;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -9248,6 +9312,59 @@ export interface operations {
                 };
             };
             /** @description GitHub collector import failed (``error: feature_unavailable``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    greenbone_collect_api_collectors_greenbone_collect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GreenboneCollectResponse"];
+                };
+            };
+            /** @description Missing/non-string ``content``, malformed XML, a refused entity construct, wrong root element, oversized content (over 50 MB), or an unknown ``cadence_slug`` (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Optional ``scan`` extra not installed (``error: feature_unavailable``). */
             503: {
                 headers: {
                     [name: string]: unknown;

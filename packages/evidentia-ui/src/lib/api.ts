@@ -498,6 +498,24 @@ export interface NessusCollectRequest {
 export type NessusCollectResponse =
   components["schemas"]["NessusCollectResponse"];
 
+/**
+ * Greenbone GMP report ingest body for `POST /api/collectors/greenbone/collect`.
+ * `content` is the GMP `<report>` XML text (wrapped or bare inner form): no
+ * path, no URL; the server never reads a client-named file. `cadence_slug`
+ * defaults server-side to `fedramp-conmon-scans`; `save_evidence` defaults
+ * server-side to `true`.
+ */
+export interface GreenboneCollectRequest {
+  content: string;
+  cadence_slug?: string;
+  save_evidence?: boolean;
+  description_max_chars?: number;
+}
+
+/** Response of `POST /api/collectors/greenbone/collect`: findings + manifest + the saved evidence artifact's lineage. */
+export type GreenboneCollectResponse =
+  components["schemas"]["GreenboneCollectResponse"];
+
 // ── Catalog types (mirrored from evidentia_core catalog tooling) ─────────
 
 /** Catalog import body ({framework_id, content, format?, name?, …}). */
@@ -1292,6 +1310,13 @@ const realApi = {
   // mirrors OCSF's inline-`content` mode's trust posture.
   collectNessus: (body: NessusCollectRequest) =>
     request<NessusCollectResponse>("/api/collectors/nessus/collect", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  // Greenbone ingest is LOCAL-ONLY (text upload, no path/URL, no credentials):
+  // same trust posture as the Nessus tab.
+  collectGreenbone: (body: GreenboneCollectRequest) =>
+    request<GreenboneCollectResponse>("/api/collectors/greenbone/collect", {
       method: "POST",
       body: JSON.stringify(body),
     }),

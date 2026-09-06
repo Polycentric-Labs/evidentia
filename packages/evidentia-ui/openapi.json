@@ -3442,6 +3442,56 @@
         "title": "GapStatus",
         "type": "string"
       },
+      "GreenboneCollectResponse": {
+        "description": "Response body of ``POST /collectors/greenbone/collect``.",
+        "properties": {
+          "evidence": {
+            "$ref": "#/components/schemas/GreenboneEvidenceResult"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/SecurityFinding"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "manifest": {
+            "$ref": "#/components/schemas/CollectionManifest"
+          }
+        },
+        "required": [
+          "findings",
+          "manifest",
+          "evidence"
+        ],
+        "title": "GreenboneCollectResponse",
+        "type": "object"
+      },
+      "GreenboneEvidenceResult": {
+        "description": "The ``evidence`` block of :class:`GreenboneCollectResponse`.",
+        "properties": {
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "lineage_id": {
+            "title": "Lineage Id",
+            "type": "string"
+          },
+          "saved": {
+            "title": "Saved",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "lineage_id",
+          "saved",
+          "collected_at"
+        ],
+        "title": "GreenboneEvidenceResult",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -9402,6 +9452,70 @@
           }
         },
         "summary": "Github Collect",
+        "tags": [
+          "collectors"
+        ]
+      }
+    },
+    "/api/collectors/greenbone/collect": {
+      "post": {
+        "description": "Ingest a Greenbone GMP report XML export (v0.13 V13-05).\n\nMirrors the ``evidentia collect greenbone`` CLI verb. Request body:\n\n- ``content`` (required): the GMP ``<report>`` XML text (either the\n  wrapping document or a bare inner ``<report>``).\n  No path and no URL: the server never reads a client-named file.\n  This is a text-upload ingest only.\n- ``cadence_slug`` (optional): defaults to ``fedramp-conmon-scans``.\n  Must name a registered cadence.\n- ``save_evidence`` (optional): bool, default True. Persists the\n  scan-report ``EvidenceArtifact`` to the server's own configured\n  evidence store\n  (:func:`evidentia_core.evidence_store.get_evidence_store_dir`).\n- ``description_max_chars`` (optional): int, default 4000.\n\nNO credentials: file/text ingest only, mirroring the OCSF inline-\n``content`` mode's trust posture. Third-party XML is parsed with\n``defusedxml``; entity expansion and external references are\nrefused before any element is read.",
+        "operationId": "greenbone_collect_api_collectors_greenbone_collect_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Payload",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GreenboneCollectResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing/non-string ``content``, malformed XML, a refused entity construct, wrong root element, oversized content (over 50 MB), or an unknown ``cadence_slug`` (``error: invalid_body``)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Optional ``scan`` extra not installed (``error: feature_unavailable``)."
+          }
+        },
+        "summary": "Greenbone Collect",
         "tags": [
           "collectors"
         ]
