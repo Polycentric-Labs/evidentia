@@ -457,6 +457,44 @@ class TestBaseSaaSCollectorContract:
         # After exit, owned client is closed + cleared.
         assert c._client is None
 
+    def test_get_sets_status_code_on_query_error(self) -> None:
+        """v0.13 batch 7: SaaSCollectorError.status_code carries the HTTP
+        status that produced it, so a caller (a retry predicate, for
+        example) can decide whether to retry without re-parsing the
+        message string. A 429 lands as a SaaSQueryError with status_code
+        set, through an injected httpx.MockTransport client."""
+        import httpx
+        from evidentia_core.plugins.collectors import SaaSQueryError
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(429, json={"error": "rate limited"})
+
+        client = httpx.Client(
+            transport=httpx.MockTransport(handler),
+            base_url="https://api.fake.example",
+        )
+        c = _FakeCollector(client=client)
+        with pytest.raises(SaaSQueryError) as exc:
+            c.collect()
+        assert exc.value.status_code == 429
+
+    def test_get_sets_status_code_on_auth_error(self) -> None:
+        """A 403 lands as a SaaSAuthError with status_code set."""
+        import httpx
+        from evidentia_core.plugins.collectors import SaaSAuthError
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(403, json={"error": "forbidden"})
+
+        client = httpx.Client(
+            transport=httpx.MockTransport(handler),
+            base_url="https://api.fake.example",
+        )
+        c = _FakeCollector(client=client)
+        with pytest.raises(SaaSAuthError) as exc:
+            c.collect()
+        assert exc.value.status_code == 403
+
 
 # ── Plugin discovery ──────────────────────────────────────────────
 

@@ -44,6 +44,7 @@ from tenacity import (
     AsyncRetrying,
     RetryCallState,
     Retrying,
+    retry_if_exception,
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential_jitter,
@@ -82,6 +83,7 @@ def build_retrying(
         ConnectionError,
         TimeoutError,
     ),
+    retry_predicate: Callable[[BaseException], bool] | None = None,
     event_action: EventAction = EventAction.COLLECT_RETRY,
 ) -> Retrying:
     """Return a configured :class:`tenacity.Retrying` instance.
@@ -90,12 +92,23 @@ def build_retrying(
     retry loop manually and read ``retry_state.attempt_number`` for
     structured provenance, instead of using the :func:`with_retry`
     decorator which hides that state.
+
+    When ``retry_predicate`` is given, it replaces the type-based
+    ``retry_on`` check with ``tenacity.retry_if_exception(retry_predicate)``,
+    so a caller can decide whether to retry from runtime state carried on
+    the exception (for example an HTTP status code) rather than from the
+    exception's type alone.
     """
     initial, mx = _effective_backoff(initial_backoff, max_backoff)
+    retry_condition = (
+        retry_if_exception(retry_predicate)
+        if retry_predicate is not None
+        else retry_if_exception_type(retry_on)
+    )
     return Retrying(
         stop=stop_after_attempt(max_attempts),
         wait=wait_exponential_jitter(initial=initial, max=mx),
-        retry=retry_if_exception_type(retry_on),
+        retry=retry_condition,
         before_sleep=_log_retry_event(function_name, max_attempts, event_action),
         reraise=True,
     )
@@ -133,6 +146,7 @@ def with_retry(
         ConnectionError,
         TimeoutError,
     ),
+    retry_predicate: Callable[[BaseException], bool] | None = None,
     event_action: EventAction = EventAction.COLLECT_RETRY,
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Decorator adding bounded exponential-backoff retry to a sync function.
@@ -145,7 +159,8 @@ def with_retry(
     :attr:`~evidentia_core.audit.events.EventAction.COLLECT_RETRY` so
     pre-v0.7.1 collectors keep their existing behaviour; AI generators
     pass an ``AI_*_RETRY`` action so SIEM filters can distinguish the
-    namespaces.
+    namespaces. ``retry_predicate`` is passed through to
+    :func:`build_retrying` unchanged.
     """
 
     def decorator(fn: Callable[P, R]) -> Callable[P, R]:
@@ -157,6 +172,7 @@ def with_retry(
                 initial_backoff=initial_backoff,
                 max_backoff=max_backoff,
                 retry_on=retry_on,
+                retry_predicate=retry_predicate,
                 event_action=event_action,
             )
             for attempt in retrying:

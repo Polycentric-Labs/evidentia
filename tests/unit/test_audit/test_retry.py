@@ -215,6 +215,50 @@ def test_build_retrying_returns_iterable_with_attempt_state() -> None:
     assert last_attempt_number == 2
 
 
+# -----------------------------------------------------------------------------
+# v0.13 batch 7: retry_predicate (state-based retry, not just exception type)
+# -----------------------------------------------------------------------------
+
+
+def test_retry_predicate_overrides_type_based_retry_on() -> None:
+    """A predicate that accepts only a marker exception retries that one
+    and re-raises any other exception immediately (attempt count 1).
+
+    This module's own ``test_mode`` fixture (above) is ``autouse`` and
+    already sets ``EVIDENTIA_TEST_MODE=1`` for every test in this file, so
+    no extra ``monkeypatch.setenv`` call is needed here.
+    """
+
+    class _MarkerError(Exception):
+        """A stand-in for a status-code-bearing collector error."""
+
+    def only_marker(exc: BaseException) -> bool:
+        return isinstance(exc, _MarkerError)
+
+    marker_attempts = {"n": 0}
+
+    @with_retry(max_attempts=3, retry_predicate=only_marker)
+    def flaky_marker() -> str:
+        marker_attempts["n"] += 1
+        if marker_attempts["n"] < 2:
+            raise _MarkerError("retry me")
+        return "ok"
+
+    assert flaky_marker() == "ok"
+    assert marker_attempts["n"] == 2
+
+    other_attempts = {"n": 0}
+
+    @with_retry(max_attempts=3, retry_predicate=only_marker)
+    def always_other() -> str:
+        other_attempts["n"] += 1
+        raise ValueError("not retried by the predicate")
+
+    with pytest.raises(ValueError):
+        always_other()
+    assert other_attempts["n"] == 1
+
+
 @pytest.mark.asyncio
 async def test_with_retry_async_succeeds_after_retries() -> None:
     attempts = {"n": 0}
