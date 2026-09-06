@@ -320,8 +320,7 @@ export interface RetentionListResponse {
 // ── Evidence types (mirrored from evidentia_core.models.evidence) ────────
 
 /** Evidence artifact — save body shape (caller constructs new lineage/version). */
-export type EvidenceArtifactInput =
-  components["schemas"]["EvidenceArtifact"];
+export type EvidenceArtifactInput = components["schemas"]["EvidenceArtifact"];
 /** Evidence artifact as returned by the version endpoint. */
 export type EvidenceArtifact = components["schemas"]["EvidenceArtifact"];
 
@@ -556,6 +555,10 @@ export type ConmonMarkCompletedRequest =
 /** `POST /api/conmon/mark-completed` response. */
 export type ConmonMarkCompletedResponse =
   components["schemas"]["MarkCompletedResponse"];
+/** `POST /api/conmon/series` body ({slug, since?, until?, lookback_days, tolerance_days?}). */
+export type ConmonSeriesRequest = components["schemas"]["SeriesRequest"];
+/** `POST /api/conmon/series` response ({description, series}). */
+export type ConmonSeriesResponse = components["schemas"]["SeriesResponse"];
 
 /**
  * Request a gap-report export and return the artifact blob + the
@@ -815,15 +818,17 @@ const realApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  conmonSeries: (body: ConmonSeriesRequest) =>
+    request<ConmonSeriesResponse>("/api/conmon/series", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   conmonMarkCompleted: (body: ConmonMarkCompletedRequest) =>
     request<ConmonMarkCompletedResponse>("/api/conmon/mark-completed", {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  conmonDedupList: (params?: {
-    slug?: string;
-    suppression_hours?: number;
-  }) => {
+  conmonDedupList: (params?: { slug?: string; suppression_hours?: number }) => {
     const search = new URLSearchParams();
     if (params?.slug) search.set("slug", params.slug);
     if (params?.suppression_hours != null)
@@ -1111,9 +1116,7 @@ const realApi = {
     const search = new URLSearchParams();
     if (params?.tier) search.set("tier", params.tier);
     const qs = search.toString();
-    return request<AISystemEntry[]>(
-      `/api/ai-gov/systems${qs ? `?${qs}` : ""}`,
-    );
+    return request<AISystemEntry[]>(`/api/ai-gov/systems${qs ? `?${qs}` : ""}`);
   },
   classifyAiSystem: (descriptor: AISystemDescriptor) =>
     request<AISystemClassification>("/api/ai-gov/classify", {

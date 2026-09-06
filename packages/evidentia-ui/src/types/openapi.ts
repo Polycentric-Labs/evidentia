@@ -1363,6 +1363,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/conmon/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assert Conmon Series
+         * @description Assert the cadence evidence series for a slug over a window.
+         *
+         *     Reads the server's own configured evidence store
+         *     (:func:`evidentia_core.evidence_store.get_evidence_store_dir`,
+         *     honoring ``EVIDENTIA_EVIDENCE_STORE_DIR``; the request never carries
+         *     a filesystem path, for the same reason no other router here accepts
+         *     a client-supplied path) for artifacts whose ``metadata.cadence_slug``
+         *     matches ``slug`` inside the resolved window, then asserts the dated
+         *     series (:func:`evidentia_core.conmon.series.assert_series`). A
+         *     gap-free series is evidence of cadence and nothing more.
+         */
+        post: operations["assert_conmon_series_api_conmon_series_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/doctor": {
         parameters: {
             query?: never;
@@ -3537,6 +3566,35 @@ export interface components {
          * @enum {string}
          */
         AnnexIIIDomain: "biometrics" | "critical_infrastructure" | "education" | "employment" | "essential_services" | "law_enforcement" | "migration" | "justice" | "none";
+        /**
+         * CadenceSeries
+         * @description The dated series for one cadence over a window, with its verdict.
+         */
+        CadenceSeries: {
+            /** Frequency */
+            frequency?: string | null;
+            /** Gaps */
+            gaps?: components["schemas"]["SeriesGap"][];
+            /** Interval Days */
+            interval_days?: number | null;
+            /** Observations */
+            observations?: components["schemas"]["SeriesObservation"][];
+            /** Slug */
+            slug: string;
+            /** Tolerance Days */
+            tolerance_days: number;
+            verdict: components["schemas"]["SeriesVerdict"];
+            /**
+             * Window End
+             * Format: date-time
+             */
+            window_end: string;
+            /**
+             * Window Start
+             * Format: date-time
+             */
+            window_start: string;
+        };
         /**
          * CatalogControl
          * @description A single control from a framework catalog.
@@ -6823,6 +6881,98 @@ export interface components {
             title: string;
         };
         /**
+         * SeriesGap
+         * @description A spacing that exceeded the allowed interval.
+         */
+        SeriesGap: {
+            /**
+             * After
+             * Format: date-time
+             * @description Start of the gap: an observation, or the window start.
+             */
+            after: string;
+            /**
+             * Allowed Days
+             * @description Interval plus tolerance.
+             */
+            allowed_days: number;
+            /**
+             * Before
+             * Format: date-time
+             * @description End of the gap: the next observation, or the window end.
+             */
+            before: string;
+            /**
+             * Boundary
+             * @description True when one side of the gap is a window edge.
+             * @default false
+             */
+            boundary: boolean;
+            /**
+             * Days
+             * @description Whole days between the two instants.
+             */
+            days: number;
+        };
+        /**
+         * SeriesObservation
+         * @description One artifact version that counts towards the series.
+         */
+        SeriesObservation: {
+            /**
+             * Collected At
+             * Format: date-time
+             */
+            collected_at: string;
+            /** Lineage Id */
+            lineage_id: string;
+            /** Source System */
+            source_system: string;
+            /** Version */
+            version: number;
+        };
+        /** SeriesRequest */
+        SeriesRequest: {
+            /**
+             * Lookback Days
+             * @description Look-back window in days, used to fill any bound 'since' / 'until' don't supply. Default 365.
+             * @default 365
+             */
+            lookback_days: number;
+            /**
+             * Since
+             * @description Window start. When both 'since' and 'until' are omitted, the window is the last 'lookback_days' days ending today. When only one of the two is given, the other is filled from that same default window (not derived from the given bound).
+             */
+            since?: string | null;
+            /**
+             * Slug
+             * @description Cadence slug (e.g., 'pci-dss-11-6-1-weekly').
+             */
+            slug: string;
+            /**
+             * Tolerance Days
+             * @description Grace period (days) added to the cadence's interval before a spacing counts as a gap. Omit for the cadence-appropriate default.
+             */
+            tolerance_days?: number | null;
+            /**
+             * Until
+             * @description Window end. See 'since' for the fill rule.
+             */
+            until?: string | null;
+        };
+        /** SeriesResponse */
+        SeriesResponse: {
+            /** Description */
+            description: string;
+            series: components["schemas"]["CadenceSeries"];
+        };
+        /**
+         * SeriesVerdict
+         * @description What the dated series shows for the window.
+         * @enum {string}
+         */
+        SeriesVerdict: "continuous" | "gapped" | "insufficient" | "unknown";
+        /**
          * SetAcquisitionPhaseRequest
          * @description Body for ``POST /ai-gov/acquisitions/{acquisition_id}/set-phase``.
          */
@@ -9940,6 +10090,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NextDueResponse"];
+                };
+            };
+            /** @description Unknown cadence ``slug`` (``error: not_found``). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assert_conmon_series_api_conmon_series_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeriesRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesResponse"];
+                };
+            };
+            /** @description `until` precedes `since` (``error: invalid_window``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Unknown cadence ``slug`` (``error: not_found``). */

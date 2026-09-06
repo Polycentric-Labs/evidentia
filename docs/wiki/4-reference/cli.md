@@ -487,6 +487,21 @@ Compute the next-due date for a registered cadence.
 | `--last-completed` | ISO-8601 date of the last completed cycle. |
 | `--json` | Emit JSON instead of human form. |
 
+### `evidentia conmon series`
+
+Assert the cadence evidence series for SLUG over a window.
+
+| Flag / argument | Description |
+| --- | --- |
+| `SLUG` | — |
+| `--evidence-store` | Evidence store root directory. Defaults to EVIDENTIA_EVIDENCE_STORE_DIR, else the platform user-data directory (evidentia_core.evidence_store.get_evidence_store_dir). |
+| `--since` | ISO-8601 date; window start. When both --since and --until are omitted, the window is the last --lookback-days days ending today. When only one of the two is given, the other is filled from that same default window (not derived from the given bound). |
+| `--until` | ISO-8601 date; window end. See --since for the fill rule. |
+| `--lookback-days` | Look-back window in days, used to fill any bound --since / --until don't supply. Default 365. |
+| `--tolerance-days` | Grace period (days) added to the cadence's interval before a spacing counts as a gap. Omit for the cadence-appropriate default (evidentia_core.conmon.series.default_tolerance_days). |
+| `--json` | Emit machine-readable JSON instead of rich tables. |
+| `--emit-findings` | Write a JSON array to this path holding the SecurityFinding a gapped or insufficient series produces (evidentia_core.conmon.series.series_to_finding), or an empty array for a continuous series. |
+
 ### `evidentia conmon watch`
 
 Long-running poll daemon for CONMON cycle attention-state.
@@ -969,7 +984,7 @@ Model Context Protocol (MCP) server (v0.8.0 P0.3). Exposes gap analysis, control
 
 ### `evidentia mcp cimd-migrate`
 
-Migrate a CIMD registry to grant the v0.9.6 ``conmon_*`` MCP tools.
+Migrate a CIMD registry to grant the ``conmon_*`` MCP tools.
 
 | Flag / argument | Description |
 | --- | --- |

@@ -11,8 +11,7 @@ import { ConmonPage } from "@/routes/ConmonPage";
 // `ApiError` through from the real module so the page's `instanceof ApiError`
 // error branch stays intact, and stub every method the page touches.
 vi.mock("@/lib/api", async () => {
-  const actual =
-    await vi.importActual<typeof import("@/lib/api")>("@/lib/api");
+  const actual = await vi.importActual<typeof import("@/lib/api")>("@/lib/api");
   return {
     ...actual,
     api: {
@@ -20,6 +19,7 @@ vi.mock("@/lib/api", async () => {
       conmonNext: vi.fn(),
       conmonCheck: vi.fn(),
       conmonHealth: vi.fn(),
+      conmonSeries: vi.fn(),
       conmonMarkCompleted: vi.fn(),
       conmonDedupList: vi.fn(),
     },
@@ -27,12 +27,13 @@ vi.mock("@/lib/api", async () => {
 });
 
 // Import after the mock factory so we get the mocked reference.
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 
 const listConmonCadences = vi.mocked(api.listConmonCadences);
 const conmonNext = vi.mocked(api.conmonNext);
 const conmonCheck = vi.mocked(api.conmonCheck);
 const conmonHealth = vi.mocked(api.conmonHealth);
+const conmonSeries = vi.mocked(api.conmonSeries);
 const conmonMarkCompleted = vi.mocked(api.conmonMarkCompleted);
 const conmonDedupList = vi.mocked(api.conmonDedupList);
 
@@ -47,7 +48,8 @@ const CADENCES = [
     framework: "nist-800-53-rev5",
     activity: "continuous-monitoring",
     frequency: "monthly",
-    description: "Re-assess a control subset every month per the ISCM strategy.",
+    description:
+      "Re-assess a control subset every month per the ISCM strategy.",
     citation: "NIST SP 800-53 Rev 5 CA-7 (Continuous Monitoring)",
   },
   {
@@ -79,6 +81,7 @@ describe("ConmonPage", () => {
     conmonNext.mockReset();
     conmonCheck.mockReset();
     conmonHealth.mockReset();
+    conmonSeries.mockReset();
     conmonMarkCompleted.mockReset();
     conmonDedupList.mockReset();
   });
@@ -139,7 +142,9 @@ describe("ConmonPage", () => {
     renderPage();
 
     expect(
-      await screen.findByText(/no continuous-monitoring cadences are registered/i),
+      await screen.findByText(
+        /no continuous-monitoring cadences are registered/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -181,9 +186,7 @@ describe("ConmonPage", () => {
       }),
       "2026-06-01",
     );
-    await user.click(
-      screen.getByRole("button", { name: /compute next due/i }),
-    );
+    await user.click(screen.getByRole("button", { name: /compute next due/i }));
 
     await waitFor(() =>
       expect(conmonNext).toHaveBeenCalledWith({
@@ -193,6 +196,100 @@ describe("ConmonPage", () => {
     );
     // The computed next-due date renders in the result list.
     expect(await screen.findByText("2026-07-01")).toBeInTheDocument();
+  });
+
+  it("asserts a cadence series through conmonSeries", async () => {
+    const user = userEvent.setup();
+    listConmonCadences.mockResolvedValue([]);
+    conmonSeries.mockResolvedValue({
+      description:
+        "One evidence artifact was collected in the window, with one gap of 14 days against an allowed 9.",
+      series: {
+        slug: "pci-dss-11-6-1-weekly",
+        frequency: "weekly",
+        interval_days: 7,
+        tolerance_days: 2,
+        verdict: "gapped",
+        window_start: "2026-01-01T00:00:00Z",
+        window_end: "2026-09-01T00:00:00Z",
+        observations: [
+          {
+            collected_at: "2026-06-01T00:00:00Z",
+            lineage_id: "lineage-0123456789abcdef",
+            source_system: "aws-security-hub",
+            version: 3,
+          },
+        ],
+        gaps: [
+          {
+            after: "2026-06-01T00:00:00Z",
+            before: "2026-06-15T00:00:00Z",
+            days: 14,
+            allowed_days: 9,
+            boundary: false,
+          },
+        ],
+      },
+    });
+
+    renderPage();
+
+    await user.type(
+      screen.getByLabelText("Cadence slug", {
+        selector: "#conmon-series-slug",
+      }),
+      "pci-dss-11-6-1-weekly",
+    );
+    await user.click(screen.getByRole("button", { name: /assert series/i }));
+
+    await waitFor(() =>
+      expect(conmonSeries).toHaveBeenCalledWith(
+        expect.objectContaining({
+          slug: "pci-dss-11-6-1-weekly",
+          lookback_days: 365,
+          since: undefined,
+          until: undefined,
+          tolerance_days: undefined,
+        }),
+      ),
+    );
+
+    // The verdict badge and the plain-language description both render.
+    expect(await screen.findByText("gapped")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "One evidence artifact was collected in the window, with one gap of 14 days against an allowed 9.",
+      ),
+    ).toBeInTheDocument();
+    // The gap row shows the actual spacing against the allowed interval.
+    expect(screen.getByText("14")).toBeInTheDocument();
+    expect(screen.getByText("9")).toBeInTheDocument();
+  });
+
+  it("shows the error card when the series request fails", async () => {
+    const user = userEvent.setup();
+    listConmonCadences.mockResolvedValue([]);
+    conmonSeries.mockRejectedValue(
+      new ApiError("API POST /api/conmon/series failed (404)", 404, {
+        detail: { error: "unknown_cadence", slug: "does-not-exist" },
+      }),
+    );
+
+    renderPage();
+
+    await user.type(
+      screen.getByLabelText("Cadence slug", {
+        selector: "#conmon-series-slug",
+      }),
+      "does-not-exist",
+    );
+    await user.click(screen.getByRole("button", { name: /assert series/i }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/could not assert cadence series/i),
+      ).toBeInTheDocument(),
+    );
   });
 
   it("records a completion through conmonMarkCompleted and refreshes the list", async () => {
@@ -220,9 +317,7 @@ describe("ConmonPage", () => {
       }),
       "2026-06-01",
     );
-    await user.click(
-      screen.getByRole("button", { name: /mark completed/i }),
-    );
+    await user.click(screen.getByRole("button", { name: /mark completed/i }));
 
     await waitFor(() =>
       expect(conmonMarkCompleted).toHaveBeenCalledWith({
@@ -231,9 +326,7 @@ describe("ConmonPage", () => {
       }),
     );
     // The cadences query is invalidated → refetched after the mutation.
-    await waitFor(() =>
-      expect(listConmonCadences).toHaveBeenCalledTimes(2),
-    );
+    await waitFor(() => expect(listConmonCadences).toHaveBeenCalledTimes(2));
   });
 
   it("loads deduplicated alert entries through conmonDedupList", async () => {

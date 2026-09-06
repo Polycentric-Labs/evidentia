@@ -38,7 +38,7 @@ Task-oriented how-tos. Each page solves a specific operational need.
 
 - **[OSPS self-assessment](osps-self-assessment.md)** — walk through [`OSPS-CONFORMANCE.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/OSPS-CONFORMANCE.md) + the `verify-osps-conformance.yml` CI gate; how to fork the pattern for your own project.
 
-- **[MCP client setup](mcp-client-setup.md)** — run the Evidentia MCP server and wire its 13 tools into Claude Desktop / Claude Code (`mcp`).
+- **[MCP client setup](mcp-client-setup.md)** — run the Evidentia MCP server and wire its 14 tools into Claude Desktop / Claude Code (`mcp`).
 
 - **[Serve the web UI](serve-the-web-ui.md)** — launch the local browser UI for gap analysis + the 8-format gap-export control (`evidentia serve`).
 

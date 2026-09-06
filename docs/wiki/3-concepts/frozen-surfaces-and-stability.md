@@ -26,7 +26,7 @@ These surfaces carry full semver guarantees. Breaking them requires a major bump
 - **REST API URIs** (`evidentia_api.routes.*`) — 17 routers under the `/api/<resource>` pattern (`/api/health`, `/api/gaps`, `/api/poam`, `/api/conmon`, …); counting the router modules mounted via `app.include_router(...)` in `app.py`. URI paths, response JSON field names, HTTP methods, and query-parameter names are frozen (additions only); new endpoints are non-breaking. REST deprecation is signaled via the `Deprecation: true` and `Sunset: <date>` response headers (RFC 8594).
 - **Env-var public contract** — a set of runtime-configuration env vars (`EVIDENTIA_POAM_STORE_DIR`, `EVIDENTIA_RBAC_POLICY_FILE`, `EVIDENTIA_EVIDENCE_STORE_DIR`, `EVIDENTIA_EVIDENCE_AUTO_MIRROR_WORM`, and others) whose names and semantics are frozen with the same guarantees as CLI flags.
 
-## The append-only MCP tool surface (13 tools)
+## The append-only MCP tool surface (14 tools)
 
 MCP tool *names* are part of the contract with AI clients (Claude Desktop, Claude Code, custom MCP clients), so the tool surface is **append-only**: renaming a tool is a major trigger; adding a tool is non-breaking. As of v0.10.4 there are **13 tools**, each registered with a `@server.tool()` decorator in `packages/evidentia-mcp/src/evidentia_mcp/server.py`:
 
@@ -45,6 +45,7 @@ MCP tool *names* are part of the contract with AI clients (Claude Desktop, Claud
 | `tprm_vendor_list` | v0.10.2 | List vendors from the local TPRM store (read-only) |
 | `poam_list` | v0.10.2 | List POA&Ms from the local store (read-only) |
 | `verify_signed_artifact` | v0.10.4 | Verify an Evidentia signed-artifact bundle |
+| `conmon_series` | v0.13 | Cadence evidence series over the evidence store |
 
 Two deliberate hardening choices are encoded here: `collect_ocsf` is **file-mode only** — the URL-ingest path was omitted to remove the SSRF surface (finding F-V101-L1); and `verify_signed_artifact` path-gates its input through `validate_within(--allow-root)`. Tool *parameter names* are frozen; tool *descriptions* may be refined for clarity without being a breaking change.
 

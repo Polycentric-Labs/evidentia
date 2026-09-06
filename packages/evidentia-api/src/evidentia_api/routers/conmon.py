@@ -46,7 +46,7 @@ daemon-status / daemon-history instead).
 from __future__ import annotations
 
 import os
-from datetime import date
+from datetime import UTC, date, datetime, time
 from pathlib import Path
 from typing import Any
 
@@ -54,8 +54,11 @@ from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.conmon import (
     DEFAULT_SUPPRESSION_HOURS,
     AlertDeduper,
+    CadenceSeries,
     CycleAttentionState,
+    assert_series,
     compute_health,
+    default_window,
     derive_status,
     get_cadence,
     list_cadences,
@@ -66,6 +69,8 @@ from evidentia_core.conmon.daemon import (
     read_daemon_history,
     read_daemon_status,
 )
+from evidentia_core.conmon.series import CADENCE_SLUG_METADATA_KEY
+from evidentia_core.evidence_store import get_evidence_store_dir, iter_artifacts
 from evidentia_core.models.common import NonBlankStr
 from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
@@ -115,10 +120,7 @@ class CheckRequest(BaseModel):
     )
     today: date | None = Field(
         default=None,
-        description=(
-            "Override 'today' for deterministic snapshots. "
-            "Omit for real-time checks."
-        ),
+        description=("Override 'today' for deterministic snapshots. Omit for real-time checks."),
     )
     window_days: int = Field(
         default=14,
@@ -174,9 +176,7 @@ async def list_conmon_cadences(
 
 @router.get(
     "/conmon/cadences/{slug}",
-    responses=error_responses(
-        {404: "Unknown cadence ``slug`` (``error: not_found``)."}
-    ),
+    responses=error_responses({404: "Unknown cadence ``slug`` (``error: not_found``)."}),
 )
 async def get_conmon_cadence(slug: str) -> dict[str, str | None]:
     """Get a single cadence by slug."""
@@ -204,9 +204,7 @@ async def get_conmon_cadence(slug: str) -> dict[str, str | None]:
 
 @router.post(
     "/conmon/next",
-    responses=error_responses(
-        {404: "Unknown cadence ``slug`` (``error: not_found``)."}
-    ),
+    responses=error_responses({404: "Unknown cadence ``slug`` (``error: not_found``)."}),
 )
 async def compute_next_due(body: NextDueRequest) -> NextDueResponse:
     """Compute the next-due date for a registered cadence."""
@@ -282,23 +280,123 @@ async def check_conmon_cycles(body: CheckRequest) -> CheckResponse:
     )
 
 
+# ── series (v0.13, V13-01: cadence evidence series) ──────────────
+
+
+class SeriesRequest(BaseModel):
+    slug: NonBlankStr = Field(
+        max_length=128,
+        description="Cadence slug (e.g., 'pci-dss-11-6-1-weekly').",
+    )
+    since: date | None = Field(
+        default=None,
+        description=(
+            "Window start. When both 'since' and 'until' are omitted, "
+            "the window is the last 'lookback_days' days ending today. "
+            "When only one of the two is given, the other is filled "
+            "from that same default window (not derived from the given "
+            "bound)."
+        ),
+    )
+    until: date | None = Field(
+        default=None,
+        description="Window end. See 'since' for the fill rule.",
+    )
+    lookback_days: int = Field(
+        default=365,
+        ge=1,
+        le=3660,
+        description=("Look-back window in days, used to fill any bound 'since' / 'until' don't supply. Default 365."),
+    )
+    tolerance_days: int | None = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Grace period (days) added to the cadence's interval before "
+            "a spacing counts as a gap. Omit for the cadence-appropriate "
+            "default."
+        ),
+    )
+
+
+class SeriesResponse(BaseModel):
+    series: CadenceSeries
+    description: str
+
+
+@router.post(
+    "/conmon/series",
+    responses=error_responses(
+        {
+            400: "`until` precedes `since` (``error: invalid_window``).",
+            404: "Unknown cadence ``slug`` (``error: not_found``).",
+        }
+    ),
+)
+async def assert_conmon_series(body: SeriesRequest) -> SeriesResponse:
+    """Assert the cadence evidence series for a slug over a window.
+
+    Reads the server's own configured evidence store
+    (:func:`evidentia_core.evidence_store.get_evidence_store_dir`,
+    honoring ``EVIDENTIA_EVIDENCE_STORE_DIR``; the request never carries
+    a filesystem path, for the same reason no other router here accepts
+    a client-supplied path) for artifacts whose ``metadata.cadence_slug``
+    matches ``slug`` inside the resolved window, then asserts the dated
+    series (:func:`evidentia_core.conmon.series.assert_series`). A
+    gap-free series is evidence of cadence and nothing more.
+    """
+    cadence = get_cadence(body.slug)
+    if cadence is None:
+        raise api_error(
+            404,
+            "not_found",
+            f"Unknown cadence slug: {body.slug!r}",
+            resource="cadence",
+            resource_id=body.slug,
+        )
+
+    default_start, default_end = default_window(lookback_days=body.lookback_days)
+    start_date = body.since if body.since is not None else default_start.date()
+    end_date = body.until if body.until is not None else default_end.date()
+    if end_date < start_date:
+        raise api_error(
+            400,
+            "invalid_window",
+            f"until ({end_date.isoformat()}) is before since ({start_date.isoformat()}).",
+            since=start_date.isoformat(),
+            until=end_date.isoformat(),
+        )
+    window_start = datetime.combine(start_date, time.min, tzinfo=UTC)
+    window_end = datetime.combine(end_date, time.max, tzinfo=UTC)
+
+    store = get_evidence_store_dir()
+    artifacts = iter_artifacts(
+        store,
+        since=window_start,
+        until=window_end,
+        metadata={CADENCE_SLUG_METADATA_KEY: body.slug},
+    )
+    series = assert_series(
+        body.slug,
+        artifacts,
+        window_start=window_start,
+        window_end=window_end,
+        tolerance_days=body.tolerance_days,
+    )
+    return SeriesResponse(series=series, description=series.describe())
+
+
 # ── health (v0.9.3 P1.3) ──────────────────────────────────────────
 
 
 class HealthRequest(BaseModel):
     state: dict[str, date] = Field(
         max_length=10000,
-        description=(
-            "Slug→last-completed-date mapping. Capped at 10,000 "
-            "entries per request."
-        ),
+        description=("Slug→last-completed-date mapping. Capped at 10,000 entries per request."),
     )
     today: date | None = Field(
         default=None,
-        description=(
-            "Override 'today' for deterministic snapshots. Omit "
-            "for real-time reports."
-        ),
+        description=("Override 'today' for deterministic snapshots. Omit for real-time reports."),
     )
     window_days: int = Field(
         default=14,
@@ -307,9 +405,7 @@ class HealthRequest(BaseModel):
     )
     framework: str | None = Field(
         default=None,
-        description=(
-            "Optional framework identifier to restrict the report."
-        ),
+        description=("Optional framework identifier to restrict the report."),
     )
 
 
@@ -337,10 +433,7 @@ async def conmon_health_endpoint(body: HealthRequest) -> dict[str, Any]:
     "/conmon/daemon-status",
     responses=error_responses(
         {
-            404: (
-                "Status file not configured, missing, or unparseable "
-                "(``error: not_found``)."
-            ),
+            404: ("Status file not configured, missing, or unparseable (``error: not_found``)."),
         }
     ),
 )
@@ -364,9 +457,7 @@ async def conmon_daemon_status_endpoint() -> dict[str, Any]:
     + :attr:`EventAction.CONMON_DAEMON_POLL_FAILED` events for
     end-to-end auditor visibility into daemon health.
     """
-    status_file_env = os.environ.get(
-        "EVIDENTIA_CONMON_DAEMON_STATUS_FILE", ""
-    ).strip()
+    status_file_env = os.environ.get("EVIDENTIA_CONMON_DAEMON_STATUS_FILE", "").strip()
     if not status_file_env:
         raise api_error(
             404,
@@ -417,10 +508,7 @@ async def conmon_daemon_status_endpoint() -> dict[str, Any]:
     "/conmon/daemon-history",
     responses=error_responses(
         {
-            404: (
-                "History file not configured or missing "
-                "(``error: not_found``)."
-            ),
+            404: ("History file not configured or missing (``error: not_found``)."),
         }
     ),
 )
@@ -461,9 +549,7 @@ async def conmon_daemon_history_endpoint(
     with ``query_type=history`` to differentiate from point-in-
     time snapshot queries.
     """
-    history_file_env = os.environ.get(
-        "EVIDENTIA_CONMON_DAEMON_HISTORY_FILE", ""
-    ).strip()
+    history_file_env = os.environ.get("EVIDENTIA_CONMON_DAEMON_HISTORY_FILE", "").strip()
     if not history_file_env:
         raise api_error(
             404,
@@ -495,10 +581,7 @@ async def conmon_daemon_history_endpoint(
     _log.info(
         action=EventAction.CONMON_DAEMON_STATUS_QUERIED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"Daemon history queried "
-            f"(returned={len(snapshots)} snapshots, limit={limit})"
-        ),
+        message=(f"Daemon history queried (returned={len(snapshots)} snapshots, limit={limit})"),
         evidentia={
             "history_file": str(history_file),
             "query_type": "history",
@@ -578,9 +661,7 @@ async def mark_conmon_completed(
     RBAC: ``require_role("write")`` — denies under a deny-by-default
     policy; inert under the permissive DEFAULT_POLICY.
     """
-    state_file_env = os.environ.get(
-        "EVIDENTIA_CONMON_STATE_FILE", ""
-    ).strip()
+    state_file_env = os.environ.get("EVIDENTIA_CONMON_STATE_FILE", "").strip()
     if not state_file_env:
         raise api_error(
             400,
@@ -598,9 +679,7 @@ async def mark_conmon_completed(
         previous = mark_completed(state_file, body.slug, body.when)
     except ValueError as exc:
         # Unknown cadence slug — mirrors the CLI's exit-1 user error.
-        raise api_error(
-            400, "invalid_field", str(exc), field="slug"
-        ) from exc
+        raise api_error(400, "invalid_field", str(exc), field="slug") from exc
 
     cadence = get_cadence(body.slug)
     assert cadence is not None  # validated by mark_completed
@@ -621,10 +700,7 @@ async def mark_conmon_completed(
     "/conmon/dedup-list",
     responses=error_responses(
         {
-            400: (
-                "Alert-dedup file not configured "
-                "(``error: feature_unavailable``)."
-            ),
+            400: ("Alert-dedup file not configured (``error: feature_unavailable``)."),
         }
     ),
 )
@@ -662,9 +738,7 @@ async def list_conmon_dedup(
     """
     from datetime import UTC, datetime, timedelta
 
-    dedup_file_env = os.environ.get(
-        "EVIDENTIA_CONMON_ALERT_DEDUP_FILE", ""
-    ).strip()
+    dedup_file_env = os.environ.get("EVIDENTIA_CONMON_ALERT_DEDUP_FILE", "").strip()
     if not dedup_file_env:
         raise api_error(
             400,
@@ -691,9 +765,7 @@ async def list_conmon_dedup(
                 "cadence_slug": entry_slug,
                 "state": state_name,
                 "last_dispatched_at": ts.isoformat(),
-                "suppression_remaining_minutes": round(
-                    remaining_seconds / 60.0, 1
-                ),
+                "suppression_remaining_minutes": round(remaining_seconds / 60.0, 1),
             }
         )
 

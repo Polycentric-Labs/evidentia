@@ -38,13 +38,17 @@ rather than from an operator marking a cycle complete, and a vocabulary for sayi
 
 ### 2.1 Cadence vocabulary: day granularity, additive
 
-`CadenceFrequency` gains `WEEKLY` (7 days) and `BIWEEKLY` (14 days).
-`ConmonCadence` gains an optional `interval_days: int | None` for irregular clocks
-(35 days for CIP-007 R2). `next_due()` uses `interval_days` when set, else the
-existing month arithmetic; `derive_status()` is unchanged. Both changes are
-additive on frozen imports (`BUNDLED_CADENCES`, `derive_status`) and take a
-NORMATIVE row in `docs/api-stability.md`. Bundled cadences added: `pci-dss-11-6-1-weekly`,
-`nerc-cip-007-r2-35-day`, `irs-pub-1345-weekly-asv`, `glba-314-4-d-annual-pentest`.
+`CadenceFrequency` gains `WEEKLY` (7 days), `BIWEEKLY` (14 days), `SEMIANNUAL`
+(6 months) and `CUSTOM`. `ConmonCadence` gains `interval_days: int | None`, required
+for a custom cadence (35 days for CIP-007 R2) and refused otherwise, so a cadence
+has one source of truth. `next_due()` adds a day interval directly for weekly,
+biweekly and custom cadences and keeps the calendar-aware month arithmetic for the
+rest; `derive_status()` is unchanged. Both changes are additive on frozen imports
+(`BUNDLED_CADENCES`, `derive_status`) and take a NORMATIVE row in
+`docs/api-stability.md`. Bundled cadences added: `pci-dss-11-6-1-weekly`,
+`nerc-cip-007-r2-patch-evaluation`, `irs-pub-1345-weekly-asv-scan`,
+`glba-314-4-d-semiannual-vulnerability-assessment` and
+`glba-314-4-d-annual-penetration-test`. Built in batch 4 as described.
 
 ### 2.2 Linking evidence to a cadence
 
@@ -53,8 +57,9 @@ This mirrors the one place cadence and a control-like object already meet,
 `KsiPersistenceCycle.cadence_slug`, and needs no model change (`EvidenceArtifact`
 is `extra="forbid"`, so a new top-level field would be a frozen-model change for
 no gain). A helper `evidence_store.iter_artifacts(store_dir, *, since=None,
-until=None, source_system=None, cadence_slug=None)` walks `list_lineages()` and
-reads versions, filtering on `collected_at` and the two keys. It is a linear scan;
+until=None, source_system=None, metadata=None)` walks `list_lineages()` and reads
+versions, filtering on `collected_at`, the source system and equality on every
+metadata key given (the series passes `{"cadence_slug": slug}`). It is a linear scan;
 for v0.13 store sizes that is acceptable, and an index sidecar is a documented
 follow-up rather than part of this item.
 
@@ -67,10 +72,10 @@ A new model `CadenceSeries` (`evidentia_core/conmon/series.py`):
 | `slug`, `frequency`, `interval_days` | the cadence being asserted |
 | `window_start`, `window_end` | the look-back window (defaults: the cadence's citation, for example twelve months for HITECH 13412) |
 | `observations` | `(collected_at, lineage_id, version)` tuples, oldest first |
-| `gaps` | `(after, before, days)` triples where consecutive observations exceed the interval plus a configurable tolerance (default two days) |
+| `gaps` | `(after, before, days, allowed_days, boundary)` where a spacing exceeds the interval plus tolerance; tolerance defaults to two days for day-based cadences and five for month-based ones (month-end drift alone moves a monthly spacing by up to three days); both window edges are assessed and flagged `boundary` |
 | `verdict` | `continuous`, `gapped`, `insufficient` (fewer than two observations), `unknown` (no cadence match) |
 
-`assert_series(slug, artifacts, *, window, tolerance_days)` is a pure function
+`assert_series(slug, artifacts, *, window_start, window_end, tolerance_days=None)` is a pure function
 with no I/O, so it is unit-testable with synthetic timestamps. Two wording rules
 are enforced by the model itself: the rendered verdict always reads "cadence
 evidence" (`CadenceSeries.describe()` never contains the words compliant or
@@ -142,6 +147,8 @@ they follow once the ingest shape is stable.
 ## 3. Sequencing
 
 1. Batch 4 (V13-01 core): frequency extension and `interval_days`,
+   (the `--evidence-store` mode on `conmon check` and `conmon health` follows in
+   batch 5, once the leaf has settled the series shape),
    `iter_artifacts`, `CadenceSeries` and `assert_series`, the `conmon series`
    leaf with API, console panel, MCP tool and parity row, docs
    (`conmon-runbook.md` section, `api-stability.md` rows). Exit: unit tests on

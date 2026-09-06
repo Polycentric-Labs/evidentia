@@ -3,7 +3,7 @@
 
 > **Auto-generated page.** This page is generated from the live Evidentia codebase by [`scripts/wiki/sync_reference.py`](https://github.com/Polycentric-Labs/evidentia/blob/main/scripts/wiki/sync_reference.py). Do not edit it by hand; change the underlying code/data and re-run the generator (`uv run python scripts/wiki/sync_reference.py`).
 
-Evidentia's [Model Context Protocol](https://modelcontextprotocol.io/) server exposes **13 tools** to MCP-aware AI clients (Claude Desktop, Claude Code, ChatGPT Desktop, custom clients). Tools are listed in registration order.
+Evidentia's [Model Context Protocol](https://modelcontextprotocol.io/) server exposes **14 tools** to MCP-aware AI clients (Claude Desktop, Claude Code, ChatGPT Desktop, custom clients). Tools are listed in registration order.
 
 > **Append-only contract.** Per [`docs/api-stability.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/api-stability.md) (NORMATIVE), the MCP tool surface is **append-only** within a major version: new tools may be added, but existing tool names, parameters, and return shapes are not removed or changed incompatibly before the next major release.
 
@@ -71,6 +71,14 @@ Return the CONMON health report for a state-file.
 
 ```python
 conmon_health(state_file_path: str) -> dict[str, Any]
+```
+
+### `conmon_series`
+
+Assert the cadence evidence series for a slug over a window (v0.13).
+
+```python
+conmon_series(slug: str, evidence_store_dir: str | None = None, since: str | None = None, until: str | None = None, lookback_days: int = 365, tolerance_days: int | None = None) -> dict[str, Any]
 ```
 
 ### `gap_analyze_sarif`
