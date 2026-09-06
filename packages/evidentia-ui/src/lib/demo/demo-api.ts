@@ -590,7 +590,7 @@ const DEMO_COLLECTORS_STATUS: Record<string, unknown> = {
   vanta: { configured: false },
 };
 
-// Baked Nessus scan-ingest result — a representative finding + manifest +
+// Baked Nessus scan-ingest result; a representative finding + manifest +
 // evidence stub. `saved: false` because the demo never touches a real
 // evidence store.
 const DEMO_NESSUS_COLLECT_RESULT: NessusCollectResponse = {
@@ -598,7 +598,7 @@ const DEMO_NESSUS_COLLECT_RESULT: NessusCollectResponse = {
     {
       title: "SSL Certificate Cannot Be Trusted on demo-host-01:443/tcp",
       description:
-        "The X.509 certificate chain for this service cannot be trusted. (Demo finding — illustrative only.)",
+        "The X.509 certificate chain for this service cannot be trusted. (Demo finding; illustrative only.)",
       severity: "medium",
       source_system: "nessus",
       status: "active",

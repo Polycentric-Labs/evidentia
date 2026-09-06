@@ -691,7 +691,7 @@ function OcsfTab({ authed }: { authed: boolean }) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
-// Nessus tab — text upload, local-only (NOT auth-gated, no path/URL)
+// Nessus tab: text upload, local-only (NOT auth-gated, no path/URL)
 // ════════════════════════════════════════════════════════════════════════
 
 function NessusTab() {
@@ -721,15 +721,15 @@ function NessusTab() {
         <CardHeader className="pb-3">
           <CardTitle className="base">Nessus scan (.nessus XML)</CardTitle>
           <CardDescription>
-            Ingest a Nessus v2 scan export. Text upload only — no path, no URL,
-            no credentials — parsed server-side with defusedxml.
+            Ingest a Nessus v2 scan export. Text upload only; no path, no URL,
+            no credentials: parsed server-side with defusedxml.
           </CardDescription>
         </CardHeader>
         <CardContent className="stack-5">
           <div className="stack-2">
             <Label htmlFor="nessus-content">Nessus XML</Label>
             <p className="text-xs muted">
-              The full &lt;NessusClientData_v2&gt; export. Local-only — no
+              The full &lt;NessusClientData_v2&gt; export. Local-only; no
               network, no credentials.
             </p>
             <Textarea
@@ -788,8 +788,8 @@ function NessusTab() {
             <div className="stack-3">
               <p className="text-sm font-medium">
                 Scan{" "}
-                {mutation.data.manifest.is_complete ? "complete" : "incomplete"}{" "}
-                —{" "}
+                {mutation.data.manifest.is_complete ? "complete" : "incomplete"}
+                ;{" "}
                 {mutation.data.evidence.saved
                   ? `evidence saved (lineage ${mutation.data.evidence.lineage_id})`
                   : "evidence not saved"}

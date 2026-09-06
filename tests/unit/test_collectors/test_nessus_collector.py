@@ -28,7 +28,7 @@ HOSTILE = FIXTURES / "nessus-hostile-entity.nessus"
 
 
 class TestParseNessus:
-    """`parse_nessus` is a pure function — shape + timestamps only, no
+    """`parse_nessus` is a pure function; shape + timestamps only, no
     SecurityFinding mapping."""
 
     def test_parse_shape(self) -> None:
@@ -65,7 +65,7 @@ class TestParseNessus:
         assert critical_item.cve == ["CVE-2026-12345", "CVE-2026-67890"]
 
     def test_plugin_output_over_4000_chars_at_parse_layer(self) -> None:
-        """The parser itself does NOT trim — trimming is a mapping-layer
+        """The parser itself does NOT trim; trimming is a mapping-layer
         concern (plugin_output_max_chars)."""
         parsed = parse_nessus(SAMPLE.read_bytes())
         critical_item = next(i for i in parsed.items if i.severity == 4)
@@ -114,7 +114,7 @@ class TestCollectNessusFile:
         assert ssl_finding.source_system == "nessus"
         assert ssl_finding.source_finding_id == "demo-scan:scanner-target-1:51192:443/tcp"
         assert ssl_finding.severity == Severity.MEDIUM
-        # A vulnerability observation is not a control check — the default
+        # A vulnerability observation is not a control check; the default
         # ComplianceStatus is left alone.
         assert ssl_finding.compliance_status == ComplianceStatus.UNKNOWN
         assert ssl_finding.resource_type == "host"

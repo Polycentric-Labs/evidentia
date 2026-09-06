@@ -483,7 +483,7 @@ export interface OcsfCollectRequest {
 
 /**
  * Nessus scan-export ingest body for `POST /api/collectors/nessus/collect`.
- * `content` is the `<NessusClientData_v2>` XML text — no path, no URL; the
+ * `content` is the `<NessusClientData_v2>` XML text; no path, no URL; the
  * server never reads a client-named file. `cadence_slug` defaults server-side
  * to `fedramp-conmon-scans`; `save_evidence` defaults server-side to `true`.
  */
@@ -494,7 +494,7 @@ export interface NessusCollectRequest {
   plugin_output_max_chars?: number;
 }
 
-/** Response of `POST /api/collectors/nessus/collect` — findings + manifest + the saved evidence artifact's lineage. */
+/** Response of `POST /api/collectors/nessus/collect`: findings + manifest + the saved evidence artifact's lineage. */
 export type NessusCollectResponse =
   components["schemas"]["NessusCollectResponse"];
 
@@ -1306,7 +1306,7 @@ const realApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  // Nessus ingest is LOCAL-ONLY (text upload, no path/URL, no credentials) —
+  // Nessus ingest is LOCAL-ONLY (text upload, no path/URL, no credentials),
   // mirrors OCSF's inline-`content` mode's trust posture.
   collectNessus: (body: NessusCollectRequest) =>
     request<NessusCollectResponse>("/api/collectors/nessus/collect", {

@@ -1314,7 +1314,7 @@ def collect_nessus(
         help=(
             "Cadence slug the saved evidence artifact declares via "
             "metadata.cadence_slug (evidentia conmon series reads it). "
-            "Must name a registered cadence — run `evidentia conmon list` "
+            "Must name a registered cadence; run `evidentia conmon list` "
             "to see available."
         ),
     ),
@@ -1349,9 +1349,9 @@ def collect_nessus(
 
     One ``SecurityFinding`` per ``ReportItem`` (host + plugin + port),
     mapped to NIST RA-5 (vulnerability scanning) + SI-2 (flaw
-    remediation). Also builds one scan-report ``EvidenceArtifact`` —
+    remediation). Also builds one scan-report ``EvidenceArtifact``,
     saved to the evidence store unless ``--no-save-evidence`` is
-    given — so ``evidentia conmon series <slug>`` has something to
+    given: so ``evidentia conmon series <slug>`` has something to
     read. No network access: the input is a local file only.
 
     XML is parsed with ``defusedxml``, refusing entity expansion and

@@ -1706,7 +1706,7 @@ async def nessus_collect(payload: dict[str, Any]) -> NessusCollectResponse:
     Mirrors the ``evidentia collect nessus`` CLI verb. Request body:
 
     - ``content`` (required): the ``<NessusClientData_v2>`` XML text.
-      No path and no URL — the server never reads a client-named file;
+      No path and no URL: the server never reads a client-named file;
       this is a text-upload ingest only.
     - ``cadence_slug`` (optional): defaults to ``fedramp-conmon-scans``.
       Must name a registered cadence.
@@ -1718,7 +1718,7 @@ async def nessus_collect(payload: dict[str, Any]) -> NessusCollectResponse:
 
     NO credentials: file/text ingest only, mirroring the OCSF inline-
     ``content`` mode's trust posture. Third-party XML is parsed with
-    ``defusedxml`` — entity expansion and external references are
+    ``defusedxml``: entity expansion and external references are
     refused before any element is read.
     """
     try:
@@ -2381,7 +2381,7 @@ async def collectors_status() -> dict[str, Any]:
         "nessus": {
             "installed": nessus_installed,
             "credentials_hint": (
-                "No credentials — file/text ingest only. POST the "
+                "No credentials: file/text ingest only. POST the "
                 "<NessusClientData_v2> XML export as 'content'; the "
                 "server never reads a client-named file path."
             ),

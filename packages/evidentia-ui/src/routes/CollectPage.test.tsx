@@ -255,7 +255,7 @@ describe("CollectPage", () => {
 
   it("submits Nessus scan content and renders the result (local, not auth-gated)", async () => {
     const user = userEvent.setup();
-    // Auth OFF — Nessus ingest is local-only (text upload, no path/URL) and
+    // Auth OFF. Nessus ingest is local-only (text upload, no path/URL) and
     // must stay enabled just like Convert and OCSF inline content.
     healthMock.mockResolvedValue(healthValue(false));
     collectNessusMock.mockResolvedValue(NESSUS_RESULT);

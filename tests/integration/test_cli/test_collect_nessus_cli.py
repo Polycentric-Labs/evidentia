@@ -58,7 +58,7 @@ def test_collect_nessus_writes_findings_and_saves_evidence(runner: CliRunner, tm
     assert versions[0].metadata["cadence_slug"] == "fedramp-conmon-scans"
     assert versions[0].source_system == "nessus"
     assert "Saved evidence" in result.output
-    # The manifest is incomplete (one fixture host has no HOST_END) — the
+    # The manifest is incomplete (one fixture host has no HOST_END): the
     # printed line surfaces that rather than silently claiming completeness.
     assert "incomplete" in result.output
 
@@ -148,7 +148,7 @@ def test_two_ingests_produce_two_conmon_series_observations(runner: CliRunner, t
     """End-to-end: ingesting the fixture twice, with two different HOST_END
     timestamps, saves two separate evidence-artifact lineages (each
     ``collect nessus`` call mints a fresh EvidenceArtifact.id); `conmon
-    series` — driven through the same Typer runner — then reports two
+    series`: driven through the same Typer runner; then reports two
     observations against the cadence they share."""
     pytest.importorskip("defusedxml")
     base_text = (FIXTURES / "nessus-sample.nessus").read_text(encoding="utf-8")
@@ -214,7 +214,7 @@ def test_collect_nessus_missing_extra_exits_1(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """``sys.modules[name] = None`` makes a subsequent ``import name`` raise
-    ImportError — the hermetic way to simulate the [scan] extra being
+    ImportError: the hermetic way to simulate the [scan] extra being
     absent (mirrors tests/unit/test_collectors/test_collector_ssrf_guard.py's
     driver-absent simulation)."""
     monkeypatch.setitem(sys.modules, "evidentia_collectors.nessus", None)

@@ -40,7 +40,7 @@ _SAMPLE_NESSUS_XML = """<?xml version="1.0" ?>
 
 @pytest.mark.usefixtures("api_client")
 class TestNessusCollectEndpoint:
-    """v0.13 V13-05 — /api/collectors/nessus/collect (text-upload, no path/URL)."""
+    """v0.13 V13-05: /api/collectors/nessus/collect (text-upload, no path/URL)."""
 
     def test_happy_path_returns_findings_manifest_and_evidence(
         self,
@@ -165,7 +165,7 @@ class TestNessusCollectEndpoint:
         assert "not-a-real-cadence" in detail["message"]
 
     def test_content_over_cap_returns_400(self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
-        """The 50 MB cap is exercised via a monkeypatched threshold — a real
+        """The 50 MB cap is exercised via a monkeypatched threshold; a real
         50 MB JSON round-trip would make this test needlessly slow; the
         collector-unit tests already prove the real 50 MB constant."""
         pytest.importorskip("defusedxml")
@@ -181,7 +181,7 @@ class TestNessusCollectEndpoint:
 
     def test_missing_scan_extra_returns_503(self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
         """``sys.modules[name] = None`` makes a subsequent ``import name``
-        raise ImportError — the hermetic way to simulate the [scan] extra
+        raise ImportError: the hermetic way to simulate the [scan] extra
         being absent (mirrors tests/unit/test_collectors/
         test_collector_ssrf_guard.py's driver-absent simulation)."""
         monkeypatch.setitem(sys.modules, "evidentia_collectors.nessus", None)
