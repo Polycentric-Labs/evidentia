@@ -587,6 +587,7 @@ const DEMO_COLLECTORS_STATUS: Record<string, unknown> = {
   aws: { configured: false },
   github: { configured: false },
   okta: { configured: false },
+  "google-workspace": { configured: false },
   vanta: { configured: false },
 };
 
@@ -1518,6 +1519,9 @@ export const demoApi = {
     Promise.resolve(clone(DEMO_FINDINGS)),
   collectOkta: (_body?: Record<string, unknown>): Promise<SecurityFinding[]> =>
     Promise.resolve(clone(DEMO_FINDINGS)),
+  collectGoogleWorkspace: (
+    _body?: Record<string, unknown>,
+  ): Promise<SecurityFinding[]> => Promise.resolve(clone(DEMO_FINDINGS)),
   collectSql: (
     _dialect: string,
     _body: Record<string, unknown>,
