@@ -2,7 +2,7 @@
 
 Evidentia ships a **Model Context Protocol (MCP) server** that exposes its gap
 analysis, control lookup, CONMON, TPRM, POA&M, and signed-artifact verification
-surface as **13 tools** an AI agent can call directly. This guide gets that
+surface as **14 tools** an AI agent can call directly. This guide gets that
 server running and wires it into the MCP hosts you actually use (Claude Desktop
 and Claude Code) so an agent can drive Evidentia on your behalf. It
 covers the `evidentia mcp` command group (`serve`, `doctor`, `cimd-migrate`), the
@@ -52,7 +52,7 @@ Real output on a healthy install:
 Evidentia MCP doctor: PASS
   • MCP SDK: importable
   • Catalog registry: 96 frameworks loaded
-  • FastMCP server: 13 tools registered
+  • FastMCP server: 14 tools registered
 ```
 
 If you see `1` with an import error instead, the `mcp` extra is missing — re-run
@@ -164,7 +164,7 @@ Confirm the server is registered and reachable with `claude mcp list`.
 
 ## Step 6 — (Optional) Gate tools per client with CIMD
 
-By default every connected client can call every one of the 13 tools. For
+By default every connected client can call every one of the 14 tools. For
 multi-client deployments you can restrict which tools a given client may call
 with a **CIMD (Client ID Metadata Document) registry** — a JSON file mapping each
 `client_id` to a space-separated allowlist of tool names in its `scope`.
@@ -246,7 +246,7 @@ Drop `--dry-run` to write the change. Restrict it to one client with
 `--client-id <slug>`, or grant a different tool set with
 `--tools 'tool_a tool_b'` for future tool additions.
 
-## The 13 MCP tools
+## The 14 MCP tools
 
 Tools are exposed in registration order. Purposes are from the
 [MCP tools reference](../4-reference/mcp-tools.md), which is auto-generated from

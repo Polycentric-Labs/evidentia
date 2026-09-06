@@ -40,7 +40,7 @@ Evidence collectors pull raw signals from source systems (AWS API, GitHub API, P
 | `evidentia-ai` | LLM features (opt-in) | Risk-statement generator + control explainer via LiteLLM (Claude / OpenAI / Anthropic / Bedrock / etc.). DFAH (Determinism, Faithfulness, And Harness) calibration applies. |
 | `evidentia-eval` | Evaluation harness | DFAH calibration corpus + benchmark runner. Extracted to its own package v0.10.5 P9 so the air-gap install posture is preserved (lazy-import contract). |
 | `evidentia-api` | REST + frontend | FastAPI REST endpoints + `evidentia-ui` (TS/JS Vite frontend bundled at wheel-assembly time). |
-| `evidentia-mcp` | MCP server | 13 MCP tools (append-only per `docs/api-stability.md`). Drives Evidentia from any MCP host (Claude Desktop, Claude Code, Copilot CLI). Tool outputs can be wrapped in a `SignedToolOutput` envelope (Sigstore keyless); CIMD client-scope gating (RFC 7591) also lives here. |
+| `evidentia-mcp` | MCP server | 14 MCP tools (append-only per `docs/api-stability.md`). Drives Evidentia from any MCP host (Claude Desktop, Claude Code, Copilot CLI). Tool outputs can be wrapped in a `SignedToolOutput` envelope (Sigstore keyless); CIMD client-scope gating (RFC 7591) also lives here. |
 | `evidentia-integrations` | Third-party plugins | Bridge to Jira, ServiceNow, etc. for POA&M lifecycle integration. |
 | `evidentia-ui` | Frontend | Vite + TypeScript SPA bundled into `evidentia-api`'s wheel. NOT published to PyPI separately. |
 
