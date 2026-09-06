@@ -320,6 +320,11 @@ evidence store from `EVIDENTIA_EVIDENCE_STORE_DIR` (the request never
 carries a filesystem path). MCP parity: the `conmon_series` tool
 returns the identical shape.
 
+**Where the evidence comes from.** `evidentia collect nessus` (v0.13
+V13-05) is the first collector that writes an `EvidenceArtifact` a series
+can read — see [vuln-scan-collectors.md](vuln-scan-collectors.md) for the
+Nessus ingest's mapping table, blind spots, and security notes.
+
 ## Future work
 
 The CONMON live-trigger daemon (`evidentia conmon watch`)

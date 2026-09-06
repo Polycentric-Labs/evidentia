@@ -85,6 +85,8 @@ import type {
   TraceabilityMatrix,
   SecurityFinding,
   OcsfCollectRequest,
+  NessusCollectRequest,
+  NessusCollectResponse,
 } from "@/lib/api";
 import type {
   AirGapCheckResponse,
@@ -584,6 +586,55 @@ const DEMO_COLLECTORS_STATUS: Record<string, unknown> = {
   github: { configured: false },
   okta: { configured: false },
   vanta: { configured: false },
+};
+
+// Baked Nessus scan-ingest result — a representative finding + manifest +
+// evidence stub. `saved: false` because the demo never touches a real
+// evidence store.
+const DEMO_NESSUS_COLLECT_RESULT: NessusCollectResponse = {
+  findings: [
+    {
+      title: "SSL Certificate Cannot Be Trusted on demo-host-01:443/tcp",
+      description:
+        "The X.509 certificate chain for this service cannot be trusted. (Demo finding — illustrative only.)",
+      severity: "medium",
+      source_system: "nessus",
+      status: "active",
+      compliance_status: "unknown",
+      resource_type: "host",
+      resource_id: "10.0.0.12",
+    },
+  ],
+  manifest: {
+    run_id: "01J0000000000000000000DEMO",
+    collector_id: "nessus-file",
+    collector_version: "0.13.0",
+    collection_started_at: "2026-09-01T10:22:31Z",
+    collection_finished_at: "2026-09-01T10:22:31Z",
+    source_system_ids: ["demo-scan"],
+    filters_applied: {},
+    coverage_counts: [
+      { resource_type: "host", scanned: 1, matched_filter: 1, collected: 1 },
+      {
+        resource_type: "report_item",
+        scanned: 1,
+        matched_filter: 1,
+        collected: 1,
+      },
+    ],
+    total_findings: 1,
+    is_complete: true,
+    incomplete_reason: null,
+    empty_categories: [],
+    warnings: [],
+    errors: [],
+    evidentia_version: "0.13.0",
+  },
+  evidence: {
+    lineage_id: "00000000-0000-0000-0000-000000000000",
+    saved: false,
+    collected_at: "2026-09-01T10:22:31Z",
+  },
 };
 
 // Baked integration status (demo: not configured — no server-side credentials).
@@ -1438,6 +1489,10 @@ export const demoApi = {
   ): Promise<SecurityFinding[]> => Promise.resolve(clone(DEMO_FINDINGS)),
   collectOcsf: (_body: OcsfCollectRequest): Promise<SecurityFinding[]> =>
     Promise.resolve(clone(DEMO_FINDINGS)),
+  collectNessus: (
+    _body: NessusCollectRequest,
+  ): Promise<NessusCollectResponse> =>
+    Promise.resolve(clone(DEMO_NESSUS_COLLECT_RESULT)),
   collectConvert: (
     _body: Record<string, unknown>,
   ): Promise<Record<string, unknown>[]> =>

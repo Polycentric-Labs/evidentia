@@ -481,6 +481,23 @@ export interface OcsfCollectRequest {
   block_private_ips?: boolean;
 }
 
+/**
+ * Nessus scan-export ingest body for `POST /api/collectors/nessus/collect`.
+ * `content` is the `<NessusClientData_v2>` XML text — no path, no URL; the
+ * server never reads a client-named file. `cadence_slug` defaults server-side
+ * to `fedramp-conmon-scans`; `save_evidence` defaults server-side to `true`.
+ */
+export interface NessusCollectRequest {
+  content: string;
+  cadence_slug?: string;
+  save_evidence?: boolean;
+  plugin_output_max_chars?: number;
+}
+
+/** Response of `POST /api/collectors/nessus/collect` — findings + manifest + the saved evidence artifact's lineage. */
+export type NessusCollectResponse =
+  components["schemas"]["NessusCollectResponse"];
+
 // ── Catalog types (mirrored from evidentia_core catalog tooling) ─────────
 
 /** Catalog import body ({framework_id, content, format?, name?, …}). */
@@ -1268,6 +1285,13 @@ const realApi = {
     }),
   collectOcsf: (body: OcsfCollectRequest) =>
     request<SecurityFinding[]>("/api/collectors/ocsf/collect", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  // Nessus ingest is LOCAL-ONLY (text upload, no path/URL, no credentials) —
+  // mirrors OCSF's inline-`content` mode's trust posture.
+  collectNessus: (body: NessusCollectRequest) =>
+    request<NessusCollectResponse>("/api/collectors/nessus/collect", {
       method: "POST",
       body: JSON.stringify(body),
     }),

@@ -356,6 +356,10 @@ commands:
     api: "POST /api/collectors/ocsf/collect"
     gui: "/collect"
     status: full
+  - cli: "collect nessus"
+    api: "POST /api/collectors/nessus/collect"
+    gui: "/collect"
+    status: full
   - cli: "collect convert"
     api: "POST /api/collectors/convert"
     gui: "/collect"
