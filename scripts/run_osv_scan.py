@@ -71,11 +71,19 @@ def generate_sbom(sbom_path: Path) -> bool:
     try:
         result = subprocess.run(
             [
-                "uvx", "--from", "cyclonedx-bom", "cyclonedx-py", "environment",
-                "-o", str(sbom_path),
-                "--of", "JSON",
-                "--sv", "1.7",
-                "--pyproject", "packages/evidentia-core/pyproject.toml",
+                "uvx",
+                "--from",
+                "cyclonedx-bom",
+                "cyclonedx-py",
+                "environment",
+                "-o",
+                str(sbom_path),
+                "--of",
+                "JSON",
+                "--sv",
+                "1.7",
+                "--pyproject",
+                "packages/evidentia-core/pyproject.toml",
                 sys.executable,
             ],
             check=False,
@@ -94,8 +102,7 @@ def run_osv_scanner(sbom_path: Path, config_path: Path) -> int:
     """
     if shutil.which("osv-scanner") is None:
         print(
-            "ERROR: osv-scanner not found on PATH. Install it first; see "
-            "docs/release-checklist.md Step 5.",
+            "ERROR: osv-scanner not found on PATH. Install it first; see docs/release-checklist.md Step 5.",
             file=sys.stderr,
         )
         return -1
@@ -191,15 +198,20 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
-        "--sbom", type=Path, default=SBOM_PATH,
+        "--sbom",
+        type=Path,
+        default=SBOM_PATH,
         help="SBOM path to generate and scan (default: evidentia-sbom.cdx.json).",
     )
     parser.add_argument(
-        "--config", type=Path, default=CONFIG_PATH,
+        "--config",
+        type=Path,
+        default=CONFIG_PATH,
         help="osv-scanner allowlist (default: osv-scanner.toml).",
     )
     parser.add_argument(
-        "--skip-sbom-gen", action="store_true",
+        "--skip-sbom-gen",
+        action="store_true",
         help="Scan an existing --sbom file instead of regenerating it.",
     )
     args = parser.parse_args()

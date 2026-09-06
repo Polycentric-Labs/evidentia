@@ -25,9 +25,7 @@ def _write_classifications(path: Path, content: str) -> None:
 
 
 class TestLinesReport:
-    def test_happy_path_to_stdout(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_happy_path_to_stdout(self, runner: CliRunner, tmp_path: Path) -> None:
         cls = tmp_path / "owners.yaml"
         _write_classifications(
             cls,
@@ -48,8 +46,10 @@ class TestLinesReport:
         result = runner.invoke(
             app,
             [
-                "governance", "lines-report",
-                "--classifications", str(cls),
+                "governance",
+                "lines-report",
+                "--classifications",
+                str(cls),
             ],
         )
         assert result.exit_code == 0, result.output
@@ -70,9 +70,12 @@ class TestLinesReport:
         result = runner.invoke(
             app,
             [
-                "governance", "lines-report",
-                "--classifications", str(cls),
-                "--output", str(out),
+                "governance",
+                "lines-report",
+                "--classifications",
+                str(cls),
+                "--output",
+                str(out),
             ],
         )
         assert result.exit_code == 0, result.output
@@ -80,9 +83,7 @@ class TestLinesReport:
         body = out.read_text(encoding="utf-8")
         assert "Three Lines of Defense Distribution" in body
 
-    def test_refuses_to_overwrite_without_force(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_refuses_to_overwrite_without_force(self, runner: CliRunner, tmp_path: Path) -> None:
         cls = tmp_path / "owners.yaml"
         _write_classifications(
             cls,
@@ -96,34 +97,35 @@ class TestLinesReport:
         result = runner.invoke(
             app,
             [
-                "governance", "lines-report",
-                "--classifications", str(cls),
-                "--output", str(out),
+                "governance",
+                "lines-report",
+                "--classifications",
+                str(cls),
+                "--output",
+                str(out),
             ],
         )
         assert result.exit_code == 1
         assert "--force" in result.output
         assert out.read_text(encoding="utf-8") == "existing"
 
-    def test_invalid_yaml_errors_clearly(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_invalid_yaml_errors_clearly(self, runner: CliRunner, tmp_path: Path) -> None:
         cls = tmp_path / "broken.yaml"
         # Unbalanced brace + tab — guaranteed YAML parse failure
         cls.write_text("{key: [value\n\t}", encoding="utf-8")
         result = runner.invoke(
             app,
             [
-                "governance", "lines-report",
-                "--classifications", str(cls),
+                "governance",
+                "lines-report",
+                "--classifications",
+                str(cls),
             ],
         )
         assert result.exit_code == 1
         assert "not valid YAML" in result.output
 
-    def test_invalid_line_of_defense_errors(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_invalid_line_of_defense_errors(self, runner: CliRunner, tmp_path: Path) -> None:
         cls = tmp_path / "bad.yaml"
         _write_classifications(
             cls,
@@ -135,46 +137,46 @@ class TestLinesReport:
         result = runner.invoke(
             app,
             [
-                "governance", "lines-report",
-                "--classifications", str(cls),
+                "governance",
+                "lines-report",
+                "--classifications",
+                str(cls),
             ],
         )
         assert result.exit_code == 1
         assert "validation" in result.output.lower()
 
-    def test_top_level_must_be_list(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_top_level_must_be_list(self, runner: CliRunner, tmp_path: Path) -> None:
         cls = tmp_path / "scalar.yaml"
         cls.write_text("not_a_list: true", encoding="utf-8")
         result = runner.invoke(
             app,
             [
-                "governance", "lines-report",
-                "--classifications", str(cls),
+                "governance",
+                "lines-report",
+                "--classifications",
+                str(cls),
             ],
         )
         assert result.exit_code == 1
         assert "must be a YAML list" in result.output
 
-    def test_empty_yaml_renders_empty_report(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_empty_yaml_renders_empty_report(self, runner: CliRunner, tmp_path: Path) -> None:
         cls = tmp_path / "empty.yaml"
         cls.write_text("", encoding="utf-8")
         result = runner.invoke(
             app,
             [
-                "governance", "lines-report",
-                "--classifications", str(cls),
+                "governance",
+                "lines-report",
+                "--classifications",
+                str(cls),
             ],
         )
         assert result.exit_code == 0
         assert "No owners classified" in result.output
 
-    def test_crossover_warning_in_output(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_crossover_warning_in_output(self, runner: CliRunner, tmp_path: Path) -> None:
         cls = tmp_path / "owners.yaml"
         _write_classifications(
             cls,
@@ -188,8 +190,10 @@ class TestLinesReport:
         result = runner.invoke(
             app,
             [
-                "governance", "lines-report",
-                "--classifications", str(cls),
+                "governance",
+                "lines-report",
+                "--classifications",
+                str(cls),
             ],
         )
         assert result.exit_code == 0
@@ -200,9 +204,7 @@ class TestLinesReport:
 
 
 @pytest.fixture()
-def isolated_challenge_store(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def isolated_challenge_store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     store = tmp_path / "challenge-store"
     monkeypatch.setenv(CHALLENGE_STORE_ENV_VAR, str(store))
     return store
@@ -219,14 +221,23 @@ def _add_minimal_challenge(
     result = runner.invoke(
         app,
         [
-            "governance", "challenge", "add",
-            "--subject-model-id", subject_id,
-            "--challenger-email", "mrm-director@example.com",
-            "--challenger-role", "MRM Director",
-            "--challenge-date", challenge_date,
-            "--challenge-topic", topic,
-            "--challenge-substance", "Why was this approach chosen?",
-            "--outcome", outcome,
+            "governance",
+            "challenge",
+            "add",
+            "--subject-model-id",
+            subject_id,
+            "--challenger-email",
+            "mrm-director@example.com",
+            "--challenger-role",
+            "MRM Director",
+            "--challenge-date",
+            challenge_date,
+            "--challenge-topic",
+            topic,
+            "--challenge-substance",
+            "Why was this approach chosen?",
+            "--outcome",
+            outcome,
         ],
     )
     assert result.exit_code == 0, result.output
@@ -238,44 +249,55 @@ def _add_minimal_challenge(
 
 
 class TestChallengeAdd:
-    def test_minimal_add(
-        self, runner: CliRunner, isolated_challenge_store: Path
-    ) -> None:
+    def test_minimal_add(self, runner: CliRunner, isolated_challenge_store: Path) -> None:
         cid = _add_minimal_challenge(runner)
         assert cid
 
-    def test_invalid_outcome_errors(
-        self, runner: CliRunner, isolated_challenge_store: Path
-    ) -> None:
+    def test_invalid_outcome_errors(self, runner: CliRunner, isolated_challenge_store: Path) -> None:
         result = runner.invoke(
             app,
             [
-                "governance", "challenge", "add",
-                "--subject-model-id", "aaaa1111-2222-3333-4444-555566667777",
-                "--challenger-email", "x@y.com",
-                "--challenger-role", "x",
-                "--challenge-date", "2026-01-01",
-                "--challenge-topic", "x",
-                "--challenge-substance", "y",
-                "--outcome", "definitely-not-an-outcome",
+                "governance",
+                "challenge",
+                "add",
+                "--subject-model-id",
+                "aaaa1111-2222-3333-4444-555566667777",
+                "--challenger-email",
+                "x@y.com",
+                "--challenger-role",
+                "x",
+                "--challenge-date",
+                "2026-01-01",
+                "--challenge-topic",
+                "x",
+                "--challenge-substance",
+                "y",
+                "--outcome",
+                "definitely-not-an-outcome",
             ],
         )
         assert result.exit_code == 1
         assert "Unknown outcome" in result.output
 
-    def test_invalid_date_errors(
-        self, runner: CliRunner, isolated_challenge_store: Path
-    ) -> None:
+    def test_invalid_date_errors(self, runner: CliRunner, isolated_challenge_store: Path) -> None:
         result = runner.invoke(
             app,
             [
-                "governance", "challenge", "add",
-                "--subject-model-id", "aaaa1111-2222-3333-4444-555566667777",
-                "--challenger-email", "x@y.com",
-                "--challenger-role", "x",
-                "--challenge-date", "not-a-date",
-                "--challenge-topic", "x",
-                "--challenge-substance", "y",
+                "governance",
+                "challenge",
+                "add",
+                "--subject-model-id",
+                "aaaa1111-2222-3333-4444-555566667777",
+                "--challenger-email",
+                "x@y.com",
+                "--challenger-role",
+                "x",
+                "--challenge-date",
+                "not-a-date",
+                "--challenge-topic",
+                "x",
+                "--challenge-substance",
+                "y",
             ],
         )
         assert result.exit_code == 1
@@ -283,21 +305,15 @@ class TestChallengeAdd:
 
 
 class TestChallengeList:
-    def test_empty_message(
-        self, runner: CliRunner, isolated_challenge_store: Path
-    ) -> None:
+    def test_empty_message(self, runner: CliRunner, isolated_challenge_store: Path) -> None:
         result = runner.invoke(app, ["governance", "challenge", "list"])
         assert result.exit_code == 0
         assert "No challenges" in result.output
 
-    def test_json_array_output(
-        self, runner: CliRunner, isolated_challenge_store: Path
-    ) -> None:
+    def test_json_array_output(self, runner: CliRunner, isolated_challenge_store: Path) -> None:
         _add_minimal_challenge(runner, topic="A")
         _add_minimal_challenge(runner, topic="B")
-        result = runner.invoke(
-            app, ["governance", "challenge", "list", "--json"]
-        )
+        result = runner.invoke(app, ["governance", "challenge", "list", "--json"])
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert isinstance(data, list)
@@ -305,9 +321,7 @@ class TestChallengeList:
         topics = {c["challenge_topic"] for c in data}
         assert topics == {"A", "B"}
 
-    def test_filter_by_subject_model_id(
-        self, runner: CliRunner, isolated_challenge_store: Path
-    ) -> None:
+    def test_filter_by_subject_model_id(self, runner: CliRunner, isolated_challenge_store: Path) -> None:
         sid_a = "aaaa1111-2222-3333-4444-aaaaaaaaaaaa"
         sid_b = "bbbb1111-2222-3333-4444-bbbbbbbbbbbb"
         _add_minimal_challenge(runner, subject_id=sid_a, topic="A")
@@ -315,24 +329,30 @@ class TestChallengeList:
         result = runner.invoke(
             app,
             [
-                "governance", "challenge", "list",
-                "--subject-model-id", sid_a, "--json",
+                "governance",
+                "challenge",
+                "list",
+                "--subject-model-id",
+                sid_a,
+                "--json",
             ],
         )
         data = json.loads(result.output)
         assert len(data) == 1
         assert data[0]["challenge_topic"] == "A"
 
-    def test_filter_by_outcome(
-        self, runner: CliRunner, isolated_challenge_store: Path
-    ) -> None:
+    def test_filter_by_outcome(self, runner: CliRunner, isolated_challenge_store: Path) -> None:
         _add_minimal_challenge(runner, outcome="pending", topic="P")
         _add_minimal_challenge(runner, outcome="accepted", topic="A")
         result = runner.invoke(
             app,
             [
-                "governance", "challenge", "list",
-                "--outcome", "accepted", "--json",
+                "governance",
+                "challenge",
+                "list",
+                "--outcome",
+                "accepted",
+                "--json",
             ],
         )
         data = json.loads(result.output)
@@ -341,44 +361,32 @@ class TestChallengeList:
 
 
 class TestChallengeShow:
-    def test_show_existing(
-        self, runner: CliRunner, isolated_challenge_store: Path
-    ) -> None:
+    def test_show_existing(self, runner: CliRunner, isolated_challenge_store: Path) -> None:
         cid = _add_minimal_challenge(runner)
-        result = runner.invoke(
-            app, ["governance", "challenge", "show", cid]
-        )
+        result = runner.invoke(app, ["governance", "challenge", "show", cid])
         assert result.exit_code == 0
         assert "Methodology challenge" in result.output
         assert "Outcome:" in result.output
 
-    def test_show_json(
-        self, runner: CliRunner, isolated_challenge_store: Path
-    ) -> None:
+    def test_show_json(self, runner: CliRunner, isolated_challenge_store: Path) -> None:
         cid = _add_minimal_challenge(runner)
-        result = runner.invoke(
-            app, ["governance", "challenge", "show", cid, "--json"]
-        )
+        result = runner.invoke(app, ["governance", "challenge", "show", cid, "--json"])
         data = json.loads(result.output)
         assert data["id"] == cid
 
-    def test_show_unknown_errors(
-        self, runner: CliRunner, isolated_challenge_store: Path
-    ) -> None:
+    def test_show_unknown_errors(self, runner: CliRunner, isolated_challenge_store: Path) -> None:
         result = runner.invoke(
             app,
             [
-                "governance", "challenge", "show",
+                "governance",
+                "challenge",
+                "show",
                 "00000000-0000-0000-0000-000000000000",
             ],
         )
         assert result.exit_code == 1
 
-    def test_show_invalid_id_errors(
-        self, runner: CliRunner, isolated_challenge_store: Path
-    ) -> None:
-        result = runner.invoke(
-            app, ["governance", "challenge", "show", "not-a-uuid"]
-        )
+    def test_show_invalid_id_errors(self, runner: CliRunner, isolated_challenge_store: Path) -> None:
+        result = runner.invoke(app, ["governance", "challenge", "show", "not-a-uuid"])
         assert result.exit_code == 1
         assert "Invalid challenge ID" in result.output

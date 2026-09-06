@@ -269,9 +269,7 @@ def _gap_to_risk(gap: ControlGap) -> dict[str, Any]:
     :class:`Milestone` records from the tracking-entry props.
     """
     remediation_uuid = str(uuid4())
-    tracking_entries = [
-        _milestone_to_tracking_entry(ms) for ms in gap.poam_milestones
-    ]
+    tracking_entries = [_milestone_to_tracking_entry(ms) for ms in gap.poam_milestones]
 
     risk: dict[str, Any] = {
         "uuid": gap.id,  # cross-references match by gap.id

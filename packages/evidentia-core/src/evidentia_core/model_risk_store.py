@@ -84,9 +84,7 @@ def _validate_id_shape(model_id: str) -> None:
     try:
         UUID(model_id)
     except (ValueError, AttributeError, TypeError) as exc:
-        raise InvalidModelIdError(
-            f"Invalid model ID format (expected UUID string): {model_id!r}"
-        ) from exc
+        raise InvalidModelIdError(f"Invalid model ID format (expected UUID string): {model_id!r}") from exc
 
 
 def get_model_store_dir(override: Path | None = None) -> Path:
@@ -193,21 +191,13 @@ def list_models(
     models: list[ModelInventory] = []
     for path in store.glob("*.json"):
         try:
-            models.append(
-                ModelInventory.model_validate_json(
-                    path.read_text(encoding="utf-8")
-                )
-            )
+            models.append(ModelInventory.model_validate_json(path.read_text(encoding="utf-8")))
         except Exception as exc:  # pragma: no cover — defensive
             # A malformed file shouldn't crash the listing of
             # well-formed records. Log + skip. Operators can spot it
             # via the warning + manually inspect.
-            logger.warning(
-                "Skipping malformed model record %s: %s", path, exc
-            )
-    models.sort(
-        key=lambda m: (_TIER_RANK.get(m.tier, 99), m.name.lower())
-    )
+            logger.warning("Skipping malformed model record %s: %s", path, exc)
+    models.sort(key=lambda m: (_TIER_RANK.get(m.tier, 99), m.name.lower()))
     return models
 
 

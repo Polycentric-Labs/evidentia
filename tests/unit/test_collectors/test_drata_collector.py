@@ -95,54 +95,33 @@ def test_collect_happy_path_emits_inventory_finding() -> None:
     collector = DrataCollector(api_token="dr_test", client=mock_client)
     findings = collector.collect()
 
-    assert any(
-        (f.source_finding_id or "").startswith("vendor-inventory:")
-        for f in findings
-    )
-    assert not any(
-        (f.source_finding_id or "").startswith("vendor-high-risk:")
-        for f in findings
-    )
+    assert any((f.source_finding_id or "").startswith("vendor-inventory:") for f in findings)
+    assert not any((f.source_finding_id or "").startswith("vendor-high-risk:") for f in findings)
 
 
 def test_collect_emits_high_risk_finding_on_high_level() -> None:
     vendors = [
-        _vendor_record(
-            vendor_id="v-high", name="HighCo", risk_level="high"
-        ),
-        _vendor_record(
-            vendor_id="v-low", name="LowCo", risk_level="low"
-        ),
+        _vendor_record(vendor_id="v-high", name="HighCo", risk_level="high"),
+        _vendor_record(vendor_id="v-low", name="LowCo", risk_level="low"),
     ]
     mock_client = _make_client([_page_response(vendors)])
 
     collector = DrataCollector(api_token="dr_test", client=mock_client)
     findings = collector.collect()
 
-    high_risk = [
-        f
-        for f in findings
-        if (f.source_finding_id or "").startswith("vendor-high-risk:")
-    ]
+    high_risk = [f for f in findings if (f.source_finding_id or "").startswith("vendor-high-risk:")]
     assert len(high_risk) == 1
-    assert "HighCo" in (
-        high_risk[0].title + (high_risk[0].description or "")
-    )
+    assert "HighCo" in (high_risk[0].title + (high_risk[0].description or ""))
 
 
 def test_collect_emits_high_risk_on_critical_level() -> None:
-    vendor = _vendor_record(
-        vendor_id="v-crit", name="CritCo", risk_level="critical"
-    )
+    vendor = _vendor_record(vendor_id="v-crit", name="CritCo", risk_level="critical")
     mock_client = _make_client([_page_response([vendor])])
 
     collector = DrataCollector(api_token="dr_test", client=mock_client)
     findings = collector.collect()
 
-    assert any(
-        (f.source_finding_id or "").startswith("vendor-high-risk:")
-        for f in findings
-    )
+    assert any((f.source_finding_id or "").startswith("vendor-high-risk:") for f in findings)
 
 
 def test_high_risk_detection_handles_alternative_field_shapes() -> None:
@@ -184,11 +163,7 @@ def test_high_risk_detection_handles_alternative_field_shapes() -> None:
     collector = DrataCollector(api_token="dr_test", client=mock_client)
     findings = collector.collect()
 
-    high_risk = [
-        f
-        for f in findings
-        if (f.source_finding_id or "").startswith("vendor-high-risk:")
-    ]
+    high_risk = [f for f in findings if (f.source_finding_id or "").startswith("vendor-high-risk:")]
     assert len(high_risk) == 6
 
 
@@ -243,11 +218,7 @@ def test_high_risk_detection_handles_extended_field_shapes_v0_7_13() -> None:
     collector = DrataCollector(api_token="dr_test", client=mock_client)
     findings = collector.collect()
 
-    high_risk = [
-        f
-        for f in findings
-        if (f.source_finding_id or "").startswith("vendor-high-risk:")
-    ]
+    high_risk = [f for f in findings if (f.source_finding_id or "").startswith("vendor-high-risk:")]
     assert len(high_risk) == 7, (
         f"Expected all 7 extended-field variants to map to high-risk; "
         f"got {len(high_risk)}: "
@@ -269,11 +240,7 @@ def test_collect_paginates_via_next_page_token() -> None:
     collector = DrataCollector(api_token="dr_test", client=mock_client)
     findings = collector.collect()
 
-    inventory = [
-        f
-        for f in findings
-        if (f.source_finding_id or "").startswith("vendor-inventory:")
-    ]
+    inventory = [f for f in findings if (f.source_finding_id or "").startswith("vendor-inventory:")]
     assert len(inventory) == 2
     assert mock_client.get.call_count == 2
 
@@ -296,11 +263,7 @@ def test_collect_respects_max_vendors_ceiling() -> None:
     )
     findings = collector.collect()
 
-    inventory = [
-        f
-        for f in findings
-        if (f.source_finding_id or "").startswith("vendor-inventory:")
-    ]
+    inventory = [f for f in findings if (f.source_finding_id or "").startswith("vendor-inventory:")]
     assert len(inventory) == 4
 
 
@@ -334,9 +297,7 @@ def test_collect_records_connection_error_in_manifest() -> None:
     """Connection errors are surfaced in the manifest's errors list
     rather than re-raised — auth errors are the only fatal class."""
     mock_client = MagicMock(spec=httpx.Client)
-    mock_client.get = MagicMock(
-        side_effect=httpx.ConnectError("Network unreachable")
-    )
+    mock_client.get = MagicMock(side_effect=httpx.ConnectError("Network unreachable"))
     mock_client.close = MagicMock()
 
     collector = DrataCollector(api_token="dr_test", client=mock_client)
@@ -367,19 +328,13 @@ def test_collect_empty_inventory_yields_no_findings() -> None:
 
 
 def test_inventory_finding_carries_vendor_metadata() -> None:
-    vendor = _vendor_record(
-        vendor_id="vendor-a", name="Vendor A", risk_level="low"
-    )
+    vendor = _vendor_record(vendor_id="vendor-a", name="Vendor A", risk_level="low")
     mock_client = _make_client([_page_response([vendor])])
 
     collector = DrataCollector(api_token="dr_test", client=mock_client)
     findings = collector.collect()
 
-    inv = next(
-        f
-        for f in findings
-        if (f.source_finding_id or "").startswith("vendor-inventory:")
-    )
+    inv = next(f for f in findings if (f.source_finding_id or "").startswith("vendor-inventory:"))
     text = " ".join(filter(None, [inv.title, inv.description or ""]))
     assert "Vendor A" in text or "vendor-a" in text
 

@@ -49,12 +49,7 @@ class TestAcquisitionProgress:
     def test_all_complete_is_lifecycle_complete(self) -> None:
         acquisition = AIAcquisition(
             name="x",
-            phases={
-                p: AcquisitionPhaseRecord(
-                    status=AcquisitionPhaseStatus.COMPLETE
-                )
-                for p in AcquisitionPhase
-            },
+            phases={p: AcquisitionPhaseRecord(status=AcquisitionPhaseStatus.COMPLETE) for p in AcquisitionPhase},
         )
         summary = acquisition_progress(acquisition)
         assert summary.lifecycle_complete
@@ -62,13 +57,8 @@ class TestAcquisitionProgress:
         assert summary.missing == []
 
     def test_in_progress_blocks_completion(self) -> None:
-        phases = {
-            p: AcquisitionPhaseRecord(status=AcquisitionPhaseStatus.COMPLETE)
-            for p in AcquisitionPhase
-        }
-        phases[AcquisitionPhase.CONTRACT_CLOSEOUT] = AcquisitionPhaseRecord(
-            status=AcquisitionPhaseStatus.IN_PROGRESS
-        )
+        phases = {p: AcquisitionPhaseRecord(status=AcquisitionPhaseStatus.COMPLETE) for p in AcquisitionPhase}
+        phases[AcquisitionPhase.CONTRACT_CLOSEOUT] = AcquisitionPhaseRecord(status=AcquisitionPhaseStatus.IN_PROGRESS)
         summary = acquisition_progress(AIAcquisition(name="x", phases=phases))
         assert not summary.lifecycle_complete
         assert summary.in_progress == 1
@@ -90,11 +80,7 @@ class TestAcquisitionProgress:
     def test_default_high_impact_determination_is_not_assessed(self) -> None:
         acquisition = AIAcquisition(name="x")
         determination = acquisition.likely_high_impact
-        assert (
-            determination
-            if isinstance(determination, str)
-            else determination.value
-        ) == "not_assessed"
+        assert (determination if isinstance(determination, str) else determination.value) == "not_assessed"
 
 
 class TestAIAcquisitionStore:
@@ -119,18 +105,14 @@ class TestAIAcquisitionStore:
         store.save(acquisition)
         assert acquisition.updated_at >= before
 
-    def test_load_unknown_id_returns_none(
-        self, store: AIAcquisitionStore
-    ) -> None:
+    def test_load_unknown_id_returns_none(self, store: AIAcquisitionStore) -> None:
         assert store.load("11111111-1111-4111-8111-111111111111") is None
 
     def test_load_invalid_id_raises(self, store: AIAcquisitionStore) -> None:
         with pytest.raises(InvalidAcquisitionIdError):
             store.load("../../etc/passwd")
 
-    def test_list_all_sorted_by_created_at(
-        self, store: AIAcquisitionStore
-    ) -> None:
+    def test_list_all_sorted_by_created_at(self, store: AIAcquisitionStore) -> None:
         first = AIAcquisition(name="first")
         second = AIAcquisition(name="second")
         store.save(second)
@@ -148,9 +130,7 @@ class TestAIAcquisitionStore:
         assert store.load(acquisition.acquisition_id) is None
         assert store.delete(acquisition.acquisition_id) is False
 
-    def test_malformed_file_skipped_by_list_all(
-        self, store: AIAcquisitionStore, tmp_path: Path
-    ) -> None:
+    def test_malformed_file_skipped_by_list_all(self, store: AIAcquisitionStore, tmp_path: Path) -> None:
         acquisition = AIAcquisition(name="x")
         store.save(acquisition)
         rogue = store.directory / "22222222-2222-4222-8222-222222222222.json"

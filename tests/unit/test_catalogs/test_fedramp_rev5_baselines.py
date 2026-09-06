@@ -27,10 +27,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DATA_DIR = (
-    REPO_ROOT / "packages" / "evidentia-core" / "src" / "evidentia_core"
-    / "catalogs" / "data" / "us-federal"
-)
+DATA_DIR = REPO_ROOT / "packages" / "evidentia-core" / "src" / "evidentia_core" / "catalogs" / "data" / "us-federal"
 UPSTREAM = REPO_ROOT / "scripts" / "catalogs" / "upstream" / "fedramp-rev5-baselines.json"
 
 BASELINES = {
@@ -126,10 +123,7 @@ def test_no_pointer_placeholder_text_survives() -> None:
     in that script but is also worth asserting on the shipped artifact."""
     for name, fname in BASELINES.items():
         data = json.loads((DATA_DIR / fname).read_text(encoding="utf-8"))
-        unresolved = [
-            c["id"] for c in data["controls"]
-            if "See nist-800-53-rev5 catalog" in c.get("description", "")
-        ]
+        unresolved = [c["id"] for c in data["controls"] if "See nist-800-53-rev5 catalog" in c.get("description", "")]
         assert not unresolved, f"{name} still has pointer placeholders: {unresolved[:10]}"
 
 

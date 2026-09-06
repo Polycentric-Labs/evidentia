@@ -124,8 +124,7 @@ class FileLock:
                 except BlockingIOError:
                     if time.monotonic() >= deadline:
                         raise FileLockTimeout(
-                            f"could not acquire lock on {self._path} "
-                            f"within {self._timeout}s"
+                            f"could not acquire lock on {self._path} within {self._timeout}s"
                         ) from None
                     time.sleep(self._poll_interval)
         except BaseException:
@@ -174,9 +173,7 @@ class FileLock:
                 # Windows raises OSError(errno=EACCES/EDEADLK) on
                 # contention; remap to BlockingIOError so the polling
                 # loop in __enter__ handles it uniformly.
-                raise BlockingIOError(
-                    f"lock contention on {fd.name}: {exc}"
-                ) from exc
+                raise BlockingIOError(f"lock contention on {fd.name}: {exc}") from exc
 
         @staticmethod
         def _release(fd: IO[bytes]) -> None:

@@ -69,9 +69,7 @@ def _is_open(gap: ControlGap) -> bool:
     usage did not. Normalizing to the enum ``.value`` here covers
     both paths.
     """
-    status_value = (
-        gap.status.value if isinstance(gap.status, GapStatus) else str(gap.status)
-    )
+    status_value = gap.status.value if isinstance(gap.status, GapStatus) else str(gap.status)
     return status_value in (
         GapStatus.OPEN.value,
         GapStatus.IN_PROGRESS.value,
@@ -94,12 +92,8 @@ def compute_gap_diff(
         third, closed fourth, unchanged last.
     """
     # Index both sides by (framework, control_id) normalized key
-    base_by_key: dict[tuple[str, str], ControlGap] = {
-        _gap_key(g): g for g in base.gaps if _is_open(g)
-    }
-    head_by_key: dict[tuple[str, str], ControlGap] = {
-        _gap_key(g): g for g in head.gaps if _is_open(g)
-    }
+    base_by_key: dict[tuple[str, str], ControlGap] = {_gap_key(g): g for g in base.gaps if _is_open(g)}
+    head_by_key: dict[tuple[str, str], ControlGap] = {_gap_key(g): g for g in head.gaps if _is_open(g)}
 
     all_keys = set(base_by_key) | set(head_by_key)
     entries: list[GapDiffEntry] = []
@@ -185,18 +179,12 @@ def compute_gap_diff(
     summary = GapDiffSummary(
         closed=sum(1 for e in entries if e.status == "closed"),
         opened=sum(1 for e in entries if e.status == "opened"),
-        severity_increased=sum(
-            1 for e in entries if e.status == "severity_increased"
-        ),
-        severity_decreased=sum(
-            1 for e in entries if e.status == "severity_decreased"
-        ),
+        severity_increased=sum(1 for e in entries if e.status == "severity_increased"),
+        severity_decreased=sum(1 for e in entries if e.status == "severity_decreased"),
         unchanged=sum(1 for e in entries if e.status == "unchanged"),
     )
 
-    frameworks = sorted(
-        set(base.frameworks_analyzed) | set(head.frameworks_analyzed)
-    )
+    frameworks = sorted(set(base.frameworks_analyzed) | set(head.frameworks_analyzed))
 
     logger.info(
         "Gap diff: +%d opened, -%d closed, ▲%d sev-up, ▼%d sev-down, %d unchanged",
@@ -262,8 +250,7 @@ def render_markdown(diff: GapDiff) -> str:
         lines.append("|---|---|---|")
         for e in diff.opened_entries[:50]:
             lines.append(
-                f"| `{e.framework}` | **{e.control_id}** — {e.control_title or ''} | "
-                f"{e.head_severity or '-'} |"
+                f"| `{e.framework}` | **{e.control_id}** — {e.control_title or ''} | {e.head_severity or '-'} |"
             )
         if len(diff.opened_entries) > 50:
             lines.append(f"| *…and {len(diff.opened_entries) - 50} more* | | |")
@@ -287,9 +274,7 @@ def render_markdown(diff: GapDiff) -> str:
         lines.append(f"{len(diff.closed_entries)} gaps resolved since base.")
         if len(diff.closed_entries) <= 10:
             for e in diff.closed_entries:
-                lines.append(
-                    f"- `{e.framework}`:**{e.control_id}** — {e.control_title or ''}"
-                )
+                lines.append(f"- `{e.framework}`:**{e.control_id}** — {e.control_title or ''}")
         lines.append("")
 
     lines.append("---")
@@ -319,8 +304,7 @@ def render_github_annotations(diff: GapDiff) -> str:
         )
     for e in diff.closed_entries[:20]:  # cap to avoid flooding the log
         lines.append(
-            f"::notice title=Gap closed: {e.control_id}::"
-            f"Framework {e.framework}: {e.control_title or e.control_id}"
+            f"::notice title=Gap closed: {e.control_id}::Framework {e.framework}: {e.control_title or e.control_id}"
         )
     if not lines:
         lines.append("::notice title=Evidentia::No changes in compliance posture.")

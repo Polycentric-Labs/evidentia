@@ -260,10 +260,7 @@ class MinimumPracticeRecord(EvidentiaModel):
     notes: str | None = Field(
         default=None,
         max_length=4000,
-        description=(
-            "Optional free-text detail — evidence pointers, plan "
-            "references, scope notes."
-        ),
+        description=("Optional free-text detail — evidence pointers, plan references, scope notes."),
     )
     last_reviewed: date | None = Field(
         default=None,
@@ -271,9 +268,7 @@ class MinimumPracticeRecord(EvidentiaModel):
     )
     waiver: PracticeWaiver | None = Field(
         default=None,
-        description=(
-            "The CAIO waiver in force — required iff status is WAIVED."
-        ),
+        description=("The CAIO waiver in force — required iff status is WAIVED."),
     )
 
     @model_validator(mode="after")
@@ -282,14 +277,10 @@ class MinimumPracticeRecord(EvidentiaModel):
         waived = self.status == PracticeStatus.WAIVED
         if waived and self.waiver is None:
             raise ValueError(
-                "status 'waived' requires a waiver record (the CAIO's "
-                "written determination per M-25-21 §4(a)(ii))"
+                "status 'waived' requires a waiver record (the CAIO's written determination per M-25-21 §4(a)(ii))"
             )
         if not waived and self.waiver is not None:
-            raise ValueError(
-                "a waiver record is only valid with status 'waived' "
-                f"(got status {self.status!r})"
-            )
+            raise ValueError(f"a waiver record is only valid with status 'waived' (got status {self.status!r})")
         return self
 
 
@@ -312,8 +303,7 @@ class OMBHighImpactAssessment(EvidentiaModel):
 
     determination: HighImpactDetermination = Field(
         description=(
-            "The M-25-21 high-impact determination. HIGH_IMPACT triggers "
-            "the minimum risk-management practices."
+            "The M-25-21 high-impact determination. HIGH_IMPACT triggers the minimum risk-management practices."
         ),
     )
     bases: list[HighImpactBasis] = Field(
@@ -367,10 +357,7 @@ class PracticeComplianceSummary(EvidentiaModel):
         description="Practices with no recorded status.",
     )
     satisfied: bool = Field(
-        description=(
-            "True iff all seven practices are recorded and each is "
-            "IMPLEMENTED or WAIVED."
-        ),
+        description=("True iff all seven practices are recorded and each is IMPLEMENTED or WAIVED."),
     )
 
 
@@ -386,25 +373,15 @@ def practice_compliance(
     """
     counts = dict.fromkeys(PracticeStatus, 0)
     for record in assessment.practices.values():
-        status = (
-            record.status
-            if isinstance(record.status, PracticeStatus)
-            else PracticeStatus(record.status)
-        )
+        status = record.status if isinstance(record.status, PracticeStatus) else PracticeStatus(record.status)
         counts[status] += 1
     recorded = {
-        practice
-        if isinstance(practice, MinimumPractice)
-        else MinimumPractice(practice)
+        practice if isinstance(practice, MinimumPractice) else MinimumPractice(practice)
         for practice in assessment.practices
     }
     missing = sorted(set(MinimumPractice) - recorded, key=lambda p: p.value)
     satisfied = not missing and all(
-        (
-            record.status
-            if isinstance(record.status, PracticeStatus)
-            else PracticeStatus(record.status)
-        )
+        (record.status if isinstance(record.status, PracticeStatus) else PracticeStatus(record.status))
         in (PracticeStatus.IMPLEMENTED, PracticeStatus.WAIVED)
         for record in assessment.practices.values()
     )
@@ -454,9 +431,7 @@ def triggers_minimum_practices(determination: HighImpactDetermination) -> bool:
     ``use_enum_values`` config), coercing defensively.
     """
     coerced = (
-        determination
-        if isinstance(determination, HighImpactDetermination)
-        else HighImpactDetermination(determination)
+        determination if isinstance(determination, HighImpactDetermination) else HighImpactDetermination(determination)
     )
     return coerced == HighImpactDetermination.HIGH_IMPACT
 
@@ -509,11 +484,7 @@ def crosswalk_from_legacy(category: OMBImpactCategory) -> OMBHighImpactAssessmen
         An :class:`OMBHighImpactAssessment` with the mapped determination,
         coarse bases, and a legacy-derived rationale.
     """
-    coerced = (
-        category
-        if isinstance(category, OMBImpactCategory)
-        else OMBImpactCategory(category)
-    )
+    coerced = category if isinstance(category, OMBImpactCategory) else OMBImpactCategory(category)
     if coerced == OMBImpactCategory.NEITHER:
         return OMBHighImpactAssessment(
             determination=HighImpactDetermination.NOT_HIGH_IMPACT,

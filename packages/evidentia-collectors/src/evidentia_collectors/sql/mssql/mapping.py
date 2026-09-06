@@ -41,8 +41,7 @@ PRIVILEGE_GRANT_MAPPINGS = [
     _m(
         "AC-3",
         OLIRRelationship.SUBSET_OF,
-        "AC-3 Access Enforcement — sys.server_permissions + "
-        "sys.database_permissions ARE the enforcement records.",
+        "AC-3 Access Enforcement — sys.server_permissions + sys.database_permissions ARE the enforcement records.",
     ),
     _m(
         "AC-6",

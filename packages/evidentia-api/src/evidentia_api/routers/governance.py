@@ -143,10 +143,7 @@ def _metric_with_status(metric: Metric) -> dict[str, Any]:
     responses=error_responses(
         {
             403: RBAC_DENIED_403,
-            422: (
-                "Client-supplied empty/malformed ``id`` "
-                "(``error: invalid_body``)."
-            ),
+            422: ("Client-supplied empty/malformed ``id`` (``error: invalid_body``)."),
         }
     ),
 )
@@ -170,10 +167,7 @@ async def create_challenge(payload: EffectiveChallenge) -> EffectiveChallenge:
     _log.info(
         action=EventAction.GOVERNANCE_CHALLENGE_CREATED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"Effective challenge logged via API: "
-            f"{challenge.challenge_topic}"
-        ),
+        message=(f"Effective challenge logged via API: {challenge.challenge_topic}"),
         evidentia={
             "challenge_id": challenge.id,
             "subject_model_id": challenge.subject_model_id,
@@ -197,9 +191,7 @@ async def create_challenge(payload: EffectiveChallenge) -> EffectiveChallenge:
 )
 async def list_challenge_records(
     skip: int = Query(0, ge=0, description="Pagination offset."),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Max records (1-1000)."
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Max records (1-1000)."),
     subject_model_id: str | None = Query(
         None,
         description="Filter by subject ModelInventory.id (exact-equality).",
@@ -219,22 +211,15 @@ async def list_challenge_records(
         raise api_error(
             400,
             "unknown_outcome",
-            (
-                f"Unknown outcome {outcome!r}; valid: "
-                f"{sorted(o.value for o in ChallengeOutcome)}"
-            ),
+            (f"Unknown outcome {outcome!r}; valid: {sorted(o.value for o in ChallengeOutcome)}"),
             outcome=outcome,
             valid=sorted(o.value for o in ChallengeOutcome),
         )
     challenges = list_challenges()
     if subject_model_id:
-        challenges = [
-            c for c in challenges if c.subject_model_id == subject_model_id
-        ]
+        challenges = [c for c in challenges if c.subject_model_id == subject_model_id]
     if outcome:
-        challenges = [
-            c for c in challenges if _enum_value(c.outcome) == outcome
-        ]
+        challenges = [c for c in challenges if _enum_value(c.outcome) == outcome]
     total = len(challenges)
     page = challenges[skip : skip + limit]
     return {
@@ -250,10 +235,7 @@ async def list_challenge_records(
     response_model=EffectiveChallenge,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``challenge_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``challenge_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -289,12 +271,8 @@ class MetricObservationPayload(BaseModel):
     """Body shape for POST /governance/metrics/{id}/observations."""
 
     value: float = Field(description="Observation value.")
-    observed_at: date = Field(
-        description="ISO-8601 date (YYYY-MM-DD) the observation was recorded."
-    )
-    note: str | None = Field(
-        default=None, description="Optional contextual note."
-    )
+    observed_at: date = Field(description="ISO-8601 date (YYYY-MM-DD) the observation was recorded.")
+    note: str | None = Field(default=None, description="Optional contextual note.")
 
 
 @router.post(
@@ -304,10 +282,7 @@ class MetricObservationPayload(BaseModel):
     responses=error_responses(
         {
             403: RBAC_DENIED_403,
-            422: (
-                "Client-supplied empty/malformed ``id`` "
-                "(``error: invalid_body``)."
-            ),
+            422: ("Client-supplied empty/malformed ``id`` (``error: invalid_body``)."),
         }
     ),
 )
@@ -350,16 +325,11 @@ async def create_metric(payload: Metric) -> dict[str, Any]:
     responses=error_responses(
         {
             403: RBAC_DENIED_403,
-            404: (
-                "Unknown or malformed ``metric_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``metric_id`` (``error: not_found``)."),
         }
     ),
 )
-async def observe_metric(
-    metric_id: str, payload: MetricObservationPayload
-) -> dict[str, Any]:
+async def observe_metric(metric_id: str, payload: MetricObservationPayload) -> dict[str, Any]:
     """Append an observation + return the updated metric with computed status.
 
     Loads the metric (404 on unknown / malformed ID), appends a new
@@ -390,16 +360,13 @@ async def observe_metric(
         value=payload.value,
         note=payload.note,
     )
-    metric = metric.model_copy(
-        update={"observations": [*metric.observations, new_obs]}
-    )
+    metric = metric.model_copy(update={"observations": [*metric.observations, new_obs]})
     save_metric(metric)
     _log.info(
         action=EventAction.GOVERNANCE_METRIC_OBSERVED,
         outcome=EventOutcome.SUCCESS,
         message=(
-            f"Observation {payload.value} recorded via API for "
-            f"{metric.name}; status={evaluate_metric(metric).value}"
+            f"Observation {payload.value} recorded via API for {metric.name}; status={evaluate_metric(metric).value}"
         ),
         evidentia={
             "metric_id": metric.id,
@@ -414,22 +381,14 @@ async def observe_metric(
     "/governance/metrics",
     responses=error_responses(
         {
-            400: (
-                "Unknown ``kind`` filter value (``error: "
-                "unknown_kind``); ``detail`` carries ``kind`` + "
-                "``valid``."
-            ),
+            400: ("Unknown ``kind`` filter value (``error: unknown_kind``); ``detail`` carries ``kind`` + ``valid``."),
         }
     ),
 )
 async def list_metric_records(
     skip: int = Query(0, ge=0, description="Pagination offset."),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Max records (1-1000)."
-    ),
-    kind: str | None = Query(
-        None, description="Filter by kind: kri / kpi / kgi."
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Max records (1-1000)."),
+    kind: str | None = Query(None, description="Filter by kind: kri / kpi / kgi."),
 ) -> dict[str, object]:
     """List metrics, each with its computed status.
 
@@ -441,10 +400,7 @@ async def list_metric_records(
         raise api_error(
             400,
             "unknown_kind",
-            (
-                f"Unknown kind {kind!r}; valid: "
-                f"{sorted(k.value for k in MetricKind)}"
-            ),
+            (f"Unknown kind {kind!r}; valid: {sorted(k.value for k in MetricKind)}"),
             kind=kind,
             valid=sorted(k.value for k in MetricKind),
         )
@@ -477,10 +433,7 @@ async def metrics_report() -> str:
     "/governance/metrics/{metric_id}",
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``metric_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``metric_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -514,10 +467,7 @@ async def get_metric(metric_id: str) -> dict[str, Any]:
     responses=error_responses(
         {
             403: RBAC_DENIED_403,
-            404: (
-                "Unknown or malformed ``metric_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``metric_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -557,18 +507,10 @@ async def delete_metric_record(metric_id: str) -> None:
 class WorkflowAdvancePayload(BaseModel):
     """Body shape for POST /governance/workflows/{id}/advance."""
 
-    step_index: int = Field(
-        ge=0, description="Step index (0-based) to transition."
-    )
-    new_status: WorkflowStepStatus = Field(
-        description="approved / rejected / skipped / in_progress."
-    )
-    actor: NonBlankStr = Field(
-        description="Actor identity (typically email)."
-    )
-    note: str | None = Field(
-        default=None, description="Optional rationale / approval note."
-    )
+    step_index: int = Field(ge=0, description="Step index (0-based) to transition.")
+    new_status: WorkflowStepStatus = Field(description="approved / rejected / skipped / in_progress.")
+    actor: NonBlankStr = Field(description="Actor identity (typically email).")
+    note: str | None = Field(default=None, description="Optional rationale / approval note.")
 
 
 @router.post(
@@ -579,10 +521,7 @@ class WorkflowAdvancePayload(BaseModel):
     responses=error_responses(
         {
             403: RBAC_DENIED_403,
-            422: (
-                "Client-supplied empty/malformed ``id`` "
-                "(``error: invalid_body``)."
-            ),
+            422: ("Client-supplied empty/malformed ``id`` (``error: invalid_body``)."),
         }
     ),
 )
@@ -605,9 +544,7 @@ async def run_workflow(payload: Workflow) -> Workflow:
     # Auto-promote the first step from PENDING → IN_PROGRESS so the
     # workflow is "active" immediately after run.
     if wf.steps and wf.steps[0].status == WorkflowStepStatus.PENDING.value:
-        first = wf.steps[0].model_copy(
-            update={"status": WorkflowStepStatus.IN_PROGRESS.value}
-        )
+        first = wf.steps[0].model_copy(update={"status": WorkflowStepStatus.IN_PROGRESS.value})
         new_steps = [first, *wf.steps[1:]]
         wf = wf.model_copy(update={"steps": new_steps})
     # Re-evaluate workflow status from the (now in-progress) step list.
@@ -621,10 +558,7 @@ async def run_workflow(payload: Workflow) -> Workflow:
     _log.info(
         action=EventAction.GOVERNANCE_WORKFLOW_RUN,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"Workflow started via API: {wf.name}; "
-            f"status={_enum_value(wf.status)}"
-        ),
+        message=(f"Workflow started via API: {wf.name}; status={_enum_value(wf.status)}"),
         evidentia={
             "workflow_id": wf.id,
             "status": _enum_value(wf.status),
@@ -640,21 +574,13 @@ async def run_workflow(payload: Workflow) -> Workflow:
     dependencies=[require_role("write")],
     responses=error_responses(
         {
-            400: (
-                "Workflow-rule violation on the step transition "
-                "(``error: invalid_body``)."
-            ),
+            400: ("Workflow-rule violation on the step transition (``error: invalid_body``)."),
             403: RBAC_DENIED_403,
-            404: (
-                "Unknown or malformed ``workflow_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``workflow_id`` (``error: not_found``)."),
         }
     ),
 )
-async def advance_workflow(
-    workflow_id: str, payload: WorkflowAdvancePayload
-) -> Workflow:
+async def advance_workflow(workflow_id: str, payload: WorkflowAdvancePayload) -> Workflow:
     """Transition a workflow step to a new status.
 
     Loads (404 on unknown / malformed ID), calls
@@ -712,9 +638,7 @@ async def advance_workflow(
 @router.get("/governance/workflows")
 async def list_workflow_records(
     skip: int = Query(0, ge=0, description="Pagination offset."),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Max records (1-1000)."
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Max records (1-1000)."),
 ) -> dict[str, object]:
     """List workflows (newest-first). Standard envelope + pagination."""
     workflows = list_workflows()
@@ -733,10 +657,7 @@ async def list_workflow_records(
     response_model=Workflow,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``workflow_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``workflow_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -768,10 +689,7 @@ async def get_workflow(workflow_id: str) -> Workflow:
     response_class=PlainTextResponse,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``workflow_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``workflow_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -809,10 +727,7 @@ async def workflow_log(workflow_id: str) -> str:
     responses=error_responses(
         {
             403: RBAC_DENIED_403,
-            404: (
-                "Unknown or malformed ``workflow_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``workflow_id`` (``error: not_found``)."),
         }
     ),
 )

@@ -123,11 +123,7 @@ def _gap_to_ocsf_detection_finding(
             version=current_version(),
         ),
     )
-    remediation = (
-        ocsf.Remediation(desc=gap.remediation_guidance)
-        if gap.remediation_guidance
-        else None
-    )
+    remediation = ocsf.Remediation(desc=gap.remediation_guidance) if gap.remediation_guidance else None
 
     # GapStatus -> OCSF StatusID: OPEN/IN_PROGRESS → New (1);
     # REMEDIATED → Resolved (4); ACCEPTED → Suppressed (3); default → Other (99).
@@ -157,9 +153,7 @@ def _gap_to_ocsf_detection_finding(
         time=timestamp_ms,
         time_dt=gap.created_at,
         severity_id=ocsf.SeverityID(severity_id_int),
-        severity=gap.gap_severity.value
-        if hasattr(gap.gap_severity, "value")
-        else str(gap.gap_severity),
+        severity=gap.gap_severity.value if hasattr(gap.gap_severity, "value") else str(gap.gap_severity),
         status_id=ocsf.StatusID(finding_status_id),
         message=gap.gap_description,
         metadata=metadata,
@@ -176,9 +170,7 @@ def _gap_to_ocsf_detection_finding(
     # returned model as `Any`; the model_dump call is well-typed at
     # runtime to dict[str, Any]. Annotate to satisfy the strict
     # `no-any-return` policy without losing precision.
-    result: dict[str, Any] = detection_finding.model_dump(
-        mode="json", exclude_none=True
-    )
+    result: dict[str, Any] = detection_finding.model_dump(mode="json", exclude_none=True)
     return result
 
 

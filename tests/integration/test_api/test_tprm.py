@@ -16,9 +16,7 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture(autouse=True)
-def _isolated_vendor_store(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def _isolated_vendor_store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Point EVIDENTIA_VENDOR_STORE_DIR at an isolated tmp for each test."""
     store = tmp_path / "vendor-store"
     monkeypatch.setenv("EVIDENTIA_VENDOR_STORE_DIR", str(store))
@@ -26,9 +24,7 @@ def _isolated_vendor_store(
 
 
 @pytest.fixture
-def tprm_readonly_client(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Iterator[TestClient]:
+def tprm_readonly_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     """A TPRM TestClient under a restrictive read-only RBAC policy.
 
     Mirrors ``gov_readonly_client`` in ``test_governance_router``: a local
@@ -47,9 +43,7 @@ def tprm_readonly_client(
 
     app = FastAPI()
     app.include_router(tprm_router.router, prefix="/api")
-    app.state.rbac_policy = RBACPolicy(
-        identities={}, default_role=Role.READER
-    )
+    app.state.rbac_policy = RBACPolicy(identities={}, default_role=Role.READER)
     with TestClient(app) as client:
         yield client
 
@@ -72,12 +66,8 @@ def _make_payload(
 
 
 class TestCreateVendor:
-    def test_minimal_create_returns_201_with_stamped_fields(
-        self, api_client: TestClient
-    ) -> None:
-        r = api_client.post(
-            "/api/tprm/vendors", json=_make_payload()
-        )
+    def test_minimal_create_returns_201_with_stamped_fields(self, api_client: TestClient) -> None:
+        r = api_client.post("/api/tprm/vendors", json=_make_payload())
         assert r.status_code == 201, r.text
         body = r.json()
         # Server stamped these via Pydantic default_factory
@@ -87,9 +77,7 @@ class TestCreateVendor:
         assert body["evidentia_version"]
         assert body["name"] == "Acme Cloud"
 
-    def test_create_auto_computes_next_review_due(
-        self, api_client: TestClient
-    ) -> None:
+    def test_create_auto_computes_next_review_due(self, api_client: TestClient) -> None:
         payload = _make_payload(criticality_tier="high")
         payload["last_due_diligence_review"] = "2025-06-15"
         r = api_client.post("/api/tprm/vendors", json=payload)
@@ -97,18 +85,14 @@ class TestCreateVendor:
         # high → annual cadence
         assert r.json()["next_review_due"] == "2026-06-15"
 
-    def test_invalid_enum_returns_422_via_pydantic(
-        self, api_client: TestClient
-    ) -> None:
+    def test_invalid_enum_returns_422_via_pydantic(self, api_client: TestClient) -> None:
         payload = _make_payload(type_="not-a-real-type")
         r = api_client.post("/api/tprm/vendors", json=payload)
         # FastAPI's auto-validation 422 with array-shape detail
         assert r.status_code == 422
         assert isinstance(r.json()["detail"], list)
 
-    def test_missing_required_field_returns_422_via_pydantic(
-        self, api_client: TestClient
-    ) -> None:
+    def test_missing_required_field_returns_422_via_pydantic(self, api_client: TestClient) -> None:
         payload = _make_payload()
         del payload["name"]
         r = api_client.post("/api/tprm/vendors", json=payload)
@@ -125,9 +109,7 @@ class TestListVendors:
         body = r.json()
         assert body == {"total": 0, "skip": 0, "limit": 100, "vendors": []}
 
-    def test_list_returns_pagination_envelope(
-        self, api_client: TestClient
-    ) -> None:
+    def test_list_returns_pagination_envelope(self, api_client: TestClient) -> None:
         for n in ["A", "B", "C"]:
             api_client.post("/api/tprm/vendors", json=_make_payload(name=n))
         r = api_client.get("/api/tprm/vendors")
@@ -151,9 +133,7 @@ class TestListVendors:
         assert body["limit"] == 2
         assert len(body["vendors"]) == 2
 
-    def test_filter_by_criticality_tier(
-        self, api_client: TestClient
-    ) -> None:
+    def test_filter_by_criticality_tier(self, api_client: TestClient) -> None:
         api_client.post(
             "/api/tprm/vendors",
             json=_make_payload(name="Crit", criticality_tier="critical"),
@@ -162,32 +142,22 @@ class TestListVendors:
             "/api/tprm/vendors",
             json=_make_payload(name="Low", criticality_tier="low"),
         )
-        r = api_client.get(
-            "/api/tprm/vendors?criticality_tier=critical"
-        )
+        r = api_client.get("/api/tprm/vendors?criticality_tier=critical")
         body = r.json()
         assert body["total"] == 1
         assert body["vendors"][0]["name"] == "Crit"
 
     def test_filter_by_type_via_alias(self, api_client: TestClient) -> None:
-        api_client.post(
-            "/api/tprm/vendors", json=_make_payload(type_="cloud_provider")
-        )
-        api_client.post(
-            "/api/tprm/vendors", json=_make_payload(type_="saas")
-        )
+        api_client.post("/api/tprm/vendors", json=_make_payload(type_="cloud_provider"))
+        api_client.post("/api/tprm/vendors", json=_make_payload(type_="saas"))
         # ``type`` is the query alias for ``type_`` per the router signature
         r = api_client.get("/api/tprm/vendors?type=saas")
         body = r.json()
         assert body["total"] == 1
         assert body["vendors"][0]["type"] == "saas"
 
-    def test_unknown_criticality_tier_returns_400(
-        self, api_client: TestClient
-    ) -> None:
-        r = api_client.get(
-            "/api/tprm/vendors?criticality_tier=ultra-critical"
-        )
+    def test_unknown_criticality_tier_returns_400(self, api_client: TestClient) -> None:
+        r = api_client.get("/api/tprm/vendors?criticality_tier=ultra-critical")
         assert r.status_code == 400
         # F-V08-DAST-3 status normalization: manual 4xx carries the
         # structured object detail (2026-07-06 convergence) — still
@@ -210,25 +180,17 @@ class TestListVendors:
 
 class TestGetVendor:
     def test_known_id_returns_200(self, api_client: TestClient) -> None:
-        post = api_client.post(
-            "/api/tprm/vendors", json=_make_payload()
-        )
+        post = api_client.post("/api/tprm/vendors", json=_make_payload())
         vid = post.json()["id"]
         r = api_client.get(f"/api/tprm/vendors/{vid}")
         assert r.status_code == 200
         assert r.json()["id"] == vid
 
-    def test_unknown_well_formed_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
-        r = api_client.get(
-            "/api/tprm/vendors/00000000-0000-0000-0000-000000000000"
-        )
+    def test_unknown_well_formed_id_returns_404(self, api_client: TestClient) -> None:
+        r = api_client.get("/api/tprm/vendors/00000000-0000-0000-0000-000000000000")
         assert r.status_code == 404
 
-    def test_malformed_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_malformed_id_returns_404(self, api_client: TestClient) -> None:
         # F-V08-DAST-1 widening pattern: shape violation also normalizes
         # to 404 (rather than letting the unhandled InvalidVendorIdError
         # propagate to 500).
@@ -240,12 +202,8 @@ class TestGetVendor:
 
 
 class TestReplaceVendor:
-    def test_replace_preserves_id_and_created_at(
-        self, api_client: TestClient
-    ) -> None:
-        post = api_client.post(
-            "/api/tprm/vendors", json=_make_payload(name="Original")
-        )
+    def test_replace_preserves_id_and_created_at(self, api_client: TestClient) -> None:
+        post = api_client.post("/api/tprm/vendors", json=_make_payload(name="Original"))
         original = post.json()
         vid = original["id"]
         original_created = original["created_at"]
@@ -261,18 +219,14 @@ class TestReplaceVendor:
         assert body["created_at"] == original_created
         assert body["name"] == "Replaced"
 
-    def test_replace_unknown_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_replace_unknown_id_returns_404(self, api_client: TestClient) -> None:
         r = api_client.put(
             "/api/tprm/vendors/00000000-0000-0000-0000-000000000000",
             json=_make_payload(),
         )
         assert r.status_code == 404
 
-    def test_replace_malformed_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_replace_malformed_id_returns_404(self, api_client: TestClient) -> None:
         r = api_client.put(
             "/api/tprm/vendors/not-a-uuid",
             json=_make_payload(),
@@ -285,9 +239,7 @@ class TestReplaceVendor:
 
 class TestDeleteVendor:
     def test_known_id_returns_204(self, api_client: TestClient) -> None:
-        post = api_client.post(
-            "/api/tprm/vendors", json=_make_payload()
-        )
+        post = api_client.post("/api/tprm/vendors", json=_make_payload())
         vid = post.json()["id"]
         r = api_client.delete(f"/api/tprm/vendors/{vid}")
         assert r.status_code == 204
@@ -296,14 +248,10 @@ class TestDeleteVendor:
         assert get_r.status_code == 404
 
     def test_unknown_id_returns_404(self, api_client: TestClient) -> None:
-        r = api_client.delete(
-            "/api/tprm/vendors/00000000-0000-0000-0000-000000000000"
-        )
+        r = api_client.delete("/api/tprm/vendors/00000000-0000-0000-0000-000000000000")
         assert r.status_code == 404
 
-    def test_malformed_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_malformed_id_returns_404(self, api_client: TestClient) -> None:
         r = api_client.delete("/api/tprm/vendors/not-a-uuid")
         assert r.status_code == 404
 
@@ -312,9 +260,7 @@ class TestDeleteVendor:
 
 
 class TestPreviewNextReviewDue:
-    def test_with_dd_review_returns_computed_date(
-        self, api_client: TestClient
-    ) -> None:
+    def test_with_dd_review_returns_computed_date(self, api_client: TestClient) -> None:
         payload = _make_payload(criticality_tier="medium")
         payload["last_due_diligence_review"] = "2025-06-15"
         post = api_client.post("/api/tprm/vendors", json=payload)
@@ -324,24 +270,15 @@ class TestPreviewNextReviewDue:
         # medium → biennial cadence
         assert r.json() == {"next_review_due": "2027-06-15"}
 
-    def test_without_dd_review_returns_null(
-        self, api_client: TestClient
-    ) -> None:
-        post = api_client.post(
-            "/api/tprm/vendors", json=_make_payload()
-        )
+    def test_without_dd_review_returns_null(self, api_client: TestClient) -> None:
+        post = api_client.post("/api/tprm/vendors", json=_make_payload())
         vid = post.json()["id"]
         r = api_client.get(f"/api/tprm/vendors/{vid}/next-review-due")
         assert r.status_code == 200
         assert r.json() == {"next_review_due": None}
 
-    def test_unknown_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
-        r = api_client.get(
-            "/api/tprm/vendors/00000000-0000-0000-0000-000000000000"
-            "/next-review-due"
-        )
+    def test_unknown_id_returns_404(self, api_client: TestClient) -> None:
+        r = api_client.get("/api/tprm/vendors/00000000-0000-0000-0000-000000000000/next-review-due")
         assert r.status_code == 404
 
 
@@ -360,9 +297,7 @@ class TestConcentrationEndpoint:
             r = api_client.post("/api/tprm/vendors", json=payload)
             assert r.status_code == 201, r.text
 
-    def test_default_dimensions_returns_200(
-        self, api_client: TestClient
-    ) -> None:
+    def test_default_dimensions_returns_200(self, api_client: TestClient) -> None:
         self._seed(api_client)
         r = api_client.get("/api/tprm/concentration?by=region")
         assert r.status_code == 200
@@ -370,25 +305,16 @@ class TestConcentrationEndpoint:
         assert body["total_vendors"] == 3
         assert body["dimensions"][0]["dimension"] == "region"
 
-    def test_threshold_flags_in_json(
-        self, api_client: TestClient
-    ) -> None:
+    def test_threshold_flags_in_json(self, api_client: TestClient) -> None:
         self._seed(api_client)
         # 2 of 3 in us-east-1 = 66.7%; threshold=50 → flag us-east-1
-        r = api_client.get(
-            "/api/tprm/concentration?by=region&threshold=50"
-        )
+        r = api_client.get("/api/tprm/concentration?by=region&threshold=50")
         body = r.json()
-        flagged = [
-            v for v in body["dimensions"][0]["distribution"]
-            if v["exceeds_threshold"]
-        ]
+        flagged = [v for v in body["dimensions"][0]["distribution"] if v["exceeds_threshold"]]
         assert len(flagged) == 1
         assert flagged[0]["value"] == "us-east-1"
 
-    def test_unsupported_dimension_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_unsupported_dimension_returns_400(self, api_client: TestClient) -> None:
         r = api_client.get("/api/tprm/concentration?by=not-a-dim")
         assert r.status_code == 400
         # F-V08-DAST-3 status normalization: manual 4xx carries the
@@ -399,33 +325,23 @@ class TestConcentrationEndpoint:
         assert detail["dimensions"] == ["not-a-dim"]
         assert "message" in detail
 
-    def test_empty_by_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_empty_by_returns_400(self, api_client: TestClient) -> None:
         r = api_client.get("/api/tprm/concentration?by=")
         assert r.status_code == 400
         detail = r.json()["detail"]
         assert detail["error"] == "invalid_field"
         assert detail["field"] == "by"
 
-    def test_threshold_out_of_range_returns_422(
-        self, api_client: TestClient
-    ) -> None:
+    def test_threshold_out_of_range_returns_422(self, api_client: TestClient) -> None:
         # FastAPI Query(ge=0, le=100) — out-of-range hits Pydantic
         # auto-validation 422 with array-shape detail
-        r = api_client.get(
-            "/api/tprm/concentration?by=region&threshold=200"
-        )
+        r = api_client.get("/api/tprm/concentration?by=region&threshold=200")
         assert r.status_code == 422
         assert isinstance(r.json()["detail"], list)
 
-    def test_multiple_dimensions(
-        self, api_client: TestClient
-    ) -> None:
+    def test_multiple_dimensions(self, api_client: TestClient) -> None:
         self._seed(api_client)
-        r = api_client.get(
-            "/api/tprm/concentration?by=region,service-category"
-        )
+        r = api_client.get("/api/tprm/concentration?by=region,service-category")
         body = r.json()
         assert [d["dimension"] for d in body["dimensions"]] == [
             "region",
@@ -438,45 +354,30 @@ class TestConcentrationEndpoint:
 
 class TestDDQuestionnaireEndpoint:
     def _add_vendor(self, api_client: TestClient) -> str:
-        r = api_client.post(
-            "/api/tprm/vendors", json=_make_payload()
-        )
+        r = api_client.post("/api/tprm/vendors", json=_make_payload())
         assert r.status_code == 201
         return str(r.json()["id"])
 
-    def test_generic_returns_201_with_pre_fill(
-        self, api_client: TestClient
-    ) -> None:
+    def test_generic_returns_201_with_pre_fill(self, api_client: TestClient) -> None:
         vid = self._add_vendor(api_client)
-        r = api_client.post(
-            f"/api/tprm/vendors/{vid}/dd-questionnaire"
-            "?format=evidentia-generic"
-        )
+        r = api_client.post(f"/api/tprm/vendors/{vid}/dd-questionnaire?format=evidentia-generic")
         assert r.status_code == 201
         body = r.json()
         assert body["format"] == "evidentia-generic"
         assert body["vendor"]["vendor_id"] == vid
         assert len(body["questions"]) >= 15
 
-    def test_caiq_lite_includes_attribution(
-        self, api_client: TestClient
-    ) -> None:
+    def test_caiq_lite_includes_attribution(self, api_client: TestClient) -> None:
         vid = self._add_vendor(api_client)
-        r = api_client.post(
-            f"/api/tprm/vendors/{vid}/dd-questionnaire?format=caiq-lite"
-        )
+        r = api_client.post(f"/api/tprm/vendors/{vid}/dd-questionnaire?format=caiq-lite")
         assert r.status_code == 201
         body = r.json()
         assert body["licensing_attribution"]
         assert "CC BY 4.0" in body["licensing_attribution"]
 
-    def test_unknown_format_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_unknown_format_returns_400(self, api_client: TestClient) -> None:
         vid = self._add_vendor(api_client)
-        r = api_client.post(
-            f"/api/tprm/vendors/{vid}/dd-questionnaire?format=not-a-format"
-        )
+        r = api_client.post(f"/api/tprm/vendors/{vid}/dd-questionnaire?format=not-a-format")
         assert r.status_code == 400
         # F-V08-DAST-3 status normalization: manual 4xx carries the
         # structured object detail (2026-07-06 convergence) — still
@@ -486,38 +387,26 @@ class TestDDQuestionnaireEndpoint:
         assert detail["format"] == "not-a-format"
         assert "message" in detail
 
-    def test_sig_format_returns_501(
-        self, api_client: TestClient
-    ) -> None:
+    def test_sig_format_returns_501(self, api_client: TestClient) -> None:
         # SIG / SIG-Lite stubs — reachable via the enum (so format
         # validation passes) but generate_questionnaire raises
         # NotImplementedError → router translates to 501.
         vid = self._add_vendor(api_client)
-        r = api_client.post(
-            f"/api/tprm/vendors/{vid}/dd-questionnaire?format=sig"
-        )
+        r = api_client.post(f"/api/tprm/vendors/{vid}/dd-questionnaire?format=sig")
         assert r.status_code == 501
         detail = r.json()["detail"]
         assert detail["error"] == "not_implemented"
         # Message references the BYO-template path
         assert "Shared Assessments" in detail["message"]
 
-    def test_unknown_vendor_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_unknown_vendor_returns_404(self, api_client: TestClient) -> None:
         r = api_client.post(
-            "/api/tprm/vendors/00000000-0000-0000-0000-000000000000"
-            "/dd-questionnaire?format=evidentia-generic"
+            "/api/tprm/vendors/00000000-0000-0000-0000-000000000000/dd-questionnaire?format=evidentia-generic"
         )
         assert r.status_code == 404
 
-    def test_malformed_vendor_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
-        r = api_client.post(
-            "/api/tprm/vendors/not-a-uuid/dd-questionnaire"
-            "?format=evidentia-generic"
-        )
+    def test_malformed_vendor_id_returns_404(self, api_client: TestClient) -> None:
+        r = api_client.post("/api/tprm/vendors/not-a-uuid/dd-questionnaire?format=evidentia-generic")
         assert r.status_code == 404
 
 
@@ -563,9 +452,7 @@ class TestDDQuestionnaireIngestEndpoint:
             ],
         }
 
-    def test_ingest_returns_correlation_result(
-        self, api_client: TestClient
-    ) -> None:
+    def test_ingest_returns_correlation_result(self, api_client: TestClient) -> None:
         vid = self._add_vendor(api_client)
         r = api_client.post(
             f"/api/tprm/vendors/{vid}/dd-questionnaire/ingest",
@@ -577,18 +464,14 @@ class TestDDQuestionnaireIngestEndpoint:
         # correlated by question.id, plus carry-forward context.
         assert body["vendor"]["id"] == vid
         assert body["vendor"]["name"] == "Acme Cloud"
-        assert body["questionnaire_id"] == (
-            "33333333-3333-3333-3333-333333333333"
-        )
+        assert body["questionnaire_id"] == ("33333333-3333-3333-3333-333333333333")
         assert body["format"] == "evidentia-generic"
         assert body["responses"] == {
             "EVG-GOV-01": "Yes — board-approved infosec policy.",
             "EVG-GOV-02": "SOC 2 Type II on file.",
         }
 
-    def test_ingest_does_not_mutate_vendor(
-        self, api_client: TestClient
-    ) -> None:
+    def test_ingest_does_not_mutate_vendor(self, api_client: TestClient) -> None:
         vid = self._add_vendor(api_client)
         before = api_client.get(f"/api/tprm/vendors/{vid}").json()
         assert before["evidence_refs"] == []
@@ -605,28 +488,21 @@ class TestDDQuestionnaireIngestEndpoint:
         assert after["evidence_refs"] == []
         assert after["updated_at"] == before["updated_at"]
 
-    def test_ingest_unknown_vendor_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_ingest_unknown_vendor_returns_404(self, api_client: TestClient) -> None:
         r = api_client.post(
-            "/api/tprm/vendors/00000000-0000-0000-0000-000000000000"
-            "/dd-questionnaire/ingest",
+            "/api/tprm/vendors/00000000-0000-0000-0000-000000000000/dd-questionnaire/ingest",
             json=self._completed_body(),
         )
         assert r.status_code == 404
 
-    def test_ingest_malformed_vendor_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_ingest_malformed_vendor_id_returns_404(self, api_client: TestClient) -> None:
         r = api_client.post(
             "/api/tprm/vendors/not-a-uuid/dd-questionnaire/ingest",
             json=self._completed_body(),
         )
         assert r.status_code == 404
 
-    def test_ingest_empty_questions_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_ingest_empty_questions_returns_400(self, api_client: TestClient) -> None:
         # Unparseable / empty questionnaire content: nothing correlates.
         # F-V08-DAST-3 status normalization: the manual 400 carries the
         # structured object detail (2026-07-06 convergence) — still
@@ -641,9 +517,7 @@ class TestDDQuestionnaireIngestEndpoint:
         assert detail["error"] == "invalid_body"
         assert "message" in detail
 
-    def test_ingest_wrong_typed_body_returns_422(
-        self, api_client: TestClient
-    ) -> None:
+    def test_ingest_wrong_typed_body_returns_422(self, api_client: TestClient) -> None:
         # The body must be a JSON object (the questionnaire document).
         # A top-level non-object (here a JSON array) fails Pydantic
         # auto-validation with array-shape detail (422).
@@ -655,9 +529,7 @@ class TestDDQuestionnaireIngestEndpoint:
         assert r.status_code == 422
         assert isinstance(r.json()["detail"], list)
 
-    def test_ingest_unparseable_object_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_ingest_unparseable_object_returns_400(self, api_client: TestClient) -> None:
         # A well-formed JSON object whose `questions` value is not a list
         # correlates to zero responses → structured-detail 400
         # (parse-only; F-V08-DAST-3 status normalization, 2026-07-06
@@ -672,9 +544,7 @@ class TestDDQuestionnaireIngestEndpoint:
         assert detail["error"] == "invalid_body"
         assert "message" in detail
 
-    def test_ingest_open_under_readonly_policy(
-        self, tprm_readonly_client: TestClient
-    ) -> None:
+    def test_ingest_open_under_readonly_policy(self, tprm_readonly_client: TestClient) -> None:
         # Parse-only is a READ-style operation: it no longer requires the
         # ``write`` role. Under a deny-by-default reader policy the ingest
         # is OPEN (200), matching the other read endpoints on this router.
@@ -735,6 +605,4 @@ def test_tprm_error_statuses_documented_in_openapi(
     for path, method, statuses in expected:
         op = schema["paths"][path][method]
         for status in statuses:
-            assert status in op["responses"], (
-                f"{method.upper()} {path} missing documented {status}"
-            )
+            assert status in op["responses"], f"{method.upper()} {path} missing documented {status}"

@@ -54,30 +54,16 @@ class TestRender:
             "evidentia_audit_events_total",
             "evidentia_audit_events_failures_total",
         ):
-            assert f"# HELP {metric}" in body, (
-                f"missing HELP for {metric}"
-            )
-            assert f"# TYPE {metric}" in body, (
-                f"missing TYPE for {metric}"
-            )
+            assert f"# HELP {metric}" in body, f"missing HELP for {metric}"
+            assert f"# TYPE {metric}" in body, f"missing TYPE for {metric}"
 
     def test_record_event_increments_counter(self) -> None:
-        record_event(
-            action="evidentia.test.event", outcome="success"
-        )
-        record_event(
-            action="evidentia.test.event", outcome="success"
-        )
-        record_event(
-            action="evidentia.test.other", outcome="success"
-        )
+        record_event(action="evidentia.test.event", outcome="success")
+        record_event(action="evidentia.test.event", outcome="success")
+        record_event(action="evidentia.test.other", outcome="success")
         body = render_metrics(api_version="0.7.16", uptime_seconds=0.0)
-        assert (
-            'evidentia_audit_events_total{action="evidentia.test.event"} 2'
-        ) in body
-        assert (
-            'evidentia_audit_events_total{action="evidentia.test.other"} 1'
-        ) in body
+        assert ('evidentia_audit_events_total{action="evidentia.test.event"} 2') in body
+        assert ('evidentia_audit_events_total{action="evidentia.test.other"} 1') in body
 
     def test_failure_outcome_bumps_failure_counter(self) -> None:
         record_event(action="evidentia.test.failure", outcome="failure")
@@ -92,9 +78,7 @@ class TestRender:
             outcome="success",
         )
         body = render_metrics(api_version="0.7.16", uptime_seconds=0.0)
-        assert (
-            'evidentia.weird\\"action\\\\path'
-        ) in body
+        assert ('evidentia.weird\\"action\\\\path') in body
 
     def test_output_ends_with_newline(self) -> None:
         body = render_metrics(api_version="0.7.16", uptime_seconds=0.0)
@@ -116,9 +100,7 @@ class TestEndpoint:
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("text/plain")
         # Full content type carries Prometheus version annotation.
-        assert (
-            "version=0.0.4" in response.headers["content-type"]
-        )
+        assert "version=0.0.4" in response.headers["content-type"]
 
     def test_endpoint_carries_app_info(self) -> None:
         app = create_app(dev_mode=False)
@@ -146,9 +128,7 @@ class TestEndpoint:
         response = client.get("/api/metrics")
         assert response.status_code == 200
         # The action label is the EventAction string value.
-        assert (
-            'evidentia_audit_events_total{action="evidentia.ai.risk_generated"} 1'
-        ) in response.text
+        assert ('evidentia_audit_events_total{action="evidentia.ai.risk_generated"} 1') in response.text
 
     def test_filtered_log_events_do_not_increment_counter(self) -> None:
         """v0.8.1 F-V08-CR-1: when the stdlib logger filters out
@@ -169,9 +149,7 @@ class TestEndpoint:
         )
         response = client.get("/api/metrics")
         # The event was filtered out; no counter increment.
-        assert (
-            'evidentia_audit_events_total{action="evidentia.ai.risk_generated"} 1'
-        ) not in response.text
+        assert ('evidentia_audit_events_total{action="evidentia.ai.risk_generated"} 1') not in response.text
 
     def test_prometheus_content_type_constant_well_formed(self) -> None:
         # Sanity check the constant exposed for downstream tooling.

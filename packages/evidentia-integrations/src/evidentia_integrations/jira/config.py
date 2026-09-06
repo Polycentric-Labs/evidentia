@@ -39,9 +39,7 @@ class JiraConfig(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     base_url: str = Field(
-        description=(
-            "Jira base URL, e.g. 'https://acme.atlassian.net'. No trailing slash."
-        ),
+        description=("Jira base URL, e.g. 'https://acme.atlassian.net'. No trailing slash."),
     )
     email: str = Field(description="Jira user email (basic-auth username).")
     api_token: str = Field(
@@ -89,9 +87,7 @@ class JiraConfig(BaseModel):
         resolved_email = email or os.environ.get("JIRA_EMAIL")
         resolved_token = api_token or os.environ.get("JIRA_API_TOKEN")
         resolved_project = project_key or os.environ.get("JIRA_PROJECT_KEY")
-        resolved_type = (
-            issue_type or os.environ.get("JIRA_ISSUE_TYPE") or "Task"
-        )
+        resolved_type = issue_type or os.environ.get("JIRA_ISSUE_TYPE") or "Task"
 
         missing: list[str] = []
         if not resolved_url:

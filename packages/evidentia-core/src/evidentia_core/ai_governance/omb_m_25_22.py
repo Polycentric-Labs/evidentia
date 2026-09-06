@@ -106,10 +106,7 @@ class AcquisitionPhaseRecord(EvidentiaModel):
     notes: str | None = Field(
         default=None,
         max_length=4000,
-        description=(
-            "Optional detail — cross-functional-team notes, artifact "
-            "pointers, solicitation references."
-        ),
+        description=("Optional detail — cross-functional-team notes, artifact pointers, solicitation references."),
     )
     last_reviewed: date | None = Field(
         default=None,
@@ -132,8 +129,7 @@ class AIAcquisition(EvidentiaModel):
         default=None,
         max_length=256,
         description=(
-            "Solicitation / contract vehicle reference (RFP number, "
-            "task-order ID, or similar), once one exists."
+            "Solicitation / contract vehicle reference (RFP number, task-order ID, or similar), once one exists."
         ),
     )
     description: str | None = Field(
@@ -202,9 +198,7 @@ class AcquisitionProgressSummary(EvidentiaModel):
         description="Phases with no recorded status.",
     )
     lifecycle_complete: bool = Field(
-        description=(
-            "True iff all six phases are recorded and each is COMPLETE."
-        ),
+        description=("True iff all six phases are recorded and each is COMPLETE."),
     )
 
 
@@ -223,16 +217,11 @@ def acquisition_progress(acquisition: AIAcquisition) -> AcquisitionProgressSumma
         )
         counts[status] += 1
     recorded = {
-        phase if isinstance(phase, AcquisitionPhase) else AcquisitionPhase(phase)
-        for phase in acquisition.phases
+        phase if isinstance(phase, AcquisitionPhase) else AcquisitionPhase(phase) for phase in acquisition.phases
     }
     missing = sorted(set(AcquisitionPhase) - recorded, key=lambda p: p.value)
     lifecycle_complete = not missing and all(
-        (
-            record.status
-            if isinstance(record.status, AcquisitionPhaseStatus)
-            else AcquisitionPhaseStatus(record.status)
-        )
+        (record.status if isinstance(record.status, AcquisitionPhaseStatus) else AcquisitionPhaseStatus(record.status))
         == AcquisitionPhaseStatus.COMPLETE
         for record in acquisition.phases.values()
     )

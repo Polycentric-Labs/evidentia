@@ -116,9 +116,7 @@ _SAAS_CASES = [
 
 class TestSaaSCollectorsSSRF:
     @pytest.mark.parametrize("module,cls_name,err_name", _SAAS_CASES)
-    def test_metadata_base_url_refused_by_default(
-        self, module: str, cls_name: str, err_name: str
-    ) -> None:
+    def test_metadata_base_url_refused_by_default(self, module: str, cls_name: str, err_name: str) -> None:
         import importlib
 
         mod = importlib.import_module(module)
@@ -131,9 +129,7 @@ class TestSaaSCollectorsSSRF:
         assert _is_ssrf_refusal(exc.value)
 
     @pytest.mark.parametrize("module,cls_name,err_name", _SAAS_CASES)
-    def test_allow_private_ips_bypasses_guard(
-        self, module: str, cls_name: str, err_name: str
-    ) -> None:
+    def test_allow_private_ips_bypasses_guard(self, module: str, cls_name: str, err_name: str) -> None:
         import importlib
 
         mod = importlib.import_module(module)
@@ -165,9 +161,7 @@ class TestGitHubSSRF:
         from evidentia_collectors.github import GitHubCollector
 
         with pytest.raises(GitHubApiError):
-            GitHubCollector(
-                owner="o", repo="r", token="t", base_url=f"https://{RFC1918_HOST}"
-            )
+            GitHubCollector(owner="o", repo="r", token="t", base_url=f"https://{RFC1918_HOST}")
         # Keep the import referenced for clarity even though the wrap raises
         # GitHubApiError (collector ctor does not catch it).
         assert GitHubCollectorError is not None
@@ -254,9 +248,7 @@ def _fake_driver_module(name: str, attr: str) -> Any:
 
 
 class TestSQLCollectorsSSRF:
-    @pytest.mark.parametrize(
-        "module,cls_name,err_name,uri,drv,_attr", _SQL_CASES
-    )
+    @pytest.mark.parametrize("module,cls_name,err_name,uri,drv,_attr", _SQL_CASES)
     def test_private_host_refused_without_driver(
         self,
         module: str,
@@ -282,20 +274,14 @@ class TestSQLCollectorsSSRF:
 
         mod = importlib.import_module(module)
         cls = getattr(mod, cls_name)
-        base_err = getattr(
-            mod, cls_name.replace("Collector", "CollectorError")
-        )
+        base_err = getattr(mod, cls_name.replace("Collector", "CollectorError"))
 
-        collector = cls(
-            connection_uri=uri.format(host=METADATA_HOST), password="pw"
-        )
+        collector = cls(connection_uri=uri.format(host=METADATA_HOST), password="pw")
         with pytest.raises(base_err) as exc:
             collector._ensure_connected()
         assert _is_ssrf_refusal(exc.value)
 
-    @pytest.mark.parametrize(
-        "module,cls_name,err_name,uri,drv,attr", _SQL_CASES
-    )
+    @pytest.mark.parametrize("module,cls_name,err_name,uri,drv,attr", _SQL_CASES)
     def test_allow_private_ips_bypasses_guard(
         self,
         module: str,
@@ -317,9 +303,7 @@ class TestSQLCollectorsSSRF:
 
         mod = importlib.import_module(module)
         cls = getattr(mod, cls_name)
-        base_err = getattr(
-            mod, cls_name.replace("Collector", "CollectorError")
-        )
+        base_err = getattr(mod, cls_name.replace("Collector", "CollectorError"))
 
         collector = cls(
             connection_uri=uri.format(host=METADATA_HOST),
@@ -349,9 +333,7 @@ class TestDatabricksSSRF:
             collector._ensure_client()
         assert _is_ssrf_refusal(exc.value)
 
-    def test_allow_private_ips_bypasses_guard(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_allow_private_ips_bypasses_guard(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Opt-out skips the guard. We monkeypatch WorkspaceClient to raise
         a sentinel so no SDK auth/network runs — reaching it proves the
         guard was bypassed, and the wrapped error is NOT the SSRF refusal."""
@@ -365,9 +347,7 @@ class TestDatabricksSSRF:
             raise _DriverReached("WorkspaceClient reached")
 
         monkeypatch.setattr(databricks.sdk, "WorkspaceClient", _sentinel)
-        collector = DatabricksCollector(
-            host=f"https://{METADATA_HOST}", block_private_ips=False
-        )
+        collector = DatabricksCollector(host=f"https://{METADATA_HOST}", block_private_ips=False)
         # WorkspaceClient construction failures are wrapped as
         # DatabricksAuthError by the collector.
         with pytest.raises(DatabricksAuthError) as exc:
@@ -380,9 +360,7 @@ class TestDatabricksSSRF:
 
 
 class TestSnowflakeSSRF:
-    def test_account_resolving_to_private_refused_by_default(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_account_resolving_to_private_refused_by_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """A Snowflake account locator whose host resolves to a private IP
         (private-link / DNS-rebinding) is refused. We stub getaddrinfo on
         the derived <account>.snowflakecomputing.com host."""
@@ -403,9 +381,7 @@ class TestSnowflakeSSRF:
             collector._ensure_connected()
         assert _is_ssrf_refusal(exc.value)
 
-    def test_allow_private_ips_bypasses_guard(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_allow_private_ips_bypasses_guard(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Opt-out skips the guard. We monkeypatch the connector's connect
         to raise a sentinel so no real socket opens — reaching it proves
         the guard was bypassed, and the wrapped error is NOT the SSRF
@@ -420,9 +396,7 @@ class TestSnowflakeSSRF:
             raise _DriverReached("snowflake connect reached")
 
         monkeypatch.setattr(snowflake.connector, "connect", _sentinel)
-        collector = SnowflakeCollector(
-            account="evil-acct", user="u", block_private_ips=False
-        )
+        collector = SnowflakeCollector(account="evil-acct", user="u", block_private_ips=False)
         # Snowflake wraps driver connect failures as SnowflakeAuthError.
         with pytest.raises(SnowflakeAuthError) as exc:
             collector._ensure_connected()

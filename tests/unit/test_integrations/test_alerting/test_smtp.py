@@ -101,14 +101,10 @@ class TestSMTPAlertChannel:
             smtp_class.return_value.__enter__.return_value = smtp_instance
             channel.dispatch(sample_observation)
 
-        smtp_class.assert_called_once_with(
-            host="smtp.example.com", port=587, timeout=10.0
-        )
+        smtp_class.assert_called_once_with(host="smtp.example.com", port=587, timeout=10.0)
         smtp_instance.has_extn.assert_called_with("STARTTLS")
         smtp_instance.starttls.assert_called_once()
-        smtp_instance.login.assert_called_once_with(
-            "alerter", "resolved-password"
-        )
+        smtp_instance.login.assert_called_once_with("alerter", "resolved-password")
         smtp_instance.send_message.assert_called_once()
 
     def test_dispatch_refuses_when_starttls_stripped(

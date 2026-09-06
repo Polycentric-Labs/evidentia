@@ -159,11 +159,7 @@ def test_oscal_verify_digests_robustness() -> None:
     _ar_like = st.fixed_dictionaries(
         {
             "assessment-results": st.fixed_dictionaries(
-                {
-                    "back-matter": st.fixed_dictionaries(
-                        {"resources": st.lists(_json_values, max_size=4)}
-                    )
-                }
+                {"back-matter": st.fixed_dictionaries({"resources": st.lists(_json_values, max_size=4)})}
             )
         }
     )
@@ -198,9 +194,7 @@ def test_ocsf_ingest_robustness() -> None:
     # so the mapping path is reached, not just the JSON-reject path.
     _ocsf_like = st.fixed_dictionaries(
         {"class_uid": st.sampled_from((2003, 2004, 9999, None))},
-    ).flatmap(
-        lambda base: _json_objects.map(lambda extra: {**extra, **base})
-    )
+    ).flatmap(lambda base: _json_objects.map(lambda extra: {**extra, **base}))
     bodies = st.one_of(
         _json_text(),
         _ocsf_like.map(lambda d: json.dumps(d)),

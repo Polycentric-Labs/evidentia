@@ -111,17 +111,13 @@ class ATOReference(EvidentiaModel):
         default=None,
         max_length=2048,
         description=(
-            "Optional URI / handle pointing at the signed ATO letter "
-            "in document storage (eMASS, SharePoint, etc.)."
+            "Optional URI / handle pointing at the signed ATO letter in document storage (eMASS, SharePoint, etc.)."
         ),
     )
     notes: str | None = Field(
         default=None,
         max_length=4000,
-        description=(
-            "Free-text notes (cATO posture, scope caveats, conditional "
-            "approvals, etc.)."
-        ),
+        description=("Free-text notes (cATO posture, scope caveats, conditional approvals, etc.)."),
     )
 
 
@@ -132,9 +128,7 @@ class AISystemRegistryEntry(EvidentiaModel):
         default_factory=new_id,
         description="Stable UUID v4 string; assigned at registration time.",
     )
-    descriptor: AISystemDescriptor = Field(
-        description="Operator-supplied use-case attributes."
-    )
+    descriptor: AISystemDescriptor = Field(description="Operator-supplied use-case attributes.")
     classification: AISystemClassification = Field(
         description=(
             "Result of running the classifier over the descriptor. "
@@ -144,10 +138,7 @@ class AISystemRegistryEntry(EvidentiaModel):
     )
     provider: NonBlankStr = Field(
         max_length=256,
-        description=(
-            "Who built or supplies the AI system (vendor name, "
-            "in-house team name, or 'self-built')."
-        ),
+        description=("Who built or supplies the AI system (vendor name, in-house team name, or 'self-built')."),
     )
     owner: NonBlankStr = Field(
         max_length=256,

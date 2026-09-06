@@ -47,9 +47,7 @@ def canonical_json_bytes(data: Any) -> bytes:
     does not depend on any other tool reproducing it (the DSSE signature is
     verified over the stored payload bytes).
     """
-    return json.dumps(
-        data, sort_keys=True, separators=(",", ":"), default=str, ensure_ascii=True
-    ).encode("utf-8")
+    return json.dumps(data, sort_keys=True, separators=(",", ":"), default=str, ensure_ascii=True).encode("utf-8")
 
 
 def digest_bytes(data: bytes) -> str:
@@ -124,10 +122,7 @@ def parse_digest(prop_value: str) -> tuple[str, str]:
         algo, hex_digest = prop_value.split(":", 1)
         algo = algo.lower()
         if algo != DIGEST_ALGO:
-            raise ValueError(
-                f"Unsupported digest algorithm {algo!r}; "
-                f"v0.7.0 supports {DIGEST_ALGO!r} only."
-            )
+            raise ValueError(f"Unsupported digest algorithm {algo!r}; v0.7.0 supports {DIGEST_ALGO!r} only.")
         return algo, hex_digest
     return DIGEST_ALGO, prop_value
 

@@ -57,9 +57,7 @@ def chdir_tmp(tmp_path: Path) -> Iterator[Path]:
         os.chdir(prev)
 
 
-def _make_bump_with_tracked(
-    bump: Any, monkeypatch: pytest.MonkeyPatch, tracked: list[str], packages: list[str]
-) -> Any:
+def _make_bump_with_tracked(bump: Any, monkeypatch: pytest.MonkeyPatch, tracked: list[str], packages: list[str]) -> Any:
     """Monkeypatch the imported bump module so tracked_files() + workspace_packages()
     return controlled values, while keeping the real expand_manifest_path +
     replacements_for_kind."""
@@ -74,9 +72,7 @@ def _make_bump_with_tracked(
 def test_coverage_pass_when_tracked_file_current(
     check: Any, bump: Any, chdir_tmp: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    (chdir_tmp / "pyproject.toml").write_text(
-        'version = "0.10.7"\n', encoding="utf-8"
-    )
+    (chdir_tmp / "pyproject.toml").write_text('version = "0.10.7"\n', encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["pyproject.toml"], [])
     manifest = {
         "tracked": [{"path": "pyproject.toml", "kind": "python_version"}],
@@ -89,9 +85,7 @@ def test_coverage_fail_when_tracked_file_stale(
     check: Any, bump: Any, chdir_tmp: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # File holds the OLD version; current is 0.10.7 -> stale -> FAIL.
-    (chdir_tmp / "pyproject.toml").write_text(
-        'version = "0.10.6"\n', encoding="utf-8"
-    )
+    (chdir_tmp / "pyproject.toml").write_text('version = "0.10.6"\n', encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["pyproject.toml"], [])
     manifest = {
         "tracked": [{"path": "pyproject.toml", "kind": "python_version"}],
@@ -127,9 +121,7 @@ def test_coverage_advisory_kinds_not_required(
     """pip_extra_pin / workspace_pins / cff_date are advisory — a file lacking
     the current version for one of those kinds does NOT fail coverage."""
     # requirements.in legitimately lags (last *published* release).
-    (chdir_tmp / "requirements.in").write_text(
-        "evidentia[gui]==0.9.1\n", encoding="utf-8"
-    )
+    (chdir_tmp / "requirements.in").write_text("evidentia[gui]==0.9.1\n", encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["requirements.in"], [])
     manifest = {
         "tracked": [{"path": "requirements.in", "kind": "pip_extra_pin"}],
@@ -159,9 +151,7 @@ def test_never_skip_pass_when_literal_in_frozen(
     check: Any, bump: Any, chdir_tmp: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A frozen file holding an OLD project version passes (historical)."""
-    (chdir_tmp / "CHANGELOG.md").write_text(
-        "## [0.7.0] - 2026-01-01\nInitial.\n", encoding="utf-8"
-    )
+    (chdir_tmp / "CHANGELOG.md").write_text("## [0.7.0] - 2026-01-01\nInitial.\n", encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["CHANGELOG.md"], [])
     manifest = {
         "tracked": [],
@@ -175,9 +165,7 @@ def test_never_skip_fail_when_literal_unclassified(
 ) -> None:
     """An unclassified file carrying a project-version literal hard-fails with
     the exact message the task specifies."""
-    (chdir_tmp / "mystery.cfg").write_text(
-        "some_setting = v0.10.7\n", encoding="utf-8"
-    )
+    (chdir_tmp / "mystery.cfg").write_text("some_setting = v0.10.7\n", encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["mystery.cfg"], [])
     manifest = {"tracked": [], "frozen": []}
     failures = check.check_never_skip(bump, manifest)
@@ -192,9 +180,7 @@ def test_never_skip_classified_tracked_file_ok(
     check: Any, bump: Any, chdir_tmp: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A tracked file with the current literal is classified -> not flagged."""
-    (chdir_tmp / "pyproject.toml").write_text(
-        'version = "0.10.7"\n', encoding="utf-8"
-    )
+    (chdir_tmp / "pyproject.toml").write_text('version = "0.10.7"\n', encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["pyproject.toml"], [])
     manifest = {
         "tracked": [{"path": "pyproject.toml", "kind": "python_version"}],
@@ -209,9 +195,7 @@ def test_never_skip_glob_classification(
     """A ``docs/**`` frozen glob classifies a nested doc carrying a literal."""
     (chdir_tmp / "docs").mkdir()
     (chdir_tmp / "docs" / "sub").mkdir()
-    (chdir_tmp / "docs" / "sub" / "old-plan.md").write_text(
-        "Shipped in v0.8.0.\n", encoding="utf-8"
-    )
+    (chdir_tmp / "docs" / "sub" / "old-plan.md").write_text("Shipped in v0.8.0.\n", encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["docs/sub/old-plan.md"], [])
     manifest = {"tracked": [], "frozen": [{"path": "docs/**"}]}
     assert check.check_never_skip(bump, manifest) == []
@@ -223,9 +207,7 @@ def test_never_skip_ignores_sub_project_versions(
     """Small third-party dep versions (0.1.x .. 0.6.x) are below the project
     family floor (>= 0.7) and do NOT trip the gate, so a file that ONLY
     carries such a version need not be classified."""
-    (chdir_tmp / "unrelated.txt").write_text(
-        "annotated-types 0.6.0 and defusedxml 0.5.1\n", encoding="utf-8"
-    )
+    (chdir_tmp / "unrelated.txt").write_text("annotated-types 0.6.0 and defusedxml 0.5.1\n", encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["unrelated.txt"], [])
     manifest = {"tracked": [], "frozen": []}
     assert check.check_never_skip(bump, manifest) == []
@@ -291,9 +273,7 @@ def test_anchor_coverage_passes_when_current(
     manifest = {
         "tracked": [],
         "frozen": [{"path": "SECURITY.md"}],
-        "anchors": [
-            {"path": "SECURITY.md", "line_contains": "Latest patched release:"}
-        ],
+        "anchors": [{"path": "SECURITY.md", "line_contains": "Latest patched release:"}],
     }
     assert check.check_anchors(bump, manifest, "0.10.7") == []
 
@@ -303,16 +283,12 @@ def test_anchor_coverage_fails_when_stale(
 ) -> None:
     """A stale anchored line (the live-in-frozen drift the whole mechanism
     guards) hard-fails with the spec'd message."""
-    (chdir_tmp / "SECURITY.md").write_text(
-        "Latest patched release: 0.10.6\n", encoding="utf-8"
-    )
+    (chdir_tmp / "SECURITY.md").write_text("Latest patched release: 0.10.6\n", encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["SECURITY.md"], [])
     manifest = {
         "tracked": [],
         "frozen": [{"path": "SECURITY.md"}],
-        "anchors": [
-            {"path": "SECURITY.md", "line_contains": "Latest patched release:"}
-        ],
+        "anchors": [{"path": "SECURITY.md", "line_contains": "Latest patched release:"}],
     }
     failures = check.check_anchors(bump, manifest, "0.10.7")
     assert len(failures) == 1
@@ -327,9 +303,7 @@ def test_anchor_coverage_stale_v_prefixed_reports_found(
 ) -> None:
     """The 'found' value in the failure message includes the literal as-written
     (preserving the v prefix)."""
-    (chdir_tmp / "README.md").write_text(
-        "Pinned: v0.10.6 image\n", encoding="utf-8"
-    )
+    (chdir_tmp / "README.md").write_text("Pinned: v0.10.6 image\n", encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["README.md"], [])
     manifest = {
         "tracked": [],
@@ -346,9 +320,7 @@ def test_anchor_multi_line_marker_each_checked(
 ) -> None:
     """A marker matching 2 lines checks BOTH — one stale line fails even if the
     other is current."""
-    (chdir_tmp / "doc.md").write_text(
-        "Release: 0.10.7\nRelease: 0.10.5\n", encoding="utf-8"
-    )
+    (chdir_tmp / "doc.md").write_text("Release: 0.10.7\nRelease: 0.10.5\n", encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["doc.md"], [])
     manifest = {
         "tracked": [],
@@ -361,9 +333,7 @@ def test_anchor_multi_line_marker_each_checked(
     assert "shows 0.10.5 not 0.10.7" in failures[0]
 
 
-def test_anchor_empty_list_passes(
-    check: Any, bump: Any, chdir_tmp: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_anchor_empty_list_passes(check: Any, bump: Any, chdir_tmp: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """No anchors => no anchor failures (the default state)."""
     _make_bump_with_tracked(bump, monkeypatch, ["x.md"], [])
     manifest: dict[str, list[dict[str, str]]] = {
@@ -424,9 +394,7 @@ def test_anchor_guard_unclassified_file(
 ) -> None:
     """An anchor file in NEITHER tracked NOR frozen fails — overlay, not a
     classification substitute."""
-    (chdir_tmp / "doc.md").write_text(
-        "Latest release: 0.10.6\n", encoding="utf-8"
-    )
+    (chdir_tmp / "doc.md").write_text("Latest release: 0.10.6\n", encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["doc.md"], [])
     manifest: dict[str, list[dict[str, str]]] = {
         "tracked": [],
@@ -438,22 +406,16 @@ def test_anchor_guard_unclassified_file(
     assert "NEITHER tracked NOR frozen" in failures[0]
 
 
-def test_anchor_classified_via_glob(
-    check: Any, bump: Any, chdir_tmp: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_anchor_classified_via_glob(check: Any, bump: Any, chdir_tmp: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """A file classified by a frozen GLOB (not a literal path) satisfies the
     'must be classified' guard for its anchor overlay."""
     (chdir_tmp / "docs").mkdir()
-    (chdir_tmp / "docs" / "status.md").write_text(
-        "Latest release: 0.10.7\n", encoding="utf-8"
-    )
+    (chdir_tmp / "docs" / "status.md").write_text("Latest release: 0.10.7\n", encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["docs/status.md"], [])
     manifest = {
         "tracked": [],
         "frozen": [{"path": "docs/**"}],  # glob classifies docs/status.md
-        "anchors": [
-            {"path": "docs/status.md", "line_contains": "Latest release:"}
-        ],
+        "anchors": [{"path": "docs/status.md", "line_contains": "Latest release:"}],
     }
     # Classified via glob => no 'unclassified' failure; line is current => pass.
     assert check.check_anchors(bump, manifest, "0.10.7") == []
@@ -469,9 +431,7 @@ def test_anchor_ambiguous_two_project_literals_historical(
     PROJECT literal (a historical project version on the same line) is an
     ambiguous anchor — a HARD FAIL. The checker must NOT pass merely because
     the current token appears somewhere on the line."""
-    (chdir_tmp / "doc.md").write_text(
-        "Latest: v0.10.7 (was v0.10.6)\n", encoding="utf-8"
-    )
+    (chdir_tmp / "doc.md").write_text("Latest: v0.10.7 (was v0.10.6)\n", encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["doc.md"], [])
     manifest = {
         "tracked": [],
@@ -493,9 +453,7 @@ def test_anchor_ambiguous_third_party_in_family_literal(
     dependency literal in the >=0.7 project family on the SAME line is also
     ambiguous — a HARD FAIL (otherwise the gate could pass a stale live token
     that the bumper would have corrupted)."""
-    (chdir_tmp / "doc.md").write_text(
-        "Pinned evidentia 0.10.7 with somedep 0.9.5 today\n", encoding="utf-8"
-    )
+    (chdir_tmp / "doc.md").write_text("Pinned evidentia 0.10.7 with somedep 0.9.5 today\n", encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["doc.md"], [])
     manifest = {
         "tracked": [],
@@ -513,9 +471,7 @@ def test_anchor_single_literal_must_equal_current_not_merely_present(
     """The SINGLE literal on an anchored line must EQUAL current — not merely
     'current appears somewhere'. A single STALE literal still fails (this is the
     plain-stale path, retained after the exactly-one tightening)."""
-    (chdir_tmp / "doc.md").write_text(
-        "Latest patched release: v0.10.6\n", encoding="utf-8"
-    )
+    (chdir_tmp / "doc.md").write_text("Latest patched release: v0.10.6\n", encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["doc.md"], [])
     manifest = {
         "tracked": [],
@@ -531,9 +487,7 @@ def test_anchor_single_literal_equal_current_passes(
     check: Any, bump: Any, chdir_tmp: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Exactly one live literal equal to current passes (happy path retained)."""
-    (chdir_tmp / "doc.md").write_text(
-        "Latest release tag: v0.10.7\n", encoding="utf-8"
-    )
+    (chdir_tmp / "doc.md").write_text("Latest release tag: v0.10.7\n", encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["doc.md"], [])
     manifest = {
         "tracked": [],
@@ -588,9 +542,7 @@ def test_never_skip_uses_shared_classified_paths(
     """check_never_skip routes classification through bump.classified_paths so
     there is ONE definition of the tracked∪frozen union. We assert that helper
     is actually consulted by spying on it."""
-    (chdir_tmp / "CHANGELOG.md").write_text(
-        "## [0.7.0]\n", encoding="utf-8"
-    )
+    (chdir_tmp / "CHANGELOG.md").write_text("## [0.7.0]\n", encoding="utf-8")
     _make_bump_with_tracked(bump, monkeypatch, ["CHANGELOG.md"], [])
     manifest = {"tracked": [], "frozen": [{"path": "CHANGELOG.md"}]}
 
@@ -613,9 +565,7 @@ def test_never_skip_classified_set_identical_via_shared_helper(
     bump.classified_paths produces for the same manifest + tracked list (the
     'identical before/after the DRY refactor' guarantee)."""
     (chdir_tmp / "CHANGELOG.md").write_text("0.7.0\n", encoding="utf-8")
-    (chdir_tmp / "pyproject.toml").write_text(
-        'version = "0.10.7"\n', encoding="utf-8"
-    )
+    (chdir_tmp / "pyproject.toml").write_text('version = "0.10.7"\n', encoding="utf-8")
     tracked = ["CHANGELOG.md", "pyproject.toml", "docs/old.md"]
     _make_bump_with_tracked(bump, monkeypatch, tracked, [])
     manifest = {
@@ -758,9 +708,7 @@ def test_requires_python_in_sync_fails_when_member_missing_field(
     _write_pyproject(chdir_tmp / "pyproject.toml", ">=3.12,<3.14")
     bad_dir = chdir_tmp / "packages" / "evidentia-core"
     bad_dir.mkdir(parents=True)
-    (bad_dir / "pyproject.toml").write_text(
-        '[project]\nname = "evidentia-core"\n', encoding="utf-8"
-    )
+    (bad_dir / "pyproject.toml").write_text('[project]\nname = "evidentia-core"\n', encoding="utf-8")
     monkeypatch.setattr(check, "REPO_ROOT", chdir_tmp)
     _make_bump_with_tracked(
         bump,
@@ -810,15 +758,13 @@ def test_sibling_pins_pass_when_lower_bound_is_current(
     _write_pkg(
         tmp_path,
         "packages/evidentia/pyproject.toml",
-        '[project]\n'
+        "[project]\n"
         'dependencies = ["evidentia-core>=0.12.0,<0.13.0"]\n'
-        '[project.optional-dependencies]\n'
+        "[project.optional-dependencies]\n"
         'worm-s3 = ["evidentia-core[worm-s3]>=0.12.0,<0.13.0"]\n',
     )
     monkeypatch.setattr(check, "REPO_ROOT", tmp_path)
-    _make_bump_with_tracked(
-        bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"]
-    )
+    _make_bump_with_tracked(bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"])
     assert check.check_sibling_pins_at_current(bump, "0.12.0") == []
 
 
@@ -837,15 +783,13 @@ def test_sibling_pins_fail_on_the_worm_extra_regression(
     _write_pkg(
         tmp_path,
         "packages/evidentia/pyproject.toml",
-        '[project]\n'
+        "[project]\n"
         'dependencies = ["evidentia-core>=0.12.0,<0.13.0"]\n'
-        '[project.optional-dependencies]\n'
+        "[project.optional-dependencies]\n"
         'worm-s3 = ["evidentia-core[worm-s3]>=0.10.0,<0.11.0"]\n',
     )
     monkeypatch.setattr(check, "REPO_ROOT", tmp_path)
-    _make_bump_with_tracked(
-        bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"]
-    )
+    _make_bump_with_tracked(bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"])
     failures = check.check_sibling_pins_at_current(bump, "0.12.0")
     assert len(failures) == 1
     assert "optional-dependencies.worm-s3" in failures[0]
@@ -863,9 +807,7 @@ def test_sibling_pins_ignore_third_party_lookalikes(
         '[project]\ndependencies = ["py-ocsf-models>=0.9.0,<0.10.0"]\n',
     )
     monkeypatch.setattr(check, "REPO_ROOT", tmp_path)
-    _make_bump_with_tracked(
-        bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"]
-    )
+    _make_bump_with_tracked(bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"])
     assert check.check_sibling_pins_at_current(bump, "0.12.0") == []
 
 
@@ -874,59 +816,63 @@ def test_sibling_pins_ignore_third_party_lookalikes(
 # rest are variants the FIRST version of this gate silently passed, found by
 # the v0.12.0 pre-release security review.
 _STALE_SHAPES = [
-    ("house_style", 'evidentia-core[worm-s3]>=0.10.0,<0.11.0'),
-    ("space_before_op", 'evidentia-core[worm-s3] >=0.10.0,<0.11.0'),
-    ("space_after_op", 'evidentia-core[worm-s3]>= 0.10.0,<0.11.0'),
-    ("equality_pin", 'evidentia-core==0.10.0'),
-    ("compatible_release", 'evidentia-core~=0.10.0'),
-    ("underscore_name", 'evidentia_core>=0.10.0,<0.11.0'),
-    ("bare_lower_bound", 'evidentia-core>=0.10.0'),
+    ("house_style", "evidentia-core[worm-s3]>=0.10.0,<0.11.0"),
+    ("space_before_op", "evidentia-core[worm-s3] >=0.10.0,<0.11.0"),
+    ("space_after_op", "evidentia-core[worm-s3]>= 0.10.0,<0.11.0"),
+    ("equality_pin", "evidentia-core==0.10.0"),
+    ("compatible_release", "evidentia-core~=0.10.0"),
+    ("underscore_name", "evidentia_core>=0.10.0,<0.11.0"),
+    ("bare_lower_bound", "evidentia-core>=0.10.0"),
     ("environment_marker", 'evidentia-core>=0.10.0; python_version >= "3.12"'),
 ]
 
 _ACCEPTABLE_SHAPES = [
-    ("current_house_style", 'evidentia-core[worm-s3]>=0.12.0,<0.13.0'),
-    ("current_spaced", 'evidentia-core >= 0.12.0, <0.13.0'),
-    ("third_party_lookalike", 'py-ocsf-models>=0.9.0,<0.10.0'),
+    ("current_house_style", "evidentia-core[worm-s3]>=0.12.0,<0.13.0"),
+    ("current_spaced", "evidentia-core >= 0.12.0, <0.13.0"),
+    ("third_party_lookalike", "py-ocsf-models>=0.9.0,<0.10.0"),
 ]
 
 
 @pytest.mark.parametrize("label,req", _STALE_SHAPES, ids=[s[0] for s in _STALE_SHAPES])
 def test_sibling_pins_catch_every_stale_shape(
-    label: str, req: str, check: Any, bump: Any, tmp_path: Path,
+    label: str,
+    req: str,
+    check: Any,
+    bump: Any,
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A gate that only knows the house style fails OPEN on legal variants."""
     _write_pkg(tmp_path, "pyproject.toml", '[project]\nname = "root"\n')
     _write_pkg(
-        tmp_path, "packages/evidentia/pyproject.toml",
+        tmp_path,
+        "packages/evidentia/pyproject.toml",
         f'[project]\ndependencies = ["{req}"]\n',
     )
     monkeypatch.setattr(check, "REPO_ROOT", tmp_path)
-    _make_bump_with_tracked(
-        bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"]
-    )
+    _make_bump_with_tracked(bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"])
     failures = check.check_sibling_pins_at_current(bump, "0.12.0")
     assert failures, f"{label}: stale pin {req!r} was NOT caught (gate failed open)"
 
 
-@pytest.mark.parametrize(
-    "label,req", _ACCEPTABLE_SHAPES, ids=[s[0] for s in _ACCEPTABLE_SHAPES]
-)
+@pytest.mark.parametrize("label,req", _ACCEPTABLE_SHAPES, ids=[s[0] for s in _ACCEPTABLE_SHAPES])
 def test_sibling_pins_accept_current_and_third_party(
-    label: str, req: str, check: Any, bump: Any, tmp_path: Path,
+    label: str,
+    req: str,
+    check: Any,
+    bump: Any,
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Widening the pattern must not make the gate cry wolf."""
     _write_pkg(tmp_path, "pyproject.toml", '[project]\nname = "root"\n')
     _write_pkg(
-        tmp_path, "packages/evidentia/pyproject.toml",
+        tmp_path,
+        "packages/evidentia/pyproject.toml",
         f'[project]\ndependencies = ["{req}"]\n',
     )
     monkeypatch.setattr(check, "REPO_ROOT", tmp_path)
-    _make_bump_with_tracked(
-        bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"]
-    )
+    _make_bump_with_tracked(bump, monkeypatch, ["packages/evidentia/pyproject.toml"], ["evidentia-core"])
     assert check.check_sibling_pins_at_current(bump, "0.12.0") == [], label
 
 
@@ -938,6 +884,7 @@ def test_sibling_name_alternation_survives_re_escape() -> None:
     This asserts the alternation is built the other way round.
     """
     import importlib.util
+
     spec = importlib.util.spec_from_file_location("cvc_alt", CHECK_PATH)
     assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)

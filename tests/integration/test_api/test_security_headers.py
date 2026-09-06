@@ -60,54 +60,35 @@ def _make_client(
 
 
 class TestActivationPolicy:
-    def test_off_by_default(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
+    def test_off_by_default(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         """No env var, no explicit kwarg → middleware not attached."""
         client = _make_client(monkeypatch, tmp_path)
         r = client.get("/api/health")
         for header in SECURITY_HEADERS:
-            assert header not in r.headers, (
-                f"Expected {header} absent; default should be off."
-            )
+            assert header not in r.headers, f"Expected {header} absent; default should be off."
 
-    def test_explicit_true_attaches_middleware(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        client = _make_client(
-            monkeypatch, tmp_path, security_headers=True
-        )
+    def test_explicit_true_attaches_middleware(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        client = _make_client(monkeypatch, tmp_path, security_headers=True)
         r = client.get("/api/health")
         for header, expected in SECURITY_HEADERS.items():
-            assert r.headers.get(header) == expected, (
-                f"{header} should be {expected!r}; got {r.headers.get(header)!r}"
-            )
+            assert r.headers.get(header) == expected, f"{header} should be {expected!r}; got {r.headers.get(header)!r}"
 
-    def test_explicit_false_does_not_attach(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
+    def test_explicit_false_does_not_attach(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         # Even with the env var set ON, an explicit False kwarg overrides.
-        client = _make_client(
-            monkeypatch, tmp_path, security_headers=False, env_var="1"
-        )
+        client = _make_client(monkeypatch, tmp_path, security_headers=False, env_var="1")
         r = client.get("/api/health")
         for header in SECURITY_HEADERS:
             assert header not in r.headers, (
-                f"Explicit False kwarg should override env var ON. "
-                f"{header} should NOT be present."
+                f"Explicit False kwarg should override env var ON. {header} should NOT be present."
             )
 
-    def test_env_var_1_enables(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
+    def test_env_var_1_enables(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         client = _make_client(monkeypatch, tmp_path, env_var="1")
         r = client.get("/api/health")
         for header, expected in SECURITY_HEADERS.items():
             assert r.headers.get(header) == expected
 
-    def test_env_var_0_does_not_enable(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
+    def test_env_var_0_does_not_enable(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         # Anything other than literal "1" is treated as off.
         client = _make_client(monkeypatch, tmp_path, env_var="0")
         r = client.get("/api/health")
@@ -120,9 +101,7 @@ class TestActivationPolicy:
 
 class TestHeaderValues:
     @pytest.fixture()
-    def headers(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> object:
+    def headers(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> object:
         # Return the raw Headers object (case-insensitive lookups);
         # ``dict(r.headers)`` would lowercase keys.
         client = _make_client(monkeypatch, tmp_path, security_headers=True)
@@ -140,31 +119,23 @@ class TestHeaderValues:
     def test_x_frame_options_deny(self, headers: object) -> None:
         assert headers["X-Frame-Options"] == "DENY"  # type: ignore[index]
 
-    def test_x_content_type_options_nosniff(
-        self, headers: object
-    ) -> None:
+    def test_x_content_type_options_nosniff(self, headers: object) -> None:
         assert (
             headers["X-Content-Type-Options"] == "nosniff"  # type: ignore[index]
         )
 
-    def test_referrer_policy_strict_origin_xorigin(
-        self, headers: object
-    ) -> None:
+    def test_referrer_policy_strict_origin_xorigin(self, headers: object) -> None:
         assert (
             headers["Referrer-Policy"]  # type: ignore[index]
             == "strict-origin-when-cross-origin"
         )
 
-    def test_hsts_one_year_with_subdomains(
-        self, headers: object
-    ) -> None:
+    def test_hsts_one_year_with_subdomains(self, headers: object) -> None:
         sts = headers["Strict-Transport-Security"]  # type: ignore[index]
         assert "max-age=31536000" in sts
         assert "includeSubDomains" in sts
 
-    def test_permissions_policy_blocks_sensitive_apis(
-        self, headers: object
-    ) -> None:
+    def test_permissions_policy_blocks_sensitive_apis(self, headers: object) -> None:
         pp = headers["Permissions-Policy"]  # type: ignore[index]
         for api in ("camera", "microphone", "geolocation", "payment"):
             assert f"{api}=()" in pp
@@ -174,9 +145,7 @@ class TestHeaderValues:
 
 
 class TestRegressionExistingRoutes:
-    def test_health_endpoint_returns_200_with_middleware(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
+    def test_health_endpoint_returns_200_with_middleware(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         client = _make_client(monkeypatch, tmp_path, security_headers=True)
         r = client.get("/api/health")
         assert r.status_code == 200
@@ -200,9 +169,7 @@ class TestShouldEnableForHost:
             ("10.0.0.5", True),
         ],
     )
-    def test_should_enable_for_host(
-        self, host: str, expected: bool
-    ) -> None:
+    def test_should_enable_for_host(self, host: str, expected: bool) -> None:
         assert should_enable_for_host(host) is expected
 
 
@@ -210,9 +177,7 @@ class TestShouldEnableForHost:
 
 
 class TestAlwaysSetSemantic:
-    def test_middleware_overrides_route_set_header(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
+    def test_middleware_overrides_route_set_header(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         """Per the always-set semantic: security headers win over any
         route-level customization. A future route that genuinely needs
         looser CSP must opt out via a different mechanism (e.g., a
@@ -222,9 +187,7 @@ class TestAlwaysSetSemantic:
         from evidentia_core.network_guard import set_offline
         from fastapi import APIRouter, Response
 
-        monkeypatch.setenv(
-            "EVIDENTIA_GAP_STORE_DIR", str(tmp_path / "gap_store")
-        )
+        monkeypatch.setenv("EVIDENTIA_GAP_STORE_DIR", str(tmp_path / "gap_store"))
         monkeypatch.chdir(tmp_path)
         _load_config_cached.cache_clear()
         set_offline(False)

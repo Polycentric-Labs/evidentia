@@ -162,8 +162,7 @@ def _validate_id_shape(candidate: str) -> str:
         return str(UUID(candidate))
     except (ValueError, AttributeError, TypeError) as exc:
         raise InvalidEvidenceIdError(
-            f"Invalid evidence/lineage ID format "
-            f"(expected UUID string): {candidate!r}"
+            f"Invalid evidence/lineage ID format (expected UUID string): {candidate!r}"
         ) from exc
 
 
@@ -212,10 +211,7 @@ def get_evidence_store_dir(
         if env:
             base = Path(env).expanduser().resolve()
         else:
-            base = (
-                Path(user_data_dir("evidentia", "Evidentia"))
-                / "evidence_store"
-            )
+            base = Path(user_data_dir("evidentia", "Evidentia")) / "evidence_store"
     if tenant is None:
         return base
     from evidentia_core.rbac import validate_tenant_id
@@ -240,9 +236,7 @@ def _lineage_dir(
     try:
         return validate_within(candidate, store_root)
     except PathTraversalError as exc:
-        raise InvalidEvidenceIdError(
-            f"Lineage id {lineage_id!r} would escape store root"
-        ) from exc
+        raise InvalidEvidenceIdError(f"Lineage id {lineage_id!r} would escape store root") from exc
 
 
 def _version_path(
@@ -252,18 +246,13 @@ def _version_path(
 ) -> Path:
     """Resolve the file path for one version within a lineage chain."""
     if version < 1:
-        raise ValueError(
-            f"version must be >= 1 (per EvidenceArtifact.version "
-            f"invariant); got {version}"
-        )
+        raise ValueError(f"version must be >= 1 (per EvidenceArtifact.version invariant); got {version}")
     lineage = _lineage_dir(lineage_id, store_root)
     candidate = lineage / f"v{version}.json"
     return validate_within(candidate, store_root)
 
 
-def _resolve_auto_mirror_backend() -> (
-    tuple[object, object] | None
-):
+def _resolve_auto_mirror_backend() -> tuple[object, object] | None:
     """Resolve the auto-mirror backend factory from env vars (v0.9.7 P1.1; v0.9.8 P2.2 delegates to factory_resolver).
 
     Returns ``None`` when :data:`EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR`
@@ -295,8 +284,7 @@ def _resolve_auto_mirror_backend() -> (
         return None
     if not isinstance(result, tuple) or len(result) != 2:
         raise RuntimeError(
-            f"WORM auto-mirror factory must return a "
-            f"(backend, retention_metadata) tuple; got {type(result).__name__}"
+            f"WORM auto-mirror factory must return a (backend, retention_metadata) tuple; got {type(result).__name__}"
         )
     typed_result: tuple[object, object] = result
     return typed_result
@@ -374,9 +362,7 @@ def save_evidence(
         )
 
     tmp_path = out_path.with_suffix(".json.tmp")
-    tmp_path.write_text(
-        artifact.model_dump_json(indent=2), encoding="utf-8"
-    )
+    tmp_path.write_text(artifact.model_dump_json(indent=2), encoding="utf-8")
     os.replace(tmp_path, out_path)
     logger.debug(
         "Saved evidence v%d for lineage %s: %s",
@@ -409,8 +395,7 @@ def save_evidence(
             # the exception in their factory function rather than
             # catching it here.
             logger.warning(
-                "Auto-mirror to WORM backend failed for lineage %s "
-                "v%d; local-store write succeeded.",
+                "Auto-mirror to WORM backend failed for lineage %s v%d; local-store write succeeded.",
                 canonical_lineage,
                 artifact.version,
                 exc_info=True,
@@ -471,9 +456,7 @@ def load_evidence_version(
     path = _version_path(canonical_lineage, version, store)
     if not path.is_file():
         return None
-    return EvidenceArtifact.model_validate_json(
-        path.read_text(encoding="utf-8")
-    )
+    return EvidenceArtifact.model_validate_json(path.read_text(encoding="utf-8"))
 
 
 def list_lineage(
@@ -505,15 +488,9 @@ def list_lineage(
     artifacts: list[EvidenceArtifact] = []
     for path in sorted(lineage_dir.glob("v*.json")):
         try:
-            artifacts.append(
-                EvidenceArtifact.model_validate_json(
-                    path.read_text(encoding="utf-8")
-                )
-            )
+            artifacts.append(EvidenceArtifact.model_validate_json(path.read_text(encoding="utf-8")))
         except Exception as exc:  # pragma: no cover — defensive
-            logger.warning(
-                "Skipping malformed evidence record %s: %s", path, exc
-            )
+            logger.warning("Skipping malformed evidence record %s: %s", path, exc)
     artifacts.sort(key=lambda a: a.version)
     return artifacts
 
@@ -600,8 +577,6 @@ def iter_artifacts(
                 continue
             if source_system is not None and artifact.source_system != source_system:
                 continue
-            if metadata and any(
-                artifact.metadata.get(key) != value for key, value in metadata.items()
-            ):
+            if metadata and any(artifact.metadata.get(key) != value for key, value in metadata.items()):
                 continue
             yield artifact

@@ -88,17 +88,12 @@ def test_extract_claims_real_llm_produces_claims() -> None:
     )
     claims = extract_claims(risk_text)
     assert isinstance(claims, list), "extract_claims must return list"
-    assert len(claims) >= 2, (
-        f"Expected ≥ 2 claims from 3-claim input; got "
-        f"{len(claims)}: {claims!r}"
-    )
+    assert len(claims) >= 2, f"Expected ≥ 2 claims from 3-claim input; got {len(claims)}: {claims!r}"
     for claim in claims:
         assert isinstance(claim, str), "each claim must be str"
         # ≥ 5 tokens per claim — guards against the LLM returning
         # one-word fragments.
-        assert len(claim.split()) >= 5, (
-            f"Claim too short (likely fragment): {claim!r}"
-        )
+        assert len(claim.split()) >= 5, f"Claim too short (likely fragment): {claim!r}"
 
 
 def test_extract_claims_empty_input_returns_empty_list_no_llm_call() -> None:
@@ -143,9 +138,7 @@ def test_dfa_harness_check_faithfulness_end_to_end_against_corpus() -> None:
     )
 
     corpus_path = Path("tests/data/dfah-calibration/corpus.jsonl")
-    assert corpus_path.is_file(), (
-        "v0.8.3 P1.3 corpus must be present for integration test"
-    )
+    assert corpus_path.is_file(), "v0.8.3 P1.3 corpus must be present for integration test"
 
     # Pick 4 representative entries.
     selected: list[dict[str, object]] = []
@@ -163,9 +156,7 @@ def test_dfa_harness_check_faithfulness_end_to_end_against_corpus() -> None:
             selected.append(entry)
             if len(selected) == 4:
                 break
-    assert len(selected) == 4, (
-        f"Expected 4 distinct categories; got {seen_categories}"
-    )
+    assert len(selected) == 4, f"Expected 4 distinct categories; got {seen_categories}"
 
     # Generator returns the corpus claim verbatim — the harness
     # then runs extract_claims on the modal output (=claim) and
@@ -181,10 +172,7 @@ def test_dfa_harness_check_faithfulness_end_to_end_against_corpus() -> None:
         EvalSample(
             prompt_id=str(entry["id"]),
             prompt=str(entry["id"]),
-            source_clauses=[
-                str(c)
-                for c in cast(list[object], entry["source_clauses"])
-            ],
+            source_clauses=[str(c) for c in cast(list[object], entry["source_clauses"])],
         )
         for entry in selected
     ]
@@ -193,9 +181,7 @@ def test_dfa_harness_check_faithfulness_end_to_end_against_corpus() -> None:
         return GenerationContext(
             model="integration-stub",
             temperature=0.0,
-            prompt_hash=compute_prompt_hash(
-                "real-llm-integration-test", prompt_id
-            ),
+            prompt_hash=compute_prompt_hash("real-llm-integration-test", prompt_id),
         )
 
     harness = DFAHarness(
@@ -212,17 +198,14 @@ def test_dfa_harness_check_faithfulness_end_to_end_against_corpus() -> None:
     )
 
     assert len(result.faithfulness_results) == 4, (
-        f"Expected 4 faithfulness results; got "
-        f"{len(result.faithfulness_results)}"
+        f"Expected 4 faithfulness results; got {len(result.faithfulness_results)}"
     )
     # No exact-threshold asserts — different LLM models produce
     # different claim splits, so a verbatim-faithful entry might
     # score 0.6 with model A + 0.9 with model B. We just assert
     # the structure: each result has ≥ 1 claim scored.
     for pfr in result.faithfulness_results:
-        assert len(pfr.claims) >= 1, (
-            f"prompt_id={pfr.prompt_id!r} produced 0 scored claims"
-        )
+        assert len(pfr.claims) >= 1, f"prompt_id={pfr.prompt_id!r} produced 0 scored claims"
 
 
 @_skip_if_no_llm
@@ -260,10 +243,7 @@ def test_dfa_harness_score_distribution_trend() -> None:
         EvalSample(
             prompt_id=str(entry["id"]),
             prompt=str(entry["id"]),
-            source_clauses=[
-                str(c)
-                for c in cast(list[object], entry["source_clauses"])
-            ],
+            source_clauses=[str(c) for c in cast(list[object], entry["source_clauses"])],
         )
         for entry in samples_by_id.values()
     ]
@@ -275,9 +255,7 @@ def test_dfa_harness_score_distribution_trend() -> None:
         return GenerationContext(
             model="integration-stub",
             temperature=0.0,
-            prompt_hash=compute_prompt_hash(
-                "real-llm-integration-test", prompt_id
-            ),
+            prompt_hash=compute_prompt_hash("real-llm-integration-test", prompt_id),
         )
 
     harness = DFAHarness(
@@ -305,9 +283,7 @@ def test_dfa_harness_score_distribution_trend() -> None:
                 unfaithful_scores.append(c.score)
 
     assert faithful_scores, "Expected at least one faithful claim"
-    assert unfaithful_scores, (
-        "Expected at least one unfaithful claim"
-    )
+    assert unfaithful_scores, "Expected at least one unfaithful claim"
     mean_faithful = sum(faithful_scores) / len(faithful_scores)
     mean_unfaithful = sum(unfaithful_scores) / len(unfaithful_scores)
     assert mean_faithful > mean_unfaithful, (

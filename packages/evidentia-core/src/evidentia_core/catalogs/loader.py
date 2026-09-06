@@ -67,6 +67,7 @@ def resolve_framework_id_alias(framework_id: str) -> str:
     )
     return canonical
 
+
 # CWE-674 guard: the OSCAL control/part trees are recursive, so a
 # pathologically deep document could exhaust Python's recursion limit
 # (RecursionError — a type the fuzz harnesses do not allowlist). Real
@@ -114,8 +115,7 @@ def _load_catalog_data(catalog_path: Path) -> dict[str, Any]:
                     f"{catalog_path.name}.yaml) and retry."
                 )
             raise ValueError(
-                f"Unsupported catalog file extension {suffix!r} for "
-                f"{catalog_path.name}; expected .json, .yaml, or .yml"
+                f"Unsupported catalog file extension {suffix!r} for {catalog_path.name}; expected .json, .yaml, or .yml"
             )
     except RecursionError as exc:
         # CWE-674: a pathologically deeply-nested document exhausts the JSON /
@@ -123,13 +123,10 @@ def _load_catalog_data(catalog_path: Path) -> dict[str, Any]:
         # ValueError rather than leaking RecursionError — defense-in-depth
         # alongside the CWE-248 structural guards. (A coverage-guided fuzzer is
         # unlikely to build the depth, but the class is real.)
-        raise ValueError(
-            f"Catalog file {catalog_path.name} is nested too deeply to parse"
-        ) from exc
+        raise ValueError(f"Catalog file {catalog_path.name} is nested too deeply to parse") from exc
     if not isinstance(data, dict):
         raise ValueError(
-            f"{suffix} catalog {catalog_path.name} top-level must be a "
-            f"mapping (got {type(data).__name__})"
+            f"{suffix} catalog {catalog_path.name} top-level must be a mapping (got {type(data).__name__})"
         )
     return data
 
@@ -171,9 +168,7 @@ def _iter_mappings(value: Any, what: str) -> list[dict[str, Any]]:
         raise ValueError(f"{what} must be a JSON array, got {type(value).__name__}")
     for index, item in enumerate(value):
         if not isinstance(item, dict):
-            raise ValueError(
-                f"{what}[{index}] must be a JSON object, got {type(item).__name__}"
-            )
+            raise ValueError(f"{what}[{index}] must be a JSON object, got {type(item).__name__}")
     return value
 
 
@@ -196,9 +191,7 @@ def load_oscal_catalog(catalog_path: Path) -> ControlCatalog:
         family_title = group.get("title", "")
         families.append(family_title)
 
-        for oscal_control in _iter_mappings(
-            group.get("controls", []), "group.controls"
-        ):
+        for oscal_control in _iter_mappings(group.get("controls", []), "group.controls"):
             control = _parse_oscal_control(oscal_control, family_title)
             controls.append(control)
 
@@ -224,9 +217,7 @@ def load_oscal_catalog(catalog_path: Path) -> ControlCatalog:
     return catalog
 
 
-def _parse_oscal_control(
-    oscal_control: dict[str, Any], family: str, _depth: int = 0
-) -> CatalogControl:
+def _parse_oscal_control(oscal_control: dict[str, Any], family: str, _depth: int = 0) -> CatalogControl:
     """Parse a single OSCAL control into a CatalogControl.
 
     Shared by :func:`load_oscal_catalog` and the OSCAL profile resolver, so
@@ -241,9 +232,7 @@ def _parse_oscal_control(
     a ``RecursionError`` (CWE-674).
     """
     if _depth > _MAX_NEST_DEPTH:
-        raise ValueError(
-            f"control nesting exceeds the maximum depth ({_MAX_NEST_DEPTH})"
-        )
+        raise ValueError(f"control nesting exceeds the maximum depth ({_MAX_NEST_DEPTH})")
     oscal_control = _require_mapping(oscal_control, "control")
     control_id = str(oscal_control.get("id", "")).upper()
     title = oscal_control.get("title", "")
@@ -263,9 +252,7 @@ def _parse_oscal_control(
 
     # Parse enhancements (nested controls)
     enhancements: list[CatalogControl] = []
-    for sub_control in _iter_mappings(
-        oscal_control.get("controls", []), "control.controls"
-    ):
+    for sub_control in _iter_mappings(oscal_control.get("controls", []), "control.controls"):
         enhancement = _parse_oscal_control(sub_control, family, _depth + 1)
         enhancements.append(enhancement)
 
@@ -295,16 +282,12 @@ def _parse_oscal_control(
         param_id = param.get("id", "")
         default_value = ""
         if "select" in param:
-            choices = _require_mapping(param["select"], "param.select").get(
-                "choice", []
-            )
+            choices = _require_mapping(param["select"], "param.select").get("choice", [])
             default_value = " | ".join(choices) if choices else ""
         elif "guidelines" in param:
             guidelines = param["guidelines"]
             if isinstance(guidelines, list) and guidelines:
-                default_value = _require_mapping(
-                    guidelines[0], "param.guidelines[0]"
-                ).get("prose", "")
+                default_value = _require_mapping(guidelines[0], "param.guidelines[0]").get("prose", "")
         parameters[param_id] = default_value
 
     return CatalogControl(
@@ -329,9 +312,7 @@ def _extract_prose(part: dict[str, Any], _depth: int = 0) -> str:
     :data:`_MAX_NEST_DEPTH`).
     """
     if _depth > _MAX_NEST_DEPTH:
-        raise ValueError(
-            f"part nesting exceeds the maximum depth ({_MAX_NEST_DEPTH})"
-        )
+        raise ValueError(f"part nesting exceeds the maximum depth ({_MAX_NEST_DEPTH})")
     part = _require_mapping(part, "part")
     prose: str = str(part.get("prose", ""))
     for sub_part in _iter_mappings(part.get("parts", []), "part.parts"):
@@ -410,9 +391,7 @@ def load_non_control_catalog(catalog_path: Path) -> object:
         from evidentia_core.models.obligation import ObligationCatalog
 
         return ObligationCatalog.model_validate(data)
-    raise ValueError(
-        f"Unknown catalog category {category!r} in {catalog_path.name}"
-    )
+    raise ValueError(f"Unknown catalog category {category!r} in {catalog_path.name}")
 
 
 def load_catalog(framework_id: str, custom_path: Path | None = None) -> ControlCatalog:
@@ -436,9 +415,7 @@ def load_catalog(framework_id: str, custom_path: Path | None = None) -> ControlC
         from evidentia_core.catalogs.user_dir import resolve_catalog_path
 
         manifest = load_manifest()
-        path, _entry, _source = resolve_catalog_path(
-            framework_id, bundled_manifest=manifest
-        )
+        path, _entry, _source = resolve_catalog_path(framework_id, bundled_manifest=manifest)
 
     if not path.exists():
         raise FileNotFoundError(f"Catalog file not found: {path}")
@@ -464,9 +441,7 @@ def load_catalog(framework_id: str, custom_path: Path | None = None) -> ControlC
     return load_evidentia_catalog(path)
 
 
-def load_any_catalog(
-    framework_id: str, custom_path: Path | None = None
-) -> object:
+def load_any_catalog(framework_id: str, custom_path: Path | None = None) -> object:
     """Load any catalog by framework ID, returning the right Pydantic type.
 
     Dispatches on the catalog's ``category`` field:
@@ -485,9 +460,7 @@ def load_any_catalog(
         from evidentia_core.catalogs.user_dir import resolve_catalog_path
 
         manifest = load_manifest()
-        path, _entry, _source = resolve_catalog_path(
-            framework_id, bundled_manifest=manifest
-        )
+        path, _entry, _source = resolve_catalog_path(framework_id, bundled_manifest=manifest)
 
     if not path.exists():
         raise FileNotFoundError(f"Catalog file not found: {path}")

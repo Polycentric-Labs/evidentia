@@ -148,19 +148,11 @@ def build_gap_dataset_csv(report: GapAnalysisReport) -> bytes:
                 "implementation_status": gap.implementation_status,
                 "status": _serialize(gap.status),
                 "priority_score": gap.priority_score,
-                "implementation_effort": _serialize(
-                    gap.implementation_effort
-                ),
-                "equivalent_controls": _serialize(
-                    gap.equivalent_controls_in_inventory
-                ),
-                "cross_framework_satisfies": _serialize(
-                    gap.cross_framework_value
-                ),
+                "implementation_effort": _serialize(gap.implementation_effort),
+                "equivalent_controls": _serialize(gap.equivalent_controls_in_inventory),
+                "cross_framework_satisfies": _serialize(gap.cross_framework_value),
                 "jira_issue_key": _serialize(gap.jira_issue_key),
-                "servicenow_ticket_id": _serialize(
-                    gap.servicenow_ticket_id
-                ),
+                "servicenow_ticket_id": _serialize(gap.servicenow_ticket_id),
                 "assigned_to": _serialize(gap.assigned_to),
                 "tags": _serialize(gap.tags),
                 "created_at": _serialize(gap.created_at),
@@ -235,34 +227,22 @@ def build_risk_dataset_csv(
                 "threat_source": risk.threat_source,
                 "threat_event": risk.threat_event,
                 "vulnerability": risk.vulnerability,
-                "predisposing_conditions": _serialize(
-                    risk.predisposing_conditions
-                ),
+                "predisposing_conditions": _serialize(risk.predisposing_conditions),
                 "likelihood": _serialize(risk.likelihood),
                 "likelihood_rationale": risk.likelihood_rationale,
                 "impact": _serialize(risk.impact),
                 "impact_rationale": risk.impact_rationale,
                 "risk_level": _serialize(risk.risk_level),
-                "recommended_controls": _serialize(
-                    risk.recommended_controls
-                ),
+                "recommended_controls": _serialize(risk.recommended_controls),
                 "remediation_priority": risk.remediation_priority,
-                "estimated_remediation_effort": _serialize(
-                    risk.estimated_remediation_effort
-                ),
+                "estimated_remediation_effort": _serialize(risk.estimated_remediation_effort),
                 "treatment": _serialize(risk.treatment),
-                "treatment_rationale": _serialize(
-                    risk.treatment_rationale
-                ),
+                "treatment_rationale": _serialize(risk.treatment_rationale),
                 "generated_by": risk.generated_by,
                 "generated_at": _serialize(risk.generated_at),
                 "model_used": _serialize(risk.model_used),
-                "temperature": (
-                    _serialize(ctx.temperature) if ctx else ""
-                ),
-                "prompt_hash": (
-                    _serialize(ctx.prompt_hash) if ctx else ""
-                ),
+                "temperature": (_serialize(ctx.temperature) if ctx else ""),
+                "prompt_hash": (_serialize(ctx.prompt_hash) if ctx else ""),
                 "run_id": _serialize(ctx.run_id) if ctx else "",
                 "risk_description": risk.risk_description,
             }
@@ -315,9 +295,7 @@ def build_collection_run_dataset_csv(
                 "collected_at": _serialize(ctx.collected_at),
                 "credential_identity": ctx.credential_identity,
                 "source_system_id": ctx.source_system_id,
-                "filter_applied": json.dumps(
-                    ctx.filter_applied, sort_keys=True, default=str
-                ),
+                "filter_applied": json.dumps(ctx.filter_applied, sort_keys=True, default=str),
                 "evidentia_version": ctx.evidentia_version,
             }
         )

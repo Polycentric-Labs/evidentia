@@ -39,10 +39,7 @@ def _make_trace() -> ReasoningTrace:
     return ReasoningTrace(
         claims=[
             TraceClaim(
-                claim=(
-                    "Account management controls are insufficient "
-                    "given the scale of the user base."
-                ),
+                claim=("Account management controls are insufficient given the scale of the user base."),
                 clause_citations=[
                     "nist-800-53-rev5-moderate:AC-2",
                     "nist-800-53-rev5-moderate:AC-2(1)",
@@ -50,27 +47,19 @@ def _make_trace() -> ReasoningTrace:
                 confidence=0.85,
             ),
             TraceClaim(
-                claim=(
-                    "The vulnerability is exploitable by external "
-                    "attackers with valid credentials."
-                ),
+                claim=("The vulnerability is exploitable by external attackers with valid credentials."),
                 clause_citations=[
                     "nist-800-53-rev5-moderate:AC-3",
                 ],
                 confidence=0.70,
             ),
         ],
-        methodology=(
-            "Per-claim atomic decomposition; "
-            "geometric-mean confidence aggregation."
-        ),
+        methodology=("Per-claim atomic decomposition; geometric-mean confidence aggregation."),
         overall_confidence=0.77,
     )
 
 
-def _make_risk_statement_with_trace(
-    *, with_trace: bool = True
-) -> RiskStatement:
+def _make_risk_statement_with_trace(*, with_trace: bool = True) -> RiskStatement:
     # Use a real UUID for stmt.id — the OSCAL emitter pipes
     # this through to back-matter resource.uuid, and trestle
     # validates the UUID-format.
@@ -174,8 +163,7 @@ class TestReasoningTraceModel:
         round_tripped = RiskStatement.model_validate_json(dumped)
         assert round_tripped.reasoning_trace is not None
         assert (
-            len(round_tripped.reasoning_trace.claims)
-            == len(stmt.reasoning_trace.claims)  # type: ignore[union-attr]
+            len(round_tripped.reasoning_trace.claims) == len(stmt.reasoning_trace.claims)  # type: ignore[union-attr]
         )
 
     def test_pre_v0_8_0_payload_deserializes(self) -> None:
@@ -221,9 +209,7 @@ class TestOSCALEmit:
     ) -> None:
         report = _make_minimal_gap_report()
         stmt = _make_risk_statement_with_trace(with_trace=True)
-        ar = gap_report_to_oscal_ar(
-            report, risk_statements_with_traces=[stmt]
-        )
+        ar = gap_report_to_oscal_ar(report, risk_statements_with_traces=[stmt])
         resources = ar["assessment-results"]["back-matter"]["resources"]
         assert len(resources) == 1
         resource = resources[0]
@@ -250,15 +236,9 @@ class TestOSCALEmit:
     ) -> None:
         report = _make_minimal_gap_report()
         stmt = _make_risk_statement_with_trace(with_trace=True)
-        ar = gap_report_to_oscal_ar(
-            report, risk_statements_with_traces=[stmt]
-        )
+        ar = gap_report_to_oscal_ar(report, risk_statements_with_traces=[stmt])
         resource = ar["assessment-results"]["back-matter"]["resources"][0]
-        ns_props = [
-            p
-            for p in resource["props"]
-            if p.get("ns") == "https://evidentia.dev/oscal"
-        ]
+        ns_props = [p for p in resource["props"] if p.get("ns") == "https://evidentia.dev/oscal"]
         assert len(ns_props) >= 4
         names = {p["name"] for p in ns_props}
         assert "reasoning-trace-claim-count" in names
@@ -271,9 +251,7 @@ class TestOSCALEmit:
         """The base64-embedded payload is the canonical trace JSON."""
         report = _make_minimal_gap_report()
         stmt = _make_risk_statement_with_trace(with_trace=True)
-        ar = gap_report_to_oscal_ar(
-            report, risk_statements_with_traces=[stmt]
-        )
+        ar = gap_report_to_oscal_ar(report, risk_statements_with_traces=[stmt])
         resource = ar["assessment-results"]["back-matter"]["resources"][0]
         encoded = resource["base64"]["value"]
         decoded = base64.b64decode(encoded.encode("ascii"))
@@ -288,18 +266,12 @@ class TestOSCALEmit:
 
         report = _make_minimal_gap_report()
         stmt = _make_risk_statement_with_trace(with_trace=True)
-        ar = gap_report_to_oscal_ar(
-            report, risk_statements_with_traces=[stmt]
-        )
+        ar = gap_report_to_oscal_ar(report, risk_statements_with_traces=[stmt])
         resource = ar["assessment-results"]["back-matter"]["resources"][0]
         encoded = resource["base64"]["value"]
         decoded = base64.b64decode(encoded.encode("ascii"))
         recomputed_hex = hashlib.sha256(decoded).hexdigest()
-        digest_props = [
-            p
-            for p in resource["props"]
-            if p["name"] == "evidence-digest"
-        ]
+        digest_props = [p for p in resource["props"] if p["name"] == "evidence-digest"]
         assert digest_props[0]["value"] == f"sha256:{recomputed_hex}"
 
 
@@ -318,14 +290,10 @@ class TestTrestleRoundTrip:
     """
 
     def test_ar_with_traces_parses_via_trestle(self) -> None:
-        trestle_ar = pytest.importorskip(
-            "trestle.oscal.assessment_results"
-        )
+        trestle_ar = pytest.importorskip("trestle.oscal.assessment_results")
         report = _make_minimal_gap_report()
         stmt = _make_risk_statement_with_trace(with_trace=True)
-        ar = gap_report_to_oscal_ar(
-            report, risk_statements_with_traces=[stmt]
-        )
+        ar = gap_report_to_oscal_ar(report, risk_statements_with_traces=[stmt])
         # Trestle's root class is ``Model`` (the wrapper); use
         # parse_obj on the whole dict per the existing
         # tests/unit/test_oscal/test_trestle_conformance.py
@@ -334,15 +302,10 @@ class TestTrestleRoundTrip:
         # Trestle keeps back-matter under
         # parsed.assessment_results.back_matter.resources
         assert parsed.assessment_results.back_matter is not None
-        assert (
-            len(parsed.assessment_results.back_matter.resources)
-            >= 1
-        )
+        assert len(parsed.assessment_results.back_matter.resources) >= 1
         # Trace resource carries the integrity prop.
         for resource in parsed.assessment_results.back_matter.resources:
-            if "Policy Reasoning Trace" in (
-                resource.description or ""
-            ):
+            if "Policy Reasoning Trace" in (resource.description or ""):
                 # Confirmed the trace resource survives parsing.
                 assert resource.props is not None
                 names = {p.name for p in resource.props}

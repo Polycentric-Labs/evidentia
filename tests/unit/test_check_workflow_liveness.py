@@ -50,9 +50,7 @@ def test_on_as_string_and_list(cwl: Any) -> None:
 
 
 def test_dead_release_trigger_flagged_even_with_dispatch(cwl: Any) -> None:
-    findings = cwl.check_dead_triggers(
-        {"post-publish-smoke.yml": {"release", "workflow_dispatch"}}
-    )
+    findings = cwl.check_dead_triggers({"post-publish-smoke.yml": {"release", "workflow_dispatch"}})
     assert len(findings) == 1
     assert "release" in findings[0] and "post-publish-smoke.yml" in findings[0]
 
@@ -83,9 +81,7 @@ def _api(created: str, touched: str, total: int) -> FakeAPI:
         {
             ("/actions/workflows", json.dumps({"per_page": "100"}, sort_keys=True)): {
                 "total_count": 1,
-                "workflows": [
-                    {"id": 7, "path": wf_path, "state": "active", "created_at": created}
-                ],
+                "workflows": [{"id": 7, "path": wf_path, "state": "active", "created_at": created}],
             },
             (
                 "/commits",
@@ -100,23 +96,17 @@ def _api(created: str, touched: str, total: int) -> FakeAPI:
 
 
 def test_zero_runs_past_grace_flagged(cwl: Any) -> None:
-    findings = cwl.check_never_fired(
-        _api(OLD, OLD, 0), {".github/workflows/w.yml": {"schedule"}}, NOW
-    )
+    findings = cwl.check_never_fired(_api(OLD, OLD, 0), {".github/workflows/w.yml": {"schedule"}}, NOW)
     assert len(findings) == 1 and "schedule" in findings[0]
 
 
 def test_recently_touched_file_gets_fresh_grace(cwl: Any) -> None:
-    findings = cwl.check_never_fired(
-        _api(OLD, RECENT, 0), {".github/workflows/w.yml": {"schedule"}}, NOW
-    )
+    findings = cwl.check_never_fired(_api(OLD, RECENT, 0), {".github/workflows/w.yml": {"schedule"}}, NOW)
     assert findings == []
 
 
 def test_nonzero_runs_not_flagged(cwl: Any) -> None:
-    findings = cwl.check_never_fired(
-        _api(OLD, OLD, 3), {".github/workflows/w.yml": {"schedule"}}, NOW
-    )
+    findings = cwl.check_never_fired(_api(OLD, OLD, 3), {".github/workflows/w.yml": {"schedule"}}, NOW)
     assert findings == []
 
 
@@ -129,9 +119,7 @@ def test_dispatch_and_call_events_exempt(cwl: Any) -> None:
     assert findings == []
 
 
-def test_main_skip_api_writes_dead_trigger_findings(
-    cwl: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_main_skip_api_writes_dead_trigger_findings(cwl: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     wf_dir = tmp_path / "wf"
     wf_dir.mkdir()
     (wf_dir / "smoke.yml").write_text(
@@ -145,9 +133,7 @@ def test_main_skip_api_writes_dead_trigger_findings(
     assert "release" in out.read_text(encoding="utf-8")
 
 
-def test_main_skip_api_clean_writes_empty_file(
-    cwl: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_main_skip_api_clean_writes_empty_file(cwl: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     wf_dir = tmp_path / "wf"
     wf_dir.mkdir()
     (wf_dir / "ok.yml").write_text("name: k\non: [push]\njobs: {}\n", encoding="utf-8")

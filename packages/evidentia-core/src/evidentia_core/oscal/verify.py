@@ -91,9 +91,7 @@ class VerifyReport:
         Semantics here are retained for JSON-consumer back-compat;
         ``overall_valid`` no longer relies on this property.
         """
-        return bool(self.digest_checks) and all(
-            check.valid for check in self.digest_checks
-        )
+        return bool(self.digest_checks) and all(check.valid for check in self.digest_checks)
 
     @property
     def has_verification_surface(self) -> bool:
@@ -318,33 +316,22 @@ def verify_ar_file(
     report.digest_checks = verify_digests(ar_doc)
 
     # ── GPG signature path ──────────────────────────────────────────────
-    sig_path = Path(signature_path) if signature_path else ar_path.with_suffix(
-        ar_path.suffix + ".asc"
-    )
+    sig_path = Path(signature_path) if signature_path else ar_path.with_suffix(ar_path.suffix + ".asc")
     gpg_exists = sig_path.is_file()
 
     # ── Sigstore bundle path ────────────────────────────────────────────
     sigstore_path = (
-        Path(sigstore_bundle_path)
-        if sigstore_bundle_path
-        else ar_path.with_suffix(ar_path.suffix + ".sigstore.json")
+        Path(sigstore_bundle_path) if sigstore_bundle_path else ar_path.with_suffix(ar_path.suffix + ".sigstore.json")
     )
     sigstore_exists = check_sigstore and sigstore_path.is_file()
 
     # ── DSSE (cryptography-native) path ─────────────────────────────────
-    dsse_path = (
-        Path(dsse_bundle_path)
-        if dsse_bundle_path
-        else ar_path.with_suffix(ar_path.suffix + ".dsse.json")
-    )
+    dsse_path = Path(dsse_bundle_path) if dsse_bundle_path else ar_path.with_suffix(ar_path.suffix + ".dsse.json")
     dsse_exists = dsse_path.is_file()
 
     # require_signature is satisfied by GPG, Sigstore, or DSSE (v0.11+)
     if require_signature and not gpg_exists and not sigstore_exists and not dsse_exists:
-        report.errors.append(
-            f"Signature required but none found: {sig_path}, {sigstore_path}, "
-            f"or {dsse_path}"
-        )
+        report.errors.append(f"Signature required but none found: {sig_path}, {sigstore_path}, or {dsse_path}")
         report.signature_valid = False
         report.sigstore_signature_valid = False
         report.dsse_signature_valid = False
@@ -361,9 +348,7 @@ def verify_ar_file(
         )
 
         try:
-            result = gpg_verify_file(
-                ar_path, signature_path=sig_path, gnupghome=gnupghome
-            )
+            result = gpg_verify_file(ar_path, signature_path=sig_path, gnupghome=gnupghome)
         except GPGError as e:
             report.errors.append(f"GPG signature verification failed: {e}")
             report.signature_valid = False
@@ -436,9 +421,7 @@ def verify_ar_file(
         from evidentia_core.oscal.keysign import KeySignError, verify_oscal_file
 
         try:
-            ds_result = verify_oscal_file(
-                ar_path, verify_key_path=verify_key_path, dsse_path=dsse_path
-            )
+            ds_result = verify_oscal_file(ar_path, verify_key_path=verify_key_path, dsse_path=dsse_path)
         except KeySignError as e:
             report.errors.append(f"DSSE verification failed: {e}")
             report.dsse_signature_valid = False

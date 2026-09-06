@@ -48,9 +48,7 @@ def _gap(**overrides: object) -> ControlGap:
         (GapSeverity.INFORMATIONAL, "5"),
     ],
 )
-def test_severity_priority_mapping(
-    severity: GapSeverity, expected_priority: str
-) -> None:
+def test_severity_priority_mapping(severity: GapSeverity, expected_priority: str) -> None:
     assert SEVERITY_TO_SN_PRIORITY[severity] == expected_priority
 
 
@@ -91,9 +89,7 @@ def test_correlation_id_uses_gap_id() -> None:
 
 def test_custom_correlation_prefix() -> None:
     gap = _gap()
-    fields = gap_to_record_request(
-        gap, correlation_id_prefix="custom-prefix-"
-    )
+    fields = gap_to_record_request(gap, correlation_id_prefix="custom-prefix-")
     assert str(fields["correlation_id"]).startswith("custom-prefix-")
 
 

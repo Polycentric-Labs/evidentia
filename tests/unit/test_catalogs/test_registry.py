@@ -61,8 +61,7 @@ def test_load_bundled_soc2_catalog_is_licensed_stub():
 def test_crosswalk_loads_bundled_mappings():
     registry = FrameworkRegistry.get_instance()
     crosswalk = registry.crosswalk
-    assert "nist-800-53-mod" in crosswalk.available_frameworks or \
-           "nist-800-53-rev5" in crosswalk.available_frameworks
+    assert "nist-800-53-mod" in crosswalk.available_frameworks or "nist-800-53-rev5" in crosswalk.available_frameworks
     # Should have at least one mapping
     mapped = crosswalk.get_all_mapped_controls("nist-800-53-mod", "AC-2")
     if not mapped:

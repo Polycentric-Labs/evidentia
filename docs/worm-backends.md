@@ -52,9 +52,7 @@ except WORMBackendError as e:
     print(f"Delete blocked (expected): {e}")
 
 # Operator extends retention (cannot shorten — that's a WORM violation)
-new_md = backend.extend_retention(
-    "rec-12345", new_lock_until=date.today() + timedelta(days=10 * 365)
-)
+new_md = backend.extend_retention("rec-12345", new_lock_until=date.today() + timedelta(days=10 * 365))
 
 # Operator applies legal hold (overrides retention; trumps GDPR)
 backend.apply_legal_hold("rec-12345")
@@ -139,7 +137,7 @@ backend = S3ObjectLockWORM(
     bucket_name="my-evidentia-worm",
     region="us-east-1",
     lock_mode="COMPLIANCE",  # or "GOVERNANCE"
-    prefix="evidentia/v1/",   # optional multi-tenant prefix
+    prefix="evidentia/v1/",  # optional multi-tenant prefix
 )
 ```
 
@@ -267,7 +265,8 @@ assert md.lock_until is not None and date.today() >= md.lock_until
 
 # 2. Transition lifecycle ACTIVE → EXPIRED
 from evidentia_core.retention.metadata import (
-    RetentionLifecycleStage, transition_lifecycle,
+    RetentionLifecycleStage,
+    transition_lifecycle,
 )
 
 expired = transition_lifecycle(md, RetentionLifecycleStage.EXPIRED)

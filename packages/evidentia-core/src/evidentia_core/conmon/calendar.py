@@ -149,10 +149,7 @@ class ConmonCadence(EvidentiaModel):
     )
     description: NonBlankStr = Field(
         max_length=1024,
-        description=(
-            "Human-readable description of what the cycle covers + "
-            "what operator deliverable closes it."
-        ),
+        description=("Human-readable description of what the cycle covers + what operator deliverable closes it."),
     )
     citation: str | None = Field(
         default=None,
@@ -325,10 +322,7 @@ BUNDLED_CADENCES: list[ConmonCadence] = [
         framework="glba-safeguards",
         activity="penetration-test",
         frequency=CadenceFrequency.ANNUAL,
-        description=(
-            "FTC Safeguards Rule annual penetration test of the information "
-            "system."
-        ),
+        description=("FTC Safeguards Rule annual penetration test of the information system."),
         citation="16 CFR 314.4(d)(2)(i)",
     ),
 ]
@@ -434,10 +428,7 @@ def next_due(slug: str, last_completed: date) -> date:
     """
     cadence = _REGISTRY.get(slug)
     if cadence is None:
-        raise KeyError(
-            f"Unknown CONMON cadence slug {slug!r}; "
-            f"available: {sorted(_REGISTRY.keys())}"
-        )
+        raise KeyError(f"Unknown CONMON cadence slug {slug!r}; available: {sorted(_REGISTRY.keys())}")
     day_interval = interval_days_for(cadence)
     if day_interval is not None:
         return last_completed + timedelta(days=day_interval)

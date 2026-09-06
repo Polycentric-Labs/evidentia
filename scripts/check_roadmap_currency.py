@@ -87,7 +87,6 @@ _CHANGELOG_VERSION_RE = re.compile(r"^## \[(\d+\.\d+\.\d+(?:\.\d+)?)\]", re.MULT
 _PLAN_LINK_RE = re.compile(r"\(((?:\./)?releases/plans/v[0-9][\w.+-]*\.md)\)")
 
 
-
 def check_a5_descending_version_order(headings: list[Heading]) -> list[str]:
     """A5, h2 version headings appear in strictly DESCENDING version order.
 
@@ -100,6 +99,7 @@ def check_a5_descending_version_order(headings: list[Heading]) -> list[str]:
     Only h2 headings participate. h3 entries nest inside their cycle and are
     deliberately not constrained here.
     """
+
     def order_key(version: str) -> tuple[int, int, int, int]:
         """Sortable key tolerant of the umbrella forms `_numeric_key` rejects.
 
@@ -211,20 +211,12 @@ def check_a0_single_open_cycle(headings: list[Heading]) -> list[str]:
     if len(planned_h2) == 1:
         return []
     if not planned_h2:
-        return [
-            "no PLANNED h2 found — the roadmap must carry exactly one open "
-            "cycle (`## v<x> — ... — PLANNED`)"
-        ]
+        return ["no PLANNED h2 found — the roadmap must carry exactly one open cycle (`## v<x> — ... — PLANNED`)"]
     listed = "; ".join(f"line {h.line_no}: {h.text}" for h in planned_h2)
-    return [
-        f"{len(planned_h2)} PLANNED h2 headings found (exactly one open cycle "
-        f"allowed): {listed}"
-    ]
+    return [f"{len(planned_h2)} PLANNED h2 headings found (exactly one open cycle allowed): {listed}"]
 
 
-def check_a1_planned_never_shipped(
-    headings: list[Heading], shipped: list[str]
-) -> list[str]:
+def check_a1_planned_never_shipped(headings: list[Heading], shipped: list[str]) -> list[str]:
     """A1 — nothing marked PLANNED/RESERVED has a shipped CHANGELOG block."""
     failures: list[str] = []
     shipped_set = set(shipped)
@@ -252,20 +244,14 @@ def check_a1_planned_never_shipped(
     return failures
 
 
-def check_a2_planned_umbrella_pure(
-    headings: list[Heading], h2_lines: list[int], total_lines: int
-) -> list[str]:
+def check_a2_planned_umbrella_pure(headings: list[Heading], h2_lines: list[int], total_lines: int) -> list[str]:
     """A2 — a PLANNED umbrella h2 contains no SHIPPED entry in its section."""
     failures: list[str] = []
     for h in headings:
         if not (h.level == 2 and h.status == "PLANNED" and h.is_umbrella):
             continue
         end = _section_end(h.line_no, h2_lines, total_lines)
-        shipped_inside = [
-            s
-            for s in headings
-            if h.line_no < s.line_no <= end and s.status == "SHIPPED"
-        ]
+        shipped_inside = [s for s in headings if h.line_no < s.line_no <= end and s.status == "SHIPPED"]
         if shipped_inside:
             listed = ", ".join(f"v{s.version} (line {s.line_no})" for s in shipped_inside)
             failures.append(
@@ -301,10 +287,7 @@ def check_a3_open_cycle_has_plan(
     """A3 — the top PLANNED h2's intro links an on-disk, version-matching plan doc."""
     planned_h2 = [h for h in headings if h.level == 2 and h.status == "PLANNED"]
     if not planned_h2:
-        return [
-            "no PLANNED h2 exists to carry the current-cycle plan link "
-            "(see the A0 failure)"
-        ]
+        return ["no PLANNED h2 exists to carry the current-cycle plan link (see the A0 failure)"]
     top = min(planned_h2, key=lambda h: h.line_no)
     section_end = _section_end(top.line_no, h2_lines, len(roadmap_lines))
     end = _intro_end(top.line_no, roadmap_lines, section_end)
@@ -328,29 +311,19 @@ def check_a3_open_cycle_has_plan(
             problems.append(f"'{link}' does not exist on disk under docs/")
             continue
         return []  # one version-matching, on-disk plan link satisfies A3
-    return [
-        f"line {top.line_no}: the open cycle '{top.text}' has no satisfying "
-        f"plan link — " + "; ".join(problems)
-    ]
+    return [f"line {top.line_no}: the open cycle '{top.text}' has no satisfying plan link — " + "; ".join(problems)]
 
 
-def check_a4_latest_cycle_backfilled(
-    headings: list[Heading], shipped: list[str]
-) -> list[str]:
+def check_a4_latest_cycle_backfilled(headings: list[Heading], shipped: list[str]) -> list[str]:
     """A4 (ADVISORY) — every shipped version in the latest cycle has a SHIPPED heading."""
     if not shipped:
         return []
     latest = max(shipped, key=_numeric_key)
     cycle_prefix = ".".join(latest.split(".")[:2]) + "."
-    members = sorted(
-        (v for v in shipped if v.startswith(cycle_prefix)), key=_numeric_key
-    )
-    covered = {
-        h.version for h in headings if h.status == "SHIPPED" and not h.is_umbrella
-    }
+    members = sorted((v for v in shipped if v.startswith(cycle_prefix)), key=_numeric_key)
+    covered = {h.version for h in headings if h.status == "SHIPPED" and not h.is_umbrella}
     return [
-        f"shipped [{v}] has no `SHIPPED` roadmap heading — backfill a "
-        f"`### v{v} — ... — SHIPPED` entry"
+        f"shipped [{v}] has no `SHIPPED` roadmap heading — backfill a `### v{v} — ... — SHIPPED` entry"
         for v in members
         if v not in covered
     ]
@@ -402,9 +375,7 @@ _SECTIONS = (
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--json", action="store_true", help="emit a machine-readable JSON report"
-    )
+    parser.add_argument("--json", action="store_true", help="emit a machine-readable JSON report")
     args = parser.parse_args(argv)
 
     try:

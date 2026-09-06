@@ -16,28 +16,20 @@ from evidentia_core.conmon import (
 
 class TestFrameworkHealth:
     def test_health_score_all_current(self) -> None:
-        fh = FrameworkHealth(
-            framework="x", total=5, current=5, due_soon=0, overdue=0
-        )
+        fh = FrameworkHealth(framework="x", total=5, current=5, due_soon=0, overdue=0)
         assert fh.health_score == 1.0
 
     def test_health_score_due_soon_counts_as_healthy(self) -> None:
-        fh = FrameworkHealth(
-            framework="x", total=5, current=3, due_soon=2, overdue=0
-        )
+        fh = FrameworkHealth(framework="x", total=5, current=3, due_soon=2, overdue=0)
         assert fh.health_score == 1.0
 
     def test_health_score_with_overdue(self) -> None:
-        fh = FrameworkHealth(
-            framework="x", total=4, current=2, due_soon=1, overdue=1
-        )
+        fh = FrameworkHealth(framework="x", total=4, current=2, due_soon=1, overdue=1)
         # (2 + 1) / (2 + 1 + 1) = 3/4
         assert fh.health_score == 0.75
 
     def test_empty_returns_one(self) -> None:
-        fh = FrameworkHealth(
-            framework="x", total=0, current=0, due_soon=0, overdue=0
-        )
+        fh = FrameworkHealth(framework="x", total=0, current=0, due_soon=0, overdue=0)
         assert fh.health_score == 1.0
 
     # v0.9.3 F-V93-Q1 review fix: removed test_unknown_excluded_from_
@@ -55,9 +47,7 @@ class TestComputeHealth:
             # fedramp-rev5-mod: 1 current
             "fedramp-conmon-poam": date(2026, 5, 10),
         }
-        report = compute_health(
-            state, today=date(2026, 5, 15), window_days=14
-        )
+        report = compute_health(state, today=date(2026, 5, 15), window_days=14)
         by_fw = {fh.framework: fh for fh in report.frameworks}
         assert by_fw["nist-800-53-rev5"].overdue == 1
         assert by_fw["fedramp-rev5-mod"].current == 1
@@ -112,8 +102,6 @@ class TestHealthFromStateFile:
             state_file,
             {"nist-800-53-rev5-ca7": date(2026, 5, 10)},
         )
-        report = health_from_state_file(
-            state_file, today=date(2026, 5, 15)
-        )
+        report = health_from_state_file(state_file, today=date(2026, 5, 15))
         assert report.total_cycles == 1
         assert report.frameworks[0].framework == "nist-800-53-rev5"

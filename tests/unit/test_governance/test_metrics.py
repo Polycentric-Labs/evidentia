@@ -112,65 +112,54 @@ class TestEvaluateMetric:
 
     def test_higher_is_worse_comfortable(self) -> None:
         m = _kri()
-        m = m.model_copy(update={
-            "observations": [MetricObservation(observed_at=date(2026, 1, 1), value=1.0)]
-        })
+        m = m.model_copy(update={"observations": [MetricObservation(observed_at=date(2026, 1, 1), value=1.0)]})
         assert evaluate_metric(m) == MetricStatus.COMFORTABLE
 
     def test_higher_is_worse_watch(self) -> None:
         m = _kri()
-        m = m.model_copy(update={
-            "observations": [MetricObservation(observed_at=date(2026, 1, 1), value=2.5)]
-        })
+        m = m.model_copy(update={"observations": [MetricObservation(observed_at=date(2026, 1, 1), value=2.5)]})
         assert evaluate_metric(m) == MetricStatus.WATCH
 
     def test_higher_is_worse_breach(self) -> None:
         m = _kri()
-        m = m.model_copy(update={
-            "observations": [MetricObservation(observed_at=date(2026, 1, 1), value=4.0)]
-        })
+        m = m.model_copy(update={"observations": [MetricObservation(observed_at=date(2026, 1, 1), value=4.0)]})
         assert evaluate_metric(m) == MetricStatus.BREACH
 
     def test_higher_is_better_comfortable(self) -> None:
         m = _kpi()
-        m = m.model_copy(update={
-            "observations": [MetricObservation(observed_at=date(2026, 1, 1), value=95.0)]
-        })
+        m = m.model_copy(update={"observations": [MetricObservation(observed_at=date(2026, 1, 1), value=95.0)]})
         assert evaluate_metric(m) == MetricStatus.COMFORTABLE
 
     def test_higher_is_better_watch(self) -> None:
         m = _kpi()
-        m = m.model_copy(update={
-            "observations": [MetricObservation(observed_at=date(2026, 1, 1), value=75.0)]
-        })
+        m = m.model_copy(update={"observations": [MetricObservation(observed_at=date(2026, 1, 1), value=75.0)]})
         assert evaluate_metric(m) == MetricStatus.WATCH
 
     def test_higher_is_better_breach(self) -> None:
         m = _kpi()
-        m = m.model_copy(update={
-            "observations": [MetricObservation(observed_at=date(2026, 1, 1), value=55.0)]
-        })
+        m = m.model_copy(update={"observations": [MetricObservation(observed_at=date(2026, 1, 1), value=55.0)]})
         assert evaluate_metric(m) == MetricStatus.BREACH
 
     def test_picks_latest_observation(self) -> None:
         m = _kri()
-        m = m.model_copy(update={
-            "observations": [
-                MetricObservation(observed_at=date(2025, 6, 1), value=5.0),  # old breach
-                MetricObservation(observed_at=date(2026, 1, 1), value=1.0),  # new comfort
-            ]
-        })
+        m = m.model_copy(
+            update={
+                "observations": [
+                    MetricObservation(observed_at=date(2025, 6, 1), value=5.0),  # old breach
+                    MetricObservation(observed_at=date(2026, 1, 1), value=1.0),  # new comfort
+                ]
+            }
+        )
         assert evaluate_metric(m) == MetricStatus.COMFORTABLE
 
     def test_no_thresholds_means_no_breach(self) -> None:
         m = Metric(
-            name="x", description="x",
+            name="x",
+            description="x",
             kind=MetricKind.KGI,
             direction=MetricDirection.HIGHER_IS_BETTER,
             unit="x",
-            observations=[
-                MetricObservation(observed_at=date(2026, 1, 1), value=0.0)
-            ],
+            observations=[MetricObservation(observed_at=date(2026, 1, 1), value=0.0)],
         )
         # No thresholds → can't reach BREACH or WATCH
         assert evaluate_metric(m) == MetricStatus.COMFORTABLE
@@ -185,17 +174,13 @@ class TestGenerateMetricsReport:
         assert "No metrics defined" in out
 
     def test_warning_callout_when_breach_present(self) -> None:
-        kri = _kri().model_copy(update={
-            "observations": [MetricObservation(observed_at=date(2026, 1, 1), value=5.0)]
-        })
+        kri = _kri().model_copy(update={"observations": [MetricObservation(observed_at=date(2026, 1, 1), value=5.0)]})
         out = generate_metrics_report([kri])
         assert "⚠️" in out
         assert "1 metric(s) in BREACH" in out
 
     def test_no_warning_when_no_breach(self) -> None:
-        kri = _kri().model_copy(update={
-            "observations": [MetricObservation(observed_at=date(2026, 1, 1), value=1.0)]
-        })
+        kri = _kri().model_copy(update={"observations": [MetricObservation(observed_at=date(2026, 1, 1), value=1.0)]})
         out = generate_metrics_report([kri])
         assert "BREACH state" not in out
 
@@ -218,18 +203,14 @@ class TestGenerateMetricsReport:
 
 
 @pytest.fixture()
-def isolated_metric_store(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def isolated_metric_store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     store = tmp_path / "metric-store"
     monkeypatch.setenv(METRIC_STORE_ENV_VAR, str(store))
     return store
 
 
 class TestSaveLoad:
-    def test_save_and_load_round_trip(
-        self, isolated_metric_store: Path
-    ) -> None:
+    def test_save_and_load_round_trip(self, isolated_metric_store: Path) -> None:
         m = _kri()
         save_metric(m)
         loaded = load_metric_by_id(m.id)
@@ -237,34 +218,24 @@ class TestSaveLoad:
         assert loaded.id == m.id
         assert loaded.name == m.name
 
-    def test_save_atomic_no_tmp_leftover(
-        self, isolated_metric_store: Path
-    ) -> None:
+    def test_save_atomic_no_tmp_leftover(self, isolated_metric_store: Path) -> None:
         save_metric(_kri())
         assert list(isolated_metric_store.glob("*.tmp")) == []
 
-    def test_load_unknown_returns_none(
-        self, isolated_metric_store: Path
-    ) -> None:
+    def test_load_unknown_returns_none(self, isolated_metric_store: Path) -> None:
         result = load_metric_by_id("00000000-0000-0000-0000-000000000000")
         assert result is None
 
-    def test_load_invalid_id_raises(
-        self, isolated_metric_store: Path
-    ) -> None:
+    def test_load_invalid_id_raises(self, isolated_metric_store: Path) -> None:
         with pytest.raises(InvalidMetricIdError):
             load_metric_by_id("not-a-uuid")
 
 
 class TestList:
-    def test_empty_returns_empty(
-        self, isolated_metric_store: Path
-    ) -> None:
+    def test_empty_returns_empty(self, isolated_metric_store: Path) -> None:
         assert list_metrics() == []
 
-    def test_sort_by_kind_then_name(
-        self, isolated_metric_store: Path
-    ) -> None:
+    def test_sort_by_kind_then_name(self, isolated_metric_store: Path) -> None:
         save_metric(_kpi())
         save_metric(_kri())
         listed = list_metrics()
@@ -274,15 +245,11 @@ class TestList:
 
 
 class TestDelete:
-    def test_delete_returns_true(
-        self, isolated_metric_store: Path
-    ) -> None:
+    def test_delete_returns_true(self, isolated_metric_store: Path) -> None:
         m = _kri()
         save_metric(m)
         assert delete_metric(m.id) is True
         assert load_metric_by_id(m.id) is None
 
-    def test_delete_unknown_returns_false(
-        self, isolated_metric_store: Path
-    ) -> None:
+    def test_delete_unknown_returns_false(self, isolated_metric_store: Path) -> None:
         assert delete_metric("00000000-0000-0000-0000-000000000000") is False

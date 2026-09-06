@@ -101,9 +101,7 @@ def collect_ocsf_url(
     surface and is best reserved for trusted endpoints.
     """
     if not url.lower().startswith("https://"):
-        raise OCSFIngestError(
-            f"OCSF URL ingest is HTTPS-only; got: {url[:60]}"
-        )
+        raise OCSFIngestError(f"OCSF URL ingest is HTTPS-only; got: {url[:60]}")
 
     # F-V1010-S1: the validated public IPs (+ host) so the urllib fetch can
     # PIN resolution through the connection. urllib re-resolves the hostname
@@ -131,9 +129,7 @@ def collect_ocsf_url(
         if not host:
             raise OCSFIngestError(f"OCSF URL missing hostname: {url[:60]}")
         try:
-            validated_ips = enforce_public_host(
-                url, subsystem="ocsf-ingest", block_private=block_private_ips
-            )
+            validated_ips = enforce_public_host(url, subsystem="ocsf-ingest", block_private=block_private_ips)
         except SSRFBlockedError as exc:
             raise OCSFIngestError(str(exc)) from exc
 
@@ -166,9 +162,7 @@ class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
         headers: Any,
         newurl: str,
     ) -> urllib.request.Request:
-        raise OCSFIngestError(
-            f"OCSF URL ingest refused {code} redirect to {newurl[:60]}"
-        )
+        raise OCSFIngestError(f"OCSF URL ingest refused {code} redirect to {newurl[:60]}")
 
 
 def _read_capped(response: Any, max_bytes: int) -> bytes:
@@ -180,9 +174,7 @@ def _read_capped(response: Any, max_bytes: int) -> bytes:
             break
         buffer.extend(chunk)
         if len(buffer) > max_bytes:
-            raise OCSFIngestError(
-                f"OCSF response exceeds {max_bytes}-byte cap"
-            )
+            raise OCSFIngestError(f"OCSF response exceeds {max_bytes}-byte cap")
     return bytes(buffer)
 
 
@@ -199,22 +191,16 @@ def _convert_ocsf_payload(raw: str, *, source: str) -> list[SecurityFinding]:
     elif isinstance(payload, list):
         items = [item for item in payload if isinstance(item, dict)]
         if len(items) != len(payload):
-            raise OCSFIngestError(
-                f"{source} contains non-object entries in its JSON list"
-            )
+            raise OCSFIngestError(f"{source} contains non-object entries in its JSON list")
     else:
-        raise OCSFIngestError(
-            f"{source} JSON root must be an object or a list of objects"
-        )
+        raise OCSFIngestError(f"{source} JSON root must be an object or a list of objects")
 
     findings: list[SecurityFinding] = []
     for index, item in enumerate(items):
         try:
             findings.append(_dispatch_one(item))
         except OCSFMappingError as exc:
-            raise OCSFIngestError(
-                f"{source}[{index}] failed OCSF conversion: {exc}"
-            ) from exc
+            raise OCSFIngestError(f"{source}[{index}] failed OCSF conversion: {exc}") from exc
     return findings
 
 

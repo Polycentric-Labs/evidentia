@@ -122,9 +122,7 @@ def validate_tenant_id(tenant_id: str) -> str:
     Raises:
         InvalidTenantIdError: When the id fails the format check.
     """
-    if not isinstance(tenant_id, str) or not _TENANT_ID_PATTERN.match(
-        tenant_id
-    ):
+    if not isinstance(tenant_id, str) or not _TENANT_ID_PATTERN.match(tenant_id):
         raise InvalidTenantIdError(
             f"Invalid tenant id {tenant_id!r}: must match "
             f"{_TENANT_ID_PATTERN.pattern} (alphanumeric start, "
@@ -383,11 +381,7 @@ def check_permission_multi_tenant(
     # emitter (scope.py, poam.py, conmon.py, ai_gov.py).
     _log.warning(
         action=EventAction.RBAC_TENANT_BOUNDARY_CROSSED,
-        outcome=(
-            EventOutcome.SUCCESS
-            if escalation_granted
-            else EventOutcome.FAILURE
-        ),
+        outcome=(EventOutcome.SUCCESS if escalation_granted else EventOutcome.FAILURE),
         message=(
             f"Cross-tenant escalation {'granted' if escalation_granted else 'denied'} "
             f"for identity {bare_identity!r} (claimed_tenant={tenant_claim!r}, "
@@ -430,21 +424,14 @@ def load_multi_tenant_policy_from_file(path: Path) -> TenantRBACPolicy:
     import yaml as yaml_mod
 
     if not path.exists():
-        raise FileNotFoundError(
-            f"Multi-tenant RBAC policy file not found: {path}"
-        )
+        raise FileNotFoundError(f"Multi-tenant RBAC policy file not found: {path}")
     raw = path.read_text(encoding="utf-8")
     try:
         data = yaml_mod.safe_load(raw)
     except yaml_mod.YAMLError as exc:
-        raise ValueError(
-            f"Multi-tenant RBAC policy file {path} is not valid YAML/JSON: {exc}"
-        ) from exc
+        raise ValueError(f"Multi-tenant RBAC policy file {path} is not valid YAML/JSON: {exc}") from exc
     if not isinstance(data, dict):
-        raise ValueError(
-            f"Multi-tenant RBAC policy file {path} must be a mapping; "
-            f"got {type(data).__name__}"
-        )
+        raise ValueError(f"Multi-tenant RBAC policy file {path} must be a mapping; got {type(data).__name__}")
     return TenantRBACPolicy.model_validate(data)
 
 
@@ -485,14 +472,9 @@ def load_rbac_policy_auto(path: Path) -> RBACPolicy | TenantRBACPolicy:
     try:
         data = yaml_mod.safe_load(path.read_text(encoding="utf-8"))
     except yaml_mod.YAMLError as exc:
-        raise ValueError(
-            f"RBAC policy file {path} is not valid YAML/JSON: {exc}"
-        ) from exc
+        raise ValueError(f"RBAC policy file {path} is not valid YAML/JSON: {exc}") from exc
     if not isinstance(data, dict):
-        raise ValueError(
-            f"RBAC policy file {path} must be a mapping at top level; "
-            f"got {type(data).__name__}"
-        )
+        raise ValueError(f"RBAC policy file {path} must be a mapping at top level; got {type(data).__name__}")
     if "tenants" in data:
         return load_multi_tenant_policy_from_file(path)
     return load_policy_from_file(path)

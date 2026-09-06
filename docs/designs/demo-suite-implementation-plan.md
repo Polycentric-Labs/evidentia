@@ -209,16 +209,19 @@ describe("demo-api", () => {
 import pytest
 from evidentia.demo.runner import is_allowed, scrub_env, run
 
+
 def test_allowlisted_vector_passes():
     assert is_allowed(["doctor"]) is True
     assert is_allowed(["catalog", "list", "--tier", "A"]) is True
 
+
 def test_raw_shell_and_arbitrary_verbs_refused():
-    assert is_allowed(["collect", "okta"]) is False        # network verb excluded
+    assert is_allowed(["collect", "okta"]) is False  # network verb excluded
     assert is_allowed(["mcp", "serve"]) is False
     assert is_allowed(["risk", "generate"]) is False
-    assert is_allowed(["-c", "import os"]) is False         # no python -c
+    assert is_allowed(["-c", "import os"]) is False  # no python -c
     assert is_allowed(["gap", "analyze", "--findings", "x"]) is False  # off-allowlist flag
+
 
 def test_scrub_env_strips_credentials_and_forces_offline():
     env = scrub_env({"OPENAI_API_KEY": "sk-x", "AWS_SECRET_ACCESS_KEY": "y", "PATH": "/usr/bin"})

@@ -91,9 +91,7 @@ class TestFaithfulnessScore:
 
     def test_threshold_stored_on_result(self) -> None:
         """``FaithfulnessResult.threshold`` reflects the input threshold."""
-        result = faithfulness_score(
-            "claim", ["clause"], threshold=0.5
-        )
+        result = faithfulness_score("claim", ["clause"], threshold=0.5)
         assert result.threshold == 0.5
 
     def test_default_threshold_constant(self) -> None:
@@ -185,9 +183,7 @@ class TestFrameworkField:
     """Framework persisted on result for audit-trail re-derivation."""
 
     def test_framework_default_none(self) -> None:
-        result = faithfulness_score(
-            "test claim", ["test clause"]
-        )
+        result = faithfulness_score("test claim", ["test clause"])
         assert result.framework is None
 
     def test_framework_persisted_when_set(self) -> None:
@@ -226,6 +222,4 @@ class TestResolveThreshold:
 
         # Even with a known framework, the non-jaccard method
         # path returns the agnostic default.
-        assert resolve_threshold(
-            "nist-800-53", method="semantic"
-        ) == DEFAULT_FAITHFULNESS_THRESHOLD
+        assert resolve_threshold("nist-800-53", method="semantic") == DEFAULT_FAITHFULNESS_THRESHOLD

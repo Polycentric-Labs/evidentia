@@ -67,39 +67,25 @@ class TestCheckPermission:
             identities={"reader@example.com": Role.READER},
             default_role=Role.DENY,
         )
-        assert check_permission(
-            "reader@example.com", "read", policy=policy
-        ) is True
-        assert check_permission(
-            "reader@example.com", "write", policy=policy
-        ) is False
-        assert check_permission(
-            "reader@example.com", "admin", policy=policy
-        ) is False
+        assert check_permission("reader@example.com", "read", policy=policy) is True
+        assert check_permission("reader@example.com", "write", policy=policy) is False
+        assert check_permission("reader@example.com", "admin", policy=policy) is False
 
     def test_editor_can_write_but_not_admin(self) -> None:
         policy = RBACPolicy(
             identities={"editor@example.com": Role.EDITOR},
             default_role=Role.DENY,
         )
-        assert check_permission(
-            "editor@example.com", "read", policy=policy
-        ) is True
-        assert check_permission(
-            "editor@example.com", "write", policy=policy
-        ) is True
-        assert check_permission(
-            "editor@example.com", "admin", policy=policy
-        ) is False
+        assert check_permission("editor@example.com", "read", policy=policy) is True
+        assert check_permission("editor@example.com", "write", policy=policy) is True
+        assert check_permission("editor@example.com", "admin", policy=policy) is False
 
     def test_deny_role_blocks_everything(self) -> None:
         policy = RBACPolicy(
             identities={"banned@example.com": Role.DENY},
             default_role=Role.READER,
         )
-        assert check_permission(
-            "banned@example.com", "read", policy=policy
-        ) is False
+        assert check_permission("banned@example.com", "read", policy=policy) is False
 
     def test_deny_by_default_blocks_unknown(self) -> None:
         policy = RBACPolicy(default_role=Role.DENY)
@@ -140,9 +126,7 @@ class TestPolicyFileLoad:
     def test_invalid_role_value_raises(self, tmp_path: Path) -> None:
         policy_file = tmp_path / "rbac.yaml"
         policy_file.write_text(
-            "identities:\n"
-            "  alice@example.com: superuser\n"
-            "default_role: reader\n",
+            "identities:\n  alice@example.com: superuser\ndefault_role: reader\n",
             encoding="utf-8",
         )
         # Pydantic validation rejects "superuser" as not in Role enum.
@@ -165,9 +149,7 @@ class TestRBACDependency:
         resp = client.get("/api/health")
         assert resp.status_code == 200
 
-    def test_deny_policy_returns_403_via_dependency(
-        self, tmp_path: Path
-    ) -> None:
+    def test_deny_policy_returns_403_via_dependency(self, tmp_path: Path) -> None:
         """End-to-end: standalone FastAPI app w/ deny-by-default
         policy + require_role("write") dependency returns 403 for
         anonymous + unknown identities.
@@ -182,9 +164,7 @@ class TestRBACDependency:
 
         policy_file = tmp_path / "rbac.yaml"
         policy_file.write_text(
-            "identities:\n"
-            "  alice@example.com: editor\n"
-            "default_role: deny\n",
+            "identities:\n  alice@example.com: editor\ndefault_role: deny\n",
             encoding="utf-8",
         )
         policy = load_policy_from_file(policy_file)
@@ -253,9 +233,7 @@ class TestRBACDependencyMultiTenant:
         app.state.rbac_policy = policy
 
         @app.middleware("http")
-        async def _inject_principal(
-            request: Request, call_next: Any
-        ) -> Any:
+        async def _inject_principal(request: Request, call_next: Any) -> Any:
             if principal is not None:
                 request.state.auth_principal = principal
             return await call_next(request)
@@ -266,29 +244,21 @@ class TestRBACDependencyMultiTenant:
 
         return app
 
-    def test_authenticated_in_home_tenant_allowed(
-        self, tmp_path: Path
-    ) -> None:
+    def test_authenticated_in_home_tenant_allowed(self, tmp_path: Path) -> None:
         """alice@example.com@@acme-corp (editor in acme-corp) → 200."""
         from fastapi.testclient import TestClient
 
         policy = self._build_multi_tenant_policy(tmp_path)
-        app = self._build_gated_app(
-            policy, principal="alice@example.com@@acme-corp"
-        )
+        app = self._build_gated_app(policy, principal="alice@example.com@@acme-corp")
         resp = TestClient(app).get("/gated")
         assert resp.status_code == 200
 
-    def test_authenticated_in_wrong_tenant_denied(
-        self, tmp_path: Path
-    ) -> None:
+    def test_authenticated_in_wrong_tenant_denied(self, tmp_path: Path) -> None:
         """alice@example.com@@globex (not editor in globex) → 403."""
         from fastapi.testclient import TestClient
 
         policy = self._build_multi_tenant_policy(tmp_path)
-        app = self._build_gated_app(
-            policy, principal="alice@example.com@@globex"
-        )
+        app = self._build_gated_app(policy, principal="alice@example.com@@globex")
         resp = TestClient(app).get("/gated")
         assert resp.status_code == 403
         body = resp.json()
@@ -297,9 +267,7 @@ class TestRBACDependencyMultiTenant:
         # operators triage from the response alone.
         assert body["detail"]["identity"] == "alice@example.com@@globex"
 
-    def test_no_claim_falls_through_to_default_tenant(
-        self, tmp_path: Path
-    ) -> None:
+    def test_no_claim_falls_through_to_default_tenant(self, tmp_path: Path) -> None:
         """Principal w/o claim resolves to ``default_tenant`` (acme-corp)."""
         from fastapi.testclient import TestClient
 
@@ -310,9 +278,7 @@ class TestRBACDependencyMultiTenant:
         resp = TestClient(app).get("/gated")
         assert resp.status_code == 200
 
-    def test_anonymous_denied_against_multi_tenant_policy(
-        self, tmp_path: Path
-    ) -> None:
+    def test_anonymous_denied_against_multi_tenant_policy(self, tmp_path: Path) -> None:
         """No auth principal → anonymous → default-tenant default_role=deny → 403."""
         from fastapi.testclient import TestClient
 
@@ -321,9 +287,7 @@ class TestRBACDependencyMultiTenant:
         resp = TestClient(app).get("/gated")
         assert resp.status_code == 403
 
-    def test_tenant_claim_spoofing_via_header_ignored(
-        self, tmp_path: Path
-    ) -> None:
+    def test_tenant_claim_spoofing_via_header_ignored(self, tmp_path: Path) -> None:
         """Closes F-V97-multi-tenant-claim-spoofing.
 
         A request header claiming a tenant the principal doesn't
@@ -337,9 +301,7 @@ class TestRBACDependencyMultiTenant:
 
         policy = self._build_multi_tenant_policy(tmp_path)
         # Principal: bob@globex (editor in globex). Header claims acme.
-        app = self._build_gated_app(
-            policy, principal="bob@example.com@@globex"
-        )
+        app = self._build_gated_app(policy, principal="bob@example.com@@globex")
         client = TestClient(app)
         # Spoofing header is silently ignored — bob is editor in
         # globex, so request to write succeeds based on the principal.
@@ -349,9 +311,7 @@ class TestRBACDependencyMultiTenant:
         # ignored — the actual tenant is bob's authenticated claim
         # (globex), where bob IS editor.
 
-    def test_single_tenant_policy_ignores_tenant_claims(
-        self, tmp_path: Path
-    ) -> None:
+    def test_single_tenant_policy_ignores_tenant_claims(self, tmp_path: Path) -> None:
         """Backward compat — single-tenant policy treats principal as plain string.
 
         A principal with ``@@<tenant>`` suffix against a single-tenant
@@ -366,9 +326,7 @@ class TestRBACDependencyMultiTenant:
         policy_file = tmp_path / "single.yaml"
         # Single-tenant policy w/ alice as editor.
         policy_file.write_text(
-            "identities:\n"
-            "  alice@example.com: editor\n"
-            "default_role: deny\n",
+            "identities:\n  alice@example.com: editor\ndefault_role: deny\n",
             encoding="utf-8",
         )
         policy = load_policy_from_file(policy_file)
@@ -377,9 +335,7 @@ class TestRBACDependencyMultiTenant:
         app.state.rbac_policy = policy
 
         @app.middleware("http")
-        async def _inject(
-            request: Request, call_next: Any
-        ) -> Any:
+        async def _inject(request: Request, call_next: Any) -> Any:
             # Principal w/ embedded tenant claim — single-tenant
             # dispatch treats the full string as identity → miss →
             # default_role=deny → 403.

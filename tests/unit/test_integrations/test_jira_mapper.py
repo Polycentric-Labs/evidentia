@@ -80,9 +80,7 @@ class TestJiraStatusMapping:
         a Jira push silently.
         """
         for status in GapStatus:
-            assert status in GAP_STATUS_TO_JIRA_STATUS, (
-                f"Missing forward mapping for GapStatus.{status.name}"
-            )
+            assert status in GAP_STATUS_TO_JIRA_STATUS, f"Missing forward mapping for GapStatus.{status.name}"
 
     def test_forward_reverse_roundtrip_for_canonical_statuses(self) -> None:
         """OPEN / IN_PROGRESS / REMEDIATED / ACCEPTED roundtrip correctly.
@@ -141,9 +139,7 @@ class TestGapToCreateRequest:
         assert "Tracked by Evidentia gap id" in desc
 
     def test_description_lists_cross_framework_impact(self) -> None:
-        req = gap_to_create_request(
-            _gap(cross_framework_value=["soc2-tsc:CC6.1", "iso-27001-2022:A.8.1"])
-        )
+        req = gap_to_create_request(_gap(cross_framework_value=["soc2-tsc:CC6.1", "iso-27001-2022:A.8.1"]))
         desc = req["description"]
         assert isinstance(desc, str)
         assert "Cross-framework impact" in desc

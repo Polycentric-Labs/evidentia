@@ -106,10 +106,7 @@ def _parse_date_or_exit(value: str | None, flag: str) -> date | None:
     try:
         return date.fromisoformat(value)
     except ValueError as exc:
-        console.print(
-            f"[red]Error:[/red] {flag} must be ISO-8601 date "
-            f"(YYYY-MM-DD); got {value!r}: {exc}"
-        )
+        console.print(f"[red]Error:[/red] {flag} must be ISO-8601 date (YYYY-MM-DD); got {value!r}: {exc}")
         raise typer.Exit(code=1) from exc
 
 
@@ -121,10 +118,7 @@ def _load_poam_or_exit(poam_id: str) -> ControlGap:
         console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(code=1) from exc
     if loaded is None:
-        console.print(
-            f"[red]Error:[/red] No POA&M with ID {poam_id!r} "
-            f"found in the store."
-        )
+        console.print(f"[red]Error:[/red] No POA&M with ID {poam_id!r} found in the store.")
         raise typer.Exit(code=1)
     return loaded
 
@@ -175,10 +169,7 @@ def _render_poam_table(poams: list[ControlGap]) -> Table:
 
 def _render_poam_show(poam: ControlGap) -> None:
     """Render a POA&M in human-readable form for ``poam show``."""
-    console.print(
-        f"[bold]{poam.framework}:{poam.control_id}[/bold]  "
-        f"[dim]({poam.id})[/dim]"
-    )
+    console.print(f"[bold]{poam.framework}:{poam.control_id}[/bold]  [dim]({poam.id})[/dim]")
     console.print(f"  Control title:      {poam.control_title}")
     console.print(f"  Severity:           [cyan]{poam.gap_severity}[/cyan]")
     console.print(f"  Gap status:         [cyan]{poam.status}[/cyan]")
@@ -275,14 +266,9 @@ def poam_create(
     register without ceremony).
     """
     try:
-        report = GapAnalysisReport.model_validate_json(
-            from_gap_report.read_text(encoding="utf-8")
-        )
+        report = GapAnalysisReport.model_validate_json(from_gap_report.read_text(encoding="utf-8"))
     except Exception as exc:
-        console.print(
-            f"[red]Error:[/red] could not parse gap report "
-            f"{from_gap_report}: {exc}"
-        )
+        console.print(f"[red]Error:[/red] could not parse gap report {from_gap_report}: {exc}")
         raise typer.Exit(code=1) from exc
 
     materialized = 0
@@ -327,10 +313,7 @@ def poam_create(
         _log.info(
             action=EventAction.POAM_CREATED,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"POA&M item created for {gap.framework}:"
-                f"{gap.control_id} (severity={gap.gap_severity})"
-            ),
+            message=(f"POA&M item created for {gap.framework}:{gap.control_id} (severity={gap.gap_severity})"),
             evidentia={
                 "poam_id": gap.id,
                 "control_id": f"{gap.framework}:{gap.control_id}",
@@ -338,11 +321,7 @@ def poam_create(
             },
         )
 
-    malformed_phrase = (
-        f", {skipped_malformed} skipped (malformed gap.id)"
-        if skipped_malformed
-        else ""
-    )
+    malformed_phrase = f", {skipped_malformed} skipped (malformed gap.id)" if skipped_malformed else ""
     console.print(
         f"[green]POA&M materialization complete:[/green] "
         f"{materialized} created, {skipped_existing} skipped "
@@ -362,17 +341,13 @@ def poam_list(
         False,
         "--all",
         help=(
-            "Include POA&Ms whose underlying gap is REMEDIATED or "
-            "ACCEPTED. Default shows only OPEN / IN_PROGRESS gaps."
+            "Include POA&Ms whose underlying gap is REMEDIATED or ACCEPTED. Default shows only OPEN / IN_PROGRESS gaps."
         ),
     ),
     severity: str | None = typer.Option(
         None,
         "--severity",
-        help=(
-            "Filter by gap severity. Comma-separated; choices: "
-            f"{', '.join(s.value for s in GapSeverity)}."
-        ),
+        help=(f"Filter by gap severity. Comma-separated; choices: {', '.join(s.value for s in GapSeverity)}."),
     ),
     owner: str | None = typer.Option(
         None,
@@ -386,10 +361,7 @@ def poam_list(
     reviewer: str | None = typer.Option(
         None,
         "--reviewer",
-        help=(
-            "v0.9.5 P3.1: filter to POA&M items where at least one "
-            "milestone's `reviewer` matches (exact-equality)."
-        ),
+        help=("v0.9.5 P3.1: filter to POA&M items where at least one milestone's `reviewer` matches (exact-equality)."),
     ),
     output_json: bool = typer.Option(
         False,
@@ -414,24 +386,15 @@ def poam_list(
         valid = {s.value for s in GapSeverity}
         bad = wanted - valid
         if bad:
-            console.print(
-                f"[red]Error:[/red] unknown severity {sorted(bad)}; "
-                f"valid choices: {sorted(valid)}"
-            )
+            console.print(f"[red]Error:[/red] unknown severity {sorted(bad)}; valid choices: {sorted(valid)}")
             raise typer.Exit(code=1)
         poams = [p for p in poams if p.gap_severity in wanted]
 
     # v0.9.5 P3.1: owner / reviewer filtering across milestone collection
     if owner is not None:
-        poams = [
-            p for p in poams
-            if any(m.owner == owner for m in p.poam_milestones)
-        ]
+        poams = [p for p in poams if any(m.owner == owner for m in p.poam_milestones)]
     if reviewer is not None:
-        poams = [
-            p for p in poams
-            if any(m.reviewer == reviewer for m in p.poam_milestones)
-        ]
+        poams = [p for p in poams if any(m.reviewer == reviewer for m in p.poam_milestones)]
 
     if output_json:
         typer.echo(
@@ -514,10 +477,7 @@ def poam_update(
         try:
             new_status = GapStatus(status)
         except ValueError as exc:
-            console.print(
-                f"[red]Error:[/red] invalid --status {status!r}; "
-                f"valid: {[s.value for s in GapStatus]}"
-            )
+            console.print(f"[red]Error:[/red] invalid --status {status!r}; valid: {[s.value for s in GapStatus]}")
             raise typer.Exit(code=1) from exc
         poam.status = new_status
         if new_status == GapStatus.REMEDIATED:
@@ -541,28 +501,19 @@ def poam_update(
         changed.append("tags")
 
     if not changed:
-        console.print(
-            "[yellow]No changes specified; nothing to persist.[/yellow]"
-        )
+        console.print("[yellow]No changes specified; nothing to persist.[/yellow]")
         return
 
     save_poam(poam)
     _log.info(
         action=EventAction.POAM_UPDATED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"POA&M item {poam_id[:8]} updated: "
-            f"{', '.join(changed)}"
-        ),
+        message=(f"POA&M item {poam_id[:8]} updated: {', '.join(changed)}"),
         evidentia={
             "poam_id": poam.id,
             "control_id": f"{poam.framework}:{poam.control_id}",
-            "prior_state": (
-                _enum_value(prior_status) if "status" in changed else None
-            ),
-            "new_state": (
-                _enum_value(poam.status) if "status" in changed else None
-            ),
+            "prior_state": (_enum_value(prior_status) if "status" in changed else None),
+            "new_state": (_enum_value(poam.status) if "status" in changed else None),
             "fields_changed": changed,
         },
     )
@@ -580,10 +531,7 @@ def poam_update(
                 "new_state": GapStatus.REMEDIATED.value,
             },
         )
-    console.print(
-        f"[green]Updated[/green] POA&M {poam_id[:8]} "
-        f"({', '.join(changed)})"
-    )
+    console.print(f"[green]Updated[/green] POA&M {poam_id[:8]} ({', '.join(changed)})")
 
 
 # ── milestone add ──────────────────────────────────────────────────
@@ -606,18 +554,12 @@ def milestone_add(
     status: str = typer.Option(
         POAMState.PLANNED.value,
         "--status",
-        help=(
-            "Initial status. Default: planned. Valid: "
-            f"{[s.value for s in POAMState]}."
-        ),
+        help=(f"Initial status. Default: planned. Valid: {[s.value for s in POAMState]}."),
     ),
     evidence_ref: str | None = typer.Option(
         None,
         "--evidence-ref",
-        help=(
-            "Optional reference to the evidence artifact (URL/URI/"
-            "Sigstore bundle path/Jira key/etc.)."
-        ),
+        help=("Optional reference to the evidence artifact (URL/URI/Sigstore bundle path/Jira key/etc.)."),
     ),
 ) -> None:
     """Add a new milestone to an existing POA&M."""
@@ -626,10 +568,7 @@ def milestone_add(
     try:
         parsed_status = POAMState(status)
     except ValueError as exc:
-        console.print(
-            f"[red]Error:[/red] invalid --status {status!r}; "
-            f"valid: {[s.value for s in POAMState]}"
-        )
+        console.print(f"[red]Error:[/red] invalid --status {status!r}; valid: {[s.value for s in POAMState]}")
         raise typer.Exit(code=1) from exc
 
     poam = _load_poam_or_exit(poam_id)
@@ -644,10 +583,7 @@ def milestone_add(
     _log.info(
         action=EventAction.POAM_UPDATED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"Milestone added to POA&M {poam_id[:8]}: "
-            f"{description!r} ({parsed_status.value} @ {parsed_date})"
-        ),
+        message=(f"Milestone added to POA&M {poam_id[:8]}: {description!r} ({parsed_status.value} @ {parsed_date})"),
         evidentia={
             "poam_id": poam.id,
             "control_id": f"{poam.framework}:{poam.control_id}",
@@ -656,8 +592,7 @@ def milestone_add(
         },
     )
     console.print(
-        f"[green]Added milestone[/green] {ms.id[:8]} to POA&M {poam_id[:8]} "
-        f"({parsed_status.value} @ {parsed_date})"
+        f"[green]Added milestone[/green] {ms.id[:8]} to POA&M {poam_id[:8]} ({parsed_status.value} @ {parsed_date})"
     )
 
 
@@ -717,9 +652,7 @@ def milestone_update(
     # display (`milestone_id[:8]`) + audit payload reflects the real
     # milestone, not the (possibly truncated) string the operator typed.
     milestone_id = resolved_id
-    target_ms = next(
-        m for m in poam.poam_milestones if m.id == milestone_id
-    )
+    target_ms = next(m for m in poam.poam_milestones if m.id == milestone_id)
 
     prior_state = POAMState(target_ms.status)
     changed: list[str] = []
@@ -728,14 +661,9 @@ def milestone_update(
         try:
             new_state = POAMState(status)
         except ValueError as exc:
-            console.print(
-                f"[red]Error:[/red] invalid --status {status!r}; "
-                f"valid: {[s.value for s in POAMState]}"
-            )
+            console.print(f"[red]Error:[/red] invalid --status {status!r}; valid: {[s.value for s in POAMState]}")
             raise typer.Exit(code=1) from exc
-        if new_state != prior_state and not is_valid_transition(
-            prior_state, new_state
-        ):
+        if new_state != prior_state and not is_valid_transition(prior_state, new_state):
             console.print(
                 f"[red]Error:[/red] invalid state transition "
                 f"{prior_state.value} → {new_state.value}. "
@@ -762,9 +690,7 @@ def milestone_update(
         changed.append("evidence_ref")
 
     if not changed:
-        console.print(
-            "[yellow]No changes specified; nothing to persist.[/yellow]"
-        )
+        console.print("[yellow]No changes specified; nothing to persist.[/yellow]")
         return
 
     save_poam(poam)
@@ -776,10 +702,7 @@ def milestone_update(
         _log.info(
             action=EventAction.POAM_MILESTONE_REACHED,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"Milestone {milestone_id[:8]} on POA&M "
-                f"{poam_id[:8]} completed"
-            ),
+            message=(f"Milestone {milestone_id[:8]} on POA&M {poam_id[:8]} completed"),
             evidentia={
                 "poam_id": poam.id,
                 "control_id": f"{poam.framework}:{poam.control_id}",
@@ -792,10 +715,7 @@ def milestone_update(
         _log.info(
             action=EventAction.POAM_VERIFIED,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"Milestone {milestone_id[:8]} on POA&M "
-                f"{poam_id[:8]} verified"
-            ),
+            message=(f"Milestone {milestone_id[:8]} on POA&M {poam_id[:8]} verified"),
             evidentia={
                 "poam_id": poam.id,
                 "control_id": f"{poam.framework}:{poam.control_id}",
@@ -808,10 +728,7 @@ def milestone_update(
         _log.info(
             action=EventAction.POAM_OVERDUE,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"Milestone {milestone_id[:8]} on POA&M "
-                f"{poam_id[:8]} marked overdue"
-            ),
+            message=(f"Milestone {milestone_id[:8]} on POA&M {poam_id[:8]} marked overdue"),
             evidentia={
                 "poam_id": poam.id,
                 "control_id": f"{poam.framework}:{poam.control_id}",
@@ -824,10 +741,7 @@ def milestone_update(
         _log.info(
             action=EventAction.POAM_UPDATED,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"Milestone {milestone_id[:8]} on POA&M "
-                f"{poam_id[:8]} edited: {', '.join(changed)}"
-            ),
+            message=(f"Milestone {milestone_id[:8]} on POA&M {poam_id[:8]} edited: {', '.join(changed)}"),
             evidentia={
                 "poam_id": poam.id,
                 "control_id": f"{poam.framework}:{poam.control_id}",
@@ -836,10 +750,7 @@ def milestone_update(
             },
         )
 
-    console.print(
-        f"[green]Updated[/green] milestone {milestone_id[:8]} "
-        f"on POA&M {poam_id[:8]} ({', '.join(changed)})"
-    )
+    console.print(f"[green]Updated[/green] milestone {milestone_id[:8]} on POA&M {poam_id[:8]} ({', '.join(changed)})")
 
 
 # ── delete ─────────────────────────────────────────────────────────
@@ -865,8 +776,7 @@ def poam_delete(
     poam = _load_poam_or_exit(poam_id)
     if not yes:
         confirmation = typer.confirm(
-            f"Delete POA&M {poam_id[:8]} ({poam.framework}:"
-            f"{poam.control_id})? This cannot be undone."
+            f"Delete POA&M {poam_id[:8]} ({poam.framework}:{poam.control_id})? This cannot be undone."
         )
         if not confirmation:
             console.print("[yellow]Cancelled.[/yellow]")
@@ -877,15 +787,9 @@ def poam_delete(
         console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(code=1) from exc
     if not deleted:
-        console.print(
-            f"[red]Error:[/red] POA&M {poam_id[:8]} could not be deleted "
-            f"(no file on disk)."
-        )
+        console.print(f"[red]Error:[/red] POA&M {poam_id[:8]} could not be deleted (no file on disk).")
         raise typer.Exit(code=1)
-    console.print(
-        f"[green]Deleted[/green] POA&M {poam_id[:8]} "
-        f"({poam.framework}:{poam.control_id})"
-    )
+    console.print(f"[green]Deleted[/green] POA&M {poam_id[:8]} ({poam.framework}:{poam.control_id})")
 
 
 # ── calendar ───────────────────────────────────────────────────────
@@ -925,11 +829,7 @@ def poam_calendar(
     consumes the v0.9.0 P1 derive_attention_state helper to give
     operators a forward look right now.
     """
-    today = (
-        _parse_date_or_exit(today_override, "--today")
-        if today_override
-        else date.today()
-    )
+    today = _parse_date_or_exit(today_override, "--today") if today_override else date.today()
     assert today is not None  # date.today() never returns None
 
     all_milestones: list[tuple[ControlGap, Milestone]] = []
@@ -937,12 +837,8 @@ def poam_calendar(
         for ms in poam.poam_milestones:
             all_milestones.append((poam, ms))
 
-    buckets = derive_attention_state(
-        [ms for _, ms in all_milestones], today=today
-    )
-    poam_by_milestone_id = {
-        ms.id: poam for poam, ms in all_milestones
-    }
+    buckets = derive_attention_state([ms for _, ms in all_milestones], today=today)
+    poam_by_milestone_id = {ms.id: poam for poam, ms in all_milestones}
 
     if output_json:
         out: dict[str, Any] = {
@@ -950,10 +846,7 @@ def poam_calendar(
                 {
                     "milestone_id": ms.id,
                     "poam_id": poam_by_milestone_id[ms.id].id,
-                    "control_id": (
-                        f"{poam_by_milestone_id[ms.id].framework}:"
-                        f"{poam_by_milestone_id[ms.id].control_id}"
-                    ),
+                    "control_id": (f"{poam_by_milestone_id[ms.id].framework}:{poam_by_milestone_id[ms.id].control_id}"),
                     "target_date": ms.target_date.isoformat(),
                     "status": ms.status,
                     "description": ms.description,
@@ -970,10 +863,7 @@ def poam_calendar(
     overdue_count = len(buckets["overdue"])
     due_soon_count = len(buckets["due_soon"])
     if overdue_count == 0 and due_soon_count == 0:
-        console.print(
-            f"[green]No overdue or due-soon milestones[/green] "
-            f"as of {today.isoformat()}."
-        )
+        console.print(f"[green]No overdue or due-soon milestones[/green] as of {today.isoformat()}.")
         return
 
     if overdue_count > 0:
@@ -1001,10 +891,7 @@ def poam_calendar(
 
     if due_soon_count > 0:
         table = Table(
-            title=(
-                f"Due within {window_days} day(s) ({due_soon_count}) "
-                f"as of {today.isoformat()}"
-            ),
+            title=(f"Due within {window_days} day(s) ({due_soon_count}) as of {today.isoformat()}"),
             title_style="bold yellow",
         )
         table.add_column("Milestone", style="dim")

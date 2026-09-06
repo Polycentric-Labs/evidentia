@@ -152,20 +152,13 @@ def enforce_cimd_scope(
             (detected via the ``_evidentia_scope_wrapped`` marker).
     """
     if getattr(server, "_evidentia_scope_wrapped", False):
-        raise RuntimeError(
-            "enforce_cimd_scope already wired on this server; "
-            "call once per build_server invocation."
-        )
+        raise RuntimeError("enforce_cimd_scope already wired on this server; call once per build_server invocation.")
 
     original_call_tool: _CallToolFn = server.call_tool
-    cimd_registry: CIMDRegistry | None = getattr(
-        server, "evidentia_cimd", None
-    )
+    cimd_registry: CIMDRegistry | None = getattr(server, "evidentia_cimd", None)
 
     @functools.wraps(original_call_tool)
-    async def _gated_call_tool(
-        name: str, arguments: dict[str, Any]
-    ) -> Any:
+    async def _gated_call_tool(name: str, arguments: dict[str, Any]) -> Any:
         # Pass-through when CIMD is not configured. Preserves the
         # v0.8.5 behavior of no-gating + no-audit when the operator
         # builds the server without a registry. Documented in the
@@ -219,10 +212,7 @@ def enforce_cimd_scope(
             _log.warning(
                 action=EventAction.AI_MCP_TOOL_DENIED,
                 outcome=EventOutcome.FAILURE,
-                message=(
-                    f"MCP tool {name!r} denied: client_id "
-                    f"{client_id!r} is not in the CIMD registry"
-                ),
+                message=(f"MCP tool {name!r} denied: client_id {client_id!r} is not in the CIMD registry"),
                 evidentia={
                     "run_id": run_id,
                     "client_id": client_id,
@@ -233,10 +223,7 @@ def enforce_cimd_scope(
             raise McpError(
                 ErrorData(
                     code=INVALID_PARAMS,
-                    message=(
-                        f"tool call denied: client {client_id!r} "
-                        f"is not registered"
-                    ),
+                    message=(f"tool call denied: client {client_id!r} is not registered"),
                 )
             )
 
@@ -246,11 +233,7 @@ def enforce_cimd_scope(
             _log.warning(
                 action=EventAction.AI_MCP_TOOL_DENIED,
                 outcome=EventOutcome.FAILURE,
-                message=(
-                    f"MCP tool {name!r} denied: client_id "
-                    f"{client_id!r} scope does not include "
-                    f"this tool"
-                ),
+                message=(f"MCP tool {name!r} denied: client_id {client_id!r} scope does not include this tool"),
                 evidentia={
                     "run_id": run_id,
                     "client_id": client_id,
@@ -261,10 +244,7 @@ def enforce_cimd_scope(
             raise McpError(
                 ErrorData(
                     code=INVALID_PARAMS,
-                    message=(
-                        f"tool call denied: client {client_id!r} "
-                        f"is not authorized to call {name!r}"
-                    ),
+                    message=(f"tool call denied: client {client_id!r} is not authorized to call {name!r}"),
                 )
             )
 
@@ -272,10 +252,7 @@ def enforce_cimd_scope(
         _log.info(
             action=EventAction.AI_MCP_TOOL_AUTHORIZED,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"MCP tool {name!r} authorized for client "
-                f"{client_id!r}"
-            ),
+            message=(f"MCP tool {name!r} authorized for client {client_id!r}"),
             evidentia={
                 "run_id": run_id,
                 "client_id": client_id,

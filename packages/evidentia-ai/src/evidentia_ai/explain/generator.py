@@ -101,11 +101,7 @@ RULES for every field you produce:
 def _build_user_prompt(control: CatalogControl, framework_id: str) -> str:
     desc = (control.description or "").strip() or "(no description in catalog)"
     family = f"\nFamily: {control.family}" if control.family else ""
-    guidance = (
-        f"\n\nOSCAL guidance:\n{control.guidance}"
-        if getattr(control, "guidance", None)
-        else ""
-    )
+    guidance = f"\n\nOSCAL guidance:\n{control.guidance}" if getattr(control, "guidance", None) else ""
     return (
         f"Framework: {framework_id}\n"
         f"Control ID: {control.id}\n"
@@ -150,9 +146,7 @@ class ExplanationGenerator:
         cache_dir: Path | None = None,
     ) -> None:
         self.model = model or get_default_model()
-        self.temperature = (
-            temperature if temperature is not None else get_temperature()
-        )
+        self.temperature = temperature if temperature is not None else get_temperature()
         self.max_retries = max_retries
         self.use_cache = use_cache
         self.cache_dir = cache_dir
@@ -191,8 +185,7 @@ class ExplanationGenerator:
         # M1: explicit raise survives -O (which strips asserts).
         if result is None:
             raise RuntimeError(
-                "Internal invariant violated: tenacity retry loop exited "
-                "without populating result and without raising."
+                "Internal invariant violated: tenacity retry loop exited without populating result and without raising."
             )
         return result, last_attempt
 
@@ -243,34 +236,26 @@ class ExplanationGenerator:
         run_id = new_run_id()
 
         try:
-            explanation, attempts = self._invoke_llm_sync(
-                EXPLAIN_SYSTEM_PROMPT, prompt, run_id=run_id
-            )
+            explanation, attempts = self._invoke_llm_sync(EXPLAIN_SYSTEM_PROMPT, prompt, run_id=run_id)
         except OfflineViolationError:
             # Programmer/policy error — must surface to the operator.
             raise
         except _LLM_TRANSIENT_EXCEPTIONS as exc:
             self._emit_failure(control_label, exc, "transient_after_retries", run_id)
             raise LLMUnavailableError(
-                f"LLM transient error for {control_label} after retries: "
-                f"{type(exc).__name__}: {exc}"
+                f"LLM transient error for {control_label} after retries: {type(exc).__name__}: {exc}"
             ) from exc
         except InstructorRetryException as exc:
             self._emit_failure(control_label, exc, "validation_exhausted", run_id)
-            raise LLMValidationError(
-                f"Instructor validation retries exhausted for {control_label}: {exc}"
-            ) from exc
+            raise LLMValidationError(f"Instructor validation retries exhausted for {control_label}: {exc}") from exc
         except Exception as exc:
             self._emit_failure(control_label, exc, "unexpected", run_id)
             raise ExplainGenerationFailed(
-                f"Unexpected explanation failure for {control_label}: "
-                f"{type(exc).__name__}: {exc}"
+                f"Unexpected explanation failure for {control_label}: {type(exc).__name__}: {exc}"
             ) from exc
 
         # ── Post-generation enrichment ────────────────────────────────
-        gen_ctx = self._build_generation_context(
-            EXPLAIN_SYSTEM_PROMPT, prompt, attempts, run_id=run_id
-        )
+        gen_ctx = self._build_generation_context(EXPLAIN_SYSTEM_PROMPT, prompt, attempts, run_id=run_id)
         # Enforce echo fields in case the LLM drifted, AND attach provenance.
         explanation = explanation.model_copy(
             update={
@@ -298,9 +283,7 @@ class ExplanationGenerator:
 
     # ── Structured event helpers ──────────────────────────────────────
 
-    def _emit_cache_hit(
-        self, control_label: str, cached: PlainEnglishExplanation
-    ) -> None:
+    def _emit_cache_hit(self, control_label: str, cached: PlainEnglishExplanation) -> None:
         # Cached explanations may carry a v0.7.1 GenerationContext OR be from
         # a pre-v0.7.1 cache write (no provenance). Surface whatever we have
         # so SIEM can join cache hits to their original generation event.
@@ -312,12 +295,8 @@ class ExplanationGenerator:
             evidentia={
                 "model": self.model,
                 "control_label": control_label,
-                "cached_run_id": (
-                    cached_ctx.run_id if cached_ctx is not None else None
-                ),
-                "cached_prompt_hash": (
-                    cached_ctx.prompt_hash if cached_ctx is not None else None
-                ),
+                "cached_run_id": (cached_ctx.run_id if cached_ctx is not None else None),
+                "cached_prompt_hash": (cached_ctx.prompt_hash if cached_ctx is not None else None),
             },
         )
 
@@ -331,9 +310,7 @@ class ExplanationGenerator:
         _log.info(
             action=EventAction.AI_EXPLAIN_GENERATED,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"Generated explanation for {control_label} (attempts={attempts})"
-            ),
+            message=(f"Generated explanation for {control_label} (attempts={attempts})"),
             evidentia={
                 "model": self.model,
                 "control_label": control_label,
@@ -356,8 +333,7 @@ class ExplanationGenerator:
             action=EventAction.AI_EXPLAIN_FAILED,
             outcome=EventOutcome.FAILURE,
             message=(
-                f"Explanation generation failed for {control_label} "
-                f"({failure_kind}): {type(exc).__name__}: {exc}"
+                f"Explanation generation failed for {control_label} ({failure_kind}): {type(exc).__name__}: {exc}"
             ),
             error={
                 "type": type(exc).__name__,

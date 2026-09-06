@@ -19,8 +19,7 @@ _ACTION_PATTERN = re.compile(r"^evidentia\.[a-z_]+\.[a-z_]+$")
 def test_every_action_matches_namespace_pattern(action: EventAction) -> None:
     """Every action value follows ``evidentia.<namespace>.<verb>`` exactly."""
     assert _ACTION_PATTERN.match(action.value), (
-        f"{action.name}={action.value!r} breaks the "
-        f"'evidentia.<namespace>.<verb>' convention"
+        f"{action.name}={action.value!r} breaks the 'evidentia.<namespace>.<verb>' convention"
     )
 
 
@@ -138,9 +137,7 @@ def test_ai_event_member_to_value_mapping(name: str, value: str) -> None:
         ("CATALOG_REMOVED", "evidentia.catalog.removed"),
     ],
 )
-def test_governance_catalog_action_member_to_value_mapping(
-    name: str, value: str
-) -> None:
+def test_governance_catalog_action_member_to_value_mapping(name: str, value: str) -> None:
     """Pin the member name + string value for the v0.10.12 WS-A4 promotion.
 
     Values are byte-identical to the pre-promotion router string constants,

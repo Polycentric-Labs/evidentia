@@ -202,10 +202,7 @@ def generate_sidebar(link_map: dict[Path, str]) -> str:
         if not section_name:
             continue
         lines.append(f"- **[{section_name.replace('-', ' ')}]({section_name})**")
-        pages = sorted(
-            p for p in section_dir.iterdir()
-            if p.is_file() and p.name != "index.md" and p.suffix == ".md"
-        )
+        pages = sorted(p for p in section_dir.iterdir() if p.is_file() and p.name != "index.md" and p.suffix == ".md")
         for page in pages:
             page_name = link_map.get(page)
             if page_name:
@@ -305,7 +302,11 @@ def main() -> int:
     commit_sha = os.environ.get("GITHUB_SHA", "unknown")
     subprocess.run(
         [
-            "git", "-C", str(wiki_dir), "commit", "-m",
+            "git",
+            "-C",
+            str(wiki_dir),
+            "commit",
+            "-m",
             f"sync from docs/wiki/ @ {commit_sha[:7]} via sync-wiki.yml",
         ],
         check=True,

@@ -28,12 +28,8 @@ async def health(request: Request) -> HealthResponse:
     (in ``UNAUTHENTICATED_PATHS``); ``auth_configured`` is not a secret — an
     anonymous caller already learns the API is unauthenticated by reaching it.
     """
-    auth_configured = (
-        getattr(request.app.state, "auth_provider", None) is not None
-    )
-    return HealthResponse(
-        status="ok", version=api_version, auth_configured=auth_configured
-    )
+    auth_configured = getattr(request.app.state, "auth_provider", None) is not None
+    return HealthResponse(status="ok", version=api_version, auth_configured=auth_configured)
 
 
 @router.get("/version", response_model=VersionResponse)

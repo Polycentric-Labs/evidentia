@@ -51,29 +51,27 @@ class TestTitlecaseViolations:
     # (header, expect_violation?) — drawn from the actual post-E5b README
     # plus deliberately-wrong cases.
     GOOD_HEADERS: ClassVar[list[str]] = [
-        "What is Evidentia?",      # "is" stop-word; Evidentia proper noun
+        "What is Evidentia?",  # "is" stop-word; Evidentia proper noun
         "Install",
         "Quickstart (60 Seconds)",  # "(60" skipped; Seconds capitalized
         "Features",
-        "What's in the Box",        # "in"/"the" stop-words; Box principal
+        "What's in the Box",  # "in"/"the" stop-words; Box principal
         "Documentation",
         "Recent Releases",
-        "Community & Governance",   # "&" token skipped
-        "AI Assistance",           # AI acronym preserved
+        "Community & Governance",  # "&" token skipped
+        "AI Assistance",  # AI acronym preserved
         "License",
     ]
     BAD_HEADERS: ClassVar[list[str]] = [
-        "Recent releases",          # "releases" should be capitalized
-        "new thing",                # both principal words lowercase
-        "ai assistance",            # "ai" must be AI + "assistance" cap
-        "What's in the box",        # "box" should be Box
-        "Community + governance",   # "governance" should be capitalized
+        "Recent releases",  # "releases" should be capitalized
+        "new thing",  # both principal words lowercase
+        "ai assistance",  # "ai" must be AI + "assistance" cap
+        "What's in the box",  # "box" should be Box
+        "Community + governance",  # "governance" should be capitalized
     ]
 
     @pytest.mark.parametrize("header", GOOD_HEADERS)
-    def test_good_headers_have_no_violations(
-        self, cdh: Any, header: str
-    ) -> None:
+    def test_good_headers_have_no_violations(self, cdh: Any, header: str) -> None:
         assert cdh._titlecase_violations(header) == [], header
 
     @pytest.mark.parametrize("header", BAD_HEADERS)
@@ -99,11 +97,7 @@ class TestCheckReadmeHeaderTitlecaseRealReadme:
             cdh.check_readme_header_titlecase(result)
         finally:
             os.chdir(prev)
-        fails = [
-            f for f in result.findings
-            if f.check == "readme_header_titlecase"
-            and f.severity == cdh.Severity.FAIL
-        ]
+        fails = [f for f in result.findings if f.check == "readme_header_titlecase" and f.severity == cdh.Severity.FAIL]
         assert fails == [], [f.message for f in fails]
 
 
@@ -124,30 +118,20 @@ class TestCheckReadmeHeaderTitlecaseSynthetic:
         )
         result = cdh.CheckResult()
         cdh.check_readme_header_titlecase(result)
-        fails = [
-            f for f in result.findings
-            if f.check == "readme_header_titlecase"
-            and f.severity == cdh.Severity.FAIL
-        ]
+        fails = [f for f in result.findings if f.check == "readme_header_titlecase" and f.severity == cdh.Severity.FAIL]
         assert len(fails) == 1
         assert "new thing" in fails[0].message
 
-    def test_code_fence_comments_not_flagged(
-        self, cdh: Any, chdir_tmp: Path
-    ) -> None:
+    def test_code_fence_comments_not_flagged(self, cdh: Any, chdir_tmp: Path) -> None:
         # A `# 1. lowercase` bash comment INSIDE a fenced block looks like an
         # h1 but must be skipped (mirrors the quickstart block).
         (chdir_tmp / "README.md").write_text(
-            "# Title\n\n## Good Header\n\n"
-            "```bash\n# 1. list things\n## not a real header\n```\n",
+            "# Title\n\n## Good Header\n\n```bash\n# 1. list things\n## not a real header\n```\n",
             encoding="utf-8",
         )
         result = cdh.CheckResult()
         cdh.check_readme_header_titlecase(result)
-        fails = [
-            f for f in result.findings
-            if f.severity == cdh.Severity.FAIL
-        ]
+        fails = [f for f in result.findings if f.severity == cdh.Severity.FAIL]
         assert fails == [], [f.message for f in fails]
 
 
@@ -161,8 +145,8 @@ class TestCheckReadmeRecentReleasesCurrentRealReadme:
         finally:
             os.chdir(prev)
         fails = [
-            f for f in result.findings
-            if f.check == "readme_recent_releases_current"
-            and f.severity == cdh.Severity.FAIL
+            f
+            for f in result.findings
+            if f.check == "readme_recent_releases_current" and f.severity == cdh.Severity.FAIL
         ]
         assert fails == [], [f.message for f in fails]

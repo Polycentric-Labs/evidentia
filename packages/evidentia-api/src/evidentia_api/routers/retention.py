@@ -80,14 +80,11 @@ _log = get_logger("evidentia.api.retention")
 class RetentionCreatePayload(BaseModel):
     """Body shape for POST /api/retention (the `retention set` verb)."""
 
-    classification: RetentionClassification = Field(
-        description="Regulator-aligned classification (required)."
-    )
+    classification: RetentionClassification = Field(description="Regulator-aligned classification (required).")
     retention_period_days: int | None = Field(
         default=None,
         description=(
-            "Retention period in calendar days. Defaults to the "
-            "regulator-stated minimum for the classification."
+            "Retention period in calendar days. Defaults to the regulator-stated minimum for the classification."
         ),
     )
     record_pointer: str | None = Field(
@@ -102,25 +99,19 @@ class RetentionCreatePayload(BaseModel):
         default=None,
         description="Optional cross-reference to a RetentionPolicy.",
     )
-    notes: str | None = Field(
-        default=None, description="Free-text operator notes."
-    )
+    notes: str | None = Field(default=None, description="Free-text operator notes.")
 
 
 class RetentionExtendPayload(BaseModel):
     """Body shape for POST /api/retention/{id}/extend."""
 
-    new_lock_until: date = Field(
-        description="ISO-8601 date the new lock-until should be (YYYY-MM-DD)."
-    )
+    new_lock_until: date = Field(description="ISO-8601 date the new lock-until should be (YYYY-MM-DD).")
 
 
 class RetentionTransitionPayload(BaseModel):
     """Body shape for POST /api/retention/{id}/transition."""
 
-    new_stage: RetentionLifecycleStage = Field(
-        description="Target lifecycle stage: active/preserved/expired/purged."
-    )
+    new_stage: RetentionLifecycleStage = Field(description="Target lifecycle stage: active/preserved/expired/purged.")
 
 
 # ── set / list ─────────────────────────────────────────────────────
@@ -158,18 +149,11 @@ async def set_retention(payload: RetentionCreatePayload) -> RetentionMetadata:
     _log.info(
         action=EventAction.RETENTION_RECORD_PUT,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"Retention record created via API: "
-            f"{_enum_value(metadata.classification)}"
-        ),
+        message=(f"Retention record created via API: {_enum_value(metadata.classification)}"),
         evidentia={
             "retention_id": metadata.id,
             "classification": _enum_value(metadata.classification),
-            "lock_until": (
-                metadata.lock_until.isoformat()
-                if metadata.lock_until
-                else None
-            ),
+            "lock_until": (metadata.lock_until.isoformat() if metadata.lock_until else None),
         },
     )
     return metadata
@@ -206,10 +190,7 @@ async def list_retention_records(
     ),
     lifecycle: str | None = Query(
         None,
-        description=(
-            "Filter by lifecycle stage: active / preserved / expired "
-            "/ purged."
-        ),
+        description=("Filter by lifecycle stage: active / preserved / expired / purged."),
     ),
 ) -> dict[str, object]:
     """List retention records in canonical sort order.
@@ -217,29 +198,19 @@ async def list_retention_records(
     Filtering applies BEFORE pagination so ``total`` reflects the
     filter-matched count.
     """
-    if classification and classification not in {
-        c.value for c in RetentionClassification
-    }:
+    if classification and classification not in {c.value for c in RetentionClassification}:
         raise api_error(
             400,
             "unknown_classification",
-            (
-                f"Unknown classification {classification!r}; valid: "
-                f"{sorted(c.value for c in RetentionClassification)}"
-            ),
+            (f"Unknown classification {classification!r}; valid: {sorted(c.value for c in RetentionClassification)}"),
             classification=classification,
             valid=sorted(c.value for c in RetentionClassification),
         )
-    if lifecycle and lifecycle not in {
-        s.value for s in RetentionLifecycleStage
-    }:
+    if lifecycle and lifecycle not in {s.value for s in RetentionLifecycleStage}:
         raise api_error(
             400,
             "unknown_lifecycle",
-            (
-                f"Unknown lifecycle {lifecycle!r}; valid: "
-                f"{sorted(s.value for s in RetentionLifecycleStage)}"
-            ),
+            (f"Unknown lifecycle {lifecycle!r}; valid: {sorted(s.value for s in RetentionLifecycleStage)}"),
             lifecycle=lifecycle,
             valid=sorted(s.value for s in RetentionLifecycleStage),
         )
@@ -283,10 +254,7 @@ async def retention_report() -> str:
     response_model=RetentionMetadata,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``retention_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``retention_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -319,21 +287,13 @@ async def get_retention(retention_id: str) -> RetentionMetadata:
     dependencies=[require_role("write")],
     responses=error_responses(
         {
-            400: (
-                "WORM shorten attempt "
-                "(``error: invalid_body``)."
-            ),
+            400: ("WORM shorten attempt (``error: invalid_body``)."),
             403: RBAC_DENIED_403,
-            404: (
-                "Unknown or malformed ``retention_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``retention_id`` (``error: not_found``)."),
         }
     ),
 )
-async def extend_retention(
-    retention_id: str, payload: RetentionExtendPayload
-) -> RetentionMetadata:
+async def extend_retention(retention_id: str, payload: RetentionExtendPayload) -> RetentionMetadata:
     """Extend a record's lock-until date.
 
     WORM-style retention only allows extending — never shortening.
@@ -358,10 +318,7 @@ async def extend_retention(
             resource="retention_record",
             resource_id=retention_id,
         )
-    if (
-        metadata.lock_until is not None
-        and payload.new_lock_until < metadata.lock_until
-    ):
+    if metadata.lock_until is not None and payload.new_lock_until < metadata.lock_until:
         raise api_error(
             400,
             "invalid_body",
@@ -371,9 +328,7 @@ async def extend_retention(
                 f"requested={payload.new_lock_until})."
             ),
         )
-    updated = metadata.model_copy(
-        update={"lock_until": payload.new_lock_until, "updated_at": utc_now()}
-    )
+    updated = metadata.model_copy(update={"lock_until": payload.new_lock_until, "updated_at": utc_now()})
     save_retention(updated)
     _log.info(
         action=EventAction.RETENTION_RECORD_EXTENDED,
@@ -381,11 +336,7 @@ async def extend_retention(
         message=f"Retention record {retention_id[:8]} extended via API",
         evidentia={
             "retention_id": updated.id,
-            "prior_lock_until": (
-                metadata.lock_until.isoformat()
-                if metadata.lock_until
-                else None
-            ),
+            "prior_lock_until": (metadata.lock_until.isoformat() if metadata.lock_until else None),
             "new_lock_until": payload.new_lock_until.isoformat(),
         },
     )
@@ -398,21 +349,13 @@ async def extend_retention(
     dependencies=[require_role("write")],
     responses=error_responses(
         {
-            400: (
-                "Illegal lifecycle transition "
-                "(``error: invalid_body``)."
-            ),
+            400: ("Illegal lifecycle transition (``error: invalid_body``)."),
             403: RBAC_DENIED_403,
-            404: (
-                "Unknown or malformed ``retention_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``retention_id`` (``error: not_found``)."),
         }
     ),
 )
-async def transition_retention(
-    retention_id: str, payload: RetentionTransitionPayload
-) -> RetentionMetadata:
+async def transition_retention(retention_id: str, payload: RetentionTransitionPayload) -> RetentionMetadata:
     """Transition a record's lifecycle stage (state-machine enforced)."""
     try:
         metadata = load_retention_by_id(retention_id)
@@ -458,10 +401,7 @@ async def transition_retention(
     responses=error_responses(
         {
             403: RBAC_DENIED_403,
-            404: (
-                "Unknown or malformed ``retention_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``retention_id`` (``error: not_found``)."),
         }
     ),
 )

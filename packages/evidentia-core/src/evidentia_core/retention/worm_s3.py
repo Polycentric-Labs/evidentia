@@ -108,14 +108,9 @@ class S3ObjectLockWORM(WORMBackend):
         client_factory: Any = None,
     ) -> None:
         if not bucket_name or not isinstance(bucket_name, str):
-            raise WORMBackendError(
-                "S3ObjectLockWORM requires a non-empty bucket_name"
-            )
+            raise WORMBackendError("S3ObjectLockWORM requires a non-empty bucket_name")
         if lock_mode not in ("COMPLIANCE", "GOVERNANCE"):
-            raise WORMBackendError(
-                f"S3 lock_mode must be COMPLIANCE or GOVERNANCE, got "
-                f"{lock_mode!r}"
-            )
+            raise WORMBackendError(f"S3 lock_mode must be COMPLIANCE or GOVERNANCE, got {lock_mode!r}")
         self._bucket = bucket_name
         self._lock_mode = lock_mode
         self._prefix = prefix
@@ -142,9 +137,7 @@ class S3ObjectLockWORM(WORMBackend):
                 return False
             raise
 
-    def _retain_until_datetime(
-        self, metadata: RetentionMetadata
-    ) -> datetime | None:
+    def _retain_until_datetime(self, metadata: RetentionMetadata) -> datetime | None:
         """Convert the metadata.lock_until ``date`` to a UTC
         ``datetime`` for the S3 RetainUntilDate header. Returns None
         when retention is purpose-limited (GDPR with
@@ -169,8 +162,7 @@ class S3ObjectLockWORM(WORMBackend):
         payload_key = self._payload_key(record_id)
         if self._object_exists(payload_key):
             raise WORMBackendError(
-                f"S3 record {record_id!r} already exists in bucket "
-                f"{self._bucket!r}; WORM forbids overwrite"
+                f"S3 record {record_id!r} already exists in bucket {self._bucket!r}; WORM forbids overwrite"
             )
 
         retain_until = self._retain_until_datetime(metadata)
@@ -187,8 +179,7 @@ class S3ObjectLockWORM(WORMBackend):
             self._client.put_object(**put_kwargs)
         except ClientError as e:
             raise WORMBackendError(
-                f"S3 put failed for record {record_id!r}: "
-                f"{e.response.get('Error', {}).get('Message', str(e))}"
+                f"S3 put failed for record {record_id!r}: {e.response.get('Error', {}).get('Message', str(e))}"
             ) from e
 
         # Metadata sidecar — NOT under Object Lock (so we can
@@ -202,43 +193,31 @@ class S3ObjectLockWORM(WORMBackend):
             )
         except ClientError as e:
             raise WORMBackendError(
-                f"S3 metadata put failed for record {record_id!r}: "
-                f"{e.response.get('Error', {}).get('Message', str(e))}"
+                f"S3 metadata put failed for record {record_id!r}: {e.response.get('Error', {}).get('Message', str(e))}"
             ) from e
 
     def get(self, record_id: str) -> bytes:
         try:
-            resp = self._client.get_object(
-                Bucket=self._bucket, Key=self._payload_key(record_id)
-            )
+            resp = self._client.get_object(Bucket=self._bucket, Key=self._payload_key(record_id))
         except ClientError as e:
             code = e.response.get("Error", {}).get("Code", "")
             if code in ("NoSuchKey", "404"):
-                raise WORMBackendError(
-                    f"S3 record {record_id!r} not found in bucket "
-                    f"{self._bucket!r}"
-                ) from e
+                raise WORMBackendError(f"S3 record {record_id!r} not found in bucket {self._bucket!r}") from e
             raise WORMBackendError(
-                f"S3 get failed for record {record_id!r}: "
-                f"{e.response.get('Error', {}).get('Message', str(e))}"
+                f"S3 get failed for record {record_id!r}: {e.response.get('Error', {}).get('Message', str(e))}"
             ) from e
         body = resp["Body"]
         return bytes(body.read())
 
     def get_metadata(self, record_id: str) -> RetentionMetadata:
         try:
-            resp = self._client.get_object(
-                Bucket=self._bucket, Key=self._meta_key(record_id)
-            )
+            resp = self._client.get_object(Bucket=self._bucket, Key=self._meta_key(record_id))
         except ClientError as e:
             code = e.response.get("Error", {}).get("Code", "")
             if code in ("NoSuchKey", "404"):
-                raise WORMBackendError(
-                    f"S3 metadata for record {record_id!r} not found"
-                ) from e
+                raise WORMBackendError(f"S3 metadata for record {record_id!r} not found") from e
             raise WORMBackendError(
-                f"S3 metadata get failed for record {record_id!r}: "
-                f"{e.response.get('Error', {}).get('Message', str(e))}"
+                f"S3 metadata get failed for record {record_id!r}: {e.response.get('Error', {}).get('Message', str(e))}"
             ) from e
         raw_body = bytes(resp["Body"].read())
         return RetentionMetadata.model_validate_json(raw_body.decode("utf-8"))
@@ -251,9 +230,7 @@ class S3ObjectLockWORM(WORMBackend):
         # because of clock skew), we surface the S3 error.
         metadata = self.get_metadata(record_id)
         if metadata.legal_hold:
-            raise WORMBackendError(
-                f"S3 record {record_id!r} is under legal hold; cannot delete"
-            )
+            raise WORMBackendError(f"S3 record {record_id!r} is under legal hold; cannot delete")
         if is_locked(metadata, today=today):
             raise WORMBackendError(
                 f"S3 record {record_id!r} is still inside its retention "
@@ -261,37 +238,25 @@ class S3ObjectLockWORM(WORMBackend):
             )
         if metadata.lifecycle_stage != RetentionLifecycleStage.EXPIRED.value:
             raise WORMBackendError(
-                f"S3 record {record_id!r} lifecycle is "
-                f"{metadata.lifecycle_stage}; only EXPIRED records can "
-                f"be deleted"
+                f"S3 record {record_id!r} lifecycle is {metadata.lifecycle_stage}; only EXPIRED records can be deleted"
             )
 
         # S3 API delete. With Compliance mode + retention not yet
         # expired, S3 will refuse with a 403. We surface that as
         # WORMBackendError preserving the original S3 message.
         try:
-            self._client.delete_object(
-                Bucket=self._bucket, Key=self._payload_key(record_id)
-            )
-            self._client.delete_object(
-                Bucket=self._bucket, Key=self._meta_key(record_id)
-            )
+            self._client.delete_object(Bucket=self._bucket, Key=self._payload_key(record_id))
+            self._client.delete_object(Bucket=self._bucket, Key=self._meta_key(record_id))
         except ClientError as e:
             raise WORMBackendError(
-                f"S3 delete failed for record {record_id!r}: "
-                f"{e.response.get('Error', {}).get('Message', str(e))}"
+                f"S3 delete failed for record {record_id!r}: {e.response.get('Error', {}).get('Message', str(e))}"
             ) from e
 
-    def extend_retention(
-        self, record_id: str, new_lock_until: date
-    ) -> RetentionMetadata:
+    def extend_retention(self, record_id: str, new_lock_until: date) -> RetentionMetadata:
         from evidentia_core.models.common import utc_now
 
         metadata = self.get_metadata(record_id)
-        if (
-            metadata.lock_until is not None
-            and new_lock_until < metadata.lock_until
-        ):
+        if metadata.lock_until is not None and new_lock_until < metadata.lock_until:
             raise WORMBackendError(
                 f"WORM forbids shortening retention: current lock_until="
                 f"{metadata.lock_until}, attempted={new_lock_until}"
@@ -364,9 +329,7 @@ class S3ObjectLockWORM(WORMBackend):
                 f"{e.response.get('Error', {}).get('Message', str(e))}"
             ) from e
         metadata = self.get_metadata(record_id)
-        new_metadata = metadata.model_copy(
-            update={"legal_hold": True, "updated_at": utc_now()}
-        )
+        new_metadata = metadata.model_copy(update={"legal_hold": True, "updated_at": utc_now()})
         self._client.put_object(
             Bucket=self._bucket,
             Key=self._meta_key(record_id),
@@ -392,9 +355,7 @@ class S3ObjectLockWORM(WORMBackend):
                 f"{e.response.get('Error', {}).get('Message', str(e))}"
             ) from e
         metadata = self.get_metadata(record_id)
-        new_metadata = metadata.model_copy(
-            update={"legal_hold": False, "updated_at": utc_now()}
-        )
+        new_metadata = metadata.model_copy(update={"legal_hold": False, "updated_at": utc_now()})
         self._client.put_object(
             Bucket=self._bucket,
             Key=self._meta_key(record_id),
@@ -403,9 +364,7 @@ class S3ObjectLockWORM(WORMBackend):
         )
         return new_metadata
 
-    def _update_metadata(
-        self, record_id: str, new_metadata: RetentionMetadata
-    ) -> None:
+    def _update_metadata(self, record_id: str, new_metadata: RetentionMetadata) -> None:
         """Sidecar metadata rewrite (does NOT touch the locked payload)."""
         try:
             self._client.put_object(
@@ -421,10 +380,7 @@ class S3ObjectLockWORM(WORMBackend):
             ) from e
 
     def __repr__(self) -> str:
-        return (
-            f"S3ObjectLockWORM(bucket={self._bucket!r}, "
-            f"lock_mode={self._lock_mode!r}, prefix={self._prefix!r})"
-        )
+        return f"S3ObjectLockWORM(bucket={self._bucket!r}, lock_mode={self._lock_mode!r}, prefix={self._prefix!r})"
 
 
 # Avoid "imported but unused" on `timedelta` when typing-only refs

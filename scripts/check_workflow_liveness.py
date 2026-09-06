@@ -74,8 +74,7 @@ def check_dead_triggers(triggers_by_file: dict[str, set[str]]) -> list[str]:
     for name in sorted(triggers_by_file):
         for event in sorted(triggers_by_file[name] & set(DEAD_TRIGGER_RULES)):
             findings.append(
-                f"- **`{name}`** declares a structurally dead `on: {event}` "
-                f"trigger: {DEAD_TRIGGER_RULES[event]}"
+                f"- **`{name}`** declares a structurally dead `on: {event}` trigger: {DEAD_TRIGGER_RULES[event]}"
             )
     return findings
 
@@ -110,9 +109,7 @@ class GitHubAPI:
             return json.loads(resp.read().decode("utf-8"))
 
 
-def check_never_fired(
-    api: GitHubAPI, triggers_by_path: dict[str, set[str]], now: datetime
-) -> list[str]:
+def check_never_fired(api: GitHubAPI, triggers_by_path: dict[str, set[str]], now: datetime) -> list[str]:
     findings: list[str] = []
     listing = api.get("/actions/workflows", params={"per_page": "100"})
     if not isinstance(listing, dict):
@@ -160,19 +157,13 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     triggers_by_path: dict[str, set[str]] = {}
-    for path in sorted(WORKFLOWS_DIR.glob("*.yml")) + sorted(
-        WORKFLOWS_DIR.glob("*.yaml")
-    ):
+    for path in sorted(WORKFLOWS_DIR.glob("*.yml")) + sorted(WORKFLOWS_DIR.glob("*.yaml")):
         try:
-            triggers_by_path[f".github/workflows/{path.name}"] = workflow_triggers(
-                path.read_text(encoding="utf-8")
-            )
+            triggers_by_path[f".github/workflows/{path.name}"] = workflow_triggers(path.read_text(encoding="utf-8"))
         except yaml.YAMLError as exc:
             print(f"WARN: could not parse {path.name}: {exc}", file=sys.stderr)
 
-    findings = check_dead_triggers(
-        {Path(p).name: t for p, t in triggers_by_path.items()}
-    )
+    findings = check_dead_triggers({Path(p).name: t for p, t in triggers_by_path.items()})
     if not args.skip_api:
         token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
         api = GitHubAPI(args.repo, token)
@@ -185,9 +176,7 @@ def main(argv: list[str] | None = None) -> int:
             # Rule (i) findings above still stand.
             print(f"WARN: runs-API check skipped: {exc}", file=sys.stderr)
 
-    Path(args.output).write_text(
-        "\n".join(findings) + ("\n" if findings else ""), encoding="utf-8"
-    )
+    Path(args.output).write_text("\n".join(findings) + ("\n" if findings else ""), encoding="utf-8")
     for line in findings:
         print(line)
     print(f"check_workflow_liveness: {len(findings)} finding(s)")

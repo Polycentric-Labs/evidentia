@@ -89,17 +89,14 @@ def deprecation_headers(
     if successor is not None:
         if not successor.strip():
             raise ValueError(
-                "successor must be a non-empty path or URI; pass None "
-                "when the deprecated resource has no replacement"
+                "successor must be a non-empty path or URI; pass None when the deprecated resource has no replacement"
             )
         headers["Link"] = f'<{successor}>; rel="successor-version"'
 
     if sunset is not None:
         # RFC 8594 §3 requires an HTTP-date; format_datetime(usegmt=True)
         # emits the IMF-fixdate production ("Fri, 15 Jan 2027 … GMT").
-        midnight_utc = datetime(
-            sunset.year, sunset.month, sunset.day, tzinfo=UTC
-        )
+        midnight_utc = datetime(sunset.year, sunset.month, sunset.day, tzinfo=UTC)
         headers["Sunset"] = format_datetime(midnight_utc, usegmt=True)
 
     return headers
@@ -149,9 +146,7 @@ class DeprecationAwareRoute(APIRoute):
             return original_handler
 
         extra = self.openapi_extra or {}
-        headers = deprecation_headers(
-            successor=extra.get(SUCCESSOR_VERSION_EXTENSION)
-        )
+        headers = deprecation_headers(successor=extra.get(SUCCESSOR_VERSION_EXTENSION))
 
         async def deprecation_aware_handler(request: Request) -> Response:
             try:

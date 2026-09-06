@@ -36,26 +36,17 @@ def sample_observation() -> CycleObservation:
 class TestResolveSecret:
     """File > env > error precedence per v0.9.3 cycle-open sign-off."""
 
-    def test_file_takes_precedence(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_file_takes_precedence(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         secret_file = tmp_path / "secret"
         secret_file.write_text("from-file\n", encoding="utf-8")
         monkeypatch.setenv("TEST_SECRET", "from-env")
-        assert (
-            resolve_secret(secret_file, "TEST_SECRET", "test")
-            == "from-file"
-        )
+        assert resolve_secret(secret_file, "TEST_SECRET", "test") == "from-file"
 
-    def test_env_used_when_no_file(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_env_used_when_no_file(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("TEST_SECRET", "from-env")
         assert resolve_secret(None, "TEST_SECRET", "test") == "from-env"
 
-    def test_raises_when_neither_source(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_raises_when_neither_source(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("TEST_SECRET", raising=False)
         with pytest.raises(ValueError, match="--\\*-file flag"):
             resolve_secret(None, "TEST_SECRET", "test")
@@ -71,9 +62,7 @@ class TestResolveSecret:
         with pytest.raises(ValueError, match="is empty"):
             resolve_secret(secret_file, "X", "test")
 
-    def test_treats_whitespace_only_env_as_missing(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_treats_whitespace_only_env_as_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("TEST_SECRET", "   ")
         with pytest.raises(ValueError):
             resolve_secret(None, "TEST_SECRET", "test")
@@ -85,15 +74,11 @@ class TestResolveSecret:
 class TestAlertDeduper:
     """File-backed per-(slug, state) suppression window."""
 
-    def test_first_alert_not_suppressed(
-        self, tmp_path: Path, sample_observation: CycleObservation
-    ) -> None:
+    def test_first_alert_not_suppressed(self, tmp_path: Path, sample_observation: CycleObservation) -> None:
         dd = AlertDeduper.from_hours(tmp_path / "dedup.json", 24.0)
         assert dd.should_suppress(sample_observation) is False
 
-    def test_within_window_suppressed(
-        self, tmp_path: Path, sample_observation: CycleObservation
-    ) -> None:
+    def test_within_window_suppressed(self, tmp_path: Path, sample_observation: CycleObservation) -> None:
         dd = AlertDeduper.from_hours(tmp_path / "dedup.json", 24.0)
         now = datetime(2026, 5, 16, 0, 0, tzinfo=UTC)
         dd.mark_dispatched(sample_observation, now=now)
@@ -101,18 +86,14 @@ class TestAlertDeduper:
         later = now + timedelta(hours=12)
         assert dd.should_suppress(sample_observation, now=later) is True
 
-    def test_outside_window_not_suppressed(
-        self, tmp_path: Path, sample_observation: CycleObservation
-    ) -> None:
+    def test_outside_window_not_suppressed(self, tmp_path: Path, sample_observation: CycleObservation) -> None:
         dd = AlertDeduper.from_hours(tmp_path / "dedup.json", 24.0)
         now = datetime(2026, 5, 16, 0, 0, tzinfo=UTC)
         dd.mark_dispatched(sample_observation, now=now)
         later = now + timedelta(hours=25)
         assert dd.should_suppress(sample_observation, now=later) is False
 
-    def test_different_state_not_dedupd(
-        self, tmp_path: Path, sample_observation: CycleObservation
-    ) -> None:
+    def test_different_state_not_dedupd(self, tmp_path: Path, sample_observation: CycleObservation) -> None:
         dd = AlertDeduper.from_hours(tmp_path / "dedup.json", 24.0)
         now = datetime(2026, 5, 16, 0, 0, tzinfo=UTC)
         dd.mark_dispatched(sample_observation, now=now)
@@ -127,9 +108,7 @@ class TestAlertDeduper:
         )
         assert dd.should_suppress(other, now=now) is False
 
-    def test_corrupted_state_file_tolerated(
-        self, tmp_path: Path, sample_observation: CycleObservation
-    ) -> None:
+    def test_corrupted_state_file_tolerated(self, tmp_path: Path, sample_observation: CycleObservation) -> None:
         dedup_file = tmp_path / "dedup.json"
         dedup_file.write_text("{ not valid json ", encoding="utf-8")
         dd = AlertDeduper.from_hours(dedup_file, 24.0)
@@ -161,9 +140,7 @@ class _FakeChannel:
 class TestMakeAlertHandler:
     """Wire channels + deduper into a CycleHandler."""
 
-    def test_dispatches_to_all_channels(
-        self, tmp_path: Path, sample_observation: CycleObservation
-    ) -> None:
+    def test_dispatches_to_all_channels(self, tmp_path: Path, sample_observation: CycleObservation) -> None:
         ch1 = _FakeChannel(name="primary")
         ch2 = _FakeChannel(name="secondary")
         dd = AlertDeduper.from_hours(tmp_path / "dedup.json", 24.0)
@@ -185,16 +162,11 @@ class TestMakeAlertHandler:
         handler = make_alert_handler([ch], deduper=dd)
 
         handler(sample_observation)
-        with caplog.at_level(
-            "INFO", logger="evidentia_core.conmon.alerting"
-        ):
+        with caplog.at_level("INFO", logger="evidentia_core.conmon.alerting"):
             handler(sample_observation)
 
         assert len(ch.dispatched) == 1  # second call suppressed
-        actions = [
-            getattr(r, "ecs_record", {}).get("event", {}).get("action")
-            for r in caplog.records
-        ]
+        actions = [getattr(r, "ecs_record", {}).get("event", {}).get("action") for r in caplog.records]
         assert EventAction.CONMON_ALERT_SUPPRESSED.value in actions
 
     def test_failing_channel_does_not_block_siblings(
@@ -220,9 +192,7 @@ class TestMakeAlertHandler:
         # Next poll should retry (no dedup mark since dispatch failed)
         assert dd.should_suppress(sample_observation) is False
 
-    def test_no_deduper_dispatches_every_time(
-        self, tmp_path: Path, sample_observation: CycleObservation
-    ) -> None:
+    def test_no_deduper_dispatches_every_time(self, tmp_path: Path, sample_observation: CycleObservation) -> None:
         ch = _FakeChannel()
         handler = make_alert_handler([ch], deduper=None)
 
@@ -231,9 +201,7 @@ class TestMakeAlertHandler:
         handler(sample_observation)
         assert len(ch.dispatched) == 3
 
-    def test_empty_channel_list_is_noop(
-        self, sample_observation: CycleObservation
-    ) -> None:
+    def test_empty_channel_list_is_noop(self, sample_observation: CycleObservation) -> None:
         handler = make_alert_handler([], deduper=None)
         # Just verify no raise.
         handler(sample_observation)

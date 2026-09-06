@@ -82,8 +82,7 @@ def set_offline(enabled: bool) -> None:
     _offline_enabled = bool(enabled)
     if _offline_enabled:
         logger.info(
-            "Air-gapped mode ENABLED — outbound network calls to non-loopback "
-            "hosts will raise OfflineViolationError."
+            "Air-gapped mode ENABLED — outbound network calls to non-loopback hosts will raise OfflineViolationError."
         )
 
 
@@ -126,16 +125,11 @@ class OfflineViolationError(Exception):
         surfaced to the GUI via the /api/*/error response body.
     """
 
-    def __init__(
-        self, *, subsystem: str, target: str, remediation: str = ""
-    ) -> None:
+    def __init__(self, *, subsystem: str, target: str, remediation: str = "") -> None:
         self.subsystem = subsystem
         self.target = target
         self.remediation = remediation
-        message = (
-            f"Air-gapped mode refuses network call from {subsystem}: "
-            f"target={target!r}"
-        )
+        message = f"Air-gapped mode refuses network call from {subsystem}: target={target!r}"
         if remediation:
             message += f" -- {remediation}"
         super().__init__(message)
@@ -214,8 +208,7 @@ def check_url(url: str, *, subsystem: str, remediation: str = "") -> None:
     raise OfflineViolationError(
         subsystem=subsystem,
         target=url,
-        remediation=remediation
-        or "Configure a local endpoint (Ollama, vLLM, mirror proxy) or disable --offline.",
+        remediation=remediation or "Configure a local endpoint (Ollama, vLLM, mirror proxy) or disable --offline.",
     )
 
 
@@ -262,8 +255,7 @@ def check_llm_model(
             subsystem=subsystem,
             target=f"{model} @ {api_base}",
             remediation=(
-                "api_base points at a non-loopback host. Use localhost / "
-                "RFC-1918 or switch to an ollama/* model."
+                "api_base points at a non-loopback host. Use localhost / RFC-1918 or switch to an ollama/* model."
             ),
         )
 
@@ -324,9 +316,7 @@ class SSRFBlockedError(Exception):
         The first disallowed address the host resolved to.
     """
 
-    def __init__(
-        self, *, subsystem: str, host: str, resolved_ip: str
-    ) -> None:
+    def __init__(self, *, subsystem: str, host: str, resolved_ip: str) -> None:
         self.subsystem = subsystem
         self.host = host
         self.resolved_ip = resolved_ip
@@ -485,21 +475,15 @@ def enforce_public_host(
 
     host = _extract_host(url_or_host)
     if not host:
-        raise SSRFBlockedError(
-            subsystem=subsystem, host=url_or_host, resolved_ip="(no host)"
-        )
+        raise SSRFBlockedError(subsystem=subsystem, host=url_or_host, resolved_ip="(no host)")
 
     try:
         is_private, bad_ip, public_ips = _resolve_and_classify(host)
     except socket.gaierror as exc:
         # Fail closed: a host we cannot resolve cannot be proven public.
-        raise SSRFBlockedError(
-            subsystem=subsystem, host=host, resolved_ip="(unresolvable)"
-        ) from exc
+        raise SSRFBlockedError(subsystem=subsystem, host=host, resolved_ip="(unresolvable)") from exc
     if is_private:
-        raise SSRFBlockedError(
-            subsystem=subsystem, host=host, resolved_ip=bad_ip
-        )
+        raise SSRFBlockedError(subsystem=subsystem, host=host, resolved_ip=bad_ip)
     return public_ips
 
 
@@ -574,9 +558,7 @@ def _pinned_getaddrinfo(
     thread — falls through to the delegate resolver untouched.
     """
     registry: dict[str, list[str]] = getattr(_pin_state, "hosts", {})
-    pinned_ips = (
-        registry.get(host.lower()) if isinstance(host, str) else None
-    )
+    pinned_ips = registry.get(host.lower()) if isinstance(host, str) else None
     if not pinned_ips:
         return _GETADDRINFO_DELEGATE(  # type: ignore[no-any-return]
             host, port, family, type, proto, flags
@@ -594,11 +576,7 @@ def _pinned_getaddrinfo(
             # Caller asked for a specific family that this pinned
             # address doesn't satisfy — skip it.
             continue
-        sockaddr: tuple[object, ...] = (
-            (ip_str, port, 0, 0)
-            if af == socket.AF_INET6
-            else (ip_str, port)
-        )
+        sockaddr: tuple[object, ...] = (ip_str, port, 0, 0) if af == socket.AF_INET6 else (ip_str, port)
         results.append((af, socktype, proto, "", sockaddr))
     if not results:
         # No pinned address matched the requested family — fail the

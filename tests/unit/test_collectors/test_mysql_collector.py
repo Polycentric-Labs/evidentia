@@ -106,9 +106,7 @@ class TestConstructorValidation:
             MySQLCollector(connection_uri="mysql://user:secret@host/db")
 
     def test_accepts_uri_without_password(self) -> None:
-        c = MySQLCollector(
-            connection_uri="mysql://user@host/db", password="x"
-        )
+        c = MySQLCollector(connection_uri="mysql://user@host/db", password="x")
         assert c is not None
 
     def test_rejects_empty_constructor(self) -> None:
@@ -122,9 +120,7 @@ class TestConstructorValidation:
 
 class TestUriParsing:
     def test_full_uri(self) -> None:
-        c = MySQLCollector(
-            connection_uri="mysql://reader@db.example.com:3307/appdb"
-        )
+        c = MySQLCollector(connection_uri="mysql://reader@db.example.com:3307/appdb")
         kwargs = c._parse_uri("mysql://reader@db.example.com:3307/appdb")
         assert kwargs["host"] == "db.example.com"
         assert kwargs["port"] == 3307
@@ -180,11 +176,10 @@ class TestCollectV2:
         conn = _MockConnection(responses)
         collector = MySQLCollector(connection=conn)
         findings, _ = collector.collect_v2()
-        crypto = [
-            f for f in findings if "crypto-config" in (f.source_finding_id or "")
-        ]
+        crypto = [f for f in findings if "crypto-config" in (f.source_finding_id or "")]
         assert len(crypto) == 1
         from evidentia_core.models.common import Severity
+
         assert crypto[0].severity == Severity.HIGH
 
 

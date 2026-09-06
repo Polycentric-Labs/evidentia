@@ -20,9 +20,7 @@ from evidentia_core.init_wizard import (
 
 class TestGenerateEvidentiaYaml:
     def test_minimal(self) -> None:
-        text = generate_evidentia_yaml(
-            organization="Test Org", frameworks=["soc2-tsc"]
-        )
+        text = generate_evidentia_yaml(organization="Test Org", frameworks=["soc2-tsc"])
         data = yaml.safe_load(text)
         assert data["organization"] == "Test Org"
         assert data["frameworks"] == ["soc2-tsc"]
@@ -39,18 +37,14 @@ class TestGenerateEvidentiaYaml:
         assert data["system_name"] == "Acme SaaS"
 
     def test_without_system_name_leaves_commented_hint(self) -> None:
-        text = generate_evidentia_yaml(
-            organization="Acme", frameworks=["soc2-tsc"]
-        )
+        text = generate_evidentia_yaml(organization="Acme", frameworks=["soc2-tsc"])
         # The commented-out hint should be present; un-commented key should not.
         assert "# system_name:" in text
         data = yaml.safe_load(text)
         assert "system_name" not in data
 
     def test_empty_frameworks_produces_commented_placeholder(self) -> None:
-        text = generate_evidentia_yaml(
-            organization="Acme", frameworks=[]
-        )
+        text = generate_evidentia_yaml(organization="Acme", frameworks=[])
         assert "# Add at least one framework ID here." in text
         data = yaml.safe_load(text)
         # Empty list in YAML parses to None; both shapes are acceptable.
@@ -200,9 +194,7 @@ class TestRecommendFrameworks:
         assert "nist-800-53-rev5-moderate" in rec
 
     def test_fintech_pci_cde_recommends_pci(self) -> None:
-        rec = recommend_frameworks(
-            industry="fintech", data_classification=["PII", "PCI-CDE"]
-        )
+        rec = recommend_frameworks(industry="fintech", data_classification=["PII", "PCI-CDE"])
         assert "pci-dss-v4" in rec
 
     def test_healthtech_recommends_hipaa(self) -> None:
@@ -211,9 +203,7 @@ class TestRecommendFrameworks:
         assert "hipaa-privacy" in rec
 
     def test_phi_data_recommends_hipaa_regardless_of_industry(self) -> None:
-        rec = recommend_frameworks(
-            industry="saas", data_classification=["PHI"]
-        )
+        rec = recommend_frameworks(industry="saas", data_classification=["PHI"])
         assert "hipaa-security" in rec
 
     def test_govcon_recommends_cmmc_and_800_171(self) -> None:
@@ -222,9 +212,7 @@ class TestRecommendFrameworks:
         assert "nist-800-171-rev2" in rec
 
     def test_cui_data_recommends_cmmc(self) -> None:
-        rec = recommend_frameworks(
-            industry="saas", data_classification=["CUI"]
-        )
+        rec = recommend_frameworks(industry="saas", data_classification=["CUI"])
         assert "cmmc-l2" in rec
 
     def test_gdpr_regulatory_recommends_eu_gdpr(self) -> None:

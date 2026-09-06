@@ -71,30 +71,26 @@ async def _auth_lifespan(app: FastAPI) -> AsyncIterator[None]:
     error rather than a silent fall-through to no-auth.
     """
     if app.state.auth_provider is None:
-        env_token_file = os.environ.get(
-            "EVIDENTIA_API_AUTH_TOKEN_FILE", ""
-        ).strip()
+        env_token_file = os.environ.get("EVIDENTIA_API_AUTH_TOKEN_FILE", "").strip()
         if env_token_file:
             from evidentia_core.plugins.auth.local_token import (
                 LocalTokenAuthProvider,
             )
 
             try:
-                app.state.auth_provider = LocalTokenAuthProvider(
-                    token_file=env_token_file
-                )
+                app.state.auth_provider = LocalTokenAuthProvider(token_file=env_token_file)
             except (FileNotFoundError, ValueError):
                 # Fail loud at startup — operator passed
                 # --auth-token-file but the file is missing /
                 # empty / symlinked. Don't silently fall back to
                 # no-auth.
                 logger.error(
-                    "AuthProvider construction failed at startup "
-                    "(token file %s)",
+                    "AuthProvider construction failed at startup (token file %s)",
                     env_token_file,
                 )
                 raise
     yield
+
 
 STATIC_DIR = Path(__file__).parent / "static"
 """Absolute path to the bundled SPA assets (populated at build time)."""
@@ -166,14 +162,10 @@ def create_app(
         set_offline(True)
 
     if security_headers is None:
-        security_headers = (
-            os.environ.get("EVIDENTIA_API_SECURITY_HEADERS") == "1"
-        )
+        security_headers = os.environ.get("EVIDENTIA_API_SECURITY_HEADERS") == "1"
 
     if trust_proxy_headers is None:
-        trust_proxy_headers = (
-            os.environ.get("EVIDENTIA_TRUST_PROXY_HEADERS") == "1"
-        )
+        trust_proxy_headers = os.environ.get("EVIDENTIA_TRUST_PROXY_HEADERS") == "1"
 
     # v0.9.5 P3.3: optional RBAC policy. When
     # EVIDENTIA_RBAC_POLICY_FILE is set, load the policy at app-
@@ -191,16 +183,13 @@ def create_app(
     from evidentia_core.rbac import DEFAULT_POLICY, load_rbac_policy_auto
 
     rbac_policy: object = DEFAULT_POLICY
-    rbac_policy_file_env = os.environ.get(
-        "EVIDENTIA_RBAC_POLICY_FILE", ""
-    ).strip()
+    rbac_policy_file_env = os.environ.get("EVIDENTIA_RBAC_POLICY_FILE", "").strip()
     if rbac_policy_file_env:
         try:
             rbac_policy = load_rbac_policy_auto(Path(rbac_policy_file_env))
         except (FileNotFoundError, ValueError) as exc:
             logger.error(
-                "RBAC policy load failed (%s); falling back to default "
-                "permissive policy",
+                "RBAC policy load failed (%s); falling back to default permissive policy",
                 exc,
             )
 
@@ -417,25 +406,15 @@ def create_app(
     app.include_router(config_router.router, prefix="/api", tags=["config"])
     app.include_router(doctor_router.router, prefix="/api", tags=["doctor"])
     app.include_router(llm_status_router.router, prefix="/api", tags=["llm"])
-    app.include_router(
-        frameworks_router.router, prefix="/api", tags=["frameworks"]
-    )
+    app.include_router(frameworks_router.router, prefix="/api", tags=["frameworks"])
     app.include_router(gaps_router.router, prefix="/api", tags=["gaps"])
     app.include_router(risks_router.router, prefix="/api", tags=["risks"])
     app.include_router(explain_router.router, prefix="/api", tags=["explain"])
-    app.include_router(
-        init_wizard_router.router, prefix="/api", tags=["init"]
-    )
-    app.include_router(
-        integrations_router.router, prefix="/api", tags=["integrations"]
-    )
-    app.include_router(
-        collectors_router.router, prefix="/api", tags=["collectors"]
-    )
+    app.include_router(init_wizard_router.router, prefix="/api", tags=["init"])
+    app.include_router(integrations_router.router, prefix="/api", tags=["integrations"])
+    app.include_router(collectors_router.router, prefix="/api", tags=["collectors"])
     app.include_router(tprm_router.router, prefix="/api", tags=["tprm"])
-    app.include_router(
-        model_risk_router.router, prefix="/api", tags=["model-risk"]
-    )
+    app.include_router(model_risk_router.router, prefix="/api", tags=["model-risk"])
     app.include_router(poam_router.router, prefix="/api", tags=["poam"])
     app.include_router(conmon_router.router, prefix="/api", tags=["conmon"])
     app.include_router(ai_gov_router.router, prefix="/api", tags=["ai-gov"])
@@ -443,15 +422,9 @@ def create_app(
     # evidence). Evidence is the first router to adopt per-route RBAC
     # (require_role), mirroring its CLI @require_role_cli gates; governance +
     # retention gate mutations write/admin per the v0.10.12 threat-model.
-    app.include_router(
-        governance_router.router, prefix="/api", tags=["governance"]
-    )
-    app.include_router(
-        retention_router.router, prefix="/api", tags=["retention"]
-    )
-    app.include_router(
-        evidence_router.router, prefix="/api", tags=["evidence"]
-    )
+    app.include_router(governance_router.router, prefix="/api", tags=["governance"])
+    app.include_router(retention_router.router, prefix="/api", tags=["retention"])
+    app.include_router(evidence_router.router, prefix="/api", tags=["evidence"])
     # v0.10.12 Wave 2 — catalog management verbs (crosswalk/where/license-info
     # reads + import/remove local writes). Distinct from the read-only
     # `frameworks` browse router.
@@ -459,9 +432,7 @@ def create_app(
     # v0.10.12 Wave 3 — read-only OSCAL verify + unsigned traceability emit
     # (signing stays CLI-only; these back the read-mostly GUI views).
     app.include_router(oscal_router.router, prefix="/api", tags=["oscal"])
-    app.include_router(
-        traceability_router.router, prefix="/api", tags=["traceability"]
-    )
+    app.include_router(traceability_router.router, prefix="/api", tags=["traceability"])
 
     # Static SPA mount — everything that isn't /api/* falls through to index.html.
     _mount_spa(app)

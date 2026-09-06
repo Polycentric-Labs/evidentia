@@ -72,9 +72,9 @@ class TestCheckSubjectCapitalized:
 
     # Subjects that MUST fail (return a non-None message).
     FAIL_SUBJECTS: ClassVar[list[str]] = [
-        "feat(x): add a thing",          # → should be "Add"
-        "docs: update the readme",       # → should be "Update"
-        "new thing without type",        # → should be "New"
+        "feat(x): add a thing",  # → should be "Add"
+        "docs: update the readme",  # → should be "Update"
+        "new thing without type",  # → should be "New"
     ]
 
     @pytest.mark.parametrize("subject", PASS_SUBJECTS)
@@ -103,7 +103,7 @@ class TestCheckSubjectCapitalized:
         [
             "Merge branch 'develop' into main",
             "Merge pull request #42 from foo/bar",
-            "Revert \"feat: add a thing\"",
+            'Revert "feat: add a thing"',
             "fixup! feat: add a thing",
             "squash! refactor: clean up",
             "amend! docs: update",
@@ -135,9 +135,9 @@ class TestCheckSubjectCapitalized:
     @pytest.mark.parametrize(
         "subject",
         [
-            "feat: 3D rendering support",        # leading digit
-            "fix: 64-bit offset handling",       # leading digit
-            "chore: (2026) refresh copyright",   # paren skipped → digit leads
+            "feat: 3D rendering support",  # leading digit
+            "fix: 64-bit offset handling",  # leading digit
+            "chore: (2026) refresh copyright",  # paren skipped → digit leads
         ],
     )
     def test_leading_non_alpha_not_flagged(self, cdh: Any, subject: str) -> None:
@@ -149,12 +149,10 @@ class TestCheckSubjectCapitalized:
         "subject",
         [
             "fix: (regression) restore output",  # skip '(' → "regression" lower
-            "chore: \"quoted\" leading token",   # skip '\"' → "quoted" lower
+            'chore: "quoted" leading token',  # skip '\"' → "quoted" lower
         ],
     )
-    def test_lowercase_word_after_opening_punct_flagged(
-        self, cdh: Any, subject: str
-    ) -> None:
+    def test_lowercase_word_after_opening_punct_flagged(self, cdh: Any, subject: str) -> None:
         assert cdh.check_subject_capitalized(subject) is not None, subject
 
     def test_empty_and_blank_pass(self, cdh: Any) -> None:
@@ -203,9 +201,7 @@ class TestRunCommitMsgHookCapCheck:
         gated behind the phrase config)."""
         absent = cdh.PhraseConfig.empty()
         assert not absent.is_loaded
-        monkeypatch.setattr(
-            cdh, "load_phrase_config", lambda: (absent, None)
-        )
+        monkeypatch.setattr(cdh, "load_phrase_config", lambda: (absent, None))
         bad = tmp_path / "BAD"
         bad.write_text("docs: update the readme\n", encoding="utf-8")
         assert cdh.run_commit_msg_hook_check(str(bad)) == 2

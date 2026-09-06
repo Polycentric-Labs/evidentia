@@ -104,33 +104,20 @@ class OpenFAIRScenario(EvidentiaModel):
     """
 
     id: str = Field(default_factory=new_id)
-    name: str = Field(
-        description="Short scenario name (e.g., 'Credential stuffing on customer login')."
-    )
-    description: str = Field(
-        description="Full scenario narrative covering threat, asset, + impact."
-    )
+    name: str = Field(description="Short scenario name (e.g., 'Credential stuffing on customer login').")
+    description: str = Field(description="Full scenario narrative covering threat, asset, + impact.")
 
     # FAIR loss-event frequency (LEF) factors
     tef: float | PERTRange = Field(
-        description=(
-            "Threat Event Frequency: events/year that threat actors "
-            "attempt this attack. Scalar OR PERTRange."
-        )
+        description=("Threat Event Frequency: events/year that threat actors attempt this attack. Scalar OR PERTRange.")
     )
     vulnerability: float | PERTRange = Field(
-        description=(
-            "Vulnerability: probability (0-1) the attempt succeeds "
-            "given controls. Scalar OR PERTRange."
-        )
+        description=("Vulnerability: probability (0-1) the attempt succeeds given controls. Scalar OR PERTRange.")
     )
 
     # FAIR loss-magnitude (LM) factors
     primary_loss: float | PERTRange = Field(
-        description=(
-            "Primary Loss ($): direct response + replacement costs "
-            "from one event. Scalar OR PERTRange."
-        )
+        description=("Primary Loss ($): direct response + replacement costs from one event. Scalar OR PERTRange.")
     )
     secondary_loss: float | PERTRange = Field(
         default=0.0,
@@ -214,10 +201,7 @@ def _format_currency(amount: float) -> str:
 def _format_factor(value: float | PERTRange, unit: str) -> str:
     """Render a scalar-or-range factor in a single human-readable line."""
     if isinstance(value, PERTRange):
-        return (
-            f"PERT(low={value.low}, most_likely={value.most_likely}, "
-            f"high={value.high}) → {value.mean():.4f} {unit}"
-        )
+        return f"PERT(low={value.low}, most_likely={value.most_likely}, high={value.high}) → {value.mean():.4f} {unit}"
     return f"{value} {unit}"
 
 
@@ -276,9 +260,7 @@ def generate_risk_quantification_report(
         f"**Total Annualized Loss Expectancy (ALE)**: "
         f"{_format_currency(total_ale)}\n\n"
         "| Risk category | Scenario count |\n"
-        "| --- | --- |\n"
-        + cat_rows
-        + f"\n| **Total** | **{len(scenarios)}** |\n"
+        "| --- | --- |\n" + cat_rows + f"\n| **Total** | **{len(scenarios)}** |\n"
     )
 
     # ── §2 Per-scenario detail ───────────────────────────────────

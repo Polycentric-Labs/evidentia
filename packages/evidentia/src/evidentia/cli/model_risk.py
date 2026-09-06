@@ -54,9 +54,7 @@ from evidentia.cli._editor import resolve_editor_or_exit
 app = typer.Typer(help="Model Risk Management commands (SR 11-7 / SR 26-02).")
 model_app = typer.Typer(help="Model inventory commands.")
 doc_app = typer.Typer(help="Model documentation generators (SR 11-7 §III.A).")
-validation_app = typer.Typer(
-    help="Validation report generators (SR 11-7 §III.D)."
-)
+validation_app = typer.Typer(help="Validation report generators (SR 11-7 §III.D).")
 app.add_typer(model_app, name="model")
 app.add_typer(doc_app, name="doc")
 app.add_typer(validation_app, name="validation-report")
@@ -80,10 +78,7 @@ def _parse_date_or_exit(value: str | None, flag: str) -> date | None:
     try:
         return date.fromisoformat(value)
     except ValueError as e:
-        console.print(
-            f"[red]Error:[/red] {flag} must be ISO-8601 date "
-            f"(YYYY-MM-DD); got {value!r}: {e}"
-        )
+        console.print(f"[red]Error:[/red] {flag} must be ISO-8601 date (YYYY-MM-DD); got {value!r}: {e}")
         raise typer.Exit(code=1) from e
 
 
@@ -127,16 +122,10 @@ def _render_model_show(m: ModelInventory) -> None:
     console.print(f"  Tier:               [cyan]{m.tier}[/cyan]")
     console.print(f"  Provenance:         [cyan]{m.vendor_or_internal}[/cyan]")
     if m.vendor_id:
-        console.print(
-            f"  Vendor cross-link:  [yellow]{m.vendor_id}[/yellow]"
-        )
+        console.print(f"  Vendor cross-link:  [yellow]{m.vendor_id}[/yellow]")
     console.print(f"  Owner:              {m.owner}")
-    console.print(
-        f"  Last validation:    {m.last_validation_date or '[dim](none)[/dim]'}"
-    )
-    console.print(
-        f"  Next validation:    {m.next_validation_due or '[dim](unset)[/dim]'}"
-    )
+    console.print(f"  Last validation:    {m.last_validation_date or '[dim](none)[/dim]'}")
+    console.print(f"  Next validation:    {m.next_validation_due or '[dim](unset)[/dim]'}")
     if m.inputs:
         console.print(f"  Inputs ({len(m.inputs)}):")
         for inp in m.inputs:
@@ -146,46 +135,26 @@ def _render_model_show(m: ModelInventory) -> None:
             if inp.data_classification:
                 extras.append(f"class={inp.data_classification}")
             extra_str = f" [dim]({'; '.join(extras)})[/dim]" if extras else ""
-            console.print(
-                f"    - {inp.name} from {inp.source_system}{extra_str}"
-            )
+            console.print(f"    - {inp.name} from {inp.source_system}{extra_str}")
     if m.outputs:
         console.print(f"  Outputs ({len(m.outputs)}):")
         for out in m.outputs:
-            consumers = (
-                f" → {', '.join(out.downstream_consumers)}"
-                if out.downstream_consumers
-                else ""
-            )
-            console.print(
-                f"    - {out.name} ({out.decision_type}){consumers}"
-            )
+            consumers = f" → {', '.join(out.downstream_consumers)}" if out.downstream_consumers else ""
+            console.print(f"    - {out.name} ({out.decision_type}){consumers}")
     if m.validation_findings:
-        console.print(
-            f"  Validation findings ({len(m.validation_findings)}):"
-        )
+        console.print(f"  Validation findings ({len(m.validation_findings)}):")
         for f in m.validation_findings:
-            console.print(
-                f"    - [{f.severity}] {f.title} "
-                f"[dim]({f.status}; detected {f.detected_at})[/dim]"
-            )
+            console.print(f"    - [{f.severity}] {f.title} [dim]({f.status}; detected {f.detected_at})[/dim]")
     if m.retirement_plan:
         console.print(f"  Retirement plan:    {m.retirement_plan}")
     if m.evidence_refs:
         console.print(f"  Evidence refs ({len(m.evidence_refs)}):")
         for ref in m.evidence_refs:
-            tag = (
-                f"artifact={ref.artifact_id}"
-                if ref.artifact_id
-                else f"file={ref.file_path}"
-            )
+            tag = f"artifact={ref.artifact_id}" if ref.artifact_id else f"file={ref.file_path}"
             console.print(f"    - {ref.title} [dim]({tag})[/dim]")
     if m.notes:
         console.print(f"  Notes: {m.notes}")
-    console.print(
-        f"  [dim]Created: {m.created_at}  Updated: {m.updated_at}  "
-        f"evidentia: {m.evidentia_version}[/dim]"
-    )
+    console.print(f"  [dim]Created: {m.created_at}  Updated: {m.updated_at}  evidentia: {m.evidentia_version}[/dim]")
 
 
 def _load_model_or_exit(model_id: str) -> ModelInventory:
@@ -196,9 +165,7 @@ def _load_model_or_exit(model_id: str) -> ModelInventory:
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e
     if loaded is None:
-        console.print(
-            f"[red]Error:[/red] No model with ID {model_id!r} found in the store."
-        )
+        console.print(f"[red]Error:[/red] No model with ID {model_id!r} found in the store.")
         raise typer.Exit(code=1)
     return loaded
 
@@ -218,25 +185,18 @@ def model_add(
         None,
         "--methodology",
         "-m",
-        help=(
-            f"Model methodology. One of: "
-            f"{', '.join(t.value for t in Methodology)}."
-        ),
+        help=(f"Model methodology. One of: {', '.join(t.value for t in Methodology)}."),
     ),
     vendor_or_internal: str | None = typer.Option(
         None,
         "--vendor-or-internal",
-        help=(
-            f"Provenance. One of: "
-            f"{', '.join(p.value for p in Provenance)}."
-        ),
+        help=(f"Provenance. One of: {', '.join(p.value for p in Provenance)}."),
     ),
     vendor_id: str | None = typer.Option(
         None,
         "--vendor-id",
         help=(
-            "Required for `vendor` provenance: cross-link to TPRM "
-            "Vendor.id. MUST be omitted for `internal` provenance."
+            "Required for `vendor` provenance: cross-link to TPRM Vendor.id. MUST be omitted for `internal` provenance."
         ),
     ),
     tier: str | None = typer.Option(
@@ -273,14 +233,9 @@ def model_add(
     retirement_plan: str | None = typer.Option(
         None,
         "--retirement-plan",
-        help=(
-            "Per SR 11-7 §III.C ongoing-monitoring expectations: "
-            "documented retirement / replacement plan."
-        ),
+        help=("Per SR 11-7 §III.C ongoing-monitoring expectations: documented retirement / replacement plan."),
     ),
-    notes: str | None = typer.Option(
-        None, "--notes", help="Free-text model notes."
-    ),
+    notes: str | None = typer.Option(None, "--notes", help="Free-text model notes."),
     from_yaml: Path | None = typer.Option(
         None,
         "--from-yaml",
@@ -317,9 +272,7 @@ def model_add(
 
         data = yaml_mod.safe_load(from_yaml.read_text(encoding="utf-8")) or {}
         if not isinstance(data, dict):
-            console.print(
-                "[red]Error:[/red] --from-yaml file must be a YAML mapping at the top level."
-            )
+            console.print("[red]Error:[/red] --from-yaml file must be a YAML mapping at the top level.")
             raise typer.Exit(code=1)
         # Atomic flags override YAML-supplied values when both are set.
         if name:
@@ -365,10 +318,7 @@ def model_add(
             if not val
         ]
         if missing:
-            console.print(
-                f"[red]Error:[/red] Missing required field(s): "
-                f"{', '.join(missing)}. (Or pass --from-yaml.)"
-            )
+            console.print(f"[red]Error:[/red] Missing required field(s): {', '.join(missing)}. (Or pass --from-yaml.)")
             raise typer.Exit(code=1)
         try:
             model = ModelInventory.model_validate(
@@ -380,12 +330,8 @@ def model_add(
                     "vendor_id": vendor_id,
                     "tier": tier,
                     "owner": owner,
-                    "last_validation_date": (
-                        lvd.isoformat() if lvd else None
-                    ),
-                    "next_validation_due": (
-                        nvd.isoformat() if nvd else None
-                    ),
+                    "last_validation_date": (lvd.isoformat() if lvd else None),
+                    "next_validation_due": (nvd.isoformat() if nvd else None),
                     "retirement_plan": retirement_plan,
                     "notes": notes,
                 }
@@ -400,10 +346,7 @@ def model_add(
         model.next_validation_due = model.compute_next_validation_due()
 
     save_model(model)
-    console.print(
-        f"[green]Added[/green] model [bold]{model.name}[/bold] "
-        f"(id: [dim]{model.id}[/dim])"
-    )
+    console.print(f"[green]Added[/green] model [bold]{model.name}[/bold] (id: [dim]{model.id}[/dim])")
 
 
 # ── list ───────────────────────────────────────────────────────────
@@ -443,11 +386,7 @@ def model_list(
         models = [m for m in models if m.methodology == methodology_filter]
 
     if json_output:
-        sys.stdout.write(
-            json.dumps(
-                [m.model_dump(mode="json") for m in models], indent=2
-            )
-        )
+        sys.stdout.write(json.dumps([m.model_dump(mode="json") for m in models], indent=2))
         sys.stdout.write("\n")
         return
     console.print(_render_model_table(models))
@@ -459,9 +398,7 @@ def model_list(
 @model_app.command("show")
 def model_show(
     model_id: str = typer.Argument(..., help="Model ID (UUID)."),
-    json_output: bool = typer.Option(
-        False, "--json", help="Emit JSON instead of formatted output."
-    ),
+    json_output: bool = typer.Option(False, "--json", help="Emit JSON instead of formatted output."),
 ) -> None:
     """Show a single model record."""
     m = _load_model_or_exit(model_id)
@@ -483,9 +420,7 @@ def model_edit(
     methodology: str | None = typer.Option(None, "--methodology"),
     tier: str | None = typer.Option(None, "--tier"),
     owner: str | None = typer.Option(None, "--owner"),
-    last_validation_date: str | None = typer.Option(
-        None, "--last-validation-date", help="YYYY-MM-DD"
-    ),
+    last_validation_date: str | None = typer.Option(None, "--last-validation-date", help="YYYY-MM-DD"),
     next_validation_due: str | None = typer.Option(
         None,
         "--next-validation-due",
@@ -504,10 +439,7 @@ def model_edit(
         file_okay=True,
         dir_okay=False,
         readable=True,
-        help=(
-            "Replace the model record from a YAML file (full replace; "
-            "preserves the original ID + created_at)."
-        ),
+        help=("Replace the model record from a YAML file (full replace; preserves the original ID + created_at)."),
     ),
     editor: bool = typer.Option(
         False,
@@ -551,8 +483,7 @@ def model_edit(
         raise typer.Exit(code=1)
     if modes_chosen > 1:
         console.print(
-            "[red]Error:[/red] Modes are mutually exclusive: pick one of "
-            "--from-yaml / --editor / atomic flags."
+            "[red]Error:[/red] Modes are mutually exclusive: pick one of --from-yaml / --editor / atomic flags."
         )
         raise typer.Exit(code=1)
 
@@ -575,9 +506,7 @@ def model_edit(
         # via the shared allowlist-aware helper to mitigate the
         # CWE-78 risk-amplifier path.
         editor_argv = resolve_editor_or_exit()
-        with tempfile.NamedTemporaryFile(
-            mode="w+", suffix=".yaml", delete=False, encoding="utf-8"
-        ) as tmp:
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False, encoding="utf-8") as tmp:
             tmp.write(
                 yaml_mod.safe_dump(
                     model.model_dump(mode="json"),
@@ -590,15 +519,11 @@ def model_edit(
             subprocess.run([*editor_argv, str(tmp_path)], check=True)
             edited_text = tmp_path.read_text(encoding="utf-8").strip()
             if not edited_text:
-                console.print(
-                    "[yellow]Editor returned empty content; aborting edit.[/yellow]"
-                )
+                console.print("[yellow]Editor returned empty content; aborting edit.[/yellow]")
                 raise typer.Exit(code=1)
             data = yaml_mod.safe_load(edited_text)
             if not isinstance(data, dict):
-                console.print(
-                    "[red]Error:[/red] Edited content must be a YAML mapping."
-                )
+                console.print("[red]Error:[/red] Edited content must be a YAML mapping.")
                 raise typer.Exit(code=1)
             data["id"] = model.id
             data["created_at"] = model.created_at.isoformat()
@@ -617,9 +542,7 @@ def model_edit(
             model.purpose = purpose
         if methodology is not None:
             if methodology not in {e.value for e in Methodology}:
-                console.print(
-                    f"[red]Error:[/red] Unknown methodology {methodology!r}."
-                )
+                console.print(f"[red]Error:[/red] Unknown methodology {methodology!r}.")
                 raise typer.Exit(code=1)
             model.methodology = methodology  # type: ignore[assignment]
         if tier is not None:
@@ -630,13 +553,9 @@ def model_edit(
         if owner is not None:
             model.owner = owner
         if last_validation_date is not None:
-            model.last_validation_date = _parse_date_or_exit(
-                last_validation_date, "--last-validation-date"
-            )
+            model.last_validation_date = _parse_date_or_exit(last_validation_date, "--last-validation-date")
         if next_validation_due is not None:
-            model.next_validation_due = _parse_date_or_exit(
-                next_validation_due, "--next-validation-due"
-            )
+            model.next_validation_due = _parse_date_or_exit(next_validation_due, "--next-validation-due")
         if retirement_plan is not None:
             model.retirement_plan = retirement_plan
         if notes is not None:
@@ -644,17 +563,11 @@ def model_edit(
 
     # Re-compute next_validation_due if the anchor changed AND the
     # operator didn't explicitly supply --next-validation-due.
-    if (
-        model.last_validation_date
-        and next_validation_due is None
-    ):
+    if model.last_validation_date and next_validation_due is None:
         model.next_validation_due = model.compute_next_validation_due()
 
     save_model(model)
-    console.print(
-        f"[green]Updated[/green] model [bold]{model.name}[/bold] "
-        f"(id: [dim]{model.id}[/dim])"
-    )
+    console.print(f"[green]Updated[/green] model [bold]{model.name}[/bold] (id: [dim]{model.id}[/dim])")
 
 
 # ── delete ─────────────────────────────────────────────────────────
@@ -686,15 +599,11 @@ def model_delete(
             raise typer.Exit(code=0)
     deleted = delete_model(model_id)
     if deleted:
-        console.print(
-            f"[green]Deleted[/green] model [bold]{model.name}[/bold]."
-        )
+        console.print(f"[green]Deleted[/green] model [bold]{model.name}[/bold].")
     else:
         # Should never happen — _load_model_or_exit confirmed it
         # exists. Defensive.
-        console.print(
-            f"[yellow]No record removed for ID {model_id!r}.[/yellow]"
-        )
+        console.print(f"[yellow]No record removed for ID {model_id!r}.[/yellow]")
 
 
 # ── doc generate (v0.7.10 P0.6.2) ──────────────────────────────────
@@ -738,17 +647,12 @@ def doc_generate(
         return
 
     if output.exists() and not force:
-        console.print(
-            f"[red]Error:[/red] {output} already exists; pass --force to overwrite."
-        )
+        console.print(f"[red]Error:[/red] {output} already exists; pass --force to overwrite.")
         raise typer.Exit(code=1)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(rendered, encoding="utf-8")
-    console.print(
-        f"[green]Wrote[/green] model documentation to [bold]{output}[/bold] "
-        f"({len(rendered)} chars)."
-    )
+    console.print(f"[green]Wrote[/green] model documentation to [bold]{output}[/bold] ({len(rendered)} chars).")
 
 
 # ── validation-report generate (v0.7.10 P0.6.3) ────────────────────
@@ -790,15 +694,9 @@ def validation_report_generate(
         return
 
     if output.exists() and not force:
-        console.print(
-            f"[red]Error:[/red] {output} already exists; pass --force to overwrite."
-        )
+        console.print(f"[red]Error:[/red] {output} already exists; pass --force to overwrite.")
         raise typer.Exit(code=1)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(rendered, encoding="utf-8")
-    console.print(
-        f"[green]Wrote[/green] validation report to [bold]{output}[/bold] "
-        f"({len(rendered)} chars)."
-    )
-
+    console.print(f"[green]Wrote[/green] validation report to [bold]{output}[/bold] ({len(rendered)} chars).")

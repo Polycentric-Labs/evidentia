@@ -73,9 +73,7 @@ from evidentia_core.models.tprm import Vendor, VendorType
 # the vendor — and the concentration CSV that gets shared with
 # regulators / auditors — cannot be weaponized via a crafted vendor
 # name or 4th-party name.
-_CSV_FORMULA_LEAD_CHARS: frozenset[str] = frozenset(
-    ["=", "+", "-", "@", "\t", "\r"]
-)
+_CSV_FORMULA_LEAD_CHARS: frozenset[str] = frozenset(["=", "+", "-", "@", "\t", "\r"])
 
 
 def _csv_safe(value: object) -> str:
@@ -120,10 +118,7 @@ class ValueCount(EvidentiaModel):
     value: str = Field(description="The dimension value (e.g., 'aws', 'us-east-1').")
     count: int = Field(
         ge=0,
-        description=(
-            "Number of distinct vendors carrying this value on this "
-            "dimension."
-        ),
+        description=("Number of distinct vendors carrying this value on this dimension."),
     )
     percentage: float = Field(
         ge=0.0,
@@ -137,10 +132,7 @@ class ValueCount(EvidentiaModel):
     )
     exceeds_threshold: bool = Field(
         default=False,
-        description=(
-            "True when the report's threshold was set and this value's "
-            "percentage meets-or-exceeds it."
-        ),
+        description=("True when the report's threshold was set and this value's percentage meets-or-exceeds it."),
     )
 
 
@@ -184,9 +176,7 @@ class ConcentrationReport(EvidentiaModel):
         default_factory=utc_now,
         description="Report-generation timestamp (UTC).",
     )
-    total_vendors: int = Field(
-        ge=0, description="Total vendor count this report was computed against."
-    )
+    total_vendors: int = Field(ge=0, description="Total vendor count this report was computed against.")
     threshold: float | None = Field(
         default=None,
         description=(
@@ -208,9 +198,7 @@ class ConcentrationReport(EvidentiaModel):
 # ── extraction ────────────────────────────────────────────────────
 
 
-def _extract_values_for_dimension(
-    vendor: Vendor, dimension: str
-) -> list[str]:
+def _extract_values_for_dimension(vendor: Vendor, dimension: str) -> list[str]:
     """Return the set of value labels a vendor contributes for a dimension.
 
     Multi-valued dimensions (``4th-party``, ``cloud-provider``,
@@ -254,10 +242,7 @@ def _extract_values_for_dimension(
             if str(fp.type) == VendorType.CLOUD_PROVIDER.value:
                 out.append(f"{fp.name} (4th-party)")
         return out
-    raise ValueError(
-        f"Unsupported concentration dimension {dimension!r}; "
-        f"valid: {sorted(SUPPORTED_DIMENSIONS)}"
-    )
+    raise ValueError(f"Unsupported concentration dimension {dimension!r}; valid: {sorted(SUPPORTED_DIMENSIONS)}")
 
 
 # ── core ──────────────────────────────────────────────────────────
@@ -291,14 +276,9 @@ def compute_concentration(
     # before failing.
     bad = [d for d in dimensions if d not in SUPPORTED_DIMENSIONS]
     if bad:
-        raise ValueError(
-            f"Unsupported dimension(s) {bad!r}; "
-            f"valid: {sorted(SUPPORTED_DIMENSIONS)}"
-        )
+        raise ValueError(f"Unsupported dimension(s) {bad!r}; valid: {sorted(SUPPORTED_DIMENSIONS)}")
     if threshold is not None and not (0.0 <= threshold <= 100.0):
-        raise ValueError(
-            f"threshold must be in [0.0, 100.0]; got {threshold}"
-        )
+        raise ValueError(f"threshold must be in [0.0, 100.0]; got {threshold}")
 
     vendor_list = list(vendors)
     total = len(vendor_list)
@@ -319,9 +299,7 @@ def compute_concentration(
             count = len(vendor_ids)
             pct = (count / total * 100.0) if total > 0 else 0.0
             pct_rounded = round(pct, 1)
-            exceeds = (
-                threshold is not None and pct_rounded >= threshold
-            )
+            exceeds = threshold is not None and pct_rounded >= threshold
             distribution.append(
                 ValueCount(
                     value=value,
@@ -424,9 +402,7 @@ def _render_dimension_html(dim: DimensionAnalysis) -> str:
         f"<strong>{dim.vendors_with_value}</strong> vendor(s). "
     )
     if flagged:
-        summary += (
-            f'<span class="flag">{flagged} value(s) exceed the threshold.</span>'
-        )
+        summary += f'<span class="flag">{flagged} value(s) exceed the threshold.</span>'
     summary += "</div>"
 
     rows = []
@@ -444,12 +420,12 @@ def _render_dimension_html(dim: DimensionAnalysis) -> str:
     table = (
         f"<h2>Dimension: {html.escape(dim.dimension)}</h2>"
         + summary
-        + '<table><thead><tr>'
+        + "<table><thead><tr>"
         + '<th data-sort="text">Value</th>'
         + '<th data-sort="number">Vendor count</th>'
         + '<th data-sort="number">Percentage</th>'
-        + '<th>Flag</th>'
-        + '</tr></thead><tbody>'
+        + "<th>Flag</th>"
+        + "</tr></thead><tbody>"
         + "".join(rows)
         + "</tbody></table>"
     )
@@ -463,12 +439,8 @@ def render_html_report(report: ConcentrationReport) -> str:
     No external dependencies — drop into any browser. HTML-escapes all
     user-supplied vendor + value names.
     """
-    threshold_label = (
-        f"≥{report.threshold}%" if report.threshold is not None else "n/a"
-    )
-    sections = "\n".join(
-        _render_dimension_html(d) for d in report.dimensions
-    )
+    threshold_label = f"≥{report.threshold}%" if report.threshold is not None else "n/a"
+    sections = "\n".join(_render_dimension_html(d) for d in report.dimensions)
     return _HTML_TEMPLATE.format(
         generated_at=html.escape(report.generated_at.isoformat()),
         total_vendors=report.total_vendors,
@@ -491,9 +463,7 @@ def render_csv_report(report: ConcentrationReport) -> str:
     """
     buf = io.StringIO()
     writer = csv.writer(buf)
-    writer.writerow(
-        ["dimension", "value", "count", "percentage", "exceeds_threshold"]
-    )
+    writer.writerow(["dimension", "value", "count", "percentage", "exceeds_threshold"])
     for dim in report.dimensions:
         for vc in dim.distribution:
             # Apply _csv_safe to the only user-supplied cell — `vc.value`

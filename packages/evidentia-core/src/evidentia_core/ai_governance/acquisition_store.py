@@ -53,10 +53,7 @@ def _validate_id_shape(acquisition_id: str) -> str:
     try:
         return str(UUID(acquisition_id))
     except (ValueError, AttributeError, TypeError) as exc:
-        raise InvalidAcquisitionIdError(
-            f"Invalid acquisition ID format (expected UUID): "
-            f"{acquisition_id!r}"
-        ) from exc
+        raise InvalidAcquisitionIdError(f"Invalid acquisition ID format (expected UUID): {acquisition_id!r}") from exc
 
 
 def get_ai_acquisition_dir(override: Path | None = None) -> Path:
@@ -115,9 +112,7 @@ class AIAcquisitionStore:
         path = validate_within(candidate, self._dir)
         if not path.is_file():
             return None
-        return AIAcquisition.model_validate_json(
-            path.read_text(encoding="utf-8")
-        )
+        return AIAcquisition.model_validate_json(path.read_text(encoding="utf-8"))
 
     def list_all(self) -> list[AIAcquisition]:
         """Return every record, sorted by ``created_at`` ascending.
@@ -127,11 +122,7 @@ class AIAcquisitionStore:
         records: list[AIAcquisition] = []
         for path in sorted(self._dir.glob("*.json")):
             try:
-                records.append(
-                    AIAcquisition.model_validate_json(
-                        path.read_text(encoding="utf-8")
-                    )
-                )
+                records.append(AIAcquisition.model_validate_json(path.read_text(encoding="utf-8")))
             except Exception as exc:  # pragma: no cover — defensive
                 logger.warning(
                     "Skipping malformed AI acquisition file %s: %s",

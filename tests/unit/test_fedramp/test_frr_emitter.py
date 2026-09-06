@@ -43,9 +43,7 @@ def _status(
     requirements: dict[str, Any] | None = None,
 ) -> KsiStatusDocument:
     body: dict[str, Any] = {
-        "certification_package_overview_uri": (
-            "https://provider.example/fedramp/cpo.json"
-        ),
+        "certification_package_overview_uri": ("https://provider.example/fedramp/cpo.json"),
         "document_version": "1.0.0",
         "source": "unit tests",
         "indicators": indicators or {"KSI-CED-RAT": {"implementation": ["m."]}},
@@ -181,9 +179,7 @@ class TestEmitFrrBlock:
 
 class TestFrrCoverage:
     def test_coverage_counts_against_the_provider_scoped_catalog(self) -> None:
-        cov = frr_coverage(
-            _status(requirements={A_REAL_FRR_ID: {"implementation": ["x"]}})
-        )
+        cov = frr_coverage(_status(requirements={A_REAL_FRR_ID: {"implementation": ["x"]}}))
         assert cov.total == len(load_frr_catalog().controls)
         assert cov.addressed == 1
         assert A_REAL_FRR_ID not in cov.missing

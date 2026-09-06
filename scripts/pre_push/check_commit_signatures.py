@@ -86,22 +86,13 @@ def main(argv: list[str]) -> int:
         if status in BLOCK_STATUSES:
             bad.append((sha[:9], status, subject))
 
-    print(
-        f"check_commit_signatures: {len(lines)} commit(s) in range; "
-        f"{len(bad)} unsigned/bad."
-    )
+    print(f"check_commit_signatures: {len(lines)} commit(s) in range; {len(bad)} unsigned/bad.")
     if bad:
         print("  Commits with no valid signature (N = none, B = bad):")
         for sha, status, subject in bad:
             print(f"    {sha} [{status}] {subject}")
-        print(
-            "  These are UNPUSHED — sign them before pushing. With "
-            "commit.gpgsign=true + a registered key:"
-        )
-        print(
-            "    git rebase --exec 'git commit --amend --no-edit -S' "
-            f"{base or 'origin/main'}"
-        )
+        print("  These are UNPUSHED — sign them before pushing. With commit.gpgsign=true + a registered key:")
+        print(f"    git rebase --exec 'git commit --amend --no-edit -S' {base or 'origin/main'}")
         return 1
     return 0
 

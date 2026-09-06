@@ -111,9 +111,7 @@ def test_collect_ocsf_invalid_json_raises(server: FastMCP, tmp_path: Path) -> No
 # ── tprm_vendor_list ──────────────────────────────────────────────────
 
 
-def test_tprm_vendor_list_empty_store(
-    server: FastMCP, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_tprm_vendor_list_empty_store(server: FastMCP, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """When the vendor store is empty, returns an empty list (no error)."""
     monkeypatch.setenv("EVIDENTIA_VENDOR_STORE_DIR", str(tmp_path / "vendors"))
     fn = _tool_fn(server, "tprm_vendor_list")
@@ -148,18 +146,14 @@ def test_tprm_vendor_list_returns_stored_vendors(
 # ── poam_list ─────────────────────────────────────────────────────────
 
 
-def test_poam_list_empty_store(
-    server: FastMCP, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_poam_list_empty_store(server: FastMCP, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """When the POA&M store is empty, returns an empty list (no error)."""
     monkeypatch.setenv("EVIDENTIA_POAM_STORE_DIR", str(tmp_path / "poams"))
     fn = _tool_fn(server, "poam_list")
     assert fn() == []
 
 
-def test_poam_list_returns_stored_poams(
-    server: FastMCP, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_poam_list_returns_stored_poams(server: FastMCP, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from evidentia_core.models.gap import (
         ControlGap,
         GapSeverity,

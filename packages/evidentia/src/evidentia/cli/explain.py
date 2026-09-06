@@ -48,10 +48,7 @@ def explain_control(
         None,
         "--model",
         "-m",
-        help=(
-            "LLM model. Defaults to $EVIDENTIA_LLM_MODEL, then "
-            "evidentia.yaml llm.model, then 'gpt-4o'."
-        ),
+        help=("LLM model. Defaults to $EVIDENTIA_LLM_MODEL, then evidentia.yaml llm.model, then 'gpt-4o'."),
     ),
     refresh: bool = typer.Option(
         False,
@@ -80,9 +77,7 @@ def explain_control(
     from evidentia_core.config import EvidentiaConfig, get_default
 
     cfg_obj = ctx.obj.get("config") if ctx.obj else None
-    cfg: EvidentiaConfig = (
-        cfg_obj if cfg_obj is not None else EvidentiaConfig()
-    )
+    cfg: EvidentiaConfig = cfg_obj if cfg_obj is not None else EvidentiaConfig()
 
     # Resolve framework: --framework > only entry in cfg.frameworks > error
     resolved_fw = framework
@@ -92,21 +87,15 @@ def explain_control(
             resolved_fw = fws[0]
         elif len(fws) > 1:
             console.print(
-                f"[red]Multiple frameworks in evidentia.yaml ({len(fws)}); "
-                f"specify --framework to pick one.[/red]"
+                f"[red]Multiple frameworks in evidentia.yaml ({len(fws)}); specify --framework to pick one.[/red]"
             )
             raise typer.Exit(code=1)
         else:
-            console.print(
-                "[red]--framework is required (or set a single framework in "
-                "evidentia.yaml).[/red]"
-            )
+            console.print("[red]--framework is required (or set a single framework in evidentia.yaml).[/red]")
             raise typer.Exit(code=1)
 
     # Resolve LLM model
-    resolved_model = get_default(
-        cfg, model, "llm.model", env_var="EVIDENTIA_LLM_MODEL"
-    )
+    resolved_model = get_default(cfg, model, "llm.model", env_var="EVIDENTIA_LLM_MODEL")
     # Fall back to the AI client's default (reads env + hardcoded default)
     if not resolved_model:
         from evidentia_ai.client import get_default_model
@@ -158,9 +147,7 @@ def explain_control(
         f"using [bold]{resolved_model}[/bold]..."
     )
     try:
-        explanation = gen.generate(
-            control, framework_id=resolved_fw, refresh=refresh
-        )
+        explanation = gen.generate(control, framework_id=resolved_fw, refresh=refresh)
     except Exception as exc:
         console.print(f"[red]LLM call failed: {exc}[/red]")
         raise typer.Exit(code=1) from exc
@@ -254,9 +241,7 @@ app.add_typer(cache_app, name="cache")
 
 @cache_app.command("clear")
 def clear(
-    yes: bool = typer.Option(
-        False, "--yes", "-y", help="Skip confirmation prompt."
-    ),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
 ) -> None:
     """Remove all cached explanations."""
     from evidentia_ai.explain.cache import clear_cache, get_cache_dir

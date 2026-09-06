@@ -159,17 +159,12 @@ def wrap_signed_output(server: FastMCP) -> None:
             this server (``_evidentia_signed_wrapped`` marker).
     """
     if getattr(server, "_evidentia_signed_wrapped", False):
-        raise RuntimeError(
-            "wrap_signed_output already wired on this server; "
-            "call once per build_server invocation."
-        )
+        raise RuntimeError("wrap_signed_output already wired on this server; call once per build_server invocation.")
 
     inner_call_tool: _CallToolFn = server.call_tool
 
     @functools.wraps(inner_call_tool)
-    async def _signed_call_tool(
-        name: str, arguments: dict[str, Any]
-    ) -> Any:
+    async def _signed_call_tool(name: str, arguments: dict[str, Any]) -> Any:
         # Delegate to the inner dispatch (which may itself be the CIMD
         # scope-enforcement wrapper). A scope denial raises McpError
         # here, before signing — denied calls get no envelope.
@@ -196,11 +191,7 @@ def wrap_signed_output(server: FastMCP) -> None:
         if structured is not None:
             payload: dict[str, Any] = structured
         else:
-            payload = {
-                "result": [
-                    block.model_dump(mode="json") for block in content
-                ]
-            }
+            payload = {"result": [block.model_dump(mode="json") for block in content]}
 
         envelope = sign_tool_output(payload, tool_name=name)
 

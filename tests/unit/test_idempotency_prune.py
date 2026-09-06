@@ -54,9 +54,7 @@ class TestPrune:
         for i in range(IDEMPOTENCY_MAX_ENTRIES + 2):
             # All within TTL — only the cap should trigger eviction.
             ts = now - timedelta(seconds=IDEMPOTENCY_MAX_ENTRIES + 2 - i)
-            store[f"key-{i:05d}"] = _entry(
-                f"hash-{i}", f"uuid-{i:05d}", ts
-            )
+            store[f"key-{i:05d}"] = _entry(f"hash-{i}", f"uuid-{i:05d}", ts)
         pruned = _prune_idempotency_store(store, now=now)
         assert len(pruned) == IDEMPOTENCY_MAX_ENTRIES
         # Oldest 2 entries evicted (key-00000 + key-00001).

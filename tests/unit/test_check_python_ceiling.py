@@ -143,9 +143,7 @@ def test_fetch_requires_python_none_on_missing_info(cpc: Any) -> None:
 # --- main --------------------------------------------------------------------
 
 
-def test_main_writes_nudge_when_ceiling_allows(
-    cpc: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_main_writes_nudge_when_ceiling_allows(cpc: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(cpc, "fetch_requires_python", lambda package, opener=None: "<3.16,>=3.10")
     out = tmp_path / "ceiling-findings.md"
     rc = cpc.main(["--output", str(out)])
@@ -155,9 +153,7 @@ def test_main_writes_nudge_when_ceiling_allows(
     assert "litellm" in text
 
 
-def test_main_writes_empty_file_when_still_capped(
-    cpc: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_main_writes_empty_file_when_still_capped(cpc: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(cpc, "fetch_requires_python", lambda package, opener=None: "<3.15,>=3.10")
     out = tmp_path / "ceiling-findings.md"
     rc = cpc.main(["--output", str(out)])
@@ -175,9 +171,7 @@ def test_main_writes_empty_file_and_exit_0_when_fetch_none(
     assert out.read_text(encoding="utf-8") == ""
 
 
-def test_main_respects_package_and_target_args(
-    cpc: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_main_respects_package_and_target_args(cpc: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     seen: dict[str, str] = {}
 
     def fake_fetch(package: str, opener: Any = None) -> str:
@@ -186,9 +180,7 @@ def test_main_respects_package_and_target_args(
 
     monkeypatch.setattr(cpc, "fetch_requires_python", fake_fetch)
     out = tmp_path / "ceiling-findings.md"
-    rc = cpc.main(
-        ["--package", "somepkg", "--target", "3.20.0", "--output", str(out)]
-    )
+    rc = cpc.main(["--package", "somepkg", "--target", "3.20.0", "--output", str(out)])
     assert rc == 0
     assert seen["package"] == "somepkg"
     assert "somepkg" in out.read_text(encoding="utf-8")

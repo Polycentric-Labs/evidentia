@@ -426,9 +426,7 @@ class TestEvidenceRBAC:
     ) -> None:
         from uuid import uuid4
 
-        monkeypatch.setenv(
-            "EVIDENTIA_RBAC_POLICY_FILE", str(reader_policy_file)
-        )
+        monkeypatch.setenv("EVIDENTIA_RBAC_POLICY_FILE", str(reader_policy_file))
         monkeypatch.setenv("EVIDENTIA_RBAC_IDENTITY", "alice@example.com")
         result = runner.invoke(
             app,
@@ -451,9 +449,7 @@ class TestEvidenceRBAC:
         reader_policy_file: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.setenv(
-            "EVIDENTIA_RBAC_POLICY_FILE", str(reader_policy_file)
-        )
+        monkeypatch.setenv("EVIDENTIA_RBAC_POLICY_FILE", str(reader_policy_file))
         monkeypatch.setenv("EVIDENTIA_RBAC_IDENTITY", "alice@example.com")
         result = runner.invoke(
             app,
@@ -475,9 +471,7 @@ class TestEvidenceRBAC:
         editor_policy_file: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.setenv(
-            "EVIDENTIA_RBAC_POLICY_FILE", str(editor_policy_file)
-        )
+        monkeypatch.setenv("EVIDENTIA_RBAC_POLICY_FILE", str(editor_policy_file))
         monkeypatch.setenv("EVIDENTIA_RBAC_IDENTITY", "bob@example.com")
         result = runner.invoke(
             app,
@@ -499,9 +493,7 @@ class TestEvidenceRBAC:
         reader_policy_file: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.setenv(
-            "EVIDENTIA_RBAC_POLICY_FILE", str(reader_policy_file)
-        )
+        monkeypatch.setenv("EVIDENTIA_RBAC_POLICY_FILE", str(reader_policy_file))
         # No EVIDENTIA_RBAC_IDENTITY → anonymous.
         result = runner.invoke(
             app,

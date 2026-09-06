@@ -53,6 +53,4 @@ settings.register_profile(
     max_examples=500,
 )
 
-settings.load_profile(
-    os.environ.get("HYPOTHESIS_PROFILE", "ci")
-)
+settings.load_profile(os.environ.get("HYPOTHESIS_PROFILE", "ci"))

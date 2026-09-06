@@ -40,25 +40,27 @@ from rich.console import Console
 # absolute path, NOT on the raw ``$EDITOR`` string — so symlinks
 # (e.g. ``/usr/local/bin/editor`` -> ``/usr/bin/vim``) are handled
 # correctly.
-_DEFAULT_EDITOR_ALLOWLIST = frozenset({
-    "vi",
-    "vim",
-    "vim.basic",  # debian/ubuntu wrapper
-    "vim.tiny",
-    "nvim",
-    "nano",
-    "emacs",
-    "micro",
-    "pico",
-    "code",
-    "code-insiders",
-    "subl",
-    "atom",
-    "gedit",
-    "kate",
-    "notepad",
-    "notepad.exe",
-})
+_DEFAULT_EDITOR_ALLOWLIST = frozenset(
+    {
+        "vi",
+        "vim",
+        "vim.basic",  # debian/ubuntu wrapper
+        "vim.tiny",
+        "nvim",
+        "nano",
+        "emacs",
+        "micro",
+        "pico",
+        "code",
+        "code-insiders",
+        "subl",
+        "atom",
+        "gedit",
+        "kate",
+        "notepad",
+        "notepad.exe",
+    }
+)
 
 _OPT_OUT_ENV = "EVIDENTIA_EDITOR_ALLOW_ANY"
 
@@ -112,15 +114,12 @@ def resolve_editor_or_exit(
     try:
         parts = shlex.split(raw)
     except ValueError as e:
-        _console.print(
-            f"[red]Error:[/red] $EDITOR={raw!r} could not be parsed: {e}"
-        )
+        _console.print(f"[red]Error:[/red] $EDITOR={raw!r} could not be parsed: {e}")
         raise typer.Exit(code=1) from e
 
     if not parts:
         _console.print(
-            "[red]Error:[/red] $EDITOR parsed to empty argv. "
-            "Set $EDITOR to a valid editor command (e.g. 'vim')."
+            "[red]Error:[/red] $EDITOR parsed to empty argv. Set $EDITOR to a valid editor command (e.g. 'vim')."
         )
         raise typer.Exit(code=1)
 
@@ -128,8 +127,7 @@ def resolve_editor_or_exit(
     resolved = shutil.which(head)
     if resolved is None:
         _console.print(
-            f"[red]Error:[/red] Editor {head!r} not found on $PATH. "
-            f"Install it or set $EDITOR to an editor that is."
+            f"[red]Error:[/red] Editor {head!r} not found on $PATH. Install it or set $EDITOR to an editor that is."
         )
         raise typer.Exit(code=1)
 

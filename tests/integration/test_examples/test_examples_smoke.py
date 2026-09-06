@@ -108,9 +108,7 @@ def test_meridian_v2_gap_diff_produces_every_classification() -> None:
         f"Expected closed >= 1; got {diff.summary.closed}. "
         "my-controls-pr.yaml should fully-improve at least one control (e.g., AU-2)."
     )
-    assert diff.summary.unchanged > 0, (
-        "Expected some unchanged gaps — the test inventories should not be 100% changed."
-    )
+    assert diff.summary.unchanged > 0, "Expected some unchanged gaps — the test inventories should not be 100% changed."
 
 
 @pytest.mark.skipif(
@@ -200,14 +198,10 @@ def test_meridian_v2_yaml_config_loads() -> None:
 
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        cfg = load_config(
-            EXAMPLES / "meridian-fintech-v2" / "evidentia.yaml"
-        )
+        cfg = load_config(EXAMPLES / "meridian-fintech-v2" / "evidentia.yaml")
     # No DeprecationWarnings — we use the new schema
     deprecations = [w for w in caught if issubclass(w.category, DeprecationWarning)]
-    assert not deprecations, (
-        f"Meridian v2 config should NOT emit deprecations; got: {deprecations}"
-    )
+    assert not deprecations, f"Meridian v2 config should NOT emit deprecations; got: {deprecations}"
     assert cfg.organization == "Meridian Financial"
     assert "nist-800-53-rev5-moderate" in cfg.frameworks
     assert cfg.llm.model == "gpt-4o"
@@ -229,7 +223,4 @@ def test_legacy_meridian_yaml_emits_deprecation() -> None:
         warnings.simplefilter("always")
         load_config(EXAMPLES / "meridian-fintech" / "evidentia.yaml")
     deprecations = [w for w in caught if issubclass(w.category, DeprecationWarning)]
-    assert deprecations, (
-        "Legacy meridian-fintech yaml should emit DeprecationWarning "
-        "(uses nested frameworks.default:)"
-    )
+    assert deprecations, "Legacy meridian-fintech yaml should emit DeprecationWarning (uses nested frameworks.default:)"

@@ -81,7 +81,7 @@ def test_project_version_via_toml(mod: Any) -> None:
 
 
 def test_project_version_missing(mod: Any) -> None:
-    text = '[tool.foo]\nbar = 1\n'
+    text = "[tool.foo]\nbar = 1\n"
     assert mod.project_version(text) is None
 
 

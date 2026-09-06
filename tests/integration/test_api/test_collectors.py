@@ -12,9 +12,7 @@ from fastapi.testclient import TestClient
 
 
 class TestCollectorsStatus:
-    def test_reports_packages_and_env(
-        self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_reports_packages_and_env(self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GITHUB_TOKEN", "ghp_should_never_appear_in_response")
         r = api_client.get("/api/collectors/status")
         assert r.status_code == 200
@@ -126,6 +124,7 @@ class TestSQLiteCollectEndpointSafeRoot:
         safe.mkdir()
         outside = _P(str(tmp_path)) / "outside.db"
         import sqlite3
+
         sqlite3.connect(str(outside)).close()
 
         monkeypatch.setenv("EVIDENTIA_SQLITE_SAFE_ROOT", str(safe))
@@ -151,6 +150,7 @@ class TestSQLiteCollectEndpointSafeRoot:
         safe.mkdir()
         inside = safe / "app.db"
         import sqlite3
+
         sqlite3.connect(str(inside)).close()
 
         monkeypatch.setenv("EVIDENTIA_SQLITE_SAFE_ROOT", str(safe))
@@ -175,6 +175,7 @@ class TestSQLiteCollectEndpointSafeRoot:
 
         db = _P(str(tmp_path)) / "app.db"
         import sqlite3
+
         sqlite3.connect(str(db)).close()
 
         monkeypatch.delenv("EVIDENTIA_SQLITE_SAFE_ROOT", raising=False)
@@ -192,9 +193,7 @@ class TestSnowflakeCollectEndpoint:
     handling guarantees.
     """
 
-    def test_missing_account_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_missing_account_returns_400(self, api_client: TestClient) -> None:
         r = api_client.post(
             "/api/collectors/snowflake/collect",
             json={"user": "EVIDENTIA_AUDIT_RO"},
@@ -207,9 +206,7 @@ class TestSnowflakeCollectEndpoint:
         assert detail["error"] == "missing_field"
         assert "account" in detail["message"]
 
-    def test_missing_user_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_missing_user_returns_400(self, api_client: TestClient) -> None:
         r = api_client.post(
             "/api/collectors/snowflake/collect",
             json={"account": "acme-prod"},
@@ -296,8 +293,7 @@ class TestSecurityScorecardCollectEndpointSSRFGuard:
         # detail shape (F-V08-DAST-3 status normalization; 2026-07-06
         # error-shape convergence).
         assert r.status_code == 400, (
-            f"Expected 400 for portfolio_id={bad_portfolio_id!r}, "
-            f"got {r.status_code}: {r.text}"
+            f"Expected 400 for portfolio_id={bad_portfolio_id!r}, got {r.status_code}: {r.text}"
         )
         detail = r.json()["detail"]
         assert detail["error"] == "invalid_field"
@@ -342,9 +338,7 @@ class TestOcsfCollectEndpoint:
     and the guard refusal is asserted BEFORE any socket is opened.
     """
 
-    def test_inline_content_returns_findings(
-        self, api_client: TestClient
-    ) -> None:
+    def test_inline_content_returns_findings(self, api_client: TestClient) -> None:
         pytest.importorskip("py_ocsf_models")
         r = api_client.post(
             "/api/collectors/ocsf/collect",
@@ -360,9 +354,7 @@ class TestOcsfCollectEndpoint:
         # compliance.standards, not a forged block.
         assert payload[0]["control_mappings"][0]["framework"] == "cis-aws"
 
-    def test_inline_single_object_content_returns_findings(
-        self, api_client: TestClient
-    ) -> None:
+    def test_inline_single_object_content_returns_findings(self, api_client: TestClient) -> None:
         """Content may be a single OCSF object (not just a list)."""
         pytest.importorskip("py_ocsf_models")
         r = api_client.post(
@@ -372,9 +364,7 @@ class TestOcsfCollectEndpoint:
         assert r.status_code == 200, r.text
         assert len(r.json()) == 1
 
-    def test_missing_content_and_url_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_missing_content_and_url_returns_400(self, api_client: TestClient) -> None:
         r = api_client.post("/api/collectors/ocsf/collect", json={})
         assert r.status_code == 400
         detail = r.json()["detail"]
@@ -401,9 +391,7 @@ class TestOcsfCollectEndpoint:
         assert r.status_code == 400
         assert "https" in r.json()["detail"]["message"].lower()
 
-    def test_url_mode_metadata_endpoint_refused_by_default(
-        self, api_client: TestClient
-    ) -> None:
+    def test_url_mode_metadata_endpoint_refused_by_default(self, api_client: TestClient) -> None:
         """SSRF guard: the AWS instance-metadata endpoint is refused by
         default. Literal IP host → no DNS; the refusal fires before any
         socket is opened, so this is fully hermetic."""
@@ -424,9 +412,7 @@ class TestOcsfCollectEndpoint:
             "https://127.0.0.1:8080/api",
         ],
     )
-    def test_url_mode_private_and_loopback_refused_by_default(
-        self, api_client: TestClient, url: str
-    ) -> None:
+    def test_url_mode_private_and_loopback_refused_by_default(self, api_client: TestClient, url: str) -> None:
         """RFC1918 + loopback URLs are all refused by the default-on guard."""
         r = api_client.post(
             "/api/collectors/ocsf/collect",
@@ -434,15 +420,9 @@ class TestOcsfCollectEndpoint:
         )
         assert r.status_code == 400, r.text
         message = r.json()["detail"]["message"].lower()
-        assert (
-            "private" in message
-            or "loopback" in message
-            or "link-local" in message
-        )
+        assert "private" in message or "loopback" in message or "link-local" in message
 
-    def test_url_mode_allowed_only_with_block_private_ips_false(
-        self, api_client: TestClient
-    ) -> None:
+    def test_url_mode_allowed_only_with_block_private_ips_false(self, api_client: TestClient) -> None:
         """With the explicit opt-out the guard is SKIPPED, so the request
         proceeds to the actual fetch — which fails on connection refusal
         (no listener on 127.0.0.1:1). The KEY assertion: the error is NOT
@@ -492,9 +472,7 @@ class TestConvertEndpoint:
         # OCSF Compliance Finding output carries the canonical class_uid.
         assert payload[0]["class_uid"] == 2003
 
-    def test_convert_single_object_content(
-        self, api_client: TestClient
-    ) -> None:
+    def test_convert_single_object_content(self, api_client: TestClient) -> None:
         pytest.importorskip("py_ocsf_models")
         r = api_client.post(
             "/api/collectors/convert",
@@ -506,9 +484,7 @@ class TestConvertEndpoint:
         assert r.status_code == 200, r.text
         assert len(r.json()) == 1
 
-    def test_convert_unsupported_format_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_convert_unsupported_format_returns_400(self, api_client: TestClient) -> None:
         r = api_client.post(
             "/api/collectors/convert",
             json={
@@ -521,9 +497,7 @@ class TestConvertEndpoint:
         assert detail["error"] == "unsupported_format"
         assert "format" in detail["message"].lower()
 
-    def test_convert_missing_content_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_convert_missing_content_returns_400(self, api_client: TestClient) -> None:
         r = api_client.post(
             "/api/collectors/convert",
             json={"to_format": "ocsf"},
@@ -533,9 +507,7 @@ class TestConvertEndpoint:
         assert detail["error"] == "missing_field"
         assert "content" in detail["message"].lower()
 
-    def test_convert_bad_finding_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_convert_bad_finding_returns_400(self, api_client: TestClient) -> None:
         """Content that isn't a valid SecurityFinding → 400 (not 500)."""
         r = api_client.post(
             "/api/collectors/convert",
@@ -598,6 +570,4 @@ def test_collectors_error_statuses_documented_in_openapi(
     for path, method, statuses in expected:
         op = schema["paths"][path][method]
         for status in statuses:
-            assert status in op["responses"], (
-                f"{method.upper()} {path} missing documented {status}"
-            )
+            assert status in op["responses"], f"{method.upper()} {path} missing documented {status}"

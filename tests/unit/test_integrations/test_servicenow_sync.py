@@ -156,9 +156,7 @@ def test_push_force_creates_even_when_existing() -> None:
                 json={"result": {"sys_id": "new", "number": "INC0099999"}},
             )
         # No GET should be made when force=True
-        return httpx.Response(
-            500, json={"error": {"message": "GET should not happen"}}
-        )
+        return httpx.Response(500, json={"error": {"message": "GET should not happen"}})
 
     client = _client_with_handler(handler)
     outcome = push_gap_to_servicenow(_gap(), client, force=True)
@@ -168,9 +166,7 @@ def test_push_force_creates_even_when_existing() -> None:
 
 def test_push_returns_errored_on_api_failure() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(
-            500, json={"error": {"message": "Internal Server Error"}}
-        )
+        return httpx.Response(500, json={"error": {"message": "Internal Server Error"}})
 
     client = _client_with_handler(handler)
     outcome = push_gap_to_servicenow(_gap(), client)
@@ -204,13 +200,15 @@ def test_push_open_gaps_skips_remediated() -> None:
         )
 
     client = _client_with_handler(handler)
-    report = _make_report(gaps=[
+    report = _make_report(
+        gaps=[
             _gap(gap_id="g01", status=GapStatus.OPEN),
             _gap(gap_id="g02", status=GapStatus.REMEDIATED),
             _gap(gap_id="g03", status=GapStatus.IN_PROGRESS),
             _gap(gap_id="g04", status=GapStatus.ACCEPTED),
             _gap(gap_id="g05", status=GapStatus.NOT_APPLICABLE),
-        ])
+        ]
+    )
     result = push_open_gaps(report, client)
 
     assert result.created == 2  # g01 + g03
@@ -236,10 +234,7 @@ def test_push_open_gaps_aggregate_counts() -> None:
         )
 
     client = _client_with_handler(handler)
-    report = _make_report(gaps=[
-            _gap(gap_id=f"g{i:02d}", status=GapStatus.OPEN)
-            for i in range(5)
-        ])
+    report = _make_report(gaps=[_gap(gap_id=f"g{i:02d}", status=GapStatus.OPEN) for i in range(5)])
     result = push_open_gaps(report, client)
     assert result.created == 5
     assert state["created"] == 5

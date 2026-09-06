@@ -66,14 +66,10 @@ def _build_user_prompt(entry: dict[str, Any]) -> str:
     clauses = entry.get("source_clauses", [])
     formatted = "\n".join(f"- {c}" for c in clauses) if isinstance(clauses, list) else str(clauses)
     claim = str(entry.get("claim", ""))
-    return _USER_PROMPT_TEMPLATE.format(
-        source_clauses=formatted, claim=claim
-    )
+    return _USER_PROMPT_TEMPLATE.format(source_clauses=formatted, claim=claim)
 
 
-def _call_llm(
-    model: str, system_prompt: str, user_prompt: str
-) -> bool:
+def _call_llm(model: str, system_prompt: str, user_prompt: str) -> bool:
     """Call the LLM and parse a faithful/unfaithful boolean response."""
     import litellm
 
@@ -133,31 +129,22 @@ def rate_corpus(
             except Exception as exc:
                 if attempt < max_retries - 1:
                     print(
-                        f"  retry {attempt + 1}/{max_retries} for "
-                        f"{entry_id}: {exc}",
+                        f"  retry {attempt + 1}/{max_retries} for {entry_id}: {exc}",
                         file=sys.stderr,
                     )
                     time.sleep(delay_between * (attempt + 1))
                 else:
                     print(
-                        f"  FAILED after {max_retries} attempts for "
-                        f"{entry_id}: {exc}",
+                        f"  FAILED after {max_retries} attempts for {entry_id}: {exc}",
                         file=sys.stderr,
                     )
 
         if label is not None:
             results[entry_id] = label
-            output_lines.append(
-                json.dumps({"id": entry_id, "faithful": label})
-            )
-            print(
-                f"  [{i + 1}/{len(entries)}] {entry_id}: "
-                f"{'faithful' if label else 'unfaithful'}"
-            )
+            output_lines.append(json.dumps({"id": entry_id, "faithful": label}))
+            print(f"  [{i + 1}/{len(entries)}] {entry_id}: {'faithful' if label else 'unfaithful'}")
         else:
-            print(
-                f"  [{i + 1}/{len(entries)}] {entry_id}: SKIPPED (LLM error)"
-            )
+            print(f"  [{i + 1}/{len(entries)}] {entry_id}: SKIPPED (LLM error)")
 
         if delay_between > 0 and i < len(entries) - 1:
             time.sleep(delay_between)
@@ -169,10 +156,7 @@ def rate_corpus(
     print(f"\nRated {len(results)}/{len(entries)} entries")
     print(f"Output: {output_path}")
     faithful_count = sum(results.values())
-    print(
-        f"Distribution: {faithful_count} faithful, "
-        f"{len(results) - faithful_count} unfaithful"
-    )
+    print(f"Distribution: {faithful_count} faithful, {len(results) - faithful_count} unfaithful")
     return results
 
 

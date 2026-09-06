@@ -94,9 +94,7 @@ def _validate_id_shape(vendor_id: str) -> str:
     try:
         return str(UUID(vendor_id))
     except (ValueError, AttributeError, TypeError) as exc:
-        raise InvalidVendorIdError(
-            f"Invalid vendor ID format (expected UUID string): {vendor_id!r}"
-        ) from exc
+        raise InvalidVendorIdError(f"Invalid vendor ID format (expected UUID string): {vendor_id!r}") from exc
 
 
 def get_vendor_store_dir(override: Path | None = None) -> Path:
@@ -220,19 +218,13 @@ def list_vendors(
     vendors: list[Vendor] = []
     for path in store.glob("*.json"):
         try:
-            vendors.append(
-                Vendor.model_validate_json(path.read_text(encoding="utf-8"))
-            )
+            vendors.append(Vendor.model_validate_json(path.read_text(encoding="utf-8")))
         except Exception as exc:  # pragma: no cover — defensive
             # A malformed file in the store shouldn't crash the listing
             # of all the well-formed records. Log + skip. Operators
             # can spot it via the warning + manually inspect.
-            logger.warning(
-                "Skipping malformed vendor record %s: %s", path, exc
-            )
-    vendors.sort(
-        key=lambda v: (_TIER_RANK.get(v.criticality_tier, 99), v.name.lower())
-    )
+            logger.warning("Skipping malformed vendor record %s: %s", path, exc)
+    vendors.sort(key=lambda v: (_TIER_RANK.get(v.criticality_tier, 99), v.name.lower()))
     return vendors
 
 

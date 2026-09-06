@@ -47,9 +47,7 @@ class TestPutGet:
         with pytest.raises(WORMBackendError):
             worm.get("aaaaaaaa-1111-2222-3333-444444444444")
 
-    def test_get_metadata_missing_raises(
-        self, worm: LocalFilesystemWORM
-    ) -> None:
+    def test_get_metadata_missing_raises(self, worm: LocalFilesystemWORM) -> None:
         with pytest.raises(WORMBackendError):
             worm.get_metadata("aaaaaaaa-1111-2222-3333-444444444444")
 
@@ -59,9 +57,7 @@ class TestPutGet:
         with pytest.raises(WORMBackendError):
             worm.put(m.id, b"second", m)
 
-    def test_path_traversal_rejected(
-        self, worm: LocalFilesystemWORM
-    ) -> None:
+    def test_path_traversal_rejected(self, worm: LocalFilesystemWORM) -> None:
         m = _meta()
         m_evil = m.model_copy(update={"id": "../../etc/passwd"})
         with pytest.raises(WORMBackendError):
@@ -72,18 +68,14 @@ class TestPutGet:
 
 
 class TestDelete:
-    def test_delete_inside_window_rejected(
-        self, worm: LocalFilesystemWORM
-    ) -> None:
+    def test_delete_inside_window_rejected(self, worm: LocalFilesystemWORM) -> None:
         future = date.today() + timedelta(days=365)
         m = _meta(lock_until=future)
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError):
             worm.delete(m.id)
 
-    def test_delete_under_legal_hold_rejected(
-        self, worm: LocalFilesystemWORM
-    ) -> None:
+    def test_delete_under_legal_hold_rejected(self, worm: LocalFilesystemWORM) -> None:
         past = date.today() - timedelta(days=1)
         m = _meta(
             lock_until=past,
@@ -94,18 +86,14 @@ class TestDelete:
         with pytest.raises(WORMBackendError):
             worm.delete(m.id)
 
-    def test_delete_active_stage_rejected(
-        self, worm: LocalFilesystemWORM
-    ) -> None:
+    def test_delete_active_stage_rejected(self, worm: LocalFilesystemWORM) -> None:
         past = date.today() - timedelta(days=1)
         m = _meta(lock_until=past)  # stage stays ACTIVE
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError):
             worm.delete(m.id)
 
-    def test_delete_expired_no_hold_succeeds(
-        self, worm: LocalFilesystemWORM
-    ) -> None:
+    def test_delete_expired_no_hold_succeeds(self, worm: LocalFilesystemWORM) -> None:
         past = date.today() - timedelta(days=1)
         m = _meta(
             lock_until=past,
@@ -121,9 +109,7 @@ class TestDelete:
 
 
 class TestExtendRetention:
-    def test_extend_lock_until_succeeds(
-        self, worm: LocalFilesystemWORM
-    ) -> None:
+    def test_extend_lock_until_succeeds(self, worm: LocalFilesystemWORM) -> None:
         future = date.today() + timedelta(days=30)
         m = _meta(lock_until=future)
         worm.put(m.id, b"x", m)
@@ -134,9 +120,7 @@ class TestExtendRetention:
         loaded = worm.get_metadata(m.id)
         assert loaded.lock_until == farther
 
-    def test_shortening_lock_until_rejected(
-        self, worm: LocalFilesystemWORM
-    ) -> None:
+    def test_shortening_lock_until_rejected(self, worm: LocalFilesystemWORM) -> None:
         future = date.today() + timedelta(days=365)
         m = _meta(lock_until=future)
         worm.put(m.id, b"x", m)

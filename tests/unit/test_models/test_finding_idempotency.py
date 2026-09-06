@@ -78,9 +78,7 @@ class TestDeterministicFindingIdHelper:
         # v0.10.5 Phase 10 lock-in: rotating this UUID would re-key every
         # SecurityFinding.id ever produced. The constant MUST NEVER change
         # post-v0.10.5. This assertion guards against accidental edits.
-        assert str(NAMESPACE_EVIDENTIA_FINDING) == (
-            "c81bcb44-9b41-5b18-9f10-72b3b9b4d3d6"
-        )
+        assert str(NAMESPACE_EVIDENTIA_FINDING) == ("c81bcb44-9b41-5b18-9f10-72b3b9b4d3d6")
 
 
 # ── SecurityFinding model-validator level ────────────────────────────────
@@ -95,9 +93,7 @@ class TestSecurityFindingDeterministicIdValidator:
             source_system="aws-config",
             source_finding_id="s3-public:bucket-1",
         )
-        expected = deterministic_finding_id(
-            "aws-config", "s3-public:bucket-1"
-        )
+        expected = deterministic_finding_id("aws-config", "s3-public:bucket-1")
         assert f.id == expected
 
     def test_idempotent_across_constructions(self) -> None:
@@ -189,9 +185,7 @@ class TestSecurityFindingDeterministicIdValidator:
             source_system="aws-config",
             source_finding_id="s3-public:bucket-1",
         )
-        round_tripped = SecurityFinding.model_validate(
-            original.model_dump(mode="json")
-        )
+        round_tripped = SecurityFinding.model_validate(original.model_dump(mode="json"))
         assert round_tripped.id == original.id
 
     def test_compliance_and_status_do_not_affect_id(self) -> None:

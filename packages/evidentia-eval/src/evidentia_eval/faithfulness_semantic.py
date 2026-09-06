@@ -159,9 +159,7 @@ def faithfulness_score_semantic(
         ValueError: ``threshold`` is outside [0, 1].
     """
     if not (0.0 <= threshold <= 1.0):
-        raise ValueError(
-            f"threshold must be in [0, 1]; got {threshold}"
-        )
+        raise ValueError(f"threshold must be in [0, 1]; got {threshold}")
     clauses = list(source_clauses)
     if not clauses:
         return FaithfulnessResult(
@@ -206,9 +204,7 @@ def faithfulness_score_semantic(
         if clause_norm == 0:
             similarities.append((clause, 0.0))
             continue
-        sim = float(
-            np.dot(claim_emb, clause_emb) / (claim_norm * clause_norm)
-        )
+        sim = float(np.dot(claim_emb, clause_emb) / (claim_norm * clause_norm))
         # Cosine similarity is in [-1, 1]; clamp to [0, 1] for the
         # FaithfulnessResult.score contract. Negative cosine
         # similarity means "semantically opposite" which is also

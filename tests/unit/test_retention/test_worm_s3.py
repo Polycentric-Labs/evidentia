@@ -83,9 +83,7 @@ class TestPutGet:
         with pytest.raises(WORMBackendError, match="not found"):
             worm.get("aaaaaaaa-1111-2222-3333-444444444444")
 
-    def test_get_metadata_missing_raises(
-        self, worm: S3ObjectLockWORM
-    ) -> None:
+    def test_get_metadata_missing_raises(self, worm: S3ObjectLockWORM) -> None:
         with pytest.raises(WORMBackendError, match="not found"):
             worm.get_metadata("aaaaaaaa-1111-2222-3333-444444444444")
 
@@ -101,9 +99,7 @@ class TestPutGet:
         loaded = worm.get_metadata(m.id)
         assert loaded.legal_hold is True
 
-    def test_put_zero_retention_gdpr(
-        self, worm: S3ObjectLockWORM
-    ) -> None:
+    def test_put_zero_retention_gdpr(self, worm: S3ObjectLockWORM) -> None:
         """GDPR purpose-limited records have retention_period_days=0
         and lock_until=None — S3 put should still succeed (no
         Object Lock retain-until applied)."""
@@ -119,34 +115,26 @@ class TestPutGet:
 
 
 class TestDelete:
-    def test_delete_active_within_window_rejected(
-        self, worm: S3ObjectLockWORM
-    ) -> None:
+    def test_delete_active_within_window_rejected(self, worm: S3ObjectLockWORM) -> None:
         m = _meta()  # ACTIVE, lock_until = today + 365
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError, match="retention window"):
             worm.delete(m.id)
 
-    def test_delete_legal_hold_rejected(
-        self, worm: S3ObjectLockWORM
-    ) -> None:
+    def test_delete_legal_hold_rejected(self, worm: S3ObjectLockWORM) -> None:
         m = _meta(legal_hold=True)
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError, match="legal hold"):
             worm.delete(m.id)
 
-    def test_delete_non_expired_rejected(
-        self, worm: S3ObjectLockWORM
-    ) -> None:
+    def test_delete_non_expired_rejected(self, worm: S3ObjectLockWORM) -> None:
         # Outside lock window but lifecycle still ACTIVE
         m = _meta(lock_until=date.today() - timedelta(days=10))
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError, match="lifecycle"):
             worm.delete(m.id)
 
-    def test_delete_expired_succeeds(
-        self, worm: S3ObjectLockWORM
-    ) -> None:
+    def test_delete_expired_succeeds(self, worm: S3ObjectLockWORM) -> None:
         # Past-lock + lifecycle EXPIRED; still legal_hold=False.
         # Note: S3 Object Lock retain-until in the past + Governance
         # mode means the API allows delete. Our backend layer also
@@ -179,9 +167,7 @@ class TestExtendRetention:
         assert new_meta.lock_until == new_until
         assert new_meta.updated_at >= m.updated_at
 
-    def test_extend_backward_rejected(
-        self, worm: S3ObjectLockWORM
-    ) -> None:
+    def test_extend_backward_rejected(self, worm: S3ObjectLockWORM) -> None:
         m = _meta()  # lock_until = today + 365
         worm.put(m.id, b"x", m)
         new_until = date.today() + timedelta(days=10)
@@ -206,18 +192,14 @@ class TestLegalHold:
 
 
 class TestConstruction:
-    def test_empty_bucket_name_rejected(
-        self, s3_with_object_lock: Any
-    ) -> None:
+    def test_empty_bucket_name_rejected(self, s3_with_object_lock: Any) -> None:
         with pytest.raises(WORMBackendError, match="non-empty"):
             S3ObjectLockWORM(
                 bucket_name="",
                 client_factory=lambda: s3_with_object_lock,
             )
 
-    def test_invalid_lock_mode_rejected(
-        self, s3_with_object_lock: Any
-    ) -> None:
+    def test_invalid_lock_mode_rejected(self, s3_with_object_lock: Any) -> None:
         with pytest.raises(WORMBackendError, match="COMPLIANCE or GOVERNANCE"):
             S3ObjectLockWORM(
                 bucket_name=BUCKET,
@@ -225,9 +207,7 @@ class TestConstruction:
                 client_factory=lambda: s3_with_object_lock,
             )
 
-    def test_repr_contains_bucket_and_mode(
-        self, worm: S3ObjectLockWORM
-    ) -> None:
+    def test_repr_contains_bucket_and_mode(self, worm: S3ObjectLockWORM) -> None:
         s = repr(worm)
         assert BUCKET in s
         assert "GOVERNANCE" in s
@@ -294,9 +274,7 @@ def test_lifecycle_transition_through_s3_persistence(
     m = _meta(lock_until=past)
     worm.put(m.id, b"x", m)
     # Transition ACTIVE → EXPIRED (lock_until is past)
-    transitioned = transition_lifecycle(
-        m, RetentionLifecycleStage.EXPIRED
-    )
+    transitioned = transition_lifecycle(m, RetentionLifecycleStage.EXPIRED)
     # Update sidecar (in real operator workflow, the lifecycle-
     # transition function is paired with a sidecar metadata write)
     worm._client.put_object(  # type: ignore[attr-defined]

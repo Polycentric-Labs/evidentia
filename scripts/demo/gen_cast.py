@@ -66,8 +66,8 @@ TITLE = "Evidentia — gap analysis on a fintech inventory"
 
 # Deterministic timeline knobs (seconds).
 KEYSTROKE_DELAY = 0.04  # ~40ms/char typed-prompt animation
-PROMPT_PAUSE = 0.4      # beat after the prompt is typed, before output
-COMMAND_PAUSE = 1.0     # pause between commands
+PROMPT_PAUSE = 0.4  # beat after the prompt is typed, before output
+COMMAND_PAUSE = 1.0  # pause between commands
 
 # Throwaway output paths kept inside the scenario's temp area so the demo
 # run never litters the repo. They are recreated each command.
@@ -81,17 +81,26 @@ COMMANDS: list[list[str]] = [
     ["doctor"],
     ["catalog", "list", "--tier", "A"],
     [
-        "gap", "analyze",
-        "--inventory", INVENTORY,
-        "--frameworks", "nist-800-53-rev5-moderate,soc2-tsc",
-        "--output", "{report}",
+        "gap",
+        "analyze",
+        "--inventory",
+        INVENTORY,
+        "--frameworks",
+        "nist-800-53-rev5-moderate,soc2-tsc",
+        "--output",
+        "{report}",
     ],
     [
-        "gap", "analyze",
-        "--inventory", INVENTORY,
-        "--frameworks", "nist-800-53-rev5-moderate,soc2-tsc",
-        "--output", "{oscal}",
-        "--format", "oscal-ar",
+        "gap",
+        "analyze",
+        "--inventory",
+        INVENTORY,
+        "--frameworks",
+        "nist-800-53-rev5-moderate,soc2-tsc",
+        "--output",
+        "{oscal}",
+        "--format",
+        "oscal-ar",
     ],
     ["oscal", "verify", "{oscal}"],
 ]
@@ -177,12 +186,8 @@ def run_command(argv: list[str], tmp_dir: Path) -> bytes:
     )
     if result.returncode != 0:
         sys.stderr.buffer.write(result.stdout)
-        raise SystemExit(
-            f"Command failed ({result.returncode}): evidentia {' '.join(resolved)}"
-        )
-    redacted = redact_output(
-        result.stdout.decode("utf-8", errors="replace"), tmp_dir
-    )
+        raise SystemExit(f"Command failed ({result.returncode}): evidentia {' '.join(resolved)}")
+    redacted = redact_output(result.stdout.decode("utf-8", errors="replace"), tmp_dir)
     return redacted.encode("utf-8")
 
 
@@ -231,15 +236,11 @@ def render_cast(events: list[list[object]]) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     args = argv if argv is not None else sys.argv[1:]
     if len(args) != 1:
         sys.stderr.write(
-            "usage: gen_cast.py <output.cast>\n"
-            "  e.g. scripts/demo/gen_cast.py "
-            "packages/evidentia-ui/public/demo.cast\n"
+            "usage: gen_cast.py <output.cast>\n  e.g. scripts/demo/gen_cast.py packages/evidentia-ui/public/demo.cast\n"
         )
         return 2
     out_path = Path(args[0])
@@ -255,9 +256,7 @@ def main(argv: list[str] | None = None) -> int:
         shutil.rmtree(tmp_dir)
     tmp_dir.mkdir(parents=True)
     try:
-        events = build_events(
-            COMMANDS, lambda a: run_command(a, tmp_dir)
-        )
+        events = build_events(COMMANDS, lambda a: run_command(a, tmp_dir))
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
 

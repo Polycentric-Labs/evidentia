@@ -156,9 +156,7 @@ class GapAnalyzer:
         # guidance. Emits Python's `warnings.warn` (UserWarning) so the
         # signal surfaces in both CLI runs (captured by Rich) and library
         # callers (captured by their own warning filters / test harnesses).
-        _placeholders = [
-            fw for fw, cat in catalogs.items() if getattr(cat, "placeholder", False)
-        ]
+        _placeholders = [fw for fw, cat in catalogs.items() if getattr(cat, "placeholder", False)]
         if _placeholders:
             import warnings
 
@@ -199,19 +197,13 @@ class GapAnalyzer:
         # Step 7: Detect efficiency opportunities
         efficiency: list[EfficiencyOpportunity] = []
         if show_efficiency:
-            efficiency = self._detect_efficiency_opportunities(
-                gaps, min_frameworks=min_efficiency_frameworks
-            )
+            efficiency = self._detect_efficiency_opportunities(gaps, min_frameworks=min_efficiency_frameworks)
 
         # Step 8: Build report
         severity_counts = self._count_severities(gaps)
         total_required = len(required_controls)
         total_gaps = len(gaps)
-        coverage = (
-            ((total_required - total_gaps) / total_required * 100)
-            if total_required > 0
-            else 100.0
-        )
+        coverage = ((total_required - total_gaps) / total_required * 100) if total_required > 0 else 100.0
 
         report = GapAnalysisReport(
             organization=inventory.organization,
@@ -239,9 +231,7 @@ class GapAnalyzer:
         )
         return report
 
-    def _build_required_set(
-        self, catalogs: dict[str, ControlCatalog]
-    ) -> dict[str, list[tuple[str, CatalogControl]]]:
+    def _build_required_set(self, catalogs: dict[str, ControlCatalog]) -> dict[str, list[tuple[str, CatalogControl]]]:
         """Build the set of required controls across all frameworks.
 
         Returns: {framework:control_id: [(framework_id, CatalogControl), ...]}
@@ -307,9 +297,7 @@ class GapAnalyzer:
                             f"is required by {fw_id} but is not present in the "
                             f"organization's control inventory."
                         ),
-                        remediation_guidance=self._generate_remediation_guidance(
-                            catalog_control
-                        ),
+                        remediation_guidance=self._generate_remediation_guidance(catalog_control),
                         implementation_effort=self._estimate_effort(catalog_control),
                     )
                 )
@@ -329,9 +317,7 @@ class GapAnalyzer:
                             f"Notes: {impl.implementation_notes or 'No details provided.'}"
                         ),
                         equivalent_controls_in_inventory=[impl.id],
-                        remediation_guidance=self._generate_remediation_guidance(
-                            catalog_control, partial=True
-                        ),
+                        remediation_guidance=self._generate_remediation_guidance(catalog_control, partial=True),
                         implementation_effort=ImplementationEffort.MEDIUM,
                     )
                 )
@@ -372,9 +358,7 @@ class GapAnalyzer:
                             f"is in the inventory but explicitly marked as not implemented."
                         ),
                         equivalent_controls_in_inventory=[impl.id],
-                        remediation_guidance=self._generate_remediation_guidance(
-                            catalog_control
-                        ),
+                        remediation_guidance=self._generate_remediation_guidance(catalog_control),
                         implementation_effort=self._estimate_effort(catalog_control),
                     )
                 )
@@ -387,9 +371,7 @@ class GapAnalyzer:
         crosswalk = self.registry.crosswalk
 
         for gap in gaps:
-            cross_value = crosswalk.get_cross_framework_value(
-                gap.framework, gap.control_id
-            )
+            cross_value = crosswalk.get_cross_framework_value(gap.framework, gap.control_id)
             gap.cross_framework_value = cross_value
 
     def _compute_priority(self, gap: ControlGap) -> float:
@@ -429,9 +411,7 @@ class GapAnalyzer:
 
             if len(unique_frameworks) >= min_frameworks:
                 # Pick the effort level from the most severe gap in the group
-                most_severe = max(
-                    gap_group, key=lambda g: _severity_weight(g.gap_severity)
-                )
+                most_severe = max(gap_group, key=lambda g: _severity_weight(g.gap_severity))
                 effort_value = most_severe.implementation_effort
                 effort_w = _effort_weight(effort_value)
                 value_score = len(set(all_satisfied)) / effort_w
@@ -510,9 +490,7 @@ class GapAnalyzer:
         """
         # Layer 1: structural complexity (works when OSCAL resolution populates
         # enhancements and 800-53A assessment objectives)
-        structural_score = len(control.enhancements) + len(
-            control.assessment_objectives
-        )
+        structural_score = len(control.enhancements) + len(control.assessment_objectives)
         if structural_score >= 10:
             return ImplementationEffort.VERY_HIGH
         if structural_score >= 5:
@@ -542,10 +520,6 @@ class GapAnalyzer:
     def _count_severities(gaps: list[ControlGap]) -> dict[str, int]:
         counts: dict[str, int] = {}
         for gap in gaps:
-            key = (
-                gap.gap_severity.value
-                if isinstance(gap.gap_severity, GapSeverity)
-                else gap.gap_severity
-            )
+            key = gap.gap_severity.value if isinstance(gap.gap_severity, GapSeverity) else gap.gap_severity
             counts[key] = counts.get(key, 0) + 1
         return counts

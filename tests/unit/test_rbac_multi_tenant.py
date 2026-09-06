@@ -38,16 +38,12 @@ class TestResolveTenant:
         assert resolve_tenant_from_identity("") == (None, None)
 
     def test_no_claim(self) -> None:
-        bare, tenant = resolve_tenant_from_identity(
-            "alice@example.com"
-        )
+        bare, tenant = resolve_tenant_from_identity("alice@example.com")
         assert bare == "alice@example.com"
         assert tenant is None
 
     def test_with_claim(self) -> None:
-        bare, tenant = resolve_tenant_from_identity(
-            "alice@example.com@@acme-corp"
-        )
+        bare, tenant = resolve_tenant_from_identity("alice@example.com@@acme-corp")
         assert bare == "alice@example.com"
         assert tenant == "acme-corp"
 
@@ -128,16 +124,11 @@ class TestTenantRBACPolicy:
         wrapped = TenantRBACPolicy.from_single_tenant_policy(single)
         assert "default" in wrapped.tenants
         assert wrapped.default_tenant == "default"
-        assert (
-            wrapped.tenants["default"].role_for("alice@acme.com")
-            == Role.ADMIN
-        )
+        assert wrapped.tenants["default"].role_for("alice@acme.com") == Role.ADMIN
 
     def test_from_single_tenant_custom_tenant_id(self) -> None:
         single = _make_acme_policy()
-        wrapped = TenantRBACPolicy.from_single_tenant_policy(
-            single, tenant_id="acme-corp"
-        )
+        wrapped = TenantRBACPolicy.from_single_tenant_policy(single, tenant_id="acme-corp")
         assert "acme-corp" in wrapped.tenants
         assert wrapped.default_tenant == "acme-corp"
 
@@ -157,36 +148,28 @@ def multi_tenant_policy() -> TenantRBACPolicy:
 
 
 class TestCheckPermissionMultiTenant:
-    def test_alice_admin_in_acme(
-        self, multi_tenant_policy: TenantRBACPolicy
-    ) -> None:
+    def test_alice_admin_in_acme(self, multi_tenant_policy: TenantRBACPolicy) -> None:
         assert check_permission_multi_tenant(
             "alice@acme.com@@acme-corp",
             "admin",
             policy=multi_tenant_policy,
         )
 
-    def test_bob_editor_can_write(
-        self, multi_tenant_policy: TenantRBACPolicy
-    ) -> None:
+    def test_bob_editor_can_write(self, multi_tenant_policy: TenantRBACPolicy) -> None:
         assert check_permission_multi_tenant(
             "bob@acme.com@@acme-corp",
             "write",
             policy=multi_tenant_policy,
         )
 
-    def test_bob_editor_cannot_admin(
-        self, multi_tenant_policy: TenantRBACPolicy
-    ) -> None:
+    def test_bob_editor_cannot_admin(self, multi_tenant_policy: TenantRBACPolicy) -> None:
         assert not check_permission_multi_tenant(
             "bob@acme.com@@acme-corp",
             "admin",
             policy=multi_tenant_policy,
         )
 
-    def test_acme_identity_in_globex_tenant_denied(
-        self, multi_tenant_policy: TenantRBACPolicy
-    ) -> None:
+    def test_acme_identity_in_globex_tenant_denied(self, multi_tenant_policy: TenantRBACPolicy) -> None:
         # alice's home is acme; globex policy treats her as unknown
         # with default_role=DENY.
         assert not check_permission_multi_tenant(
@@ -195,9 +178,7 @@ class TestCheckPermissionMultiTenant:
             policy=multi_tenant_policy,
         )
 
-    def test_no_claim_resolves_to_default_tenant(
-        self, multi_tenant_policy: TenantRBACPolicy
-    ) -> None:
+    def test_no_claim_resolves_to_default_tenant(self, multi_tenant_policy: TenantRBACPolicy) -> None:
         # No tenant claim → default_tenant=acme-corp.
         assert check_permission_multi_tenant(
             "alice@acme.com",
@@ -217,18 +198,14 @@ class TestCheckPermissionMultiTenant:
             policy=policy,
         )
 
-    def test_unknown_tenant_denies(
-        self, multi_tenant_policy: TenantRBACPolicy
-    ) -> None:
+    def test_unknown_tenant_denies(self, multi_tenant_policy: TenantRBACPolicy) -> None:
         assert not check_permission_multi_tenant(
             "alice@acme.com@@unknown-tenant",
             "read",
             policy=multi_tenant_policy,
         )
 
-    def test_anonymous_falls_through_to_default_role(
-        self, multi_tenant_policy: TenantRBACPolicy
-    ) -> None:
+    def test_anonymous_falls_through_to_default_role(self, multi_tenant_policy: TenantRBACPolicy) -> None:
         # No identity → no tenant claim → default_tenant acme-corp
         # → unknown identity → default_role READER → can read.
         assert check_permission_multi_tenant(
@@ -243,9 +220,7 @@ class TestCheckPermissionMultiTenant:
             policy=multi_tenant_policy,
         )
 
-    def test_unknown_action_raises_keyerror(
-        self, multi_tenant_policy: TenantRBACPolicy
-    ) -> None:
+    def test_unknown_action_raises_keyerror(self, multi_tenant_policy: TenantRBACPolicy) -> None:
         with pytest.raises(KeyError):
             check_permission_multi_tenant(
                 "alice@acme.com@@acme-corp",
@@ -344,16 +319,11 @@ class TestLoadMultiTenantPolicy:
         assert policy.default_tenant == "acme-corp"
         assert "acme-corp" in policy.tenants
         assert "globex" in policy.tenants
-        assert (
-            policy.tenants["acme-corp"].role_for("alice@acme.com")
-            == Role.ADMIN
-        )
+        assert policy.tenants["acme-corp"].role_for("alice@acme.com") == Role.ADMIN
 
     def test_missing_file_raises(self, tmp_path: Path) -> None:
         with pytest.raises(FileNotFoundError):
-            load_multi_tenant_policy_from_file(
-                tmp_path / "does-not-exist.yaml"
-            )
+            load_multi_tenant_policy_from_file(tmp_path / "does-not-exist.yaml")
 
     def test_malformed_yaml_raises(self, tmp_path: Path) -> None:
         path = tmp_path / "bad.yaml"
@@ -392,12 +362,8 @@ class TestSingleTenantUntouched:
             identities={"alice@example.com": Role.EDITOR},
             default_role=Role.READER,
         )
-        assert check_permission(
-            "alice@example.com", "write", policy=policy
-        )
-        assert not check_permission(
-            "alice@example.com", "admin", policy=policy
-        )
+        assert check_permission("alice@example.com", "write", policy=policy)
+        assert not check_permission("alice@example.com", "admin", policy=policy)
 
 
 # ── RBAC_TENANT_BOUNDARY_CROSSED audit event (v0.9.8 P1.5) ─────────
@@ -439,31 +405,21 @@ class TestTenantBoundaryAuditEvent:
             default_tenant="acme-corp",
         )
 
-    def test_no_event_when_escalation_disabled(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_no_event_when_escalation_disabled(self, caplog: pytest.LogCaptureFixture) -> None:
         """Default policy (cross_tenant_admin_role=DENY) never emits."""
         import logging
 
         policy = self._policy_without_escalation()
-        with caplog.at_level(
-            logging.WARNING, logger="evidentia.rbac.multi_tenant"
-        ):
+        with caplog.at_level(logging.WARNING, logger="evidentia.rbac.multi_tenant"):
             check_permission_multi_tenant(
                 "bob@example.com",  # not in identities → DENY
                 "read",
                 policy=policy,
             )
-        boundary_records = [
-            r
-            for r in caplog.records
-            if r.name == "evidentia.rbac.multi_tenant"
-        ]
+        boundary_records = [r for r in caplog.records if r.name == "evidentia.rbac.multi_tenant"]
         assert boundary_records == []
 
-    def test_event_fires_on_successful_escalation(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_event_fires_on_successful_escalation(self, caplog: pytest.LogCaptureFixture) -> None:
         """Identity with escalation role → SUCCESS outcome."""
         import logging
 
@@ -471,9 +427,7 @@ class TestTenantBoundaryAuditEvent:
         # alice is ADMIN in acme-corp, but per-tenant default is DENY.
         # When she requests a write to a tenant where she's NOT default,
         # the v0.9.7-limited escalation path grants her admin scope.
-        with caplog.at_level(
-            logging.WARNING, logger="evidentia.rbac.multi_tenant"
-        ):
+        with caplog.at_level(logging.WARNING, logger="evidentia.rbac.multi_tenant"):
             result = check_permission_multi_tenant(
                 "bob@example.com",  # not in alice's tenant
                 "read",
@@ -483,19 +437,13 @@ class TestTenantBoundaryAuditEvent:
         # ADMIN role anywhere) → outcome=failure, but the event still
         # fires because the escalation path was entered.
         assert result is False
-        boundary_records = [
-            r
-            for r in caplog.records
-            if r.name == "evidentia.rbac.multi_tenant"
-        ]
+        boundary_records = [r for r in caplog.records if r.name == "evidentia.rbac.multi_tenant"]
         assert len(boundary_records) == 1
         msg = boundary_records[0].getMessage()
         assert "denied" in msg.lower()
         assert "bob@example.com" in msg
 
-    def test_event_fires_with_granted_outcome(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_event_fires_with_granted_outcome(self, caplog: pytest.LogCaptureFixture) -> None:
         """Identity holding escalation role → escalation granted."""
         import logging
 
@@ -506,9 +454,7 @@ class TestTenantBoundaryAuditEvent:
         # the escalation grants. With default_role=DENY and alice as
         # ADMIN, alice's per-tenant check already grants admin scope —
         # the escalation path is NOT entered.
-        with caplog.at_level(
-            logging.WARNING, logger="evidentia.rbac.multi_tenant"
-        ):
+        with caplog.at_level(logging.WARNING, logger="evidentia.rbac.multi_tenant"):
             result = check_permission_multi_tenant(
                 "alice@example.com",
                 "admin",
@@ -516,33 +462,21 @@ class TestTenantBoundaryAuditEvent:
             )
         assert result is True
         # Per-tenant ADMIN grants; no escalation path traversed.
-        boundary_records = [
-            r
-            for r in caplog.records
-            if r.name == "evidentia.rbac.multi_tenant"
-        ]
+        boundary_records = [r for r in caplog.records if r.name == "evidentia.rbac.multi_tenant"]
         assert boundary_records == []
 
-    def test_event_message_includes_decision_context(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_event_message_includes_decision_context(self, caplog: pytest.LogCaptureFixture) -> None:
         """Audit event message carries identity + tenant + action + role."""
         import logging
 
         policy = self._policy_with_escalation()
-        with caplog.at_level(
-            logging.WARNING, logger="evidentia.rbac.multi_tenant"
-        ):
+        with caplog.at_level(logging.WARNING, logger="evidentia.rbac.multi_tenant"):
             check_permission_multi_tenant(
                 "carol@globex.com@@acme-corp",
                 "write",
                 policy=policy,
             )
-        boundary_records = [
-            r
-            for r in caplog.records
-            if r.name == "evidentia.rbac.multi_tenant"
-        ]
+        boundary_records = [r for r in caplog.records if r.name == "evidentia.rbac.multi_tenant"]
         assert len(boundary_records) == 1
         msg = boundary_records[0].getMessage()
         # Identity (bare) + claimed_tenant + action + escalation_role
@@ -564,9 +498,7 @@ class TestLoadRbacPolicyAuto:
     CLI had. This loader is now the single detection point both use.
     """
 
-    def test_single_tenant_file_loads_as_rbac_policy(
-        self, tmp_path: Path
-    ) -> None:
+    def test_single_tenant_file_loads_as_rbac_policy(self, tmp_path: Path) -> None:
         from evidentia_core.rbac import RBACPolicy, load_rbac_policy_auto
 
         policy_file = tmp_path / "single.yaml"
@@ -578,9 +510,7 @@ class TestLoadRbacPolicyAuto:
         assert isinstance(policy, RBACPolicy)
         assert not isinstance(policy, TenantRBACPolicy)
 
-    def test_multi_tenant_file_loads_as_tenant_policy(
-        self, tmp_path: Path
-    ) -> None:
+    def test_multi_tenant_file_loads_as_tenant_policy(self, tmp_path: Path) -> None:
         from evidentia_core.rbac import load_rbac_policy_auto
 
         policy_file = tmp_path / "multi.yaml"
@@ -603,9 +533,7 @@ class TestLoadRbacPolicyAuto:
         with pytest.raises(FileNotFoundError):
             load_rbac_policy_auto(tmp_path / "nope.yaml")
 
-    def test_malformed_yaml_raises_value_error(
-        self, tmp_path: Path
-    ) -> None:
+    def test_malformed_yaml_raises_value_error(self, tmp_path: Path) -> None:
         from evidentia_core.rbac import load_rbac_policy_auto
 
         policy_file = tmp_path / "bad.yaml"
@@ -653,17 +581,11 @@ class TestCrossTenantAdminRoleConstraint:
         with pytest.raises(ValidationError, match="must be 'admin' or 'deny'"):
             TenantRBACPolicy(cross_tenant_admin_role=bad_role)
 
-    def test_sub_admin_role_rejected_from_yaml(
-        self, tmp_path: Path
-    ) -> None:
+    def test_sub_admin_role_rejected_from_yaml(self, tmp_path: Path) -> None:
         """The constraint also fires when loading a policy file."""
         policy_file = tmp_path / "bad.yaml"
         policy_file.write_text(
-            "tenants:\n"
-            "  acme-corp:\n"
-            "    identities: {}\n"
-            "    default_role: deny\n"
-            "cross_tenant_admin_role: editor\n",
+            "tenants:\n  acme-corp:\n    identities: {}\n    default_role: deny\ncross_tenant_admin_role: editor\n",
             encoding="utf-8",
         )
         with pytest.raises(ValueError, match="must be 'admin' or 'deny'"):
@@ -681,9 +603,7 @@ class TestBoundaryEventStructuredPayload:
     structured payload so SIEM filters can pivot on the fields.
     """
 
-    def test_emit_carries_structured_evidentia_fields(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_emit_carries_structured_evidentia_fields(self, caplog: pytest.LogCaptureFixture) -> None:
         import logging
 
         policy = TenantRBACPolicy(
@@ -696,17 +616,9 @@ class TestBoundaryEventStructuredPayload:
             default_tenant="acme-corp",
             cross_tenant_admin_role=Role.ADMIN,
         )
-        with caplog.at_level(
-            logging.WARNING, logger="evidentia.rbac.multi_tenant"
-        ):
-            check_permission_multi_tenant(
-                "bob@example.com@@acme-corp", "write", policy=policy
-            )
-        records = [
-            r
-            for r in caplog.records
-            if r.name == "evidentia.rbac.multi_tenant"
-        ]
+        with caplog.at_level(logging.WARNING, logger="evidentia.rbac.multi_tenant"):
+            check_permission_multi_tenant("bob@example.com@@acme-corp", "write", policy=policy)
+        records = [r for r in caplog.records if r.name == "evidentia.rbac.multi_tenant"]
         assert len(records) == 1
         # The audit logger stashes the full ECS record under
         # `ecs_record`; the evidentia={} payload lands at the

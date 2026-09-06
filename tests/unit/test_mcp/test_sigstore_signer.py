@@ -30,10 +30,13 @@ class TestAvailabilityGates:
             make_sigstore_signer,
         )
 
-        with patch(
-            "evidentia_core.oscal.sigstore.sigstore_available",
-            return_value=False,
-        ), pytest.raises(SigstoreMCPSignerError, match="not installed"):
+        with (
+            patch(
+                "evidentia_core.oscal.sigstore.sigstore_available",
+                return_value=False,
+            ),
+            pytest.raises(SigstoreMCPSignerError, match="not installed"),
+        ):
             make_sigstore_signer()
 
     def test_factory_raises_when_air_gap_enabled(self) -> None:
@@ -65,10 +68,13 @@ class TestAvailabilityGates:
             make_sigstore_verifier,
         )
 
-        with patch(
-            "evidentia_core.oscal.sigstore.sigstore_available",
-            return_value=False,
-        ), pytest.raises(SigstoreMCPSignerError, match="not installed"):
+        with (
+            patch(
+                "evidentia_core.oscal.sigstore.sigstore_available",
+                return_value=False,
+            ),
+            pytest.raises(SigstoreMCPSignerError, match="not installed"),
+        ):
             make_sigstore_verifier(
                 expected_identity="x",
                 expected_issuer="y",
@@ -157,9 +163,7 @@ class TestOIDCCredentialResolution:
             patches["available"],
             patches["online"],
             patches["oidc_module"],
-            pytest.raises(
-                SigstoreMCPSignerError, match="No OIDC credential"
-            ),
+            pytest.raises(SigstoreMCPSignerError, match="No OIDC credential"),
         ):
             make_sigstore_signer()
 
@@ -175,9 +179,7 @@ class TestOIDCCredentialResolution:
         ):
             # Should NOT raise even though detect_credential would
             # have returned None — the explicit token bypasses it.
-            signer = make_sigstore_signer(
-                identity_token="explicit-token-value"
-            )
+            signer = make_sigstore_signer(identity_token="explicit-token-value")
             assert callable(signer)
             # detect_credential should NOT have been called.
             patches["detect_credential"].assert_not_called()
@@ -219,9 +221,7 @@ class TestSigningHappyPath:
         # this module + verified downstream by make_sigstore_verifier.
         assert sig["bundle"].startswith('{"mediaType"')
         # sign_artifact was invoked with our canonical-JSON bytes.
-        patches["signer_instance"].sign_artifact.assert_called_once_with(
-            b'{"foo":"bar"}'
-        )
+        patches["signer_instance"].sign_artifact.assert_called_once_with(b'{"foo":"bar"}')
 
     def test_signer_handles_repeated_calls(self) -> None:
         """The signer can be invoked multiple times in a row."""
@@ -240,9 +240,7 @@ class TestSigningHappyPath:
         assert sig1["alg"] == sig2["alg"] == "sigstore-keyless"
         # Each call opens a fresh signer context (per-call Fulcio
         # cert lookup — Sigstore client caches under the hood).
-        assert (
-            patches["signer_instance"].sign_artifact.call_count == 2
-        )
+        assert patches["signer_instance"].sign_artifact.call_count == 2
 
 
 # ── 4. Error wrapping ────────────────────────────────────────────
@@ -262,18 +260,14 @@ class TestSigningErrorWrapping:
         )
 
         patches = _patch_sigstore_for_signer()
-        patches["signer_instance"].sign_artifact.side_effect = RuntimeError(
-            "fulcio outage"
-        )
+        patches["signer_instance"].sign_artifact.side_effect = RuntimeError("fulcio outage")
         with (
             patches["available"],
             patches["online"],
             patches["oidc_module"],
         ):
             signer = make_sigstore_signer()
-            with pytest.raises(
-                SigstoreMCPSignerError, match="Sigstore signing failed"
-            ):
+            with pytest.raises(SigstoreMCPSignerError, match="Sigstore signing failed"):
                 signer(b"some-payload")
 
 
@@ -286,18 +280,14 @@ def _patch_sigstore_for_verifier(
 ) -> Any:
     """Mock the verifier-side Sigstore primitives."""
     bundle_instance = (
-        bundle_from_json_returns
-        if bundle_from_json_returns is not None
-        else MagicMock(name="Bundle-instance")
+        bundle_from_json_returns if bundle_from_json_returns is not None else MagicMock(name="Bundle-instance")
     )
     bundle_class = MagicMock()
     bundle_class.from_json.return_value = bundle_instance
 
     verifier_instance = MagicMock(name="Verifier-instance")
     if verify_artifact_raises is not None:
-        verifier_instance.verify_artifact.side_effect = (
-            verify_artifact_raises
-        )
+        verifier_instance.verify_artifact.side_effect = verify_artifact_raises
     verifier_class = MagicMock()
     verifier_class.production.return_value = verifier_instance
 
@@ -336,9 +326,7 @@ class TestVerifierBehavior:
             patches["online"],
             patches["verify_module"],
         ):
-            verifier = make_sigstore_verifier(
-                expected_identity="x", expected_issuer="y"
-            )
+            verifier = make_sigstore_verifier(expected_identity="x", expected_issuer="y")
         # Wrong alg → False without touching Bundle.from_json.
         result = verifier(b"payload", {"alg": "hmac-sha256", "sig": "abc"})
         assert result is False
@@ -354,9 +342,7 @@ class TestVerifierBehavior:
             patches["online"],
             patches["verify_module"],
         ):
-            verifier = make_sigstore_verifier(
-                expected_identity="x", expected_issuer="y"
-            )
+            verifier = make_sigstore_verifier(expected_identity="x", expected_issuer="y")
         result = verifier(b"payload", {"alg": "sigstore-keyless"})
         assert result is False
 
@@ -370,9 +356,7 @@ class TestVerifierBehavior:
             patches["online"],
             patches["verify_module"],
         ):
-            verifier = make_sigstore_verifier(
-                expected_identity="x", expected_issuer="y"
-            )
+            verifier = make_sigstore_verifier(expected_identity="x", expected_issuer="y")
             result = verifier(
                 b"payload",
                 {
@@ -387,17 +371,13 @@ class TestVerifierBehavior:
         """Sigstore raises → verifier returns False (no exception leak)."""
         from evidentia_mcp.sigstore_signer import make_sigstore_verifier
 
-        patches = _patch_sigstore_for_verifier(
-            verify_artifact_raises=RuntimeError("identity mismatch")
-        )
+        patches = _patch_sigstore_for_verifier(verify_artifact_raises=RuntimeError("identity mismatch"))
         with (
             patches["available"],
             patches["online"],
             patches["verify_module"],
         ):
-            verifier = make_sigstore_verifier(
-                expected_identity="x", expected_issuer="y"
-            )
+            verifier = make_sigstore_verifier(expected_identity="x", expected_issuer="y")
             result = verifier(
                 b"payload",
                 {

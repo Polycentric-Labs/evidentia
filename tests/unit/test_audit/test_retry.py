@@ -30,9 +30,7 @@ def test_is_test_mode_false_when_env_unset(monkeypatch: pytest.MonkeyPatch) -> N
 
 
 @pytest.mark.parametrize("falsy", ["", "0", "false", "False", "no"])
-def test_is_test_mode_false_for_falsy_values(
-    monkeypatch: pytest.MonkeyPatch, falsy: str
-) -> None:
+def test_is_test_mode_false_for_falsy_values(monkeypatch: pytest.MonkeyPatch, falsy: str) -> None:
     monkeypatch.setenv(TEST_MODE_ENV, falsy)
     assert is_test_mode() is False
 
@@ -132,11 +130,7 @@ def test_retry_emits_log_events(caplog: pytest.LogCaptureFixture) -> None:
     with caplog.at_level("WARNING", logger="evidentia.audit.retry"):
         flaky()
 
-    retry_messages = [
-        r.message
-        for r in caplog.records
-        if "failed with ConnectionError" in r.message
-    ]
+    retry_messages = [r.message for r in caplog.records if "failed with ConnectionError" in r.message]
     assert len(retry_messages) == 2
     assert "attempt 1/3 failed" in retry_messages[0]
     assert "attempt 2/3 failed" in retry_messages[1]
@@ -160,11 +154,7 @@ def test_with_retry_default_event_action_is_collect_retry(
     with caplog.at_level("WARNING", logger="evidentia.audit.retry"), pytest.raises(ConnectionError):
         flaky()
 
-    actions = [
-        r.ecs_record["event"]["action"]
-        for r in caplog.records
-        if hasattr(r, "ecs_record")
-    ]
+    actions = [r.ecs_record["event"]["action"] for r in caplog.records if hasattr(r, "ecs_record")]
     assert actions == [EventAction.COLLECT_RETRY.value]
 
 
@@ -185,11 +175,7 @@ def test_with_retry_event_action_override_emitted(
     with caplog.at_level("WARNING", logger="evidentia.audit.retry"), pytest.raises(ConnectionError):
         flaky()
 
-    actions = [
-        r.ecs_record["event"]["action"]
-        for r in caplog.records
-        if hasattr(r, "ecs_record")
-    ]
+    actions = [r.ecs_record["event"]["action"] for r in caplog.records if hasattr(r, "ecs_record")]
     assert actions == [EventAction.AI_RISK_RETRY.value]
 
 
@@ -303,11 +289,7 @@ async def test_with_retry_async_event_action_override(
     with caplog.at_level("WARNING", logger="evidentia.audit.retry"), pytest.raises(ConnectionError):
         await flaky()
 
-    actions = [
-        r.ecs_record["event"]["action"]
-        for r in caplog.records
-        if hasattr(r, "ecs_record")
-    ]
+    actions = [r.ecs_record["event"]["action"] for r in caplog.records if hasattr(r, "ecs_record")]
     assert actions == [EventAction.AI_EXPLAIN_RETRY.value]
 
 

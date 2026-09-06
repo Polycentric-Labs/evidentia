@@ -78,9 +78,7 @@ class TestLRUEviction:
         even when the cap is exceeded — this defeats the IPv6-spray
         LRU-eviction attack."""
         # rate=60/min=1/sec, burst=2 → refill-to-full = 2 seconds.
-        limiter = TokenBucketRateLimiter(
-            rate_per_minute=60, burst=2, max_tracked_clients=3
-        )
+        limiter = TokenBucketRateLimiter(rate_per_minute=60, burst=2, max_tracked_clients=3)
         clock = {"now": 0.0}
         with patch(
             "evidentia_api.rate_limit.time.monotonic",
@@ -110,12 +108,8 @@ class TestLRUEviction:
         to refill), a new entry does NOT evict them — transient
         overage above max_tracked is accepted so the limiter
         preserves the active clients' rate-limit state."""
-        limiter = TokenBucketRateLimiter(
-            rate_per_minute=60, burst=2, max_tracked_clients=3
-        )
-        with patch(
-            "evidentia_api.rate_limit.time.monotonic", return_value=0.0
-        ):
+        limiter = TokenBucketRateLimiter(rate_per_minute=60, burst=2, max_tracked_clients=3)
+        with patch("evidentia_api.rate_limit.time.monotonic", return_value=0.0):
             # Fill 3 clients at t=0.
             for client in ("A", "B", "C"):
                 limiter.check(client)

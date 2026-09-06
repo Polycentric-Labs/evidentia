@@ -47,9 +47,7 @@ class TestOwner:
 
     def test_invalid_line_of_defense_rejected(self) -> None:
         with pytest.raises(ValidationError):
-            Owner.model_validate(
-                {"email": "x@y.com", "line_of_defense": "fourth"}
-            )
+            Owner.model_validate({"email": "x@y.com", "line_of_defense": "fourth"})
 
 
 # ── generate_lines_report ──────────────────────────────────────────
@@ -62,15 +60,13 @@ class TestGenerateLinesReport:
         assert "No owners classified" in out
 
     def test_distribution_counts_and_percentages(self) -> None:
-        owners = [
-            Owner(email=f"first-{i}@x.com", line_of_defense=LineOfDefense.FIRST)
-            for i in range(6)
-        ] + [
-            Owner(email=f"second-{i}@x.com", line_of_defense=LineOfDefense.SECOND)
-            for i in range(3)
-        ] + [
-            Owner(email="third@x.com", line_of_defense=LineOfDefense.THIRD),
-        ]
+        owners = (
+            [Owner(email=f"first-{i}@x.com", line_of_defense=LineOfDefense.FIRST) for i in range(6)]
+            + [Owner(email=f"second-{i}@x.com", line_of_defense=LineOfDefense.SECOND) for i in range(3)]
+            + [
+                Owner(email="third@x.com", line_of_defense=LineOfDefense.THIRD),
+            ]
+        )
         out = generate_lines_report(owners)
         # 6/3/1 = 60.0% / 30.0% / 10.0% of 10
         assert "| first | 6 | 60.0% |" in out

@@ -31,9 +31,7 @@ def runner() -> CliRunner:
 
 
 @pytest.fixture(autouse=True)
-def _isolated_vendor_store(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def _isolated_vendor_store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Scope EVIDENTIA_VENDOR_STORE_DIR to a per-test tmp dir."""
     store = tmp_path / "vendor-store"
     monkeypatch.setenv("EVIDENTIA_VENDOR_STORE_DIR", str(store))
@@ -45,12 +43,19 @@ def _add_vendor(runner: CliRunner) -> str:
     add = runner.invoke(
         app,
         [
-            "tprm", "vendor", "add",
-            "--name", "Acme Cloud",
-            "--type", "cloud_provider",
-            "--criticality-tier", "critical",
-            "--owner", "allen@example.com",
-            "--contract-start-date", "2025-01-01",
+            "tprm",
+            "vendor",
+            "add",
+            "--name",
+            "Acme Cloud",
+            "--type",
+            "cloud_provider",
+            "--criticality-tier",
+            "critical",
+            "--owner",
+            "allen@example.com",
+            "--contract-start-date",
+            "2025-01-01",
         ],
     )
     assert add.exit_code == 0, add.output
@@ -65,11 +70,17 @@ def _generate(runner: CliRunner, vendor_id: str, dest: Path) -> None:
     gen = runner.invoke(
         app,
         [
-            "tprm", "dd-questionnaire", "generate",
-            "--vendor-id", vendor_id,
-            "--format", "evidentia-generic",
-            "--output-format", "json",
-            "--output", str(dest),
+            "tprm",
+            "dd-questionnaire",
+            "generate",
+            "--vendor-id",
+            vendor_id,
+            "--format",
+            "evidentia-generic",
+            "--output-format",
+            "json",
+            "--output",
+            str(dest),
         ],
     )
     assert gen.exit_code == 0, gen.output
@@ -77,9 +88,7 @@ def _generate(runner: CliRunner, vendor_id: str, dest: Path) -> None:
 
 
 class TestDdQuestionnaireIngestRender:
-    def test_ingest_table_output_does_not_crash(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_ingest_table_output_does_not_crash(self, runner: CliRunner, tmp_path: Path) -> None:
         vendor_id = _add_vendor(runner)
         qfile = tmp_path / "completed.json"
         _generate(runner, vendor_id, qfile)
@@ -87,9 +96,13 @@ class TestDdQuestionnaireIngestRender:
         result = runner.invoke(
             app,
             [
-                "tprm", "dd-questionnaire", "ingest",
-                "--questionnaire", str(qfile),
-                "--vendor-id", vendor_id,
+                "tprm",
+                "dd-questionnaire",
+                "ingest",
+                "--questionnaire",
+                str(qfile),
+                "--vendor-id",
+                vendor_id,
             ],
         )
 
@@ -98,9 +111,7 @@ class TestDdQuestionnaireIngestRender:
         # The format field renders as its string value, not a crash.
         assert "evidentia-generic" in result.output
 
-    def test_ingest_json_output_renders_format_value(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_ingest_json_output_renders_format_value(self, runner: CliRunner, tmp_path: Path) -> None:
         vendor_id = _add_vendor(runner)
         qfile = tmp_path / "completed.json"
         _generate(runner, vendor_id, qfile)
@@ -108,10 +119,15 @@ class TestDdQuestionnaireIngestRender:
         result = runner.invoke(
             app,
             [
-                "tprm", "dd-questionnaire", "ingest",
-                "--questionnaire", str(qfile),
-                "--vendor-id", vendor_id,
-                "--output-format", "json",
+                "tprm",
+                "dd-questionnaire",
+                "ingest",
+                "--questionnaire",
+                str(qfile),
+                "--vendor-id",
+                vendor_id,
+                "--output-format",
+                "json",
             ],
         )
 

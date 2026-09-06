@@ -38,8 +38,7 @@ def _minimal_challenge() -> EffectiveChallenge:
         challenge_date=date(2026, 1, 15),
         challenge_topic="Methodology — feature selection rationale",
         challenge_substance=(
-            "Why were 5 alternative feature sets evaluated? Show the "
-            "comparison + selection criteria."
+            "Why were 5 alternative feature sets evaluated? Show the comparison + selection criteria."
         ),
     )
 
@@ -87,26 +86,20 @@ class TestEffectiveChallenge:
 
 
 @pytest.fixture()
-def isolated_store(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def isolated_store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     store = tmp_path / "challenge-store"
     monkeypatch.setenv(CHALLENGE_STORE_ENV_VAR, str(store))
     return store
 
 
 class TestStoreDirResolution:
-    def test_env_var_overrides_default(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_env_var_overrides_default(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         target = tmp_path / "from-env"
         monkeypatch.setenv(CHALLENGE_STORE_ENV_VAR, str(target))
         resolved = get_challenge_store_dir()
         assert resolved == target
 
-    def test_explicit_override_beats_env(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_explicit_override_beats_env(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv(CHALLENGE_STORE_ENV_VAR, str(tmp_path / "env"))
         explicit = tmp_path / "explicit"
         resolved = get_challenge_store_dir(override=explicit)
@@ -114,9 +107,7 @@ class TestStoreDirResolution:
 
 
 class TestSaveLoad:
-    def test_save_and_load_round_trip(
-        self, isolated_store: Path
-    ) -> None:
+    def test_save_and_load_round_trip(self, isolated_store: Path) -> None:
         c = _minimal_challenge()
         save_challenge(c)
         loaded = load_challenge_by_id(c.id)
@@ -125,18 +116,14 @@ class TestSaveLoad:
         assert loaded.challenge_topic == c.challenge_topic
         assert loaded.subject_model_id == c.subject_model_id
 
-    def test_save_atomic_no_tmp_leftover(
-        self, isolated_store: Path
-    ) -> None:
+    def test_save_atomic_no_tmp_leftover(self, isolated_store: Path) -> None:
         c = _minimal_challenge()
         save_challenge(c)
         # No .tmp files should linger
         tmp_files = list(isolated_store.glob("*.tmp"))
         assert tmp_files == []
 
-    def test_save_refreshes_updated_at(
-        self, isolated_store: Path
-    ) -> None:
+    def test_save_refreshes_updated_at(self, isolated_store: Path) -> None:
         from datetime import timedelta
 
         from evidentia_core.models.common import utc_now
@@ -149,23 +136,15 @@ class TestSaveLoad:
         assert loaded is not None
         assert loaded.updated_at > original
 
-    def test_load_unknown_returns_none(
-        self, isolated_store: Path
-    ) -> None:
-        result = load_challenge_by_id(
-            "00000000-0000-0000-0000-000000000000"
-        )
+    def test_load_unknown_returns_none(self, isolated_store: Path) -> None:
+        result = load_challenge_by_id("00000000-0000-0000-0000-000000000000")
         assert result is None
 
-    def test_load_invalid_id_shape_raises(
-        self, isolated_store: Path
-    ) -> None:
+    def test_load_invalid_id_shape_raises(self, isolated_store: Path) -> None:
         with pytest.raises(InvalidChallengeIdError):
             load_challenge_by_id("not-a-uuid")
 
-    def test_save_invalid_id_raises_via_path_traversal(
-        self, isolated_store: Path
-    ) -> None:
+    def test_save_invalid_id_raises_via_path_traversal(self, isolated_store: Path) -> None:
         c = _minimal_challenge()
         c2 = c.model_copy(update={"id": "../escape"})
         with pytest.raises(InvalidChallengeIdError):
@@ -197,9 +176,7 @@ class TestDelete:
         assert delete_challenge(c.id) is True
         assert load_challenge_by_id(c.id) is None
 
-    def test_delete_unknown_returns_false(
-        self, isolated_store: Path
-    ) -> None:
+    def test_delete_unknown_returns_false(self, isolated_store: Path) -> None:
         assert delete_challenge("00000000-0000-0000-0000-000000000000") is False
 
     def test_delete_invalid_id_raises(self, isolated_store: Path) -> None:

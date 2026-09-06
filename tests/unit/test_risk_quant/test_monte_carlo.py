@@ -39,12 +39,8 @@ def _scenario_pert(name: str = "credential-stuffing") -> OpenFAIRScenario:
             "description": "Credential stuffing attack on the customer login endpoint.",
             "tef": PERTRange(low=12, most_likely=52, high=200),
             "vulnerability": PERTRange(low=0.05, most_likely=0.10, high=0.25),
-            "primary_loss": PERTRange(
-                low=10_000, most_likely=50_000, high=200_000
-            ),
-            "secondary_loss": PERTRange(
-                low=20_000, most_likely=100_000, high=500_000
-            ),
+            "primary_loss": PERTRange(low=10_000, most_likely=50_000, high=200_000),
+            "secondary_loss": PERTRange(low=20_000, most_likely=100_000, high=500_000),
         }
     )
 
@@ -175,8 +171,7 @@ class TestSimulateAle:
         # require equality — just within an order of magnitude.
         ratio = r.p50 / deterministic
         assert 0.3 <= ratio <= 3.0, (
-            f"P50 ({r.p50:.0f}) should be within 0.3x-3x of "
-            f"deterministic ({deterministic:.0f}); ratio={ratio:.3f}"
+            f"P50 ({r.p50:.0f}) should be within 0.3x-3x of deterministic ({deterministic:.0f}); ratio={ratio:.3f}"
         )
 
     def test_iterations_count_matches(self) -> None:
@@ -273,9 +268,7 @@ class TestGenerateMonteCarloReport:
         )
         r_high = simulate_ale(s_high, iterations=100, seed=42)
         r_low = simulate_ale(s_low, iterations=100, seed=42)
-        report = generate_monte_carlo_report(
-            [(s_low, r_low), (s_high, r_high)]
-        )
+        report = generate_monte_carlo_report([(s_low, r_low), (s_high, r_high)])
         # high-risk should appear before low-risk in the table
         high_pos = report.find("high-risk")
         low_pos = report.find("low-risk")

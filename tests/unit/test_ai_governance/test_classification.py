@@ -81,12 +81,8 @@ class TestNISTAIRMFOrdering:
             annex_iii_domain=AnnexIIIDomain.ESSENTIAL_SERVICES,
         )
         result = classify(d)
-        assert result.applicable_nist_ai_rmf_functions[0] == (
-            NISTAIRMFFunction.GOVERN
-        )
-        assert result.applicable_nist_ai_rmf_functions[1] == (
-            NISTAIRMFFunction.MAP
-        )
+        assert result.applicable_nist_ai_rmf_functions[0] == (NISTAIRMFFunction.GOVERN)
+        assert result.applicable_nist_ai_rmf_functions[1] == (NISTAIRMFFunction.MAP)
 
     def test_automated_role_prioritizes_measure(self) -> None:
         d = AISystemDescriptor(
@@ -95,9 +91,7 @@ class TestNISTAIRMFOrdering:
             decision_role="automated",  # type: ignore[arg-type]
         )
         result = classify(d)
-        assert result.applicable_nist_ai_rmf_functions[0] == (
-            NISTAIRMFFunction.MEASURE
-        )
+        assert result.applicable_nist_ai_rmf_functions[0] == (NISTAIRMFFunction.MEASURE)
 
     def test_advisory_role_prioritizes_map(self) -> None:
         d = AISystemDescriptor(
@@ -105,9 +99,7 @@ class TestNISTAIRMFOrdering:
             purpose="Suggest treatment options for clinician review",
         )
         result = classify(d)
-        assert result.applicable_nist_ai_rmf_functions[0] == (
-            NISTAIRMFFunction.MAP
-        )
+        assert result.applicable_nist_ai_rmf_functions[0] == (NISTAIRMFFunction.MAP)
 
     def test_all_four_functions_always_present(self) -> None:
         d = AISystemDescriptor(name="x", purpose="y")
@@ -153,10 +145,7 @@ class TestNonBlankPatternMatchesRuntimeStrip:
 
         from evidentia_core.models.common import NON_BLANK_PATTERN
 
-        leaked = [
-            hex(cp) for cp in range(0x110000)
-            if chr(cp).isspace() and re.search(NON_BLANK_PATTERN, chr(cp))
-        ]
+        leaked = [hex(cp) for cp in range(0x110000) if chr(cp).isspace() and re.search(NON_BLANK_PATTERN, chr(cp))]
         assert leaked == [], f"whitespace code points the pattern admits: {leaked}"
         assert re.search(NON_BLANK_PATTERN, "a")
         assert re.search(NON_BLANK_PATTERN, "\u00a0x\u00a0")

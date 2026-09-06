@@ -88,16 +88,10 @@ class GapReportRepository:
             return self.root
         candidate = self.root_revalidator()
         if candidate is None:
-            raise GapStoreRootChangedError(
-                "Gap report repository root changed during operation-time "
-                "revalidation."
-            )
+            raise GapStoreRootChangedError("Gap report repository root changed during operation-time revalidation.")
         revalidated = get_gap_store_dir(candidate)
         if revalidated != self.root:
-            raise GapStoreRootChangedError(
-                "Gap report repository root changed during operation-time "
-                "revalidation."
-            )
+            raise GapStoreRootChangedError("Gap report repository root changed during operation-time revalidation.")
         return self.root
 
     def save(self, report: GapAnalysisReport) -> Path:
@@ -129,12 +123,8 @@ def _validate_key_shape(key: str) -> None:
     letters, non-hex characters, ``..`` segments, path separators)
     raises :class:`InvalidReportKeyError`.
     """
-    if len(key) != REPORT_KEY_LENGTH or not all(
-        c in REPORT_KEY_HEX_CHARS for c in key
-    ):
-        raise InvalidReportKeyError(
-            "Invalid report key format (expected 16 hex characters)."
-        )
+    if len(key) != REPORT_KEY_LENGTH or not all(c in REPORT_KEY_HEX_CHARS for c in key):
+        raise InvalidReportKeyError("Invalid report key format (expected 16 hex characters).")
 
 
 def get_gap_store_dir(override: Path | None = None) -> Path:
@@ -153,9 +143,7 @@ def get_gap_store_dir(override: Path | None = None) -> Path:
     return Path(user_data_dir("evidentia", "Evidentia")) / "gap_store"
 
 
-def _compute_key(
-    inventory_source: str | None, organization: str, frameworks: list[str]
-) -> str:
+def _compute_key(inventory_source: str | None, organization: str, frameworks: list[str]) -> str:
     """Compute a stable 16-hex-char key for a (inventory, frameworks) pair.
 
     Uses ``inventory_source`` (absolute file path) when available since
@@ -210,9 +198,7 @@ def load_latest_report(
 
     latest = reports[-1]
     logger.debug("Loading latest gap report: %s", latest)
-    return GapAnalysisReport.model_validate_json(
-        latest.read_text(encoding="utf-8")
-    )
+    return GapAnalysisReport.model_validate_json(latest.read_text(encoding="utf-8"))
 
 
 def list_reports(
@@ -248,9 +234,7 @@ def load_report_by_key(
     path = validate_within(candidate, store)
     if not path.is_file():
         return None
-    return GapAnalysisReport.model_validate_json(
-        path.read_text(encoding="utf-8")
-    )
+    return GapAnalysisReport.model_validate_json(path.read_text(encoding="utf-8"))
 
 
 __all__ = [

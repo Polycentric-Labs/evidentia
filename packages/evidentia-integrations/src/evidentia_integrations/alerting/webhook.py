@@ -101,10 +101,7 @@ class WebhookConfig:
             raise ValueError("webhook URL required")
         parsed = urlparse(self.url)
         if parsed.scheme not in ("http", "https"):
-            raise ValueError(
-                f"webhook URL must be http:// or https://; "
-                f"got {self.url!r}"
-            )
+            raise ValueError(f"webhook URL must be http:// or https://; got {self.url!r}")
         if parsed.scheme == "http" and not self.allow_plaintext:
             raise ValueError(
                 f"webhook URL is plaintext http:// ({self.url!r}); "
@@ -114,27 +111,17 @@ class WebhookConfig:
                 "headers to on-path attackers."
             )
         if not parsed.hostname:
-            raise ValueError(
-                f"webhook URL has no hostname; got {self.url!r}"
-            )
+            raise ValueError(f"webhook URL has no hostname; got {self.url!r}")
         if not self.secret:
-            raise ValueError(
-                "webhook secret required (resolve via "
-                "evidentia_core.conmon.alerting.resolve_secret)"
-            )
+            raise ValueError("webhook secret required (resolve via evidentia_core.conmon.alerting.resolve_secret)")
 
         # SSRF guard: resolve hostname → reject private/loopback/
         # link-local/reserved unless opted in. Use getaddrinfo so
         # IPv6 is covered uniformly with IPv4.
         try:
-            addrinfo = socket.getaddrinfo(
-                parsed.hostname, parsed.port, type=socket.SOCK_STREAM
-            )
+            addrinfo = socket.getaddrinfo(parsed.hostname, parsed.port, type=socket.SOCK_STREAM)
         except socket.gaierror as exc:
-            raise ValueError(
-                f"webhook hostname {parsed.hostname!r} did not "
-                f"resolve: {exc}"
-            ) from exc
+            raise ValueError(f"webhook hostname {parsed.hostname!r} did not resolve: {exc}") from exc
 
         # v0.9.5 F-V94-Q11 closure (correctness): the v0.9.4
         # implementation sorted resolved IPs lexicographically by
@@ -154,9 +141,7 @@ class WebhookConfig:
                 # Zero-pad IPv4 + use compressed IPv6 so lexicographic
                 # sort matches numeric / canonical order.
                 if isinstance(parsed, ipaddress.IPv4Address):
-                    octets = [
-                        f"{o:03d}" for o in parsed.packed
-                    ]
+                    octets = [f"{o:03d}" for o in parsed.packed]
                     return (0, "v4:" + ".".join(octets))
                 return (0, "v6:" + parsed.compressed)
             except ValueError:
@@ -166,12 +151,8 @@ class WebhookConfig:
         # ``str | int`` (IPv6 includes scope-id as int in some
         # positions); in practice the host is always a string. Cast
         # to set[str] at the call boundary for the sort.
-        resolved_str_ips: set[str] = {
-            str(ai[4][0]) for ai in addrinfo
-        }
-        resolved_ips = tuple(
-            sorted(resolved_str_ips, key=_ip_sort_key)
-        )
+        resolved_str_ips: set[str] = {str(ai[4][0]) for ai in addrinfo}
+        resolved_ips = tuple(sorted(resolved_str_ips, key=_ip_sort_key))
         # Cannot use object.__setattr__ trick for tuple of mutable
         # default; dataclass(frozen=True) requires it. The field's
         # ``default_factory`` initialized it to (); replace via the
@@ -184,13 +165,7 @@ class WebhookConfig:
                     ip = ipaddress.ip_address(ip_str)
                 except ValueError:
                     continue
-                if (
-                    ip.is_loopback
-                    or ip.is_private
-                    or ip.is_link_local
-                    or ip.is_reserved
-                    or ip.is_multicast
-                ):
+                if ip.is_loopback or ip.is_private or ip.is_link_local or ip.is_reserved or ip.is_multicast:
                     raise ValueError(
                         f"webhook hostname {parsed.hostname!r} "
                         f"resolved to non-public address {ip_str} "
@@ -267,16 +242,8 @@ class WebhookAlertChannel:
                 context=ssl_context,
             ) as response:
                 if response.status >= 400:
-                    raise RuntimeError(
-                        f"webhook POST returned status "
-                        f"{response.status}"
-                    )
+                    raise RuntimeError(f"webhook POST returned status {response.status}")
         except HTTPError as exc:
-            raise RuntimeError(
-                f"webhook POST failed with HTTP {exc.code}: "
-                f"{exc.reason}"
-            ) from exc
+            raise RuntimeError(f"webhook POST failed with HTTP {exc.code}: {exc.reason}") from exc
         except URLError as exc:
-            raise RuntimeError(
-                f"webhook POST failed (transport): {exc.reason}"
-            ) from exc
+            raise RuntimeError(f"webhook POST failed (transport): {exc.reason}") from exc

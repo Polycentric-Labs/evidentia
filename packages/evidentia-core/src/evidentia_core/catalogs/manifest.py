@@ -59,9 +59,7 @@ class FrameworkManifestEntry(BaseModel):
     path: str = Field(
         description="JSON catalog path relative to data/ directory",
     )
-    source_url: str | None = Field(
-        default=None, description="Upstream URL for this framework"
-    )
+    source_url: str | None = Field(default=None, description="Upstream URL for this framework")
     license: str | None = Field(
         default=None,
         description="Short human-readable license statement",
@@ -94,9 +92,7 @@ class FrameworkManifest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     version: int = Field(description="Manifest schema version")
-    frameworks: list[FrameworkManifestEntry] = Field(
-        description="All frameworks bundled in this release"
-    )
+    frameworks: list[FrameworkManifestEntry] = Field(description="All frameworks bundled in this release")
 
     def get(self, framework_id: str) -> FrameworkManifestEntry | None:
         """Look up a manifest entry by framework ID (case-sensitive)."""
@@ -139,13 +135,10 @@ def load_manifest(path: Path | None = None) -> FrameworkManifest:
         seen[fw.id] = seen.get(fw.id, 0) + 1
     dups = [fid for fid, count in seen.items() if count > 1]
     if dups:
-        raise ValueError(
-            f"Duplicate framework IDs in manifest: {', '.join(sorted(dups))}"
-        )
+        raise ValueError(f"Duplicate framework IDs in manifest: {', '.join(sorted(dups))}")
 
     logger.debug(
-        "Loaded manifest v%d: %d frameworks (%d tier-A, %d tier-B, "
-        "%d tier-C stubs, %d tier-D)",
+        "Loaded manifest v%d: %d frameworks (%d tier-A, %d tier-B, %d tier-C stubs, %d tier-D)",
         manifest.version,
         len(manifest.frameworks),
         len(manifest.by_tier("A")),

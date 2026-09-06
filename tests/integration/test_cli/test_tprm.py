@@ -37,12 +37,19 @@ class TestVendorAdd:
         result = runner.invoke(
             app,
             [
-                "tprm", "vendor", "add",
-                "--name", "Acme Cloud",
-                "--type", "cloud_provider",
-                "--criticality-tier", "critical",
-                "--owner", "allen@allenfbyrd.com",
-                "--contract-start-date", "2025-01-01",
+                "tprm",
+                "vendor",
+                "add",
+                "--name",
+                "Acme Cloud",
+                "--type",
+                "cloud_provider",
+                "--criticality-tier",
+                "critical",
+                "--owner",
+                "allen@allenfbyrd.com",
+                "--contract-start-date",
+                "2025-01-01",
             ],
         )
         assert result.exit_code == 0, result.output
@@ -53,8 +60,11 @@ class TestVendorAdd:
         result = runner.invoke(
             app,
             [
-                "tprm", "vendor", "add",
-                "--name", "X",
+                "tprm",
+                "vendor",
+                "add",
+                "--name",
+                "X",
                 # Missing --type / --criticality-tier / --owner / --contract-start-date
             ],
         )
@@ -65,12 +75,19 @@ class TestVendorAdd:
         result = runner.invoke(
             app,
             [
-                "tprm", "vendor", "add",
-                "--name", "X",
-                "--type", "saas",
-                "--criticality-tier", "low",
-                "--owner", "x@x.com",
-                "--contract-start-date", "not-a-date",
+                "tprm",
+                "vendor",
+                "add",
+                "--name",
+                "X",
+                "--type",
+                "saas",
+                "--criticality-tier",
+                "low",
+                "--owner",
+                "x@x.com",
+                "--contract-start-date",
+                "not-a-date",
             ],
         )
         assert result.exit_code == 1
@@ -80,44 +97,53 @@ class TestVendorAdd:
         result = runner.invoke(
             app,
             [
-                "tprm", "vendor", "add",
-                "--name", "X",
-                "--type", "not-a-real-type",
-                "--criticality-tier", "low",
-                "--owner", "x@x.com",
-                "--contract-start-date", "2025-01-01",
+                "tprm",
+                "vendor",
+                "add",
+                "--name",
+                "X",
+                "--type",
+                "not-a-real-type",
+                "--criticality-tier",
+                "low",
+                "--owner",
+                "x@x.com",
+                "--contract-start-date",
+                "2025-01-01",
             ],
         )
         assert result.exit_code == 1
 
-    def test_auto_computes_next_review_due_when_last_dd_provided(
-        self, runner: CliRunner
-    ) -> None:
+    def test_auto_computes_next_review_due_when_last_dd_provided(self, runner: CliRunner) -> None:
         runner.invoke(
             app,
             [
-                "tprm", "vendor", "add",
-                "--name", "Test Vendor",
-                "--type", "saas",
-                "--criticality-tier", "high",
-                "--owner", "x@x.com",
-                "--contract-start-date", "2025-01-01",
-                "--last-due-diligence-review", "2025-06-15",
+                "tprm",
+                "vendor",
+                "add",
+                "--name",
+                "Test Vendor",
+                "--type",
+                "saas",
+                "--criticality-tier",
+                "high",
+                "--owner",
+                "x@x.com",
+                "--contract-start-date",
+                "2025-01-01",
+                "--last-due-diligence-review",
+                "2025-06-15",
             ],
         )
         # Now list with --json and verify next_review_due was set
-        list_result = runner.invoke(
-            app, ["tprm", "vendor", "list", "--json"]
-        )
+        list_result = runner.invoke(app, ["tprm", "vendor", "list", "--json"])
         assert list_result.exit_code == 0, list_result.output
         vendors = json.loads(list_result.output)
         assert len(vendors) == 1
         # high → annual cadence, so 2025-06-15 + 12 months
         assert vendors[0]["next_review_due"] == "2026-06-15"
 
-    def test_from_yaml_with_complex_fields(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_from_yaml_with_complex_fields(self, runner: CliRunner, tmp_path: Path) -> None:
         yaml_path = tmp_path / "vendor.yaml"
         yaml_path.write_text(
             """
@@ -142,16 +168,12 @@ evidence_refs:
         )
         assert result.exit_code == 0, result.output
         # Verify the embedded sub-models survived
-        list_result = runner.invoke(
-            app, ["tprm", "vendor", "list", "--json"]
-        )
+        list_result = runner.invoke(app, ["tprm", "vendor", "list", "--json"])
         vendors = json.loads(list_result.output)
         assert len(vendors[0]["fourth_parties"]) == 1
         assert len(vendors[0]["evidence_refs"]) == 1
 
-    def test_atomic_flags_override_yaml_when_both_supplied(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_atomic_flags_override_yaml_when_both_supplied(self, runner: CliRunner, tmp_path: Path) -> None:
         yaml_path = tmp_path / "vendor.yaml"
         yaml_path.write_text(
             """
@@ -166,15 +188,17 @@ contract_start_date: '2025-01-01'
         result = runner.invoke(
             app,
             [
-                "tprm", "vendor", "add",
-                "--from-yaml", str(yaml_path),
-                "--name", "Flag Override Name",
+                "tprm",
+                "vendor",
+                "add",
+                "--from-yaml",
+                str(yaml_path),
+                "--name",
+                "Flag Override Name",
             ],
         )
         assert result.exit_code == 0, result.output
-        list_result = runner.invoke(
-            app, ["tprm", "vendor", "list", "--json"]
-        )
+        list_result = runner.invoke(app, ["tprm", "vendor", "list", "--json"])
         vendors = json.loads(list_result.output)
         assert vendors[0]["name"] == "Flag Override Name"
 
@@ -187,34 +211,55 @@ class TestVendorList:
         runner.invoke(
             app,
             [
-                "tprm", "vendor", "add",
-                "--name", "A Critical Cloud",
-                "--type", "cloud_provider",
-                "--criticality-tier", "critical",
-                "--owner", "x@x.com",
-                "--contract-start-date", "2025-01-01",
+                "tprm",
+                "vendor",
+                "add",
+                "--name",
+                "A Critical Cloud",
+                "--type",
+                "cloud_provider",
+                "--criticality-tier",
+                "critical",
+                "--owner",
+                "x@x.com",
+                "--contract-start-date",
+                "2025-01-01",
             ],
         )
         runner.invoke(
             app,
             [
-                "tprm", "vendor", "add",
-                "--name", "B High SaaS",
-                "--type", "saas",
-                "--criticality-tier", "high",
-                "--owner", "x@x.com",
-                "--contract-start-date", "2025-01-01",
+                "tprm",
+                "vendor",
+                "add",
+                "--name",
+                "B High SaaS",
+                "--type",
+                "saas",
+                "--criticality-tier",
+                "high",
+                "--owner",
+                "x@x.com",
+                "--contract-start-date",
+                "2025-01-01",
             ],
         )
         runner.invoke(
             app,
             [
-                "tprm", "vendor", "add",
-                "--name", "C Low Contractor",
-                "--type", "contractor",
-                "--criticality-tier", "low",
-                "--owner", "x@x.com",
-                "--contract-start-date", "2025-01-01",
+                "tprm",
+                "vendor",
+                "add",
+                "--name",
+                "C Low Contractor",
+                "--type",
+                "contractor",
+                "--criticality-tier",
+                "low",
+                "--owner",
+                "x@x.com",
+                "--contract-start-date",
+                "2025-01-01",
             ],
         )
 
@@ -260,9 +305,7 @@ class TestVendorList:
 
     def test_filter_by_type(self, runner: CliRunner) -> None:
         self._seed_vendors(runner)
-        result = runner.invoke(
-            app, ["tprm", "vendor", "list", "--type", "saas", "--json"]
-        )
+        result = runner.invoke(app, ["tprm", "vendor", "list", "--type", "saas", "--json"])
         vendors = json.loads(result.output)
         assert len(vendors) == 1
         assert vendors[0]["name"] == "B High SaaS"
@@ -284,17 +327,22 @@ class TestVendorShow:
         runner.invoke(
             app,
             [
-                "tprm", "vendor", "add",
-                "--name", "Show Test",
-                "--type", "saas",
-                "--criticality-tier", "low",
-                "--owner", "x@x.com",
-                "--contract-start-date", "2025-01-01",
+                "tprm",
+                "vendor",
+                "add",
+                "--name",
+                "Show Test",
+                "--type",
+                "saas",
+                "--criticality-tier",
+                "low",
+                "--owner",
+                "x@x.com",
+                "--contract-start-date",
+                "2025-01-01",
             ],
         )
-        list_result = runner.invoke(
-            app, ["tprm", "vendor", "list", "--json"]
-        )
+        list_result = runner.invoke(app, ["tprm", "vendor", "list", "--json"])
         vendors = json.loads(list_result.output)
         return str(vendors[0]["id"])
 
@@ -316,8 +364,7 @@ class TestVendorShow:
     def test_show_unknown_id_errors(self, runner: CliRunner) -> None:
         result = runner.invoke(
             app,
-            ["tprm", "vendor", "show",
-             "00000000-0000-0000-0000-000000000000"],
+            ["tprm", "vendor", "show", "00000000-0000-0000-0000-000000000000"],
         )
         assert result.exit_code == 1
         # Rich console wraps lines; flatten + lowercase before substring
@@ -326,9 +373,7 @@ class TestVendorShow:
         assert "no vendor" in flat and "found" in flat
 
     def test_show_malformed_id_errors(self, runner: CliRunner) -> None:
-        result = runner.invoke(
-            app, ["tprm", "vendor", "show", "../etc/passwd"]
-        )
+        result = runner.invoke(app, ["tprm", "vendor", "show", "../etc/passwd"])
         assert result.exit_code == 1
         assert "Invalid vendor ID" in result.output
 
@@ -341,34 +386,40 @@ class TestVendorEdit:
         runner.invoke(
             app,
             [
-                "tprm", "vendor", "add",
-                "--name", "Original",
-                "--type", "saas",
-                "--criticality-tier", "low",
-                "--owner", "x@x.com",
-                "--contract-start-date", "2025-01-01",
+                "tprm",
+                "vendor",
+                "add",
+                "--name",
+                "Original",
+                "--type",
+                "saas",
+                "--criticality-tier",
+                "low",
+                "--owner",
+                "x@x.com",
+                "--contract-start-date",
+                "2025-01-01",
             ],
         )
-        return str(
-            json.loads(
-                runner.invoke(app, ["tprm", "vendor", "list", "--json"]).output
-            )[0]["id"]
-        )
+        return str(json.loads(runner.invoke(app, ["tprm", "vendor", "list", "--json"]).output)[0]["id"])
 
     def test_atomic_field_update(self, runner: CliRunner) -> None:
         vid = self._add_one(runner)
         result = runner.invoke(
             app,
             [
-                "tprm", "vendor", "edit", vid,
-                "--name", "Updated",
-                "--residual-risk-score", "12",
+                "tprm",
+                "vendor",
+                "edit",
+                vid,
+                "--name",
+                "Updated",
+                "--residual-risk-score",
+                "12",
             ],
         )
         assert result.exit_code == 0, result.output
-        show_result = runner.invoke(
-            app, ["tprm", "vendor", "show", vid, "--json"]
-        )
+        show_result = runner.invoke(app, ["tprm", "vendor", "show", vid, "--json"])
         data = json.loads(show_result.output)
         assert data["name"] == "Updated"
         assert data["residual_risk_score"] == 12
@@ -379,9 +430,7 @@ class TestVendorEdit:
         assert result.exit_code == 1
         assert "No edit input" in result.output
 
-    def test_mixed_modes_error(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_mixed_modes_error(self, runner: CliRunner, tmp_path: Path) -> None:
         vid = self._add_one(runner)
         yaml_path = tmp_path / "x.yaml"
         yaml_path.write_text(
@@ -397,24 +446,23 @@ contract_start_date: '2025-01-01'
         result = runner.invoke(
             app,
             [
-                "tprm", "vendor", "edit", vid,
-                "--from-yaml", str(yaml_path),
-                "--name", "Conflicting",
+                "tprm",
+                "vendor",
+                "edit",
+                vid,
+                "--from-yaml",
+                str(yaml_path),
+                "--name",
+                "Conflicting",
             ],
         )
         assert result.exit_code == 1
         assert "mutually exclusive" in result.output
 
-    def test_from_yaml_preserves_id_and_created_at(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_from_yaml_preserves_id_and_created_at(self, runner: CliRunner, tmp_path: Path) -> None:
         vid = self._add_one(runner)
         # Capture original created_at
-        orig_data = json.loads(
-            runner.invoke(
-                app, ["tprm", "vendor", "show", vid, "--json"]
-            ).output
-        )
+        orig_data = json.loads(runner.invoke(app, ["tprm", "vendor", "show", vid, "--json"]).output)
         orig_created = orig_data["created_at"]
 
         yaml_path = tmp_path / "replace.yaml"
@@ -433,11 +481,7 @@ contract_start_date: '2025-02-01'
             ["tprm", "vendor", "edit", vid, "--from-yaml", str(yaml_path)],
         )
         assert result.exit_code == 0, result.output
-        new_data = json.loads(
-            runner.invoke(
-                app, ["tprm", "vendor", "show", vid, "--json"]
-            ).output
-        )
+        new_data = json.loads(runner.invoke(app, ["tprm", "vendor", "show", vid, "--json"]).output)
         assert new_data["id"] == vid
         assert new_data["created_at"] == orig_created
         assert new_data["name"] == "Fully Replaced"
@@ -451,60 +495,51 @@ class TestVendorDelete:
         runner.invoke(
             app,
             [
-                "tprm", "vendor", "add",
-                "--name", "Doomed",
-                "--type", "saas",
-                "--criticality-tier", "low",
-                "--owner", "x@x.com",
-                "--contract-start-date", "2025-01-01",
+                "tprm",
+                "vendor",
+                "add",
+                "--name",
+                "Doomed",
+                "--type",
+                "saas",
+                "--criticality-tier",
+                "low",
+                "--owner",
+                "x@x.com",
+                "--contract-start-date",
+                "2025-01-01",
             ],
         )
-        return str(
-            json.loads(
-                runner.invoke(app, ["tprm", "vendor", "list", "--json"]).output
-            )[0]["id"]
-        )
+        return str(json.loads(runner.invoke(app, ["tprm", "vendor", "list", "--json"]).output)[0]["id"])
 
     def test_yes_flag_bypasses_prompt(self, runner: CliRunner) -> None:
         vid = self._add_one(runner)
-        result = runner.invoke(
-            app, ["tprm", "vendor", "delete", vid, "--yes"]
-        )
+        result = runner.invoke(app, ["tprm", "vendor", "delete", vid, "--yes"])
         assert result.exit_code == 0, result.output
         assert "Deleted" in result.output
         # Verify gone
-        list_result = runner.invoke(
-            app, ["tprm", "vendor", "list", "--json"]
-        )
+        list_result = runner.invoke(app, ["tprm", "vendor", "list", "--json"])
         assert json.loads(list_result.output) == []
 
     def test_default_prompt_decline_aborts(self, runner: CliRunner) -> None:
         vid = self._add_one(runner)
-        result = runner.invoke(
-            app, ["tprm", "vendor", "delete", vid], input="n\n"
-        )
+        result = runner.invoke(app, ["tprm", "vendor", "delete", vid], input="n\n")
         assert result.exit_code == 0
         assert "Aborted" in result.output
         # Vendor still present
-        list_result = runner.invoke(
-            app, ["tprm", "vendor", "list", "--json"]
-        )
+        list_result = runner.invoke(app, ["tprm", "vendor", "list", "--json"])
         assert len(json.loads(list_result.output)) == 1
 
     def test_default_prompt_accept_deletes(self, runner: CliRunner) -> None:
         vid = self._add_one(runner)
-        result = runner.invoke(
-            app, ["tprm", "vendor", "delete", vid], input="y\n"
-        )
+        result = runner.invoke(app, ["tprm", "vendor", "delete", vid], input="y\n")
         assert result.exit_code == 0
         assert "Deleted" in result.output
 
     def test_unknown_id_errors(self, runner: CliRunner) -> None:
         result = runner.invoke(
             app,
-            ["tprm", "vendor", "delete",
-             "00000000-0000-0000-0000-000000000000",
-             "--yes"],
+            ["tprm", "vendor", "delete", "00000000-0000-0000-0000-000000000000", "--yes"],
         )
         assert result.exit_code == 1
 
@@ -522,12 +557,19 @@ class TestConcentrationReport:
             ("Unknown", None),
         ]:
             cmd = [
-                "tprm", "vendor", "add",
-                "--name", name,
-                "--type", "saas",
-                "--criticality-tier", "high",
-                "--owner", "x@x.com",
-                "--contract-start-date", "2025-01-01",
+                "tprm",
+                "vendor",
+                "add",
+                "--name",
+                name,
+                "--type",
+                "saas",
+                "--criticality-tier",
+                "high",
+                "--owner",
+                "x@x.com",
+                "--contract-start-date",
+                "2025-01-01",
             ]
             if region:
                 # Region is only on the model, not on the CLI add flags
@@ -536,9 +578,7 @@ class TestConcentrationReport:
                 pass
             runner.invoke(app, cmd)
 
-    def _seed_via_yaml(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def _seed_via_yaml(self, runner: CliRunner, tmp_path: Path) -> None:
         """Seed vendors via --from-yaml so we can set the region field."""
         for name, region in [
             ("US-A", "us-east-1"),
@@ -562,14 +602,11 @@ contract_start_date: '2025-01-01'
                 ["tprm", "vendor", "add", "--from-yaml", str(yaml_path)],
             )
 
-    def test_json_output_default_dimensions(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_json_output_default_dimensions(self, runner: CliRunner, tmp_path: Path) -> None:
         self._seed_via_yaml(runner, tmp_path)
         result = runner.invoke(
             app,
-            ["tprm", "concentration-report", "--by", "region",
-             "--format", "json"],
+            ["tprm", "concentration-report", "--by", "region", "--format", "json"],
         )
         assert result.exit_code == 0, result.output
         # The output's stdout has the JSON dump
@@ -579,13 +616,10 @@ contract_start_date: '2025-01-01'
         assert len(data["dimensions"]) == 1
         assert data["dimensions"][0]["dimension"] == "region"
 
-    def test_unsupported_dimension_errors(
-        self, runner: CliRunner
-    ) -> None:
+    def test_unsupported_dimension_errors(self, runner: CliRunner) -> None:
         result = runner.invoke(
             app,
-            ["tprm", "concentration-report", "--by", "not-a-dim",
-             "--format", "json"],
+            ["tprm", "concentration-report", "--by", "not-a-dim", "--format", "json"],
         )
         assert result.exit_code == 1
         assert "Unsupported dimension" in result.output
@@ -598,41 +632,42 @@ contract_start_date: '2025-01-01'
         assert result.exit_code == 1
         assert "html/json/csv" in result.output
 
-    def test_threshold_flag_applies(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_threshold_flag_applies(self, runner: CliRunner, tmp_path: Path) -> None:
         self._seed_via_yaml(runner, tmp_path)
         # 2 of 4 vendors in us-east-1 = 50% — threshold=50 should flag
         result = runner.invoke(
             app,
             [
-                "tprm", "concentration-report",
-                "--by", "region",
-                "--threshold", "50",
-                "--format", "json",
+                "tprm",
+                "concentration-report",
+                "--by",
+                "region",
+                "--threshold",
+                "50",
+                "--format",
+                "json",
             ],
         )
         assert result.exit_code == 0
         data = json.loads(result.output)
-        flagged = [
-            v for v in data["dimensions"][0]["distribution"]
-            if v["exceeds_threshold"]
-        ]
+        flagged = [v for v in data["dimensions"][0]["distribution"] if v["exceeds_threshold"]]
         assert len(flagged) == 1
         assert flagged[0]["value"] == "us-east-1"
 
-    def test_html_output_to_file(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_html_output_to_file(self, runner: CliRunner, tmp_path: Path) -> None:
         self._seed_via_yaml(runner, tmp_path)
         out_path = tmp_path / "report.html"
         result = runner.invoke(
             app,
             [
-                "tprm", "concentration-report",
-                "--by", "region",
-                "--format", "html",
-                "--output", str(out_path),
+                "tprm",
+                "concentration-report",
+                "--by",
+                "region",
+                "--format",
+                "html",
+                "--output",
+                str(out_path),
             ],
         )
         assert result.exit_code == 0, result.output
@@ -642,37 +677,38 @@ contract_start_date: '2025-01-01'
         assert "<!DOCTYPE html>" in content
         assert "us-east-1" in content
 
-    def test_csv_output_to_file(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_csv_output_to_file(self, runner: CliRunner, tmp_path: Path) -> None:
         self._seed_via_yaml(runner, tmp_path)
         out_path = tmp_path / "report.csv"
         result = runner.invoke(
             app,
             [
-                "tprm", "concentration-report",
-                "--by", "region",
-                "--format", "csv",
-                "--output", str(out_path),
+                "tprm",
+                "concentration-report",
+                "--by",
+                "region",
+                "--format",
+                "csv",
+                "--output",
+                str(out_path),
             ],
         )
         assert result.exit_code == 0, result.output
         content = out_path.read_text(encoding="utf-8")
         # Header
-        assert content.startswith(
-            "dimension,value,count,percentage,exceeds_threshold"
-        )
+        assert content.startswith("dimension,value,count,percentage,exceeds_threshold")
 
-    def test_multiple_dimensions(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_multiple_dimensions(self, runner: CliRunner, tmp_path: Path) -> None:
         self._seed_via_yaml(runner, tmp_path)
         result = runner.invoke(
             app,
             [
-                "tprm", "concentration-report",
-                "--by", "region,service-category,criticality-tier",
-                "--format", "json",
+                "tprm",
+                "concentration-report",
+                "--by",
+                "region,service-category,criticality-tier",
+                "--format",
+                "json",
             ],
         )
         assert result.exit_code == 0
@@ -692,31 +728,37 @@ class TestDDQuestionnaireGenerate:
         runner.invoke(
             app,
             [
-                "tprm", "vendor", "add",
-                "--name", "Test Vendor",
-                "--type", "saas",
-                "--criticality-tier", "high",
-                "--owner", "x@x.com",
-                "--contract-start-date", "2025-01-01",
+                "tprm",
+                "vendor",
+                "add",
+                "--name",
+                "Test Vendor",
+                "--type",
+                "saas",
+                "--criticality-tier",
+                "high",
+                "--owner",
+                "x@x.com",
+                "--contract-start-date",
+                "2025-01-01",
             ],
         )
-        return str(
-            json.loads(
-                runner.invoke(
-                    app, ["tprm", "vendor", "list", "--json"]
-                ).output
-            )[0]["id"]
-        )
+        return str(json.loads(runner.invoke(app, ["tprm", "vendor", "list", "--json"]).output)[0]["id"])
 
     def test_generic_json_to_stdout(self, runner: CliRunner) -> None:
         vid = self._add_vendor(runner)
         result = runner.invoke(
             app,
             [
-                "tprm", "dd-questionnaire", "generate",
-                "--vendor-id", vid,
-                "--format", "evidentia-generic",
-                "--output-format", "json",
+                "tprm",
+                "dd-questionnaire",
+                "generate",
+                "--vendor-id",
+                vid,
+                "--format",
+                "evidentia-generic",
+                "--output-format",
+                "json",
             ],
         )
         assert result.exit_code == 0, result.output
@@ -725,19 +767,23 @@ class TestDDQuestionnaireGenerate:
         assert data["vendor"]["vendor_name"] == "Test Vendor"
         assert len(data["questions"]) >= 15
 
-    def test_caiq_lite_json_to_file(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_caiq_lite_json_to_file(self, runner: CliRunner, tmp_path: Path) -> None:
         vid = self._add_vendor(runner)
         out_path = tmp_path / "q.json"
         result = runner.invoke(
             app,
             [
-                "tprm", "dd-questionnaire", "generate",
-                "--vendor-id", vid,
-                "--format", "caiq-lite",
-                "--output-format", "json",
-                "--output", str(out_path),
+                "tprm",
+                "dd-questionnaire",
+                "generate",
+                "--vendor-id",
+                vid,
+                "--format",
+                "caiq-lite",
+                "--output-format",
+                "json",
+                "--output",
+                str(out_path),
             ],
         )
         assert result.exit_code == 0, result.output
@@ -747,19 +793,23 @@ class TestDDQuestionnaireGenerate:
         assert data["licensing_attribution"]
         assert "CSA" in data["licensing_attribution"]
 
-    def test_csv_output(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_csv_output(self, runner: CliRunner, tmp_path: Path) -> None:
         vid = self._add_vendor(runner)
         out_path = tmp_path / "q.csv"
         result = runner.invoke(
             app,
             [
-                "tprm", "dd-questionnaire", "generate",
-                "--vendor-id", vid,
-                "--format", "evidentia-generic",
-                "--output-format", "csv",
-                "--output", str(out_path),
+                "tprm",
+                "dd-questionnaire",
+                "generate",
+                "--vendor-id",
+                vid,
+                "--format",
+                "evidentia-generic",
+                "--output-format",
+                "csv",
+                "--output",
+                str(out_path),
             ],
         )
         assert result.exit_code == 0, result.output
@@ -773,33 +823,37 @@ class TestDDQuestionnaireGenerate:
         result = runner.invoke(
             app,
             [
-                "tprm", "dd-questionnaire", "generate",
-                "--vendor-id", vid,
-                "--format", "not-a-format",
+                "tprm",
+                "dd-questionnaire",
+                "generate",
+                "--vendor-id",
+                vid,
+                "--format",
+                "not-a-format",
             ],
         )
         assert result.exit_code == 1
         assert "Unknown questionnaire format" in result.output
 
-    def test_sig_format_errors_with_byo_template_message(
-        self, runner: CliRunner
-    ) -> None:
+    def test_sig_format_errors_with_byo_template_message(self, runner: CliRunner) -> None:
         vid = self._add_vendor(runner)
         result = runner.invoke(
             app,
             [
-                "tprm", "dd-questionnaire", "generate",
-                "--vendor-id", vid,
-                "--format", "sig",
+                "tprm",
+                "dd-questionnaire",
+                "generate",
+                "--vendor-id",
+                vid,
+                "--format",
+                "sig",
             ],
         )
         assert result.exit_code == 1
         # Message should clearly state SIG isn't shipped + reference BYO
         assert "Shared Assessments" in result.output
 
-    def test_invalid_output_format_errors(
-        self, runner: CliRunner
-    ) -> None:
+    def test_invalid_output_format_errors(self, runner: CliRunner) -> None:
         """v0.7.9 P0.2 second slice: xlsx is now valid; an invalid
         format like 'pdf' should be rejected, AND xlsx-without-output
         should be rejected with the binary-output guard."""
@@ -808,9 +862,13 @@ class TestDDQuestionnaireGenerate:
         result = runner.invoke(
             app,
             [
-                "tprm", "dd-questionnaire", "generate",
-                "--vendor-id", vid,
-                "--output-format", "pdf",
+                "tprm",
+                "dd-questionnaire",
+                "generate",
+                "--vendor-id",
+                vid,
+                "--output-format",
+                "pdf",
             ],
         )
         assert result.exit_code == 1
@@ -819,23 +877,29 @@ class TestDDQuestionnaireGenerate:
         result_xlsx = runner.invoke(
             app,
             [
-                "tprm", "dd-questionnaire", "generate",
-                "--vendor-id", vid,
-                "--output-format", "xlsx",
+                "tprm",
+                "dd-questionnaire",
+                "generate",
+                "--vendor-id",
+                vid,
+                "--output-format",
+                "xlsx",
             ],
         )
         assert result_xlsx.exit_code == 1
         assert "binary output" in result_xlsx.output.lower()
 
-    def test_unknown_vendor_id_errors(
-        self, runner: CliRunner
-    ) -> None:
+    def test_unknown_vendor_id_errors(self, runner: CliRunner) -> None:
         result = runner.invoke(
             app,
             [
-                "tprm", "dd-questionnaire", "generate",
-                "--vendor-id", "00000000-0000-0000-0000-000000000000",
-                "--format", "evidentia-generic",
+                "tprm",
+                "dd-questionnaire",
+                "generate",
+                "--vendor-id",
+                "00000000-0000-0000-0000-000000000000",
+                "--format",
+                "evidentia-generic",
             ],
         )
         assert result.exit_code == 1

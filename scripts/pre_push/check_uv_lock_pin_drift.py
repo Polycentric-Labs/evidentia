@@ -261,8 +261,7 @@ def workspace_bumped(
         b = base.get(name)
         t = tip.get(name)
         is_ws = name in WORKSPACE_PACKAGES or (
-            (b is not None and b[1] in {"editable", "virtual"})
-            or (t is not None and t[1] in {"editable", "virtual"})
+            (b is not None and b[1] in {"editable", "virtual"}) or (t is not None and t[1] in {"editable", "virtual"})
         )
         if not is_ws:
             continue
@@ -332,8 +331,7 @@ def resolve_base(base_arg: str | None, repo_root: Path) -> str | None:
     if (
         base_arg
         and base_arg != ZERO_SHA
-        and _run_git(["rev-parse", "--verify", "--quiet", f"{base_arg}^{{commit}}"], repo_root).returncode
-        == 0
+        and _run_git(["rev-parse", "--verify", "--quiet", f"{base_arg}^{{commit}}"], repo_root).returncode == 0
     ):
         return base_arg
     if _run_git(["rev-parse", "--verify", "--quiet", "origin/main^{commit}"], repo_root).returncode == 0:

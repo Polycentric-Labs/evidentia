@@ -61,9 +61,7 @@ def _make_server(
     return server
 
 
-def _make_registry(
-    *, client_id: str = "test-client", scope: str = ""
-) -> CIMDRegistry:
+def _make_registry(*, client_id: str = "test-client", scope: str = "") -> CIMDRegistry:
     """Build a single-client CIMD registry fixture."""
     return CIMDRegistry(
         clients={
@@ -81,9 +79,7 @@ def _make_registry(
 
 class TestPassThroughWithoutCIMD:
     @pytest.mark.asyncio
-    async def test_no_registry_passes_through(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    async def test_no_registry_passes_through(self, caplog: pytest.LogCaptureFixture) -> None:
         """When evidentia_cimd is None, the gate delegates without
         emitting any audit events. This is the v0.8.5 behavior
         preserved for operators who haven't opted into CIMD.
@@ -96,20 +92,9 @@ class TestPassThroughWithoutCIMD:
             result = await server.call_tool("any_tool", {"x": 1})
 
         assert result == "delegated-result"
-        original_delegate.assert_awaited_once_with(
-            "any_tool", {"x": 1}
-        )
+        original_delegate.assert_awaited_once_with("any_tool", {"x": 1})
         # No audit events emit when registry is absent.
-        assert (
-            len(
-                [
-                    r
-                    for r in caplog.records
-                    if r.name == "evidentia.mcp.scope"
-                ]
-            )
-            == 0
-        )
+        assert len([r for r in caplog.records if r.name == "evidentia.mcp.scope"]) == 0
 
 
 # ── 2. Deny when client_id cannot be resolved ────────────────────
@@ -117,16 +102,12 @@ class TestPassThroughWithoutCIMD:
 
 class TestDenyAmbiguousClientId:
     @pytest.mark.asyncio
-    async def test_neither_ctx_nor_default_denies(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    async def test_neither_ctx_nor_default_denies(self, caplog: pytest.LogCaptureFixture) -> None:
         """When Context.client_id is None AND default_client_id is
         None, the gate denies the call as ambiguous-caller.
         """
         registry = _make_registry(scope="any_tool")
-        server = _make_server(
-            cimd_registry=registry, ctx_client_id=None
-        )
+        server = _make_server(cimd_registry=registry, ctx_client_id=None)
         enforce_cimd_scope(server, default_client_id=None)
 
         with (
@@ -139,10 +120,7 @@ class TestDenyAmbiguousClientId:
         assert "no client_id" in str(exc_info.value).lower()
         # AI_MCP_TOOL_DENIED audit event emitted.
         deny_records = [
-            r
-            for r in caplog.records
-            if r.name == "evidentia.mcp.scope"
-            and "denied" in r.getMessage().lower()
+            r for r in caplog.records if r.name == "evidentia.mcp.scope" and "denied" in r.getMessage().lower()
         ]
         assert len(deny_records) == 1
 
@@ -152,21 +130,13 @@ class TestDenyAmbiguousClientId:
 
 class TestDenyUnregisteredClientId:
     @pytest.mark.asyncio
-    async def test_unregistered_client_id_denies(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    async def test_unregistered_client_id_denies(self, caplog: pytest.LogCaptureFixture) -> None:
         """Registry has 'registered-client'; request comes in as
         'unknown-client' via default_client_id → DENY.
         """
-        registry = _make_registry(
-            client_id="registered-client", scope="any_tool"
-        )
-        server = _make_server(
-            cimd_registry=registry, ctx_client_id=None
-        )
-        enforce_cimd_scope(
-            server, default_client_id="unknown-client"
-        )
+        registry = _make_registry(client_id="registered-client", scope="any_tool")
+        server = _make_server(cimd_registry=registry, ctx_client_id=None)
+        enforce_cimd_scope(server, default_client_id="unknown-client")
 
         with (
             caplog.at_level(logging.WARNING, logger="evidentia.mcp.scope"),
@@ -179,8 +149,7 @@ class TestDenyUnregisteredClientId:
         deny_records = [
             r
             for r in caplog.records
-            if r.name == "evidentia.mcp.scope"
-            and "not in the cimd registry" in r.getMessage().lower()
+            if r.name == "evidentia.mcp.scope" and "not in the cimd registry" in r.getMessage().lower()
         ]
         assert len(deny_records) == 1
 
@@ -190,19 +159,13 @@ class TestDenyUnregisteredClientId:
 
 class TestDenyOutOfScope:
     @pytest.mark.asyncio
-    async def test_out_of_scope_tool_denies(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    async def test_out_of_scope_tool_denies(self, caplog: pytest.LogCaptureFixture) -> None:
         """Registry's CIMDDocument has scope='list_frameworks';
         request to call 'gap_analyze' → DENY (deny-by-default
         allowlist).
         """
-        registry = _make_registry(
-            client_id="readonly-client", scope="list_frameworks"
-        )
-        server = _make_server(
-            cimd_registry=registry, ctx_client_id="readonly-client"
-        )
+        registry = _make_registry(client_id="readonly-client", scope="list_frameworks")
+        server = _make_server(cimd_registry=registry, ctx_client_id="readonly-client")
         enforce_cimd_scope(server)
 
         with (
@@ -214,10 +177,7 @@ class TestDenyOutOfScope:
         assert "not authorized" in str(exc_info.value).lower()
         # AI_MCP_TOOL_DENIED audit event includes scope_allowlist.
         deny_records = [
-            r
-            for r in caplog.records
-            if r.name == "evidentia.mcp.scope"
-            and "scope" in r.getMessage().lower()
+            r for r in caplog.records if r.name == "evidentia.mcp.scope" and "scope" in r.getMessage().lower()
         ]
         assert len(deny_records) == 1
         # Verify scope_allowlist field is on the structured event.
@@ -234,9 +194,7 @@ class TestDenyOutOfScope:
 
 class TestAllowInScope:
     @pytest.mark.asyncio
-    async def test_in_scope_tool_authorizes_and_delegates(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    async def test_in_scope_tool_authorizes_and_delegates(self, caplog: pytest.LogCaptureFixture) -> None:
         """Happy path: registered client_id + scope contains tool
         → AUTHORIZED audit emit + delegate to original call_tool.
         """
@@ -244,27 +202,18 @@ class TestAllowInScope:
             client_id="power-client",
             scope="list_frameworks gap_analyze gap_diff",
         )
-        server = _make_server(
-            cimd_registry=registry, ctx_client_id="power-client"
-        )
+        server = _make_server(cimd_registry=registry, ctx_client_id="power-client")
         original_delegate = server.call_tool
         enforce_cimd_scope(server)
 
         with caplog.at_level(logging.INFO, logger="evidentia.mcp.scope"):
-            result = await server.call_tool(
-                "gap_analyze", {"inventory_path": "/tmp/foo"}
-            )
+            result = await server.call_tool("gap_analyze", {"inventory_path": "/tmp/foo"})
 
         assert result == "delegated-result"
-        original_delegate.assert_awaited_once_with(
-            "gap_analyze", {"inventory_path": "/tmp/foo"}
-        )
+        original_delegate.assert_awaited_once_with("gap_analyze", {"inventory_path": "/tmp/foo"})
         # AI_MCP_TOOL_AUTHORIZED audit event emitted.
         auth_records = [
-            r
-            for r in caplog.records
-            if r.name == "evidentia.mcp.scope"
-            and "authorized" in r.getMessage().lower()
+            r for r in caplog.records if r.name == "evidentia.mcp.scope" and "authorized" in r.getMessage().lower()
         ]
         assert len(auth_records) == 1
         ecs_record = getattr(auth_records[0], "ecs_record", None)
@@ -275,21 +224,13 @@ class TestAllowInScope:
         assert "gap_analyze" in evidentia_extra["scope_allowlist"]
 
     @pytest.mark.asyncio
-    async def test_default_client_id_fallback_when_ctx_none(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    async def test_default_client_id_fallback_when_ctx_none(self, caplog: pytest.LogCaptureFixture) -> None:
         """Stdio canonical case: Context.client_id is None;
         default_client_id supplies the slug → AUTHORIZED.
         """
-        registry = _make_registry(
-            client_id="stdio-client", scope="list_frameworks"
-        )
-        server = _make_server(
-            cimd_registry=registry, ctx_client_id=None
-        )
-        enforce_cimd_scope(
-            server, default_client_id="stdio-client"
-        )
+        registry = _make_registry(client_id="stdio-client", scope="list_frameworks")
+        server = _make_server(cimd_registry=registry, ctx_client_id=None)
+        enforce_cimd_scope(server, default_client_id="stdio-client")
 
         with caplog.at_level(logging.INFO, logger="evidentia.mcp.scope"):
             result = await server.call_tool("list_frameworks", {})
@@ -306,9 +247,7 @@ class TestIdempotency:
         raises RuntimeError to prevent silent double-wrapping."""
         server = _make_server()
         enforce_cimd_scope(server)
-        with pytest.raises(
-            RuntimeError, match="already wired"
-        ):
+        with pytest.raises(RuntimeError, match="already wired"):
             enforce_cimd_scope(server)
 
 
@@ -317,18 +256,12 @@ class TestIdempotency:
 
 class TestRunIdField:
     @pytest.mark.asyncio
-    async def test_each_call_emits_unique_run_id(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    async def test_each_call_emits_unique_run_id(self, caplog: pytest.LogCaptureFixture) -> None:
         """Each tool call should produce a fresh UUID4 run_id so
         auditors can correlate requests in the audit stream.
         """
-        registry = _make_registry(
-            client_id="x", scope="list_frameworks"
-        )
-        server = _make_server(
-            cimd_registry=registry, ctx_client_id="x"
-        )
+        registry = _make_registry(client_id="x", scope="list_frameworks")
+        server = _make_server(cimd_registry=registry, ctx_client_id="x")
         enforce_cimd_scope(server)
 
         with caplog.at_level(logging.INFO, logger="evidentia.mcp.scope"):
@@ -336,9 +269,7 @@ class TestRunIdField:
             await server.call_tool("list_frameworks", {})
 
         run_ids: list[Any] = [
-            (getattr(r, "ecs_record", {}) or {})
-            .get("evidentia", {})
-            .get("run_id")
+            (getattr(r, "ecs_record", {}) or {}).get("evidentia", {}).get("run_id")
             for r in caplog.records
             if r.name == "evidentia.mcp.scope"
         ]

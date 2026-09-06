@@ -96,9 +96,7 @@ def test_metadata_tool_is_evidentia() -> None:
 
 
 def test_each_gap_becomes_one_vulnerability_entry() -> None:
-    report = _report(
-        [_gap("AC-2", GapSeverity.HIGH), _gap("AC-3", GapSeverity.MEDIUM)]
-    )
+    report = _report([_gap("AC-2", GapSeverity.HIGH), _gap("AC-3", GapSeverity.MEDIUM)])
     vex = gap_report_to_cyclonedx_vex(report)
     assert len(vex["vulnerabilities"]) == 2
     ids = {v["id"] for v in vex["vulnerabilities"]}
@@ -116,18 +114,14 @@ def test_severity_maps_to_cyclonedx_rating() -> None:
         ]
     )
     vex = gap_report_to_cyclonedx_vex(report)
+
     # EvidentiaModel uses use_enum_values=True so gap_severity comes
     # back as a plain str; unwrap defensively for the cross-key build.
     def _sev(g: ControlGap) -> str:
-        return (
-            g.gap_severity.value
-            if hasattr(g.gap_severity, "value")
-            else str(g.gap_severity)
-        )
+        return g.gap_severity.value if hasattr(g.gap_severity, "value") else str(g.gap_severity)
 
     by_gap_severity = {
-        _sev(gap): vex["vulnerabilities"][i]["ratings"][0]["severity"]
-        for i, gap in enumerate(report.gaps)
+        _sev(gap): vex["vulnerabilities"][i]["ratings"][0]["severity"] for i, gap in enumerate(report.gaps)
     }
     assert by_gap_severity == {
         "critical": "critical",
@@ -142,10 +136,7 @@ def test_recommendation_carries_remediation_guidance() -> None:
     gap = _gap("AC-2", GapSeverity.HIGH)
     gap.remediation_guidance = "Wire IAM federation to corporate SSO."
     vex = gap_report_to_cyclonedx_vex(_report([gap]))
-    assert (
-        vex["vulnerabilities"][0]["recommendation"]
-        == "Wire IAM federation to corporate SSO."
-    )
+    assert vex["vulnerabilities"][0]["recommendation"] == "Wire IAM federation to corporate SSO."
 
 
 def test_description_carries_framework_and_control() -> None:
@@ -269,9 +260,7 @@ def test_export_report_writes_cyclonedx_vex_file(tmp_path: Path) -> None:
     """End-to-end via the public export_report dispatch: --format
     cyclonedx-vex writes a JSON document to disk that round-trips into
     a dict with the expected CycloneDX 1.6 VEX shape."""
-    report = _report(
-        [_gap("AC-2", GapSeverity.CRITICAL), _gap("AC-3", GapSeverity.LOW)]
-    )
+    report = _report([_gap("AC-2", GapSeverity.CRITICAL), _gap("AC-3", GapSeverity.LOW)])
     output_path = tmp_path / "gaps.vex.json"
 
     returned_path = export_report(report, output_path, format="cyclonedx-vex")

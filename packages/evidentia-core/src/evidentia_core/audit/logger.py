@@ -203,11 +203,7 @@ def _build_ecs_record(
         "event": {
             "kind": "event",
             "action": action.value if isinstance(action, EventAction) else action,
-            "outcome": (
-                outcome.value
-                if isinstance(outcome, EventOutcome)
-                else outcome
-            ),
+            "outcome": (outcome.value if isinstance(outcome, EventOutcome) else outcome),
             "id": str(ulid.ULID()),
             "dataset": f"{SERVICE_NAME}.audit",
         },
@@ -222,22 +218,14 @@ def _build_ecs_record(
     }
 
     if category is not None:
-        record["event"]["category"] = [
-            c.value if isinstance(c, EventCategory) else c for c in category
-        ]
+        record["event"]["category"] = [c.value if isinstance(c, EventCategory) else c for c in category]
     if types is not None:
-        record["event"]["type"] = [
-            t.value if isinstance(t, EventType) else t for t in types
-        ]
+        record["event"]["type"] = [t.value if isinstance(t, EventType) else t for t in types]
 
     if event_start is not None:
-        record["event"]["start"] = event_start.astimezone().isoformat(
-            timespec="microseconds"
-        )
+        record["event"]["start"] = event_start.astimezone().isoformat(timespec="microseconds")
     if event_end is not None:
-        record["event"]["end"] = event_end.astimezone().isoformat(
-            timespec="microseconds"
-        )
+        record["event"]["end"] = event_end.astimezone().isoformat(timespec="microseconds")
     if duration_ms is not None:
         # ECS spec is nanoseconds, integer. Convert from milliseconds.
         record["event"]["duration"] = int(duration_ms * 1_000_000)
@@ -288,9 +276,7 @@ class ECSFormatter(logging.Formatter):
         ecs_record: dict[str, Any] | None = getattr(record, "ecs_record", None)
         if ecs_record is None:
             ecs_record = {
-                "@timestamp": datetime.fromtimestamp(
-                    record.created
-                ).astimezone().isoformat(timespec="microseconds"),
+                "@timestamp": datetime.fromtimestamp(record.created).astimezone().isoformat(timespec="microseconds"),
                 "ecs": {"version": ECS_VERSION},
                 "log": {
                     "level": record.levelname.lower(),
@@ -322,11 +308,7 @@ class EvidentiaLogger:
         parent = _get_scope()
         merged: dict[str, Any] = dict(parent)
         for key, value in kwargs.items():
-            if (
-                key == "evidentia"
-                and isinstance(value, dict)
-                and isinstance(parent.get("evidentia"), dict)
-            ):
+            if key == "evidentia" and isinstance(value, dict) and isinstance(parent.get("evidentia"), dict):
                 merged["evidentia"] = {**parent["evidentia"], **value}
             else:
                 merged[key] = value

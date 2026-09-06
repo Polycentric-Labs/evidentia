@@ -63,8 +63,7 @@ def emit(
         dir_okay=False,
         readable=True,
         help=(
-            "Traceability matrix input (JSON or YAML): title, catalog_href, "
-            "framework_id, crosswalk_source, mappings[]."
+            "Traceability matrix input (JSON or YAML): title, catalog_href, framework_id, crosswalk_source, mappings[]."
         ),
     ),
     output: Path = typer.Option(
@@ -144,9 +143,7 @@ def emit(
 
     if sign_with_sigstore:
         try:
-            bundle = sigstore_sign_file(
-                output, identity_token=sigstore_identity_token
-            )
+            bundle = sigstore_sign_file(output, identity_token=sigstore_identity_token)
         except Exception as e:
             console.print(f"[red]Sigstore signing failed:[/red] {e}")
             raise typer.Exit(code=1) from e
@@ -167,11 +164,7 @@ def emit(
     if signed:
         if sign_with_key and not sign_with_gpg and not sign_with_sigstore:
             console.print(
-                f"[dim]Verify with:[/dim] evidentia oscal verify {output} "
-                f"--verify-key <pubkey.pem> --require-signature"
+                f"[dim]Verify with:[/dim] evidentia oscal verify {output} --verify-key <pubkey.pem> --require-signature"
             )
         else:
-            console.print(
-                f"[dim]Verify with:[/dim] evidentia oscal verify {output} "
-                "--require-signature"
-            )
+            console.print(f"[dim]Verify with:[/dim] evidentia oscal verify {output} --require-signature")

@@ -41,20 +41,14 @@ console = Console()
 
 @app.command("list")
 def list_frameworks(
-    tier: str | None = typer.Option(
-        None, "--tier", help="Filter by redistribution tier: A, B, C, or D."
-    ),
+    tier: str | None = typer.Option(None, "--tier", help="Filter by redistribution tier: A, B, C, or D."),
     category: str | None = typer.Option(
         None,
         "--category",
         help="Filter by catalog type: control, technique, vulnerability, obligation.",
     ),
-    bundled_only: bool = typer.Option(
-        False, "--bundled-only", help="Show only catalogs shipped with the package."
-    ),
-    user_only: bool = typer.Option(
-        False, "--user-only", help="Show only user-imported catalogs."
-    ),
+    bundled_only: bool = typer.Option(False, "--bundled-only", help="Show only catalogs shipped with the package."),
+    user_only: bool = typer.Option(False, "--user-only", help="Show only user-imported catalogs."),
 ) -> None:
     """List available framework catalogs, with optional filters."""
     registry = FrameworkRegistry.get_instance()
@@ -126,17 +120,14 @@ def list_frameworks(
 
     console.print(table)
     console.print(
-        f"[dim]{len(rows)} framework(s) "
-        f"{'(filtered)' if tier or category or bundled_only or user_only else ''}[/dim]"
+        f"[dim]{len(rows)} framework(s) {'(filtered)' if tier or category or bundled_only or user_only else ''}[/dim]"
     )
 
 
 @app.command("show")
 def show_catalog(
     framework: str = typer.Argument(..., help="Framework ID, e.g. 'nist-800-53-mod'."),
-    control: str | None = typer.Option(
-        None, "--control", "-c", help="Show detail for a specific control ID."
-    ),
+    control: str | None = typer.Option(None, "--control", "-c", help="Show detail for a specific control ID."),
 ) -> None:
     """Show controls in a framework catalog (or detail for one control)."""
     registry = FrameworkRegistry.get_instance()
@@ -149,16 +140,12 @@ def show_catalog(
     if control:
         ctrl = catalog.get_control(control)
         if not ctrl:
-            console.print(
-                f"[red]Control '{control}' not found in '{framework}'.[/red]"
-            )
+            console.print(f"[red]Control '{control}' not found in '{framework}'.[/red]")
             raise typer.Exit(code=1)
 
         # Placeholder rendering — show license URL instead of placeholder prose
         if ctrl.placeholder and ctrl.license_url:
-            description_block = (
-                f"[yellow]\\[Licensed content — see {ctrl.license_url}][/yellow]"
-            )
+            description_block = f"[yellow]\\[Licensed content — see {ctrl.license_url}][/yellow]"
         else:
             description_block = ctrl.description
 
@@ -203,15 +190,10 @@ def show_crosswalk(
     mappings = crosswalk.get_mapped_controls(source, control, target)
 
     if not mappings:
-        console.print(
-            f"[yellow]No mappings found from {source}:{control} to {target}.[/yellow]"
-        )
+        console.print(f"[yellow]No mappings found from {source}:{control} to {target}.[/yellow]")
         raise typer.Exit(code=0)
 
-    console.print(
-        f"[bold cyan]{source}[/bold cyan]:{control} maps to "
-        f"[bold cyan]{target}[/bold cyan]:"
-    )
+    console.print(f"[bold cyan]{source}[/bold cyan]:{control} maps to [bold cyan]{target}[/bold cyan]:")
     for m in mappings:
         title = m.target_control_title or ""
         rel = f"[dim]\\[{m.relationship}][/dim]"
@@ -236,9 +218,7 @@ def import_catalog(
         "--framework-id",
         help="Override the framework_id in the imported file (default: read from file).",
     ),
-    name: str | None = typer.Option(
-        None, "--name", help="Override the human-readable framework name."
-    ),
+    name: str | None = typer.Option(None, "--name", help="Override the human-readable framework name."),
     license_terms: str | None = typer.Option(
         None,
         "--license-terms",
@@ -306,9 +286,7 @@ def import_catalog(
         payload = resolved.model_dump(mode="json", exclude_none=True, by_alias=True)
         out_path = user_dir / f"{resolved.framework_id}.json"
         if out_path.exists() and not force:
-            console.print(
-                f"[red]{out_path.name} already exists — use --force to overwrite.[/red]"
-            )
+            console.print(f"[red]{out_path.name} already exists — use --force to overwrite.[/red]")
             raise typer.Exit(code=1)
         with open(out_path, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2)
@@ -331,10 +309,7 @@ def import_catalog(
 
     # Mode 1 / 3: direct JSON import
     if source is None:
-        console.print(
-            "[red]Provide a source path, or use --profile for OSCAL profile "
-            "resolution.[/red]"
-        )
+        console.print("[red]Provide a source path, or use --profile for OSCAL profile resolution.[/red]")
         raise typer.Exit(code=1)
 
     if not source.exists():
@@ -346,10 +321,7 @@ def import_catalog(
 
     resolved_id = framework_id or data.get("framework_id")
     if not resolved_id:
-        console.print(
-            "[red]Cannot determine framework_id — either set it in the file or "
-            "pass --framework-id.[/red]"
-        )
+        console.print("[red]Cannot determine framework_id — either set it in the file or pass --framework-id.[/red]")
         raise typer.Exit(code=1)
 
     if framework_id:
@@ -364,10 +336,7 @@ def import_catalog(
     # Copy/rewrite into user dir
     out_path = user_dir / f"{resolved_id}.json"
     if out_path.exists() and not force:
-        console.print(
-            f"[red]A user-imported '{resolved_id}' already exists — use --force to "
-            f"overwrite.[/red]"
-        )
+        console.print(f"[red]A user-imported '{resolved_id}' already exists — use --force to overwrite.[/red]")
         raise typer.Exit(code=1)
 
     if framework_id or name:
@@ -392,17 +361,13 @@ def import_catalog(
     shadow_note = ""
     if load_manifest().get(resolved_id) is not None:
         shadow_note = " (shadows bundled catalog)"
-    console.print(
-        f"[green]Imported '{resolved_id}'{shadow_note} → {out_path}[/green]"
-    )
+    console.print(f"[green]Imported '{resolved_id}'{shadow_note} → {out_path}[/green]")
 
 
 @app.command("where")
 def where_framework(
     framework_id: str = typer.Argument(..., help="Framework ID to locate."),
-    catalog_dir: Path | None = typer.Option(
-        None, "--catalog-dir", help="Override user catalog directory."
-    ),
+    catalog_dir: Path | None = typer.Option(None, "--catalog-dir", help="Override user catalog directory."),
 ) -> None:
     """Show where a framework is resolved from (user, bundled, or not found)."""
     bundled = load_manifest()
@@ -459,33 +424,24 @@ def license_info(
         lines.append(f"[bold]License URL:[/bold] {entry.license_url}")
     if entry.source_url:
         lines.append(f"[bold]Source URL:[/bold] {entry.source_url}")
-    console.print(
-        Panel("\n".join(lines), title=f"License: {framework_id}", border_style="cyan")
-    )
+    console.print(Panel("\n".join(lines), title=f"License: {framework_id}", border_style="cyan"))
 
 
 @app.command("remove")
 def remove_framework(
     framework_id: str = typer.Argument(..., help="Framework ID to remove."),
-    catalog_dir: Path | None = typer.Option(
-        None, "--catalog-dir", help="Override user catalog directory."
-    ),
+    catalog_dir: Path | None = typer.Option(None, "--catalog-dir", help="Override user catalog directory."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
 ) -> None:
     """Remove a user-imported framework (bundled catalogs are never touched)."""
     user = load_user_manifest(catalog_dir)
     entry = user.get(framework_id)
     if entry is None:
-        console.print(
-            f"[red]No user-imported framework '{framework_id}'. "
-            f"Bundled catalogs cannot be removed.[/red]"
-        )
+        console.print(f"[red]No user-imported framework '{framework_id}'. Bundled catalogs cannot be removed.[/red]")
         raise typer.Exit(code=1)
 
     if not yes:
-        confirm = typer.confirm(
-            f"Remove user-imported framework '{framework_id}' ({entry.name})?"
-        )
+        confirm = typer.confirm(f"Remove user-imported framework '{framework_id}' ({entry.name})?")
         if not confirm:
             console.print("[yellow]Cancelled.[/yellow]")
             raise typer.Exit(code=0)

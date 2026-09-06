@@ -69,13 +69,9 @@ def _risk(**overrides: object) -> RiskStatement:
         "threat_event": "SQL injection extraction of PHI",
         "vulnerability": "Web app has unsanitized SQL input on /search",
         "likelihood": LikelihoodRating.HIGH,
-        "likelihood_rationale": (
-            "Public-facing endpoint with no WAF and no input validation."
-        ),
+        "likelihood_rationale": ("Public-facing endpoint with no WAF and no input validation."),
         "impact": ImpactRating.HIGH,
-        "impact_rationale": (
-            "10M PHI records exposed; HIPAA reportable; class action risk."
-        ),
+        "impact_rationale": ("10M PHI records exposed; HIPAA reportable; class action risk."),
         "risk_level": RiskLevel.HIGH,
         "risk_description": (
             "External attacker exploits unsanitized SQL input on /search "
@@ -126,16 +122,12 @@ class TestGapDataset:
         assert len(csv_bytes.decode("utf-8").splitlines()) == 1
 
     def test_severity_serialized_as_string_value(self) -> None:
-        report = _report(
-            [_gap(gap_severity=GapSeverity.CRITICAL)]
-        )
+        report = _report([_gap(gap_severity=GapSeverity.CRITICAL)])
         text = build_gap_dataset_csv(report).decode("utf-8")
         assert "critical" in text  # not GapSeverity.CRITICAL repr
 
     def test_status_lifecycle_emitted(self) -> None:
-        report = _report(
-            [_gap(status=GapStatus.IN_PROGRESS)]
-        )
+        report = _report([_gap(status=GapStatus.IN_PROGRESS)])
         text = build_gap_dataset_csv(report).decode("utf-8")
         assert "in_progress" in text
 
@@ -245,16 +237,12 @@ class TestCollectionRunDataset:
             assert col in first
 
     def test_one_row_per_context(self) -> None:
-        text = build_collection_run_dataset_csv(
-            [_ctx(), _ctx()]
-        ).decode("utf-8")
+        text = build_collection_run_dataset_csv([_ctx(), _ctx()]).decode("utf-8")
         # 1 header + 2 rows
         assert len(text.splitlines()) == 3
 
     def test_filter_applied_is_json(self) -> None:
-        text = build_collection_run_dataset_csv([_ctx()]).decode(
-            "utf-8"
-        )
+        text = build_collection_run_dataset_csv([_ctx()]).decode("utf-8")
         # The CSV writer escapes embedded double-quotes by doubling
         # them. Check the JSON tokens appear in CSV-escaped form.
         assert '""account"": ""ACME-PROD""' in text
@@ -274,9 +262,7 @@ class TestCollectionRunDataset:
     def test_credential_identity_does_not_leak_secret(self) -> None:
         # Defense-in-depth: CollectionContext.credential_identity
         # is the principal name, never the secret. Confirm.
-        text = build_collection_run_dataset_csv([_ctx()]).decode(
-            "utf-8"
-        )
+        text = build_collection_run_dataset_csv([_ctx()]).decode("utf-8")
         # No high-entropy strings or 'sk-...' patterns expected.
         assert "EVIDENTIA_AUDIT_RO" in text
         assert "sk-" not in text
@@ -377,12 +363,7 @@ class TestCountCSVRows:
             _count_csv_rows,
         )
 
-        assert (
-            _count_csv_rows(
-                b"col_a,col_b\nr1,r1\nr2,r2\nr3,r3\n"
-            )
-            == 3
-        )
+        assert _count_csv_rows(b"col_a,col_b\nr1,r1\nr2,r2\nr3,r3\n") == 3
 
     def test_no_trailing_newline(self) -> None:
         from evidentia_integrations.tableau.publish import (
@@ -390,6 +371,4 @@ class TestCountCSVRows:
         )
 
         # The last row may not end with a newline.
-        assert (
-            _count_csv_rows(b"col_a,col_b\nr1,r1\nr2,r2") == 2
-        )
+        assert _count_csv_rows(b"col_a,col_b\nr1,r1\nr2,r2") == 2

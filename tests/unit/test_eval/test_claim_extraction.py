@@ -63,12 +63,8 @@ class TestExtractClaimsBasics:
         assert claims[2] == "Audit logs are retained for 90 days."
 
     def test_bullet_prefixes_stripped(self) -> None:
-        """"- ", "* ", "• " bullet prefixes are dropped."""
-        canned = (
-            "- Account management is enforced.\n"
-            "* MFA is required for admins.\n"
-            "• Audit logs retained 90 days.\n"
-        )
+        """ "- ", "* ", "• " bullet prefixes are dropped."""
+        canned = "- Account management is enforced.\n* MFA is required for admins.\n• Audit logs retained 90 days.\n"
         fn = _mock_completion(canned)
         claims = extract_claims("text", completion_fn=fn)
         assert claims == [
@@ -78,12 +74,8 @@ class TestExtractClaimsBasics:
         ]
 
     def test_numbered_prefixes_stripped(self) -> None:
-        """"N." and "N)" numbering prefixes are dropped."""
-        canned = (
-            "1. First claim text.\n"
-            "2) Second claim text.\n"
-            "3. Third claim text.\n"
-        )
+        """ "N." and "N)" numbering prefixes are dropped."""
+        canned = "1. First claim text.\n2) Second claim text.\n3. Third claim text.\n"
         fn = _mock_completion(canned)
         claims = extract_claims("text", completion_fn=fn)
         assert claims == [
@@ -94,14 +86,7 @@ class TestExtractClaimsBasics:
 
     def test_empty_lines_dropped(self) -> None:
         """Empty / whitespace-only lines in the LLM response are skipped."""
-        canned = (
-            "Claim one.\n"
-            "\n"
-            "  \n"
-            "Claim two.\n"
-            "\n\n"
-            "Claim three.\n"
-        )
+        canned = "Claim one.\n\n  \nClaim two.\n\n\nClaim three.\n"
         fn = _mock_completion(canned)
         claims = extract_claims("text", completion_fn=fn)
         assert claims == ["Claim one.", "Claim two.", "Claim three."]
@@ -110,9 +95,7 @@ class TestExtractClaimsBasics:
         """Output truncated when LLM returns more than max_claims."""
         canned = "\n".join(f"Claim {i}." for i in range(15))
         fn = _mock_completion(canned)
-        claims = extract_claims(
-            "text", completion_fn=fn, max_claims=5
-        )
+        claims = extract_claims("text", completion_fn=fn, max_claims=5)
         assert len(claims) == 5
         assert claims[0] == "Claim 0."
         assert claims[4] == "Claim 4."

@@ -55,25 +55,10 @@ REPO_ROOT = SCRIPTS_DIR.parent
 
 README_PATH = REPO_ROOT / "README.md"
 OPENAPI_PATH = REPO_ROOT / "packages" / "evidentia-ui" / "openapi.json"
-_CATALOGS_DATA = (
-    REPO_ROOT
-    / "packages"
-    / "evidentia-core"
-    / "src"
-    / "evidentia_core"
-    / "catalogs"
-    / "data"
-)
+_CATALOGS_DATA = REPO_ROOT / "packages" / "evidentia-core" / "src" / "evidentia_core" / "catalogs" / "data"
 MANIFEST_PATH = _CATALOGS_DATA / "frameworks.yaml"
 MAPPINGS_DIR = _CATALOGS_DATA / "mappings"
-MCP_SERVER_PATH = (
-    REPO_ROOT
-    / "packages"
-    / "evidentia-mcp"
-    / "src"
-    / "evidentia_mcp"
-    / "server.py"
-)
+MCP_SERVER_PATH = REPO_ROOT / "packages" / "evidentia-mcp" / "src" / "evidentia_mcp" / "server.py"
 
 # Canonical count keys + the README-table label substring that identifies each.
 # The substrings are mutually exclusive across the four real rows
@@ -122,14 +107,11 @@ def compare_counts(code: dict[str, int], readme: dict[str, int]) -> list[str]:
             errors.append(f"{key}: could not derive code count")
             continue
         if key not in readme:
-            errors.append(
-                f"{key}: README has no at-a-glance row (code says {code[key]})"
-            )
+            errors.append(f"{key}: README has no at-a-glance row (code says {code[key]})")
             continue
         if code[key] != readme[key]:
             errors.append(
-                f"{key}: README says {readme[key]} but code derives "
-                f"{code[key]} — update the README capabilities table"
+                f"{key}: README says {readme[key]} but code derives {code[key]} — update the README capabilities table"
             )
     return errors
 
@@ -215,9 +197,7 @@ def load_code_counts() -> dict[str, int]:
 # ─────────────────────────────── main ────────────────────────────────────
 
 
-_PARITY_BADGE_RE = re.compile(
-    r"CLI%E2%86%94GUI%20parity-(?P<pct>\d+(?:\.\d+)?)%25"
-)
+_PARITY_BADGE_RE = re.compile(r"CLI%E2%86%94GUI%20parity-(?P<pct>\d+(?:\.\d+)?)%25")
 
 
 def check_parity_badge(readme_text: str) -> list[str]:
@@ -252,9 +232,7 @@ def check_parity_badge(readme_text: str) -> list[str]:
     # generated on demand and is itself drift-gated by nothing, so comparing
     # to it would chain one ungated claim to another.
     try:
-        spec = importlib.util.spec_from_file_location(
-            "check_parity_for_badge", SCRIPTS_DIR / "check_parity.py"
-        )
+        spec = importlib.util.spec_from_file_location("check_parity_for_badge", SCRIPTS_DIR / "check_parity.py")
         if spec is None or spec.loader is None:  # pragma: no cover - import guard
             raise ImportError("cannot load scripts/check_parity.py")
         parity = importlib.util.module_from_spec(spec)

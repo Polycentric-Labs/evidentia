@@ -68,9 +68,7 @@ class TestOpenFAIRScenario:
         assert s.id  # auto-UUID
 
     def test_pert_range_for_factor(self) -> None:
-        s = _scalar_scenario(
-            tef=PERTRange(low=100, most_likely=300, high=1000)
-        )
+        s = _scalar_scenario(tef=PERTRange(low=100, most_likely=300, high=1000))
         # Actually loaded as PERTRange via Pydantic discrimination
         assert isinstance(s.tef, PERTRange | dict)
 
@@ -116,14 +114,17 @@ class TestComputeFAIRFactors:
 
 
 class TestCategorizeRisk:
-    @pytest.mark.parametrize("ale,expected", [
-        (15_000_000, RiskCategory.SEVERE),
-        (5_000_000, RiskCategory.HIGH),
-        (500_000, RiskCategory.SIGNIFICANT),
-        (50_000, RiskCategory.MODERATE),
-        (5_000, RiskCategory.LOW),
-        (0, RiskCategory.LOW),
-    ])
+    @pytest.mark.parametrize(
+        "ale,expected",
+        [
+            (15_000_000, RiskCategory.SEVERE),
+            (5_000_000, RiskCategory.HIGH),
+            (500_000, RiskCategory.SIGNIFICANT),
+            (50_000, RiskCategory.MODERATE),
+            (5_000, RiskCategory.LOW),
+            (0, RiskCategory.LOW),
+        ],
+    )
     def test_band_boundaries(self, ale: float, expected: RiskCategory) -> None:
         assert categorize_risk(ale) == expected
 
@@ -149,12 +150,18 @@ class TestGenerateReport:
         # Two scenarios: ALE = (1000 * 0.1 * 1000) + (10 * 0.5 * 5000)
         #              = 100,000 + 25,000 = 125,000
         s1 = _scalar_scenario(
-            name="S1", tef=1000, vulnerability=0.1,
-            primary_loss=1000, secondary_loss=0,
+            name="S1",
+            tef=1000,
+            vulnerability=0.1,
+            primary_loss=1000,
+            secondary_loss=0,
         )
         s2 = _scalar_scenario(
-            name="S2", tef=10, vulnerability=0.5,
-            primary_loss=5000, secondary_loss=0,
+            name="S2",
+            tef=10,
+            vulnerability=0.5,
+            primary_loss=5000,
+            secondary_loss=0,
         )
         out = generate_risk_quantification_report([s1, s2])
         assert "$125.0k" in out
@@ -174,12 +181,18 @@ class TestGenerateReport:
     def test_per_scenario_sorted_by_ale_descending(self) -> None:
         # high-ALE first
         big = _scalar_scenario(
-            name="BIG", tef=1000, vulnerability=1.0,
-            primary_loss=1_000_000, secondary_loss=0,
+            name="BIG",
+            tef=1000,
+            vulnerability=1.0,
+            primary_loss=1_000_000,
+            secondary_loss=0,
         )
         small = _scalar_scenario(
-            name="SMALL", tef=1, vulnerability=0.001,
-            primary_loss=1, secondary_loss=0,
+            name="SMALL",
+            tef=1,
+            vulnerability=0.001,
+            primary_loss=1,
+            secondary_loss=0,
         )
         out = generate_risk_quantification_report([small, big])
         # BIG should appear before SMALL in the output

@@ -42,15 +42,12 @@ class InvalidMetricIdError(ValueError):
 
 def _validate_id_shape(metric_id: str) -> None:
     if not isinstance(metric_id, str) or not metric_id:
-        raise InvalidMetricIdError(
-            f"Invalid metric ID: empty or non-string: {metric_id!r}"
-        )
+        raise InvalidMetricIdError(f"Invalid metric ID: empty or non-string: {metric_id!r}")
     try:
         UUID(metric_id)
     except (ValueError, AttributeError, TypeError) as e:
         raise InvalidMetricIdError(
-            f"Invalid metric ID: not a UUID-shaped string: "
-            f"{metric_id!r} ({type(e).__name__}: {e})"
+            f"Invalid metric ID: not a UUID-shaped string: {metric_id!r} ({type(e).__name__}: {e})"
         ) from e
 
 
@@ -66,9 +63,7 @@ def get_metric_store_dir(override: Path | None = None) -> Path:
     return Path(user_data_dir("evidentia", appauthor=False)) / "metric_store"
 
 
-def save_metric(
-    metric: Metric, *, override: Path | None = None
-) -> Path:
+def save_metric(metric: Metric, *, override: Path | None = None) -> Path:
     """Persist a metric record. Atomic via os.replace.
 
     Mirrors the harmonized v0.7.11 store pattern:
@@ -86,9 +81,7 @@ def save_metric(
     try:
         out_path = validate_within(candidate, store_dir)
     except PathTraversalError as e:
-        raise InvalidMetricIdError(
-            f"Invalid metric ID: path-traversal violation: {metric.id!r}"
-        ) from e
+        raise InvalidMetricIdError(f"Invalid metric ID: path-traversal violation: {metric.id!r}") from e
     tmp_path = store_dir / f"{metric.id}.json.tmp"
     tmp_path.write_text(payload, encoding="utf-8")
     os.replace(tmp_path, out_path)
@@ -96,9 +89,7 @@ def save_metric(
     return out_path
 
 
-def load_metric_by_id(
-    metric_id: str, *, override: Path | None = None
-) -> Metric | None:
+def load_metric_by_id(metric_id: str, *, override: Path | None = None) -> Metric | None:
     """Load a metric by ID. Returns None for well-formed-unknown IDs."""
     _validate_id_shape(metric_id)
     store_dir = get_metric_store_dir(override)
@@ -106,17 +97,13 @@ def load_metric_by_id(
     try:
         path = validate_within(candidate, store_dir)
     except PathTraversalError as e:
-        raise InvalidMetricIdError(
-            f"Invalid metric ID: path-traversal violation: {metric_id!r}"
-        ) from e
+        raise InvalidMetricIdError(f"Invalid metric ID: path-traversal violation: {metric_id!r}") from e
     if not path.exists():
         return None
     return Metric.model_validate_json(path.read_text(encoding="utf-8"))
 
 
-def list_metrics(
-    *, override: Path | None = None
-) -> list[Metric]:
+def list_metrics(*, override: Path | None = None) -> list[Metric]:
     """List all metrics sorted by kind (KRI → KPI → KGI) then name."""
     store_dir = get_metric_store_dir(override)
     if not store_dir.exists():
@@ -126,11 +113,7 @@ def list_metrics(
         if path.name.endswith(".tmp"):
             continue
         try:
-            metrics.append(
-                Metric.model_validate_json(
-                    path.read_text(encoding="utf-8")
-                )
-            )
+            metrics.append(Metric.model_validate_json(path.read_text(encoding="utf-8")))
         except Exception as e:
             logger.warning("Skipping malformed metric file %s: %s", path, e)
             continue
@@ -139,9 +122,7 @@ def list_metrics(
     return metrics
 
 
-def delete_metric(
-    metric_id: str, *, override: Path | None = None
-) -> bool:
+def delete_metric(metric_id: str, *, override: Path | None = None) -> bool:
     """Delete a metric by ID. Returns True if removed."""
     _validate_id_shape(metric_id)
     store_dir = get_metric_store_dir(override)
@@ -149,9 +130,7 @@ def delete_metric(
     try:
         path = validate_within(candidate, store_dir)
     except PathTraversalError as e:
-        raise InvalidMetricIdError(
-            f"Invalid metric ID: path-traversal violation: {metric_id!r}"
-        ) from e
+        raise InvalidMetricIdError(f"Invalid metric ID: path-traversal violation: {metric_id!r}") from e
     if not path.exists():
         return False
     path.unlink()

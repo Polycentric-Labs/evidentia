@@ -45,10 +45,7 @@ _AWS_TEMP_KEY_EXAMPLE = "ASIA" + "IOSFODNN7EXAMPLE"
 
 
 def test_scrub_redacts_aws_access_key() -> None:
-    assert (
-        _scrub(f"using {_AWS_PERM_KEY_EXAMPLE} as credential")
-        == "using [REDACTED] as credential"
-    )
+    assert _scrub(f"using {_AWS_PERM_KEY_EXAMPLE} as credential") == "using [REDACTED] as credential"
 
 
 def test_scrub_redacts_aws_session_credential() -> None:
@@ -70,11 +67,7 @@ def test_scrub_redacts_password_pattern() -> None:
 
 
 def test_scrub_redacts_jwt() -> None:
-    jwt = (
-        "eyJhbGciOiJIUzI1NiJ9."
-        "eyJzdWIiOiIxMjM0NSJ9."
-        "signature-bytes-here"
-    )
+    jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NSJ9.signature-bytes-here"
     assert "[REDACTED]" in _scrub(f"bearer {jwt}")
 
 

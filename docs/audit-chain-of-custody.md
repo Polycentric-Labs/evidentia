@@ -177,10 +177,10 @@ concrete WORM-storage backend implements:
 from evidentia_core.retention.worm import WORMBackend
 from evidentia_core.retention import RetentionMetadata
 
+
 class WORMBackend(ABC):
     @abstractmethod
-    def put(self, record_id: str, payload: bytes,
-            metadata: RetentionMetadata) -> None: ...
+    def put(self, record_id: str, payload: bytes, metadata: RetentionMetadata) -> None: ...
     @abstractmethod
     def get(self, record_id: str) -> bytes: ...
     @abstractmethod
@@ -188,8 +188,7 @@ class WORMBackend(ABC):
     @abstractmethod
     def delete(self, record_id: str, today: date | None = None) -> None: ...
     @abstractmethod
-    def extend_retention(self, record_id: str,
-                         new_lock_until: date) -> RetentionMetadata: ...
+    def extend_retention(self, record_id: str, new_lock_until: date) -> RetentionMetadata: ...
 ```
 
 ### Reference implementation: `LocalFilesystemWORM`
@@ -197,7 +196,8 @@ class WORMBackend(ABC):
 ```python
 from evidentia_core.retention.worm import LocalFilesystemWORM
 from evidentia_core.retention import (
-    RetentionMetadata, RetentionClassification,
+    RetentionMetadata,
+    RetentionClassification,
 )
 
 backend = LocalFilesystemWORM(root="/var/evidentia/worm")

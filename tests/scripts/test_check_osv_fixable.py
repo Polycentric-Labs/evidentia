@@ -60,19 +60,16 @@ def _scan(*packages: dict) -> dict:
     return {"results": [{"source": {"type": "os"}, "packages": list(packages)}]}
 
 
-def _pkg(name: str, ecosystem: str, version: str, vulns: list[dict],
-         groups: list[dict] | None = None) -> dict:
+def _pkg(name: str, ecosystem: str, version: str, vulns: list[dict], groups: list[dict] | None = None) -> dict:
     return {
-        "package": {"name": name, "os_package_name": name, "ecosystem": ecosystem,
-                    "version": version},
+        "package": {"name": name, "os_package_name": name, "ecosystem": ecosystem, "version": version},
         "groups": groups if groups is not None else [],
         "vulnerabilities": vulns,
     }
 
 
 def _affected(ecosystem: str, name: str, events: list[dict]) -> dict:
-    return {"package": {"ecosystem": ecosystem, "name": name},
-            "ranges": [{"type": "ECOSYSTEM", "events": events}]}
+    return {"package": {"ecosystem": ecosystem, "name": name}, "ranges": [{"type": "ECOSYSTEM", "events": events}]}
 
 
 # --------------------------------------------------------------------------
@@ -83,8 +80,7 @@ def test_fixed_versions_for_returns_matched_debian_release_fix() -> None:
     vuln = {
         "id": "X",
         "affected": [
-            _affected("Debian:13", "libssh2",
-                      [{"introduced": "0"}, {"fixed": "1.11.1-1+deb13u1"}]),
+            _affected("Debian:13", "libssh2", [{"introduced": "0"}, {"fixed": "1.11.1-1+deb13u1"}]),
         ],
     }
     assert c.fixed_versions_for(pkg_info, vuln) == ["1.11.1-1+deb13u1"]
@@ -99,8 +95,7 @@ def test_fixed_event_in_other_ecosystem_is_not_a_fix() -> None:
             # the detected package: no fix in Debian:13
             _affected("Debian:13", "gnutls28", [{"introduced": "0"}]),
             # the cross-package decoy (real-world shape): asterisk in Debian:11
-            _affected("Debian:11", "asterisk",
-                      [{"introduced": "0"}, {"fixed": "1:13.7.2~dfsg-1"}]),
+            _affected("Debian:11", "asterisk", [{"introduced": "0"}, {"fixed": "1:13.7.2~dfsg-1"}]),
         ],
     }
     assert c.fixed_versions_for(pkg_info, vuln) == []
@@ -111,8 +106,7 @@ def test_last_affected_only_is_not_a_fix() -> None:
     vuln = {
         "id": "Z",
         "affected": [
-            _affected("Debian:13", "perl",
-                      [{"introduced": "0"}, {"last_affected": "5.40.1-6"}]),
+            _affected("Debian:13", "perl", [{"introduced": "0"}, {"last_affected": "5.40.1-6"}]),
         ],
     }
     assert c.fixed_versions_for(pkg_info, vuln) == []
@@ -126,7 +120,7 @@ def test_cross_release_fix_for_same_package_does_not_count() -> None:
     vuln = {
         "id": "W",
         "affected": [
-            _affected("Debian:13", "curl", [{"introduced": "0"}]),               # detected: no fix
+            _affected("Debian:13", "curl", [{"introduced": "0"}]),  # detected: no fix
             _affected("Debian:12", "curl", [{"introduced": "0"}, {"fixed": "8.x"}]),  # other release: has a fix
         ],
     }
@@ -201,16 +195,22 @@ def test_same_vuln_across_multiple_package_records_is_deduped_as_fixable() -> No
     """util-linux appears 3x (different installed versions) in a real scan;
     a vuln that is fixable on one record must be counted once, as fixable."""
     unfix_record = _pkg(
-        "util-linux", "Debian:13", "2.41-5",
-        [{"id": "DEBIAN-CVE-2026-0001",
-          "affected": [_affected("Debian:13", "util-linux", [{"introduced": "0"}])]}],
+        "util-linux",
+        "Debian:13",
+        "2.41-5",
+        [{"id": "DEBIAN-CVE-2026-0001", "affected": [_affected("Debian:13", "util-linux", [{"introduced": "0"}])]}],
         groups=[{"ids": ["DEBIAN-CVE-2026-0001"], "max_severity": "5.0"}],
     )
     fix_record = _pkg(
-        "util-linux", "Debian:13", "1:2.41-5",
-        [{"id": "DEBIAN-CVE-2026-0001",
-          "affected": [_affected("Debian:13", "util-linux",
-                                 [{"introduced": "0"}, {"fixed": "2.41-6"}])]}],
+        "util-linux",
+        "Debian:13",
+        "1:2.41-5",
+        [
+            {
+                "id": "DEBIAN-CVE-2026-0001",
+                "affected": [_affected("Debian:13", "util-linux", [{"introduced": "0"}, {"fixed": "2.41-6"}])],
+            }
+        ],
         groups=[{"ids": ["DEBIAN-CVE-2026-0001"], "max_severity": "5.0"}],
     )
     fixable, unfixable = c.classify(_scan(unfix_record, fix_record))
@@ -222,16 +222,22 @@ def test_same_vuln_fixable_record_first_still_deduped_as_fixable() -> None:
     """Mirror of the dedup test with the FIXABLE record encountered first — a
     last-write-wins regression would silently flip it to a false negative."""
     fix_record = _pkg(
-        "util-linux", "Debian:13", "1:2.41-5",
-        [{"id": "DEBIAN-CVE-2026-0002",
-          "affected": [_affected("Debian:13", "util-linux",
-                                 [{"introduced": "0"}, {"fixed": "2.41-6"}])]}],
+        "util-linux",
+        "Debian:13",
+        "1:2.41-5",
+        [
+            {
+                "id": "DEBIAN-CVE-2026-0002",
+                "affected": [_affected("Debian:13", "util-linux", [{"introduced": "0"}, {"fixed": "2.41-6"}])],
+            }
+        ],
         groups=[{"ids": ["DEBIAN-CVE-2026-0002"], "max_severity": "5.0"}],
     )
     unfix_record = _pkg(
-        "util-linux", "Debian:13", "2.41-5",
-        [{"id": "DEBIAN-CVE-2026-0002",
-          "affected": [_affected("Debian:13", "util-linux", [{"introduced": "0"}])]}],
+        "util-linux",
+        "Debian:13",
+        "2.41-5",
+        [{"id": "DEBIAN-CVE-2026-0002", "affected": [_affected("Debian:13", "util-linux", [{"introduced": "0"}])]}],
         groups=[{"ids": ["DEBIAN-CVE-2026-0002"], "max_severity": "5.0"}],
     )
     fixable, unfixable = c.classify(_scan(fix_record, unfix_record))
@@ -270,12 +276,25 @@ def test_main_exits_1_when_fixable_present() -> None:
 
 def test_main_exits_0_when_no_fixable(tmp_path: Path) -> None:
     nofix = tmp_path / "nofix.json"
-    nofix.write_text(json.dumps(_scan(
-        _pkg("perl", "Debian:13", "5.40.1-6",
-             [{"id": "DEBIAN-CVE-2026-9999",
-               "affected": [_affected("Debian:13", "perl", [{"introduced": "0"}])]}],
-             groups=[{"ids": ["DEBIAN-CVE-2026-9999"], "max_severity": "7.5"}])
-    )), encoding="utf-8")
+    nofix.write_text(
+        json.dumps(
+            _scan(
+                _pkg(
+                    "perl",
+                    "Debian:13",
+                    "5.40.1-6",
+                    [
+                        {
+                            "id": "DEBIAN-CVE-2026-9999",
+                            "affected": [_affected("Debian:13", "perl", [{"introduced": "0"}])],
+                        }
+                    ],
+                    groups=[{"ids": ["DEBIAN-CVE-2026-9999"], "max_severity": "7.5"}],
+                )
+            )
+        ),
+        encoding="utf-8",
+    )
     assert c.main([str(nofix)]) == 0
 
 

@@ -29,9 +29,7 @@ class TestListFrameworks:
         for fw in r.json()["frameworks"]:
             assert fw["category"] == "control"
 
-    def test_filter_by_unknown_tier_returns_empty_list(
-        self, api_client: TestClient
-    ) -> None:
+    def test_filter_by_unknown_tier_returns_empty_list(self, api_client: TestClient) -> None:
         r = api_client.get("/api/frameworks", params={"tier": "Z"})
         assert r.status_code == 200
         assert r.json()["frameworks"] == []
@@ -73,9 +71,7 @@ class TestGetControl:
         assert detail["resource"] == "control"
         assert "not found" in detail["message"].lower()
 
-    def test_unknown_framework_id_returns_404_not_500(
-        self, api_client: TestClient
-    ) -> None:
+    def test_unknown_framework_id_returns_404_not_500(self, api_client: TestClient) -> None:
         """Regression for F-V08-DAST-1 — Schemathesis fuzz hit
         ``/api/frameworks/0/controls/0`` and got 500 because the route
         handler caught only (FileNotFoundError, KeyError) but
@@ -95,9 +91,7 @@ class TestFrameworksOpenApiErrorDocs:
     """2026-07-06 error-shape convergence: every deliberate 4xx the
     frameworks router raises is documented on its OpenAPI operation."""
 
-    def test_frameworks_error_statuses_documented_in_openapi(
-        self, api_client: TestClient
-    ) -> None:
+    def test_frameworks_error_statuses_documented_in_openapi(self, api_client: TestClient) -> None:
         schema = api_client.get("/api/openapi.json").json()
         expected: list[tuple[str, str, list[str]]] = [
             ("/api/frameworks/{framework_id}", "get", ["404"]),
@@ -110,6 +104,4 @@ class TestFrameworksOpenApiErrorDocs:
         for path, method, statuses in expected:
             responses = schema["paths"][path][method]["responses"]
             for status in statuses:
-                assert status in responses, (
-                    f"{method.upper()} {path} missing {status}"
-                )
+                assert status in responses, f"{method.upper()} {path} missing {status}"

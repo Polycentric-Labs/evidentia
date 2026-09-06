@@ -315,16 +315,11 @@ class CoverageCount(EvidentiaModel):
 
     resource_type: str = Field(
         description=(
-            "Source-system resource category. Examples: "
-            "'aws-iam-role', 'aws-iam-user', 'github-dependabot-alert'."
+            "Source-system resource category. Examples: 'aws-iam-role', 'aws-iam-user', 'github-dependabot-alert'."
         ),
     )
-    scanned: int = Field(
-        ge=0, description="Total resources enumerated (before filtering)"
-    )
-    matched_filter: int = Field(
-        ge=0, description="Resources passing the collector's filter criteria"
-    )
+    scanned: int = Field(ge=0, description="Total resources enumerated (before filtering)")
+    matched_filter: int = Field(ge=0, description="Resources passing the collector's filter criteria")
     collected: int = Field(
         ge=0,
         description=(
@@ -365,10 +360,7 @@ class CollectionManifest(EvidentiaModel):
     )
     collection_finished_at: datetime | None = Field(
         default=None,
-        description=(
-            "UTC timestamp when the collector finished. None while "
-            "still in progress."
-        ),
+        description=("UTC timestamp when the collector finished. None while still in progress."),
     )
     source_system_ids: list[str] = Field(
         default_factory=list,
@@ -376,17 +368,13 @@ class CollectionManifest(EvidentiaModel):
     )
     filters_applied: dict[str, Any] = Field(
         default_factory=dict,
-        description=(
-            "Run-level filters. Empty dict means 'no filter'."
-        ),
+        description=("Run-level filters. Empty dict means 'no filter'."),
     )
     coverage_counts: list[CoverageCount] = Field(
         default_factory=list,
         description="Per-resource-type scan/match/collect counts",
     )
-    total_findings: int = Field(
-        default=0, ge=0, description="Sum of findings emitted from this run"
-    )
+    total_findings: int = Field(default=0, ge=0, description="Sum of findings emitted from this run")
     is_complete: bool = Field(
         default=True,
         description=(
@@ -397,10 +385,7 @@ class CollectionManifest(EvidentiaModel):
     )
     incomplete_reason: str | None = Field(
         default=None,
-        description=(
-            "Human-readable reason the run didn't complete. "
-            "MUST be populated when ``is_complete=False``."
-        ),
+        description=("Human-readable reason the run didn't complete. MUST be populated when ``is_complete=False``."),
     )
     empty_categories: list[str] = Field(
         default_factory=list,

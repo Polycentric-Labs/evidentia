@@ -320,9 +320,7 @@ def latest_observations(artifacts: Iterable[EvidenceArtifact]) -> dict[str, date
     return latest
 
 
-def merge_evidence_anchors(
-    state: dict[str, date], observed: dict[str, date]
-) -> dict[str, date]:
+def merge_evidence_anchors(state: dict[str, date], observed: dict[str, date]) -> dict[str, date]:
     """Fill state-file gaps from the evidence store; the state file always wins.
 
     A slug the operator recorded keeps the recorded date even when the store
@@ -346,11 +344,7 @@ def series_verdicts(
     window_start, window_end = default_window(today, lookback_days=lookback_days)
     pool = list(artifacts)
     return {
-        slug: SeriesVerdict(
-            assert_series(
-                slug, pool, window_start=window_start, window_end=window_end
-            ).verdict
-        )
+        slug: SeriesVerdict(assert_series(slug, pool, window_start=window_start, window_end=window_end).verdict)
         for slug in slugs
     }
 

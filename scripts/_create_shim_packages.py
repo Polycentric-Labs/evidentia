@@ -106,8 +106,7 @@ SHIMS: list[dict[str, object]] = [
         "new_pypi": "evidentia-integrations",
         "new_module": "evidentia_integrations",
         "description": (
-            "DEPRECATED: renamed to 'evidentia-integrations'. "
-            "Transitional re-export shim; removed in v0.7.0."
+            "DEPRECATED: renamed to 'evidentia-integrations'. Transitional re-export shim; removed in v0.7.0."
         ),
         "keywords": ["grc", "compliance", "deprecated", "renamed", "evidentia-integrations"],
         "cli_entries": {},
@@ -238,7 +237,7 @@ if hasattr(_new_pkg, "__version__"):
 
 def make_readme(row: dict[str, object]) -> str:
     return dedent(
-        f'''\
+        f"""\
 # {row["old_pypi"]} (DEPRECATED)
 
 **This package has been renamed to [`{row["new_pypi"]}`](https://pypi.org/project/{row["new_pypi"]}/).**
@@ -270,7 +269,7 @@ from {row["new_module"]}.submodule import Thing
 
 See the [v0.6.0 CHANGELOG entry](https://github.com/polycentric-labs/evidentia/blob/main/CHANGELOG.md)
 for the full rename rationale.
-'''
+"""
     )
 
 

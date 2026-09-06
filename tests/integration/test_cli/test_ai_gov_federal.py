@@ -24,9 +24,7 @@ def runner() -> CliRunner:
 
 
 @pytest.fixture()
-def isolated_registry(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def isolated_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Isolated AI registry per test."""
     registry_dir = tmp_path / "ai_registry"
     monkeypatch.setenv("EVIDENTIA_AI_REGISTRY_DIR", str(registry_dir))
@@ -38,8 +36,7 @@ def descriptor_yaml(tmp_path: Path) -> Path:
     """Minimal descriptor for registration."""
     path = tmp_path / "descriptor.yaml"
     path.write_text(
-        "name: fed-ai-system\n"
-        "purpose: Federal AI use case for testing.\n",
+        "name: fed-ai-system\npurpose: Federal AI use case for testing.\n",
         encoding="utf-8",
     )
     return path
@@ -459,9 +456,7 @@ class TestUpdateEmitSCR:
             ],
         )
         assert result.exit_code == 0
-        scr_data = json.loads(
-            out.with_suffix(".json").read_text(encoding="utf-8")
-        )
+        scr_data = json.loads(out.with_suffix(".json").read_text(encoding="utf-8"))
         assert scr_data["category"] == "adaptive"
         assert scr_data["system_id"] == registered_system_id
 
@@ -524,9 +519,7 @@ class TestUpdateEmitSCR:
             ],
         )
         assert promote.exit_code == 0
-        scr_data = json.loads(
-            out.with_suffix(".json").read_text(encoding="utf-8")
-        )
+        scr_data = json.loads(out.with_suffix(".json").read_text(encoding="utf-8"))
         assert scr_data["category"] == "transformative"
 
 
@@ -550,9 +543,7 @@ class TestUpdateSSPReference:
             ],
         )
         assert result.exit_code == 0, result.output
-        show = runner.invoke(
-            app, ["ai-gov", "show", registered_system_id, "--json"]
-        )
+        show = runner.invoke(app, ["ai-gov", "show", registered_system_id, "--json"])
         assert show.exit_code == 0
         body = json.loads(show.output)
         assert body["ssp_reference"] == "emass://12345"
@@ -562,9 +553,7 @@ class TestUpdateSSPReference:
 
 
 class TestSetPractice:
-    def _set_high_impact(
-        self, runner: CliRunner, system_id: str
-    ) -> None:
+    def _set_high_impact(self, runner: CliRunner, system_id: str) -> None:
         result = runner.invoke(
             app,
             [
@@ -796,12 +785,10 @@ class TestSetPractice:
         entry = AIRegistryStore().load(registered_system_id)
         assert entry is not None and entry.omb_high_impact is not None
         practices = entry.omb_high_impact.practices
-        assert MinimumPractice.HUMAN_OVERSIGHT in practices, (
-            "the re-determination destroyed the recorded practice"
+        assert MinimumPractice.HUMAN_OVERSIGHT in practices, "the re-determination destroyed the recorded practice"
+        assert practices[MinimumPractice.HUMAN_OVERSIGHT].waiver is not None, (
+            "the CAIO waiver provenance was lost on re-determination"
         )
-        assert (
-            practices[MinimumPractice.HUMAN_OVERSIGHT].waiver is not None
-        ), "the CAIO waiver provenance was lost on re-determination"
 
 
 # ── v0.11 Wave 2: ai-gov acquisition (OMB M-25-22) ─────────────────
@@ -816,9 +803,7 @@ def _normalize(output: str) -> str:
 
 
 @pytest.fixture()
-def isolated_acquisitions(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def isolated_acquisitions(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Isolated M-25-22 acquisition store per test."""
     store_dir = tmp_path / "ai_acquisitions"
     monkeypatch.setenv("EVIDENTIA_AI_ACQUISITION_DIR", str(store_dir))
@@ -847,22 +832,16 @@ class TestAcquisition:
         assert match, result.output
         return match.group(1)
 
-    def test_register_and_show(
-        self, runner: CliRunner, isolated_acquisitions: Path
-    ) -> None:
+    def test_register_and_show(self, runner: CliRunner, isolated_acquisitions: Path) -> None:
         acquisition_id = self._register(runner)
-        result = runner.invoke(
-            app, ["ai-gov", "acquisition", "show", acquisition_id]
-        )
+        result = runner.invoke(app, ["ai-gov", "acquisition", "show", acquisition_id])
         assert result.exit_code == 0, result.output
         normalized = _normalize(result.output)
         assert "Case-triage LLM service" in normalized
         assert "high_impact" in normalized
         assert "not recorded" in normalized
 
-    def test_set_phase_and_progress(
-        self, runner: CliRunner, isolated_acquisitions: Path
-    ) -> None:
+    def test_set_phase_and_progress(self, runner: CliRunner, isolated_acquisitions: Path) -> None:
         acquisition_id = self._register(runner)
         result = runner.invoke(
             app,
@@ -882,9 +861,7 @@ class TestAcquisition:
         assert result.exit_code == 0, result.output
         assert "1/6 recorded" in _normalize(result.output)
 
-    def test_unknown_phase_exits_1(
-        self, runner: CliRunner, isolated_acquisitions: Path
-    ) -> None:
+    def test_unknown_phase_exits_1(self, runner: CliRunner, isolated_acquisitions: Path) -> None:
         acquisition_id = self._register(runner)
         result = runner.invoke(
             app,
@@ -902,9 +879,7 @@ class TestAcquisition:
         assert result.exit_code == 1
         assert "unknown phase" in _normalize(result.output)
 
-    def test_unknown_id_exits_1(
-        self, runner: CliRunner, isolated_acquisitions: Path
-    ) -> None:
+    def test_unknown_id_exits_1(self, runner: CliRunner, isolated_acquisitions: Path) -> None:
         result = runner.invoke(
             app,
             [
@@ -916,9 +891,7 @@ class TestAcquisition:
         )
         assert result.exit_code == 1
 
-    def test_list_json(
-        self, runner: CliRunner, isolated_acquisitions: Path
-    ) -> None:
+    def test_list_json(self, runner: CliRunner, isolated_acquisitions: Path) -> None:
         self._register(runner)
         result = runner.invoke(app, ["ai-gov", "acquisition", "list", "--json"])
         assert result.exit_code == 0, result.output
@@ -969,12 +942,9 @@ class TestSetOMBImpactDeprecationWarning:
                     category="rights_impacting",
                 )
 
-        deprecation_warnings = [
-            w for w in caught if issubclass(w.category, DeprecationWarning)
-        ]
+        deprecation_warnings = [w for w in caught if issubclass(w.category, DeprecationWarning)]
         assert len(deprecation_warnings) >= 1, (
-            "ai-gov set-omb-impact must emit a DeprecationWarning "
-            f"(caught: {[str(w.message) for w in caught]})"
+            f"ai-gov set-omb-impact must emit a DeprecationWarning (caught: {[str(w.message) for w in caught]})"
         )
         message = str(deprecation_warnings[0].message)
         assert "set-omb-impact" in message
@@ -1002,9 +972,7 @@ class TestSetOMBImpactDeprecationWarning:
                     rationale=None,
                 )
 
-        assert not [
-            w for w in caught if issubclass(w.category, DeprecationWarning)
-        ]
+        assert not [w for w in caught if issubclass(w.category, DeprecationWarning)]
 
     def test_command_still_succeeds_and_persists(
         self,
@@ -1024,8 +992,6 @@ class TestSetOMBImpactDeprecationWarning:
         )
         assert result.exit_code == 0, result.output
 
-        show = runner.invoke(
-            app, ["ai-gov", "show", registered_system_id, "--json"]
-        )
+        show = runner.invoke(app, ["ai-gov", "show", registered_system_id, "--json"])
         assert show.exit_code == 0
         assert json.loads(show.output)["omb_impact"] == "rights_impacting"

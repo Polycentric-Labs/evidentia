@@ -66,9 +66,7 @@ def tiny_inventory(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def tiny_report_paths(
-    tiny_inventory: Path, tmp_path: Path
-) -> tuple[Path, Path]:
+def tiny_report_paths(tiny_inventory: Path, tmp_path: Path) -> tuple[Path, Path]:
     """Generate two GapAnalysisReport JSON files for diff testing."""
     inventory = load_inventory(tiny_inventory)
     analyzer = GapAnalyzer()
@@ -143,8 +141,7 @@ class TestServerBuild:
         tools = asyncio.run(server.list_tools())
         for tool in tools:
             assert tool.description, (
-                f"Tool {tool.name!r} is missing a description; "
-                f"FastMCP needs the function docstring populated."
+                f"Tool {tool.name!r} is missing a description; FastMCP needs the function docstring populated."
             )
 
 
@@ -175,9 +172,7 @@ class TestListFrameworks:
                 "tier",
                 "category",
             ):
-                assert required_key in entry, (
-                    f"framework metadata missing key {required_key!r}: {entry}"
-                )
+                assert required_key in entry, f"framework metadata missing key {required_key!r}: {entry}"
 
     def test_includes_nist_800_53_rev5(self) -> None:
         server = build_server()
@@ -185,9 +180,7 @@ class TestListFrameworks:
         ids = {entry["id"] for entry in result}
         # nist-800-53-rev5-moderate ships in the bundled catalogs;
         # if this fails, the catalog registry has regressed.
-        assert any(
-            fid.startswith("nist-800-53-rev5") for fid in ids
-        )
+        assert any(fid.startswith("nist-800-53-rev5") for fid in ids)
 
 
 class TestGetControl:
@@ -215,9 +208,7 @@ class TestGetControl:
 
 
 class TestGapAnalyze:
-    def test_runs_analysis_against_tiny_inventory(
-        self, tiny_inventory: Path
-    ) -> None:
+    def test_runs_analysis_against_tiny_inventory(self, tiny_inventory: Path) -> None:
         server = build_server()
         result = _invoke_tool(
             server,
@@ -230,9 +221,7 @@ class TestGapAnalyze:
         assert "gaps" in result
         assert "frameworks_analyzed" in result
 
-    def test_missing_path_raises_filenotfound(
-        self, tmp_path: Path
-    ) -> None:
+    def test_missing_path_raises_filenotfound(self, tmp_path: Path) -> None:
         server = build_server()
         with pytest.raises(FileNotFoundError):
             _invoke_tool(
@@ -244,9 +233,7 @@ class TestGapAnalyze:
 
 
 class TestGapDiff:
-    def test_diff_two_reports_returns_dict(
-        self, tiny_report_paths: tuple[Path, Path]
-    ) -> None:
+    def test_diff_two_reports_returns_dict(self, tiny_report_paths: tuple[Path, Path]) -> None:
         base_path, head_path = tiny_report_paths
         server = build_server()
         result = _invoke_tool(
@@ -295,9 +282,7 @@ class TestGapDiff:
 class TestVerifySignedArtifact:
     """v0.10.9 F-V109-1/2: identity pinning + flagless-warning surfaces."""
 
-    def test_single_flag_identity_raises_valueerror(
-        self, tmp_path: Path
-    ) -> None:
+    def test_single_flag_identity_raises_valueerror(self, tmp_path: Path) -> None:
         """Exactly one expected_sigstore_* arg → a clean ValueError
         tool error (the schema can't express both-or-neither), not a
         stack trace from deep inside the verifier."""
@@ -312,9 +297,7 @@ class TestVerifySignedArtifact:
                 expected_sigstore_identity="ci@example.com",
             )
 
-    def test_single_flag_issuer_raises_valueerror(
-        self, tmp_path: Path
-    ) -> None:
+    def test_single_flag_issuer_raises_valueerror(self, tmp_path: Path) -> None:
         """F-V109-1, other order: a lone issuer is rejected too."""
         ar_path = tmp_path / "audit.oscal-ar.json"
         ar_path.write_text("{}", encoding="utf-8")
@@ -324,14 +307,10 @@ class TestVerifySignedArtifact:
                 server,
                 "verify_signed_artifact",
                 ar_path=str(ar_path),
-                expected_sigstore_issuer=(
-                    "https://token.actions.githubusercontent.com"
-                ),
+                expected_sigstore_issuer=("https://token.actions.githubusercontent.com"),
             )
 
-    def test_flagless_verify_surfaces_any_signer_warning(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_flagless_verify_surfaces_any_signer_warning(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """F-V109-2 mirror: flagless verification carries the
         UnsafeNoOp any-signer warning in the result payload's
         ``warnings`` list (MCP has no stderr)."""
@@ -351,9 +330,7 @@ class TestVerifySignedArtifact:
         )
 
         server = build_server()
-        result = _invoke_tool(
-            server, "verify_signed_artifact", ar_path=str(ar_path)
-        )
+        result = _invoke_tool(server, "verify_signed_artifact", ar_path=str(ar_path))
         assert result["sigstore_signature_valid"] is True
         assert any("UnsafeNoOp" in w for w in result["warnings"])
 
@@ -369,9 +346,7 @@ class TestGapAnalyzePathGating:
     rejections at the MCP tool boundary.
     """
 
-    def test_allow_root_none_preserves_v081_behavior(
-        self, tiny_inventory: Path
-    ) -> None:
+    def test_allow_root_none_preserves_v081_behavior(self, tiny_inventory: Path) -> None:
         """No --allow-root → file-path tools accept any readable path
         (backward-compat with v0.8.1 stdio default)."""
         server = build_server(allow_root=None)
@@ -386,9 +361,7 @@ class TestGapAnalyzePathGating:
         assert isinstance(result, dict)
         assert "gaps" in result
 
-    def test_allow_root_accepts_inside(
-        self, tiny_inventory: Path, tmp_path: Path
-    ) -> None:
+    def test_allow_root_accepts_inside(self, tiny_inventory: Path, tmp_path: Path) -> None:
         """Inventory path inside --allow-root → call succeeds."""
         # tiny_inventory is created under tmp_path; bind allow_root to tmp_path.
         server = build_server(allow_root=tmp_path)
@@ -401,9 +374,7 @@ class TestGapAnalyzePathGating:
         assert isinstance(result, dict)
         assert "gaps" in result
 
-    def test_allow_root_rejects_dotdot_traversal(
-        self, tmp_path: Path
-    ) -> None:
+    def test_allow_root_rejects_dotdot_traversal(self, tmp_path: Path) -> None:
         """``..`` segments escaping --allow-root → PathTraversalError."""
         safe_root = tmp_path / "store"
         safe_root.mkdir()
@@ -422,9 +393,7 @@ class TestGapAnalyzePathGating:
                 frameworks=["nist-800-53-rev5-moderate"],
             )
 
-    def test_allow_root_rejects_absolute_outside(
-        self, tmp_path: Path
-    ) -> None:
+    def test_allow_root_rejects_absolute_outside(self, tmp_path: Path) -> None:
         """Absolute path outside --allow-root → PathTraversalError."""
         safe_root = tmp_path / "store"
         safe_root.mkdir()
@@ -444,9 +413,7 @@ class TestGapAnalyzePathGating:
         sys.platform == "win32",
         reason="symlink creation requires elevated privileges on Windows",
     )
-    def test_allow_root_rejects_symlink_escape(
-        self, tmp_path: Path
-    ) -> None:
+    def test_allow_root_rejects_symlink_escape(self, tmp_path: Path) -> None:
         """Symlink inside --allow-root pointing outside → rejected."""
         import os
 
@@ -567,9 +534,7 @@ class TestVerifySignedArtifactPathGating:
     """TQ-2: verify_signed_artifact gates verify_key_path + dsse_bundle_path
     through the same allow-root check as the other file-path tools."""
 
-    def test_verify_key_path_outside_allow_root_raises(
-        self, tmp_path: Path
-    ) -> None:
+    def test_verify_key_path_outside_allow_root_raises(self, tmp_path: Path) -> None:
         """verify_key_path that resolves outside --allow-root → PathTraversalError."""
         safe_root = tmp_path / "safe"
         safe_root.mkdir()
@@ -588,9 +553,7 @@ class TestVerifySignedArtifactPathGating:
                 verify_key_path=str(outside_key),
             )
 
-    def test_dsse_bundle_path_outside_allow_root_raises(
-        self, tmp_path: Path
-    ) -> None:
+    def test_dsse_bundle_path_outside_allow_root_raises(self, tmp_path: Path) -> None:
         """dsse_bundle_path that resolves outside --allow-root → PathTraversalError."""
         safe_root = tmp_path / "safe"
         safe_root.mkdir()
@@ -661,9 +624,7 @@ class TestCLI:
         assert "--transport" in opt_flags
 
         # Locate the transport param + assert its Choice values.
-        transport_param = next(
-            p for p in serve_cmd.params if "--transport" in p.opts
-        )
+        transport_param = next(p for p in serve_cmd.params if "--transport" in p.opts)
         # Typer renders enum-typed Options as a Click Choice (vendored under
         # typer 0.26); duck-type via .choices rather than isinstance.
         assert hasattr(transport_param.type, "choices")

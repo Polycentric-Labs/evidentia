@@ -70,18 +70,73 @@ ACTION_TOOLS: dict[str, set[str]] = {
 # ubuntu-latest preinstalled approximation — the honest 20% that catches the
 # 80%. Deliberately conservative; extend only with a comment naming the need.
 RUNNER_PREINSTALLED: set[str] = {
-    "awk", "basename", "bash", "cat", "chmod", "cp", "curl", "cut", "date",
-    "df", "dirname", "docker", "du", "env", "find", "gh", "git", "grep",
-    "gunzip", "gzip", "head", "jq", "ls", "mkdir", "mv", "node", "npm",
-    "npx", "pip", "pip3", "python", "python3", "rm", "sed", "sh",
-    "sha256sum", "sleep", "sort", "tail", "tar", "tee", "touch", "tr",
-    "uniq", "unzip", "wc", "wget", "which", "xargs", "zip",
+    "awk",
+    "basename",
+    "bash",
+    "cat",
+    "chmod",
+    "cp",
+    "curl",
+    "cut",
+    "date",
+    "df",
+    "dirname",
+    "docker",
+    "du",
+    "env",
+    "find",
+    "gh",
+    "git",
+    "grep",
+    "gunzip",
+    "gzip",
+    "head",
+    "jq",
+    "ls",
+    "mkdir",
+    "mv",
+    "node",
+    "npm",
+    "npx",
+    "pip",
+    "pip3",
+    "python",
+    "python3",
+    "rm",
+    "sed",
+    "sh",
+    "sha256sum",
+    "sleep",
+    "sort",
+    "tail",
+    "tar",
+    "tee",
+    "touch",
+    "tr",
+    "uniq",
+    "unzip",
+    "wc",
+    "wget",
+    "which",
+    "xargs",
+    "zip",
 }
 
 # Wrapper tokens: strip and keep parsing the remainder of the statement.
 _WRAPPER_TOKENS: set[str] = {
-    "sudo", "command", "nohup", "exec", "time", "if", "until", "while",
-    "then", "else", "elif", "do", "!",
+    "sudo",
+    "command",
+    "nohup",
+    "exec",
+    "time",
+    "if",
+    "until",
+    "while",
+    "then",
+    "else",
+    "elif",
+    "do",
+    "!",
 }
 
 # Terminal keywords/builtins: the statement is satisfied — skip it.
@@ -89,12 +144,48 @@ _WRAPPER_TOKENS: set[str] = {
 # not external commands — a first token of ``{`` or ``}`` is shell grouping, never
 # a tool invocation (real in base-freshness.yml / stale-branches.yml).
 SHELL_BUILTINS: set[str] = {
-    ".", ":", "[", "[[", "break", "continue", "cd", "declare", "done",
-    "echo", "esac", "eval", "exit", "export", "false", "fi", "for",
-    "function", "hash", "in", "let", "local", "popd", "printf", "pushd",
-    "read", "readonly", "return", "select", "set", "shift", "source",
-    "test", "trap", "true", "type", "ulimit", "umask", "unset", "wait",
-    "{", "}",
+    ".",
+    ":",
+    "[",
+    "[[",
+    "break",
+    "continue",
+    "cd",
+    "declare",
+    "done",
+    "echo",
+    "esac",
+    "eval",
+    "exit",
+    "export",
+    "false",
+    "fi",
+    "for",
+    "function",
+    "hash",
+    "in",
+    "let",
+    "local",
+    "popd",
+    "printf",
+    "pushd",
+    "read",
+    "readonly",
+    "return",
+    "select",
+    "set",
+    "shift",
+    "source",
+    "test",
+    "trap",
+    "true",
+    "type",
+    "ulimit",
+    "umask",
+    "unset",
+    "wait",
+    "{",
+    "}",
 }
 
 WAIVER_RE = re.compile(r"#\s*tool-check:\s*ok\s+(?P<cmd>[\w.+-]+)")
@@ -309,9 +400,7 @@ def check_workflow_tools(path: Path) -> list[Finding]:
     return findings
 
 
-_INSTALL_SPEC_RE = re.compile(
-    r"(?P<pkg>[A-Za-z0-9][A-Za-z0-9._-]*)\[(?P<extras>[A-Za-z0-9_,\s-]+)\]"
-)
+_INSTALL_SPEC_RE = re.compile(r"(?P<pkg>[A-Za-z0-9][A-Za-z0-9._-]*)\[(?P<extras>[A-Za-z0-9_,\s-]+)\]")
 
 
 def _normalize(name: str) -> str:
@@ -333,15 +422,11 @@ def collect_workspace_extras(manifests: list[Path]) -> dict[str, set[str]]:
         if not isinstance(project, dict) or "name" not in project:
             continue
         extras = project.get("optional-dependencies", {})
-        extras_by_pkg[_normalize(str(project["name"]))] = {
-            _normalize(e) for e in extras
-        }
+        extras_by_pkg[_normalize(str(project["name"]))] = {_normalize(e) for e in extras}
     return extras_by_pkg
 
 
-def check_workflow_extras(
-    path: Path, extras_by_pkg: dict[str, set[str]]
-) -> list[Finding]:
+def check_workflow_extras(path: Path, extras_by_pkg: dict[str, set[str]]) -> list[Finding]:
     """G9: workspace-package install-specs may only name declared extras."""
     data = _load_workflow(path)
     if isinstance(data, Finding):
@@ -401,10 +486,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         for f in findings:
             print(f"{f.kind:13} {f.workflow} :: {f.job} :: {f.step} :: {f.detail}")
-        print(
-            f"check_workflow_tools: {len(findings)} finding(s) across "
-            f"{len(paths)} workflow file(s)"
-        )
+        print(f"check_workflow_tools: {len(findings)} finding(s) across {len(paths)} workflow file(s)")
     if findings and args.strict:
         return 2
     return 0

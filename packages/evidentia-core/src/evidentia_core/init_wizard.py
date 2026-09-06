@@ -95,9 +95,7 @@ def generate_evidentia_yaml(
     if not frameworks_block:
         frameworks_block = "  # Add at least one framework ID here."
 
-    system_name_line = (
-        f'system_name: "{system_name}"' if system_name else '# system_name: "Your System Name"'
-    )
+    system_name_line = f'system_name: "{system_name}"' if system_name else '# system_name: "Your System Name"'
 
     return _EVIDENTIA_YAML_TEMPLATE.format(
         organization=organization,
@@ -257,9 +255,7 @@ def generate_my_controls_yaml(
     ``hipaa-starter``, ``cmmc-starter``, ``empty``.
     """
     if preset not in _PRESET_CONTROLS:
-        raise ValueError(
-            f"Unknown preset {preset!r}. Choose one of: {sorted(_PRESET_CONTROLS)}"
-        )
+        raise ValueError(f"Unknown preset {preset!r}. Choose one of: {sorted(_PRESET_CONTROLS)}")
     body = _PRESET_CONTROLS[preset]
     return _MY_CONTROLS_HEADER.format(organization=organization) + body
 
@@ -322,8 +318,7 @@ def generate_system_context_yaml(
     to bias the output toward a given industry (fintech / healthtech / etc.).
     """
     desc_lines = (
-        system_description
-        or f"SaaS platform operated by {organization}.\nScope: authoritative business system."
+        system_description or f"SaaS platform operated by {organization}.\nScope: authoritative business system."
     ).splitlines() or ["(Add a system description.)"]
     system_description_block = "\n".join(f"  {line}" for line in desc_lines)
 
@@ -331,11 +326,7 @@ def generate_system_context_yaml(
     data_classification_block = "\n".join(f"  - {item}" for item in dc)
 
     rr = regulatory_requirements or []
-    regulatory_block = (
-        "\n".join(f"  - {item}" for item in rr)
-        if rr
-        else "  # - SOC 2\n  # - GDPR"
-    )
+    regulatory_block = "\n".join(f"  - {item}" for item in rr) if rr else "  # - SOC 2\n  # - GDPR"
 
     ta = threat_actors or _DEFAULT_THREAT_ACTORS
     threat_actors_block = "\n".join(f'  - "{item}"' for item in ta)

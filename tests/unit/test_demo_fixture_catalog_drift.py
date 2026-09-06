@@ -21,30 +21,17 @@ from pathlib import Path
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-FIXTURES_TS = (
-    REPO_ROOT / "packages" / "evidentia-ui" / "src" / "lib" / "demo" / "fixtures.ts"
-)
+FIXTURES_TS = REPO_ROOT / "packages" / "evidentia-ui" / "src" / "lib" / "demo" / "fixtures.ts"
 FRAMEWORKS_YAML = (
-    REPO_ROOT
-    / "packages"
-    / "evidentia-core"
-    / "src"
-    / "evidentia_core"
-    / "catalogs"
-    / "data"
-    / "frameworks.yaml"
+    REPO_ROOT / "packages" / "evidentia-core" / "src" / "evidentia_core" / "catalogs" / "data" / "frameworks.yaml"
 )
 
-_ENTRY_RE = re.compile(
-    r'\{\s*id:\s*"(?P<id>[^"]+)",\s*name:\s*"[^"]*",\s*version:\s*"(?P<version>[^"]*)"'
-)
+_ENTRY_RE = re.compile(r'\{\s*id:\s*"(?P<id>[^"]+)",\s*name:\s*"[^"]*",\s*version:\s*"(?P<version>[^"]*)"')
 
 
 def _manifest_versions() -> dict[str, str]:
     raw = yaml.safe_load(FRAMEWORKS_YAML.read_text(encoding="utf-8"))
-    items = raw if isinstance(raw, list) else next(
-        v for v in raw.values() if isinstance(v, list)
-    )
+    items = raw if isinstance(raw, list) else next(v for v in raw.values() if isinstance(v, list))
     return {entry["id"]: str(entry.get("version", "")) for entry in items}
 
 
@@ -65,9 +52,7 @@ def test_fixture_extraction_is_not_vacuous() -> None:
 def test_every_fixture_catalog_id_exists_in_manifest() -> None:
     manifest = _manifest_versions()
     unknown = sorted({cid for cid, _ in _fixture_entries()} - manifest.keys())
-    assert not unknown, (
-        f"demo fixtures present catalog ids the manifest does not ship: {unknown}"
-    )
+    assert not unknown, f"demo fixtures present catalog ids the manifest does not ship: {unknown}"
 
 
 def test_fixture_catalog_versions_match_manifest() -> None:
@@ -77,7 +62,4 @@ def test_fixture_catalog_versions_match_manifest() -> None:
         for cid, version in _fixture_entries()
         if cid in manifest and version != manifest[cid]
     ]
-    assert not drift, (
-        "demo fixture catalog versions drifted from frameworks.yaml:\n  "
-        + "\n  ".join(drift)
-    )
+    assert not drift, "demo fixture catalog versions drifted from frameworks.yaml:\n  " + "\n  ".join(drift)

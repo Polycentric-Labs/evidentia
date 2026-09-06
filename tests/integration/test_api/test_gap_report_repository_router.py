@@ -44,10 +44,7 @@ def _report(organization: str) -> GapAnalysisReport:
 
 def _stored_report_router_factory() -> Any:
     factory = getattr(gaps, "create_stored_report_read_router", None)
-    assert factory is not None, (
-        "create_stored_report_read_router must bind a repository at "
-        "router construction"
-    )
+    assert factory is not None, "create_stored_report_read_router must bind a repository at router construction"
     return factory
 
 
@@ -128,39 +125,19 @@ def test_explicit_router_reads_only_its_bound_root(
 
     monkeypatch.setenv("EVIDENTIA_GAP_STORE_DIR", str(ambient_root))
     legacy_client = TestClient(create_app())
-    explicit_client = TestClient(
-        _explicit_app(GapReportRepository(bound_root))
-    )
+    explicit_client = TestClient(_explicit_app(GapReportRepository(bound_root)))
 
-    assert (
-        legacy_client.get(
-            f"/api/gap/reports/{ambient_path.stem}"
-        ).json()["organization"]
-        == "Ambient Sentinel"
-    )
-    assert (
-        explicit_client.get(
-            f"/api/gap/reports/{bound_path.stem}"
-        ).json()["organization"]
-        == "Bound Sentinel"
-    )
+    assert legacy_client.get(f"/api/gap/reports/{ambient_path.stem}").json()["organization"] == "Ambient Sentinel"
+    assert explicit_client.get(f"/api/gap/reports/{bound_path.stem}").json()["organization"] == "Bound Sentinel"
 
     monkeypatch.setenv(
         "EVIDENTIA_GAP_STORE_DIR",
         str(changed_ambient_root),
     )
     assert (
-        legacy_client.get(
-            f"/api/gap/reports/{changed_path.stem}"
-        ).json()["organization"]
-        == "Changed Ambient Sentinel"
+        legacy_client.get(f"/api/gap/reports/{changed_path.stem}").json()["organization"] == "Changed Ambient Sentinel"
     )
-    assert (
-        explicit_client.get(
-            f"/api/gap/reports/{bound_path.stem}"
-        ).json()["organization"]
-        == "Bound Sentinel"
-    )
+    assert explicit_client.get(f"/api/gap/reports/{bound_path.stem}").json()["organization"] == "Bound Sentinel"
 
 
 def test_explicit_router_success_wire_contract_matches_legacy(
@@ -182,12 +159,10 @@ def test_explicit_router_success_wire_contract_matches_legacy(
     assert legacy_path.stem == explicit_path.stem
     monkeypatch.setenv("EVIDENTIA_GAP_STORE_DIR", str(legacy_root))
 
-    baseline = TestClient(create_app()).get(
-        f"/api/gap/reports/{legacy_path.stem}"
+    baseline = TestClient(create_app()).get(f"/api/gap/reports/{legacy_path.stem}")
+    candidate = TestClient(_explicit_app(GapReportRepository(explicit_root))).get(
+        f"/api/gap/reports/{explicit_path.stem}"
     )
-    candidate = TestClient(
-        _explicit_app(GapReportRepository(explicit_root))
-    ).get(f"/api/gap/reports/{explicit_path.stem}")
 
     _assert_wire_equivalent(baseline, candidate)
 
@@ -207,9 +182,7 @@ def test_explicit_router_error_wire_contract_matches_legacy(
     monkeypatch.setenv("EVIDENTIA_GAP_STORE_DIR", str(legacy_root))
 
     baseline = TestClient(create_app()).get(f"/api/gap/reports/{key}")
-    candidate = TestClient(
-        _explicit_app(GapReportRepository(explicit_root))
-    ).get(f"/api/gap/reports/{key}")
+    candidate = TestClient(_explicit_app(GapReportRepository(explicit_root))).get(f"/api/gap/reports/{key}")
 
     _assert_wire_equivalent(baseline, candidate)
 
@@ -265,9 +238,7 @@ def test_explicit_router_openapi_operation_matches_legacy(
     """The bound route must retain the existing OpenAPI operation contract."""
     path = "/api/gap/reports/{key}"
     baseline_operation = create_app().openapi()["paths"][path]["get"]
-    candidate_operation = _explicit_app(
-        GapReportRepository(tmp_path / "explicit")
-    ).openapi()["paths"][path]["get"]
+    candidate_operation = _explicit_app(GapReportRepository(tmp_path / "explicit")).openapi()["paths"][path]["get"]
 
     assert candidate_operation == baseline_operation
 
@@ -280,9 +251,7 @@ def test_explicit_router_exposes_only_exact_report_read(
         _report("Bound Sentinel"),
         gap_store_dir=tmp_path / "explicit",
     )
-    client = TestClient(
-        _explicit_app(GapReportRepository(tmp_path / "explicit"))
-    )
+    client = TestClient(_explicit_app(GapReportRepository(tmp_path / "explicit")))
 
     assert client.get(f"/api/gap/reports/{saved.stem}").status_code == 200
     assert client.get("/api/gap/reports").status_code == 404

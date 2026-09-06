@@ -124,9 +124,7 @@ class TestPushGapToJira:
 
         assert outcome.action == JiraSyncAction.ERRORED
         assert "Jira API error" in outcome.detail
-        assert gap.jira_issue_key is None, (
-            "Failed push must not leave the gap pointing at a bogus key."
-        )
+        assert gap.jira_issue_key is None, "Failed push must not leave the gap pointing at a bogus key."
 
 
 # ── sync_gap_from_jira ───────────────────────────────────────────────────
@@ -175,9 +173,7 @@ class TestSyncGapFromJira:
 
     def test_skips_when_jira_status_unknown(self) -> None:
         gap = _gap(jira_issue_key="SEC-5", status=GapStatus.OPEN)
-        client = _client(
-            get_issue=lambda _: _issue("SEC-5", status_name="Waiting for Customer")
-        )
+        client = _client(get_issue=lambda _: _issue("SEC-5", status_name="Waiting for Customer"))
 
         outcome = sync_gap_from_jira(gap, client)
 
@@ -209,17 +205,11 @@ def _report(gaps: list[ControlGap]) -> GapAnalysisReport:
         total_controls_required=len(gaps),
         total_controls_in_inventory=0,
         total_gaps=len(gaps),
-        critical_gaps=sum(
-            1 for g in gaps if _sev_value(g.gap_severity) == "critical"
-        ),
+        critical_gaps=sum(1 for g in gaps if _sev_value(g.gap_severity) == "critical"),
         high_gaps=sum(1 for g in gaps if _sev_value(g.gap_severity) == "high"),
-        medium_gaps=sum(
-            1 for g in gaps if _sev_value(g.gap_severity) == "medium"
-        ),
+        medium_gaps=sum(1 for g in gaps if _sev_value(g.gap_severity) == "medium"),
         low_gaps=sum(1 for g in gaps if _sev_value(g.gap_severity) == "low"),
-        informational_gaps=sum(
-            1 for g in gaps if _sev_value(g.gap_severity) == "informational"
-        ),
+        informational_gaps=sum(1 for g in gaps if _sev_value(g.gap_severity) == "informational"),
         coverage_percentage=0.0,
         gaps=gaps,
     )
@@ -288,11 +278,7 @@ class TestPushOpenGaps:
 
         assert result.created == 2
         assert result.skipped == 3
-        assert all(
-            "max_issues" in o.detail
-            for o in result.outcomes
-            if o.action == JiraSyncAction.SKIPPED
-        )
+        assert all("max_issues" in o.detail for o in result.outcomes if o.action == JiraSyncAction.SKIPPED)
 
 
 # ── sync_report (batch) ──────────────────────────────────────────────────
@@ -317,8 +303,7 @@ class TestSyncReport:
         result = sync_report(report, client)
 
         assert len(result.outcomes) == 2, (
-            "sync_report should only emit outcomes for LINKED gaps; unlinked "
-            "are silently filtered."
+            "sync_report should only emit outcomes for LINKED gaps; unlinked are silently filtered."
         )
         assert result.updated == 2
         assert gaps[0].status == GapStatus.IN_PROGRESS

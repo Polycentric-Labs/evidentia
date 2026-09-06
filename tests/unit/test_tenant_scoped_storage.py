@@ -79,16 +79,12 @@ class TestValidateTenantId:
 
 
 class TestEvidenceStoreDirTenantScoping:
-    def test_no_tenant_returns_base_unchanged(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_no_tenant_returns_base_unchanged(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Backward compat — single-tenant call yields v0.9.7 path."""
         monkeypatch.setenv(EVIDENCE_STORE_ENV_VAR, str(tmp_path))
         assert get_evidence_store_dir() == tmp_path.resolve()
 
-    def test_tenant_appends_under_tenants_subdir(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_tenant_appends_under_tenants_subdir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """``tenant="acme-corp"`` → ``<base>/tenants/acme-corp``."""
         monkeypatch.setenv(EVIDENCE_STORE_ENV_VAR, str(tmp_path))
         resolved = get_evidence_store_dir(tenant="acme-corp")
@@ -96,9 +92,7 @@ class TestEvidenceStoreDirTenantScoping:
 
     def test_tenant_with_explicit_override(self, tmp_path: Path) -> None:
         """``override=`` + ``tenant=`` compose correctly."""
-        resolved = get_evidence_store_dir(
-            override=tmp_path, tenant="globex"
-        )
+        resolved = get_evidence_store_dir(override=tmp_path, tenant="globex")
         assert resolved == tmp_path.resolve() / "tenants" / "globex"
 
     def test_invalid_tenant_id_raises(self, tmp_path: Path) -> None:
@@ -111,15 +105,11 @@ class TestEvidenceStoreDirTenantScoping:
 
 
 class TestPoamStoreDirTenantScoping:
-    def test_no_tenant_returns_base_unchanged(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_no_tenant_returns_base_unchanged(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv(POAM_STORE_ENV_VAR, str(tmp_path))
         assert get_poam_store_dir() == tmp_path.resolve()
 
-    def test_tenant_appends_under_tenants_subdir(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_tenant_appends_under_tenants_subdir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv(POAM_STORE_ENV_VAR, str(tmp_path))
         resolved = get_poam_store_dir(tenant="acme-corp")
         assert resolved == tmp_path.resolve() / "tenants" / "acme-corp"
@@ -147,16 +137,10 @@ def _make_artifact(title: str) -> EvidenceArtifact:
 
 
 class TestCrossTenantIsolation:
-    def test_evidence_in_tenant_a_not_visible_in_tenant_b(
-        self, tmp_path: Path
-    ) -> None:
+    def test_evidence_in_tenant_a_not_visible_in_tenant_b(self, tmp_path: Path) -> None:
         """Save under tenant A; list under tenant B → A's data is invisible."""
-        acme_dir = get_evidence_store_dir(
-            override=tmp_path, tenant="acme-corp"
-        )
-        globex_dir = get_evidence_store_dir(
-            override=tmp_path, tenant="globex"
-        )
+        acme_dir = get_evidence_store_dir(override=tmp_path, tenant="acme-corp")
+        globex_dir = get_evidence_store_dir(override=tmp_path, tenant="globex")
         # Save one artifact under acme-corp.
         save_evidence(
             _make_artifact("acme-only"),
@@ -167,42 +151,24 @@ class TestCrossTenantIsolation:
         # globex sees nothing.
         assert list_lineages(evidence_store_dir=globex_dir) == []
 
-    def test_lineages_truly_in_distinct_subdirs(
-        self, tmp_path: Path
-    ) -> None:
+    def test_lineages_truly_in_distinct_subdirs(self, tmp_path: Path) -> None:
         """Physical layout: each tenant's lineages live under tenants/<tenant>/."""
-        acme_dir = get_evidence_store_dir(
-            override=tmp_path, tenant="acme-corp"
-        )
-        save_evidence(
-            _make_artifact("a"), evidence_store_dir=acme_dir
-        )
+        acme_dir = get_evidence_store_dir(override=tmp_path, tenant="acme-corp")
+        save_evidence(_make_artifact("a"), evidence_store_dir=acme_dir)
 
         # The on-disk path includes the tenants/acme-corp prefix.
-        expected_prefix = (
-            tmp_path.resolve() / "tenants" / "acme-corp"
-        )
+        expected_prefix = tmp_path.resolve() / "tenants" / "acme-corp"
         assert acme_dir == expected_prefix
         assert acme_dir.exists()
         # The base override path itself does NOT contain lineage
         # subdirectories — they're all under tenants/.
-        base_children = {
-            p.name
-            for p in tmp_path.iterdir()
-            if p.is_dir()
-        }
+        base_children = {p.name for p in tmp_path.iterdir() if p.is_dir()}
         assert base_children == {"tenants"}
 
-    def test_load_evidence_version_respects_tenant_scope(
-        self, tmp_path: Path
-    ) -> None:
+    def test_load_evidence_version_respects_tenant_scope(self, tmp_path: Path) -> None:
         """Saving in tenant A, loading from tenant B → not found."""
-        acme_dir = get_evidence_store_dir(
-            override=tmp_path, tenant="acme-corp"
-        )
-        globex_dir = get_evidence_store_dir(
-            override=tmp_path, tenant="globex"
-        )
+        acme_dir = get_evidence_store_dir(override=tmp_path, tenant="acme-corp")
+        globex_dir = get_evidence_store_dir(override=tmp_path, tenant="globex")
         artifact = _make_artifact("acme-secret")
         save_evidence(artifact, evidence_store_dir=acme_dir)
         # Loading from acme-corp succeeds.

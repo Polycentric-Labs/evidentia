@@ -163,9 +163,7 @@ def test_expand_env_vars_recursive(monkeypatch) -> None:
 def test_expand_env_vars_in_config(tmp_path: Path, monkeypatch) -> None:
     """Full load_config pipeline expands ${} in any string value."""
     monkeypatch.setenv("SPECIAL_ORG", "Specialized Industries")
-    path = _write_yaml(
-        tmp_path / "evidentia.yaml", "organization: ${SPECIAL_ORG}\n"
-    )
+    path = _write_yaml(tmp_path / "evidentia.yaml", "organization: ${SPECIAL_ORG}\n")
     cfg = load_config(path)
     assert cfg.organization == "Specialized Industries"
 
@@ -178,17 +176,13 @@ def test_expand_env_vars_in_config(tmp_path: Path, monkeypatch) -> None:
 def test_get_default_cli_wins_over_env_and_yaml(monkeypatch) -> None:
     cfg = EvidentiaConfig(organization="YamlOrg")
     monkeypatch.setenv("CB_TEST_ORG", "EnvOrg")
-    assert (
-        get_default(cfg, "CliOrg", "organization", env_var="CB_TEST_ORG") == "CliOrg"
-    )
+    assert get_default(cfg, "CliOrg", "organization", env_var="CB_TEST_ORG") == "CliOrg"
 
 
 def test_get_default_env_wins_over_yaml(monkeypatch) -> None:
     cfg = EvidentiaConfig(organization="YamlOrg")
     monkeypatch.setenv("CB_TEST_ORG", "EnvOrg")
-    assert (
-        get_default(cfg, None, "organization", env_var="CB_TEST_ORG") == "EnvOrg"
-    )
+    assert get_default(cfg, None, "organization", env_var="CB_TEST_ORG") == "EnvOrg"
 
 
 def test_get_default_yaml_used_when_cli_and_env_empty(monkeypatch) -> None:
@@ -200,12 +194,7 @@ def test_get_default_yaml_used_when_cli_and_env_empty(monkeypatch) -> None:
 def test_get_default_falls_through_to_builtin_default(monkeypatch) -> None:
     cfg = EvidentiaConfig()  # no org set
     monkeypatch.delenv("CB_TEST_ORG", raising=False)
-    assert (
-        get_default(
-            cfg, None, "organization", env_var="CB_TEST_ORG", builtin_default="Default"
-        )
-        == "Default"
-    )
+    assert get_default(cfg, None, "organization", env_var="CB_TEST_ORG", builtin_default="Default") == "Default"
 
 
 def test_get_default_empty_string_treated_as_empty() -> None:

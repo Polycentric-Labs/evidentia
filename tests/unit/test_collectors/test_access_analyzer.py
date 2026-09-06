@@ -18,7 +18,8 @@ from evidentia_core.models.finding import SecurityFinding
 
 
 def _make_collector(
-    *, findings_pages: list[list[dict[str, Any]]] | None = None,
+    *,
+    findings_pages: list[list[dict[str, Any]]] | None = None,
     fail_with: Exception | None = None,
 ) -> AccessAnalyzerCollector:
     """Build a collector with a mocked accessanalyzer client."""
@@ -36,9 +37,7 @@ def _make_collector(
         client.list_findings.side_effect = responses
 
     return AccessAnalyzerCollector(
-        analyzer_arn=(
-            "arn:aws:access-analyzer:us-east-1:123456789012:analyzer/grc"
-        ),
+        analyzer_arn=("arn:aws:access-analyzer:us-east-1:123456789012:analyzer/grc"),
         region="us-east-1",
         _clients={"accessanalyzer": client},
     )
@@ -66,9 +65,7 @@ def _make_raw_finding(**overrides: Any) -> dict[str, Any]:
 
 def test_constructor_rejects_empty_analyzer_arn() -> None:
     with pytest.raises(AccessAnalyzerCollectorError, match="analyzer_arn"):
-        AccessAnalyzerCollector(
-            analyzer_arn="", region="us-east-1", _clients={}
-        )
+        AccessAnalyzerCollector(analyzer_arn="", region="us-east-1", _clients={})
 
 
 def test_constructor_accepts_valid_analyzer_arn() -> None:
@@ -195,17 +192,17 @@ def test_unknown_finding_type_returns_empty_mappings() -> None:
 def test_every_mapping_has_nonempty_justification() -> None:
     """Per Q3=A, all Access Analyzer mappings must cite authority."""
     for finding_type in [
-        "ExternalAccess", "UnusedIAMRole", "UnusedIAMUserAccessKey",
-        "UnusedIAMUserPassword", "UnusedPermission",
+        "ExternalAccess",
+        "UnusedIAMRole",
+        "UnusedIAMUserAccessKey",
+        "UnusedIAMUserPassword",
+        "UnusedPermission",
     ]:
         raw = _make_raw_finding(findingType=finding_type)
         collector = _make_collector(findings_pages=[[raw]])
         finding = collector.collect()[0]
         for m in finding.control_mappings:
-            assert m.justification, (
-                f"Empty justification on {finding_type} mapping to "
-                f"{m.control_id}"
-            )
+            assert m.justification, f"Empty justification on {finding_type} mapping to {m.control_id}"
 
 
 # ── manifest + provenance ────────────────────────────────────────────────
@@ -252,9 +249,7 @@ def test_collect_v2_populates_collection_context_on_findings() -> None:
 
 
 def test_collect_v2_captures_exception_in_manifest() -> None:
-    collector = _make_collector(
-        fail_with=RuntimeError("simulated AWS error")
-    )
+    collector = _make_collector(fail_with=RuntimeError("simulated AWS error"))
     findings, manifest = collector.collect_v2()
     assert findings == []
     assert not manifest.is_complete
@@ -267,9 +262,7 @@ def test_collect_v2_captures_exception_in_manifest() -> None:
 def test_dry_run_returns_empty_without_api_calls() -> None:
     client = MagicMock()
     collector = AccessAnalyzerCollector(
-        analyzer_arn=(
-            "arn:aws:access-analyzer:us-east-1:123456789012:analyzer/grc"
-        ),
+        analyzer_arn=("arn:aws:access-analyzer:us-east-1:123456789012:analyzer/grc"),
         region="us-east-1",
         _clients={"accessanalyzer": client},
     )

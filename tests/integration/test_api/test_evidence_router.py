@@ -37,16 +37,12 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     store = tmp_path / "evidence-store"
     monkeypatch.setenv("EVIDENTIA_EVIDENCE_STORE_DIR", str(store))
     app = FastAPI()
-    app.include_router(
-        evidence_router.router, prefix="/api", tags=["evidence"]
-    )
+    app.include_router(evidence_router.router, prefix="/api", tags=["evidence"])
     return TestClient(app)
 
 
 @pytest.fixture
-def readonly_client(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> TestClient:
+def readonly_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     """TestClient under a restrictive read-only RBAC policy.
 
     Sets ``app.state.rbac_policy`` to a deny-by-default policy whose
@@ -59,12 +55,8 @@ def readonly_client(
     store = tmp_path / "evidence-store"
     monkeypatch.setenv("EVIDENTIA_EVIDENCE_STORE_DIR", str(store))
     app = FastAPI()
-    app.include_router(
-        evidence_router.router, prefix="/api", tags=["evidence"]
-    )
-    app.state.rbac_policy = RBACPolicy(
-        identities={}, default_role=Role.READER
-    )
+    app.include_router(evidence_router.router, prefix="/api", tags=["evidence"])
+    app.state.rbac_policy = RBACPolicy(identities={}, default_role=Role.READER)
     return TestClient(app)
 
 
@@ -105,9 +97,7 @@ def _make_artifact(title: str = "AC-2 snapshot") -> EvidenceArtifact:
 
 
 class TestSaveEvidence:
-    def test_save_returns_summary_and_persists(
-        self, client: TestClient, tmp_path: Path
-    ) -> None:
+    def test_save_returns_summary_and_persists(self, client: TestClient, tmp_path: Path) -> None:
         r = client.post("/api/evidence", json=_make_payload())
         assert r.status_code == 201, r.text
         body = r.json()
@@ -129,12 +119,7 @@ class TestSaveEvidence:
         # NOT in the response (by design), so we derive it locally from
         # the store dir + lineage_id + version rather than trusting the
         # API to disclose it.
-        out = (
-            tmp_path
-            / "evidence-store"
-            / body["lineage_id"]
-            / f"v{body['version']}.json"
-        )
+        out = tmp_path / "evidence-store" / body["lineage_id"] / f"v{body['version']}.json"
         assert out.is_file()
         assert out.name == "v1.json"
 
@@ -153,15 +138,11 @@ class TestSaveEvidence:
         assert body["lineage_id"] == v1.id
         assert body["predecessor_id"] == v1.id
 
-    def test_resave_same_version_returns_409_with_next_version(
-        self, client: TestClient
-    ) -> None:
+    def test_resave_same_version_returns_409_with_next_version(self, client: TestClient) -> None:
         artifact = _make_artifact()
         save_evidence(artifact)
         # Re-save the SAME version (same lineage + version=1) → WORM block.
-        payload = _make_payload(
-            version=1, lineage_id=artifact.effective_lineage_id
-        )
+        payload = _make_payload(version=1, lineage_id=artifact.effective_lineage_id)
         r = client.post("/api/evidence", json=payload)
         assert r.status_code == 409, r.text
         detail = r.json()["detail"]
@@ -173,9 +154,7 @@ class TestSaveEvidence:
         assert detail["lineage_id"] == artifact.effective_lineage_id
         assert "message" in detail
 
-    def test_save_invalid_lineage_id_returns_404(
-        self, client: TestClient
-    ) -> None:
+    def test_save_invalid_lineage_id_returns_404(self, client: TestClient) -> None:
         payload = _make_payload(version=2, lineage_id="not-a-uuid")
         r = client.post("/api/evidence", json=payload)
         assert r.status_code == 404, r.text
@@ -192,9 +171,7 @@ class TestSaveEvidence:
 
 
 class TestHistory:
-    def test_history_lists_versions_ascending(
-        self, client: TestClient
-    ) -> None:
+    def test_history_lists_versions_ascending(self, client: TestClient) -> None:
         v1 = _make_artifact()
         save_evidence(v1)
         v2 = v1.new_version(content={"users": 43})
@@ -206,20 +183,14 @@ class TestHistory:
         versions = [item["version"] for item in body["items"]]
         assert versions == [1, 2]
 
-    def test_history_unknown_lineage_returns_empty(
-        self, client: TestClient
-    ) -> None:
-        r = client.get(
-            "/api/evidence/00000000-0000-0000-0000-000000000000/history"
-        )
+    def test_history_unknown_lineage_returns_empty(self, client: TestClient) -> None:
+        r = client.get("/api/evidence/00000000-0000-0000-0000-000000000000/history")
         assert r.status_code == 200
         body = r.json()
         assert body["total"] == 0
         assert body["items"] == []
 
-    def test_history_invalid_lineage_returns_404(
-        self, client: TestClient
-    ) -> None:
+    def test_history_invalid_lineage_returns_404(self, client: TestClient) -> None:
         r = client.get("/api/evidence/not-a-uuid/history")
         assert r.status_code == 404
 
@@ -238,25 +209,17 @@ class TestShow:
         assert body["version"] == 1
         assert body["title"] == artifact.title
 
-    def test_show_missing_version_returns_404(
-        self, client: TestClient
-    ) -> None:
+    def test_show_missing_version_returns_404(self, client: TestClient) -> None:
         artifact = _make_artifact()
         save_evidence(artifact)
         r = client.get(f"/api/evidence/{artifact.id}/versions/2")
         assert r.status_code == 404
 
-    def test_show_unknown_lineage_returns_404(
-        self, client: TestClient
-    ) -> None:
-        r = client.get(
-            "/api/evidence/00000000-0000-0000-0000-000000000000/versions/1"
-        )
+    def test_show_unknown_lineage_returns_404(self, client: TestClient) -> None:
+        r = client.get("/api/evidence/00000000-0000-0000-0000-000000000000/versions/1")
         assert r.status_code == 404
 
-    def test_show_invalid_lineage_returns_404(
-        self, client: TestClient
-    ) -> None:
+    def test_show_invalid_lineage_returns_404(self, client: TestClient) -> None:
         r = client.get("/api/evidence/not-a-uuid/versions/1")
         assert r.status_code == 404
 
@@ -281,18 +244,14 @@ class TestEvidenceRBAC:
     reads still succeed.
     """
 
-    def test_anonymous_write_denied_403(
-        self, readonly_client: TestClient
-    ) -> None:
+    def test_anonymous_write_denied_403(self, readonly_client: TestClient) -> None:
         # POST /evidence is gated on require_role("write"); anonymous
         # identity resolves to the reader default_role → denied.
         r = readonly_client.post("/api/evidence", json=_make_payload())
         assert r.status_code == 403, r.text
         assert r.json()["detail"]["error"] == "rbac_denied"
 
-    def test_anonymous_read_allowed_200(
-        self, readonly_client: TestClient
-    ) -> None:
+    def test_anonymous_read_allowed_200(self, readonly_client: TestClient) -> None:
         # The read gate (require_role("read")) is satisfied by the reader
         # default_role, so a history GET still returns 200 — proving the
         # policy is read-allowed, not blanket-deny.

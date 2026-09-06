@@ -56,16 +56,14 @@ def _load_corpus(path: Path) -> list[dict[str, Any]]:
                 entry = json.loads(line)
             except json.JSONDecodeError as exc:
                 print(
-                    f"  WARN: line {line_no} of {path} is not valid "
-                    f"JSON; skipping ({exc})",
+                    f"  WARN: line {line_no} of {path} is not valid JSON; skipping ({exc})",
                     file=sys.stderr,
                 )
                 continue
             for required in ("claim", "source_clauses", "faithful"):
                 if required not in entry:
                     print(
-                        f"  WARN: line {line_no} missing field "
-                        f"{required!r}; skipping",
+                        f"  WARN: line {line_no} missing field {required!r}; skipping",
                         file=sys.stderr,
                     )
                     break
@@ -136,10 +134,7 @@ def _print_per_step(
     print(f"{'threshold':>10} {'fpr':>8} {'fnr':>8} {'youden_j':>10}")
     print("-" * 40)
     for threshold, fpr, fnr, youden_j in per_step:
-        print(
-            f"{threshold:>10.2f} {fpr:>8.3f} {fnr:>8.3f} "
-            f"{youden_j:>10.3f}"
-        )
+        print(f"{threshold:>10.2f} {fpr:>8.3f} {fnr:>8.3f} {youden_j:>10.3f}")
 
 
 def _resolve_score_fn(
@@ -170,12 +165,9 @@ def _resolve_score_fn(
 
             return semantic_score
         except ImportError as exc:
+            print(f"Semantic scorer unavailable: {exc}", file=sys.stderr)
             print(
-                f"Semantic scorer unavailable: {exc}", file=sys.stderr
-            )
-            print(
-                "Install via "
-                "`pip install evidentia-ai[eval-faithfulness]`",
+                "Install via `pip install evidentia-ai[eval-faithfulness]`",
                 file=sys.stderr,
             )
             return None
@@ -193,8 +185,7 @@ def main() -> int:
         "--corpus",
         type=Path,
         default=Path("tests/data/dfah-calibration/corpus.jsonl"),
-        help="Path to JSONL calibration corpus (default: bundled "
-        "framework-agnostic corpus)",
+        help="Path to JSONL calibration corpus (default: bundled framework-agnostic corpus)",
     )
     parser.add_argument(
         "--corpus-pattern",
@@ -211,8 +202,7 @@ def main() -> int:
         "--method",
         choices=["jaccard", "semantic"],
         default="jaccard",
-        help="Scorer to tune (jaccard = stdlib; semantic requires "
-        "[eval-faithfulness] extra)",
+        help="Scorer to tune (jaccard = stdlib; semantic requires [eval-faithfulness] extra)",
     )
     parser.add_argument(
         "--step",
@@ -223,8 +213,7 @@ def main() -> int:
     parser.add_argument(
         "--by-category",
         action="store_true",
-        help="Also report optimum threshold per-category. Ignored "
-        "when --corpus-pattern is used.",
+        help="Also report optimum threshold per-category. Ignored when --corpus-pattern is used.",
     )
     args = parser.parse_args()
 
@@ -235,15 +224,11 @@ def main() -> int:
         matches = sorted(_glob.glob(args.corpus_pattern))
         if not matches:
             print(
-                f"--corpus-pattern matched 0 files: "
-                f"{args.corpus_pattern}",
+                f"--corpus-pattern matched 0 files: {args.corpus_pattern}",
                 file=sys.stderr,
             )
             return 2
-        print(
-            f"Sweeping {len(matches)} corpus file(s) matched by "
-            f"pattern '{args.corpus_pattern}':"
-        )
+        print(f"Sweeping {len(matches)} corpus file(s) matched by pattern '{args.corpus_pattern}':")
         print()
         # Wire up scorer once.
         score_fn = _resolve_score_fn(args.method)
@@ -255,9 +240,7 @@ def main() -> int:
             if not sub_corpus:
                 print(f"  {match_path}: empty; skipping")
                 continue
-            sub_best_t, sub_best_j, _ = _tune_threshold(
-                sub_corpus, score_fn, step=args.step
-            )
+            sub_best_t, sub_best_j, _ = _tune_threshold(sub_corpus, score_fn, step=args.step)
             n_faithful = sum(1 for e in sub_corpus if e["faithful"])
             n_unfaithful = len(sub_corpus) - n_faithful
             print(
@@ -269,16 +252,12 @@ def main() -> int:
         return 0
 
     if not args.corpus.is_file():
-        print(
-            f"Corpus file not found: {args.corpus}", file=sys.stderr
-        )
+        print(f"Corpus file not found: {args.corpus}", file=sys.stderr)
         return 2
 
     corpus = _load_corpus(args.corpus)
     if not corpus:
-        print(
-            f"Corpus is empty: {args.corpus}", file=sys.stderr
-        )
+        print(f"Corpus is empty: {args.corpus}", file=sys.stderr)
         return 2
 
     print(f"Loaded {len(corpus)} corpus entries from {args.corpus}")
@@ -291,15 +270,11 @@ def main() -> int:
         return 2
 
     # Overall sweep.
-    best_t, best_j, per_step = _tune_threshold(
-        corpus, score_fn, step=args.step
-    )
+    best_t, best_j, per_step = _tune_threshold(corpus, score_fn, step=args.step)
     print("=== Overall sweep ===")
     _print_per_step(per_step)
     print()
-    print(
-        f"OPTIMAL THRESHOLD: {best_t:.2f} (Youden's J = {best_j:.3f})"
-    )
+    print(f"OPTIMAL THRESHOLD: {best_t:.2f} (Youden's J = {best_j:.3f})")
 
     # Per-category breakdown.
     if args.by_category:
@@ -308,9 +283,7 @@ def main() -> int:
         categories = sorted({e.get("category", "uncategorized") for e in corpus})
         for cat in categories:
             cat_entries = [e for e in corpus if e.get("category") == cat]
-            cat_best_t, cat_best_j, _ = _tune_threshold(
-                cat_entries, score_fn, step=args.step
-            )
+            cat_best_t, cat_best_j, _ = _tune_threshold(cat_entries, score_fn, step=args.step)
             n_faithful = sum(1 for e in cat_entries if e["faithful"])
             n_unfaithful = len(cat_entries) - n_faithful
             print(

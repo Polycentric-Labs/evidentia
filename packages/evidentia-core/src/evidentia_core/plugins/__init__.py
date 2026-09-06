@@ -127,8 +127,4 @@ def discover_plugins(
     # entries that aren't classes (factory functions etc.) by
     # silently skipping them — caller asked for "subclasses
     # of X" so non-class entries don't satisfy the request.
-    return {
-        name: cls
-        for name, cls in loaded.items()
-        if isinstance(cls, type) and issubclass(cls, of_type)
-    }
+    return {name: cls for name, cls in loaded.items() if isinstance(cls, type) and issubclass(cls, of_type)}

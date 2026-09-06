@@ -25,12 +25,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # Load the script as a module — ``scripts/`` is not a package.
-_SCRIPT_PATH = (
-    Path(__file__).parent.parent.parent / "scripts" / "publish_hf_eval.py"
-)
-_spec = importlib.util.spec_from_file_location(
-    "publish_hf_eval", _SCRIPT_PATH
-)
+_SCRIPT_PATH = Path(__file__).parent.parent.parent / "scripts" / "publish_hf_eval.py"
+_spec = importlib.util.spec_from_file_location("publish_hf_eval", _SCRIPT_PATH)
 assert _spec is not None
 assert _spec.loader is not None
 _mod = importlib.util.module_from_spec(_spec)
@@ -93,15 +89,11 @@ class TestValidateCorpusEntry:
 
     def test_empty_id_rejected(self) -> None:
         with pytest.raises(CorpusValidationError, match="'id'"):
-            validate_corpus_entry(
-                _valid_entry(id=""), source="t", line_no=1
-            )
+            validate_corpus_entry(_valid_entry(id=""), source="t", line_no=1)
 
     def test_bad_category_rejected(self) -> None:
         with pytest.raises(CorpusValidationError, match="category"):
-            validate_corpus_entry(
-                _valid_entry(category="bogus"), source="t", line_no=1
-            )
+            validate_corpus_entry(_valid_entry(category="bogus"), source="t", line_no=1)
 
     def test_non_list_source_clauses_rejected(self) -> None:
         with pytest.raises(CorpusValidationError, match="source_clauses"):
@@ -113,9 +105,7 @@ class TestValidateCorpusEntry:
 
     def test_empty_source_clauses_rejected(self) -> None:
         with pytest.raises(CorpusValidationError, match="source_clauses"):
-            validate_corpus_entry(
-                _valid_entry(source_clauses=[]), source="t", line_no=1
-            )
+            validate_corpus_entry(_valid_entry(source_clauses=[]), source="t", line_no=1)
 
     def test_non_string_source_clause_rejected(self) -> None:
         with pytest.raises(CorpusValidationError, match="source_clause"):
@@ -127,15 +117,11 @@ class TestValidateCorpusEntry:
 
     def test_non_bool_faithful_rejected(self) -> None:
         with pytest.raises(CorpusValidationError, match="faithful"):
-            validate_corpus_entry(
-                _valid_entry(faithful="yes"), source="t", line_no=1
-            )
+            validate_corpus_entry(_valid_entry(faithful="yes"), source="t", line_no=1)
 
     def test_bad_framework_type_rejected(self) -> None:
         with pytest.raises(CorpusValidationError, match="framework"):
-            validate_corpus_entry(
-                _valid_entry(framework=42), source="t", line_no=1
-            )
+            validate_corpus_entry(_valid_entry(framework=42), source="t", line_no=1)
 
 
 class TestValidateCorpusFile:
@@ -163,9 +149,7 @@ class TestValidateCorpusFile:
 
     def test_blank_lines_tolerated(self, tmp_path: Path) -> None:
         corpus = tmp_path / "ok.jsonl"
-        corpus.write_text(
-            json.dumps(_valid_entry()) + "\n\n", encoding="utf-8"
-        )
+        corpus.write_text(json.dumps(_valid_entry()) + "\n\n", encoding="utf-8")
         assert len(validate_corpus_file(corpus)) == 1
 
 
@@ -175,9 +159,7 @@ class TestValidateCorpusFile:
 class TestRealCorpus:
     """The 7 real subset files must all pass validation."""
 
-    @pytest.mark.parametrize(
-        "filename", [f for f, _ in CORPUS_SUBSETS]
-    )
+    @pytest.mark.parametrize("filename", [f for f, _ in CORPUS_SUBSETS])
     def test_real_subset_validates(self, filename: str) -> None:
         lines = validate_corpus_file(_REAL_CALIBRATION_DIR / filename)
         # Every per-framework subset is 24 entries; base is 51.
@@ -193,15 +175,11 @@ class TestRealCorpus:
         import shutil
 
         for filename, _ in CORPUS_SUBSETS:
-            shutil.copy(
-                _REAL_CALIBRATION_DIR / filename, tmp_path / filename
-            )
+            shutil.copy(_REAL_CALIBRATION_DIR / filename, tmp_path / filename)
         out_path, count = build_corpus_all(tmp_path)
         assert count == 195
         assert out_path.name == "corpus-all.jsonl"
-        assert (
-            len(out_path.read_text(encoding="utf-8").splitlines()) == 195
-        )
+        assert len(out_path.read_text(encoding="utf-8").splitlines()) == 195
 
     def test_new_subsets_present(self) -> None:
         """v0.9.8 P1.9 adds FedRAMP Rev 5 High + CMMC L2 subsets."""
@@ -219,9 +197,7 @@ class TestAssembleUploadSet:
         import shutil
 
         for filename, _ in CORPUS_SUBSETS:
-            shutil.copy(
-                _REAL_CALIBRATION_DIR / filename, tmp_path / filename
-            )
+            shutil.copy(_REAL_CALIBRATION_DIR / filename, tmp_path / filename)
         shutil.copy(
             _REAL_CALIBRATION_DIR / DATASET_CARD_FILENAME,
             tmp_path / DATASET_CARD_FILENAME,
@@ -234,9 +210,7 @@ class TestAssembleUploadSet:
         assert "README.md" in upload
         assert upload["README.md"].name == DATASET_CARD_FILENAME
 
-    def test_assemble_includes_all_subsets_and_combined(
-        self, tmp_path: Path
-    ) -> None:
+    def test_assemble_includes_all_subsets_and_combined(self, tmp_path: Path) -> None:
         seeded = self._seed_calibration_dir(tmp_path)
         upload = assemble_upload_set(seeded)
         for filename, _ in CORPUS_SUBSETS:
@@ -250,9 +224,7 @@ class TestAssembleUploadSet:
 
         # Seed corpus files but NOT the dataset card.
         for filename, _ in CORPUS_SUBSETS:
-            shutil.copy(
-                _REAL_CALIBRATION_DIR / filename, tmp_path / filename
-            )
+            shutil.copy(_REAL_CALIBRATION_DIR / filename, tmp_path / filename)
         with pytest.raises(FileNotFoundError, match="Dataset card"):
             assemble_upload_set(tmp_path)
 
@@ -261,9 +233,7 @@ class TestAssembleUploadSet:
 
 
 class TestMainDryRun:
-    def test_dry_run_returns_zero(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_dry_run_returns_zero(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """--dry-run against the real corpus exits 0 without a token."""
         monkeypatch.delenv("HF_TOKEN", raising=False)
         rc = main(
@@ -275,28 +245,20 @@ class TestMainDryRun:
         )
         assert rc == 0
 
-    def test_non_dry_run_without_token_returns_one(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_non_dry_run_without_token_returns_one(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Real-publish path with no HF_TOKEN → exit 1, no upload."""
         monkeypatch.delenv("HF_TOKEN", raising=False)
-        rc = main(
-            ["--calibration-dir", str(_REAL_CALIBRATION_DIR)]
-        )
+        rc = main(["--calibration-dir", str(_REAL_CALIBRATION_DIR)])
         assert rc == 1
 
-    def test_bad_calibration_dir_returns_one(
-        self, tmp_path: Path
-    ) -> None:
+    def test_bad_calibration_dir_returns_one(self, tmp_path: Path) -> None:
         """Missing corpus files → exit 1 with a clear error."""
         rc = main(["--dry-run", "--calibration-dir", str(tmp_path)])
         assert rc == 1
 
 
 class TestMainPublishPath:
-    def test_publish_invoked_with_token(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_publish_invoked_with_token(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """With HF_TOKEN set, main() calls publish() — HfApi mocked."""
         monkeypatch.setenv("HF_TOKEN", "fake-write-token")
 
@@ -315,9 +277,7 @@ class TestMainPublishPath:
             captured["file_count"] = len(upload_set)
 
         monkeypatch.setattr(_mod, "publish", _fake_publish)
-        rc = main(
-            ["--calibration-dir", str(_REAL_CALIBRATION_DIR)]
-        )
+        rc = main(["--calibration-dir", str(_REAL_CALIBRATION_DIR)])
         assert rc == 0
         assert captured["repo_id"] == "Polycentric-Labs/evidentia-grc-eval"
         assert captured["token"] == "fake-write-token"
@@ -336,9 +296,7 @@ class TestPublishFunction:
             "README.md": Path("/tmp/card.md"),
             "corpus.jsonl": Path("/tmp/corpus.jsonl"),
         }
-        with patch.dict(
-            sys.modules, {"huggingface_hub": fake_hf_module}
-        ):
+        with patch.dict(sys.modules, {"huggingface_hub": fake_hf_module}):
             publish(
                 "Polycentric-Labs/evidentia-grc-eval",
                 upload_set,

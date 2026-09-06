@@ -28,14 +28,8 @@ import pytest
 # Load the script as a module without going through `python -m`.
 # The script lives in `scripts/`, which isn't a package; this
 # avoids needing to add an `__init__.py` there.
-_SCRIPT_PATH = (
-    Path(__file__).parent.parent.parent
-    / "scripts"
-    / "extract_changelog_block.py"
-)
-_spec = importlib.util.spec_from_file_location(
-    "extract_changelog_block", _SCRIPT_PATH
-)
+_SCRIPT_PATH = Path(__file__).parent.parent.parent / "scripts" / "extract_changelog_block.py"
+_spec = importlib.util.spec_from_file_location("extract_changelog_block", _SCRIPT_PATH)
 assert _spec is not None
 assert _spec.loader is not None
 _mod = importlib.util.module_from_spec(_spec)
@@ -72,13 +66,9 @@ _CHANGELOG = (_REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
 def test_every_v0_7_block_extracts_non_empty(version: str) -> None:
     """Every shipped v0.7.x release block extracts as non-empty."""
     block = extract_block(_CHANGELOG, version)
-    assert block is not None, (
-        f"v{version} CHANGELOG block returned None — possible regex "
-        "regression"
-    )
+    assert block is not None, f"v{version} CHANGELOG block returned None — possible regex regression"
     assert len(block) > 100, (
-        f"v{version} CHANGELOG block is suspiciously short "
-        f"({len(block)} chars) — extraction may be truncated"
+        f"v{version} CHANGELOG block is suspiciously short ({len(block)} chars) — extraction may be truncated"
     )
 
 
@@ -91,9 +81,7 @@ def test_extracted_block_excludes_heading_line() -> None:
     # block. The first non-empty line should be either content or
     # a sub-heading like `### Added`.
     first_line = block.lstrip().split("\n", 1)[0]
-    assert not first_line.startswith("## [0.7.12]"), (
-        f"Extracted block leaks heading line: {first_line!r}"
-    )
+    assert not first_line.startswith("## [0.7.12]"), f"Extracted block leaks heading line: {first_line!r}"
 
 
 def test_extracted_block_excludes_next_heading() -> None:
@@ -103,9 +91,7 @@ def test_extracted_block_excludes_next_heading() -> None:
     # No `## [` heading should appear inside the extracted block —
     # `## [0.7.11]` (the next-newer-then-older heading) marks the
     # block end.
-    assert "## [0.7.11]" not in block, (
-        "Extracted v0.7.12 block bleeds into v0.7.11"
-    )
+    assert "## [0.7.11]" not in block, "Extracted v0.7.12 block bleeds into v0.7.11"
     assert "## [0.7.10]" not in block
 
 

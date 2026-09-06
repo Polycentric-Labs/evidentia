@@ -94,13 +94,9 @@ def _gap_to_ocsf_finding(
     :func:`finding_to_ocsf` pattern).
     """
     severity_id_int = _SEVERITY_TO_OCSF_SEVERITY_ID.get(gap.gap_severity, 99)
-    compliance_status_id_int = _IMPL_STATUS_TO_COMPLIANCE_STATUS_ID.get(
-        gap.implementation_status, 99
-    )
+    compliance_status_id_int = _IMPL_STATUS_TO_COMPLIANCE_STATUS_ID.get(gap.implementation_status, 99)
 
-    standards: list[str] = sorted(
-        {gap.framework, *(s.split(":")[0] for s in gap.cross_framework_value)}
-    )
+    standards: list[str] = sorted({gap.framework, *(s.split(":")[0] for s in gap.cross_framework_value)})
 
     compliance = ocsf.Compliance(
         desc=gap.gap_description,
@@ -123,11 +119,7 @@ def _gap_to_ocsf_finding(
             version=current_version(),
         ),
     )
-    remediation = (
-        ocsf.Remediation(desc=gap.remediation_guidance)
-        if gap.remediation_guidance
-        else None
-    )
+    remediation = ocsf.Remediation(desc=gap.remediation_guidance) if gap.remediation_guidance else None
 
     # GapStatus -> OCSF StatusID: OPEN/IN_PROGRESS → New (1);
     # REMEDIATED → Closed (4); ACCEPTED → Suppressed (3); default → Other (99).
@@ -151,9 +143,7 @@ def _gap_to_ocsf_finding(
         time=timestamp_ms,
         time_dt=gap.created_at,
         severity_id=ocsf.SeverityID(severity_id_int),
-        severity=gap.gap_severity.value
-        if hasattr(gap.gap_severity, "value")
-        else str(gap.gap_severity),
+        severity=gap.gap_severity.value if hasattr(gap.gap_severity, "value") else str(gap.gap_severity),
         status_id=ocsf.StatusID(finding_status_id),
         message=gap.gap_description,
         metadata=metadata,
@@ -171,9 +161,7 @@ def _gap_to_ocsf_finding(
     # returned model as `Any`; the model_dump call is well-typed at
     # runtime to dict[str, Any]. Annotate to satisfy the strict
     # `no-any-return` policy without losing precision.
-    result: dict[str, Any] = compliance_finding.model_dump(
-        mode="json", exclude_none=True
-    )
+    result: dict[str, Any] = compliance_finding.model_dump(mode="json", exclude_none=True)
     return result
 
 

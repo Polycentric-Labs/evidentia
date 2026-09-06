@@ -90,9 +90,7 @@ _No changes yet on the v9.9.9 development branch._
 
 
 class TestParseChangelogBlocks:
-    def test_parses_dated_blocks_newest_first_skipping_unreleased(
-        self, gen: Any
-    ) -> None:
+    def test_parses_dated_blocks_newest_first_skipping_unreleased(self, gen: Any) -> None:
         blocks = gen.parse_changelog_blocks(CHANGELOG_FIXTURE)
         versions = [b.version for b in blocks]
         # [Unreleased] is skipped (no date); dated blocks in document order.
@@ -116,9 +114,7 @@ class TestCondenseTheme:
         assert not theme.startswith("v1.2.3")
         assert theme.startswith("alpha feature")
 
-    def test_caps_clauses_and_drops_trailing_parenthetical(
-        self, gen: Any
-    ) -> None:
+    def test_caps_clauses_and_drops_trailing_parenthetical(self, gen: Any) -> None:
         # "alpha feature + beta hardening (carried over) + hygiene" -> the
         # per-clause trailing parenthetical is dropped.
         theme = gen.condense_theme(CHANGELOG_FIXTURE.split("## [1.2.3]")[1], "1.2.3")
@@ -136,9 +132,7 @@ class TestCondenseSummary:
         # The "(Phase 7):" label is collapsed (no raw "(Phase 7)").
         assert "(Phase 7)" not in summary
 
-    def test_summary_falls_back_to_changed_when_no_added(
-        self, gen: Any
-    ) -> None:
+    def test_summary_falls_back_to_changed_when_no_added(self, gen: Any) -> None:
         blocks = gen.parse_changelog_blocks(CHANGELOG_FIXTURE)
         # 1.2.2 has only a Changed section.
         v122 = next(b for b in blocks if b.version == "1.2.2")
@@ -150,9 +144,7 @@ class TestRenderBlock:
     def test_three_entries_newest_first(self, gen: Any) -> None:
         blocks = gen.parse_changelog_blocks(CHANGELOG_FIXTURE)
         block = gen.render_block(blocks)
-        entries = [
-            ln for ln in block.splitlines() if ln.startswith("**v")
-        ]
+        entries = [ln for ln in block.splitlines() if ln.startswith("**v")]
         assert len(entries) == 3
         assert entries[0].startswith("**v1.2.3 (2026-06-01)**")
         assert entries[1].startswith("**v1.2.2 (2026-05-20)**")
@@ -207,14 +199,8 @@ class TestSpliceIntoReadme:
 
 class TestCheckReadmeCurrent:
     def _readme_with_versions(self, versions: list[str]) -> str:
-        entries = "\n\n".join(
-            f"**v{v} (2026-01-01)** — *t*. s." for v in versions
-        )
-        return (
-            "## Recent Releases\n\n"
-            f"{entries}\n\n"
-            "Full release history: [CHANGELOG.md](CHANGELOG.md)\n"
-        )
+        entries = "\n\n".join(f"**v{v} (2026-01-01)** — *t*. s." for v in versions)
+        return f"## Recent Releases\n\n{entries}\n\nFull release history: [CHANGELOG.md](CHANGELOG.md)\n"
 
     def test_passes_when_three_entries_newest_matches(self, gen: Any) -> None:
         readme = self._readme_with_versions(["0.10.7", "0.10.6", "0.10.5"])
@@ -236,7 +222,9 @@ class TestCheckReadmeCurrent:
     def test_extract_versions(self, gen: Any) -> None:
         readme = self._readme_with_versions(["0.10.7", "0.10.6", "0.10.5"])
         assert gen.extract_readme_block_versions(readme) == [
-            "0.10.7", "0.10.6", "0.10.5",
+            "0.10.7",
+            "0.10.6",
+            "0.10.5",
         ]
 
 

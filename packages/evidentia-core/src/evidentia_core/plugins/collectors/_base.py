@@ -122,10 +122,7 @@ class BaseSaaSCollector(ABC):
             )
         self._api_token = api_token
         self._base_url = (base_url or self.DEFAULT_BASE_URL).rstrip("/")
-        self._timeout_seconds = (
-            timeout_seconds if timeout_seconds is not None
-            else self.DEFAULT_TIMEOUT_SECONDS
-        )
+        self._timeout_seconds = timeout_seconds if timeout_seconds is not None else self.DEFAULT_TIMEOUT_SECONDS
         self._client = client
         self._owns_client = client is None
         # SECURE-BY-DEFAULT (threat-model T2): refuse a base_url that
@@ -166,9 +163,7 @@ class BaseSaaSCollector(ABC):
         from evidentia_core import __version__
 
         return (
-            f"evidentia-collectors/{__version__} "
-            f"({type(self).__name__}; "
-            f"https://github.com/polycentric-labs/evidentia)"
+            f"evidentia-collectors/{__version__} ({type(self).__name__}; https://github.com/polycentric-labs/evidentia)"
         )
 
     def _auth_header(self) -> str:
@@ -194,9 +189,7 @@ class BaseSaaSCollector(ABC):
         # in logs because we use httpx's auth-header injection,
         # not a URL query parameter.
         if self._api_token is None:  # defensive — checked in __init__
-            raise self.AUTH_ERROR_CLASS(
-                f"{type(self).__name__}: missing api_token"
-            )
+            raise self.AUTH_ERROR_CLASS(f"{type(self).__name__}: missing api_token")
         # SECURE-BY-DEFAULT (threat-model T2): SSRF guard at the
         # client-factory path. Runs once, before the httpx.Client that
         # binds base_url is created, so a base_url pointed at a cloud
@@ -267,14 +260,12 @@ class BaseSaaSCollector(ABC):
                 resp = client.get(path, params=params)
         except httpx.TimeoutException as exc:
             raise self.CONNECTION_ERROR_CLASS(
-                f"{type(self).__name__} API timeout after "
-                f"{self._timeout_seconds}s on GET {path}"
+                f"{type(self).__name__} API timeout after {self._timeout_seconds}s on GET {path}"
             ) from exc
         except httpx.HTTPError as exc:
             # Network / TLS / DNS / connection-refused etc.
             raise self.CONNECTION_ERROR_CLASS(
-                f"{type(self).__name__} API connection failure "
-                f"on GET {path}: {type(exc).__name__}"
+                f"{type(self).__name__} API connection failure on GET {path}: {type(exc).__name__}"
             ) from exc
         if resp.status_code in (401, 403):
             auth_err = self.AUTH_ERROR_CLASS(
@@ -286,8 +277,7 @@ class BaseSaaSCollector(ABC):
             raise auth_err
         if resp.status_code >= 400:
             query_err = self.QUERY_ERROR_CLASS(
-                f"{type(self).__name__} API error on GET {path}: "
-                f"HTTP {resp.status_code}"
+                f"{type(self).__name__} API error on GET {path}: HTTP {resp.status_code}"
             )
             query_err.status_code = resp.status_code
             raise query_err
@@ -295,8 +285,7 @@ class BaseSaaSCollector(ABC):
             data = resp.json()
         except ValueError as exc:
             raise self.QUERY_ERROR_CLASS(
-                f"{type(self).__name__} API returned non-JSON "
-                f"response on GET {path}: {exc}"
+                f"{type(self).__name__} API returned non-JSON response on GET {path}: {exc}"
             ) from exc
         if not isinstance(data, dict):
             # v0.8.1 F-V08-CR-3: previously the base wrapped

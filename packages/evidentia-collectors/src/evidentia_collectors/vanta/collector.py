@@ -139,9 +139,7 @@ class VantaQueryError(VantaCollectorError, SaaSQueryError):
 BLIND_SPOTS: list[dict[str, str]] = [
     {
         "id": "EVIDENTIA-VANTA-CONTROL-TESTS-DEFERRED",
-        "title": (
-            "Vanta control test results not yet collected"
-        ),
+        "title": ("Vanta control test results not yet collected"),
         "description": (
             "Vanta's per-control test evidence (the SOC-2-readiness "
             "signal that drives most operators' Vanta usage) is "
@@ -153,9 +151,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
     },
     {
         "id": "EVIDENTIA-VANTA-OAUTH-CLIENT-CREDENTIALS",
-        "title": (
-            "OAuth 2.0 client-credentials flow not yet implemented"
-        ),
+        "title": ("OAuth 2.0 client-credentials flow not yet implemented"),
         "description": (
             "The collector authenticates via static Bearer token "
             "(Personal Access Token or pre-acquired OAuth access "
@@ -167,9 +163,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
     },
     {
         "id": "EVIDENTIA-VANTA-WEBHOOK-EVENTS",
-        "title": (
-            "Vanta webhook event ingestion not implemented"
-        ),
+        "title": ("Vanta webhook event ingestion not implemented"),
         "description": (
             "Vanta supports webhook subscriptions for vendor + control "
             "state changes (push model). The collector is pull-only "
@@ -181,9 +175,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
     },
     {
         "id": "EVIDENTIA-VANTA-FIELD-SHAPE-DEFENSIVE",
-        "title": (
-            "Vendor JSON shape parsed defensively"
-        ),
+        "title": ("Vendor JSON shape parsed defensively"),
         "description": (
             "The collector extracts only the well-known ``id`` + "
             "``name`` fields explicitly; everything else is "
@@ -262,9 +254,7 @@ class VantaCollector(BaseSaaSCollector):
         )
         self._max_vendors = max_vendors
 
-    def _paginate(
-        self, path: str, **params: Any
-    ) -> list[dict[str, Any]]:
+    def _paginate(self, path: str, **params: Any) -> list[dict[str, Any]]:
         """Pull a paginated endpoint to its natural end (or hard cap).
 
         Vanta uses cursor-based pagination — responses carry a
@@ -288,8 +278,7 @@ class VantaCollector(BaseSaaSCollector):
             results = data.get("results", [])
             if not isinstance(results, list):
                 raise VantaQueryError(
-                    f"Vanta API: expected `results` to be a list on "
-                    f"GET {path}; got {type(results).__name__}"
+                    f"Vanta API: expected `results` to be a list on GET {path}; got {type(results).__name__}"
                 )
             out.extend(r for r in results if isinstance(r, dict))
             if len(out) >= self._max_vendors:
@@ -299,16 +288,10 @@ class VantaCollector(BaseSaaSCollector):
             page_info = data.get("pageInfo") or data.get("page_info") or {}
             if not isinstance(page_info, dict):
                 break
-            has_next = bool(
-                page_info.get("hasNextPage")
-                or page_info.get("has_next_page")
-            )
+            has_next = bool(page_info.get("hasNextPage") or page_info.get("has_next_page"))
             if not has_next:
                 break
-            next_cursor = (
-                page_info.get("endCursor")
-                or page_info.get("end_cursor")
-            )
+            next_cursor = page_info.get("endCursor") or page_info.get("end_cursor")
             if not next_cursor or not isinstance(next_cursor, str):
                 # No usable cursor → stop. Safer than infinite loop.
                 break
@@ -360,9 +343,7 @@ class VantaCollector(BaseSaaSCollector):
             vendors = self._paginate("/v1/vendors")
             scanned = len(vendors)
             for v in vendors:
-                findings.extend(
-                    self._vendor_to_findings(v, context)
-                )
+                findings.extend(self._vendor_to_findings(v, context))
         except VantaAuthError:
             # Auth failures are fatal — no point continuing.
             _log.warning(
@@ -414,14 +395,8 @@ class VantaCollector(BaseSaaSCollector):
         # worth surfacing rather than silently swallowing.
         _log.info(
             action=EventAction.COLLECT_COMPLETED,
-            outcome=(
-                EventOutcome.SUCCESS if not errors
-                else EventOutcome.UNKNOWN
-            ),
-            message=(
-                f"Vanta collection finished: {len(findings)} "
-                f"finding(s) across {scanned} vendor(s)"
-            ),
+            outcome=(EventOutcome.SUCCESS if not errors else EventOutcome.UNKNOWN),
+            message=(f"Vanta collection finished: {len(findings)} finding(s) across {scanned} vendor(s)"),
             evidentia={
                 "run_id": run_id,
                 "collector_id": COLLECTOR_ID,
@@ -434,9 +409,7 @@ class VantaCollector(BaseSaaSCollector):
 
     # ── per-vendor mapping ─────────────────────────────────────────
 
-    def _vendor_to_findings(
-        self, vendor: dict[str, Any], context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _vendor_to_findings(self, vendor: dict[str, Any], context: CollectionContext) -> list[SecurityFinding]:
         """Project a Vanta vendor JSON dict into one or more findings.
 
         Always emits an inventory finding (RESOLVED + INFORMATIONAL
@@ -447,12 +420,7 @@ class VantaCollector(BaseSaaSCollector):
         # Defensive extraction — id + name are well-known; everything
         # else flows through to metadata.
         vendor_id = str(vendor.get("id") or vendor.get("vendorId") or "unknown")
-        vendor_name = str(
-            vendor.get("name")
-            or vendor.get("displayName")
-            or vendor.get("vendorName")
-            or "unknown"
-        )
+        vendor_name = str(vendor.get("name") or vendor.get("displayName") or vendor.get("vendorName") or "unknown")
         out: list[SecurityFinding] = [
             SecurityFinding(
                 title=f"Vanta vendor inventoried: {vendor_name}",
@@ -487,9 +455,7 @@ class VantaCollector(BaseSaaSCollector):
         if self._is_high_risk(vendor):
             out.append(
                 SecurityFinding(
-                    title=(
-                        f"Vanta-flagged high-risk vendor: {vendor_name}"
-                    ),
+                    title=(f"Vanta-flagged high-risk vendor: {vendor_name}"),
                     description=(
                         f"Vendor {vendor_name!r} (Vanta id: "
                         f"{vendor_id}) carries a HIGH or CRITICAL "
@@ -508,9 +474,7 @@ class VantaCollector(BaseSaaSCollector):
                     # operator review per OCC 2013-29 §III.A.4.
                     compliance_status=ComplianceStatus.FAIL,
                     source_system="vanta",
-                    source_finding_id=(
-                        f"vendor-high-risk:{vendor_id}"
-                    ),
+                    source_finding_id=(f"vendor-high-risk:{vendor_id}"),
                     resource_type="vanta-vendor",
                     resource_id=vendor_id,
                     collection_context=context,
@@ -541,30 +505,35 @@ class VantaCollector(BaseSaaSCollector):
         # `risk_rating`, `riskClass`, `risk_class`. Each accepts the
         # same canonical HIGH-tier values.
         for key in (
-            "riskTier", "risk_tier",
-            "riskLevel", "risk_level",
-            "riskRating", "risk_rating",
-            "riskClass", "risk_class",
-            "severity", "tier", "risk",
+            "riskTier",
+            "risk_tier",
+            "riskLevel",
+            "risk_level",
+            "riskRating",
+            "risk_rating",
+            "riskClass",
+            "risk_class",
+            "severity",
+            "tier",
+            "risk",
         ):
             value = vendor.get(key)
-            if isinstance(value, str) and value.upper() in (
-                "HIGH", "CRITICAL", "SEVERE"
-            ):
+            if isinstance(value, str) and value.upper() in ("HIGH", "CRITICAL", "SEVERE"):
                 return True
         # Some Vanta exports nest risk under a `riskAssessment` block.
         # v0.7.13 P3 L-2: also probe `assessment` / `risk_summary`
         # nested blocks under the same set of inner keys.
         for outer in (
-            "riskAssessment", "risk_assessment",
-            "assessment", "risk_summary", "riskSummary",
+            "riskAssessment",
+            "risk_assessment",
+            "assessment",
+            "risk_summary",
+            "riskSummary",
         ):
             block = vendor.get(outer)
             if isinstance(block, dict):
                 for key in ("tier", "level", "severity", "rating", "class"):
                     value = block.get(key)
-                    if isinstance(value, str) and value.upper() in (
-                        "HIGH", "CRITICAL", "SEVERE"
-                    ):
+                    if isinstance(value, str) and value.upper() in ("HIGH", "CRITICAL", "SEVERE"):
                         return True
         return False

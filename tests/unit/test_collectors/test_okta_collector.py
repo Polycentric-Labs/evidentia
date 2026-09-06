@@ -30,9 +30,7 @@ def _now_iso() -> str:
 
 
 def _ago_iso(days: int) -> str:
-    return (datetime.now(UTC) - timedelta(days=days)).strftime(
-        "%Y-%m-%dT%H:%M:%S.000Z"
-    )
+    return (datetime.now(UTC) - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
 
 def _baseline_responses() -> dict[str, Any]:
@@ -75,9 +73,7 @@ def _baseline_responses() -> dict[str, Any]:
             {"id": "u01", "status": "ACTIVE"},
             {"id": "admin1", "status": "ACTIVE"},
         ],
-        "/api/v1/users/u01/factors": [
-            {"id": "f01", "factorType": "push", "status": "ACTIVE"}
-        ],
+        "/api/v1/users/u01/factors": [{"id": "f01", "factorType": "push", "status": "ACTIVE"}],
         "/api/v1/users/u02/factors": [],  # user has no MFA
         "/api/v1/users/u03/factors": [],
         "/api/v1/users/u04/factors": [],
@@ -102,11 +98,7 @@ def _baseline_responses() -> dict[str, Any]:
                     "rules": [
                         {
                             "id": "r01",
-                            "actions": {
-                                "signon": {
-                                    "factorPromptMode": "ALWAYS"
-                                }
-                            },
+                            "actions": {"signon": {"factorPromptMode": "ALWAYS"}},
                         }
                     ],
                 }
@@ -128,15 +120,11 @@ def _make_handler(
         if path == "/api/v1/policies":
             params = parse_qs(urlparse(str(request.url)).query)
             policy_type = (params.get("type") or [""])[0]
-            policies = responses["/api/v1/policies"].get(
-                policy_type, []
-            )
+            policies = responses["/api/v1/policies"].get(policy_type, [])
             return httpx.Response(200, json=policies)
         if path in responses:
             return httpx.Response(200, json=responses[path])
-        return httpx.Response(
-            404, json={"error": f"path {path!r} not stubbed"}
-        )
+        return httpx.Response(404, json={"error": f"path {path!r} not stubbed"})
 
     return httpx.MockTransport(handler), captured
 
@@ -145,9 +133,7 @@ def _make_collector(
     responses: dict[str, Any] | None = None,
     **kwargs: Any,
 ) -> tuple[OktaCollector, list[httpx.Request]]:
-    transport, captured = _make_handler(
-        responses or _baseline_responses()
-    )
+    transport, captured = _make_handler(responses or _baseline_responses())
     client = httpx.Client(
         transport=transport,
         base_url="https://test-org.okta.com",
@@ -271,9 +257,7 @@ def test_privileged_account_finding() -> None:
 
 def test_privileged_account_finding_high_severity() -> None:
     responses = _baseline_responses()
-    responses["/api/v1/iam/assignees/users"] = [
-        {"id": f"admin{i}"} for i in range(15)
-    ]
+    responses["/api/v1/iam/assignees/users"] = [{"id": f"admin{i}"} for i in range(15)]
     coll, _ = _make_collector(responses)
     findings = coll.collect()
     admin = [f for f in findings if "admin accounts" in f.title]
@@ -298,9 +282,7 @@ def test_mfa_enrollment_finding_low_coverage() -> None:
 def test_mfa_enrollment_finding_full_coverage() -> None:
     responses = _baseline_responses()
     # Make every active user MFA-enrolled
-    responses["/api/v1/users/u02/factors"] = [
-        {"id": "f02", "factorType": "push", "status": "ACTIVE"}
-    ]
+    responses["/api/v1/users/u02/factors"] = [{"id": "f02", "factorType": "push", "status": "ACTIVE"}]
     coll, _ = _make_collector(responses)
     findings = coll.collect()
     mfa = [f for f in findings if "MFA enrollment" in f.title]
@@ -321,9 +303,7 @@ def test_password_policy_finding_strong() -> None:
 
 def test_password_policy_finding_weak() -> None:
     responses = _baseline_responses()
-    responses["/api/v1/policies"]["PASSWORD"][0]["settings"][
-        "password"
-    ]["complexity"]["minLength"] = 8
+    responses["/api/v1/policies"]["PASSWORD"][0]["settings"]["password"]["complexity"]["minLength"] = 8
     coll, _ = _make_collector(responses)
     findings = coll.collect()
     pp = [f for f in findings if "password policy" in f.title]
@@ -401,9 +381,7 @@ def test_finding_id_unchanged_by_control_mappings_migration() -> None:
     coll, _ = _make_collector()
     findings = coll.collect()
     inventory = next(f for f in findings if "user inventory" in f.title)
-    expected_id = deterministic_finding_id(
-        inventory.source_system, inventory.source_finding_id
-    )
+    expected_id = deterministic_finding_id(inventory.source_system, inventory.source_finding_id)
     assert inventory.id == expected_id
 
 

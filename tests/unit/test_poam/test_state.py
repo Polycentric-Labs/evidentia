@@ -68,9 +68,7 @@ class TestIsValidTransition:
 
     def test_completed_to_in_progress_is_invalid(self) -> None:
         # Backward transition explicitly forbidden — auditor integrity.
-        assert not is_valid_transition(
-            POAMState.COMPLETED, POAMState.IN_PROGRESS
-        )
+        assert not is_valid_transition(POAMState.COMPLETED, POAMState.IN_PROGRESS)
 
     def test_verified_to_anything_is_invalid(self) -> None:
         for target in POAMState:

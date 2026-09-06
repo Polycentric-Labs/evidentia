@@ -51,9 +51,7 @@ def _build_framework_metadata(
 # Computed once at import time from the bundled manifest. Retained as a
 # module-level constant for backward compatibility with v0.1.x callers
 # that imported it directly.
-FRAMEWORK_METADATA: dict[str, dict[str, str]] = _build_framework_metadata(
-    load_manifest()
-)
+FRAMEWORK_METADATA: dict[str, dict[str, str]] = _build_framework_metadata(load_manifest())
 
 
 class FrameworkRegistry:
@@ -72,9 +70,7 @@ class FrameworkRegistry:
         self._data_dir = data_dir or Path(__file__).parent / "data"
         self._catalogs: dict[str, ControlCatalog] = {}
         self._manifest = load_manifest()
-        self._crosswalk_engine = CrosswalkEngine(
-            mappings_dir=self._data_dir / "mappings"
-        )
+        self._crosswalk_engine = CrosswalkEngine(mappings_dir=self._data_dir / "mappings")
         self._crosswalk_loaded = False
 
     @classmethod

@@ -110,16 +110,13 @@ async def list_vendors_endpoint(
     ),
     criticality_tier: str | None = Query(
         None,
-        description=(
-            "Filter by criticality tier: critical / high / medium / low."
-        ),
+        description=("Filter by criticality tier: critical / high / medium / low."),
     ),
     type_: str | None = Query(
         None,
         alias="type",
         description=(
-            "Filter by vendor type: saas / subservice_org / contractor / "
-            "data_processor / cloud_provider / open_source."
+            "Filter by vendor type: saas / subservice_org / contractor / data_processor / cloud_provider / open_source."
         ),
     ),
 ) -> dict[str, object]:
@@ -130,16 +127,11 @@ async def list_vendors_endpoint(
     Pagination is applied AFTER filtering so ``total`` reflects
     the filter-matched count, not the unfiltered store size.
     """
-    if criticality_tier and criticality_tier not in {
-        e.value for e in CriticalityTier
-    }:
+    if criticality_tier and criticality_tier not in {e.value for e in CriticalityTier}:
         raise api_error(
             400,
             "unknown_criticality_tier",
-            (
-                f"Unknown criticality_tier {criticality_tier!r}; valid: "
-                f"{sorted(e.value for e in CriticalityTier)}"
-            ),
+            (f"Unknown criticality_tier {criticality_tier!r}; valid: {sorted(e.value for e in CriticalityTier)}"),
             criticality_tier=criticality_tier,
             valid=sorted(e.value for e in CriticalityTier),
         )
@@ -147,10 +139,7 @@ async def list_vendors_endpoint(
         raise api_error(
             400,
             "unknown_type",
-            (
-                f"Unknown type {type_!r}; valid: "
-                f"{sorted(e.value for e in VendorType)}"
-            ),
+            (f"Unknown type {type_!r}; valid: {sorted(e.value for e in VendorType)}"),
             type=type_,
             valid=sorted(e.value for e in VendorType),
         )
@@ -173,10 +162,7 @@ async def list_vendors_endpoint(
     status_code=201,
     responses=error_responses(
         {
-            422: (
-                "Body-content semantic failure "
-                "(``error: invalid_body``)."
-            ),
+            422: ("Body-content semantic failure (``error: invalid_body``)."),
         }
     ),
 )
@@ -196,9 +182,7 @@ async def create_vendor(payload: Vendor) -> Vendor:
     convention used in the rest of `evidentia-api`).
     """
     if payload.last_due_diligence_review and payload.next_review_due is None:
-        vendor = payload.model_copy(
-            update={"next_review_due": payload.compute_next_review_due()}
-        )
+        vendor = payload.model_copy(update={"next_review_due": payload.compute_next_review_due()})
     else:
         vendor = payload.model_copy()
     try:
@@ -215,10 +199,7 @@ async def create_vendor(payload: Vendor) -> Vendor:
     response_model=Vendor,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``vendor_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``vendor_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -253,10 +234,7 @@ async def get_vendor(vendor_id: str) -> Vendor:
     response_model=Vendor,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``vendor_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``vendor_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -310,10 +288,7 @@ async def replace_vendor(vendor_id: str, payload: Vendor) -> Vendor:
     status_code=204,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``vendor_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``vendor_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -351,10 +326,7 @@ async def delete_vendor_endpoint(vendor_id: str) -> None:
     "/tprm/vendors/{vendor_id}/next-review-due",
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``vendor_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``vendor_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -411,10 +383,7 @@ async def preview_next_review_due(vendor_id: str) -> dict[str, str | None]:
 async def concentration(
     by: str = Query(
         "region,cloud-provider",
-        description=(
-            "Comma-separated dimensions to aggregate by. Valid: "
-            f"{', '.join(sorted(SUPPORTED_DIMENSIONS))}."
-        ),
+        description=(f"Comma-separated dimensions to aggregate by. Valid: {', '.join(sorted(SUPPORTED_DIMENSIONS))}."),
     ),
     threshold: float | None = Query(
         None,
@@ -449,10 +418,7 @@ async def concentration(
         raise api_error(
             400,
             "unknown_dimension",
-            (
-                f"Unsupported dimension(s) {bad!r}; "
-                f"valid: {sorted(SUPPORTED_DIMENSIONS)}"
-            ),
+            (f"Unsupported dimension(s) {bad!r}; valid: {sorted(SUPPORTED_DIMENSIONS)}"),
             dimensions=bad,
             valid=sorted(SUPPORTED_DIMENSIONS),
         )
@@ -474,14 +440,8 @@ async def concentration(
                 "unknown_format``); ``detail`` carries ``format`` + "
                 "``valid``."
             ),
-            404: (
-                "Unknown or malformed ``vendor_id`` "
-                "(``error: not_found``)."
-            ),
-            501: (
-                "SIG / SIG-Lite stub formats "
-                "(``error: not_implemented``)."
-            ),
+            404: ("Unknown or malformed ``vendor_id`` (``error: not_found``)."),
+            501: ("SIG / SIG-Lite stub formats (``error: not_implemented``)."),
         }
     ),
 )
@@ -514,10 +474,7 @@ async def generate_dd_questionnaire(
         raise api_error(
             400,
             "unknown_format",
-            (
-                f"Unknown questionnaire format {format!r}; valid: "
-                f"{[f.value for f in QuestionnaireFormat]}"
-            ),
+            (f"Unknown questionnaire format {format!r}; valid: {[f.value for f in QuestionnaireFormat]}"),
             format=format,
             valid=[f.value for f in QuestionnaireFormat],
         ) from exc
@@ -601,14 +558,9 @@ class DDQuestionnaireIngestResult(BaseModel):
     responses=error_responses(
         {
             400: (
-                "Malformed questionnaire content — unparseable or "
-                "zero correlated responses "
-                "(``error: invalid_body``)."
+                "Malformed questionnaire content — unparseable or zero correlated responses (``error: invalid_body``)."
             ),
-            404: (
-                "Unknown or malformed ``vendor_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``vendor_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -694,9 +646,7 @@ async def ingest_dd_questionnaire(
         ) as tmp:
             json.dump(document, tmp)
             tmp_path = Path(tmp.name)
-        completed: CompletedQuestionnaire = parse_completed_questionnaire(
-            tmp_path
-        )
+        completed: CompletedQuestionnaire = parse_completed_questionnaire(tmp_path)
     except (ValueError, ImportError) as exc:
         # Unparseable / malformed questionnaire content. Use a generic
         # message (no path/internal leakage; F-V08-DAST-3 status
@@ -728,9 +678,7 @@ async def ingest_dd_questionnaire(
         )
 
     fmt = completed.format
-    fmt_value = (
-        fmt.value if isinstance(fmt, QuestionnaireFormat) else fmt
-    )
+    fmt_value = fmt.value if isinstance(fmt, QuestionnaireFormat) else fmt
 
     return DDQuestionnaireIngestResult(
         vendor={"id": vendor.id, "name": vendor.name},

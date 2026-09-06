@@ -429,10 +429,7 @@ class SnowflakeCollector:
             with pin_resolved_host(account_host, validated_ips):
                 self._connection = snowflake.connector.connect(**kwargs)
         except Exception as e:
-            raise SnowflakeAuthError(
-                f"Could not connect to Snowflake "
-                f"(driver: {type(e).__name__})"
-            ) from e
+            raise SnowflakeAuthError(f"Could not connect to Snowflake (driver: {type(e).__name__})") from e
         return self._connection
 
     # ── Context + provenance ────────────────────────────────────────
@@ -447,9 +444,7 @@ class SnowflakeCollector:
         cur = conn.cursor()
         try:
             cur.execute(
-                "SELECT CURRENT_ACCOUNT(), CURRENT_USER(), "
-                "CURRENT_ROLE(), CURRENT_VERSION(), "
-                "CURRENT_WAREHOUSE()"
+                "SELECT CURRENT_ACCOUNT(), CURRENT_USER(), CURRENT_ROLE(), CURRENT_VERSION(), CURRENT_WAREHOUSE()"
             )
             row = cur.fetchone()
             self._cached_account_id = str(row[0]) if row else None
@@ -478,17 +473,13 @@ class SnowflakeCollector:
                 "account": account,
                 "user": self._user,
                 "role": role,
-                "login_history_window_days": (
-                    self._login_history_window_days
-                ),
+                "login_history_window_days": (self._login_history_window_days),
             },
         )
 
     # ── Sub-checks ──────────────────────────────────────────────────
 
-    def _login_history_findings(
-        self, context: CollectionContext
-    ) -> tuple[list[SecurityFinding], CoverageCount]:
+    def _login_history_findings(self, context: CollectionContext) -> tuple[list[SecurityFinding], CoverageCount]:
         """LOGIN_HISTORY inventory + failed-login surfacing.
 
         Emits one inventory-summary finding per principal + one
@@ -503,9 +494,7 @@ class SnowflakeCollector:
         findings: list[SecurityFinding] = []
         scanned = 0
         try:
-            window_start = datetime.now(UTC) - timedelta(
-                days=self._login_history_window_days
-            )
+            window_start = datetime.now(UTC) - timedelta(days=self._login_history_window_days)
             # Defensive LIMIT — closes F-V08-CR-H1. The cap is enforced
             # at the SQL layer (not via Python truncation) so it bounds
             # both query memory + the SecurityFinding emission count.
@@ -537,9 +526,7 @@ class SnowflakeCollector:
                 user_name = str(row[0]) if row[0] else "unknown"
                 is_success = bool(row[7])
                 if is_success:
-                    successful_by_user[user_name] = (
-                        successful_by_user.get(user_name, 0) + 1
-                    )
+                    successful_by_user[user_name] = successful_by_user.get(user_name, 0) + 1
                 else:
                     failures_by_user.setdefault(user_name, []).append(row)
 
@@ -550,10 +537,7 @@ class SnowflakeCollector:
                 failures = len(failures_by_user.get(user_name, []))
                 findings.append(
                     SecurityFinding(
-                        title=(
-                            f"Login activity inventoried for user "
-                            f"{user_name}"
-                        ),
+                        title=(f"Login activity inventoried for user {user_name}"),
                         description=(
                             f"Observed {successes} successful + "
                             f"{failures} failed login(s) for user "
@@ -569,9 +553,7 @@ class SnowflakeCollector:
                         # not a pass/fail check.
                         compliance_status=ComplianceStatus.UNKNOWN,
                         source_system="snowflake",
-                        source_finding_id=(
-                            f"login-history-inventory:{user_name}"
-                        ),
+                        source_finding_id=(f"login-history-inventory:{user_name}"),
                         resource_type="snowflake-user",
                         resource_id=user_name,
                         collection_context=context,
@@ -591,10 +573,7 @@ class SnowflakeCollector:
                     error_message = str(row[9]) if row[9] else ""
                     findings.append(
                         SecurityFinding(
-                            title=(
-                                f"Failed Snowflake login for "
-                                f"{user_name} from {client_ip}"
-                            ),
+                            title=(f"Failed Snowflake login for {user_name} from {client_ip}"),
                             description=(
                                 f"User {user_name} failed to "
                                 f"authenticate from {client_ip} "
@@ -640,9 +619,7 @@ class SnowflakeCollector:
                 message=f"snowflake login_history query failed: {e!r}",
                 error={"type": type(e).__name__, "message": str(e)},
             )
-            raise SnowflakeQueryError(
-                f"LOGIN_HISTORY query failed: {type(e).__name__}"
-            ) from e
+            raise SnowflakeQueryError(f"LOGIN_HISTORY query failed: {type(e).__name__}") from e
         finally:
             cur.close()
 
@@ -653,9 +630,7 @@ class SnowflakeCollector:
             collected=len(findings),
         )
 
-    def _user_inventory_findings(
-        self, context: CollectionContext
-    ) -> tuple[list[SecurityFinding], CoverageCount]:
+    def _user_inventory_findings(self, context: CollectionContext) -> tuple[list[SecurityFinding], CoverageCount]:
         """USERS inventory + per-user MFA + disabled + never-logged-in.
 
         Emits one inventory finding per user (RESOLVED + INFORMATIONAL),
@@ -701,9 +676,7 @@ class SnowflakeCollector:
                 # Inventory finding (always emitted).
                 findings.append(
                     SecurityFinding(
-                        title=(
-                            f"Snowflake user {user_name} inventoried"
-                        ),
+                        title=(f"Snowflake user {user_name} inventoried"),
                         description=(
                             f"User {user_name} present in "
                             f"account_usage.USERS. "
@@ -736,10 +709,7 @@ class SnowflakeCollector:
                 if has_password and not has_mfa:
                     findings.append(
                         SecurityFinding(
-                            title=(
-                                f"Snowflake user {user_name} has no "
-                                f"MFA enrolled"
-                            ),
+                            title=(f"Snowflake user {user_name} has no MFA enrolled"),
                             description=(
                                 f"User {user_name} has password auth "
                                 f"enabled (HAS_PASSWORD=TRUE) but no "
@@ -774,10 +744,7 @@ class SnowflakeCollector:
                 if disabled:
                     findings.append(
                         SecurityFinding(
-                            title=(
-                                f"Snowflake user {user_name} is "
-                                f"disabled"
-                            ),
+                            title=(f"Snowflake user {user_name} is disabled"),
                             description=(
                                 f"User {user_name} is marked "
                                 f"DISABLED=TRUE in "
@@ -800,9 +767,7 @@ class SnowflakeCollector:
                             # WARNING.
                             compliance_status=ComplianceStatus.WARNING,
                             source_system="snowflake",
-                            source_finding_id=(
-                                f"user-disabled:{user_name}"
-                            ),
+                            source_finding_id=(f"user-disabled:{user_name}"),
                             resource_type="snowflake-user",
                             resource_id=user_name,
                             collection_context=context,
@@ -814,10 +779,7 @@ class SnowflakeCollector:
                 if last_login is None and not disabled:
                     findings.append(
                         SecurityFinding(
-                            title=(
-                                f"Snowflake user {user_name} has "
-                                f"never logged in"
-                            ),
+                            title=(f"Snowflake user {user_name} has never logged in"),
                             description=(
                                 f"User {user_name} has no recorded "
                                 f"successful login in "
@@ -837,15 +799,11 @@ class SnowflakeCollector:
                             # operator-attestable → WARNING.
                             compliance_status=ComplianceStatus.WARNING,
                             source_system="snowflake",
-                            source_finding_id=(
-                                f"user-never-logged-in:{user_name}"
-                            ),
+                            source_finding_id=(f"user-never-logged-in:{user_name}"),
                             resource_type="snowflake-user",
                             resource_id=user_name,
                             collection_context=context,
-                            control_mappings=(
-                                USER_NEVER_LOGGED_IN_MAPPINGS
-                            ),
+                            control_mappings=(USER_NEVER_LOGGED_IN_MAPPINGS),
                         )
                     )
         except Exception as e:
@@ -855,9 +813,7 @@ class SnowflakeCollector:
                 message=f"snowflake users query failed: {e!r}",
                 error={"type": type(e).__name__, "message": str(e)},
             )
-            raise SnowflakeQueryError(
-                f"USERS query failed: {type(e).__name__}"
-            ) from e
+            raise SnowflakeQueryError(f"USERS query failed: {type(e).__name__}") from e
         finally:
             cur.close()
 
@@ -868,9 +824,7 @@ class SnowflakeCollector:
             collected=len(findings),
         )
 
-    def _grant_inventory_findings(
-        self, context: CollectionContext
-    ) -> tuple[list[SecurityFinding], CoverageCount]:
+    def _grant_inventory_findings(self, context: CollectionContext) -> tuple[list[SecurityFinding], CoverageCount]:
         """GRANTS inventory — focus on privileged-role grants.
 
         Emits one inventory-summary finding per grantee and one
@@ -906,24 +860,11 @@ class SnowflakeCollector:
 
             for grantee, role_list in sorted(grants_by_user.items()):
                 # Inventory-summary finding.
-                privileged = sorted(
-                    {
-                        r
-                        for r in role_list
-                        if r.upper() in _PRIVILEGED_ROLES
-                    }
-                )
-                privileged_note = (
-                    f" (privileged roles: {', '.join(privileged)})"
-                    if privileged
-                    else ""
-                )
+                privileged = sorted({r for r in role_list if r.upper() in _PRIVILEGED_ROLES})
+                privileged_note = f" (privileged roles: {', '.join(privileged)})" if privileged else ""
                 findings.append(
                     SecurityFinding(
-                        title=(
-                            f"Snowflake grants inventoried for "
-                            f"{grantee}"
-                        ),
+                        title=(f"Snowflake grants inventoried for {grantee}"),
                         description=(
                             f"User {grantee} has {len(role_list)} "
                             f"role grant(s)"
@@ -937,9 +878,7 @@ class SnowflakeCollector:
                         # pass/fail check.
                         compliance_status=ComplianceStatus.UNKNOWN,
                         source_system="snowflake",
-                        source_finding_id=(
-                            f"grant-inventory:{grantee}"
-                        ),
+                        source_finding_id=(f"grant-inventory:{grantee}"),
                         resource_type="snowflake-user",
                         resource_id=grantee,
                         collection_context=context,
@@ -951,10 +890,7 @@ class SnowflakeCollector:
                 for role in privileged:
                     findings.append(
                         SecurityFinding(
-                            title=(
-                                f"Privileged-role grant: "
-                                f"{grantee} → {role}"
-                            ),
+                            title=(f"Privileged-role grant: {grantee} → {role}"),
                             description=(
                                 f"User {grantee} holds the "
                                 f"privileged role {role}. "
@@ -971,15 +907,11 @@ class SnowflakeCollector:
                             # operator review per AC-6(7).
                             compliance_status=ComplianceStatus.FAIL,
                             source_system="snowflake",
-                            source_finding_id=(
-                                f"privileged-grant:{grantee}:{role}"
-                            ),
+                            source_finding_id=(f"privileged-grant:{grantee}:{role}"),
                             resource_type="snowflake-grant",
                             resource_id=f"{grantee}:{role}",
                             collection_context=context,
-                            control_mappings=(
-                                GRANT_ACCOUNTADMIN_MAPPINGS
-                            ),
+                            control_mappings=(GRANT_ACCOUNTADMIN_MAPPINGS),
                         )
                     )
         except Exception as e:
@@ -989,9 +921,7 @@ class SnowflakeCollector:
                 message=f"snowflake grants query failed: {e!r}",
                 error={"type": type(e).__name__, "message": str(e)},
             )
-            raise SnowflakeQueryError(
-                f"GRANTS_TO_USERS query failed: {type(e).__name__}"
-            ) from e
+            raise SnowflakeQueryError(f"GRANTS_TO_USERS query failed: {type(e).__name__}") from e
         finally:
             cur.close()
 
@@ -1002,9 +932,7 @@ class SnowflakeCollector:
             collected=len(findings),
         )
 
-    def _network_policy_findings(
-        self, context: CollectionContext
-    ) -> tuple[list[SecurityFinding], CoverageCount]:
+    def _network_policy_findings(self, context: CollectionContext) -> tuple[list[SecurityFinding], CoverageCount]:
         """Network-policy inventory at the account level.
 
         Uses SHOW NETWORK POLICIES (account-level). Emits one
@@ -1025,21 +953,12 @@ class SnowflakeCollector:
                 # SHOW NETWORK POLICIES columns: created_on, name,
                 # comment, entries_in_allowed_ip_list,
                 # entries_in_blocked_ip_list, owner.
-                policy_name = (
-                    str(row[1]) if len(row) > 1 and row[1] else "unknown"
-                )
-                allowed_count = (
-                    int(row[3]) if len(row) > 3 and row[3] is not None else 0
-                )
-                blocked_count = (
-                    int(row[4]) if len(row) > 4 and row[4] is not None else 0
-                )
+                policy_name = str(row[1]) if len(row) > 1 and row[1] else "unknown"
+                allowed_count = int(row[3]) if len(row) > 3 and row[3] is not None else 0
+                blocked_count = int(row[4]) if len(row) > 4 and row[4] is not None else 0
                 findings.append(
                     SecurityFinding(
-                        title=(
-                            f"Snowflake network policy {policy_name} "
-                            f"inventoried"
-                        ),
+                        title=(f"Snowflake network policy {policy_name} inventoried"),
                         description=(
                             f"Network policy {policy_name} present "
                             f"in account. "
@@ -1054,34 +973,23 @@ class SnowflakeCollector:
                         # pass/fail check.
                         compliance_status=ComplianceStatus.UNKNOWN,
                         source_system="snowflake",
-                        source_finding_id=(
-                            f"network-policy-inventory:{policy_name}"
-                        ),
+                        source_finding_id=(f"network-policy-inventory:{policy_name}"),
                         resource_type="snowflake-network-policy",
                         resource_id=policy_name,
                         collection_context=context,
-                        control_mappings=(
-                            NETWORK_POLICY_INVENTORY_MAPPINGS
-                        ),
+                        control_mappings=(NETWORK_POLICY_INVENTORY_MAPPINGS),
                     )
                 )
 
             # Probe whether an account-level policy is set.
             try:
-                cur.execute(
-                    "SHOW PARAMETERS LIKE 'NETWORK_POLICY' "
-                    "IN ACCOUNT"
-                )
+                cur.execute("SHOW PARAMETERS LIKE 'NETWORK_POLICY' IN ACCOUNT")
                 param_rows = cur.fetchall()
                 account_policy: str | None = None
                 for prow in param_rows:
                     # SHOW PARAMETERS columns: key, value, default,
                     # level, description, type.
-                    if (
-                        len(prow) > 1
-                        and prow[0]
-                        and str(prow[0]).upper() == "NETWORK_POLICY"
-                    ):
+                    if len(prow) > 1 and prow[0] and str(prow[0]).upper() == "NETWORK_POLICY":
                         val = str(prow[1]) if prow[1] else ""
                         account_policy = val if val else None
                         break
@@ -1089,10 +997,7 @@ class SnowflakeCollector:
                 if not account_policy:
                     findings.append(
                         SecurityFinding(
-                            title=(
-                                "No account-level Snowflake "
-                                "network policy in effect"
-                            ),
+                            title=("No account-level Snowflake network policy in effect"),
                             description=(
                                 "The Snowflake account has no "
                                 "NETWORK_POLICY parameter set. "
@@ -1113,18 +1018,11 @@ class SnowflakeCollector:
                             # baseline.
                             compliance_status=ComplianceStatus.FAIL,
                             source_system="snowflake",
-                            source_finding_id=(
-                                "network-policy-none-assigned"
-                            ),
+                            source_finding_id=("network-policy-none-assigned"),
                             resource_type="snowflake-account",
-                            resource_id=(
-                                self._cached_account_id
-                                or self._account
-                            ),
+                            resource_id=(self._cached_account_id or self._account),
                             collection_context=context,
-                            control_mappings=(
-                                NETWORK_POLICY_NONE_ASSIGNED_MAPPINGS
-                            ),
+                            control_mappings=(NETWORK_POLICY_NONE_ASSIGNED_MAPPINGS),
                         )
                     )
             except Exception as e:
@@ -1132,10 +1030,7 @@ class SnowflakeCollector:
                 _log.info(
                     action=EventAction.COLLECT_STARTED,
                     outcome=EventOutcome.UNKNOWN,
-                    message=(
-                        f"snowflake account-level network policy "
-                        f"probe skipped: {e!r}"
-                    ),
+                    message=(f"snowflake account-level network policy probe skipped: {e!r}"),
                     error={"type": type(e).__name__, "message": str(e)},
                 )
         except Exception as e:
@@ -1145,9 +1040,7 @@ class SnowflakeCollector:
                 message=f"snowflake network policy query failed: {e!r}",
                 error={"type": type(e).__name__, "message": str(e)},
             )
-            raise SnowflakeQueryError(
-                f"SHOW NETWORK POLICIES failed: {type(e).__name__}"
-            ) from e
+            raise SnowflakeQueryError(f"SHOW NETWORK POLICIES failed: {type(e).__name__}") from e
         finally:
             cur.close()
 
@@ -1224,19 +1117,12 @@ class SnowflakeCollector:
                         pol_rows = cur.fetchall()
                     masking_scanned += len(pol_rows)
                     for prow in pol_rows:
-                        policy_name = (
-                            str(prow[0]) if prow[0] else "unknown"
-                        )
-                        policy_schema = (
-                            str(prow[1]) if prow[1] else "unknown"
-                        )
+                        policy_name = str(prow[0]) if prow[0] else "unknown"
+                        policy_schema = str(prow[1]) if prow[1] else "unknown"
                         fqn = f"{db}.{policy_schema}.{policy_name}"
                         findings.append(
                             SecurityFinding(
-                                title=(
-                                    f"Masking policy {fqn} "
-                                    f"inventoried"
-                                ),
+                                title=(f"Masking policy {fqn} inventoried"),
                                 description=(
                                     f"Masking policy {fqn} present "
                                     f"in database {db}. AC-3 + "
@@ -1251,17 +1137,11 @@ class SnowflakeCollector:
                                 # not a pass/fail check.
                                 compliance_status=ComplianceStatus.UNKNOWN,
                                 source_system="snowflake",
-                                source_finding_id=(
-                                    f"masking-policy:{fqn}"
-                                ),
-                                resource_type=(
-                                    "snowflake-masking-policy"
-                                ),
+                                source_finding_id=(f"masking-policy:{fqn}"),
+                                resource_type=("snowflake-masking-policy"),
                                 resource_id=fqn,
                                 collection_context=context,
-                                control_mappings=(
-                                    MASKING_POLICY_INVENTORY_MAPPINGS
-                                ),
+                                control_mappings=(MASKING_POLICY_INVENTORY_MAPPINGS),
                             )
                         )
                         masking_collected += 1
@@ -1269,10 +1149,7 @@ class SnowflakeCollector:
                     _log.info(
                         action=EventAction.COLLECT_STARTED,
                         outcome=EventOutcome.UNKNOWN,
-                        message=(
-                            f"snowflake masking policy query for db "
-                            f"{db!r} failed (likely permission): {e!r}"
-                        ),
+                        message=(f"snowflake masking policy query for db {db!r} failed (likely permission): {e!r}"),
                         error={
                             "type": type(e).__name__,
                             "message": str(e),
@@ -1291,19 +1168,12 @@ class SnowflakeCollector:
                         pol_rows = cur.fetchall()
                     row_access_scanned += len(pol_rows)
                     for prow in pol_rows:
-                        policy_name = (
-                            str(prow[0]) if prow[0] else "unknown"
-                        )
-                        policy_schema = (
-                            str(prow[1]) if prow[1] else "unknown"
-                        )
+                        policy_name = str(prow[0]) if prow[0] else "unknown"
+                        policy_schema = str(prow[1]) if prow[1] else "unknown"
                         fqn = f"{db}.{policy_schema}.{policy_name}"
                         findings.append(
                             SecurityFinding(
-                                title=(
-                                    f"Row-access policy {fqn} "
-                                    f"inventoried"
-                                ),
+                                title=(f"Row-access policy {fqn} inventoried"),
                                 description=(
                                     f"Row-access policy {fqn} "
                                     f"present in database {db}. "
@@ -1319,17 +1189,11 @@ class SnowflakeCollector:
                                 # AC-3(7)), not a pass/fail check.
                                 compliance_status=ComplianceStatus.UNKNOWN,
                                 source_system="snowflake",
-                                source_finding_id=(
-                                    f"row-access-policy:{fqn}"
-                                ),
-                                resource_type=(
-                                    "snowflake-row-access-policy"
-                                ),
+                                source_finding_id=(f"row-access-policy:{fqn}"),
+                                resource_type=("snowflake-row-access-policy"),
                                 resource_id=fqn,
                                 collection_context=context,
-                                control_mappings=(
-                                    ROW_ACCESS_POLICY_INVENTORY_MAPPINGS
-                                ),
+                                control_mappings=(ROW_ACCESS_POLICY_INVENTORY_MAPPINGS),
                             )
                         )
                         row_access_collected += 1
@@ -1337,11 +1201,7 @@ class SnowflakeCollector:
                     _log.info(
                         action=EventAction.COLLECT_STARTED,
                         outcome=EventOutcome.UNKNOWN,
-                        message=(
-                            f"snowflake row-access policy query for "
-                            f"db {db!r} failed (likely permission): "
-                            f"{e!r}"
-                        ),
+                        message=(f"snowflake row-access policy query for db {db!r} failed (likely permission): {e!r}"),
                         error={
                             "type": type(e).__name__,
                             "message": str(e),
@@ -1354,9 +1214,7 @@ class SnowflakeCollector:
                 message=f"snowflake policy inventory query failed: {e!r}",
                 error={"type": type(e).__name__, "message": str(e)},
             )
-            raise SnowflakeQueryError(
-                f"Policy inventory query failed: {type(e).__name__}"
-            ) from e
+            raise SnowflakeQueryError(f"Policy inventory query failed: {type(e).__name__}") from e
         # Cursors are context-managed (F-V08-CR-H2); no top-level
         # finally cur.close() needed.
 
@@ -1375,9 +1233,7 @@ class SnowflakeCollector:
             ),
         ]
 
-    def _key_rotation_findings(
-        self, context: CollectionContext
-    ) -> tuple[list[SecurityFinding], CoverageCount]:
+    def _key_rotation_findings(self, context: CollectionContext) -> tuple[list[SecurityFinding], CoverageCount]:
         """Operator-attested key-rotation status (single inventory finding).
 
         Snowflake's account-level encryption keys are platform-managed
@@ -1388,10 +1244,7 @@ class SnowflakeCollector:
         """
         findings = [
             SecurityFinding(
-                title=(
-                    "Snowflake account encryption keys "
-                    "platform-managed"
-                ),
+                title=("Snowflake account encryption keys platform-managed"),
                 description=(
                     "Snowflake encrypts all data at rest with "
                     "platform-managed AES-256 keys. Per Snowflake's "
@@ -1412,13 +1265,9 @@ class SnowflakeCollector:
                 source_system="snowflake",
                 source_finding_id="key-rotation-platform-managed",
                 resource_type="snowflake-account",
-                resource_id=(
-                    self._cached_account_id or self._account
-                ),
+                resource_id=(self._cached_account_id or self._account),
                 collection_context=context,
-                control_mappings=(
-                    KEY_ROTATION_OPERATOR_FACT_MAPPINGS
-                ),
+                control_mappings=(KEY_ROTATION_OPERATOR_FACT_MAPPINGS),
             )
         ]
         return findings, CoverageCount(
@@ -1519,9 +1368,7 @@ class SnowflakeCollector:
                 continue
             except Exception as e:
                 is_complete = False
-                errors.append(
-                    f"{name}: unexpected {type(e).__name__}: {e}"
-                )
+                errors.append(f"{name}: unexpected {type(e).__name__}: {e}")
                 continue
 
             all_findings.extend(sub_findings)
@@ -1555,9 +1402,7 @@ class SnowflakeCollector:
             coverage_counts=all_coverage,
             total_findings=len(all_findings),
             is_complete=is_complete,
-            incomplete_reason=(
-                "; ".join(errors) if not is_complete else None
-            ),
+            incomplete_reason=("; ".join(errors) if not is_complete else None),
             empty_categories=empty_categories,
             warnings=warnings,
             errors=errors,

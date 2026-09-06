@@ -10,14 +10,8 @@ from evidentia_core.oscal import keysign
 
 def _ed25519_pem(encrypted: bytes | None = None) -> bytes:
     key = Ed25519PrivateKey.generate()
-    enc = (
-        serialization.BestAvailableEncryption(encrypted)
-        if encrypted
-        else serialization.NoEncryption()
-    )
-    return key.private_bytes(
-        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, enc
-    )
+    enc = serialization.BestAvailableEncryption(encrypted) if encrypted else serialization.NoEncryption()
+    return key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, enc)
 
 
 def test_load_unencrypted_key_with_stray_env_passphrase_does_not_crash(monkeypatch):
@@ -56,9 +50,7 @@ def test_wrong_passphrase_with_unrecognized_upstream_message(monkeypatch):
     def _raise_unrecognized(*args, **kwargs):
         raise ValueError("PKCS8 data checksum failure")  # no 'password'/'decrypt'
 
-    monkeypatch.setattr(
-        keysign.serialization, "load_pem_private_key", _raise_unrecognized
-    )
+    monkeypatch.setattr(keysign.serialization, "load_pem_private_key", _raise_unrecognized)
     with pytest.raises(keysign.SigningKeyError, match="incorrect passphrase"):
         keysign._load_private_key(_ed25519_pem(encrypted=b"right"))
 
@@ -194,8 +186,9 @@ def test_verify_fails_on_signature_tamper(tmp_path):
     bad = keysign.dsse.Envelope(
         payload_type=env.payload_type,
         payload_b64=env.payload_b64,
-        signatures=(keysign.dsse.Signature(keyid=env.signatures[0].keyid,
-                    sig=keysign.dsse.b64encode_std(b"\x00" * 64)),),
+        signatures=(
+            keysign.dsse.Signature(keyid=env.signatures[0].keyid, sig=keysign.dsse.b64encode_std(b"\x00" * 64)),
+        ),
     )
     dsse_path.write_text(keysign.dsse.serialize_envelope(bad), encoding="utf-8")
     assert keysign.verify_oscal_file(ar, verify_key_path=pub).valid is False
@@ -212,7 +205,8 @@ def test_verify_rejects_wrong_payload_type(tmp_path):
     ar, pub, dsse_path = _sign_fixture(tmp_path, _write_ed25519_keypair(tmp_path))
     env = keysign.dsse.parse_envelope(dsse_path.read_text(encoding="utf-8"))
     tampered = keysign.dsse.Envelope(
-        payload_type="application/x-evil", payload_b64=env.payload_b64,
+        payload_type="application/x-evil",
+        payload_b64=env.payload_b64,
         signatures=env.signatures,
     )
     dsse_path.write_text(keysign.dsse.serialize_envelope(tampered), encoding="utf-8")
@@ -267,9 +261,7 @@ def _resign_with_statement(tmp_path, statement_dict, priv_path, ar_path):
         payload_b64=keysign.dsse.b64encode_std(sb),
         signatures=(keysign.dsse.Signature(keyid="x", sig=keysign.dsse.b64encode_std(sig)),),
     )
-    keysign.default_dsse_path(ar_path).write_text(
-        keysign.dsse.serialize_envelope(env), encoding="utf-8"
-    )
+    keysign.default_dsse_path(ar_path).write_text(keysign.dsse.serialize_envelope(env), encoding="utf-8")
 
 
 def _get_base_statement(ar_path, dsse_path):
@@ -313,8 +305,6 @@ def test_verify_rejects_non_dict_payload(tmp_path):
         payload_b64=keysign.dsse.b64encode_std(sb),
         signatures=(keysign.dsse.Signature(keyid="x", sig=keysign.dsse.b64encode_std(sig)),),
     )
-    keysign.default_dsse_path(ar).write_text(
-        keysign.dsse.serialize_envelope(env), encoding="utf-8"
-    )
+    keysign.default_dsse_path(ar).write_text(keysign.dsse.serialize_envelope(env), encoding="utf-8")
     result = keysign.verify_oscal_file(ar, verify_key_path=pub)
     assert result.valid is False

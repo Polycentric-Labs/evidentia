@@ -241,8 +241,7 @@ def _make_finding(
     suffix = f":{scope}" if scope else ""
     finding_status = (
         FindingStatus.RESOLVED
-        if status is ComplianceStatus.PASS
-        or status is ComplianceStatus.NOT_APPLICABLE
+        if status is ComplianceStatus.PASS or status is ComplianceStatus.NOT_APPLICABLE
         else FindingStatus.ACTIVE
     )
     return SecurityFinding(
@@ -378,22 +377,16 @@ def _file_present_at_any(
             last_error = e
             continue
         if result is not None:
-            return _FileProbeResult(
-                outcome=_FileProbeOutcome.PRESENT, path=path
-            )
+            return _FileProbeResult(outcome=_FileProbeOutcome.PRESENT, path=path)
     if last_error is not None:
-        return _FileProbeResult(
-            outcome=_FileProbeOutcome.INDETERMINATE, error=last_error
-        )
+        return _FileProbeResult(outcome=_FileProbeOutcome.INDETERMINATE, error=last_error)
     return _FileProbeResult(outcome=_FileProbeOutcome.ABSENT)
 
 
 # ─── Helpers ───────────────────────────────────────────────────────────
 
 
-def populate_osps_ac_03_01(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_ac_03_01(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-AC-03.01 — Prevent direct modification of the primary branch.
 
     PASS iff the default branch has any branch-protection rule in place
@@ -411,10 +404,7 @@ def populate_osps_ac_03_01(
             control_id="OSPS-AC-03.01",
             reason="Could not read repo metadata",
             error=e,
-            justification=(
-                "Default-branch protection cannot be evaluated — "
-                "repo metadata read failed."
-            ),
+            justification=("Default-branch protection cannot be evaluated — repo metadata read failed."),
         )
 
     default_branch = str(repo_meta.get("default_branch") or "main")
@@ -438,10 +428,7 @@ def populate_osps_ac_03_01(
             repo=repo,
             control_id="OSPS-AC-03.01",
             scope=default_branch,
-            title=(
-                f"OSPS-AC-03.01 FAIL: {default_branch!r} unprotected in "
-                f"{owner}/{repo}"
-            ),
+            title=(f"OSPS-AC-03.01 FAIL: {default_branch!r} unprotected in {owner}/{repo}"),
             description=(
                 "OSPS-AC-03.01 requires an enforcement mechanism that "
                 "prevents direct modification of the primary branch. "
@@ -457,8 +444,7 @@ def populate_osps_ac_03_01(
                 ),
                 _nist_53_mapping(
                     "AC-3",
-                    "Branch-protection rules ARE the AC-3 Access "
-                    "Enforcement mechanism on the source-of-truth.",
+                    "Branch-protection rules ARE the AC-3 Access Enforcement mechanism on the source-of-truth.",
                     relationship=OLIRRelationship.SUBSET_OF,
                 ),
                 _nist_53_mapping(
@@ -468,9 +454,7 @@ def populate_osps_ac_03_01(
                 ),
             ],
             remediation=(
-                "Enable branch protection on the default branch at "
-                "https://github.com/"
-                f"{owner}/{repo}/settings/branches"
+                f"Enable branch protection on the default branch at https://github.com/{owner}/{repo}/settings/branches"
             ),
         )
 
@@ -479,10 +463,7 @@ def populate_osps_ac_03_01(
         repo=repo,
         control_id="OSPS-AC-03.01",
         scope=default_branch,
-        title=(
-            f"OSPS-AC-03.01 PASS: {default_branch!r} protected in "
-            f"{owner}/{repo}"
-        ),
+        title=(f"OSPS-AC-03.01 PASS: {default_branch!r} protected in {owner}/{repo}"),
         description=(
             f"Branch protection is configured on the default branch "
             f"{default_branch!r}. OSPS-AC-03.01 evidence is satisfied; "
@@ -492,8 +473,7 @@ def populate_osps_ac_03_01(
         mappings=[
             _osps_mapping(
                 "OSPS-AC-03.01",
-                "Branch-protection presence verified on the default "
-                "branch via the GitHub REST API.",
+                "Branch-protection presence verified on the default branch via the GitHub REST API.",
             ),
             _nist_53_mapping(
                 "AC-3",
@@ -505,9 +485,7 @@ def populate_osps_ac_03_01(
     )
 
 
-def populate_osps_ac_03_02(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_ac_03_02(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-AC-03.02 — Branch deletion requires explicit intent.
 
     PASS iff branch protection exists AND ``allow_deletions.enabled`` is
@@ -547,10 +525,7 @@ def populate_osps_ac_03_02(
             repo=repo,
             control_id="OSPS-AC-03.02",
             scope=default_branch,
-            title=(
-                f"OSPS-AC-03.02 FAIL: {default_branch!r} unprotected — "
-                f"deletion guard absent in {owner}/{repo}"
-            ),
+            title=(f"OSPS-AC-03.02 FAIL: {default_branch!r} unprotected — deletion guard absent in {owner}/{repo}"),
             description=(
                 "OSPS-AC-03.02 requires the VCS to treat primary-branch "
                 "deletion as a sensitive action. With no branch "
@@ -560,27 +535,21 @@ def populate_osps_ac_03_02(
             mappings=[
                 _osps_mapping(
                     "OSPS-AC-03.02",
-                    "Primary branch lacks protection; deletion is not "
-                    "guarded.",
+                    "Primary branch lacks protection; deletion is not guarded.",
                 ),
             ],
         )
 
-    allow_deletions = (protection.get("allow_deletions") or {})
+    allow_deletions = protection.get("allow_deletions") or {}
     deletion_enabled = bool(allow_deletions.get("enabled", False))
-    status = (
-        ComplianceStatus.PASS if not deletion_enabled else ComplianceStatus.FAIL
-    )
+    status = ComplianceStatus.PASS if not deletion_enabled else ComplianceStatus.FAIL
     title_verb = "PASS" if status is ComplianceStatus.PASS else "FAIL"
     return _make_finding(
         owner=owner,
         repo=repo,
         control_id="OSPS-AC-03.02",
         scope=default_branch,
-        title=(
-            f"OSPS-AC-03.02 {title_verb}: deletion-guard on "
-            f"{owner}/{repo}@{default_branch}"
-        ),
+        title=(f"OSPS-AC-03.02 {title_verb}: deletion-guard on {owner}/{repo}@{default_branch}"),
         description=(
             f"allow_deletions.enabled = {deletion_enabled!r}. "
             f"OSPS-AC-03.02 evidence is {'satisfied' if status is ComplianceStatus.PASS else 'NOT satisfied'}."
@@ -596,9 +565,7 @@ def populate_osps_ac_03_02(
     )
 
 
-def populate_osps_br_06_01(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_br_06_01(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-BR-06.01 — Releases signed or attested.
 
     PASS iff at least one release has an asset whose name carries a
@@ -670,10 +637,7 @@ def populate_osps_br_06_01(
             repo=repo,
             control_id="OSPS-BR-06.01",
             scope=None,
-            title=(
-                f"OSPS-BR-06.01 PASS: signed/attested release assets in "
-                f"{owner}/{repo}"
-            ),
+            title=(f"OSPS-BR-06.01 PASS: signed/attested release assets in {owner}/{repo}"),
             description=(
                 f"{len(signed_tags)} of {len(releases)} recent releases "
                 "carry signature or attestation assets (.sig / .asc / "
@@ -684,8 +648,7 @@ def populate_osps_br_06_01(
             mappings=[
                 _osps_mapping(
                     "OSPS-BR-06.01",
-                    "Release assets carry cryptographic signatures or "
-                    "attestations.",
+                    "Release assets carry cryptographic signatures or attestations.",
                 ),
                 _nist_53_mapping(
                     "SI-7",
@@ -702,9 +665,7 @@ def populate_osps_br_06_01(
         repo=repo,
         control_id="OSPS-BR-06.01",
         scope=None,
-        title=(
-            f"OSPS-BR-06.01 FAIL: no signed release assets in {owner}/{repo}"
-        ),
+        title=(f"OSPS-BR-06.01 FAIL: no signed release assets in {owner}/{repo}"),
         description=(
             f"Inspected {len(releases)} releases; none carry a signature "
             "or attestation asset extension (.sig / .asc / .intoto / "
@@ -715,8 +676,7 @@ def populate_osps_br_06_01(
         mappings=[
             _osps_mapping(
                 "OSPS-BR-06.01",
-                "No signature / attestation assets attached to any "
-                "release.",
+                "No signature / attestation assets attached to any release.",
             ),
         ],
         remediation=(
@@ -727,9 +687,7 @@ def populate_osps_br_06_01(
     )
 
 
-def populate_osps_do_02_01(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_do_02_01(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-DO-02.01 — Defect-reporting mechanism documented/available.
 
     PASS iff ``has_issues=true`` on the repo metadata (GitHub Issues is
@@ -775,9 +733,7 @@ def populate_osps_do_02_01(
     )
 
 
-def populate_osps_gv_03_01(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_gv_03_01(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-GV-03.01 — Contribution guide published.
 
     PASS iff CONTRIBUTING(.md|.rst) is present at one of the well-known
@@ -797,14 +753,8 @@ def populate_osps_gv_03_01(
             repo=repo,
             control_id="OSPS-GV-03.01",
             scope=None,
-            title=(
-                f"OSPS-GV-03.01 PASS: CONTRIBUTING present at "
-                f"{probe.path!r} in {owner}/{repo}"
-            ),
-            description=(
-                "Contribution guide located. OSPS-GV-03.01 evidence "
-                "satisfied."
-            ),
+            title=(f"OSPS-GV-03.01 PASS: CONTRIBUTING present at {probe.path!r} in {owner}/{repo}"),
+            description=("Contribution guide located. OSPS-GV-03.01 evidence satisfied."),
             status=ComplianceStatus.PASS,
             mappings=[
                 _osps_mapping(
@@ -829,11 +779,7 @@ def populate_osps_gv_03_01(
         control_id="OSPS-GV-03.01",
         scope=None,
         title=f"OSPS-GV-03.01 FAIL: no CONTRIBUTING in {owner}/{repo}",
-        description=(
-            "Probed candidate paths "
-            + ", ".join(repr(p) for p in candidate_paths)
-            + "; none found."
-        ),
+        description=("Probed candidate paths " + ", ".join(repr(p) for p in candidate_paths) + "; none found."),
         status=ComplianceStatus.FAIL,
         mappings=[
             _osps_mapping(
@@ -845,9 +791,7 @@ def populate_osps_gv_03_01(
     )
 
 
-def populate_osps_le_02_01(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_le_02_01(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-LE-02.01 — License meets OSI/FSF definition.
 
     PASS iff the repo's ``license.spdx_id`` (as detected by GitHub's
@@ -889,27 +833,20 @@ def populate_osps_le_02_01(
                 ),
             ],
             remediation=(
-                "Add a LICENSE file containing an OSI-approved license "
-                "(e.g., Apache-2.0, MIT, BSD-3-Clause)."
+                "Add a LICENSE file containing an OSI-approved license (e.g., Apache-2.0, MIT, BSD-3-Clause)."
             ),
         )
 
     spdx_str = str(spdx_id)
     # Case-insensitive lookup against the allow-list.
-    recognized = any(
-        spdx_str.lower() == approved.lower()
-        for approved in _OSI_FSF_RECOGNIZED_SPDX
-    )
+    recognized = any(spdx_str.lower() == approved.lower() for approved in _OSI_FSF_RECOGNIZED_SPDX)
     if recognized:
         return _make_finding(
             owner=owner,
             repo=repo,
             control_id="OSPS-LE-02.01",
             scope=None,
-            title=(
-                f"OSPS-LE-02.01 PASS: {spdx_str} on {owner}/{repo} is "
-                "OSI/FSF-recognized"
-            ),
+            title=(f"OSPS-LE-02.01 PASS: {spdx_str} on {owner}/{repo} is OSI/FSF-recognized"),
             description=(
                 f"Detected SPDX license {spdx_str!r}. Recognized by both "
                 "the OSI Open Source Definition allow-list and the FSF "
@@ -930,10 +867,7 @@ def populate_osps_le_02_01(
         repo=repo,
         control_id="OSPS-LE-02.01",
         scope=None,
-        title=(
-            f"OSPS-LE-02.01 WARNING: {spdx_str} on {owner}/{repo} "
-            "needs manual OSI/FSF verification"
-        ),
+        title=(f"OSPS-LE-02.01 WARNING: {spdx_str} on {owner}/{repo} needs manual OSI/FSF verification"),
         description=(
             f"Detected SPDX license {spdx_str!r}. Not on the bundled "
             "OSI/FSF allow-list; verify the license is OSI-approved or "
@@ -950,9 +884,7 @@ def populate_osps_le_02_01(
     )
 
 
-def populate_osps_le_03_01(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_le_03_01(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-LE-03.01 — LICENSE in well-known location.
 
     PASS iff one of (LICENSE, LICENSE.md, LICENSE.txt, COPYING,
@@ -974,13 +906,8 @@ def populate_osps_le_03_01(
             repo=repo,
             control_id="OSPS-LE-03.01",
             scope=None,
-            title=(
-                f"OSPS-LE-03.01 PASS: license file at {probe.path!r} in "
-                f"{owner}/{repo}"
-            ),
-            description=(
-                f"LICENSE in the well-known location {probe.path!r}."
-            ),
+            title=(f"OSPS-LE-03.01 PASS: license file at {probe.path!r} in {owner}/{repo}"),
+            description=(f"LICENSE in the well-known location {probe.path!r}."),
             status=ComplianceStatus.PASS,
             mappings=[
                 _osps_mapping(
@@ -1007,11 +934,7 @@ def populate_osps_le_03_01(
         control_id="OSPS-LE-03.01",
         scope=None,
         title=f"OSPS-LE-03.01 FAIL: no license file at any known path in {owner}/{repo}",
-        description=(
-            "Probed candidate paths "
-            + ", ".join(repr(p) for p in candidate_paths)
-            + "; none found."
-        ),
+        description=("Probed candidate paths " + ", ".join(repr(p) for p in candidate_paths) + "; none found."),
         status=ComplianceStatus.FAIL,
         mappings=[
             _osps_mapping(
@@ -1023,9 +946,7 @@ def populate_osps_le_03_01(
     )
 
 
-def populate_osps_qa_01_01(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_qa_01_01(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-QA-01.01 — Source code repository publicly readable.
 
     PASS iff the repository's ``private`` field is ``false``. FAIL if
@@ -1068,9 +989,7 @@ def populate_osps_qa_01_01(
     )
 
 
-def populate_osps_qa_01_02(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_qa_01_02(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-QA-01.02 — Public commit history.
 
     PASS iff the repo is public (commits are publicly readable in any
@@ -1099,8 +1018,7 @@ def populate_osps_qa_01_02(
         scope=None,
         title=f"OSPS-QA-01.02 {verb}: commit history visibility in {owner}/{repo}",
         description=(
-            f"private = {private!r}. Public commit history is implicit "
-            "for any GitHub repo with private=false."
+            f"private = {private!r}. Public commit history is implicit for any GitHub repo with private=false."
         ),
         status=status,
         mappings=[
@@ -1113,9 +1031,7 @@ def populate_osps_qa_01_02(
     )
 
 
-def populate_osps_qa_02_01(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_qa_02_01(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-QA-02.01 — Dependency manifest present.
 
     PASS iff any common dependency manifest (``pyproject.toml``,
@@ -1145,10 +1061,7 @@ def populate_osps_qa_02_01(
             repo=repo,
             control_id="OSPS-QA-02.01",
             scope=None,
-            title=(
-                f"OSPS-QA-02.01 PASS: dependency manifest {probe.path!r} in "
-                f"{owner}/{repo}"
-            ),
+            title=(f"OSPS-QA-02.01 PASS: dependency manifest {probe.path!r} in {owner}/{repo}"),
             description=(
                 f"Detected dependency manifest at {probe.path!r}; OSPS-QA-02.01 "
                 "evidence is satisfied for direct dependencies."
@@ -1178,9 +1091,7 @@ def populate_osps_qa_02_01(
         repo=repo,
         control_id="OSPS-QA-02.01",
         scope=None,
-        title=(
-            f"OSPS-QA-02.01 FAIL: no dependency manifest in {owner}/{repo}"
-        ),
+        title=(f"OSPS-QA-02.01 FAIL: no dependency manifest in {owner}/{repo}"),
         description=(
             "Probed common dependency manifest paths; none found. "
             "OSPS-QA-02.01 requires a manifest accounting for direct "
@@ -1193,16 +1104,11 @@ def populate_osps_qa_02_01(
                 "No standard dependency manifest detected.",
             ),
         ],
-        remediation=(
-            "Add the ecosystem-standard manifest (e.g., pyproject.toml, "
-            "package.json) at the repo root."
-        ),
+        remediation=("Add the ecosystem-standard manifest (e.g., pyproject.toml, package.json) at the repo root."),
     )
 
 
-def populate_osps_qa_03_01(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_qa_03_01(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-QA-03.01 — Status checks on primary branch.
 
     PASS iff branch protection on the default branch lists at least
@@ -1236,7 +1142,7 @@ def populate_osps_qa_03_01(
 
     contexts: list[str] = []
     if protection is not None:
-        status_checks = (protection.get("required_status_checks") or {})
+        status_checks = protection.get("required_status_checks") or {}
         raw_contexts = status_checks.get("contexts") or []
         if isinstance(raw_contexts, list):
             contexts = [str(c) for c in raw_contexts]
@@ -1247,13 +1153,9 @@ def populate_osps_qa_03_01(
             repo=repo,
             control_id="OSPS-QA-03.01",
             scope=default_branch,
-            title=(
-                f"OSPS-QA-03.01 PASS: {len(contexts)} required status "
-                f"check(s) on {owner}/{repo}@{default_branch}"
-            ),
+            title=(f"OSPS-QA-03.01 PASS: {len(contexts)} required status check(s) on {owner}/{repo}@{default_branch}"),
             description=(
-                f"Required status-check contexts: "
-                f"{', '.join(contexts[:5])}{'...' if len(contexts) > 5 else ''}."
+                f"Required status-check contexts: {', '.join(contexts[:5])}{'...' if len(contexts) > 5 else ''}."
             ),
             status=ComplianceStatus.PASS,
             mappings=[
@@ -1263,8 +1165,7 @@ def populate_osps_qa_03_01(
                 ),
                 _nist_53_mapping(
                     "SA-11",
-                    "SA-11 Developer Security Testing — status checks "
-                    "enforce automated test/SAST gates before merge.",
+                    "SA-11 Developer Security Testing — status checks enforce automated test/SAST gates before merge.",
                     relationship=OLIRRelationship.SUBSET_OF,
                 ),
             ],
@@ -1276,10 +1177,7 @@ def populate_osps_qa_03_01(
         repo=repo,
         control_id="OSPS-QA-03.01",
         scope=default_branch,
-        title=(
-            f"OSPS-QA-03.01 FAIL: no required status checks on "
-            f"{owner}/{repo}@{default_branch}"
-        ),
+        title=(f"OSPS-QA-03.01 FAIL: no required status checks on {owner}/{repo}@{default_branch}"),
         description=(
             "OSPS-QA-03.01 requires that automated status checks pass "
             "or be explicitly bypassed before a commit can land on the "
@@ -1292,16 +1190,11 @@ def populate_osps_qa_03_01(
                 "No required status checks configured on primary branch.",
             ),
         ],
-        remediation=(
-            "Add at least one required status check to the default "
-            "branch's protection rules."
-        ),
+        remediation=("Add at least one required status check to the default branch's protection rules."),
     )
 
 
-def populate_osps_vm_02_01(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_vm_02_01(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-VM-02.01 — SECURITY.md / security contacts published."""
     candidate_paths = (
         "SECURITY.md",
@@ -1317,13 +1210,8 @@ def populate_osps_vm_02_01(
             repo=repo,
             control_id="OSPS-VM-02.01",
             scope=None,
-            title=(
-                f"OSPS-VM-02.01 PASS: security contacts at {probe.path!r} in "
-                f"{owner}/{repo}"
-            ),
-            description=(
-                "Security contacts file located at a well-known path."
-            ),
+            title=(f"OSPS-VM-02.01 PASS: security contacts at {probe.path!r} in {owner}/{repo}"),
+            description=("Security contacts file located at a well-known path."),
             status=ComplianceStatus.PASS,
             mappings=[
                 _osps_mapping(
@@ -1332,8 +1220,7 @@ def populate_osps_vm_02_01(
                 ),
                 _nist_53_mapping(
                     "IR-6",
-                    "IR-6 Incident Reporting — SECURITY.md is the "
-                    "external reporting entry point.",
+                    "IR-6 Incident Reporting — SECURITY.md is the external reporting entry point.",
                     relationship=OLIRRelationship.INTERSECTS_WITH,
                 ),
             ],
@@ -1370,9 +1257,7 @@ def populate_osps_vm_02_01(
     )
 
 
-def populate_osps_vm_03_01(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_vm_03_01(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-VM-03.01 — Private vulnerability reporting enabled."""
     try:
         repo_meta = client.get_repo(owner, repo)
@@ -1397,10 +1282,7 @@ def populate_osps_vm_03_01(
         repo=repo,
         control_id="OSPS-VM-03.01",
         scope=None,
-        title=(
-            f"OSPS-VM-03.01 {verb}: private vulnerability reporting in "
-            f"{owner}/{repo}"
-        ),
+        title=(f"OSPS-VM-03.01 {verb}: private vulnerability reporting in {owner}/{repo}"),
         description=(
             f"security_and_analysis.private_vulnerability_reporting.status "
             f"= {pvr_status!r}. OSPS-VM-03.01 requires a private "
@@ -1414,24 +1296,18 @@ def populate_osps_vm_03_01(
             ),
             _nist_53_mapping(
                 "IR-6",
-                "IR-6 Incident Reporting — private vulnerability "
-                "reporting is the confidential pre-disclosure channel.",
+                "IR-6 Incident Reporting — private vulnerability reporting is the confidential pre-disclosure channel.",
                 relationship=OLIRRelationship.INTERSECTS_WITH,
             ),
         ],
         raw={"private_vulnerability_reporting": pvr_status or "unset"},
         remediation=(
-            None
-            if enabled
-            else "Enable Private Vulnerability Reporting in the repo's "
-            "Settings → Security & analysis."
+            None if enabled else "Enable Private Vulnerability Reporting in the repo's Settings → Security & analysis."
         ),
     )
 
 
-def populate_osps_vm_04_01(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_vm_04_01(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-VM-04.01 — Discovered vulnerabilities publicly published.
 
     NOT_APPLICABLE if the repo is private (the upstream control
@@ -1457,9 +1333,7 @@ def populate_osps_vm_04_01(
             repo=repo,
             control_id="OSPS-VM-04.01",
             scope=None,
-            title=(
-                f"OSPS-VM-04.01 NOT_APPLICABLE: {owner}/{repo} is private"
-            ),
+            title=(f"OSPS-VM-04.01 NOT_APPLICABLE: {owner}/{repo} is private"),
             description=(
                 "OSPS-VM-04.01 evaluates the public-disclosure mechanism. "
                 "Private repos do not have a public-publish surface; the "
@@ -1515,9 +1389,7 @@ def populate_osps_vm_04_01(
     )
 
 
-def populate_osps_vm_05_03(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_vm_05_03(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-VM-05.03 — Dependency SCA active on changes.
 
     Posture-level finding: is Dependabot's vulnerability-alerts
@@ -1548,10 +1420,7 @@ def populate_osps_vm_05_03(
         repo=repo,
         control_id="OSPS-VM-05.03",
         scope=None,
-        title=(
-            f"OSPS-VM-05.03 {verb}: Dependabot SCA on {owner}/{repo} "
-            f"({'enabled' if enabled else 'disabled'})"
-        ),
+        title=(f"OSPS-VM-05.03 {verb}: Dependabot SCA on {owner}/{repo} ({'enabled' if enabled else 'disabled'})"),
         description=(
             "Dependabot vulnerability alerts mechanism = "
             f"{'enabled' if enabled else 'disabled'}. "
@@ -1562,8 +1431,7 @@ def populate_osps_vm_05_03(
         mappings=[
             _osps_mapping(
                 "OSPS-VM-05.03",
-                "Dependabot vulnerability-alerts presence inspected via "
-                "the /repos/{o}/{r}/vulnerability-alerts probe.",
+                "Dependabot vulnerability-alerts presence inspected via the /repos/{o}/{r}/vulnerability-alerts probe.",
             ),
             _nist_53_mapping(
                 "RA-5",
@@ -1573,24 +1441,16 @@ def populate_osps_vm_05_03(
             ),
             _nist_53_mapping(
                 "SI-2",
-                "SI-2 Flaw Remediation — Dependabot alerts directly "
-                "evidence known flaws in third-party dependencies.",
+                "SI-2 Flaw Remediation — Dependabot alerts directly evidence known flaws in third-party dependencies.",
                 relationship=OLIRRelationship.INTERSECTS_WITH,
             ),
         ],
         raw={"vulnerability_alerts_enabled": enabled},
-        remediation=(
-            None
-            if enabled
-            else "Enable Dependabot alerts in Settings → Security & "
-            "analysis."
-        ),
+        remediation=(None if enabled else "Enable Dependabot alerts in Settings → Security & analysis."),
     )
 
 
-def populate_osps_vm_06_02(
-    client: GitHubClient, owner: str, repo: str
-) -> SecurityFinding:
+def populate_osps_vm_06_02(client: GitHubClient, owner: str, repo: str) -> SecurityFinding:
     """OSPS-VM-06.02 — Code scanning (SAST) on changes."""
     try:
         enabled = client.is_code_scanning_enabled(owner, repo)
@@ -1611,10 +1471,7 @@ def populate_osps_vm_06_02(
         repo=repo,
         control_id="OSPS-VM-06.02",
         scope=None,
-        title=(
-            f"OSPS-VM-06.02 {verb}: code scanning on {owner}/{repo} "
-            f"({'enabled' if enabled else 'disabled'})"
-        ),
+        title=(f"OSPS-VM-06.02 {verb}: code scanning on {owner}/{repo} ({'enabled' if enabled else 'disabled'})"),
         description=(
             "Code-scanning alerts endpoint = "
             f"{'reachable' if enabled else 'not reachable'}. "
@@ -1628,8 +1485,7 @@ def populate_osps_vm_06_02(
             ),
             _nist_53_mapping(
                 "SA-11",
-                "SA-11 Developer Security Testing — code scanning is the "
-                "automated SAST gate enforced before merge.",
+                "SA-11 Developer Security Testing — code scanning is the automated SAST gate enforced before merge.",
                 relationship=OLIRRelationship.SUBSET_OF,
             ),
         ],
@@ -1637,8 +1493,7 @@ def populate_osps_vm_06_02(
         remediation=(
             None
             if enabled
-            else "Enable Code Scanning (CodeQL default setup or a custom "
-            "workflow) in Settings → Security & analysis."
+            else "Enable Code Scanning (CodeQL default setup or a custom workflow) in Settings → Security & analysis."
         ),
     )
 

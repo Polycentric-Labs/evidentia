@@ -84,9 +84,7 @@ def load_user_manifest(override: Path | None = None) -> FrameworkManifest:
     return FrameworkManifest.model_validate(raw)
 
 
-def save_user_manifest(
-    manifest: FrameworkManifest, override: Path | None = None
-) -> Path:
+def save_user_manifest(manifest: FrameworkManifest, override: Path | None = None) -> Path:
     """Persist the user-dir manifest as YAML."""
     ensure_user_dir(override)
     path = user_manifest_path(override)
@@ -136,8 +134,7 @@ def resolve_catalog_path(
         resolved = path.resolve()
         if not resolved.is_relative_to(user_dir.resolve()):
             raise ValueError(
-                f"User catalog path for {framework_id!r} escapes the user "
-                "catalog directory; refusing to load."
+                f"User catalog path for {framework_id!r} escapes the user catalog directory; refusing to load."
             )
         # %r (repr) escapes control chars in user-controlled framework_id
         # + path — closes CodeQL py/log-injection alert #81 (CWE-117)
@@ -156,13 +153,8 @@ def resolve_catalog_path(
     # Fall back to bundled
     bundled_entry = bundled_manifest.get(framework_id)
     if bundled_entry is None:
-        all_ids = sorted(
-            {fw.id for fw in bundled_manifest.frameworks}
-            | {fw.id for fw in user_manifest.frameworks}
-        )
-        raise ValueError(
-            f"Unknown framework '{framework_id}'. Available: {', '.join(all_ids)}"
-        )
+        all_ids = sorted({fw.id for fw in bundled_manifest.frameworks} | {fw.id for fw in user_manifest.frameworks})
+        raise ValueError(f"Unknown framework '{framework_id}'. Available: {', '.join(all_ids)}")
 
     if bundled_data_dir is None:
         from evidentia_core.catalogs.loader import DATA_DIR

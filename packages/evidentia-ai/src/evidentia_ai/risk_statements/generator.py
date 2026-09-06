@@ -97,17 +97,11 @@ def _build_risk_context(gap: ControlGap, context: SystemContext) -> str:
             components_text += f" — location: {comp.location}"
         components_text += "\n"
 
-    threat_actors_text = (
-        "\n".join(f"- {t}" for t in context.threat_actors) or "Not specified"
-    )
+    threat_actors_text = "\n".join(f"- {t}" for t in context.threat_actors) or "Not specified"
     existing_controls_text = ", ".join(context.existing_controls) or "None specified"
     cross_fw_text = ", ".join(gap.cross_framework_value) or "None"
 
-    severity_value = (
-        gap.gap_severity.value
-        if hasattr(gap.gap_severity, "value")
-        else gap.gap_severity
-    )
+    severity_value = gap.gap_severity.value if hasattr(gap.gap_severity, "value") else gap.gap_severity
 
     return RISK_CONTEXT_TEMPLATE.format(
         organization=context.organization,
@@ -175,9 +169,7 @@ class RiskStatementGenerator:
         model_inventory_id: str | None = None,
     ) -> None:
         self.model = model or get_default_model()
-        self.temperature = (
-            temperature if temperature is not None else get_temperature()
-        )
+        self.temperature = temperature if temperature is not None else get_temperature()
         self.max_retries = max_retries
         self.client = get_instructor_client()
         # v0.7.10 P0.6.4 — model risk inventory linkage. When set,
@@ -364,39 +356,28 @@ class RiskStatementGenerator:
         # `prompt_hash` reflects the actual prompt sent.
         sys_prompt = RISK_STATEMENT_SYSTEM_PROMPT
         if emit_trace:
-            sys_prompt = (
-                RISK_STATEMENT_SYSTEM_PROMPT
-                + RISK_STATEMENT_TRACE_PROMPT
-            )
+            sys_prompt = RISK_STATEMENT_SYSTEM_PROMPT + RISK_STATEMENT_TRACE_PROMPT
 
         try:
-            risk, attempts = self._invoke_llm_sync(
-                sys_prompt, user_prompt, run_id=run_id
-            )
+            risk, attempts = self._invoke_llm_sync(sys_prompt, user_prompt, run_id=run_id)
         except OfflineViolationError:
             # Programmer/policy error — must surface to the operator.
             raise
         except _LLM_TRANSIENT_EXCEPTIONS as exc:
             self._emit_failure(gap_label, exc, "transient_after_retries", run_id)
             raise LLMUnavailableError(
-                f"LLM transient error for {gap_label} after retries: "
-                f"{type(exc).__name__}: {exc}"
+                f"LLM transient error for {gap_label} after retries: {type(exc).__name__}: {exc}"
             ) from exc
         except InstructorRetryException as exc:
             self._emit_failure(gap_label, exc, "validation_exhausted", run_id)
-            raise LLMValidationError(
-                f"Instructor validation retries exhausted for {gap_label}: {exc}"
-            ) from exc
+            raise LLMValidationError(f"Instructor validation retries exhausted for {gap_label}: {exc}") from exc
         except Exception as exc:
             self._emit_failure(gap_label, exc, "unexpected", run_id)
             raise RiskGenerationFailed(
-                f"Unexpected risk-statement failure for {gap_label}: "
-                f"{type(exc).__name__}: {exc}"
+                f"Unexpected risk-statement failure for {gap_label}: {type(exc).__name__}: {exc}"
             ) from exc
 
-        gen_ctx = self._build_generation_context(
-            sys_prompt, user_prompt, attempts, run_id=run_id
-        )
+        gen_ctx = self._build_generation_context(sys_prompt, user_prompt, attempts, run_id=run_id)
         risk = self._enrich(risk, gap, gen_ctx)
         if emit_trace:
             # v0.8.1 P2.2: prefer the LLM-derived trace.
@@ -434,10 +415,7 @@ class RiskStatementGenerator:
         _log.info(
             action=EventAction.AI_RISK_TRACE_EMITTED,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"Reasoning trace emitted for "
-                f"{gap.framework}:{gap.control_id}"
-            ),
+            message=(f"Reasoning trace emitted for {gap.framework}:{gap.control_id}"),
             evidentia={
                 "run_id": run_id or risk.id,
                 "risk_id": risk.id,
@@ -473,10 +451,7 @@ class RiskStatementGenerator:
         stub_trace = ReasoningTrace(
             claims=[
                 TraceClaim(
-                    claim=(
-                        f"Risk applies to control {gap.control_id} "
-                        f"in framework {gap.framework}."
-                    ),
+                    claim=(f"Risk applies to control {gap.control_id} in framework {gap.framework}."),
                     clause_citations=[
                         f"{gap.framework}:{gap.control_id}",
                     ],
@@ -494,10 +469,7 @@ class RiskStatementGenerator:
         _log.info(
             action=EventAction.AI_RISK_TRACE_EMITTED,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"Reasoning trace emitted for "
-                f"{gap.framework}:{gap.control_id}"
-            ),
+            message=(f"Reasoning trace emitted for {gap.framework}:{gap.control_id}"),
             evidentia={
                 "run_id": run_id or risk.id,
                 "risk_id": risk.id,
@@ -548,9 +520,7 @@ class RiskStatementGenerator:
         # M4: outcome = SUCCESS only when every gap succeeded; UNKNOWN when
         # some failed (per ECS spec, UNKNOWN is the partial-success signal).
         # M2: distinct event action prevents per-call + summary double-counting.
-        batch_outcome = (
-            EventOutcome.SUCCESS if len(results) == total else EventOutcome.UNKNOWN
-        )
+        batch_outcome = EventOutcome.SUCCESS if len(results) == total else EventOutcome.UNKNOWN
         _log.info(
             action=EventAction.AI_RISK_BATCH_COMPLETED,
             outcome=batch_outcome,
@@ -576,32 +546,24 @@ class RiskStatementGenerator:
         gap_label = f"{gap.framework}:{gap.control_id}"
 
         try:
-            risk, attempts = await self._invoke_llm_async(
-                RISK_STATEMENT_SYSTEM_PROMPT, user_prompt, run_id=run_id
-            )
+            risk, attempts = await self._invoke_llm_async(RISK_STATEMENT_SYSTEM_PROMPT, user_prompt, run_id=run_id)
         except OfflineViolationError:
             raise
         except _LLM_TRANSIENT_EXCEPTIONS as exc:
             self._emit_failure(gap_label, exc, "transient_after_retries", run_id)
             raise LLMUnavailableError(
-                f"LLM transient error for {gap_label} after retries: "
-                f"{type(exc).__name__}: {exc}"
+                f"LLM transient error for {gap_label} after retries: {type(exc).__name__}: {exc}"
             ) from exc
         except InstructorRetryException as exc:
             self._emit_failure(gap_label, exc, "validation_exhausted", run_id)
-            raise LLMValidationError(
-                f"Instructor validation retries exhausted for {gap_label}: {exc}"
-            ) from exc
+            raise LLMValidationError(f"Instructor validation retries exhausted for {gap_label}: {exc}") from exc
         except Exception as exc:
             self._emit_failure(gap_label, exc, "unexpected", run_id)
             raise RiskGenerationFailed(
-                f"Unexpected risk-statement failure for {gap_label}: "
-                f"{type(exc).__name__}: {exc}"
+                f"Unexpected risk-statement failure for {gap_label}: {type(exc).__name__}: {exc}"
             ) from exc
 
-        gen_ctx = self._build_generation_context(
-            RISK_STATEMENT_SYSTEM_PROMPT, user_prompt, attempts, run_id=run_id
-        )
+        gen_ctx = self._build_generation_context(RISK_STATEMENT_SYSTEM_PROMPT, user_prompt, attempts, run_id=run_id)
         risk = self._enrich(risk, gap, gen_ctx)
         self._emit_success(risk, gap_label, attempts)
         return risk
@@ -624,9 +586,7 @@ class RiskStatementGenerator:
         async def _generate_one(gap: ControlGap) -> RiskStatement | None:
             async with semaphore:
                 try:
-                    return await self.generate_async(
-                        gap, system_context, run_id=batch_run_id
-                    )
+                    return await self.generate_async(gap, system_context, run_id=batch_run_id)
                 except RiskStatementError:
                     return None
 
@@ -634,18 +594,11 @@ class RiskStatementGenerator:
         raw_results = await asyncio.gather(*tasks)
         results: list[RiskStatement] = [r for r in raw_results if r is not None]
 
-        batch_outcome = (
-            EventOutcome.SUCCESS
-            if len(results) == len(gaps)
-            else EventOutcome.UNKNOWN
-        )
+        batch_outcome = EventOutcome.SUCCESS if len(results) == len(gaps) else EventOutcome.UNKNOWN
         _log.info(
             action=EventAction.AI_RISK_BATCH_COMPLETED,
             outcome=batch_outcome,
-            message=(
-                f"Async batch complete: {len(results)}/{len(gaps)} "
-                f"risk statements generated"
-            ),
+            message=(f"Async batch complete: {len(results)}/{len(gaps)} risk statements generated"),
             evidentia={
                 "run_id": batch_run_id,
                 "model": self.model,
@@ -659,9 +612,7 @@ class RiskStatementGenerator:
 
     # ── Structured event helpers ──────────────────────────────────────
 
-    def _emit_success(
-        self, risk: RiskStatement, gap_label: str, attempts: int
-    ) -> None:
+    def _emit_success(self, risk: RiskStatement, gap_label: str, attempts: int) -> None:
         gen_ctx = risk.generation_context
         _log.info(
             action=EventAction.AI_RISK_GENERATED,
@@ -694,10 +645,7 @@ class RiskStatementGenerator:
         _log.error(
             action=EventAction.AI_RISK_FAILED,
             outcome=EventOutcome.FAILURE,
-            message=(
-                f"Risk-statement generation failed for {gap_label} "
-                f"({failure_kind}): {type(exc).__name__}: {exc}"
-            ),
+            message=(f"Risk-statement generation failed for {gap_label} ({failure_kind}): {type(exc).__name__}: {exc}"),
             error={
                 "type": type(exc).__name__,
                 "message": str(exc),

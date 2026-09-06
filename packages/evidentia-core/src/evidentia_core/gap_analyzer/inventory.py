@@ -105,10 +105,7 @@ def load_inventory(path: str | Path) -> ControlInventory:
     if suffix == ".json":
         return _parse_json(content, str(path))
 
-    raise ValueError(
-        f"Unsupported file extension '{suffix}'. "
-        f"Supported: .yaml, .yml, .json, .csv"
-    )
+    raise ValueError(f"Unsupported file extension '{suffix}'. Supported: .yaml, .yml, .json, .csv")
 
 
 def _parse_json(content: str, source_path: str) -> ControlInventory:
@@ -117,9 +114,7 @@ def _parse_json(content: str, source_path: str) -> ControlInventory:
 
     if "component-definition" in data:
         return _parse_oscal_component_definition(data, source_path)
-    if "ciso_assistant" in data or (
-        isinstance(data, dict) and "framework" in data and "assessments" in data
-    ):
+    if "ciso_assistant" in data or (isinstance(data, dict) and "framework" in data and "assessments" in data):
         return _parse_ciso_assistant(data, source_path)
     if "controls" in data:
         return _parse_evidentia_dict(data, source_path, "evidentia-json")
@@ -135,15 +130,11 @@ def _parse_evidentia_yaml(content: str, source_path: str) -> ControlInventory:
     """Parse Evidentia YAML format."""
     data = yaml.safe_load(content)
     if not isinstance(data, dict) or "controls" not in data:
-        raise ValueError(
-            "Invalid Evidentia YAML: expected a mapping with 'controls' key"
-        )
+        raise ValueError("Invalid Evidentia YAML: expected a mapping with 'controls' key")
     return _parse_evidentia_dict(data, source_path, "evidentia")
 
 
-def _parse_evidentia_dict(
-    data: dict[str, Any], source_path: str, format_name: str
-) -> ControlInventory:
+def _parse_evidentia_dict(data: dict[str, Any], source_path: str, format_name: str) -> ControlInventory:
     """Parse a Evidentia-format dict (from YAML or JSON)."""
     controls: list[ControlImplementation] = []
     for item in data.get("controls", []):
@@ -156,8 +147,7 @@ def _parse_evidentia_dict(
                 title=item.get("title"),
                 description=item.get("description"),
                 status=status,
-                implementation_notes=item.get("implementation_notes")
-                or item.get("notes"),
+                implementation_notes=item.get("implementation_notes") or item.get("notes"),
                 responsible_roles=item.get("responsible_roles", []),
                 evidence_references=item.get("evidence_references", []),
                 owner=item.get("owner"),
@@ -207,9 +197,7 @@ def _parse_csv(content: str, source_path: str) -> ControlInventory:
         if not control_id:
             continue
 
-        status_str = (
-            row.get(header_map.get("status", ""), "not_implemented") or "not_implemented"
-        ).lower().strip()
+        status_str = (row.get(header_map.get("status", ""), "not_implemented") or "not_implemented").lower().strip()
         status = STATUS_ALIASES.get(status_str, ControlStatus.NOT_IMPLEMENTED)
 
         controls.append(
@@ -240,9 +228,7 @@ def _parse_csv(content: str, source_path: str) -> ControlInventory:
     )
 
 
-def _parse_oscal_component_definition(
-    data: dict[str, Any], source_path: str
-) -> ControlInventory:
+def _parse_oscal_component_definition(data: dict[str, Any], source_path: str) -> ControlInventory:
     """Parse an OSCAL component-definition JSON into a ControlInventory."""
     comp_def = data["component-definition"]
     metadata = comp_def.get("metadata", {})

@@ -79,9 +79,7 @@ def test_compare_counts_flags_missing_readme_key() -> None:
 
 def test_count_catalogs_counts_manifest_entries(tmp_path: Path) -> None:
     manifest = tmp_path / "frameworks.yaml"
-    manifest.write_text(
-        "version: 1\nframeworks:\n- id: a\n- id: b\n- id: c\n", encoding="utf-8"
-    )
+    manifest.write_text("version: 1\nframeworks:\n- id: a\n- id: b\n- id: c\n", encoding="utf-8")
     assert c.count_catalogs(manifest) == 3
 
 
@@ -164,12 +162,8 @@ def _patch_live_pct(monkeypatch, pct: float) -> None:
     class _Spec:
         loader = _Loader()
 
-    monkeypatch.setattr(
-        c.importlib.util, "spec_from_file_location", lambda *a, **k: _Spec()
-    )
-    monkeypatch.setattr(
-        c.importlib.util, "module_from_spec", lambda spec: types.SimpleNamespace()
-    )
+    monkeypatch.setattr(c.importlib.util, "spec_from_file_location", lambda *a, **k: _Spec())
+    monkeypatch.setattr(c.importlib.util, "module_from_spec", lambda spec: types.SimpleNamespace())
 
 
 def test_parity_badge_passes_when_it_matches_live(monkeypatch) -> None:

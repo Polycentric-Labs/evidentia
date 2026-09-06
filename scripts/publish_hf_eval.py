@@ -59,9 +59,7 @@ CORPUS_ALL_FILENAME = "corpus-all.jsonl"
 DATASET_CARD_FILENAME = "hf-dataset-card.md"
 
 #: Valid ``category`` values per the corpus schema.
-VALID_CATEGORIES = frozenset(
-    {"verbatim", "paraphrase", "semi-related", "hallucination"}
-)
+VALID_CATEGORIES = frozenset({"verbatim", "paraphrase", "semi-related", "hallucination"})
 
 
 class CorpusValidationError(Exception):
@@ -90,41 +88,25 @@ def validate_corpus_entry(entry: object, *, source: str, line_no: int) -> None:
     """
     where = f"{source}:{line_no}"
     if not isinstance(entry, dict):
-        raise CorpusValidationError(
-            f"{where}: entry is not a JSON object"
-        )
+        raise CorpusValidationError(f"{where}: entry is not a JSON object")
     for field in ("id", "claim"):
         value = entry.get(field)
         if not isinstance(value, str) or not value:
-            raise CorpusValidationError(
-                f"{where}: {field!r} must be a non-empty string"
-            )
+            raise CorpusValidationError(f"{where}: {field!r} must be a non-empty string")
     category = entry.get("category")
     if category not in VALID_CATEGORIES:
-        raise CorpusValidationError(
-            f"{where}: category {category!r} not in {sorted(VALID_CATEGORIES)}"
-        )
+        raise CorpusValidationError(f"{where}: category {category!r} not in {sorted(VALID_CATEGORIES)}")
     clauses = entry.get("source_clauses")
     if not isinstance(clauses, list) or not clauses:
-        raise CorpusValidationError(
-            f"{where}: 'source_clauses' must be a non-empty list"
-        )
+        raise CorpusValidationError(f"{where}: 'source_clauses' must be a non-empty list")
     if not all(isinstance(c, str) and c for c in clauses):
-        raise CorpusValidationError(
-            f"{where}: every source_clause must be a non-empty string"
-        )
+        raise CorpusValidationError(f"{where}: every source_clause must be a non-empty string")
     if not isinstance(entry.get("faithful"), bool):
-        raise CorpusValidationError(
-            f"{where}: 'faithful' must be a boolean"
-        )
+        raise CorpusValidationError(f"{where}: 'faithful' must be a boolean")
     # framework is optional, but if present must be a non-empty string.
     framework = entry.get("framework")
-    if framework is not None and (
-        not isinstance(framework, str) or not framework
-    ):
-        raise CorpusValidationError(
-            f"{where}: 'framework' (when present) must be a non-empty string"
-        )
+    if framework is not None and (not isinstance(framework, str) or not framework):
+        raise CorpusValidationError(f"{where}: 'framework' (when present) must be a non-empty string")
 
 
 def validate_corpus_file(path: Path) -> list[str]:
@@ -146,24 +128,18 @@ def validate_corpus_file(path: Path) -> list[str]:
     if not path.is_file():
         raise FileNotFoundError(f"Corpus file not found: {path}")
     lines: list[str] = []
-    for line_no, raw_line in enumerate(
-        path.read_text(encoding="utf-8").splitlines(), start=1
-    ):
+    for line_no, raw_line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         stripped = raw_line.strip()
         if not stripped:
             continue  # tolerate blank lines
         try:
             entry = json.loads(stripped)
         except json.JSONDecodeError as exc:
-            raise CorpusValidationError(
-                f"{path.name}:{line_no}: invalid JSON: {exc}"
-            ) from exc
+            raise CorpusValidationError(f"{path.name}:{line_no}: invalid JSON: {exc}") from exc
         validate_corpus_entry(entry, source=path.name, line_no=line_no)
         lines.append(stripped)
     if not lines:
-        raise CorpusValidationError(
-            f"{path.name}: contains no entries"
-        )
+        raise CorpusValidationError(f"{path.name}: contains no entries")
     return lines
 
 
@@ -301,26 +277,17 @@ def main(argv: list[str] | None = None) -> int:
         "--calibration-dir",
         type=Path,
         default=CALIBRATION_DIR,
-        help=(
-            "Directory holding the corpus*.jsonl files + the dataset "
-            f"card (default: {CALIBRATION_DIR})."
-        ),
+        help=(f"Directory holding the corpus*.jsonl files + the dataset card (default: {CALIBRATION_DIR})."),
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help=(
-            "Validate + assemble + print the upload plan WITHOUT "
-            "touching the network or needing HF_TOKEN."
-        ),
+        help=("Validate + assemble + print the upload plan WITHOUT touching the network or needing HF_TOKEN."),
     )
     parser.add_argument(
         "--private",
         action="store_true",
-        help=(
-            "Create the dataset repo private. Default is public — the "
-            "eval suite is meant to be downloadable."
-        ),
+        help=("Create the dataset repo private. Default is public — the eval suite is meant to be downloadable."),
     )
     args = parser.parse_args(argv)
 
@@ -332,21 +299,13 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     combined_path = calibration_dir / CORPUS_ALL_FILENAME
-    total_entries = len(
-        combined_path.read_text(encoding="utf-8").splitlines()
-    )
-    print(
-        f"Assembled {len(upload_set)} files for {args.repo_id!r} "
-        f"({total_entries} total corpus entries):"
-    )
+    total_entries = len(combined_path.read_text(encoding="utf-8").splitlines())
+    print(f"Assembled {len(upload_set)} files for {args.repo_id!r} ({total_entries} total corpus entries):")
     for path_in_repo in sorted(upload_set):
         print(f"  {path_in_repo}")
 
     if args.dry_run:
-        print(
-            "\n--dry-run: nothing uploaded. Re-run without --dry-run "
-            "(with HF_TOKEN set) to publish."
-        )
+        print("\n--dry-run: nothing uploaded. Re-run without --dry-run (with HF_TOKEN set) to publish.")
         return 0
 
     import os

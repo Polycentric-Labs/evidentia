@@ -41,8 +41,7 @@ PRIVILEGE_GRANT_MAPPINGS = [
     _m(
         "AC-3",
         OLIRRelationship.SUBSET_OF,
-        "AC-3 Access Enforcement — INFORMATION_SCHEMA privileges + "
-        "pg_class.relacl ARE the enforcement records.",
+        "AC-3 Access Enforcement — INFORMATION_SCHEMA privileges + pg_class.relacl ARE the enforcement records.",
     ),
     _m(
         "AC-6",
@@ -66,8 +65,7 @@ AUDIT_LOG_MAPPINGS = [
     _m(
         "AU-3",
         OLIRRelationship.INTERSECTS_WITH,
-        "AU-3 Content of Audit Records — log_line_prefix + log_* "
-        "settings define what each audit record carries.",
+        "AU-3 Content of Audit Records — log_line_prefix + log_* settings define what each audit record carries.",
     ),
 ]
 

@@ -23,9 +23,7 @@ import pytest
 
 
 @pytest.fixture
-def openapi_schema(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> dict[str, Any]:
+def openapi_schema(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     """Build the OpenAPI schema with an isolated AI registry dir.
 
     Mirrors the isolation pattern used elsewhere (an isolated
@@ -41,9 +39,7 @@ def openapi_schema(
 
 
 class TestAiGovRegisterLinks:
-    def test_links_present_with_correct_operation_ids_and_parameters(
-        self, openapi_schema: dict[str, Any]
-    ) -> None:
+    def test_links_present_with_correct_operation_ids_and_parameters(self, openapi_schema: dict[str, Any]) -> None:
         register_op = openapi_schema["paths"]["/api/ai-gov/register"]["post"]
         links = register_op["responses"]["200"]["links"]
 
@@ -56,9 +52,7 @@ class TestAiGovRegisterLinks:
         # Derive expected operationIds from the schema itself (the GET/PUT/
         # DELETE ops on the same resource) so this assertion is robust to
         # operationId spelling drift rather than hardcoding a duplicate.
-        system_id_path = openapi_schema["paths"][
-            "/api/ai-gov/systems/{system_id}"
-        ]
+        system_id_path = openapi_schema["paths"]["/api/ai-gov/systems/{system_id}"]
         expected_get_op_id = system_id_path["get"]["operationId"]
         expected_put_op_id = system_id_path["put"]["operationId"]
         expected_delete_op_id = system_id_path["delete"]["operationId"]
@@ -68,53 +62,34 @@ class TestAiGovRegisterLinks:
         assert links["DeleteSystem"]["operationId"] == expected_delete_op_id
 
         for name in ("GetSystem", "UpdateSystem", "DeleteSystem"):
-            assert links[name]["parameters"] == {
-                "system_id": "$response.body#/system_id"
-            }
+            assert links[name]["parameters"] == {"system_id": "$response.body#/system_id"}
 
-    def test_existing_4xx_responses_unchanged_after_openapi_extra_merge(
-        self, openapi_schema: dict[str, Any]
-    ) -> None:
+    def test_existing_4xx_responses_unchanged_after_openapi_extra_merge(self, openapi_schema: dict[str, Any]) -> None:
         """Proves the ``openapi_extra`` link merge didn't clobber the
         ``error_responses()`` 4xx documentation already on the route."""
-        register_responses = openapi_schema["paths"]["/api/ai-gov/register"][
-            "post"
-        ]["responses"]
+        register_responses = openapi_schema["paths"]["/api/ai-gov/register"]["post"]["responses"]
         assert "400" in register_responses
         assert "409" in register_responses
         assert "429" in register_responses
         # Sanity: the descriptions still carry the documented error keys.
         assert "invalid_body" in register_responses["400"]["description"]
-        assert (
-            "idempotency_key_conflict"
-            in register_responses["409"]["description"]
-        )
+        assert "idempotency_key_conflict" in register_responses["409"]["description"]
 
 
 class TestCatalogImportLinks:
-    def test_delete_link_present_with_correct_operation_id_and_parameters(
-        self, openapi_schema: dict[str, Any]
-    ) -> None:
+    def test_delete_link_present_with_correct_operation_id_and_parameters(self, openapi_schema: dict[str, Any]) -> None:
         import_op = openapi_schema["paths"]["/api/catalog/import"]["post"]
         links = import_op["responses"]["201"]["links"]
 
         assert len(links) == 1
         (_link_name, link) = next(iter(links.items()))
 
-        expected_delete_op_id = openapi_schema["paths"][
-            "/api/catalog/{framework_id}"
-        ]["delete"]["operationId"]
+        expected_delete_op_id = openapi_schema["paths"]["/api/catalog/{framework_id}"]["delete"]["operationId"]
         assert link["operationId"] == expected_delete_op_id
-        assert link["parameters"] == {
-            "framework_id": "$response.body#/framework_id"
-        }
+        assert link["parameters"] == {"framework_id": "$response.body#/framework_id"}
 
-    def test_existing_4xx_responses_unchanged_after_openapi_extra_merge(
-        self, openapi_schema: dict[str, Any]
-    ) -> None:
-        import_responses = openapi_schema["paths"]["/api/catalog/import"][
-            "post"
-        ]["responses"]
+    def test_existing_4xx_responses_unchanged_after_openapi_extra_merge(self, openapi_schema: dict[str, Any]) -> None:
+        import_responses = openapi_schema["paths"]["/api/catalog/import"]["post"]["responses"]
         assert "400" in import_responses
         assert "403" in import_responses
         assert "invalid_id" in import_responses["400"]["description"]
@@ -150,14 +125,10 @@ class TestUpdateSystemRequestAtLeastOneFieldSchema:
             assert branch["properties"][field] == {"not": {"type": "null"}}
         assert seen_fields == expected_fields
 
-    def test_schema_appears_verbatim_in_dumped_openapi_doc(
-        self, openapi_schema: dict[str, Any]
-    ) -> None:
+    def test_schema_appears_verbatim_in_dumped_openapi_doc(self, openapi_schema: dict[str, Any]) -> None:
         """The same ``anyOf`` shape must also show up in the dumped
         OpenAPI doc's component schema (not just the standalone
         ``model_json_schema()`` call) — this is what schemathesis
         actually reads to generate request bodies."""
-        component = openapi_schema["components"]["schemas"][
-            "UpdateSystemRequest"
-        ]
+        component = openapi_schema["components"]["schemas"]["UpdateSystemRequest"]
         assert len(component["anyOf"]) == 4

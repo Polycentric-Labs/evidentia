@@ -99,9 +99,7 @@ def parse_frozen_imports(markdown: str) -> list[str]:
 
     match = re.search(r"```python\n(.*?)```", section, re.DOTALL)
     if match is None:
-        raise SurfaceParseError(
-            f"{API_STABILITY_PATH.name} §5 has no ```python block to check"
-        )
+        raise SurfaceParseError(f"{API_STABILITY_PATH.name} §5 has no ```python block to check")
 
     block = _ELISION.sub("", match.group(1))
 
@@ -129,11 +127,7 @@ def parse_frozen_imports(markdown: str) -> list[str]:
 def _table_names(markdown: str, heading: str, *, stop: str) -> set[str]:
     """Collect the first-column backticked names of the table under ``heading``."""
     section = _section(markdown, heading, stop=stop)
-    return {
-        match.group(1)
-        for line in section.splitlines()
-        if (match := _TABLE_NAME_CELL.match(line))
-    }
+    return {match.group(1) for line in section.splitlines() if (match := _TABLE_NAME_CELL.match(line))}
 
 
 def parse_frozen_mcp_tools(markdown: str) -> set[str]:
@@ -153,9 +147,7 @@ def discover_live_env_vars(packages_root: Path) -> set[str]:
         if "__pycache__" in path.parts:
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
-        found.update(
-            match.group(1).strip() for match in _EVIDENTIA_ENV_LITERAL.finditer(text)
-        )
+        found.update(match.group(1).strip() for match in _EVIDENTIA_ENV_LITERAL.finditer(text))
     return found
 
 
@@ -180,15 +172,11 @@ def discover_live_mcp_tools() -> set[str]:
         cwd=REPO_ROOT,
     )
     if proc.returncode != 0:
-        raise SurfaceParseError(
-            "could not enumerate live MCP tools: " + proc.stderr.strip()[-2000:]
-        )
+        raise SurfaceParseError("could not enumerate live MCP tools: " + proc.stderr.strip()[-2000:])
     # Warnings may precede the payload; the JSON array is the last line.
     payload = [ln for ln in proc.stdout.splitlines() if ln.startswith("[")]
     if not payload:
-        raise SurfaceParseError(
-            "MCP tool enumeration produced no JSON: " + proc.stdout[-2000:]
-        )
+        raise SurfaceParseError("MCP tool enumeration produced no JSON: " + proc.stdout[-2000:])
     return set(ast.literal_eval(payload[-1]))
 
 
@@ -222,13 +210,8 @@ def check_frozen_imports(statements: list[str]) -> list[str]:
         if one.returncode != 0:
             last = one.stderr.strip().splitlines()[-1] if one.stderr.strip() else "?"
             flat = " ".join(statement.split())
-            failures.append(
-                f"frozen §5 import no longer resolves: {flat}  ->  {last}"
-            )
-    return failures or [
-        "§5 imports fail as a block but each succeeds alone: "
-        + proc.stderr.strip()[-2000:]
-    ]
+            failures.append(f"frozen §5 import no longer resolves: {flat}  ->  {last}")
+    return failures or ["§5 imports fail as a block but each succeeds alone: " + proc.stderr.strip()[-2000:]]
 
 
 def compare_mcp_tools(*, frozen: set[str], live: set[str]) -> list[str]:
@@ -276,9 +259,7 @@ def main(argv: list[str] | None = None) -> int:
     failures += check_frozen_imports(statements)
 
     frozen_tools = parse_frozen_mcp_tools(markdown)
-    failures += compare_mcp_tools(
-        frozen=frozen_tools, live=discover_live_mcp_tools()
-    )
+    failures += compare_mcp_tools(frozen=frozen_tools, live=discover_live_mcp_tools())
 
     frozen_env = parse_frozen_env_vars(markdown)
     live_env = discover_live_env_vars(PACKAGES_ROOT)

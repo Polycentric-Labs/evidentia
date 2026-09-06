@@ -23,9 +23,7 @@ class TestEvidenceRecord:
         try:
             rec.source = "z"  # type: ignore[misc]
         except Exception as exc:
-            assert "frozen" in str(exc).lower() or isinstance(
-                exc, AttributeError
-            )
+            assert "frozen" in str(exc).lower() or isinstance(exc, AttributeError)
         else:
             raise AssertionError("expected FrozenInstanceError")
 
@@ -58,9 +56,7 @@ class TestNoopContinuousSource:
         assert source.cadence_slug == "noop"
 
     def test_name_and_cadence_slug_custom(self) -> None:
-        source = NoopContinuousSource(
-            name="my-source", cadence_slug="nist-800-53-rev5-ca7"
-        )
+        source = NoopContinuousSource(name="my-source", cadence_slug="nist-800-53-rev5-ca7")
         assert source.name == "my-source"
         assert source.cadence_slug == "nist-800-53-rev5-ca7"
 

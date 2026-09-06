@@ -59,16 +59,35 @@ documentation or policy work.
 
 ```python
 _HIGH_EFFORT_KEYWORDS = (
-    "architecture", "audit log", "authentication", "continuous monitoring",
-    "cryptograph",   # matches "cryptographic", "cryptography"
-    "encrypt", "incident response plan", "key management", "least privilege",
-    "multi-factor", "penetration test", "public key infrastructure",
-    "separation of duties", "siem", "single sign-on", "zero trust",
+    "architecture",
+    "audit log",
+    "authentication",
+    "continuous monitoring",
+    "cryptograph",  # matches "cryptographic", "cryptography"
+    "encrypt",
+    "incident response plan",
+    "key management",
+    "least privilege",
+    "multi-factor",
+    "penetration test",
+    "public key infrastructure",
+    "separation of duties",
+    "siem",
+    "single sign-on",
+    "zero trust",
 )
 
 _MEDIUM_EFFORT_KEYWORDS = (
-    "assess", "configuration", "document", "monitor", "patch", "policy",
-    "procedure", "review", "training", "vulnerability scan",
+    "assess",
+    "configuration",
+    "document",
+    "monitor",
+    "patch",
+    "policy",
+    "procedure",
+    "review",
+    "training",
+    "vulnerability scan",
 )
 ```
 

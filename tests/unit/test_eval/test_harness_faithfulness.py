@@ -59,9 +59,7 @@ def _make_score(
 ) -> Callable[[str, list[str], float], FaithfulnessResult]:
     """Build a deterministic faithfulness_score mock."""
 
-    def _score(
-        claim: str, clauses: list[str], threshold: float
-    ) -> FaithfulnessResult:
+    def _score(claim: str, clauses: list[str], threshold: float) -> FaithfulnessResult:
         score = score_table.get(claim, 0.0)
         return FaithfulnessResult(
             claim=claim,
@@ -84,12 +82,8 @@ class TestCheckFaithfulnessDefault:
                 source_clauses=["clause"],
             ),
         ]
-        harness = DFAHarness(
-            generator=_stub_generator, sample_count_per_prompt=2
-        )
-        result = harness.run(
-            samples=samples, context_factory=_make_ctx
-        )
+        harness = DFAHarness(generator=_stub_generator, sample_count_per_prompt=2)
+        result = harness.run(samples=samples, context_factory=_make_ctx)
         assert result.faithfulness_results == []
 
     def test_check_faithfulness_true_runs_check(self) -> None:
@@ -104,19 +98,13 @@ class TestCheckFaithfulnessDefault:
                 ],
             ),
         ]
-        harness = DFAHarness(
-            generator=_stub_generator, sample_count_per_prompt=2
-        )
+        harness = DFAHarness(generator=_stub_generator, sample_count_per_prompt=2)
         result = harness.run(
             samples=samples,
             context_factory=_make_ctx,
             check_faithfulness=True,
-            claim_extraction_fn=_make_extract(
-                {"prompt 1": ["Claim A", "Claim B"]}
-            ),
-            faithfulness_score_fn=_make_score(
-                {"Claim A": 0.9, "Claim B": 0.8}
-            ),
+            claim_extraction_fn=_make_extract({"prompt 1": ["Claim A", "Claim B"]}),
+            faithfulness_score_fn=_make_score({"Claim A": 0.9, "Claim B": 0.8}),
         )
         assert len(result.faithfulness_results) == 1
         pfr = result.faithfulness_results[0]
@@ -138,16 +126,12 @@ class TestCheckFaithfulnessSampleSkipping:
                 source_clauses=["clause"],
             ),
         ]
-        harness = DFAHarness(
-            generator=_stub_generator, sample_count_per_prompt=2
-        )
+        harness = DFAHarness(generator=_stub_generator, sample_count_per_prompt=2)
         result = harness.run(
             samples=samples,
             context_factory=_make_ctx,
             check_faithfulness=True,
-            claim_extraction_fn=_make_extract(
-                {"prompt 1": ["A"], "prompt 2": ["B"]}
-            ),
+            claim_extraction_fn=_make_extract({"prompt 1": ["A"], "prompt 2": ["B"]}),
             faithfulness_score_fn=_make_score({"A": 1.0, "B": 1.0}),
         )
         # Only p2 produces a faithfulness result.
@@ -157,13 +141,9 @@ class TestCheckFaithfulnessSampleSkipping:
     def test_sample_with_empty_source_clauses_skipped(self) -> None:
         """Empty list also skips (treated as missing)."""
         samples = [
-            EvalSample(
-                prompt_id="p1", prompt="p1 text", source_clauses=[]
-            ),
+            EvalSample(prompt_id="p1", prompt="p1 text", source_clauses=[]),
         ]
-        harness = DFAHarness(
-            generator=_stub_generator, sample_count_per_prompt=1
-        )
+        harness = DFAHarness(generator=_stub_generator, sample_count_per_prompt=1)
         result = harness.run(
             samples=samples,
             context_factory=_make_ctx,
@@ -185,9 +165,7 @@ class TestCheckFaithfulnessClaimResults:
                 source_clauses=["clause"],
             ),
         ]
-        harness = DFAHarness(
-            generator=_stub_generator, sample_count_per_prompt=1
-        )
+        harness = DFAHarness(generator=_stub_generator, sample_count_per_prompt=1)
         result = harness.run(
             samples=samples,
             context_factory=_make_ctx,
@@ -210,9 +188,7 @@ class TestCheckFaithfulnessClaimResults:
                 source_clauses=["clause"],
             ),
         ]
-        harness = DFAHarness(
-            generator=_stub_generator, sample_count_per_prompt=1
-        )
+        harness = DFAHarness(generator=_stub_generator, sample_count_per_prompt=1)
         result = harness.run(
             samples=samples,
             context_factory=_make_ctx,
@@ -237,20 +213,14 @@ class TestCheckFaithfulnessClaimResults:
                 source_clauses=["c1", "c2"],
             ),
         ]
-        harness = DFAHarness(
-            generator=_stub_generator, sample_count_per_prompt=1
-        )
+        harness = DFAHarness(generator=_stub_generator, sample_count_per_prompt=1)
         result = harness.run(
             samples=samples,
             context_factory=_make_ctx,
             check_faithfulness=True,
             faithfulness_threshold=0.5,
-            claim_extraction_fn=_make_extract(
-                {"p1 text": ["A", "B", "C"]}
-            ),
-            faithfulness_score_fn=_make_score(
-                {"A": 0.9, "B": 0.2, "C": 0.7}
-            ),
+            claim_extraction_fn=_make_extract({"p1 text": ["A", "B", "C"]}),
+            faithfulness_score_fn=_make_score({"A": 0.9, "B": 0.2, "C": 0.7}),
         )
         pfr = result.faithfulness_results[0]
         assert pfr.passed_count == 2
@@ -268,12 +238,8 @@ class TestCheckFaithfulnessAuditEvents:
                 source_clauses=["c"],
             ),
         ]
-        harness = DFAHarness(
-            generator=_stub_generator, sample_count_per_prompt=1
-        )
-        with mock.patch(
-            "evidentia_eval.harness._log"
-        ) as mock_log:
+        harness = DFAHarness(generator=_stub_generator, sample_count_per_prompt=1)
+        with mock.patch("evidentia_eval.harness._log") as mock_log:
             harness.run(
                 samples=samples,
                 context_factory=_make_ctx,
@@ -285,19 +251,14 @@ class TestCheckFaithfulnessAuditEvents:
         info_calls = [
             call
             for call in mock_log.info.call_args_list
-            if (a := call.kwargs.get("action"))
-            and getattr(a, "value", a)
-            == "evidentia.ai.eval_faithfulness_checked"
+            if (a := call.kwargs.get("action")) and getattr(a, "value", a) == "evidentia.ai.eval_faithfulness_checked"
         ]
         assert len(info_calls) == 1
         # passed_count + claim_count + overall_faithful in
         # the structured log.
         assert info_calls[0].kwargs["evidentia"]["passed_count"] == 1
         assert info_calls[0].kwargs["evidentia"]["claim_count"] == 1
-        assert (
-            info_calls[0].kwargs["evidentia"]["overall_faithful"]
-            is True
-        )
+        assert info_calls[0].kwargs["evidentia"]["overall_faithful"] is True
 
     def test_violation_event_fires_per_failed_claim(self) -> None:
         """Each below-threshold claim fires AI_EVAL_FAITHFULNESS_VIOLATION."""
@@ -308,20 +269,14 @@ class TestCheckFaithfulnessAuditEvents:
                 source_clauses=["c"],
             ),
         ]
-        harness = DFAHarness(
-            generator=_stub_generator, sample_count_per_prompt=1
-        )
-        with mock.patch(
-            "evidentia_eval.harness._log"
-        ) as mock_log:
+        harness = DFAHarness(generator=_stub_generator, sample_count_per_prompt=1)
+        with mock.patch("evidentia_eval.harness._log") as mock_log:
             harness.run(
                 samples=samples,
                 context_factory=_make_ctx,
                 check_faithfulness=True,
                 faithfulness_threshold=0.5,
-                claim_extraction_fn=_make_extract(
-                    {"p1 text": ["A", "B"]}
-                ),
+                claim_extraction_fn=_make_extract({"p1 text": ["A", "B"]}),
                 faithfulness_score_fn=_make_score(
                     {"A": 0.9, "B": 0.2}  # B fails threshold
                 ),
@@ -330,15 +285,11 @@ class TestCheckFaithfulnessAuditEvents:
         violation_calls = [
             call
             for call in mock_log.warning.call_args_list
-            if (a := call.kwargs.get("action"))
-            and getattr(a, "value", a)
-            == "evidentia.ai.eval_faithfulness_violation"
+            if (a := call.kwargs.get("action")) and getattr(a, "value", a) == "evidentia.ai.eval_faithfulness_violation"
         ]
         # 1 violation (claim B with score 0.2 < threshold 0.5).
         assert len(violation_calls) == 1
-        assert (
-            violation_calls[0].kwargs["evidentia"]["claim"] == "B"
-        )
+        assert violation_calls[0].kwargs["evidentia"]["claim"] == "B"
         assert violation_calls[0].kwargs["evidentia"]["score"] == 0.2
 
 
@@ -352,9 +303,7 @@ class TestCheckFaithfulnessMethodSelection:
                 source_clauses=["c"],
             ),
         ]
-        harness = DFAHarness(
-            generator=_stub_generator, sample_count_per_prompt=1
-        )
+        harness = DFAHarness(generator=_stub_generator, sample_count_per_prompt=1)
         # Don't inject a faithfulness_score_fn; let the harness
         # resolve the default. Use a mocked extract_claims to
         # avoid the LLM call.
@@ -377,9 +326,7 @@ class TestCheckFaithfulnessMethodSelection:
                 source_clauses=["c"],
             ),
         ]
-        harness = DFAHarness(
-            generator=_stub_generator, sample_count_per_prompt=1
-        )
+        harness = DFAHarness(generator=_stub_generator, sample_count_per_prompt=1)
         # Operator's mock returns method='custom'; harness should
         # use it regardless of faithfulness_method kwarg.
         result = harness.run(
@@ -425,9 +372,7 @@ class TestPromptFaithfulnessResultModel:
             ],
         )
         json_str = pfr.model_dump_json()
-        roundtripped = PromptFaithfulnessResult.model_validate_json(
-            json_str
-        )
+        roundtripped = PromptFaithfulnessResult.model_validate_json(json_str)
         assert roundtripped.prompt_id == "p1"
         assert len(roundtripped.claims) == 1
         assert roundtripped.claims[0].score == 0.9

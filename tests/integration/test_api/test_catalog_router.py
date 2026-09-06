@@ -43,9 +43,7 @@ _SAMPLE_CATALOG: dict[str, object] = {
 
 
 @pytest.fixture
-def cat_client(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Iterator[TestClient]:
+def cat_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     """A TestClient over a local app holding ONLY the catalog router.
 
     The user catalog dir is redirected to an isolated tmp subdirectory so
@@ -62,9 +60,7 @@ def cat_client(
 
 
 @pytest.fixture
-def cat_readonly_client(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Iterator[TestClient]:
+def cat_readonly_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     """A catalog TestClient under a restrictive read-only RBAC policy.
 
     Identical user-dir isolation to ``cat_client``, but installs a
@@ -121,9 +117,7 @@ class TestWhere:
         assert detail["error"] == "not_found"
         assert detail["resource"] == "framework"
 
-    def test_imported_framework_resolves_from_user(
-        self, cat_client: TestClient
-    ) -> None:
+    def test_imported_framework_resolves_from_user(self, cat_client: TestClient) -> None:
         cat_client.post("/api/catalog/import", json=_import_payload())
         r = cat_client.get("/api/catalog/where?framework_id=acme-internal")
         assert r.status_code == 200, r.text
@@ -163,15 +157,10 @@ class TestLicenseInfo:
 
 
 class TestCrosswalk:
-    def test_returns_mappings_for_known_pair(
-        self, cat_client: TestClient
-    ) -> None:
+    def test_returns_mappings_for_known_pair(self, cat_client: TestClient) -> None:
         # GV.OC-01 in nist-csf-2.0 maps to AC-1 in nist-800-53-mod
         # (bundled crosswalk nist-csf-2.0_to_nist-800-53-mod.json).
-        r = cat_client.get(
-            "/api/catalog/crosswalk"
-            "?source=nist-csf-2.0&target=nist-800-53-mod&control=GV.OC-01"
-        )
+        r = cat_client.get("/api/catalog/crosswalk?source=nist-csf-2.0&target=nist-800-53-mod&control=GV.OC-01")
         assert r.status_code == 200, r.text
         body = r.json()
         assert body["source"] == "nist-csf-2.0"
@@ -181,14 +170,8 @@ class TestCrosswalk:
         target_ids = {m["target_control_id"] for m in body["mappings"]}
         assert "AC-1" in target_ids
 
-    def test_no_mappings_returns_empty_envelope(
-        self, cat_client: TestClient
-    ) -> None:
-        r = cat_client.get(
-            "/api/catalog/crosswalk"
-            "?source=nist-csf-2.0&target=nist-800-53-mod"
-            "&control=ZZ.NO-99"
-        )
+    def test_no_mappings_returns_empty_envelope(self, cat_client: TestClient) -> None:
+        r = cat_client.get("/api/catalog/crosswalk?source=nist-csf-2.0&target=nist-800-53-mod&control=ZZ.NO-99")
         assert r.status_code == 200, r.text
         body = r.json()
         assert body["total"] == 0
@@ -211,26 +194,16 @@ class TestImport:
         w = cat_client.get("/api/catalog/where?framework_id=acme-internal")
         assert w.json()["source"] == "user"
 
-    def test_duplicate_import_without_force_returns_400(
-        self, cat_client: TestClient
-    ) -> None:
-        assert (
-            cat_client.post("/api/catalog/import", json=_import_payload()).status_code
-            == 201
-        )
+    def test_duplicate_import_without_force_returns_400(self, cat_client: TestClient) -> None:
+        assert cat_client.post("/api/catalog/import", json=_import_payload()).status_code == 201
         r = cat_client.post("/api/catalog/import", json=_import_payload())
         assert r.status_code == 400, r.text
         detail = r.json()["detail"]
         assert detail["error"] == "already_exists"
         assert detail["resource"] == "user_catalog"
 
-    def test_duplicate_import_with_force_overwrites(
-        self, cat_client: TestClient
-    ) -> None:
-        assert (
-            cat_client.post("/api/catalog/import", json=_import_payload()).status_code
-            == 201
-        )
+    def test_duplicate_import_with_force_overwrites(self, cat_client: TestClient) -> None:
+        assert cat_client.post("/api/catalog/import", json=_import_payload()).status_code == 201
         payload = {**_import_payload(), "force": True}
         r = cat_client.post("/api/catalog/import", json=payload)
         assert r.status_code == 201, r.text
@@ -244,9 +217,7 @@ class TestImport:
         r = cat_client.post("/api/catalog/import", json=payload)
         assert r.status_code == 400, r.text
 
-    def test_path_traversal_framework_id_rejected(
-        self, cat_client: TestClient
-    ) -> None:
+    def test_path_traversal_framework_id_rejected(self, cat_client: TestClient) -> None:
         # A framework_id with path separators / .. must never reach the
         # filesystem helper — the router rejects the shape outright.
         payload = {
@@ -258,9 +229,7 @@ class TestImport:
         assert r.status_code == 400, r.text
         assert r.json()["detail"]["error"] == "invalid_id"
 
-    def test_content_framework_id_mismatch_uses_path_id(
-        self, cat_client: TestClient
-    ) -> None:
+    def test_content_framework_id_mismatch_uses_path_id(self, cat_client: TestClient) -> None:
         # The path/body framework_id is authoritative for where the file
         # lands; a mismatching framework_id inside the content is rewritten.
         catalog = {**_SAMPLE_CATALOG, "framework_id": "something-else"}
@@ -300,9 +269,7 @@ class TestRemove:
         r = cat_client.delete("/api/catalog/nist-csf-2.0")
         assert r.status_code == 404, r.text
 
-    def test_remove_path_traversal_rejected(
-        self, cat_client: TestClient
-    ) -> None:
+    def test_remove_path_traversal_rejected(self, cat_client: TestClient) -> None:
         r = cat_client.delete("/api/catalog/..%2Fescape")
         assert r.status_code in (400, 404), r.text
 
@@ -321,30 +288,20 @@ class TestCatalogRBAC:
     (remove) → 403, while a read (where) still returns 200.
     """
 
-    def test_anonymous_import_denied_403(
-        self, cat_readonly_client: TestClient
-    ) -> None:
-        r = cat_readonly_client.post(
-            "/api/catalog/import", json=_import_payload()
-        )
+    def test_anonymous_import_denied_403(self, cat_readonly_client: TestClient) -> None:
+        r = cat_readonly_client.post("/api/catalog/import", json=_import_payload())
         assert r.status_code == 403, r.text
         assert r.json()["detail"]["error"] == "rbac_denied"
 
-    def test_anonymous_remove_denied_403(
-        self, cat_readonly_client: TestClient
-    ) -> None:
+    def test_anonymous_remove_denied_403(self, cat_readonly_client: TestClient) -> None:
         r = cat_readonly_client.delete("/api/catalog/acme-internal")
         assert r.status_code == 403, r.text
         assert r.json()["detail"]["error"] == "rbac_denied"
 
-    def test_anonymous_where_allowed_200(
-        self, cat_readonly_client: TestClient
-    ) -> None:
+    def test_anonymous_where_allowed_200(self, cat_readonly_client: TestClient) -> None:
         # The read endpoint carries no require_role gate (reads are open),
         # so it returns 200 even under the read-only policy.
-        r = cat_readonly_client.get(
-            "/api/catalog/where?framework_id=nist-csf-2.0"
-        )
+        r = cat_readonly_client.get("/api/catalog/where?framework_id=nist-csf-2.0")
         assert r.status_code == 200, r.text
 
 
@@ -358,9 +315,7 @@ class TestCatalogOpenApiErrorDocs:
     its OpenAPI operation. Uses the project-wide app so the schema
     reflects the registered router."""
 
-    def test_catalog_error_statuses_documented_in_openapi(
-        self, api_client: TestClient
-    ) -> None:
+    def test_catalog_error_statuses_documented_in_openapi(self, api_client: TestClient) -> None:
         schema = api_client.get("/api/openapi.json").json()
         expected: list[tuple[str, str, list[str]]] = [
             ("/api/catalog/where", "get", ["400", "404"]),
@@ -379,6 +334,4 @@ class TestCatalogOpenApiErrorDocs:
         for path, method, statuses in expected:
             responses = schema["paths"][path][method]["responses"]
             for status in statuses:
-                assert status in responses, (
-                    f"{method.upper()} {path} missing {status}"
-                )
+                assert status in responses, f"{method.upper()} {path} missing {status}"

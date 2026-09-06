@@ -151,16 +151,12 @@ class AuthProviderMiddleware(BaseHTTPMiddleware):
 
         # v0.8.2 F-V81-S2: read provider from app state at
         # dispatch time. None = no auth gating (v0.8.0 default).
-        provider: AuthProvider | None = getattr(
-            request.app.state, "auth_provider", None
-        )
+        provider: AuthProvider | None = getattr(request.app.state, "auth_provider", None)
         if provider is None:
             return await call_next(request)
 
         auth_header = request.headers.get("Authorization")
-        result = provider.authenticate(
-            authorization_header=auth_header
-        )
+        result = provider.authenticate(authorization_header=auth_header)
         if not result.authenticated:
             return JSONResponse(
                 status_code=401,

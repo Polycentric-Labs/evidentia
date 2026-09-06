@@ -265,9 +265,7 @@ def test_verify_ar_file_no_sigstore_bundle_present(tmp_path: Path) -> None:
     assert report.overall_valid is True  # digests pass; no signatures required
 
 
-def test_verify_ar_file_sigstore_bundle_present_triggers_verification(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_verify_ar_file_sigstore_bundle_present_triggers_verification(tmp_path: Path, monkeypatch) -> None:
     """When <path>.sigstore.json exists, sigstore.verify_file is called and
     the result populates the VerifyReport's sigstore_* fields."""
     from unittest.mock import MagicMock
@@ -279,7 +277,7 @@ def test_verify_ar_file_sigstore_bundle_present_triggers_verification(
     ar_path = tmp_path / "audit.json"
     ar_path.write_text(json.dumps(ar_doc), encoding="utf-8")
     bundle_path = ar_path.with_suffix(ar_path.suffix + ".sigstore.json")
-    bundle_path.write_text("{\"fake\": \"bundle\"}", encoding="utf-8")
+    bundle_path.write_text('{"fake": "bundle"}', encoding="utf-8")
 
     fake_result = SigstoreVerifyResult(
         valid=True,
@@ -294,17 +292,12 @@ def test_verify_ar_file_sigstore_bundle_present_triggers_verification(
     assert mock_verify.call_count == 1
     assert report.sigstore_signature_valid is True
     assert report.sigstore_signer_identity == "ci@example.com"
-    assert (
-        report.sigstore_signer_issuer
-        == "https://token.actions.githubusercontent.com"
-    )
+    assert report.sigstore_signer_issuer == "https://token.actions.githubusercontent.com"
     assert report.sigstore_rekor_log_index == 42
     assert report.overall_valid is True
 
 
-def test_verify_ar_file_sigstore_invalid_bundle_fails_overall(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_verify_ar_file_sigstore_invalid_bundle_fails_overall(tmp_path: Path, monkeypatch) -> None:
     """A bundle that exists but verifies as invalid fails overall_valid."""
     from unittest.mock import MagicMock
 
@@ -315,21 +308,17 @@ def test_verify_ar_file_sigstore_invalid_bundle_fails_overall(
     ar_path = tmp_path / "audit.json"
     ar_path.write_text(json.dumps(ar_doc), encoding="utf-8")
     bundle_path = ar_path.with_suffix(ar_path.suffix + ".sigstore.json")
-    bundle_path.write_text("{\"fake\": \"bundle\"}", encoding="utf-8")
+    bundle_path.write_text('{"fake": "bundle"}', encoding="utf-8")
 
     bad_result = SigstoreVerifyResult(valid=False, details="signature mismatch")
-    monkeypatch.setattr(
-        sigstore_mod, "verify_file", MagicMock(return_value=bad_result)
-    )
+    monkeypatch.setattr(sigstore_mod, "verify_file", MagicMock(return_value=bad_result))
 
     report = verify_ar_file(ar_path)
     assert report.sigstore_signature_valid is False
     assert report.overall_valid is False
 
 
-def test_verify_ar_file_check_sigstore_false_skips_bundle(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_verify_ar_file_check_sigstore_false_skips_bundle(tmp_path: Path, monkeypatch) -> None:
     """check_sigstore=False skips the bundle even if it's present on disk."""
     from unittest.mock import MagicMock
 
@@ -339,7 +328,7 @@ def test_verify_ar_file_check_sigstore_false_skips_bundle(
     ar_path = tmp_path / "audit.json"
     ar_path.write_text(json.dumps(ar_doc), encoding="utf-8")
     bundle_path = ar_path.with_suffix(ar_path.suffix + ".sigstore.json")
-    bundle_path.write_text("{\"fake\": \"bundle\"}", encoding="utf-8")
+    bundle_path.write_text('{"fake": "bundle"}', encoding="utf-8")
 
     mock_verify = MagicMock()
     monkeypatch.setattr(sigstore_mod, "verify_file", mock_verify)
@@ -349,9 +338,7 @@ def test_verify_ar_file_check_sigstore_false_skips_bundle(
     assert report.sigstore_signature_valid is None
 
 
-def test_verify_ar_file_sigstore_warns_when_no_expected_identity(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_verify_ar_file_sigstore_warns_when_no_expected_identity(tmp_path: Path, monkeypatch) -> None:
     """Bundle present but no expected_identity → warning emitted (UnsafeNoOp)."""
     from unittest.mock import MagicMock
 
@@ -362,7 +349,7 @@ def test_verify_ar_file_sigstore_warns_when_no_expected_identity(
     ar_path = tmp_path / "audit.json"
     ar_path.write_text(json.dumps(ar_doc), encoding="utf-8")
     bundle_path = ar_path.with_suffix(ar_path.suffix + ".sigstore.json")
-    bundle_path.write_text("{\"fake\": \"bundle\"}", encoding="utf-8")
+    bundle_path.write_text('{"fake": "bundle"}', encoding="utf-8")
 
     monkeypatch.setattr(
         sigstore_mod,
@@ -374,9 +361,7 @@ def test_verify_ar_file_sigstore_warns_when_no_expected_identity(
     assert any("UnsafeNoOp" in w for w in report.warnings)
 
 
-def test_verify_ar_file_require_signature_satisfied_by_sigstore(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_verify_ar_file_require_signature_satisfied_by_sigstore(tmp_path: Path, monkeypatch) -> None:
     """With require_signature=True, a Sigstore bundle alone satisfies the requirement."""
     from unittest.mock import MagicMock
 
@@ -387,7 +372,7 @@ def test_verify_ar_file_require_signature_satisfied_by_sigstore(
     ar_path = tmp_path / "audit.json"
     ar_path.write_text(json.dumps(ar_doc), encoding="utf-8")
     bundle_path = ar_path.with_suffix(ar_path.suffix + ".sigstore.json")
-    bundle_path.write_text("{\"fake\": \"bundle\"}", encoding="utf-8")
+    bundle_path.write_text('{"fake": "bundle"}', encoding="utf-8")
 
     monkeypatch.setattr(
         sigstore_mod,
@@ -406,9 +391,7 @@ def test_verify_ar_file_require_signature_satisfied_by_sigstore(
     assert report.sigstore_signature_valid is True
 
 
-def test_verify_ar_file_custom_sigstore_bundle_path(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_verify_ar_file_custom_sigstore_bundle_path(tmp_path: Path, monkeypatch) -> None:
     """sigstore_bundle_path overrides the default <path>.sigstore.json."""
     from unittest.mock import MagicMock
 
@@ -419,7 +402,7 @@ def test_verify_ar_file_custom_sigstore_bundle_path(
     ar_path = tmp_path / "audit.json"
     ar_path.write_text(json.dumps(ar_doc), encoding="utf-8")
     custom_bundle = tmp_path / "custom.sigstore.json"
-    custom_bundle.write_text("{\"fake\": \"bundle\"}", encoding="utf-8")
+    custom_bundle.write_text('{"fake": "bundle"}', encoding="utf-8")
 
     monkeypatch.setattr(
         sigstore_mod,
@@ -431,9 +414,7 @@ def test_verify_ar_file_custom_sigstore_bundle_path(
     assert report.sigstore_signature_valid is True
 
 
-def test_verify_ar_file_sigstore_with_expected_identity_no_warning(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_verify_ar_file_sigstore_with_expected_identity_no_warning(tmp_path: Path, monkeypatch) -> None:
     """When both expected_identity and expected_issuer are set, no UnsafeNoOp warning."""
     from unittest.mock import MagicMock
 
@@ -444,7 +425,7 @@ def test_verify_ar_file_sigstore_with_expected_identity_no_warning(
     ar_path = tmp_path / "audit.json"
     ar_path.write_text(json.dumps(ar_doc), encoding="utf-8")
     bundle_path = ar_path.with_suffix(ar_path.suffix + ".sigstore.json")
-    bundle_path.write_text("{\"fake\": \"bundle\"}", encoding="utf-8")
+    bundle_path.write_text('{"fake": "bundle"}', encoding="utf-8")
 
     monkeypatch.setattr(
         sigstore_mod,
@@ -473,11 +454,9 @@ def test_verify_ar_file_sigstore_single_flag_fails_with_report_error(
     ar_path = tmp_path / "audit.json"
     ar_path.write_text(json.dumps(ar_doc), encoding="utf-8")
     bundle_path = ar_path.with_suffix(ar_path.suffix + ".sigstore.json")
-    bundle_path.write_text("{\"fake\": \"bundle\"}", encoding="utf-8")
+    bundle_path.write_text('{"fake": "bundle"}', encoding="utf-8")
 
-    report = verify_ar_file(
-        ar_path, expected_sigstore_identity="ci@example.com"
-    )
+    report = verify_ar_file(ar_path, expected_sigstore_identity="ci@example.com")
     assert report.sigstore_signature_valid is False
     assert report.overall_valid is False
     assert any("provided together" in e for e in report.errors)

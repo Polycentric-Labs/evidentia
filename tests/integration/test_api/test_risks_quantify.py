@@ -57,9 +57,7 @@ def _scenarios() -> list[dict[str, object]]:
 
 
 class TestOpenFairMethod:
-    def test_default_method_returns_deterministic_result(
-        self, client: TestClient
-    ) -> None:
+    def test_default_method_returns_deterministic_result(self, client: TestClient) -> None:
         r = client.post(
             "/api/risk/quantify",
             json={"scenarios": _scenarios()},
@@ -94,12 +92,10 @@ class TestOpenFairMethod:
         # compare the math, not the identity.)
         assert first["total_ale"] == second["total_ale"]
         first_math = [
-            (s["name"], s["lef"], s["loss_magnitude"], s["ale"], s["risk_category"])
-            for s in first["scenarios"]
+            (s["name"], s["lef"], s["loss_magnitude"], s["ale"], s["risk_category"]) for s in first["scenarios"]
         ]
         second_math = [
-            (s["name"], s["lef"], s["loss_magnitude"], s["ale"], s["risk_category"])
-            for s in second["scenarios"]
+            (s["name"], s["lef"], s["loss_magnitude"], s["ale"], s["risk_category"]) for s in second["scenarios"]
         ]
         assert first_math == second_math
 
@@ -151,12 +147,10 @@ class TestFairMcMethod:
         # (`id` / `created_at` / `scenario_id` are auto-stamped per call and
         # legitimately differ — compare the simulation math, not identity.)
         first_math = [
-            (s["scenario_name"], s["p10"], s["p50"], s["p90"], s["mean"], s["samples"])
-            for s in first["simulations"]
+            (s["scenario_name"], s["p10"], s["p50"], s["p90"], s["mean"], s["samples"]) for s in first["simulations"]
         ]
         second_math = [
-            (s["scenario_name"], s["p10"], s["p50"], s["p90"], s["mean"], s["samples"])
-            for s in second["simulations"]
+            (s["scenario_name"], s["p10"], s["p50"], s["p90"], s["mean"], s["samples"]) for s in second["simulations"]
         ]
         assert first_math == second_math
 
@@ -203,9 +197,7 @@ class TestErrors:
         assert r.status_code == 422
         assert isinstance(r.json()["detail"], list)
 
-    def test_missing_required_scenario_field_returns_422(
-        self, client: TestClient
-    ) -> None:
+    def test_missing_required_scenario_field_returns_422(self, client: TestClient) -> None:
         # OpenFAIRScenario requires tef/vulnerability/primary_loss; drop one.
         r = client.post(
             "/api/risk/quantify",
@@ -223,9 +215,7 @@ class TestErrors:
         assert r.status_code == 422
         assert isinstance(r.json()["detail"], list)
 
-    def test_iterations_out_of_range_returns_422(
-        self, client: TestClient
-    ) -> None:
+    def test_iterations_out_of_range_returns_422(self, client: TestClient) -> None:
         # iterations is bounded (ge=1, le=1_000_000); over-cap → 422.
         r = client.post(
             "/api/risk/quantify",

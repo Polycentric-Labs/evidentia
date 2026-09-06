@@ -195,9 +195,7 @@ def analyze(
     else:
         framework_list = [f.strip() for f in resolved_frameworks if isinstance(f, str) and f.strip()]
 
-    console.print(
-        f"[cyan]Loading inventory from[/cyan] [bold]{inventory}[/bold]..."
-    )
+    console.print(f"[cyan]Loading inventory from[/cyan] [bold]{inventory}[/bold]...")
     inv = load_inventory(inventory)
 
     # v0.2.1: apply organization/system_name overrides via model_copy.
@@ -217,9 +215,7 @@ def analyze(
         header += f" / [bold]{inv.system_name}[/bold]"
     console.print(f"[green]Loaded[/green] {len(inv.controls)} controls for {header}")
 
-    console.print(
-        f"[cyan]Analyzing against[/cyan] {', '.join(framework_list)}..."
-    )
+    console.print(f"[cyan]Analyzing against[/cyan] {', '.join(framework_list)}...")
     analyzer = GapAnalyzer()
     report = analyzer.analyze(
         inventory=inv,
@@ -284,8 +280,7 @@ def analyze(
                 raise typer.Exit(code=1)
             findings_list = [SecurityFinding.model_validate(item) for item in raw]
             console.print(
-                f"[dim]Loaded {len(findings_list)} finding(s) from "
-                f"{findings} for AR evidence embedding.[/dim]"
+                f"[dim]Loaded {len(findings_list)} finding(s) from {findings} for AR evidence embedding.[/dim]"
             )
 
     # v0.7.9 P0.5: load optional TPRM vendor inventory for OSCAL AR
@@ -301,9 +296,7 @@ def analyze(
         else:
             from evidentia_core.models.tprm import Vendor
 
-            raw_vendors = json.loads(
-                vendor_inventory.read_text(encoding="utf-8")
-            )
+            raw_vendors = json.loads(vendor_inventory.read_text(encoding="utf-8"))
             if not isinstance(raw_vendors, list):
                 console.print(
                     "[red]Error:[/red] --vendor-inventory file must "
@@ -313,8 +306,7 @@ def analyze(
                 raise typer.Exit(code=1)
             vendor_list = [Vendor.model_validate(item) for item in raw_vendors]
             console.print(
-                f"[dim]Loaded {len(vendor_list)} vendor(s) from "
-                f"{vendor_inventory} for AR back-matter embedding.[/dim]"
+                f"[dim]Loaded {len(vendor_list)} vendor(s) from {vendor_inventory} for AR back-matter embedding.[/dim]"
             )
 
     if sign_with_gpg and format != "oscal-ar":
@@ -353,28 +345,17 @@ def analyze(
         sigstore_identity_token=sigstore_identity_token,
         key_sign_path=sign_with_key,
     )
-    console.print(
-        f"[green]Report exported:[/green] [bold]{out_path}[/bold] ({format})"
-    )
+    console.print(f"[green]Report exported:[/green] [bold]{out_path}[/bold] ({format})")
     if sign_with_gpg:
         sig_path = out_path.with_suffix(out_path.suffix + ".asc")
-        console.print(
-            f"[green]Detached signature written:[/green] [bold]{sig_path}[/bold] "
-            f"(key={sign_with_gpg})"
-        )
+        console.print(f"[green]Detached signature written:[/green] [bold]{sig_path}[/bold] (key={sign_with_gpg})")
     if sign_with_sigstore:
-        bundle_path = sigstore_bundle or out_path.with_suffix(
-            out_path.suffix + ".sigstore.json"
-        )
-        console.print(
-            f"[green]Sigstore bundle written:[/green] [bold]{bundle_path}[/bold]"
-        )
+        bundle_path = sigstore_bundle or out_path.with_suffix(out_path.suffix + ".sigstore.json")
+        console.print(f"[green]Sigstore bundle written:[/green] [bold]{bundle_path}[/bold]")
     if sign_with_key:
         from evidentia_core.oscal.keysign import default_dsse_path
 
-        console.print(
-            f"[green]DSSE envelope written:[/green] [bold]{default_dsse_path(out_path)}[/bold]"
-        )
+        console.print(f"[green]DSSE envelope written:[/green] [bold]{default_dsse_path(out_path)}[/bold]")
 
     # v0.2.1: save a canonical copy to the user-dir gap store so
     # `evidentia risk generate --gap-id GAP-…` can find the latest
@@ -384,14 +365,9 @@ def analyze(
         from evidentia_core.gap_store import save_report
 
         store_path = save_report(report)
-        console.print(
-            f"[dim]Gap store snapshot: {store_path} "
-            f"(used by `risk generate --gap-id`)[/dim]"
-        )
+        console.print(f"[dim]Gap store snapshot: {store_path} (used by `risk generate --gap-id`)[/dim]")
     except Exception as exc:
-        console.print(
-            f"[yellow]Note: could not write gap store snapshot: {exc}[/yellow]"
-        )
+        console.print(f"[yellow]Note: could not write gap store snapshot: {exc}[/yellow]")
 
 
 # ---------------------------------------------------------------------------
@@ -483,17 +459,10 @@ def diff(
             head = reports[0]
         if base is None:
             base = reports[1 if reports[0] == head else 0]
-        console.print(
-            f"[dim]Auto-picked from gap store — base: {base.name}, "
-            f"head: {head.name}[/dim]"
-        )
+        console.print(f"[dim]Auto-picked from gap store — base: {base.name}, head: {head.name}[/dim]")
 
-    base_report = GapAnalysisReport.model_validate_json(
-        base.read_text(encoding="utf-8")
-    )
-    head_report = GapAnalysisReport.model_validate_json(
-        head.read_text(encoding="utf-8")
-    )
+    base_report = GapAnalysisReport.model_validate_json(base.read_text(encoding="utf-8"))
+    head_report = GapAnalysisReport.model_validate_json(head.read_text(encoding="utf-8"))
 
     diff_result = compute_gap_diff(base_report, head_report)
 
@@ -541,11 +510,7 @@ def _render_diff_console(diff) -> None:  # type: ignore[no-untyped-def]
     renderer, which target UTF-8-clean surfaces.
     """
     s = diff.summary
-    title = (
-        "[red]FAIL - Compliance regression[/red]"
-        if s.is_regression
-        else "[green]PASS - No regression[/green]"
-    )
+    title = "[red]FAIL - Compliance regression[/red]" if s.is_regression else "[green]PASS - No regression[/green]"
     header = Table(title=f"Gap Diff -- {title}")
     header.add_column("Status", style="cyan")
     header.add_column("Count", justify="right", style="bold")
@@ -583,6 +548,4 @@ def _render_diff_console(diff) -> None:  # type: ignore[no-untyped-def]
         console.print(t)
 
     if diff.closed_entries:
-        console.print(
-            f"[green]{len(diff.closed_entries)} gap(s) closed[/green]"
-        )
+        console.print(f"[green]{len(diff.closed_entries)} gap(s) closed[/green]")

@@ -45,9 +45,7 @@ def test_blind_spots_documented() -> None:
 
 
 def test_constructor_requires_path_or_connection() -> None:
-    with pytest.raises(
-        SQLiteCollectorError, match="requires either database_path"
-    ):
+    with pytest.raises(SQLiteCollectorError, match="requires either database_path"):
         SQLiteCollector()
 
 
@@ -94,9 +92,7 @@ def test_journal_mode_findings_default_memory_db() -> None:
     conn = _make_memory_conn()
     coll = SQLiteCollector(connection=conn)
     findings, _ = coll.collect_v2()
-    journal_findings = [
-        f for f in findings if "journal=" in f.title.lower()
-    ]
+    journal_findings = [f for f in findings if "journal=" in f.title.lower()]
     assert len(journal_findings) == 1
     f = journal_findings[0]
     assert f.severity == Severity.INFORMATIONAL
@@ -122,9 +118,7 @@ def test_journal_mode_wal_full_is_resolved(tmp_path: Path) -> None:
     # mandatory (default Path.cwd()); tmp_path is outside cwd in pytest.
     coll = SQLiteCollector(database_path=db_file, connection=conn, safe_root=tmp_path)
     findings, _ = coll.collect_v2()
-    journal_findings = [
-        f for f in findings if "journal=" in f.title.lower()
-    ]
+    journal_findings = [f for f in findings if "journal=" in f.title.lower()]
     assert len(journal_findings) == 1
     f = journal_findings[0]
     assert f.raw_data["journal_mode"] == "WAL"
@@ -142,9 +136,7 @@ def test_integrity_check_clean_db() -> None:
 
     coll = SQLiteCollector(connection=conn)
     findings, _manifest = coll.collect_v2()
-    integrity_findings = [
-        f for f in findings if "integrity" in f.title.lower()
-    ]
+    integrity_findings = [f for f in findings if "integrity" in f.title.lower()]
     assert len(integrity_findings) >= 1
     f = integrity_findings[0]
     assert f.status == FindingStatus.RESOLVED
@@ -157,23 +149,16 @@ def test_integrity_check_with_fk_violation() -> None:
     # match a parent — only triggers when foreign_keys=ON for the
     # check, but PRAGMA foreign_key_check reports it regardless.
     conn.execute("CREATE TABLE p (id INTEGER PRIMARY KEY)")
-    conn.execute(
-        "CREATE TABLE c (id INTEGER PRIMARY KEY, "
-        "parent_id INTEGER REFERENCES p(id))"
-    )
+    conn.execute("CREATE TABLE c (id INTEGER PRIMARY KEY, parent_id INTEGER REFERENCES p(id))")
     conn.execute("INSERT INTO c VALUES (1, 99)")  # 99 not in p
     conn.commit()
 
     coll = SQLiteCollector(connection=conn)
     findings, _ = coll.collect_v2()
-    integrity_findings = [
-        f for f in findings if "integrity" in f.title.lower()
-    ]
+    integrity_findings = [f for f in findings if "integrity" in f.title.lower()]
     assert len(integrity_findings) >= 1
     # At least one integrity finding should be ACTIVE (FK violation)
-    fk_or_integrity_active = [
-        f for f in integrity_findings if f.status == FindingStatus.ACTIVE
-    ]
+    fk_or_integrity_active = [f for f in integrity_findings if f.status == FindingStatus.ACTIVE]
     assert len(fk_or_integrity_active) >= 1
 
 
@@ -187,9 +172,7 @@ def test_encryption_extension_no_extension_loaded() -> None:
     conn = _make_memory_conn()
     coll = SQLiteCollector(connection=conn)
     findings, _ = coll.collect_v2()
-    enc_findings = [
-        f for f in findings if "encryption" in f.title.lower()
-    ]
+    enc_findings = [f for f in findings if "encryption" in f.title.lower()]
     assert len(enc_findings) == 1
     f = enc_findings[0]
     # No extension loaded -> ACTIVE (gap) at INFORMATIONAL severity
@@ -219,9 +202,7 @@ def test_write_privilege_finding_when_writable(tmp_path: Path) -> None:
 
     coll = SQLiteCollector(database_path=db, safe_root=tmp_path)
     findings, _ = coll.collect_v2()
-    write_priv_findings = [
-        f for f in findings if "writable by the calling process" in f.title
-    ]
+    write_priv_findings = [f for f in findings if "writable by the calling process" in f.title]
     assert len(write_priv_findings) == 1
     f = write_priv_findings[0]
     assert f.severity == Severity.MEDIUM

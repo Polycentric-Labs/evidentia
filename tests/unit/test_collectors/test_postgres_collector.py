@@ -117,9 +117,7 @@ class TestConstructorValidation:
             PostgresCollector(connection_uri="postgres://user:secret@host/db")
 
     def test_accepts_uri_without_embedded_password(self) -> None:
-        c = PostgresCollector(
-            connection_uri="postgres://user@host/db", password="x"
-        )
+        c = PostgresCollector(connection_uri="postgres://user@host/db", password="x")
         assert c is not None
 
     def test_accepts_uri_with_no_userinfo(self) -> None:
@@ -218,9 +216,7 @@ class TestCollectV2:
         conn = _MockConnection(responses)
         collector = PostgresCollector(connection=conn)
         findings, _ = collector.collect_v2()
-        audit_findings = [
-            f for f in findings if "audit-log" in (f.source_finding_id or "")
-        ]
+        audit_findings = [f for f in findings if "audit-log" in (f.source_finding_id or "")]
         assert len(audit_findings) == 1
         # Audit-log gaps should drive non-INFORMATIONAL severity +
         # ACTIVE status (vs RESOLVED for clean baseline)
@@ -240,13 +236,12 @@ class TestCollectV2:
         conn = _MockConnection(responses)
         collector = PostgresCollector(connection=conn)
         findings, _ = collector.collect_v2()
-        crypto_findings = [
-            f for f in findings if "crypto-config" in (f.source_finding_id or "")
-        ]
+        crypto_findings = [f for f in findings if "crypto-config" in (f.source_finding_id or "")]
         assert len(crypto_findings) == 1
         # Severity should reflect gaps; the collector emits HIGH when
         # password_encryption is not scram-sha-256 OR ssl is off
         from evidentia_core.models.common import Severity
+
         assert crypto_findings[0].severity == Severity.HIGH
 
 
@@ -302,15 +297,9 @@ class TestComplianceStatus:
     def test_clean_baseline_audit_and_crypto_pass(self) -> None:
         from evidentia_core.models.finding import ComplianceStatus
 
-        findings, _ = PostgresCollector(
-            connection=_MockConnection(_baseline_responses())
-        ).collect_v2()
-        audit = next(
-            f for f in findings if "audit-log" in (f.source_finding_id or "")
-        )
-        crypto = next(
-            f for f in findings if "crypto-config" in (f.source_finding_id or "")
-        )
+        findings, _ = PostgresCollector(connection=_MockConnection(_baseline_responses())).collect_v2()
+        audit = next(f for f in findings if "audit-log" in (f.source_finding_id or ""))
+        crypto = next(f for f in findings if "crypto-config" in (f.source_finding_id or ""))
         assert audit.compliance_status == ComplianceStatus.PASS
         assert crypto.compliance_status == ComplianceStatus.PASS
 
@@ -326,32 +315,22 @@ class TestComplianceStatus:
             ("ssl", "on"),
             ("max_connections", "100"),
         ]
-        findings, _ = PostgresCollector(
-            connection=_MockConnection(responses)
-        ).collect_v2()
-        audit = next(
-            f for f in findings if "audit-log" in (f.source_finding_id or "")
-        )
+        findings, _ = PostgresCollector(connection=_MockConnection(responses)).collect_v2()
+        audit = next(f for f in findings if "audit-log" in (f.source_finding_id or ""))
         assert audit.compliance_status == ComplianceStatus.FAIL
 
     def test_role_inventory_compliance_status_is_unknown(self) -> None:
         from evidentia_core.models.finding import ComplianceStatus
 
-        findings, _ = PostgresCollector(
-            connection=_MockConnection(_baseline_responses())
-        ).collect_v2()
-        role_inv = next(
-            f for f in findings if "role-inventory" in (f.source_finding_id or "")
-        )
+        findings, _ = PostgresCollector(connection=_MockConnection(_baseline_responses())).collect_v2()
+        role_inv = next(f for f in findings if "role-inventory" in (f.source_finding_id or ""))
         assert role_inv.compliance_status == ComplianceStatus.UNKNOWN
 
     def test_postgres_findings_ocsf_round_trip(self) -> None:
         pytest.importorskip("py_ocsf_models")
         from evidentia_core.ocsf import finding_from_ocsf, finding_to_ocsf
 
-        findings, _ = PostgresCollector(
-            connection=_MockConnection(_baseline_responses())
-        ).collect_v2()
+        findings, _ = PostgresCollector(connection=_MockConnection(_baseline_responses())).collect_v2()
         assert findings
         for f in findings:
             assert finding_from_ocsf(finding_to_ocsf(f)) == f

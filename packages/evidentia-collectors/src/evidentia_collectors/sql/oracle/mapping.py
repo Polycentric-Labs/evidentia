@@ -41,8 +41,7 @@ PRIVILEGE_GRANT_MAPPINGS = [
     _m(
         "AC-3",
         OLIRRelationship.SUBSET_OF,
-        "AC-3 Access Enforcement — DBA_SYS_PRIVS / DBA_TAB_PRIVS / "
-        "DBA_ROLE_PRIVS ARE the enforcement records.",
+        "AC-3 Access Enforcement — DBA_SYS_PRIVS / DBA_TAB_PRIVS / DBA_ROLE_PRIVS ARE the enforcement records.",
     ),
     _m(
         "AC-6",
@@ -67,8 +66,7 @@ AUDIT_LOG_MAPPINGS = [
     _m(
         "AU-3",
         OLIRRelationship.INTERSECTS_WITH,
-        "AU-3 Content of Audit Records — Unified Audit policy "
-        "definitions drive what each record contains.",
+        "AU-3 Content of Audit Records — Unified Audit policy definitions drive what each record contains.",
     ),
 ]
 

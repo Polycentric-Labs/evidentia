@@ -82,15 +82,9 @@ def _filter_poams(
     # milestone on the POA&M item. The "any-match" semantics mirror
     # the CLI poam list --owner X behavior.
     if owner is not None:
-        poams = [
-            p for p in poams
-            if any(m.owner == owner for m in p.poam_milestones)
-        ]
+        poams = [p for p in poams if any(m.owner == owner for m in p.poam_milestones)]
     if reviewer is not None:
-        poams = [
-            p for p in poams
-            if any(m.reviewer == reviewer for m in p.poam_milestones)
-        ]
+        poams = [p for p in poams if any(m.reviewer == reviewer for m in p.poam_milestones)]
     return poams
 
 
@@ -119,23 +113,16 @@ async def list_poam_items(
     ),
     severity: str | None = Query(
         None,
-        description=(
-            "Filter by gap severity: critical / high / medium / low / "
-            "informational."
-        ),
+        description=("Filter by gap severity: critical / high / medium / low / informational."),
     ),
     status: str | None = Query(
         None,
-        description=(
-            "Filter by gap status: open / in_progress / remediated / "
-            "accepted / not_applicable."
-        ),
+        description=("Filter by gap status: open / in_progress / remediated / accepted / not_applicable."),
     ),
     owner: str | None = Query(
         None,
         description=(
-            "v0.9.5 P3.1: filter to POA&M items with at least one "
-            "milestone where owner == this value (exact-equality)."
+            "v0.9.5 P3.1: filter to POA&M items with at least one milestone where owner == this value (exact-equality)."
         ),
     ),
     reviewer: str | None = Query(
@@ -156,10 +143,7 @@ async def list_poam_items(
         raise api_error(
             400,
             "unknown_severity",
-            (
-                f"Unknown severity {severity!r}; valid: "
-                f"{sorted(e.value for e in GapSeverity)}"
-            ),
+            (f"Unknown severity {severity!r}; valid: {sorted(e.value for e in GapSeverity)}"),
             severity=severity,
             valid=sorted(e.value for e in GapSeverity),
         )
@@ -167,18 +151,13 @@ async def list_poam_items(
         raise api_error(
             400,
             "unknown_status",
-            (
-                f"Unknown status {status!r}; valid: "
-                f"{sorted(e.value for e in GapStatus)}"
-            ),
+            (f"Unknown status {status!r}; valid: {sorted(e.value for e in GapStatus)}"),
             status=status,
             valid=sorted(e.value for e in GapStatus),
         )
 
     all_poams = list_poams()
-    filtered = _filter_poams(
-        all_poams, severity, status, owner=owner, reviewer=reviewer
-    )
+    filtered = _filter_poams(all_poams, severity, status, owner=owner, reviewer=reviewer)
     total = len(filtered)
     page = filtered[skip : skip + limit]
     return {
@@ -195,10 +174,7 @@ async def list_poam_items(
     status_code=201,
     responses=error_responses(
         {
-            422: (
-                "Body-content semantic failure "
-                "(``error: invalid_body``)."
-            ),
+            422: ("Body-content semantic failure (``error: invalid_body``)."),
         }
     ),
 )
@@ -220,10 +196,7 @@ async def create_poam_item(payload: ControlGap) -> ControlGap:
     _log.info(
         action=EventAction.POAM_CREATED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"POA&M item created via API: {poam.framework}:"
-            f"{poam.control_id}"
-        ),
+        message=(f"POA&M item created via API: {poam.framework}:{poam.control_id}"),
         evidentia={
             "poam_id": poam.id,
             "control_id": f"{poam.framework}:{poam.control_id}",
@@ -237,10 +210,7 @@ async def create_poam_item(payload: ControlGap) -> ControlGap:
     response_model=ControlGap,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``poam_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``poam_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -274,10 +244,7 @@ async def get_poam_item(poam_id: str) -> ControlGap:
     response_model=ControlGap,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``poam_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``poam_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -309,9 +276,7 @@ async def replace_poam_item(poam_id: str, payload: ControlGap) -> ControlGap:
             resource_id=poam_id,
         )
     prior_status = existing.status
-    poam = payload.model_copy(
-        update={"id": existing.id, "created_at": existing.created_at}
-    )
+    poam = payload.model_copy(update={"id": existing.id, "created_at": existing.created_at})
     save_poam(poam)
     _log.info(
         action=EventAction.POAM_UPDATED,
@@ -331,9 +296,7 @@ async def replace_poam_item(poam_id: str, payload: ControlGap) -> ControlGap:
         _log.info(
             action=EventAction.POAM_CLOSED,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"POA&M {poam_id[:8]} closed via API (status=remediated)"
-            ),
+            message=(f"POA&M {poam_id[:8]} closed via API (status=remediated)"),
             evidentia={
                 "poam_id": poam.id,
                 "control_id": f"{poam.framework}:{poam.control_id}",
@@ -349,10 +312,7 @@ async def replace_poam_item(poam_id: str, payload: ControlGap) -> ControlGap:
     status_code=204,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``poam_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``poam_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -414,10 +374,7 @@ class MilestoneUpdatePayload(BaseModel):
     response_model=ControlGap,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``poam_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``poam_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -455,10 +412,7 @@ async def add_milestone(
     _log.info(
         action=EventAction.POAM_UPDATED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"Milestone {ms.id[:8]} added to POA&M {poam_id[:8]} "
-            f"via API"
-        ),
+        message=(f"Milestone {ms.id[:8]} added to POA&M {poam_id[:8]} via API"),
         evidentia={
             "poam_id": poam.id,
             "control_id": f"{poam.framework}:{poam.control_id}",
@@ -474,14 +428,8 @@ async def add_milestone(
     response_model=ControlGap,
     responses=error_responses(
         {
-            400: (
-                "Backward/invalid state transition "
-                "(``error: invalid_body``)."
-            ),
-            404: (
-                "Unknown or malformed ``poam_id``, or unknown "
-                "``milestone_id`` (``error: not_found``)."
-            ),
+            400: ("Backward/invalid state transition (``error: invalid_body``)."),
+            404: ("Unknown or malformed ``poam_id``, or unknown ``milestone_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -517,10 +465,7 @@ async def update_milestone(
         raise api_error(
             404,
             "not_found",
-            (
-                f"Milestone {milestone_id!r} not found on POA&M "
-                f"{poam_id!r}."
-            ),
+            (f"Milestone {milestone_id!r} not found on POA&M {poam_id!r}."),
             resource="milestone",
             resource_id=milestone_id,
         )
@@ -552,18 +497,11 @@ async def update_milestone(
     save_poam(poam)
 
     new_state = POAMState(target_ms.status)
-    if (
-        payload.status is not None
-        and new_state == POAMState.COMPLETED
-        and prior_state != POAMState.COMPLETED
-    ):
+    if payload.status is not None and new_state == POAMState.COMPLETED and prior_state != POAMState.COMPLETED:
         _log.info(
             action=EventAction.POAM_MILESTONE_REACHED,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"Milestone {milestone_id[:8]} on POA&M "
-                f"{poam_id[:8]} completed via API"
-            ),
+            message=(f"Milestone {milestone_id[:8]} on POA&M {poam_id[:8]} completed via API"),
             evidentia={
                 "poam_id": poam.id,
                 "control_id": f"{poam.framework}:{poam.control_id}",
@@ -572,17 +510,11 @@ async def update_milestone(
                 "new_state": new_state.value,
             },
         )
-    elif (
-        payload.status is not None
-        and new_state == POAMState.VERIFIED
-    ):
+    elif payload.status is not None and new_state == POAMState.VERIFIED:
         _log.info(
             action=EventAction.POAM_VERIFIED,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"Milestone {milestone_id[:8]} on POA&M "
-                f"{poam_id[:8]} verified via API"
-            ),
+            message=(f"Milestone {milestone_id[:8]} on POA&M {poam_id[:8]} verified via API"),
             evidentia={
                 "poam_id": poam.id,
                 "control_id": f"{poam.framework}:{poam.control_id}",
@@ -591,17 +523,11 @@ async def update_milestone(
                 "new_state": new_state.value,
             },
         )
-    elif (
-        payload.status is not None
-        and new_state == POAMState.OVERDUE
-    ):
+    elif payload.status is not None and new_state == POAMState.OVERDUE:
         _log.info(
             action=EventAction.POAM_OVERDUE,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"Milestone {milestone_id[:8]} on POA&M "
-                f"{poam_id[:8]} marked overdue via API"
-            ),
+            message=(f"Milestone {milestone_id[:8]} on POA&M {poam_id[:8]} marked overdue via API"),
             evidentia={
                 "poam_id": poam.id,
                 "control_id": f"{poam.framework}:{poam.control_id}",
@@ -614,10 +540,7 @@ async def update_milestone(
         _log.info(
             action=EventAction.POAM_UPDATED,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"Milestone {milestone_id[:8]} on POA&M "
-                f"{poam_id[:8]} edited via API"
-            ),
+            message=(f"Milestone {milestone_id[:8]} on POA&M {poam_id[:8]} edited via API"),
             evidentia={
                 "poam_id": poam.id,
                 "control_id": f"{poam.framework}:{poam.control_id}",
@@ -635,11 +558,7 @@ async def update_milestone(
     "/poam/calendar",
     responses=error_responses(
         {
-            400: (
-                "Non-ISO-8601 ``today`` override "
-                "(``error: invalid_field``); ``detail`` carries "
-                "``field``."
-            ),
+            400: ("Non-ISO-8601 ``today`` override (``error: invalid_field``); ``detail`` carries ``field``."),
         }
     ),
 )
@@ -647,10 +566,7 @@ async def get_calendar(
     today_override: str | None = Query(
         None,
         alias="today",
-        description=(
-            "Override 'today' for deterministic snapshots "
-            "(YYYY-MM-DD). Omit for the server's current date."
-        ),
+        description=("Override 'today' for deterministic snapshots (YYYY-MM-DD). Omit for the server's current date."),
     ),
 ) -> dict[str, Any]:
     """Read-only attention surface: overdue + due-soon milestones."""
@@ -661,10 +577,7 @@ async def get_calendar(
             raise api_error(
                 400,
                 "invalid_field",
-                (
-                    f"--today must be ISO-8601 YYYY-MM-DD; got "
-                    f"{today_override!r}: {exc}"
-                ),
+                (f"--today must be ISO-8601 YYYY-MM-DD; got {today_override!r}: {exc}"),
                 field="today",
             ) from exc
     else:
@@ -674,12 +587,8 @@ async def get_calendar(
     for poam in list_poams():
         for ms in poam.poam_milestones:
             all_milestones.append((poam, ms))
-    buckets = derive_attention_state(
-        [ms for _, ms in all_milestones], today=today_val
-    )
-    poam_by_milestone_id = {
-        ms.id: poam for poam, ms in all_milestones
-    }
+    buckets = derive_attention_state([ms for _, ms in all_milestones], today=today_val)
+    poam_by_milestone_id = {ms.id: poam for poam, ms in all_milestones}
 
     return {
         "today": today_val.isoformat(),
@@ -687,10 +596,7 @@ async def get_calendar(
             {
                 "milestone_id": ms.id,
                 "poam_id": poam_by_milestone_id[ms.id].id,
-                "control_id": (
-                    f"{poam_by_milestone_id[ms.id].framework}:"
-                    f"{poam_by_milestone_id[ms.id].control_id}"
-                ),
+                "control_id": (f"{poam_by_milestone_id[ms.id].framework}:{poam_by_milestone_id[ms.id].control_id}"),
                 "target_date": ms.target_date.isoformat(),
                 "status": ms.status,
                 "description": ms.description,
@@ -701,10 +607,7 @@ async def get_calendar(
             {
                 "milestone_id": ms.id,
                 "poam_id": poam_by_milestone_id[ms.id].id,
-                "control_id": (
-                    f"{poam_by_milestone_id[ms.id].framework}:"
-                    f"{poam_by_milestone_id[ms.id].control_id}"
-                ),
+                "control_id": (f"{poam_by_milestone_id[ms.id].framework}:{poam_by_milestone_id[ms.id].control_id}"),
                 "target_date": ms.target_date.isoformat(),
                 "status": ms.status,
                 "description": ms.description,

@@ -199,9 +199,7 @@ def make_sigstore_signer(
             # Re-raise as our exception type so the signatures-module
             # non-fatal-failure path captures the contextualized
             # error in ``envelope.signing_error``.
-            raise SigstoreMCPSignerError(
-                f"Sigstore signing failed: {exc}"
-            ) from exc
+            raise SigstoreMCPSignerError(f"Sigstore signing failed: {exc}") from exc
         return {
             "alg": "sigstore-keyless",
             "bundle": bundle.to_json(),

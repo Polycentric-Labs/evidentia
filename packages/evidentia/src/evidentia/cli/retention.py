@@ -60,17 +60,15 @@ def _parse_date_or_exit(value: str | None, flag: str) -> date | None:
     try:
         return date.fromisoformat(value)
     except ValueError as e:
-        console.print(
-            f"[red]Error:[/red] {flag} must be ISO-8601 date "
-            f"(YYYY-MM-DD); got {value!r}: {e}"
-        )
+        console.print(f"[red]Error:[/red] {flag} must be ISO-8601 date (YYYY-MM-DD); got {value!r}: {e}")
         raise typer.Exit(code=1) from e
 
 
 @app.command("set")
 def retention_set(
     classification: str = typer.Option(
-        ..., "--classification",
+        ...,
+        "--classification",
         help=(
             "Retention classification: sec-17a-4 / finra-3110 / "
             "irs-tax / sox-404 / hipaa / glba / pci-dss / "
@@ -78,26 +76,29 @@ def retention_set(
         ),
     ),
     retention_period_days: int | None = typer.Option(
-        None, "--retention-period-days",
-        help=(
-            "Retention period in calendar days. Defaults to the "
-            "regulator-stated minimum for the classification."
-        ),
+        None,
+        "--retention-period-days",
+        help=("Retention period in calendar days. Defaults to the regulator-stated minimum for the classification."),
     ),
     record_pointer: str | None = typer.Option(
-        None, "--record-pointer",
+        None,
+        "--record-pointer",
         help="Pointer to the underlying record (file/S3/Azure URL).",
     ),
     legal_hold: bool = typer.Option(
-        False, "--legal-hold",
+        False,
+        "--legal-hold",
         help="Mark this record as under legal hold from the start.",
     ),
     policy_name: str | None = typer.Option(
-        None, "--policy-name",
+        None,
+        "--policy-name",
         help="Optional cross-reference to a RetentionPolicy.",
     ),
     notes: str | None = typer.Option(
-        None, "--notes", help="Free-text operator notes.",
+        None,
+        "--notes",
+        help="Free-text operator notes.",
     ),
 ) -> None:
     """Add a new retention metadata record."""
@@ -110,11 +111,7 @@ def retention_set(
         )
         raise typer.Exit(code=1) from e
 
-    days = (
-        retention_period_days
-        if retention_period_days is not None
-        else default_retention_days(cls_enum)
-    )
+    days = retention_period_days if retention_period_days is not None else default_retention_days(cls_enum)
     try:
         metadata = RetentionMetadata(
             classification=cls_enum,
@@ -139,40 +136,32 @@ def retention_set(
 @app.command("list")
 def retention_list(
     classification: str | None = typer.Option(
-        None, "--classification",
+        None,
+        "--classification",
         help="Filter by classification.",
     ),
     lifecycle: str | None = typer.Option(
-        None, "--lifecycle",
+        None,
+        "--lifecycle",
         help="Filter by lifecycle stage: active / preserved / expired / purged.",
     ),
-    json_out: bool = typer.Option(
-        False, "--json", help="Emit machine-readable JSON array."
-    ),
+    json_out: bool = typer.Option(False, "--json", help="Emit machine-readable JSON array."),
 ) -> None:
     """List retention records."""
     items = list_retention()
     if classification:
         if classification not in {c.value for c in RetentionClassification}:
-            console.print(
-                f"[red]Error:[/red] Unknown classification {classification!r}"
-            )
+            console.print(f"[red]Error:[/red] Unknown classification {classification!r}")
             raise typer.Exit(code=1)
         items = [m for m in items if m.classification == classification]
     if lifecycle:
         if lifecycle not in {s.value for s in RetentionLifecycleStage}:
-            console.print(
-                f"[red]Error:[/red] Unknown lifecycle {lifecycle!r}"
-            )
+            console.print(f"[red]Error:[/red] Unknown lifecycle {lifecycle!r}")
             raise typer.Exit(code=1)
         items = [m for m in items if m.lifecycle_stage == lifecycle]
 
     if json_out:
-        sys.stdout.write(
-            json.dumps(
-                [m.model_dump(mode="json") for m in items], indent=2
-            )
-        )
+        sys.stdout.write(json.dumps([m.model_dump(mode="json") for m in items], indent=2))
         sys.stdout.write("\n")
         return
 
@@ -205,9 +194,7 @@ def retention_list(
 @app.command("show")
 def retention_show(
     retention_id: str = typer.Argument(..., help="Retention record ID."),
-    json_out: bool = typer.Option(
-        False, "--json", help="Emit machine-readable JSON."
-    ),
+    json_out: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
 ) -> None:
     """Show a retention record's full details."""
     try:
@@ -216,10 +203,7 @@ def retention_show(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e
     if metadata is None:
-        console.print(
-            f"[red]Error:[/red] No retention record with ID "
-            f"{retention_id!r} found."
-        )
+        console.print(f"[red]Error:[/red] No retention record with ID {retention_id!r} found.")
         raise typer.Exit(code=1)
 
     if json_out:
@@ -233,31 +217,23 @@ def retention_show(
     console.print(f"  Lifecycle stage:    [cyan]{metadata.lifecycle_stage}[/cyan]")
     console.print(f"  Retention period:   {metadata.retention_period_days} days")
     console.print(f"  Lock-until:         {metadata.lock_until or '—'}")
-    console.print(
-        f"  Currently locked:   "
-        f"{'[red]YES[/red]' if is_locked(metadata, today=today) else 'no'}"
-    )
-    console.print(
-        f"  Legal hold:         "
-        f"{'[red]YES[/red]' if metadata.legal_hold else 'no'}"
-    )
+    console.print(f"  Currently locked:   {'[red]YES[/red]' if is_locked(metadata, today=today) else 'no'}")
+    console.print(f"  Legal hold:         {'[red]YES[/red]' if metadata.legal_hold else 'no'}")
     if metadata.policy_name:
         console.print(f"  Policy:             {metadata.policy_name}")
     if metadata.record_pointer:
         console.print(f"  Record pointer:     {metadata.record_pointer}")
     if metadata.notes:
         console.print(f"  Notes:              {metadata.notes}")
-    console.print(
-        f"  [dim]Created: {metadata.created_at}  "
-        f"Updated: {metadata.updated_at}[/dim]"
-    )
+    console.print(f"  [dim]Created: {metadata.created_at}  Updated: {metadata.updated_at}[/dim]")
 
 
 @app.command("extend")
 def retention_extend(
     retention_id: str = typer.Argument(..., help="Retention record ID."),
     new_lock_until: str = typer.Option(
-        ..., "--new-lock-until",
+        ...,
+        "--new-lock-until",
         help="ISO-8601 date the new lock-until should be (YYYY-MM-DD).",
     ),
 ) -> None:
@@ -271,10 +247,7 @@ def retention_extend(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e
     if metadata is None:
-        console.print(
-            f"[red]Error:[/red] No retention record with ID "
-            f"{retention_id!r} found."
-        )
+        console.print(f"[red]Error:[/red] No retention record with ID {retention_id!r} found.")
         raise typer.Exit(code=1)
     new_date = _parse_date_or_exit(new_lock_until, "--new-lock-until")
     if new_date is None:
@@ -288,9 +261,7 @@ def retention_extend(
         raise typer.Exit(code=1)
     from evidentia_core.models.common import utc_now
 
-    new_metadata = metadata.model_copy(
-        update={"lock_until": new_date, "updated_at": utc_now()}
-    )
+    new_metadata = metadata.model_copy(update={"lock_until": new_date, "updated_at": utc_now()})
     save_retention(new_metadata)
     console.print(
         f"[green]Extended[/green] retention id={metadata.id[:8]}; "
@@ -302,7 +273,8 @@ def retention_extend(
 def retention_transition(
     retention_id: str = typer.Argument(..., help="Retention record ID."),
     new_stage: str = typer.Option(
-        ..., "--new-stage",
+        ...,
+        "--new-stage",
         help="Target lifecycle stage: active / preserved / expired / purged.",
     ),
 ) -> None:
@@ -313,17 +285,13 @@ def retention_transition(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e
     if metadata is None:
-        console.print(
-            f"[red]Error:[/red] No retention record with ID "
-            f"{retention_id!r} found."
-        )
+        console.print(f"[red]Error:[/red] No retention record with ID {retention_id!r} found.")
         raise typer.Exit(code=1)
     try:
         stage_enum = RetentionLifecycleStage(new_stage)
     except ValueError as e:
         console.print(
-            f"[red]Error:[/red] Unknown stage {new_stage!r}; valid: "
-            f"{[s.value for s in RetentionLifecycleStage]}"
+            f"[red]Error:[/red] Unknown stage {new_stage!r}; valid: {[s.value for s in RetentionLifecycleStage]}"
         )
         raise typer.Exit(code=1) from e
     try:
@@ -341,9 +309,7 @@ def retention_transition(
 @app.command("delete")
 def retention_delete(
     retention_id: str = typer.Argument(..., help="Retention record ID."),
-    yes: bool = typer.Option(
-        False, "--yes", help="Skip confirmation prompt."
-    ),
+    yes: bool = typer.Option(False, "--yes", help="Skip confirmation prompt."),
 ) -> None:
     """Delete a retention metadata record.
 
@@ -358,10 +324,7 @@ def retention_delete(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e
     if metadata is None:
-        console.print(
-            f"[red]Error:[/red] No retention record with ID "
-            f"{retention_id!r} found."
-        )
+        console.print(f"[red]Error:[/red] No retention record with ID {retention_id!r} found.")
         raise typer.Exit(code=1)
     if not yes:
         confirmed = typer.confirm(
@@ -372,19 +335,20 @@ def retention_delete(
             console.print("[yellow]Aborted.[/yellow]")
             raise typer.Exit(code=0)
     delete_retention(retention_id)
-    console.print(
-        f"[green]Deleted[/green] retention record [bold]{metadata.id[:8]}[/bold]."
-    )
+    console.print(f"[green]Deleted[/green] retention record [bold]{metadata.id[:8]}[/bold].")
 
 
 @app.command("report")
 def retention_report(
     output: Path | None = typer.Option(
-        None, "--output", "-o",
+        None,
+        "--output",
+        "-o",
         help="Output path. If omitted, prints to stdout.",
     ),
     force: bool = typer.Option(
-        False, "--force",
+        False,
+        "--force",
         help="Overwrite the output path if it exists.",
     ),
 ) -> None:
@@ -398,13 +362,8 @@ def retention_report(
         return
 
     if output.exists() and not force:
-        console.print(
-            f"[red]Error:[/red] {output} already exists; pass --force."
-        )
+        console.print(f"[red]Error:[/red] {output} already exists; pass --force.")
         raise typer.Exit(code=1)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(rendered, encoding="utf-8")
-    console.print(
-        f"[green]Wrote[/green] retention report to [bold]{output}[/bold] "
-        f"({len(items)} record(s))."
-    )
+    console.print(f"[green]Wrote[/green] retention report to [bold]{output}[/bold] ({len(items)} record(s)).")

@@ -53,9 +53,7 @@ class TestFileLockExclusion:
     covered by ``TestFileLockMultiprocess`` below.
     """
 
-    def test_second_thread_blocks_until_first_releases(
-        self, tmp_path: Path
-    ) -> None:
+    def test_second_thread_blocks_until_first_releases(self, tmp_path: Path) -> None:
         lock_path = tmp_path / "test.lock"
         order: list[str] = []
         first_inside = threading.Event()
@@ -123,10 +121,7 @@ class TestFileLockTimeout:
             deadline = time.monotonic() + 10.0
             while not acquired_signal.exists():
                 if time.monotonic() >= deadline:
-                    pytest.fail(
-                        "child process never acquired the lock — "
-                        "spawn-method startup issue?"
-                    )
+                    pytest.fail("child process never acquired the lock — spawn-method startup issue?")
                 time.sleep(0.05)
 
             # Now try to acquire with short timeout; should fail.
@@ -146,9 +141,7 @@ class TestFileLockTimeout:
                 proc.join(timeout=2.0)
 
 
-def _hold_lock_for(
-    lock_path: str, signal_path: str, hold_seconds: float
-) -> None:
+def _hold_lock_for(lock_path: str, signal_path: str, hold_seconds: float) -> None:
     """Helper for multiprocess tests — acquire the lock, signal that
     we have it (by touching the signal file), then sleep."""
     with FileLock(Path(lock_path), timeout_seconds=5.0):
@@ -156,9 +149,7 @@ def _hold_lock_for(
         time.sleep(hold_seconds)
 
 
-def _try_increment_counter(
-    lock_path: str, counter_path: str, iterations: int
-) -> int:
+def _try_increment_counter(lock_path: str, counter_path: str, iterations: int) -> int:
     """Helper for the concurrent-writer test. Loops ``iterations`` times,
     each time: acquire lock → read counter → increment → write counter →
     release. Returns the number of successful increments observed."""
@@ -193,9 +184,7 @@ class TestFileLockMultiprocess:
             "stability work in v0.9.5"
         ),
     )
-    def test_four_concurrent_writers_no_clobber(
-        self, tmp_path: Path
-    ) -> None:
+    def test_four_concurrent_writers_no_clobber(self, tmp_path: Path) -> None:
         """4 processes each do 10 lock-acquire + increment cycles.
         With proper locking: final counter = 4 * 10 = 40. Without
         locking: typically < 40 due to lost-update races."""
@@ -207,10 +196,7 @@ class TestFileLockMultiprocess:
         with multiprocessing.Pool(processes=worker_count) as pool:
             results = pool.starmap(
                 _try_increment_counter,
-                [
-                    (str(lock_path), str(counter_path), iterations_per_worker)
-                    for _ in range(worker_count)
-                ],
+                [(str(lock_path), str(counter_path), iterations_per_worker) for _ in range(worker_count)],
             )
 
         # Each worker reports its own successful increments.
@@ -227,9 +213,7 @@ class TestFileLockMultiprocess:
 
 
 class TestFileLockExceptionPath:
-    def test_releases_on_exception_in_critical_section(
-        self, tmp_path: Path
-    ) -> None:
+    def test_releases_on_exception_in_critical_section(self, tmp_path: Path) -> None:
         lock_path = tmp_path / "test.lock"
         with (
             pytest.raises(RuntimeError, match="inside"),
@@ -264,9 +248,7 @@ class TestFileLockSubprocessPopen:
         "    time.sleep(float(hold_seconds))\n"
     )
 
-    def test_subprocess_holder_blocks_in_process_acquirer(
-        self, tmp_path: Path
-    ) -> None:
+    def test_subprocess_holder_blocks_in_process_acquirer(self, tmp_path: Path) -> None:
         """Launch a subprocess that holds the lock for 3s. The in-
         process acquirer with a 0.5s timeout should raise
         FileLockTimeout. Validates that the lock primitive is
@@ -293,10 +275,7 @@ class TestFileLockSubprocessPopen:
             deadline = time.monotonic() + 10.0
             while not acquired_signal.exists():
                 if time.monotonic() >= deadline:
-                    pytest.fail(
-                        "subprocess never acquired the lock — startup "
-                        "issue or import failure in the child"
-                    )
+                    pytest.fail("subprocess never acquired the lock — startup issue or import failure in the child")
                 time.sleep(0.05)
 
             # In-process acquire with short timeout should fail.
@@ -307,9 +286,7 @@ class TestFileLockSubprocessPopen:
             ):
                 pass
             elapsed = time.monotonic() - t0
-            assert 0.4 <= elapsed <= 1.5, (
-                f"timeout was {elapsed}s; expected ~0.5s"
-            )
+            assert 0.4 <= elapsed <= 1.5, f"timeout was {elapsed}s; expected ~0.5s"
         finally:
             proc.wait(timeout=8.0)
             assert proc.returncode == 0

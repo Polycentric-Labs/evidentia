@@ -41,9 +41,7 @@ class TableauPublishedDataset(BaseModel):
             "dataset contained data."
         ),
     )
-    datasource_id: str = Field(
-        description="Tableau-assigned datasource ID after publish"
-    )
+    datasource_id: str = Field(description="Tableau-assigned datasource ID after publish")
 
 
 class TableauPublishResult(BaseModel):
@@ -163,14 +161,9 @@ def publish_report(
                     )
                 )
             else:
-                result.skipped.append(
-                    f"{risk_dataset_name} (no risks supplied)"
-                )
+                result.skipped.append(f"{risk_dataset_name} (no risks supplied)")
         else:
-            result.skipped.append(
-                f"{risk_dataset_name} (risks=None — caller did "
-                f"not pass a risk register)"
-            )
+            result.skipped.append(f"{risk_dataset_name} (risks=None — caller did not pass a risk register)")
 
         # 3. Collection-run dataset (optional).
         if collection_runs is not None:
@@ -191,15 +184,9 @@ def publish_report(
                     )
                 )
             else:
-                result.skipped.append(
-                    f"{collection_run_dataset_name} (no contexts "
-                    f"supplied)"
-                )
+                result.skipped.append(f"{collection_run_dataset_name} (no contexts supplied)")
         else:
-            result.skipped.append(
-                f"{collection_run_dataset_name} (collection_runs="
-                f"None)"
-            )
+            result.skipped.append(f"{collection_run_dataset_name} (collection_runs=None)")
 
     return result
 

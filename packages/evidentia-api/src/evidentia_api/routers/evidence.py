@@ -119,17 +119,12 @@ async def save_evidence_artifact(
             next_version=exc.next_version,
         ) from exc
     except InvalidEvidenceIdError as exc:
-        raise api_error(
-            404, "not_found", str(exc), resource="evidence_lineage"
-        ) from exc
+        raise api_error(404, "not_found", str(exc), resource="evidence_lineage") from exc
 
     _log.info(
         action=EventAction.EVIDENCE_VERSION_PERSISTED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"Persisted evidence v{artifact.version} for lineage "
-            f"{artifact.effective_lineage_id} via API"
-        ),
+        message=(f"Persisted evidence v{artifact.version} for lineage {artifact.effective_lineage_id} via API"),
         evidentia={
             "artifact_id": artifact.id,
             "lineage_id": artifact.effective_lineage_id,
@@ -185,10 +180,7 @@ async def get_evidence_history(lineage_id: str) -> dict[str, Any]:
     _log.info(
         action=EventAction.EVIDENCE_LINEAGE_QUERIED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"Queried lineage {lineage_id} ({len(artifacts)} versions) "
-            f"via API"
-        ),
+        message=(f"Queried lineage {lineage_id} ({len(artifacts)} versions) via API"),
         evidentia={
             "lineage_id": lineage_id,
             "version_count": len(artifacts),
@@ -210,10 +202,7 @@ async def get_evidence_history(lineage_id: str) -> dict[str, Any]:
     responses=error_responses(
         {
             403: RBAC_DENIED_403,
-            404: (
-                "Malformed lineage id OR no such version "
-                "(``error: not_found``)."
-            ),
+            404: ("Malformed lineage id OR no such version (``error: not_found``)."),
         }
     ),
 )
@@ -250,10 +239,7 @@ async def get_evidence_version(
     _log.info(
         action=EventAction.EVIDENCE_LINEAGE_QUERIED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"Loaded v{version} of lineage {lineage_id} (artifact "
-            f"{artifact.id}) via API"
-        ),
+        message=(f"Loaded v{version} of lineage {lineage_id} (artifact {artifact.id}) via API"),
         evidentia={
             "lineage_id": lineage_id,
             "version": version,

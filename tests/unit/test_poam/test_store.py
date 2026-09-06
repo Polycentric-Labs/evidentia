@@ -62,25 +62,19 @@ class TestGetPoamStoreDir:
         result = get_poam_store_dir(tmp_path)
         assert result == tmp_path.expanduser().resolve()
 
-    def test_env_var_used_when_no_override(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_env_var_used_when_no_override(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("EVIDENTIA_POAM_STORE_DIR", str(tmp_path))
         result = get_poam_store_dir()
         assert result == tmp_path.expanduser().resolve()
 
-    def test_explicit_override_beats_env(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_explicit_override_beats_env(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         env_dir = tmp_path / "env"
         override = tmp_path / "override"
         monkeypatch.setenv("EVIDENTIA_POAM_STORE_DIR", str(env_dir))
         result = get_poam_store_dir(override)
         assert result == override.expanduser().resolve()
 
-    def test_default_uses_platformdirs(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_default_uses_platformdirs(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("EVIDENTIA_POAM_STORE_DIR", raising=False)
         result = get_poam_store_dir()
         assert result.name == "poam_store"
@@ -91,25 +85,19 @@ class TestGetPoamStoreDir:
 
 
 class TestSaveAndLoad:
-    def test_save_returns_path_and_creates_file(
-        self, tmp_path: Path
-    ) -> None:
+    def test_save_returns_path_and_creates_file(self, tmp_path: Path) -> None:
         p = _make_poam()
         out = save_poam(p, poam_store_dir=tmp_path)
         assert out.is_file()
         assert out.parent == tmp_path
         assert out.name == f"{p.id}.json"
 
-    def test_save_creates_store_dir_if_missing(
-        self, tmp_path: Path
-    ) -> None:
+    def test_save_creates_store_dir_if_missing(self, tmp_path: Path) -> None:
         store = tmp_path / "fresh"
         save_poam(_make_poam(), poam_store_dir=store)
         assert store.is_dir()
 
-    def test_load_by_id_returns_equivalent_record(
-        self, tmp_path: Path
-    ) -> None:
+    def test_load_by_id_returns_equivalent_record(self, tmp_path: Path) -> None:
         original = _make_poam(
             control_id="AC-3",
             milestones=[
@@ -153,9 +141,7 @@ class TestSaveAndLoad:
 
 
 class TestMilestoneUpdatedAtRefresh:
-    def test_changed_status_refreshes_milestone_updated_at(
-        self, tmp_path: Path
-    ) -> None:
+    def test_changed_status_refreshes_milestone_updated_at(self, tmp_path: Path) -> None:
         from datetime import timedelta
 
         from evidentia_core.models.common import utc_now
@@ -180,9 +166,7 @@ class TestMilestoneUpdatedAtRefresh:
         assert loaded is not None
         assert loaded.poam_milestones[0].updated_at > original_ts
 
-    def test_unchanged_state_preserves_updated_at(
-        self, tmp_path: Path
-    ) -> None:
+    def test_unchanged_state_preserves_updated_at(self, tmp_path: Path) -> None:
         m = _make_milestone()
         original_ts = m.updated_at
         p = _make_poam(milestones=[m])
@@ -199,9 +183,7 @@ class TestMilestoneUpdatedAtRefresh:
 
 
 class TestInvalidIds:
-    def test_load_with_path_traversal_id_raises(
-        self, tmp_path: Path
-    ) -> None:
+    def test_load_with_path_traversal_id_raises(self, tmp_path: Path) -> None:
         with pytest.raises(InvalidPoamIdError):
             load_poam_by_id("../etc/passwd", poam_store_dir=tmp_path)
 
@@ -213,9 +195,7 @@ class TestInvalidIds:
         with pytest.raises(InvalidPoamIdError):
             delete_poam("not-a-uuid", poam_store_dir=tmp_path)
 
-    def test_invalid_id_subclasses_value_error(
-        self, tmp_path: Path
-    ) -> None:
+    def test_invalid_id_subclasses_value_error(self, tmp_path: Path) -> None:
         # Existing ``except ValueError`` handlers continue to work.
         with pytest.raises(ValueError):
             load_poam_by_id("../bad", poam_store_dir=tmp_path)
@@ -238,9 +218,7 @@ class TestUuidCanonicalization:
     URN_PREFIXED = "urn:uuid:12345678-1234-5678-9abc-1234567890ab"
     HEX_NO_HYPHENS = "12345678123456789abc1234567890ab"
 
-    def test_alias_forms_collapse_to_single_record(
-        self, tmp_path: Path
-    ) -> None:
+    def test_alias_forms_collapse_to_single_record(self, tmp_path: Path) -> None:
         # Save with the canonical form.
         p1 = _make_poam()
         p1.id = self.CANONICAL
@@ -256,9 +234,7 @@ class TestUuidCanonicalization:
         assert (tmp_path / f"{self.CANONICAL}.json").is_file()
         assert not (tmp_path / f"{self.BRACE_WRAPPED}.json").is_file()
 
-    def test_save_rewrites_poam_id_to_canonical(
-        self, tmp_path: Path
-    ) -> None:
+    def test_save_rewrites_poam_id_to_canonical(self, tmp_path: Path) -> None:
         p = _make_poam()
         p.id = self.BRACE_WRAPPED
         save_poam(p, poam_store_dir=tmp_path)
@@ -301,17 +277,13 @@ class TestListPoams:
     def test_empty_store_returns_empty_list(self, tmp_path: Path) -> None:
         assert list_poams(poam_store_dir=tmp_path) == []
 
-    def test_non_existent_store_returns_empty_list(
-        self, tmp_path: Path
-    ) -> None:
+    def test_non_existent_store_returns_empty_list(self, tmp_path: Path) -> None:
         result = list_poams(poam_store_dir=tmp_path / "missing")
         assert result == []
 
     def test_sorts_by_severity_descending(self, tmp_path: Path) -> None:
         low = _make_poam(control_id="AC-1", severity=GapSeverity.LOW)
-        critical = _make_poam(
-            control_id="AC-2", severity=GapSeverity.CRITICAL
-        )
+        critical = _make_poam(control_id="AC-2", severity=GapSeverity.CRITICAL)
         medium = _make_poam(control_id="AC-3", severity=GapSeverity.MEDIUM)
         for p in [low, critical, medium]:
             save_poam(p, poam_store_dir=tmp_path)
@@ -322,9 +294,7 @@ class TestListPoams:
             GapSeverity.LOW,
         ]
 
-    def test_secondary_sort_open_milestones_first(
-        self, tmp_path: Path
-    ) -> None:
+    def test_secondary_sort_open_milestones_first(self, tmp_path: Path) -> None:
         # Both HIGH severity; one has an open milestone, the other
         # is fully closed.
         with_open = _make_poam(
@@ -354,9 +324,7 @@ class TestListPoams:
         assert result[0].control_id == "AC-2"
         assert result[1].control_id == "AC-3"
 
-    def test_skips_malformed_files_with_warning(
-        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_skips_malformed_files_with_warning(self, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
         save_poam(_make_poam(), poam_store_dir=tmp_path)
         # Drop a junk file with a UUID-shaped name
         junk = tmp_path / "00000000-0000-0000-0000-000000000000.json"
@@ -364,10 +332,7 @@ class TestListPoams:
         with caplog.at_level("WARNING"):
             result = list_poams(poam_store_dir=tmp_path)
         assert len(result) == 1
-        assert any(
-            "Skipping malformed POA&M record" in r.message
-            for r in caplog.records
-        )
+        assert any("Skipping malformed POA&M record" in r.message for r in caplog.records)
 
 
 # ── delete_poam ────────────────────────────────────────────────────

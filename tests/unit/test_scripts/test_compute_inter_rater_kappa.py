@@ -22,14 +22,8 @@ import pytest
 # Load the script as a module — it lives outside packages/ so we
 # import it via spec_from_file_location rather than the package
 # import path.
-_SCRIPT_PATH = (
-    Path(__file__).resolve().parents[3]
-    / "scripts"
-    / "compute_inter_rater_kappa.py"
-)
-_spec = importlib.util.spec_from_file_location(
-    "compute_inter_rater_kappa", _SCRIPT_PATH
-)
+_SCRIPT_PATH = Path(__file__).resolve().parents[3] / "scripts" / "compute_inter_rater_kappa.py"
+_spec = importlib.util.spec_from_file_location("compute_inter_rater_kappa", _SCRIPT_PATH)
 assert _spec is not None and _spec.loader is not None
 _mod: Any = importlib.util.module_from_spec(_spec)
 sys.modules["compute_inter_rater_kappa"] = _mod
@@ -139,9 +133,7 @@ class TestLandisKochLabel:
             (1.00, "almost-perfect"),
         ],
     )
-    def test_label_boundaries(
-        self, kappa: float, expected: str
-    ) -> None:
+    def test_label_boundaries(self, kappa: float, expected: str) -> None:
         assert _mod.landis_koch_label(kappa) == expected
 
 

@@ -67,6 +67,5 @@ def test_evidentia_eval_remains_importable() -> None:
     """
     spec = importlib.util.find_spec("evidentia_eval")
     assert spec is not None, (
-        "evidentia_eval must remain importable — it is the migration "
-        "target published in the v0.10.5 deprecation notice"
+        "evidentia_eval must remain importable — it is the migration target published in the v0.10.5 deprecation notice"
     )

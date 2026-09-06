@@ -22,9 +22,7 @@ def runner() -> CliRunner:
 
 
 @pytest.fixture(autouse=True)
-def _isolated_model_store(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def _isolated_model_store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Point EVIDENTIA_MODEL_STORE_DIR at an isolated tmp for each test."""
     store = tmp_path / "model-store"
     monkeypatch.setenv("EVIDENTIA_MODEL_STORE_DIR", str(store))
@@ -80,13 +78,21 @@ class TestModelAdd:
         result = runner.invoke(
             app,
             [
-                "model-risk", "model", "add",
-                "--name", "FICO scorer v3",
-                "--purpose", "Score consumer credit applications",
-                "--methodology", "ml",
-                "--vendor-or-internal", "internal",
-                "--tier", "tier_1",
-                "--owner", "ml-team@example.com",
+                "model-risk",
+                "model",
+                "add",
+                "--name",
+                "FICO scorer v3",
+                "--purpose",
+                "Score consumer credit applications",
+                "--methodology",
+                "ml",
+                "--vendor-or-internal",
+                "internal",
+                "--tier",
+                "tier_1",
+                "--owner",
+                "ml-team@example.com",
             ],
         )
         assert result.exit_code == 0, result.output
@@ -97,8 +103,11 @@ class TestModelAdd:
         result = runner.invoke(
             app,
             [
-                "model-risk", "model", "add",
-                "--name", "X",
+                "model-risk",
+                "model",
+                "add",
+                "--name",
+                "X",
                 # Missing --purpose / --methodology / --vendor-or-internal / --tier / --owner
             ],
         )
@@ -109,92 +118,119 @@ class TestModelAdd:
         result = runner.invoke(
             app,
             [
-                "model-risk", "model", "add",
-                "--name", "X", "--purpose", "x",
-                "--methodology", "telepathy",  # invalid
-                "--vendor-or-internal", "internal",
-                "--tier", "tier_2", "--owner", "a@b.com",
+                "model-risk",
+                "model",
+                "add",
+                "--name",
+                "X",
+                "--purpose",
+                "x",
+                "--methodology",
+                "telepathy",  # invalid
+                "--vendor-or-internal",
+                "internal",
+                "--tier",
+                "tier_2",
+                "--owner",
+                "a@b.com",
             ],
         )
         assert result.exit_code == 1
         assert "Invalid model data" in result.output
 
-    def test_vendor_provenance_requires_vendor_id(
-        self, runner: CliRunner
-    ) -> None:
+    def test_vendor_provenance_requires_vendor_id(self, runner: CliRunner) -> None:
         result = runner.invoke(
             app,
             [
-                "model-risk", "model", "add",
-                "--name", "X", "--purpose", "x",
-                "--methodology", "llm",
-                "--vendor-or-internal", "vendor",
+                "model-risk",
+                "model",
+                "add",
+                "--name",
+                "X",
+                "--purpose",
+                "x",
+                "--methodology",
+                "llm",
+                "--vendor-or-internal",
+                "vendor",
                 # Missing --vendor-id
-                "--tier", "tier_2", "--owner", "a@b.com",
+                "--tier",
+                "tier_2",
+                "--owner",
+                "a@b.com",
             ],
         )
         assert result.exit_code == 1
         assert "vendor_id" in result.output.lower()
 
-    def test_vendor_provenance_with_vendor_id(
-        self, runner: CliRunner
-    ) -> None:
+    def test_vendor_provenance_with_vendor_id(self, runner: CliRunner) -> None:
         result = runner.invoke(
             app,
             [
-                "model-risk", "model", "add",
-                "--name", "Vendor LLM",
-                "--purpose", "Vendor-supplied LLM",
-                "--methodology", "llm",
-                "--vendor-or-internal", "vendor",
-                "--vendor-id", "aaaa1111-2222-3333-4444-555566667777",
-                "--tier", "tier_2",
-                "--owner", "ai-team@example.com",
+                "model-risk",
+                "model",
+                "add",
+                "--name",
+                "Vendor LLM",
+                "--purpose",
+                "Vendor-supplied LLM",
+                "--methodology",
+                "llm",
+                "--vendor-or-internal",
+                "vendor",
+                "--vendor-id",
+                "aaaa1111-2222-3333-4444-555566667777",
+                "--tier",
+                "tier_2",
+                "--owner",
+                "ai-team@example.com",
             ],
         )
         assert result.exit_code == 0, result.output
         assert "Added" in result.output
 
-    def test_auto_computes_next_validation_due(
-        self, runner: CliRunner
-    ) -> None:
+    def test_auto_computes_next_validation_due(self, runner: CliRunner) -> None:
         # Tier 1 + last_validation_date 2025-06-15 → next 2026-06-15
         mid = _add_minimal_model(
             runner,
             tier="tier_1",
             last_validation_date="2025-06-15",
         )
-        result = runner.invoke(
-            app, ["model-risk", "model", "show", mid, "--json"]
-        )
+        result = runner.invoke(app, ["model-risk", "model", "show", mid, "--json"])
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert data["next_validation_due"] == "2026-06-15"
 
-    def test_explicit_next_validation_due_overrides_auto(
-        self, runner: CliRunner
-    ) -> None:
+    def test_explicit_next_validation_due_overrides_auto(self, runner: CliRunner) -> None:
         result = runner.invoke(
             app,
             [
-                "model-risk", "model", "add",
-                "--name", "Override test",
-                "--purpose", "x",
-                "--methodology", "ml",
-                "--vendor-or-internal", "internal",
-                "--tier", "tier_1",
-                "--owner", "a@b.com",
-                "--last-validation-date", "2025-06-15",
-                "--next-validation-due", "2025-12-01",  # earlier override
+                "model-risk",
+                "model",
+                "add",
+                "--name",
+                "Override test",
+                "--purpose",
+                "x",
+                "--methodology",
+                "ml",
+                "--vendor-or-internal",
+                "internal",
+                "--tier",
+                "tier_1",
+                "--owner",
+                "a@b.com",
+                "--last-validation-date",
+                "2025-06-15",
+                "--next-validation-due",
+                "2025-12-01",  # earlier override
             ],
         )
         assert result.exit_code == 0
         import re
 
         mid = re.search(r"id:\s+([0-9a-f-]{36})", result.output).group(1)
-        show = runner.invoke(
-            app, ["model-risk", "model", "show", mid, "--json"]
-        )
+        show = runner.invoke(app, ["model-risk", "model", "show", mid, "--json"])
         data = json.loads(show.output)
         assert data["next_validation_due"] == "2025-12-01"
 
@@ -212,9 +248,7 @@ class TestModelList:
     def test_json_output_is_bare_array(self, runner: CliRunner) -> None:
         _add_minimal_model(runner, name="Alpha")
         _add_minimal_model(runner, name="Beta")
-        result = runner.invoke(
-            app, ["model-risk", "model", "list", "--json"]
-        )
+        result = runner.invoke(app, ["model-risk", "model", "list", "--json"])
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert isinstance(data, list)
@@ -239,8 +273,12 @@ class TestModelList:
         result = runner.invoke(
             app,
             [
-                "model-risk", "model", "list",
-                "--methodology", "llm", "--json",
+                "model-risk",
+                "model",
+                "list",
+                "--methodology",
+                "llm",
+                "--json",
             ],
         )
         data = json.loads(result.output)
@@ -261,9 +299,7 @@ class TestModelShow:
 
     def test_show_json(self, runner: CliRunner) -> None:
         mid = _add_minimal_model(runner)
-        result = runner.invoke(
-            app, ["model-risk", "model", "show", mid, "--json"]
-        )
+        result = runner.invoke(app, ["model-risk", "model", "show", mid, "--json"])
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert data["id"] == mid
@@ -272,7 +308,9 @@ class TestModelShow:
         result = runner.invoke(
             app,
             [
-                "model-risk", "model", "show",
+                "model-risk",
+                "model",
+                "show",
                 "00000000-0000-0000-0000-000000000000",
             ],
         )
@@ -280,9 +318,7 @@ class TestModelShow:
         assert "No model with ID" in result.output
 
     def test_show_invalid_id_shape_errors(self, runner: CliRunner) -> None:
-        result = runner.invoke(
-            app, ["model-risk", "model", "show", "not-a-uuid"]
-        )
+        result = runner.invoke(app, ["model-risk", "model", "show", "not-a-uuid"])
         assert result.exit_code == 1
         assert "Invalid model ID" in result.output
 
@@ -296,15 +332,17 @@ class TestModelEdit:
         result = runner.invoke(
             app,
             [
-                "model-risk", "model", "edit", mid,
-                "--owner", "new-owner@example.com",
+                "model-risk",
+                "model",
+                "edit",
+                mid,
+                "--owner",
+                "new-owner@example.com",
             ],
         )
         assert result.exit_code == 0, result.output
         # Verify
-        show = runner.invoke(
-            app, ["model-risk", "model", "show", mid, "--json"]
-        )
+        show = runner.invoke(app, ["model-risk", "model", "show", mid, "--json"])
         data = json.loads(show.output)
         assert data["owner"] == "new-owner@example.com"
 
@@ -319,16 +357,18 @@ class TestModelEdit:
         result = runner.invoke(
             app,
             [
-                "model-risk", "model", "edit", mid,
-                "--methodology", "telepathy",
+                "model-risk",
+                "model",
+                "edit",
+                mid,
+                "--methodology",
+                "telepathy",
             ],
         )
         assert result.exit_code == 1
         assert "Unknown methodology" in result.output
 
-    def test_edit_recomputes_next_validation_due(
-        self, runner: CliRunner
-    ) -> None:
+    def test_edit_recomputes_next_validation_due(self, runner: CliRunner) -> None:
         mid = _add_minimal_model(
             runner,
             tier="tier_2",
@@ -339,21 +379,21 @@ class TestModelEdit:
         result = runner.invoke(
             app,
             [
-                "model-risk", "model", "edit", mid,
-                "--last-validation-date", "2026-01-01",
+                "model-risk",
+                "model",
+                "edit",
+                mid,
+                "--last-validation-date",
+                "2026-01-01",
             ],
         )
         assert result.exit_code == 0
-        show = runner.invoke(
-            app, ["model-risk", "model", "show", mid, "--json"]
-        )
+        show = runner.invoke(app, ["model-risk", "model", "show", mid, "--json"])
         data = json.loads(show.output)
         # Tier 2 + 2026-01-01 → 2028-01-01
         assert data["next_validation_due"] == "2028-01-01"
 
-    def test_explicit_next_validation_due_takes_precedence(
-        self, runner: CliRunner
-    ) -> None:
+    def test_explicit_next_validation_due_takes_precedence(self, runner: CliRunner) -> None:
         mid = _add_minimal_model(
             runner,
             tier="tier_1",
@@ -363,14 +403,16 @@ class TestModelEdit:
         result = runner.invoke(
             app,
             [
-                "model-risk", "model", "edit", mid,
-                "--next-validation-due", "2025-12-31",
+                "model-risk",
+                "model",
+                "edit",
+                mid,
+                "--next-validation-due",
+                "2025-12-31",
             ],
         )
         assert result.exit_code == 0
-        show = runner.invoke(
-            app, ["model-risk", "model", "show", mid, "--json"]
-        )
+        show = runner.invoke(app, ["model-risk", "model", "show", mid, "--json"])
         data = json.loads(show.output)
         assert data["next_validation_due"] == "2025-12-31"
 
@@ -381,34 +423,28 @@ class TestModelEdit:
 class TestModelDelete:
     def test_delete_with_yes_flag(self, runner: CliRunner) -> None:
         mid = _add_minimal_model(runner)
-        result = runner.invoke(
-            app, ["model-risk", "model", "delete", mid, "--yes"]
-        )
+        result = runner.invoke(app, ["model-risk", "model", "delete", mid, "--yes"])
         assert result.exit_code == 0
         assert "Deleted" in result.output
         # Confirm gone
-        show = runner.invoke(
-            app, ["model-risk", "model", "show", mid]
-        )
+        show = runner.invoke(app, ["model-risk", "model", "show", mid])
         assert show.exit_code == 1
 
     def test_delete_unknown_errors(self, runner: CliRunner) -> None:
         result = runner.invoke(
             app,
             [
-                "model-risk", "model", "delete",
+                "model-risk",
+                "model",
+                "delete",
                 "00000000-0000-0000-0000-000000000000",
                 "--yes",
             ],
         )
         assert result.exit_code == 1
 
-    def test_delete_invalid_id_shape_errors(
-        self, runner: CliRunner
-    ) -> None:
-        result = runner.invoke(
-            app, ["model-risk", "model", "delete", "not-a-uuid", "--yes"]
-        )
+    def test_delete_invalid_id_shape_errors(self, runner: CliRunner) -> None:
+        result = runner.invoke(app, ["model-risk", "model", "delete", "not-a-uuid", "--yes"])
         assert result.exit_code == 1
         assert "Invalid model ID" in result.output
 
@@ -419,9 +455,7 @@ class TestModelDelete:
 class TestDocGenerate:
     def test_to_stdout(self, runner: CliRunner) -> None:
         mid = _add_minimal_model(runner)
-        result = runner.invoke(
-            app, ["model-risk", "doc", "generate", mid]
-        )
+        result = runner.invoke(app, ["model-risk", "doc", "generate", mid])
         assert result.exit_code == 0, result.output
         assert "## 1. Identification" in result.output
         assert "## 9. Audit trail" in result.output
@@ -438,9 +472,7 @@ class TestDocGenerate:
         body = out.read_text(encoding="utf-8")
         assert "Model Documentation — Test Model" in body
 
-    def test_refuses_to_overwrite_without_force(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_refuses_to_overwrite_without_force(self, runner: CliRunner, tmp_path: Path) -> None:
         mid = _add_minimal_model(runner)
         out = tmp_path / "doc.md"
         out.write_text("pre-existing", encoding="utf-8")
@@ -456,7 +488,9 @@ class TestDocGenerate:
         result = runner.invoke(
             app,
             [
-                "model-risk", "doc", "generate",
+                "model-risk",
+                "doc",
+                "generate",
                 "00000000-0000-0000-0000-000000000000",
             ],
         )
@@ -469,9 +503,7 @@ class TestDocGenerate:
 class TestValidationReportGenerate:
     def test_to_stdout(self, runner: CliRunner) -> None:
         mid = _add_minimal_model(runner)
-        result = runner.invoke(
-            app, ["model-risk", "validation-report", "generate", mid]
-        )
+        result = runner.invoke(app, ["model-risk", "validation-report", "generate", mid])
         assert result.exit_code == 0, result.output
         assert "## Executive summary" in result.output
         assert "## Finding disposition" in result.output
@@ -482,8 +514,12 @@ class TestValidationReportGenerate:
         result = runner.invoke(
             app,
             [
-                "model-risk", "validation-report", "generate",
-                mid, "--output", str(out),
+                "model-risk",
+                "validation-report",
+                "generate",
+                mid,
+                "--output",
+                str(out),
             ],
         )
         assert result.exit_code == 0, result.output

@@ -14,23 +14,17 @@ _UNKNOWN_UUID = "11111111-1111-4111-8111-111111111111"
 
 
 @pytest.fixture(autouse=True)
-def isolated_registry(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def isolated_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Per-test isolated AI registry; matches CLI test fixture."""
     registry_dir = tmp_path / "ai_registry"
     monkeypatch.setenv("EVIDENTIA_AI_REGISTRY_DIR", str(registry_dir))
     # v0.11: acquisitions store isolation (M-25-22 lifecycle records).
-    monkeypatch.setenv(
-        "EVIDENTIA_AI_ACQUISITION_DIR", str(tmp_path / "ai_acquisitions")
-    )
+    monkeypatch.setenv("EVIDENTIA_AI_ACQUISITION_DIR", str(tmp_path / "ai_acquisitions"))
     return registry_dir
 
 
 @pytest.fixture
-def ai_gov_readonly_client(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Iterator[TestClient]:
+def ai_gov_readonly_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     """A TestClient over a local app holding ONLY the ai_gov router
     under a deny-by-default (read-only) RBAC policy.
 
@@ -80,9 +74,7 @@ def _register_system(
 
 
 class TestClassify:
-    def test_classify_returns_high_for_annex_iii(
-        self, api_client: TestClient
-    ) -> None:
+    def test_classify_returns_high_for_annex_iii(self, api_client: TestClient) -> None:
         resp = api_client.post(
             "/api/ai-gov/classify",
             json={
@@ -95,9 +87,7 @@ class TestClassify:
         body = resp.json()
         assert body["eu_ai_act_tier"] == "high"
 
-    def test_classify_returns_minimal_for_default(
-        self, api_client: TestClient
-    ) -> None:
+    def test_classify_returns_minimal_for_default(self, api_client: TestClient) -> None:
         resp = api_client.post(
             "/api/ai-gov/classify",
             json={"name": "spam-filter", "purpose": "Internal spam"},
@@ -174,9 +164,7 @@ class TestRegisterListGetDelete:
         assert minimal.status_code == 200
         assert len(minimal.json()) == 1
 
-    def test_unknown_tier_returns_structured_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_unknown_tier_returns_structured_400(self, api_client: TestClient) -> None:
         """2026-07-06 DAST (schemathesis) follow-up: the unknown-tier
         400 must carry the structured ``detail`` shape the API uses
         for machine-readable errors (cf. ``rbac_denied``), not a bare
@@ -194,9 +182,7 @@ class TestRegisterListGetDelete:
         ]
         assert "message" in detail
 
-    def test_unknown_tier_400_documented_in_openapi(
-        self, api_client: TestClient
-    ) -> None:
+    def test_unknown_tier_400_documented_in_openapi(self, api_client: TestClient) -> None:
         """Companion to the structured-400 test: schemathesis also
         flagged the 400 as undocumented (missing from the operation's
         ``responses``)."""
@@ -204,30 +190,20 @@ class TestRegisterListGetDelete:
         op = schema["paths"]["/api/ai-gov/systems"]["get"]
         assert "400" in op["responses"]
 
-    def test_invalid_uuid_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_invalid_uuid_returns_400(self, api_client: TestClient) -> None:
         resp = api_client.get("/api/ai-gov/systems/not-a-uuid")
         assert resp.status_code == 400
         assert resp.json()["detail"]["error"] == "invalid_id"
 
-    def test_unknown_uuid_returns_404(
-        self, api_client: TestClient
-    ) -> None:
-        resp = api_client.get(
-            "/api/ai-gov/systems/11111111-1111-4111-8111-111111111111"
-        )
+    def test_unknown_uuid_returns_404(self, api_client: TestClient) -> None:
+        resp = api_client.get("/api/ai-gov/systems/11111111-1111-4111-8111-111111111111")
         assert resp.status_code == 404
         detail = resp.json()["detail"]
         assert detail["error"] == "not_found"
         assert detail["resource"] == "ai_system"
 
-    def test_delete_unknown_id_is_idempotent(
-        self, api_client: TestClient
-    ) -> None:
-        resp = api_client.delete(
-            "/api/ai-gov/systems/11111111-1111-4111-8111-111111111111"
-        )
+    def test_delete_unknown_id_is_idempotent(self, api_client: TestClient) -> None:
+        resp = api_client.delete("/api/ai-gov/systems/11111111-1111-4111-8111-111111111111")
         assert resp.status_code == 200
         assert resp.json()["removed"] is False
 
@@ -252,9 +228,7 @@ class TestRegisterWhitespaceOnlyFields:
         "annex_iii_domain": "employment",
     }
 
-    def test_whitespace_only_provider_no_idempotency_key_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_whitespace_only_provider_no_idempotency_key_returns_400(self, api_client: TestClient) -> None:
         resp = api_client.post(
             "/api/ai-gov/register",
             json={
@@ -266,9 +240,7 @@ class TestRegisterWhitespaceOnlyFields:
         assert resp.status_code == 400, resp.text
         assert resp.json()["detail"]["error"] == "invalid_body"
 
-    def test_whitespace_only_owner_no_idempotency_key_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_whitespace_only_owner_no_idempotency_key_returns_400(self, api_client: TestClient) -> None:
         resp = api_client.post(
             "/api/ai-gov/register",
             json={
@@ -280,9 +252,7 @@ class TestRegisterWhitespaceOnlyFields:
         assert resp.status_code == 400, resp.text
         assert resp.json()["detail"]["error"] == "invalid_body"
 
-    def test_whitespace_only_provider_via_idempotent_fresh_create_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_whitespace_only_provider_via_idempotent_fresh_create_returns_400(self, api_client: TestClient) -> None:
         """Same bug, but through the ``with FileLock(...)`` fresh-create
         branch (i.e. a request carrying a never-seen-before
         ``X-Idempotency-Key``) rather than the no-idempotency-key
@@ -299,9 +269,7 @@ class TestRegisterWhitespaceOnlyFields:
         assert resp.status_code == 400, resp.text
         assert resp.json()["detail"]["error"] == "invalid_body"
 
-    def test_normal_register_still_succeeds(
-        self, api_client: TestClient
-    ) -> None:
+    def test_normal_register_still_succeeds(self, api_client: TestClient) -> None:
         """No-regression check: a well-formed register still 200s."""
         resp = api_client.post(
             "/api/ai-gov/register",
@@ -324,9 +292,7 @@ class TestBodyParseErrorNormalization:
     OTHER deliberate ``api_error(...)`` 400 still flows through FastAPI's
     default handler unchanged (the handler delegates non-target cases)."""
 
-    def test_undecodable_body_returns_structured_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_undecodable_body_returns_structured_400(self, api_client: TestClient) -> None:
         resp = api_client.post(
             "/api/ai-gov/register",
             # High bytes that fail the body UTF-8 decode BEFORE JSON
@@ -339,9 +305,7 @@ class TestBodyParseErrorNormalization:
         assert resp.status_code == 400, resp.text
         assert resp.json()["detail"]["error"] == "body_parse_error"
 
-    def test_other_400s_keep_their_own_error_key(
-        self, api_client: TestClient
-    ) -> None:
+    def test_other_400s_keep_their_own_error_key(self, api_client: TestClient) -> None:
         """The handler must DELEGATE non-target HTTPExceptions: a normal
         domain 400 keeps its own key, proving the app-wide handler does
         not hijack every 400."""
@@ -365,9 +329,7 @@ class TestRegisterDescriptorWhitespaceRejected:
     request-validation 422, array-shape detail) instead of over-promising
     acceptance in the schema."""
 
-    def test_whitespace_only_descriptor_name_rejected(
-        self, api_client: TestClient
-    ) -> None:
+    def test_whitespace_only_descriptor_name_rejected(self, api_client: TestClient) -> None:
         resp = api_client.post(
             "/api/ai-gov/register",
             json={
@@ -378,9 +340,7 @@ class TestRegisterDescriptorWhitespaceRejected:
         )
         assert resp.status_code == 422, resp.text
 
-    def test_whitespace_only_descriptor_purpose_rejected(
-        self, api_client: TestClient
-    ) -> None:
+    def test_whitespace_only_descriptor_purpose_rejected(self, api_client: TestClient) -> None:
         resp = api_client.post(
             "/api/ai-gov/register",
             json={
@@ -410,9 +370,7 @@ class TestIdempotency:
         "owner": "hr-team",
     }
 
-    def test_same_key_same_body_returns_prior_system_id(
-        self, api_client: TestClient
-    ) -> None:
+    def test_same_key_same_body_returns_prior_system_id(self, api_client: TestClient) -> None:
         """Idempotent replay: identical key + body returns the
         original system_id and the entry is NOT duplicated."""
         first = api_client.post(
@@ -438,9 +396,7 @@ class TestIdempotency:
         assert listing.status_code == 200
         assert len(listing.json()) == 1
 
-    def test_same_key_different_body_returns_409(
-        self, api_client: TestClient
-    ) -> None:
+    def test_same_key_different_body_returns_409(self, api_client: TestClient) -> None:
         """Same key + different body = 409 Conflict (operator error
         signal). Prevents key-reuse bugs from silently creating
         wrong-data entries."""
@@ -465,24 +421,16 @@ class TestIdempotency:
         assert detail["error"] == "idempotency_key_conflict"
         assert "test-key-2" in detail["message"]
 
-    def test_no_key_creates_fresh_entry_each_call(
-        self, api_client: TestClient
-    ) -> None:
+    def test_no_key_creates_fresh_entry_each_call(self, api_client: TestClient) -> None:
         """Without X-Idempotency-Key, repeated POSTs create separate
         entries (legacy v0.9.3 behavior preserved)."""
-        first = api_client.post(
-            "/api/ai-gov/register", json=self._SAMPLE_BODY
-        )
-        second = api_client.post(
-            "/api/ai-gov/register", json=self._SAMPLE_BODY
-        )
+        first = api_client.post("/api/ai-gov/register", json=self._SAMPLE_BODY)
+        second = api_client.post("/api/ai-gov/register", json=self._SAMPLE_BODY)
         assert first.status_code == 200
         assert second.status_code == 200
         assert first.json()["system_id"] != second.json()["system_id"]
 
-    def test_register_replay_after_delete_returns_null_entry(
-        self, api_client: TestClient
-    ) -> None:
+    def test_register_replay_after_delete_returns_null_entry(self, api_client: TestClient) -> None:
         """v0.9.5 F-V94-Q2 regression test: idempotency replay after
         the target system_id has been deleted returns the original
         ``system_id`` with ``entry: null`` (not a 500, not a re-
@@ -538,22 +486,16 @@ class TestRateLimit:
                     "purpose": "test",
                 },
             )
-            assert resp.status_code == 200, (
-                f"burst {i} should be allowed but got {resp.status_code}"
-            )
+            assert resp.status_code == 200, f"burst {i} should be allowed but got {resp.status_code}"
         # 11th hits empty bucket → 429.
-        resp = api_client.post(
-            "/api/ai-gov/classify", json=self._SAMPLE_CLASSIFY_BODY
-        )
+        resp = api_client.post("/api/ai-gov/classify", json=self._SAMPLE_CLASSIFY_BODY)
         assert resp.status_code == 429
         detail = resp.json()["detail"]
         assert detail["error"] == "rate_limited"
         assert "Rate limit" in detail["message"]
         assert resp.headers.get("Retry-After") == "5"
 
-    def test_get_endpoints_not_rate_limited(
-        self, api_client: TestClient
-    ) -> None:
+    def test_get_endpoints_not_rate_limited(self, api_client: TestClient) -> None:
         """GET endpoints (list/show) aren't on the allowlist —
         many calls in a row all succeed."""
         for _ in range(50):
@@ -587,34 +529,26 @@ class TestUpdateSystem:
         assert got.json()["owner"] == "new-owner"
         assert got.json()["deployment_status"] == "production"
 
-    def test_update_unknown_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_update_unknown_id_returns_404(self, api_client: TestClient) -> None:
         resp = api_client.put(
             f"/api/ai-gov/systems/{_UNKNOWN_UUID}",
             json={"owner": "x"},
         )
         assert resp.status_code == 404
 
-    def test_update_invalid_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_update_invalid_id_returns_404(self, api_client: TestClient) -> None:
         resp = api_client.put(
             "/api/ai-gov/systems/not-a-uuid",
             json={"owner": "x"},
         )
         assert resp.status_code == 404
 
-    def test_update_no_fields_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_update_no_fields_returns_400(self, api_client: TestClient) -> None:
         system_id = _register_system(api_client)
         resp = api_client.put(f"/api/ai-gov/systems/{system_id}", json={})
         assert resp.status_code == 400
 
-    def test_update_bad_deployment_status_returns_422(
-        self, api_client: TestClient
-    ) -> None:
+    def test_update_bad_deployment_status_returns_422(self, api_client: TestClient) -> None:
         system_id = _register_system(api_client)
         resp = api_client.put(
             f"/api/ai-gov/systems/{system_id}",
@@ -637,9 +571,7 @@ class TestRetireSystem:
         assert got.status_code == 200
         assert got.json()["deployment_status"] == "retired"
 
-    def test_retire_already_retired_is_idempotent(
-        self, api_client: TestClient
-    ) -> None:
+    def test_retire_already_retired_is_idempotent(self, api_client: TestClient) -> None:
         system_id = _register_system(api_client, deployment_status="pilot")
         first = api_client.post(f"/api/ai-gov/systems/{system_id}/retire")
         assert first.status_code == 200
@@ -647,15 +579,11 @@ class TestRetireSystem:
         assert second.status_code == 200
         assert second.json()["entry"]["deployment_status"] == "retired"
 
-    def test_retire_unknown_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_retire_unknown_id_returns_404(self, api_client: TestClient) -> None:
         resp = api_client.post(f"/api/ai-gov/systems/{_UNKNOWN_UUID}/retire")
         assert resp.status_code == 404
 
-    def test_retire_invalid_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_retire_invalid_id_returns_404(self, api_client: TestClient) -> None:
         resp = api_client.post("/api/ai-gov/systems/not-a-uuid/retire")
         assert resp.status_code == 404
 
@@ -663,9 +591,7 @@ class TestRetireSystem:
 class TestCategorizeFips:
     """POST /ai-gov/systems/{system_id}/categorize-fips — FIPS 199."""
 
-    def test_categorize_mutates_and_persists(
-        self, api_client: TestClient
-    ) -> None:
+    def test_categorize_mutates_and_persists(self, api_client: TestClient) -> None:
         system_id = _register_system(api_client)
         resp = api_client.post(
             f"/api/ai-gov/systems/{system_id}/categorize-fips",
@@ -687,9 +613,7 @@ class TestCategorizeFips:
         got = api_client.get(f"/api/ai-gov/systems/{system_id}")
         assert got.json()["fips_199_categorization"]["overall"] == "high"
 
-    def test_categorize_unknown_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_categorize_unknown_id_returns_404(self, api_client: TestClient) -> None:
         resp = api_client.post(
             f"/api/ai-gov/systems/{_UNKNOWN_UUID}/categorize-fips",
             json={
@@ -700,9 +624,7 @@ class TestCategorizeFips:
         )
         assert resp.status_code == 404
 
-    def test_categorize_invalid_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_categorize_invalid_id_returns_404(self, api_client: TestClient) -> None:
         resp = api_client.post(
             "/api/ai-gov/systems/not-a-uuid/categorize-fips",
             json={
@@ -713,9 +635,7 @@ class TestCategorizeFips:
         )
         assert resp.status_code == 404
 
-    def test_categorize_bad_impact_value_returns_422(
-        self, api_client: TestClient
-    ) -> None:
+    def test_categorize_bad_impact_value_returns_422(self, api_client: TestClient) -> None:
         system_id = _register_system(api_client)
         resp = api_client.post(
             f"/api/ai-gov/systems/{system_id}/categorize-fips",
@@ -727,9 +647,7 @@ class TestCategorizeFips:
         )
         assert resp.status_code == 422
 
-    def test_categorize_high_water_mark_mismatch_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_categorize_high_water_mark_mismatch_returns_400(self, api_client: TestClient) -> None:
         # overall=low while integrity=high is a paperwork error the
         # core validator rejects → domain error normalizes to 400.
         system_id = _register_system(api_client)
@@ -748,9 +666,7 @@ class TestCategorizeFips:
 class TestSetOmbImpact:
     """POST /ai-gov/systems/{system_id}/set-omb-impact — OMB M-24-10."""
 
-    def test_set_omb_mutates_and_persists(
-        self, api_client: TestClient
-    ) -> None:
+    def test_set_omb_mutates_and_persists(self, api_client: TestClient) -> None:
         system_id = _register_system(api_client)
         resp = api_client.post(
             f"/api/ai-gov/systems/{system_id}/set-omb-impact",
@@ -763,27 +679,21 @@ class TestSetOmbImpact:
         got = api_client.get(f"/api/ai-gov/systems/{system_id}")
         assert got.json()["omb_impact"] == "rights_impacting"
 
-    def test_set_omb_unknown_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_set_omb_unknown_id_returns_404(self, api_client: TestClient) -> None:
         resp = api_client.post(
             f"/api/ai-gov/systems/{_UNKNOWN_UUID}/set-omb-impact",
             json={"category": "neither"},
         )
         assert resp.status_code == 404
 
-    def test_set_omb_invalid_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_set_omb_invalid_id_returns_404(self, api_client: TestClient) -> None:
         resp = api_client.post(
             "/api/ai-gov/systems/not-a-uuid/set-omb-impact",
             json={"category": "neither"},
         )
         assert resp.status_code == 404
 
-    def test_set_omb_bad_category_returns_422(
-        self, api_client: TestClient
-    ) -> None:
+    def test_set_omb_bad_category_returns_422(self, api_client: TestClient) -> None:
         system_id = _register_system(api_client)
         resp = api_client.post(
             f"/api/ai-gov/systems/{system_id}/set-omb-impact",
@@ -806,9 +716,7 @@ class TestSetOmbImpactDeprecationSignalling:
     ``deprecated`` flag.
     """
 
-    def test_response_carries_deprecation_header(
-        self, api_client: TestClient
-    ) -> None:
+    def test_response_carries_deprecation_header(self, api_client: TestClient) -> None:
         """RFC 8594 §2: ``Deprecation: true`` on a deprecated resource."""
         system_id = _register_system(api_client)
         resp = api_client.post(
@@ -818,9 +726,7 @@ class TestSetOmbImpactDeprecationSignalling:
         assert resp.status_code == 200, resp.text
         assert resp.headers.get("Deprecation") == "true"
 
-    def test_response_links_the_successor_version(
-        self, api_client: TestClient
-    ) -> None:
+    def test_response_links_the_successor_version(self, api_client: TestClient) -> None:
         """RFC 8594 §4: a ``successor-version`` Link to the replacement."""
         system_id = _register_system(api_client)
         resp = api_client.post(
@@ -831,9 +737,7 @@ class TestSetOmbImpactDeprecationSignalling:
         assert 'rel="successor-version"' in link, link
         assert "/api/ai-gov/systems/{system_id}/set-high-impact" in link, link
 
-    def test_no_sunset_header_without_a_committed_date(
-        self, api_client: TestClient
-    ) -> None:
+    def test_no_sunset_header_without_a_committed_date(self, api_client: TestClient) -> None:
         """RFC 8594 §3 ``Sunset`` states a DATE, which we do not have.
 
         The calendar commits to a removal *release* (v1.0.0), not a
@@ -848,9 +752,7 @@ class TestSetOmbImpactDeprecationSignalling:
         )
         assert "Sunset" not in resp.headers
 
-    def test_error_responses_also_carry_the_header(
-        self, api_client: TestClient
-    ) -> None:
+    def test_error_responses_also_carry_the_header(self, api_client: TestClient) -> None:
         """A client probing an unknown ID still learns the verb is going away."""
         resp = api_client.post(
             f"/api/ai-gov/systems/{_UNKNOWN_UUID}/set-omb-impact",
@@ -859,9 +761,7 @@ class TestSetOmbImpactDeprecationSignalling:
         assert resp.status_code == 404
         assert resp.headers.get("Deprecation") == "true"
 
-    def test_successor_route_is_not_marked_deprecated(
-        self, api_client: TestClient
-    ) -> None:
+    def test_successor_route_is_not_marked_deprecated(self, api_client: TestClient) -> None:
         """The M-25-21 replacement must NOT inherit the signal."""
         system_id = _register_system(api_client)
         resp = api_client.post(
@@ -871,25 +771,19 @@ class TestSetOmbImpactDeprecationSignalling:
         assert resp.status_code == 200, resp.text
         assert "Deprecation" not in resp.headers
 
-    def test_openapi_marks_the_operation_deprecated(
-        self, api_client: TestClient
-    ) -> None:
+    def test_openapi_marks_the_operation_deprecated(self, api_client: TestClient) -> None:
         """The generated schema flags the operation for SDK/codegen users."""
         schema = api_client.get("/api/openapi.json").json()
         op = schema["paths"]["/api/ai-gov/systems/{system_id}/set-omb-impact"]
         assert op["post"].get("deprecated") is True
-        successor = schema["paths"][
-            "/api/ai-gov/systems/{system_id}/set-high-impact"
-        ]
+        successor = schema["paths"]["/api/ai-gov/systems/{system_id}/set-high-impact"]
         assert successor["post"].get("deprecated") is not True
 
 
 class TestSetHighImpact:
     """POST /ai-gov/systems/{system_id}/set-high-impact — OMB M-25-21."""
 
-    def test_set_high_impact_mutates_and_persists(
-        self, api_client: TestClient
-    ) -> None:
+    def test_set_high_impact_mutates_and_persists(self, api_client: TestClient) -> None:
         system_id = _register_system(api_client)
         resp = api_client.post(
             f"/api/ai-gov/systems/{system_id}/set-high-impact",
@@ -912,27 +806,21 @@ class TestSetHighImpact:
         assert got["omb_high_impact"]["determination"] == "high_impact"
         assert got["omb_impact"] is None
 
-    def test_set_high_impact_unknown_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_set_high_impact_unknown_id_returns_404(self, api_client: TestClient) -> None:
         resp = api_client.post(
             f"/api/ai-gov/systems/{_UNKNOWN_UUID}/set-high-impact",
             json={"determination": "not_high_impact"},
         )
         assert resp.status_code == 404
 
-    def test_set_high_impact_invalid_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_set_high_impact_invalid_id_returns_404(self, api_client: TestClient) -> None:
         resp = api_client.post(
             "/api/ai-gov/systems/not-a-uuid/set-high-impact",
             json={"determination": "not_high_impact"},
         )
         assert resp.status_code == 404
 
-    def test_set_high_impact_bad_determination_returns_422(
-        self, api_client: TestClient
-    ) -> None:
+    def test_set_high_impact_bad_determination_returns_422(self, api_client: TestClient) -> None:
         system_id = _register_system(api_client)
         resp = api_client.post(
             f"/api/ai-gov/systems/{system_id}/set-high-impact",
@@ -940,9 +828,7 @@ class TestSetHighImpact:
         )
         assert resp.status_code == 422
 
-    def test_set_high_impact_bad_basis_returns_422(
-        self, api_client: TestClient
-    ) -> None:
+    def test_set_high_impact_bad_basis_returns_422(self, api_client: TestClient) -> None:
         system_id = _register_system(api_client)
         resp = api_client.post(
             f"/api/ai-gov/systems/{system_id}/set-high-impact",
@@ -968,9 +854,7 @@ class TestAiGovRBAC:
     path. Mirrors ``TestGovernanceRBAC`` in test_governance_router.py.
     """
 
-    def test_anonymous_update_denied_403(
-        self, api_client: TestClient, ai_gov_readonly_client: TestClient
-    ) -> None:
+    def test_anonymous_update_denied_403(self, api_client: TestClient, ai_gov_readonly_client: TestClient) -> None:
         # Seed via the permissive full-app client (shares the isolated
         # registry env var), then attempt the write under the read-only
         # policy.
@@ -982,13 +866,9 @@ class TestAiGovRBAC:
         assert resp.status_code == 403, resp.text
         assert resp.json()["detail"]["error"] == "rbac_denied"
 
-    def test_anonymous_retire_denied_403(
-        self, api_client: TestClient, ai_gov_readonly_client: TestClient
-    ) -> None:
+    def test_anonymous_retire_denied_403(self, api_client: TestClient, ai_gov_readonly_client: TestClient) -> None:
         system_id = _register_system(api_client)
-        resp = ai_gov_readonly_client.post(
-            f"/api/ai-gov/systems/{system_id}/retire"
-        )
+        resp = ai_gov_readonly_client.post(f"/api/ai-gov/systems/{system_id}/retire")
         assert resp.status_code == 403, resp.text
         assert resp.json()["detail"]["error"] == "rbac_denied"
 
@@ -1014,9 +894,7 @@ class TestSetPractice:
         )
         assert resp.status_code == 200, resp.text
 
-    def test_set_practice_mutates_persists_and_rolls_up(
-        self, api_client: TestClient
-    ) -> None:
+    def test_set_practice_mutates_persists_and_rolls_up(self, api_client: TestClient) -> None:
         system_id = _register_system(api_client)
         self._set_high_impact(api_client, system_id)
         resp = api_client.post(
@@ -1038,16 +916,9 @@ class TestSetPractice:
         assert rollup["satisfied"] is False
 
         got = api_client.get(f"/api/ai-gov/systems/{system_id}").json()
-        assert (
-            got["omb_high_impact"]["practices"]["pre_deployment_testing"][
-                "status"
-            ]
-            == "implemented"
-        )
+        assert got["omb_high_impact"]["practices"]["pre_deployment_testing"]["status"] == "implemented"
 
-    def test_waived_practice_carries_waiver_record(
-        self, api_client: TestClient
-    ) -> None:
+    def test_waived_practice_carries_waiver_record(self, api_client: TestClient) -> None:
         system_id = _register_system(api_client)
         self._set_high_impact(api_client, system_id)
         resp = api_client.post(
@@ -1058,24 +929,17 @@ class TestSetPractice:
                 "waiver": {
                     "issued_on": "2026-06-01",
                     "issued_by": "Agency CAIO",
-                    "justification": (
-                        "Unacceptable impediment to critical agency "
-                        "operations."
-                    ),
+                    "justification": ("Unacceptable impediment to critical agency operations."),
                     "reported_to_omb_on": "2026-06-15",
                 },
             },
         )
         assert resp.status_code == 200, resp.text
-        record = resp.json()["entry"]["omb_high_impact"]["practices"][
-            "public_feedback"
-        ]
+        record = resp.json()["entry"]["omb_high_impact"]["practices"]["public_feedback"]
         assert record["status"] == "waived"
         assert record["waiver"]["issued_by"] == "Agency CAIO"
 
-    def test_waived_without_waiver_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_waived_without_waiver_returns_400(self, api_client: TestClient) -> None:
         system_id = _register_system(api_client)
         self._set_high_impact(api_client, system_id)
         resp = api_client.post(
@@ -1085,9 +949,7 @@ class TestSetPractice:
         assert resp.status_code == 400
         assert resp.json()["detail"]["error"] == "invalid_body"
 
-    def test_no_assessment_yet_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_no_assessment_yet_returns_400(self, api_client: TestClient) -> None:
         system_id = _register_system(api_client)
         resp = api_client.post(
             f"/api/ai-gov/systems/{system_id}/set-practice",
@@ -1096,9 +958,7 @@ class TestSetPractice:
         assert resp.status_code == 400
         assert "set-high-impact" in resp.json()["detail"]["message"]
 
-    def test_unknown_system_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_unknown_system_returns_404(self, api_client: TestClient) -> None:
         resp = api_client.post(
             f"/api/ai-gov/systems/{_UNKNOWN_UUID}/set-practice",
             json={"practice": "impact_assessment", "status": "implemented"},
@@ -1114,9 +974,7 @@ class TestSetPractice:
         )
         assert resp.status_code == 422
 
-    def test_set_high_impact_preserves_recorded_practices(
-        self, api_client: TestClient
-    ) -> None:
+    def test_set_high_impact_preserves_recorded_practices(self, api_client: TestClient) -> None:
         """Re-running set-high-impact must not wipe recorded practices.
 
         Regression: the handler rebuilt the assessment from only
@@ -1152,9 +1010,7 @@ class TestSetPractice:
 
         got = api_client.get(f"/api/ai-gov/systems/{system_id}").json()
         practices = got["omb_high_impact"]["practices"]
-        assert "human_oversight" in practices, (
-            "re-determination destroyed the recorded practice"
-        )
+        assert "human_oversight" in practices, "re-determination destroyed the recorded practice"
         assert practices["human_oversight"]["waiver"] is not None, (
             "the CAIO waiver provenance was lost on re-determination"
         )
@@ -1176,9 +1032,7 @@ class TestAcquisitions:
         acquisition_id: str = resp.json()["acquisition_id"]
         return acquisition_id
 
-    def test_register_get_list_round_trip(
-        self, api_client: TestClient
-    ) -> None:
+    def test_register_get_list_round_trip(self, api_client: TestClient) -> None:
         acquisition_id = self._register(api_client)
 
         got = api_client.get(f"/api/ai-gov/acquisitions/{acquisition_id}")
@@ -1193,9 +1047,7 @@ class TestAcquisitions:
         assert listing.status_code == 200
         assert listing.json()["count"] == 1
 
-    def test_set_phase_mutates_and_rolls_up(
-        self, api_client: TestClient
-    ) -> None:
+    def test_set_phase_mutates_and_rolls_up(self, api_client: TestClient) -> None:
         acquisition_id = self._register(api_client)
         resp = api_client.post(
             f"/api/ai-gov/acquisitions/{acquisition_id}/set-phase",
@@ -1207,27 +1059,16 @@ class TestAcquisitions:
         )
         assert resp.status_code == 200, resp.text
         body = resp.json()
-        assert (
-            body["acquisition"]["phases"]["identification_of_requirements"][
-                "status"
-            ]
-            == "complete"
-        )
+        assert body["acquisition"]["phases"]["identification_of_requirements"]["status"] == "complete"
         assert body["progress"]["complete"] == 1
         assert body["progress"]["lifecycle_complete"] is False
 
-    def test_unknown_acquisition_returns_404(
-        self, api_client: TestClient
-    ) -> None:
-        resp = api_client.get(
-            f"/api/ai-gov/acquisitions/{_UNKNOWN_UUID}"
-        )
+    def test_unknown_acquisition_returns_404(self, api_client: TestClient) -> None:
+        resp = api_client.get(f"/api/ai-gov/acquisitions/{_UNKNOWN_UUID}")
         assert resp.status_code == 404
         assert resp.json()["detail"]["error"] == "not_found"
 
-    def test_traversal_shaped_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_traversal_shaped_id_returns_404(self, api_client: TestClient) -> None:
         resp = api_client.get("/api/ai-gov/acquisitions/not-a-uuid")
         assert resp.status_code == 404
 

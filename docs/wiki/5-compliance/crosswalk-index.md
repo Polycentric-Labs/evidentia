@@ -42,9 +42,9 @@ You can read the posture programmatically:
 from evidentia_core.catalogs.crosswalk import load_crosswalk
 
 cw = load_crosswalk("osps-baseline_to_nist-ssdf-800-218")
-print(cw.verification)        # "self-attested-via-upstream"
-print(cw.provenance)          # "upstream-osps-guidelines"
-print(len(cw.mappings))       # 115
+print(cw.verification)  # "self-attested-via-upstream"
+print(cw.provenance)  # "upstream-osps-guidelines"
+print(len(cw.mappings))  # 115
 ```
 
 The `provenance` / `verification` / `verification_note` fields were added

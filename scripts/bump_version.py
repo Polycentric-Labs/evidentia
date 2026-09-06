@@ -76,9 +76,7 @@ VERSION_RE = re.compile(r"\d+\.\d+\.\d+(?:\.\d+)?")
 # literals. Group ``v`` holds the optional ``v`` prefix; the numeric body is
 # everything after it. Used to FORCE-SET (not cur->target match) the version
 # on an anchored line regardless of its prior value.
-ANCHOR_VERSION_RE = re.compile(
-    r"(?<![\w.])(?P<v>v?)0\.(?:[7-9]|[1-9][0-9])\.\d+(?:\.\d+)?(?![\w])"
-)
+ANCHOR_VERSION_RE = re.compile(r"(?<![\w.])(?P<v>v?)0\.(?:[7-9]|[1-9][0-9])\.\d+(?:\.\d+)?(?![\w])")
 
 # The declarative manifest that lists every file carrying the project
 # version (the ``tracked:`` section the bumper drives off) plus the
@@ -107,10 +105,7 @@ def builder_base_image(dockerfile: Path | None = None) -> str:
         flags=re.MULTILINE,
     )
     if not m:
-        sys.exit(
-            f"Cannot find the pinned `FROM python:3.13-slim@sha256:<digest>` "
-            f"builder line in {p}"
-        )
+        sys.exit(f"Cannot find the pinned `FROM python:3.13-slim@sha256:<digest>` builder line in {p}")
     return m.group(1)
 
 
@@ -143,18 +138,12 @@ def workspace_packages(pyproject_path: Path | None = None) -> list[str]:
     except tomllib.TOMLDecodeError:
         return []
     sources = data.get("tool", {}).get("uv", {}).get("sources", {})
-    return sorted(
-        name
-        for name, spec in sources.items()
-        if isinstance(spec, dict) and spec.get("workspace") is True
-    )
+    return sorted(name for name, spec in sources.items() if isinstance(spec, dict) and spec.get("workspace") is True)
 
 
 def tracked_files() -> list[Path]:
     """All git-tracked files (so we never touch generated/ignored content)."""
-    out = subprocess.run(
-        ["git", "ls-files"], capture_output=True, text=True, check=True
-    ).stdout
+    out = subprocess.run(["git", "ls-files"], capture_output=True, text=True, check=True).stdout
     return [Path(p) for p in out.splitlines() if p]
 
 
@@ -162,10 +151,7 @@ def detect_current_version() -> str:
     """Read evidentia-core's pyproject.toml as the source of truth."""
     p = Path("packages/evidentia-core/pyproject.toml")
     if not p.exists():
-        sys.exit(
-            "Cannot detect current version: "
-            "packages/evidentia-core/pyproject.toml missing"
-        )
+        sys.exit("Cannot detect current version: packages/evidentia-core/pyproject.toml missing")
     for line in p.read_text(encoding="utf-8").splitlines():
         m = re.match(r'\s*version\s*=\s*"(\d+\.\d+\.\d+)"', line)
         if m:
@@ -219,8 +205,7 @@ def bump_pin_range(
         # exactly the F-V100-M1 bug). Callers must detect the empty
         # list and skip the pin substitution.
         raise ValueError(
-            "bump_pin_range called with empty workspace package list; "
-            "the F-V100-M1 fix requires an explicit allowlist."
+            "bump_pin_range called with empty workspace package list; the F-V100-M1 fix requires an explicit allowlist."
         )
     cur_parts = current.split(".")
     tgt_parts = target.split(".")
@@ -233,9 +218,9 @@ def bump_pin_range(
     cur_range = (
         rf"(?P<name>(?:{name_alt})(?:\[[^\]]+\])?)>="
         rf"{cur_maj}\.{cur_min}\.\d+(?:\.\d+)?,"
-        rf"<{cur_maj}\.{int(cur_min)+1}\.0"
+        rf"<{cur_maj}\.{int(cur_min) + 1}\.0"
     )
-    tgt_range = rf"\g<name>>={target},<{tgt_maj}.{int(tgt_min)+1}.0"
+    tgt_range = rf"\g<name>>={target},<{tgt_maj}.{int(tgt_min) + 1}.0"
     return cur_range, tgt_range
 
 
@@ -261,14 +246,8 @@ def load_manifest(path: Path | None = None) -> dict[str, list[dict[str, str]]]:
     tracked = data.get("tracked") or []
     frozen = data.get("frozen") or []
     anchors = data.get("anchors") or []
-    if (
-        not isinstance(tracked, list)
-        or not isinstance(frozen, list)
-        or not isinstance(anchors, list)
-    ):
-        sys.exit(
-            f"Malformed manifest {p}: 'tracked'/'frozen'/'anchors' must be lists"
-        )
+    if not isinstance(tracked, list) or not isinstance(frozen, list) or not isinstance(anchors, list):
+        sys.exit(f"Malformed manifest {p}: 'tracked'/'frozen'/'anchors' must be lists")
     return {"tracked": tracked, "frozen": frozen, "anchors": anchors}
 
 
@@ -312,7 +291,7 @@ def replacements_for_kind(
         return [(rf'"version": "{cur_re}"{nla}', f'"version": "{target}"')]
     if kind == "pip_extra_pin":
         # v0.7.7.1 trap: the published image must install the NEW version.
-        return [(rf'evidentia\[gui\]=={cur_re}{nla}', f'evidentia[gui]=={target}')]
+        return [(rf"evidentia\[gui\]=={cur_re}{nla}", f"evidentia[gui]=={target}")]
     if kind == "workspace_pins":
         # F-V100-M1: only workspace members from [tool.uv.sources] are
         # rewritten. Empty allowlist => skip (refuse package-agnostic fallback).
@@ -321,7 +300,7 @@ def replacements_for_kind(
         return [bump_pin_range(current, target, packages)]
     if kind == "cff_version":
         # CITATION.cff YAML: unquoted `version: X.Y.Z`.
-        return [(rf'version: {cur_re}{nla}', f'version: {target}')]
+        return [(rf"version: {cur_re}{nla}", f"version: {target}")]
     if kind == "cff_date":
         # CITATION.cff YAML: `date-released: 'YYYY-MM-DD'` -> the bump date.
         # Matches any single-quoted ISO date so it updates regardless of the
@@ -403,9 +382,7 @@ def force_set_anchor_line(line: str, target: str) -> tuple[str, int]:
     return ANCHOR_VERSION_RE.subn(_repl, line)
 
 
-def classified_paths(
-    manifest: dict[str, list[dict[str, str]]], all_tracked: list[Path]
-) -> set[str]:
+def classified_paths(manifest: dict[str, list[dict[str, str]]], all_tracked: list[Path]) -> set[str]:
     """POSIX paths classified by the manifest's ``tracked`` + ``frozen`` specs.
 
     Used by the anchor overlay to enforce that an anchor file is ALSO
@@ -413,9 +390,7 @@ def classified_paths(
     for classification). Mirrors the union the never-skip gate builds.
     """
     classified: set[str] = set()
-    for spec in {e["path"] for e in manifest["tracked"]} | {
-        e["path"] for e in manifest["frozen"]
-    }:
+    for spec in {e["path"] for e in manifest["tracked"]} | {e["path"] for e in manifest["frozen"]}:
         for p in expand_manifest_path(spec, all_tracked):
             classified.add(p.as_posix())
     return classified
@@ -471,8 +446,7 @@ def apply_anchors(
         matched_files = expand_manifest_path(spec, all_tracked)
         if not matched_files:
             sys.exit(
-                f"anchor path {spec!r} matched no git-tracked file — fix the "
-                f"path in scripts/version_tracked_files.yaml"
+                f"anchor path {spec!r} matched no git-tracked file — fix the path in scripts/version_tracked_files.yaml"
             )
         for p in matched_files:
             posix = p.as_posix()
@@ -528,9 +502,7 @@ def main() -> int:
         help="current version (auto-detected from evidentia-core if omitted)",
     )
     ap.add_argument("--to", required=True, help="target version, e.g. 0.7.1")
-    ap.add_argument(
-        "--dry-run", action="store_true", help="print changes without writing"
-    )
+    ap.add_argument("--dry-run", action="store_true", help="print changes without writing")
     ap.add_argument(
         "--regenerate-requirements",
         action="store_true",
@@ -584,10 +556,7 @@ def main() -> int:
             # frozen file is fixable on any invocation). The tracked
             # substitutions stay skipped (no-ops); the anchor + write-back
             # path below runs, then we return.
-            print(
-                f"Already at {args.to} — skipping version substitutions; "
-                "force-setting anchors only."
-            )
+            print(f"Already at {args.to} — skipping version substitutions; force-setting anchors only.")
 
     # v0.10.1 F-V100-M1 fix: read the workspace allowlist BEFORE
     # building substitution patterns; refuse to over-bump third-party
@@ -636,9 +605,7 @@ def main() -> int:
         for entry in manifest["tracked"]:
             spec = entry["path"]
             kind = entry["kind"]
-            pairs = replacements_for_kind(
-                kind, current, args.to, packages=packages, bump_date=bump_date
-            )
+            pairs = replacements_for_kind(kind, current, args.to, packages=packages, bump_date=bump_date)
             if not pairs:
                 continue
             for p in expand_manifest_path(spec, all_tracked):
@@ -673,9 +640,7 @@ def main() -> int:
 
     print()
     suffix = " [DRY RUN]" if args.dry_run else ""
-    print(
-        f"Summary: {files_changed} file(s), {total_subs} substitution(s){suffix}"
-    )
+    print(f"Summary: {files_changed} file(s), {total_subs} substitution(s){suffix}")
 
     # v0.7.14 P1.5 (foundation) → v0.8.2 (production-staged) → v0.8.3 G4
     # (production-activated): regenerate docker/requirements.txt with
@@ -727,12 +692,10 @@ def main() -> int:
                 extra_in_lines = [
                     ln
                     for ln in req_in.read_text(encoding="utf-8").splitlines()
-                    if ln.strip()
-                    and not re.match(r"^evidentia(\[[^\]]*\])?==", ln.strip())
+                    if ln.strip() and not re.match(r"^evidentia(\[[^\]]*\])?==", ln.strip())
                 ]
             req_in.write_text(
-                "\n".join([f"evidentia[gui]=={args.to}", *extra_in_lines])
-                + "\n",
+                "\n".join([f"evidentia[gui]=={args.to}", *extra_in_lines]) + "\n",
                 encoding="utf-8",
             )
 
@@ -746,10 +709,7 @@ def main() -> int:
                 check=True,
             )
             source_date_epoch = sde_proc.stdout.strip()
-            print(
-                f"  SOURCE_DATE_EPOCH={source_date_epoch} "
-                "(from HEAD commit timestamp)"
-            )
+            print(f"  SOURCE_DATE_EPOCH={source_date_epoch} (from HEAD commit timestamp)")
 
             # Clean dist/ so we don't pull in stale wheels from a
             # prior bump.
@@ -772,17 +732,12 @@ def main() -> int:
                     "  uv build FAILED:",
                     build_proc.stderr[-500:],
                 )
-                print(
-                    "  (regeneration skipped; ensure `uv` is "
-                    "installed + the workspace builds cleanly)"
-                )
+                print("  (regeneration skipped; ensure `uv` is installed + the workspace builds cleanly)")
                 # Continue with version-bump completion; just skip
                 # the regeneration. Operator can re-run.
             else:
                 wheel_count = len(list(dist_dir.glob("*.whl")))
-                print(
-                    f"  uv build OK: {wheel_count} wheels in dist/"
-                )
+                print(f"  uv build OK: {wheel_count} wheels in dist/")
 
                 # Step 2 — invoke pip-compile against local wheels
                 # via --find-links. Auto-detect host platform: on
@@ -790,10 +745,7 @@ def main() -> int:
                 # (uvloop) resolve.
                 is_linux_host = sys.platform.startswith("linux")
                 if is_linux_host:
-                    print(
-                        "  Host is Linux; running pip-compile "
-                        "directly"
-                    )
+                    print("  Host is Linux; running pip-compile directly")
                     # --no-emit-find-links keeps the local-wheels
                     # path out of the generated requirements.txt
                     # so the file is portable to environments
@@ -831,10 +783,7 @@ def main() -> int:
                 else:
                     # F-V82-S1: invoke pip-compile inside the
                     # pinned Linux base image.
-                    print(
-                        f"  Host is {sys.platform}; invoking "
-                        "pip-compile inside Docker (Linux base)"
-                    )
+                    print(f"  Host is {sys.platform}; invoking pip-compile inside Docker (Linux base)")
                     # v0.11.1: read the pin from the Dockerfile (single
                     # source of truth) instead of a second literal that
                     # had drifted behind it.
@@ -902,31 +851,19 @@ def main() -> int:
                         "  pip-compile FAILED:",
                         compile_proc.stderr[-500:],
                     )
-                    print(
-                        "  (regeneration skipped; verify pip-tools "
-                        "+ Docker (if non-Linux host) installed)"
-                    )
+                    print("  (regeneration skipped; verify pip-tools + Docker (if non-Linux host) installed)")
                 else:
                     pkg_count = sum(
-                        1
-                        for line in req_out.read_text(
-                            encoding="utf-8"
-                        ).splitlines()
-                        if line and line[0].isalpha()
+                        1 for line in req_out.read_text(encoding="utf-8").splitlines() if line and line[0].isalpha()
                     )
-                    print(
-                        f"  docker/requirements.txt regenerated: "
-                        f"{pkg_count} packages with SHA256 hashes"
-                    )
+                    print(f"  docker/requirements.txt regenerated: {pkg_count} packages with SHA256 hashes")
 
     if not args.dry_run and files_changed > 0:
         print()
         print("Next steps (per the publishing-authority protocol, do these manually):")
         print(f"  1. uv sync --all-packages   # regenerate uv.lock at {args.to}")
         print("  2. Run pytest + mypy + ruff to confirm nothing broke")
-        print(
-            f"  3. git add -p && git commit -m 'chore(release): bump to {args.to}'"
-        )
+        print(f"  3. git add -p && git commit -m 'chore(release): bump to {args.to}'")
         print(f"  4. (When ready, with explicit approval) push to main + tag v{args.to}")
     return 0
 

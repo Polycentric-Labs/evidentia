@@ -104,17 +104,13 @@ def gap_report_to_cyclonedx_vex(report: GapAnalysisReport) -> dict[str, Any]:
     and lifecycle status. See the module docstring for the full state
     mapping.
     """
-    vulnerabilities: list[dict[str, Any]] = [
-        _gap_to_vulnerability(gap) for gap in report.gaps
-    ]
+    vulnerabilities: list[dict[str, Any]] = [_gap_to_vulnerability(gap) for gap in report.gaps]
 
     # Stable per-report fingerprint so consumers can detect re-emits of
     # the same report. Computed over the report id + analyzed_at to
     # remain deterministic for identical inputs while shifting on a
     # fresh analyzer run.
-    serial = hashlib.sha256(
-        f"{report.id}:{report.analyzed_at.isoformat()}".encode()
-    ).hexdigest()[:16]
+    serial = hashlib.sha256(f"{report.id}:{report.analyzed_at.isoformat()}".encode()).hexdigest()[:16]
 
     return {
         "bomFormat": _CYCLONEDX_BOM_FORMAT,
@@ -169,10 +165,7 @@ def _gap_to_vulnerability(gap: ControlGap) -> dict[str, Any]:
                 "method": "other",
             }
         ],
-        "description": (
-            f"{gap.framework} {gap.control_id} ({gap.control_title}): "
-            f"{gap.gap_description}"
-        ),
+        "description": (f"{gap.framework} {gap.control_id} ({gap.control_title}): {gap.gap_description}"),
         "analysis": analysis,
     }
 
@@ -192,9 +185,7 @@ def _gap_to_vulnerability(gap: ControlGap) -> dict[str, Any]:
         },
         {
             "name": "evidentia:gap_status",
-            "value": (
-                gap.status.value if hasattr(gap.status, "value") else str(gap.status)
-            ),
+            "value": (gap.status.value if hasattr(gap.status, "value") else str(gap.status)),
         },
         {
             "name": "evidentia:priority_score",
@@ -226,9 +217,7 @@ def _vex_state_and_justification(gap: ControlGap) -> tuple[str, str | None]:
     # EvidentiaModel uses `use_enum_values=True`; gap.status may surface
     # as either the underlying str or the enum instance. Unwrap to str
     # for the comparison.
-    status_value = (
-        gap.status.value if hasattr(gap.status, "value") else str(gap.status)
-    )
+    status_value = gap.status.value if hasattr(gap.status, "value") else str(gap.status)
 
     # `implemented`: the control is in place, gap is structurally
     # resolved. VEX `resolved`.
@@ -273,14 +262,8 @@ def _vex_analysis_detail(gap: ControlGap, state: str) -> str:
     # may surface as either the underlying str or the enum instance
     # depending on construction path (Python-constructed vs Pydantic-
     # deserialized). Defensively unwrap both shapes.
-    status_value = (
-        gap.status.value if hasattr(gap.status, "value") else str(gap.status)
-    )
-    severity_value = (
-        gap.gap_severity.value
-        if hasattr(gap.gap_severity, "value")
-        else str(gap.gap_severity)
-    )
+    status_value = gap.status.value if hasattr(gap.status, "value") else str(gap.status)
+    severity_value = gap.gap_severity.value if hasattr(gap.gap_severity, "value") else str(gap.gap_severity)
     return (
         f"Gap classified as VEX state '{state}' from "
         f"implementation_status='{gap.implementation_status}', "

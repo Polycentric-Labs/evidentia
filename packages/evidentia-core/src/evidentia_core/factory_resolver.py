@@ -138,15 +138,12 @@ def resolve_factory(
     try:
         module = importlib.import_module(module_path)
     except ImportError as exc:
-        raise RuntimeError(
-            f"Could not import {module_path!r} for {purpose} factory: {exc}"
-        ) from exc
+        raise RuntimeError(f"Could not import {module_path!r} for {purpose} factory: {exc}") from exc
 
     factory = getattr(module, attr, None)
     if factory is None or not callable(factory):
         raise RuntimeError(
-            f"{factory_value!r} did not resolve to a callable attribute "
-            f"in {module_path!r} (purpose: {purpose})."
+            f"{factory_value!r} did not resolve to a callable attribute in {module_path!r} (purpose: {purpose})."
         )
 
     result = factory()

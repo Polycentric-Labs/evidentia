@@ -19,8 +19,7 @@ from evidentia_core.models.gap import ImplementationEffort
 def _ctrl(id_: str, description: str = "", n_enhancements: int = 0, n_objectives: int = 0) -> CatalogControl:
     """Build a minimal control with configurable structural complexity."""
     enhancements = [
-        CatalogControl(id=f"{id_}({i+1})", title=f"Enh {i+1}", description="enh")
-        for i in range(n_enhancements)
+        CatalogControl(id=f"{id_}({i + 1})", title=f"Enh {i + 1}", description="enh") for i in range(n_enhancements)
     ]
     return CatalogControl(
         id=id_,
@@ -48,9 +47,7 @@ def _ctrl(id_: str, description: str = "", n_enhancements: int = 0, n_objectives
         (0, 0, ImplementationEffort.LOW),
     ],
 )
-def test_structural_score_dominates(
-    n_enh: int, n_obj: int, expected: ImplementationEffort
-) -> None:
+def test_structural_score_dominates(n_enh: int, n_obj: int, expected: ImplementationEffort) -> None:
     """When enhancements + assessment_objectives >= 2 the structural layer wins."""
     analyzer = GapAnalyzer()
     ctrl = _ctrl("AC-2", description="", n_enhancements=n_enh, n_objectives=n_obj)
@@ -117,9 +114,7 @@ def test_long_bare_description_resolves_to_medium() -> None:
     assert len(long_text) > 400
     # Guard: none of our HIGH/MEDIUM keywords present
     for kw in (*_HIGH_EFFORT_KEYWORDS, *_MEDIUM_EFFORT_KEYWORDS):
-        assert kw not in long_text.lower(), (
-            f"Test fixture accidentally contains effort keyword {kw!r}"
-        )
+        assert kw not in long_text.lower(), f"Test fixture accidentally contains effort keyword {kw!r}"
     ctrl = _ctrl("X", description=long_text)
     assert analyzer._estimate_effort(ctrl) == ImplementationEffort.MEDIUM
 
@@ -182,8 +177,5 @@ def test_never_returns_all_low_on_varied_descriptions() -> None:
         "Establish a policy for incident handling procedures.",  # MEDIUM
         "Implement multi-factor authentication for all privileged accounts.",  # HIGH
     ]
-    results = {
-        analyzer._estimate_effort(_ctrl(f"X{i}", description=d))
-        for i, d in enumerate(descriptions)
-    }
+    results = {analyzer._estimate_effort(_ctrl(f"X{i}", description=d)) for i, d in enumerate(descriptions)}
     assert len(results) >= 3, f"Expected 3+ distinct effort tiers, got {results}"

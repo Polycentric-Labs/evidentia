@@ -310,13 +310,8 @@ class CatalogImportPayload(BaseModel):
             "201": {
                 "links": {
                     "DeleteCatalog": {
-                        "operationId": (
-                            "remove_catalog_api_catalog"
-                            "__framework_id__delete"
-                        ),
-                        "parameters": {
-                            "framework_id": "$response.body#/framework_id"
-                        },
+                        "operationId": ("remove_catalog_api_catalog__framework_id__delete"),
+                        "parameters": {"framework_id": "$response.body#/framework_id"},
                     }
                 }
             }
@@ -356,11 +351,7 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
 
     # Parse the inline content into a dict.
     try:
-        data = (
-            json.loads(payload.content)
-            if fmt == "json"
-            else yaml.safe_load(payload.content)
-        )
+        data = json.loads(payload.content) if fmt == "json" else yaml.safe_load(payload.content)
     except (json.JSONDecodeError, yaml.YAMLError) as exc:
         raise api_error(
             400,
@@ -399,10 +390,7 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
         raise api_error(
             400,
             "already_exists",
-            (
-                f"A user-imported {payload.framework_id!r} already exists; "
-                "set force=true to overwrite."
-            ),
+            (f"A user-imported {payload.framework_id!r} already exists; set force=true to overwrite."),
             resource="user_catalog",
             resource_id=payload.framework_id,
         )
@@ -410,9 +398,7 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
     # Validate the catalog shape BEFORE writing so a malformed body never
     # leaves a half-imported file on disk. Write to the canonical path,
     # then load it back through the core loader.
-    out_path.write_text(
-        json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
-    )
+    out_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     try:
         load_evidentia_catalog(out_path)
     except Exception as exc:  # normalize any load error to 400
@@ -465,10 +451,7 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
         {
             400: "Malformed ``framework_id`` (``error: invalid_id``).",
             403: RBAC_DENIED_403,
-            404: (
-                "No user-imported framework under that ID "
-                "(``error: not_found``)."
-            ),
+            404: ("No user-imported framework under that ID (``error: not_found``)."),
         }
     ),
 )
@@ -488,10 +471,7 @@ async def remove_catalog(framework_id: str) -> None:
         raise api_error(
             404,
             "not_found",
-            (
-                f"No user-imported framework {framework_id!r}. Bundled "
-                "catalogs cannot be removed."
-            ),
+            (f"No user-imported framework {framework_id!r}. Bundled catalogs cannot be removed."),
             resource="user_catalog",
             resource_id=framework_id,
         )

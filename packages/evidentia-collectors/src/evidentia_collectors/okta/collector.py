@@ -107,9 +107,7 @@ def _is_retryable(exc: BaseException) -> bool:
 BLIND_SPOTS: list[dict[str, str]] = [
     {
         "id": "EVIDENTIA-OKTA-WORKFLOWS-COVERAGE",
-        "title": (
-            "Okta Workflows + Identity Governance not enumerated"
-        ),
+        "title": ("Okta Workflows + Identity Governance not enumerated"),
         "description": (
             "Okta Workflows (provisioning automations) and Okta "
             "Identity Governance (OIG access certifications, "
@@ -122,9 +120,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
     },
     {
         "id": "EVIDENTIA-OKTA-RATE-LIMIT-PARTIAL",
-        "title": (
-            "API rate limits may produce partial enumeration"
-        ),
+        "title": ("API rate limits may produce partial enumeration"),
         "description": (
             "Okta's per-org rate limits (Concurrent Rate, Org Rate) can "
             "throttle large user or group enumerations. Every request "
@@ -138,9 +134,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
     },
     {
         "id": "EVIDENTIA-OKTA-USER-MFA-FACTOR-LIFECYCLE",
-        "title": (
-            "MFA factor lifecycle (PENDING_ACTIVATION) state"
-        ),
+        "title": ("MFA factor lifecycle (PENDING_ACTIVATION) state"),
         "description": (
             "Users with factors in PENDING_ACTIVATION (enrolled "
             "but not yet verified) are reported as enrolled but "
@@ -170,20 +164,16 @@ class OktaCollector:
     ) -> None:
         if not org_url and client is None:
             raise OktaCollectorError(
-                "OktaCollector requires either org_url= or "
-                "client= (an injected httpx.Client for testing)."
+                "OktaCollector requires either org_url= or client= (an injected httpx.Client for testing)."
             )
         if org_url:
             parsed = urlparse(org_url)
             if parsed.scheme != "https":
                 raise OktaCollectorError(
-                    "org_url must use https://. Refusing to send "
-                    "API tokens over a non-TLS channel."
+                    "org_url must use https://. Refusing to send API tokens over a non-TLS channel."
                 )
             if not parsed.hostname:
-                raise OktaCollectorError(
-                    f"org_url {org_url!r} has no hostname."
-                )
+                raise OktaCollectorError(f"org_url {org_url!r} has no hostname.")
         self._org_url = org_url.rstrip("/") if org_url else None
         self._api_token = api_token
         self._client = client
@@ -229,14 +219,9 @@ class OktaCollector:
         if self._client is not None:
             return self._client
         if self._org_url is None:
-            raise OktaCollectorError(
-                "_ensure_client called without an org_url."
-            )
+            raise OktaCollectorError("_ensure_client called without an org_url.")
         if self._api_token is None:
-            raise OktaCollectorError(
-                "OKTA_API_TOKEN is not set; cannot authenticate "
-                "against the Okta API."
-            )
+            raise OktaCollectorError("OKTA_API_TOKEN is not set; cannot authenticate against the Okta API.")
         # SECURE-BY-DEFAULT (threat-model T2): refuse an org_url that
         # resolves to a private / loopback / link-local / metadata
         # address before opening the client. A connection-class refusal
@@ -262,17 +247,14 @@ class OktaCollector:
                 "Authorization": f"SSWS {self._api_token}",
                 "Accept": "application/json",
                 "User-Agent": (
-                    f"evidentia-collectors/{current_version()} "
-                    f"(+https://github.com/polycentric-labs/evidentia)"
+                    f"evidentia-collectors/{current_version()} (+https://github.com/polycentric-labs/evidentia)"
                 ),
             },
             timeout=30.0,
         )
         return self._client
 
-    def _request_once(
-        self, path: str, params: dict[str, Any] | None = None
-    ) -> httpx.Response:
+    def _request_once(self, path: str, params: dict[str, Any] | None = None) -> httpx.Response:
         """One GET attempt: pin the resolution, map connection failures,
         and raise a status-code-carrying OktaQueryError for >= 400.
         Returns the raw response (not parsed JSON) so a caller needing
@@ -289,9 +271,7 @@ class OktaCollector:
             with pin_resolved_host(self._pinned_host, self._pinned_ips):
                 response = client.get(path, params=params)
         except httpx.HTTPError as e:
-            raise OktaConnectionError(
-                f"GET {path} failed: {e}"
-            ) from e
+            raise OktaConnectionError(f"GET {path} failed: {e}") from e
         if response.status_code >= 400:
             raise OktaQueryError(
                 f"GET {path} returned HTTP {response.status_code}",
@@ -299,9 +279,7 @@ class OktaCollector:
             )
         return response
 
-    def _request(
-        self, path: str, params: dict[str, Any] | None = None
-    ) -> httpx.Response:
+    def _request(self, path: str, params: dict[str, Any] | None = None) -> httpx.Response:
         """_request_once wrapped in a bounded retry: retries
         OktaConnectionError outright, and OktaQueryError only when its
         carried HTTP status is in _RETRYABLE_STATUS_CODES (429 and the
@@ -316,19 +294,13 @@ class OktaCollector:
                 return self._request_once(path, params)
         raise RuntimeError("unreachable")  # pragma: no cover
 
-    def _api_get(
-        self, path: str, params: dict[str, Any] | None = None
-    ) -> Any:
+    def _api_get(self, path: str, params: dict[str, Any] | None = None) -> Any:
         return self._request(path, params).json()
 
     # ── Context + provenance ────────────────────────────────────────
 
     def _build_context(self, run_id: str) -> CollectionContext:
-        host = (
-            urlparse(self._org_url).hostname
-            if self._org_url
-            else "unknown"
-        )
+        host = urlparse(self._org_url).hostname if self._org_url else "unknown"
         return CollectionContext(
             collector_id=COLLECTOR_ID,
             collector_version=current_version(),
@@ -345,9 +317,7 @@ class OktaCollector:
         try:
             org = self._api_get("/api/v1/org")
         except OktaQueryError as e:
-            raise OktaConnectionError(
-                f"Could not query /api/v1/org: {e}"
-            ) from e
+            raise OktaConnectionError(f"Could not query /api/v1/org: {e}") from e
         return {
             "subdomain": org.get("subdomain"),
             "company_name": org.get("companyName"),
@@ -380,9 +350,7 @@ class OktaCollector:
         except OktaCollectorError:
             raise
         except Exception as e:
-            raise OktaConnectionError(
-                f"Could not establish + probe Okta connection: {e}"
-            ) from e
+            raise OktaConnectionError(f"Could not establish + probe Okta connection: {e}") from e
 
         context = self._build_context(run_id)
         errors: list[str] = []
@@ -408,10 +376,7 @@ class OktaCollector:
         ):
             _log.info(
                 action=EventAction.COLLECT_STARTED,
-                message=(
-                    f"Okta collection starting for "
-                    f"{org_info.get('subdomain')}"
-                ),
+                message=(f"Okta collection starting for {org_info.get('subdomain')}"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.START],
             )
@@ -434,28 +399,18 @@ class OktaCollector:
                         error={"type": "OktaQueryError", "message": str(e)},
                     )
                 except Exception as e:
-                    errors.append(
-                        f"{sub_check.__name__}: unexpected error: {e}"
-                    )
+                    errors.append(f"{sub_check.__name__}: unexpected error: {e}")
                     _log.error(
                         action=EventAction.COLLECT_FAILED,
                         outcome=EventOutcome.FAILURE,
-                        message=(
-                            f"Sub-check {sub_check.__name__} unexpected error"
-                        ),
+                        message=(f"Sub-check {sub_check.__name__} unexpected error"),
                         error={"type": type(e).__name__, "message": str(e)},
                     )
 
             _log.info(
                 action=EventAction.COLLECT_COMPLETED,
-                outcome=(
-                    EventOutcome.SUCCESS
-                    if not errors
-                    else EventOutcome.FAILURE
-                ),
-                message=(
-                    f"Okta collection completed: {len(findings)} findings"
-                ),
+                outcome=(EventOutcome.SUCCESS if not errors else EventOutcome.FAILURE),
+                message=(f"Okta collection completed: {len(findings)} findings"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.END],
                 evidentia={
@@ -470,9 +425,7 @@ class OktaCollector:
             collector_version=current_version(),
             collection_started_at=started_at,
             collection_finished_at=utc_now(),
-            source_system_ids=[
-                f"okta:{org_info.get('subdomain') or 'unknown'}"
-            ],
+            source_system_ids=[f"okta:{org_info.get('subdomain') or 'unknown'}"],
             filters_applied={"org_url": self._org_url or "unknown"},
             coverage_counts=[
                 CoverageCount(
@@ -518,9 +471,7 @@ class OktaCollector:
             response = self._request(path, params)
             users.extend(response.json())
             # Okta paginates via Link header: rel="next"
-            link = response.headers.get("link", "") or response.headers.get(
-                "Link", ""
-            )
+            link = response.headers.get("link", "") or response.headers.get("Link", "")
             next_url: str | None = None
             for part in link.split(","):
                 if 'rel="next"' in part:
@@ -542,15 +493,11 @@ class OktaCollector:
         self._users_listed = len(result)
         return result
 
-    def _user_inventory_findings(
-        self, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _user_inventory_findings(self, context: CollectionContext) -> list[SecurityFinding]:
         users = self._list_all_users()
         active = [u for u in users if u.get("status") == "ACTIVE"]
         suspended = [u for u in users if u.get("status") == "SUSPENDED"]
-        deprovisioned = [
-            u for u in users if u.get("status") == "DEPROVISIONED"
-        ]
+        deprovisioned = [u for u in users if u.get("status") == "DEPROVISIONED"]
         # Full status breakdown: every distinct Okta status seen among
         # the enumerated users (a superset of the three named above:
         # covers STAGED, PROVISIONED, RECOVERY, LOCKED_OUT and
@@ -563,9 +510,7 @@ class OktaCollector:
             status_counts[status] = status_counts.get(status, 0) + 1
         status_counts = dict(sorted(status_counts.items()))
 
-        threshold = utc_now() - timedelta(
-            days=self._inactive_threshold_days
-        )
+        threshold = utc_now() - timedelta(days=self._inactive_threshold_days)
         inactive: list[dict[str, Any]] = []
         for u in active:
             last_login = u.get("lastLogin")
@@ -575,9 +520,7 @@ class OktaCollector:
                 inactive.append(u)
                 continue
             try:
-                ll_dt = datetime.fromisoformat(
-                    str(last_login).replace("Z", "+00:00")
-                )
+                ll_dt = datetime.fromisoformat(str(last_login).replace("Z", "+00:00"))
                 if ll_dt.tzinfo is None:
                     ll_dt = ll_dt.replace(tzinfo=UTC)
                 if ll_dt < threshold:
@@ -626,9 +569,7 @@ class OktaCollector:
         )
 
         if inactive:
-            sample = [
-                u.get("profile", {}).get("login", "?") for u in inactive[:5]
-            ]
+            sample = [u.get("profile", {}).get("login", "?") for u in inactive[:5]]
             out.append(
                 SecurityFinding(
                     title=(
@@ -645,20 +586,14 @@ class OktaCollector:
                         "deprovisioning of accounts that have not "
                         "been used within the configured threshold."
                     ),
-                    severity=(
-                        Severity.HIGH
-                        if len(inactive) > 50
-                        else Severity.MEDIUM
-                    ),
+                    severity=(Severity.HIGH if len(inactive) > 50 else Severity.MEDIUM),
                     status=FindingStatus.ACTIVE,
                     # v0.10.0: inactive privileged-eligible accounts
                     # represent degraded posture (rotting credentials)
                     # but not a hard gap — surface as WARNING.
                     compliance_status=ComplianceStatus.WARNING,
                     source_system="okta",
-                    source_finding_id=(
-                        f"inactive-accounts:{context.source_system_id}"
-                    ),
+                    source_finding_id=(f"inactive-accounts:{context.source_system_id}"),
                     resource_type="Okta::Org",
                     resource_id=str(context.source_system_id),
                     control_mappings=list(INACTIVE_ACCOUNT_MAPPINGS),
@@ -673,9 +608,7 @@ class OktaCollector:
 
         return out
 
-    def _privileged_account_findings(
-        self, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _privileged_account_findings(self, context: CollectionContext) -> list[SecurityFinding]:
         # /api/v1/iam/assignees/users returns users with admin role
         # assignments. Older API surface: /api/v1/users/{id}/roles
         # — we use the modern aggregate endpoint.
@@ -686,16 +619,11 @@ class OktaCollector:
             # would be O(n) — skip in favor of best-effort signal
             assignees = []
 
-        admin_count = (
-            len(assignees) if isinstance(assignees, list) else 0
-        )
+        admin_count = len(assignees) if isinstance(assignees, list) else 0
         self._admin_assignments_listed = admin_count
         return [
             SecurityFinding(
-                title=(
-                    f"Okta admin accounts: {admin_count} users with "
-                    "any admin-role assignment"
-                ),
+                title=(f"Okta admin accounts: {admin_count} users with any admin-role assignment"),
                 description=(
                     f"/api/v1/iam/assignees/users returned "
                     f"{admin_count} users with admin role "
@@ -712,21 +640,13 @@ class OktaCollector:
                     if admin_count > 5
                     else Severity.INFORMATIONAL
                 ),
-                status=(
-                    FindingStatus.ACTIVE
-                    if admin_count > 5
-                    else FindingStatus.RESOLVED
-                ),
+                status=(FindingStatus.ACTIVE if admin_count > 5 else FindingStatus.RESOLVED),
                 # v0.10.0: excessive admin accounts (>5) represent a
                 # degraded least-privilege posture (WARNING); a small
                 # admin set passes the AC-6 check.
-                compliance_status=ComplianceStatus.WARNING
-                if admin_count > 5
-                else ComplianceStatus.PASS,
+                compliance_status=ComplianceStatus.WARNING if admin_count > 5 else ComplianceStatus.PASS,
                 source_system="okta",
-                source_finding_id=(
-                    f"admin-accounts:{context.source_system_id}"
-                ),
+                source_finding_id=(f"admin-accounts:{context.source_system_id}"),
                 resource_type="Okta::Org",
                 resource_id=str(context.source_system_id),
                 control_mappings=list(PRIVILEGED_ACCOUNT_MAPPINGS),
@@ -735,9 +655,7 @@ class OktaCollector:
             )
         ]
 
-    def _mfa_findings(
-        self, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _mfa_findings(self, context: CollectionContext) -> list[SecurityFinding]:
         # Active users + factor enrollment. The full per-user factor
         # enumeration is O(n) — too slow for 10k+ orgs. Use the
         # /api/v1/users with statistics in the response when
@@ -762,15 +680,10 @@ class OktaCollector:
                 factors = self._api_get(f"/api/v1/users/{user_id}/factors")
             except OktaQueryError:
                 continue
-            if isinstance(factors, list) and any(
-                f.get("status") in {"ACTIVE", "PENDING_ACTIVATION"}
-                for f in factors
-            ):
+            if isinstance(factors, list) and any(f.get("status") in {"ACTIVE", "PENDING_ACTIVATION"} for f in factors):
                 users_with_factors += 1
 
-        enrollment_rate = (
-            (users_with_factors / sample_size) if sample_size else 0.0
-        )
+        enrollment_rate = (users_with_factors / sample_size) if sample_size else 0.0
         return [
             SecurityFinding(
                 title=(
@@ -798,20 +711,12 @@ class OktaCollector:
                     if enrollment_rate < 0.95
                     else Severity.INFORMATIONAL
                 ),
-                status=(
-                    FindingStatus.RESOLVED
-                    if enrollment_rate >= 0.95
-                    else FindingStatus.ACTIVE
-                ),
+                status=(FindingStatus.RESOLVED if enrollment_rate >= 0.95 else FindingStatus.ACTIVE),
                 # v0.10.0: enrollment rate < 95% fails the IA-2 MFA
                 # check; >= 95% passes.
-                compliance_status=ComplianceStatus.PASS
-                if enrollment_rate >= 0.95
-                else ComplianceStatus.FAIL,
+                compliance_status=ComplianceStatus.PASS if enrollment_rate >= 0.95 else ComplianceStatus.FAIL,
                 source_system="okta",
-                source_finding_id=(
-                    f"mfa-enrollment:{context.source_system_id}"
-                ),
+                source_finding_id=(f"mfa-enrollment:{context.source_system_id}"),
                 resource_type="Okta::Org",
                 resource_id=str(context.source_system_id),
                 control_mappings=list(MFA_MAPPINGS),
@@ -824,13 +729,9 @@ class OktaCollector:
             )
         ]
 
-    def _password_policy_findings(
-        self, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _password_policy_findings(self, context: CollectionContext) -> list[SecurityFinding]:
         try:
-            policies = self._api_get(
-                "/api/v1/policies", params={"type": "PASSWORD"}
-            )
+            policies = self._api_get("/api/v1/policies", params={"type": "PASSWORD"})
         except OktaQueryError as e:
             raise OktaQueryError(
                 f"Could not query /api/v1/policies?type=PASSWORD: {e}",
@@ -838,9 +739,7 @@ class OktaCollector:
             ) from e
 
         self._policies_listed += len(policies or [])
-        active_policies = [
-            p for p in (policies or []) if p.get("status") == "ACTIVE"
-        ]
+        active_policies = [p for p in (policies or []) if p.get("status") == "ACTIVE"]
         # Inspect the first ACTIVE policy's settings as the org's
         # default password posture (Okta evaluates by priority).
         first = active_policies[0] if active_policies else None
@@ -887,21 +786,13 @@ class OktaCollector:
                     "checks over rotation; the collector reports "
                     "the configured values for operator review."
                 ),
-                severity=(
-                    Severity.INFORMATIONAL if strong else Severity.MEDIUM
-                ),
-                status=(
-                    FindingStatus.RESOLVED if strong else FindingStatus.ACTIVE
-                ),
+                severity=(Severity.INFORMATIONAL if strong else Severity.MEDIUM),
+                status=(FindingStatus.RESOLVED if strong else FindingStatus.ACTIVE),
                 # v0.10.0: weak password policy fails the IA-5 check;
                 # a strong policy passes.
-                compliance_status=ComplianceStatus.PASS
-                if strong
-                else ComplianceStatus.FAIL,
+                compliance_status=ComplianceStatus.PASS if strong else ComplianceStatus.FAIL,
                 source_system="okta",
-                source_finding_id=(
-                    f"password-policy:{context.source_system_id}"
-                ),
+                source_finding_id=(f"password-policy:{context.source_system_id}"),
                 resource_type="Okta::Policy",
                 resource_id=str(first.get("id") if first else "unknown"),
                 control_mappings=list(PASSWORD_POLICY_MAPPINGS),
@@ -915,13 +806,9 @@ class OktaCollector:
             )
         ]
 
-    def _sign_on_policy_findings(
-        self, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _sign_on_policy_findings(self, context: CollectionContext) -> list[SecurityFinding]:
         try:
-            policies = self._api_get(
-                "/api/v1/policies", params={"type": "OKTA_SIGN_ON"}
-            )
+            policies = self._api_get("/api/v1/policies", params={"type": "OKTA_SIGN_ON"})
         except OktaQueryError as e:
             raise OktaQueryError(
                 f"Could not query /api/v1/policies?type=OKTA_SIGN_ON: {e}",
@@ -929,9 +816,7 @@ class OktaCollector:
             ) from e
 
         self._policies_listed += len(policies or [])
-        active_policies = [
-            p for p in (policies or []) if p.get("status") == "ACTIVE"
-        ]
+        active_policies = [p for p in (policies or []) if p.get("status") == "ACTIVE"]
         # Count rules with MFA factor requirements
         rules_with_mfa = 0
         total_rules = 0
@@ -966,21 +851,13 @@ class OktaCollector:
                     "trust, geo-restriction)."
                 ),
                 severity=Severity.INFORMATIONAL,
-                status=(
-                    FindingStatus.ACTIVE
-                    if rules_with_mfa < total_rules
-                    else FindingStatus.RESOLVED
-                ),
+                status=(FindingStatus.ACTIVE if rules_with_mfa < total_rules else FindingStatus.RESOLVED),
                 # v0.10.0: sign-on rules not enforcing MFA fail the
                 # AC-3 access-enforcement check; all rules enforcing
                 # MFA passes.
-                compliance_status=ComplianceStatus.FAIL
-                if rules_with_mfa < total_rules
-                else ComplianceStatus.PASS,
+                compliance_status=ComplianceStatus.FAIL if rules_with_mfa < total_rules else ComplianceStatus.PASS,
                 source_system="okta",
-                source_finding_id=(
-                    f"sign-on-policy:{context.source_system_id}"
-                ),
+                source_finding_id=(f"sign-on-policy:{context.source_system_id}"),
                 resource_type="Okta::Policy",
                 resource_id=str(context.source_system_id),
                 control_mappings=list(SIGN_ON_POLICY_MAPPINGS),
@@ -992,5 +869,3 @@ class OktaCollector:
                 },
             )
         ]
-
-

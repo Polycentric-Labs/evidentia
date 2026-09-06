@@ -70,9 +70,7 @@ class LocalDirectoryMarketplaceProvider(MarketplaceProvider):
     ) -> None:
         path = Path(base_dir).expanduser().resolve()
         if not path.exists() or not path.is_dir():
-            raise FileNotFoundError(
-                f"MarketplaceProvider base_dir not found at {path}"
-            )
+            raise FileNotFoundError(f"MarketplaceProvider base_dir not found at {path}")
         self._base = path
         self._name = provider_name
         self._manifest: dict[str, dict[str, Any]] = {}
@@ -141,13 +139,9 @@ class LocalDirectoryMarketplaceProvider(MarketplaceProvider):
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, ValueError) as e:
-            raise ValueError(
-                f"Catalog {catalog_id!r} cannot be parsed as JSON: {e}"
-            ) from e
+            raise ValueError(f"Catalog {catalog_id!r} cannot be parsed as JSON: {e}") from e
         if not isinstance(data, dict):
-            raise ValueError(
-                f"Catalog {catalog_id!r} is not a JSON object"
-            )
+            raise ValueError(f"Catalog {catalog_id!r} is not a JSON object")
         return data
 
     def name(self) -> str:

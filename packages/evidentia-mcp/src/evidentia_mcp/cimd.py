@@ -115,10 +115,7 @@ class CIMDDocument(BaseModel):
     client_name: str = Field(
         min_length=1,
         max_length=500,
-        description=(
-            "Human-friendly client name shown in audit logs + "
-            "operator dashboards. May contain spaces."
-        ),
+        description=("Human-friendly client name shown in audit logs + operator dashboards. May contain spaces."),
     )
     scope: str = Field(
         default="",
@@ -202,15 +199,10 @@ class CIMDRegistry(BaseModel):
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
-            raise ValueError(
-                f"Invalid JSON in CIMD registry {path}: {exc}"
-            ) from exc
+            raise ValueError(f"Invalid JSON in CIMD registry {path}: {exc}") from exc
 
         if not isinstance(raw, dict):
-            raise ValueError(
-                f"CIMD registry {path} must be a JSON object at "
-                f"the top level; got {type(raw).__name__}."
-            )
+            raise ValueError(f"CIMD registry {path} must be a JSON object at the top level; got {type(raw).__name__}.")
 
         version = raw.get("version", CIMD_REGISTRY_VERSION)
         if version != CIMD_REGISTRY_VERSION:
@@ -223,9 +215,7 @@ class CIMDRegistry(BaseModel):
         try:
             return cls.model_validate(raw)
         except Exception as exc:
-            raise ValueError(
-                f"CIMD registry {path} failed validation: {exc}"
-            ) from exc
+            raise ValueError(f"CIMD registry {path} failed validation: {exc}") from exc
 
     def get(self, client_id: str) -> CIMDDocument | None:
         """Lookup; returns None if unregistered (callers decide

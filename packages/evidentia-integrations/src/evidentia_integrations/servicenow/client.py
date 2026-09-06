@@ -75,9 +75,7 @@ class ServiceNowClient:
         http: httpx.Client | None = None,
     ) -> None:
         self._config = config
-        basic = base64.b64encode(
-            f"{config.user}:{config.password}".encode()
-        ).decode("ascii")
+        basic = base64.b64encode(f"{config.user}:{config.password}".encode()).decode("ascii")
         self._http = http or httpx.Client(
             base_url=config.instance_url,
             headers={
@@ -112,13 +110,9 @@ class ServiceNowClient:
         params: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         try:
-            response = self._http.request(
-                method, path, json=json, params=params
-            )
+            response = self._http.request(method, path, json=json, params=params)
         except httpx.HTTPError as e:
-            raise ServiceNowApiError(
-                f"ServiceNow request failed: {e}", status_code=0
-            ) from e
+            raise ServiceNowApiError(f"ServiceNow request failed: {e}", status_code=0) from e
 
         if response.status_code == 204:
             return {}
@@ -134,12 +128,7 @@ class ServiceNowClient:
                 err = body.get("error")
                 if isinstance(err, dict):
                     error_message = str(err.get("message") or err.get("detail") or "")
-            excerpt = (
-                response.text[:200]
-                + ("..." if len(response.text) > 200 else "")
-                if not error_message
-                else None
-            )
+            excerpt = response.text[:200] + ("..." if len(response.text) > 200 else "") if not error_message else None
             raise ServiceNowApiError(
                 f"{method.upper()} {path}",
                 status_code=response.status_code,
@@ -170,9 +159,7 @@ class ServiceNowClient:
             "result_count": str(len(body.get("result", []) or [])),
         }
 
-    def create_record(
-        self, *, fields: dict[str, Any]
-    ) -> ServiceNowRecord:
+    def create_record(self, *, fields: dict[str, Any]) -> ServiceNowRecord:
         """Create a record in the configured table."""
         body = self._request(
             "POST",
@@ -187,10 +174,7 @@ class ServiceNowClient:
             )
         sys_id = str(result.get("sys_id") or "")
         number = str(result.get("number") or "")
-        url = (
-            f"{self._config.instance_url}/nav_to.do?uri="
-            f"{self._config.table_name}.do?sys_id={sys_id}"
-        )
+        url = f"{self._config.instance_url}/nav_to.do?uri={self._config.table_name}.do?sys_id={sys_id}"
         return ServiceNowRecord(
             sys_id=sys_id,
             number=number,
@@ -210,10 +194,7 @@ class ServiceNowClient:
                 f"ServiceNow get returned no record for {sys_id}",
                 status_code=200,
             )
-        url = (
-            f"{self._config.instance_url}/nav_to.do?uri="
-            f"{self._config.table_name}.do?sys_id={sys_id}"
-        )
+        url = f"{self._config.instance_url}/nav_to.do?uri={self._config.table_name}.do?sys_id={sys_id}"
         return ServiceNowRecord(
             sys_id=str(result.get("sys_id") or sys_id),
             number=str(result.get("number") or ""),
@@ -222,9 +203,7 @@ class ServiceNowClient:
             url=url,
         )
 
-    def find_existing_by_correlation(
-        self, *, correlation_id: str
-    ) -> ServiceNowRecord | None:
+    def find_existing_by_correlation(self, *, correlation_id: str) -> ServiceNowRecord | None:
         """Look up a previously-created record by correlation_id.
 
         Used to make `push_open_gaps` idempotent — re-pushing the
@@ -247,10 +226,7 @@ class ServiceNowClient:
         if not isinstance(first, dict):
             return None
         sys_id = str(first.get("sys_id") or "")
-        url = (
-            f"{self._config.instance_url}/nav_to.do?uri="
-            f"{self._config.table_name}.do?sys_id={sys_id}"
-        )
+        url = f"{self._config.instance_url}/nav_to.do?uri={self._config.table_name}.do?sys_id={sys_id}"
         return ServiceNowRecord(
             sys_id=sys_id,
             number=str(first.get("number") or ""),

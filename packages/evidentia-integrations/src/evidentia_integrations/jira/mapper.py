@@ -91,9 +91,7 @@ def gap_to_create_request(gap: ControlGap) -> dict[str, object]:
       - ``extra_fields``: ``priority`` from gap severity.
     """
     if not gap.framework or not gap.control_id:
-        raise JiraMappingError(
-            "Gap is missing framework/control_id; cannot push to Jira."
-        )
+        raise JiraMappingError("Gap is missing framework/control_id; cannot push to Jira.")
 
     summary = f"[{gap.framework}] {gap.control_id}: {gap.control_title}"
     summary = summary[:250]  # Jira cap is ~255 — stay conservative.
@@ -142,9 +140,7 @@ def gap_to_create_request(gap: ControlGap) -> dict[str, object]:
     ]
 
     priority_name = _SEVERITY_TO_PRIORITY.get(
-        gap.gap_severity
-        if isinstance(gap.gap_severity, GapSeverity)
-        else GapSeverity(gap.gap_severity)
+        gap.gap_severity if isinstance(gap.gap_severity, GapSeverity) else GapSeverity(gap.gap_severity)
     )
 
     extra_fields: dict[str, object] = {}

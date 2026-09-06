@@ -65,9 +65,7 @@ class LocalTokenAuthProvider(AuthProvider):
         try:
             stat_result = os.lstat(candidate)
         except FileNotFoundError as exc:
-            raise FileNotFoundError(
-                f"AuthProvider token-file not found at {candidate}"
-            ) from exc
+            raise FileNotFoundError(f"AuthProvider token-file not found at {candidate}") from exc
         # ``S_ISLNK`` is the canonical symlink check (also catches
         # exotic file types that aren't regular files; fail
         # closed). Reject any non-regular-file at the trust
@@ -86,26 +84,18 @@ class LocalTokenAuthProvider(AuthProvider):
             )
         path = candidate.resolve()
         if not path.exists() or not path.is_file():
-            raise FileNotFoundError(
-                f"AuthProvider token-file not found at {path}"
-            )
+            raise FileNotFoundError(f"AuthProvider token-file not found at {path}")
         token = path.read_text(encoding="utf-8").strip()
         if not token:
-            raise ValueError(
-                f"AuthProvider token-file at {path} is empty"
-            )
+            raise ValueError(f"AuthProvider token-file at {path} is empty")
         # Hold the token in memory; never logged in any persisted
         # form (per the AuthProvider contract).
         self._token = token
         self._name = provider_name
 
-    def authenticate(
-        self, *, authorization_header: str | None
-    ) -> AuthResult:
+    def authenticate(self, *, authorization_header: str | None) -> AuthResult:
         if authorization_header is None:
-            return AuthResult(
-                authenticated=False, reason="missing Authorization header"
-            )
+            return AuthResult(authenticated=False, reason="missing Authorization header")
         # Parse the scheme + credential.
         parts = authorization_header.split(maxsplit=1)
         if len(parts) != 2:
@@ -121,12 +111,8 @@ class LocalTokenAuthProvider(AuthProvider):
             )
         # Constant-time comparison to prevent timing attacks.
         if hmac.compare_digest(credential, self._token):
-            return AuthResult(
-                authenticated=True, principal="local-operator"
-            )
-        return AuthResult(
-            authenticated=False, reason="invalid bearer token"
-        )
+            return AuthResult(authenticated=True, principal="local-operator")
+        return AuthResult(authenticated=False, reason="invalid bearer token")
 
     def name(self) -> str:
         return self._name

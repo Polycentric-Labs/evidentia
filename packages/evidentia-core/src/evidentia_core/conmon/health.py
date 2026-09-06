@@ -109,10 +109,7 @@ class HealthReport:
             "total_due_soon": self.total_due_soon,
             "total_current": self.total_current,
             "overall_health_score": self.overall_health_score,
-            "frameworks": [
-                {**asdict(fh), "health_score": fh.health_score}
-                for fh in self.frameworks
-            ],
+            "frameworks": [{**asdict(fh), "health_score": fh.health_score} for fh in self.frameworks],
             "unknown_slugs": list(self.unknown_slugs),
         }
 

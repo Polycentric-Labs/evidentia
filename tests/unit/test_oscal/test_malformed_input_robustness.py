@@ -99,9 +99,7 @@ VALID_CATALOG: dict[str, Any] = {
                             {"id": "ac-1_prm_1", "select": {"choice": ["a", "b"]}},
                             {"id": "ac-1_prm_2", "guidelines": [{"prose": "default"}]},
                         ],
-                        "controls": [
-                            {"id": "ac-1.1", "title": "Enhancement One"}
-                        ],
+                        "controls": [{"id": "ac-1.1", "title": "Enhancement One"}],
                     }
                 ],
             }
@@ -138,9 +136,7 @@ VALID_PROFILE: dict[str, Any] = {
     "profile": {
         "uuid": "22222222-2222-2222-2222-222222222222",
         "metadata": {"title": "Demo Profile", "version": "1.0"},
-        "imports": [
-            {"href": "catalog.json", "include-controls": [{"with-ids": ["AC-1"]}]}
-        ],
+        "imports": [{"href": "catalog.json", "include-controls": [{"with-ids": ["AC-1"]}]}],
         "modify": [
             {
                 "set-parameters": [{"param-id": "ac-1_prm_1", "values": ["override"]}],
@@ -290,11 +286,7 @@ def _deep_control_chain(depth: int) -> str:
 def _deep_part_chain(depth: int) -> str:
     """Raw JSON for a catalog whose single control has `depth`-deep parts."""
     parts = '{"name": "statement", "parts": [' * depth + '{"name": "p"}' + "]}" * depth
-    return (
-        '{"catalog": {"groups": [{"controls": [{"id": "c", "parts": ['
-        + parts
-        + "]}]}]}}"
-    )
+    return '{"catalog": {"groups": [{"controls": [{"id": "c", "parts": [' + parts + "]}]}]}}"
 
 
 def test_deeply_nested_controls_raise_clean_error(tmp_path: Path) -> None:

@@ -45,8 +45,7 @@ class PrivacyObligation(EvidentiaModel):
     """
 
     id: str = Field(
-        description="Obligation ID, e.g. 'CCPA-1798.100' for the statute section "
-        "or 'CCPA.ACCESS' for a topical key",
+        description="Obligation ID, e.g. 'CCPA-1798.100' for the statute section or 'CCPA.ACCESS' for a topical key",
     )
     title: str = Field(description="Short obligation title")
     description: str = Field(description="Obligation text or summary")
@@ -63,9 +62,7 @@ class PrivacyObligation(EvidentiaModel):
         default_factory=list,
         description="Scope — entity types this obligation applies to",
     )
-    references: list[str] = Field(
-        default_factory=list, description="External reference URLs"
-    )
+    references: list[str] = Field(default_factory=list, description="External reference URLs")
     placeholder: bool = Field(
         default=False,
         description="True if the description is a placeholder (not yet authored)",
@@ -83,9 +80,7 @@ class PrivacyRegime(EvidentiaModel):
     jurisdiction: str = Field(
         description="Jurisdiction, e.g. 'US-CA', 'EU', 'UK', 'US-VA'",
     )
-    effective_date: str | None = Field(
-        default=None, description="Date the regime took effect (ISO 8601)"
-    )
+    effective_date: str | None = Field(default=None, description="Date the regime took effect (ISO 8601)")
     amendments: list[str] = Field(
         default_factory=list,
         description="Amendment names/dates (e.g. ['CPRA 2023'])",
@@ -128,8 +123,7 @@ class PrivacyRegime(EvidentiaModel):
     )
     applicability_revenue_share_from_data: float | None = Field(
         default=None,
-        description="% of revenue from selling/sharing data that triggers applicability "
-        "(0.5 = 50%)",
+        description="% of revenue from selling/sharing data that triggers applicability (0.5 = 50%)",
     )
     regulator: str | None = Field(
         default=None,

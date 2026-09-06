@@ -18,10 +18,12 @@ def test_oscal_verify_dsse_json_output(tmp_path):
     key = Ed25519PrivateKey.generate()
     priv = tmp_path / "k.key"
     pub = tmp_path / "k.pub"
-    priv.write_bytes(key.private_bytes(serialization.Encoding.PEM,
-        serialization.PrivateFormat.PKCS8, serialization.NoEncryption()))
-    pub.write_bytes(key.public_key().public_bytes(serialization.Encoding.PEM,
-        serialization.PublicFormat.SubjectPublicKeyInfo))
+    priv.write_bytes(
+        key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
+    )
+    pub.write_bytes(
+        key.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
+    )
     ar = tmp_path / "audit.oscal-ar.json"
     ar.write_text(_json.dumps({"assessment-results": {"uuid": "u1"}}), encoding="utf-8")
     keysign.sign_oscal_file(ar, key_path=priv)

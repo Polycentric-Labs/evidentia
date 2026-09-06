@@ -136,16 +136,12 @@ class AISystemDescriptor(EvidentiaModel):
     )
     annex_iii_domain: AnnexIIIDomain = Field(
         default=AnnexIIIDomain.NONE,
-        description=(
-            "Annex III high-risk domain (if any). Set to NONE for "
-            "systems outside Annex III scope."
-        ),
+        description=("Annex III high-risk domain (if any). Set to NONE for systems outside Annex III scope."),
     )
     decision_role: _DecisionRole = Field(
         default=_DecisionRole.ADVISORY,
         description=(
-            "Whether the AI output is advisory (human affirms), "
-            "automated (no per-case human review), or hybrid."
+            "Whether the AI output is advisory (human affirms), automated (no per-case human review), or hybrid."
         ),
     )
     affects_natural_persons: bool = Field(
@@ -194,23 +190,15 @@ class AISystemClassification(EvidentiaModel):
     have SME review for any HIGH or UNACCEPTABLE classification.
     """
 
-    descriptor_name: str = Field(
-        description="Echo of the input descriptor name for traceability."
-    )
-    eu_ai_act_tier: EUAIActTier = Field(
-        description="EU AI Act risk tier per Articles 5, 6, 50."
-    )
+    descriptor_name: str = Field(description="Echo of the input descriptor name for traceability.")
+    eu_ai_act_tier: EUAIActTier = Field(description="EU AI Act risk tier per Articles 5, 6, 50.")
     applicable_nist_ai_rmf_functions: list[NISTAIRMFFunction] = Field(
         description=(
-            "NIST AI RMF functions most operationally pressing for "
-            "this descriptor. Ordered most-pressing first."
+            "NIST AI RMF functions most operationally pressing for this descriptor. Ordered most-pressing first."
         ),
     )
     rationale: list[str] = Field(
-        description=(
-            "Plain-English explanation of which classifier rules "
-            "fired. Ordered as evaluated."
-        ),
+        description=("Plain-English explanation of which classifier rules fired. Ordered as evaluated."),
     )
     disclaimer: str = Field(
         default=(
@@ -252,8 +240,7 @@ def classify(descriptor: AISystemDescriptor) -> AISystemClassification:
     if descriptor.is_prohibited_practice:
         tier = EUAIActTier.UNACCEPTABLE
         rationale.append(
-            "Operator self-flagged is_prohibited_practice=True; "
-            "Article 5 prohibitions apply (UNACCEPTABLE)."
+            "Operator self-flagged is_prohibited_practice=True; Article 5 prohibitions apply (UNACCEPTABLE)."
         )
     elif descriptor.annex_iii_domain != AnnexIIIDomain.NONE:
         tier = EUAIActTier.HIGH
@@ -264,28 +251,17 @@ def classify(descriptor: AISystemDescriptor) -> AISystemClassification:
             f"(narrow procedural task, preparatory work, decision-"
             f"pattern detection)."
         )
-    elif (
-        descriptor.interacts_with_natural_persons
-        or descriptor.generates_synthetic_content
-    ):
+    elif descriptor.interacts_with_natural_persons or descriptor.generates_synthetic_content:
         tier = EUAIActTier.LIMITED
         triggers = []
         if descriptor.interacts_with_natural_persons:
             triggers.append("Article 50.1 (interacts with natural persons)")
         if descriptor.generates_synthetic_content:
-            triggers.append(
-                "Article 50.4 (generates synthetic content)"
-            )
-        rationale.append(
-            f"Transparency obligations apply: "
-            f"{'; '.join(triggers)} (LIMITED)."
-        )
+            triggers.append("Article 50.4 (generates synthetic content)")
+        rationale.append(f"Transparency obligations apply: {'; '.join(triggers)} (LIMITED).")
     else:
         tier = EUAIActTier.MINIMAL
-        rationale.append(
-            "No prohibitions, Annex III domain, or transparency "
-            "triggers identified (MINIMAL)."
-        )
+        rationale.append("No prohibitions, Annex III domain, or transparency triggers identified (MINIMAL).")
 
     # ── NIST AI RMF priority ────────────────────────────────────
     # Universal applicability; ordering reflects pressing operational
@@ -321,8 +297,7 @@ def classify(descriptor: AISystemDescriptor) -> AISystemClassification:
             NISTAIRMFFunction.MANAGE,
         ]
         rationale.append(
-            "Advisory/hybrid decision-role; MAP + GOVERN prioritized "
-            "(human-in-the-loop reduces measurement urgency)."
+            "Advisory/hybrid decision-role; MAP + GOVERN prioritized (human-in-the-loop reduces measurement urgency)."
         )
 
     return AISystemClassification(

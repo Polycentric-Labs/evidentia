@@ -61,10 +61,7 @@ class TestVendor:
         assert restored.id == v.id
         assert restored.residual_risk_score == 15
         assert restored.notes == "Imported from spreadsheet 2026-Q2"
-        assert (
-            RegulatoryClassification.CRITICAL_THIRD_PARTY.value
-            in restored.regulatory_classification
-        )
+        assert RegulatoryClassification.CRITICAL_THIRD_PARTY.value in restored.regulatory_classification
 
     def test_residual_risk_score_clamps_to_1_25(self) -> None:
         # ge=0, le=25 — 0 is valid (unscored); 26 is not.
@@ -247,9 +244,7 @@ class TestEvidenceRef:
         pins the model_validator that enforces it."""
         with pytest.raises(ValidationError) as exc_info:
             EvidenceRef(title="Bare title only")
-        assert "artifact_id" in str(exc_info.value) or "file_path" in str(
-            exc_info.value
-        )
+        assert "artifact_id" in str(exc_info.value) or "file_path" in str(exc_info.value)
 
     def test_file_path_without_sha256_rejected(self) -> None:
         """H-1 follow-up: file_path requires a paired sha256 digest

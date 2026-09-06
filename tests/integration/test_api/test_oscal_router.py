@@ -122,9 +122,7 @@ def _tampered_ar_doc() -> dict:
     digest check is meant to detect."""
     doc = _valid_ar_doc()
     resource = doc["assessment-results"]["back-matter"]["resources"][0]
-    resource["base64"]["value"] = base64.b64encode(
-        b'{"malicious": "payload"}'
-    ).decode("ascii")
+    resource["base64"]["value"] = base64.b64encode(b'{"malicious": "payload"}').decode("ascii")
     return doc
 
 
@@ -148,9 +146,7 @@ class TestVerifyValidAR:
         assert body["signature_valid"] is None
         assert body["sigstore_signature_valid"] is None
 
-    def test_response_does_not_leak_temp_path(
-        self, oscal_client: TestClient
-    ) -> None:
+    def test_response_does_not_leak_temp_path(self, oscal_client: TestClient) -> None:
         """G-9: the structured result must not echo the server-side temp
         file path back to the client (no filesystem-path leak)."""
         r = oscal_client.post(
@@ -170,9 +166,7 @@ class TestVerifyValidAR:
 
 
 class TestVerifyTamperedAR:
-    def test_tampered_ar_reports_invalid_but_http_200(
-        self, oscal_client: TestClient
-    ) -> None:
+    def test_tampered_ar_reports_invalid_but_http_200(self, oscal_client: TestClient) -> None:
         """A tampered AR is a NEGATIVE verdict, not a server error: the
         verification ran successfully and concluded the document is bad,
         so the HTTP status stays 200 and the body carries the failure."""
@@ -185,19 +179,14 @@ class TestVerifyTamperedAR:
         assert body["overall_valid"] is False
         assert body["digests_valid"] is False
         assert body["digest_checks"][0]["valid"] is False
-        assert (
-            body["digest_checks"][0]["expected_digest"]
-            != body["digest_checks"][0]["actual_digest"]
-        )
+        assert body["digest_checks"][0]["expected_digest"] != body["digest_checks"][0]["actual_digest"]
 
 
 # ── POST /api/oscal/verify — bad input ─────────────────────────────
 
 
 class TestVerifyBadInput:
-    def test_unparseable_content_returns_400(
-        self, oscal_client: TestClient
-    ) -> None:
+    def test_unparseable_content_returns_400(self, oscal_client: TestClient) -> None:
         r = oscal_client.post(
             "/api/oscal/verify",
             json={"content": "this is not json {{{"},
@@ -212,16 +201,12 @@ class TestVerifyBadInput:
         assert "/tmp" not in detail["message"]
         assert "AppData" not in detail["message"]
 
-    def test_missing_content_field_returns_422(
-        self, oscal_client: TestClient
-    ) -> None:
+    def test_missing_content_field_returns_422(self, oscal_client: TestClient) -> None:
         """Pydantic body validation (no ``content``) → 422, not 400."""
         r = oscal_client.post("/api/oscal/verify", json={})
         assert r.status_code == 422
 
-    def test_only_one_identity_field_returns_400(
-        self, oscal_client: TestClient
-    ) -> None:
+    def test_only_one_identity_field_returns_400(self, oscal_client: TestClient) -> None:
         """Both-or-neither (cosign model, F-V109-1): supplying exactly
         one of expected_sigstore_identity / _issuer is a usage error."""
         r = oscal_client.post(
@@ -241,9 +226,7 @@ class TestVerifyBadInput:
 
 
 class TestVerifyOffline:
-    def test_offline_reports_rekor_skipped(
-        self, oscal_client: TestClient
-    ) -> None:
+    def test_offline_reports_rekor_skipped(self, oscal_client: TestClient) -> None:
         """In offline/air-gap mode the Sigstore/Rekor (outbound network)
         leg is skipped + clearly reported, while the digest + local-GPG
         checks still run. Digests on a clean AR still pass."""
@@ -267,9 +250,7 @@ class TestVerifyOffline:
 
 
 class TestVerifyDSSEInline:
-    def test_oscal_verify_dsse_inline(
-        self, oscal_client: TestClient, tmp_path: Path
-    ) -> None:
+    def test_oscal_verify_dsse_inline(self, oscal_client: TestClient, tmp_path: Path) -> None:
         """Supplying a DSSE envelope + matching public key returns
         dsse_signature_valid=True and dsse_status='valid'."""
         import json
@@ -287,10 +268,14 @@ class TestVerifyDSSEInline:
                 serialization.NoEncryption(),
             )
         )
-        pub_pem = key.public_key().public_bytes(
-            serialization.Encoding.PEM,
-            serialization.PublicFormat.SubjectPublicKeyInfo,
-        ).decode()
+        pub_pem = (
+            key.public_key()
+            .public_bytes(
+                serialization.Encoding.PEM,
+                serialization.PublicFormat.SubjectPublicKeyInfo,
+            )
+            .decode()
+        )
         ar = tmp_path / "audit.oscal-ar.json"
         content = json.dumps({"assessment-results": {"uuid": "u1"}})
         ar.write_text(content, encoding="utf-8")
@@ -309,9 +294,7 @@ class TestVerifyDSSEInline:
         assert body["dsse_signature_valid"] is True
         assert body["dsse_status"] == "valid"
 
-    def test_oscal_verify_dsse_envelope_without_key_is_400(
-        self, oscal_client: TestClient
-    ) -> None:
+    def test_oscal_verify_dsse_envelope_without_key_is_400(self, oscal_client: TestClient) -> None:
         """Both-or-neither: supplying dsse_envelope without verify_public_key
         is a usage error → 400."""
         resp = oscal_client.post(
@@ -321,9 +304,7 @@ class TestVerifyDSSEInline:
         assert resp.status_code == 400
         assert resp.json()["detail"]["error"] == "invalid_body"
 
-    def test_oscal_verify_dsse_key_without_envelope_is_400(
-        self, oscal_client: TestClient
-    ) -> None:
+    def test_oscal_verify_dsse_key_without_envelope_is_400(self, oscal_client: TestClient) -> None:
         """Both-or-neither: supplying verify_public_key without dsse_envelope
         is a usage error → 400."""
         resp = oscal_client.post(
@@ -333,9 +314,7 @@ class TestVerifyDSSEInline:
         assert resp.status_code == 400
         assert resp.json()["detail"]["error"] == "invalid_body"
 
-    def test_no_dsse_returns_not_checked_status(
-        self, oscal_client: TestClient
-    ) -> None:
+    def test_no_dsse_returns_not_checked_status(self, oscal_client: TestClient) -> None:
         """When no DSSE fields are supplied the response carries
         dsse_status='not checked (no DSSE envelope)' and
         dsse_signature_valid=None."""

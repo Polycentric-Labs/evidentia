@@ -142,15 +142,9 @@ class Vulnerability(EvidentiaModel):
         default_factory=list,
         description="CWE weakness IDs underlying this vulnerability (e.g. ['CWE-22'])",
     )
-    cvss_v3_score: float | None = Field(
-        default=None, description="CVSS v3.1 base score"
-    )
-    cvss_v4_score: float | None = Field(
-        default=None, description="CVSS v4.0 base score"
-    )
-    date_published: str | None = Field(
-        default=None, description="Publication date (ISO 8601 date)"
-    )
+    cvss_v3_score: float | None = Field(default=None, description="CVSS v3.1 base score")
+    cvss_v4_score: float | None = Field(default=None, description="CVSS v4.0 base score")
+    date_published: str | None = Field(default=None, description="Publication date (ISO 8601 date)")
     date_added: str | None = Field(
         default=None,
         description="Date added to KEV or discovered (ISO 8601 date)",
@@ -167,9 +161,7 @@ class Vulnerability(EvidentiaModel):
         default=None,
         description="KEV federal-agency remediation deadline (ISO 8601 date)",
     )
-    references: list[str] = Field(
-        default_factory=list, description="External reference URLs"
-    )
+    references: list[str] = Field(default_factory=list, description="External reference URLs")
 
 
 class VulnerabilityCatalog(EvidentiaModel):

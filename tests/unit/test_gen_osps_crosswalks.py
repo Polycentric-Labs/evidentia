@@ -166,9 +166,7 @@ def test_build_mapping_field_order_and_notes(gen: Any) -> None:
 
 def test_build_crosswalk_top_level_shape(gen: Any) -> None:
     entries = [("OSPS-AC-01", "Use MFA for Sensitive Actions", "PO.3.2")]
-    payload = gen.build_crosswalk(
-        "nist-ssdf-800-218", "NIST SSDF SP 800-218", entries, FIXTURE_SHA
-    )
+    payload = gen.build_crosswalk("nist-ssdf-800-218", "NIST SSDF SP 800-218", entries, FIXTURE_SHA)
     assert list(payload.keys()) == [
         "source_framework",
         "target_framework",
@@ -245,9 +243,7 @@ def test_compare_no_drift_when_committed_matches(gen: Any, tmp_path: Path) -> No
     assert gen._compare(regenerated, tmp_path) == []
 
 
-def test_compare_detects_drift_on_mutated_committed_byte(
-    gen: Any, tmp_path: Path
-) -> None:
+def test_compare_detects_drift_on_mutated_committed_byte(gen: Any, tmp_path: Path) -> None:
     """``_compare`` flags the file whose committed copy diverges by one field."""
     regenerated = gen.build_all_crosswalks(FIXTURE_DOCS, FIXTURE_SHA, FIXTURE_STANDARDS)
     for name, content in regenerated.items():
@@ -256,9 +252,7 @@ def test_compare_detects_drift_on_mutated_committed_byte(
     drifted_name = "osps-baseline_to_nist-ssdf-800-218.json"
     committed = json.loads((tmp_path / drifted_name).read_text(encoding="utf-8"))
     committed["mappings"][0]["target_control_id"] = "MUTATED.0.0"
-    (tmp_path / drifted_name).write_text(
-        gen.serialize(committed), encoding="utf-8"
-    )
+    (tmp_path / drifted_name).write_text(gen.serialize(committed), encoding="utf-8")
     drift = gen._compare(regenerated, tmp_path)
     # Exactly the mutated file is reported; the untouched file is not.
     assert len(drift) == 1

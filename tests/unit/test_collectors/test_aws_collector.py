@@ -95,9 +95,7 @@ class TestConfigCollector:
                                     }
                                 },
                                 "Annotation": "Bucket has public read ACL.",
-                                "ResultRecordedTime": datetime(
-                                    2026, 4, 15, 12, 0, 0, tzinfo=UTC
-                                ),
+                                "ResultRecordedTime": datetime(2026, 4, 15, 12, 0, 0, tzinfo=UTC),
                             },
                             {
                                 "EvaluationResultIdentifier": {
@@ -107,9 +105,7 @@ class TestConfigCollector:
                                     }
                                 },
                                 "Annotation": "Bucket has public read ACL.",
-                                "ResultRecordedTime": datetime(
-                                    2026, 4, 15, 12, 0, 0, tzinfo=UTC
-                                ),
+                                "ResultRecordedTime": datetime(2026, 4, 15, 12, 0, 0, tzinfo=UTC),
                             },
                         ]
                     }
@@ -203,9 +199,7 @@ class TestSecurityHubCollector:
         )
         mock_sh.get_paginator.return_value = paginator
 
-        collector = AwsCollector(
-            region="us-east-1", _clients={"securityhub": mock_sh}
-        )
+        collector = AwsCollector(region="us-east-1", _clients={"securityhub": mock_sh})
         findings = collector.collect_security_hub_findings()
 
         assert len(findings) == 1
@@ -239,9 +233,7 @@ class TestSecurityHubCollector:
                                 "SecurityControlId": "IAM.1",
                                 "RelatedRequirements": [],
                             },
-                            "Resources": [
-                                {"Id": "acct-1", "Type": "AwsAccount", "Region": "us-east-1"}
-                            ],
+                            "Resources": [{"Id": "acct-1", "Type": "AwsAccount", "Region": "us-east-1"}],
                         }
                     ]
                 }
@@ -249,9 +241,7 @@ class TestSecurityHubCollector:
         )
         mock_sh.get_paginator.return_value = paginator
 
-        collector = AwsCollector(
-            region="us-east-1", _clients={"securityhub": mock_sh}
-        )
+        collector = AwsCollector(region="us-east-1", _clients={"securityhub": mock_sh})
         findings = collector.collect_security_hub_findings()
 
         assert len(findings) == 1
@@ -275,9 +265,7 @@ class TestSecurityHubCollector:
                             "Severity": {"Label": "LOW"},
                             "Workflow": {"Status": "NEW"},
                             "Compliance": {"SecurityControlId": "1.4"},
-                            "Resources": [
-                                {"Id": "r", "Type": "x", "Region": "us-east-1"}
-                            ],
+                            "Resources": [{"Id": "r", "Type": "x", "Region": "us-east-1"}],
                         }
                         for i in range(20)
                     ]
@@ -286,9 +274,7 @@ class TestSecurityHubCollector:
         )
         mock_sh.get_paginator.return_value = paginator
 
-        collector = AwsCollector(
-            region="us-east-1", _clients={"securityhub": mock_sh}
-        )
+        collector = AwsCollector(region="us-east-1", _clients={"securityhub": mock_sh})
         findings = collector.collect_security_hub_findings(max_findings=5)
         assert len(findings) == 5
 
@@ -355,9 +341,7 @@ class TestCollectAll:
                             "Severity": {"Label": "MEDIUM"},
                             "Workflow": {"Status": "NEW"},
                             "Compliance": {"SecurityControlId": "S3.3"},
-                            "Resources": [
-                                {"Id": "r", "Type": "x", "Region": "us-east-1"}
-                            ],
+                            "Resources": [{"Id": "r", "Type": "x", "Region": "us-east-1"}],
                         }
                     ]
                 }
@@ -375,9 +359,7 @@ class TestCollectAll:
         assert "aws-config" in sources
         assert "aws-security-hub" in sources
 
-    def test_subcollector_failure_is_swallowed_and_logged(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_subcollector_failure_is_swallowed_and_logged(self, caplog: pytest.LogCaptureFixture) -> None:
         from unittest.mock import MagicMock
 
         config = MagicMock()
@@ -396,9 +378,7 @@ class TestCollectAll:
                             "Severity": {"Label": "LOW"},
                             "Workflow": {"Status": "NEW"},
                             "Compliance": {"SecurityControlId": "1.4"},
-                            "Resources": [
-                                {"Id": "r", "Type": "x", "Region": "us-east-1"}
-                            ],
+                            "Resources": [{"Id": "r", "Type": "x", "Region": "us-east-1"}],
                         }
                     ]
                 }
@@ -414,9 +394,7 @@ class TestCollectAll:
         findings = collector.collect_all()
         assert len(findings) == 1
         assert findings[0].source_system == "aws-security-hub"
-        assert any(
-            "AWS Config collector failed" in r.message for r in caplog.records
-        )
+        assert any("AWS Config collector failed" in r.message for r in caplog.records)
 
 
 # ── v0.10.0: compliance_status + remediation + OCSF round-trip ───────────
@@ -459,9 +437,7 @@ def _config_collector() -> AwsCollector:
     )
     mock_config = MagicMock()
     mock_config.get_paginator.side_effect = lambda name: (
-        describe
-        if name == "describe_compliance_by_config_rule"
-        else details
+        describe if name == "describe_compliance_by_config_rule" else details
     )
     return AwsCollector(region="us-east-1", _clients={"config": mock_config})
 
@@ -482,9 +458,7 @@ def test_config_findings_have_fail_compliance_status() -> None:
 
     findings = _config_collector().collect_config_findings()
     assert findings
-    assert all(
-        f.compliance_status == ComplianceStatus.FAIL for f in findings
-    )
+    assert all(f.compliance_status == ComplianceStatus.FAIL for f in findings)
 
 
 def test_security_hub_failed_status_maps_to_fail_with_remediation() -> None:
@@ -503,9 +477,7 @@ def test_security_hub_failed_status_maps_to_fail_with_remediation() -> None:
                 "Url": "https://docs.aws.amazon.com/console/securityhub/S3.3",
             }
         },
-        "Resources": [
-            {"Id": "arn:aws:s3:::b", "Type": "AwsS3Bucket", "Region": "us-east-1"}
-        ],
+        "Resources": [{"Id": "arn:aws:s3:::b", "Type": "AwsS3Bucket", "Region": "us-east-1"}],
     }
     finding = _sh_collector(raw).collect_security_hub_findings()[0]
     assert finding.compliance_status == ComplianceStatus.FAIL
@@ -522,9 +494,7 @@ def test_security_hub_passed_status_maps_to_pass() -> None:
         "Severity": {"Label": "INFORMATIONAL"},
         "Workflow": {"Status": "NEW"},
         "Compliance": {"Status": "PASSED", "SecurityControlId": "S3.3"},
-        "Resources": [
-            {"Id": "arn:aws:s3:::b", "Type": "AwsS3Bucket", "Region": "us-east-1"}
-        ],
+        "Resources": [{"Id": "arn:aws:s3:::b", "Type": "AwsS3Bucket", "Region": "us-east-1"}],
     }
     finding = _sh_collector(raw).collect_security_hub_findings()[0]
     assert finding.compliance_status == ComplianceStatus.PASS

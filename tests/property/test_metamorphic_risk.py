@@ -244,10 +244,7 @@ def test_threshold_flagging_monotonic(specs):
     def flagged(threshold: float) -> set[tuple[str, str]]:
         report = compute_concentration(vendors, _DIMENSIONS, threshold=threshold)
         return {
-            (dim.dimension, vc.value)
-            for dim in report.dimensions
-            for vc in dim.distribution
-            if vc.exceeds_threshold
+            (dim.dimension, vc.value) for dim in report.dimensions for vc in dim.distribution if vc.exceeds_threshold
         }
 
     assert flagged(50.0) <= flagged(10.0)

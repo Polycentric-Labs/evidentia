@@ -71,14 +71,14 @@ _OCSF_DETECTION_CLASS_NAME = "Detection Finding"
 # INFORMATIONAL/UNKNOWN where the source is publishing context, not a
 # check result.
 _DETECTION_SEVERITY_TO_COMPLIANCE: dict[int, ComplianceStatus] = {
-    5: ComplianceStatus.FAIL,        # Critical
-    4: ComplianceStatus.FAIL,        # High
-    3: ComplianceStatus.FAIL,        # Medium
-    2: ComplianceStatus.WARNING,     # Low
-    1: ComplianceStatus.UNKNOWN,     # Informational
-    0: ComplianceStatus.UNKNOWN,     # Unknown
-    6: ComplianceStatus.FAIL,        # Fatal
-    99: ComplianceStatus.UNKNOWN,    # Other
+    5: ComplianceStatus.FAIL,  # Critical
+    4: ComplianceStatus.FAIL,  # High
+    3: ComplianceStatus.FAIL,  # Medium
+    2: ComplianceStatus.WARNING,  # Low
+    1: ComplianceStatus.UNKNOWN,  # Informational
+    0: ComplianceStatus.UNKNOWN,  # Unknown
+    6: ComplianceStatus.FAIL,  # Fatal
+    99: ComplianceStatus.UNKNOWN,  # Other
 }
 
 # Evidentia Severity -> OCSF SeverityID value (py-ocsf-models SeverityID:
@@ -91,9 +91,7 @@ _SEVERITY_TO_OCSF: dict[Severity, int] = {
     Severity.LOW: 2,
     Severity.INFORMATIONAL: 1,
 }
-_OCSF_TO_SEVERITY: dict[int, Severity] = {
-    value: severity for severity, value in _SEVERITY_TO_OCSF.items()
-}
+_OCSF_TO_SEVERITY: dict[int, Severity] = {value: severity for severity, value in _SEVERITY_TO_OCSF.items()}
 
 # Evidentia ComplianceStatus -> OCSF compliance StatusID value
 # (py-ocsf-models compliance StatusID: Unknown 0 / Pass 1 / Warning 2 /
@@ -165,8 +163,7 @@ def _load_ocsf() -> Any:
         from py_ocsf_models.objects.resource_details import ResourceDetails
     except ImportError as exc:  # pragma: no cover - exercised only without the extra
         raise OCSFMappingError(
-            "OCSF mapping needs the optional 'ocsf' extra. Install it with: "
-            "pip install 'evidentia-core[ocsf]'."
+            "OCSF mapping needs the optional 'ocsf' extra. Install it with: pip install 'evidentia-core[ocsf]'."
         ) from exc
 
     return SimpleNamespace(
@@ -205,9 +202,7 @@ def finding_to_ocsf(finding: SecurityFinding) -> dict[str, Any]:
         desc=finding.description,
         requirements=requirements or None,
         standards=frameworks or None,
-        status_id=ocsf.ComplianceStatusID(
-            _COMPLIANCE_STATUS_TO_OCSF[finding.compliance_status]
-        ),
+        status_id=ocsf.ComplianceStatusID(_COMPLIANCE_STATUS_TO_OCSF[finding.compliance_status]),
     )
     finding_info = ocsf.FindingInformation(
         title=finding.title,
@@ -224,9 +219,7 @@ def finding_to_ocsf(finding: SecurityFinding) -> dict[str, Any]:
             version=current_version(),
         ),
     )
-    remediation = (
-        ocsf.Remediation(desc=finding.remediation) if finding.remediation else None
-    )
+    remediation = ocsf.Remediation(desc=finding.remediation) if finding.remediation else None
     resources = None
     if finding.resource_id or finding.resource_type:
         resources = [
@@ -259,9 +252,7 @@ def finding_to_ocsf(finding: SecurityFinding) -> dict[str, Any]:
         resources=resources,
         unmapped={"evidentia": finding.model_dump(mode="json")},
     )
-    result: dict[str, Any] = compliance_finding.model_dump(
-        mode="json", exclude_none=True
-    )
+    result: dict[str, Any] = compliance_finding.model_dump(mode="json", exclude_none=True)
     return result
 
 
@@ -319,9 +310,7 @@ def finding_from_ocsf(
     try:
         compliance_finding = ocsf.ComplianceFinding.model_validate(ocsf_finding)
     except Exception as exc:  # pydantic ValidationError (and any related parse error)
-        raise OCSFMappingError(
-            f"input does not validate as an OCSF Compliance Finding: {exc}"
-        ) from exc
+        raise OCSFMappingError(f"input does not validate as an OCSF Compliance Finding: {exc}") from exc
 
     if trust_unmapped:
         unmapped = compliance_finding.unmapped
@@ -387,9 +376,7 @@ def finding_from_ocsf_detection(
     try:
         detection_finding = ocsf.DetectionFinding.model_validate(ocsf_finding)
     except Exception as exc:  # pydantic ValidationError (and any related parse error)
-        raise OCSFMappingError(
-            f"input does not validate as an OCSF Detection Finding: {exc}"
-        ) from exc
+        raise OCSFMappingError(f"input does not validate as an OCSF Detection Finding: {exc}") from exc
 
     if trust_unmapped:
         unmapped = detection_finding.unmapped
@@ -412,17 +399,11 @@ def _security_finding_from_native_detection_ocsf(
 
     severity_id_value = int(detection_finding.severity_id)
     severity = _OCSF_TO_SEVERITY.get(severity_id_value, Severity.MEDIUM)
-    compliance_status = _DETECTION_SEVERITY_TO_COMPLIANCE.get(
-        severity_id_value, ComplianceStatus.UNKNOWN
-    )
+    compliance_status = _DETECTION_SEVERITY_TO_COMPLIANCE.get(severity_id_value, ComplianceStatus.UNKNOWN)
 
     product = getattr(detection_finding.metadata, "product", None)
     source_system = getattr(product, "name", None) or "ocsf-detection-import"
-    remediation = (
-        detection_finding.remediation.desc
-        if detection_finding.remediation is not None
-        else None
-    )
+    remediation = detection_finding.remediation.desc if detection_finding.remediation is not None else None
 
     resource = None
     if detection_finding.resources:
@@ -466,40 +447,27 @@ def _security_finding_from_native_ocsf(compliance_finding: Any) -> SecurityFindi
     info = compliance_finding.finding_info
     compliance = compliance_finding.compliance
 
-    severity = _OCSF_TO_SEVERITY.get(
-        int(compliance_finding.severity_id), Severity.MEDIUM
-    )
+    severity = _OCSF_TO_SEVERITY.get(int(compliance_finding.severity_id), Severity.MEDIUM)
     compliance_status = ComplianceStatus.UNKNOWN
     if compliance is not None and compliance.status_id is not None:
-        compliance_status = _OCSF_TO_COMPLIANCE_STATUS.get(
-            int(compliance.status_id), ComplianceStatus.UNKNOWN
-        )
+        compliance_status = _OCSF_TO_COMPLIANCE_STATUS.get(int(compliance.status_id), ComplianceStatus.UNKNOWN)
 
     standards = list(compliance.standards or []) if compliance is not None else []
-    requirements = (
-        list(compliance.requirements or []) if compliance is not None else []
-    )
+    requirements = list(compliance.requirements or []) if compliance is not None else []
     framework = standards[0] if standards else "unknown"
     control_mappings = [
         ControlMapping(
             framework=framework,
             control_id=requirement,
             relationship=OLIRRelationship.RELATED_TO,
-            justification=(
-                "Ingested from OCSF; the source did not specify an OLIR "
-                "relationship."
-            ),
+            justification=("Ingested from OCSF; the source did not specify an OLIR relationship."),
         )
         for requirement in requirements
     ]
 
     product = getattr(compliance_finding.metadata, "product", None)
     source_system = getattr(product, "name", None) or "ocsf-import"
-    remediation = (
-        compliance_finding.remediation.desc
-        if compliance_finding.remediation is not None
-        else None
-    )
+    remediation = compliance_finding.remediation.desc if compliance_finding.remediation is not None else None
 
     kwargs: dict[str, Any] = {
         "id": info.uid,

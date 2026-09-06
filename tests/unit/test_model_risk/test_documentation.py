@@ -94,7 +94,8 @@ class TestGenerateModelDocumentation:
             inputs=[
                 ModelInput(name="FICO", source_system="experian"),
                 ModelInput(
-                    name="History", source_system="snowflake",
+                    name="History",
+                    source_system="snowflake",
                     transformation="log-normalized",
                 ),
             ],

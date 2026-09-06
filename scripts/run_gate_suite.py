@@ -193,9 +193,7 @@ def checks_for_scope(scope: str) -> tuple[Check, ...]:
     try:
         return _SCOPES[scope]
     except KeyError:  # pragma: no cover - argparse `choices` guards the CLI
-        raise ValueError(
-            f"unknown scope {scope!r}; expected one of {sorted(_SCOPES)}"
-        ) from None
+        raise ValueError(f"unknown scope {scope!r}; expected one of {sorted(_SCOPES)}") from None
 
 
 def _run_check(check: Check) -> int:
@@ -246,10 +244,7 @@ def main(argv: list[str] | None = None) -> int:
             print(check.name)
         return 0
 
-    print(
-        f"Running the '{args.scope}' gate suite "
-        f"({len(selected)} check(s)): {', '.join(c.name for c in selected)}"
-    )
+    print(f"Running the '{args.scope}' gate suite ({len(selected)} check(s)): {', '.join(c.name for c in selected)}")
 
     failures: list[str] = []
     for check in selected:
@@ -258,10 +253,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print("\n" + "=" * 62)
     if failures:
-        print(
-            f"GATE SUITE ({args.scope}): FAILED — "
-            f"{len(failures)} of {len(selected)} check(s) failed:"
-        )
+        print(f"GATE SUITE ({args.scope}): FAILED — {len(failures)} of {len(selected)} check(s) failed:")
         for name in failures:
             print(f"  - {name}")
         print("=" * 62)

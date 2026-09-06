@@ -91,9 +91,7 @@ def _parse_csv_enum(
     valid = {e.value for e in enum_cls}
     bad = [item for item in raw if item not in valid]
     if bad:
-        raise typer.BadParameter(
-            f"Unknown value(s) {bad!r}; valid choices: {sorted(valid)}"
-        )
+        raise typer.BadParameter(f"Unknown value(s) {bad!r}; valid choices: {sorted(valid)}")
     return raw
 
 
@@ -111,10 +109,7 @@ def _parse_date_or_exit(value: str | None, flag: str) -> date | None:
     try:
         return date.fromisoformat(value)
     except ValueError as e:
-        console.print(
-            f"[red]Error:[/red] {flag} must be ISO-8601 date "
-            f"(YYYY-MM-DD); got {value!r}: {e}"
-        )
+        console.print(f"[red]Error:[/red] {flag} must be ISO-8601 date (YYYY-MM-DD); got {value!r}: {e}")
         raise typer.Exit(code=1) from e
 
 
@@ -157,18 +152,10 @@ def _render_vendor_show(v: Vendor) -> None:
     console.print(f"  Criticality tier:   [cyan]{v.criticality_tier}[/cyan]")
     console.print(f"  Relationship owner: {v.relationship_owner}")
     console.print(f"  Contract start:     {v.contract_start_date}")
-    console.print(
-        f"  Contract end:       {v.contract_end_date or '[dim](indefinite)[/dim]'}"
-    )
-    console.print(
-        f"  Last DD review:     {v.last_due_diligence_review or '[dim](none)[/dim]'}"
-    )
-    console.print(
-        f"  Next review due:    {v.next_review_due or '[dim](unset; run compute_next_review_due)[/dim]'}"
-    )
-    console.print(
-        f"  Residual risk:      {v.residual_risk_score} / 25"
-    )
+    console.print(f"  Contract end:       {v.contract_end_date or '[dim](indefinite)[/dim]'}")
+    console.print(f"  Last DD review:     {v.last_due_diligence_review or '[dim](none)[/dim]'}")
+    console.print(f"  Next review due:    {v.next_review_due or '[dim](unset; run compute_next_review_due)[/dim]'}")
+    console.print(f"  Residual risk:      {v.residual_risk_score} / 25")
     if v.regulatory_classification:
         flags = ", ".join(v.regulatory_classification)
         console.print(f"  Regulatory flags:   [yellow]{flags}[/yellow]")
@@ -179,18 +166,11 @@ def _render_vendor_show(v: Vendor) -> None:
     if v.evidence_refs:
         console.print(f"  Evidence refs ({len(v.evidence_refs)}):")
         for ref in v.evidence_refs:
-            tag = (
-                f"artifact={ref.artifact_id}"
-                if ref.artifact_id
-                else f"file={ref.file_path}"
-            )
+            tag = f"artifact={ref.artifact_id}" if ref.artifact_id else f"file={ref.file_path}"
             console.print(f"    - {ref.title} [dim]({tag})[/dim]")
     if v.notes:
         console.print(f"  Notes: {v.notes}")
-    console.print(
-        f"  [dim]Created: {v.created_at}  Updated: {v.updated_at}  "
-        f"evidentia: {v.evidentia_version}[/dim]"
-    )
+    console.print(f"  [dim]Created: {v.created_at}  Updated: {v.updated_at}  evidentia: {v.evidentia_version}[/dim]")
 
 
 def _load_vendor_or_exit(vendor_id: str) -> Vendor:
@@ -207,9 +187,7 @@ def _load_vendor_or_exit(vendor_id: str) -> Vendor:
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e
     if loaded is None:
-        console.print(
-            f"[red]Error:[/red] No vendor with ID {vendor_id!r} found in the store."
-        )
+        console.print(f"[red]Error:[/red] No vendor with ID {vendor_id!r} found in the store.")
         raise typer.Exit(code=1)
     return loaded
 
@@ -219,25 +197,18 @@ def _load_vendor_or_exit(vendor_id: str) -> Vendor:
 
 @vendor_app.command("add")
 def vendor_add(
-    name: str | None = typer.Option(
-        None, "--name", "-n", help="Vendor legal name."
-    ),
+    name: str | None = typer.Option(None, "--name", "-n", help="Vendor legal name."),
     type_: str | None = typer.Option(
         None,
         "--type",
         "-t",
-        help=(
-            f"Vendor type. One of: {', '.join(t.value for t in VendorType)}."
-        ),
+        help=(f"Vendor type. One of: {', '.join(t.value for t in VendorType)}."),
     ),
     criticality_tier: str | None = typer.Option(
         None,
         "--criticality-tier",
         "-c",
-        help=(
-            f"FFIEC criticality tier. One of: "
-            f"{', '.join(t.value for t in CriticalityTier)}."
-        ),
+        help=(f"FFIEC criticality tier. One of: {', '.join(t.value for t in CriticalityTier)}."),
     ),
     owner: str | None = typer.Option(
         None,
@@ -272,18 +243,12 @@ def vendor_add(
     region: str | None = typer.Option(
         None,
         "--region",
-        help=(
-            "Free-text geo / cloud-region label (max 128 chars). "
-            "Used by `concentration-report --by region`."
-        ),
+        help=("Free-text geo / cloud-region label (max 128 chars). Used by `concentration-report --by region`."),
     ),
     regulatory_classification: str | None = typer.Option(
         None,
         "--regulatory-classification",
-        help=(
-            "Comma-separated list. Choices: "
-            f"{', '.join(c.value for c in RegulatoryClassification)}."
-        ),
+        help=(f"Comma-separated list. Choices: {', '.join(c.value for c in RegulatoryClassification)}."),
     ),
     residual_risk_score: int = typer.Option(
         0,
@@ -293,9 +258,7 @@ def vendor_add(
         max=25,
         help="Residual risk score (1-25; 0 = unscored).",
     ),
-    notes: str | None = typer.Option(
-        None, "--notes", help="Free-text vendor notes."
-    ),
+    notes: str | None = typer.Option(None, "--notes", help="Free-text vendor notes."),
     from_yaml: Path | None = typer.Option(
         None,
         "--from-yaml",
@@ -327,9 +290,7 @@ def vendor_add(
     # whether YAML or atomic-flags path runs.
     csd = _parse_date_or_exit(contract_start_date, "--contract-start-date")
     ced = _parse_date_or_exit(contract_end_date, "--contract-end-date")
-    lddr = _parse_date_or_exit(
-        last_due_diligence_review, "--last-due-diligence-review"
-    )
+    lddr = _parse_date_or_exit(last_due_diligence_review, "--last-due-diligence-review")
     nrd = _parse_date_or_exit(next_review_due, "--next-review-due")
 
     if from_yaml:
@@ -337,9 +298,7 @@ def vendor_add(
 
         data = yaml_mod.safe_load(from_yaml.read_text(encoding="utf-8")) or {}
         if not isinstance(data, dict):
-            console.print(
-                "[red]Error:[/red] --from-yaml file must be a YAML mapping at the top level."
-            )
+            console.print("[red]Error:[/red] --from-yaml file must be a YAML mapping at the top level.")
             raise typer.Exit(code=1)
         # Atomic flags override YAML-supplied values when both are set.
         if name:
@@ -361,9 +320,7 @@ def vendor_add(
         if region is not None:
             data["region"] = region
         if regulatory_classification is not None:
-            data["regulatory_classification"] = _parse_csv_enum(
-                regulatory_classification, RegulatoryClassification
-            )
+            data["regulatory_classification"] = _parse_csv_enum(regulatory_classification, RegulatoryClassification)
         if residual_risk_score:
             data["residual_risk_score"] = residual_risk_score
         if notes:
@@ -388,10 +345,7 @@ def vendor_add(
             if not val
         ]
         if missing:
-            console.print(
-                f"[red]Error:[/red] Missing required field(s): "
-                f"{', '.join(missing)}. (Or pass --from-yaml.)"
-            )
+            console.print(f"[red]Error:[/red] Missing required field(s): {', '.join(missing)}. (Or pass --from-yaml.)")
             raise typer.Exit(code=1)
         # Build via Pydantic validation so each field's enum/range/etc.
         # validators run with proper error messages.
@@ -404,16 +358,10 @@ def vendor_add(
                     "relationship_owner": owner,
                     "contract_start_date": csd.isoformat() if csd else None,
                     "contract_end_date": ced.isoformat() if ced else None,
-                    "last_due_diligence_review": (
-                        lddr.isoformat() if lddr else None
-                    ),
-                    "next_review_due": (
-                        nrd.isoformat() if nrd else None
-                    ),
+                    "last_due_diligence_review": (lddr.isoformat() if lddr else None),
+                    "next_review_due": (nrd.isoformat() if nrd else None),
                     "region": region,
-                    "regulatory_classification": _parse_csv_enum(
-                        regulatory_classification, RegulatoryClassification
-                    ),
+                    "regulatory_classification": _parse_csv_enum(regulatory_classification, RegulatoryClassification),
                     "residual_risk_score": residual_risk_score,
                     "notes": notes,
                 }
@@ -427,10 +375,7 @@ def vendor_add(
         vendor.next_review_due = vendor.compute_next_review_due()
 
     save_vendor(vendor)
-    console.print(
-        f"[green]✓[/green] Added vendor [bold]{vendor.name}[/bold] "
-        f"(id: [dim]{vendor.id}[/dim])"
-    )
+    console.print(f"[green]✓[/green] Added vendor [bold]{vendor.name}[/bold] (id: [dim]{vendor.id}[/dim])")
 
 
 # ── list ───────────────────────────────────────────────────────────
@@ -468,9 +413,7 @@ def vendor_list(
     that consumers need to know exist on the wire. Closes v0.7.9
     P0.1 Continuous-review H-2 by documenting the contract.
     """
-    if criticality_tier and criticality_tier not in {
-        e.value for e in CriticalityTier
-    }:
+    if criticality_tier and criticality_tier not in {e.value for e in CriticalityTier}:
         console.print(
             f"[red]Error:[/red] Unknown criticality tier {criticality_tier!r}; "
             f"choices: {sorted(e.value for e in CriticalityTier)}"
@@ -478,8 +421,7 @@ def vendor_list(
         raise typer.Exit(code=1)
     if type_ and type_ not in {e.value for e in VendorType}:
         console.print(
-            f"[red]Error:[/red] Unknown vendor type {type_!r}; "
-            f"choices: {sorted(e.value for e in VendorType)}"
+            f"[red]Error:[/red] Unknown vendor type {type_!r}; choices: {sorted(e.value for e in VendorType)}"
         )
         raise typer.Exit(code=1)
 
@@ -507,9 +449,7 @@ def vendor_list(
 @vendor_app.command("show")
 def vendor_show(
     vendor_id: str = typer.Argument(..., help="Vendor ID (UUID)."),
-    json_output: bool = typer.Option(
-        False, "--json", help="Emit raw JSON instead of human-readable view."
-    ),
+    json_output: bool = typer.Option(False, "--json", help="Emit raw JSON instead of human-readable view."),
 ) -> None:
     """Show a single vendor's full details."""
     vendor = _load_vendor_or_exit(vendor_id)
@@ -529,12 +469,8 @@ def vendor_edit(
     type_: str | None = typer.Option(None, "--type"),
     criticality_tier: str | None = typer.Option(None, "--criticality-tier"),
     owner: str | None = typer.Option(None, "--owner"),
-    contract_end_date: str | None = typer.Option(
-        None, "--contract-end-date", help="YYYY-MM-DD"
-    ),
-    last_due_diligence_review: str | None = typer.Option(
-        None, "--last-due-diligence-review", help="YYYY-MM-DD"
-    ),
+    contract_end_date: str | None = typer.Option(None, "--contract-end-date", help="YYYY-MM-DD"),
+    last_due_diligence_review: str | None = typer.Option(None, "--last-due-diligence-review", help="YYYY-MM-DD"),
     next_review_due: str | None = typer.Option(
         None,
         "--next-review-due",
@@ -547,19 +483,14 @@ def vendor_edit(
     region: str | None = typer.Option(
         None,
         "--region",
-        help=(
-            "Free-text geo / cloud-region label (max 128 chars). "
-            "Used by `concentration-report --by region`."
-        ),
+        help=("Free-text geo / cloud-region label (max 128 chars). Used by `concentration-report --by region`."),
     ),
     regulatory_classification: str | None = typer.Option(
         None,
         "--regulatory-classification",
         help="Comma-separated; replaces existing list.",
     ),
-    residual_risk_score: int | None = typer.Option(
-        None, "--residual-risk-score", min=0, max=25
-    ),
+    residual_risk_score: int | None = typer.Option(None, "--residual-risk-score", min=0, max=25),
     notes: str | None = typer.Option(None, "--notes"),
     from_yaml: Path | None = typer.Option(
         None,
@@ -568,10 +499,7 @@ def vendor_edit(
         file_okay=True,
         dir_okay=False,
         readable=True,
-        help=(
-            "Replace the vendor record from a YAML file (full replace; "
-            "preserves the original ID + created_at)."
-        ),
+        help=("Replace the vendor record from a YAML file (full replace; preserves the original ID + created_at)."),
     ),
     editor: bool = typer.Option(
         False,
@@ -618,8 +546,7 @@ def vendor_edit(
         raise typer.Exit(code=1)
     if modes_chosen > 1:
         console.print(
-            "[red]Error:[/red] Modes are mutually exclusive: pick one of "
-            "--from-yaml / --editor / atomic flags."
+            "[red]Error:[/red] Modes are mutually exclusive: pick one of --from-yaml / --editor / atomic flags."
         )
         raise typer.Exit(code=1)
 
@@ -643,9 +570,7 @@ def vendor_edit(
         # the shared allowlist-aware helper to mitigate the
         # CWE-78 risk-amplifier path.
         editor_argv = resolve_editor_or_exit()
-        with tempfile.NamedTemporaryFile(
-            mode="w+", suffix=".yaml", delete=False, encoding="utf-8"
-        ) as tmp:
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False, encoding="utf-8") as tmp:
             tmp.write(
                 yaml_mod.safe_dump(
                     vendor.model_dump(mode="json"),
@@ -658,15 +583,11 @@ def vendor_edit(
             subprocess.run([*editor_argv, str(tmp_path)], check=True)
             edited_text = tmp_path.read_text(encoding="utf-8").strip()
             if not edited_text:
-                console.print(
-                    "[yellow]Editor returned empty content; aborting edit.[/yellow]"
-                )
+                console.print("[yellow]Editor returned empty content; aborting edit.[/yellow]")
                 raise typer.Exit(code=1)
             data = yaml_mod.safe_load(edited_text)
             if not isinstance(data, dict):
-                console.print(
-                    "[red]Error:[/red] Edited content must be a YAML mapping."
-                )
+                console.print("[red]Error:[/red] Edited content must be a YAML mapping.")
                 raise typer.Exit(code=1)
             data["id"] = vendor.id
             data["created_at"] = vendor.created_at.isoformat()
@@ -684,25 +605,19 @@ def vendor_edit(
             vendor.type = type_  # type: ignore[assignment]
         if criticality_tier is not None:
             if criticality_tier not in {e.value for e in CriticalityTier}:
-                console.print(
-                    f"[red]Error:[/red] Unknown criticality_tier {criticality_tier!r}."
-                )
+                console.print(f"[red]Error:[/red] Unknown criticality_tier {criticality_tier!r}.")
                 raise typer.Exit(code=1)
             vendor.criticality_tier = criticality_tier  # type: ignore[assignment]
         if owner is not None:
             vendor.relationship_owner = owner
         if contract_end_date is not None:
-            vendor.contract_end_date = _parse_date_or_exit(
-                contract_end_date, "--contract-end-date"
-            )
+            vendor.contract_end_date = _parse_date_or_exit(contract_end_date, "--contract-end-date")
         if last_due_diligence_review is not None:
             vendor.last_due_diligence_review = _parse_date_or_exit(
                 last_due_diligence_review, "--last-due-diligence-review"
             )
         if next_review_due is not None:
-            vendor.next_review_due = _parse_date_or_exit(
-                next_review_due, "--next-review-due"
-            )
+            vendor.next_review_due = _parse_date_or_exit(next_review_due, "--next-review-due")
         if region is not None:
             vendor.region = region
         if regulatory_classification is not None:
@@ -718,17 +633,11 @@ def vendor_edit(
     # operator didn't explicitly supply --next-review-due. Atomic
     # --next-review-due takes precedence over auto-recompute (the
     # operator is asserting a manual cadence override).
-    if (
-        vendor.last_due_diligence_review
-        and next_review_due is None
-    ):
+    if vendor.last_due_diligence_review and next_review_due is None:
         vendor.next_review_due = vendor.compute_next_review_due()
 
     save_vendor(vendor)
-    console.print(
-        f"[green]✓[/green] Updated vendor [bold]{vendor.name}[/bold] "
-        f"(id: [dim]{vendor.id}[/dim])"
-    )
+    console.print(f"[green]✓[/green] Updated vendor [bold]{vendor.name}[/bold] (id: [dim]{vendor.id}[/dim])")
 
 
 # ── delete ─────────────────────────────────────────────────────────
@@ -763,16 +672,11 @@ def vendor_delete(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e
     if removed:
-        console.print(
-            f"[green]✓[/green] Deleted vendor [bold]{vendor.name}[/bold]."
-        )
+        console.print(f"[green]✓[/green] Deleted vendor [bold]{vendor.name}[/bold].")
     else:
         # Race condition — vendor existed at load time but was removed
         # before delete fired. Surface as a soft warning.
-        console.print(
-            f"[yellow]Warning:[/yellow] Vendor {vendor.id} was already "
-            "removed by another process."
-        )
+        console.print(f"[yellow]Warning:[/yellow] Vendor {vendor.id} was already removed by another process.")
         sys.exit(1)
 
 
@@ -784,10 +688,7 @@ def concentration_report(
     by: str = typer.Option(
         "region,cloud-provider",
         "--by",
-        help=(
-            "Comma-separated dimensions to aggregate by. Choices: "
-            f"{', '.join(sorted(SUPPORTED_DIMENSIONS))}."
-        ),
+        help=(f"Comma-separated dimensions to aggregate by. Choices: {', '.join(sorted(SUPPORTED_DIMENSIONS))}."),
     ),
     threshold: float | None = typer.Option(
         None,
@@ -810,10 +711,7 @@ def concentration_report(
         None,
         "--output",
         "-o",
-        help=(
-            "Write to file path. If omitted: html dumps to stdout (use "
-            "shell redirect); json + csv print to stdout."
-        ),
+        help=("Write to file path. If omitted: html dumps to stdout (use shell redirect); json + csv print to stdout."),
     ),
 ) -> None:
     """Concentration-risk report across the vendor inventory.
@@ -835,35 +733,23 @@ def concentration_report(
         evidentia tprm concentration-report --by 4th-party --threshold 15
     """
     if format_ not in {"html", "json", "csv"}:
-        console.print(
-            f"[red]Error:[/red] --format must be one of html/json/csv; "
-            f"got {format_!r}."
-        )
+        console.print(f"[red]Error:[/red] --format must be one of html/json/csv; got {format_!r}.")
         raise typer.Exit(code=1)
 
     dimensions = [d.strip() for d in by.split(",") if d.strip()]
     if not dimensions:
-        console.print(
-            "[red]Error:[/red] --by must list at least one dimension."
-        )
+        console.print("[red]Error:[/red] --by must list at least one dimension.")
         raise typer.Exit(code=1)
     bad = [d for d in dimensions if d not in SUPPORTED_DIMENSIONS]
     if bad:
-        console.print(
-            f"[red]Error:[/red] Unsupported dimension(s) {bad!r}; "
-            f"valid: {sorted(SUPPORTED_DIMENSIONS)}"
-        )
+        console.print(f"[red]Error:[/red] Unsupported dimension(s) {bad!r}; valid: {sorted(SUPPORTED_DIMENSIONS)}")
         raise typer.Exit(code=1)
 
     vendors = list_vendors()
-    report = compute_concentration(
-        vendors, dimensions, threshold=threshold
-    )
+    report = compute_concentration(vendors, dimensions, threshold=threshold)
 
     if format_ == "json":
-        rendered = json.dumps(
-            report.model_dump(mode="json"), indent=2
-        )
+        rendered = json.dumps(report.model_dump(mode="json"), indent=2)
     elif format_ == "csv":
         rendered = render_csv_report(report)
     else:
@@ -927,8 +813,7 @@ def dd_questionnaire_generate(
         "json",
         "--output-format",
         help=(
-            "Output format: json / csv / xlsx. xlsx requires the "
-            "[xlsx] extra (`pip install 'evidentia-core[xlsx]'`)."
+            "Output format: json / csv / xlsx. xlsx requires the [xlsx] extra (`pip install 'evidentia-core[xlsx]'`)."
         ),
     ),
     output: Path | None = typer.Option(
@@ -989,10 +874,7 @@ def dd_questionnaire_generate(
           --output sig-prefilled.xlsx
     """
     if output_format not in {"json", "csv", "xlsx"}:
-        console.print(
-            f"[red]Error:[/red] --output-format must be one of "
-            f"json/csv/xlsx; got {output_format!r}."
-        )
+        console.print(f"[red]Error:[/red] --output-format must be one of json/csv/xlsx; got {output_format!r}.")
         raise typer.Exit(code=1)
 
     try:
@@ -1017,14 +899,11 @@ def dd_questionnaire_generate(
 
         if not output:
             console.print(
-                "[red]Error:[/red] --output is required when "
-                "--from-template is supplied (binary XLSX output)."
+                "[red]Error:[/red] --output is required when --from-template is supplied (binary XLSX output)."
             )
             raise typer.Exit(code=1)
         try:
-            xlsx_bytes = generate_from_byo_template(
-                vendor, template_path=from_template, fmt=fmt
-            )
+            xlsx_bytes = generate_from_byo_template(vendor, template_path=from_template, fmt=fmt)
         except (
             ValueError,
             FileNotFoundError,
@@ -1049,9 +928,7 @@ def dd_questionnaire_generate(
         raise typer.Exit(code=1) from e
 
     if output_format == "json":
-        rendered: str | bytes = json.dumps(
-            questionnaire.model_dump(mode="json"), indent=2
-        )
+        rendered: str | bytes = json.dumps(questionnaire.model_dump(mode="json"), indent=2)
     elif output_format == "csv":
         rendered = render_csv_questionnaire(questionnaire)
     else:
@@ -1061,10 +938,7 @@ def dd_questionnaire_generate(
         )
 
         if not output:
-            console.print(
-                "[red]Error:[/red] --output is required when "
-                "--output-format is xlsx (binary output)."
-            )
+            console.print("[red]Error:[/red] --output is required when --output-format is xlsx (binary output).")
             raise typer.Exit(code=1)
         try:
             rendered = render_xlsx_questionnaire(questionnaire)
@@ -1086,10 +960,7 @@ def dd_questionnaire_generate(
         )
     else:
         if isinstance(rendered, bytes):
-            console.print(
-                "[red]Error:[/red] xlsx output requires --output "
-                "(binary)."
-            )
+            console.print("[red]Error:[/red] xlsx output requires --output (binary).")
             raise typer.Exit(code=1)
         sys.stdout.write(rendered)
         if not rendered.endswith("\n"):
@@ -1105,10 +976,7 @@ def dd_questionnaire_ingest(
         file_okay=True,
         dir_okay=False,
         readable=True,
-        help=(
-            "Path to the completed questionnaire file. Auto-detects "
-            "format from extension: .json / .csv / .xlsx."
-        ),
+        help=("Path to the completed questionnaire file. Auto-detects format from extension: .json / .csv / .xlsx."),
     ),
     vendor_id_override: str | None = typer.Option(
         None,
@@ -1159,10 +1027,7 @@ def dd_questionnaire_ingest(
     )
 
     if output_format not in {"table", "json"}:
-        console.print(
-            f"[red]Error:[/red] --output-format must be one of "
-            f"table/json; got {output_format!r}."
-        )
+        console.print(f"[red]Error:[/red] --output-format must be one of table/json; got {output_format!r}.")
         raise typer.Exit(code=1)
 
     try:
@@ -1207,10 +1072,7 @@ def dd_questionnaire_ingest(
     # Table output
     from rich.table import Table as _Table
 
-    console.print(
-        f"[green]✓[/green] Ingested questionnaire from "
-        f"[bold]{questionnaire_path}[/bold]"
-    )
+    console.print(f"[green]✓[/green] Ingested questionnaire from [bold]{questionnaire_path}[/bold]")
     console.print(
         f"[dim]Vendor:[/dim] {vendor.name} ([dim]id={vendor.id}[/dim])  "
         f"[dim]Questionnaire ID:[/dim] "

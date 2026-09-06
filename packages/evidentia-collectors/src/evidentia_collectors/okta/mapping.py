@@ -41,8 +41,7 @@ PRIVILEGED_ACCOUNT_MAPPINGS = [
     _m(
         "AC-2",
         OLIRRelationship.SUBSET_OF,
-        "AC-2 Account Management — admin role assignments "
-        "(/api/v1/iam/assignees) enumerate elevated accounts.",
+        "AC-2 Account Management — admin role assignments (/api/v1/iam/assignees) enumerate elevated accounts.",
     ),
     _m(
         "AC-6",

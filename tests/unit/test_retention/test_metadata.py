@@ -39,24 +39,25 @@ class TestEnums:
         assert "generic" in values
 
     def test_lifecycle_stages(self) -> None:
-        assert {s.value for s in RetentionLifecycleStage} == {
-            "active", "preserved", "expired", "purged"
-        }
+        assert {s.value for s in RetentionLifecycleStage} == {"active", "preserved", "expired", "purged"}
 
 
 class TestDefaultRetentionDays:
-    @pytest.mark.parametrize("cls,expected", [
-        ("sec-17a-4", 6 * 365),
-        ("finra-3110", 6 * 365),
-        ("irs-tax", 7 * 365),
-        ("sox-404", 7 * 365),
-        ("hipaa", 6 * 365),
-        ("glba", 5 * 365),
-        ("pci-dss", 365),
-        ("model-risk", 7 * 365),
-        ("gdpr", 0),
-        ("generic", 7 * 365),
-    ])
+    @pytest.mark.parametrize(
+        "cls,expected",
+        [
+            ("sec-17a-4", 6 * 365),
+            ("finra-3110", 6 * 365),
+            ("irs-tax", 7 * 365),
+            ("sox-404", 7 * 365),
+            ("hipaa", 6 * 365),
+            ("glba", 5 * 365),
+            ("pci-dss", 365),
+            ("model-risk", 7 * 365),
+            ("gdpr", 0),
+            ("generic", 7 * 365),
+        ],
+    )
     def test_per_classification_default(self, cls: str, expected: int) -> None:
         assert default_retention_days(cls) == expected
 
@@ -106,6 +107,7 @@ class TestRetentionMetadata:
 
     def test_extra_fields_rejected(self) -> None:
         from pydantic import ValidationError
+
         with pytest.raises(ValidationError):
             RetentionMetadata(  # type: ignore[call-arg]
                 classification=RetentionClassification.SOX_404,
@@ -129,9 +131,11 @@ class TestRetentionPolicy:
 
     def test_negative_period_rejected(self) -> None:
         from pydantic import ValidationError
+
         with pytest.raises(ValidationError):
             RetentionPolicy(
-                name="x", description="x",
+                name="x",
+                description="x",
                 classification=RetentionClassification.GENERIC,
                 retention_period_days=-1,
             )
@@ -306,18 +310,14 @@ class TestGenerateRetentionReport:
 
 
 @pytest.fixture()
-def isolated_retention_store(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def isolated_retention_store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     store = tmp_path / "retention-store"
     monkeypatch.setenv(RETENTION_STORE_ENV_VAR, str(store))
     return store
 
 
 class TestRetentionStore:
-    def test_save_and_load(
-        self, isolated_retention_store: Path
-    ) -> None:
+    def test_save_and_load(self, isolated_retention_store: Path) -> None:
         m = RetentionMetadata(
             classification=RetentionClassification.SOX_404,
             retention_period_days=365,
@@ -327,9 +327,7 @@ class TestRetentionStore:
         assert loaded is not None
         assert loaded.id == m.id
 
-    def test_atomic_save(
-        self, isolated_retention_store: Path
-    ) -> None:
+    def test_atomic_save(self, isolated_retention_store: Path) -> None:
         m = RetentionMetadata(
             classification=RetentionClassification.SOX_404,
             retention_period_days=365,
@@ -337,16 +335,10 @@ class TestRetentionStore:
         save_retention(m)
         assert list(isolated_retention_store.glob("*.tmp")) == []
 
-    def test_load_unknown_returns_none(
-        self, isolated_retention_store: Path
-    ) -> None:
-        assert load_retention_by_id(
-            "00000000-0000-0000-0000-000000000000"
-        ) is None
+    def test_load_unknown_returns_none(self, isolated_retention_store: Path) -> None:
+        assert load_retention_by_id("00000000-0000-0000-0000-000000000000") is None
 
-    def test_load_invalid_id_raises(
-        self, isolated_retention_store: Path
-    ) -> None:
+    def test_load_invalid_id_raises(self, isolated_retention_store: Path) -> None:
         with pytest.raises(InvalidRetentionIdError):
             load_retention_by_id("not-a-uuid")
 
@@ -359,14 +351,10 @@ class TestRetentionStore:
         assert delete_retention(m.id) is True
         assert load_retention_by_id(m.id) is None
 
-    def test_delete_unknown_returns_false(
-        self, isolated_retention_store: Path
-    ) -> None:
+    def test_delete_unknown_returns_false(self, isolated_retention_store: Path) -> None:
         assert delete_retention("00000000-0000-0000-0000-000000000000") is False
 
-    def test_list_sort_order(
-        self, isolated_retention_store: Path
-    ) -> None:
+    def test_list_sort_order(self, isolated_retention_store: Path) -> None:
         m1 = RetentionMetadata(
             classification=RetentionClassification.SOX_404,
             retention_period_days=365,

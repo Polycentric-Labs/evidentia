@@ -145,9 +145,27 @@ PHRASE_CONFIG_PATH = Path("private/check-docs-health-patterns.yaml")
 TITLECASE_STOPWORDS: frozenset[str] = frozenset(
     {
         # E5b-named:
-        "a", "an", "the", "of", "in", "on", "for", "and", "to", "vs",
+        "a",
+        "an",
+        "the",
+        "of",
+        "in",
+        "on",
+        "for",
+        "and",
+        "to",
+        "vs",
         # standard title-case lowercase function words:
-        "is", "as", "at", "by", "or", "nor", "but", "via", "with", "from",
+        "is",
+        "as",
+        "at",
+        "by",
+        "or",
+        "nor",
+        "but",
+        "via",
+        "with",
+        "from",
     }
 )
 # Tokens whose exact casing is preserved (acronyms + the project proper noun).
@@ -226,10 +244,7 @@ def _parse_config_file(config_path: Path) -> tuple[dict | None, str | None]:
     try:
         import yaml  # type: ignore[import-untyped]
     except ImportError:
-        return None, (
-            "PyYAML not available; phrase checks disabled "
-            "(install with `uv sync --all-groups`)"
-        )
+        return None, ("PyYAML not available; phrase checks disabled (install with `uv sync --all-groups`)")
 
     try:
         data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
@@ -329,24 +344,17 @@ def load_phrase_config() -> tuple[PhraseConfig, str | None]:
     compiled += _compile_patterns(priv_data.get("forbidden_patterns", []) or [])
 
     # file_allowlist: union (either layer may exempt a path).
-    file_allow = list(base_data.get("file_allowlist", []) or []) + list(
-        priv_data.get("file_allowlist", []) or []
-    )
+    file_allow = list(base_data.get("file_allowlist", []) or []) + list(priv_data.get("file_allowlist", []) or [])
 
     # line_allowlist: merge; private wins on a path collision.
     line_allow = _parse_line_allowlist(base_data.get("line_allowlist", {}) or {})
     line_allow.update(_parse_line_allowlist(priv_data.get("line_allowlist", {}) or {}))
 
     # tag_allowlist: union.
-    tag_allow = set(base_data.get("tag_allowlist", []) or []) | set(
-        priv_data.get("tag_allowlist", []) or []
-    )
+    tag_allow = set(base_data.get("tag_allowlist", []) or []) | set(priv_data.get("tag_allowlist", []) or [])
 
     # commit_cutoff_sha: private wins (base leaves it empty).
-    cutoff = str(
-        priv_data.get("commit_cutoff_sha", "")
-        or base_data.get("commit_cutoff_sha", "")
-    )
+    cutoff = str(priv_data.get("commit_cutoff_sha", "") or base_data.get("commit_cutoff_sha", ""))
 
     return PhraseConfig(
         forbidden_patterns=compiled,
@@ -419,15 +427,25 @@ def check_parse_validity(md_paths: list[Path], result: CheckResult) -> None:
         try:
             path.read_text(encoding="utf-8")
         except UnicodeDecodeError as e:
-            result.add(Finding(
-                Severity.FAIL, "parse_validity", path.as_posix(), None,
-                f"file is not valid UTF-8: {e}",
-            ))
+            result.add(
+                Finding(
+                    Severity.FAIL,
+                    "parse_validity",
+                    path.as_posix(),
+                    None,
+                    f"file is not valid UTF-8: {e}",
+                )
+            )
         except OSError as e:
-            result.add(Finding(
-                Severity.FAIL, "parse_validity", path.as_posix(), None,
-                f"file unreadable: {e}",
-            ))
+            result.add(
+                Finding(
+                    Severity.FAIL,
+                    "parse_validity",
+                    path.as_posix(),
+                    None,
+                    f"file unreadable: {e}",
+                )
+            )
 
 
 def find_code_block_ranges(content: str) -> list[tuple[int, int]]:
@@ -477,7 +495,7 @@ def check_cross_link_resolve(
         for match in link_re.finditer(content):
             if is_in_code_block(match.start(), code_ranges):
                 continue
-            line = content[:match.start()].count("\n") + 1
+            line = content[: match.start()].count("\n") + 1
             if line in line_allow:
                 continue
             target = match.group(2).strip()
@@ -491,10 +509,15 @@ def check_cross_link_resolve(
             try:
                 abs_target = (path.parent / target).resolve()
             except (ValueError, OSError):
-                result.add(Finding(
-                    Severity.WARN, "cross_link_resolve", path.as_posix(), line,
-                    f"link target outside repo or unresolvable: {target}",
-                ))
+                result.add(
+                    Finding(
+                        Severity.WARN,
+                        "cross_link_resolve",
+                        path.as_posix(),
+                        line,
+                        f"link target outside repo or unresolvable: {target}",
+                    )
+                )
                 continue
             if abs_target.is_dir():
                 candidate = abs_target / "index.md"
@@ -503,10 +526,15 @@ def check_cross_link_resolve(
             try:
                 rel_to_repo = abs_target.relative_to(REPO_ROOT)
             except ValueError:
-                result.add(Finding(
-                    Severity.WARN, "cross_link_resolve", path.as_posix(), line,
-                    f"link target outside repo or unresolvable: {target}",
-                ))
+                result.add(
+                    Finding(
+                        Severity.WARN,
+                        "cross_link_resolve",
+                        path.as_posix(),
+                        line,
+                        f"link target outside repo or unresolvable: {target}",
+                    )
+                )
                 continue
             if abs_target.is_dir():
                 continue
@@ -520,31 +548,51 @@ def check_cross_link_resolve(
                 # required CI (previously it slipped through to be caught only
                 # post-merge by the Pages `mkdocs build --strict`; A1.4 also
                 # adds a PR-scoped strict build as a second layer).
-                result.add(Finding(
-                    Severity.FAIL, "cross_link_resolve", path.as_posix(), line,
-                    f"broken link to {rel_to_repo.as_posix()}",
-                ))
+                result.add(
+                    Finding(
+                        Severity.FAIL,
+                        "cross_link_resolve",
+                        path.as_posix(),
+                        line,
+                        f"broken link to {rel_to_repo.as_posix()}",
+                    )
+                )
 
 
 def check_readme_size_guard(max_bytes: int, result: CheckResult) -> None:
     readme = Path("README.md")
     if not readme.exists():
-        result.add(Finding(
-            Severity.FAIL, "readme_size_guard", "README.md", None,
-            "README.md not found at repo root",
-        ))
+        result.add(
+            Finding(
+                Severity.FAIL,
+                "readme_size_guard",
+                "README.md",
+                None,
+                "README.md not found at repo root",
+            )
+        )
         return
     size = readme.stat().st_size
     if size > max_bytes:
-        result.add(Finding(
-            Severity.FAIL, "readme_size_guard", "README.md", None,
-            f"README size {size} bytes exceeds budget {max_bytes}",
-        ))
+        result.add(
+            Finding(
+                Severity.FAIL,
+                "readme_size_guard",
+                "README.md",
+                None,
+                f"README size {size} bytes exceeds budget {max_bytes}",
+            )
+        )
     elif size > max_bytes * 0.9:
-        result.add(Finding(
-            Severity.WARN, "readme_size_guard", "README.md", None,
-            f"README size {size} bytes is within 10% of budget {max_bytes}",
-        ))
+        result.add(
+            Finding(
+                Severity.WARN,
+                "readme_size_guard",
+                "README.md",
+                None,
+                f"README size {size} bytes is within 10% of budget {max_bytes}",
+            )
+        )
 
 
 def check_private_path_leak(md_paths: list[Path], result: CheckResult) -> None:
@@ -560,11 +608,16 @@ def check_private_path_leak(md_paths: list[Path], result: CheckResult) -> None:
             target = match.group(2)
             if "/private/" not in target and not target.startswith("private/"):
                 continue
-            line = content[:match.start()].count("\n") + 1
-            result.add(Finding(
-                Severity.FAIL, "private_path_leak", path.as_posix(), line,
-                f"public file links to private/ path: {target}",
-            ))
+            line = content[: match.start()].count("\n") + 1
+            result.add(
+                Finding(
+                    Severity.FAIL,
+                    "private_path_leak",
+                    path.as_posix(),
+                    line,
+                    f"public file links to private/ path: {target}",
+                )
+            )
 
 
 def _titlecase_violations(header_text: str) -> list[str]:
@@ -630,18 +683,28 @@ def check_readme_header_titlecase(result: CheckResult) -> None:
     """
     readme = Path("README.md")
     if not readme.exists():
-        result.add(Finding(
-            Severity.FAIL, "readme_header_titlecase", "README.md", None,
-            "README.md not found at repo root",
-        ))
+        result.add(
+            Finding(
+                Severity.FAIL,
+                "readme_header_titlecase",
+                "README.md",
+                None,
+                "README.md not found at repo root",
+            )
+        )
         return
     try:
         content = readme.read_text(encoding="utf-8")
     except (UnicodeDecodeError, OSError) as e:
-        result.add(Finding(
-            Severity.FAIL, "readme_header_titlecase", "README.md", None,
-            f"README.md unreadable: {e}",
-        ))
+        result.add(
+            Finding(
+                Severity.FAIL,
+                "readme_header_titlecase",
+                "README.md",
+                None,
+                f"README.md unreadable: {e}",
+            )
+        )
         return
 
     code_ranges = find_code_block_ranges(content)
@@ -653,11 +716,15 @@ def check_readme_header_titlecase(result: CheckResult) -> None:
         header_text = match.group(2)
         violations = _titlecase_violations(header_text)
         if violations:
-            result.add(Finding(
-                Severity.FAIL, "readme_header_titlecase", "README.md", line,
-                f"header {header_text!r} is not Title Case: "
-                f"{'; '.join(violations)}",
-            ))
+            result.add(
+                Finding(
+                    Severity.FAIL,
+                    "readme_header_titlecase",
+                    "README.md",
+                    line,
+                    f"header {header_text!r} is not Title Case: {'; '.join(violations)}",
+                )
+            )
 
 
 def check_readme_recent_releases_current(result: CheckResult) -> None:
@@ -670,10 +737,15 @@ def check_readme_recent_releases_current(result: CheckResult) -> None:
     """
     gen_path = Path(__file__).resolve().parent / "gen_readme_releases.py"
     if not gen_path.exists():
-        result.add(Finding(
-            Severity.WARN, "readme_recent_releases_current", "<scripts>", None,
-            "gen_readme_releases.py not found; check skipped",
-        ))
+        result.add(
+            Finding(
+                Severity.WARN,
+                "readme_recent_releases_current",
+                "<scripts>",
+                None,
+                "gen_readme_releases.py not found; check skipped",
+            )
+        )
         return
     try:
         mod_name = "gen_readme_releases_for_docs_health"
@@ -688,35 +760,55 @@ def check_readme_recent_releases_current(result: CheckResult) -> None:
         sys.modules[mod_name] = gen
         spec.loader.exec_module(gen)
     except (ImportError, OSError, SyntaxError) as e:
-        result.add(Finding(
-            Severity.WARN, "readme_recent_releases_current", "<scripts>", None,
-            f"could not import gen_readme_releases.py: {e}",
-        ))
+        result.add(
+            Finding(
+                Severity.WARN,
+                "readme_recent_releases_current",
+                "<scripts>",
+                None,
+                f"could not import gen_readme_releases.py: {e}",
+            )
+        )
         return
 
     readme = Path("README.md")
     if not readme.exists():
-        result.add(Finding(
-            Severity.FAIL, "readme_recent_releases_current", "README.md", None,
-            "README.md not found at repo root",
-        ))
+        result.add(
+            Finding(
+                Severity.FAIL,
+                "readme_recent_releases_current",
+                "README.md",
+                None,
+                "README.md not found at repo root",
+            )
+        )
         return
     try:
         readme_text = readme.read_text(encoding="utf-8")
         current = gen.detect_current_version()
     except (FileNotFoundError, ValueError, OSError) as e:
-        result.add(Finding(
-            Severity.WARN, "readme_recent_releases_current", "README.md", None,
-            f"could not evaluate current version: {e}",
-        ))
+        result.add(
+            Finding(
+                Severity.WARN,
+                "readme_recent_releases_current",
+                "README.md",
+                None,
+                f"could not evaluate current version: {e}",
+            )
+        )
         return
 
     ok, message = gen.check_readme_current(readme_text, current)
     if not ok:
-        result.add(Finding(
-            Severity.FAIL, "readme_recent_releases_current", "README.md", None,
-            message,
-        ))
+        result.add(
+            Finding(
+                Severity.FAIL,
+                "readme_recent_releases_current",
+                "README.md",
+                None,
+                message,
+            )
+        )
 
 
 def _scan_text_for_forbidden(
@@ -730,18 +822,19 @@ def _scan_text_for_forbidden(
     for pattern_name, pattern in config.forbidden_patterns:
         for match in pattern.finditer(text):
             line = text[: match.start()].count("\n") + 1
-            findings.append(Finding(
-                Severity.FAIL, f"{check_prefix}:{pattern_name}",
-                source, line,
-                f"forbidden phrase match (pattern {pattern_name}): "
-                f"{match.group(0)!r}",
-            ))
+            findings.append(
+                Finding(
+                    Severity.FAIL,
+                    f"{check_prefix}:{pattern_name}",
+                    source,
+                    line,
+                    f"forbidden phrase match (pattern {pattern_name}): {match.group(0)!r}",
+                )
+            )
     return findings
 
 
-def check_phrase_audit(
-    md_paths: list[Path], config: PhraseConfig, result: CheckResult
-) -> None:
+def check_phrase_audit(md_paths: list[Path], config: PhraseConfig, result: CheckResult) -> None:
     """Scan tracked .md files for forbidden phrases (config-driven)."""
     for path in md_paths:
         if matches_allowlist(path, config.file_allowlist_globs):
@@ -753,57 +846,79 @@ def check_phrase_audit(
         line_allow = config.line_allowlist.get(path.as_posix(), set())
         for pattern_name, pattern in config.forbidden_patterns:
             for match in pattern.finditer(content):
-                line = content[:match.start()].count("\n") + 1
+                line = content[: match.start()].count("\n") + 1
                 if line in line_allow:
                     continue
-                result.add(Finding(
-                    Severity.FAIL, f"phrase_audit:{pattern_name}",
-                    path.as_posix(), line,
-                    f"forbidden phrase match (pattern {pattern_name}): "
-                    f"{match.group(0)!r}",
-                ))
+                result.add(
+                    Finding(
+                        Severity.FAIL,
+                        f"phrase_audit:{pattern_name}",
+                        path.as_posix(),
+                        line,
+                        f"forbidden phrase match (pattern {pattern_name}): {match.group(0)!r}",
+                    )
+                )
 
 
-def check_git_commit_message_audit(
-    config: PhraseConfig, result: CheckResult
-) -> None:
+def check_git_commit_message_audit(config: PhraseConfig, result: CheckResult) -> None:
     """Scan commit messages for forbidden phrases in cutoff..HEAD."""
     cutoff = config.commit_cutoff_sha
     if not cutoff:
-        result.add(Finding(
-            Severity.WARN, "commit_msg_audit", "<config>", None,
-            "no commit_cutoff_sha in phrase config; check skipped",
-        ))
+        result.add(
+            Finding(
+                Severity.WARN,
+                "commit_msg_audit",
+                "<config>",
+                None,
+                "no commit_cutoff_sha in phrase config; check skipped",
+            )
+        )
         return
 
     rev_parse = subprocess.run(
         ["git", "rev-parse", "--verify", "--quiet", cutoff],
-        capture_output=True, text=True, check=False,
+        capture_output=True,
+        text=True,
+        check=False,
     )
     if rev_parse.returncode != 0:
-        result.add(Finding(
-            Severity.WARN, "commit_msg_audit", "<git>", None,
-            f"cutoff SHA {cutoff!r} not found in repo; check skipped",
-        ))
+        result.add(
+            Finding(
+                Severity.WARN,
+                "commit_msg_audit",
+                "<git>",
+                None,
+                f"cutoff SHA {cutoff!r} not found in repo; check skipped",
+            )
+        )
         return
 
     log = subprocess.run(
         [
-            "git", "log",
+            "git",
+            "log",
             "--format=__COMMIT__%n%H%n%B%n__END__",
             f"{cutoff}..HEAD",
         ],
-        capture_output=True, text=True, check=False,
+        capture_output=True,
+        text=True,
+        check=False,
         # SF-8: commit bodies are UTF-8; without an explicit encoding the
         # Windows default (cp1252) raises UnicodeDecodeError on non-Latin-1
         # bytes. errors="replace" keeps the audit running on odd bytes.
-        encoding="utf-8", errors="replace",
+        encoding="utf-8",
+        errors="replace",
     )
     if log.returncode != 0:
-        result.add(Finding(
-            Severity.WARN, "commit_msg_audit", "<git>", None,
-            f"git log failed: {(log.stderr or '').strip()}",
-        ))
+        result.add(
+            Finding(
+                Severity.WARN,
+                "commit_msg_audit",
+                "<git>",
+                None,
+                f"git log failed: {(log.stderr or '').strip()}",
+            )
+        )
         return
 
     blocks = (log.stdout or "").split("__COMMIT__\n")
@@ -816,27 +931,35 @@ def check_git_commit_message_audit(
         sha = lines[0].strip()
         body = lines[1].rsplit("__END__", 1)[0]
         findings = _scan_text_for_forbidden(
-            body, source=f"commit:{sha[:7]}", config=config,
+            body,
+            source=f"commit:{sha[:7]}",
+            config=config,
             check_prefix="commit_msg_audit",
         )
         for f in findings:
             result.add(f)
 
 
-def check_git_tag_message_audit(
-    config: PhraseConfig, result: CheckResult
-) -> None:
+def check_git_tag_message_audit(config: PhraseConfig, result: CheckResult) -> None:
     """Scan annotated tag messages for forbidden phrases."""
     tag_list = subprocess.run(
         ["git", "tag", "-l"],
-        capture_output=True, text=True, check=False,
-        encoding="utf-8", errors="replace",  # SF-8: cp1252-safe on Windows
+        capture_output=True,
+        text=True,
+        check=False,
+        encoding="utf-8",
+        errors="replace",  # SF-8: cp1252-safe on Windows
     )
     if tag_list.returncode != 0:
-        result.add(Finding(
-            Severity.WARN, "tag_msg_audit", "<git>", None,
-            "git tag -l failed; tag check skipped",
-        ))
+        result.add(
+            Finding(
+                Severity.WARN,
+                "tag_msg_audit",
+                "<git>",
+                None,
+                "git tag -l failed; tag check skipped",
+            )
+        )
         return
 
     tags = [t.strip() for t in (tag_list.stdout or "").splitlines() if t.strip()]
@@ -845,23 +968,26 @@ def check_git_tag_message_audit(
             continue
         body = subprocess.run(
             ["git", "tag", "-l", "--format=%(contents)", tag],
-            capture_output=True, text=True, check=False,
-            encoding="utf-8", errors="replace",  # SF-8: cp1252-safe on Windows
+            capture_output=True,
+            text=True,
+            check=False,
+            encoding="utf-8",
+            errors="replace",  # SF-8: cp1252-safe on Windows
         )
         body_text = (body.stdout or "").strip()
         if body.returncode != 0 or not body_text:
             continue
         findings = _scan_text_for_forbidden(
-            body_text, source=f"tag:{tag}", config=config,
+            body_text,
+            source=f"tag:{tag}",
+            config=config,
             check_prefix="tag_msg_audit",
         )
         for f in findings:
             result.add(f)
 
 
-def check_github_release_body_audit(
-    config: PhraseConfig, result: CheckResult
-) -> None:
+def check_github_release_body_audit(config: PhraseConfig, result: CheckResult) -> None:
     """Scan the latest GitHub Release body for forbidden phrases.
 
     Uses ``gh api``. Advisory: WARNs if gh is unavailable/unauthenticated
@@ -869,34 +995,55 @@ def check_github_release_body_audit(
     """
     auth_status = subprocess.run(
         ["gh", "auth", "status"],
-        capture_output=True, text=True, check=False,
-        encoding="utf-8", errors="replace",  # SF-8: cp1252-safe on Windows
+        capture_output=True,
+        text=True,
+        check=False,
+        encoding="utf-8",
+        errors="replace",  # SF-8: cp1252-safe on Windows
     )
     if auth_status.returncode != 0:
-        result.add(Finding(
-            Severity.WARN, "release_body_audit", "<gh>", None,
-            "gh CLI not available or unauthenticated; check skipped",
-        ))
+        result.add(
+            Finding(
+                Severity.WARN,
+                "release_body_audit",
+                "<gh>",
+                None,
+                "gh CLI not available or unauthenticated; check skipped",
+            )
+        )
         return
 
     latest = subprocess.run(
         ["gh", "release", "view", "--json", "tagName,body"],
-        capture_output=True, text=True, check=False,
-        encoding="utf-8", errors="replace",  # SF-8: cp1252-safe on Windows
+        capture_output=True,
+        text=True,
+        check=False,
+        encoding="utf-8",
+        errors="replace",  # SF-8: cp1252-safe on Windows
     )
     if latest.returncode != 0:
-        result.add(Finding(
-            Severity.WARN, "release_body_audit", "<gh>", None,
-            f"gh release view failed: {(latest.stderr or '').strip()[:200]}",
-        ))
+        result.add(
+            Finding(
+                Severity.WARN,
+                "release_body_audit",
+                "<gh>",
+                None,
+                f"gh release view failed: {(latest.stderr or '').strip()[:200]}",
+            )
+        )
         return
 
     stdout_text = latest.stdout or ""
     if not stdout_text.strip():
-        result.add(Finding(
-            Severity.WARN, "release_body_audit", "<gh>", None,
-            "gh release view returned empty output",
-        ))
+        result.add(
+            Finding(
+                Severity.WARN,
+                "release_body_audit",
+                "<gh>",
+                None,
+                "gh release view returned empty output",
+            )
+        )
         return
 
     try:
@@ -904,14 +1051,21 @@ def check_github_release_body_audit(
         tag = data.get("tagName", "<unknown>")
         body = data.get("body", "")
     except json.JSONDecodeError:
-        result.add(Finding(
-            Severity.WARN, "release_body_audit", "<gh>", None,
-            "gh release view returned invalid JSON",
-        ))
+        result.add(
+            Finding(
+                Severity.WARN,
+                "release_body_audit",
+                "<gh>",
+                None,
+                "gh release view returned invalid JSON",
+            )
+        )
         return
 
     findings = _scan_text_for_forbidden(
-        body, source=f"release:{tag}", config=config,
+        body,
+        source=f"release:{tag}",
+        config=config,
         check_prefix="release_body_audit",
     )
     for f in findings:
@@ -922,7 +1076,9 @@ def render_findings_text(result: CheckResult) -> str:
     if not result.findings:
         return "All docs-health checks PASS."
     grouped: dict[Severity, list[Finding]] = {
-        Severity.FAIL: [], Severity.WARN: [], Severity.PASS: [],
+        Severity.FAIL: [],
+        Severity.WARN: [],
+        Severity.PASS: [],
     }
     for f in result.findings:
         grouped[f.severity].append(f)
@@ -935,10 +1091,7 @@ def render_findings_text(result: CheckResult) -> str:
         for f in items:
             loc = f"{f.path}:{f.line}" if f.line is not None else f.path
             lines.append(f"  [{f.check}] {loc} — {f.message}")
-    lines.append(
-        f"\nTotal: {result.fail_count} FAIL, {result.warn_count} WARN; "
-        f"{result.files_checked} files checked."
-    )
+    lines.append(f"\nTotal: {result.fail_count} FAIL, {result.warn_count} WARN; {result.files_checked} files checked.")
     return "\n".join(lines)
 
 
@@ -957,9 +1110,7 @@ _SUBJECT_SPECIAL_PREFIXES = (
 # A conventional-commit subject: `type` or `type(scope)`, optional `!`,
 # then `: ` and the description. Type is lowercase letters (per the repo's
 # convention); scope is anything but `()`.
-_CONVENTIONAL_RE = re.compile(
-    r"^(?P<type>[a-z]+)(?P<scope>\([^)]*\))?(?P<bang>!)?: (?P<desc>.*)$"
-)
+_CONVENTIONAL_RE = re.compile(r"^(?P<type>[a-z]+)(?P<scope>\([^)]*\))?(?P<bang>!)?: (?P<desc>.*)$")
 
 # Characters we skip past at the start of a description before locating the
 # first "word": opening backtick / quotes / paren.
@@ -1111,12 +1262,12 @@ def run_commit_msg_hook_check(message_file: str) -> int:
         return 0
 
     # Strip git's commented lines (lines starting with # are not part of the message)
-    text_no_comments = "\n".join(
-        line for line in text.splitlines() if not line.startswith("#")
-    )
+    text_no_comments = "\n".join(line for line in text.splitlines() if not line.startswith("#"))
 
     findings = _scan_text_for_forbidden(
-        text_no_comments, source=message_file, config=config,
+        text_no_comments,
+        source=message_file,
+        config=config,
         check_prefix="commit_msg_hook",
     )
     if not findings:
@@ -1139,15 +1290,15 @@ def run_commit_msg_hook_check(message_file: str) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Evidentia comprehensive doc-health check."
-    )
+    parser = argparse.ArgumentParser(description="Evidentia comprehensive doc-health check.")
     parser.add_argument(
-        "--strict", action="store_true",
+        "--strict",
+        action="store_true",
         help="Exit 2 on any FAIL (used by /pre-release-review pre-tag).",
     )
     parser.add_argument(
-        "--json", action="store_true",
+        "--json",
+        action="store_true",
         help="Emit findings as JSON (machine-readable).",
     )
     parser.add_argument(
@@ -1157,11 +1308,14 @@ def main() -> int:
         # Releases block (the usual trim target) is machine-generated and off-
         # limits, and the remaining prose is fact-locked. Deliberate, documented
         # bump per the "raise only for a high-value blocked addition" policy.
-        "--readme-max", type=int, default=11_300,
+        "--readme-max",
+        type=int,
+        default=11_300,
         help="README.md max byte budget (default 11300; canonical OSS ~6-8KB).",
     )
     parser.add_argument(
-        "--check-commit-msg", metavar="FILE",
+        "--check-commit-msg",
+        metavar="FILE",
         help=(
             "Hook mode: scan a single message file. Used by "
             ".githooks/commit-msg before letting git commit complete. "
@@ -1169,7 +1323,8 @@ def main() -> int:
         ),
     )
     parser.add_argument(
-        "--skip-release-body", action="store_true",
+        "--skip-release-body",
+        action="store_true",
         help="Skip the gh-api release-body check (faster; for local dev).",
     )
     args = parser.parse_args()
@@ -1202,19 +1357,29 @@ def main() -> int:
         if not args.skip_release_body:
             check_github_release_body_audit(config, result)
     elif config_err:
-        result.add(Finding(
-            Severity.WARN, "phrase_config", "<config>", None,
-            config_err,
-        ))
+        result.add(
+            Finding(
+                Severity.WARN,
+                "phrase_config",
+                "<config>",
+                None,
+                config_err,
+            )
+        )
 
     if args.json:
-        print(json.dumps({
-            "files_checked": result.files_checked,
-            "fail_count": result.fail_count,
-            "warn_count": result.warn_count,
-            "phrase_config_loaded": config.is_loaded,
-            "findings": [f.to_dict() for f in result.findings],
-        }, indent=2))
+        print(
+            json.dumps(
+                {
+                    "files_checked": result.files_checked,
+                    "fail_count": result.fail_count,
+                    "warn_count": result.warn_count,
+                    "phrase_config_loaded": config.is_loaded,
+                    "findings": [f.to_dict() for f in result.findings],
+                },
+                indent=2,
+            )
+        )
     else:
         print(render_findings_text(result))
 

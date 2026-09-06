@@ -40,9 +40,7 @@ def get_cache_dir(override: Path | None = None) -> Path:
     return Path(user_cache_dir("evidentia", "Evidentia")) / "explanations"
 
 
-def _cache_key(
-    framework_id: str, control_id: str, model: str, temperature: float
-) -> str:
+def _cache_key(framework_id: str, control_id: str, model: str, temperature: float) -> str:
     """Stable 16-hex-char key for a (fw, ctrl, model, temp) tuple."""
     seed = f"{framework_id}|{control_id}|{model}|{temperature:.3f}"
     return hashlib.sha256(seed.encode("utf-8")).hexdigest()[:16]
@@ -61,9 +59,7 @@ def load_cached(
     if not path.exists():
         return None
     try:
-        return PlainEnglishExplanation.model_validate_json(
-            path.read_text(encoding="utf-8")
-        )
+        return PlainEnglishExplanation.model_validate_json(path.read_text(encoding="utf-8"))
     except Exception as exc:
         logger.warning("Corrupt cache file %s (%s); ignoring", path, exc)
         return None
@@ -76,15 +72,11 @@ def store(
     cache_dir: Path | None = None,
 ) -> Path:
     """Persist an explanation to the cache; return the file path written."""
-    key = _cache_key(
-        explanation.framework_id, explanation.control_id, model, temperature
-    )
+    key = _cache_key(explanation.framework_id, explanation.control_id, model, temperature)
     dest = get_cache_dir(cache_dir)
     dest.mkdir(parents=True, exist_ok=True)
     path = dest / f"{key}.json"
-    path.write_text(
-        explanation.model_dump_json(indent=2) + "\n", encoding="utf-8"
-    )
+    path.write_text(explanation.model_dump_json(indent=2) + "\n", encoding="utf-8")
     logger.debug("Cached explanation: %s", path)
     return path
 

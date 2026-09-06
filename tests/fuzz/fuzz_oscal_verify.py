@@ -49,6 +49,7 @@ from _harness_util import to_text
 with atheris.instrument_imports():
     from evidentia_core.oscal.verify import verify_digests
 
+
 def TestOneInput(data: bytes) -> None:
     if not data:
         return

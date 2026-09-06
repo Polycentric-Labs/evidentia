@@ -124,9 +124,7 @@ class TestVendorPreFill:
                 ),
             ],
         )
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
         assert q.vendor.fourth_party_count == 2
         assert "AWS" in q.vendor.fourth_party_names
         assert "Stripe" in q.vendor.fourth_party_names
@@ -138,31 +136,19 @@ class TestVendorPreFill:
                 RegulatoryClassification.CRITICAL_THIRD_PARTY,
             ],
         )
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
-        assert (
-            RegulatoryClassification.MODEL.value
-            in q.vendor.regulatory_classification
-        )
-        assert (
-            RegulatoryClassification.CRITICAL_THIRD_PARTY.value
-            in q.vendor.regulatory_classification
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
+        assert RegulatoryClassification.MODEL.value in q.vendor.regulatory_classification
+        assert RegulatoryClassification.CRITICAL_THIRD_PARTY.value in q.vendor.regulatory_classification
 
     def test_prefill_handles_no_region(self) -> None:
         v = _make_vendor(region=None)
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
         assert q.vendor.region is None
 
     def test_prefill_handles_indefinite_contract(self) -> None:
         v = _make_vendor()
         # contract_end_date defaults to None
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
         assert q.vendor.contract_end_date is None
 
 
@@ -184,8 +170,7 @@ class TestDataFileIntegrity:
         q = generate_questionnaire(v, fmt)
         ids = [question.id for question in q.questions]
         assert len(ids) == len(set(ids)), (
-            f"Duplicate question IDs in {fmt.value}: "
-            f"{[i for i in set(ids) if ids.count(i) > 1]}"
+            f"Duplicate question IDs in {fmt.value}: {[i for i in set(ids) if ids.count(i) > 1]}"
         )
 
     @pytest.mark.parametrize(
@@ -195,9 +180,7 @@ class TestDataFileIntegrity:
             QuestionnaireFormat.CAIQ_LITE,
         ],
     )
-    def test_all_questions_carry_required_fields(
-        self, fmt: QuestionnaireFormat
-    ) -> None:
+    def test_all_questions_carry_required_fields(self, fmt: QuestionnaireFormat) -> None:
         v = _make_vendor()
         q = generate_questionnaire(v, fmt)
         for question in q.questions:
@@ -221,9 +204,7 @@ class TestRenderCsvQuestionnaire:
                 ),
             ],
         )
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
         csv_str = render_csv_questionnaire(q)
         # Header section uses # comment-prefixed lines for vendor metadata
         assert "# Vendor DD Questionnaire" in csv_str
@@ -235,15 +216,10 @@ class TestRenderCsvQuestionnaire:
 
     def test_csv_includes_question_rows_with_blank_response(self) -> None:
         v = _make_vendor()
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
         csv_str = render_csv_questionnaire(q)
         # Header row for question columns
-        assert (
-            "id,domain,question_text,response_options,notes,vendor_response"
-            in csv_str
-        )
+        assert "id,domain,question_text,response_options,notes,vendor_response" in csv_str
         # Last column should be blank for vendor to fill
         # (every question row ends with the empty vendor_response cell)
         for line in csv_str.split("\n"):
@@ -274,26 +250,20 @@ class TestCsvInjectionDefense:
         [
             "=cmd|'/c calc'!A0",
             "+SUM(A1)",
-            "@HYPERLINK(\"http://attacker\")",
+            '@HYPERLINK("http://attacker")',
             "-formula",
         ],
     )
-    def test_questionnaire_csv_neutralizes_vendor_name_formulas(
-        self, malicious_name: str
-    ) -> None:
+    def test_questionnaire_csv_neutralizes_vendor_name_formulas(self, malicious_name: str) -> None:
         v = _make_vendor(name=malicious_name)
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
         csv_str = render_csv_questionnaire(q)
         # Vendor-name cell should be prefixed with single-quote
         for line in csv_str.split("\n"):
             if line.startswith("# Vendor name,"):
                 # The cell after the comma should start with "'"
                 cell = line.split(",", 1)[1].strip().strip('"')
-                assert cell.startswith("'"), (
-                    f"Vendor name cell should be defused: {line!r}"
-                )
+                assert cell.startswith("'"), f"Vendor name cell should be defused: {line!r}"
 
     def test_questionnaire_csv_4p_list_cell_safe_via_count_prefix(
         self,
@@ -313,26 +283,19 @@ class TestCsvInjectionDefense:
                 ),
             ],
         )
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
         csv_str = render_csv_questionnaire(q)
         # Find the "# 4th parties" row + verify the cell starts
         # with a digit (count), not `=`
         for line in csv_str.split("\n"):
             if line.startswith("# 4th parties,"):
                 cell = line.split(",", 1)[1].strip().strip('"')
-                assert cell[0].isdigit(), (
-                    f"4P list cell should lead with count digit, "
-                    f"not formula char: {line!r}"
-                )
+                assert cell[0].isdigit(), f"4P list cell should lead with count digit, not formula char: {line!r}"
                 # Malicious payload still appears (we don't drop it)
                 assert "=BAD()" in cell or "BAD()" in cell
                 break
         else:
-            pytest.fail(
-                f"No '# 4th parties' row in CSV:\n{csv_str}"
-            )
+            pytest.fail(f"No '# 4th parties' row in CSV:\n{csv_str}")
 
 
 class TestFormatStringSafety:
@@ -347,9 +310,7 @@ class TestFormatStringSafety:
         # Vendor name containing `.format()`-style placeholder syntax
         v = _make_vendor(name="{vendor_name}")
         # Must not raise KeyError or recursively substitute
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
         # The literal braces survive into the title
         assert "{vendor_name}" in q.title
 
@@ -357,18 +318,14 @@ class TestFormatStringSafety:
         # Hypothetical attacker-supplied template-walker
         v = _make_vendor(name="{0.__class__.__init__.__globals__}")
         # Must not raise + must not actually walk attributes
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
         assert "{0.__class__.__init__.__globals__}" in q.title
 
 
 class TestQuestionnaireJsonRoundTrip:
     def test_round_trip(self) -> None:
         v = _make_vendor()
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
         data = q.model_dump(mode="json")
         restored = Questionnaire.model_validate(data)
         assert restored.id == q.id
@@ -412,9 +369,7 @@ class TestRenderXlsxQuestionnaire:
         )
 
         v = _make_vendor()
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
         xlsx = render_xlsx_questionnaire(q)
         assert isinstance(xlsx, bytes)
         # XLSX files start with PK (zip magic)
@@ -429,9 +384,7 @@ class TestRenderXlsxQuestionnaire:
         )
 
         v = _make_vendor(name="ParseMe Co")
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
         xlsx = render_xlsx_questionnaire(q)
         wb = openpyxl.load_workbook(filename=io.BytesIO(xlsx))
         assert "Vendor metadata" in wb.sheetnames
@@ -478,9 +431,7 @@ class TestParseCompletedQuestionnaire:
         )
 
         v = _make_vendor()
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
         # Simulate vendor responses by populating vendor_response on
         # the model dump
         dump = q.model_dump(mode="json")
@@ -503,9 +454,7 @@ class TestParseCompletedQuestionnaire:
         )
 
         v = _make_vendor()
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
         csv_text = render_csv_questionnaire(q)
         # Simulate one filled-in response by editing the last column
         # of the first question row (column index 5)
@@ -537,17 +486,13 @@ class TestParseCompletedQuestionnaire:
         )
 
         v = _make_vendor()
-        q = generate_questionnaire(
-            v, QuestionnaireFormat.EVIDENTIA_GENERIC
-        )
+        q = generate_questionnaire(v, QuestionnaireFormat.EVIDENTIA_GENERIC)
         xlsx_bytes = render_xlsx_questionnaire(q)
         xlsx_path = tmp_path / "completed.xlsx"
         xlsx_path.write_bytes(xlsx_bytes)
         # Open + populate vendor_response cells in one domain sheet
         wb = openpyxl.load_workbook(filename=str(xlsx_path))
-        first_domain_sheet = next(
-            s for s in wb.sheetnames if s != "Vendor metadata"
-        )
+        first_domain_sheet = next(s for s in wb.sheetnames if s != "Vendor metadata")
         ws = wb[first_domain_sheet]
         # Header row exists; row 2 is first question
         if ws.max_row >= 2:
@@ -578,9 +523,7 @@ class TestParseCompletedQuestionnaire:
         with pytest.raises(FileNotFoundError):
             parse_completed_questionnaire(tmp_path / "ghost.json")
 
-    def test_parses_json_without_vendor_id_returns_none(
-        self, tmp_path: Path
-    ) -> None:
+    def test_parses_json_without_vendor_id_returns_none(self, tmp_path: Path) -> None:
         """v0.7.9 P0.4 Continuous H-4: a questionnaire JSON whose
         prefill block carries no vendor_id (operator-edited file or
         vendor stripped the metadata) parses cleanly with
@@ -614,9 +557,7 @@ class TestParseCompletedQuestionnaire:
             encoding="utf-8",
         )
         completed = parse_completed_questionnaire(json_path)
-        assert completed.questionnaire_id == (
-            "00000000-0000-0000-0000-000000000001"
-        )
+        assert completed.questionnaire_id == ("00000000-0000-0000-0000-000000000001")
         assert completed.vendor_id is None
         assert completed.responses == {"EVG-GOV-01": "Yes"}
 
@@ -649,7 +590,8 @@ class TestGenerateFromByoTemplate:
         return path
 
     def test_byo_sig_pre_fills_vendor_metadata(
-        self, tmp_path: Any  # type: ignore[name-defined]
+        self,
+        tmp_path: Any,  # type: ignore[name-defined]
     ) -> None:
         import io
 
@@ -665,9 +607,7 @@ class TestGenerateFromByoTemplate:
             criticality_tier=CriticalityTier.HIGH,
             region="us-east-1",
         )
-        out = generate_from_byo_template(
-            v, template_path=template, fmt=QuestionnaireFormat.SIG
-        )
+        out = generate_from_byo_template(v, template_path=template, fmt=QuestionnaireFormat.SIG)
         assert isinstance(out, bytes)
         assert out[:2] == b"PK"  # XLSX zip magic
         wb = openpyxl.load_workbook(filename=io.BytesIO(out))
@@ -679,7 +619,8 @@ class TestGenerateFromByoTemplate:
                 assert response == "Acme Cloud"
 
     def test_byo_sig_refuses_non_byo_format(
-        self, tmp_path: Any  # type: ignore[name-defined]
+        self,
+        tmp_path: Any,  # type: ignore[name-defined]
     ) -> None:
         from evidentia_core.tprm.questionnaire import (
             generate_from_byo_template,
@@ -687,9 +628,7 @@ class TestGenerateFromByoTemplate:
 
         template = self._make_synthetic_sig(tmp_path)
         v = _make_vendor()
-        with pytest.raises(
-            ValueError, match="does not accept a BYO template"
-        ):
+        with pytest.raises(ValueError, match="does not accept a BYO template"):
             generate_from_byo_template(
                 v,
                 template_path=template,
@@ -697,7 +636,8 @@ class TestGenerateFromByoTemplate:
             )
 
     def test_byo_sig_errors_on_missing_template(
-        self, tmp_path: Any  # type: ignore[name-defined]
+        self,
+        tmp_path: Any,  # type: ignore[name-defined]
     ) -> None:
         from evidentia_core.tprm.questionnaire import (
             generate_from_byo_template,
@@ -711,9 +651,7 @@ class TestGenerateFromByoTemplate:
                 fmt=QuestionnaireFormat.SIG,
             )
 
-    def test_byo_sig_errors_on_unrecognized_layout(
-        self, tmp_path: Path
-    ) -> None:
+    def test_byo_sig_errors_on_unrecognized_layout(self, tmp_path: Path) -> None:
         import openpyxl
         from evidentia_core.tprm.questionnaire import (
             generate_from_byo_template,
@@ -727,16 +665,10 @@ class TestGenerateFromByoTemplate:
         path = tmp_path / "weird.xlsx"
         wb.save(str(path))
         v = _make_vendor()
-        with pytest.raises(
-            RuntimeError, match="No recognizable vendor-metadata"
-        ):
-            generate_from_byo_template(
-                v, template_path=path, fmt=QuestionnaireFormat.SIG
-            )
+        with pytest.raises(RuntimeError, match="No recognizable vendor-metadata"):
+            generate_from_byo_template(v, template_path=path, fmt=QuestionnaireFormat.SIG)
 
-    def test_byo_sig_partial_label_match_succeeds(
-        self, tmp_path: Path
-    ) -> None:
+    def test_byo_sig_partial_label_match_succeeds(self, tmp_path: Path) -> None:
         """v0.7.9 P0.4 Continuous H-4: a SIG template where SOME
         vendor-metadata labels match Evidentia's recognizer + others
         don't. The function should silently skip the non-matching
@@ -765,9 +697,7 @@ class TestGenerateFromByoTemplate:
         wb.save(str(path))
 
         v = _make_vendor(name="PartialMatch Co", type_=VendorType.SAAS)
-        out = generate_from_byo_template(
-            v, template_path=path, fmt=QuestionnaireFormat.SIG
-        )
+        out = generate_from_byo_template(v, template_path=path, fmt=QuestionnaireFormat.SIG)
         # Should NOT raise; matching rows pre-filled, others left empty
         assert isinstance(out, bytes)
         wb_out = openpyxl.load_workbook(filename=io.BytesIO(out))

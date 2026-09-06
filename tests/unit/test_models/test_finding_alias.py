@@ -17,7 +17,10 @@ def test_finding_is_same_class_as_security_finding() -> None:
 def test_finding_constructor_works_with_canonical_name() -> None:
     """Instances created via `Finding(...)` are valid SecurityFinding instances."""
     f = Finding(
-        title="t", description="d", severity=Severity.LOW, source_system="x",
+        title="t",
+        description="d",
+        severity=Severity.LOW,
+        source_system="x",
     )
     assert isinstance(f, SecurityFinding)
     assert isinstance(f, Finding)
@@ -27,7 +30,10 @@ def test_isinstance_works_against_either_name() -> None:
     """Existing code that uses `isinstance(obj, SecurityFinding)` keeps
     working AND new code that uses `isinstance(obj, Finding)` also works."""
     f = SecurityFinding(
-        title="t", description="d", severity=Severity.LOW, source_system="x",
+        title="t",
+        description="d",
+        severity=Severity.LOW,
+        source_system="x",
     )
     assert isinstance(f, SecurityFinding)
     assert isinstance(f, Finding)
@@ -45,7 +51,10 @@ def test_model_schemas_are_identical_under_both_names() -> None:
 def test_dump_validate_round_trip_works_under_both_names() -> None:
     """A finding serialized under one name re-validates under the other."""
     f1 = SecurityFinding(
-        title="t", description="d", severity=Severity.LOW, source_system="x",
+        title="t",
+        description="d",
+        severity=Severity.LOW,
+        source_system="x",
     )
     # Dump under SecurityFinding, re-validate under Finding.
     restored = Finding.model_validate(f1.model_dump())

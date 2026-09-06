@@ -86,9 +86,7 @@ PACKAGES: tuple[tuple[str, str], ...] = (
 # imports (``PackageNotFoundError`` + the ``version as _pkg_version`` alias,
 # already underscore-filtered). Filtering them lets a thin root render
 # honestly as "exposes only __version__".
-_SYMBOL_DENYLIST: frozenset[str] = frozenset(
-    {"__version__", "annotations", "PackageNotFoundError"}
-)
+_SYMBOL_DENYLIST: frozenset[str] = frozenset({"__version__", "annotations", "PackageNotFoundError"})
 
 
 # ---------------------------------------------------------------------------
@@ -165,9 +163,7 @@ def extract_all_list(init_source: str) -> list[str] | None:
             value = node.value
         else:
             continue
-        is_all = any(
-            isinstance(t, ast.Name) and t.id == "__all__" for t in targets
-        )
+        is_all = any(isinstance(t, ast.Name) and t.id == "__all__" for t in targets)
         if not is_all:
             continue
         if isinstance(value, (ast.List, ast.Tuple)):
@@ -201,9 +197,7 @@ def extract_public_toplevel_names(init_source: str) -> list[str]:
                 # the imported dotted name.
                 bound = alias.asname or alias.name.split(".")[0]
                 names.add(bound)
-    return sorted(
-        n for n in names if not n.startswith("_") and n not in _SYMBOL_DENYLIST
-    )
+    return sorted(n for n in names if not n.startswith("_") and n not in _SYMBOL_DENYLIST)
 
 
 def build_symbol_docs(package_dir: Path, symbols: list[str]) -> list[tuple[str, str]]:
@@ -233,12 +227,8 @@ def build_symbol_docs(package_dir: Path, symbols: list[str]) -> list[tuple[str, 
         except (OSError, SyntaxError):  # pragma: no cover — defensive
             continue
         for node in tree.body:
-            if isinstance(
-                node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
-            ) and node.name not in doc_index:
-                doc_index[node.name] = first_docstring_line(
-                    ast.get_docstring(node)
-                )
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and node.name not in doc_index:
+                doc_index[node.name] = first_docstring_line(ast.get_docstring(node))
     return [(symbol, doc_index.get(symbol, "")) for symbol in symbols]
 
 
@@ -257,11 +247,7 @@ def list_public_submodules(package_dir: Path) -> list[str]:
         if not stem.startswith("_"):
             names.add(stem)
     for child in package_dir.iterdir():
-        if (
-            child.is_dir()
-            and not child.name.startswith("_")
-            and (child / "__init__.py").exists()
-        ):
+        if child.is_dir() and not child.name.startswith("_") and (child / "__init__.py").exists():
             names.add(child.name)
     return sorted(names)
 
@@ -283,23 +269,15 @@ def render_package_page(
     out = [build_banner(dist_name)]
     if description:
         out.append(f"{description}\n\n")
-    out.append(
-        f"Install: `pip install {dist_name}`. Import root: `{module_name}`.\n\n"
-    )
+    out.append(f"Install: `pip install {dist_name}`. Import root: `{module_name}`.\n\n")
 
     # --- Public symbols ---
     out.append("## Public API\n\n")
     if symbol_docs:
         if has_explicit_all:
-            out.append(
-                f"The names exported by `{module_name}.__all__` "
-                f"(re-exported at the package root):\n\n"
-            )
+            out.append(f"The names exported by `{module_name}.__all__` (re-exported at the package root):\n\n")
         else:
-            out.append(
-                f"The public names available at the `{module_name}` package "
-                f"root:\n\n"
-            )
+            out.append(f"The public names available at the `{module_name}` package root:\n\n")
         out.append("| Symbol | Summary |\n| --- | --- |\n")
         for symbol, summary in symbol_docs:
             cell_summary = summary.replace("|", r"\|").strip() or "—"
@@ -343,14 +321,7 @@ def render_package_page(
 
 def package_init_path(repo_root: Path, dist_name: str, module_name: str) -> Path:
     """Return the path to a package's ``__init__.py``."""
-    return (
-        repo_root
-        / "packages"
-        / dist_name
-        / "src"
-        / module_name
-        / "__init__.py"
-    )
+    return repo_root / "packages" / dist_name / "src" / module_name / "__init__.py"
 
 
 def generate_page(repo_root: Path, dist_name: str, module_name: str) -> str:
@@ -359,9 +330,7 @@ def generate_page(repo_root: Path, dist_name: str, module_name: str) -> str:
     init_path = package_init_path(repo_root, dist_name, module_name)
     package_dir = init_path.parent
 
-    description = read_description(
-        (pkg_root / "pyproject.toml").read_text(encoding="utf-8")
-    )
+    description = read_description((pkg_root / "pyproject.toml").read_text(encoding="utf-8"))
     init_source = init_path.read_text(encoding="utf-8")
 
     explicit_all = extract_all_list(init_source)
@@ -393,9 +362,7 @@ def generate_all(repo_root: Path = REPO_ROOT) -> dict[str, str]:
     """Render every package API page; return ``{page_rel_path: rendered_text}``."""
     out: dict[str, str] = {}
     for dist_name, module_name in PACKAGES:
-        out[page_rel_path(dist_name)] = generate_page(
-            repo_root, dist_name, module_name
-        )
+        out[page_rel_path(dist_name)] = generate_page(repo_root, dist_name, module_name)
     return out
 
 
@@ -410,16 +377,9 @@ def _diff_summary(expected: str, actual: str, name: str) -> str:
     act_lines = actual.splitlines()
     for i, (exp, act) in enumerate(zip(exp_lines, act_lines, strict=False)):
         if exp != act:
-            return (
-                f"  {name}: first diff at line {i + 1}\n"
-                f"    committed:   {exp!r}\n"
-                f"    regenerated: {act!r}"
-            )
+            return f"  {name}: first diff at line {i + 1}\n    committed:   {exp!r}\n    regenerated: {act!r}"
     if len(exp_lines) != len(act_lines):
-        return (
-            f"  {name}: line-count differs "
-            f"(committed={len(exp_lines)}, regenerated={len(act_lines)})"
-        )
+        return f"  {name}: line-count differs (committed={len(exp_lines)}, regenerated={len(act_lines)})"
     return f"  {name}: content differs only in trailing bytes / EOL"
 
 
@@ -456,15 +416,13 @@ def main(argv: list[str] | None = None) -> int:
         drift = compare(rendered)
         if drift:
             print(
-                "DRIFT: committed wiki API pages differ from the package "
-                "source:",
+                "DRIFT: committed wiki API pages differ from the package source:",
                 file=sys.stderr,
             )
             for line in drift:
                 print(line, file=sys.stderr)
             print(
-                f"\nRe-run `uv run python {GENERATOR_REL}` (no --check) to "
-                "regenerate the pages, then commit.",
+                f"\nRe-run `uv run python {GENERATOR_REL}` (no --check) to regenerate the pages, then commit.",
                 file=sys.stderr,
             )
             return 1

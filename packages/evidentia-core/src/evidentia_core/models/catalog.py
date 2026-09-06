@@ -46,12 +46,11 @@ def _normalize_control_id(raw: str) -> str:
     # through the regex (sub() handles all non-overlapping matches).
     return _PAREN_TO_DOT.sub(r".\1", s)
 
+
 # Crosswalk relationship vocabulary. Kept as a ``Literal`` constant so
 # tooling can type-check hand-authored mappings; ``FrameworkMapping.relationship``
 # remains a plain ``str`` for backward compatibility with v0.1.x JSON.
-RelationshipType = Literal[
-    "equivalent", "related", "partial", "superset", "subset", "intersects"
-]
+RelationshipType = Literal["equivalent", "related", "partial", "superset", "subset", "intersects"]
 
 
 class CatalogControl(EvidentiaModel):
@@ -94,8 +93,7 @@ class CatalogControl(EvidentiaModel):
     )
     objective: str | None = Field(
         default=None,
-        description="OSCAL `part.name=objective` prose — concise statement of "
-        "what the control aims to achieve",
+        description="OSCAL `part.name=objective` prose — concise statement of what the control aims to achieve",
     )
     risk_tier: str | None = Field(
         default=None,
@@ -197,10 +195,7 @@ class ControlCatalog(EvidentiaModel):
     )
     v0_9_3_note: str | None = Field(
         default=None,
-        description=(
-            "v0.9.3 P2.1: optional cycle-note documenting catalog "
-            "enrichment scope. Free-form."
-        ),
+        description=("v0.9.3 P2.1: optional cycle-note documenting catalog enrichment scope. Free-form."),
     )
     annex_iii_risk_categories: list[str] | None = Field(
         default=None,
@@ -309,10 +304,7 @@ class CrosswalkDefinition(EvidentiaModel):
     mappings: list[FrameworkMapping]
     v0_9_3_note: str | None = Field(
         default=None,
-        description=(
-            "v0.9.3 P2.2: optional cycle-note documenting authoring "
-            "scope + planned refinements. Free-form."
-        ),
+        description=("v0.9.3 P2.2: optional cycle-note documenting authoring scope + planned refinements. Free-form."),
     )
     confidence_rubric: dict[str, str] | None = Field(
         default=None,
@@ -331,9 +323,7 @@ class CrosswalkDefinition(EvidentiaModel):
             "crosswalks predating v0.10.6."
         ),
     )
-    verification: (
-        Literal["self-attested-via-upstream", "self-attested", "hand-checked"] | None
-    ) = Field(
+    verification: Literal["self-attested-via-upstream", "self-attested", "hand-checked"] | None = Field(
         default=None,
         description=(
             "v0.10.6: verification posture. 'self-attested-via-upstream' "
@@ -368,16 +358,8 @@ class CrosswalkDefinition(EvidentiaModel):
 
     def get_target_controls(self, source_control_id: str) -> list[FrameworkMapping]:
         """Get all target controls mapped from a source control."""
-        return [
-            m
-            for m in self.mappings
-            if m.source_control_id.upper() == source_control_id.strip().upper()
-        ]
+        return [m for m in self.mappings if m.source_control_id.upper() == source_control_id.strip().upper()]
 
     def get_source_controls(self, target_control_id: str) -> list[FrameworkMapping]:
         """Get all source controls mapped to a target control (reverse lookup)."""
-        return [
-            m
-            for m in self.mappings
-            if m.target_control_id.upper() == target_control_id.strip().upper()
-        ]
+        return [m for m in self.mappings if m.target_control_id.upper() == target_control_id.strip().upper()]

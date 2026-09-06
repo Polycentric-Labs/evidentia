@@ -166,16 +166,12 @@ class TestPutGet:
         with pytest.raises(WORMBackendError, match="already exists"):
             worm.put(m.id, b"second", m)
 
-    def test_put_with_legal_hold(
-        self, worm: AzureImmutableBlobWORM
-    ) -> None:
+    def test_put_with_legal_hold(self, worm: AzureImmutableBlobWORM) -> None:
         m = _meta(legal_hold=True)
         worm.put(m.id, b"with-hold", m)
         assert worm.get_metadata(m.id).legal_hold is True
 
-    def test_put_zero_retention_gdpr(
-        self, worm: AzureImmutableBlobWORM
-    ) -> None:
+    def test_put_zero_retention_gdpr(self, worm: AzureImmutableBlobWORM) -> None:
         m = _meta(
             classification=RetentionClassification.GDPR,
             retention_period_days=0,
@@ -185,33 +181,25 @@ class TestPutGet:
 
 
 class TestDelete:
-    def test_delete_active_within_window_rejected(
-        self, worm: AzureImmutableBlobWORM
-    ) -> None:
+    def test_delete_active_within_window_rejected(self, worm: AzureImmutableBlobWORM) -> None:
         m = _meta()
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError, match="retention window"):
             worm.delete(m.id)
 
-    def test_delete_legal_hold_rejected(
-        self, worm: AzureImmutableBlobWORM
-    ) -> None:
+    def test_delete_legal_hold_rejected(self, worm: AzureImmutableBlobWORM) -> None:
         m = _meta(legal_hold=True)
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError, match="legal hold"):
             worm.delete(m.id)
 
-    def test_delete_non_expired_rejected(
-        self, worm: AzureImmutableBlobWORM
-    ) -> None:
+    def test_delete_non_expired_rejected(self, worm: AzureImmutableBlobWORM) -> None:
         m = _meta(lock_until=date.today() - timedelta(days=10))
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError, match="lifecycle"):
             worm.delete(m.id)
 
-    def test_delete_expired_succeeds(
-        self, worm: AzureImmutableBlobWORM
-    ) -> None:
+    def test_delete_expired_succeeds(self, worm: AzureImmutableBlobWORM) -> None:
         past = date.today() - timedelta(days=5)
         m = _meta(
             lock_until=past,
@@ -231,9 +219,7 @@ class TestExtendRetention:
         new_meta = worm.extend_retention(m.id, new_until)
         assert new_meta.lock_until == new_until
 
-    def test_extend_backward_rejected(
-        self, worm: AzureImmutableBlobWORM
-    ) -> None:
+    def test_extend_backward_rejected(self, worm: AzureImmutableBlobWORM) -> None:
         m = _meta()
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError, match="shortening"):
@@ -268,9 +254,7 @@ class TestConstruction:
                 client_factory=lambda: _ServiceStub(),
             )
 
-    def test_repr_contains_container(
-        self, worm: AzureImmutableBlobWORM
-    ) -> None:
+    def test_repr_contains_container(self, worm: AzureImmutableBlobWORM) -> None:
         s = repr(worm)
         assert "evidentia-worm" in s
         assert "Unlocked" in s

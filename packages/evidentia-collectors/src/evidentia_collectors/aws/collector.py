@@ -102,8 +102,7 @@ class AwsCollector:
             import boto3
         except ImportError as e:  # pragma: no cover
             raise AwsCollectorError(
-                "boto3 is not installed. Install the collectors AWS extra: "
-                "`pip install 'evidentia-collectors[aws]'`."
+                "boto3 is not installed. Install the collectors AWS extra: `pip install 'evidentia-collectors[aws]'`."
             ) from e
 
         self._session = boto3.Session(region_name=region, profile_name=profile)
@@ -114,8 +113,7 @@ class AwsCollector:
         if service not in self._clients:
             if self._session is None:
                 raise AwsCollectorError(
-                    f"No boto3 client available for {service!r}; pass _clients "
-                    "to the constructor when mocking."
+                    f"No boto3 client available for {service!r}; pass _clients to the constructor when mocking."
                 )
             self._clients[service] = self._session.client(service)
         return self._clients[service]
@@ -140,9 +138,7 @@ class AwsCollector:
         try:
             identity = self._call_sts_get_caller_identity()
         except (ConnectionError, TimeoutError) as e:
-            raise AwsCollectorError(
-                f"AWS STS connection failed after retries: {e}"
-            ) from e
+            raise AwsCollectorError(f"AWS STS connection failed after retries: {e}") from e
         except Exception as e:
             # boto3 ClientError/BotoCoreError/NoCredentialsError are not
             # in retry_on (programmer/config errors — retrying won't help).
@@ -176,9 +172,7 @@ class AwsCollector:
 
     # ── AWS Config ──────────────────────────────────────────────────
 
-    def collect_config_findings(
-        self, context: CollectionContext | None = None
-    ) -> list[SecurityFinding]:
+    def collect_config_findings(self, context: CollectionContext | None = None) -> list[SecurityFinding]:
         """Return non-compliant AWS Config rule evaluations as findings.
 
         When ``context`` is None, the SecurityFinding default
@@ -197,9 +191,7 @@ class AwsCollector:
                 compliance = rule.get("Compliance") or {}
                 if compliance.get("ComplianceType") != "NON_COMPLIANT":
                     continue
-                findings.extend(
-                    self._config_rule_findings(client, rule_name, context)
-                )
+                findings.extend(self._config_rule_findings(client, rule_name, context))
 
         return findings
 
@@ -215,9 +207,7 @@ class AwsCollector:
         # justification citing FSBP/CIS sources.
         control_mappings = map_config_rule_to_control_mappings(rule_name)
 
-        paginator = client.get_paginator(
-            "get_compliance_details_by_config_rule"
-        )
+        paginator = client.get_paginator("get_compliance_details_by_config_rule")
         for page in paginator.paginate(
             ConfigRuleName=rule_name,
             ComplianceTypes=["NON_COMPLIANT"],
@@ -225,9 +215,7 @@ class AwsCollector:
             for result in page.get("EvaluationResults", []):
                 if not isinstance(result, dict):
                     continue
-                ident = (result.get("EvaluationResultIdentifier") or {}).get(
-                    "EvaluationResultQualifier"
-                ) or {}
+                ident = (result.get("EvaluationResultIdentifier") or {}).get("EvaluationResultQualifier") or {}
                 resource_type = str(ident.get("ResourceType") or "")
                 resource_id = str(ident.get("ResourceId") or "")
                 annotation = str(result.get("Annotation") or "")
@@ -235,9 +223,7 @@ class AwsCollector:
 
                 title = f"AWS Config: {rule_name} non-compliant"
                 description = (
-                    annotation
-                    or f"Resource {resource_id} ({resource_type}) is not compliant "
-                    f"with rule {rule_name}."
+                    annotation or f"Resource {resource_id} ({resource_type}) is not compliant with rule {rule_name}."
                 )
 
                 finding_kwargs: dict[str, Any] = {
@@ -280,10 +266,7 @@ class AwsCollector:
         findings: list[SecurityFinding] = []
 
         filters: dict[str, Any] = {
-            "WorkflowStatus": [
-                {"Value": s, "Comparison": "EQUALS"}
-                for s in (workflow_status or ["NEW", "NOTIFIED"])
-            ],
+            "WorkflowStatus": [{"Value": s, "Comparison": "EQUALS"} for s in (workflow_status or ["NEW", "NOTIFIED"])],
             "RecordState": [{"Value": "ACTIVE", "Comparison": "EQUALS"}],
         }
 
@@ -310,9 +293,7 @@ class AwsCollector:
         """Convert a single Security Hub finding dict to a SecurityFinding."""
         title = str(raw.get("Title") or "")[:200]
         description = str(raw.get("Description") or "")[:2000]
-        severity_label = str(
-            (raw.get("Severity") or {}).get("Label") or "MEDIUM"
-        ).lower()
+        severity_label = str((raw.get("Severity") or {}).get("Label") or "MEDIUM").lower()
         severity = _severity_from_label(severity_label)
         source_id = str(raw.get("Id") or "")
 
@@ -326,13 +307,9 @@ class AwsCollector:
         # ``Compliance.RelatedRequirements`` when it carries NIST 800-53
         # refs — that IS the authoritative SUBSET_OF mapping per AWS.
         compliance = raw.get("Compliance") or {}
-        related = [
-            str(r) for r in (compliance.get("RelatedRequirements") or []) if isinstance(r, str)
-        ]
+        related = [str(r) for r in (compliance.get("RelatedRequirements") or []) if isinstance(r, str)]
         if any(r.startswith("NIST.800-53") for r in related):
-            nist_ids = [
-                _extract_nist_id(r) for r in related if r.startswith("NIST.800-53")
-            ]
+            nist_ids = [_extract_nist_id(r) for r in related if r.startswith("NIST.800-53")]
             control_mappings = [
                 ControlMapping(
                     framework="nist-800-53-rev5",
@@ -349,21 +326,11 @@ class AwsCollector:
                 if cid
             ]
         else:
-            generator_id = str(
-                compliance.get("SecurityControlId")
-                or raw.get("GeneratorId")
-                or ""
-            )
-            control_mappings = map_security_hub_control_to_control_mappings(
-                generator_id
-            )
+            generator_id = str(compliance.get("SecurityControlId") or raw.get("GeneratorId") or "")
+            control_mappings = map_security_hub_control_to_control_mappings(generator_id)
 
         product_fields = raw.get("ProductFields") or {}
-        account = str(
-            raw.get("AwsAccountId")
-            or product_fields.get("aws/securityhub/awsAccountId")
-            or ""
-        )
+        account = str(raw.get("AwsAccountId") or product_fields.get("aws/securityhub/awsAccountId") or "")
 
         # v0.10.0: OCSF compliance status from Security Hub's
         # Compliance.Status, plus remediation text from the finding's
@@ -375,9 +342,7 @@ class AwsCollector:
             "WARNING": ComplianceStatus.WARNING,
             "NOT_AVAILABLE": ComplianceStatus.UNKNOWN,
         }.get(sh_status, ComplianceStatus.FAIL)
-        recommendation = (raw.get("Remediation") or {}).get(
-            "Recommendation"
-        ) or {}
+        recommendation = (raw.get("Remediation") or {}).get("Recommendation") or {}
         remediation = str(recommendation.get("Text") or "") or None
 
         finding_kwargs: dict[str, Any] = {
@@ -397,10 +362,8 @@ class AwsCollector:
             "resource_account": account or None,
             "control_mappings": control_mappings,
             "raw_data": _jsonify(raw),
-            "first_observed": _to_datetime(raw.get("FirstObservedAt"))
-            or _to_datetime(raw.get("CreatedAt")),
-            "last_observed": _to_datetime(raw.get("LastObservedAt"))
-            or _to_datetime(raw.get("UpdatedAt")),
+            "first_observed": _to_datetime(raw.get("FirstObservedAt")) or _to_datetime(raw.get("CreatedAt")),
+            "last_observed": _to_datetime(raw.get("LastObservedAt")) or _to_datetime(raw.get("UpdatedAt")),
         }
         if context is not None:
             finding_kwargs["collection_context"] = context
@@ -500,10 +463,7 @@ class AwsCollector:
         ):
             _log.info(
                 action=EventAction.COLLECT_STARTED,
-                message=(
-                    f"AWS collection starting in account {account_id} "
-                    f"region {self._region}"
-                ),
+                message=(f"AWS collection starting in account {account_id} region {self._region}"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.START],
             )
@@ -531,10 +491,7 @@ class AwsCollector:
                         empty_categories.append("aws-config-non-compliant")
                         _log.info(
                             action=EventAction.MANIFEST_EMPTY_SET_ATTESTED,
-                            message=(
-                                "AWS Config: zero non-compliant rule "
-                                "evaluations (attested empty)"
-                            ),
+                            message=("AWS Config: zero non-compliant rule evaluations (attested empty)"),
                         )
                 except (ConnectionError, TimeoutError) as e:
                     errors.append(f"aws-config: transient error: {e}")
@@ -566,9 +523,7 @@ class AwsCollector:
                     },
                 )
                 try:
-                    sh_findings = self.collect_security_hub_findings(
-                        context=context
-                    )
+                    sh_findings = self.collect_security_hub_findings(context=context)
                     findings.extend(sh_findings)
                     coverage_counts.append(
                         CoverageCount(
@@ -582,10 +537,7 @@ class AwsCollector:
                         empty_categories.append("aws-security-hub-active")
                         _log.info(
                             action=EventAction.MANIFEST_EMPTY_SET_ATTESTED,
-                            message=(
-                                "Security Hub: zero active findings "
-                                "(attested empty)"
-                            ),
+                            message=("Security Hub: zero active findings (attested empty)"),
                         )
                 except (ConnectionError, TimeoutError) as e:
                     errors.append(f"aws-security-hub: transient error: {e}")
@@ -596,9 +548,7 @@ class AwsCollector:
                         error={"type": type(e).__name__, "message": str(e)},
                     )
                 except Exception as e:
-                    errors.append(
-                        f"aws-security-hub: {type(e).__name__}: {e}"
-                    )
+                    errors.append(f"aws-security-hub: {type(e).__name__}: {e}")
                     _log.error(
                         action=EventAction.COLLECT_FAILED,
                         outcome=EventOutcome.FAILURE,
@@ -617,22 +567,15 @@ class AwsCollector:
                 coverage_counts=coverage_counts,
                 total_findings=len(findings),
                 is_complete=not errors,
-                incomplete_reason=(
-                    "; ".join(errors) if errors else None
-                ),
+                incomplete_reason=("; ".join(errors) if errors else None),
                 empty_categories=empty_categories,
                 errors=errors,
             )
 
             _log.info(
                 action=EventAction.COLLECT_COMPLETED,
-                outcome=EventOutcome.SUCCESS
-                if not errors
-                else EventOutcome.FAILURE,
-                message=(
-                    f"AWS collection completed: {len(findings)} findings, "
-                    f"{len(errors)} errors"
-                ),
+                outcome=EventOutcome.SUCCESS if not errors else EventOutcome.FAILURE,
+                message=(f"AWS collection completed: {len(findings)} findings, {len(errors)} errors"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.END],
                 evidentia={"findings_count": len(findings)},
@@ -640,9 +583,7 @@ class AwsCollector:
 
         return findings, manifest
 
-    def _emit_dry_run_events(
-        self, *, include_config: bool, include_security_hub: bool
-    ) -> None:
+    def _emit_dry_run_events(self, *, include_config: bool, include_security_hub: bool) -> None:
         """Log what would be collected without actually collecting."""
         _log.info(
             action=EventAction.COLLECT_STARTED,

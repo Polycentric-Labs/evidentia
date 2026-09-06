@@ -20,7 +20,7 @@ def test_pae_length_is_utf8_byte_count_not_char_count():
 
 def test_decode_b64_accepts_standard_and_urlsafe_identically():
     raw = b"\xfb\xff\xbe\x01\x02\x03"  # bytes whose base64 differs by alphabet
-    std = base64.b64encode(raw).decode("ascii")            # contains + / =
+    std = base64.b64encode(raw).decode("ascii")  # contains + / =
     url = base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")  # - _ no pad
     assert dsse.decode_b64(std) == raw
     assert dsse.decode_b64(url) == raw

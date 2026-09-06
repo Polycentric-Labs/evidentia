@@ -92,7 +92,10 @@ def test_round_trip_preserves_olir_relationship_and_justification() -> None:
 
 def test_round_trip_minimal_finding() -> None:
     minimal = SecurityFinding(
-        title="t", description="d", severity=Severity.LOW, source_system="github",
+        title="t",
+        description="d",
+        severity=Severity.LOW,
+        source_system="github",
     )
     restored = finding_from_ocsf(finding_to_ocsf(minimal))
     assert restored == minimal
@@ -215,12 +218,12 @@ def test_from_ocsf_detection_synthesizes_compliance_status_from_severity() -> No
     comes from severity_id per the heuristic in
     `_DETECTION_SEVERITY_TO_COMPLIANCE`."""
     cases = [
-        (5, ComplianceStatus.FAIL),         # Critical
-        (4, ComplianceStatus.FAIL),         # High
-        (3, ComplianceStatus.FAIL),         # Medium
-        (2, ComplianceStatus.WARNING),      # Low
-        (1, ComplianceStatus.UNKNOWN),      # Informational
-        (0, ComplianceStatus.UNKNOWN),      # Unknown
+        (5, ComplianceStatus.FAIL),  # Critical
+        (4, ComplianceStatus.FAIL),  # High
+        (3, ComplianceStatus.FAIL),  # Medium
+        (2, ComplianceStatus.WARNING),  # Low
+        (1, ComplianceStatus.UNKNOWN),  # Informational
+        (0, ComplianceStatus.UNKNOWN),  # Unknown
     ]
     for sev_id, expected in cases:
         finding = finding_from_ocsf_detection(_detection_finding_dict(severity_id=sev_id))
@@ -258,14 +261,14 @@ def test_from_ocsf_detection_trust_unmapped_true_honors_block() -> None:
     """When the operator IS producing the round-trip and flips
     trust_unmapped=True, the block is honored."""
     minimal = SecurityFinding(
-        title="round-trip subject", description="d",
-        severity=Severity.LOW, source_system="evidentia-detection-test",
+        title="round-trip subject",
+        description="d",
+        severity=Severity.LOW,
+        source_system="evidentia-detection-test",
     )
     detection_with_block = _detection_finding_dict()
     detection_with_block["unmapped"] = {"evidentia": minimal.model_dump(mode="json")}
-    restored = finding_from_ocsf_detection(
-        detection_with_block, trust_unmapped=True
-    )
+    restored = finding_from_ocsf_detection(detection_with_block, trust_unmapped=True)
     assert restored == minimal
 
 

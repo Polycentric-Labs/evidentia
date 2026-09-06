@@ -38,15 +38,12 @@ class InvalidChallengeIdError(ValueError):
 
 def _validate_id_shape(challenge_id: str) -> None:
     if not isinstance(challenge_id, str) or not challenge_id:
-        raise InvalidChallengeIdError(
-            f"Invalid challenge ID: empty or non-string: {challenge_id!r}"
-        )
+        raise InvalidChallengeIdError(f"Invalid challenge ID: empty or non-string: {challenge_id!r}")
     try:
         UUID(challenge_id)
     except (ValueError, AttributeError, TypeError) as e:
         raise InvalidChallengeIdError(
-            f"Invalid challenge ID: not a UUID-shaped string: "
-            f"{challenge_id!r} ({type(e).__name__}: {e})"
+            f"Invalid challenge ID: not a UUID-shaped string: {challenge_id!r} ({type(e).__name__}: {e})"
         ) from e
 
 
@@ -64,9 +61,7 @@ def get_challenge_store_dir(override: Path | None = None) -> Path:
     return Path(user_data_dir("evidentia", appauthor=False)) / "challenge_store"
 
 
-def save_challenge(
-    challenge: EffectiveChallenge, *, override: Path | None = None
-) -> Path:
+def save_challenge(challenge: EffectiveChallenge, *, override: Path | None = None) -> Path:
     """Persist a challenge record. Atomic via os.replace.
 
     ID shape is validated up-front via :func:`_validate_id_shape`,
@@ -88,9 +83,7 @@ def save_challenge(
     try:
         out_path = validate_within(candidate, store_dir)
     except PathTraversalError as e:
-        raise InvalidChallengeIdError(
-            f"Invalid challenge ID: path-traversal violation: {challenge.id!r}"
-        ) from e
+        raise InvalidChallengeIdError(f"Invalid challenge ID: path-traversal violation: {challenge.id!r}") from e
     tmp_path = store_dir / f"{challenge.id}.json.tmp"
     tmp_path.write_text(payload, encoding="utf-8")
     os.replace(tmp_path, out_path)
@@ -98,9 +91,7 @@ def save_challenge(
     return out_path
 
 
-def load_challenge_by_id(
-    challenge_id: str, *, override: Path | None = None
-) -> EffectiveChallenge | None:
+def load_challenge_by_id(challenge_id: str, *, override: Path | None = None) -> EffectiveChallenge | None:
     """Load a challenge by ID. Returns None for well-formed-unknown IDs."""
     _validate_id_shape(challenge_id)
     store_dir = get_challenge_store_dir(override)
@@ -108,17 +99,13 @@ def load_challenge_by_id(
     try:
         path = validate_within(candidate, store_dir)
     except PathTraversalError as e:
-        raise InvalidChallengeIdError(
-            f"Invalid challenge ID: path-traversal violation: {challenge_id!r}"
-        ) from e
+        raise InvalidChallengeIdError(f"Invalid challenge ID: path-traversal violation: {challenge_id!r}") from e
     if not path.exists():
         return None
     return EffectiveChallenge.model_validate_json(path.read_text(encoding="utf-8"))
 
 
-def list_challenges(
-    *, override: Path | None = None
-) -> list[EffectiveChallenge]:
+def list_challenges(*, override: Path | None = None) -> list[EffectiveChallenge]:
     """List all challenges sorted by challenge_date DESC then id."""
     store_dir = get_challenge_store_dir(override)
     if not store_dir.exists():
@@ -128,11 +115,7 @@ def list_challenges(
         if path.name.endswith(".tmp"):
             continue
         try:
-            challenges.append(
-                EffectiveChallenge.model_validate_json(
-                    path.read_text(encoding="utf-8")
-                )
-            )
+            challenges.append(EffectiveChallenge.model_validate_json(path.read_text(encoding="utf-8")))
         except Exception as e:
             logger.warning("Skipping malformed challenge file %s: %s", path, e)
             continue
@@ -141,9 +124,7 @@ def list_challenges(
     return challenges
 
 
-def delete_challenge(
-    challenge_id: str, *, override: Path | None = None
-) -> bool:
+def delete_challenge(challenge_id: str, *, override: Path | None = None) -> bool:
     """Delete a challenge by ID. Returns True if removed."""
     _validate_id_shape(challenge_id)
     store_dir = get_challenge_store_dir(override)
@@ -151,9 +132,7 @@ def delete_challenge(
     try:
         path = validate_within(candidate, store_dir)
     except PathTraversalError as e:
-        raise InvalidChallengeIdError(
-            f"Invalid challenge ID: path-traversal violation: {challenge_id!r}"
-        ) from e
+        raise InvalidChallengeIdError(f"Invalid challenge ID: path-traversal violation: {challenge_id!r}") from e
     if not path.exists():
         return False
     path.unlink()

@@ -92,9 +92,7 @@ def _load_private_key(pem: bytes) -> _PrivateKey:
             except (ValueError, TypeError) as e2:
                 raise SigningKeyError("malformed or undecodable private key") from e2
         elif "encrypted" in msg:
-            raise SigningKeyError(
-                f"encrypted signing key requires {EVIDENTIA_SIGNING_KEY_PASSPHRASE}"
-            ) from e
+            raise SigningKeyError(f"encrypted signing key requires {EVIDENTIA_SIGNING_KEY_PASSPHRASE}") from e
         else:
             raise SigningKeyError(f"could not load private key: {e}") from e
     except ValueError as e:
@@ -106,23 +104,16 @@ def _load_private_key(pem: bytes) -> _PrivateKey:
             # unrecognized (cryptography/OpenSSL variants drift across
             # versions/platforms): report both plausible causes rather than
             # misclassifying as key corruption.
-            raise SigningKeyError(
-                "could not decrypt signing key: incorrect passphrase or "
-                "malformed key data"
-            ) from e
+            raise SigningKeyError("could not decrypt signing key: incorrect passphrase or malformed key data") from e
         raise SigningKeyError("malformed or undecodable private key") from e
     except UnsupportedAlgorithm as e:
         raise UnsupportedKeyError(f"unsupported key algorithm: {e}") from e
 
     if isinstance(key, (Ed25519PrivateKey, RSAPrivateKey)):
         if isinstance(key, RSAPrivateKey) and key.key_size < 2048:
-            raise UnsupportedKeyError(
-                f"RSA signing key is {key.key_size} bits; minimum is 2048 (recommend 3072+)"
-            )
+            raise UnsupportedKeyError(f"RSA signing key is {key.key_size} bits; minimum is 2048 (recommend 3072+)")
         return key
-    raise UnsupportedKeyError(
-        f"unsupported signing key type {type(key).__name__}; use Ed25519 or RSA"
-    )
+    raise UnsupportedKeyError(f"unsupported signing key type {type(key).__name__}; use Ed25519 or RSA")
 
 
 def _load_public_key(pem: bytes) -> _PublicKey:
@@ -132,13 +123,9 @@ def _load_public_key(pem: bytes) -> _PublicKey:
         raise VerifyKeyError(f"could not load public key: {e}") from e
     if isinstance(key, (Ed25519PublicKey, RSAPublicKey)):
         if isinstance(key, RSAPublicKey) and key.key_size < 2048:
-            raise UnsupportedKeyError(
-                f"RSA verify key is {key.key_size} bits; minimum is 2048 (recommend 3072+)"
-            )
+            raise UnsupportedKeyError(f"RSA verify key is {key.key_size} bits; minimum is 2048 (recommend 3072+)")
         return key
-    raise UnsupportedKeyError(
-        f"unsupported verify key type {type(key).__name__}; use Ed25519 or RSA"
-    )
+    raise UnsupportedKeyError(f"unsupported verify key type {type(key).__name__}; use Ed25519 or RSA")
 
 
 def _algorithm_for(key: _PrivateKey | _PublicKey) -> str:
@@ -207,9 +194,7 @@ def sign_oscal_file(
         parsed = json.loads(artifact.read_text(encoding="utf-8"))
         statement = {
             "_type": _STATEMENT_TYPE,
-            "subject": [
-                {"name": artifact.name, "digest": {"sha256": digest_json(parsed)}}
-            ],
+            "subject": [{"name": artifact.name, "digest": {"sha256": digest_json(parsed)}}],
             "predicateType": _PREDICATE_TYPE,
             "predicate": {
                 "algorithm": algorithm,
@@ -224,9 +209,7 @@ def sign_oscal_file(
         envelope = dsse.Envelope(
             payload_type=_PAYLOAD_TYPE,
             payload_b64=dsse.b64encode_std(statement_bytes),
-            signatures=(
-                dsse.Signature(keyid=key_id, sig=dsse.b64encode_std(signature)),
-            ),
+            signatures=(dsse.Signature(keyid=key_id, sig=dsse.b64encode_std(signature)),),
         )
     except KeySignError as e:
         _log.warning(
@@ -309,9 +292,7 @@ def verify_oscal_file(
             message=f"DSSE verification failed for {artifact.name}: {details}",
             evidentia={"artifact_path": str(artifact), "details": details},
         )
-        return DSSEVerifyResult(
-            valid=False, signer_key_id=key_id, algorithm=expected_alg, details=details
-        )
+        return DSSEVerifyResult(valid=False, signer_key_id=key_id, algorithm=expected_alg, details=details)
 
     try:
         envelope = dsse.parse_envelope(resolved.read_text(encoding="utf-8"))
@@ -358,9 +339,7 @@ def verify_oscal_file(
         return fail(f"artifact is not readable JSON: {e}")
     subjects = statement.get("subject") or []
     matched = any(
-        isinstance(s, dict)
-        and isinstance(s.get("digest"), dict)
-        and s["digest"].get("sha256") == artifact_digest
+        isinstance(s, dict) and isinstance(s.get("digest"), dict) and s["digest"].get("sha256") == artifact_digest
         for s in subjects
     )
     if not matched:

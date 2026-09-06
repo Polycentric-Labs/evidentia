@@ -60,9 +60,7 @@ def test_api_error_carries_status_and_message() -> None:
 
 
 def test_config_rejects_http_scheme() -> None:
-    with pytest.raises(
-        ValueError, match="must use https"
-    ):
+    with pytest.raises(ValueError, match="must use https"):
         ServiceNowConfig(
             instance_url="http://insecure.example.com",
             user="u",
@@ -189,9 +187,7 @@ def test_find_existing_by_correlation_returns_record_when_present() -> None:
         )
 
     client = _client(handler)
-    record = client.find_existing_by_correlation(
-        correlation_id="evidentia-gap-x123"
-    )
+    record = client.find_existing_by_correlation(correlation_id="evidentia-gap-x123")
     assert record is not None
     assert record.sys_id == "abc123"
 
@@ -201,9 +197,7 @@ def test_find_existing_by_correlation_returns_none_when_empty() -> None:
         return httpx.Response(200, json={"result": []})
 
     client = _client(handler)
-    record = client.find_existing_by_correlation(
-        correlation_id="evidentia-gap-nope"
-    )
+    record = client.find_existing_by_correlation(correlation_id="evidentia-gap-nope")
     assert record is None
 
 

@@ -121,8 +121,7 @@ class SignedToolOutput(EvidentiaModel):
     signed_at: datetime = Field(
         default_factory=utc_now,
         description=(
-            "UTC timestamp the signature was computed. Auditors "
-            "use this for chronological ordering in the audit log."
+            "UTC timestamp the signature was computed. Auditors use this for chronological ordering in the audit log."
         ),
     )
     signature: dict[str, str] | None = Field(
@@ -178,10 +177,7 @@ def _resolve_signer_factory() -> SignerCallable | None:
     if signer is None:
         return None
     if not callable(signer):
-        raise RuntimeError(
-            "MCP signer factory returned a non-callable; expected "
-            "Callable[[bytes], dict[str, str]]"
-        )
+        raise RuntimeError("MCP signer factory returned a non-callable; expected Callable[[bytes], dict[str, str]]")
     return signer  # type: ignore[no-any-return]
 
 
@@ -230,18 +226,14 @@ def sign_tool_output(
     # (preferred — preserves Pydantic's deterministic serialization
     # rules); the ``default=str`` fallback is defense-in-depth so a
     # raw-dict caller doesn't trigger a TypeError mid-signing.
-    canonical = json.dumps(
-        payload, sort_keys=True, separators=(",", ":"), default=str
-    ).encode("utf-8")
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
     try:
         sig_dict = resolved_signer(canonical)
     except Exception as exc:
         # Signing failure is non-fatal — emit the envelope with
         # signing_error populated. Operators relying on signed-
         # only outputs filter on signature is None.
-        envelope_with_err = envelope.model_copy(
-            update={"signing_error": str(exc)}
-        )
+        envelope_with_err = envelope.model_copy(update={"signing_error": str(exc)})
         return envelope_with_err
     return envelope.model_copy(update={"signature": sig_dict})
 
@@ -274,9 +266,7 @@ def verify_tool_output(
     # ``default=str`` mirrors the sign-side encoding (v0.9.8 P2.3 /
     # CR-V97-4) so a payload that round-tripped through stringification
     # at sign-time canonicalizes identically at verify-time.
-    canonical = json.dumps(
-        envelope.payload, sort_keys=True, separators=(",", ":"), default=str
-    ).encode("utf-8")
+    canonical = json.dumps(envelope.payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
     try:
         return verifier(canonical, envelope.signature)
     except Exception:

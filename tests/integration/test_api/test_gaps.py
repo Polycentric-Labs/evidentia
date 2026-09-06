@@ -39,9 +39,7 @@ class TestGapAnalyze:
         assert detail["error"] == "invalid_body"
         assert "inventory_path or inventory_content" in detail["message"]
 
-    def test_runs_with_inline_content(
-        self, api_client: TestClient, meridian_inventory: str
-    ) -> None:
+    def test_runs_with_inline_content(self, api_client: TestClient, meridian_inventory: str) -> None:
         r = api_client.post(
             "/api/gap/analyze",
             json={
@@ -57,9 +55,7 @@ class TestGapAnalyze:
         # Organization from the inventory propagates.
         assert report["organization"]
 
-    def test_organization_override_propagates(
-        self, api_client: TestClient, meridian_inventory: str
-    ) -> None:
+    def test_organization_override_propagates(self, api_client: TestClient, meridian_inventory: str) -> None:
         r = api_client.post(
             "/api/gap/analyze",
             json={
@@ -79,9 +75,7 @@ class TestGapReports:
         assert r.json()["total"] == 0
         assert r.json()["reports"] == []
 
-    def test_analyze_then_list_shows_report(
-        self, api_client: TestClient, meridian_inventory: str
-    ) -> None:
+    def test_analyze_then_list_shows_report(self, api_client: TestClient, meridian_inventory: str) -> None:
         # Analyze once so the gap store has something.
         api_client.post(
             "/api/gap/analyze",
@@ -108,9 +102,7 @@ class TestGapReports:
 class TestGapExport:
     """Coverage for POST /api/gap/export — reuses the CLI emitters."""
 
-    def _analyze(
-        self, api_client: TestClient, meridian_inventory: str
-    ) -> dict:
+    def _analyze(self, api_client: TestClient, meridian_inventory: str) -> dict:
         r = api_client.post(
             "/api/gap/analyze",
             json={
@@ -121,9 +113,7 @@ class TestGapExport:
         assert r.status_code == 200, r.text
         return r.json()
 
-    def test_rejects_unknown_format(
-        self, api_client: TestClient, meridian_inventory: str
-    ) -> None:
+    def test_rejects_unknown_format(self, api_client: TestClient, meridian_inventory: str) -> None:
         report = self._analyze(api_client, meridian_inventory)
         # 'console' is a gap-*diff* format, not a gap-*report* format.
         r = api_client.post(
@@ -136,9 +126,7 @@ class TestGapExport:
         assert detail["format"] == "console"
         assert "Unsupported format" in detail["message"]
 
-    def test_requires_exactly_one_source(
-        self, api_client: TestClient, meridian_inventory: str
-    ) -> None:
+    def test_requires_exactly_one_source(self, api_client: TestClient, meridian_inventory: str) -> None:
         # Neither report nor report_key.
         r = api_client.post("/api/gap/export", json={"format": "json"})
         assert r.status_code == 400
@@ -154,9 +142,7 @@ class TestGapExport:
         )
         assert r2.status_code == 400
 
-    def test_inline_json_export_roundtrips(
-        self, api_client: TestClient, meridian_inventory: str
-    ) -> None:
+    def test_inline_json_export_roundtrips(self, api_client: TestClient, meridian_inventory: str) -> None:
         report = self._analyze(api_client, meridian_inventory)
         r = api_client.post(
             "/api/gap/export",
@@ -174,9 +160,7 @@ class TestGapExport:
         assert exported["id"] == report["id"]
         assert exported["organization"] == report["organization"]
 
-    def test_sarif_export_has_sarif_media_type(
-        self, api_client: TestClient, meridian_inventory: str
-    ) -> None:
+    def test_sarif_export_has_sarif_media_type(self, api_client: TestClient, meridian_inventory: str) -> None:
         report = self._analyze(api_client, meridian_inventory)
         r = api_client.post(
             "/api/gap/export",
@@ -190,9 +174,7 @@ class TestGapExport:
         sarif = json.loads(r.content)
         assert sarif.get("version") == "2.1.0"
 
-    def test_export_by_report_key(
-        self, api_client: TestClient, meridian_inventory: str
-    ) -> None:
+    def test_export_by_report_key(self, api_client: TestClient, meridian_inventory: str) -> None:
         # Analyze persists to the gap store; export by the stored key.
         self._analyze(api_client, meridian_inventory)
         reports = api_client.get("/api/gap/reports").json()["reports"]
@@ -216,9 +198,7 @@ class TestGapExport:
         assert detail["error"] == "not_found"
         assert detail["resource"] == "gap_report"
 
-    def test_filename_is_sanitized(
-        self, api_client: TestClient, meridian_inventory: str
-    ) -> None:
+    def test_filename_is_sanitized(self, api_client: TestClient, meridian_inventory: str) -> None:
         report = self._analyze(api_client, meridian_inventory)
         # Inject a hostile organization name with path + header chars.
         report["organization"] = '../../etc/passwd "evil'
@@ -247,9 +227,7 @@ class TestGapDiff:
         assert detail["error"] == "invalid_id"
         assert detail["resource"] == "gap_report"
 
-    def test_missing_report_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_missing_report_returns_404(self, api_client: TestClient) -> None:
         r = api_client.post(
             "/api/gap/diff",
             json={
@@ -259,9 +237,7 @@ class TestGapDiff:
         )
         assert r.status_code == 404
 
-    def test_diff_between_same_report_has_all_unchanged(
-        self, api_client: TestClient, meridian_inventory: str
-    ) -> None:
+    def test_diff_between_same_report_has_all_unchanged(self, api_client: TestClient, meridian_inventory: str) -> None:
         # Analyze once -> one report in store. Diff it against itself.
         r1 = api_client.post(
             "/api/gap/analyze",
@@ -291,9 +267,7 @@ class TestGapsOpenApiErrorDocs:
     """2026-07-06 error-shape convergence: every deliberate 4xx the
     gaps router raises is documented on its OpenAPI operation."""
 
-    def test_gaps_error_statuses_documented_in_openapi(
-        self, api_client: TestClient
-    ) -> None:
+    def test_gaps_error_statuses_documented_in_openapi(self, api_client: TestClient) -> None:
         schema = api_client.get("/api/openapi.json").json()
         expected: list[tuple[str, str, list[str]]] = [
             ("/api/gap/analyze", "post", ["400"]),
@@ -304,6 +278,4 @@ class TestGapsOpenApiErrorDocs:
         for path, method, statuses in expected:
             responses = schema["paths"][path][method]["responses"]
             for status in statuses:
-                assert status in responses, (
-                    f"{method.upper()} {path} missing {status}"
-                )
+                assert status in responses, f"{method.upper()} {path} missing {status}"

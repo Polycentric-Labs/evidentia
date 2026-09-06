@@ -102,21 +102,15 @@ class SecurityScorecardCollectorError(SaaSCollectorError):
     """Base class for all SecurityScorecard collector failures."""
 
 
-class SecurityScorecardAuthError(
-    SecurityScorecardCollectorError, SaaSAuthError
-):
+class SecurityScorecardAuthError(SecurityScorecardCollectorError, SaaSAuthError):
     """Auth failure — 401 / 403 from the API."""
 
 
-class SecurityScorecardConnectionError(
-    SecurityScorecardCollectorError, SaaSConnectionError
-):
+class SecurityScorecardConnectionError(SecurityScorecardCollectorError, SaaSConnectionError):
     """Network / TLS / timeout failure."""
 
 
-class SecurityScorecardQueryError(
-    SecurityScorecardCollectorError, SaaSQueryError
-):
+class SecurityScorecardQueryError(SecurityScorecardCollectorError, SaaSQueryError):
     """A specific API call failed (4xx / 5xx other than auth, or a
     malformed response)."""
 
@@ -155,13 +149,9 @@ def _validate_portfolio_id_shape(portfolio_id: str) -> None:
     full rationale. Raises that exception on any value that does
     not match :data:`_PORTFOLIO_ID_RE`.
     """
-    if not isinstance(portfolio_id, str) or not _PORTFOLIO_ID_RE.fullmatch(
-        portfolio_id
-    ):
+    if not isinstance(portfolio_id, str) or not _PORTFOLIO_ID_RE.fullmatch(portfolio_id):
         raise SecurityScorecardInvalidPortfolioIdError(
-            "Invalid SecurityScorecard portfolio_id format "
-            "(expected [A-Za-z0-9_-]{1,128}; got "
-            f"{portfolio_id!r})"
+            f"Invalid SecurityScorecard portfolio_id format (expected [A-Za-z0-9_-]{{1,128}}; got {portfolio_id!r})"
         )
 
 
@@ -312,16 +302,10 @@ class SecurityScorecardCollector(BaseSaaSCollector):
             )
         first = entries[0]
         if not isinstance(first, dict):
-            raise SecurityScorecardQueryError(
-                "SecurityScorecard /portfolios returned malformed "
-                "entries."
-            )
+            raise SecurityScorecardQueryError("SecurityScorecard /portfolios returned malformed entries.")
         portfolio_id = first.get("id")
         if not isinstance(portfolio_id, str):
-            raise SecurityScorecardQueryError(
-                "SecurityScorecard portfolio entry is missing a "
-                "string `id` field."
-            )
+            raise SecurityScorecardQueryError("SecurityScorecard portfolio entry is missing a string `id` field.")
         # v0.7.12 P0.6 / CodeQL #92 closure: defense-in-depth.
         # Even if the SSC API itself returns a malformed/malicious
         # portfolio_id, reject it before it's composed into the
@@ -350,9 +334,7 @@ class SecurityScorecardCollector(BaseSaaSCollector):
             )
         return portfolio_id
 
-    def _paginate_portfolio(
-        self, portfolio_id: str
-    ) -> list[dict[str, Any]]:
+    def _paginate_portfolio(self, portfolio_id: str) -> list[dict[str, Any]]:
         """Walk the portfolio companies endpoint via page+per_page."""
         out: list[dict[str, Any]] = []
         page = 1
@@ -454,10 +436,7 @@ class SecurityScorecardCollector(BaseSaaSCollector):
             _log.warning(
                 action=EventAction.COLLECT_FAILED,
                 outcome=EventOutcome.FAILURE,
-                message=(
-                    f"SecurityScorecard portfolio collection "
-                    f"failed: {exc!r}"
-                ),
+                message=(f"SecurityScorecard portfolio collection failed: {exc!r}"),
                 evidentia={
                     "run_id": run_id,
                     "collector_id": COLLECTOR_ID,
@@ -502,15 +481,8 @@ class SecurityScorecardCollector(BaseSaaSCollector):
         # contextlib.suppress wrapping on the audit logger.
         _log.info(
             action=EventAction.COLLECT_COMPLETED,
-            outcome=(
-                EventOutcome.SUCCESS if not errors
-                else EventOutcome.UNKNOWN
-            ),
-            message=(
-                f"SecurityScorecard collection finished: "
-                f"{len(findings)} finding(s) across "
-                f"{scanned} company(s)"
-            ),
+            outcome=(EventOutcome.SUCCESS if not errors else EventOutcome.UNKNOWN),
+            message=(f"SecurityScorecard collection finished: {len(findings)} finding(s) across {scanned} company(s)"),
             evidentia={
                 "run_id": run_id,
                 "collector_id": COLLECTOR_ID,
@@ -528,35 +500,19 @@ class SecurityScorecardCollector(BaseSaaSCollector):
         company: dict[str, Any],
         context: CollectionContext,
     ) -> list[SecurityFinding]:
-        domain = str(
-            company.get("domain")
-            or company.get("hostname")
-            or company.get("id")
-            or "unknown"
-        )
-        name = str(
-            company.get("name")
-            or company.get("companyName")
-            or domain
-        )
+        domain = str(company.get("domain") or company.get("hostname") or company.get("id") or "unknown")
+        name = str(company.get("name") or company.get("companyName") or domain)
         score = company.get("score")
         # v0.7.10 P3 closure of v0.7.9 M-2: round() not int() so a
         # floating-point score like 69.6 doesn't trunc to 69 and
         # silently slip under a 70 low-score threshold.
-        score_int = (
-            round(score) if isinstance(score, (int, float)) else None
-        )
+        score_int = round(score) if isinstance(score, (int, float)) else None
         grade = company.get("grade")
         grade_str = str(grade) if grade else "ungraded"
-        score_str = (
-            str(score_int) if score_int is not None else "unscored"
-        )
+        score_str = str(score_int) if score_int is not None else "unscored"
         out: list[SecurityFinding] = [
             SecurityFinding(
-                title=(
-                    f"SecurityScorecard portfolio company: {name} "
-                    f"(score: {score_str}, grade: {grade_str})"
-                ),
+                title=(f"SecurityScorecard portfolio company: {name} (score: {score_str}, grade: {grade_str})"),
                 description=(
                     f"Company {name!r} (SSC domain: {domain}) is "
                     f"present in the operator's SecurityScorecard "
@@ -582,16 +538,10 @@ class SecurityScorecardCollector(BaseSaaSCollector):
                 raw_data={"securityscorecard_company_record": company},
             )
         ]
-        if (
-            score_int is not None
-            and score_int < self._low_score_threshold
-        ):
+        if score_int is not None and score_int < self._low_score_threshold:
             out.append(
                 SecurityFinding(
-                    title=(
-                        f"SecurityScorecard low score: {name} "
-                        f"({score_int} < {self._low_score_threshold})"
-                    ),
+                    title=(f"SecurityScorecard low score: {name} ({score_int} < {self._low_score_threshold})"),
                     description=(
                         f"Company {name!r} (SSC domain: {domain}) "
                         f"carries a SecurityScorecard score of "

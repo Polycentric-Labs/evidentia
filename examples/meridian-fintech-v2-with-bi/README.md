@@ -211,7 +211,8 @@ from pathlib import Path
 from evidentia_collectors.snowflake import SnowflakeCollector
 from evidentia_core.models.gap import GapAnalysisReport
 from evidentia_integrations.tableau import (
-    TableauConfig, publish_report,
+    TableauConfig,
+    publish_report,
 )
 
 # Run the collector and capture both findings + manifest's context.
@@ -226,9 +227,7 @@ with SnowflakeCollector(
 contexts = [f.collection_context for f in findings]
 
 # Load the gap report from disk.
-report = GapAnalysisReport.model_validate_json(
-    Path("gap-report.json").read_text()
-)
+report = GapAnalysisReport.model_validate_json(Path("gap-report.json").read_text())
 
 # Publish all three datasets.
 result = publish_report(

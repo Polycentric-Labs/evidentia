@@ -72,14 +72,9 @@ console = Console()
 def _load_report(gaps_path: Path) -> GapAnalysisReport:
     """Load a GapAnalysisReport from JSON on disk."""
     if not gaps_path.is_file():
-        console.print(
-            f"[red]Error:[/red] report not found: {gaps_path}. Run "
-            "[cyan]evidentia gap analyze[/cyan] first."
-        )
+        console.print(f"[red]Error:[/red] report not found: {gaps_path}. Run [cyan]evidentia gap analyze[/cyan] first.")
         raise typer.Exit(code=1)
-    return GapAnalysisReport.model_validate_json(
-        gaps_path.read_text(encoding="utf-8")
-    )
+    return GapAnalysisReport.model_validate_json(gaps_path.read_text(encoding="utf-8"))
 
 
 def _save_report(report: GapAnalysisReport, gaps_path: Path) -> None:
@@ -132,10 +127,7 @@ def jira_push(
         None,
         "--severity",
         "-s",
-        help=(
-            "Comma-separated severities to push. E.g. 'critical,high'. "
-            "Default: all severities."
-        ),
+        help=("Comma-separated severities to push. E.g. 'critical,high'. Default: all severities."),
     ),
     max_issues: int | None = typer.Option(
         None,
@@ -146,10 +138,7 @@ def jira_push(
         None,
         "--output",
         "-o",
-        help=(
-            "Where to write the updated report. Default: overwrite the input. "
-            "Pass '-' to skip the write (dry-run)."
-        ),
+        help=("Where to write the updated report. Default: overwrite the input. Pass '-' to skip the write (dry-run)."),
     ),
 ) -> None:
     """Push open gaps from a report as Jira issues.
@@ -162,9 +151,7 @@ def jira_push(
 
     severity_filter: set[str] | None = None
     if severity:
-        severity_filter = {
-            s.strip().lower() for s in severity.split(",") if s.strip()
-        }
+        severity_filter = {s.strip().lower() for s in severity.split(",") if s.strip()}
 
     with _build_client() as client:
         result = push_open_gaps(
@@ -256,10 +243,7 @@ def servicenow_test() -> None:
             ServiceNowConfig,
         )
     except ImportError as e:
-        console.print(
-            "[red]Error:[/red] ServiceNow integration failed to import: "
-            + str(e)
-        )
+        console.print("[red]Error:[/red] ServiceNow integration failed to import: " + str(e))
         raise typer.Exit(code=1) from e
 
     try:
@@ -295,8 +279,7 @@ def servicenow_push(
         False,
         "--force",
         help=(
-            "Create new records even if a matching correlation_id "
-            "already exists. Rarely needed; mostly for testing."
+            "Create new records even if a matching correlation_id already exists. Rarely needed; mostly for testing."
         ),
     ),
 ) -> None:
@@ -315,10 +298,7 @@ def servicenow_push(
             push_open_gaps as sn_push_open_gaps,
         )
     except ImportError as e:
-        console.print(
-            "[red]Error:[/red] ServiceNow integration failed to import: "
-            + str(e)
-        )
+        console.print("[red]Error:[/red] ServiceNow integration failed to import: " + str(e))
         raise typer.Exit(code=1) from e
 
     try:
@@ -363,9 +343,7 @@ def servicenow_push(
 
 @jira_app.command("status-map")
 def jira_status_map(
-    output_format: str = typer.Option(
-        "table", "--format", "-f", help="Output format: 'table' or 'json'."
-    ),
+    output_format: str = typer.Option("table", "--format", "-f", help="Output format: 'table' or 'json'."),
 ) -> None:
     """Print the Jira-status <-> GapStatus mapping currently in use."""
     from evidentia_integrations.jira import (
@@ -376,12 +354,8 @@ def jira_status_map(
     if output_format == "json":
         console.print_json(
             data={
-                "gap_status_to_jira": {
-                    k.value: v for k, v in GAP_STATUS_TO_JIRA_STATUS.items()
-                },
-                "jira_status_to_gap": {
-                    k: v.value for k, v in JIRA_STATUS_TO_GAP_STATUS.items()
-                },
+                "gap_status_to_jira": {k.value: v for k, v in GAP_STATUS_TO_JIRA_STATUS.items()},
+                "jira_status_to_gap": {k: v.value for k, v in JIRA_STATUS_TO_GAP_STATUS.items()},
             }
         )
         return
@@ -414,9 +388,7 @@ def _load_risks_optional(risks_path: Path | None) -> object | None:
     if risks_path is None:
         return None
     if not risks_path.is_file():
-        console.print(
-            f"[red]Error:[/red] risks file not found: {risks_path}."
-        )
+        console.print(f"[red]Error:[/red] risks file not found: {risks_path}.")
         raise typer.Exit(code=1)
     import json as _json
 
@@ -424,9 +396,7 @@ def _load_risks_optional(risks_path: Path | None) -> object | None:
 
     payload = _json.loads(risks_path.read_text(encoding="utf-8"))
     if not isinstance(payload, list):
-        console.print(
-            "[red]Error:[/red] risks file must contain a JSON list."
-        )
+        console.print("[red]Error:[/red] risks file must contain a JSON list.")
         raise typer.Exit(code=1)
     return [RiskStatement.model_validate(item) for item in payload]
 
@@ -436,10 +406,7 @@ def tableau_publish(
     gaps: Path = typer.Option(
         ...,
         "--gaps",
-        help=(
-            "Path to a gap-analysis report JSON file (the output "
-            "of 'evidentia gap analyze --output ...')."
-        ),
+        help=("Path to a gap-analysis report JSON file (the output of 'evidentia gap analyze --output ...')."),
     ),
     server_url: str = typer.Option(
         ...,
@@ -462,10 +429,7 @@ def tableau_publish(
     project_name: str = typer.Option(
         "default",
         "--project-name",
-        help=(
-            "Project name on the Tableau site to publish into. "
-            "Defaults to 'default' (auto-created on every site)."
-        ),
+        help=("Project name on the Tableau site to publish into. Defaults to 'default' (auto-created on every site)."),
     ),
     pat_name_env: str = typer.Option(
         "TABLEAU_PAT_NAME",
@@ -484,10 +448,7 @@ def tableau_publish(
     risks: Path | None = typer.Option(
         None,
         "--risks",
-        help=(
-            "Optional path to a JSON list of RiskStatement objects "
-            "to publish as the 'evidentia-risks' dataset."
-        ),
+        help=("Optional path to a JSON list of RiskStatement objects to publish as the 'evidentia-risks' dataset."),
     ),
     no_overwrite: bool = typer.Option(
         False,
@@ -531,9 +492,7 @@ def tableau_publish(
             overwrite=not no_overwrite,
         )
     except TableauApiError as e:
-        console.print(
-            f"[red]Tableau publish failed:[/red] {e}"
-        )
+        console.print(f"[red]Tableau publish failed:[/red] {e}")
         raise typer.Exit(code=1) from e
 
     table = Table(title=f"Tableau publish result ({server_url})")
@@ -544,9 +503,7 @@ def tableau_publish(
         table.add_row(ds.name, ds.datasource_id, str(ds.rows))
     console.print(table)
     if result.skipped:
-        console.print(
-            "[yellow]Skipped:[/yellow] " + "; ".join(result.skipped)
-        )
+        console.print("[yellow]Skipped:[/yellow] " + "; ".join(result.skipped))
 
 
 # ── Power BI commands (v0.7.8 P1.2) ───────────────────────────────
@@ -636,19 +593,13 @@ def powerbi_publish(
         console.print(f"[red]Power BI publish failed:[/red] {e}")
         raise typer.Exit(code=1) from e
 
-    table = Table(
-        title=f"Power BI publish result (workspace {workspace_id})"
-    )
+    table = Table(title=f"Power BI publish result (workspace {workspace_id})")
     table.add_column("Dataset", style="cyan")
     table.add_column("Dataset ID")
     table.add_column("Table")
     table.add_column("Rows")
     for ds in result.datasets:
-        table.add_row(
-            ds.name, ds.dataset_id, ds.table_name, str(ds.rows)
-        )
+        table.add_row(ds.name, ds.dataset_id, ds.table_name, str(ds.rows))
     console.print(table)
     if result.skipped:
-        console.print(
-            "[yellow]Skipped:[/yellow] " + "; ".join(result.skipped)
-        )
+        console.print("[yellow]Skipped:[/yellow] " + "; ".join(result.skipped))

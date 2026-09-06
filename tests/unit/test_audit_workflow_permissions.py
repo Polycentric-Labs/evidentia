@@ -128,11 +128,7 @@ def test_write_scope_with_justification_is_downgraded(awp: Any, tmp_path: Path) 
     p = _write(
         tmp_path,
         "just.yml",
-        "name: x\n"
-        "# JUSTIFIED: bot opens an issue on upstream drift\n"
-        "permissions:\n"
-        "  contents: read\n"
-        "  issues: write\n",
+        "name: x\n# JUSTIFIED: bot opens an issue on upstream drift\npermissions:\n  contents: read\n  issues: write\n",
     )
     status, detail = awp.audit_workflow(p)
     assert status == "JUSTIFIED"
@@ -145,11 +141,7 @@ def test_justification_through_blank_lines(awp: Any, tmp_path: Path) -> None:
     p = _write(
         tmp_path,
         "just_blank.yml",
-        "name: x\n"
-        "# JUSTIFIED: posts a PR comment\n"
-        "\n"
-        "permissions:\n"
-        "  pull-requests: write\n",
+        "name: x\n# JUSTIFIED: posts a PR comment\n\npermissions:\n  pull-requests: write\n",
     )
     status, detail = awp.audit_workflow(p)
     assert status == "JUSTIFIED"
@@ -163,10 +155,7 @@ def test_justification_far_above_does_not_associate(awp: Any, tmp_path: Path) ->
     p = _write(
         tmp_path,
         "far.yml",
-        "# JUSTIFIED: this comment is too far away\n"
-        "name: x\n"
-        "permissions:\n"
-        "  issues: write\n",
+        "# JUSTIFIED: this comment is too far away\nname: x\npermissions:\n  issues: write\n",
     )
     status, _ = awp.audit_workflow(p)
     assert status == "FAIL"
@@ -179,10 +168,7 @@ def test_justification_on_write_line_does_not_associate(awp: Any, tmp_path: Path
     p = _write(
         tmp_path,
         "inside.yml",
-        "name: x\n"
-        "permissions:\n"
-        "  contents: read\n"
-        "  issues: write  # JUSTIFIED: inside the block\n",
+        "name: x\npermissions:\n  contents: read\n  issues: write  # JUSTIFIED: inside the block\n",
     )
     status, _ = awp.audit_workflow(p)
     assert status == "FAIL"
@@ -259,14 +245,7 @@ def test_find_justification_none_when_no_top_level_permissions(awp: Any) -> None
 def test_find_justification_ignores_indented_permissions(awp: Any) -> None:
     # An indented (job-scoped) permissions: key must not be treated as the
     # top-level key; the comment above it does not count.
-    text = (
-        "name: x\n"
-        "jobs:\n"
-        "  a:\n"
-        "    # JUSTIFIED: job-scoped, not top-level\n"
-        "    permissions:\n"
-        "      issues: write\n"
-    )
+    text = "name: x\njobs:\n  a:\n    # JUSTIFIED: job-scoped, not top-level\n    permissions:\n      issues: write\n"
     assert awp.find_justification(text) is None
 
 
@@ -275,9 +254,7 @@ def test_find_justification_ignores_indented_permissions(awp: Any) -> None:
 # --------------------------------------------------------------------------
 
 
-def test_strict_exits_2_on_unjustified_fail(
-    awp: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_strict_exits_2_on_unjustified_fail(awp: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _write(tmp_path, "ok.yml", "name: x\npermissions:\n  contents: read\n")
     _write(tmp_path, "bad.yml", "name: x\npermissions:\n  issues: write\n")
     monkeypatch.setattr(awp, "WORKFLOWS_DIR", tmp_path)
@@ -285,9 +262,7 @@ def test_strict_exits_2_on_unjustified_fail(
     assert awp.main() == 2
 
 
-def test_strict_exits_0_when_all_fail_justified(
-    awp: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_strict_exits_0_when_all_fail_justified(awp: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _write(tmp_path, "ok.yml", "name: x\npermissions:\n  contents: read\n")
     _write(
         tmp_path,
@@ -299,9 +274,7 @@ def test_strict_exits_0_when_all_fail_justified(
     assert awp.main() == 0
 
 
-def test_strict_exits_2_on_error_file(
-    awp: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_strict_exits_2_on_error_file(awp: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # An ERROR (empty file) is blocking under --strict, same as FAIL.
     _write(tmp_path, "empty.yml", "")
     monkeypatch.setattr(awp, "WORKFLOWS_DIR", tmp_path)
@@ -309,9 +282,7 @@ def test_strict_exits_2_on_error_file(
     assert awp.main() == 2
 
 
-def test_advisory_default_exits_0_despite_fail(
-    awp: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_advisory_default_exits_0_despite_fail(awp: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # Without --strict, an un-justified FAIL must still exit 0 (backward
     # compatible advisory behavior).
     _write(tmp_path, "bad.yml", "name: x\npermissions:\n  issues: write\n")

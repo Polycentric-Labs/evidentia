@@ -52,8 +52,7 @@ PORTFOLIO_INVENTORY_MAPPINGS: list[ControlMapping] = [
         framework="occ-2013-29",
         control_id="III.A",
         control_title=(
-            "Risk Management — Planning, Due Diligence, "
-            "Contract Negotiation, Ongoing Monitoring, Termination"
+            "Risk Management — Planning, Due Diligence, Contract Negotiation, Ongoing Monitoring, Termination"
         ),
         relationship=OLIRRelationship.SUBSET_OF,
         justification=(
@@ -132,9 +131,6 @@ LOW_RATING_MAPPINGS: list[ControlMapping] = [
         control_id="II.D",
         control_title="Ongoing Monitoring",
         relationship=OLIRRelationship.SUBSET_OF,
-        justification=(
-            "Same ongoing-monitoring expectation as OCC 2013-29 "
-            "§III.A.4 from the FRB framing."
-        ),
+        justification=("Same ongoing-monitoring expectation as OCC 2013-29 §III.A.4 from the FRB framing."),
     ),
 ]

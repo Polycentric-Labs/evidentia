@@ -143,21 +143,15 @@ def _make_litellm_exc(exc_cls: type[BaseException]) -> BaseException:
     if exc_cls is RateLimitError:
         return RateLimitError("rate limited", llm_provider="openai", model="gpt-4o")
     if exc_cls is APIConnectionError:
-        return APIConnectionError(
-            message="conn refused", llm_provider="openai", model="gpt-4o"
-        )
+        return APIConnectionError(message="conn refused", llm_provider="openai", model="gpt-4o")
     if exc_cls is Timeout:
         return Timeout("timeout", model="gpt-4o", llm_provider="openai")
     if exc_cls is InternalServerError:
         return InternalServerError("500", model="gpt-4o", llm_provider="openai")
     if exc_cls is ServiceUnavailableError:
-        return ServiceUnavailableError(
-            "503", model="gpt-4o", llm_provider="openai"
-        )
+        return ServiceUnavailableError("503", model="gpt-4o", llm_provider="openai")
     if exc_cls is BadGatewayError:
-        return BadGatewayError(
-            message="502", model="gpt-4o", llm_provider="openai"
-        )
+        return BadGatewayError(message="502", model="gpt-4o", llm_provider="openai")
     raise AssertionError(f"unhandled litellm exception class {exc_cls}")
 
 
@@ -306,10 +300,7 @@ def test_generate_with_emit_trace_uses_llm_trace_when_present(
                 confidence=0.9,
             ),
             TraceClaim(
-                claim=(
-                    "Inadequate AC-2 lifecycle controls leave dormant "
-                    "accounts vulnerable to credential stuffing."
-                ),
+                claim=("Inadequate AC-2 lifecycle controls leave dormant accounts vulnerable to credential stuffing."),
                 clause_citations=[
                     "nist-800-53-rev5:AC-2",
                     "nist-800-53-rev5:AC-2(3)",
@@ -317,16 +308,13 @@ def test_generate_with_emit_trace_uses_llm_trace_when_present(
                 confidence=0.8,
             ),
             TraceClaim(
-                claim=(
-                    "Quarterly access reviews would mitigate the gap."
-                ),
+                claim=("Quarterly access reviews would mitigate the gap."),
                 clause_citations=["nist-800-53-rev5:AC-2(3)"],
                 confidence=0.85,
             ),
         ],
         methodology=(
-            "Per-NIST-component decomposition: separate claims "
-            "for asset, vulnerability, recommended control."
+            "Per-NIST-component decomposition: separate claims for asset, vulnerability, recommended control."
         ),
         overall_confidence=0.85,
     )
@@ -383,9 +371,7 @@ def test_generate_prompt_hash_is_deterministic_for_same_inputs(
     system_context: SystemContext,
 ) -> None:
     gap = _make_gap()
-    with _patched_sync_create(
-        side_effect=[_fake_risk_statement(), _fake_risk_statement()]
-    ):
+    with _patched_sync_create(side_effect=[_fake_risk_statement(), _fake_risk_statement()]):
         gen = RiskStatementGenerator()
         a = gen.generate(gap, system_context)
         b = gen.generate(gap, system_context)
@@ -403,9 +389,7 @@ def test_generate_prompt_hash_is_deterministic_for_same_inputs(
     "exc_cls",
     [RateLimitError, APIConnectionError, Timeout, InternalServerError, BadGatewayError],
 )
-def test_generate_retries_transient_then_succeeds(
-    system_context: SystemContext, exc_cls: type[BaseException]
-) -> None:
+def test_generate_retries_transient_then_succeeds(system_context: SystemContext, exc_cls: type[BaseException]) -> None:
     gap = _make_gap()
     fake_risk = _fake_risk_statement()
     side_effect = [
@@ -468,9 +452,7 @@ def test_generate_offline_violation_propagates_unwrapped(
     """Air-gap violations must NOT be wrapped — they're programmer/policy
     errors that operators need to see immediately."""
     gap = _make_gap()
-    with _patched_sync_create(
-        side_effect=[OfflineViolationError(subsystem="evidentia_ai", target="gpt-4o")]
-    ):
+    with _patched_sync_create(side_effect=[OfflineViolationError(subsystem="evidentia_ai", target="gpt-4o")]):
         gen = RiskStatementGenerator()
         with pytest.raises(OfflineViolationError):
             gen.generate(gap, system_context)
@@ -490,12 +472,9 @@ def test_generate_emits_ai_risk_generated_event_on_success(
         with caplog.at_level("INFO", logger="evidentia.ai.risk_statements"):
             gen.generate(gap, system_context)
     success_records = [
-        r for r in caplog.records
-        if (
-            hasattr(r, "ecs_record")
-            and r.ecs_record["event"]["action"]
-            == EventAction.AI_RISK_GENERATED.value
-        )
+        r
+        for r in caplog.records
+        if (hasattr(r, "ecs_record") and r.ecs_record["event"]["action"] == EventAction.AI_RISK_GENERATED.value)
     ]
     assert len(success_records) >= 1
 
@@ -512,12 +491,9 @@ def test_generate_emits_ai_risk_failed_event_on_unrecoverable_failure(
         gen = RiskStatementGenerator()
         gen.generate(gap, system_context)
     failure_records = [
-        r for r in caplog.records
-        if (
-            hasattr(r, "ecs_record")
-            and r.ecs_record["event"]["action"]
-            == EventAction.AI_RISK_FAILED.value
-        )
+        r
+        for r in caplog.records
+        if (hasattr(r, "ecs_record") and r.ecs_record["event"]["action"] == EventAction.AI_RISK_FAILED.value)
     ]
     assert len(failure_records) == 1
 
@@ -536,12 +512,9 @@ def test_generate_emits_ai_risk_retry_event_on_each_retry(
         with caplog.at_level("WARNING", logger="evidentia.audit.retry"):
             gen.generate(gap, system_context)
     retry_records = [
-        r for r in caplog.records
-        if (
-            hasattr(r, "ecs_record")
-            and r.ecs_record["event"]["action"]
-            == EventAction.AI_RISK_RETRY.value
-        )
+        r
+        for r in caplog.records
+        if (hasattr(r, "ecs_record") and r.ecs_record["event"]["action"] == EventAction.AI_RISK_RETRY.value)
     ]
     # 3 attempts total → 2 before_sleep callbacks → 2 retry events
     assert len(retry_records) == 2
@@ -571,9 +544,7 @@ def test_generate_batch_threads_one_run_id_through_all_outputs(
     system_context: SystemContext,
 ) -> None:
     gaps = [_make_gap("AC-2"), _make_gap("AC-3")]
-    with _patched_sync_create(
-        side_effect=[_fake_risk_statement(), _fake_risk_statement()]
-    ):
+    with _patched_sync_create(side_effect=[_fake_risk_statement(), _fake_risk_statement()]):
         gen = RiskStatementGenerator()
         results = gen.generate_batch(gaps, system_context)
     assert len(results) == 2
@@ -605,9 +576,7 @@ def test_generate_batch_progress_callback_invoked_per_success(
     def on_progress(current: int, total: int) -> None:
         progress_calls.append((current, total))
 
-    with _patched_sync_create(
-        side_effect=[_fake_risk_statement(), _fake_risk_statement()]
-    ):
+    with _patched_sync_create(side_effect=[_fake_risk_statement(), _fake_risk_statement()]):
         gen = RiskStatementGenerator()
         gen.generate_batch(gaps, system_context, on_progress=on_progress)
     assert progress_calls == [(1, 2), (2, 2)]
@@ -665,9 +634,7 @@ async def test_generate_async_offline_violation_propagates(
     system_context: SystemContext,
 ) -> None:
     gap = _make_gap()
-    with _patched_async_create(
-        side_effect=[OfflineViolationError(subsystem="evidentia_ai", target="gpt-4o")]
-    ):
+    with _patched_async_create(side_effect=[OfflineViolationError(subsystem="evidentia_ai", target="gpt-4o")]):
         gen = RiskStatementGenerator()
         with pytest.raises(OfflineViolationError):
             await gen.generate_async(gap, system_context)
@@ -694,9 +661,7 @@ async def test_generate_batch_async_air_gap_aborts(
     system_context: SystemContext,
 ) -> None:
     gaps = [_make_gap("AC-2")]
-    with _patched_async_create(
-        side_effect=[OfflineViolationError(subsystem="evidentia_ai", target="gpt-4o")]
-    ):
+    with _patched_async_create(side_effect=[OfflineViolationError(subsystem="evidentia_ai", target="gpt-4o")]):
         gen = RiskStatementGenerator()
         with pytest.raises(OfflineViolationError):
             await gen.generate_batch_async(gaps, system_context)
@@ -707,9 +672,7 @@ async def test_generate_batch_async_threads_single_run_id(
     system_context: SystemContext,
 ) -> None:
     gaps = [_make_gap("AC-2"), _make_gap("AC-3")]
-    with _patched_async_create(
-        side_effect=[_fake_risk_statement(), _fake_risk_statement()]
-    ):
+    with _patched_async_create(side_effect=[_fake_risk_statement(), _fake_risk_statement()]):
         gen = RiskStatementGenerator()
         results = await gen.generate_batch_async(gaps, system_context)
     assert len(results) == 2
@@ -754,11 +717,9 @@ def test_h1_failure_event_carries_run_id_from_batch(
             results = gen.generate_batch(gaps, system_context)
 
     failure_records = [
-        r for r in caplog.records
-        if (
-            hasattr(r, "ecs_record")
-            and r.ecs_record["event"]["action"] == EventAction.AI_RISK_FAILED.value
-        )
+        r
+        for r in caplog.records
+        if (hasattr(r, "ecs_record") and r.ecs_record["event"]["action"] == EventAction.AI_RISK_FAILED.value)
     ]
     assert len(failure_records) == 1
     failure_run_id = failure_records[0].ecs_record["evidentia"]["run_id"]
@@ -787,20 +748,16 @@ def test_h2_retry_events_inherit_trace_id_from_run_id(
             gen.generate(gap, system_context, run_id=explicit_run_id)
 
     retry_records = [
-        r for r in caplog.records
-        if (
-            hasattr(r, "ecs_record")
-            and r.ecs_record["event"]["action"] == EventAction.AI_RISK_RETRY.value
-        )
+        r
+        for r in caplog.records
+        if (hasattr(r, "ecs_record") and r.ecs_record["event"]["action"] == EventAction.AI_RISK_RETRY.value)
     ]
     assert len(retry_records) == 2
     for rec in retry_records:
         assert rec.ecs_record["trace"]["id"] == explicit_run_id
 
 
-def test_l2_success_event_carries_prompt_hash(
-    system_context: SystemContext, caplog: pytest.LogCaptureFixture
-) -> None:
+def test_l2_success_event_carries_prompt_hash(system_context: SystemContext, caplog: pytest.LogCaptureFixture) -> None:
     """L2: AI_RISK_GENERATED success events surface prompt_hash for SIEM
     correlation between the log event and the artifact's GenerationContext."""
     gap = _make_gap()
@@ -810,12 +767,9 @@ def test_l2_success_event_carries_prompt_hash(
             result = gen.generate(gap, system_context)
 
     success_records = [
-        r for r in caplog.records
-        if (
-            hasattr(r, "ecs_record")
-            and r.ecs_record["event"]["action"]
-            == EventAction.AI_RISK_GENERATED.value
-        )
+        r
+        for r in caplog.records
+        if (hasattr(r, "ecs_record") and r.ecs_record["event"]["action"] == EventAction.AI_RISK_GENERATED.value)
     ]
     assert len(success_records) >= 1
     assert result.generation_context is not None
@@ -829,30 +783,22 @@ def test_m2_batch_emits_distinct_batch_completed_event(
     """M2: Batch summary uses AI_RISK_BATCH_COMPLETED, not AI_RISK_GENERATED,
     so SIEM 'count of risks' queries don't double-count."""
     gaps = [_make_gap("AC-2"), _make_gap("AC-3")]
-    with _patched_sync_create(
-        side_effect=[_fake_risk_statement(), _fake_risk_statement()]
-    ):
+    with _patched_sync_create(side_effect=[_fake_risk_statement(), _fake_risk_statement()]):
         gen = RiskStatementGenerator()
         with caplog.at_level("INFO", logger="evidentia.ai.risk_statements"):
             gen.generate_batch(gaps, system_context)
 
     batch_records = [
-        r for r in caplog.records
-        if (
-            hasattr(r, "ecs_record")
-            and r.ecs_record["event"]["action"]
-            == EventAction.AI_RISK_BATCH_COMPLETED.value
-        )
+        r
+        for r in caplog.records
+        if (hasattr(r, "ecs_record") and r.ecs_record["event"]["action"] == EventAction.AI_RISK_BATCH_COMPLETED.value)
     ]
     assert len(batch_records) == 1
     # Per-call AI_RISK_GENERATED still fire \u2014 one per gap
     per_call_records = [
-        r for r in caplog.records
-        if (
-            hasattr(r, "ecs_record")
-            and r.ecs_record["event"]["action"]
-            == EventAction.AI_RISK_GENERATED.value
-        )
+        r
+        for r in caplog.records
+        if (hasattr(r, "ecs_record") and r.ecs_record["event"]["action"] == EventAction.AI_RISK_GENERATED.value)
     ]
     assert len(per_call_records) == 2
 
@@ -863,20 +809,15 @@ def test_m4_partial_batch_outcome_is_unknown_not_success(
     """M4: When succeeded < total, batch outcome is UNKNOWN per ECS spec
     (NOT misleadingly SUCCESS)."""
     gaps = [_make_gap("AC-2"), _make_gap("AC-3")]
-    with _patched_sync_create(
-        side_effect=[_fake_risk_statement(), RuntimeError("boom")]
-    ):
+    with _patched_sync_create(side_effect=[_fake_risk_statement(), RuntimeError("boom")]):
         gen = RiskStatementGenerator()
         with caplog.at_level("INFO", logger="evidentia.ai.risk_statements"):
             gen.generate_batch(gaps, system_context)
 
     batch_record = next(
-        r for r in caplog.records
-        if (
-            hasattr(r, "ecs_record")
-            and r.ecs_record["event"]["action"]
-            == EventAction.AI_RISK_BATCH_COMPLETED.value
-        )
+        r
+        for r in caplog.records
+        if (hasattr(r, "ecs_record") and r.ecs_record["event"]["action"] == EventAction.AI_RISK_BATCH_COMPLETED.value)
     )
     assert batch_record.ecs_record["event"]["outcome"] == "unknown"
     assert batch_record.ecs_record["evidentia"]["succeeded"] == 1
@@ -889,20 +830,15 @@ def test_m4_full_success_batch_outcome_is_success(
 ) -> None:
     """Counter-test: when every gap succeeds, batch outcome IS success."""
     gaps = [_make_gap("AC-2"), _make_gap("AC-3")]
-    with _patched_sync_create(
-        side_effect=[_fake_risk_statement(), _fake_risk_statement()]
-    ):
+    with _patched_sync_create(side_effect=[_fake_risk_statement(), _fake_risk_statement()]):
         gen = RiskStatementGenerator()
         with caplog.at_level("INFO", logger="evidentia.ai.risk_statements"):
             gen.generate_batch(gaps, system_context)
 
     batch_record = next(
-        r for r in caplog.records
-        if (
-            hasattr(r, "ecs_record")
-            and r.ecs_record["event"]["action"]
-            == EventAction.AI_RISK_BATCH_COMPLETED.value
-        )
+        r
+        for r in caplog.records
+        if (hasattr(r, "ecs_record") and r.ecs_record["event"]["action"] == EventAction.AI_RISK_BATCH_COMPLETED.value)
     )
     assert batch_record.ecs_record["event"]["outcome"] == "success"
     assert batch_record.ecs_record["evidentia"]["failed"] == 0

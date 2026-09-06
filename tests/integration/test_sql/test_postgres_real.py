@@ -101,21 +101,18 @@ def postgres_container() -> dict[str, str]:
         timeout=10,
     )
     if inspect.returncode != 0 or "0.0.0.0:" not in inspect.stdout:
-        subprocess.run(
-            ["docker", "stop", container_name], capture_output=True, timeout=10
-        )
+        subprocess.run(["docker", "stop", container_name], capture_output=True, timeout=10)
         pytest.skip(f"Could not resolve postgres port: {inspect.stdout}")
     port_line = inspect.stdout.strip().splitlines()[0]
     port = int(port_line.rsplit(":", 1)[1])
 
     if not _wait_for_postgres(port, password):
-        subprocess.run(
-            ["docker", "stop", container_name], capture_output=True, timeout=10
-        )
+        subprocess.run(["docker", "stop", container_name], capture_output=True, timeout=10)
         pytest.skip(f"Postgres did not become ready on port {port} within timeout")
 
     # Seed: create a read-only role with no write privilege
     import psycopg
+
     conn = psycopg.connect(
         f"postgres://postgres@127.0.0.1:{port}/postgres",
         password=password,
@@ -128,17 +125,10 @@ def postgres_container() -> dict[str, str]:
     # is acceptable here. (For non-DDL queries we still use bound
     # parameters; e.g., the GRANT below uses an identifier, not a
     # password.)
-    cur.execute(
-        "CREATE ROLE evidentia_reader WITH LOGIN PASSWORD 'reader_pwd' "
-        "CONNECTION LIMIT 5"
-    )
-    cur.execute(
-        "ALTER ROLE evidentia_reader SET default_transaction_read_only = on"
-    )
+    cur.execute("CREATE ROLE evidentia_reader WITH LOGIN PASSWORD 'reader_pwd' CONNECTION LIMIT 5")
+    cur.execute("ALTER ROLE evidentia_reader SET default_transaction_read_only = on")
     cur.execute("CREATE TABLE compliance_users (id int, role text)")
-    cur.execute(
-        "INSERT INTO compliance_users VALUES (1, 'admin'), (2, 'auditor'), (3, 'app')"
-    )
+    cur.execute("INSERT INTO compliance_users VALUES (1, 'admin'), (2, 'auditor'), (3, 'app')")
     cur.execute("GRANT SELECT ON compliance_users TO evidentia_reader")
     cur.close()
     conn.close()
@@ -195,9 +185,7 @@ def test_collector_reads_real_postgres(
     # access in vanilla pg, so the role-inventory finding should still
     # come through (pg_roles is queryable by any role). At minimum
     # the postgres superuser shows up.
-    role_findings = [
-        f for f in findings if "role-inventory" in (f.source_finding_id or "")
-    ]
+    role_findings = [f for f in findings if "role-inventory" in (f.source_finding_id or "")]
     assert len(role_findings) == 1
     raw = role_findings[0].raw_data or {}
     assert int(raw.get("total_roles", 0)) >= 2
@@ -214,14 +202,8 @@ def test_write_priv_principal_emits_finding(
     ) as collector:
         findings, _manifest = collector.collect_v2()
 
-    write_priv = [
-        f
-        for f in findings
-        if "WRITE-PRIV-DETECTED" in (f.source_finding_id or "")
-    ]
-    assert len(write_priv) == 1, (
-        "Superuser principal should fire EVIDENTIA-WRITE-PRIV-DETECTED"
-    )
+    write_priv = [f for f in findings if "WRITE-PRIV-DETECTED" in (f.source_finding_id or "")]
+    assert len(write_priv) == 1, "Superuser principal should fire EVIDENTIA-WRITE-PRIV-DETECTED"
     # AC-6 mapping
     assert "AC-6" in (write_priv[0].control_ids or [])
 

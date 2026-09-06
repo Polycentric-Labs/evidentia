@@ -155,9 +155,7 @@ def gap_report_to_oscal_ar(
         for stmt in risk_statements_with_traces:
             if stmt.reasoning_trace is None:
                 continue
-            back_matter_resources.append(
-                _reasoning_trace_to_oscal_resource(stmt)
-            )
+            back_matter_resources.append(_reasoning_trace_to_oscal_resource(stmt))
 
     findings_output = [_gap_to_finding(gap) for gap in report.gaps]
     observations = [_gap_to_observation(gap, resource_by_control) for gap in report.gaps]
@@ -166,8 +164,7 @@ def gap_report_to_oscal_ar(
         "uuid": result_uuid,
         "title": "Evidentia Gap Analysis Result",
         "description": (
-            f"Automated gap analysis of {report.organization} "
-            f"against {', '.join(report.frameworks_analyzed)}."
+            f"Automated gap analysis of {report.organization} against {', '.join(report.frameworks_analyzed)}."
         ),
         "start": report.analyzed_at.isoformat(),
         "end": report.analyzed_at.isoformat(),
@@ -367,10 +364,7 @@ def _reasoning_trace_canonical_json(stmt: RiskStatement) -> bytes:
     symmetric.
     """
     if stmt.reasoning_trace is None:  # pragma: no cover — caller-filtered
-        raise ValueError(
-            "_reasoning_trace_canonical_json called on RiskStatement "
-            "with no reasoning_trace"
-        )
+        raise ValueError("_reasoning_trace_canonical_json called on RiskStatement with no reasoning_trace")
     payload = stmt.reasoning_trace.model_dump(mode="json")
     return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
@@ -403,10 +397,7 @@ def _reasoning_trace_to_oscal_resource(stmt: RiskStatement) -> dict[str, Any]:
         )
     return {
         "uuid": stmt.id,
-        "title": (
-            f"Reasoning trace for risk statement "
-            f"{stmt.source_gap_id or stmt.id}"
-        ),
+        "title": (f"Reasoning trace for risk statement {stmt.source_gap_id or stmt.id}"),
         "description": (
             f"Policy Reasoning Trace per arXiv 2509.23291 — "
             f"{len(trace.claims)} claim(s); overall confidence "
@@ -579,11 +570,7 @@ def _vendor_to_oscal_party(vendor: Vendor) -> dict[str, Any]:
         {
             "name": "vendor-type",
             "ns": EVIDENTIA_OSCAL_NS,
-            "value": (
-                vendor.type.value
-                if hasattr(vendor.type, "value")
-                else str(vendor.type)
-            ),
+            "value": (vendor.type.value if hasattr(vendor.type, "value") else str(vendor.type)),
             "class": "tprm",
         },
         {
@@ -653,8 +640,7 @@ def _vendor_to_oscal_party(vendor: Vendor) -> dict[str, Any]:
                 "name": "regulatory-classification",
                 "ns": EVIDENTIA_OSCAL_NS,
                 "value": ", ".join(
-                    rc.value if hasattr(rc, "value") else str(rc)
-                    for rc in vendor.regulatory_classification
+                    rc.value if hasattr(rc, "value") else str(rc) for rc in vendor.regulatory_classification
                 ),
                 "class": "tprm",
             }
@@ -702,23 +688,14 @@ def _vendor_to_oscal_resource(vendor: Vendor) -> dict[str, Any]:
     canonical = _vendor_canonical_json(vendor)
     hex_digest = digest_bytes(canonical)
     criticality_value = (
-        vendor.criticality_tier.value
-        if hasattr(vendor.criticality_tier, "value")
-        else str(vendor.criticality_tier)
+        vendor.criticality_tier.value if hasattr(vendor.criticality_tier, "value") else str(vendor.criticality_tier)
     )
-    type_value = (
-        vendor.type.value
-        if hasattr(vendor.type, "value")
-        else str(vendor.type)
-    )
+    type_value = vendor.type.value if hasattr(vendor.type, "value") else str(vendor.type)
     return {
         "uuid": vendor.id,
         "title": vendor.name,
         "description": vendor.notes
-        or (
-            f"TPRM vendor record for {vendor.name} "
-            f"(criticality: {criticality_value}, type: {type_value})"
-        ),
+        or (f"TPRM vendor record for {vendor.name} (criticality: {criticality_value}, type: {type_value})"),
         "props": [
             {
                 "name": "vendor-id",

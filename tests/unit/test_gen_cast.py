@@ -52,13 +52,11 @@ class TestBuildEvents:
         for ev in events:
             assert isinstance(ev, list) and len(ev) == 3
             assert isinstance(ev[0], (int, float))  # timestamp
-            assert ev[1] == "o"                       # output stream
-            assert isinstance(ev[2], str)             # data
+            assert ev[1] == "o"  # output stream
+            assert isinstance(ev[2], str)  # data
 
     def test_timestamps_monotonic_nondecreasing(self, gen: Any) -> None:
-        events = gen.build_events(
-            [["doctor"], ["catalog", "list", "--tier", "A"]], _stub_runner
-        )
+        events = gen.build_events([["doctor"], ["catalog", "list", "--tier", "A"]], _stub_runner)
         times = [ev[0] for ev in events]
         assert times == sorted(times)
         assert times[0] == 0.0
@@ -76,10 +74,14 @@ class TestBuildEvents:
     def test_output_targets_are_scrubbed_from_the_prompt(self, gen: Any) -> None:
         # The temp output paths must never leak into the displayed prompt.
         cmd = [
-            "gap", "analyze",
-            "--inventory", "x.yaml",
-            "--frameworks", "nist-800-53-rev5-moderate,soc2-tsc",
-            "--output", "{report}",
+            "gap",
+            "analyze",
+            "--inventory",
+            "x.yaml",
+            "--frameworks",
+            "nist-800-53-rev5-moderate,soc2-tsc",
+            "--output",
+            "{report}",
         ]
         events = gen.build_events([cmd], _stub_runner)
         typed = "".join(ev[2] for ev in events)
@@ -115,10 +117,7 @@ class TestRenderCast:
 class TestRedactOutput:
     def test_scratch_paths_collapse_to_filenames(self, gen: Any) -> None:
         tmp = Path("/scratch/evidentia-democast")
-        raw = (
-            f"Report exported: {tmp / gen.REPORT_OUT} (json)\n"
-            f"{tmp / gen.OSCAL_OUT} — PASS\n"
-        )
+        raw = f"Report exported: {tmp / gen.REPORT_OUT} (json)\n{tmp / gen.OSCAL_OUT} — PASS\n"
         out = gen.redact_output(raw, tmp)
         assert str(tmp) not in out
         assert f"Report exported: {gen.REPORT_OUT} (json)" in out

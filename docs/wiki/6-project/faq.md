@@ -24,6 +24,7 @@ setup. Locate it from Python:
 
 ```python
 from importlib.resources import files
+
 path = files("evidentia.examples") / "sample-inventory.yaml"
 ```
 

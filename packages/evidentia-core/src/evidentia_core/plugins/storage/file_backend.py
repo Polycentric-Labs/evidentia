@@ -45,9 +45,7 @@ class FilesystemStorageBackend[T: BaseModel](StorageBackend[T]):
     # Record IDs allow alphanumeric + dash + underscore only.
     # Lowercase enforcement is implementation-defined; this
     # backend allows mixed case.
-    _ID_VALID: ClassVar[frozenset[str]] = frozenset(
-        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
-    )
+    _ID_VALID: ClassVar[frozenset[str]] = frozenset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_")
 
     def __init__(
         self,
@@ -64,9 +62,7 @@ class FilesystemStorageBackend[T: BaseModel](StorageBackend[T]):
             raise ValueError("record_id must be non-empty")
         if any(ch not in self._ID_VALID for ch in record_id):
             raise ValueError(
-                f"record_id {record_id!r} contains invalid "
-                f"characters; allowed: alphanumeric + dash + "
-                f"underscore"
+                f"record_id {record_id!r} contains invalid characters; allowed: alphanumeric + dash + underscore"
             )
 
     def _path_for(self, record_id: str) -> Path:
@@ -87,14 +83,9 @@ class FilesystemStorageBackend[T: BaseModel](StorageBackend[T]):
         if not path.exists():
             raise KeyError(f"No record at {record_id!r}")
         try:
-            return self._record_type.model_validate_json(
-                path.read_text(encoding="utf-8")
-            )
+            return self._record_type.model_validate_json(path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, ValueError) as e:
-            raise ValueError(
-                f"Record {record_id!r} cannot be parsed as "
-                f"{self._record_type.__name__}: {e}"
-            ) from e
+            raise ValueError(f"Record {record_id!r} cannot be parsed as {self._record_type.__name__}: {e}") from e
 
     def list_records(self) -> Iterator[str]:
         for p in self._base.glob("*.json"):

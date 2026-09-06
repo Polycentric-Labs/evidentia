@@ -83,9 +83,7 @@ class PowerBIClient:
             import msal
         except ImportError as e:
             raise PowerBIApiError(
-                "msal is not installed. Install via the [powerbi] "
-                "extra: "
-                'pip install "evidentia-integrations[powerbi]"'
+                'msal is not installed. Install via the [powerbi] extra: pip install "evidentia-integrations[powerbi]"'
             ) from e
         return msal
 
@@ -103,30 +101,18 @@ class PowerBIClient:
 
         msal = self._ensure_msal()
         try:
-            authority = (
-                f"{self._config.authority_url.rstrip('/')}/"
-                f"{self._config.tenant_id}"
-            )
+            authority = f"{self._config.authority_url.rstrip('/')}/{self._config.tenant_id}"
             app = msal.ConfidentialClientApplication(
                 client_id=self._config.client_id,
                 client_credential=client_secret,
                 authority=authority,
             )
-            result = app.acquire_token_for_client(
-                scopes=[self._config.api_scope]
-            )
+            result = app.acquire_token_for_client(scopes=[self._config.api_scope])
         except Exception as e:
-            raise PowerBIAuthError(
-                f"MSAL token acquisition failed "
-                f"(driver: {type(e).__name__})"
-            ) from e
+            raise PowerBIAuthError(f"MSAL token acquisition failed (driver: {type(e).__name__})") from e
 
         if not isinstance(result, dict) or "access_token" not in result:
-            err = (
-                result.get("error_description")
-                if isinstance(result, dict)
-                else "unknown"
-            )
+            err = result.get("error_description") if isinstance(result, dict) else "unknown"
             raise PowerBIAuthError(
                 f"Power BI access token not granted. "
                 f"Verify the service principal has "
@@ -157,14 +143,10 @@ class PowerBIClient:
             self._signin()
         assert self._http is not None
         try:
-            r = self._http.get(
-                f"/groups/{self._config.workspace_id}/datasets"
-            )
+            r = self._http.get(f"/groups/{self._config.workspace_id}/datasets")
             r.raise_for_status()
         except httpx.HTTPError as e:
-            raise PowerBIPublishError(
-                f"List datasets failed: {type(e).__name__}: {e}"
-            ) from e
+            raise PowerBIPublishError(f"List datasets failed: {type(e).__name__}: {e}") from e
         result = r.json()
         value = result.get("value", [])
         if not isinstance(value, list):
@@ -203,9 +185,7 @@ class PowerBIClient:
         body = {
             "name": dataset_name,
             "defaultMode": "Push",
-            "tables": [
-                {"name": table_name, "columns": schema}
-            ],
+            "tables": [{"name": table_name, "columns": schema}],
         }
         try:
             r = self._http.post(
@@ -214,17 +194,11 @@ class PowerBIClient:
             )
             r.raise_for_status()
         except httpx.HTTPError as e:
-            raise PowerBIPublishError(
-                f"Create dataset '{dataset_name}' failed: "
-                f"{type(e).__name__}: {e}"
-            ) from e
+            raise PowerBIPublishError(f"Create dataset '{dataset_name}' failed: {type(e).__name__}: {e}") from e
         result = r.json()
         ds_id = result.get("id")
         if not ds_id:
-            raise PowerBIPublishError(
-                f"Power BI did not return a dataset ID for "
-                f"'{dataset_name}'."
-            )
+            raise PowerBIPublishError(f"Power BI did not return a dataset ID for '{dataset_name}'.")
         return str(ds_id)
 
     def ensure_dataset(
@@ -244,9 +218,7 @@ class PowerBIClient:
             schema=schema,
         )
 
-    def clear_table(
-        self, *, dataset_id: str, table_name: str
-    ) -> None:
+    def clear_table(self, *, dataset_id: str, table_name: str) -> None:
         """Delete all rows from a Push Dataset table.
 
         Power BI Push Datasets retain rows until explicitly cleared
@@ -267,26 +239,17 @@ class PowerBIClient:
             self._signin()
         assert self._http is not None
         try:
-            r = self._http.delete(
-                f"/groups/{self._config.workspace_id}/datasets/"
-                f"{dataset_id}/tables/{table_name}/rows"
-            )
+            r = self._http.delete(f"/groups/{self._config.workspace_id}/datasets/{dataset_id}/tables/{table_name}/rows")
         except httpx.HTTPError as e:
             # Network-level failure (timeout, connection refused, etc.)
-            raise PowerBIPublishError(
-                f"Clear table '{table_name}' failed: "
-                f"{type(e).__name__}: {e}"
-            ) from e
+            raise PowerBIPublishError(f"Clear table '{table_name}' failed: {type(e).__name__}: {e}") from e
         if r.status_code == 404 or 400 <= r.status_code < 500:
             # Benign — see docstring. Proceed silently; the caller's
             # subsequent push_rows call will validate the table is
             # actually pushable.
             return
         if r.status_code >= 500:
-            raise PowerBIPublishError(
-                f"Clear table '{table_name}' failed: "
-                f"HTTP {r.status_code} {r.reason_phrase}"
-            )
+            raise PowerBIPublishError(f"Clear table '{table_name}' failed: HTTP {r.status_code} {r.reason_phrase}")
 
     def push_rows(
         self,
@@ -325,16 +288,13 @@ class PowerBIClient:
             assert self._http is not None
             try:
                 r = self._http.post(
-                    f"/groups/{self._config.workspace_id}/datasets/"
-                    f"{dataset_id}/tables/{table_name}/rows",
+                    f"/groups/{self._config.workspace_id}/datasets/{dataset_id}/tables/{table_name}/rows",
                     json={"rows": batch},
                 )
                 r.raise_for_status()
             except httpx.HTTPError as e:
                 raise PowerBIPublishError(
-                    f"Push rows to '{table_name}' failed "
-                    f"(batch starting at row {offset}): "
-                    f"{type(e).__name__}: {e}"
+                    f"Push rows to '{table_name}' failed (batch starting at row {offset}): {type(e).__name__}: {e}"
                 ) from e
 
         for batch_start in range(0, len(rows), row_batch_size):
@@ -346,9 +306,7 @@ class PowerBIClient:
             # Wide-schema fallback: bisect the batch until each chunk
             # fits the 1 MB window. log2(10_000) ≈ 14, so worst case
             # we do 14 levels of bisection — bounded and predictable.
-            stack: list[tuple[list[dict[str, Any]], int]] = [
-                (batch, batch_start)
-            ]
+            stack: list[tuple[list[dict[str, Any]], int]] = [(batch, batch_start)]
             while stack:
                 chunk, offset = stack.pop()
                 chunk_payload = _serialize_batch(chunk)

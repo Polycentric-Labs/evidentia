@@ -139,9 +139,7 @@ def test_constructor_requires_uri_or_connection() -> None:
 
 
 def test_constructor_rejects_password_in_uri() -> None:
-    with pytest.raises(
-        OracleCollectorError, match="must NOT embed a password"
-    ):
+    with pytest.raises(OracleCollectorError, match="must NOT embed a password"):
         OracleCollector(connection_uri="oracle://user:secret@host:1521/orcl")
 
 
@@ -193,9 +191,7 @@ def test_write_priv_finding_fires_on_dba() -> None:
     conn = _MockConnection(responses)
     coll = OracleCollector(connection=conn)
     findings = coll.collect()
-    write_priv = [
-        f for f in findings if "EVIDENTIA-WRITE-PRIV-DETECTED" in f.source_finding_id
-    ]
+    write_priv = [f for f in findings if "EVIDENTIA-WRITE-PRIV-DETECTED" in f.source_finding_id]
     assert len(write_priv) == 1
     f = write_priv[0]
     assert f.severity == Severity.HIGH
@@ -211,9 +207,7 @@ def test_write_priv_finding_with_any_table_grants() -> None:
     conn = _MockConnection(responses)
     coll = OracleCollector(connection=conn)
     findings = coll.collect()
-    write_priv = [
-        f for f in findings if "EVIDENTIA-WRITE-PRIV-DETECTED" in f.source_finding_id
-    ]
+    write_priv = [f for f in findings if "EVIDENTIA-WRITE-PRIV-DETECTED" in f.source_finding_id]
     assert len(write_priv) == 1
     f = write_priv[0]
     assert f.severity == Severity.MEDIUM  # not DBA, just ANY-table
@@ -224,9 +218,7 @@ def test_no_write_priv_finding_when_read_only() -> None:
     conn = _MockConnection(_baseline_responses())
     coll = OracleCollector(connection=conn)
     findings = coll.collect()
-    write_priv = [
-        f for f in findings if "EVIDENTIA-WRITE-PRIV-DETECTED" in f.source_finding_id
-    ]
+    write_priv = [f for f in findings if "EVIDENTIA-WRITE-PRIV-DETECTED" in f.source_finding_id]
     assert write_priv == []
 
 
@@ -254,9 +246,7 @@ def test_dba_role_grants_finding_clean() -> None:
 
 def test_dba_role_grants_finding_too_many() -> None:
     responses = _baseline_responses()
-    responses["dba_role_privs"] = [
-        (f"APP_DBA_{i}",) for i in range(7)
-    ]
+    responses["dba_role_privs"] = [(f"APP_DBA_{i}",) for i in range(7)]
     conn = _MockConnection(responses)
     coll = OracleCollector(connection=conn)
     findings = coll.collect()

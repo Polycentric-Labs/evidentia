@@ -167,9 +167,7 @@ class TestCheckLlmModel:
 
     def test_allows_custom_api_base_on_loopback(self) -> None:
         with offline_mode():
-            check_llm_model(
-                "gpt-4o", api_base="http://127.0.0.1:8080/v1"
-            )  # self-hosted OpenAI-compatible
+            check_llm_model("gpt-4o", api_base="http://127.0.0.1:8080/v1")  # self-hosted OpenAI-compatible
             check_llm_model(
                 "custom-model",
                 api_base="https://10.0.0.50:8443/v1",

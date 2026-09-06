@@ -56,10 +56,7 @@ def verify(
         file_okay=True,
         dir_okay=False,
         readable=True,
-        help=(
-            "Custom signature file path. Defaults to <path>.asc next to "
-            "the AR file."
-        ),
+        help=("Custom signature file path. Defaults to <path>.asc next to the AR file."),
     ),
     gnupghome: Path | None = typer.Option(
         None,
@@ -89,10 +86,7 @@ def verify(
         file_okay=True,
         dir_okay=False,
         readable=True,
-        help=(
-            "Custom Sigstore bundle path. Defaults to <path>.sigstore.json "
-            "next to the AR file."
-        ),
+        help=("Custom Sigstore bundle path. Defaults to <path>.sigstore.json next to the AR file."),
     ),
     verify_key: Path | None = typer.Option(
         None,
@@ -208,49 +202,31 @@ def _render_rich(report: VerifyReport) -> None:
 
     # GPG signature
     if report.signature_valid is not None:
-        sig_status = (
-            "[green]valid[/green]" if report.signature_valid else "[red]INVALID[/red]"
-        )
+        sig_status = "[green]valid[/green]" if report.signature_valid else "[red]INVALID[/red]"
         console.print(f"GPG signature: {sig_status}")
         if report.signature_signer:
-            console.print(
-                f"  Signer key id: [cyan]{report.signature_signer}[/cyan]"
-            )
+            console.print(f"  Signer key id: [cyan]{report.signature_signer}[/cyan]")
         if report.signature_fingerprint:
-            console.print(
-                f"  Fingerprint:   [cyan]{report.signature_fingerprint}[/cyan]"
-            )
+            console.print(f"  Fingerprint:   [cyan]{report.signature_fingerprint}[/cyan]")
     else:
         console.print("[dim]No GPG signature checked.[/dim]")
 
     # Sigstore signature
     if report.sigstore_signature_valid is not None:
-        ss_status = (
-            "[green]valid[/green]"
-            if report.sigstore_signature_valid
-            else "[red]INVALID[/red]"
-        )
+        ss_status = "[green]valid[/green]" if report.sigstore_signature_valid else "[red]INVALID[/red]"
         console.print(f"Sigstore signature: {ss_status}")
         if report.sigstore_signer_identity:
-            console.print(
-                f"  Signer identity: [cyan]{report.sigstore_signer_identity}[/cyan]"
-            )
+            console.print(f"  Signer identity: [cyan]{report.sigstore_signer_identity}[/cyan]")
         if report.sigstore_signer_issuer:
-            console.print(
-                f"  Issuer:          [cyan]{report.sigstore_signer_issuer}[/cyan]"
-            )
+            console.print(f"  Issuer:          [cyan]{report.sigstore_signer_issuer}[/cyan]")
         if report.sigstore_rekor_log_index is not None:
-            console.print(
-                f"  Rekor log index: [cyan]{report.sigstore_rekor_log_index}[/cyan]"
-            )
+            console.print(f"  Rekor log index: [cyan]{report.sigstore_rekor_log_index}[/cyan]")
     else:
         console.print("[dim]No Sigstore signature checked.[/dim]")
 
     # DSSE signature
     if report.dsse_signature_valid is not None:
-        ds_status = (
-            "[green]valid[/green]" if report.dsse_signature_valid else "[red]INVALID[/red]"
-        )
+        ds_status = "[green]valid[/green]" if report.dsse_signature_valid else "[red]INVALID[/red]"
         console.print(f"DSSE signature: {ds_status}")
         if report.dsse_signer_key_id:
             console.print(f"  Signer key id: [cyan]{report.dsse_signer_key_id}[/cyan]")

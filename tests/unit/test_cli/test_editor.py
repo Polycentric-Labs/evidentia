@@ -21,15 +21,14 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
 def _stub_which(*, mapping: dict[str, str | None]) -> Any:
     def _stub(cmd: str) -> str | None:
         return mapping.get(cmd)
+
     return _stub
 
 
 # ── happy-path resolution ──────────────────────────────────────────
 
 
-def test_default_vi_resolves_when_unset(
-    clean_env: None, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_default_vi_resolves_when_unset(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "evidentia.cli._editor.shutil.which",
         _stub_which(mapping={"vi": "/usr/bin/vi"}),
@@ -38,9 +37,7 @@ def test_default_vi_resolves_when_unset(
     assert argv == ["/usr/bin/vi"]
 
 
-def test_simple_editor_resolves(
-    clean_env: None, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_simple_editor_resolves(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("EDITOR", "vim")
     monkeypatch.setattr(
         "evidentia.cli._editor.shutil.which",
@@ -50,9 +47,7 @@ def test_simple_editor_resolves(
     assert argv == ["/usr/local/bin/vim"]
 
 
-def test_editor_with_args_split_correctly(
-    clean_env: None, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_editor_with_args_split_correctly(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("EDITOR", "code -w")
     monkeypatch.setattr(
         "evidentia.cli._editor.shutil.which",
@@ -62,9 +57,7 @@ def test_editor_with_args_split_correctly(
     assert argv == ["/usr/local/bin/code", "-w"]
 
 
-def test_editor_with_quoted_args(
-    clean_env: None, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_editor_with_quoted_args(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
     """shlex.split handles quoted-arg patterns correctly."""
     monkeypatch.setenv("EDITOR", 'vim "-u" "NONE"')
     monkeypatch.setattr(
@@ -75,9 +68,7 @@ def test_editor_with_quoted_args(
     assert argv == ["/usr/bin/vim", "-u", "NONE"]
 
 
-def test_resolved_path_basename_used_for_allowlist_check(
-    clean_env: None, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_resolved_path_basename_used_for_allowlist_check(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
     """If EDITOR='editor' but PATH resolves to /usr/bin/vim,
     the allowlist check uses the resolved basename ('vim')."""
     monkeypatch.setenv("EDITOR", "editor")
@@ -94,9 +85,7 @@ def test_resolved_path_basename_used_for_allowlist_check(
 # ── opt-out env var ────────────────────────────────────────────────
 
 
-def test_opt_out_allows_any_editor(
-    clean_env: None, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_opt_out_allows_any_editor(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("EDITOR", "weirdeditor")
     monkeypatch.setenv("EVIDENTIA_EDITOR_ALLOW_ANY", "1")
     monkeypatch.setattr(
@@ -107,9 +96,7 @@ def test_opt_out_allows_any_editor(
     assert argv == ["/opt/wei/weirdeditor"]
 
 
-def test_opt_out_truthy_string_only_one_passes(
-    clean_env: None, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_opt_out_truthy_string_only_one_passes(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
     """Strict ``== "1"`` check — ``true`` / ``yes`` etc. don't bypass."""
     monkeypatch.setenv("EDITOR", "weirdeditor")
     monkeypatch.setenv("EVIDENTIA_EDITOR_ALLOW_ANY", "true")
@@ -124,17 +111,13 @@ def test_opt_out_truthy_string_only_one_passes(
 # ── error paths ────────────────────────────────────────────────────
 
 
-def test_empty_editor_exits(
-    clean_env: None, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_empty_editor_exits(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("EDITOR", "   ")
     with pytest.raises(typer.Exit):
         resolve_editor_or_exit()
 
 
-def test_editor_not_on_path_exits(
-    clean_env: None, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_editor_not_on_path_exits(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("EDITOR", "nonexistent")
     monkeypatch.setattr(
         "evidentia.cli._editor.shutil.which",
@@ -144,9 +127,7 @@ def test_editor_not_on_path_exits(
         resolve_editor_or_exit()
 
 
-def test_editor_not_in_allowlist_exits(
-    clean_env: None, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_editor_not_in_allowlist_exits(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("EDITOR", "evil")
     # The binary IS on PATH, but its basename isn't allowlisted.
     monkeypatch.setattr(
@@ -157,9 +138,7 @@ def test_editor_not_in_allowlist_exits(
         resolve_editor_or_exit()
 
 
-def test_unbalanced_quotes_in_editor_exits(
-    clean_env: None, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_unbalanced_quotes_in_editor_exits(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
     """shlex.split raises ValueError on unbalanced quotes; we
     catch and exit cleanly rather than crash."""
     monkeypatch.setenv("EDITOR", 'vim "unbalanced')
@@ -167,9 +146,7 @@ def test_unbalanced_quotes_in_editor_exits(
         resolve_editor_or_exit()
 
 
-def test_default_param_when_editor_unset(
-    clean_env: None, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_default_param_when_editor_unset(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "evidentia.cli._editor.shutil.which",
         _stub_which(mapping={"nano": "/usr/bin/nano"}),
@@ -178,9 +155,7 @@ def test_default_param_when_editor_unset(
     assert argv == ["/usr/bin/nano"]
 
 
-def test_custom_allowlist(
-    clean_env: None, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_custom_allowlist(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
     """Caller can pass a tighter allowlist."""
     monkeypatch.setenv("EDITOR", "vim")
     monkeypatch.setattr(

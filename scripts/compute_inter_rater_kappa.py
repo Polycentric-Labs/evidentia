@@ -97,15 +97,13 @@ def _load_corpus_with_labels(
                 entry = json.loads(line)
             except json.JSONDecodeError as exc:
                 print(
-                    f"WARN: line {line_no} of {path} not valid "
-                    f"JSON; skipping ({exc})",
+                    f"WARN: line {line_no} of {path} not valid JSON; skipping ({exc})",
                     file=sys.stderr,
                 )
                 continue
             if "id" not in entry:
                 print(
-                    f"WARN: line {line_no} missing 'id' field; "
-                    f"skipping",
+                    f"WARN: line {line_no} missing 'id' field; skipping",
                     file=sys.stderr,
                 )
                 continue
@@ -113,9 +111,7 @@ def _load_corpus_with_labels(
     return entries
 
 
-def _jaccard_label(
-    entry: dict[str, Any], threshold: float
-) -> bool:
+def _jaccard_label(entry: dict[str, Any], threshold: float) -> bool:
     """Rule-based rater: claim is faithful iff jaccard score
     against the most-similar source clause meets threshold.
 
@@ -155,9 +151,7 @@ def _tokenize(text: str) -> list[str]:
     return [t for t in cleaned.split() if t]
 
 
-def cohens_kappa(
-    rater1_labels: list[bool], rater2_labels: list[bool]
-) -> tuple[float, float, float]:
+def cohens_kappa(rater1_labels: list[bool], rater2_labels: list[bool]) -> tuple[float, float, float]:
     """Compute Cohen's Kappa over two parallel label arrays.
 
     Returns ``(kappa, observed_agreement, expected_agreement)``.
@@ -172,19 +166,14 @@ def cohens_kappa(
             either is empty.
     """
     if len(rater1_labels) != len(rater2_labels):
-        raise ValueError(
-            f"Rater label arrays have different lengths: "
-            f"{len(rater1_labels)} vs {len(rater2_labels)}"
-        )
+        raise ValueError(f"Rater label arrays have different lengths: {len(rater1_labels)} vs {len(rater2_labels)}")
     n = len(rater1_labels)
     if n == 0:
         raise ValueError("Cannot compute kappa over 0 entries")
 
     # Observed agreement: fraction of entries where both raters
     # agree.
-    agreements = sum(
-        1 for r1, r2 in zip(rater1_labels, rater2_labels, strict=True) if r1 == r2
-    )
+    agreements = sum(1 for r1, r2 in zip(rater1_labels, rater2_labels, strict=True) if r1 == r2)
     po = agreements / n
 
     # Expected agreement: probability of agreement under random
@@ -256,8 +245,7 @@ def _llm_rate_entries(
             label = _call_llm(resolved_model, _SYSTEM_PROMPT, user_prompt)
         except Exception as exc:
             print(
-                f"  [{i + 1}/{len(ids)}] {entry_id}: ERROR ({exc}); "
-                f"defaulting to unfaithful",
+                f"  [{i + 1}/{len(ids)}] {entry_id}: ERROR ({exc}); defaulting to unfaithful",
                 file=sys.stderr,
             )
             label = False
@@ -291,8 +279,7 @@ def main() -> int:
         "--rater2",
         type=Path,
         default=None,
-        help="Path to JSONL file with rater 2's labels. "
-        "Mutually exclusive with --rule.",
+        help="Path to JSONL file with rater 2's labels. Mutually exclusive with --rule.",
     )
     parser.add_argument(
         "--rule",
@@ -314,8 +301,7 @@ def main() -> int:
         "--llm-model",
         type=str,
         default=None,
-        help="LLM model for --rule llm (default: $EVIDENTIA_LLM_MODEL "
-        "or gpt-4o). Only used when --rule llm.",
+        help="LLM model for --rule llm (default: $EVIDENTIA_LLM_MODEL or gpt-4o). Only used when --rule llm.",
     )
     parser.add_argument(
         "--llm-output",
@@ -376,40 +362,23 @@ def main() -> int:
             )
             return 2
         # Intersection of IDs.
-        common_ids = sorted(
-            set(rater1_corpus.keys()) & set(rater2_corpus.keys())
-        )
+        common_ids = sorted(set(rater1_corpus.keys()) & set(rater2_corpus.keys()))
         if not common_ids:
             print(
-                "No overlapping IDs between rater 1 + rater 2 "
-                "corpora",
+                "No overlapping IDs between rater 1 + rater 2 corpora",
                 file=sys.stderr,
             )
             return 2
-        r1_labels = [
-            bool(rater1_corpus[i]["faithful"])
-            for i in common_ids
-        ]
-        r2_labels = [
-            bool(rater2_corpus[i]["faithful"])
-            for i in common_ids
-        ]
+        r1_labels = [bool(rater1_corpus[i]["faithful"]) for i in common_ids]
+        r2_labels = [bool(rater2_corpus[i]["faithful"]) for i in common_ids]
     else:
         rater_mode = "rule"
         common_ids = sorted(rater1_corpus.keys())
-        r1_labels = [
-            bool(rater1_corpus[i]["faithful"])
-            for i in common_ids
-        ]
+        r1_labels = [bool(rater1_corpus[i]["faithful"]) for i in common_ids]
         if args.rule == "jaccard":
-            r2_labels = [
-                _jaccard_label(rater1_corpus[i], args.rule_threshold)
-                for i in common_ids
-            ]
+            r2_labels = [_jaccard_label(rater1_corpus[i], args.rule_threshold) for i in common_ids]
         elif args.rule == "llm":
-            r2_labels = _llm_rate_entries(
-                rater1_corpus, common_ids, args.llm_model, args.llm_output, args.rater1
-            )
+            r2_labels = _llm_rate_entries(rater1_corpus, common_ids, args.llm_model, args.llm_output, args.rater1)
         else:
             print(f"Unknown rule: {args.rule}", file=sys.stderr)
             return 2
@@ -423,10 +392,7 @@ def main() -> int:
     if rater_mode == "file":
         print(f"Rater 2: {args.rater2}")
     else:
-        print(
-            f"Rater 2: rule={args.rule!r} "
-            f"(threshold {args.rule_threshold:.2f})"
-        )
+        print(f"Rater 2: rule={args.rule!r} (threshold {args.rule_threshold:.2f})")
     print(f"Entries compared: {len(common_ids)}")
     print(f"  rater 1 faithful: {sum(r1_labels)}")
     print(f"  rater 2 faithful: {sum(r2_labels)}")
@@ -438,16 +404,10 @@ def main() -> int:
     print(f"CI target: kappa >= {args.target:.2f}")
 
     if kappa >= args.target:
-        print(
-            f"PASS: kappa ({kappa:.4f}) >= "
-            f"target ({args.target:.2f})"
-        )
+        print(f"PASS: kappa ({kappa:.4f}) >= target ({args.target:.2f})")
         return 0
     else:
-        print(
-            f"FAIL: kappa ({kappa:.4f}) < "
-            f"target ({args.target:.2f})"
-        )
+        print(f"FAIL: kappa ({kappa:.4f}) < target ({args.target:.2f})")
         return 1
 
 

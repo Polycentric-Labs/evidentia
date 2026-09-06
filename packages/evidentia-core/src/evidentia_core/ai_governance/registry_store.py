@@ -65,9 +65,7 @@ def _validate_id_shape(system_id: str) -> str:
     try:
         return str(UUID(system_id))
     except (ValueError, AttributeError, TypeError) as exc:
-        raise InvalidAISystemIdError(
-            f"Invalid AI system ID format (expected UUID): {system_id!r}"
-        ) from exc
+        raise InvalidAISystemIdError(f"Invalid AI system ID format (expected UUID): {system_id!r}") from exc
 
 
 def get_ai_registry_dir(override: Path | None = None) -> Path:
@@ -111,9 +109,7 @@ class AIRegistryStore:
         # type when use_enum_values=True is set on the base model.
         entry.updated_at = utc_now()
         self._dir.mkdir(parents=True, exist_ok=True)
-        out_path = validate_within(
-            self._dir / f"{canonical}.json", self._dir
-        )
+        out_path = validate_within(self._dir / f"{canonical}.json", self._dir)
         tmp = out_path.with_suffix(".json.tmp")
         tmp.write_text(
             entry.model_dump_json(indent=2),
@@ -131,9 +127,7 @@ class AIRegistryStore:
         path = validate_within(candidate, self._dir)
         if not path.is_file():
             return None
-        return AISystemRegistryEntry.model_validate_json(
-            path.read_text(encoding="utf-8")
-        )
+        return AISystemRegistryEntry.model_validate_json(path.read_text(encoding="utf-8"))
 
     def list_all(self) -> list[AISystemRegistryEntry]:
         """Return every entry in the store, sorted by ``created_at``
@@ -144,11 +138,7 @@ class AIRegistryStore:
         entries: list[AISystemRegistryEntry] = []
         for path in sorted(self._dir.glob("*.json")):
             try:
-                entries.append(
-                    AISystemRegistryEntry.model_validate_json(
-                        path.read_text(encoding="utf-8")
-                    )
-                )
+                entries.append(AISystemRegistryEntry.model_validate_json(path.read_text(encoding="utf-8")))
             except Exception as exc:  # pragma: no cover — defensive
                 logger.warning(
                     "Skipping malformed AI registry file %s: %s",

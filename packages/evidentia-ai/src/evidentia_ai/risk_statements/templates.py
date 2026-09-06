@@ -18,14 +18,9 @@ class SystemComponent(EvidentiaModel):
 
     name: str = Field(description="Component name, e.g. 'Web Application'")
     type: str = Field(
-        description=(
-            "Component type: 'web_app', 'api', 'database', 'network', "
-            "'identity_provider', 'ci_cd'"
-        )
+        description=("Component type: 'web_app', 'api', 'database', 'network', 'identity_provider', 'ci_cd'")
     )
-    technology: str = Field(
-        description="Technology stack, e.g. 'React + Node.js', 'Amazon Redshift'"
-    )
+    technology: str = Field(description="Technology stack, e.g. 'React + Node.js', 'Amazon Redshift'")
     data_handled: list[str] = Field(
         default_factory=list,
         description="Types of data this component processes, e.g. ['PII', 'PCI-CDE']",
@@ -57,9 +52,7 @@ class SystemContext(EvidentiaModel):
         default_factory=list,
         description="Types of data processed: 'PII', 'PHI', 'PCI-CDE', 'CUI', 'public'",
     )
-    hosting: str = Field(
-        description="Hosting environment description, e.g. 'AWS (us-east-1, eu-west-1)'"
-    )
+    hosting: str = Field(description="Hosting environment description, e.g. 'AWS (us-east-1, eu-west-1)'")
     components: list[SystemComponent] = Field(
         default_factory=list,
         description="System components with their technology stacks",
@@ -67,8 +60,7 @@ class SystemContext(EvidentiaModel):
     threat_actors: list[str] = Field(
         default_factory=list,
         description=(
-            "Relevant threat actor categories. "
-            "E.g. ['External threat actors (financial)', 'Nation-state', 'Insider']"
+            "Relevant threat actor categories. E.g. ['External threat actors (financial)', 'Nation-state', 'Insider']"
         ),
     )
     existing_controls: list[str] = Field(

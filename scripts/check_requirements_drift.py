@@ -80,9 +80,7 @@ def parse_requirements_txt(path: Path, packages: list[str]) -> dict[str, str]:
     content = path.read_text(encoding="utf-8")
     versions: dict[str, str] = {}
 
-    pkg_pattern = re.compile(
-        r"^([a-zA-Z0-9_-]+)==([^\s\\]+)", re.MULTILINE
-    )
+    pkg_pattern = re.compile(r"^([a-zA-Z0-9_-]+)==([^\s\\]+)", re.MULTILINE)
     for match in pkg_pattern.finditer(content):
         name = match.group(1).lower().replace("_", "-")
         if name in packages:
@@ -118,8 +116,7 @@ def main() -> int:
         "--strict",
         action="store_true",
         default=False,
-        help="Exit 1 on any drift (for pre-release gates). "
-        "Default: advisory-only (exit 0 with WARNING).",
+        help="Exit 1 on any drift (for pre-release gates). Default: advisory-only (exit 0 with WARNING).",
     )
     args = parser.parse_args()
 
