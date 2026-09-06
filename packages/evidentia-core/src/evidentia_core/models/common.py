@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from enum import Enum
+from typing import Annotated
 from uuid import UUID, uuid4, uuid5
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 
 def utc_now() -> datetime:
@@ -111,6 +112,27 @@ def enum_value(v: object) -> str:
     pattern and can migrate to this helper in a future cleanup.
     """
     return v.value if hasattr(v, "value") else str(v)
+
+
+# "At least one character that survives ``str.strip()``." EvidentiaModel sets
+# ``str_strip_whitespace=True``, so a whitespace-only value passes a bare
+# ``min_length=1`` in the PUBLISHED schema but fails post-strip validation at
+# runtime, which schemathesis (correctly) reports as RejectedPositiveData. The
+# 2026-07-06 fix used ``\S``; the 2026-09-03 DAST run showed that is not enough:
+# regex engines disagree on whether U+00A0 and its relatives are whitespace,
+# while Python's strip removes every code point listed here (the 2026-09-06 run
+# generated a lone U+0085). Spelling the set out makes the published schema and
+# the runtime agree in every engine (JSON Schema patterns are ECMA-262 searches,
+# so the class is deliberately unanchored). Keep in sync with ``str.isspace()``.
+NON_BLANK_PATTERN = (
+    r"[^\s\x1c-\x1f\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]"
+)
+
+# The one string type to use for any free-text field that must not be blank. It
+# publishes ``minLength: 1`` AND the pattern above, so a schema-driven client (or
+# fuzzer) can never produce a value the stripping runtime then rejects. Combine
+# with ``Field(max_length=..., description=...)`` as usual.
+NonBlankStr = Annotated[str, StringConstraints(min_length=1, pattern=NON_BLANK_PATTERN)]
 
 
 class EvidentiaModel(BaseModel):

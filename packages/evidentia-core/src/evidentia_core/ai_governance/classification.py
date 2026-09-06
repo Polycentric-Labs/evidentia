@@ -27,7 +27,7 @@ from enum import Enum
 
 from pydantic import Field
 
-from evidentia_core.models.common import EvidentiaModel
+from evidentia_core.models.common import EvidentiaModel, NonBlankStr
 
 
 class AnnexIIIDomain(str, Enum):
@@ -117,22 +117,6 @@ class NISTAIRMFFunction(str, Enum):
     """Allocate risk resources, document, respond."""
 
 
-# "At least one character that survives ``str.strip()``." EvidentiaModel sets
-# ``str_strip_whitespace=True``, so a whitespace-only value passes a raw
-# ``min_length=1`` in the PUBLISHED schema but fails post-strip validation at
-# runtime, which schemathesis (correctly) reports as RejectedPositiveData on
-# POST /api/ai-gov/register. The 2026-07-06 fix used ``\S``; the 2026-09-03
-# DAST run showed that is not enough: regex engines disagree on whether
-# U+00A0 and its relatives are whitespace, while Python's strip removes every
-# code point listed here. Spelling the set out makes the published schema and
-# the runtime agree in every engine (JSON Schema patterns are ECMA-262
-# searches, so the class is deliberately unanchored). Keep in sync with
-# ``str.isspace()``.
-_NON_BLANK_PATTERN = (
-    r"[^\s\x1c-\x1f\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]"
-)
-
-
 class AISystemDescriptor(EvidentiaModel):
     """Operator-supplied use-case attributes for classification.
 
@@ -142,17 +126,12 @@ class AISystemDescriptor(EvidentiaModel):
     risk-elevating attributes.
     """
 
-    name: str = Field(
-        min_length=1,
+    name: NonBlankStr = Field(
         max_length=256,
-        # See _NON_BLANK_PATTERN above (2026-07-06 and 2026-09-03 DAST findings).
-        pattern=_NON_BLANK_PATTERN,
         description="Human-readable AI system name (free text).",
     )
-    purpose: str = Field(
-        min_length=1,
+    purpose: NonBlankStr = Field(
         max_length=2048,
-        pattern=_NON_BLANK_PATTERN,
         description="Plain-English description of what the system does.",
     )
     annex_iii_domain: AnnexIIIDomain = Field(

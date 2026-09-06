@@ -93,6 +93,7 @@ from evidentia_core.metric_store import (
     load_metric_by_id,
     save_metric,
 )
+from evidentia_core.models.common import NonBlankStr
 from evidentia_core.models.common import enum_value as _enum_value
 from evidentia_core.workflow_store import (
     InvalidWorkflowIdError,
@@ -562,8 +563,8 @@ class WorkflowAdvancePayload(BaseModel):
     new_status: WorkflowStepStatus = Field(
         description="approved / rejected / skipped / in_progress."
     )
-    actor: str = Field(
-        min_length=1, description="Actor identity (typically email)."
+    actor: NonBlankStr = Field(
+        description="Actor identity (typically email)."
     )
     note: str | None = Field(
         default=None, description="Optional rationale / approval note."

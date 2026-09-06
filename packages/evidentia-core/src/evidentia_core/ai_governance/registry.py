@@ -43,7 +43,7 @@ from evidentia_core.ai_governance.classification import (
 from evidentia_core.ai_governance.fips199 import FIPS199Categorization
 from evidentia_core.ai_governance.omb_m_24_10 import OMBImpactCategory
 from evidentia_core.ai_governance.omb_m_25_21 import OMBHighImpactAssessment
-from evidentia_core.models.common import EvidentiaModel, new_id, utc_now
+from evidentia_core.models.common import EvidentiaModel, NonBlankStr, new_id, utc_now
 
 
 class DeploymentStatus(str, Enum):
@@ -84,13 +84,11 @@ class ATOReference(EvidentiaModel):
     posture in ``notes``.
     """
 
-    system_name: str = Field(
-        min_length=1,
+    system_name: NonBlankStr = Field(
         max_length=256,
         description="System name as recorded in the SSP / ATO letter.",
     )
-    authorizing_official: str = Field(
-        min_length=1,
+    authorizing_official: NonBlankStr = Field(
         max_length=256,
         description=(
             "Name + title of the Authorizing Official (AO) who issued "
@@ -144,16 +142,14 @@ class AISystemRegistryEntry(EvidentiaModel):
             "when the descriptor changes."
         ),
     )
-    provider: str = Field(
-        min_length=1,
+    provider: NonBlankStr = Field(
         max_length=256,
         description=(
             "Who built or supplies the AI system (vendor name, "
             "in-house team name, or 'self-built')."
         ),
     )
-    owner: str = Field(
-        min_length=1,
+    owner: NonBlankStr = Field(
         max_length=256,
         description="Responsible person or team within operator org.",
     )

@@ -49,7 +49,7 @@ from enum import Enum
 from pydantic import Field
 
 from evidentia_core.ai_governance.omb_m_25_21 import HighImpactDetermination
-from evidentia_core.models.common import EvidentiaModel, new_id, utc_now
+from evidentia_core.models.common import EvidentiaModel, NonBlankStr, new_id, utc_now
 
 
 class AcquisitionPhase(str, Enum):
@@ -124,8 +124,7 @@ class AIAcquisition(EvidentiaModel):
         default_factory=new_id,
         description="Stable UUID v4 string; assigned at registration time.",
     )
-    name: str = Field(
-        min_length=1,
+    name: NonBlankStr = Field(
         max_length=256,
         description="Operator-facing name for the procurement.",
     )
