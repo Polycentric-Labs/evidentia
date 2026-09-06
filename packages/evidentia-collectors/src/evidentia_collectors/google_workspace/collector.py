@@ -103,9 +103,8 @@ _DIRECTORY_FIELDS = (
 _DIRECTORY_PATH = "/admin/directory/v1/users"
 _REPORTS_LOGIN_PATH = "/admin/reports/v1/activity/users/all/applications/login"
 
-# Reports API event names the collector treats as suspicious (a subset of
-# every event name it counts in `by_event`; see section 1 of the batch 7
-# spec for the full event-name list this collector counts).
+# Reports API login event names the collector treats as suspicious. Every
+# event name seen is counted in `by_event`; this subset drives severity.
 _SUSPICIOUS_EVENT_NAMES = frozenset(
     {
         "suspicious_login",
@@ -216,8 +215,8 @@ def _parse_timestamp(value: Any) -> datetime | None:
     """Parse an RFC 3339 Google timestamp; unparseable values are skipped.
 
     Returns ``None`` for a missing, non-string, or unparseable value
-    rather than raising, per the batch 7 spec's "an unparseable value is
-    skipped, not counted" rule.
+    rather than raising: an unparseable timestamp is skipped, never
+    counted toward a finding.
     """
     if not isinstance(value, str) or not value:
         return None
@@ -355,7 +354,7 @@ class GoogleWorkspaceCollector(BaseSaaSCollector):
     # ── HTTP ────────────────────────────────────────────────────────
 
     def _get_retrying(self, path: str, **params: Any) -> dict[str, Any]:
-        """A single GET wrapped in the bounded retry (section 3.2)."""
+        """A single GET wrapped in the bounded retry (429 and transient 5xx)."""
         retrying = build_retrying(
             function_name="google_workspace_get",
             retry_predicate=_is_retryable,
@@ -408,9 +407,22 @@ class GoogleWorkspaceCollector(BaseSaaSCollector):
                 },
             )
             users.extend(page_users)
-            page_token = data.get("nextPageToken")
-            if not page_token:
+            next_token = data.get("nextPageToken")
+            if not next_token:
                 break
+            if next_token == page_token:
+                # Stuck-token guard (the sibling SaaS collectors carry the
+                # same defense): a page that hands back the token it was
+                # fetched with would loop forever. Stop, and report the
+                # enumeration as truncated since completeness is unknown.
+                _log.warning(
+                    action=EventAction.COLLECT_ABORTED,
+                    outcome=EventOutcome.FAILURE,
+                    message="Google Workspace Directory pagination returned a repeated pageToken; stopping",
+                    evidentia={"resource": "google-workspace-user", "page": page_index},
+                )
+                return users[: self._max_users], True
+            page_token = next_token
         truncated = len(users) > self._max_users or (len(users) >= self._max_users and bool(page_token))
         return users[: self._max_users], truncated
 
@@ -439,9 +451,18 @@ class GoogleWorkspaceCollector(BaseSaaSCollector):
                 },
             )
             events.extend(page_items)
-            page_token = data.get("nextPageToken")
-            if not page_token:
+            next_token = data.get("nextPageToken")
+            if not next_token:
                 break
+            if next_token == page_token:
+                _log.warning(
+                    action=EventAction.COLLECT_ABORTED,
+                    outcome=EventOutcome.FAILURE,
+                    message="Google Workspace Reports pagination returned a repeated pageToken; stopping",
+                    evidentia={"resource": "google-workspace-login-event", "page": page_index},
+                )
+                return events[: self._max_login_events], True
+            page_token = next_token
         truncated = len(events) > self._max_login_events or (len(events) >= self._max_login_events and bool(page_token))
         return events[: self._max_login_events], truncated
 

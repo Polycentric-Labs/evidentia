@@ -43,7 +43,7 @@ def _ago(days: int) -> str:
     return _iso(_NOW - timedelta(days=days))
 
 
-# ── Baseline tenant fixture (section 3.6 of the batch 7 spec) ────────
+# ── Baseline tenant fixture ───────────────────────────────────────────
 
 
 def _baseline_users() -> list[dict[str, Any]]:
@@ -661,6 +661,21 @@ def test_directory_two_pages_joined_by_next_page_token() -> None:
     assert second_params["pageToken"] == ["dir-page-2"]
     inv = _finding(findings, "user-inventory")
     assert inv.raw_data["total"] == 8
+
+
+def test_directory_repeated_page_token_stops_and_marks_truncated() -> None:
+    """A page that returns the token it was fetched with must not loop forever."""
+    users = _baseline_users()
+    page_1 = httpx.Response(200, json={"users": users[:4], "nextPageToken": "stuck"})
+    page_2 = httpx.Response(200, json={"users": users[4:], "nextPageToken": "stuck"})
+    transport, captured = _make_handler(directory_pages=[page_1, page_2])
+    collector = _make_collector(transport, login_window_days=0)
+    findings = collector.collect()
+    # The first page and the one repeated-token page; the guard stops a third fetch.
+    assert len(_fetch_requests(captured, _DIRECTORY_PATH)) == 2
+    inv = _finding(findings, "user-inventory")
+    assert inv.raw_data["total"] == 8
+    assert inv.raw_data["truncated"] is True
 
 
 def test_max_users_truncates_and_sets_truncated_flag() -> None:
