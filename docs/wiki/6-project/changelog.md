@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Whitespace-only text is rejected at the API boundary with the standard 422** on
+  the six request fields that carried a bare `minLength: 1`:
+  `CatalogImportPayload.content`, `NextDueRequest.slug`, `MarkCompletedRequest.slug`,
+  `WorkflowAdvancePayload.actor`, `VerifyRequest.content` and
+  `MilestoneCreatePayload.description`. Such a value used to pass validation and fail
+  later inside the stripping core model. The ai-gov register, update and acquisition
+  requests keep their documented 400 `invalid_body` and publish the same non-blank
+  pattern as documentation only.
+- **SDR `metadata.updateSource`.** The FedRAMP Security Decision Record emitter writes
+  the third metadata key as `updateSource`, the name SDR schema 1.1.0 requires; the
+  status file's operator-facing field is still `source`.
+
 ### Removed
 
 - **Cursor IDE support**, following Cursor's acquisition by SpaceX. Removed: the
@@ -20,6 +34,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dev container, and the MCP server are unchanged; any MCP host that speaks the
   standard `mcpServers` stdio contract still works. Historical changelog and
   roadmap entries are left as written.
+
+### Fixed
+
+- **Published schema and runtime agree on non-blank strings.** `NonBlankStr`
+  (`evidentia_core.models.common`) carries `minLength: 1` plus the full Python
+  whitespace class, and every stripping core model uses it, so a schema-driven client
+  can no longer produce a value the runtime rejects (the 2026-09-06 stateful DAST run
+  generated a lone U+0085 owner). A regression gate over `openapi.json` fails if a new
+  `minLength: 1` string ships without the pattern.
+- **Stateful DAST harness isolation.** Each Hypothesis example starts with fresh
+  registry and catalog stores; state left behind by earlier examples changed which
+  link-derived rules were available on replay and surfaced as
+  `FlakyStrategyDefinition` in CI.
+- **FedRAMP CR26 pins re-verified (#275).** The vendored `common-definitions` (0.3.0)
+  and `security-decision-record` (1.1.1) schemas are byte-identical to
+  `FedRAMP/schemas@c3ed146` again; `FedRAMP/rules` did not move, so the KSI and FRR
+  catalogs are unchanged.
 
 ## [0.12.1] - 2026-09-05
 
