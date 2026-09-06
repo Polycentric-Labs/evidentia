@@ -77,6 +77,7 @@ randomness.
 from __future__ import annotations
 
 import os
+import shutil
 import tempfile
 
 import pytest
@@ -147,6 +148,26 @@ APIWorkflow = _make_state_machine()
 class BoundedAPIWorkflow(APIWorkflow):  # type: ignore[misc,valid-type]
     """CI-bounded profile: enough steps to traverse the linked
     lifecycles, small enough to keep the job in single-digit minutes."""
+
+    def setup(self) -> None:
+        # Fresh registry and catalog stores for EVERY example. Hypothesis
+        # replays choice sequences while shrinking, and the two stores are
+        # process-wide: a system registered by an earlier example (plus its
+        # idempotency-store entry) or a catalog it imported changes the
+        # responses a replayed sequence sees, which changes which
+        # link-derived rules are available at the same draw, and Hypothesis
+        # then raises FlakyStrategyDefinition ("Inconsistent data
+        # generation", CI run 34004542188 on 2026-09-06). Both stores read
+        # their env var per request, so repointing the vars is enough; the
+        # previous example's directory is removed to keep the run bounded.
+        for var, prefix in (
+            ("EVIDENTIA_AI_REGISTRY_DIR", "evidentia-dast-stateful-registry-"),
+            ("EVIDENTIA_CATALOG_DIR", "evidentia-dast-stateful-catalog-"),
+        ):
+            previous = os.environ.get(var)
+            os.environ[var] = tempfile.mkdtemp(prefix=prefix)
+            if previous:
+                shutil.rmtree(previous, ignore_errors=True)
 
 
 TestStateful = BoundedAPIWorkflow.TestCase

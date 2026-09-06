@@ -23,6 +23,7 @@ from pydantic import Field
 
 from evidentia_core.models.common import (
     EvidentiaModel,
+    NonBlankStr,
     current_version,
     new_id,
     utc_now,
@@ -139,8 +140,7 @@ class Milestone(EvidentiaModel):
             "fiscal date for ``OVERDUE`` derivation."
         ),
     )
-    description: str = Field(
-        min_length=1,
+    description: NonBlankStr = Field(
         max_length=2048,
         description=(
             "Human-readable milestone description. What the operator "

@@ -54,12 +54,12 @@ class TestBuildSdrDocument:
         assert doc["keySecurityIndicators"][0]["ksiId"] == "KSI-CED-RAT"
 
     def test_metadata_block_is_rule_required_and_schema_permitted(self) -> None:
-        """SDR-CSO-MTD metadata rides as an additional property.
+        """SDR-CSO-MTD metadata matches the shape the schema now models.
 
-        The published schema models no metadata field but does not set
-        ``additionalProperties: false`` — if upstream ever locks that
-        down, this round-trip breaks and the emitter must move the
-        block. This test pins the assumption.
+        SDR schema 1.1.0 (upstream issue #20) added an optional ``metadata``
+        object with required ``version``, ``lastUpdated`` and ``updateSource``.
+        The emitter writes exactly those keys; the companion test below
+        proves the schema enforces them.
         """
         doc = build_sdr_document(
             _status({"KSI-CED-RAT": _minimal_entry()}),
@@ -68,9 +68,23 @@ class TestBuildSdrDocument:
         assert doc["metadata"] == {
             "version": "1.0.0",
             "lastUpdated": "2026-07-14T12:00:00+00:00",
-            "source": "unit tests",
+            "updateSource": "unit tests",
         }
         assert validate_sdr_document(doc) == []
+
+    def test_metadata_keys_are_schema_enforced(self) -> None:
+        """The 2026-09-06 re-vendor: a metadata block spelled the old way fails."""
+        doc = build_sdr_document(
+            _status({"KSI-CED-RAT": _minimal_entry()}),
+            last_updated=LAST_UPDATED,
+        )
+        doc["metadata"] = {
+            "version": "1.0.0",
+            "lastUpdated": "2026-07-14T12:00:00+00:00",
+            "source": "unit tests",
+        }
+        errors = validate_sdr_document(doc)
+        assert any("updateSource" in e for e in errors), errors
 
     def test_indicators_sorted_by_id_for_determinism(self) -> None:
         doc = build_sdr_document(

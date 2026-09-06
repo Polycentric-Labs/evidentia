@@ -37,6 +37,7 @@ from datetime import UTC, date, datetime
 from typing import Any
 
 from evidentia_core.audit import EventAction, EventOutcome, get_logger
+from evidentia_core.models.common import NonBlankStr
 from evidentia_core.models.common import enum_value as _enum_value
 from evidentia_core.models.gap import (
     ControlGap,
@@ -384,8 +385,7 @@ class MilestoneCreatePayload(BaseModel):
     """Body shape for POST /api/poam/items/{id}/milestones."""
 
     target_date: date = Field(description="ISO-8601 target completion date.")
-    description: str = Field(
-        min_length=1,
+    description: NonBlankStr = Field(
         max_length=2048,
         description="Milestone description.",
     )

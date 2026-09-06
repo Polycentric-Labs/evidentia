@@ -16,8 +16,8 @@ and sha256 check so the two cannot disagree about the dataset).
 
 | File | Upstream fidelity |
 |------|-------------------|
-| `fedramp-security-decision-record-schema-2026-06-24.json` | Byte-identical to upstream (since the 2026-08-21 re-vendor) |
-| `fedramp-common-definitions-schema-2026-06-24.json` | Byte-identical to upstream |
+| `fedramp-security-decision-record-schema-2026-06-24.json` | Byte-identical to upstream (re-vendored 2026-09-06 at schema 1.1.1) |
+| `fedramp-common-definitions-schema-2026-06-24.json` | Byte-identical to upstream (re-vendored 2026-09-06 at schema 0.3.0) |
 
 Both copies are verifiable against upstream by git blob SHA: `git
 hash-object <file>` must equal the `blob_sha` recorded in `UPSTREAM.json`.
@@ -40,6 +40,19 @@ the local delta had been, and retired the delta: the vendored SDR schema is
 byte-identical to upstream again and `UPSTREAM.json` records `local_delta:
 null` for both files. The `fedramp-schema-watch` sentinel surfaced the merge
 exactly as designed.
+
+## History: the 2026-09-06 re-vendor (SDR metadata modelled upstream)
+
+Upstream issue #20 ("Add metadata fields to the SDR schema", per SDR-CSO-MTD)
+landed on 2026-09-01 as SDR schema 1.1.0: an optional top-level `metadata`
+object with required `version`, `lastUpdated` and `updateSource`. Evidentia's
+emitter had carried a rule-required `metadata` block since v0.11 as a
+schema-permitted additional property, with the third key spelled `source`. The
+re-vendor renamed the emitted key to `updateSource` in the same change, so the
+block validates under the new shape; the operator-facing status-file field is
+still `source`. Common-definitions 0.3.0 (optional `painReductionEvents`, a
+`Remediated` final disposition, a citation fix) does not touch the one `$ref`
+the SDR schema takes from it. `FedRAMP/rules` did not move.
 
 ## Re-sync procedure
 

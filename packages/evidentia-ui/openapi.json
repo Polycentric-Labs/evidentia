@@ -64,6 +64,7 @@
             "description": "Operator-facing name for the procurement.",
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Name",
             "type": "string"
           },
@@ -302,6 +303,7 @@
             "description": "Responsible person or team within operator org.",
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Owner",
             "type": "string"
           },
@@ -309,6 +311,7 @@
             "description": "Who built or supplies the AI system (vendor name, in-house team name, or 'self-built').",
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Provider",
             "type": "string"
           },
@@ -373,6 +376,7 @@
             "description": "Name + title of the Authorizing Official (AO) who issued the ATO. Free-form to accommodate org-specific title conventions.",
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Authorizing Official",
             "type": "string"
           },
@@ -406,6 +410,7 @@
             "description": "System name as recorded in the SSP / ATO letter.",
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "System Name",
             "type": "string"
           }
@@ -843,6 +848,7 @@
             "description": "Raw catalog document (JSON or YAML text).",
             "maxLength": 20000000,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Content",
             "type": "string"
           },
@@ -3685,6 +3691,7 @@
           "slug": {
             "description": "Cadence slug (e.g., 'nist-800-53-rev5-ca7').",
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Slug",
             "type": "string"
           },
@@ -3970,6 +3977,7 @@
             "description": "Human-readable milestone description. What the operator is committing to deliver. Auditors read this verbatim from the OSCAL POA&M emit; it should stand alone without the surrounding gap context.",
             "maxLength": 2048,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Description",
             "type": "string"
           },
@@ -4049,6 +4057,7 @@
             "description": "Milestone description.",
             "maxLength": 2048,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Description",
             "type": "string"
           },
@@ -4465,6 +4474,7 @@
           "slug": {
             "description": "Cadence slug (e.g., 'nist-800-53-rev5-ca7').",
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Slug",
             "type": "string"
           }
@@ -5257,6 +5267,7 @@
           "name": {
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Name",
             "type": "string"
           },
@@ -5322,12 +5333,14 @@
           "owner": {
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Owner",
             "type": "string"
           },
           "provider": {
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Provider",
             "type": "string"
           }
@@ -6211,6 +6224,7 @@
               {
                 "maxLength": 256,
                 "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                 "type": "string"
               },
               {
@@ -6224,6 +6238,7 @@
               {
                 "maxLength": 256,
                 "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                 "type": "string"
               },
               {
@@ -6686,6 +6701,7 @@
             "description": "The OSCAL Assessment Result document, inline, as a JSON string. NOT a filesystem path — the server writes this to a private temp file, verifies it, and deletes it. Bounded at ~8 MB so an oversized body is rejected (422) before any disk write, independent of any reverse-proxy body limit.",
             "maxLength": 8000000,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Content",
             "type": "string"
           },
@@ -6863,6 +6879,7 @@
           "actor": {
             "description": "Actor identity (typically email).",
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Actor",
             "type": "string"
           },

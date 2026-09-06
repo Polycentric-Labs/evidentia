@@ -45,7 +45,7 @@ import hashlib
 import json
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 from evidentia_core.ai_governance import (
     AcquisitionPhase,
@@ -83,6 +83,7 @@ from evidentia_core.ai_governance.registry_store import (
     get_ai_registry_dir,
 )
 from evidentia_core.audit import EventAction, EventOutcome, get_logger
+from evidentia_core.models.common import NON_BLANK_PATTERN
 from evidentia_core.security import FileLock, atomic_write_text
 from fastapi import APIRouter, Header, Query
 from fastapi import Path as FastAPIPath
@@ -120,6 +121,22 @@ _SYSTEM_ID_UUID_PATTERN = (
     r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}"
     r"-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
 )
+
+# Documentation-only non-blank pattern for the three request models whose
+# whitespace-only rejection is the DOCUMENTED, tested 400 ``invalid_body``
+# (the handlers catch the registry model's post-strip ValidationError).
+# ``json_schema_extra`` publishes the constraint so a schema-driven client
+# or fuzzer never sends a value the runtime rejects, without turning that
+# 400 into an automatic 422 (the same reasoning as ``_SYSTEM_ID_PATH``
+# below). Core models use ``NonBlankStr`` instead, where the 422 is the
+# existing behaviour.
+_NON_BLANK_SCHEMA: dict[str, Any] = {"pattern": NON_BLANK_PATTERN}
+# For optional fields the pattern must sit INSIDE the string variant of the
+# anyOf, where schema-driven clients read it; a Field-level json_schema_extra
+# would land on the wrapper instead.
+_OptionalNonBlank256 = Annotated[
+    str, Field(min_length=1, max_length=256, json_schema_extra=_NON_BLANK_SCHEMA)
+]
 
 _SYSTEM_ID_PATH = FastAPIPath(
     description="Registered AI system ID (UUID).",
@@ -171,8 +188,12 @@ class RegisterRequest(BaseModel):
     )
 
     descriptor: AISystemDescriptor
-    provider: str = Field(min_length=1, max_length=256)
-    owner: str = Field(min_length=1, max_length=256)
+    provider: str = Field(
+        min_length=1, max_length=256, json_schema_extra=_NON_BLANK_SCHEMA
+    )
+    owner: str = Field(
+        min_length=1, max_length=256, json_schema_extra=_NON_BLANK_SCHEMA
+    )
     deployment_status: DeploymentStatus = Field(
         default=DeploymentStatus.PROPOSED
     )
@@ -736,8 +757,8 @@ class UpdateSystemRequest(BaseModel):
         }
     )
 
-    owner: str | None = Field(default=None, min_length=1, max_length=256)
-    provider: str | None = Field(default=None, min_length=1, max_length=256)
+    owner: _OptionalNonBlank256 | None = None
+    provider: _OptionalNonBlank256 | None = None
     deployment_status: DeploymentStatus | None = Field(default=None)
     ssp_reference: str | None = Field(default=None, max_length=2048)
 
@@ -1264,7 +1285,9 @@ class RegisterAcquisitionRequest(BaseModel):
     M-25-21 vocabulary (defaults to ``not_assessed``).
     """
 
-    name: str = Field(min_length=1, max_length=256)
+    name: str = Field(
+        min_length=1, max_length=256, json_schema_extra=_NON_BLANK_SCHEMA
+    )
     solicitation_reference: str | None = Field(default=None, max_length=256)
     description: str | None = Field(default=None, max_length=4000)
     likely_high_impact: HighImpactDetermination = Field(

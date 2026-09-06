@@ -34,7 +34,7 @@ from enum import Enum
 
 from pydantic import Field
 
-from evidentia_core.models.common import EvidentiaModel
+from evidentia_core.models.common import EvidentiaModel, NonBlankStr
 
 
 class CadenceFrequency(str, Enum):
@@ -93,8 +93,7 @@ class ConmonCadence(EvidentiaModel):
     only; semantic changes require a new slug).
     """
 
-    slug: str = Field(
-        min_length=1,
+    slug: NonBlankStr = Field(
         max_length=128,
         description=(
             "Unique cadence identifier (``framework-activity`` form, "
@@ -102,8 +101,7 @@ class ConmonCadence(EvidentiaModel):
             "key + audit-trail prop value."
         ),
     )
-    framework: str = Field(
-        min_length=1,
+    framework: NonBlankStr = Field(
         max_length=128,
         description=(
             "Framework identifier (matches the gap-analyzer + catalog "
@@ -111,8 +109,7 @@ class ConmonCadence(EvidentiaModel):
             "/ ``cmmc-v2`` / ``dod-rmf`` / ``occ-2026-13`` / etc.)."
         ),
     )
-    activity: str = Field(
-        min_length=1,
+    activity: NonBlankStr = Field(
         max_length=128,
         description=(
             "Activity within the framework (e.g., ``continuous-monitoring``"
@@ -123,8 +120,7 @@ class ConmonCadence(EvidentiaModel):
     frequency: CadenceFrequency = Field(
         description="How often the cycle repeats.",
     )
-    description: str = Field(
-        min_length=1,
+    description: NonBlankStr = Field(
         max_length=1024,
         description=(
             "Human-readable description of what the cycle covers + "

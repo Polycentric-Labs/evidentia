@@ -66,6 +66,7 @@ from evidentia_core.conmon.daemon import (
     read_daemon_history,
     read_daemon_status,
 )
+from evidentia_core.models.common import NonBlankStr
 from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
 
@@ -84,8 +85,7 @@ _log = get_logger("evidentia_api.routers.conmon")
 
 
 class NextDueRequest(BaseModel):
-    slug: str = Field(
-        min_length=1,
+    slug: NonBlankStr = Field(
         description="Cadence slug (e.g., 'nist-800-53-rev5-ca7').",
     )
     last_completed: date = Field(
@@ -517,8 +517,7 @@ async def conmon_daemon_history_endpoint(
 
 
 class MarkCompletedRequest(BaseModel):
-    slug: str = Field(
-        min_length=1,
+    slug: NonBlankStr = Field(
         description="Cadence slug (e.g., 'nist-800-53-rev5-ca7').",
     )
     when: date = Field(

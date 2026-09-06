@@ -45,6 +45,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from evidentia_core.models.common import NonBlankStr
 from evidentia_core.network_guard import is_offline
 from evidentia_core.oscal.verify import verify_ar_file
 from fastapi import APIRouter
@@ -68,8 +69,7 @@ class VerifyRequest(BaseModel):
     usage error.
     """
 
-    content: str = Field(
-        min_length=1,
+    content: NonBlankStr = Field(
         max_length=8_000_000,
         description=(
             "The OSCAL Assessment Result document, inline, as a JSON "
