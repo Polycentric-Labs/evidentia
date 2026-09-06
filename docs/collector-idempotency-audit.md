@@ -57,7 +57,7 @@ cursor logic or store upserts. Phase 10 closes that gap directly.
 
 ### Pagination model classes
 
-Three pagination patterns are in play across the 14 collectors:
+Three pagination patterns are in play across the collectors:
 
 - **Full enumeration** (no pagination needed). The source returns
   the full surface in one response. Examples: `AwsCollector`'s

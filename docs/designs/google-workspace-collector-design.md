@@ -67,8 +67,7 @@ count as inactive.
 
 ## 4. Blind spots
 
-Four, documented on the collector and surfaced in `evidentia doctor` style
-disclosure:
+Four, documented on the collector's `BLIND_SPOTS` list:
 
 - **`EVIDENTIA-GOOGLE-WORKSPACE-TOKEN-LIFETIME`**: the pre-minted token has no
   refresh path; a long enumeration against a very large tenant can outlive it.
@@ -84,7 +83,7 @@ disclosure:
 ## 5. What "extend the Okta leaf" meant in this batch
 
 No CLI, API or console surface changed for Okta. Four internal changes to
-`packages/evidentia_collectors/okta/collector.py`:
+`packages/evidentia-collectors/src/evidentia_collectors/okta/collector.py`:
 
 1. Every finding's `control_ids=[...]` becomes `control_mappings=list(<MAPPINGS>)`,
    so the authored OLIR relationship and justification ship instead of being

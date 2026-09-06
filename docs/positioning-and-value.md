@@ -139,7 +139,7 @@ Meanwhile, the compliance workload keeps growing. A single fintech or healthcare
 > 104 coverable CLI leaves, with 13 further leaves `exempt` by design:
 > daemons, the server launcher, sidebar chrome, and the index-route
 > onboarding wizard) that
-> renders its own version live from the API, **13 read-mostly MCP tools**, six
+> renders its own version live from the API, **14 read-mostly MCP tools**, six
 > Python packages with public APIs + the evidentia-ui frontend that bundles into
 > the API server, **15 credentialed evidence collectors**
 > (AWS, GitHub, Okta, Google Workspace, 5 SQL DB adapters [Postgres / MySQL /
