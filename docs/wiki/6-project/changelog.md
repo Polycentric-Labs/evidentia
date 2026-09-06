@@ -10,6 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- The container's two pinned bases move to their current digests: the
+  `python:3.13-slim` builder (`ffb752e…` → `9d2e5553…`, also synced in
+  `release.yml`'s pip-compile step and `Dockerfile.demo`) and the
+  `dhi.io/python:3.13` runtime (`e512071…` → `fec89928…`). The 2026-08-31
+  post-publish rescan of the published v0.12.0 image found openssl 3.5.6
+  carrying DEBIAN-CVE-2026-14456, -14457 and -18798 (High 7.5, fixed in
+  3.5.7); the rebuilt image picks up the patched base.
+- `transformers` 5.8.0 → 5.15.1 in the lock (GHSA-xrqw-3rrv-vx5w, path
+  traversal in `save_pretrained`; reachable only through the optional
+  `faithfulness-semantic` extra, never in the container closure) and
+  `browserslist` 4.28.2 → 4.28.9 in the UI lock (GHSA-73wf-gq98-2v4g,
+  build tooling only).
+
 ### Added
 
 - **Python 3.14 support** (closes #212): `requires-python` lifted to
@@ -46,6 +61,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `POST /api/ai-gov/register` no longer rejects a schema-compliant request:
+  the descriptor `name`/`purpose` fields now publish an engine-independent
+  non-blank `pattern` that spells out every code point Python's `str.strip()`
+  removes, so the OpenAPI schema and the strip-then-`min_length` runtime
+  agree in every regex engine (the 2026-09-03 stateful DAST run generated a
+  lone U+00A0, which `\S` admitted and the runtime stripped to empty).
+- The weekly "Dependabot Updates" uv job no longer errors: `typer >=0.27`
+  (blocked by our deliberate `<0.27` cap) and `rich >=15` (blocked by
+  instructor's `<15` cap) are ignored with removal triggers, instead of
+  being retried into a `dependency_file_not_resolvable` job error.
 - The OSCAL emitters no longer write empty optional arrays: a zero-gap
   Assessment Results omits `observations`/`findings`, and a POA&M whose
   severity filter selects no gaps omits `observations`/`risks` (OSCAL

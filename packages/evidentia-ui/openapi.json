@@ -190,7 +190,7 @@
             "description": "Human-readable AI system name (free text).",
             "maxLength": 256,
             "minLength": 1,
-            "pattern": "\\S",
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Name",
             "type": "string"
           },
@@ -198,7 +198,7 @@
             "description": "Plain-English description of what the system does.",
             "maxLength": 2048,
             "minLength": 1,
-            "pattern": "\\S",
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Purpose",
             "type": "string"
           }

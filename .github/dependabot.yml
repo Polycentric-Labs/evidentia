@@ -111,6 +111,19 @@ updates:
       - dependency-name: "mcp"
         update-types:
           - "version-update:semver-major"
+      # typer is DELIBERATELY capped <0.27 in packages/evidentia/pyproject.toml
+      # (0.x minors are breaking-prone; the bump gets isolated review). Without
+      # this ignore, Dependabot's uv job still tries 0.27.x every week, hits the
+      # cap, and records a dependency_file_not_resolvable job ERROR (the weekly
+      # red "Dependabot Updates" run since 2026-08-29). REMOVAL TRIGGER: the
+      # typer cap review lifts the pyproject cap; drop both in that PR.
+      - dependency-name: "typer"
+        versions: [">=0.27"]
+      # rich 15 is blocked by a TRANSITIVE cap (instructor pins rich<15), so the
+      # same job-error pattern fires for rich. REMOVAL TRIGGER: instructor
+      # releases with rich>=15 allowed (check its metadata), then drop this.
+      - dependency-name: "rich"
+        versions: [">=15"]
 
   # ---------------------------------------------------------------------
   # Frontend (npm — packages/evidentia-ui)

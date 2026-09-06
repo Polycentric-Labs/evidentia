@@ -136,3 +136,50 @@ class TestClassificationOutput:
         d = AISystemDescriptor(name="x", purpose="y")
         result = classify(d)
         assert len(result.rationale) >= 1
+
+
+class TestNonBlankPatternMatchesRuntimeStrip:
+    r"""The published schema and the strip-then-min_length runtime must agree.
+
+    2026-09-03 stateful DAST: schemathesis generated a lone U+00A0 for
+    ``descriptor.name``. ``\S`` admitted it (some regex engines treat NBSP as
+    non-whitespace) while ``str.strip()`` removed it, so a schema-compliant
+    request got a 422. The pattern now spells out every code point Python
+    strips, so no engine can generate a value the runtime rejects.
+    """
+
+    def test_pattern_rejects_every_python_whitespace_code_point(self) -> None:
+        import re
+
+        from evidentia_core.ai_governance.classification import _NON_BLANK_PATTERN
+
+        leaked = [
+            hex(cp) for cp in range(0x110000)
+            if chr(cp).isspace() and re.search(_NON_BLANK_PATTERN, chr(cp))
+        ]
+        assert leaked == [], f"whitespace code points the pattern admits: {leaked}"
+        assert re.search(_NON_BLANK_PATTERN, "a")
+        assert re.search(_NON_BLANK_PATTERN, "\u00a0x\u00a0")
+
+    def test_published_schema_carries_the_pattern(self) -> None:
+        from evidentia_core.ai_governance.classification import (
+            _NON_BLANK_PATTERN,
+            AISystemDescriptor,
+        )
+
+        props = AISystemDescriptor.model_json_schema()["properties"]
+        assert props["name"]["pattern"] == _NON_BLANK_PATTERN
+        assert props["purpose"]["pattern"] == _NON_BLANK_PATTERN
+
+    def test_nbsp_only_name_is_rejected_by_runtime_and_schema_alike(self) -> None:
+        import re
+
+        import pytest
+        from evidentia_core.ai_governance.classification import (
+            _NON_BLANK_PATTERN,
+            AISystemDescriptor,
+        )
+
+        assert re.search(_NON_BLANK_PATTERN, "\u00a0") is None
+        with pytest.raises(ValueError):
+            AISystemDescriptor(name="\u00a0", purpose="valid purpose")
