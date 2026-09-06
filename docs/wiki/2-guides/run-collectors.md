@@ -19,9 +19,9 @@ model, and the network/SSRF guards.
 - **Pull live posture** from a source system and turn it into control-mapped
   findings you can fold into a gap analysis (`--format oscal-ar`) or convert to
   OCSF for a SIEM.
-- **Cover many providers** — cloud (AWS), code (GitHub), identity (Okta), data
-  stores (PostgreSQL, MySQL, SQLite, MS SQL, Oracle, Databricks, Snowflake), and
-  vendor-risk platforms (Vanta, Drata, BitSight, SecurityScorecard).
+- **Cover many providers** — cloud (AWS), code (GitHub), identity (Okta, Google
+  Workspace), data stores (PostgreSQL, MySQL, SQLite, MS SQL, Oracle, Databricks,
+  Snowflake), and vendor-risk platforms (Vanta, Drata, BitSight, SecurityScorecard).
 - **Ingest or convert OCSF** — pull third-party OCSF findings *in* (`collect ocsf`)
   or push Evidentia findings *out* to an OCSF bundle (`collect convert`).
 
@@ -68,9 +68,10 @@ List the whole collector matrix:
 evidentia collect --help
 ```
 
-You will see the credentialed providers (`aws`, `github`, `okta`, `sql`,
-`databricks`, `snowflake`, `vanta`, `drata`, `bitsight`, `securityscorecard`) plus
-the two OCSF verbs (`ocsf` to ingest, `convert` to emit). Each subcommand has its
+You will see the credentialed providers (`aws`, `github`, `okta`,
+`google-workspace`, `sql`, `databricks`, `snowflake`, `vanta`, `drata`, `bitsight`,
+`securityscorecard`) plus the two OCSF verbs (`ocsf` to ingest, `convert` to
+emit). Each subcommand has its
 own `--help` with the exact flags and the env var its secret is read from:
 
 ```bash
@@ -97,8 +98,8 @@ $env:GITHUB_TOKEN = "ghp_your_token_here"
 For the SQL adapters, the password lives in the env var named by `--password-env`
 (default differs per adapter, e.g. `EVIDENTIA_POSTGRES_PASSWORD`). For the
 SaaS/vendor-risk collectors, set the provider's token env var (`OKTA_API_TOKEN`,
-`VANTA_API_TOKEN`, `DRATA_API_TOKEN`, `BITSIGHT_API_TOKEN`,
-`SECURITYSCORECARD_API_TOKEN`, `SNOWFLAKE_PASSWORD`, etc.).
+`GOOGLE_WORKSPACE_ACCESS_TOKEN`, `VANTA_API_TOKEN`, `DRATA_API_TOKEN`,
+`BITSIGHT_API_TOKEN`, `SECURITYSCORECARD_API_TOKEN`, `SNOWFLAKE_PASSWORD`, etc.).
 
 ## Step 3 — Run a collector
 
@@ -119,6 +120,35 @@ evidentia collect aws --region us-east-1 --output aws-findings.json
 ```bash
 evidentia collect okta --org-url https://your-org.okta.com --output okta-findings.json
 ```
+
+```bash
+evidentia collect google-workspace --customer my_customer --output google-workspace-findings.json
+```
+
+### Google Workspace
+
+The Google Workspace collector is read-only against two Admin SDK surfaces: the
+Directory API (user inventory, admin roles, 2-Step Verification status) and the
+Reports API (login activity). Set `GOOGLE_WORKSPACE_ACCESS_TOKEN` to a
+**pre-minted** OAuth 2.0 access token carrying two read-only scopes:
+`https://www.googleapis.com/auth/admin.directory.user.readonly` always, and
+`https://www.googleapis.com/auth/admin.reports.audit.readonly` when
+`--login-window-days` is greater than 0. The collector never mints or refreshes
+a token itself, so a very long enumeration against a very large tenant can
+outlive the token's roughly one-hour lifetime.
+
+It emits six findings: user inventory, inactive accounts, admin accounts, super
+admin 2-Step Verification enrollment, tenant-wide 2-Step Verification
+enrollment, and login activity. `--login-window-days` (default 30, range
+0-180) controls how far back the Reports API pull looks; setting it to 0 skips
+the Reports API entirely, so no login-activity finding is produced and the
+manifest records the omission rather than treating it as an error.
+
+Four blind spots are documented on the collector: the pre-minted token has no
+refresh path; 2-Step Verification is reported as enrolled/enforced booleans,
+not the method in use; login activity is bounded by Google's roughly 180-day
+retention window; and `--max-users` / `--max-login-events` truncate very large
+tenants (the affected finding records `truncated`).
 
 The SQL adapter takes `--adapter`, a password-free `--connection-uri`, and reads
 the password from `--password-env`:
@@ -195,8 +225,9 @@ auth-gated like the credentialed collectors.
 
 ### Collectors tab
 
-1. **Choose a collector.** Click a provider pill (AWS, GitHub, Okta, PostgreSQL,
-   Databricks, Snowflake, Vanta, Drata, BitSight, SecurityScorecard). Each card
+1. **Choose a collector.** Click a provider pill (AWS, GitHub, Okta, Google
+   Workspace, PostgreSQL, Databricks, Snowflake, Vanta, Drata, BitSight,
+   SecurityScorecard). Each card
    says where its credentials come from (e.g. "Token via server `$GITHUB_TOKEN`").
 2. **Fill the non-secret parameters.** The form carries only fields like region,
    repo, org URL, connection URI (without a password), or account/user — never a

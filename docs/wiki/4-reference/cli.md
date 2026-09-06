@@ -329,6 +329,22 @@ Collect evidence from a GitHub repository.
 | `--block-private-ips, --allow-private-ips` | Reject hosts that resolve to RFC1918 / link-local / loopback / multicast / reserved ranges before opening the connection. Default True — closes the SSRF surface that could otherwise expose AWS / GCP / Azure instance-metadata endpoints (169.254.169.254) or internal services. Use --allow-private-ips to override for trusted internal endpoints. |
 | `--output, -o` | Where to write the findings JSON. Default: stdout. |
 
+### `evidentia collect google-workspace`
+
+Collect evidence from a Google Workspace tenant (read-only).
+
+| Flag / argument | Description |
+| --- | --- |
+| `--token-env` | Name of the env var holding a pre-minted Google Workspace OAuth 2.0 access token. The CLI reads from this env var rather than accepting the token as a flag (per secret-handling protocol). Defaults to GOOGLE_WORKSPACE_ACCESS_TOKEN. The token must carry the admin.directory.user.readonly scope, and the admin.reports.audit.readonly scope when --login-window-days is greater than 0. |
+| `--customer` | Directory API customer id. Default my_customer (Google's literal alias for the caller's own tenant). |
+| `--inactive-threshold-days` | Days since last activity that mark an active account inactive. Default: 90 (per AC-2(3)). |
+| `--max-users` | Hard cap on Directory user enumeration. Default 10000. |
+| `--login-window-days` | How many days back the Reports API login-activity pull covers. 0 skips the Reports API entirely (no login-activity finding). Default 30, range [0, 180]. |
+| `--max-login-events` | Hard cap on Reports API login-event enumeration. Default 10000. |
+| `--base-url` | Google Workspace Admin SDK base URL. Override for testing. |
+| `--block-private-ips, --allow-private-ips` | Reject hosts that resolve to RFC1918 / link-local / loopback / multicast / reserved ranges before opening the connection. Default True — closes the SSRF surface that could otherwise expose AWS / GCP / Azure instance-metadata endpoints (169.254.169.254) or internal services. Use --allow-private-ips to override for trusted internal endpoints. |
+| `--output, -o` | Where to write the findings JSON. Default: stdout. |
+
 ### `evidentia collect greenbone`
 
 Ingest a Greenbone Community Edition GMP report XML export (v0.13 V13-05).

@@ -57,7 +57,7 @@ cursor logic or store upserts. Phase 10 closes that gap directly.
 
 ### Pagination model classes
 
-Three pagination patterns are in play across the 13 collectors:
+Three pagination patterns are in play across the 14 collectors:
 
 - **Full enumeration** (no pagination needed). The source returns
   the full surface in one response. Examples: `AwsCollector`'s
@@ -98,6 +98,7 @@ posture **after v0.10.5 Phase 10** lands.
 | `GitHubCollector` (visibility / branch protection / CODEOWNERS) | Single-shot REST calls (no pagination). | `f"{slug}:visibility"`, `f"{slug}:{branch}:{rule}"`, `f"{slug}:codeowners"` — all deterministic from repo coordinates. | GAP — `id` random | PASS — `id` derived from (`github`, `<above>`) |
 | `DependabotCollector` | Page-number pagination (`?page=N`) with 100-page safety cap. | Native `alert.number` (string). | GAP — `id` random | PASS — `id` derived from (`github-dependabot`, `<alert.number>`) |
 | `OktaCollector` | Link-header pagination (`rel="next"`) on `/api/v1/users`; single-shot elsewhere; capped at `max_users=10_000`. | `f"user-inventory:{source_system_id}"`, `f"inactive-accounts:{source_system_id}"`, `f"admin-accounts:{source_system_id}"`, `f"mfa-enrollment:{source_system_id}"`, etc. — all deterministic from the org URL. | GAP — `id` random | PASS — `id` derived from (`okta`, `<above>`) |
+| `GoogleWorkspaceCollector` (v0.13 batch 7) | `nextPageToken` pagination on both the Directory API (`/admin/directory/v1/users`) and the Reports API (login activity); capped at `max_users=10_000` / `max_login_events=10_000`. | `f"user-inventory:{source_system_id}"`, `f"inactive-accounts:{source_system_id}"`, `f"admin-accounts:{source_system_id}"`, `f"admin-2sv:{source_system_id}"`, `f"2sv-enrollment:{source_system_id}"`, `f"login-activity:{source_system_id}"`, all deterministic from the customer id. | N/A, added after Phase 10; ships with deterministic ids from its first release | PASS: `id` derived from (`google-workspace`, `<above>`) |
 | `VantaCollector` | Cursor-token pagination + stuck-cursor guard + `max_vendors` cap. | `f"vendor-inventory:{vendor_id}"`, `f"vendor-high-risk:{vendor_id}"`. | GAP — `id` random | PASS — `id` derived from (`vanta-vendors`, `<above>`) |
 | `DrataCollector` | Cursor-token pagination + stuck-cursor guard + `max_vendors` cap. | `f"vendor-inventory:{vendor_id}"`, `f"vendor-high-risk:{vendor_id}"`. | GAP — `id` random | PASS — `id` derived from (`drata-vendors`, `<above>`) |
 | `BitSightCollector` | Cursor-token pagination + stuck-cursor guard + `max_companies` cap. Refuses scheme-downgrade `next` URLs (per `docs/threat-model.md`). | `f"company-inventory:{guid}"`, `f"company-low-rating:{guid}"`. | GAP — `id` random | PASS — `id` derived from (`bitsight-vendors`, `<above>`) |

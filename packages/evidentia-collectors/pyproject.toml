@@ -1,13 +1,13 @@
 [project]
 name = "evidentia-collectors"
 version = "0.12.1"
-description = "Evidence collection agents for AWS, Databricks, GitHub, Okta, Snowflake, SQL databases, and vendor-risk APIs (Vanta, Drata, BitSight, SecurityScorecard)"
+description = "Evidence collection agents for AWS, Databricks, GitHub, Okta, Google Workspace, Snowflake, SQL databases, and vendor-risk APIs (Vanta, Drata, BitSight, SecurityScorecard)"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
 license = "Apache-2.0"
 # Ceiling tracks the workspace root cap (litellm <3.14) — see root pyproject.toml for the full rationale + removal trigger; kept in sync by check_version_consistency.py.
 requires-python = ">=3.12,<3.15"
-keywords = ["grc", "compliance", "evidence-collection", "aws", "databricks", "github", "okta", "snowflake", "sql", "tprm", "vendor-risk", "vanta", "drata", "bitsight", "securityscorecard"]
+keywords = ["grc", "compliance", "evidence-collection", "aws", "databricks", "github", "okta", "google-workspace", "snowflake", "sql", "tprm", "vendor-risk", "vanta", "drata", "bitsight", "securityscorecard"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Information Technology",
