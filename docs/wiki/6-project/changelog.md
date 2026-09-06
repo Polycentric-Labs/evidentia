@@ -43,6 +43,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   store; the console's Collect page gains a Nessus tab; the new `scan` extra carries
   `defusedxml`. Importers do not raise the README collector count. See
   `docs/vuln-scan-collectors.md`.
+- **Greenbone report ingest (V13-05, second half).** `evidentia collect greenbone --file`
+  parses a Greenbone Community Edition GMP report (wrapped or bare `report` element) with
+  the shared defusedxml loader into one finding per result (deterministic ids, severity
+  from the numeric score with the threat label as fallback, the same RA-5 and SI-2
+  mappings) plus a manifest and one evidence artifact for `conmon series`;
+  `POST /api/collectors/greenbone/collect` and a console tab mirror the Nessus surfaces.
 
 ### Changed
 
