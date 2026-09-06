@@ -67,7 +67,7 @@ jobs:
         # check. CodSpeed reports perf deltas via its dashboard + PR comment, not
         # by failing this step, so keeping it non-blocking loses no regression signal.
         continue-on-error: true
-        uses: CodSpeedHQ/action@4296e51e7041e24dadb86d1d6e8b9320d223dbe8  # v5.0.3
+        uses: CodSpeedHQ/action@373d6868929f444bc08d901fd0eb0ad52a8875ea  # v5.2.1
         with:
           # v4 requires an explicit instrument mode. `simulation` is the Valgrind
           # instruction-counting instrument (deterministic, hardware-independent)
