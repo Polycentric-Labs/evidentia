@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `glba-314-4-d-annual-penetration-test`.
 - **`evidence_store.iter_artifacts`**, the filtered walk (time window, source system,
   metadata equality) the series reads; linear over the store, no index yet.
+- **`conmon check` and `conmon health` can read the evidence store.** With
+  `--evidence-store` (CLI) or `use_evidence_store` (API), a cadence missing from the
+  state file takes the date of its latest evidence artifact, the state file wins
+  where it has a date, and check rows gain a series verdict; the state file becomes
+  optional when the store is given.
 
 ### Changed
 
