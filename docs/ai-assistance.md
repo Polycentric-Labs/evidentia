@@ -21,10 +21,9 @@ and the AI-governance catalogs, are documented in
 
 | Role in the development workflow | Tools |
 |---|---|
-| Coding assistants (implementation, tests, refactors, drafting docs) | Claude (Claude Code and Claude Desktop), Codex |
-| Hosted models, reached through a router | OpenRouter (Gemini, GPT and others) |
+| Coding assistants (implementation, tests, refactors, drafting docs) | Claude Code, Codex |
+| Hosted models, reached through a router | OpenRouter |
 | Local models | Ollama and other locally run models |
-| Orchestration framework | LangChain |
 | Research and source discovery | Perplexity |
 
 The list changes as tools enter or leave the workflow; the date at the top is the
