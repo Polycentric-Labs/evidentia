@@ -150,9 +150,9 @@ Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https:/
 
 This project was developed alongside AI platforms.
 
-AI models and tools used: Claude, Codex, LangChain, Ollama (and other local models), OpenRouter (incl. Gemini, GPT, etc.), Perplexity.
+Custom infrastructure and integrations built in-house.
 
-Custom-built infrastructure and integrations for each.
+Details, including the tools used: [`docs/ai-assistance.md`](docs/ai-assistance.md).
 
 ## License
 
