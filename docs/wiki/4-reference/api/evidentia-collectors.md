@@ -20,6 +20,7 @@ Public submodules + subpackages of `evidentia_collectors` (import directly, e.g.
 - `evidentia_collectors.databricks`
 - `evidentia_collectors.drata`
 - `evidentia_collectors.github`
+- `evidentia_collectors.nessus`
 - `evidentia_collectors.ocsf`
 - `evidentia_collectors.okta`
 - `evidentia_collectors.securityscorecard`
