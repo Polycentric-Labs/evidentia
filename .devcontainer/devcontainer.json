@@ -2,7 +2,7 @@
 //
 // Promised in `docs/ide-setup.md` "Dev container (planned, not yet
 // enabled)". Provides a guaranteed-reproducible contributor
-// environment so anyone with VS Code or Cursor (and the Dev Containers
+// environment so anyone with VS Code (and the Dev Containers
 // extension) can clone the repo, click "Reopen in Container", and
 // have a fully-pinned Python 3.12 + Node 20 + GPG + git + gh
 // toolchain ready to run `uv sync --all-packages` + tests + the
@@ -42,7 +42,7 @@
   },
 
   // ---------------------------------------------------------------
-  // Editor integration — same VS Code + Cursor extensions the public
+  // Editor integration: the same VS Code extensions the public
   // `.vscode/extensions.json` recommends, baked into the container
   // so they're available on first open without an interactive
   // "install recommended extensions" prompt.

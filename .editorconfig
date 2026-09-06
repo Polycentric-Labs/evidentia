@@ -1,8 +1,8 @@
 # EditorConfig — version-controlled editor consistency.
 # https://editorconfig.org/
 #
-# Both Cursor and VS Code (with the EditorConfig extension) honor
-# this file. Settings here apply to ALL editors that read .editorconfig
+# VS Code (with the EditorConfig extension) honors this file. Settings
+# here apply to ALL editors that read .editorconfig
 # (PyCharm, Sublime, vim, etc.), so Evidentia contributors get
 # consistent indentation/whitespace regardless of editor choice.
 

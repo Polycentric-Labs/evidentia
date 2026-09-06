@@ -305,8 +305,6 @@ frozen:
     desc: "Docs-site config with historical version references."
   - path: "osv-scanner.toml"
     desc: "Vuln-allowlist `reason` strings cite the cycle each disposition was made in."
-  - path: ".cursorrules"
-    desc: "Editor-rules file with historical version references."
   - path: ".yamllint"
     desc: "Lint config comment referencing the cycle it was added in."
   - path: ".pre-commit-config.yaml"

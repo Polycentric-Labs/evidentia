@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes yet on the v0.13 development branch._
+### Removed
+
+- **Cursor IDE support**, following Cursor's acquisition by SpaceX. Removed: the
+  `.cursorrules` guardrail file, the Cursor sections of `docs/ide-setup.md` (now
+  a VS Code guide), the Cursor walkthrough in the wiki's MCP client setup guide,
+  the `.cursor/` yamllint scope, and the Cursor mentions in the README and the
+  editor-config comments. The `.vscode/` workspace files, `.editorconfig`, the
+  dev container, and the MCP server are unchanged; any MCP host that speaks the
+  standard `mcpServers` stdio contract still works. Historical changelog and
+  roadmap entries are left as written.
 
 ## [0.12.1] - 2026-09-05
 

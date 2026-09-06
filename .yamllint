@@ -1,6 +1,6 @@
 # yamllint config for Evidentia (v0.7.3 P1 DOC6).
 #
-# Scope: applies to .github/, .cursor/, and docs/ YAML files via the
+# Scope: applies to .github/ and docs/ YAML files via the
 # `files:` filter in .pre-commit-config.yaml. The bundled catalog data
 # files under packages/evidentia-core/src/evidentia_core/catalogs/data/
 # are out of scope (not under those paths) — their upstream

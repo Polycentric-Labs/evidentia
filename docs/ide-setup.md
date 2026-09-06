@@ -1,14 +1,18 @@
-# IDE setup — Cursor + VS Code
+# IDE setup (VS Code)
 
 > Version-controlled IDE configuration so Evidentia contributors get
 > testing + validation feedback inline, with the same conventions
-> across editors. Both Cursor and VS Code read the `.vscode/`
-> directory + `.editorconfig`; Cursor additionally reads `.cursorrules`
-> for AI guardrails.
+> across editors. VS Code reads the `.vscode/` directory and
+> `.editorconfig`; any editor with EditorConfig support picks up the
+> whitespace conventions.
 >
 > Status: shipped in v0.7.2 (per `docs/v0.7.2-plan.md` item DOC6).
 > Pre-v0.7.2 contributors used ad-hoc per-developer setups; v0.7.2
 > brings the workflow into the repo so onboarding is one-clone.
+>
+> Cursor support was removed in the v0.13 cycle following Cursor's
+> acquisition by SpaceX. The `.cursorrules` file and the Cursor sections
+> of this guide are gone; VS Code is the supported editor setup.
 
 ---
 
@@ -21,14 +25,12 @@
    uv sync --all-extras --all-packages
    ```
 
-2. **Open in your editor**:
+2. **Open in VS Code**:
    ```bash
-   code .       # VS Code
-   # or
-   cursor .     # Cursor
+   code .
    ```
 
-3. **Install recommended extensions**: VS Code / Cursor will prompt
+3. **Install recommended extensions**: VS Code will prompt
    on first open (per `.vscode/extensions.json`). Click
    "Install all recommended" — Python, Pylance, Ruff, Coverage
    Gutters, Markdown, YAML, GitHub Actions, EditorConfig, Prettier,
@@ -106,58 +108,10 @@ Pre-canned debug configs live in `.vscode/launch.json`:
 
 ---
 
-## Cursor-specific guidance
-
-### `.cursorrules` (project-root)
-
-Cursor reads `.cursorrules` for AI guardrails. The Evidentia version
-encodes:
-
-- **Quality bar patterns** — typed exception hierarchy, `@with_retry`,
-  `BLIND_SPOTS`, audit logger, network_guard, secret scrubber
-- **Testing patterns** — pytest mocking, mypy strict, ruff clean, OS
-  matrix
-- **Frontend patterns** — Radix primitives for WCAG, TanStack Query,
-  hand-typed REST surface, Zustand for client state
-- **Release/publishing discipline** — Cursor must NEVER suggest
-  irreversible commands (`git push`, `git tag && push`, `gh`
-  mutations, `twine upload`, etc.)
-- **Commit-attribution discipline** — never include `Co-Authored-By:
-  Claude` or AI footers in commit metadata
-
-This file is the Cursor-equivalent of `~/.claude/CLAUDE.md` (Allen's
-private Claude Code memory) for the parts of that memory that are
-project-relevant + safe to commit publicly.
-
-### Cursor Composer / Cursor Tab
-
-- **Composer**: useful for multi-file edits within a single feature
-  (e.g., adding a new collector → both the implementation file +
-  test file in one prompt). Always sanity-check that imports follow
-  the no-shortened-imports rule (no
-  `from evidentia_core.models import RiskStatement`).
-- **Cursor Tab**: works well for boilerplate completion. Disable
-  autocomplete in `tests/` files where you want to write the
-  assertions deliberately.
-
-### When to use Cursor vs Claude Code
-
-- **Cursor**: fast local edits, IDE-integrated test feedback, code
-  review on a single file, refactor a function, write a short test.
-- **Claude Code (CLI)**: ship cycles (release-checklist runs),
-  multi-step research (positioning re-sync), cross-doc consistency
-  passes, anything that needs the `~/.claude/skills/` skills like
-  `pre-release-review`. Per Allen's CLAUDE.md publishing-authority
-  protocol, Claude Code is the only tool authorized for irreversible
-  actions (push / tag / publish) — and only with explicit per-action
-  approval.
-
----
-
 ## Pre-commit hooks (active since v0.7.3)
 
-`.pre-commit-config.yaml` ships at the repo root. Both Cursor and
-VS Code run hooks on commit (and on demand via
+`.pre-commit-config.yaml` ships at the repo root. Once installed, the
+hooks run on every commit (and on demand via
 `pre-commit run --all-files`). One-time setup per clone:
 
 ```bash
@@ -174,8 +128,8 @@ Active hooks:
 - **markdownlint-cli2** — config at `.markdownlint.yaml`
 - **prettier** — applies to `packages/evidentia-ui/{src,public}/`;
   excludes generated TypeScript types at `src/types/api.ts`
-- **yamllint** — config at `.yamllint`; scoped to `.github/`,
-  `.cursor/`, and `docs/` YAML (the bundled catalog data files under
+- **yamllint** — config at `.yamllint`; scoped to `.github/` and
+  `docs/` YAML (the bundled catalog data files under
   `packages/evidentia-core/.../catalogs/data/` are out of scope —
   their upstream sources aren't yamllint-clean by our standards and we
   don't author them)
@@ -195,7 +149,7 @@ project-root files.
 `.devcontainer/devcontainer.json` ships a guaranteed-reproducible
 contributor environment. With the
 [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
-installed in VS Code or Cursor, click "Reopen in Container" after
+installed in VS Code, click "Reopen in Container" after
 cloning and you get:
 
 - Python 3.12 (the primary CI matrix version + `[tool.ruff]` target; CI also
@@ -252,15 +206,6 @@ secret-handling protocol in your global Claude config.
 - Click "Watch" in the Coverage Gutters status-bar widget.
 - Reload the window if gutters still don't appear (Ctrl+Shift+P →
   "Developer: Reload Window").
-
-### "Cursor AI suggests bypassing publishing-authority protocol"
-
-- Stop and re-read `.cursorrules`. Cursor must NEVER suggest
-  `git push`, `gh issue close`, `twine upload`, etc. Allen runs
-  those manually after explicit approval.
-- If a Cursor suggestion includes any of those commands, reject it
-  and report the suggestion to Allen so the `.cursorrules` rules
-  can be hardened.
 
 ---
 

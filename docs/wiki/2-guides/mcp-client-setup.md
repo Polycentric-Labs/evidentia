@@ -3,8 +3,8 @@
 Evidentia ships a **Model Context Protocol (MCP) server** that exposes its gap
 analysis, control lookup, CONMON, TPRM, POA&M, and signed-artifact verification
 surface as **13 tools** an AI agent can call directly. This guide gets that
-server running and wires it into the MCP hosts you actually use — Claude Desktop,
-Claude Code, and Cursor — so an agent can drive Evidentia on your behalf. It
+server running and wires it into the MCP hosts you actually use (Claude Desktop
+and Claude Code) so an agent can drive Evidentia on your behalf. It
 covers the `evidentia mcp` command group (`serve`, `doctor`, `cimd-migrate`), the
 canonical **stdio** transport those hosts speak, and the optional per-client
 scope-gating registry.
@@ -75,7 +75,7 @@ tears down the server for you over **stdio**.
 | `--host` | `127.0.0.1` | Bind address for HTTP / SSE only. `0.0.0.0` binds all interfaces and **requires** a reverse-proxy auth layer in front (the server does not gate file-path tool inputs against an allow-root by itself). |
 | `--port, -p` | `8765` | Bind port for HTTP / SSE only. `8765` is chosen to avoid colliding with `evidentia serve`'s default `8000`. |
 | `--allow-root PATH` | unset | Bounds file-path tool inputs (`gap_analyze`, `gap_diff`) to a directory; out-of-root paths surface as a tool error rather than crashing the server. **Strongly recommended for non-loopback HTTP/SSE.** Unset is appropriate for stdio + loopback. |
-| `--cimd-registry FILE` | unset | Loads a per-client scope registry (see [Step 7](#step-7-optional-gate-tools-per-client-with-cimd)). Pair with `--default-client-id` on stdio. |
+| `--cimd-registry FILE` | unset | Loads a per-client scope registry (see [Step 6](#step-6-optional-gate-tools-per-client-with-cimd)). Pair with `--default-client-id` on stdio. |
 | `--default-client-id TEXT` | unset | On stdio the wire protocol carries no per-request client_id, so this flag **is** the client_id for the whole session — set it to a slug in your CIMD registry to enable per-tool scope enforcement. |
 
 > **Do not run `evidentia mcp serve` (stdio) in a foreground terminal to "test"
@@ -155,32 +155,14 @@ commit:
 
 Confirm the server is registered and reachable with `claude mcp list`.
 
-## Step 6 — Wire it into Cursor
-
-Cursor reads `mcp.json` (project-level `.cursor/mcp.json`, or the global
-`~/.cursor/mcp.json`). It uses the same standard MCP server shape:
-
-```jsonc
-{
-  "mcpServers": {
-    "evidentia": {
-      "command": "evidentia",
-      "args": ["mcp", "serve", "--transport", "stdio"]
-    }
-  }
-}
-```
-
-Reload Cursor (or toggle the server in **Settings → MCP**) to pick it up.
-
 > The `command` / `args` keys are the standard MCP server contract and are
-> identical across these three hosts. Other hosts that consume the same
+> identical across these hosts. Other hosts that consume the same
 > `mcpServers` shape work the same way. If a particular host uses a config key
 > Evidentia does not document here, consult that host's own MCP documentation
 > rather than guessing the key — the launch command itself
 > (`evidentia mcp serve --transport stdio`) does not change.
 
-## Step 7 — (Optional) Gate tools per client with CIMD
+## Step 6 — (Optional) Gate tools per client with CIMD
 
 By default every connected client can call every one of the 13 tools. For
 multi-client deployments you can restrict which tools a given client may call

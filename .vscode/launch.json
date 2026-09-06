@@ -1,6 +1,6 @@
 {
   // Evidentia VS Code launch configurations — version-controlled.
-  // Cursor reads this same file. See docs/ide-setup.md for usage.
+  // See docs/ide-setup.md for usage.
   "version": "0.2.0",
   "configurations": [
     {
