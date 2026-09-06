@@ -325,6 +325,22 @@ V13-05) is the first collector that writes an `EvidenceArtifact` a series
 can read — see [vuln-scan-collectors.md](vuln-scan-collectors.md) for the
 Nessus ingest's mapping table, blind spots, and security notes.
 
+### Filling the state file from the evidence store
+
+`evidentia conmon check` and `evidentia conmon health` accept `--evidence-store`.
+A cadence missing from the state file takes the date of its latest evidence
+artifact (matched by `metadata.cadence_slug`), the state file always wins where
+it has a date, and `check` rows gain a `series` verdict over the last 365 days
+(a `Series` column in the tables, a `series` key in `--json`). With the store,
+`--state-file` becomes optional; without either the command exits 2. The API
+equivalents are `use_evidence_store: true` on `POST /api/conmon/check` (entries
+may then be empty; every row carries `series`) and on `POST /api/conmon/health`;
+the server reads its own configured store and the request never carries a path.
+
+```bash
+evidentia conmon check --evidence-store ~/.local/share/evidentia/evidence_store --json
+```
+
 ## Future work
 
 The CONMON live-trigger daemon (`evidentia conmon watch`)

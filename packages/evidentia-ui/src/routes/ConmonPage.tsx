@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   api,
   ApiError,
@@ -255,16 +256,21 @@ function NextDuePanel() {
 function CheckPanel() {
   const [slug, setSlug] = useState("");
   const [lastCompleted, setLastCompleted] = useState("");
+  const [useStore, setUseStore] = useState(false);
 
   const check = useMutation<ConmonCheckResponse, unknown, void>({
     mutationFn: () =>
       api.conmonCheck({
-        entries: [{ slug: slug.trim(), last_completed: lastCompleted }],
+        entries: slug.trim()
+          ? [{ slug: slug.trim(), last_completed: lastCompleted }]
+          : [],
         window_days: 14,
+        use_evidence_store: useStore,
       }),
   });
 
-  const canSubmit = Boolean(slug.trim() && lastCompleted) && !check.isPending;
+  const canSubmit =
+    (Boolean(slug.trim() && lastCompleted) || useStore) && !check.isPending;
 
   return (
     <Card>
@@ -302,6 +308,15 @@ function CheckPanel() {
               style={{ maxWidth: "16rem" }}
             />
           </div>
+          <div className="row gap-2" style={{ alignSelf: "flex-end" }}>
+            <Switch
+              id="conmon-check-store"
+              checked={useStore}
+              onCheckedChange={setUseStore}
+              aria-label="Use evidence store"
+            />
+            <Label htmlFor="conmon-check-store">Use evidence store</Label>
+          </div>
           <Button
             type="submit"
             size="sm"
@@ -338,6 +353,23 @@ function CheckPanel() {
                 Unknown slugs: {check.data.unknown_slugs.join(", ")}
               </p>
             )}
+            {[
+              ...check.data.overdue,
+              ...check.data.due_soon,
+              ...check.data.current,
+            ].some((row) => row.series) && (
+              <p className="text-xs muted" aria-label="Series verdicts">
+                Series:{" "}
+                {[
+                  ...check.data.overdue,
+                  ...check.data.due_soon,
+                  ...check.data.current,
+                ]
+                  .filter((row) => row.series)
+                  .map((row) => `${row.slug} ${row.series}`)
+                  .join(", ")}
+              </p>
+            )}
           </div>
         )}
       </CardContent>
@@ -354,16 +386,19 @@ function CheckPanel() {
 function HealthPanel() {
   const [slug, setSlug] = useState("");
   const [lastCompleted, setLastCompleted] = useState("");
+  const [useStore, setUseStore] = useState(false);
 
   const health = useMutation<Record<string, unknown>, unknown, void>({
     mutationFn: () =>
       api.conmonHealth({
         state: slug.trim() ? { [slug.trim()]: lastCompleted } : {},
         window_days: 14,
+        use_evidence_store: useStore,
       }),
   });
 
-  const canSubmit = Boolean(slug.trim() && lastCompleted) && !health.isPending;
+  const canSubmit =
+    (Boolean(slug.trim() && lastCompleted) || useStore) && !health.isPending;
 
   return (
     <Card>
@@ -400,6 +435,15 @@ function HealthPanel() {
               onChange={(e) => setLastCompleted(e.target.value)}
               style={{ maxWidth: "16rem" }}
             />
+          </div>
+          <div className="row gap-2" style={{ alignSelf: "flex-end" }}>
+            <Switch
+              id="conmon-health-store"
+              checked={useStore}
+              onCheckedChange={setUseStore}
+              aria-label="Use evidence store"
+            />
+            <Label htmlFor="conmon-health-store">Use evidence store</Label>
           </div>
           <Button
             type="submit"
