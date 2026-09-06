@@ -329,6 +329,46 @@ describe("ConmonPage", () => {
     await waitFor(() => expect(listConmonCadences).toHaveBeenCalledTimes(2));
   });
 
+  it("checks the evidence store when the switch is on", async () => {
+    listConmonCadences.mockResolvedValue(CADENCES);
+    conmonCheck.mockResolvedValue({
+      today: "2026-07-25",
+      window_days: 14,
+      overdue: [],
+      due_soon: [
+        {
+          slug: "pci-dss-11-6-1-weekly",
+          framework: "pci-dss-v4",
+          activity: "change-and-tamper-detection",
+          frequency: "weekly",
+          last_completed: "2026-07-20",
+          next_due: "2026-07-27",
+          days_until_due: 2,
+          state: "due_soon",
+          series: "gapped",
+        },
+      ],
+      current: [],
+      unknown_slugs: [],
+    });
+    renderPage();
+    await screen.findByRole("button", { name: "Check status" });
+
+    const user = userEvent.setup();
+    const [checkSwitch] = screen.getAllByRole("switch", {
+      name: "Use evidence store",
+    });
+    await user.click(checkSwitch);
+    await user.click(screen.getByRole("button", { name: "Check status" }));
+
+    await waitFor(() => expect(conmonCheck).toHaveBeenCalledTimes(1));
+    expect(conmonCheck).toHaveBeenCalledWith(
+      expect.objectContaining({ entries: [], use_evidence_store: true }),
+    );
+    const verdicts = await screen.findByLabelText("Series verdicts");
+    expect(verdicts).toHaveTextContent("pci-dss-11-6-1-weekly gapped");
+  });
+
   it("loads deduplicated alert entries through conmonDedupList", async () => {
     const user = userEvent.setup();
     listConmonCadences.mockResolvedValue([]);

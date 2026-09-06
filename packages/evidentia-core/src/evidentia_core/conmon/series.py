@@ -302,6 +302,59 @@ def series_to_finding(series: CadenceSeries, *, run_id: str | None = None) -> Se
     )
 
 
+def latest_observations(artifacts: Iterable[EvidenceArtifact]) -> dict[str, date]:
+    """Map every cadence slug seen in ``artifacts`` to its latest observation date.
+
+    Only artifacts carrying :data:`CADENCE_SLUG_METADATA_KEY` count. This is the
+    evidence-store stand-in for a state-file date: the last time the store saw
+    evidence for the cadence, in UTC.
+    """
+    latest: dict[str, date] = {}
+    for artifact in artifacts:
+        slug = artifact.metadata.get(CADENCE_SLUG_METADATA_KEY)
+        if not isinstance(slug, str) or not slug:
+            continue
+        observed = _utc(artifact.collected_at).date()
+        if slug not in latest or observed > latest[slug]:
+            latest[slug] = observed
+    return latest
+
+
+def merge_evidence_anchors(
+    state: dict[str, date], observed: dict[str, date]
+) -> dict[str, date]:
+    """Fill state-file gaps from the evidence store; the state file always wins.
+
+    A slug the operator recorded keeps the recorded date even when the store
+    holds a later observation (the record is the operator's statement, the
+    store is corroboration). A slug absent from the state file takes the
+    store's latest observation. Returns a new mapping.
+    """
+    merged = dict(observed)
+    merged.update(state)
+    return merged
+
+
+def series_verdicts(
+    artifacts: Iterable[EvidenceArtifact],
+    slugs: Iterable[str],
+    *,
+    today: date | None = None,
+    lookback_days: int = DEFAULT_LOOKBACK_DAYS,
+) -> dict[str, SeriesVerdict]:
+    """Assert the default-window series for each slug and return its verdict."""
+    window_start, window_end = default_window(today, lookback_days=lookback_days)
+    pool = list(artifacts)
+    return {
+        slug: SeriesVerdict(
+            assert_series(
+                slug, pool, window_start=window_start, window_end=window_end
+            ).verdict
+        )
+        for slug in slugs
+    }
+
+
 __all__: list[str] = [
     "CADENCE_SLUG_METADATA_KEY",
     "CADENCE_SOURCE_SYSTEM",
@@ -316,5 +369,8 @@ __all__: list[str] = [
     "assert_series",
     "default_tolerance_days",
     "default_window",
+    "latest_observations",
+    "merge_evidence_anchors",
     "series_to_finding",
+    "series_verdicts",
 ]

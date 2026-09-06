@@ -329,6 +329,19 @@ Collect evidence from a GitHub repository.
 | `--block-private-ips, --allow-private-ips` | Reject hosts that resolve to RFC1918 / link-local / loopback / multicast / reserved ranges before opening the connection. Default True — closes the SSRF surface that could otherwise expose AWS / GCP / Azure instance-metadata endpoints (169.254.169.254) or internal services. Use --allow-private-ips to override for trusted internal endpoints. |
 | `--output, -o` | Where to write the findings JSON. Default: stdout. |
 
+### `evidentia collect nessus`
+
+Ingest a Nessus v2 (.nessus) XML scan export (v0.13 V13-05).
+
+| Flag / argument | Description |
+| --- | --- |
+| `--file` | Path to a Nessus v2 (.nessus) XML scan export. |
+| `--cadence-slug` | Cadence slug the saved evidence artifact declares via metadata.cadence_slug (evidentia conmon series reads it). Must name a registered cadence — run `evidentia conmon list` to see available. |
+| `--evidence-store` | Evidence store root directory override. Defaults to EVIDENTIA_EVIDENCE_STORE_DIR, else the platform user-data directory (evidentia_core.evidence_store.get_evidence_store_dir). |
+| `--save-evidence, --no-save-evidence` | Persist the scan-report evidence artifact. Default True. |
+| `--plugin-output-max-chars` | Cap on plugin_output length embedded in each finding's raw_data. Default 4000. |
+| `--output, -o` | Where to write the converted SecurityFinding JSON. Default: stdout. |
+
 ### `evidentia collect ocsf`
 
 Ingest OCSF Compliance / Detection Finding JSON (v0.10.1).
@@ -422,6 +435,7 @@ Report due-soon + overdue cycles from a tracked-state YAML.
 | `--today` | Override 'today' for deterministic CLI snapshots (YYYY-MM-DD). Production operators omit this flag. |
 | `--window-days` | Due-soon window (days from today). Default: 14 days. Overdue cycles always surface regardless of this window. |
 | `--json` | Emit JSON instead of human-readable tables. |
+| `--evidence-store` | Evidence store root. When given, a cadence missing from the state file takes the date of its latest evidence artifact (matched by metadata.cadence_slug), and every row gains a series verdict over the last 365 days. --state-file becomes optional. |
 
 ### `evidentia conmon dedup-list`
 
@@ -440,7 +454,8 @@ Aggregate CONMON cycle health by framework.
 
 | Flag / argument | Description |
 | --- | --- |
-| `--state-file` | YAML mapping {cadence_slug: ISO-8601-date} of last-completed dates. Same schema as `evidentia conmon check --state-file`. |
+| `--state-file` | YAML mapping {cadence_slug: ISO-8601-date} of last-completed dates. Same schema as `evidentia conmon check --state-file`. Optional when --evidence-store is given. |
+| `--evidence-store` | Evidence store root. A cadence missing from the state file takes the date of its latest evidence artifact (metadata.cadence_slug). |
 | `--today` | Override 'today' for deterministic snapshots (YYYY-MM-DD). Omit for real-time reports. |
 | `--window-days` | Due-soon window in days. Default: 14. |
 | `--framework, -f` | Restrict report to a single framework (e.g., nist-800-53-rev5). |

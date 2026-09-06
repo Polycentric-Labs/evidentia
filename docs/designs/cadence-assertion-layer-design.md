@@ -147,8 +147,8 @@ they follow once the ingest shape is stable.
 ## 3. Sequencing
 
 1. Batch 4 (V13-01 core): frequency extension and `interval_days`,
-   (the `--evidence-store` mode on `conmon check` and `conmon health` follows in
-   batch 5, once the leaf has settled the series shape),
+   (the `--evidence-store` mode on `conmon check` and `conmon health` landed in
+   batch 5 as `use_evidence_store` on the API and a Series column on the CLI),
    `iter_artifacts`, `CadenceSeries` and `assert_series`, the `conmon series`
    leaf with API, console panel, MCP tool and parity row, docs
    (`conmon-runbook.md` section, `api-stability.md` rows). Exit: unit tests on

@@ -1024,6 +1024,17 @@
             "title": "Next Due",
             "type": "string"
           },
+          "series": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Series"
+          },
           "slug": {
             "title": "Slug",
             "type": "string"
@@ -1073,7 +1084,7 @@
               "$ref": "#/components/schemas/CheckEntry"
             },
             "maxItems": 100,
-            "minItems": 1,
+            "minItems": 0,
             "title": "Entries",
             "type": "array"
           },
@@ -1089,6 +1100,12 @@
             ],
             "description": "Override 'today' for deterministic snapshots. Omit for real-time checks.",
             "title": "Today"
+          },
+          "use_evidence_store": {
+            "default": false,
+            "description": "Read the server's configured evidence store: a cadence absent from entries takes the date of its latest artifact (metadata.cadence_slug) and every row gains a series verdict over the last 365 days.",
+            "title": "Use Evidence Store",
+            "type": "boolean"
           },
           "window_days": {
             "default": 14,
@@ -1221,6 +1238,128 @@
           "source_system_id"
         ],
         "title": "CollectionContext",
+        "type": "object"
+      },
+      "CollectionManifest": {
+        "additionalProperties": false,
+        "description": "Per-run manifest attesting to collection scope and completeness.\n\nImplements checklist item B5 (completeness attestation). One\nmanifest per collection run is attached to the OSCAL Assessment\nResults document's ``metadata.props`` and optionally written as a\nsibling ``<output>.manifest.json`` for standalone inspection.\n\nThe manifest is signed using the same signing pipeline as the AR\nitself. A verified manifest establishes:\n\n1. Which source systems were scanned.\n2. Which filters were applied.\n3. How many resources of each type were examined.\n4. Whether any categories were intentionally empty.\n5. Whether any errors truncated collection (``is_complete=False``).",
+        "properties": {
+          "collection_finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "UTC timestamp when the collector finished. None while still in progress.",
+            "title": "Collection Finished At"
+          },
+          "collection_started_at": {
+            "description": "UTC timestamp when the collector began this run",
+            "format": "date-time",
+            "title": "Collection Started At",
+            "type": "string"
+          },
+          "collector_id": {
+            "title": "Collector Id",
+            "type": "string"
+          },
+          "collector_version": {
+            "title": "Collector Version",
+            "type": "string"
+          },
+          "coverage_counts": {
+            "description": "Per-resource-type scan/match/collect counts",
+            "items": {
+              "$ref": "#/components/schemas/CoverageCount"
+            },
+            "title": "Coverage Counts",
+            "type": "array"
+          },
+          "empty_categories": {
+            "description": "Resource types explicitly scanned but yielding zero findings. Per checklist B5: an auditor cannot distinguish 'no findings' (legitimate) from 'collector skipped' (evidence gap) without this explicit attestation.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Empty Categories",
+            "type": "array"
+          },
+          "errors": {
+            "description": "Fatal errors that caused specific resources to be skipped but didn't abort the run. Non-empty plus is_complete=True means 'partial success'.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "evidentia_version": {
+            "description": "Version of evidentia-core that wrote this manifest",
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "filters_applied": {
+            "additionalProperties": true,
+            "description": "Run-level filters. Empty dict means 'no filter'.",
+            "title": "Filters Applied",
+            "type": "object"
+          },
+          "incomplete_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Human-readable reason the run didn't complete. MUST be populated when ``is_complete=False``.",
+            "title": "Incomplete Reason"
+          },
+          "is_complete": {
+            "default": true,
+            "description": "False if any collection error, truncation, or pagination abort occurred. Auditors treat incomplete runs as evidence gaps.",
+            "title": "Is Complete",
+            "type": "boolean"
+          },
+          "run_id": {
+            "description": "ULID matching CollectionContext.run_id on every finding produced by this run. Join key for findings↔manifest.",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "source_system_ids": {
+            "description": "All source_system_ids covered in this run",
+            "items": {
+              "type": "string"
+            },
+            "title": "Source System Ids",
+            "type": "array"
+          },
+          "total_findings": {
+            "default": 0,
+            "description": "Sum of findings emitted from this run",
+            "minimum": 0.0,
+            "title": "Total Findings",
+            "type": "integer"
+          },
+          "warnings": {
+            "description": "Non-fatal issues encountered during collection — rate-limit backoffs, skipped resources, blind-spot disclosures.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id",
+          "collector_id",
+          "collector_version",
+          "collection_started_at"
+        ],
+        "title": "CollectionManifest",
         "type": "object"
       },
       "ComplianceStatus": {
@@ -1745,6 +1884,43 @@
           "threat_framework"
         ],
         "title": "ControlThreatMapping",
+        "type": "object"
+      },
+      "CoverageCount": {
+        "additionalProperties": false,
+        "description": "One resource-type's scan/match/collect counts within a run.",
+        "properties": {
+          "collected": {
+            "description": "Findings actually produced from this resource type. May be < matched_filter if some matched resources yielded no findings.",
+            "minimum": 0.0,
+            "title": "Collected",
+            "type": "integer"
+          },
+          "matched_filter": {
+            "description": "Resources passing the collector's filter criteria",
+            "minimum": 0.0,
+            "title": "Matched Filter",
+            "type": "integer"
+          },
+          "resource_type": {
+            "description": "Source-system resource category. Examples: 'aws-iam-role', 'aws-iam-user', 'github-dependabot-alert'.",
+            "title": "Resource Type",
+            "type": "string"
+          },
+          "scanned": {
+            "description": "Total resources enumerated (before filtering)",
+            "minimum": 0.0,
+            "title": "Scanned",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "resource_type",
+          "scanned",
+          "matched_filter",
+          "collected"
+        ],
+        "title": "CoverageCount",
         "type": "object"
       },
       "CriticalityTier": {
@@ -3316,6 +3492,12 @@
             "description": "Override 'today' for deterministic snapshots. Omit for real-time reports.",
             "title": "Today"
           },
+          "use_evidence_store": {
+            "default": false,
+            "description": "Read the server's configured evidence store: a cadence absent from state takes the date of its latest artifact (metadata.cadence_slug).",
+            "title": "Use Evidence Store",
+            "type": "boolean"
+          },
           "window_days": {
             "default": 14,
             "description": "Due-soon window in days (default 14).",
@@ -4538,6 +4720,56 @@
         ],
         "title": "NISTAIRMFFunction",
         "type": "string"
+      },
+      "NessusCollectResponse": {
+        "description": "Response body of ``POST /collectors/nessus/collect``.",
+        "properties": {
+          "evidence": {
+            "$ref": "#/components/schemas/NessusEvidenceResult"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/SecurityFinding"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "manifest": {
+            "$ref": "#/components/schemas/CollectionManifest"
+          }
+        },
+        "required": [
+          "findings",
+          "manifest",
+          "evidence"
+        ],
+        "title": "NessusCollectResponse",
+        "type": "object"
+      },
+      "NessusEvidenceResult": {
+        "description": "The ``evidence`` block of :class:`NessusCollectResponse`.",
+        "properties": {
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "lineage_id": {
+            "title": "Lineage Id",
+            "type": "string"
+          },
+          "saved": {
+            "title": "Saved",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "lineage_id",
+          "saved",
+          "collected_at"
+        ],
+        "title": "NessusEvidenceResult",
+        "type": "object"
       },
       "NextDueRequest": {
         "properties": {
@@ -9170,6 +9402,70 @@
           }
         },
         "summary": "Github Collect",
+        "tags": [
+          "collectors"
+        ]
+      }
+    },
+    "/api/collectors/nessus/collect": {
+      "post": {
+        "description": "Ingest a Nessus v2 XML scan export (v0.13 V13-05).\n\nMirrors the ``evidentia collect nessus`` CLI verb. Request body:\n\n- ``content`` (required): the ``<NessusClientData_v2>`` XML text.\n  No path and no URL — the server never reads a client-named file;\n  this is a text-upload ingest only.\n- ``cadence_slug`` (optional): defaults to ``fedramp-conmon-scans``.\n  Must name a registered cadence.\n- ``save_evidence`` (optional): bool, default True. Persists the\n  scan-report ``EvidenceArtifact`` to the server's own configured\n  evidence store\n  (:func:`evidentia_core.evidence_store.get_evidence_store_dir`).\n- ``plugin_output_max_chars`` (optional): int, default 4000.\n\nNO credentials: file/text ingest only, mirroring the OCSF inline-\n``content`` mode's trust posture. Third-party XML is parsed with\n``defusedxml`` — entity expansion and external references are\nrefused before any element is read.",
+        "operationId": "nessus_collect_api_collectors_nessus_collect_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Payload",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NessusCollectResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing/non-string ``content``, malformed XML, a refused entity construct, wrong root element, oversized content (over 50 MB), or an unknown ``cadence_slug`` (``error: invalid_body``)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Optional ``scan`` extra not installed (``error: feature_unavailable``)."
+          }
+        },
+        "summary": "Nessus Collect",
         "tags": [
           "collectors"
         ]

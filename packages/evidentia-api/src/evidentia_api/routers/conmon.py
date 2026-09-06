@@ -61,9 +61,12 @@ from evidentia_core.conmon import (
     default_window,
     derive_status,
     get_cadence,
+    latest_observations,
     list_cadences,
     mark_completed,
+    merge_evidence_anchors,
     next_due,
+    series_verdicts,
 )
 from evidentia_core.conmon.daemon import (
     read_daemon_history,
@@ -73,7 +76,7 @@ from evidentia_core.conmon.series import CADENCE_SLUG_METADATA_KEY
 from evidentia_core.evidence_store import get_evidence_store_dir, iter_artifacts
 from evidentia_core.models.common import NonBlankStr
 from fastapi import APIRouter, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from evidentia_api.errors import (
     RBAC_DENIED_403,
@@ -114,9 +117,17 @@ class CheckEntry(BaseModel):
 
 class CheckRequest(BaseModel):
     entries: list[CheckEntry] = Field(
-        min_length=1,
+        min_length=0,
         max_length=100,
         description="Cadence slug → last-completed-date pairs to check.",
+    )
+    use_evidence_store: bool = Field(
+        default=False,
+        description=(
+            "Read the server's configured evidence store: a cadence absent from "
+            "entries takes the date of its latest artifact (metadata.cadence_slug) "
+            "and every row gains a series verdict over the last 365 days."
+        ),
     )
     today: date | None = Field(
         default=None,
@@ -128,6 +139,12 @@ class CheckRequest(BaseModel):
         description="Due-soon window in days (default: 14).",
     )
 
+    @model_validator(mode="after")
+    def _entries_or_evidence_store(self) -> CheckRequest:
+        if not self.entries and not self.use_evidence_store:
+            raise ValueError("entries must not be empty unless use_evidence_store is true")
+        return self
+
 
 class CheckCycleRow(BaseModel):
     slug: str
@@ -138,6 +155,7 @@ class CheckCycleRow(BaseModel):
     next_due: date
     days_until_due: int
     state: str
+    series: str | None = None
 
 
 class CheckResponse(BaseModel):
@@ -245,23 +263,34 @@ async def check_conmon_cycles(body: CheckRequest) -> CheckResponse:
     current: list[CheckCycleRow] = []
     unknown_slugs: list[str] = []
 
-    for entry in body.entries:
-        cadence = get_cadence(entry.slug)
+    anchors = {entry.slug: entry.last_completed for entry in body.entries}
+    verdicts: dict[str, str] = {}
+    if body.use_evidence_store:
+        artifacts = [
+            artifact
+            for artifact in iter_artifacts(get_evidence_store_dir())
+            if CADENCE_SLUG_METADATA_KEY in artifact.metadata
+        ]
+        anchors = merge_evidence_anchors(anchors, latest_observations(artifacts))
+        verdicts = {slug: verdict.value for slug, verdict in series_verdicts(artifacts, anchors, today=today).items()}
+    for slug, last_completed in anchors.items():
+        cadence = get_cadence(slug)
         if cadence is None:
-            unknown_slugs.append(entry.slug)
+            unknown_slugs.append(slug)
             continue
-        due = next_due(entry.slug, entry.last_completed)
+        due = next_due(slug, last_completed)
         state = derive_status(due, today, window_days=body.window_days)
         days_until_due = (due - today).days
         row = CheckCycleRow(
-            slug=entry.slug,
+            slug=slug,
             framework=cadence.framework,
             activity=cadence.activity,
             frequency=str(cadence.frequency),
-            last_completed=entry.last_completed,
+            last_completed=last_completed,
             next_due=due,
             days_until_due=days_until_due,
             state=state.value,
+            series=verdicts.get(slug) if body.use_evidence_store else None,
         )
         if state == CycleAttentionState.OVERDUE:
             overdue.append(row)
@@ -407,6 +436,13 @@ class HealthRequest(BaseModel):
         default=None,
         description=("Optional framework identifier to restrict the report."),
     )
+    use_evidence_store: bool = Field(
+        default=False,
+        description=(
+            "Read the server's configured evidence store: a cadence absent from "
+            "state takes the date of its latest artifact (metadata.cadence_slug)."
+        ),
+    )
 
 
 @router.post("/conmon/health")
@@ -417,8 +453,16 @@ async def conmon_health_endpoint(body: HealthRequest) -> dict[str, Any]:
     shape via :meth:`HealthReport.to_dict`.
     """
     today = body.today if body.today is not None else date.today()
+    state = dict(body.state)
+    if body.use_evidence_store:
+        artifacts = [
+            artifact
+            for artifact in iter_artifacts(get_evidence_store_dir())
+            if CADENCE_SLUG_METADATA_KEY in artifact.metadata
+        ]
+        state = merge_evidence_anchors(state, latest_observations(artifacts))
     report = compute_health(
-        state=body.state,
+        state=state,
         today=today,
         window_days=body.window_days,
         framework_filter=body.framework,
