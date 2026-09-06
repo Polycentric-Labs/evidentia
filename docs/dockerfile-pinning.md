@@ -164,7 +164,7 @@ file. This was a deliberate trade-off rather than an oversight.
 --to A.B.C` updates the pin in `requirements.in` + invokes
 `pip-compile`. Run inside the pinned base-image
 (`python:3.13-slim@sha256:...`; 3.13 today: the stack supports 3.14 since
-v0.13 (`requires-python <3.15`), but the base moves only as a deliberate
+v0.12.1 (`requires-python <3.15`), but the base moves only as a deliberate
 migration once DHI 3.14 coverage is confirmed; see the Dockerfile comment
 and the dependabot.yml docker ignore rule) so platform-specific
 transitives (uvloop, etc.) resolve correctly:

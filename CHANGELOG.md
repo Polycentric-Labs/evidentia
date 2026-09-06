@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_No changes yet on the v0.13 development branch._
+
+## [0.12.1] - 2026-09-05
+
+**Theme**: *Container rebuild on a fresh hardened base (day-N CVE response),
+carrying the v0.13 cycle's opening batch.* A rebuild patch in the v0.10.18
+pattern: the 2026-08-31 weekly rescan of the published v0.12.0 image surfaced
+three High openssl CVEs (DEBIAN-CVE-2026-14456, -14457 and -18798; openssl
+3.5.6, fixed in 3.5.7) with the fix available upstream, and the standing
+policy is "a fix is available, so rebuild the published image on a fresh
+base". Both pinned bases move to their current digests (the drift the
+base-freshness sentinel flagged in issue #258), the image is rebuilt,
+smoke-tested, re-signed and re-attested end to end, and the post-publish
+rescan re-verifies the published image afterwards. The two open Dependabot
+advisories (transformers, browserslist) close in the same release.
+
+Because a tag ships everything merged to `main` since the prior tag, this
+one also carries the v0.13 cycle's opening work: Python 3.14 support with
+the `requires-python` cap lifted to `<3.15`, the OSCAL empty-array
+conformance fix, the `occ-sr-26-2` designator correction with its
+deprecation aliases, the retirement of the "cryptographic CIMD signatures"
+misnomer, the roadmap-gate and FedRAMP-generator hardening, the Dependabot
+cooldown-spec fix, and the routine dependency batches (including
+compliance-trestle 5.0). Full suite at tag time: see the release notes.
+
+**Deferred to v0.13.0**: the FedRAMP CR26 schema re-vendor flagged by the
+schema-watch sentinel (issue #275; common-definitions 0.2.1 → 0.3.0 and SDR
+1.0.3 → 1.1.1, NOTICE-level), and the class-level non-blank string type for
+the remaining `min_length=1` fields (the DAST fix below covers the two
+fields the scanner reached).
+
 ### Security
 
 - The container's two pinned bases move to their current digests: the
