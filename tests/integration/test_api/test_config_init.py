@@ -16,9 +16,7 @@ class TestConfig:
         assert payload["organization"] is None
         assert payload["frameworks"] == []
 
-    def test_put_then_get_roundtrip(
-        self, api_client: TestClient, tmp_path: Path
-    ) -> None:
+    def test_put_then_get_roundtrip(self, api_client: TestClient, tmp_path: Path) -> None:
         """PUT /api/config writes YAML; subsequent GET reflects it."""
         new_config = {
             "organization": "API Test Org",
@@ -47,9 +45,7 @@ class TestConfig:
         assert r2.status_code == 200
         assert r2.json()["organization"] == "API Test Org"
 
-    def test_put_rejects_invalid_temperature(
-        self, api_client: TestClient
-    ) -> None:
+    def test_put_rejects_invalid_temperature(self, api_client: TestClient) -> None:
         bad = {
             "organization": "X",
             "frameworks": ["soc2-tsc"],
@@ -60,9 +56,7 @@ class TestConfig:
 
 
 class TestInitWizard:
-    def test_returns_three_yamls_and_framework_recommendations(
-        self, api_client: TestClient
-    ) -> None:
+    def test_returns_three_yamls_and_framework_recommendations(self, api_client: TestClient) -> None:
         r = api_client.post(
             "/api/init/wizard",
             json={
@@ -112,9 +106,7 @@ class TestInitCommit:
 
     _NAMES = ("evidentia.yaml", "my-controls.yaml", "system-context.yaml")
 
-    def test_writes_three_starter_files(
-        self, api_client: TestClient, tmp_path: Path
-    ) -> None:
+    def test_writes_three_starter_files(self, api_client: TestClient, tmp_path: Path) -> None:
         r = api_client.post(
             "/api/init/commit",
             json={
@@ -134,9 +126,7 @@ class TestInitCommit:
         # Mirrors `evidentia init`: the storage dir is created too.
         assert (tmp_path / ".evidentia").is_dir()
 
-    def test_skips_existing_without_overwrite(
-        self, api_client: TestClient, tmp_path: Path
-    ) -> None:
+    def test_skips_existing_without_overwrite(self, api_client: TestClient, tmp_path: Path) -> None:
         (tmp_path / "evidentia.yaml").write_text("PRE-EXISTING", encoding="utf-8")
         r = api_client.post(
             "/api/init/commit",
@@ -152,9 +142,7 @@ class TestInitCommit:
         # No silent clobber — the existing file is byte-for-byte untouched.
         assert (tmp_path / "evidentia.yaml").read_text("utf-8") == "PRE-EXISTING"
 
-    def test_overwrite_true_replaces_existing(
-        self, api_client: TestClient, tmp_path: Path
-    ) -> None:
+    def test_overwrite_true_replaces_existing(self, api_client: TestClient, tmp_path: Path) -> None:
         (tmp_path / "evidentia.yaml").write_text("OLD", encoding="utf-8")
         r = api_client.post(
             "/api/init/commit",

@@ -59,9 +59,7 @@ class _RebindingResolver:
         if host != self._host:
             # Unrelated host — resolve to a stable public address so any
             # incidental lookup in the block doesn't blow up the test.
-            return [
-                (socket.AF_INET, socket.SOCK_STREAM, 0, "", (PUBLIC_IP, port))
-            ]
+            return [(socket.AF_INET, socket.SOCK_STREAM, 0, "", (PUBLIC_IP, port))]
         with self._lock:
             self.calls += 1
             ip = self._first_ip if self.calls == 1 else self._later_ip
@@ -103,9 +101,7 @@ def test_enforce_public_host_returns_validated_public_ips(
         ]
 
     monkeypatch.setattr(socket, "getaddrinfo", _fake)
-    validated = enforce_public_host(
-        f"https://{REBIND_HOST}/v1", subsystem="test"
-    )
+    validated = enforce_public_host(f"https://{REBIND_HOST}/v1", subsystem="test")
     assert validated == [PUBLIC_IP]
 
 
@@ -133,14 +129,10 @@ def test_pin_forces_connection_to_validated_public_ip(
 ) -> None:
     """THE rebind defeat: validate sees PUBLIC, connect would see PRIVATE,
     but the pin forces the connection lookup back to the PUBLIC address."""
-    resolver = _RebindingResolver(
-        REBIND_HOST, first_ip=PUBLIC_IP, later_ip=REBOUND_PRIVATE_IP
-    )
+    resolver = _RebindingResolver(REBIND_HOST, first_ip=PUBLIC_IP, later_ip=REBOUND_PRIVATE_IP)
     monkeypatch.setattr(socket, "getaddrinfo", resolver)
 
-    validated = enforce_public_host(
-        f"https://{REBIND_HOST}/v1", subsystem="test"
-    )
+    validated = enforce_public_host(f"https://{REBIND_HOST}/v1", subsystem="test")
     assert validated == [PUBLIC_IP]
     assert resolver.calls == 1  # validation lookup
 
@@ -155,14 +147,10 @@ def test_pin_forces_connection_to_validated_public_ip(
     assert REBOUND_PRIVATE_IP not in dialed
 
 
-def test_pin_synthesizes_requested_port(
-    monkeypatch: pytest.MonkeyPatch, _restore_getaddrinfo: Any
-) -> None:
+def test_pin_synthesizes_requested_port(monkeypatch: pytest.MonkeyPatch, _restore_getaddrinfo: Any) -> None:
     """The pin returns addrinfo for the PORT the connection asks for, not
     the port-less validation lookup."""
-    resolver = _RebindingResolver(
-        REBIND_HOST, first_ip=PUBLIC_IP, later_ip=REBOUND_PRIVATE_IP
-    )
+    resolver = _RebindingResolver(REBIND_HOST, first_ip=PUBLIC_IP, later_ip=REBOUND_PRIVATE_IP)
     monkeypatch.setattr(socket, "getaddrinfo", resolver)
     validated = enforce_public_host(REBIND_HOST, subsystem="test")
 
@@ -172,14 +160,10 @@ def test_pin_synthesizes_requested_port(
     assert ports == {5432}
 
 
-def test_pin_only_affects_registered_host(
-    monkeypatch: pytest.MonkeyPatch, _restore_getaddrinfo: Any
-) -> None:
+def test_pin_only_affects_registered_host(monkeypatch: pytest.MonkeyPatch, _restore_getaddrinfo: Any) -> None:
     """An un-pinned host inside the block still delegates to the real
     resolver (the wrapper is a transparent pass-through)."""
-    resolver = _RebindingResolver(
-        REBIND_HOST, first_ip=PUBLIC_IP, later_ip=REBOUND_PRIVATE_IP
-    )
+    resolver = _RebindingResolver(REBIND_HOST, first_ip=PUBLIC_IP, later_ip=REBOUND_PRIVATE_IP)
     monkeypatch.setattr(socket, "getaddrinfo", resolver)
     validated = enforce_public_host(REBIND_HOST, subsystem="test")
 
@@ -189,13 +173,9 @@ def test_pin_only_affects_registered_host(
     assert {info[4][0] for info in other} == {PUBLIC_IP}
 
 
-def test_pin_is_thread_local(
-    monkeypatch: pytest.MonkeyPatch, _restore_getaddrinfo: Any
-) -> None:
+def test_pin_is_thread_local(monkeypatch: pytest.MonkeyPatch, _restore_getaddrinfo: Any) -> None:
     """A pin set on one thread must NOT leak resolution onto another."""
-    resolver = _RebindingResolver(
-        REBIND_HOST, first_ip=PUBLIC_IP, later_ip=REBOUND_PRIVATE_IP
-    )
+    resolver = _RebindingResolver(REBIND_HOST, first_ip=PUBLIC_IP, later_ip=REBOUND_PRIVATE_IP)
     monkeypatch.setattr(socket, "getaddrinfo", resolver)
     validated = enforce_public_host(REBIND_HOST, subsystem="test")
 
@@ -225,9 +205,7 @@ def test_pin_is_thread_local(
     assert other_thread_result["ips"] == {REBOUND_PRIVATE_IP}
 
 
-def test_unresolvable_host_pin_is_noop_when_empty(
-    monkeypatch: pytest.MonkeyPatch, _restore_getaddrinfo: Any
-) -> None:
+def test_unresolvable_host_pin_is_noop_when_empty(monkeypatch: pytest.MonkeyPatch, _restore_getaddrinfo: Any) -> None:
     """An empty pin list is a no-op: the wrapper isn't consulted and the
     real resolver answers (covers the opt-out passthrough)."""
 
@@ -246,9 +224,7 @@ def test_rebind_without_pin_would_succeed_control(
     """Control case proving the resolver actually rebinds: validate sees
     PUBLIC (passes), a second bare resolution sees PRIVATE — exactly the
     bypass the pin closes."""
-    resolver = _RebindingResolver(
-        REBIND_HOST, first_ip=PUBLIC_IP, later_ip=REBOUND_PRIVATE_IP
-    )
+    resolver = _RebindingResolver(REBIND_HOST, first_ip=PUBLIC_IP, later_ip=REBOUND_PRIVATE_IP)
     monkeypatch.setattr(socket, "getaddrinfo", resolver)
 
     # First call: validation passes (public).

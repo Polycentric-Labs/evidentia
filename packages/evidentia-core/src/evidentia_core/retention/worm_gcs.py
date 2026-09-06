@@ -98,9 +98,7 @@ class GCSBucketLockWORM(WORMBackend):
         client_factory: Any = None,
     ) -> None:
         if not bucket_name or not isinstance(bucket_name, str):
-            raise WORMBackendError(
-                "GCSBucketLockWORM requires a non-empty bucket_name"
-            )
+            raise WORMBackendError("GCSBucketLockWORM requires a non-empty bucket_name")
         self._bucket_name = bucket_name
         self._prefix = prefix
         if client_factory is not None:
@@ -112,9 +110,7 @@ class GCSBucketLockWORM(WORMBackend):
         try:
             self._bucket = self._client.bucket(bucket_name)
         except GoogleAPIError as e:
-            raise WORMBackendError(
-                f"GCS bucket {bucket_name!r} cannot be reached: {e}"
-            ) from e
+            raise WORMBackendError(f"GCS bucket {bucket_name!r} cannot be reached: {e}") from e
 
     # ── Key helpers ────────────────────────────────────────────────
 
@@ -135,19 +131,14 @@ class GCSBucketLockWORM(WORMBackend):
         payload_blob = self._bucket.blob(self._payload_key(record_id))
         if payload_blob.exists():
             raise WORMBackendError(
-                f"GCS record {record_id!r} already exists in bucket "
-                f"{self._bucket_name!r}; WORM forbids overwrite"
+                f"GCS record {record_id!r} already exists in bucket {self._bucket_name!r}; WORM forbids overwrite"
             )
         try:
             # if_generation_match=0 ensures atomic create (refuses
             # if blob exists at upload time — race-condition-safe)
-            payload_blob.upload_from_string(
-                payload, if_generation_match=0
-            )
+            payload_blob.upload_from_string(payload, if_generation_match=0)
         except GoogleAPIError as e:
-            raise WORMBackendError(
-                f"GCS put failed for record {record_id!r}: {e}"
-            ) from e
+            raise WORMBackendError(f"GCS put failed for record {record_id!r}: {e}") from e
 
         # Apply per-object hold for legal-hold semantics. The
         # bucket's retention period is set at creation time; per-
@@ -157,10 +148,7 @@ class GCSBucketLockWORM(WORMBackend):
                 payload_blob.temporary_hold = True
                 payload_blob.patch()
             except GoogleAPIError as e:
-                raise WORMBackendError(
-                    f"GCS temporary_hold failed for record "
-                    f"{record_id!r}: {e}"
-                ) from e
+                raise WORMBackendError(f"GCS temporary_hold failed for record {record_id!r}: {e}") from e
 
         # Metadata sidecar
         meta_blob = self._bucket.blob(self._meta_key(record_id))
@@ -170,9 +158,7 @@ class GCSBucketLockWORM(WORMBackend):
                 content_type="application/json",
             )
         except GoogleAPIError as e:
-            raise WORMBackendError(
-                f"GCS metadata put failed for record {record_id!r}: {e}"
-            ) from e
+            raise WORMBackendError(f"GCS metadata put failed for record {record_id!r}: {e}") from e
 
     def get(self, record_id: str) -> bytes:
         blob = self._bucket.blob(self._payload_key(record_id))
@@ -180,36 +166,24 @@ class GCSBucketLockWORM(WORMBackend):
             data = blob.download_as_bytes()
             return bytes(data)
         except NotFound as e:
-            raise WORMBackendError(
-                f"GCS record {record_id!r} not found in bucket "
-                f"{self._bucket_name!r}"
-            ) from e
+            raise WORMBackendError(f"GCS record {record_id!r} not found in bucket {self._bucket_name!r}") from e
         except GoogleAPIError as e:
-            raise WORMBackendError(
-                f"GCS get failed for record {record_id!r}: {e}"
-            ) from e
+            raise WORMBackendError(f"GCS get failed for record {record_id!r}: {e}") from e
 
     def get_metadata(self, record_id: str) -> RetentionMetadata:
         blob = self._bucket.blob(self._meta_key(record_id))
         try:
             raw = bytes(blob.download_as_bytes())
         except NotFound as e:
-            raise WORMBackendError(
-                f"GCS metadata for record {record_id!r} not found"
-            ) from e
+            raise WORMBackendError(f"GCS metadata for record {record_id!r} not found") from e
         except GoogleAPIError as e:
-            raise WORMBackendError(
-                f"GCS metadata get failed for record {record_id!r}: {e}"
-            ) from e
+            raise WORMBackendError(f"GCS metadata get failed for record {record_id!r}: {e}") from e
         return RetentionMetadata.model_validate_json(raw.decode("utf-8"))
 
     def delete(self, record_id: str, today: date | None = None) -> None:
         metadata = self.get_metadata(record_id)
         if metadata.legal_hold:
-            raise WORMBackendError(
-                f"GCS record {record_id!r} is under legal hold; "
-                f"cannot delete"
-            )
+            raise WORMBackendError(f"GCS record {record_id!r} is under legal hold; cannot delete")
         if is_locked(metadata, today=today):
             raise WORMBackendError(
                 f"GCS record {record_id!r} is still inside its "
@@ -218,9 +192,7 @@ class GCSBucketLockWORM(WORMBackend):
             )
         if metadata.lifecycle_stage != RetentionLifecycleStage.EXPIRED.value:
             raise WORMBackendError(
-                f"GCS record {record_id!r} lifecycle is "
-                f"{metadata.lifecycle_stage}; only EXPIRED records can "
-                f"be deleted"
+                f"GCS record {record_id!r} lifecycle is {metadata.lifecycle_stage}; only EXPIRED records can be deleted"
             )
         try:
             payload_blob = self._bucket.blob(self._payload_key(record_id))
@@ -228,20 +200,13 @@ class GCSBucketLockWORM(WORMBackend):
             meta_blob = self._bucket.blob(self._meta_key(record_id))
             meta_blob.delete()
         except GoogleAPIError as e:
-            raise WORMBackendError(
-                f"GCS delete failed for record {record_id!r}: {e}"
-            ) from e
+            raise WORMBackendError(f"GCS delete failed for record {record_id!r}: {e}") from e
 
-    def extend_retention(
-        self, record_id: str, new_lock_until: date
-    ) -> RetentionMetadata:
+    def extend_retention(self, record_id: str, new_lock_until: date) -> RetentionMetadata:
         from evidentia_core.models.common import utc_now
 
         metadata = self.get_metadata(record_id)
-        if (
-            metadata.lock_until is not None
-            and new_lock_until < metadata.lock_until
-        ):
+        if metadata.lock_until is not None and new_lock_until < metadata.lock_until:
             raise WORMBackendError(
                 f"WORM forbids shortening retention: current lock_until="
                 f"{metadata.lock_until}, attempted={new_lock_until}"
@@ -265,9 +230,7 @@ class GCSBucketLockWORM(WORMBackend):
                 content_type="application/json",
             )
         except GoogleAPIError as e:
-            raise WORMBackendError(
-                f"GCS metadata update failed for record {record_id!r}: {e}"
-            ) from e
+            raise WORMBackendError(f"GCS metadata update failed for record {record_id!r}: {e}") from e
         return new_metadata
 
     def apply_legal_hold(self, record_id: str) -> RetentionMetadata:
@@ -278,14 +241,9 @@ class GCSBucketLockWORM(WORMBackend):
             payload_blob.temporary_hold = True
             payload_blob.patch()
         except GoogleAPIError as e:
-            raise WORMBackendError(
-                f"GCS temporary_hold (apply) failed for record "
-                f"{record_id!r}: {e}"
-            ) from e
+            raise WORMBackendError(f"GCS temporary_hold (apply) failed for record {record_id!r}: {e}") from e
         metadata = self.get_metadata(record_id)
-        new_metadata = metadata.model_copy(
-            update={"legal_hold": True, "updated_at": utc_now()}
-        )
+        new_metadata = metadata.model_copy(update={"legal_hold": True, "updated_at": utc_now()})
         meta_blob = self._bucket.blob(self._meta_key(record_id))
         meta_blob.upload_from_string(
             new_metadata.model_dump_json(indent=2),
@@ -301,14 +259,9 @@ class GCSBucketLockWORM(WORMBackend):
             payload_blob.temporary_hold = False
             payload_blob.patch()
         except GoogleAPIError as e:
-            raise WORMBackendError(
-                f"GCS temporary_hold (release) failed for record "
-                f"{record_id!r}: {e}"
-            ) from e
+            raise WORMBackendError(f"GCS temporary_hold (release) failed for record {record_id!r}: {e}") from e
         metadata = self.get_metadata(record_id)
-        new_metadata = metadata.model_copy(
-            update={"legal_hold": False, "updated_at": utc_now()}
-        )
+        new_metadata = metadata.model_copy(update={"legal_hold": False, "updated_at": utc_now()})
         meta_blob = self._bucket.blob(self._meta_key(record_id))
         meta_blob.upload_from_string(
             new_metadata.model_dump_json(indent=2),
@@ -316,9 +269,7 @@ class GCSBucketLockWORM(WORMBackend):
         )
         return new_metadata
 
-    def _update_metadata(
-        self, record_id: str, new_metadata: RetentionMetadata
-    ) -> None:
+    def _update_metadata(self, record_id: str, new_metadata: RetentionMetadata) -> None:
         """Sidecar metadata rewrite (does NOT touch the payload)."""
         meta_blob = self._bucket.blob(self._meta_key(record_id))
         try:
@@ -327,12 +278,7 @@ class GCSBucketLockWORM(WORMBackend):
                 content_type="application/json",
             )
         except GoogleAPIError as e:
-            raise WORMBackendError(
-                f"GCS metadata update failed for record {record_id!r}: {e}"
-            ) from e
+            raise WORMBackendError(f"GCS metadata update failed for record {record_id!r}: {e}") from e
 
     def __repr__(self) -> str:
-        return (
-            f"GCSBucketLockWORM(bucket={self._bucket_name!r}, "
-            f"prefix={self._prefix!r})"
-        )
+        return f"GCSBucketLockWORM(bucket={self._bucket_name!r}, prefix={self._prefix!r})"

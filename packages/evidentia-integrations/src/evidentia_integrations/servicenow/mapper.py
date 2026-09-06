@@ -55,23 +55,13 @@ def gap_to_record_request(
     re-push.
     """
     if not gap.framework or not gap.control_id:
-        raise ServiceNowMappingError(
-            "Gap is missing framework/control_id; cannot push to ServiceNow."
-        )
+        raise ServiceNowMappingError("Gap is missing framework/control_id; cannot push to ServiceNow.")
 
-    severity_value = (
-        gap.gap_severity
-        if isinstance(gap.gap_severity, GapSeverity)
-        else GapSeverity(gap.gap_severity)
-    )
+    severity_value = gap.gap_severity if isinstance(gap.gap_severity, GapSeverity) else GapSeverity(gap.gap_severity)
     priority = SEVERITY_TO_SN_PRIORITY.get(severity_value, "3")
-    impact, urgency = _SEVERITY_TO_IMPACT_URGENCY.get(
-        severity_value, ("2", "2")
-    )
+    impact, urgency = _SEVERITY_TO_IMPACT_URGENCY.get(severity_value, ("2", "2"))
 
-    short_description = (
-        f"[{gap.framework}] {gap.control_id}: {gap.control_title}"
-    )
+    short_description = f"[{gap.framework}] {gap.control_id}: {gap.control_title}"
     short_description = short_description[:160]  # SN cap
 
     description_lines: list[str] = [
@@ -94,9 +84,7 @@ def gap_to_record_request(
                 *(f"  - {cf}" for cf in gap.cross_framework_value),
             ]
         )
-    description_lines.extend(
-        ["", f"Tracked by Evidentia gap id: {gap.id}"]
-    )
+    description_lines.extend(["", f"Tracked by Evidentia gap id: {gap.id}"])
     description = "\n".join(description_lines)
 
     correlation_id = f"{correlation_id_prefix}{gap.id}"

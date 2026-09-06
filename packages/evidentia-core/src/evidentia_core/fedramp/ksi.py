@@ -121,9 +121,7 @@ def validate_sdr_document(document: dict[str, Any]) -> list[str]:
     Returns a list of human-readable error strings; empty means valid.
     """
     errors = []
-    for err in sorted(
-        _sdr_validator().iter_errors(document), key=lambda e: list(e.absolute_path)
-    ):
+    for err in sorted(_sdr_validator().iter_errors(document), key=lambda e: list(e.absolute_path)):
         where = "/".join(str(p) for p in err.absolute_path) or "<document root>"
         errors.append(f"{where}: {err.message}")
     return errors
@@ -208,17 +206,11 @@ def _render_cycle_statements(
                 f"persistence_cycles; run `evidentia conmon list` to see "
                 f"available cadences."
             )
-        text = (
-            f"Persistence cycle: {cadence.activity} — {cadence.frequency} "
-            f"(CONMON cadence `{cadence.slug}`)"
-        )
+        text = f"Persistence cycle: {cadence.activity} — {cadence.frequency} (CONMON cadence `{cadence.slug}`)"
         anchor = (last_completed or {}).get(cadence.slug)
         if anchor is not None:
             due = next_due(cadence.slug, anchor)
-            text += (
-                f"; last completed {anchor.isoformat()}, "
-                f"next due {due.isoformat()}"
-            )
+            text += f"; last completed {anchor.isoformat()}, next due {due.isoformat()}"
         text += "."
         if cycle.note:
             text += f" {cycle.note}"
@@ -294,12 +286,9 @@ def build_sdr_document(
         indicators.append(item)
 
     return {
-        "certificationPackageOverviewUri": (
-            status.certification_package_overview_uri
-        ),
+        "certificationPackageOverviewUri": (status.certification_package_overview_uri),
         "fedRampRequirements": [
-            _requirement_to_sdr(frr_id, status.requirements[frr_id])
-            for frr_id in sorted(status.requirements)
+            _requirement_to_sdr(frr_id, status.requirements[frr_id]) for frr_id in sorted(status.requirements)
         ],
         "keySecurityIndicators": indicators,
         "metadata": {

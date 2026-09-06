@@ -188,9 +188,7 @@ def test_write_priv_finding_fires_on_sysadmin() -> None:
     conn = _MockConnection(responses)
     coll = MSSQLCollector(connection=conn)
     findings = coll.collect()
-    write_priv = [
-        f for f in findings if "EVIDENTIA-WRITE-PRIV-DETECTED" in f.source_finding_id
-    ]
+    write_priv = [f for f in findings if "EVIDENTIA-WRITE-PRIV-DETECTED" in f.source_finding_id]
     assert len(write_priv) == 1
     f = write_priv[0]
     assert f.severity == Severity.HIGH
@@ -201,9 +199,7 @@ def test_no_write_priv_finding_when_read_only() -> None:
     conn = _MockConnection(_baseline_responses())
     coll = MSSQLCollector(connection=conn)
     findings = coll.collect()
-    write_priv = [
-        f for f in findings if "EVIDENTIA-WRITE-PRIV-DETECTED" in f.source_finding_id
-    ]
+    write_priv = [f for f in findings if "EVIDENTIA-WRITE-PRIV-DETECTED" in f.source_finding_id]
     assert write_priv == []
 
 

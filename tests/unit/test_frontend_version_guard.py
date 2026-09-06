@@ -87,9 +87,7 @@ def test_hardcoded_version_in_jsx_fails(
     assert "Foot.tsx" in failures[0]
 
 
-def test_test_files_are_excluded(
-    check: Any, bump: Any, chdir_tmp: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_test_files_are_excluded(check: Any, bump: Any, chdir_tmp: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     rel = "packages/evidentia-ui/src/components/Foo.test.tsx"
     _write(chdir_tmp, rel, 'const mock = { evidentia_version: "0.10.7" };\n')
     _track(bump, monkeypatch, [rel])

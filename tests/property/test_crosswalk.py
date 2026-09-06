@@ -48,40 +48,30 @@ _FRAMEWORK_ID = st.text(
 
 
 @given(_FRAMEWORK_ID, _CONTROL_ID, _FRAMEWORK_ID)
-def test_empty_engine_returns_no_mappings(
-    fw_a: str, ctl: str, fw_b: str
-) -> None:
+def test_empty_engine_returns_no_mappings(fw_a: str, ctl: str, fw_b: str) -> None:
     """An empty CrosswalkEngine has no mappings regardless of query.
 
     Constructed against a non-existent mappings dir, the engine
     holds no forward / reverse entries. Every
     :meth:`get_mapped_controls` call is a clean lookup miss.
     """
-    engine = CrosswalkEngine(
-        mappings_dir=Path("/nonexistent-evidentia-property-test-dir")
-    )
+    engine = CrosswalkEngine(mappings_dir=Path("/nonexistent-evidentia-property-test-dir"))
     engine.load_all()  # logs warning on missing dir; no raise
     result = engine.get_mapped_controls(fw_a, ctl, fw_b)
     assert result == []
 
 
 @given(_FRAMEWORK_ID, _CONTROL_ID, _FRAMEWORK_ID)
-def test_get_all_mapped_controls_empty_for_empty_engine(
-    fw: str, ctl: str, _other_fw: str
-) -> None:
+def test_get_all_mapped_controls_empty_for_empty_engine(fw: str, ctl: str, _other_fw: str) -> None:
     """Empty-engine invariant for the wider all-frameworks lookup."""
-    engine = CrosswalkEngine(
-        mappings_dir=Path("/nonexistent-evidentia-property-test-dir")
-    )
+    engine = CrosswalkEngine(mappings_dir=Path("/nonexistent-evidentia-property-test-dir"))
     engine.load_all()
     result = engine.get_all_mapped_controls(fw, ctl)
     assert result == {}
 
 
 @given(_FRAMEWORK_ID, _CONTROL_ID)
-def test_cross_framework_value_returns_well_formed_strings(
-    fw: str, ctl: str
-) -> None:
+def test_cross_framework_value_returns_well_formed_strings(fw: str, ctl: str) -> None:
     """``get_cross_framework_value`` returns ``"fw:ctl"`` strings.
 
     Every entry has exactly one ``:`` separator with non-empty
@@ -90,9 +80,7 @@ def test_cross_framework_value_returns_well_formed_strings(
     exercises that the empty-result branch doesn't crash on
     pathological inputs.
     """
-    engine = CrosswalkEngine(
-        mappings_dir=Path("/nonexistent-evidentia-property-test-dir")
-    )
+    engine = CrosswalkEngine(mappings_dir=Path("/nonexistent-evidentia-property-test-dir"))
     engine.load_all()
     result = engine.get_cross_framework_value(fw, ctl)
     # Empty result is the expected case for an empty engine.
@@ -108,9 +96,7 @@ def test_cross_framework_value_returns_well_formed_strings(
 
 
 @given(_FRAMEWORK_ID, _CONTROL_ID, _FRAMEWORK_ID)
-def test_lookup_is_case_insensitive_on_control_id(
-    fw_a: str, ctl: str, fw_b: str
-) -> None:
+def test_lookup_is_case_insensitive_on_control_id(fw_a: str, ctl: str, fw_b: str) -> None:
     """Lookup with any-case variant of the same control id matches.
 
     The engine uppercases ``source_control_id`` at line 98 of
@@ -121,9 +107,7 @@ def test_lookup_is_case_insensitive_on_control_id(
     does not raise on case-folding pathological inputs (e.g.,
     Turkish dotless-i → ``İ``).
     """
-    engine = CrosswalkEngine(
-        mappings_dir=Path("/nonexistent-evidentia-property-test-dir")
-    )
+    engine = CrosswalkEngine(mappings_dir=Path("/nonexistent-evidentia-property-test-dir"))
     engine.load_all()
     lower_result = engine.get_mapped_controls(fw_a, ctl.lower(), fw_b)
     upper_result = engine.get_mapped_controls(fw_a, ctl.upper(), fw_b)
@@ -132,9 +116,7 @@ def test_lookup_is_case_insensitive_on_control_id(
 
 
 @given(_FRAMEWORK_ID, _CONTROL_ID)
-def test_available_frameworks_is_set_for_empty_engine(
-    _fw: str, _ctl: str
-) -> None:
+def test_available_frameworks_is_set_for_empty_engine(_fw: str, _ctl: str) -> None:
     """Empty engine exposes ``available_frameworks`` as empty set.
 
     The property under test is the type-stability of the
@@ -143,9 +125,7 @@ def test_available_frameworks_is_set_for_empty_engine(
     regardless of how the engine was queried. Empty engine →
     empty set.
     """
-    engine = CrosswalkEngine(
-        mappings_dir=Path("/nonexistent-evidentia-property-test-dir")
-    )
+    engine = CrosswalkEngine(mappings_dir=Path("/nonexistent-evidentia-property-test-dir"))
     engine.load_all()
     fws = engine.available_frameworks
     assert isinstance(fws, set)

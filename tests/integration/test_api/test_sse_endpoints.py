@@ -60,9 +60,7 @@ class TestExplainValidation:
         assert detail["error"] == "not_found"
         assert detail["resource"] == "control"
 
-    def test_explain_error_statuses_documented_in_openapi(
-        self, api_client: TestClient
-    ) -> None:
+    def test_explain_error_statuses_documented_in_openapi(self, api_client: TestClient) -> None:
         """2026-07-06 error-shape convergence: the deliberate 404s +
         the deliberate 500 (evidentia-ai import failure) are documented
         on the explain operation."""
@@ -77,15 +75,11 @@ class TestExplainValidation:
         for path, method, statuses in expected:
             responses = schema["paths"][path][method]["responses"]
             for status in statuses:
-                assert status in responses, (
-                    f"{method.upper()} {path} missing {status}"
-                )
+                assert status in responses, f"{method.upper()} {path} missing {status}"
 
 
 class TestOpenApi:
-    def test_openapi_schema_includes_all_routers(
-        self, api_client: TestClient
-    ) -> None:
+    def test_openapi_schema_includes_all_routers(self, api_client: TestClient) -> None:
         r = api_client.get("/api/openapi.json")
         assert r.status_code == 200
         paths = r.json()["paths"]

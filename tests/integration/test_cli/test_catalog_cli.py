@@ -95,9 +95,7 @@ def test_catalog_list_category_filter(runner: CliRunner) -> None:
 # -----------------------------------------------------------------------------
 
 
-def test_catalog_import_then_where_then_remove(
-    runner: CliRunner, tmp_path: Path, _isolated_user_dir: Path
-) -> None:
+def test_catalog_import_then_where_then_remove(runner: CliRunner, tmp_path: Path, _isolated_user_dir: Path) -> None:
     """Full round trip: import a user catalog, look it up, remove it."""
     source = _minimal_user_catalog(tmp_path)
 
@@ -122,14 +120,11 @@ def test_catalog_import_then_where_then_remove(
     # Where should now fail
     result = runner.invoke(app, ["catalog", "where", "my-custom-fw"])
     assert result.exit_code != 0, (
-        f"Expected failure after remove, got exit_code={result.exit_code} "
-        f"output={result.output!r}"
+        f"Expected failure after remove, got exit_code={result.exit_code} output={result.output!r}"
     )
 
 
-def test_catalog_import_with_framework_id_override(
-    runner: CliRunner, tmp_path: Path
-) -> None:
+def test_catalog_import_with_framework_id_override(runner: CliRunner, tmp_path: Path) -> None:
     """--framework-id flag overrides the ID in the source JSON."""
     source = _minimal_user_catalog(tmp_path, framework_id="original-id")
     result = runner.invoke(
@@ -148,9 +143,7 @@ def test_catalog_import_with_framework_id_override(
     assert result.exit_code == 0, result.output
 
 
-def test_catalog_import_refuses_duplicate_without_force(
-    runner: CliRunner, tmp_path: Path
-) -> None:
+def test_catalog_import_refuses_duplicate_without_force(runner: CliRunner, tmp_path: Path) -> None:
     """Second import with the same id errors out without --force."""
     source = _minimal_user_catalog(tmp_path)
     r1 = runner.invoke(app, ["catalog", "import", str(source)])
@@ -170,9 +163,7 @@ def test_catalog_import_force_overwrites(runner: CliRunner, tmp_path: Path) -> N
 
 
 def test_catalog_remove_unknown_framework_errors(runner: CliRunner) -> None:
-    result = runner.invoke(
-        app, ["catalog", "remove", "nonexistent-fw", "--yes"]
-    )
+    result = runner.invoke(app, ["catalog", "remove", "nonexistent-fw", "--yes"])
     assert result.exit_code != 0, result.output
 
 
@@ -190,9 +181,7 @@ def test_user_catalog_shadows_bundled(runner: CliRunner, tmp_path: Path) -> None
     """A user-imported catalog with the same id as bundled should take precedence."""
     # Import a custom version of nist-800-53-mod (a bundled id)
     source = _minimal_user_catalog(tmp_path, framework_id="nist-800-53-mod")
-    result = runner.invoke(
-        app, ["catalog", "import", str(source), "--force"]
-    )
+    result = runner.invoke(app, ["catalog", "import", str(source), "--force"])
     assert result.exit_code == 0, result.output
 
     # where should report user source

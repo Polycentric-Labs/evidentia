@@ -83,8 +83,7 @@ def validate(path: Path) -> list[str]:
         verdict = control.get("verdict")
         if verdict not in VALID_VERDICTS:
             errors.append(
-                f"controls[{idx}] ({control.get('id', '?')}): "
-                f"verdict={verdict!r} not in {sorted(VALID_VERDICTS)}"
+                f"controls[{idx}] ({control.get('id', '?')}): verdict={verdict!r} not in {sorted(VALID_VERDICTS)}"
             )
 
     return errors

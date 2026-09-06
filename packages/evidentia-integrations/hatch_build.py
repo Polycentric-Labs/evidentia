@@ -23,9 +23,5 @@ class SbomBuildHook(BuildHookInterface):
         sbom_dir = os.path.join(self.root, "sbom")
         if not os.path.isdir(sbom_dir):
             return
-        files = sorted(
-            os.path.join(sbom_dir, f)
-            for f in os.listdir(sbom_dir)
-            if f.endswith(".cdx.json")
-        )
+        files = sorted(os.path.join(sbom_dir, f) for f in os.listdir(sbom_dir) if f.endswith(".cdx.json"))
         build_data.setdefault("sbom_files", []).extend(files)

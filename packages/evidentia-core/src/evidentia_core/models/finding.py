@@ -256,9 +256,7 @@ class SecurityFinding(EvidentiaModel):
             and isinstance(source_finding_id, str)
             and source_finding_id.strip()
         ):
-            data["id"] = deterministic_finding_id(
-                source_system, source_finding_id
-            )
+            data["id"] = deterministic_finding_id(source_system, source_finding_id)
         return data
 
     @model_validator(mode="before")
@@ -295,11 +293,7 @@ class SecurityFinding(EvidentiaModel):
             )
             for m in existing
         }
-        merged = list(existing) + [
-            m
-            for m in synthesized
-            if (m.framework, m.control_id) not in explicit_keys
-        ]
+        merged = list(existing) + [m for m in synthesized if (m.framework, m.control_id) not in explicit_keys]
         data["control_mappings"] = merged
         return data
 

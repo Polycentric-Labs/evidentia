@@ -43,9 +43,7 @@ class TestAtomicWriteBasics:
 
 
 class TestAtomicWriteCleanup:
-    def test_removes_orphaned_tmp_on_write_failure(
-        self, tmp_path: Path
-    ) -> None:
+    def test_removes_orphaned_tmp_on_write_failure(self, tmp_path: Path) -> None:
         """If the .tmp file write fails (e.g., disk full), the .tmp
         file is removed before re-raising — sidecar artifacts don't
         accumulate across failures."""
@@ -55,9 +53,7 @@ class TestAtomicWriteCleanup:
 
         original_write_text = Path.write_text
 
-        def failing_write_text(
-            self: Path, *args: object, **kwargs: object
-        ) -> int:
+        def failing_write_text(self: Path, *args: object, **kwargs: object) -> int:
             if self == tmp_path_obj:
                 # Create the file, then fail — simulates partial-write
                 # disk-full scenario.
@@ -75,9 +71,7 @@ class TestAtomicWriteCleanup:
         assert not path.exists()
         assert not tmp_path_obj.exists()
 
-    def test_removes_orphaned_tmp_on_replace_failure(
-        self, tmp_path: Path
-    ) -> None:
+    def test_removes_orphaned_tmp_on_replace_failure(self, tmp_path: Path) -> None:
         """If os.replace fails (e.g., cross-filesystem rename in some
         edge case), the .tmp sidecar is cleaned up."""
         path = tmp_path / "state.json"
@@ -99,9 +93,7 @@ class TestAtomicWriteCleanup:
         assert not path.exists()
         assert not tmp_path_obj.exists()
 
-    def test_cleanup_suppresses_secondary_oserror(
-        self, tmp_path: Path
-    ) -> None:
+    def test_cleanup_suppresses_secondary_oserror(self, tmp_path: Path) -> None:
         """If the .tmp cleanup itself fails (e.g., already-deleted by
         a parallel cleanup), the secondary OSError is suppressed and
         the original exception propagates."""
@@ -111,16 +103,12 @@ class TestAtomicWriteCleanup:
         original_write_text = Path.write_text
         original_unlink = Path.unlink
 
-        def failing_write_text(
-            self: Path, *args: object, **kwargs: object
-        ) -> int:
+        def failing_write_text(self: Path, *args: object, **kwargs: object) -> int:
             if self == tmp_path_obj:
                 raise OSError("primary failure")
             return original_write_text(self, *args, **kwargs)  # type: ignore[arg-type]
 
-        def failing_unlink(
-            self: Path, missing_ok: bool = False
-        ) -> None:
+        def failing_unlink(self: Path, missing_ok: bool = False) -> None:
             if self == tmp_path_obj:
                 raise OSError("secondary cleanup failure")
             return original_unlink(self, missing_ok=missing_ok)
@@ -162,9 +150,7 @@ class TestAtomicWriteSemantics:
         write_target: list[Path] = []
         original_write_text = Path.write_text
 
-        def spy_write_text(
-            self: Path, *args: object, **kwargs: object
-        ) -> int:
+        def spy_write_text(self: Path, *args: object, **kwargs: object) -> int:
             write_target.append(self)
             return original_write_text(self, *args, **kwargs)  # type: ignore[arg-type]
 

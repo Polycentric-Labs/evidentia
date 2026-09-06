@@ -45,9 +45,7 @@ def _schemathesis_loader() -> object | None:
     if hasattr(schemathesis, "from_asgi"):
         return schemathesis.from_asgi
     # 4.x path: openapi submodule from_asgi.
-    if hasattr(schemathesis, "openapi") and hasattr(
-        schemathesis.openapi, "from_asgi"
-    ):
+    if hasattr(schemathesis, "openapi") and hasattr(schemathesis.openapi, "from_asgi"):
         return schemathesis.openapi.from_asgi
     return None
 

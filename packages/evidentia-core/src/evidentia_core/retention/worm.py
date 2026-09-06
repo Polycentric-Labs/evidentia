@@ -93,9 +93,7 @@ class WORMBackend(ABC):
         ...
 
     @abstractmethod
-    def extend_retention(
-        self, record_id: str, new_lock_until: date
-    ) -> RetentionMetadata:
+    def extend_retention(self, record_id: str, new_lock_until: date) -> RetentionMetadata:
         """Extend the lock-until date (cannot shorten).
 
         Raises :class:`WORMBackendError` if ``new_lock_until`` is
@@ -163,13 +161,9 @@ class WORMBackend(ABC):
         )
 
         if not gdpr_request_ref or not isinstance(gdpr_request_ref, str):
-            raise WORMBackendError(
-                "purge_immediately requires a non-empty gdpr_request_ref"
-            )
+            raise WORMBackendError("purge_immediately requires a non-empty gdpr_request_ref")
         if not operator_id or not isinstance(operator_id, str):
-            raise WORMBackendError(
-                "purge_immediately requires a non-empty operator_id"
-            )
+            raise WORMBackendError("purge_immediately requires a non-empty operator_id")
 
         metadata = self.get_metadata(record_id)
         if metadata.retention_period_days != 0:
@@ -228,10 +222,7 @@ class WORMBackend(ABC):
             _audit_log.info(
                 action=EventAction.RETENTION_GDPR_PURGE,
                 outcome=EventOutcome.SUCCESS,
-                message=(
-                    f"GDPR Article 17 purge completed for record "
-                    f"{record_id!r}"
-                ),
+                message=(f"GDPR Article 17 purge completed for record {record_id!r}"),
                 evidentia={
                     "record_id": record_id,
                     "gdpr_request_ref": gdpr_request_ref,
@@ -256,9 +247,7 @@ class WORMBackend(ABC):
             }
         )
 
-    def _update_metadata(
-        self, record_id: str, new_metadata: RetentionMetadata
-    ) -> None:
+    def _update_metadata(self, record_id: str, new_metadata: RetentionMetadata) -> None:
         """Persist a fresh metadata snapshot to the backend.
 
         Default implementation expects subclasses to override OR
@@ -268,8 +257,7 @@ class WORMBackend(ABC):
         rewrite that does NOT touch the payload.
         """
         raise NotImplementedError(
-            "_update_metadata must be overridden by concrete "
-            "WORMBackend subclasses to support purge_immediately."
+            "_update_metadata must be overridden by concrete WORMBackend subclasses to support purge_immediately."
         )
 
 
@@ -304,9 +292,7 @@ class LocalFilesystemWORM(WORMBackend):
             payload_path = validate_within(candidate_payload, self._root)
             meta_path = validate_within(candidate_meta, self._root)
         except PathTraversalError as e:
-            raise WORMBackendError(
-                f"record_id {record_id!r} would escape store root"
-            ) from e
+            raise WORMBackendError(f"record_id {record_id!r} would escape store root") from e
         return payload_path, meta_path
 
     def put(
@@ -317,9 +303,7 @@ class LocalFilesystemWORM(WORMBackend):
     ) -> None:
         payload_path, meta_path = self._record_path(record_id)
         if payload_path.exists():
-            raise WORMBackendError(
-                f"record {record_id!r} already exists; WORM forbids overwrite"
-            )
+            raise WORMBackendError(f"record {record_id!r} already exists; WORM forbids overwrite")
         # Atomic write of payload + metadata
         tmp_payload = payload_path.with_suffix(".bin.tmp")
         tmp_payload.write_bytes(payload)
@@ -338,12 +322,8 @@ class LocalFilesystemWORM(WORMBackend):
     def get_metadata(self, record_id: str) -> RetentionMetadata:
         _, meta_path = self._record_path(record_id)
         if not meta_path.exists():
-            raise WORMBackendError(
-                f"metadata for record {record_id!r} not found"
-            )
-        return RetentionMetadata.model_validate_json(
-            meta_path.read_text(encoding="utf-8")
-        )
+            raise WORMBackendError(f"metadata for record {record_id!r} not found")
+        return RetentionMetadata.model_validate_json(meta_path.read_text(encoding="utf-8"))
 
     def delete(self, record_id: str, today: date | None = None) -> None:
         from evidentia_core.retention.metadata import RetentionLifecycleStage
@@ -353,9 +333,7 @@ class LocalFilesystemWORM(WORMBackend):
             raise WORMBackendError(f"record {record_id!r} not found")
         metadata = self.get_metadata(record_id)
         if metadata.legal_hold:
-            raise WORMBackendError(
-                f"record {record_id!r} is under legal hold; cannot delete"
-            )
+            raise WORMBackendError(f"record {record_id!r} is under legal hold; cannot delete")
         if is_locked(metadata, today=today):
             raise WORMBackendError(
                 f"record {record_id!r} is still inside its retention "
@@ -363,16 +341,12 @@ class LocalFilesystemWORM(WORMBackend):
             )
         if metadata.lifecycle_stage != RetentionLifecycleStage.EXPIRED.value:
             raise WORMBackendError(
-                f"record {record_id!r} lifecycle is "
-                f"{metadata.lifecycle_stage}; only EXPIRED records can "
-                f"be deleted"
+                f"record {record_id!r} lifecycle is {metadata.lifecycle_stage}; only EXPIRED records can be deleted"
             )
         payload_path.unlink()
         meta_path.unlink()
 
-    def extend_retention(
-        self, record_id: str, new_lock_until: date
-    ) -> RetentionMetadata:
+    def extend_retention(self, record_id: str, new_lock_until: date) -> RetentionMetadata:
         metadata = self.get_metadata(record_id)
         if metadata.lock_until is not None and new_lock_until < metadata.lock_until:
             raise WORMBackendError(
@@ -391,25 +365,17 @@ class LocalFilesystemWORM(WORMBackend):
         # Overwriting metadata is permitted (it's tracking only, not
         # the underlying record). Atomic write.
         tmp = meta_path.with_suffix(".meta.tmp")
-        tmp.write_text(
-            new_metadata.model_dump_json(indent=2), encoding="utf-8"
-        )
+        tmp.write_text(new_metadata.model_dump_json(indent=2), encoding="utf-8")
         os.replace(tmp, meta_path)
         return new_metadata
 
-    def _update_metadata(
-        self, record_id: str, new_metadata: RetentionMetadata
-    ) -> None:
+    def _update_metadata(self, record_id: str, new_metadata: RetentionMetadata) -> None:
         """Atomic sidecar metadata rewrite (does NOT touch payload)."""
         _, meta_path = self._record_path(record_id)
         if not meta_path.exists():
-            raise WORMBackendError(
-                f"metadata for record {record_id!r} not found"
-            )
+            raise WORMBackendError(f"metadata for record {record_id!r} not found")
         tmp = meta_path.with_suffix(".meta.tmp")
-        tmp.write_text(
-            new_metadata.model_dump_json(indent=2), encoding="utf-8"
-        )
+        tmp.write_text(new_metadata.model_dump_json(indent=2), encoding="utf-8")
         os.replace(tmp, meta_path)
 
     def root(self) -> Path:

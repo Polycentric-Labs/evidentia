@@ -133,20 +133,13 @@ def test_multiline_python_c_body_is_opaque(cwt: Any) -> None:
 
 def test_case_arms_skipped_until_esac(cwt: Any) -> None:
     script = (
-        'case "$GITHUB_EVENT_NAME" in\n'
-        "  pull_request|merge_group) echo pr ;;\n"
-        "  *) echo other ;;\n"
-        "esac\n"
-        "docker ps\n"
+        'case "$GITHUB_EVENT_NAME" in\n  pull_request|merge_group) echo pr ;;\n  *) echo other ;;\nesac\ndocker ps\n'
     )
     assert cwt.extract_commands(script) == ["docker"]
 
 
 def test_single_quoted_program_bodies_opaque(cwt: Any) -> None:
-    script = (
-        "gh api x -q '.[0].number; select(.title)'\n"
-        'sed -i "s|__TAG__|v1|g; s|__D__|abc|g" file.md\n'
-    )
+    script = "gh api x -q '.[0].number; select(.title)'\nsed -i \"s|__TAG__|v1|g; s|__D__|abc|g\" file.md\n"
     assert cwt.extract_commands(script) == ["gh", "sed"]
 
 
@@ -162,7 +155,7 @@ def test_apostrophe_in_comment_does_not_desync_masking(cwt: Any) -> None:
     # rather than leaking a bare `%s` token because quote state was inverted.
     script = (
         "# the range can't be resolved (empty, all-zero \"no\n"
-        "# parent\" sentinel), so build unconditionally.\n"
+        '# parent" sentinel), so build unconditionally.\n'
         "printf '%s' \"$base\" | grep -qE '^0+$'\n"
         "docker build .\n"
     )
@@ -175,7 +168,7 @@ def test_apostrophe_in_comment_keeps_later_single_quotes_paired(cwt: Any) -> Non
     script = (
         "# install the extras exactly as a consumer would; the meta-package's\n"
         "# base deps already pull the closure.\n"
-        "pip install \"evidentia[gui,mcp]==1.0\"\n"
+        'pip install "evidentia[gui,mcp]==1.0"\n'
         "grep -q x || { echo \"'evidentia version' mismatch\"; exit 1; }\n"
     )
     got = cwt.extract_commands(script)
@@ -187,13 +180,7 @@ def test_brace_group_delimiters_are_not_commands(cwt: Any) -> None:
     # `{ ...; } >> file` is a compound-command group: the `{` opener and `}`
     # closer are shell grouping, never tool invocations (real in
     # base-freshness.yml / stale-branches.yml).
-    script = (
-        "{\n"
-        '  echo "## report"\n'
-        '  echo ""\n'
-        '} >> "$GITHUB_STEP_SUMMARY"\n'
-        "gh api repos/x/branches\n"
-    )
+    script = '{\n  echo "## report"\n  echo ""\n} >> "$GITHUB_STEP_SUMMARY"\ngh api repos/x/branches\n'
     got = cwt.extract_commands(script)
     assert "{" not in got and "}" not in got
     assert got == ["gh"]
@@ -364,25 +351,19 @@ def _patch_tree(cwt: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> No
     monkeypatch.setattr(cwt, "workspace_manifests", lambda: [manifest])
 
 
-def test_strict_exit_2_on_finding(
-    cwt: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_strict_exit_2_on_finding(cwt: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     _patch_tree(cwt, monkeypatch, tmp_path)
     _write(tmp_path / "workflows", "missing.yml", WF_MISSING)
     assert cwt.main(["--strict"]) == 2
 
 
-def test_strict_exit_0_when_clean(
-    cwt: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_strict_exit_0_when_clean(cwt: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     _patch_tree(cwt, monkeypatch, tmp_path)
     _write(tmp_path / "workflows", "ok.yml", WF_OK)
     assert cwt.main(["--strict"]) == 0
 
 
-def test_advisory_exit_0_despite_finding(
-    cwt: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_advisory_exit_0_despite_finding(cwt: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     _patch_tree(cwt, monkeypatch, tmp_path)
     _write(tmp_path / "workflows", "missing.yml", WF_MISSING)
     assert cwt.main([]) == 0

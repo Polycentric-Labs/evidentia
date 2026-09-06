@@ -118,9 +118,7 @@ def _validate_id_shape(poam_id: str) -> str:
     try:
         return str(UUID(poam_id))
     except (ValueError, AttributeError, TypeError) as exc:
-        raise InvalidPoamIdError(
-            f"Invalid POA&M ID format (expected UUID string): {poam_id!r}"
-        ) from exc
+        raise InvalidPoamIdError(f"Invalid POA&M ID format (expected UUID string): {poam_id!r}") from exc
 
 
 def get_poam_store_dir(
@@ -163,11 +161,7 @@ def get_poam_store_dir(
         base = Path(override).expanduser().resolve()
     else:
         env = os.environ.get(POAM_STORE_ENV_VAR)
-        base = (
-            Path(env).expanduser().resolve()
-            if env
-            else Path(user_data_dir("evidentia", "Evidentia")) / "poam_store"
-        )
+        base = Path(env).expanduser().resolve() if env else Path(user_data_dir("evidentia", "Evidentia")) / "poam_store"
     if tenant is None:
         return base
     from evidentia_core.rbac import validate_tenant_id
@@ -218,9 +212,7 @@ def save_poam(
     out_path = validate_within(candidate, store)
     if out_path.is_file():
         try:
-            prior = ControlGap.model_validate_json(
-                out_path.read_text(encoding="utf-8")
-            )
+            prior = ControlGap.model_validate_json(out_path.read_text(encoding="utf-8"))
             prior_by_id = {m.id: m for m in prior.poam_milestones}
             for milestone in poam.poam_milestones:
                 prior_m = prior_by_id.get(milestone.id)
@@ -228,8 +220,7 @@ def save_poam(
                     milestone.updated_at = utc_now()
         except Exception as exc:  # pragma: no cover — defensive
             logger.warning(
-                "Could not parse prior POA&M record for "
-                "milestone-timestamp refresh: %s",
+                "Could not parse prior POA&M record for milestone-timestamp refresh: %s",
                 exc,
             )
 
@@ -291,11 +282,7 @@ def _next_open_milestone_date(poam: ControlGap) -> tuple[int, str]:
         POAMState.IN_PROGRESS.value,
         POAMState.OVERDUE.value,
     }
-    open_dates = [
-        m.target_date.isoformat()
-        for m in poam.poam_milestones
-        if m.status in open_states
-    ]
+    open_dates = [m.target_date.isoformat() for m in poam.poam_milestones if m.status in open_states]
     if open_dates:
         return (0, min(open_dates))
     return (1, "")
@@ -322,17 +309,13 @@ def list_poams(
     poams: list[ControlGap] = []
     for path in store.glob("*.json"):
         try:
-            poams.append(
-                ControlGap.model_validate_json(path.read_text(encoding="utf-8"))
-            )
+            poams.append(ControlGap.model_validate_json(path.read_text(encoding="utf-8")))
         except Exception as exc:  # pragma: no cover — defensive
             # A malformed file in the store shouldn't crash the
             # listing of all the well-formed records. Log + skip.
             # Operators can spot it via the warning + manually
             # inspect.
-            logger.warning(
-                "Skipping malformed POA&M record %s: %s", path, exc
-            )
+            logger.warning("Skipping malformed POA&M record %s: %s", path, exc)
 
     def _sort_key(poam: ControlGap) -> tuple[int, int, str, str]:
         severity_rank = _SEVERITY_RANK.get(poam.gap_severity, 99)

@@ -81,8 +81,7 @@ _VISIBILITY_MAPPINGS = [
     _mapping(
         "AC-6",
         OLIRRelationship.INTERSECTS_WITH,
-        "Private visibility constrains who can read source — one "
-        "aspect of AC-6 Least Privilege.",
+        "Private visibility constrains who can read source — one aspect of AC-6 Least Privilege.",
     ),
 ]
 
@@ -90,8 +89,7 @@ _BRANCH_UNPROTECTED_MAPPINGS = [
     _mapping(
         "SA-11",
         OLIRRelationship.SUBSET_OF,
-        "SA-11 Developer Security Testing — branch protection is the "
-        "gate that forces review; missing it = SA-11 gap.",
+        "SA-11 Developer Security Testing — branch protection is the gate that forces review; missing it = SA-11 gap.",
     ),
     _mapping(
         "CM-2",
@@ -102,8 +100,7 @@ _BRANCH_UNPROTECTED_MAPPINGS = [
     _mapping(
         "CM-3",
         OLIRRelationship.SUBSET_OF,
-        "CM-3 Configuration Change Control — unprotected branch "
-        "bypasses change-control review entirely.",
+        "CM-3 Configuration Change Control — unprotected branch bypasses change-control review entirely.",
     ),
     _mapping(
         "AC-3",
@@ -118,14 +115,12 @@ _BRANCH_READ_ERROR_MAPPINGS = [
     _mapping(
         "SA-11",
         OLIRRelationship.RELATED_TO,
-        "Unable to verify branch protection posture — SA-11 evidence "
-        "indeterminate.",
+        "Unable to verify branch protection posture — SA-11 evidence indeterminate.",
     ),
     _mapping(
         "CM-3",
         OLIRRelationship.RELATED_TO,
-        "Configuration Change Control verification failed — "
-        "audit-review should treat as 'unknown state'.",
+        "Configuration Change Control verification failed — audit-review should treat as 'unknown state'.",
     ),
 ]
 
@@ -139,8 +134,7 @@ _PR_REVIEW_MAPPINGS = [
     _mapping(
         "AC-3",
         OLIRRelationship.SUBSET_OF,
-        "AC-3 Access Enforcement — PR review gate ensures only "
-        "approved changes land on the protected branch.",
+        "AC-3 Access Enforcement — PR review gate ensures only approved changes land on the protected branch.",
     ),
 ]
 
@@ -148,8 +142,7 @@ _STATUS_CHECK_MAPPINGS = [
     _mapping(
         "SA-11",
         OLIRRelationship.SUBSET_OF,
-        "SA-11 — required status checks enforce automated test/SAST/"
-        "dependency-scan gates before merge.",
+        "SA-11 — required status checks enforce automated test/SAST/dependency-scan gates before merge.",
     ),
     _mapping(
         "SI-2",
@@ -164,14 +157,12 @@ _ENFORCE_ADMINS_MAPPINGS = [
     _mapping(
         "AC-6",
         OLIRRelationship.SUBSET_OF,
-        "AC-6 Least Privilege — enforce_admins=true means admin "
-        "privileges don't include 'skip review'.",
+        "AC-6 Least Privilege — enforce_admins=true means admin privileges don't include 'skip review'.",
     ),
     _mapping(
         "CM-3",
         OLIRRelationship.SUBSET_OF,
-        "CM-3 Configuration Change Control — closes the admin-bypass "
-        "loophole that defeats CM-3.",
+        "CM-3 Configuration Change Control — closes the admin-bypass loophole that defeats CM-3.",
     ),
 ]
 
@@ -179,14 +170,12 @@ _CODEOWNERS_MAPPINGS = [
     _mapping(
         "SA-11",
         OLIRRelationship.SUBSET_OF,
-        "SA-11 Developer Security Testing — CODEOWNERS enforces "
-        "reviewer selection.",
+        "SA-11 Developer Security Testing — CODEOWNERS enforces reviewer selection.",
     ),
     _mapping(
         "AC-3",
         OLIRRelationship.SUBSET_OF,
-        "AC-3 Access Enforcement — CODEOWNERS constrains who can "
-        "approve changes to specific file paths.",
+        "AC-3 Access Enforcement — CODEOWNERS constrains who can approve changes to specific file paths.",
     ),
 ]
 
@@ -209,9 +198,7 @@ class GitHubCollector:
         block_private_ips: bool = True,
     ) -> None:
         if not owner or not repo:
-            raise GitHubCollectorError(
-                "GitHubCollector requires non-empty owner + repo."
-            )
+            raise GitHubCollectorError("GitHubCollector requires non-empty owner + repo.")
         self.owner = owner
         self.repo = repo
         # SECURE-BY-DEFAULT (threat-model T2): the default api.github.com
@@ -263,10 +250,7 @@ class GitHubCollector:
         if dry_run:
             _log.info(
                 action=EventAction.COLLECT_STARTED,
-                message=(
-                    f"GitHub dry-run for {self.slug} — would collect: "
-                    "visibility, branch protection, CODEOWNERS"
-                ),
+                message=(f"GitHub dry-run for {self.slug} — would collect: visibility, branch protection, CODEOWNERS"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.INFO],
                 evidentia={"dry_run": True, "repo": self.slug},
@@ -317,24 +301,16 @@ class GitHubCollector:
                     message=f"Could not read repo {self.slug}: {e}",
                     error={"type": "GitHubApiError", "message": str(e)},
                 )
-                raise GitHubCollectorError(
-                    f"Could not read repo {self.slug}: {e}"
-                ) from e
+                raise GitHubCollectorError(f"Could not read repo {self.slug}: {e}") from e
 
             findings.extend(self._visibility_finding(repo_meta, context))
-            findings.extend(
-                self._branch_protection_findings(repo_meta, context)
-            )
+            findings.extend(self._branch_protection_findings(repo_meta, context))
             findings.extend(self._codeowners_finding(context))
 
             _log.info(
                 action=EventAction.COLLECT_COMPLETED,
-                outcome=EventOutcome.SUCCESS
-                if not errors
-                else EventOutcome.FAILURE,
-                message=(
-                    f"GitHub collection completed: {len(findings)} findings"
-                ),
+                outcome=EventOutcome.SUCCESS if not errors else EventOutcome.FAILURE,
+                message=(f"GitHub collection completed: {len(findings)} findings"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.END],
                 evidentia={"findings_count": len(findings)},
@@ -359,11 +335,7 @@ class GitHubCollector:
                     resource_type="github-branch-protection",
                     scanned=1,
                     matched_filter=1,
-                    collected=sum(
-                        1
-                        for f in findings
-                        if f.resource_type == "GitHub::Branch"
-                    ),
+                    collected=sum(1 for f in findings if f.resource_type == "GitHub::Branch"),
                 ),
             ],
             total_findings=len(findings),
@@ -375,9 +347,7 @@ class GitHubCollector:
 
     # ── Sub-checks ──────────────────────────────────────────────────
 
-    def _visibility_finding(
-        self, repo_meta: dict[str, Any], context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _visibility_finding(self, repo_meta: dict[str, Any], context: CollectionContext) -> list[SecurityFinding]:
         is_private = bool(repo_meta.get("private", False))
         visibility = str(repo_meta.get("visibility", "unknown"))
 
@@ -386,8 +356,7 @@ class GitHubCollector:
                 SecurityFinding(
                     title=f"GitHub repo {self.slug} is private",
                     description=(
-                        f"Repository {self.slug} visibility is {visibility!r}. "
-                        "Source code is not publicly accessible."
+                        f"Repository {self.slug} visibility is {visibility!r}. Source code is not publicly accessible."
                     ),
                     severity=Severity.INFORMATIONAL,
                     status=FindingStatus.RESOLVED,
@@ -431,9 +400,7 @@ class GitHubCollector:
     ) -> list[SecurityFinding]:
         default_branch = str(repo_meta.get("default_branch") or "main")
         try:
-            protection = self._client.get_branch_protection(
-                self.owner, self.repo, default_branch
-            )
+            protection = self._client.get_branch_protection(self.owner, self.repo, default_branch)
         except GitHubApiError as e:
             return [
                 SecurityFinding(
@@ -456,10 +423,7 @@ class GitHubCollector:
         if protection is None:
             return [
                 SecurityFinding(
-                    title=(
-                        f"Default branch {default_branch!r} in {self.slug} "
-                        "has no branch protection"
-                    ),
+                    title=(f"Default branch {default_branch!r} in {self.slug} has no branch protection"),
                     description=(
                         "Branch protection is not enabled on the default "
                         "branch. Anyone with write access can push directly "
@@ -481,7 +445,7 @@ class GitHubCollector:
 
         findings: list[SecurityFinding] = []
 
-        pr_review = (protection.get("required_pull_request_reviews") or {})
+        pr_review = protection.get("required_pull_request_reviews") or {}
         reviewers = int(pr_review.get("required_approving_review_count", 0))
         findings.append(
             _finding(
@@ -498,16 +462,14 @@ class GitHubCollector:
                 ),
                 severity=Severity.INFORMATIONAL if reviewers > 0 else Severity.HIGH,
                 status=FindingStatus.RESOLVED if reviewers > 0 else FindingStatus.ACTIVE,
-                compliance_status=ComplianceStatus.PASS
-                if reviewers > 0
-                else ComplianceStatus.FAIL,
+                compliance_status=ComplianceStatus.PASS if reviewers > 0 else ComplianceStatus.FAIL,
                 control_mappings=_PR_REVIEW_MAPPINGS,
                 collection_context=context,
                 raw=pr_review,
             )
         )
 
-        status_checks = (protection.get("required_status_checks") or {})
+        status_checks = protection.get("required_status_checks") or {}
         contexts = status_checks.get("contexts") or []
         findings.append(
             _finding(
@@ -518,33 +480,26 @@ class GitHubCollector:
                 if contexts
                 else f"No required status checks on {default_branch!r}",
                 description=(
-                    f"{len(contexts)} required check(s): {', '.join(contexts[:5])}"
-                    f"{'...' if len(contexts) > 5 else ''}"
+                    f"{len(contexts)} required check(s): {', '.join(contexts[:5])}{'...' if len(contexts) > 5 else ''}"
                     if contexts
                     else "No required status checks. CI can be bypassed."
                 ),
                 severity=Severity.INFORMATIONAL if contexts else Severity.MEDIUM,
                 status=FindingStatus.RESOLVED if contexts else FindingStatus.ACTIVE,
-                compliance_status=ComplianceStatus.PASS
-                if contexts
-                else ComplianceStatus.FAIL,
+                compliance_status=ComplianceStatus.PASS if contexts else ComplianceStatus.FAIL,
                 control_mappings=_STATUS_CHECK_MAPPINGS,
                 collection_context=context,
                 raw=status_checks,
             )
         )
 
-        enforce_admins = bool(
-            (protection.get("enforce_admins") or {}).get("enabled", False)
-        )
+        enforce_admins = bool((protection.get("enforce_admins") or {}).get("enabled", False))
         findings.append(
             _finding(
                 slug=self.slug,
                 branch=default_branch,
                 rule="enforce_admins",
-                title="Admin bypass "
-                + ("disabled" if enforce_admins else "allowed")
-                + f" on {default_branch!r}",
+                title="Admin bypass " + ("disabled" if enforce_admins else "allowed") + f" on {default_branch!r}",
                 description=(
                     "Admins cannot bypass branch protection."
                     if enforce_admins
@@ -552,9 +507,7 @@ class GitHubCollector:
                 ),
                 severity=Severity.INFORMATIONAL if enforce_admins else Severity.MEDIUM,
                 status=FindingStatus.RESOLVED if enforce_admins else FindingStatus.ACTIVE,
-                compliance_status=ComplianceStatus.PASS
-                if enforce_admins
-                else ComplianceStatus.FAIL,
+                compliance_status=ComplianceStatus.PASS if enforce_admins else ComplianceStatus.FAIL,
                 control_mappings=_ENFORCE_ADMINS_MAPPINGS,
                 collection_context=context,
                 raw={"enforce_admins": enforce_admins},
@@ -563,9 +516,7 @@ class GitHubCollector:
 
         return findings
 
-    def _codeowners_finding(
-        self, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _codeowners_finding(self, context: CollectionContext) -> list[SecurityFinding]:
         for path in (".github/CODEOWNERS", "docs/CODEOWNERS", "CODEOWNERS"):
             try:
                 content = self._client.get_contents(self.owner, self.repo, path)
@@ -575,9 +526,7 @@ class GitHubCollector:
                 return [
                     SecurityFinding(
                         title=f"CODEOWNERS present in {self.slug}",
-                        description=(
-                            f"Code review ownership defined at {path!r}."
-                        ),
+                        description=(f"Code review ownership defined at {path!r}."),
                         severity=Severity.INFORMATIONAL,
                         status=FindingStatus.RESOLVED,
                         # v0.10.0: a present CODEOWNERS file satisfies
@@ -595,10 +544,7 @@ class GitHubCollector:
         return [
             SecurityFinding(
                 title=f"CODEOWNERS missing in {self.slug}",
-                description=(
-                    "No CODEOWNERS file found. Code review ownership is "
-                    "implicit rather than enforced."
-                ),
+                description=("No CODEOWNERS file found. Code review ownership is implicit rather than enforced."),
                 severity=Severity.MEDIUM,
                 status=FindingStatus.ACTIVE,
                 # v0.10.0: a missing CODEOWNERS file is a failed

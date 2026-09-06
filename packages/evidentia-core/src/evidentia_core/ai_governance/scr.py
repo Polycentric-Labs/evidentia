@@ -180,11 +180,7 @@ def _high_impact_escalated(
 
     def _resolve(a: OMBHighImpactAssessment) -> int:
         d = a.determination
-        coerced = (
-            d
-            if isinstance(d, HighImpactDetermination)
-            else HighImpactDetermination(d)
-        )
+        coerced = d if isinstance(d, HighImpactDetermination) else HighImpactDetermination(d)
         return rank[coerced]
 
     return _resolve(new) > _resolve(prior)
@@ -224,23 +220,15 @@ def classify_change(
     # — case 1: transformative
     if prior.classification.eu_ai_act_tier != new.classification.eu_ai_act_tier:
         return SCRCategory.TRANSFORMATIVE
-    if _impact_level_increased(
-        prior.fips_199_categorization, new.fips_199_categorization
-    ):
+    if _impact_level_increased(prior.fips_199_categorization, new.fips_199_categorization):
         return SCRCategory.TRANSFORMATIVE
     if _omb_impact_escalated(prior.omb_impact, new.omb_impact):
         return SCRCategory.TRANSFORMATIVE
     if _high_impact_escalated(prior.omb_high_impact, new.omb_high_impact):
         return SCRCategory.TRANSFORMATIVE
-    if (
-        prior.descriptor.annex_iii_domain
-        != new.descriptor.annex_iii_domain
-    ):
+    if prior.descriptor.annex_iii_domain != new.descriptor.annex_iii_domain:
         return SCRCategory.TRANSFORMATIVE
-    if (
-        prior.deployment_status == DeploymentStatus.PILOT
-        and new.deployment_status == DeploymentStatus.PRODUCTION
-    ):
+    if prior.deployment_status == DeploymentStatus.PILOT and new.deployment_status == DeploymentStatus.PRODUCTION:
         return SCRCategory.TRANSFORMATIVE
 
     # — case 2: adaptive
@@ -302,8 +290,7 @@ class SCRForm(EvidentiaModel):
     )
     category: SCRCategory = Field(
         description=(
-            "FedRAMP SCR categorization. Auto-detected via "
-            ":func:`classify_change` unless operator-overridden."
+            "FedRAMP SCR categorization. Auto-detected via :func:`classify_change` unless operator-overridden."
         ),
     )
     proposed_date: date = Field(
@@ -344,8 +331,7 @@ class SCRForm(EvidentiaModel):
         default=None,
         max_length=8000,
         description=(
-            "Optional rollback plan if the change cannot be completed "
-            "safely. Recommended for TRANSFORMATIVE changes."
+            "Optional rollback plan if the change cannot be completed safely. Recommended for TRANSFORMATIVE changes."
         ),
     )
     deployment_status_before: DeploymentStatus | None = Field(
@@ -517,9 +503,7 @@ class SCRForm(EvidentiaModel):
         # Evidentia carries).
         if self.category == SCRCategory.ADAPTIVE.value:
             out["date_of_change"] = self.proposed_date.isoformat()
-            out["verification_and_assessment_steps_summary"] = (
-                self.plan_and_timeline
-            )
+            out["verification_and_assessment_steps_summary"] = self.plan_and_timeline
         # Transformative pre-implementation fields per RFC-0007.
         elif self.category == SCRCategory.TRANSFORMATIVE.value:
             out["planned_change_date"] = self.proposed_date.isoformat()
@@ -636,19 +620,9 @@ def emit_scr_form(
         category=category,
         proposed_date=proposed_date or utc_now().date(),
         summary=summary or auto_summary,
-        customer_impact=(
-            customer_impact
-            or _default_customer_impact(new)
-        ),
-        plan_and_timeline=(
-            plan_and_timeline
-            or _default_plan_and_timeline(proposed_date or utc_now().date())
-        ),
-        impacted_controls=(
-            impacted_controls
-            if impacted_controls is not None
-            else list(new.linked_controls)
-        ),
+        customer_impact=(customer_impact or _default_customer_impact(new)),
+        plan_and_timeline=(plan_and_timeline or _default_plan_and_timeline(proposed_date or utc_now().date())),
+        impacted_controls=(impacted_controls if impacted_controls is not None else list(new.linked_controls)),
         rollback_plan=rollback_plan,
         deployment_status_before=prior.deployment_status,
         deployment_status_after=new.deployment_status,
@@ -669,53 +643,27 @@ def _auto_summary(
     """
     changes: list[str] = []
     if prior.deployment_status != new.deployment_status:
-        changes.append(
-            f"deployment_status changed from {prior.deployment_status} "
-            f"to {new.deployment_status}"
-        )
+        changes.append(f"deployment_status changed from {prior.deployment_status} to {new.deployment_status}")
     if prior.provider != new.provider:
-        changes.append(
-            f"provider changed from {prior.provider!r} to {new.provider!r}"
-        )
+        changes.append(f"provider changed from {prior.provider!r} to {new.provider!r}")
     if prior.owner != new.owner:
-        changes.append(
-            f"owner changed from {prior.owner!r} to {new.owner!r}"
-        )
+        changes.append(f"owner changed from {prior.owner!r} to {new.owner!r}")
     if prior.classification.eu_ai_act_tier != new.classification.eu_ai_act_tier:
         changes.append(
-            f"EU AI Act tier changed from "
-            f"{prior.classification.eu_ai_act_tier} to "
-            f"{new.classification.eu_ai_act_tier}"
+            f"EU AI Act tier changed from {prior.classification.eu_ai_act_tier} to {new.classification.eu_ai_act_tier}"
         )
     if prior.fips_199_categorization != new.fips_199_categorization:
         changes.append("FIPS 199 categorization updated")
     if prior.ato_reference != new.ato_reference:
         changes.append("ATO reference updated")
     if prior.ssp_reference != new.ssp_reference:
-        changes.append(
-            f"SSP reference changed from {prior.ssp_reference!r} to "
-            f"{new.ssp_reference!r}"
-        )
+        changes.append(f"SSP reference changed from {prior.ssp_reference!r} to {new.ssp_reference!r}")
     if prior.omb_impact != new.omb_impact:
-        changes.append(
-            f"OMB M-24-10 impact changed from {prior.omb_impact} to "
-            f"{new.omb_impact}"
-        )
+        changes.append(f"OMB M-24-10 impact changed from {prior.omb_impact} to {new.omb_impact}")
     if prior.omb_high_impact != new.omb_high_impact:
-        prior_det = (
-            prior.omb_high_impact.determination
-            if prior.omb_high_impact is not None
-            else None
-        )
-        new_det = (
-            new.omb_high_impact.determination
-            if new.omb_high_impact is not None
-            else None
-        )
-        changes.append(
-            f"OMB M-25-21 high-impact determination changed from "
-            f"{prior_det} to {new_det}"
-        )
+        prior_det = prior.omb_high_impact.determination if prior.omb_high_impact is not None else None
+        new_det = new.omb_high_impact.determination if new.omb_high_impact is not None else None
+        changes.append(f"OMB M-25-21 high-impact determination changed from {prior_det} to {new_det}")
     if not changes:
         return "No field-level changes detected (no-op SCR emit)."
     return "Field-level changes: " + "; ".join(changes) + "."
@@ -732,11 +680,7 @@ def _default_customer_impact(entry: AISystemRegistryEntry) -> str:
     hi = entry.omb_high_impact
     if hi is not None:
         det = hi.determination
-        det = (
-            det
-            if isinstance(det, HighImpactDetermination)
-            else HighImpactDetermination(det)
-        )
+        det = det if isinstance(det, HighImpactDetermination) else HighImpactDetermination(det)
         if det == HighImpactDetermination.HIGH_IMPACT:
             return (
                 "System is OMB M-25-21 high-impact AI; external customer "
@@ -763,8 +707,7 @@ def _default_customer_impact(entry: AISystemRegistryEntry) -> str:
         )
     if entry.omb_impact is None:
         return (
-            "OMB M-24-10 categorization not yet populated; operator "
-            "review required to determine customer-impact scope."
+            "OMB M-24-10 categorization not yet populated; operator review required to determine customer-impact scope."
         )
     return (
         f"System is OMB M-24-10 {entry.omb_impact}-impacting; "

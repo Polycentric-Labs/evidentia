@@ -278,9 +278,7 @@ def _export_oscal_ar(
     """
     from evidentia_core.oscal.exporter import gap_report_to_oscal_ar
 
-    oscal_ar = gap_report_to_oscal_ar(
-        report, findings=findings, vendor_inventory=vendor_inventory
-    )
+    oscal_ar = gap_report_to_oscal_ar(report, findings=findings, vendor_inventory=vendor_inventory)
     path.write_text(json.dumps(oscal_ar, indent=2, default=str), encoding="utf-8")
 
     if gpg_key_id:

@@ -16,7 +16,7 @@ _EXAMPLE = _REPO_ROOT / "examples" / "traceability-DEMO-example.yaml"
 
 def test_emit_writes_a_signable_oscal_profile(tmp_path: Path) -> None:
     out = tmp_path / "profile.json"
-    result = runner.invoke(app, ["traceability", "emit","-i", str(_EXAMPLE), "-o", str(out)])
+    result = runner.invoke(app, ["traceability", "emit", "-i", str(_EXAMPLE), "-o", str(out)])
 
     assert result.exit_code == 0, result.output
     assert out.exists()
@@ -28,9 +28,7 @@ def test_emit_writes_a_signable_oscal_profile(tmp_path: Path) -> None:
     # Every threat is an integrity-hashed back-matter resource.
     resources = prof["back-matter"]["resources"]
     assert resources
-    assert all(
-        r["rlinks"][0]["hashes"][0]["algorithm"] == "SHA-256" for r in resources
-    )
+    assert all(r["rlinks"][0]["hashes"][0]["algorithm"] == "SHA-256" for r in resources)
 
 
 def test_invalid_input_exits_nonzero(tmp_path: Path) -> None:
@@ -38,7 +36,7 @@ def test_invalid_input_exits_nonzero(tmp_path: Path) -> None:
     bad.write_text("not_a_matrix: true\n", encoding="utf-8")
     out = tmp_path / "p.json"
 
-    result = runner.invoke(app, ["traceability", "emit","-i", str(bad), "-o", str(out)])
+    result = runner.invoke(app, ["traceability", "emit", "-i", str(bad), "-o", str(out)])
 
     assert result.exit_code == 2
     assert not out.exists()
@@ -52,7 +50,7 @@ def test_empty_mappings_exits_nonzero(tmp_path: Path) -> None:
     )
     out = tmp_path / "p.json"
 
-    result = runner.invoke(app, ["traceability", "emit","-i", str(empty), "-o", str(out)])
+    result = runner.invoke(app, ["traceability", "emit", "-i", str(empty), "-o", str(out)])
 
     assert result.exit_code == 2
 

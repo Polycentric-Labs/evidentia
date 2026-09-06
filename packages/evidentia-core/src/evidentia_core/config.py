@@ -53,8 +53,7 @@ class LLMConfig(BaseModel):
     model: str | None = Field(
         default=None,
         description=(
-            "Default LLM model name (e.g. 'claude-sonnet-4-6'). "
-            "Overridden by --model or $EVIDENTIA_LLM_MODEL."
+            "Default LLM model name (e.g. 'claude-sonnet-4-6'). Overridden by --model or $EVIDENTIA_LLM_MODEL."
         ),
     )
     temperature: float | None = Field(
@@ -78,8 +77,7 @@ class EvidentiaConfig(BaseModel):
     organization: str | None = Field(
         default=None,
         description=(
-            "Organization name — seeds `gap analyze`'s inventory.organization "
-            "when the inventory file lacks one."
+            "Organization name — seeds `gap analyze`'s inventory.organization when the inventory file lacks one."
         ),
     )
     system_name: str | None = Field(
@@ -96,9 +94,7 @@ class EvidentiaConfig(BaseModel):
     )
 
     # Path to the source YAML file (populated by load_config), for diagnostics.
-    source_path: Path | None = Field(
-        default=None, exclude=True, description="Source file path (internal)."
-    )
+    source_path: Path | None = Field(default=None, exclude=True, description="Source file path (internal).")
 
     @field_validator("frameworks", mode="before")
     @classmethod
@@ -148,9 +144,7 @@ class EvidentiaConfig(BaseModel):
 def _expand_env_vars(value: Any) -> Any:
     """Recursively substitute ``${VAR}`` in strings within nested dicts/lists."""
     if isinstance(value, str):
-        return _ENV_VAR_PATTERN.sub(
-            lambda m: os.environ.get(m.group(1), m.group(0)), value
-        )
+        return _ENV_VAR_PATTERN.sub(lambda m: os.environ.get(m.group(1), m.group(0)), value)
     if isinstance(value, dict):
         return {k: _expand_env_vars(v) for k, v in value.items()}
     if isinstance(value, list):
@@ -158,9 +152,7 @@ def _expand_env_vars(value: Any) -> Any:
     return value
 
 
-def find_config_file(
-    start: Path | None = None, stop_at: Path | None = None
-) -> Path | None:
+def find_config_file(start: Path | None = None, stop_at: Path | None = None) -> Path | None:
     """Walk upward from ``start`` (default: CWD) looking for ``evidentia.yaml``.
 
     Returns the first match found, or ``None`` if none exists between

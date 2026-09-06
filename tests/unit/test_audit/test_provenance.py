@@ -35,7 +35,9 @@ def test_pagination_context_defaults_to_complete() -> None:
 
 def test_pagination_context_explicit_incomplete() -> None:
     p = PaginationContext(
-        page_size=100, page_number=3, continuation_token="abc123",
+        page_size=100,
+        page_number=3,
+        continuation_token="abc123",
         is_complete=False,
     )
     assert p.is_complete is False
@@ -64,8 +66,10 @@ def test_collection_context_minimal_required_fields() -> None:
 def test_collection_context_missing_required_field_raises() -> None:
     with pytest.raises(ValueError):
         CollectionContext(  # type: ignore[call-arg]
-            collector_version="0.7.0", run_id=new_run_id(),
-            credential_identity="arn", source_system_id="aws:123",
+            collector_version="0.7.0",
+            run_id=new_run_id(),
+            credential_identity="arn",
+            source_system_id="aws:123",
         )
 
 
@@ -79,17 +83,18 @@ def test_collection_context_serializes_roundtrip() -> None:
 def test_collection_context_rejects_extra_fields() -> None:
     with pytest.raises(ValueError):
         CollectionContext(  # type: ignore[call-arg]
-            collector_id="test", collector_version="0.7.0",
-            run_id=new_run_id(), credential_identity="arn",
-            source_system_id="aws:123", bogus_field="should fail",
+            collector_id="test",
+            collector_version="0.7.0",
+            run_id=new_run_id(),
+            credential_identity="arn",
+            source_system_id="aws:123",
+            bogus_field="should fail",
         )
 
 
 def test_collection_context_carries_pagination() -> None:
     ctx = _make_context(
-        pagination_context=PaginationContext(
-            page_size=50, page_number=1, continuation_token="next", is_complete=False
-        ),
+        pagination_context=PaginationContext(page_size=50, page_number=1, continuation_token="next", is_complete=False),
     )
     assert ctx.pagination_context is not None
     assert ctx.pagination_context.is_complete is False
@@ -102,9 +107,7 @@ def test_coverage_count_accepts_zero() -> None:
 
 def test_coverage_count_rejects_negative() -> None:
     with pytest.raises(ValueError):
-        CoverageCount(
-            resource_type="x", scanned=-1, matched_filter=0, collected=0
-        )
+        CoverageCount(resource_type="x", scanned=-1, matched_filter=0, collected=0)
 
 
 def _make_manifest(**overrides) -> CollectionManifest:
@@ -148,7 +151,9 @@ def test_manifest_serializes_roundtrip() -> None:
         coverage_counts=[
             CoverageCount(
                 resource_type="aws-iam-role",
-                scanned=100, matched_filter=42, collected=42,
+                scanned=100,
+                matched_filter=42,
+                collected=42,
             ),
         ],
         source_system_ids=["aws-account:123:us-east-1"],
@@ -165,7 +170,9 @@ def test_manifest_coverage_count_total_can_match_findings() -> None:
         coverage_counts=[
             CoverageCount(
                 resource_type="aws-iam-role",
-                scanned=100, matched_filter=42, collected=42,
+                scanned=100,
+                matched_filter=42,
+                collected=42,
             ),
         ],
     )

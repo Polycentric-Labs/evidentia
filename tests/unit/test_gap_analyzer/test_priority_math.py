@@ -39,9 +39,7 @@ def _gap(
 @pytest.mark.parametrize("severity", list(GapSeverity))
 @pytest.mark.parametrize("effort", list(ImplementationEffort))
 @pytest.mark.parametrize("cross_fw", [0, 1, 3, 5])
-def test_priority_matches_formula(
-    severity: GapSeverity, effort: ImplementationEffort, cross_fw: int
-) -> None:
+def test_priority_matches_formula(severity: GapSeverity, effort: ImplementationEffort, cross_fw: int) -> None:
     """Priority score matches the documented formula exactly.
 
     Formula: severity_weight × (1 + 0.2 × cross_fw_count) × (1 / effort_weight)
@@ -51,9 +49,7 @@ def test_priority_matches_formula(
     actual = analyzer._compute_priority(gap)
 
     expected = round(
-        SEVERITY_WEIGHT[severity]
-        * (1 + 0.2 * cross_fw)
-        * (1 / EFFORT_WEIGHT[effort]),
+        SEVERITY_WEIGHT[severity] * (1 + 0.2 * cross_fw) * (1 / EFFORT_WEIGHT[effort]),
         3,
     )
     assert actual == pytest.approx(expected, rel=1e-9), (

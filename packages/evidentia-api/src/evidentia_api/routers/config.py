@@ -46,10 +46,7 @@ async def get_config() -> EvidentiaConfig:
     response_model=EvidentiaConfig,
     responses=error_responses(
         {
-            500: (
-                "Config file write failure "
-                "(``error: internal_error``)."
-            ),
+            500: ("Config file write failure (``error: internal_error``)."),
         }
     ),
 )
@@ -63,12 +60,8 @@ async def put_config(payload: EvidentiaConfig) -> EvidentiaConfig:
     """
     target = find_config_file() or (Path.cwd() / CONFIG_FILENAME)
     try:
-        dumped: dict[str, Any] = payload.model_dump(
-            exclude={"source_path"}, exclude_defaults=False
-        )
-        yaml_text = yaml.safe_dump(
-            dumped, sort_keys=False, default_flow_style=False
-        )
+        dumped: dict[str, Any] = payload.model_dump(exclude={"source_path"}, exclude_defaults=False)
+        yaml_text = yaml.safe_dump(dumped, sort_keys=False, default_flow_style=False)
         target.write_text(yaml_text, encoding="utf-8")
     except OSError as e:
         logger.error("Failed to write %s: %s", target, e)

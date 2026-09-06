@@ -285,9 +285,7 @@ class PostgresCollector:
                     **kwargs,
                 )
         except Exception as e:
-            raise PostgresConnectionError(
-                f"Could not connect to Postgres (driver: {type(e).__name__})"
-            ) from e
+            raise PostgresConnectionError(f"Could not connect to Postgres (driver: {type(e).__name__})") from e
         return self._connection
 
     # ── Context + provenance ────────────────────────────────────────
@@ -316,9 +314,7 @@ class PostgresCollector:
         conn = self._ensure_connected()
         cur = conn.cursor()
         try:
-            cur.execute(
-                "SELECT current_user, current_database(), version()"
-            )
+            cur.execute("SELECT current_user, current_database(), version()")
             row = cur.fetchone()
             self._cached_user = str(row[0]) if row else None
             self._cached_db = str(row[1]) if row else None
@@ -352,9 +348,7 @@ class PostgresCollector:
         """
         cur = conn.cursor()
         try:
-            cur.execute(
-                "SELECT current_setting('default_transaction_read_only', true)"
-            )
+            cur.execute("SELECT current_setting('default_transaction_read_only', true)")
             row = cur.fetchone()
             read_only_val = str(row[0]).lower() if row and row[0] else "off"
             read_only_setting = read_only_val in {"on", "true", "1"}
@@ -366,10 +360,7 @@ class PostgresCollector:
             create_temp_succeeded = False
             try:
                 cur.execute("SAVEPOINT evidentia_priv_probe")
-                cur.execute(
-                    "CREATE TEMP TABLE evidentia_priv_probe_temp "
-                    "(id int) ON COMMIT DROP"
-                )
+                cur.execute("CREATE TEMP TABLE evidentia_priv_probe_temp (id int) ON COMMIT DROP")
                 create_temp_succeeded = True
                 cur.execute("ROLLBACK TO SAVEPOINT evidentia_priv_probe")
                 cur.execute("RELEASE SAVEPOINT evidentia_priv_probe")
@@ -378,12 +369,8 @@ class PostgresCollector:
                 # principal. Any other error here also means we
                 # couldn't write — treat as read-only.
                 try:
-                    cur.execute(
-                        "ROLLBACK TO SAVEPOINT evidentia_priv_probe"
-                    )
-                    cur.execute(
-                        "RELEASE SAVEPOINT evidentia_priv_probe"
-                    )
+                    cur.execute("ROLLBACK TO SAVEPOINT evidentia_priv_probe")
+                    cur.execute("RELEASE SAVEPOINT evidentia_priv_probe")
                 except Exception:
                     pass
 
@@ -425,9 +412,7 @@ class PostgresCollector:
         except PostgresCollectorError:
             raise
         except Exception as e:
-            raise PostgresConnectionError(
-                f"Could not establish + probe Postgres connection: {e}"
-            ) from e
+            raise PostgresConnectionError(f"Could not establish + probe Postgres connection: {e}") from e
 
         context = self._build_context(run_id)
         errors: list[str] = []
@@ -447,10 +432,7 @@ class PostgresCollector:
         ):
             _log.info(
                 action=EventAction.COLLECT_STARTED,
-                message=(
-                    f"Postgres collection starting for "
-                    f"{self._cached_user}@{self._cached_db}"
-                ),
+                message=(f"Postgres collection starting for {self._cached_user}@{self._cached_db}"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.START],
             )
@@ -458,9 +440,7 @@ class PostgresCollector:
             # Write-privilege violation — emit BEFORE the read-only
             # collection so it appears at the top of the findings list.
             if not probe["read_only"] or probe["can_create_temp_table"]:
-                findings.append(
-                    self._write_priv_detected_finding(probe, context)
-                )
+                findings.append(self._write_priv_detected_finding(probe, context))
 
             # Each sub-check is independently fault-tolerant: a
             # PostgresQueryError gets recorded in errors[] and the
@@ -491,28 +471,18 @@ class PostgresCollector:
                         },
                     )
                 except Exception as e:
-                    errors.append(
-                        f"{sub_check.__name__}: unexpected error: {e}"
-                    )
+                    errors.append(f"{sub_check.__name__}: unexpected error: {e}")
                     _log.error(
                         action=EventAction.COLLECT_FAILED,
                         outcome=EventOutcome.FAILURE,
-                        message=(
-                            f"Sub-check {sub_check.__name__} unexpected error"
-                        ),
+                        message=(f"Sub-check {sub_check.__name__} unexpected error"),
                         error={"type": type(e).__name__, "message": str(e)},
                     )
 
             _log.info(
                 action=EventAction.COLLECT_COMPLETED,
-                outcome=(
-                    EventOutcome.SUCCESS
-                    if not errors
-                    else EventOutcome.FAILURE
-                ),
-                message=(
-                    f"Postgres collection completed: {len(findings)} findings"
-                ),
+                outcome=(EventOutcome.SUCCESS if not errors else EventOutcome.FAILURE),
+                message=(f"Postgres collection completed: {len(findings)} findings"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.END],
                 evidentia={
@@ -527,9 +497,7 @@ class PostgresCollector:
             collector_version=current_version(),
             collection_started_at=started_at,
             collection_finished_at=utc_now(),
-            source_system_ids=[
-                f"postgres:{self._cached_user}@{self._cached_db}"
-            ],
+            source_system_ids=[f"postgres:{self._cached_user}@{self._cached_db}"],
             filters_applied={
                 "user": self._cached_user or "unknown",
                 "database": self._cached_db or "unknown",
@@ -557,10 +525,7 @@ class PostgresCollector:
         context: CollectionContext,
     ) -> SecurityFinding:
         return SecurityFinding(
-            title=(
-                f"Postgres principal {self._cached_user!r} has write "
-                "privilege"
-            ),
+            title=(f"Postgres principal {self._cached_user!r} has write privilege"),
             description=(
                 f"The collector's principal ({self._cached_user}) "
                 f"connected to {self._cached_db} with write capability "
@@ -579,10 +544,7 @@ class PostgresCollector:
             # failed least-privilege check.
             compliance_status=ComplianceStatus.FAIL,
             source_system="postgres",
-            source_finding_id=(
-                f"EVIDENTIA-WRITE-PRIV-DETECTED:{self._cached_user}@"
-                f"{self._cached_db}"
-            ),
+            source_finding_id=(f"EVIDENTIA-WRITE-PRIV-DETECTED:{self._cached_user}@{self._cached_db}"),
             resource_type="Postgres::Principal",
             resource_id=str(self._cached_user or "unknown"),
             control_ids=[m.control_id for m in WRITE_PRIV_DETECTED_MAPPINGS],
@@ -593,9 +555,7 @@ class PostgresCollector:
             },
         )
 
-    def _user_role_inventory_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _user_role_inventory_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
@@ -606,9 +566,7 @@ class PostgresCollector:
                 )
                 rows = cur.fetchall()
             except Exception as e:
-                raise PostgresQueryError(
-                    f"Could not enumerate pg_roles: {e}"
-                ) from e
+                raise PostgresQueryError(f"Could not enumerate pg_roles: {e}") from e
 
             superusers = [r[0] for r in rows if r[1]]
             login_roles = [r[0] for r in rows if r[4]]
@@ -630,24 +588,16 @@ class PostgresCollector:
                         "superuser list against the inventory of "
                         "DBA-tier human + automation principals."
                     ),
-                    severity=(
-                        Severity.MEDIUM
-                        if len(superusers) > 3
-                        else Severity.INFORMATIONAL
-                    ),
+                    severity=(Severity.MEDIUM if len(superusers) > 3 else Severity.INFORMATIONAL),
                     status=FindingStatus.ACTIVE,
                     # v0.10.0: a role inventory is informational
                     # evidence, not a pass/fail check.
                     compliance_status=ComplianceStatus.UNKNOWN,
                     source_system="postgres",
-                    source_finding_id=(
-                        f"role-inventory:{self._cached_db}"
-                    ),
+                    source_finding_id=(f"role-inventory:{self._cached_db}"),
                     resource_type="Postgres::Database",
                     resource_id=str(self._cached_db or "unknown"),
-                    control_ids=[
-                        m.control_id for m in USER_ROLE_INVENTORY_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in USER_ROLE_INVENTORY_MAPPINGS],
                     collection_context=context,
                     raw_data={
                         "total_roles": len(rows),
@@ -659,9 +609,7 @@ class PostgresCollector:
         finally:
             cur.close()
 
-    def _privilege_grant_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _privilege_grant_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
@@ -673,19 +621,14 @@ class PostgresCollector:
                 )
                 rows = cur.fetchall()
             except Exception as e:
-                raise PostgresQueryError(
-                    f"Could not enumerate information_schema.table_privileges: {e}"
-                ) from e
+                raise PostgresQueryError(f"Could not enumerate information_schema.table_privileges: {e}") from e
 
             # JSON-native (list, not tuple) so raw_data round-trips
             # cleanly through serialization and the OCSF mapping layer.
             top_grantees = [[r[0], int(r[1])] for r in rows]
             return [
                 SecurityFinding(
-                    title=(
-                        f"Postgres privilege grants: {len(rows)} grantees "
-                        "with table-level privileges"
-                    ),
+                    title=(f"Postgres privilege grants: {len(rows)} grantees with table-level privileges"),
                     description=(
                         f"information_schema.table_privileges shows "
                         f"{len(rows)} non-system grantees with "
@@ -703,14 +646,10 @@ class PostgresCollector:
                     # informational evidence, not a pass/fail check.
                     compliance_status=ComplianceStatus.UNKNOWN,
                     source_system="postgres",
-                    source_finding_id=(
-                        f"privilege-grants:{self._cached_db}"
-                    ),
+                    source_finding_id=(f"privilege-grants:{self._cached_db}"),
                     resource_type="Postgres::Database",
                     resource_id=str(self._cached_db or "unknown"),
-                    control_ids=[
-                        m.control_id for m in PRIVILEGE_GRANT_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in PRIVILEGE_GRANT_MAPPINGS],
                     collection_context=context,
                     raw_data={
                         "grantee_count": len(rows),
@@ -721,9 +660,7 @@ class PostgresCollector:
         finally:
             cur.close()
 
-    def _audit_log_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _audit_log_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         settings = self._read_pg_settings(
             conn,
             [
@@ -755,19 +692,12 @@ class PostgresCollector:
 
         return [
             SecurityFinding(
-                title=(
-                    "Postgres audit-log configuration: "
-                    f"{'gaps detected' if gaps else 'baseline OK'}"
-                ),
+                title=(f"Postgres audit-log configuration: {'gaps detected' if gaps else 'baseline OK'}"),
                 description=(
                     "Postgres audit-log evidence per AU-2 + AU-3. "
                     f"Settings: {settings}. "
                     f"pgaudit extension installed: {pgaudit_installed}. "
-                    + (
-                        "Gaps: " + ", ".join(gaps) + ". "
-                        if gaps
-                        else "No common gaps detected. "
-                    )
+                    + ("Gaps: " + ", ".join(gaps) + ". " if gaps else "No common gaps detected. ")
                     + "Operators should confirm log destination "
                     "(syslog / file / csvlog) routes to a tamper-"
                     "evident sink for full AU-2 compliance."
@@ -776,9 +706,7 @@ class PostgresCollector:
                 status=status,
                 # v0.10.0: audit-log gaps fail the AU-2/AU-3 check;
                 # a clean baseline passes.
-                compliance_status=ComplianceStatus.FAIL
-                if gaps
-                else ComplianceStatus.PASS,
+                compliance_status=ComplianceStatus.FAIL if gaps else ComplianceStatus.PASS,
                 source_system="postgres",
                 source_finding_id=f"audit-log:{self._cached_db}",
                 resource_type="Postgres::Database",
@@ -793,9 +721,7 @@ class PostgresCollector:
             )
         ]
 
-    def _crypto_config_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _crypto_config_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         settings = self._read_pg_settings(
             conn,
             [
@@ -814,9 +740,7 @@ class PostgresCollector:
 
         gaps: list[str] = []
         if not is_secure_hash:
-            gaps.append(
-                f"password_encryption={password_enc!r} (should be scram-sha-256)"
-            )
+            gaps.append(f"password_encryption={password_enc!r} (should be scram-sha-256)")
         if not ssl_on:
             gaps.append("ssl=off (TLS not enabled at server)")
 
@@ -825,20 +749,13 @@ class PostgresCollector:
 
         return [
             SecurityFinding(
-                title=(
-                    "Postgres crypto configuration: "
-                    f"{'gaps detected' if gaps else 'baseline OK'}"
-                ),
+                title=(f"Postgres crypto configuration: {'gaps detected' if gaps else 'baseline OK'}"),
                 description=(
                     f"Postgres SC-12 evidence: password_encryption="
                     f"{password_enc!r}, ssl={settings.get('ssl', '?')!r}, "
                     f"ssl_min_protocol_version="
                     f"{settings.get('ssl_min_protocol_version', '?')!r}. "
-                    + (
-                        "Gaps: " + ", ".join(gaps) + ". "
-                        if gaps
-                        else ""
-                    )
+                    + ("Gaps: " + ", ".join(gaps) + ". " if gaps else "")
                     + "scram-sha-256 is the modern minimum; md5 + plain "
                     "are insecure. ssl=on is required for in-transit "
                     "protection. ssl_min_protocol_version SHOULD be "
@@ -848,9 +765,7 @@ class PostgresCollector:
                 status=status,
                 # v0.10.0: crypto-config gaps fail the SC-12 check;
                 # a clean baseline passes.
-                compliance_status=ComplianceStatus.FAIL
-                if gaps
-                else ComplianceStatus.PASS,
+                compliance_status=ComplianceStatus.FAIL if gaps else ComplianceStatus.PASS,
                 source_system="postgres",
                 source_finding_id=f"crypto-config:{self._cached_db}",
                 resource_type="Postgres::Database",
@@ -861,18 +776,14 @@ class PostgresCollector:
             )
         ]
 
-    def _encryption_at_rest_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _encryption_at_rest_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         # Postgres has no built-in TDE — see BLIND_SPOTS. We surface
         # this as an INFORMATIONAL finding so auditors see the gap
         # acknowledged + the operator's documented mitigation can be
         # cross-referenced.
         return [
             SecurityFinding(
-                title=(
-                    "Postgres encryption-at-rest evidence is filesystem-level"
-                ),
+                title=("Postgres encryption-at-rest evidence is filesystem-level"),
                 description=(
                     "Postgres has no built-in transparent data "
                     "encryption (TDE). Encryption-at-rest must be "
@@ -891,14 +802,10 @@ class PostgresCollector:
                 # inside Postgres (a documented blind spot) — UNKNOWN.
                 compliance_status=ComplianceStatus.UNKNOWN,
                 source_system="postgres",
-                source_finding_id=(
-                    f"encryption-at-rest-blind-spot:{self._cached_db}"
-                ),
+                source_finding_id=(f"encryption-at-rest-blind-spot:{self._cached_db}"),
                 resource_type="Postgres::Database",
                 resource_id=str(self._cached_db or "unknown"),
-                control_ids=[
-                    m.control_id for m in ENCRYPTION_AT_REST_MAPPINGS
-                ],
+                control_ids=[m.control_id for m in ENCRYPTION_AT_REST_MAPPINGS],
                 collection_context=context,
                 raw_data={
                     "blind_spot_id": "EVIDENTIA-POSTGRES-FILESYSTEM-TDE",
@@ -906,9 +813,7 @@ class PostgresCollector:
             )
         ]
 
-    def _connection_limit_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _connection_limit_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         settings = self._read_pg_settings(
             conn,
             ["max_connections", "superuser_reserved_connections"],
@@ -920,9 +825,7 @@ class PostgresCollector:
 
         return [
             SecurityFinding(
-                title=(
-                    f"Postgres connection limits: max_connections={max_conn}"
-                ),
+                title=(f"Postgres connection limits: max_connections={max_conn}"),
                 description=(
                     f"max_connections={max_conn}, "
                     "superuser_reserved_connections="
@@ -943,9 +846,7 @@ class PostgresCollector:
                 source_finding_id=f"connection-limits:{self._cached_db}",
                 resource_type="Postgres::Database",
                 resource_id=str(self._cached_db or "unknown"),
-                control_ids=[
-                    m.control_id for m in CONNECTION_LIMIT_MAPPINGS
-                ],
+                control_ids=[m.control_id for m in CONNECTION_LIMIT_MAPPINGS],
                 collection_context=context,
                 raw_data={"settings": settings, "max_connections": max_conn},
             )
@@ -953,9 +854,7 @@ class PostgresCollector:
 
     # ── Helpers ─────────────────────────────────────────────────────
 
-    def _read_pg_settings(
-        self, conn: Any, keys: list[str]
-    ) -> dict[str, str]:
+    def _read_pg_settings(self, conn: Any, keys: list[str]) -> dict[str, str]:
         """Bulk-read pg_settings rows; missing keys map to empty
         string. Permission-denied on a key yields an empty string for
         that key (cloud-managed Postgres restricts certain settings)."""
@@ -965,8 +864,7 @@ class PostgresCollector:
             placeholders = ",".join(["%s"] * len(keys))
             try:
                 cur.execute(
-                    f"SELECT name, setting FROM pg_settings "
-                    f"WHERE name IN ({placeholders})",
+                    f"SELECT name, setting FROM pg_settings WHERE name IN ({placeholders})",
                     keys,
                 )
                 for row in cur.fetchall():
@@ -977,9 +875,7 @@ class PostgresCollector:
                 # leaves an empty string for that key.
                 for key in keys:
                     try:
-                        cur.execute(
-                            "SELECT current_setting(%s, true)", (key,)
-                        )
+                        cur.execute("SELECT current_setting(%s, true)", (key,))
                         row = cur.fetchone()
                         if row and row[0] is not None:
                             result[key] = str(row[0])

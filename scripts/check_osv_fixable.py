@@ -193,8 +193,7 @@ def _band_summary(findings: list[Finding]) -> str:
     return ", ".join(f"{counts[b]} {b}" for b in _BAND_ORDER if counts[b])
 
 
-def render_markdown(fixable: list[Finding], unfixable: list[Finding], *,
-                    image: str | None = None) -> str:
+def render_markdown(fixable: list[Finding], unfixable: list[Finding], *, image: str | None = None) -> str:
     """Render a GitHub-flavoured markdown report for ``$GITHUB_STEP_SUMMARY``."""
     total = len(fixable) + len(unfixable)
     head = "# Post-publish container rescan — fixable-only policy"
@@ -215,13 +214,11 @@ def render_markdown(fixable: list[Finding], unfixable: list[Finding], *,
         for f in fixable:
             sev = f"{f.max_severity or '—'} ({severity_band(f.max_severity)})"
             lines.append(
-                f"| {f.vuln_id} | {f.source_package} | {f.installed_version} "
-                f"| {', '.join(f.fixed_versions)} | {sev} |"
+                f"| {f.vuln_id} | {f.source_package} | {f.installed_version} | {', '.join(f.fixed_versions)} | {sev} |"
             )
         lines.append("")
         lines.append(
-            "> **Action:** rebuild + republish the container on a fresh base "
-            "to clear the fixable advisories above."
+            "> **Action:** rebuild + republish the container on a fresh base to clear the fixable advisories above."
         )
     else:
         lines.append("## ✅ No fixable advisories — gate passes")
@@ -237,9 +234,7 @@ def render_markdown(fixable: list[Finding], unfixable: list[Finding], *,
         lines.append("|---|---|---|---|")
         for f in unfixable:
             sev = f"{f.max_severity or '—'} ({severity_band(f.max_severity)})"
-            lines.append(
-                f"| {f.vuln_id} | {f.source_package} | {f.installed_version} | {sev} |"
-            )
+            lines.append(f"| {f.vuln_id} | {f.source_package} | {f.installed_version} | {sev} |")
         lines.append("")
         lines.append("</details>")
         lines.append("")
@@ -247,12 +242,8 @@ def render_markdown(fixable: list[Finding], unfixable: list[Finding], *,
     return "\n".join(lines) + "\n"
 
 
-def _print_console(fixable: list[Finding], unfixable: list[Finding], *,
-                   no_fail: bool) -> None:
-    print(
-        f"osv-scanner rescan policy: {len(fixable)} fixable / "
-        f"{len(unfixable)} unfixable (no upstream fix)"
-    )
+def _print_console(fixable: list[Finding], unfixable: list[Finding], *, no_fail: bool) -> None:
+    print(f"osv-scanner rescan policy: {len(fixable)} fixable / {len(unfixable)} unfixable (no upstream fix)")
     if fixable:
         print("\nFIXABLE — a fix is available; rebuild the published image:")
         for f in fixable:
@@ -272,14 +263,10 @@ def _print_console(fixable: list[Finding], unfixable: list[Finding], *,
             "Rebuild + republish the container on a fresh base."
         )
     elif fixable and no_fail:
-        print(
-            f"NOTE (--no-fail): {len(fixable)} fixable advisory(ies) present; "
-            "not failing (visibility mode)."
-        )
+        print(f"NOTE (--no-fail): {len(fixable)} fixable advisory(ies) present; not failing (visibility mode).")
     else:
         print(
-            "PASS: no fixable advisories. Unfixable base-OS CVEs are "
-            "notify-only — see the report for full visibility."
+            "PASS: no fixable advisories. Unfixable base-OS CVEs are notify-only — see the report for full visibility."
         )
 
 
@@ -289,19 +276,24 @@ def main(argv: list[str] | None = None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
-        "scan_json", type=Path,
+        "scan_json",
+        type=Path,
         help="osv-scanner --format json output to evaluate.",
     )
     parser.add_argument(
-        "--image", default=None,
+        "--image",
+        default=None,
         help="Image reference, for the report header (optional).",
     )
     parser.add_argument(
-        "--summary-file", type=Path, default=None,
+        "--summary-file",
+        type=Path,
+        default=None,
         help="Also write a markdown report here (e.g. $GITHUB_STEP_SUMMARY).",
     )
     parser.add_argument(
-        "--no-fail", action="store_true",
+        "--no-fail",
+        action="store_true",
         help="Report only; never exit non-zero on fixable advisories.",
     )
     args = parser.parse_args(argv)
@@ -311,8 +303,7 @@ def main(argv: list[str] | None = None) -> int:
     except ScanLoadError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         print(
-            "Fail-closed: a rescan gate that cannot read its scan is a "
-            "FAILURE, not a skip.",
+            "Fail-closed: a rescan gate that cannot read its scan is a FAILURE, not a skip.",
             file=sys.stderr,
         )
         return 2

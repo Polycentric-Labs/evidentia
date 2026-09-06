@@ -27,6 +27,7 @@ supplier + unique-ID (purl), which this closes.
 
 Stdlib only. Usage: python scripts/enrich_release_sbom.py <sbom.cdx.json>
 """
+
 from __future__ import annotations
 
 import argparse

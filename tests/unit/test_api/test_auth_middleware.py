@@ -52,9 +52,7 @@ class TestAuthMiddleware:
         response = client.get("/api/metrics")
         assert response.status_code == 200
 
-    def test_auth_provider_gates_metrics_endpoint(
-        self, tmp_path: Path
-    ) -> None:
+    def test_auth_provider_gates_metrics_endpoint(self, tmp_path: Path) -> None:
         """v0.8.1 F-V08-S3 closure: with an AuthProvider wired,
         /api/metrics requires a valid bearer token.
         """
@@ -66,10 +64,7 @@ class TestAuthMiddleware:
         # No Authorization header → 401.
         response = client.get("/api/metrics")
         assert response.status_code == 401
-        assert (
-            response.headers["WWW-Authenticate"]
-            == 'Bearer realm="evidentia"'
-        )
+        assert response.headers["WWW-Authenticate"] == 'Bearer realm="evidentia"'
         body = response.json()
         assert body["detail"] == "Authentication required"
         assert body["provider"] == "local-token"
@@ -132,9 +127,7 @@ class TestAuthMiddleware:
         response = client.get("/api/openapi.json")
         assert response.status_code == 200
 
-    def test_static_spa_paths_bypass_auth(
-        self, tmp_path: Path
-    ) -> None:
+    def test_static_spa_paths_bypass_auth(self, tmp_path: Path) -> None:
         """Non-/api/* paths fall through to the static SPA
         mount; they bypass auth at the API layer (the SPA
         itself handles client-side auth in the browser).
@@ -157,9 +150,7 @@ class TestAuthLifespan:
     is deferred to FastAPI lifespan (not module import).
     """
 
-    def test_lifespan_reads_env_at_startup_not_import(
-        self, tmp_path: Path
-    ) -> None:
+    def test_lifespan_reads_env_at_startup_not_import(self, tmp_path: Path) -> None:
         """The lifespan reads EVIDENTIA_API_AUTH_TOKEN_FILE at
         app startup. This means setting the env var AFTER
         importing create_app + before entering the TestClient
@@ -182,10 +173,13 @@ class TestAuthLifespan:
         # Set the env var AFTER create_app(); enter the
         # TestClient context manager to trigger the lifespan
         # startup event.
-        with mock.patch.dict(
-            os.environ,
-            {"EVIDENTIA_API_AUTH_TOKEN_FILE": str(token_file)},
-        ), TestClient(app) as client:
+        with (
+            mock.patch.dict(
+                os.environ,
+                {"EVIDENTIA_API_AUTH_TOKEN_FILE": str(token_file)},
+            ),
+            TestClient(app) as client,
+        ):
             # After lifespan startup, the provider is populated.
             assert app.state.auth_provider is not None
             # /api/metrics now requires the token.
@@ -210,18 +204,14 @@ class TestAuthLifespan:
 
         # Make sure the env var is unset for this test.
         with mock.patch.dict(os.environ, {}, clear=False):
-            os.environ.pop(
-                "EVIDENTIA_API_AUTH_TOKEN_FILE", None
-            )
+            os.environ.pop("EVIDENTIA_API_AUTH_TOKEN_FILE", None)
             with TestClient(app) as client:
                 assert app.state.auth_provider is None
                 # /api/metrics is reachable without a token.
                 response = client.get("/api/metrics")
                 assert response.status_code == 200
 
-    def test_lifespan_raises_loud_on_broken_token_file(
-        self, tmp_path: Path
-    ) -> None:
+    def test_lifespan_raises_loud_on_broken_token_file(self, tmp_path: Path) -> None:
         """If EVIDENTIA_API_AUTH_TOKEN_FILE points at a missing
         file, the lifespan raises during startup so the app
         fails loudly. This preserves the v0.8.1 fail-loud
@@ -232,26 +222,24 @@ class TestAuthLifespan:
 
         app = create_app(dev_mode=False, auth_provider=None)
 
-        with mock.patch.dict(
-            os.environ,
-            {"EVIDENTIA_API_AUTH_TOKEN_FILE": str(nonexistent)},
-        ), pytest.raises((FileNotFoundError, ValueError)), TestClient(app):
+        with (
+            mock.patch.dict(
+                os.environ,
+                {"EVIDENTIA_API_AUTH_TOKEN_FILE": str(nonexistent)},
+            ),
+            pytest.raises((FileNotFoundError, ValueError)),
+            TestClient(app),
+        ):
             pass  # pragma: no cover — lifespan raises first
 
-    def test_explicit_injection_takes_precedence_over_env(
-        self, tmp_path: Path
-    ) -> None:
+    def test_explicit_injection_takes_precedence_over_env(self, tmp_path: Path) -> None:
         """v0.8.2 F-V81-S2: explicit ``auth_provider=...`` passed
         to ``create_app`` wins over the env-var path. The
         lifespan only constructs a provider when
         ``app.state.auth_provider is None`` at startup.
         """
-        explicit_token_file = _make_token_file(
-            tmp_path, value="explicit-token"
-        )
-        explicit_provider = LocalTokenAuthProvider(
-            token_file=explicit_token_file
-        )
+        explicit_token_file = _make_token_file(tmp_path, value="explicit-token")
+        explicit_provider = LocalTokenAuthProvider(token_file=explicit_token_file)
 
         # Different token file in the env — should be IGNORED
         # because explicit injection wins.
@@ -261,18 +249,17 @@ class TestAuthLifespan:
         )
         # Use a different filename so they don't collide.
         env_token_file = tmp_path / "env-token.txt"
-        env_token_file.write_text(
-            "env-token-IGNORED", encoding="utf-8"
-        )
+        env_token_file.write_text("env-token-IGNORED", encoding="utf-8")
 
-        app = create_app(
-            dev_mode=False, auth_provider=explicit_provider
-        )
+        app = create_app(dev_mode=False, auth_provider=explicit_provider)
 
-        with mock.patch.dict(
-            os.environ,
-            {"EVIDENTIA_API_AUTH_TOKEN_FILE": str(env_token_file)},
-        ), TestClient(app) as client:
+        with (
+            mock.patch.dict(
+                os.environ,
+                {"EVIDENTIA_API_AUTH_TOKEN_FILE": str(env_token_file)},
+            ),
+            TestClient(app) as client,
+        ):
             # Explicit token works; env token does NOT (was ignored).
             response = client.get(
                 "/api/metrics",
@@ -284,9 +271,7 @@ class TestAuthLifespan:
             response = client.get(
                 "/api/metrics",
                 headers={
-                    "Authorization": (
-                        "Bearer env-token-IGNORED"
-                    ),
+                    "Authorization": ("Bearer env-token-IGNORED"),
                 },
             )
             assert response.status_code == 401

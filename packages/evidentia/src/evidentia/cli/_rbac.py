@@ -109,19 +109,13 @@ def require_role_cli(action: str) -> Callable[[F], F]:
                 try:
                     identity = get_rbac_identity_with_tenant_claim()
                 except ValueError as exc:
-                    _stderr_console.print(
-                        f"[bold red]RBAC config error[/bold red] {exc}"
-                    )
+                    _stderr_console.print(f"[bold red]RBAC config error[/bold red] {exc}")
                     sys.stderr.flush()
                     raise typer.Exit(code=EXIT_CODE_RBAC_DENIED) from exc
-                granted = check_permission_multi_tenant(
-                    identity, action, policy=policy
-                )
+                granted = check_permission_multi_tenant(identity, action, policy=policy)
             else:
                 identity = get_rbac_identity()
-                granted = check_permission(
-                    identity, action, policy=policy
-                )
+                granted = check_permission(identity, action, policy=policy)
             if not granted:
                 _stderr_console.print(
                     f"[bold red]Permission denied[/bold red] "

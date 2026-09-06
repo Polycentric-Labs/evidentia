@@ -40,14 +40,12 @@ PRIVILEGE_GRANT_MAPPINGS = [
     _m(
         "AC-3",
         OLIRRelationship.SUBSET_OF,
-        "AC-3 Access Enforcement — INFORMATION_SCHEMA.{USER,SCHEMA,TABLE}_PRIVILEGES "
-        "ARE the enforcement records.",
+        "AC-3 Access Enforcement — INFORMATION_SCHEMA.{USER,SCHEMA,TABLE}_PRIVILEGES ARE the enforcement records.",
     ),
     _m(
         "AC-6",
         OLIRRelationship.INTERSECTS_WITH,
-        "AC-6 Least Privilege — privilege grants enumerate who has "
-        "what; intersects with AC-6 evidence.",
+        "AC-6 Least Privilege — privilege grants enumerate who has what; intersects with AC-6 evidence.",
     ),
 ]
 
@@ -64,8 +62,7 @@ AUDIT_LOG_MAPPINGS = [
     _m(
         "AU-3",
         OLIRRelationship.INTERSECTS_WITH,
-        "AU-3 Content of Audit Records — log file format settings "
-        "define the content of each audit record.",
+        "AU-3 Content of Audit Records — log file format settings define the content of each audit record.",
     ),
 ]
 
@@ -100,8 +97,7 @@ CONNECTION_LIMIT_MAPPINGS = [
     _m(
         "AC-3",
         OLIRRelationship.INTERSECTS_WITH,
-        "AC-3 Access Enforcement — max_connections + max_user_connections "
-        "rate-limit access at the server boundary.",
+        "AC-3 Access Enforcement — max_connections + max_user_connections rate-limit access at the server boundary.",
     ),
 ]
 

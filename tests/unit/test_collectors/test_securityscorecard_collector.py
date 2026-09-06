@@ -92,9 +92,7 @@ def test_collector_id_and_blind_spots_documented() -> None:
 
 
 def test_collect_happy_path_with_explicit_portfolio_id() -> None:
-    company = _company_record(
-        domain="goodco.com", name="GoodCo", score=92, grade="A"
-    )
+    company = _company_record(domain="goodco.com", name="GoodCo", score=92, grade="A")
     page = _companies_response([company])
     mock_client = _make_client([page])
 
@@ -105,15 +103,9 @@ def test_collect_happy_path_with_explicit_portfolio_id() -> None:
     )
     findings = collector.collect()
 
-    assert any(
-        (f.source_finding_id or "").startswith("company-inventory:")
-        for f in findings
-    )
+    assert any((f.source_finding_id or "").startswith("company-inventory:") for f in findings)
     # 92 > 70 default threshold → no low-score finding
-    assert not any(
-        (f.source_finding_id or "").startswith("company-low-score:")
-        for f in findings
-    )
+    assert not any((f.source_finding_id or "").startswith("company-low-score:") for f in findings)
     # Exactly one HTTP call (no portfolio resolution needed)
     assert mock_client.get.call_count == 1
 
@@ -124,26 +116,17 @@ def test_collect_resolves_portfolio_when_id_omitted() -> None:
     page = _companies_response([company])
     mock_client = _make_client([portfolio_list, page])
 
-    collector = SecurityScorecardCollector(
-        api_token="ssc_test", client=mock_client
-    )
+    collector = SecurityScorecardCollector(api_token="ssc_test", client=mock_client)
     findings = collector.collect()
 
-    assert any(
-        (f.source_finding_id or "").startswith("company-inventory:")
-        for f in findings
-    )
+    assert any((f.source_finding_id or "").startswith("company-inventory:") for f in findings)
     assert mock_client.get.call_count == 2
 
 
 def test_collect_emits_low_score_finding_below_threshold() -> None:
     companies = [
-        _company_record(
-            domain="lowco.com", name="LowCo", score=55, grade="F"
-        ),
-        _company_record(
-            domain="midco.com", name="MidCo", score=82, grade="B"
-        ),
+        _company_record(domain="lowco.com", name="LowCo", score=55, grade="F"),
+        _company_record(domain="midco.com", name="MidCo", score=82, grade="B"),
     ]
     mock_client = _make_client([_companies_response(companies)])
 
@@ -154,21 +137,13 @@ def test_collect_emits_low_score_finding_below_threshold() -> None:
     )
     findings = collector.collect()
 
-    low_score = [
-        f
-        for f in findings
-        if (f.source_finding_id or "").startswith("company-low-score:")
-    ]
+    low_score = [f for f in findings if (f.source_finding_id or "").startswith("company-low-score:")]
     assert len(low_score) == 1
-    assert "LowCo" in (
-        low_score[0].title + (low_score[0].description or "")
-    )
+    assert "LowCo" in (low_score[0].title + (low_score[0].description or ""))
 
 
 def test_low_score_threshold_is_configurable() -> None:
-    company = _company_record(
-        domain="midco.com", score=85, grade="B"
-    )
+    company = _company_record(domain="midco.com", score=85, grade="B")
     mock_client = _make_client([_companies_response([company])])
 
     collector = SecurityScorecardCollector(
@@ -179,16 +154,11 @@ def test_low_score_threshold_is_configurable() -> None:
     )
     findings = collector.collect()
 
-    assert any(
-        (f.source_finding_id or "").startswith("company-low-score:")
-        for f in findings
-    )
+    assert any((f.source_finding_id or "").startswith("company-low-score:") for f in findings)
 
 
 def test_unscored_company_still_inventories() -> None:
-    company = _company_record(
-        domain="newco.com", score=None, grade=""
-    )
+    company = _company_record(domain="newco.com", score=None, grade="")
     mock_client = _make_client([_companies_response([company])])
 
     collector = SecurityScorecardCollector(
@@ -198,17 +168,10 @@ def test_unscored_company_still_inventories() -> None:
     )
     findings = collector.collect()
 
-    inv = [
-        f
-        for f in findings
-        if (f.source_finding_id or "").startswith("company-inventory:")
-    ]
+    inv = [f for f in findings if (f.source_finding_id or "").startswith("company-inventory:")]
     assert len(inv) == 1
     # No score → no low-score finding
-    assert not any(
-        (f.source_finding_id or "").startswith("company-low-score:")
-        for f in findings
-    )
+    assert not any((f.source_finding_id or "").startswith("company-low-score:") for f in findings)
 
 
 def test_collect_paginates_via_page_count() -> None:
@@ -231,11 +194,7 @@ def test_collect_paginates_via_page_count() -> None:
     )
     findings = collector.collect()
 
-    inventory = [
-        f
-        for f in findings
-        if (f.source_finding_id or "").startswith("company-inventory:")
-    ]
+    inventory = [f for f in findings if (f.source_finding_id or "").startswith("company-inventory:")]
     assert len(inventory) == 2
 
 
@@ -260,11 +219,7 @@ def test_collect_respects_max_companies_ceiling() -> None:
     )
     findings = collector.collect()
 
-    inventory = [
-        f
-        for f in findings
-        if (f.source_finding_id or "").startswith("company-inventory:")
-    ]
+    inventory = [f for f in findings if (f.source_finding_id or "").startswith("company-inventory:")]
     assert len(inventory) == 4
 
 
@@ -304,9 +259,7 @@ def test_collect_records_query_error_when_no_portfolios_resolvable() -> None:
 
 def test_collect_records_connection_error_in_manifest() -> None:
     mock_client = MagicMock(spec=httpx.Client)
-    mock_client.get = MagicMock(
-        side_effect=httpx.ConnectError("Network unreachable")
-    )
+    mock_client.get = MagicMock(side_effect=httpx.ConnectError("Network unreachable"))
     mock_client.close = MagicMock()
 
     collector = SecurityScorecardCollector(
@@ -428,7 +381,7 @@ def test_validate_portfolio_id_accepts_safe_values(good_id: str) -> None:
         # Spaces
         "portfolio id",
         # Quote / brace injection
-        "p\"q",
+        'p"q',
         "p<>q",
         # Unicode mock
         "пidence",
@@ -472,13 +425,9 @@ def test_collector_init_rejects_unsafe_portfolio_id() -> None:
     )
 
     with pytest.raises(SecurityScorecardInvalidPortfolioIdError):
-        SecurityScorecardCollector(
-            api_token="ssc_test", portfolio_id="../admin"
-        )
+        SecurityScorecardCollector(api_token="ssc_test", portfolio_id="../admin")
     with pytest.raises(SecurityScorecardInvalidPortfolioIdError):
-        SecurityScorecardCollector(
-            api_token="ssc_test", portfolio_id="portfolio/companies"
-        )
+        SecurityScorecardCollector(api_token="ssc_test", portfolio_id="portfolio/companies")
 
 
 def test_resolve_portfolio_id_rejects_unsafe_api_response() -> None:
@@ -494,15 +443,11 @@ def test_resolve_portfolio_id_rejects_unsafe_api_response() -> None:
     bad_portfolio_response = MagicMock(spec=httpx.Response)
     bad_portfolio_response.status_code = 200
     bad_portfolio_response.json.return_value = {
-        "entries": [
-            {"id": "../etc/passwd", "name": "Evil Portfolio"}
-        ],
+        "entries": [{"id": "../etc/passwd", "name": "Evil Portfolio"}],
     }
     bad_portfolio_response.raise_for_status = MagicMock()
 
     mock_client = _make_client([bad_portfolio_response])
-    collector = SecurityScorecardCollector(
-        api_token="ssc_test", client=mock_client
-    )
+    collector = SecurityScorecardCollector(api_token="ssc_test", client=mock_client)
     with pytest.raises(SecurityScorecardInvalidPortfolioIdError):
         collector._resolve_portfolio_id()

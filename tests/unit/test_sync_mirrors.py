@@ -65,9 +65,7 @@ def mod() -> Any:
 def test_rewrite_relative_link_from_docs_sourced_doc(mod: Any) -> None:
     # A doc under docs/ links to a sibling (docs/x.md) and a repo-root
     # parent (../SECURITY.md). Both become absolute blob URLs.
-    content = (
-        "See [sibling](sibling.md) and [security](../SECURITY.md) for more."
-    )
+    content = "See [sibling](sibling.md) and [security](../SECURITY.md) for more."
     out = mod.rewrite_links(content, "docs/ocsf-mapping.md", FIXTURE_BASE)
     assert f"[sibling]({FIXTURE_BASE}/docs/sibling.md)" in out
     assert f"[security]({FIXTURE_BASE}/SECURITY.md)" in out
@@ -97,9 +95,7 @@ def test_rewrite_passes_through_external_and_anchor_links(mod: Any) -> None:
 def test_rewrite_preserves_fragment_on_relative_link(mod: Any) -> None:
     content = "[api](api-stability.md#frozen-surface)"
     out = mod.rewrite_links(content, "docs/ocsf-mapping.md", FIXTURE_BASE)
-    assert (
-        f"[api]({FIXTURE_BASE}/docs/api-stability.md#frozen-surface)" in out
-    )
+    assert f"[api]({FIXTURE_BASE}/docs/api-stability.md#frozen-surface)" in out
 
 
 def test_rewrite_does_not_touch_image_links(mod: Any) -> None:
@@ -125,10 +121,7 @@ def test_rewrite_leaves_escaping_link_untouched(mod: Any) -> None:
 def test_build_banner_contains_marker_and_guidance(mod: Any) -> None:
     banner = mod.build_banner("docs/verification.md")
     # HTML-comment provenance marker (machine-detectable; non-rendering).
-    assert (
-        "<!-- AUTO-GENERATED MIRROR of docs/verification.md "
-        "-- do not edit directly -->" in banner
-    )
+    assert "<!-- AUTO-GENERATED MIRROR of docs/verification.md -- do not edit directly -->" in banner
     # Visible blockquote naming the canonical source + re-run guidance.
     assert "> **Auto-generated mirror.**" in banner
     assert "`docs/verification.md`" in banner
@@ -161,9 +154,7 @@ def test_compare_no_drift_when_committed_matches(mod: Any, tmp_path: Path) -> No
     assert mod.compare(rendered, tmp_path) == []
 
 
-def test_compare_detects_drift_on_mutated_committed_file(
-    mod: Any, tmp_path: Path
-) -> None:
+def test_compare_detects_drift_on_mutated_committed_file(mod: Any, tmp_path: Path) -> None:
     rendered = {
         "docs/wiki/6-project/eol.md": "# A\nbody-a\n",
         "docs/wiki/5-compliance/ocsf-mapping.md": "# B\nbody-b\n",
@@ -173,9 +164,7 @@ def test_compare_detects_drift_on_mutated_committed_file(
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
     # Mutate ONE committed mirror so it diverges from rendered.
-    (tmp_path / "docs/wiki/6-project/eol.md").write_text(
-        "# A\nMUTATED\n", encoding="utf-8"
-    )
+    (tmp_path / "docs/wiki/6-project/eol.md").write_text("# A\nMUTATED\n", encoding="utf-8")
     drift = mod.compare(rendered, tmp_path)
     assert len(drift) == 1
     assert "docs/wiki/6-project/eol.md" in drift[0]
@@ -209,16 +198,12 @@ def test_mirror_mappings_are_well_formed(mod: Any) -> None:
     assert len(set(mirror_paths)) == 13
     # Every mirror lands under one of the two wiki sections.
     for m in mirrors:
-        assert m.mirror.startswith(
-            ("docs/wiki/6-project/", "docs/wiki/5-compliance/")
-        ), m.mirror
+        assert m.mirror.startswith(("docs/wiki/6-project/", "docs/wiki/5-compliance/")), m.mirror
         assert m.mirror.endswith(".md")
         # Source is a repo-relative path (no leading slash, no scheme).
         assert not m.source.startswith(("/", "http"))
     # 9 in 6-project, 4 in 5-compliance per the D6 spec.
     proj = sum(1 for m in mirrors if m.mirror.startswith("docs/wiki/6-project/"))
-    comp = sum(
-        1 for m in mirrors if m.mirror.startswith("docs/wiki/5-compliance/")
-    )
+    comp = sum(1 for m in mirrors if m.mirror.startswith("docs/wiki/5-compliance/"))
     assert proj == 9
     assert comp == 4

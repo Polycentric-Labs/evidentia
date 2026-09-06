@@ -88,9 +88,7 @@ pytestmark = pytest.mark.skipif(
 
 
 def _git(repo: Path, *args: str) -> None:
-    subprocess.run(
-        ["git", "-C", str(repo), *args], check=True, capture_output=True, text=True
-    )
+    subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True, text=True)
 
 
 def _make_repo(tmp_path: Path, filename: str, content: str) -> Path:
@@ -145,9 +143,7 @@ def test_aws_secondary_placeholder_passes(tmp_path: Path) -> None:
 
 def test_both_placeholders_together_pass(tmp_path: Path) -> None:
     """A file whose ONLY AWS-key matches are placeholders passes."""
-    doc = (
-        f"Examples: {AWS_PLACEHOLDER_PRIMARY} and {AWS_PLACEHOLDER_SECONDARY}.\n"
-    )
+    doc = f"Examples: {AWS_PLACEHOLDER_PRIMARY} and {AWS_PLACEHOLDER_SECONDARY}.\n"
     repo = _make_repo(tmp_path, "guide.md", doc)
     proc = _run_check(repo)
     assert proc.returncode == 0, proc.stderr
@@ -172,10 +168,7 @@ def test_real_aws_key_blocks(tmp_path: Path) -> None:
 
 def test_real_key_blocks_even_alongside_placeholder(tmp_path: Path) -> None:
     """A file mixing a placeholder AND a real key still blocks on the real one."""
-    content = (
-        f"# example: {AWS_PLACEHOLDER_PRIMARY}\n"
-        f"aws_access_key_id = {REAL_LOOKING_AWS_KEY}\n"
-    )
+    content = f"# example: {AWS_PLACEHOLDER_PRIMARY}\naws_access_key_id = {REAL_LOOKING_AWS_KEY}\n"
     repo = _make_repo(tmp_path, "mixed.txt", content)
     proc = _run_check(repo)
     assert proc.returncode == 1

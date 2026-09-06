@@ -235,9 +235,7 @@ import json
 from evidentia_core.models.gap import GapAnalysisReport
 from evidentia_core.oscal.poam_exporter import gap_report_to_oscal_poam
 
-report = GapAnalysisReport.model_validate_json(
-    open("gap-report.json", encoding="utf-8").read()
-)
+report = GapAnalysisReport.model_validate_json(open("gap-report.json", encoding="utf-8").read())
 oscal_poam = gap_report_to_oscal_poam(report)
 with open("poam.oscal.json", "w", encoding="utf-8") as fh:
     json.dump(oscal_poam, fh, indent=2, default=str)

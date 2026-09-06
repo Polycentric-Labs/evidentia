@@ -89,12 +89,8 @@ class MetricStatus(str, Enum):
 class MetricObservation(EvidentiaModel):
     """One timestamped observation of a metric."""
 
-    observed_at: date = Field(
-        description="Date the observation was recorded."
-    )
-    value: float = Field(
-        description="Numeric value. Units defined by the parent Metric."
-    )
+    observed_at: date = Field(description="Date the observation was recorded.")
+    value: float = Field(description="Numeric value. Units defined by the parent Metric.")
     note: str | None = Field(
         default=None,
         description="Optional contextual note (e.g., 'Q3 backlog spike').",
@@ -111,30 +107,18 @@ class Metric(EvidentiaModel):
     """
 
     id: str = Field(default_factory=new_id)
-    name: str = Field(
-        description="Human-readable metric name (e.g., 'Failed-login rate')."
-    )
+    name: str = Field(description="Human-readable metric name (e.g., 'Failed-login rate').")
     description: str = Field(
         description=(
-            "What this metric measures + why it's tracked. Should "
-            "include the unit (per-day, percentage, count, etc.)."
+            "What this metric measures + why it's tracked. Should include the unit (per-day, percentage, count, etc.)."
         )
     )
-    kind: MetricKind = Field(
-        description="KRI / KPI / KGI classification."
-    )
-    direction: MetricDirection = Field(
-        description="Whether higher values are worse or better."
-    )
-    unit: str = Field(
-        description="Measurement unit (e.g., 'per 1,000 logins', 'days', '%')."
-    )
+    kind: MetricKind = Field(description="KRI / KPI / KGI classification.")
+    direction: MetricDirection = Field(description="Whether higher values are worse or better.")
+    unit: str = Field(description="Measurement unit (e.g., 'per 1,000 logins', 'days', '%').")
     owner_email: str | None = Field(
         default=None,
-        description=(
-            "Email of the metric owner. Cross-references the v0.7.10 "
-            "governance Owner schema when present."
-        ),
+        description=("Email of the metric owner. Cross-references the v0.7.10 governance Owner schema when present."),
     )
     warning_threshold: float | None = Field(
         default=None,
@@ -147,8 +131,7 @@ class Metric(EvidentiaModel):
     critical_threshold: float | None = Field(
         default=None,
         description=(
-            "Threshold above which (HIGHER_IS_WORSE) or below which "
-            "(HIGHER_IS_BETTER) the metric is in BREACH state."
+            "Threshold above which (HIGHER_IS_WORSE) or below which (HIGHER_IS_BETTER) the metric is in BREACH state."
         ),
     )
     observations: list[MetricObservation] = Field(
@@ -189,27 +172,15 @@ def evaluate_metric(metric: Metric) -> MetricStatus:
     higher_is_worse = metric.direction == MetricDirection.HIGHER_IS_WORSE.value
 
     if higher_is_worse:
-        if (
-            metric.critical_threshold is not None
-            and value >= metric.critical_threshold
-        ):
+        if metric.critical_threshold is not None and value >= metric.critical_threshold:
             return MetricStatus.BREACH
-        if (
-            metric.warning_threshold is not None
-            and value >= metric.warning_threshold
-        ):
+        if metric.warning_threshold is not None and value >= metric.warning_threshold:
             return MetricStatus.WATCH
         return MetricStatus.COMFORTABLE
     # HIGHER_IS_BETTER
-    if (
-        metric.critical_threshold is not None
-        and value <= metric.critical_threshold
-    ):
+    if metric.critical_threshold is not None and value <= metric.critical_threshold:
         return MetricStatus.BREACH
-    if (
-        metric.warning_threshold is not None
-        and value <= metric.warning_threshold
-    ):
+    if metric.warning_threshold is not None and value <= metric.warning_threshold:
         return MetricStatus.WATCH
     return MetricStatus.COMFORTABLE
 
@@ -287,30 +258,15 @@ def generate_metrics_report(metrics: list[Metric]) -> str:
         for m in kind_metrics:
             status = evaluate_metric(m).value
             latest_value = (
-                f"{max(m.observations, key=lambda o: o.observed_at).value}"
-                if m.observations
-                else "_no data_"
+                f"{max(m.observations, key=lambda o: o.observed_at).value}" if m.observations else "_no data_"
             )
-            warn = (
-                str(m.warning_threshold)
-                if m.warning_threshold is not None
-                else "—"
-            )
-            crit = (
-                str(m.critical_threshold)
-                if m.critical_threshold is not None
-                else "—"
-            )
-            rows.append(
-                f"| {m.name} | {latest_value} {m.unit} | {status} | "
-                f"{warn} / {crit} | {m.owner_email or '—'} |"
-            )
+            warn = str(m.warning_threshold) if m.warning_threshold is not None else "—"
+            crit = str(m.critical_threshold) if m.critical_threshold is not None else "—"
+            rows.append(f"| {m.name} | {latest_value} {m.unit} | {status} | {warn} / {crit} | {m.owner_email or '—'} |")
         sections.append(
             f"## {kind.value.upper()} — {_kind_narrative(kind.value)}\n\n"
             "| Name | Latest | Status | Warn / Crit | Owner |\n"
-            "| --- | --- | --- | --- | --- |\n"
-            + "\n".join(rows)
-            + "\n"
+            "| --- | --- | --- | --- | --- |\n" + "\n".join(rows) + "\n"
         )
 
     return "\n".join(sections)

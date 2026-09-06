@@ -126,14 +126,10 @@ class DaemonConfig:
     def __post_init__(self) -> None:
         if self.poll_interval_seconds < MIN_POLL_INTERVAL_SECONDS:
             raise ValueError(
-                f"poll_interval_seconds must be >= "
-                f"{MIN_POLL_INTERVAL_SECONDS}; got "
-                f"{self.poll_interval_seconds}"
+                f"poll_interval_seconds must be >= {MIN_POLL_INTERVAL_SECONDS}; got {self.poll_interval_seconds}"
             )
         if self.window_days < 0:
-            raise ValueError(
-                f"window_days must be >= 0; got {self.window_days}"
-            )
+            raise ValueError(f"window_days must be >= 0; got {self.window_days}")
 
 
 def write_daemon_status(
@@ -172,9 +168,7 @@ def write_daemon_status(
         "poll_interval_seconds": poll_interval_seconds,
         "state_file": str(state_file),
         "window_days": window_days,
-        "daemon_uptime_seconds": int(
-            (last_poll_at - started_at).total_seconds()
-        ),
+        "daemon_uptime_seconds": int((last_poll_at - started_at).total_seconds()),
     }
     # v0.9.5 P1.5: delegates atomic-write + .tmp cleanup to the
     # shared helper. Behavior is identical to the v0.9.4 inline
@@ -228,9 +222,7 @@ def append_daemon_history(
     atomic_write_text(history_file, "\n".join(existing) + "\n")
 
 
-def read_daemon_history(
-    history_file: Path, *, limit: int | None = None
-) -> list[dict[str, Any]]:
+def read_daemon_history(history_file: Path, *, limit: int | None = None) -> list[dict[str, Any]]:
     """Read recent daemon-status snapshots from the history file.
 
     Args:
@@ -352,31 +344,21 @@ def load_state_file(
         raise ValueError(f"could not parse {path}: {exc}") from exc
 
     if not isinstance(raw, dict):
-        raise ValueError(
-            f"{path} must be a YAML mapping of slug -> ISO-8601 date; "
-            f"got {type(raw).__name__}"
-        )
+        raise ValueError(f"{path} must be a YAML mapping of slug -> ISO-8601 date; got {type(raw).__name__}")
 
     out: dict[str, date] = {}
     for slug, value in raw.items():
         if not isinstance(slug, str):
-            raise ValueError(
-                f"cadence keys must be strings; got {slug!r}"
-            )
+            raise ValueError(f"cadence keys must be strings; got {slug!r}")
         if isinstance(value, date):
             out[slug] = value
         elif isinstance(value, str):
             try:
                 out[slug] = date.fromisoformat(value)
             except ValueError as exc:
-                raise ValueError(
-                    f"{slug!r} -> {value!r}: expected ISO-8601 date "
-                    f"({exc})"
-                ) from exc
+                raise ValueError(f"{slug!r} -> {value!r}: expected ISO-8601 date ({exc})") from exc
         else:
-            raise ValueError(
-                f"{slug!r} -> {value!r}: expected ISO-8601 date string"
-            )
+            raise ValueError(f"{slug!r} -> {value!r}: expected ISO-8601 date string")
     return migrate_deprecated_slugs(out)
 
 
@@ -451,9 +433,7 @@ def mark_completed(
     """
     cadence = get_cadence(slug)
     if cadence is None:
-        raise ValueError(
-            f"unknown cadence slug {slug!r}; cannot mark completed"
-        )
+        raise ValueError(f"unknown cadence slug {slug!r}; cannot mark completed")
 
     def _do_mark() -> date | None:
         state = load_state_file(state_file) if state_file.is_file() else {}
@@ -474,17 +454,12 @@ def mark_completed(
     _log.info(
         action=EventAction.CONMON_CYCLE_MARKED_COMPLETED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"CONMON cycle {slug!r} marked completed on "
-            f"{when.isoformat()}"
-        ),
+        message=(f"CONMON cycle {slug!r} marked completed on {when.isoformat()}"),
         evidentia={
             "cadence_slug": slug,
             "framework": cadence.framework,
             "activity": cadence.activity,
-            "previous_last_completed": (
-                previous.isoformat() if previous is not None else None
-            ),
+            "previous_last_completed": (previous.isoformat() if previous is not None else None),
             "new_last_completed": when.isoformat(),
             "used_lock": use_lock,
         },
@@ -554,10 +529,7 @@ def _emit_and_dispatch(
         _log.warning(
             action=EventAction.CONMON_CYCLE_OVERDUE,
             outcome=EventOutcome.FAILURE,
-            message=(
-                f"CONMON cycle {obs.cadence.slug!r} is overdue "
-                f"({obs.days_until_due} days past next-due)"
-            ),
+            message=(f"CONMON cycle {obs.cadence.slug!r} is overdue ({obs.days_until_due} days past next-due)"),
             evidentia={
                 "cadence_slug": obs.cadence.slug,
                 "framework": obs.cadence.framework,
@@ -574,20 +546,14 @@ def _emit_and_dispatch(
                 _log.warning(
                     action=EventAction.CONMON_CYCLE_OVERDUE,
                     outcome=EventOutcome.FAILURE,
-                    message=(
-                        f"on_overdue callback raised for "
-                        f"{obs.cadence.slug!r}: {exc}"
-                    ),
+                    message=(f"on_overdue callback raised for {obs.cadence.slug!r}: {exc}"),
                 )
 
     for obs in result.due_soon:
         _log.info(
             action=EventAction.CONMON_CYCLE_DUE,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"CONMON cycle {obs.cadence.slug!r} due in "
-                f"{obs.days_until_due} day(s)"
-            ),
+            message=(f"CONMON cycle {obs.cadence.slug!r} due in {obs.days_until_due} day(s)"),
             evidentia={
                 "cadence_slug": obs.cadence.slug,
                 "framework": obs.cadence.framework,
@@ -604,10 +570,7 @@ def _emit_and_dispatch(
                 _log.warning(
                     action=EventAction.CONMON_CYCLE_DUE,
                     outcome=EventOutcome.FAILURE,
-                    message=(
-                        f"on_due_soon callback raised for "
-                        f"{obs.cadence.slug!r}: {exc}"
-                    ),
+                    message=(f"on_due_soon callback raised for {obs.cadence.slug!r}: {exc}"),
                 )
 
 
@@ -663,11 +626,7 @@ def run_daemon(
             "poll_interval_seconds": config.poll_interval_seconds,
             "state_file": str(config.state_file),
             "window_days": config.window_days,
-            "status_file": (
-                str(config.status_file)
-                if config.status_file is not None
-                else None
-            ),
+            "status_file": (str(config.status_file) if config.status_file is not None else None),
         },
     )
 
@@ -681,11 +640,7 @@ def run_daemon(
             try:
                 result = poll_once(config)
                 _emit_and_dispatch(result, on_due_soon, on_overdue)
-                recognized_count = (
-                    len(result.overdue)
-                    + len(result.due_soon)
-                    + len(result.current)
-                )
+                recognized_count = len(result.overdue) + len(result.due_soon) + len(result.current)
                 unknown_count = len(result.unknown_slugs)
             except (ValueError, OSError) as exc:
                 # State file errors are operator-actionable: we log
@@ -700,10 +655,7 @@ def run_daemon(
                 _log.warning(
                     action=EventAction.CONMON_DAEMON_POLL_FAILED,
                     outcome=EventOutcome.FAILURE,
-                    message=(
-                        f"poll cycle skipped: {exc}; will retry at "
-                        f"next interval"
-                    ),
+                    message=(f"poll cycle skipped: {exc}; will retry at next interval"),
                 )
 
             # v0.9.4 P2.1: write status sidecar after each poll
@@ -729,9 +681,7 @@ def run_daemon(
                     "poll_interval_seconds": config.poll_interval_seconds,
                     "state_file": str(config.state_file),
                     "window_days": config.window_days,
-                    "daemon_uptime_seconds": int(
-                        (poll_at - started_at).total_seconds()
-                    ),
+                    "daemon_uptime_seconds": int((poll_at - started_at).total_seconds()),
                 }
                 with contextlib.suppress(OSError):
                     write_daemon_status(

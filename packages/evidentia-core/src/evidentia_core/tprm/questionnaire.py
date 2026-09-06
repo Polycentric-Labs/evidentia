@@ -195,15 +195,10 @@ class Questionnaire(EvidentiaModel):
     id: str = Field(default_factory=new_id)
     format: QuestionnaireFormat
     title: str = Field(
-        description=(
-            "Human-readable header — e.g., 'Evidentia Generic Vendor "
-            "DD Questionnaire — <vendor name>'."
-        )
+        description=("Human-readable header — e.g., 'Evidentia Generic Vendor DD Questionnaire — <vendor name>'.")
     )
     generated_at: datetime = Field(default_factory=utc_now)
-    vendor: VendorPreFill = Field(
-        description="Snapshot of vendor metadata pre-filled into the questionnaire."
-    )
+    vendor: VendorPreFill = Field(description="Snapshot of vendor metadata pre-filled into the questionnaire.")
     questions: list[Question] = Field(default_factory=list)
     licensing_attribution: str | None = Field(
         default=None,
@@ -234,9 +229,7 @@ def _load_questionnaire_data(fmt: QuestionnaireFormat) -> dict[str, Any]:
             f"{sorted(f.value for f in _PACKAGED_DATA_FORMATS)}."
         )
     fname = _PACKAGED_DATA_FORMATS[fmt]
-    with resources.files(
-        "evidentia_core.tprm.data.questionnaires"
-    ).joinpath(fname).open("r", encoding="utf-8") as fp:
+    with resources.files("evidentia_core.tprm.data.questionnaires").joinpath(fname).open("r", encoding="utf-8") as fp:
         data = json.load(fp)
     return data  # type: ignore[no-any-return]
 
@@ -255,9 +248,7 @@ def _build_prefill(vendor: Vendor) -> VendorPreFill:
         contract_start_date=vendor.contract_start_date,
         contract_end_date=vendor.contract_end_date,
         region=vendor.region,
-        regulatory_classification=[
-            str(c) for c in vendor.regulatory_classification
-        ],
+        regulatory_classification=[str(c) for c in vendor.regulatory_classification],
         fourth_party_count=len(vendor.fourth_parties),
         fourth_party_names=[fp.name for fp in vendor.fourth_parties],
     )
@@ -284,9 +275,7 @@ def generate_questionnaire(
     """
     data = _load_questionnaire_data(format)
     questions = [Question.model_validate(q) for q in data["questions"]]
-    title_template = data.get(
-        "title_template", "Vendor DD Questionnaire — {vendor_name}"
-    )
+    title_template = data.get("title_template", "Vendor DD Questionnaire — {vendor_name}")
     # Use string `.replace()` rather than `.format(vendor_name=...)`
     # so a vendor name containing `{}` / `{0}` / `{secret}` cannot
     # raise KeyError at render time or, worse, leak adjacent format
@@ -336,16 +325,10 @@ def render_csv_questionnaire(q: Questionnaire) -> str:
     writer.writerow(["# Vendor name", _csv_safe(q.vendor.vendor_name)])
     writer.writerow(["# Vendor type", q.vendor.vendor_type])
     writer.writerow(["# Criticality tier", q.vendor.criticality_tier])
-    writer.writerow(
-        ["# Relationship owner", _csv_safe(q.vendor.relationship_owner)]
-    )
-    writer.writerow(
-        ["# Contract start", str(q.vendor.contract_start_date)]
-    )
+    writer.writerow(["# Relationship owner", _csv_safe(q.vendor.relationship_owner)])
+    writer.writerow(["# Contract start", str(q.vendor.contract_start_date)])
     if q.vendor.contract_end_date:
-        writer.writerow(
-            ["# Contract end", str(q.vendor.contract_end_date)]
-        )
+        writer.writerow(["# Contract end", str(q.vendor.contract_end_date)])
     if q.vendor.region:
         writer.writerow(["# Region", _csv_safe(q.vendor.region)])
     if q.vendor.regulatory_classification:
@@ -359,10 +342,7 @@ def render_csv_questionnaire(q: Questionnaire) -> str:
         writer.writerow(
             [
                 "# 4th parties",
-                _csv_safe(
-                    f"{q.vendor.fourth_party_count}: "
-                    + ", ".join(q.vendor.fourth_party_names)
-                ),
+                _csv_safe(f"{q.vendor.fourth_party_count}: " + ", ".join(q.vendor.fourth_party_names)),
             ]
         )
     if q.licensing_attribution:
@@ -504,10 +484,7 @@ def render_xlsx_questionnaire(q: Questionnaire) -> bytes:
         meta_rows.append(
             [
                 "4th parties",
-                _csv_safe(
-                    f"{q.vendor.fourth_party_count}: "
-                    + ", ".join(q.vendor.fourth_party_names)
-                ),
+                _csv_safe(f"{q.vendor.fourth_party_count}: " + ", ".join(q.vendor.fourth_party_names)),
             ]
         )
     if q.licensing_attribution:
@@ -583,9 +560,7 @@ def _sanitize_sheet_name(name: str, *, reserve: int = 4) -> str:
     preserving the canonical 31-char ceiling AFTER suffix
     application.
     """
-    cleaned = "".join(
-        c for c in name if c not in _EXCEL_SHEET_BAD_CHARS
-    )
+    cleaned = "".join(c for c in name if c not in _EXCEL_SHEET_BAD_CHARS)
     cleaned = cleaned.strip().strip("'")
     if not cleaned:
         cleaned = "Questions"
@@ -652,8 +627,7 @@ def generate_from_byo_template(
     """
     if fmt not in _BYO_TEMPLATE_FORMATS:
         raise ValueError(
-            f"Format {fmt.value!r} does not accept a BYO template. "
-            "Only sig / sig-lite use --from-template."
+            f"Format {fmt.value!r} does not accept a BYO template. Only sig / sig-lite use --from-template."
         )
     openpyxl = _require_openpyxl()
     from pathlib import Path as _Path
@@ -708,39 +682,21 @@ def generate_from_byo_template(
         "relationship owner": vendor.relationship_owner,
         "contract start date": vendor.contract_start_date.isoformat(),
         "contract effective date": vendor.contract_start_date.isoformat(),
-        "vendor type": (
-            vendor.type.value
-            if hasattr(vendor.type, "value")
-            else str(vendor.type)
-        ),
-        "service type": (
-            vendor.type.value
-            if hasattr(vendor.type, "value")
-            else str(vendor.type)
-        ),
+        "vendor type": (vendor.type.value if hasattr(vendor.type, "value") else str(vendor.type)),
+        "service type": (vendor.type.value if hasattr(vendor.type, "value") else str(vendor.type)),
         "criticality": (
-            vendor.criticality_tier.value
-            if hasattr(vendor.criticality_tier, "value")
-            else str(vendor.criticality_tier)
+            vendor.criticality_tier.value if hasattr(vendor.criticality_tier, "value") else str(vendor.criticality_tier)
         ),
         "criticality tier": (
-            vendor.criticality_tier.value
-            if hasattr(vendor.criticality_tier, "value")
-            else str(vendor.criticality_tier)
+            vendor.criticality_tier.value if hasattr(vendor.criticality_tier, "value") else str(vendor.criticality_tier)
         ),
         "tier": (
-            vendor.criticality_tier.value
-            if hasattr(vendor.criticality_tier, "value")
-            else str(vendor.criticality_tier)
+            vendor.criticality_tier.value if hasattr(vendor.criticality_tier, "value") else str(vendor.criticality_tier)
         ),
     }
     if vendor.contract_end_date:
-        label_to_value["contract end date"] = (
-            vendor.contract_end_date.isoformat()
-        )
-        label_to_value["contract expiration date"] = (
-            vendor.contract_end_date.isoformat()
-        )
+        label_to_value["contract end date"] = vendor.contract_end_date.isoformat()
+        label_to_value["contract expiration date"] = vendor.contract_end_date.isoformat()
     if vendor.region:
         label_to_value["region"] = vendor.region
         label_to_value["geographic region"] = vendor.region
@@ -764,29 +720,22 @@ def generate_from_byo_template(
     skipped_unknown_label = 0
     skipped_already_populated = 0
     skipped_sparse = 0
-    for row_idx, row in enumerate(
-        ws.iter_rows(min_row=1, max_row=ws.max_row), start=1
-    ):
+    for row_idx, row in enumerate(ws.iter_rows(min_row=1, max_row=ws.max_row), start=1):
         if not row:
             skipped_sparse += 1
-            _log.debug(
-                "SIG BYO row %d skipped: empty row tuple", row_idx
-            )
+            _log.debug("SIG BYO row %d skipped: empty row tuple", row_idx)
             continue
         a_cell = row[0]
         if a_cell.value is None:
             skipped_sparse += 1
-            _log.debug(
-                "SIG BYO row %d skipped: column-A is None", row_idx
-            )
+            _log.debug("SIG BYO row %d skipped: column-A is None", row_idx)
             continue
         a_value = str(a_cell.value).strip().lower().rstrip(":")
         target = label_to_value.get(a_value)
         if target is None:
             skipped_unknown_label += 1
             _log.debug(
-                "SIG BYO row %d skipped: column-A label %r not in "
-                "recognized set",
+                "SIG BYO row %d skipped: column-A label %r not in recognized set",
                 row_idx,
                 a_value,
             )
@@ -819,8 +768,7 @@ def generate_from_byo_template(
         else:
             skipped_already_populated += 1
             _log.debug(
-                "SIG BYO row %d skipped: label=%r matched but "
-                "columns B + C both already populated; not clobbering",
+                "SIG BYO row %d skipped: label=%r matched but columns B + C both already populated; not clobbering",
                 row_idx,
                 a_value,
             )
@@ -834,8 +782,7 @@ def generate_from_byo_template(
         skipped_unknown_label,
         skipped_already_populated,
         skipped_sparse,
-        pre_filled_count + skipped_unknown_label
-        + skipped_already_populated + skipped_sparse,
+        pre_filled_count + skipped_unknown_label + skipped_already_populated + skipped_sparse,
     )
 
     if pre_filled_count == 0:
@@ -936,19 +883,13 @@ def parse_completed_questionnaire(
         return _parse_completed_csv(p)
     if suffix == ".xlsx":
         return _parse_completed_xlsx(p)
-    raise ValueError(
-        f"Unsupported questionnaire file extension: {suffix!r}. "
-        "Supported: .json, .csv, .xlsx."
-    )
+    raise ValueError(f"Unsupported questionnaire file extension: {suffix!r}. Supported: .json, .csv, .xlsx.")
 
 
 def _parse_completed_json(path: Any) -> CompletedQuestionnaire:
     raw = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
-        raise ValueError(
-            "Completed questionnaire JSON must be an object "
-            "(matching the Questionnaire shape)."
-        )
+        raise ValueError("Completed questionnaire JSON must be an object (matching the Questionnaire shape).")
     responses: dict[str, str] = {}
     for q in raw.get("questions", []):
         if not isinstance(q, dict):
@@ -965,11 +906,7 @@ def _parse_completed_json(path: Any) -> CompletedQuestionnaire:
         except ValueError:
             fmt = None
     vendor_block = raw.get("vendor") or {}
-    vendor_id_raw = (
-        vendor_block.get("vendor_id")
-        if isinstance(vendor_block, dict)
-        else None
-    )
+    vendor_id_raw = vendor_block.get("vendor_id") if isinstance(vendor_block, dict) else None
     return CompletedQuestionnaire(
         questionnaire_id=raw.get("id") if isinstance(raw.get("id"), str) else None,
         vendor_id=vendor_id_raw if isinstance(vendor_id_raw, str) else None,
@@ -1097,12 +1034,8 @@ def _parse_completed_xlsx(path: Any) -> CompletedQuestionnaire:
             if not row or row[id_idx] is None:
                 continue
             qid = str(row[id_idx]).strip()
-            resp_cell = (
-                row[resp_idx] if resp_idx < len(row) else None
-            )
-            responses[qid] = (
-                str(resp_cell).strip() if resp_cell is not None else ""
-            )
+            resp_cell = row[resp_idx] if resp_idx < len(row) else None
+            responses[qid] = str(resp_cell).strip() if resp_cell is not None else ""
     return CompletedQuestionnaire(
         questionnaire_id=questionnaire_id,
         vendor_id=vendor_id,

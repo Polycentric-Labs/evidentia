@@ -25,9 +25,7 @@ from evidentia_core.models.common import EvidentiaModel
 #: Domain relationship vocabulary for a control→threat link. Deliberately NOT
 #: the NIST OLIR concept-relationship set (supports / subset-of / …), which is
 #: for control↔control / standard↔standard mappings, not control↔threat.
-ThreatRelationship = Literal[
-    "mitigates", "partially-mitigates", "compensating", "detects"
-]
+ThreatRelationship = Literal["mitigates", "partially-mitigates", "compensating", "detects"]
 
 #: Source taxonomy of a threat identifier.
 ThreatFramework = Literal["mitre-attack", "cwe", "capec"]
@@ -39,15 +37,9 @@ CoverageLevel = Literal["full", "partial", "compensating"]
 class ControlThreatMapping(EvidentiaModel):
     """A single control→threat relationship: a control mitigates a threat."""
 
-    control_id: str = Field(
-        description="Control ID from the imported catalog, e.g. 'AC-2'."
-    )
-    threat_id: str = Field(
-        description="Canonical threat ID, e.g. 'T1078', 'CWE-79', 'CAPEC-66'."
-    )
-    threat_framework: ThreatFramework = Field(
-        description="Source taxonomy of ``threat_id``."
-    )
+    control_id: str = Field(description="Control ID from the imported catalog, e.g. 'AC-2'.")
+    threat_id: str = Field(description="Canonical threat ID, e.g. 'T1078', 'CWE-79', 'CAPEC-66'.")
+    threat_framework: ThreatFramework = Field(description="Source taxonomy of ``threat_id``.")
     relationship: ThreatRelationship = Field(
         default="mitigates",
         description="How the control relates to the threat.",
@@ -56,19 +48,14 @@ class ControlThreatMapping(EvidentiaModel):
         default="full",
         description="Coverage strength (full / partial / compensating).",
     )
-    threat_name: str | None = Field(
-        default=None, description="Human-readable threat name."
-    )
+    threat_name: str | None = Field(default=None, description="Human-readable threat name.")
     mapping_id: str | None = Field(
         default=None,
         description=(
-            "Stable per-mapping identifier (``urn:uuid:…``). Auto-derived "
-            "deterministically on emit when absent."
+            "Stable per-mapping identifier (``urn:uuid:…``). Auto-derived deterministically on emit when absent."
         ),
     )
-    notes: str | None = Field(
-        default=None, description="Optional operator note / rationale."
-    )
+    notes: str | None = Field(default=None, description="Optional operator note / rationale.")
 
 
 class TraceabilityMatrix(EvidentiaModel):
@@ -81,9 +68,7 @@ class TraceabilityMatrix(EvidentiaModel):
             "matrix annotates this catalog's controls with threat links)."
         )
     )
-    framework_id: str = Field(
-        description="Framework identifier, e.g. 'nist-800-53-rev5-moderate'."
-    )
+    framework_id: str = Field(description="Framework identifier, e.g. 'nist-800-53-rev5-moderate'.")
     crosswalk_source: str = Field(
         default="self-attested",
         description=(

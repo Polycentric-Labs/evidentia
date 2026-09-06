@@ -71,9 +71,7 @@ class FIPS199Impact(str, Enum):
         }[self]
 
 
-def _high_water_mark(
-    a: FIPS199Impact, b: FIPS199Impact, c: FIPS199Impact
-) -> FIPS199Impact:
+def _high_water_mark(a: FIPS199Impact, b: FIPS199Impact, c: FIPS199Impact) -> FIPS199Impact:
     """Return the highest of three FIPS 199 impact levels.
 
     Implements the FIPS 199 §3 high-water-mark aggregation:
@@ -107,19 +105,14 @@ class FIPS199Categorization(EvidentiaModel):
 
     confidentiality_impact: FIPS199Impact = Field(
         description=(
-            "Impact of unauthorized DISCLOSURE per FIPS 199. "
-            "Operators rate per NIST SP 800-60 worked-examples."
+            "Impact of unauthorized DISCLOSURE per FIPS 199. Operators rate per NIST SP 800-60 worked-examples."
         ),
     )
     integrity_impact: FIPS199Impact = Field(
-        description=(
-            "Impact of unauthorized MODIFICATION per FIPS 199."
-        ),
+        description=("Impact of unauthorized MODIFICATION per FIPS 199."),
     )
     availability_impact: FIPS199Impact = Field(
-        description=(
-            "Impact of DISRUPTION OF ACCESS per FIPS 199."
-        ),
+        description=("Impact of DISRUPTION OF ACCESS per FIPS 199."),
     )
     overall: FIPS199Impact | None = Field(
         default=None,
@@ -134,8 +127,7 @@ class FIPS199Categorization(EvidentiaModel):
         default=None,
         max_length=4000,
         description=(
-            "Free-text justification linking the impact ratings to "
-            "the underlying information types per NIST SP 800-60."
+            "Free-text justification linking the impact ratings to the underlying information types per NIST SP 800-60."
         ),
     )
 
@@ -172,11 +164,7 @@ class FIPS199Categorization(EvidentiaModel):
             # __setattr__ path triggers re-validation by default).
             self.__dict__["overall"] = computed.value
             return self
-        supplied = (
-            self.overall
-            if isinstance(self.overall, FIPS199Impact)
-            else FIPS199Impact(self.overall)
-        )
+        supplied = self.overall if isinstance(self.overall, FIPS199Impact) else FIPS199Impact(self.overall)
         if supplied != computed:
             raise ValueError(
                 f"FIPS 199 high-water-mark mismatch: overall="

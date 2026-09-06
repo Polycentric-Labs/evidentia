@@ -40,15 +40,10 @@ class _BlobStub:
         if_generation_match: int | None = None,
         content_type: str | None = None,
     ) -> None:
-        if (
-            if_generation_match == 0
-            and self._name in self._store
-        ):
+        if if_generation_match == 0 and self._name in self._store:
             from google.api_core.exceptions import PreconditionFailed
 
-            raise PreconditionFailed(
-                "Object already exists (if_generation_match=0)"
-            )
+            raise PreconditionFailed("Object already exists (if_generation_match=0)")
         body = data.encode("utf-8") if isinstance(data, str) else data
         self._store[self._name] = {
             "data": body,
@@ -149,9 +144,7 @@ class TestPutGet:
         worm.put(m.id, b"with-hold", m)
         assert worm.get_metadata(m.id).legal_hold is True
 
-    def test_put_zero_retention_gdpr(
-        self, worm: GCSBucketLockWORM
-    ) -> None:
+    def test_put_zero_retention_gdpr(self, worm: GCSBucketLockWORM) -> None:
         m = _meta(
             classification=RetentionClassification.GDPR,
             retention_period_days=0,
@@ -161,33 +154,25 @@ class TestPutGet:
 
 
 class TestDelete:
-    def test_delete_active_within_window_rejected(
-        self, worm: GCSBucketLockWORM
-    ) -> None:
+    def test_delete_active_within_window_rejected(self, worm: GCSBucketLockWORM) -> None:
         m = _meta()
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError, match="retention window"):
             worm.delete(m.id)
 
-    def test_delete_legal_hold_rejected(
-        self, worm: GCSBucketLockWORM
-    ) -> None:
+    def test_delete_legal_hold_rejected(self, worm: GCSBucketLockWORM) -> None:
         m = _meta(legal_hold=True)
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError, match="legal hold"):
             worm.delete(m.id)
 
-    def test_delete_non_expired_rejected(
-        self, worm: GCSBucketLockWORM
-    ) -> None:
+    def test_delete_non_expired_rejected(self, worm: GCSBucketLockWORM) -> None:
         m = _meta(lock_until=date.today() - timedelta(days=10))
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError, match="lifecycle"):
             worm.delete(m.id)
 
-    def test_delete_expired_succeeds(
-        self, worm: GCSBucketLockWORM
-    ) -> None:
+    def test_delete_expired_succeeds(self, worm: GCSBucketLockWORM) -> None:
         past = date.today() - timedelta(days=5)
         m = _meta(
             lock_until=past,
@@ -207,9 +192,7 @@ class TestExtendRetention:
         new_meta = worm.extend_retention(m.id, new_until)
         assert new_meta.lock_until == new_until
 
-    def test_extend_backward_rejected(
-        self, worm: GCSBucketLockWORM
-    ) -> None:
+    def test_extend_backward_rejected(self, worm: GCSBucketLockWORM) -> None:
         m = _meta()
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError, match="shortening"):
@@ -234,9 +217,7 @@ class TestConstruction:
                 client_factory=lambda: _ClientStub(),
             )
 
-    def test_repr_contains_bucket(
-        self, worm: GCSBucketLockWORM
-    ) -> None:
+    def test_repr_contains_bucket(self, worm: GCSBucketLockWORM) -> None:
         assert "evidentia-worm" in repr(worm)
 
 

@@ -39,6 +39,7 @@ conformance stamp becomes worth the dependency.
 
 Stdlib only. Usage: python scripts/check_sbom_ntia.py <sbom.cdx.json>
 """
+
 from __future__ import annotations
 
 import argparse
@@ -63,9 +64,7 @@ def check(doc: dict) -> tuple[list[str], list[str]]:
     supplier_name = (metadata.get("supplier") or {}).get("name")
     authors = metadata.get("authors") or []
     if not supplier_name and not authors:
-        failures.append(
-            "metadata.supplier.name / metadata.authors missing — no SBOM author"
-        )
+        failures.append("metadata.supplier.name / metadata.authors missing — no SBOM author")
 
     # 2. Timestamp.
     if not metadata.get("timestamp"):
@@ -136,8 +135,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ADVISORY: {adv}")
     if failures:
         print(
-            f"NTIA GATE: FAIL — {len(failures)} finding(s) across "
-            f"{n_components} components:",
+            f"NTIA GATE: FAIL — {len(failures)} finding(s) across {n_components} components:",
             file=sys.stderr,
         )
         for f in failures:

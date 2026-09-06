@@ -110,8 +110,7 @@ def init(
         f"--frameworks {frameworks} --output report.json[/cyan]"
     )
     console.print(
-        "  3. (Optional) Edit [cyan]system-context.yaml[/cyan] and run "
-        "[cyan]evidentia risk generate ...[/cyan]"
+        "  3. (Optional) Edit [cyan]system-context.yaml[/cyan] and run [cyan]evidentia risk generate ...[/cyan]"
     )
     console.print(
         "  4. Launch the web UI: [cyan]evidentia serve[/cyan] "

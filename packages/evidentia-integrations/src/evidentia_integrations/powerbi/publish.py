@@ -29,9 +29,7 @@ class PowerBIPublishedDataset(BaseModel):
 
     name: str = Field(description="Dataset name on the Power BI side")
     dataset_id: str = Field(description="Power BI dataset ID")
-    table_name: str = Field(
-        description="Table name inside the Push Dataset"
-    )
+    table_name: str = Field(description="Table name inside the Push Dataset")
     rows: int = Field(
         ge=0,
         description="Row count actually pushed (post-clear).",
@@ -42,9 +40,7 @@ class PowerBIPublishResult(BaseModel):
     """The result of a single publish_report invocation."""
 
     workspace_id: str
-    datasets: list[PowerBIPublishedDataset] = Field(
-        default_factory=list
-    )
+    datasets: list[PowerBIPublishedDataset] = Field(default_factory=list)
     skipped: list[str] = Field(default_factory=list)
 
 
@@ -103,9 +99,7 @@ def publish_report(
             schema=GAP_DATASET_SCHEMA,
         )
         if clear_before_push:
-            client.clear_table(
-                dataset_id=gap_id, table_name=gap_table
-            )
+            client.clear_table(dataset_id=gap_id, table_name=gap_table)
         client.push_rows(
             dataset_id=gap_id,
             table_name=gap_table,
@@ -149,19 +143,13 @@ def publish_report(
                     )
                 )
             else:
-                result.skipped.append(
-                    f"{risk_dataset_name} (no risks supplied)"
-                )
+                result.skipped.append(f"{risk_dataset_name} (no risks supplied)")
         else:
-            result.skipped.append(
-                f"{risk_dataset_name} (risks=None)"
-            )
+            result.skipped.append(f"{risk_dataset_name} (risks=None)")
 
         # 3. Collection-run dataset (optional).
         if collection_runs is not None:
-            ctx_rows = build_collection_run_dataset_rows(
-                collection_runs
-            )
+            ctx_rows = build_collection_run_dataset_rows(collection_runs)
             if ctx_rows:
                 ctx_table = "collection_runs"
                 ctx_id = client.ensure_dataset(
@@ -170,9 +158,7 @@ def publish_report(
                     schema=COLLECTION_RUN_DATASET_SCHEMA,
                 )
                 if clear_before_push:
-                    client.clear_table(
-                        dataset_id=ctx_id, table_name=ctx_table
-                    )
+                    client.clear_table(dataset_id=ctx_id, table_name=ctx_table)
                 client.push_rows(
                     dataset_id=ctx_id,
                     table_name=ctx_table,
@@ -187,14 +173,9 @@ def publish_report(
                     )
                 )
             else:
-                result.skipped.append(
-                    f"{collection_run_dataset_name} (no contexts)"
-                )
+                result.skipped.append(f"{collection_run_dataset_name} (no contexts)")
         else:
-            result.skipped.append(
-                f"{collection_run_dataset_name} "
-                f"(collection_runs=None)"
-            )
+            result.skipped.append(f"{collection_run_dataset_name} (collection_runs=None)")
 
     return result
 

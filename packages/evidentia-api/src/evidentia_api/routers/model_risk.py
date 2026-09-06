@@ -82,9 +82,7 @@ def _filter_models(
     if methodology:
         models = [m for m in models if _eq(m.methodology, methodology)]
     if vendor_or_internal:
-        models = [
-            m for m in models if _eq(m.vendor_or_internal, vendor_or_internal)
-        ]
+        models = [m for m in models if _eq(m.vendor_or_internal, vendor_or_internal)]
     return models
 
 
@@ -130,10 +128,7 @@ async def list_models_endpoint(
     ),
     methodology: str | None = Query(
         None,
-        description=(
-            "Filter by methodology: statistical / ml / rules_based / "
-            "llm / expert_judgment / hybrid."
-        ),
+        description=("Filter by methodology: statistical / ml / rules_based / llm / expert_judgment / hybrid."),
     ),
     vendor_or_internal: str | None = Query(
         None,
@@ -151,10 +146,7 @@ async def list_models_endpoint(
         raise api_error(
             400,
             "unknown_tier",
-            (
-                f"Unknown tier {tier!r}; valid: "
-                f"{sorted(e.value for e in Tier)}"
-            ),
+            (f"Unknown tier {tier!r}; valid: {sorted(e.value for e in Tier)}"),
             tier=tier,
             valid=sorted(e.value for e in Tier),
         )
@@ -162,23 +154,15 @@ async def list_models_endpoint(
         raise api_error(
             400,
             "unknown_methodology",
-            (
-                f"Unknown methodology {methodology!r}; valid: "
-                f"{sorted(e.value for e in Methodology)}"
-            ),
+            (f"Unknown methodology {methodology!r}; valid: {sorted(e.value for e in Methodology)}"),
             methodology=methodology,
             valid=sorted(e.value for e in Methodology),
         )
-    if vendor_or_internal and vendor_or_internal not in {
-        e.value for e in Provenance
-    }:
+    if vendor_or_internal and vendor_or_internal not in {e.value for e in Provenance}:
         raise api_error(
             400,
             "unknown_vendor_or_internal",
-            (
-                f"Unknown vendor_or_internal {vendor_or_internal!r}; "
-                f"valid: {sorted(e.value for e in Provenance)}"
-            ),
+            (f"Unknown vendor_or_internal {vendor_or_internal!r}; valid: {sorted(e.value for e in Provenance)}"),
             vendor_or_internal=vendor_or_internal,
             valid=sorted(e.value for e in Provenance),
         )
@@ -201,10 +185,7 @@ async def list_models_endpoint(
     status_code=201,
     responses=error_responses(
         {
-            422: (
-                "Body-content semantic failure "
-                "(``error: invalid_body``)."
-            ),
+            422: ("Body-content semantic failure (``error: invalid_body``)."),
         }
     ),
 )
@@ -223,9 +204,7 @@ async def create_model(payload: ModelInventory) -> ModelInventory:
     from v0.7.9 P0.1 Continuous-review H-3.
     """
     if payload.last_validation_date and payload.next_validation_due is None:
-        model = payload.model_copy(
-            update={"next_validation_due": payload.compute_next_validation_due()}
-        )
+        model = payload.model_copy(update={"next_validation_due": payload.compute_next_validation_due()})
     else:
         model = payload.model_copy()
     try:
@@ -242,10 +221,7 @@ async def create_model(payload: ModelInventory) -> ModelInventory:
     response_model=ModelInventory,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``model_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``model_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -280,16 +256,11 @@ async def get_model(model_id: str) -> ModelInventory:
     response_model=ModelInventory,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``model_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``model_id`` (``error: not_found``)."),
         }
     ),
 )
-async def replace_model(
-    model_id: str, payload: ModelInventory
-) -> ModelInventory:
+async def replace_model(model_id: str, payload: ModelInventory) -> ModelInventory:
     """Replace a model record by ID (full update).
 
     Preserves the original ``id`` + ``created_at`` even if the
@@ -338,10 +309,7 @@ async def replace_model(
     status_code=204,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``model_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``model_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -379,10 +347,7 @@ async def delete_model_endpoint(model_id: str) -> None:
     "/model-risk/models/{model_id}/next-validation-due",
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``model_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``model_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -429,10 +394,7 @@ async def preview_next_validation_due(
     response_class=PlainTextResponse,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``model_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``model_id`` (``error: not_found``)."),
         }
     ),
 )
@@ -470,10 +432,7 @@ async def model_documentation(model_id: str) -> str:
     response_class=PlainTextResponse,
     responses=error_responses(
         {
-            404: (
-                "Unknown or malformed ``model_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown or malformed ``model_id`` (``error: not_found``)."),
         }
     ),
 )

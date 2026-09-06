@@ -213,10 +213,10 @@ third-party OCSF consumer simply ignores `unmapped["evidentia"]`.
 
 ```python
 from evidentia_core.ocsf import (
-    finding_to_ocsf,              # SecurityFinding -> OCSF Compliance Finding dict
-    finding_from_ocsf,            # OCSF Compliance Finding dict -> SecurityFinding
+    finding_to_ocsf,  # SecurityFinding -> OCSF Compliance Finding dict
+    finding_from_ocsf,  # OCSF Compliance Finding dict -> SecurityFinding
     finding_from_ocsf_detection,  # v0.10.1: OCSF Detection Finding dict -> SecurityFinding
-    OCSFMappingError,             # raised when the `ocsf` extra is absent or input is invalid
+    OCSFMappingError,  # raised when the `ocsf` extra is absent or input is invalid
 )
 ```
 
@@ -230,9 +230,9 @@ file + URL input:
 
 ```python
 from evidentia_collectors.ocsf import (
-    collect_ocsf_file,   # path-or-Path  -> list[SecurityFinding]
-    collect_ocsf_url,    # https:// URL  -> list[SecurityFinding]
-    OCSFIngestError,     # malformed JSON / unsupported class_uid / URL policy
+    collect_ocsf_file,  # path-or-Path  -> list[SecurityFinding]
+    collect_ocsf_url,  # https:// URL  -> list[SecurityFinding]
+    OCSFIngestError,  # malformed JSON / unsupported class_uid / URL policy
 )
 ```
 
@@ -348,6 +348,7 @@ and `finding_info.desc` fields.
 from evidentia_core.gap_analyzer.ocsf_detection import (
     gap_report_to_ocsf_detection_array,
 )
+
 detection_array = gap_report_to_ocsf_detection_array(report)
 # returns list[dict[str, Any]] — each dict is a valid OCSF Detection Finding
 ```

@@ -249,12 +249,8 @@ class BitSightCollector(BaseSaaSCollector):
         # CR-8: explicit check instead of ``assert`` so the
         # invariant survives PYTHONOPTIMIZE=1 / -O deployments.
         if self._api_token is None:  # pragma: no cover - defensive
-            raise self.AUTH_ERROR_CLASS(
-                f"{type(self).__name__}: missing api_token"
-            )
-        encoded = base64.b64encode(
-            f"{self._api_token}:".encode("ascii")
-        ).decode("ascii")
+            raise self.AUTH_ERROR_CLASS(f"{type(self).__name__}: missing api_token")
+        encoded = base64.b64encode(f"{self._api_token}:".encode("ascii")).decode("ascii")
         return f"Basic {encoded}"
 
     def _paginate_portfolio(self) -> list[dict[str, Any]]:
@@ -271,8 +267,7 @@ class BitSightCollector(BaseSaaSCollector):
             results = data.get("results", [])
             if not isinstance(results, list):
                 raise BitSightQueryError(
-                    f"BitSight API: expected `results` to be a list "
-                    f"on GET {next_url}; got {type(results).__name__}"
+                    f"BitSight API: expected `results` to be a list on GET {next_url}; got {type(results).__name__}"
                 )
             out.extend(r for r in results if isinstance(r, dict))
             if len(out) >= self._max_companies:
@@ -296,10 +291,7 @@ class BitSightCollector(BaseSaaSCollector):
                 _log.warning(
                     action=EventAction.COLLECT_ABORTED,
                     outcome=EventOutcome.FAILURE,
-                    message=(
-                        "BitSight cross-host pagination link refused; "
-                        "stopping enumeration early."
-                    ),
+                    message=("BitSight cross-host pagination link refused; stopping enumeration early."),
                     evidentia={
                         "collector_id": COLLECTOR_ID,
                         "reason": "cross_host_next_url",
@@ -315,18 +307,11 @@ class BitSightCollector(BaseSaaSCollector):
             # otherwise leak the Authorization: Basic header over
             # cleartext HTTP. Keep us on the same scheme as the
             # configured base_url.
-            if (
-                parsed.scheme
-                and base_parsed.scheme
-                and parsed.scheme != base_parsed.scheme
-            ):
+            if parsed.scheme and base_parsed.scheme and parsed.scheme != base_parsed.scheme:
                 _log.warning(
                     action=EventAction.COLLECT_ABORTED,
                     outcome=EventOutcome.FAILURE,
-                    message=(
-                        "BitSight scheme-downgrade pagination link "
-                        "refused; stopping enumeration early."
-                    ),
+                    message=("BitSight scheme-downgrade pagination link refused; stopping enumeration early."),
                     evidentia={
                         "collector_id": COLLECTOR_ID,
                         "reason": "scheme_downgrade_next_url",
@@ -336,12 +321,7 @@ class BitSightCollector(BaseSaaSCollector):
                     },
                 )
                 break
-            next_url = (
-                raw_next
-                if parsed.netloc
-                else parsed.path
-                + (f"?{parsed.query}" if parsed.query else "")
-            )
+            next_url = raw_next if parsed.netloc else parsed.path + (f"?{parsed.query}" if parsed.query else "")
         return out
 
     # ── public collect API ─────────────────────────────────────────
@@ -435,14 +415,8 @@ class BitSightCollector(BaseSaaSCollector):
         # contextlib.suppress wrapping on the audit logger.
         _log.info(
             action=EventAction.COLLECT_COMPLETED,
-            outcome=(
-                EventOutcome.SUCCESS if not errors
-                else EventOutcome.UNKNOWN
-            ),
-            message=(
-                f"BitSight collection finished: {len(findings)} "
-                f"finding(s) across {scanned} company(s)"
-            ),
+            outcome=(EventOutcome.SUCCESS if not errors else EventOutcome.UNKNOWN),
+            message=(f"BitSight collection finished: {len(findings)} finding(s) across {scanned} company(s)"),
             evidentia={
                 "run_id": run_id,
                 "collector_id": COLLECTOR_ID,
@@ -460,16 +434,8 @@ class BitSightCollector(BaseSaaSCollector):
         company: dict[str, Any],
         context: CollectionContext,
     ) -> list[SecurityFinding]:
-        guid = str(
-            company.get("guid")
-            or company.get("id")
-            or "unknown"
-        )
-        name = str(
-            company.get("name")
-            or company.get("companyName")
-            or "unknown"
-        )
+        guid = str(company.get("guid") or company.get("id") or "unknown")
+        name = str(company.get("name") or company.get("companyName") or "unknown")
         rating = company.get("rating")
         # v0.7.10 P3 closure of v0.7.9 M-2: round() not int() so a
         # floating-point rating like 749.6 doesn't trunc to 749 and
@@ -489,15 +455,10 @@ class BitSightCollector(BaseSaaSCollector):
                 rating_int = None
         else:
             rating_int = None
-        rating_str = (
-            str(rating_int) if rating_int is not None else "unrated"
-        )
+        rating_str = str(rating_int) if rating_int is not None else "unrated"
         out: list[SecurityFinding] = [
             SecurityFinding(
-                title=(
-                    f"BitSight portfolio company: {name} "
-                    f"(rating: {rating_str})"
-                ),
+                title=(f"BitSight portfolio company: {name} (rating: {rating_str})"),
                 description=(
                     f"Company {name!r} (BitSight guid: {guid}) is "
                     f"present in the operator's BitSight portfolio. "
@@ -523,16 +484,10 @@ class BitSightCollector(BaseSaaSCollector):
                 raw_data={"bitsight_company_record": company},
             )
         ]
-        if (
-            rating_int is not None
-            and rating_int < self._low_rating_threshold
-        ):
+        if rating_int is not None and rating_int < self._low_rating_threshold:
             out.append(
                 SecurityFinding(
-                    title=(
-                        f"BitSight low rating: {name} "
-                        f"({rating_int} < {self._low_rating_threshold})"
-                    ),
+                    title=(f"BitSight low rating: {name} ({rating_int} < {self._low_rating_threshold})"),
                     description=(
                         f"Company {name!r} (BitSight guid: {guid}) "
                         f"carries a BitSight rating of {rating_int}, "

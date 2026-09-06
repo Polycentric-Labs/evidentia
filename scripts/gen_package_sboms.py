@@ -10,6 +10,7 @@ release double-build reproducibility gate stays byte-stable.
 Stdlib only. Usage: python scripts/gen_package_sboms.py [--only NAME]
 [--out-root DIR (tests)].
 """
+
 from __future__ import annotations
 
 import argparse
@@ -72,9 +73,7 @@ def _determinize_npm_sbom(doc: dict, purl_seed: str) -> dict:
     break the release double-build byte-identity gate.
     """
     doc = dict(doc)
-    doc["serialNumber"] = (
-        f"urn:uuid:{uuid.uuid5(uuid.NAMESPACE_URL, purl_seed + '#npm')}"
-    )
+    doc["serialNumber"] = f"urn:uuid:{uuid.uuid5(uuid.NAMESPACE_URL, purl_seed + '#npm')}"
     meta = dict(doc.get("metadata", {}))
     meta.pop("timestamp", None)
     doc["metadata"] = meta
@@ -98,9 +97,7 @@ def build_sbom(pkg: dict) -> dict:
     }
     epoch = os.environ.get("SOURCE_DATE_EPOCH")
     if epoch:
-        metadata["timestamp"] = datetime.fromtimestamp(
-            int(epoch), tz=UTC
-        ).isoformat()
+        metadata["timestamp"] = datetime.fromtimestamp(int(epoch), tz=UTC).isoformat()
     seen: set[str] = set()
     components: list[dict] = []
     dep_refs: list[str] = []
@@ -110,9 +107,7 @@ def build_sbom(pkg: dict) -> dict:
             continue
         seen.add(name)
         ref = f"pkg:pypi/{name}"
-        components.append(
-            {"type": "library", "bom-ref": ref, "name": name, "purl": ref}
-        )
+        components.append({"type": "library", "bom-ref": ref, "name": name, "purl": ref})
         dep_refs.append(ref)
     return {
         "bomFormat": "CycloneDX",
@@ -173,17 +168,11 @@ def main(argv: list[str] | None = None) -> int:
     for pkg in discover_packages(REPO_ROOT):
         if args.only and pkg["name"] != args.only:
             continue
-        out_dir = (
-            Path(args.out_root) / pkg["dir"].name / "sbom"
-            if args.out_root
-            else pkg["dir"] / "sbom"
-        )
+        out_dir = Path(args.out_root) / pkg["dir"].name / "sbom" if args.out_root else pkg["dir"] / "sbom"
         out_dir.mkdir(parents=True, exist_ok=True)
         out = out_dir / f"{pkg['name']}.cdx.json"
         doc = build_sbom(pkg)
-        out.write_text(
-            json.dumps(doc, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-        )
+        out.write_text(json.dumps(doc, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         print(f"wrote {out.relative_to(REPO_ROOT) if not args.out_root else out}")
         if args.npm and pkg["name"] == "evidentia-api":
             generate_npm_sbom(pkg, out_dir)

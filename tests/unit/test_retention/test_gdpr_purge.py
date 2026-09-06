@@ -111,9 +111,7 @@ class TestPurgeImmediatelyLocal:
     def worm(self, tmp_path: Path) -> LocalFilesystemWORM:
         return LocalFilesystemWORM(root=tmp_path / "worm")
 
-    def test_purge_succeeds_for_gdpr_record(
-        self, worm: LocalFilesystemWORM
-    ) -> None:
+    def test_purge_succeeds_for_gdpr_record(self, worm: LocalFilesystemWORM) -> None:
         m = _gdpr_meta()
         worm.put(m.id, b"gdpr-payload", m)
 
@@ -128,9 +126,7 @@ class TestPurgeImmediatelyLocal:
         with pytest.raises(WORMBackendError, match="not found"):
             worm.get(m.id)
 
-    def test_purge_rejected_for_non_gdpr_record(
-        self, worm: LocalFilesystemWORM
-    ) -> None:
+    def test_purge_rejected_for_non_gdpr_record(self, worm: LocalFilesystemWORM) -> None:
         m = _non_gdpr_meta()
         worm.put(m.id, b"sox-payload", m)
         with pytest.raises(WORMBackendError, match="GDPR-only"):
@@ -140,9 +136,7 @@ class TestPurgeImmediatelyLocal:
                 operator_id="alice",
             )
 
-    def test_purge_rejected_under_legal_hold(
-        self, worm: LocalFilesystemWORM
-    ) -> None:
+    def test_purge_rejected_under_legal_hold(self, worm: LocalFilesystemWORM) -> None:
         m = _gdpr_meta(legal_hold=True)
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError, match="legal hold"):
@@ -152,33 +146,25 @@ class TestPurgeImmediatelyLocal:
                 operator_id="alice",
             )
 
-    def test_purge_requires_gdpr_request_ref(
-        self, worm: LocalFilesystemWORM
-    ) -> None:
+    def test_purge_requires_gdpr_request_ref(self, worm: LocalFilesystemWORM) -> None:
         m = _gdpr_meta()
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError, match="gdpr_request_ref"):
-            worm.purge_immediately(
-                m.id, gdpr_request_ref="", operator_id="alice"
-            )
+            worm.purge_immediately(m.id, gdpr_request_ref="", operator_id="alice")
         with pytest.raises(WORMBackendError, match="gdpr_request_ref"):
             worm.purge_immediately(
-                m.id, gdpr_request_ref=None, operator_id="alice"  # type: ignore[arg-type]
+                m.id,
+                gdpr_request_ref=None,
+                operator_id="alice",  # type: ignore[arg-type]
             )
 
-    def test_purge_requires_operator_id(
-        self, worm: LocalFilesystemWORM
-    ) -> None:
+    def test_purge_requires_operator_id(self, worm: LocalFilesystemWORM) -> None:
         m = _gdpr_meta()
         worm.put(m.id, b"x", m)
         with pytest.raises(WORMBackendError, match="operator_id"):
-            worm.purge_immediately(
-                m.id, gdpr_request_ref="X", operator_id=""
-            )
+            worm.purge_immediately(m.id, gdpr_request_ref="X", operator_id="")
 
-    def test_purge_audit_trail_snapshot(
-        self, worm: LocalFilesystemWORM
-    ) -> None:
+    def test_purge_audit_trail_snapshot(self, worm: LocalFilesystemWORM) -> None:
         """The returned snapshot serves as the audit-trail record.
         It should preserve the original record's ID + classification
         + GDPR-request-ref-able fields."""
@@ -194,9 +180,7 @@ class TestPurgeImmediatelyLocal:
         assert snapshot.notes == m.notes
         assert snapshot.lifecycle_stage == RetentionLifecycleStage.PURGED.value
 
-    def test_purge_emits_gdpr_audit_event(
-        self, worm: LocalFilesystemWORM
-    ) -> None:
+    def test_purge_emits_gdpr_audit_event(self, worm: LocalFilesystemWORM) -> None:
         """v0.7.12 closure of Step-3 /security-review observation:
         every successful GDPR purge MUST emit a
         RETENTION_GDPR_PURGE audit event with operator + request-ref
@@ -236,13 +220,9 @@ class TestPurgeImmediatelyLocal:
 
         from evidentia_core.audit import EventAction
 
-        gdpr_events = [
-            c for c in captured_calls
-            if c.get("action") == EventAction.RETENTION_GDPR_PURGE
-        ]
+        gdpr_events = [c for c in captured_calls if c.get("action") == EventAction.RETENTION_GDPR_PURGE]
         assert len(gdpr_events) == 1, (
-            f"Expected exactly one RETENTION_GDPR_PURGE event, "
-            f"got {len(gdpr_events)}: {captured_calls}"
+            f"Expected exactly one RETENTION_GDPR_PURGE event, got {len(gdpr_events)}: {captured_calls}"
         )
         event = gdpr_events[0]
         assert "evidentia" in event

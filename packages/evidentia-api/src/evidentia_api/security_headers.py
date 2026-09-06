@@ -82,14 +82,7 @@ SECURITY_HEADERS: dict[str, str] = {
     # Permissions-Policy: refuse to grant sensitive browser APIs.
     # Evidentia doesn't need camera / microphone / geolocation /
     # payment / USB. `interest-cohort=()` opts out of FLoC tracking.
-    "Permissions-Policy": (
-        "camera=(), "
-        "microphone=(), "
-        "geolocation=(), "
-        "payment=(), "
-        "usb=(), "
-        "interest-cohort=()"
-    ),
+    "Permissions-Policy": ("camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"),
 }
 
 

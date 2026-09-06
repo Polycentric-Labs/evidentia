@@ -81,9 +81,7 @@ _HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options"}
 # ───────────────────────── pure check functions ──────────────────────────
 
 
-def check_completeness(
-    cli_leaves: set[str], manifest_clis: set[str]
-) -> list[str]:
+def check_completeness(cli_leaves: set[str], manifest_clis: set[str]) -> list[str]:
     """Every live CLI leaf must have a manifest row, and vice versa.
 
     Returns one error per (a) live leaf missing from the manifest and (b)
@@ -92,8 +90,7 @@ def check_completeness(
     errors: list[str] = []
     for leaf in sorted(cli_leaves - manifest_clis):
         errors.append(
-            f"completeness: live CLI leaf {leaf!r} is not in the manifest — "
-            f"add a row to docs/cli-gui-parity.yaml"
+            f"completeness: live CLI leaf {leaf!r} is not in the manifest — add a row to docs/cli-gui-parity.yaml"
         )
     for leaf in sorted(manifest_clis - cli_leaves):
         errors.append(
@@ -103,9 +100,7 @@ def check_completeness(
     return errors
 
 
-def check_api_existence(
-    rows: list[dict[str, Any]], openapi_ops: set[str]
-) -> list[str]:
+def check_api_existence(rows: list[dict[str, Any]], openapi_ops: set[str]) -> list[str]:
     """Every row's non-null ``api`` must resolve to a real OpenAPI operation."""
     errors: list[str] = []
     for row in rows:
@@ -114,8 +109,7 @@ def check_api_existence(
             continue
         if api not in openapi_ops:
             errors.append(
-                f"api-existence: row {row.get('cli')!r} declares api {api!r} "
-                f"which is not an operation in openapi.json"
+                f"api-existence: row {row.get('cli')!r} declares api {api!r} which is not an operation in openapi.json"
             )
     return errors
 
@@ -143,9 +137,7 @@ def check_gui_existence(
         cli = row.get("cli")
         gui = row.get("gui")
         if not gui:
-            errors.append(
-                f"gui-existence: row {cli!r} is status:full but has no gui route"
-            )
+            errors.append(f"gui-existence: row {cli!r} is status:full but has no gui route")
             continue
         if _norm_route(gui) not in app_routes:
             errors.append(
@@ -177,9 +169,7 @@ def check_debt_ratchet(current_cli_only: int, baseline_cli_only: int) -> list[st
     return []
 
 
-def check_inverse_completeness(
-    openapi_ops: set[str], claimed_apis: set[str], api_extra: set[str]
-) -> list[str]:
+def check_inverse_completeness(openapi_ops: set[str], claimed_apis: set[str], api_extra: set[str]) -> list[str]:
     """Every live API operation must be classified — the inverse of check 1.
 
     An operation is classified when it is either (a) claimed by some CLI-leaf
@@ -296,8 +286,13 @@ def _walk_help_tree() -> set[str]:
     def children(path: list[str]) -> list[str]:
         proc = subprocess.run(
             ["uv", "run", "evidentia", *path, "--help"],
-            capture_output=True, text=True, check=False,
-            encoding="utf-8", errors="replace", env=env, cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            check=False,
+            encoding="utf-8",
+            errors="replace",
+            env=env,
+            cwd=str(REPO_ROOT),
         )
         out = proc.stdout or ""
         names: list[str] = []
@@ -412,8 +407,7 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, Any]:
         status = row.get("status")
         if status not in VALID_STATUSES:
             sys.exit(
-                f"check_parity: row {cli!r} has invalid status {status!r} "
-                f"(expected one of {sorted(VALID_STATUSES)})"
+                f"check_parity: row {cli!r} has invalid status {status!r} (expected one of {sorted(VALID_STATUSES)})"
             )
         if status == "exempt" and not str(row.get("reason") or "").strip():
             sys.exit(f"check_parity: exempt row {cli!r} must carry a 'reason'")
@@ -431,9 +425,7 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, Any]:
                 sys.exit(f"check_parity: duplicate/invalid api_extra entry {api!r}")
             seen_extra.add(api)
             if not str(e.get("reason") or "").strip():
-                sys.exit(
-                    f"check_parity: api_extra entry {api!r} must carry a 'reason'"
-                )
+                sys.exit(f"check_parity: api_extra entry {api!r} must carry a 'reason'")
     return data
 
 
@@ -517,17 +509,9 @@ def render_coverage_md(rows: list[dict[str, Any]], baseline: int) -> str:
     out.append("| status | count | meaning |")
     out.append("|---|---:|---|")
     out.append(f"| full | {counts['full']} | CLI verb + API op + wired GUI route |")
-    out.append(
-        f"| api-only | {counts['api-only']} | API op exists; no dedicated GUI route yet |"
-    )
-    out.append(
-        f"| cli-only | {counts['cli-only']} | no API + no GUI "
-        f"(ratchet floor: {baseline}) |"
-    )
-    out.append(
-        f"| exempt | {counts['exempt']} | CLI-only by design (servers, local "
-        f"cache, offline verify, MCP) |"
-    )
+    out.append(f"| api-only | {counts['api-only']} | API op exists; no dedicated GUI route yet |")
+    out.append(f"| cli-only | {counts['cli-only']} | no API + no GUI (ratchet floor: {baseline}) |")
+    out.append(f"| exempt | {counts['exempt']} | CLI-only by design (servers, local cache, offline verify, MCP) |")
     out.append(f"| **total** | **{total}** | every live CLI leaf |")
     out.append("")
     out.append("## Per-command status")
@@ -566,17 +550,17 @@ def update_baseline(manifest_text: str, new_cli_only: int) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--json", action="store_true", help="emit a machine-readable JSON report")
     parser.add_argument(
-        "--json", action="store_true", help="emit a machine-readable JSON report"
-    )
-    parser.add_argument(
-        "--emit-coverage-md", action="store_true",
+        "--emit-coverage-md",
+        action="store_true",
         help="(re)generate docs/parity-coverage.md from the manifest and exit 0",
     )
     parser.add_argument(
-        "--update-baseline", action="store_true",
+        "--update-baseline",
+        action="store_true",
         help="write the current cli-only count back to the manifest baseline "
-             "(use only when debt legitimately dropped) and exit 0",
+        "(use only when debt legitimately dropped) and exit 0",
     )
     args = parser.parse_args(argv)
 
@@ -587,13 +571,9 @@ def main(argv: list[str] | None = None) -> int:
 
     # Side-effect modes run and exit before the gate.
     if args.update_baseline:
-        new_text = update_baseline(MANIFEST_PATH.read_text(encoding="utf-8"),
-                                   counts["cli-only"])
+        new_text = update_baseline(MANIFEST_PATH.read_text(encoding="utf-8"), counts["cli-only"])
         MANIFEST_PATH.write_text(new_text, encoding="utf-8")
-        print(
-            f"check_parity: baseline.cli_only set to {counts['cli-only']} "
-            f"(was {baseline})."
-        )
+        print(f"check_parity: baseline.cli_only set to {counts['cli-only']} (was {baseline}).")
         return 0
 
     if args.emit_coverage_md:
@@ -614,25 +594,28 @@ def main(argv: list[str] | None = None) -> int:
     gui_existence = check_gui_existence(rows, app_routes, api_ts_paths)
     ratchet = check_debt_ratchet(counts["cli-only"], baseline)
     inverse = check_inverse_completeness(openapi_ops, claimed_apis, api_extra)
-    all_errors = (
-        completeness + api_existence + gui_existence + ratchet + inverse
-    )
+    all_errors = completeness + api_existence + gui_existence + ratchet + inverse
     pct = coverage_pct(counts)
 
     if args.json:
-        print(json.dumps({
-            "ok": not all_errors,
-            "counts": counts,
-            "coverage_pct": round(pct, 1),
-            "baseline_cli_only": baseline,
-            "errors": {
-                "completeness": completeness,
-                "api_existence": api_existence,
-                "gui_existence": gui_existence,
-                "debt_ratchet": ratchet,
-                "inverse_completeness": inverse,
-            },
-        }, indent=2))
+        print(
+            json.dumps(
+                {
+                    "ok": not all_errors,
+                    "counts": counts,
+                    "coverage_pct": round(pct, 1),
+                    "baseline_cli_only": baseline,
+                    "errors": {
+                        "completeness": completeness,
+                        "api_existence": api_existence,
+                        "gui_existence": gui_existence,
+                        "debt_ratchet": ratchet,
+                        "inverse_completeness": inverse,
+                    },
+                },
+                indent=2,
+            )
+        )
         return 0 if not all_errors else 1
 
     print(render_table(counts, pct, baseline))

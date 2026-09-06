@@ -39,9 +39,7 @@ def test_framework_loads(framework_id: str) -> None:
                 entry_attr = attr
                 break
 
-    assert (
-        entry_count > 0
-    ), f"{framework_id} has no entries in any known attribute — check JSON structure"
+    assert entry_count > 0, f"{framework_id} has no entries in any known attribute — check JSON structure"
     # Sanity — the first entry has some kind of identifier.
     # Control/Technique/Obligation use ``id``; Vulnerability uses ``cve_id``.
     first = getattr(catalog, entry_attr)[0]
@@ -59,18 +57,14 @@ def test_tier_c_stubs_are_placeholders() -> None:
     manifest = load_manifest()
     for fw in manifest.by_tier("C"):
         assert fw.placeholder, f"Tier-C framework {fw.id} must have placeholder=true"
-        assert fw.license_required, (
-            f"Tier-C framework {fw.id} must have license_required=true"
-        )
+        assert fw.license_required, f"Tier-C framework {fw.id} must have license_required=true"
 
 
 def test_tier_a_is_not_placeholder() -> None:
     """Tier A frameworks ship real content, not stubs."""
     manifest = load_manifest()
     for fw in manifest.by_tier("A"):
-        assert not fw.placeholder, (
-            f"Tier-A framework {fw.id} should not be a placeholder"
-        )
+        assert not fw.placeholder, f"Tier-A framework {fw.id} should not be a placeholder"
 
 
 def test_bundled_framework_count_by_tier() -> None:

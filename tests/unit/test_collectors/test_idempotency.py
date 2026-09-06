@@ -61,8 +61,7 @@ def _assert_idempotent(
 
     # (1) Cardinality must match.
     assert len(first_list) == len(second_list), (
-        f"finding-count delta: first={len(first_list)} "
-        f"second={len(second_list)}"
+        f"finding-count delta: first={len(first_list)} second={len(second_list)}"
     )
 
     # (2) Natural keys must match (sanity check; this exercises the
@@ -70,8 +69,7 @@ def _assert_idempotent(
     first_natural = {(f.source_system, f.source_finding_id) for f in first_list}
     second_natural = {(f.source_system, f.source_finding_id) for f in second_list}
     assert first_natural == second_natural, (
-        "natural-key set diverged between runs — collector emits "
-        "non-deterministic source_finding_id values"
+        "natural-key set diverged between runs — collector emits non-deterministic source_finding_id values"
     )
 
     # (3) The actual idempotency contract: SecurityFinding.id values
@@ -128,9 +126,7 @@ def _aws_config_paginator_responses() -> tuple[Any, Any]:
                                 }
                             },
                             "Annotation": "Bucket has public read ACL.",
-                            "ResultRecordedTime": datetime(
-                                2026, 4, 15, 12, 0, 0, tzinfo=UTC
-                            ),
+                            "ResultRecordedTime": datetime(2026, 4, 15, 12, 0, 0, tzinfo=UTC),
                         },
                         {
                             "EvaluationResultIdentifier": {
@@ -140,9 +136,7 @@ def _aws_config_paginator_responses() -> tuple[Any, Any]:
                                 }
                             },
                             "Annotation": "Bucket has public read ACL.",
-                            "ResultRecordedTime": datetime(
-                                2026, 4, 15, 12, 0, 0, tzinfo=UTC
-                            ),
+                            "ResultRecordedTime": datetime(2026, 4, 15, 12, 0, 0, tzinfo=UTC),
                         },
                     ]
                 }
@@ -173,9 +167,7 @@ def test_aws_config_collector_is_idempotent() -> None:
     from evidentia_collectors.aws import AwsCollector
 
     def run_once() -> list[SecurityFinding]:
-        collector = AwsCollector(
-            region="us-east-1", _clients={"config": _build_aws_config_mock()}
-        )
+        collector = AwsCollector(region="us-east-1", _clients={"config": _build_aws_config_mock()})
         return collector.collect_config_findings()
 
     _assert_idempotent(run_once(), run_once())
@@ -268,9 +260,7 @@ def _github_handler() -> Any:
             )
         if "/contents/" in req.url.path:
             if req.url.path.endswith(".github/CODEOWNERS"):
-                return httpx.Response(
-                    200, json={"path": ".github/CODEOWNERS"}
-                )
+                return httpx.Response(200, json={"path": ".github/CODEOWNERS"})
             return httpx.Response(404)
         return httpx.Response(404)
 
@@ -287,9 +277,7 @@ def test_github_collector_is_idempotent() -> None:
             headers={"Accept": "application/vnd.github+json"},
         )
         client = GitHubClient(http=http)
-        with GitHubCollector(
-            owner="acme", repo="platform", client=client
-        ) as c:
+        with GitHubCollector(owner="acme", repo="platform", client=client) as c:
             return c.collect()
 
     _assert_idempotent(run_once(), run_once())
@@ -311,9 +299,7 @@ def _dependabot_alert() -> dict[str, Any]:
             "cve_id": "CVE-2025-12345",
             "summary": "Test vulnerability summary",
             "severity": "high",
-            "cvss_severities": {
-                "cvss_v3": {"score": 8.5, "vector_string": "x"}
-            },
+            "cvss_severities": {"cvss_v3": {"score": 8.5, "vector_string": "x"}},
         },
         "security_vulnerability": {
             "package": {"ecosystem": "pip", "name": "requests"},
@@ -341,9 +327,7 @@ def test_dependabot_collector_is_idempotent() -> None:
             return []
 
         client.request.side_effect = request
-        coll = DependabotCollector(
-            owner="acme", repo="platform", client=client
-        )
+        coll = DependabotCollector(owner="acme", repo="platform", client=client)
         return coll.collect()
 
     _assert_idempotent(run_once(), run_once())
@@ -362,9 +346,7 @@ def _okta_handler() -> Any:
     now = datetime(2026, 5, 25, 12, 0, 0, tzinfo=UTC)
 
     def iso_ago(days: int) -> str:
-        return (now - timedelta(days=days)).strftime(
-            "%Y-%m-%dT%H:%M:%S.000Z"
-        )
+        return (now - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
     responses: dict[str, Any] = {
         "/api/v1/org": {
@@ -389,9 +371,7 @@ def _okta_handler() -> Any:
         "/api/v1/iam/assignees/users": [
             {"id": "u01", "status": "ACTIVE"},
         ],
-        "/api/v1/users/u01/factors": [
-            {"id": "f01", "factorType": "push", "status": "ACTIVE"}
-        ],
+        "/api/v1/users/u01/factors": [{"id": "f01", "factorType": "push", "status": "ACTIVE"}],
         "/api/v1/users/u02/factors": [],
         "/api/v1/policies": {
             "PASSWORD": [
@@ -414,11 +394,7 @@ def _okta_handler() -> Any:
                     "rules": [
                         {
                             "id": "r01",
-                            "actions": {
-                                "signon": {
-                                    "factorPromptMode": "ALWAYS"
-                                }
-                            },
+                            "actions": {"signon": {"factorPromptMode": "ALWAYS"}},
                         }
                     ],
                 }
@@ -431,9 +407,7 @@ def _okta_handler() -> Any:
         if path == "/api/v1/policies":
             params = parse_qs(urlparse(str(request.url)).query)
             policy_type = (params.get("type") or [""])[0]
-            return httpx.Response(
-                200, json=responses["/api/v1/policies"].get(policy_type, [])
-            )
+            return httpx.Response(200, json=responses["/api/v1/policies"].get(policy_type, []))
         if path in responses:
             return httpx.Response(200, json=responses[path])
         return httpx.Response(404, json={"error": f"unstubbed {path!r}"})

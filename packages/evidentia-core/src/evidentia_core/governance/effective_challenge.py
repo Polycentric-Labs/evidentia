@@ -80,9 +80,7 @@ class EffectiveChallenge(EvidentiaModel):
             "MUST be a UUID matching an entry in the model_risk store."
         )
     )
-    challenger_email: str = Field(
-        description="Email identity of the challenger (independent of model dev)."
-    )
+    challenger_email: str = Field(description="Email identity of the challenger (independent of model dev).")
     challenger_role: str = Field(
         description=(
             "Role label of the challenger (e.g., 'MRM Director', "
@@ -90,27 +88,16 @@ class EffectiveChallenge(EvidentiaModel):
             "independence + materiality of the challenge."
         )
     )
-    challenge_date: date = Field(
-        description="Date the challenge event occurred."
-    )
+    challenge_date: date = Field(description="Date the challenge event occurred.")
     challenge_topic: str = Field(
-        description=(
-            "Short topic label for the challenge (e.g., 'Methodology — "
-            "feature selection rationale')."
-        )
+        description=("Short topic label for the challenge (e.g., 'Methodology — feature selection rationale').")
     )
     challenge_substance: str = Field(
-        description=(
-            "Full substance of the challenge — what was questioned + "
-            "on what grounds."
-        )
+        description=("Full substance of the challenge — what was questioned + on what grounds.")
     )
     response: str | None = Field(
         default=None,
-        description=(
-            "Model owner's documented response to the challenge. "
-            "None until response is logged."
-        ),
+        description=("Model owner's documented response to the challenge. None until response is logged."),
     )
     outcome: ChallengeOutcome = Field(
         default=ChallengeOutcome.PENDING,

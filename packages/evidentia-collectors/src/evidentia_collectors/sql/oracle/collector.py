@@ -81,9 +81,7 @@ class OracleQueryError(OracleCollectorError):
 BLIND_SPOTS: list[dict[str, str]] = [
     {
         "id": "EVIDENTIA-ORACLE-LICENSE-FEATURE",
-        "title": (
-            "Several Oracle features require separately-licensed options"
-        ),
+        "title": ("Several Oracle features require separately-licensed options"),
         "description": (
             "Transparent Data Encryption (TDE), Database Vault, Audit "
             "Vault, Data Masking, and Real Application Security are "
@@ -98,9 +96,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
     },
     {
         "id": "EVIDENTIA-ORACLE-AUDIT-MIXED-MODE",
-        "title": (
-            "Unified vs Traditional Audit mode coexistence"
-        ),
+        "title": ("Unified vs Traditional Audit mode coexistence"),
         "description": (
             "Oracle 12c introduced Unified Auditing as the modern "
             "audit subsystem; older deployments may run in mixed "
@@ -114,10 +110,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
     },
     {
         "id": "EVIDENTIA-ORACLE-CDB-PDB-CONTEXT",
-        "title": (
-            "Multitenant Container Database (CDB) vs Pluggable "
-            "Database (PDB) context"
-        ),
+        "title": ("Multitenant Container Database (CDB) vs Pluggable Database (PDB) context"),
         "description": (
             "Oracle Multitenant deployments have separate audit + "
             "user inventory views per PDB. The collector reports "
@@ -129,9 +122,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
     },
     {
         "id": "EVIDENTIA-ORACLE-NETWORK-ENCRYPTION-CLIENT",
-        "title": (
-            "Native Network Encryption is configured per-server"
-        ),
+        "title": ("Native Network Encryption is configured per-server"),
         "description": (
             "sqlnet.encryption_server / encryption_client parameters "
             "are set in sqlnet.ora at OS level — not always "
@@ -222,9 +213,7 @@ class OracleCollector:
         if self._connection is not None:
             return self._connection
         if not self._connection_uri:
-            raise OracleCollectorError(
-                "_ensure_connected called without a connection_uri."
-            )
+            raise OracleCollectorError("_ensure_connected called without a connection_uri.")
         # SECURE-BY-DEFAULT (threat-model T2): refuse a connection_uri whose
         # host resolves to a private / loopback / link-local / metadata address
         # BEFORE importing the driver or opening a socket. Guard-before-import
@@ -252,7 +241,7 @@ class OracleCollector:
         except ImportError as e:
             raise OracleCollectorError(
                 "oracledb is not installed. Install via the [sql-oracle] "
-                "extra: pip install \"evidentia-collectors[sql-oracle]\""
+                'extra: pip install "evidentia-collectors[sql-oracle]"'
             ) from e
         kwargs = self._parse_uri(self._connection_uri)
         if self._password is not None:
@@ -265,9 +254,7 @@ class OracleCollector:
             with pin_resolved_host(host, validated_ips):
                 self._connection = oracledb.connect(**kwargs)
         except Exception as e:
-            raise OracleConnectionError(
-                f"Could not connect to Oracle (driver: {type(e).__name__})"
-            ) from e
+            raise OracleConnectionError(f"Could not connect to Oracle (driver: {type(e).__name__})") from e
         return self._connection
 
     # ── Context + provenance ────────────────────────────────────────
@@ -302,9 +289,7 @@ class OracleCollector:
         finally:
             cur.close()
 
-        is_dba, is_sysdba, any_table_grants = (
-            self._probe_write_privilege(conn)
-        )
+        is_dba, is_sysdba, any_table_grants = self._probe_write_privilege(conn)
 
         return {
             "user": self._cached_user,
@@ -315,9 +300,7 @@ class OracleCollector:
             "any_table_grants": any_table_grants,
         }
 
-    def _probe_write_privilege(
-        self, conn: Any
-    ) -> tuple[bool, bool, list[str]]:
+    def _probe_write_privilege(self, conn: Any) -> tuple[bool, bool, list[str]]:
         """Check DBA role membership + SYSDBA + ANY-table grants.
 
         Returns (is_dba, is_sysdba, list_of_any_table_privs).
@@ -326,19 +309,14 @@ class OracleCollector:
         cur = conn.cursor()
         try:
             try:
-                cur.execute(
-                    "SELECT COUNT(*) FROM session_roles WHERE role = 'DBA'"
-                )
+                cur.execute("SELECT COUNT(*) FROM session_roles WHERE role = 'DBA'")
                 row = cur.fetchone()
                 is_dba = bool((row[0] or 0) > 0) if row else False
             except Exception:
                 is_dba = False
 
             try:
-                cur.execute(
-                    "SELECT COUNT(*) FROM session_privs "
-                    "WHERE privilege = 'SYSDBA'"
-                )
+                cur.execute("SELECT COUNT(*) FROM session_privs WHERE privilege = 'SYSDBA'")
                 row = cur.fetchone()
                 is_sysdba = bool((row[0] or 0) > 0) if row else False
             except Exception:
@@ -386,9 +364,7 @@ class OracleCollector:
         except OracleCollectorError:
             raise
         except Exception as e:
-            raise OracleConnectionError(
-                f"Could not establish + probe Oracle connection: {e}"
-            ) from e
+            raise OracleConnectionError(f"Could not establish + probe Oracle connection: {e}") from e
 
         context = self._build_context(run_id)
         errors: list[str] = []
@@ -408,22 +384,13 @@ class OracleCollector:
         ):
             _log.info(
                 action=EventAction.COLLECT_STARTED,
-                message=(
-                    f"Oracle collection starting for "
-                    f"{self._cached_user}@{self._cached_db}"
-                ),
+                message=(f"Oracle collection starting for {self._cached_user}@{self._cached_db}"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.START],
             )
 
-            if (
-                probe["is_dba"]
-                or probe["is_sysdba"]
-                or probe["any_table_grants"]
-            ):
-                findings.append(
-                    self._write_priv_detected_finding(probe, context)
-                )
+            if probe["is_dba"] or probe["is_sysdba"] or probe["any_table_grants"]:
+                findings.append(self._write_priv_detected_finding(probe, context))
 
             conn = self._connection
             assert conn is not None
@@ -447,28 +414,18 @@ class OracleCollector:
                         error={"type": "OracleQueryError", "message": str(e)},
                     )
                 except Exception as e:
-                    errors.append(
-                        f"{sub_check.__name__}: unexpected error: {e}"
-                    )
+                    errors.append(f"{sub_check.__name__}: unexpected error: {e}")
                     _log.error(
                         action=EventAction.COLLECT_FAILED,
                         outcome=EventOutcome.FAILURE,
-                        message=(
-                            f"Sub-check {sub_check.__name__} unexpected error"
-                        ),
+                        message=(f"Sub-check {sub_check.__name__} unexpected error"),
                         error={"type": type(e).__name__, "message": str(e)},
                     )
 
             _log.info(
                 action=EventAction.COLLECT_COMPLETED,
-                outcome=(
-                    EventOutcome.SUCCESS
-                    if not errors
-                    else EventOutcome.FAILURE
-                ),
-                message=(
-                    f"Oracle collection completed: {len(findings)} findings"
-                ),
+                outcome=(EventOutcome.SUCCESS if not errors else EventOutcome.FAILURE),
+                message=(f"Oracle collection completed: {len(findings)} findings"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.END],
                 evidentia={
@@ -483,9 +440,7 @@ class OracleCollector:
             collector_version=current_version(),
             collection_started_at=started_at,
             collection_finished_at=utc_now(),
-            source_system_ids=[
-                f"oracle:{self._cached_user}@{self._cached_db}"
-            ],
+            source_system_ids=[f"oracle:{self._cached_user}@{self._cached_db}"],
             filters_applied={
                 "user": self._cached_user or "unknown",
                 "database": self._cached_db or "unknown",
@@ -518,14 +473,9 @@ class OracleCollector:
         if probe["is_sysdba"]:
             flags.append("SYSDBA privilege")
         if probe["any_table_grants"]:
-            flags.append(
-                "ANY-table grants: " + ", ".join(probe["any_table_grants"])
-            )
+            flags.append("ANY-table grants: " + ", ".join(probe["any_table_grants"]))
         return SecurityFinding(
-            title=(
-                f"Oracle principal {self._cached_user!r} has write "
-                "privilege"
-            ),
+            title=(f"Oracle principal {self._cached_user!r} has write privilege"),
             description=(
                 f"Principal ({self._cached_user}) has: "
                 + "; ".join(flags)
@@ -534,20 +484,13 @@ class OracleCollector:
                 "role, no SYSDBA, no ANY-table grants. Write privilege "
                 "violates AC-6 least-privilege."
             ),
-            severity=(
-                Severity.HIGH
-                if probe["is_dba"] or probe["is_sysdba"]
-                else Severity.MEDIUM
-            ),
+            severity=(Severity.HIGH if probe["is_dba"] or probe["is_sysdba"] else Severity.MEDIUM),
             status=FindingStatus.ACTIVE,
             # v0.10.0: write privilege on the audit principal is a
             # failed least-privilege check.
             compliance_status=ComplianceStatus.FAIL,
             source_system="oracle",
-            source_finding_id=(
-                f"EVIDENTIA-WRITE-PRIV-DETECTED:{self._cached_user}@"
-                f"{self._cached_db}"
-            ),
+            source_finding_id=(f"EVIDENTIA-WRITE-PRIV-DETECTED:{self._cached_user}@{self._cached_db}"),
             resource_type="Oracle::Principal",
             resource_id=str(self._cached_user or "unknown"),
             control_ids=[m.control_id for m in WRITE_PRIV_DETECTED_MAPPINGS],
@@ -559,26 +502,17 @@ class OracleCollector:
             },
         )
 
-    def _user_role_inventory_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _user_role_inventory_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
-                cur.execute(
-                    "SELECT username, account_status, profile, created "
-                    "FROM dba_users ORDER BY username"
-                )
+                cur.execute("SELECT username, account_status, profile, created FROM dba_users ORDER BY username")
                 rows = list(cur.fetchall())
             except Exception as e:
-                raise OracleQueryError(
-                    f"Could not enumerate dba_users: {e}"
-                ) from e
+                raise OracleQueryError(f"Could not enumerate dba_users: {e}") from e
 
             open_users = [r[0] for r in rows if str(r[1] or "") == "OPEN"]
-            locked_users = [
-                r[0] for r in rows if "LOCKED" in str(r[1] or "")
-            ]
+            locked_users = [r[0] for r in rows if "LOCKED" in str(r[1] or "")]
             return [
                 SecurityFinding(
                     title=(
@@ -605,9 +539,7 @@ class OracleCollector:
                     source_finding_id=f"user-inventory:{self._cached_db}",
                     resource_type="Oracle::Database",
                     resource_id=str(self._cached_db or "unknown"),
-                    control_ids=[
-                        m.control_id for m in USER_ROLE_INVENTORY_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in USER_ROLE_INVENTORY_MAPPINGS],
                     collection_context=context,
                     raw_data={
                         "total_users": len(rows),
@@ -619,30 +551,21 @@ class OracleCollector:
         finally:
             cur.close()
 
-    def _privilege_grant_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _privilege_grant_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
                 cur.execute(
-                    "SELECT grantee FROM dba_role_privs "
-                    "WHERE granted_role = 'DBA' AND grantee NOT IN "
-                    "('SYS', 'SYSTEM')"
+                    "SELECT grantee FROM dba_role_privs WHERE granted_role = 'DBA' AND grantee NOT IN ('SYS', 'SYSTEM')"
                 )
                 rows = list(cur.fetchall())
             except Exception as e:
-                raise OracleQueryError(
-                    f"Could not enumerate dba_role_privs: {e}"
-                ) from e
+                raise OracleQueryError(f"Could not enumerate dba_role_privs: {e}") from e
 
             non_system_dbas = [str(r[0]) for r in rows]
             return [
                 SecurityFinding(
-                    title=(
-                        f"Oracle DBA role: {len(non_system_dbas)} "
-                        "non-system grantees"
-                    ),
+                    title=(f"Oracle DBA role: {len(non_system_dbas)} non-system grantees"),
                     description=(
                         f"{len(non_system_dbas)} principals (excluding "
                         f"SYS / SYSTEM) hold DBA: "
@@ -660,23 +583,15 @@ class OracleCollector:
                         if len(non_system_dbas) > 2
                         else Severity.INFORMATIONAL
                     ),
-                    status=(
-                        FindingStatus.ACTIVE
-                        if len(non_system_dbas) > 2
-                        else FindingStatus.RESOLVED
-                    ),
+                    status=(FindingStatus.ACTIVE if len(non_system_dbas) > 2 else FindingStatus.RESOLVED),
                     # v0.10.0: excessive DBA grants fail the AC-6
                     # least-privilege check; a small (<=2) set passes.
-                    compliance_status=ComplianceStatus.FAIL
-                    if len(non_system_dbas) > 2
-                    else ComplianceStatus.PASS,
+                    compliance_status=ComplianceStatus.FAIL if len(non_system_dbas) > 2 else ComplianceStatus.PASS,
                     source_system="oracle",
                     source_finding_id=f"dba-role-grants:{self._cached_db}",
                     resource_type="Oracle::Role",
                     resource_id="DBA",
-                    control_ids=[
-                        m.control_id for m in PRIVILEGE_GRANT_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in PRIVILEGE_GRANT_MAPPINGS],
                     collection_context=context,
                     raw_data={
                         "non_system_dba_grantees": non_system_dbas,
@@ -686,9 +601,7 @@ class OracleCollector:
         finally:
             cur.close()
 
-    def _password_policy_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _password_policy_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
@@ -700,21 +613,15 @@ class OracleCollector:
                 )
                 rows = list(cur.fetchall())
             except Exception as e:
-                raise OracleQueryError(
-                    f"Could not query dba_profiles: {e}"
-                ) from e
+                raise OracleQueryError(f"Could not query dba_profiles: {e}") from e
 
-            settings: dict[str, str] = {
-                str(r[1]): str(r[2]) for r in rows
-            }
+            settings: dict[str, str] = {str(r[1]): str(r[2]) for r in rows}
             life_time = settings.get("PASSWORD_LIFE_TIME", "")
             failed_attempts = settings.get("FAILED_LOGIN_ATTEMPTS", "")
             verify_func = settings.get("PASSWORD_VERIFY_FUNCTION", "NULL")
 
             life_unlimited = life_time.upper() == "UNLIMITED"
-            verify_set = (
-                verify_func.upper() not in {"NULL", "DEFAULT", ""}
-            )
+            verify_set = verify_func.upper() not in {"NULL", "DEFAULT", ""}
             ok = not life_unlimited and verify_set
             return [
                 SecurityFinding(
@@ -735,27 +642,17 @@ class OracleCollector:
                         "lifetime + missing verify function indicate "
                         "weak password policy."
                     ),
-                    severity=(
-                        Severity.INFORMATIONAL if ok else Severity.MEDIUM
-                    ),
-                    status=(
-                        FindingStatus.RESOLVED if ok else FindingStatus.ACTIVE
-                    ),
+                    severity=(Severity.INFORMATIONAL if ok else Severity.MEDIUM),
+                    status=(FindingStatus.RESOLVED if ok else FindingStatus.ACTIVE),
                     # v0.10.0: weak password policy (UNLIMITED lifetime
                     # or missing verify function) fails the IA-5 check;
                     # a configured policy passes.
-                    compliance_status=ComplianceStatus.PASS
-                    if ok
-                    else ComplianceStatus.FAIL,
+                    compliance_status=ComplianceStatus.PASS if ok else ComplianceStatus.FAIL,
                     source_system="oracle",
-                    source_finding_id=(
-                        f"password-policy:{self._cached_db}"
-                    ),
+                    source_finding_id=(f"password-policy:{self._cached_db}"),
                     resource_type="Oracle::Profile",
                     resource_id="DEFAULT",
-                    control_ids=[
-                        m.control_id for m in PASSWORD_POLICY_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in PASSWORD_POLICY_MAPPINGS],
                     collection_context=context,
                     raw_data=settings,
                 )
@@ -763,17 +660,12 @@ class OracleCollector:
         finally:
             cur.close()
 
-    def _audit_log_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _audit_log_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             unified_count = 0
             try:
-                cur.execute(
-                    "SELECT COUNT(*) FROM "
-                    "AUDIT_UNIFIED_ENABLED_POLICIES"
-                )
+                cur.execute("SELECT COUNT(*) FROM AUDIT_UNIFIED_ENABLED_POLICIES")
                 row = cur.fetchone()
                 unified_count = int(row[0]) if row else 0
             except Exception:
@@ -781,28 +673,18 @@ class OracleCollector:
 
             audit_trail_param = ""
             try:
-                cur.execute(
-                    "SELECT value FROM v$parameter "
-                    "WHERE name = 'audit_trail'"
-                )
+                cur.execute("SELECT value FROM v$parameter WHERE name = 'audit_trail'")
                 row = cur.fetchone()
                 audit_trail_param = str(row[0] or "NONE") if row else "NONE"
             except Exception as e:
-                raise OracleQueryError(
-                    f"Could not query v$parameter audit_trail: {e}"
-                ) from e
+                raise OracleQueryError(f"Could not query v$parameter audit_trail: {e}") from e
 
             unified_active = unified_count > 0
-            traditional_active = (
-                audit_trail_param.upper() not in {"NONE", "FALSE"}
-            )
+            traditional_active = audit_trail_param.upper() not in {"NONE", "FALSE"}
             audit_active = unified_active or traditional_active
             return [
                 SecurityFinding(
-                    title=(
-                        f"Oracle Audit: Unified={unified_count} "
-                        f"policies, audit_trail={audit_trail_param}"
-                    ),
+                    title=(f"Oracle Audit: Unified={unified_count} policies, audit_trail={audit_trail_param}"),
                     description=(
                         f"AUDIT_UNIFIED_ENABLED_POLICIES count = "
                         f"{unified_count}; v$parameter.audit_trail = "
@@ -812,29 +694,17 @@ class OracleCollector:
                         "DB or OS. Mixed-mode deployments require "
                         "out-of-band reconciliation."
                     ),
-                    severity=(
-                        Severity.INFORMATIONAL
-                        if audit_active
-                        else Severity.HIGH
-                    ),
-                    status=(
-                        FindingStatus.RESOLVED
-                        if audit_active
-                        else FindingStatus.ACTIVE
-                    ),
+                    severity=(Severity.INFORMATIONAL if audit_active else Severity.HIGH),
+                    status=(FindingStatus.RESOLVED if audit_active else FindingStatus.ACTIVE),
                     # v0.10.0: audit-disabled fails the AU-2 check;
                     # any active audit trail (Unified or Traditional)
                     # passes.
-                    compliance_status=ComplianceStatus.PASS
-                    if audit_active
-                    else ComplianceStatus.FAIL,
+                    compliance_status=ComplianceStatus.PASS if audit_active else ComplianceStatus.FAIL,
                     source_system="oracle",
                     source_finding_id=f"audit-config:{self._cached_db}",
                     resource_type="Oracle::Database",
                     resource_id=str(self._cached_db or "unknown"),
-                    control_ids=[
-                        m.control_id for m in AUDIT_LOG_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in AUDIT_LOG_MAPPINGS],
                     collection_context=context,
                     raw_data={
                         "unified_policy_count": unified_count,
@@ -845,17 +715,12 @@ class OracleCollector:
         finally:
             cur.close()
 
-    def _tde_encryption_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _tde_encryption_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             wallet_status = ""
             try:
-                cur.execute(
-                    "SELECT status FROM v$encryption_wallet "
-                    "WHERE ROWNUM = 1"
-                )
+                cur.execute("SELECT status FROM v$encryption_wallet WHERE ROWNUM = 1")
                 row = cur.fetchone()
                 wallet_status = str(row[0] or "UNKNOWN") if row else "UNKNOWN"
             except Exception:
@@ -865,26 +730,16 @@ class OracleCollector:
 
             encrypted_tablespaces = 0
             try:
-                cur.execute(
-                    "SELECT COUNT(*) FROM dba_tablespaces "
-                    "WHERE encrypted = 'YES'"
-                )
+                cur.execute("SELECT COUNT(*) FROM dba_tablespaces WHERE encrypted = 'YES'")
                 row = cur.fetchone()
                 encrypted_tablespaces = int(row[0]) if row else 0
             except Exception as e:
-                raise OracleQueryError(
-                    f"Could not query dba_tablespaces: {e}"
-                ) from e
+                raise OracleQueryError(f"Could not query dba_tablespaces: {e}") from e
 
-            tde_active = (
-                wallet_status.upper() == "OPEN" or encrypted_tablespaces > 0
-            )
+            tde_active = wallet_status.upper() == "OPEN" or encrypted_tablespaces > 0
             return [
                 SecurityFinding(
-                    title=(
-                        f"Oracle TDE: wallet={wallet_status}, "
-                        f"{encrypted_tablespaces} encrypted tablespaces"
-                    ),
+                    title=(f"Oracle TDE: wallet={wallet_status}, {encrypted_tablespaces} encrypted tablespaces"),
                     description=(
                         f"v$encryption_wallet.status = {wallet_status}; "
                         f"{encrypted_tablespaces} tablespaces have "
@@ -895,28 +750,16 @@ class OracleCollector:
                         "indicates the option is unlicensed or "
                         "the wallet is unconfigured."
                     ),
-                    severity=(
-                        Severity.INFORMATIONAL
-                        if tde_active
-                        else Severity.MEDIUM
-                    ),
-                    status=(
-                        FindingStatus.RESOLVED
-                        if tde_active
-                        else FindingStatus.ACTIVE
-                    ),
+                    severity=(Severity.INFORMATIONAL if tde_active else Severity.MEDIUM),
+                    status=(FindingStatus.RESOLVED if tde_active else FindingStatus.ACTIVE),
                     # v0.10.0: TDE inactive fails the SC-28 check;
                     # an open wallet or encrypted tablespaces pass.
-                    compliance_status=ComplianceStatus.PASS
-                    if tde_active
-                    else ComplianceStatus.FAIL,
+                    compliance_status=ComplianceStatus.PASS if tde_active else ComplianceStatus.FAIL,
                     source_system="oracle",
                     source_finding_id=f"tde-state:{self._cached_db}",
                     resource_type="Oracle::Database",
                     resource_id=str(self._cached_db or "unknown"),
-                    control_ids=[
-                        m.control_id for m in ENCRYPTION_AT_REST_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in ENCRYPTION_AT_REST_MAPPINGS],
                     collection_context=context,
                     raw_data={
                         "wallet_status": wallet_status,
@@ -927,35 +770,21 @@ class OracleCollector:
         finally:
             cur.close()
 
-    def _network_encryption_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _network_encryption_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
-                cur.execute(
-                    "SELECT name, value FROM v$parameter "
-                    "WHERE name LIKE 'sqlnet.encryption%'"
-                )
+                cur.execute("SELECT name, value FROM v$parameter WHERE name LIKE 'sqlnet.encryption%'")
                 rows = list(cur.fetchall())
             except Exception as e:
-                raise OracleQueryError(
-                    f"Could not query v$parameter sqlnet.encryption: {e}"
-                ) from e
+                raise OracleQueryError(f"Could not query v$parameter sqlnet.encryption: {e}") from e
 
-            settings: dict[str, str] = {
-                str(r[0]): str(r[1] or "") for r in rows
-            }
-            server_setting = settings.get(
-                "sqlnet.encryption_server", ""
-            ).upper()
+            settings: dict[str, str] = {str(r[0]): str(r[1] or "") for r in rows}
+            server_setting = settings.get("sqlnet.encryption_server", "").upper()
             encryption_required = server_setting in {"REQUIRED", "REQUESTED"}
             return [
                 SecurityFinding(
-                    title=(
-                        f"Oracle network encryption: "
-                        f"sqlnet.encryption_server={server_setting or 'UNSET'}"
-                    ),
+                    title=(f"Oracle network encryption: sqlnet.encryption_server={server_setting or 'UNSET'}"),
                     description=(
                         f"sqlnet.encryption_server = "
                         f"{server_setting or 'UNSET (default REJECTED)'}. "
@@ -967,31 +796,17 @@ class OracleCollector:
                         "EVIDENTIA-ORACLE-NETWORK-ENCRYPTION-CLIENT "
                         "for parameter-availability caveats."
                     ),
-                    severity=(
-                        Severity.INFORMATIONAL
-                        if encryption_required
-                        else Severity.MEDIUM
-                    ),
-                    status=(
-                        FindingStatus.RESOLVED
-                        if encryption_required
-                        else FindingStatus.ACTIVE
-                    ),
+                    severity=(Severity.INFORMATIONAL if encryption_required else Severity.MEDIUM),
+                    status=(FindingStatus.RESOLVED if encryption_required else FindingStatus.ACTIVE),
                     # v0.10.0: cleartext network (encryption_server
                     # UNSET/REJECTED) fails the SC-12 check; REQUIRED
                     # or REQUESTED passes.
-                    compliance_status=ComplianceStatus.PASS
-                    if encryption_required
-                    else ComplianceStatus.FAIL,
+                    compliance_status=ComplianceStatus.PASS if encryption_required else ComplianceStatus.FAIL,
                     source_system="oracle",
-                    source_finding_id=(
-                        f"network-encryption:{self._cached_db}"
-                    ),
+                    source_finding_id=(f"network-encryption:{self._cached_db}"),
                     resource_type="Oracle::Database",
                     resource_id=str(self._cached_db or "unknown"),
-                    control_ids=[
-                        m.control_id for m in CRYPTO_CONFIG_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in CRYPTO_CONFIG_MAPPINGS],
                     collection_context=context,
                     raw_data=settings,
                 )
@@ -999,33 +814,23 @@ class OracleCollector:
         finally:
             cur.close()
 
-    def _connection_limit_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _connection_limit_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             sessions_limit = ""
             processes_limit = ""
             try:
-                cur.execute(
-                    "SELECT name, value FROM v$parameter "
-                    "WHERE name IN ('sessions', 'processes')"
-                )
+                cur.execute("SELECT name, value FROM v$parameter WHERE name IN ('sessions', 'processes')")
                 rows = list(cur.fetchall())
                 m = {str(r[0]): str(r[1] or "") for r in rows}
                 sessions_limit = m.get("sessions", "")
                 processes_limit = m.get("processes", "")
             except Exception as e:
-                raise OracleQueryError(
-                    f"Could not query v$parameter sessions/processes: {e}"
-                ) from e
+                raise OracleQueryError(f"Could not query v$parameter sessions/processes: {e}") from e
 
             return [
                 SecurityFinding(
-                    title=(
-                        f"Oracle session limits: sessions={sessions_limit}, "
-                        f"processes={processes_limit}"
-                    ),
+                    title=(f"Oracle session limits: sessions={sessions_limit}, processes={processes_limit}"),
                     description=(
                         f"v$parameter sessions={sessions_limit}, "
                         f"processes={processes_limit}. AC-3 Access "
@@ -1041,14 +846,10 @@ class OracleCollector:
                     # evidence, not a pass/fail check.
                     compliance_status=ComplianceStatus.UNKNOWN,
                     source_system="oracle",
-                    source_finding_id=(
-                        f"session-limits:{self._cached_db}"
-                    ),
+                    source_finding_id=(f"session-limits:{self._cached_db}"),
                     resource_type="Oracle::Database",
                     resource_id=str(self._cached_db or "unknown"),
-                    control_ids=[
-                        m.control_id for m in CONNECTION_LIMIT_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in CONNECTION_LIMIT_MAPPINGS],
                     collection_context=context,
                     raw_data={
                         "sessions": sessions_limit,

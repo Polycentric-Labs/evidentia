@@ -45,11 +45,11 @@ def severity_rank(sev: GapSeverity | str) -> int:
 
 
 DiffStatus = Literal[
-    "closed",              # gap fixed (regression-free win)
-    "opened",              # new gap (compliance regression)
+    "closed",  # gap fixed (regression-free win)
+    "opened",  # new gap (compliance regression)
     "severity_increased",  # same gap, got worse
     "severity_decreased",  # same gap, got better
-    "unchanged",           # same gap, no change
+    "unchanged",  # same gap, no change
 ]
 
 

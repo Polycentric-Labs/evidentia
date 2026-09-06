@@ -301,9 +301,7 @@ def test_separate_commits_dep_bump_then_version_bump_pass(
     assert "PASS check_uv_lock_pin_drift" in out
 
 
-def test_single_commit_bump_plus_drift_blocks(
-    mod: Any, lock_repo: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_single_commit_bump_plus_drift_blocks(mod: Any, lock_repo: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """True positive: ONE commit bumping workspace AND moving a third-party
     pin (the F-V100-M1 signature) stays red, with the commit attributed."""
     base = _rev_head(lock_repo)
@@ -332,9 +330,7 @@ def test_working_tree_pair_blocks_on_combined_change(
     assert "working tree" in captured.err
 
 
-def test_working_tree_clean_bump_passes(
-    mod: Any, lock_repo: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_working_tree_clean_bump_passes(mod: Any, lock_repo: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """Working-tree pair with a workspace bump but stable pins -> PASS."""
     _git(lock_repo, "update-ref", "refs/remotes/origin/main", "HEAD")
     (lock_repo / "uv.lock").write_text(_lock("0.10.7", "2.7.0"), encoding="utf-8")
@@ -398,9 +394,7 @@ def test_aggregate_fallback_when_no_per_commit_pair(
     fork = _rev_head(r)
     base = _commit_lock(r, _lock("0.10.6", "2.7.0"), "main: add uv.lock")
     _git(r, "checkout", "-q", "-b", "feat", fork)
-    tip = _commit_lock(
-        r, _lock("0.10.7", "3.0.0"), "feat: add uv.lock with bump+drift"
-    )
+    tip = _commit_lock(r, _lock("0.10.7", "3.0.0"), "feat: add uv.lock with bump+drift")
 
     rc = _run_main_in(mod, r, [base, tip])
     assert rc == 1

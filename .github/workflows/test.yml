@@ -171,6 +171,9 @@ jobs:
       - name: Run ruff
         run: uv run ruff check .
 
+      - name: Run ruff format check
+        run: uv run ruff format --check .
+
   requirements-drift:
     name: docker/requirements drift
     runs-on: ubuntu-latest

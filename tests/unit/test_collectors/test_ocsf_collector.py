@@ -81,9 +81,7 @@ def test_collect_file_rejects_invalid_json(tmp_path: Path) -> None:
 def test_collect_file_rejects_unsupported_class_uid(tmp_path: Path) -> None:
     """Anything other than 2003 / 2004 in the Findings category is refused."""
     bad = tmp_path / "wrong-class.json"
-    bad.write_text(
-        json.dumps({"class_uid": 9999, "category_uid": 2}), encoding="utf-8"
-    )
+    bad.write_text(json.dumps({"class_uid": 9999, "category_uid": 2}), encoding="utf-8")
     with pytest.raises(OCSFIngestError) as exc:
         collect_ocsf_file(bad)
     assert "unsupported OCSF class_uid" in str(exc.value)

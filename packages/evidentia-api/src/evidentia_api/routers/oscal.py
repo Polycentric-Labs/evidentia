@@ -158,9 +158,7 @@ async def verify_assessment_result(payload: VerifyRequest) -> dict[str, Any]:
     # schema can't express the constraint, so guard here and fail as a
     # clean 400 usage error rather than letting verify_ar_file surface it
     # as a report error.
-    if (payload.expected_sigstore_identity is None) != (
-        payload.expected_sigstore_issuer is None
-    ):
+    if (payload.expected_sigstore_identity is None) != (payload.expected_sigstore_issuer is None):
         raise api_error(
             400,
             "invalid_body",
@@ -175,10 +173,7 @@ async def verify_assessment_result(payload: VerifyRequest) -> dict[str, Any]:
         raise api_error(
             400,
             "invalid_body",
-            (
-                "dsse_envelope and verify_public_key must be provided together "
-                "(pinned-key DSSE verification)."
-            ),
+            ("dsse_envelope and verify_public_key must be provided together (pinned-key DSSE verification)."),
         )
 
     # Parse BEFORE touching disk so malformed input never creates a temp
@@ -274,8 +269,7 @@ async def verify_assessment_result(payload: VerifyRequest) -> dict[str, Any]:
         # Offline + Sigstore reporting so a GUI can render the Rekor leg
         # as "skipped (offline)" instead of a failure.
         "offline": offline,
-        "sigstore_checked": check_sigstore
-        and report.sigstore_signature_valid is not None,
+        "sigstore_checked": check_sigstore and report.sigstore_signature_valid is not None,
         "sigstore_status": sigstore_status,
         "sigstore_signature_valid": report.sigstore_signature_valid,
         "sigstore_signer_identity": report.sigstore_signer_identity,

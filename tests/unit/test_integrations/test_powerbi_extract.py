@@ -154,6 +154,7 @@ class TestRowValue:
         without isoformat()/.value/numeric type should land on
         the final return.
         """
+
         class Custom:
             def __str__(self) -> str:
                 return "custom-repr"
@@ -175,9 +176,7 @@ class TestRowValue:
         result = _row_value(FakeWithValue())
         # The Pydantic model takes the str() fallback, NOT the
         # value-extraction branch.
-        assert "should-not-leak" not in result or result.startswith(
-            "value="
-        ) or result.startswith("FakeWithValue")
+        assert "should-not-leak" not in result or result.startswith("value=") or result.startswith("FakeWithValue")
 
 
 # ── TestSchemas ────────────────────────────────────────────────────
@@ -215,9 +214,7 @@ class TestSchemas:
                 assert col["dataType"] in valid_types
 
     def test_gap_schema_includes_priority_score_double(self) -> None:
-        priority = next(
-            c for c in GAP_DATASET_SCHEMA if c["name"] == "priority_score"
-        )
+        priority = next(c for c in GAP_DATASET_SCHEMA if c["name"] == "priority_score")
         assert priority["dataType"] == "Double"
 
 
@@ -242,15 +239,11 @@ class TestGapRows:
         assert schema_keys == row_keys
 
     def test_severity_serialized_as_string_value(self) -> None:
-        rows = build_gap_dataset_rows(
-            _report([_gap(gap_severity=GapSeverity.CRITICAL)])
-        )
+        rows = build_gap_dataset_rows(_report([_gap(gap_severity=GapSeverity.CRITICAL)]))
         assert rows[0]["gap_severity"] == "critical"
 
     def test_status_serialized_as_string_value(self) -> None:
-        rows = build_gap_dataset_rows(
-            _report([_gap(status=GapStatus.IN_PROGRESS)])
-        )
+        rows = build_gap_dataset_rows(_report([_gap(status=GapStatus.IN_PROGRESS)]))
         assert rows[0]["status"] == "in_progress"
 
     def test_lists_semicolon_joined(self) -> None:
@@ -282,9 +275,7 @@ class TestGapRows:
 
 class TestRiskRows:
     def test_one_row_per_risk(self) -> None:
-        rows = build_risk_dataset_rows(
-            [_risk(), _risk(asset="PCI cardholder data store")]
-        )
+        rows = build_risk_dataset_rows([_risk(), _risk(asset="PCI cardholder data store")])
         assert len(rows) == 2
 
     def test_empty_iterable_empty_rows(self) -> None:
@@ -301,9 +292,7 @@ class TestRiskRows:
         assert rows[0]["remediation_priority"] == 2
 
     def test_treatment_serialized_as_string_value(self) -> None:
-        rows = build_risk_dataset_rows(
-            [_risk(treatment=RiskTreatment.MITIGATE)]
-        )
+        rows = build_risk_dataset_rows([_risk(treatment=RiskTreatment.MITIGATE)])
         assert rows[0]["treatment"] == "mitigate"
 
     def test_no_generation_context_blank_provenance(self) -> None:

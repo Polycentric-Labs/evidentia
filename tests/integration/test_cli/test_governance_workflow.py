@@ -19,9 +19,7 @@ def runner() -> CliRunner:
 
 
 @pytest.fixture(autouse=True)
-def isolated_workflow_store(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def isolated_workflow_store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     store = tmp_path / "workflow-store"
     monkeypatch.setenv(WORKFLOW_STORE_ENV_VAR, str(store))
     return store
@@ -65,15 +63,11 @@ def _run_workflow(runner: CliRunner, tmp_path: Path) -> str:
 
 
 class TestWorkflowRun:
-    def test_run_from_template(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_run_from_template(self, runner: CliRunner, tmp_path: Path) -> None:
         wid = _run_workflow(runner, tmp_path)
         assert wid
 
-    def test_run_status_renders_clean_value(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_run_status_renders_clean_value(self, runner: CliRunner, tmp_path: Path) -> None:
         """The confirmation line shows the clean status value, not the
         ``WorkflowStatus.IN_PROGRESS`` enum repr."""
         template = tmp_path / "wf.yaml"
@@ -86,9 +80,7 @@ class TestWorkflowRun:
         assert "WorkflowStatus." not in result.output
         assert "in_progress" in result.output
 
-    def test_run_invalid_yaml(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_run_invalid_yaml(self, runner: CliRunner, tmp_path: Path) -> None:
         template = tmp_path / "broken.yaml"
         template.write_text("{key: [value\n\t}", encoding="utf-8")
         result = runner.invoke(
@@ -97,9 +89,7 @@ class TestWorkflowRun:
         )
         assert result.exit_code == 1
 
-    def test_run_yaml_must_be_mapping(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_run_yaml_must_be_mapping(self, runner: CliRunner, tmp_path: Path) -> None:
         template = tmp_path / "list.yaml"
         template.write_text("- item\n", encoding="utf-8")
         result = runner.invoke(
@@ -113,82 +103,102 @@ class TestWorkflowRun:
 
 
 class TestWorkflowAdvance:
-    def test_advance_step(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_advance_step(self, runner: CliRunner, tmp_path: Path) -> None:
         wid = _run_workflow(runner, tmp_path)
         result = runner.invoke(
             app,
             [
-                "governance", "workflow", "advance", wid,
-                "--step", "0",
-                "--new-status", "approved",
-                "--actor", "alice@example.com",
-                "--note", "Looks good",
+                "governance",
+                "workflow",
+                "advance",
+                wid,
+                "--step",
+                "0",
+                "--new-status",
+                "approved",
+                "--actor",
+                "alice@example.com",
+                "--note",
+                "Looks good",
             ],
         )
         assert result.exit_code == 0
         assert "Advanced" in result.output
 
-    def test_advance_status_renders_clean_value(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_advance_status_renders_clean_value(self, runner: CliRunner, tmp_path: Path) -> None:
         """The advance confirmation shows the clean workflow-status value,
         not the ``WorkflowStatus.<NAME>`` enum repr."""
         wid = _run_workflow(runner, tmp_path)
         result = runner.invoke(
             app,
             [
-                "governance", "workflow", "advance", wid,
-                "--step", "0",
-                "--new-status", "approved",
-                "--actor", "alice@example.com",
+                "governance",
+                "workflow",
+                "advance",
+                wid,
+                "--step",
+                "0",
+                "--new-status",
+                "approved",
+                "--actor",
+                "alice@example.com",
             ],
         )
         assert result.exit_code == 0, result.output
         assert "WorkflowStatus." not in result.output
 
-    def test_advance_invalid_status(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_advance_invalid_status(self, runner: CliRunner, tmp_path: Path) -> None:
         wid = _run_workflow(runner, tmp_path)
         result = runner.invoke(
             app,
             [
-                "governance", "workflow", "advance", wid,
-                "--step", "0",
-                "--new-status", "invalid-status",
-                "--actor", "alice@example.com",
+                "governance",
+                "workflow",
+                "advance",
+                wid,
+                "--step",
+                "0",
+                "--new-status",
+                "invalid-status",
+                "--actor",
+                "alice@example.com",
             ],
         )
         assert result.exit_code == 1
 
-    def test_advance_unknown_workflow(
-        self, runner: CliRunner
-    ) -> None:
+    def test_advance_unknown_workflow(self, runner: CliRunner) -> None:
         result = runner.invoke(
             app,
             [
-                "governance", "workflow", "advance",
+                "governance",
+                "workflow",
+                "advance",
                 "00000000-0000-0000-0000-000000000000",
-                "--step", "0",
-                "--new-status", "approved",
-                "--actor", "x@y.com",
+                "--step",
+                "0",
+                "--new-status",
+                "approved",
+                "--actor",
+                "x@y.com",
             ],
         )
         assert result.exit_code == 1
 
-    def test_cannot_skip_ahead(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_cannot_skip_ahead(self, runner: CliRunner, tmp_path: Path) -> None:
         wid = _run_workflow(runner, tmp_path)
         result = runner.invoke(
             app,
             [
-                "governance", "workflow", "advance", wid,
-                "--step", "2",
-                "--new-status", "approved",
-                "--actor", "x@y.com",
+                "governance",
+                "workflow",
+                "advance",
+                wid,
+                "--step",
+                "2",
+                "--new-status",
+                "approved",
+                "--actor",
+                "x@y.com",
             ],
         )
         assert result.exit_code == 1
@@ -200,17 +210,13 @@ class TestWorkflowAdvance:
 class TestWorkflowStatusAndList:
     def test_status(self, runner: CliRunner, tmp_path: Path) -> None:
         wid = _run_workflow(runner, tmp_path)
-        result = runner.invoke(
-            app, ["governance", "workflow", "status", wid]
-        )
+        result = runner.invoke(app, ["governance", "workflow", "status", wid])
         assert result.exit_code == 0
         assert "Test approval flow" in result.output
 
     def test_status_json(self, runner: CliRunner, tmp_path: Path) -> None:
         wid = _run_workflow(runner, tmp_path)
-        result = runner.invoke(
-            app, ["governance", "workflow", "status", wid, "--json"]
-        )
+        result = runner.invoke(app, ["governance", "workflow", "status", wid, "--json"])
         data = json.loads(result.output)
         assert data["id"] == wid
 
@@ -221,9 +227,7 @@ class TestWorkflowStatusAndList:
 
     def test_list_json(self, runner: CliRunner, tmp_path: Path) -> None:
         _run_workflow(runner, tmp_path)
-        result = runner.invoke(
-            app, ["governance", "workflow", "list", "--json"]
-        )
+        result = runner.invoke(app, ["governance", "workflow", "list", "--json"])
         data = json.loads(result.output)
         assert len(data) == 1
 
@@ -232,26 +236,24 @@ class TestWorkflowStatusAndList:
 
 
 class TestWorkflowLog:
-    def test_log_to_stdout(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_log_to_stdout(self, runner: CliRunner, tmp_path: Path) -> None:
         wid = _run_workflow(runner, tmp_path)
-        result = runner.invoke(
-            app, ["governance", "workflow", "log", wid]
-        )
+        result = runner.invoke(app, ["governance", "workflow", "log", wid])
         assert result.exit_code == 0
         assert "Workflow Audit Log" in result.output
 
-    def test_log_to_file(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_log_to_file(self, runner: CliRunner, tmp_path: Path) -> None:
         wid = _run_workflow(runner, tmp_path)
         out = tmp_path / "log.md"
         result = runner.invoke(
             app,
             [
-                "governance", "workflow", "log", wid,
-                "--output", str(out),
+                "governance",
+                "workflow",
+                "log",
+                wid,
+                "--output",
+                str(out),
             ],
         )
         assert result.exit_code == 0
@@ -263,12 +265,8 @@ class TestWorkflowLog:
 
 
 class TestWorkflowDelete:
-    def test_delete_with_yes(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_delete_with_yes(self, runner: CliRunner, tmp_path: Path) -> None:
         wid = _run_workflow(runner, tmp_path)
-        result = runner.invoke(
-            app, ["governance", "workflow", "delete", wid, "--yes"]
-        )
+        result = runner.invoke(app, ["governance", "workflow", "delete", wid, "--yes"])
         assert result.exit_code == 0
         assert "Deleted" in result.output

@@ -140,6 +140,7 @@ Added v0.10.5 Phase 10 in `evidentia_core.models.common`:
 # and break every cached OSCAL Assessment Results document.
 NAMESPACE_EVIDENTIA_FINDING = UUID("c2c9c8c8-...")  # see common.py
 
+
 def deterministic_finding_id(
     source_system: str,
     source_finding_id: str,

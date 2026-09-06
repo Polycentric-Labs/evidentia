@@ -34,6 +34,7 @@ router = APIRouter()
 # Structured audit logger for credentialed external writes.
 _audit = get_logger("evidentia.api.integrations")
 
+
 def _new_request_id() -> str:
     """Generate a short opaque ID to correlate a client error with the
     server-side log entry that contains the full exception detail.
@@ -54,9 +55,7 @@ def _load_report(key: str) -> GapAnalysisReport:
         # 400 (the F-V08-DAST-3 status normalization is unchanged)
         # with the structured detail object from
         # :mod:`evidentia_api.errors`.
-        raise api_error(
-            400, "invalid_id", str(exc), resource="gap_report"
-        ) from exc
+        raise api_error(400, "invalid_id", str(exc), resource="gap_report") from exc
     if report is None:
         raise api_error(
             404,
@@ -143,10 +142,7 @@ async def jira_status() -> dict[str, Any]:
         {
             400: "Malformed ``report_key`` (``error: invalid_id``).",
             404: "No such stored report (``error: not_found``).",
-            503: (
-                "Jira env configuration incomplete "
-                "(``error: credentials_missing``)."
-            ),
+            503: ("Jira env configuration incomplete (``error: credentials_missing``)."),
         }
     ),
 )
@@ -178,9 +174,7 @@ async def jira_push(
     body = payload or {}
     severity_filter: set[str] | None = None
     if isinstance(body.get("severity_filter"), list):
-        severity_filter = {
-            str(s).lower() for s in body["severity_filter"] if isinstance(s, str)
-        }
+        severity_filter = {str(s).lower() for s in body["severity_filter"] if isinstance(s, str)}
     max_issues = None
     if isinstance(body.get("max_issues"), int):
         max_issues = int(body["max_issues"])
@@ -215,10 +209,7 @@ async def jira_push(
         {
             400: "Malformed ``report_key`` (``error: invalid_id``).",
             404: "No such stored report (``error: not_found``).",
-            503: (
-                "Jira env configuration incomplete "
-                "(``error: credentials_missing``)."
-            ),
+            503: ("Jira env configuration incomplete (``error: credentials_missing``)."),
         }
     ),
 )
@@ -264,12 +255,8 @@ async def jira_status_map() -> dict[str, dict[str, str]]:
     )
 
     return {
-        "gap_status_to_jira": {
-            k.value: v for k, v in GAP_STATUS_TO_JIRA_STATUS.items()
-        },
-        "jira_status_to_gap": {
-            k: v.value for k, v in JIRA_STATUS_TO_GAP_STATUS.items()
-        },
+        "gap_status_to_jira": {k.value: v for k, v in GAP_STATUS_TO_JIRA_STATUS.items()},
+        "jira_status_to_gap": {k: v.value for k, v in JIRA_STATUS_TO_GAP_STATUS.items()},
     }
 
 
@@ -288,11 +275,7 @@ async def jira_status_map() -> dict[str, dict[str, str]]:
                 "configuration (``error: invalid_body``)."
             ),
             404: "No such stored report (``error: not_found``).",
-            500: (
-                "Unexpected publish failure "
-                "(``error: internal_error``); ``detail`` carries "
-                "``request_id``."
-            ),
+            500: ("Unexpected publish failure (``error: internal_error``); ``detail`` carries ``request_id``."),
             503: (
                 "Tableau integration not installed "
                 "(``error: feature_unavailable``) or upstream "
@@ -342,10 +325,7 @@ async def tableau_publish(
         raise api_error(
             503,
             "feature_unavailable",
-            (
-                "Tableau integration not installed. Run "
-                "`pip install 'evidentia-integrations[tableau]'`."
-            ),
+            ("Tableau integration not installed. Run `pip install 'evidentia-integrations[tableau]'`."),
         ) from e
 
     server_url = str(payload.get("server_url") or "").strip()
@@ -371,18 +351,11 @@ async def tableau_publish(
         network_guard.check_url(
             server_url,
             subsystem="tableau",
-            remediation=(
-                "Publish to a reachable public Tableau Server / Cloud URL, "
-                "or disable offline mode."
-            ),
+            remediation=("Publish to a reachable public Tableau Server / Cloud URL, or disable offline mode."),
         )
-        validated_ips = network_guard.enforce_public_host(
-            server_url, subsystem="tableau", block_private=block_private
-        )
+        validated_ips = network_guard.enforce_public_host(server_url, subsystem="tableau", block_private=block_private)
     except (SSRFBlockedError, OfflineViolationError) as exc:
-        raise api_error(
-            400, "invalid_field", str(exc), field="server_url"
-        ) from exc
+        raise api_error(400, "invalid_field", str(exc), field="server_url") from exc
 
     # Validate body shape (risks list) BEFORE report lookup so 400
     # is returned for malformed bodies instead of 404 for missing
@@ -400,10 +373,7 @@ async def tableau_publish(
                 field="risks",
             )
         try:
-            risks = [
-                RiskStatement.model_validate(item)
-                for item in risks_input
-            ]
+            risks = [RiskStatement.model_validate(item) for item in risks_input]
         except Exception as exc:
             raise api_error(
                 400,
@@ -417,12 +387,8 @@ async def tableau_publish(
             server_url=server_url,
             site_id=str(payload.get("site_id") or ""),
             project_name=str(payload.get("project_name") or "default"),
-            pat_name_env=str(
-                payload.get("pat_name_env") or "TABLEAU_PAT_NAME"
-            ),
-            pat_secret_env=str(
-                payload.get("pat_secret_env") or "TABLEAU_PAT_SECRET"
-            ),
+            pat_name_env=str(payload.get("pat_name_env") or "TABLEAU_PAT_NAME"),
+            pat_secret_env=str(payload.get("pat_secret_env") or "TABLEAU_PAT_SECRET"),
         )
     except ValidationError as exc:
         # e.g. the server_url https-scheme field_validator rejects a
@@ -460,9 +426,7 @@ async def tableau_publish(
                 overwrite=overwrite,
             )
     except TableauApiError as exc:
-        logger.exception(
-            "Tableau publish failed (request_id=%s)", request_id
-        )
+        logger.exception("Tableau publish failed (request_id=%s)", request_id)
         raise api_error(503, "upstream_error", str(exc)) from exc
     except Exception as exc:
         logger.exception(
@@ -493,11 +457,7 @@ async def tableau_publish(
                 "``risks`` (``error: invalid_field``)."
             ),
             404: "No such stored report (``error: not_found``).",
-            500: (
-                "Unexpected publish failure "
-                "(``error: internal_error``); ``detail`` carries "
-                "``request_id``."
-            ),
+            500: ("Unexpected publish failure (``error: internal_error``); ``detail`` carries ``request_id``."),
             503: (
                 "Power BI integration not installed "
                 "(``error: feature_unavailable``) or upstream "
@@ -543,10 +503,7 @@ async def powerbi_publish(
         raise api_error(
             503,
             "feature_unavailable",
-            (
-                "Power BI integration not installed. Run "
-                "`pip install 'evidentia-integrations[powerbi]'`."
-            ),
+            ("Power BI integration not installed. Run `pip install 'evidentia-integrations[powerbi]'`."),
         ) from e
 
     workspace_id = str(payload.get("workspace_id") or "").strip()
@@ -588,10 +545,7 @@ async def powerbi_publish(
                 field="risks",
             )
         try:
-            risks = [
-                RiskStatement.model_validate(item)
-                for item in risks_input
-            ]
+            risks = [RiskStatement.model_validate(item) for item in risks_input]
         except Exception as exc:
             raise api_error(
                 400,
@@ -606,10 +560,7 @@ async def powerbi_publish(
         workspace_id=workspace_id,
         tenant_id=tenant_id,
         client_id=client_id,
-        client_secret_env=str(
-            payload.get("client_secret_env")
-            or "POWERBI_CLIENT_SECRET"
-        ),
+        client_secret_env=str(payload.get("client_secret_env") or "POWERBI_CLIENT_SECRET"),
     )
     clear_before_push = bool(payload.get("clear_before_push", True))
 
@@ -621,9 +572,7 @@ async def powerbi_publish(
             clear_before_push=clear_before_push,
         )
     except PowerBIApiError as exc:
-        logger.exception(
-            "Power BI publish failed (request_id=%s)", request_id
-        )
+        logger.exception("Power BI publish failed (request_id=%s)", request_id)
         raise api_error(503, "upstream_error", str(exc)) from exc
     except Exception as exc:
         logger.exception(
@@ -695,10 +644,7 @@ async def servicenow_status() -> dict[str, Any]:
             "configured": False,
             "instance_url": cfg.instance_url,
             "table_name": cfg.table_name,
-            "error": (
-                "ServiceNow API call failed; check server logs with the "
-                "request_id."
-            ),
+            "error": ("ServiceNow API call failed; check server logs with the request_id."),
             "request_id": rid,
         }
 
@@ -770,10 +716,7 @@ async def servicenow_push(
         raise api_error(
             503,
             "feature_unavailable",
-            (
-                "ServiceNow integration not installed. Run "
-                "`pip install 'evidentia-integrations[servicenow]'`."
-            ),
+            ("ServiceNow integration not installed. Run `pip install 'evidentia-integrations[servicenow]'`."),
         ) from e
 
     report = _load_report(report_key)

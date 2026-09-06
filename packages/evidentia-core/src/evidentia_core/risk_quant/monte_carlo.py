@@ -69,9 +69,7 @@ DEFAULT_ITERATIONS = 10_000
 # ── Sampling primitive ─────────────────────────────────────────────
 
 
-def _sample_pert(
-    value: float | PERTRange, rng: random.Random
-) -> float:
+def _sample_pert(value: float | PERTRange, rng: random.Random) -> float:
     """Draw a sample from a scalar-or-PERTRange factor.
 
     Scalar values return unchanged (zero variance). PERTRange
@@ -97,9 +95,7 @@ def _sample_pert(
     return low + span * rng.betavariate(alpha, beta_param)
 
 
-def _sample_ale(
-    scenario: OpenFAIRScenario, rng: random.Random
-) -> float:
+def _sample_ale(scenario: OpenFAIRScenario, rng: random.Random) -> float:
     """One-iteration ALE: (TEF × Vulnerability) × (PL + SL)."""
     tef = _sample_pert(scenario.tef, rng)
     vuln = _sample_pert(scenario.vulnerability, rng)
@@ -121,12 +117,9 @@ class SimulationResult(EvidentiaModel):
     """
 
     id: str = Field(default_factory=new_id)
-    scenario_id: str = Field(
-        description="ID of the OpenFAIRScenario this simulation ran against."
-    )
+    scenario_id: str = Field(description="ID of the OpenFAIRScenario this simulation ran against.")
     scenario_name: str = Field(
-        description="Scenario name — duplicated here so reports + "
-        "CSV exports stay self-contained."
+        description="Scenario name — duplicated here so reports + CSV exports stay self-contained."
     )
     iterations: int = Field(
         ge=1,
@@ -134,10 +127,7 @@ class SimulationResult(EvidentiaModel):
     )
     seed: int | None = Field(
         default=None,
-        description=(
-            "Random seed used. When set, the simulation is "
-            "deterministic across runs (golden-file friendly)."
-        ),
+        description=("Random seed used. When set, the simulation is deterministic across runs (golden-file friendly)."),
     )
     samples: list[float] = Field(
         description=(
@@ -178,10 +168,7 @@ class SimulationResult(EvidentiaModel):
         lines: list[str] = []
         lines.append(f"# FAIR Monte Carlo Simulation — {self.scenario_name}")
         lines.append("")
-        lines.append(
-            f"_{self.iterations:,} iterations"
-            + (f", seed={self.seed}_" if self.seed is not None else "_")
-        )
+        lines.append(f"_{self.iterations:,} iterations" + (f", seed={self.seed}_" if self.seed is not None else "_"))
         lines.append("")
         lines.append("| Statistic | ALE ($) |")
         lines.append("|---|---|")
@@ -190,9 +177,7 @@ class SimulationResult(EvidentiaModel):
         lines.append(f"| P90  | {_money(self.p90)} |")
         lines.append(f"| Mean | {_money(self.mean)} |")
         lines.append(f"| Std-dev | {_money(self.stddev)} |")
-        lines.append(
-            f"| Risk band (P50) | **{self.risk_category_p50}** |"
-        )
+        lines.append(f"| Risk band (P50) | **{self.risk_category_p50}** |")
         lines.append("")
         # Simple ASCII box-and-whisker
         lines.append("```")
@@ -279,9 +264,7 @@ def simulate_ale(
         ValueError: when ``iterations < 1`` or scenario is invalid.
     """
     if iterations < 1:
-        raise ValueError(
-            f"iterations must be >= 1; got {iterations}"
-        )
+        raise ValueError(f"iterations must be >= 1; got {iterations}")
     rng = random.Random(seed)
     samples = [_sample_ale(scenario, rng) for _ in range(iterations)]
 
@@ -305,9 +288,7 @@ def simulate_ale(
     )
 
 
-def _percentiles(
-    samples: list[float], qs: list[float]
-) -> tuple[float, ...]:
+def _percentiles(samples: list[float], qs: list[float]) -> tuple[float, ...]:
     """Linear-interpolation percentile estimator.
 
     Mirrors ``numpy.percentile(method='linear')`` for portability.
@@ -319,9 +300,7 @@ def _percentiles(
     out: list[float] = []
     for q in qs:
         if not 0.0 <= q <= 1.0:
-            raise ValueError(
-                f"Percentile must be in [0, 1]; got {q}"
-            )
+            raise ValueError(f"Percentile must be in [0, 1]; got {q}")
         if n == 1:
             out.append(sorted_samples[0])
             continue
@@ -353,9 +332,7 @@ def generate_monte_carlo_report(
     """
     if not scenarios_with_results:
         return "# FAIR Monte Carlo Risk Quantification Report\n\nNo scenarios.\n"
-    sorted_results = sorted(
-        scenarios_with_results, key=lambda pair: -pair[1].p50
-    )
+    sorted_results = sorted(scenarios_with_results, key=lambda pair: -pair[1].p50)
     lines: list[str] = ["# FAIR Monte Carlo Risk Quantification Report", ""]
     lines.append("Sorted by P50 ALE descending.")
     lines.append("")

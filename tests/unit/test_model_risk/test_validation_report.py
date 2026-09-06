@@ -49,36 +49,38 @@ class TestGenerateValidationReport:
         assert "| (no findings) | 0 | 0 | 0 | 0 | 0 |" in out
 
     def test_findings_disposition_counts(self) -> None:
-        m = _model_with_findings([
-            ValidationFinding(
-                title="HIGH-1",
-                description="x",
-                severity=ValidationSeverity.HIGH,
-                status=ValidationStatus.OPEN,
-                detected_at=date(2025, 12, 1),
-            ),
-            ValidationFinding(
-                title="HIGH-2",
-                description="x",
-                severity=ValidationSeverity.HIGH,
-                status=ValidationStatus.REMEDIATED,
-                detected_at=date(2025, 11, 1),
-            ),
-            ValidationFinding(
-                title="MED-1",
-                description="x",
-                severity=ValidationSeverity.MEDIUM,
-                status=ValidationStatus.OPEN,
-                detected_at=date(2025, 12, 5),
-            ),
-            ValidationFinding(
-                title="LOW-1",
-                description="x",
-                severity=ValidationSeverity.LOW,
-                status=ValidationStatus.ACCEPTED,
-                detected_at=date(2025, 10, 1),
-            ),
-        ])
+        m = _model_with_findings(
+            [
+                ValidationFinding(
+                    title="HIGH-1",
+                    description="x",
+                    severity=ValidationSeverity.HIGH,
+                    status=ValidationStatus.OPEN,
+                    detected_at=date(2025, 12, 1),
+                ),
+                ValidationFinding(
+                    title="HIGH-2",
+                    description="x",
+                    severity=ValidationSeverity.HIGH,
+                    status=ValidationStatus.REMEDIATED,
+                    detected_at=date(2025, 11, 1),
+                ),
+                ValidationFinding(
+                    title="MED-1",
+                    description="x",
+                    severity=ValidationSeverity.MEDIUM,
+                    status=ValidationStatus.OPEN,
+                    detected_at=date(2025, 12, 5),
+                ),
+                ValidationFinding(
+                    title="LOW-1",
+                    description="x",
+                    severity=ValidationSeverity.LOW,
+                    status=ValidationStatus.ACCEPTED,
+                    detected_at=date(2025, 10, 1),
+                ),
+            ]
+        )
         out = generate_validation_report(m)
         # HIGH row: 1 open / 1 remediated / 0 / 0 / 2 total
         assert "| high | 1 | 1 | 0 | 0 | 2 |" in out
@@ -90,51 +92,57 @@ class TestGenerateValidationReport:
         assert "| **All** | **2** | 1 | 1 | 0 | **4** |" in out
 
     def test_high_open_warning_callout_renders_when_high_open(self) -> None:
-        m = _model_with_findings([
-            ValidationFinding(
-                title="HIGH bias",
-                description="x",
-                severity=ValidationSeverity.HIGH,
-                status=ValidationStatus.OPEN,
-                detected_at=date(2025, 12, 1),
-            ),
-        ])
+        m = _model_with_findings(
+            [
+                ValidationFinding(
+                    title="HIGH bias",
+                    description="x",
+                    severity=ValidationSeverity.HIGH,
+                    status=ValidationStatus.OPEN,
+                    detected_at=date(2025, 12, 1),
+                ),
+            ]
+        )
         out = generate_validation_report(m)
         assert "⚠️" in out
         assert "HIGH-severity findings open" in out
 
     def test_no_high_open_no_warning_callout(self) -> None:
-        m = _model_with_findings([
-            ValidationFinding(
-                title="HIGH but remediated",
-                description="x",
-                severity=ValidationSeverity.HIGH,
-                status=ValidationStatus.REMEDIATED,
-                detected_at=date(2025, 11, 1),
-            ),
-            ValidationFinding(
-                title="MED open",
-                description="x",
-                severity=ValidationSeverity.MEDIUM,
-                status=ValidationStatus.OPEN,
-                detected_at=date(2025, 12, 1),
-            ),
-        ])
+        m = _model_with_findings(
+            [
+                ValidationFinding(
+                    title="HIGH but remediated",
+                    description="x",
+                    severity=ValidationSeverity.HIGH,
+                    status=ValidationStatus.REMEDIATED,
+                    detected_at=date(2025, 11, 1),
+                ),
+                ValidationFinding(
+                    title="MED open",
+                    description="x",
+                    severity=ValidationSeverity.MEDIUM,
+                    status=ValidationStatus.OPEN,
+                    detected_at=date(2025, 12, 1),
+                ),
+            ]
+        )
         out = generate_validation_report(m)
         # Specifically the HIGH-open callout text should NOT appear
         assert "HIGH-severity findings open" not in out
 
     def test_remediation_narrative_renders_per_finding(self) -> None:
-        m = _model_with_findings([
-            ValidationFinding(
-                title="Bias on protected class",
-                description="Disparate impact on age >65 detected.",
-                severity=ValidationSeverity.HIGH,
-                status=ValidationStatus.OPEN,
-                detected_at=date(2025, 12, 1),
-                remediation_plan="Retrain with re-weighted samples by 2026-Q2",
-            ),
-        ])
+        m = _model_with_findings(
+            [
+                ValidationFinding(
+                    title="Bias on protected class",
+                    description="Disparate impact on age >65 detected.",
+                    severity=ValidationSeverity.HIGH,
+                    status=ValidationStatus.OPEN,
+                    detected_at=date(2025, 12, 1),
+                    remediation_plan="Retrain with re-weighted samples by 2026-Q2",
+                ),
+            ]
+        )
         out = generate_validation_report(m)
         assert "## Remediation narrative" in out
         assert "Bias on protected class" in out
@@ -142,15 +150,17 @@ class TestGenerateValidationReport:
         assert "Retrain with re-weighted samples" in out
 
     def test_no_remediation_plan_renders_placeholder(self) -> None:
-        m = _model_with_findings([
-            ValidationFinding(
-                title="x",
-                description="y",
-                severity=ValidationSeverity.MEDIUM,
-                detected_at=date(2025, 12, 1),
-                # No remediation_plan
-            ),
-        ])
+        m = _model_with_findings(
+            [
+                ValidationFinding(
+                    title="x",
+                    description="y",
+                    severity=ValidationSeverity.MEDIUM,
+                    detected_at=date(2025, 12, 1),
+                    # No remediation_plan
+                ),
+            ]
+        )
         out = generate_validation_report(m)
         assert "_None recorded_" in out
 
@@ -172,15 +182,17 @@ class TestGenerateValidationReport:
             assert expected in out
 
     def test_render_is_deterministic_for_same_input(self) -> None:
-        m = _model_with_findings([
-            ValidationFinding(
-                title="X",
-                description="Y",
-                severity=ValidationSeverity.MEDIUM,
-                status=ValidationStatus.OPEN,
-                detected_at=date(2025, 12, 1),
-            ),
-        ])
+        m = _model_with_findings(
+            [
+                ValidationFinding(
+                    title="X",
+                    description="Y",
+                    severity=ValidationSeverity.MEDIUM,
+                    status=ValidationStatus.OPEN,
+                    detected_at=date(2025, 12, 1),
+                ),
+            ]
+        )
         a = generate_validation_report(m)
         b = generate_validation_report(m)
         assert a == b

@@ -42,15 +42,11 @@ def _run(args: list[str], cwd: Path) -> None:
     if result.returncode != 0:
         logger.error("stdout: %s", result.stdout)
         logger.error("stderr: %s", result.stderr)
-        raise SystemExit(
-            f"Command failed ({result.returncode}): {' '.join(args)}"
-        )
+        raise SystemExit(f"Command failed ({result.returncode}): {' '.join(args)}")
 
 
 def main() -> None:
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
 
     logger.info("Generating baseline.json from my-controls.yaml")

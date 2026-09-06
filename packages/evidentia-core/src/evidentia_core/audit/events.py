@@ -384,9 +384,7 @@ class EventAction(str, Enum):
     rescinded 2025-04-03); see AI_SYSTEM_HIGH_IMPACT_CLASSIFIED. Retained
     + still fired by the legacy verb for backward compatibility."""
 
-    AI_SYSTEM_HIGH_IMPACT_CLASSIFIED = (
-        "evidentia.ai_governance.system_high_impact_classified"
-    )
+    AI_SYSTEM_HIGH_IMPACT_CLASSIFIED = "evidentia.ai_governance.system_high_impact_classified"
     """Fired when the OMB M-25-21 high-impact AI determination is set or
     updated via ``evidentia ai-gov set-high-impact``. Payload carries the
     determination (high_impact / not_high_impact / not_assessed) + the
@@ -400,17 +398,13 @@ class EventAction(str, Enum):
     likely-high-impact determination (the M-25-21 §4(a) tie-in).
     Added v0.11 — the first M-25-22 procurement surface."""
 
-    AI_ACQUISITION_PHASE_RECORDED = (
-        "evidentia.ai_governance.acquisition_phase_recorded"
-    )
+    AI_ACQUISITION_PHASE_RECORDED = "evidentia.ai_governance.acquisition_phase_recorded"
     """Fired when an M-25-22 §4 lifecycle-phase status is set or updated
     via ``evidentia ai-gov acquisition set-phase`` (or its API mirror).
     Payload carries the phase and the status (not_started / in_progress
     / complete). Added v0.11."""
 
-    AI_SYSTEM_PRACTICE_RECORDED = (
-        "evidentia.ai_governance.system_practice_recorded"
-    )
+    AI_SYSTEM_PRACTICE_RECORDED = "evidentia.ai_governance.system_practice_recorded"
     """Fired when an OMB M-25-21 §4(b) minimum-practice status is set or
     updated via ``evidentia ai-gov set-practice`` (or its API mirror).
     Payload carries the practice, the status (implemented / in_progress /

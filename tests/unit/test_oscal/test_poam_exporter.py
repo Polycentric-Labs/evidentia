@@ -47,15 +47,9 @@ def _make_report(gaps: list[ControlGap]) -> GapAnalysisReport:
         total_controls_required=100,
         total_controls_in_inventory=80,
         total_gaps=len(gaps),
-        critical_gaps=sum(
-            1 for g in gaps if g.gap_severity == GapSeverity.CRITICAL
-        ),
-        high_gaps=sum(
-            1 for g in gaps if g.gap_severity == GapSeverity.HIGH
-        ),
-        medium_gaps=sum(
-            1 for g in gaps if g.gap_severity == GapSeverity.MEDIUM
-        ),
+        critical_gaps=sum(1 for g in gaps if g.gap_severity == GapSeverity.CRITICAL),
+        high_gaps=sum(1 for g in gaps if g.gap_severity == GapSeverity.HIGH),
+        medium_gaps=sum(1 for g in gaps if g.gap_severity == GapSeverity.MEDIUM),
         low_gaps=sum(1 for g in gaps if g.gap_severity == GapSeverity.LOW),
         coverage_percentage=80.0,
         gaps=gaps,
@@ -96,9 +90,7 @@ class TestTopLevelShape:
         )
         doc = gap_report_to_oscal_poam(report)
         props = doc["plan-of-action-and-milestones"]["metadata"]["props"]
-        count_props = [
-            p for p in props if p["name"] == "poam-item-count"
-        ]
+        count_props = [p for p in props if p["name"] == "poam-item-count"]
         assert count_props
         assert count_props[0]["value"] == "2"
 
@@ -127,9 +119,7 @@ class TestDefaultSeverityFilter:
                 _make_gap("AC-2", GapSeverity.MEDIUM),
             ]
         )
-        doc = gap_report_to_oscal_poam(
-            report, severity_filter=lambda _: True
-        )
+        doc = gap_report_to_oscal_poam(report, severity_filter=lambda _: True)
         poam_items = doc["plan-of-action-and-milestones"]["poam-items"]
         assert len(poam_items) == 2
 
@@ -158,10 +148,7 @@ class TestPoamItemStructure:
         report = _make_report([_make_gap("AC-2", GapSeverity.HIGH)])
         doc = gap_report_to_oscal_poam(report)
         item = doc["plan-of-action-and-milestones"]["poam-items"][0]
-        ev_props = [
-            p for p in item["props"]
-            if p.get("ns") == EVIDENTIA_OSCAL_NS
-        ]
+        ev_props = [p for p in item["props"] if p.get("ns") == EVIDENTIA_OSCAL_NS]
         assert ev_props
         # framework + control-id + severity + milestone-count
         names = {p["name"] for p in ev_props}
@@ -181,9 +168,7 @@ class TestMilestoneMapping:
             description="Deliver Okta integration",
             status=POAMState.IN_PROGRESS,
         )
-        report = _make_report(
-            [_make_gap("AC-2", GapSeverity.HIGH, milestones=[ms])]
-        )
+        report = _make_report([_make_gap("AC-2", GapSeverity.HIGH, milestones=[ms])])
         doc = gap_report_to_oscal_poam(report)
         risk = doc["plan-of-action-and-milestones"]["risks"][0]
         assert "remediations" in risk
@@ -203,15 +188,11 @@ class TestMilestoneMapping:
             description="phase 1",
             status=POAMState.IN_PROGRESS,
         )
-        report = _make_report(
-            [_make_gap("AC-2", GapSeverity.HIGH, milestones=[ms])]
-        )
+        report = _make_report([_make_gap("AC-2", GapSeverity.HIGH, milestones=[ms])])
         doc = gap_report_to_oscal_poam(report)
-        entry = (
-            doc["plan-of-action-and-milestones"]["risks"][0][
-                "remediations"
-            ][0]["remediation-tracking"]["tracking-entries"][0]
-        )
+        entry = doc["plan-of-action-and-milestones"]["risks"][0]["remediations"][0]["remediation-tracking"][
+            "tracking-entries"
+        ][0]
         prop_names = {p["name"]: p["value"] for p in entry["props"]}
         assert prop_names["status"] == "in_progress"
         assert prop_names["target-date"] == "2026-06-30"
@@ -222,24 +203,18 @@ class TestMilestoneMapping:
             description="phase 1",
             evidence_ref="sigstore-bundle://abc123",
         )
-        report = _make_report(
-            [_make_gap("AC-2", GapSeverity.HIGH, milestones=[ms])]
-        )
+        report = _make_report([_make_gap("AC-2", GapSeverity.HIGH, milestones=[ms])])
         doc = gap_report_to_oscal_poam(report)
-        entry = (
-            doc["plan-of-action-and-milestones"]["risks"][0][
-                "remediations"
-            ][0]["remediation-tracking"]["tracking-entries"][0]
-        )
+        entry = doc["plan-of-action-and-milestones"]["risks"][0]["remediations"][0]["remediation-tracking"][
+            "tracking-entries"
+        ][0]
         prop_names = [p["name"] for p in entry["props"]]
         assert "evidence-ref" in prop_names
 
     def test_empty_milestone_list_omits_remediation_tracking(
         self,
     ) -> None:
-        report = _make_report(
-            [_make_gap("AC-2", GapSeverity.HIGH, milestones=[])]
-        )
+        report = _make_report([_make_gap("AC-2", GapSeverity.HIGH, milestones=[])])
         doc = gap_report_to_oscal_poam(report)
         risk = doc["plan-of-action-and-milestones"]["risks"][0]
         rem = risk["remediations"][0]
@@ -292,9 +267,7 @@ class TestBackMatterIntegrity:
         gap = _make_gap("AC-2", GapSeverity.HIGH)
         report = _make_report([gap])
         doc = gap_report_to_oscal_poam(report)
-        resource = doc["plan-of-action-and-milestones"]["back-matter"][
-            "resources"
-        ][0]
+        resource = doc["plan-of-action-and-milestones"]["back-matter"]["resources"][0]
         rlinks = resource["rlinks"]
         assert rlinks
         hashes = rlinks[0]["hashes"]
@@ -315,9 +288,7 @@ class TestBackMatterIntegrity:
         gap = _make_gap("AC-2", GapSeverity.HIGH)
         report = _make_report([gap])
         doc = gap_report_to_oscal_poam(report)
-        resource = doc["plan-of-action-and-milestones"]["back-matter"][
-            "resources"
-        ][0]
+        resource = doc["plan-of-action-and-milestones"]["back-matter"]["resources"][0]
         encoded = resource["base64"]["value"]
         decoded = base64.b64decode(encoded)
         # Decodes as valid JSON matching the gap record
@@ -336,12 +307,12 @@ class TestDeterminism:
         report = _make_report([gap])
         doc1 = gap_report_to_oscal_poam(report)
         doc2 = gap_report_to_oscal_poam(report)
-        digest1 = doc1["plan-of-action-and-milestones"]["back-matter"][
-            "resources"
-        ][0]["rlinks"][0]["hashes"][0]["value"]
-        digest2 = doc2["plan-of-action-and-milestones"]["back-matter"][
-            "resources"
-        ][0]["rlinks"][0]["hashes"][0]["value"]
+        digest1 = doc1["plan-of-action-and-milestones"]["back-matter"]["resources"][0]["rlinks"][0]["hashes"][0][
+            "value"
+        ]
+        digest2 = doc2["plan-of-action-and-milestones"]["back-matter"]["resources"][0]["rlinks"][0]["hashes"][0][
+            "value"
+        ]
         # Same record → same canonical JSON → same SHA-256.
         # (Other top-level UUIDs differ between emits — only the
         # back-matter digest is integrity-bound to the record.)

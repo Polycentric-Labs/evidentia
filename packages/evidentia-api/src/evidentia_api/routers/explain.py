@@ -30,23 +30,15 @@ router = APIRouter()
     "/explain/{framework}/{control_id:path}",
     responses=error_responses(
         {
-            404: (
-                "Unknown ``framework`` or ``control_id`` "
-                "(``error: not_found``)."
-            ),
-            500: (
-                "evidentia-ai import failure "
-                "(``error: feature_unavailable``)."
-            ),
+            404: ("Unknown ``framework`` or ``control_id`` (``error: not_found``)."),
+            500: ("evidentia-ai import failure (``error: feature_unavailable``)."),
         }
     ),
 )
 async def explain(
     framework: str,
     control_id: str,
-    refresh: bool = Query(
-        False, description="Bypass the on-disk cache and re-generate."
-    ),
+    refresh: bool = Query(False, description="Bypass the on-disk cache and re-generate."),
     model: str | None = Query(
         None,
         description="LLM model override; falls back to EVIDENTIA_LLM_MODEL/config.",
@@ -91,11 +83,7 @@ async def explain(
     gen = ExplanationGenerator(model=model) if model else ExplanationGenerator()
 
     async def _stream() -> AsyncIterator[dict[str, str]]:
-        yield {
-            "data": json.dumps(
-                {"phase": "start", "framework": framework, "control_id": control.id}
-            )
-        }
+        yield {"data": json.dumps({"phase": "start", "framework": framework, "control_id": control.id})}
         try:
             # ExplanationGenerator is sync-only + has on-disk cache, so
             # offloading to a thread is almost always instantaneous for
@@ -114,10 +102,6 @@ async def explain(
             yield {"data": json.dumps({"phase": "done", "explanation": payload})}
         except Exception as e:
             logger.exception("Explanation failed")
-            yield {
-                "data": json.dumps(
-                    {"phase": "error", "detail": str(e), "type": type(e).__name__}
-                )
-            }
+            yield {"data": json.dumps({"phase": "error", "detail": str(e), "type": type(e).__name__})}
 
     return EventSourceResponse(_stream())

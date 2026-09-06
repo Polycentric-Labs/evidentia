@@ -40,9 +40,7 @@ def make_hmac_verifier():
     def _verify(payload: bytes, signature: dict[str, str]) -> bool:
         if signature.get("alg") != "hmac-sha256":
             return False
-        expected = hmac.new(
-            _TEST_HMAC_KEY, payload, hashlib.sha256
-        ).hexdigest()
+        expected = hmac.new(_TEST_HMAC_KEY, payload, hashlib.sha256).hexdigest()
         return hmac.compare_digest(expected, signature.get("sig", ""))
 
     return _verify
@@ -60,9 +58,7 @@ class TestSignedToolOutputModel:
         assert env.tool_name is None
 
     def test_with_tool_name(self) -> None:
-        env = SignedToolOutput(
-            payload={"x": 1}, tool_name="gap_analyze"
-        )
+        env = SignedToolOutput(payload={"x": 1}, tool_name="gap_analyze")
         assert env.tool_name == "gap_analyze"
 
     def test_round_trip_json(self) -> None:
@@ -115,9 +111,7 @@ class TestSignToolOutputExplicit:
         def broken_signer(payload: bytes) -> dict[str, str]:
             raise RuntimeError("HSM unavailable")
 
-        env = sign_tool_output(
-            {"x": 1}, signer=broken_signer, tool_name="test"
-        )
+        env = sign_tool_output({"x": 1}, signer=broken_signer, tool_name="test")
         assert env.signature is None
         assert env.signing_error is not None
         assert "HSM unavailable" in env.signing_error
@@ -168,28 +162,18 @@ class TestVerifyToolOutput:
 
 
 class TestSignerEnvVar:
-    def test_no_env_unsigned(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        monkeypatch.delenv(
-            EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR, raising=False
-        )
+    def test_no_env_unsigned(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv(EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR, raising=False)
         env = sign_tool_output({"x": 1})
         assert env.signature is None
 
-    def test_env_set_without_factory_errors(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_env_set_without_factory_errors(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv(EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR, "1")
-        monkeypatch.delenv(
-            EVIDENCE_MCP_SIGNER_FACTORY_ENV_VAR, raising=False
-        )
+        monkeypatch.delenv(EVIDENCE_MCP_SIGNER_FACTORY_ENV_VAR, raising=False)
         with pytest.raises(RuntimeError, match="FACTORY"):
             sign_tool_output({"x": 1})
 
-    def test_env_set_with_factory_signs(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_env_set_with_factory_signs(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sys
         import types
 
@@ -212,9 +196,7 @@ class TestSignerEnvVar:
         finally:
             sys.modules.pop("test_signer_factory_mod", None)
 
-    def test_malformed_factory_ref_errors(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_malformed_factory_ref_errors(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv(EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR, "1")
         monkeypatch.setenv(
             EVIDENCE_MCP_SIGNER_FACTORY_ENV_VAR,
@@ -223,9 +205,7 @@ class TestSignerEnvVar:
         with pytest.raises(RuntimeError, match=r"'module.submodule:callable_name'"):
             sign_tool_output({"x": 1})
 
-    def test_unimportable_module_errors(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_unimportable_module_errors(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv(EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR, "1")
         monkeypatch.setenv(
             EVIDENCE_MCP_SIGNER_FACTORY_ENV_VAR,
@@ -234,9 +214,7 @@ class TestSignerEnvVar:
         with pytest.raises(RuntimeError, match="Could not import"):
             sign_tool_output({"x": 1})
 
-    def test_missing_callable_errors(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_missing_callable_errors(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv(EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR, "1")
         monkeypatch.setenv(
             EVIDENCE_MCP_SIGNER_FACTORY_ENV_VAR,

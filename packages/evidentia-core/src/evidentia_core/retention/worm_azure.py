@@ -108,14 +108,9 @@ class AzureImmutableBlobWORM(WORMBackend):
         client_factory: Any = None,
     ) -> None:
         if not container_name or not isinstance(container_name, str):
-            raise WORMBackendError(
-                "AzureImmutableBlobWORM requires a non-empty container_name"
-            )
+            raise WORMBackendError("AzureImmutableBlobWORM requires a non-empty container_name")
         if lock_mode not in ("Locked", "Unlocked"):
-            raise WORMBackendError(
-                f"Azure lock_mode must be Locked or Unlocked, got "
-                f"{lock_mode!r}"
-            )
+            raise WORMBackendError(f"Azure lock_mode must be Locked or Unlocked, got {lock_mode!r}")
         self._container_name = container_name
         self._lock_mode = lock_mode
         self._prefix = prefix
@@ -126,9 +121,7 @@ class AzureImmutableBlobWORM(WORMBackend):
                 from azure.identity import DefaultAzureCredential
 
                 credential = DefaultAzureCredential()
-            self._service = BlobServiceClient(
-                account_url=account_url, credential=credential
-            )
+            self._service = BlobServiceClient(account_url=account_url, credential=credential)
         self._container = self._service.get_container_client(container_name)
 
     # ── Key helpers ────────────────────────────────────────────────
@@ -139,14 +132,10 @@ class AzureImmutableBlobWORM(WORMBackend):
     def _meta_key(self, record_id: str) -> str:
         return f"{self._prefix}{record_id}.meta.json"
 
-    def _retain_until_datetime(
-        self, metadata: RetentionMetadata
-    ) -> datetime | None:
+    def _retain_until_datetime(self, metadata: RetentionMetadata) -> datetime | None:
         if metadata.lock_until is None:
             return None
-        return datetime.combine(
-            metadata.lock_until, datetime.min.time(), tzinfo=UTC
-        )
+        return datetime.combine(metadata.lock_until, datetime.min.time(), tzinfo=UTC)
 
     # ── WORMBackend contract ───────────────────────────────────────
 
@@ -156,9 +145,7 @@ class AzureImmutableBlobWORM(WORMBackend):
         payload: bytes,
         metadata: RetentionMetadata,
     ) -> None:
-        payload_blob = self._container.get_blob_client(
-            self._payload_key(record_id)
-        )
+        payload_blob = self._container.get_blob_client(self._payload_key(record_id))
         if payload_blob.exists():
             raise WORMBackendError(
                 f"Azure record {record_id!r} already exists in container "
@@ -169,14 +156,10 @@ class AzureImmutableBlobWORM(WORMBackend):
             payload_blob.upload_blob(payload, overwrite=False)
         except ResourceExistsError as e:
             raise WORMBackendError(
-                f"Azure record {record_id!r} already exists "
-                f"(server-side); WORM forbids overwrite"
+                f"Azure record {record_id!r} already exists (server-side); WORM forbids overwrite"
             ) from e
         except HttpResponseError as e:
-            raise WORMBackendError(
-                f"Azure put failed for record {record_id!r}: "
-                f"{getattr(e, 'message', str(e))}"
-            ) from e
+            raise WORMBackendError(f"Azure put failed for record {record_id!r}: {getattr(e, 'message', str(e))}") from e
 
         # Apply immutability policy if retention applies
         retain_until = self._retain_until_datetime(metadata)
@@ -190,9 +173,7 @@ class AzureImmutableBlobWORM(WORMBackend):
                 )
             except HttpResponseError as e:
                 raise WORMBackendError(
-                    f"Azure set_immutability_policy failed for "
-                    f"record {record_id!r}: "
-                    f"{getattr(e, 'message', str(e))}"
+                    f"Azure set_immutability_policy failed for record {record_id!r}: {getattr(e, 'message', str(e))}"
                 ) from e
         # Apply legal-hold if requested
         if metadata.legal_hold:
@@ -200,15 +181,12 @@ class AzureImmutableBlobWORM(WORMBackend):
                 payload_blob.set_legal_hold(legal_hold=True)
             except HttpResponseError as e:
                 raise WORMBackendError(
-                    f"Azure set_legal_hold failed for record "
-                    f"{record_id!r}: {getattr(e, 'message', str(e))}"
+                    f"Azure set_legal_hold failed for record {record_id!r}: {getattr(e, 'message', str(e))}"
                 ) from e
 
         # Metadata sidecar — NOT under immutability policy (so we
         # can update on retention extension / lifecycle transition).
-        meta_blob = self._container.get_blob_client(
-            self._meta_key(record_id)
-        )
+        meta_blob = self._container.get_blob_client(self._meta_key(record_id))
         try:
             meta_blob.upload_blob(
                 metadata.model_dump_json(indent=2).encode("utf-8"),
@@ -216,50 +194,35 @@ class AzureImmutableBlobWORM(WORMBackend):
             )
         except HttpResponseError as e:
             raise WORMBackendError(
-                f"Azure metadata put failed for record {record_id!r}: "
-                f"{getattr(e, 'message', str(e))}"
+                f"Azure metadata put failed for record {record_id!r}: {getattr(e, 'message', str(e))}"
             ) from e
 
     def get(self, record_id: str) -> bytes:
-        blob = self._container.get_blob_client(
-            self._payload_key(record_id)
-        )
+        blob = self._container.get_blob_client(self._payload_key(record_id))
         try:
             stream = blob.download_blob()
             return bytes(stream.readall())
         except ResourceNotFoundError as e:
-            raise WORMBackendError(
-                f"Azure record {record_id!r} not found in container "
-                f"{self._container_name!r}"
-            ) from e
+            raise WORMBackendError(f"Azure record {record_id!r} not found in container {self._container_name!r}") from e
         except HttpResponseError as e:
-            raise WORMBackendError(
-                f"Azure get failed for record {record_id!r}: "
-                f"{getattr(e, 'message', str(e))}"
-            ) from e
+            raise WORMBackendError(f"Azure get failed for record {record_id!r}: {getattr(e, 'message', str(e))}") from e
 
     def get_metadata(self, record_id: str) -> RetentionMetadata:
         blob = self._container.get_blob_client(self._meta_key(record_id))
         try:
             raw = bytes(blob.download_blob().readall())
         except ResourceNotFoundError as e:
-            raise WORMBackendError(
-                f"Azure metadata for record {record_id!r} not found"
-            ) from e
+            raise WORMBackendError(f"Azure metadata for record {record_id!r} not found") from e
         except HttpResponseError as e:
             raise WORMBackendError(
-                f"Azure metadata get failed for record {record_id!r}: "
-                f"{getattr(e, 'message', str(e))}"
+                f"Azure metadata get failed for record {record_id!r}: {getattr(e, 'message', str(e))}"
             ) from e
         return RetentionMetadata.model_validate_json(raw.decode("utf-8"))
 
     def delete(self, record_id: str, today: date | None = None) -> None:
         metadata = self.get_metadata(record_id)
         if metadata.legal_hold:
-            raise WORMBackendError(
-                f"Azure record {record_id!r} is under legal hold; "
-                f"cannot delete"
-            )
+            raise WORMBackendError(f"Azure record {record_id!r} is under legal hold; cannot delete")
         if is_locked(metadata, today=today):
             raise WORMBackendError(
                 f"Azure record {record_id!r} is still inside its "
@@ -277,31 +240,21 @@ class AzureImmutableBlobWORM(WORMBackend):
             self._container.delete_blob(self._meta_key(record_id))
         except HttpResponseError as e:
             raise WORMBackendError(
-                f"Azure delete failed for record {record_id!r}: "
-                f"{getattr(e, 'message', str(e))}"
+                f"Azure delete failed for record {record_id!r}: {getattr(e, 'message', str(e))}"
             ) from e
 
-    def extend_retention(
-        self, record_id: str, new_lock_until: date
-    ) -> RetentionMetadata:
+    def extend_retention(self, record_id: str, new_lock_until: date) -> RetentionMetadata:
         from evidentia_core.models.common import utc_now
 
         metadata = self.get_metadata(record_id)
-        if (
-            metadata.lock_until is not None
-            and new_lock_until < metadata.lock_until
-        ):
+        if metadata.lock_until is not None and new_lock_until < metadata.lock_until:
             raise WORMBackendError(
                 f"WORM forbids shortening retention: current lock_until="
                 f"{metadata.lock_until}, attempted={new_lock_until}"
             )
 
-        new_retain_dt = datetime.combine(
-            new_lock_until, datetime.min.time(), tzinfo=UTC
-        )
-        payload_blob = self._container.get_blob_client(
-            self._payload_key(record_id)
-        )
+        new_retain_dt = datetime.combine(new_lock_until, datetime.min.time(), tzinfo=UTC)
+        payload_blob = self._container.get_blob_client(self._payload_key(record_id))
         try:
             payload_blob.set_immutability_policy(
                 ImmutabilityPolicy(
@@ -311,8 +264,7 @@ class AzureImmutableBlobWORM(WORMBackend):
             )
         except HttpResponseError as e:
             raise WORMBackendError(
-                f"Azure set_immutability_policy failed for record "
-                f"{record_id!r}: {getattr(e, 'message', str(e))}"
+                f"Azure set_immutability_policy failed for record {record_id!r}: {getattr(e, 'message', str(e))}"
             ) from e
 
         new_metadata = metadata.model_copy(
@@ -321,9 +273,7 @@ class AzureImmutableBlobWORM(WORMBackend):
                 "updated_at": utc_now(),
             }
         )
-        meta_blob = self._container.get_blob_client(
-            self._meta_key(record_id)
-        )
+        meta_blob = self._container.get_blob_client(self._meta_key(record_id))
         try:
             meta_blob.upload_blob(
                 new_metadata.model_dump_json(indent=2).encode("utf-8"),
@@ -331,31 +281,23 @@ class AzureImmutableBlobWORM(WORMBackend):
             )
         except HttpResponseError as e:
             raise WORMBackendError(
-                f"Azure metadata update failed for record {record_id!r}: "
-                f"{getattr(e, 'message', str(e))}"
+                f"Azure metadata update failed for record {record_id!r}: {getattr(e, 'message', str(e))}"
             ) from e
         return new_metadata
 
     def apply_legal_hold(self, record_id: str) -> RetentionMetadata:
         from evidentia_core.models.common import utc_now
 
-        payload_blob = self._container.get_blob_client(
-            self._payload_key(record_id)
-        )
+        payload_blob = self._container.get_blob_client(self._payload_key(record_id))
         try:
             payload_blob.set_legal_hold(legal_hold=True)
         except HttpResponseError as e:
             raise WORMBackendError(
-                f"Azure set_legal_hold failed for record {record_id!r}: "
-                f"{getattr(e, 'message', str(e))}"
+                f"Azure set_legal_hold failed for record {record_id!r}: {getattr(e, 'message', str(e))}"
             ) from e
         metadata = self.get_metadata(record_id)
-        new_metadata = metadata.model_copy(
-            update={"legal_hold": True, "updated_at": utc_now()}
-        )
-        meta_blob = self._container.get_blob_client(
-            self._meta_key(record_id)
-        )
+        new_metadata = metadata.model_copy(update={"legal_hold": True, "updated_at": utc_now()})
+        meta_blob = self._container.get_blob_client(self._meta_key(record_id))
         meta_blob.upload_blob(
             new_metadata.model_dump_json(indent=2).encode("utf-8"),
             overwrite=True,
@@ -365,36 +307,25 @@ class AzureImmutableBlobWORM(WORMBackend):
     def release_legal_hold(self, record_id: str) -> RetentionMetadata:
         from evidentia_core.models.common import utc_now
 
-        payload_blob = self._container.get_blob_client(
-            self._payload_key(record_id)
-        )
+        payload_blob = self._container.get_blob_client(self._payload_key(record_id))
         try:
             payload_blob.set_legal_hold(legal_hold=False)
         except HttpResponseError as e:
             raise WORMBackendError(
-                f"Azure release_legal_hold failed for record "
-                f"{record_id!r}: {getattr(e, 'message', str(e))}"
+                f"Azure release_legal_hold failed for record {record_id!r}: {getattr(e, 'message', str(e))}"
             ) from e
         metadata = self.get_metadata(record_id)
-        new_metadata = metadata.model_copy(
-            update={"legal_hold": False, "updated_at": utc_now()}
-        )
-        meta_blob = self._container.get_blob_client(
-            self._meta_key(record_id)
-        )
+        new_metadata = metadata.model_copy(update={"legal_hold": False, "updated_at": utc_now()})
+        meta_blob = self._container.get_blob_client(self._meta_key(record_id))
         meta_blob.upload_blob(
             new_metadata.model_dump_json(indent=2).encode("utf-8"),
             overwrite=True,
         )
         return new_metadata
 
-    def _update_metadata(
-        self, record_id: str, new_metadata: RetentionMetadata
-    ) -> None:
+    def _update_metadata(self, record_id: str, new_metadata: RetentionMetadata) -> None:
         """Sidecar metadata rewrite (does NOT touch the immutable payload)."""
-        meta_blob = self._container.get_blob_client(
-            self._meta_key(record_id)
-        )
+        meta_blob = self._container.get_blob_client(self._meta_key(record_id))
         try:
             meta_blob.upload_blob(
                 new_metadata.model_dump_json(indent=2).encode("utf-8"),
@@ -402,8 +333,7 @@ class AzureImmutableBlobWORM(WORMBackend):
             )
         except HttpResponseError as e:
             raise WORMBackendError(
-                f"Azure metadata update failed for record {record_id!r}: "
-                f"{getattr(e, 'message', str(e))}"
+                f"Azure metadata update failed for record {record_id!r}: {getattr(e, 'message', str(e))}"
             ) from e
 
     def __repr__(self) -> str:

@@ -51,9 +51,7 @@ def _row_value(value: Any) -> Any:
         return value
     if isinstance(value, list | tuple):
         # Filter Nones to prevent "None" string leakage in joins.
-        return ";".join(
-            str(_row_value(v)) for v in value if v is not None
-        )
+        return ";".join(str(_row_value(v)) for v in value if v is not None)
     if hasattr(value, "isoformat"):
         return value.isoformat()
     if isinstance(value, Enum):
@@ -154,19 +152,11 @@ def build_gap_dataset_rows(
                 "implementation_status": gap.implementation_status,
                 "status": _row_value(gap.status),
                 "priority_score": gap.priority_score,
-                "implementation_effort": _row_value(
-                    gap.implementation_effort
-                ),
-                "equivalent_controls": _row_value(
-                    gap.equivalent_controls_in_inventory
-                ),
-                "cross_framework_satisfies": _row_value(
-                    gap.cross_framework_value
-                ),
+                "implementation_effort": _row_value(gap.implementation_effort),
+                "equivalent_controls": _row_value(gap.equivalent_controls_in_inventory),
+                "cross_framework_satisfies": _row_value(gap.cross_framework_value),
                 "jira_issue_key": _row_value(gap.jira_issue_key),
-                "servicenow_ticket_id": _row_value(
-                    gap.servicenow_ticket_id
-                ),
+                "servicenow_ticket_id": _row_value(gap.servicenow_ticket_id),
                 "assigned_to": _row_value(gap.assigned_to),
                 "tags": _row_value(gap.tags),
                 "created_at": _row_value(gap.created_at),
@@ -192,37 +182,23 @@ def build_risk_dataset_rows(
                 "threat_source": risk.threat_source,
                 "threat_event": risk.threat_event,
                 "vulnerability": risk.vulnerability,
-                "predisposing_conditions": _row_value(
-                    risk.predisposing_conditions
-                ),
+                "predisposing_conditions": _row_value(risk.predisposing_conditions),
                 "likelihood": _row_value(risk.likelihood),
                 "likelihood_rationale": risk.likelihood_rationale,
                 "impact": _row_value(risk.impact),
                 "impact_rationale": risk.impact_rationale,
                 "risk_level": _row_value(risk.risk_level),
-                "recommended_controls": _row_value(
-                    risk.recommended_controls
-                ),
+                "recommended_controls": _row_value(risk.recommended_controls),
                 "remediation_priority": risk.remediation_priority,
-                "estimated_remediation_effort": _row_value(
-                    risk.estimated_remediation_effort
-                ),
+                "estimated_remediation_effort": _row_value(risk.estimated_remediation_effort),
                 "treatment": _row_value(risk.treatment),
-                "treatment_rationale": _row_value(
-                    risk.treatment_rationale
-                ),
+                "treatment_rationale": _row_value(risk.treatment_rationale),
                 "generated_by": risk.generated_by,
                 "generated_at": _row_value(risk.generated_at),
                 "model_used": _row_value(risk.model_used),
-                "temperature": (
-                    ctx.temperature if ctx else None
-                ),
-                "prompt_hash": (
-                    _row_value(ctx.prompt_hash) if ctx else None
-                ),
-                "run_id": (
-                    _row_value(ctx.run_id) if ctx else None
-                ),
+                "temperature": (ctx.temperature if ctx else None),
+                "prompt_hash": (_row_value(ctx.prompt_hash) if ctx else None),
+                "run_id": (_row_value(ctx.run_id) if ctx else None),
                 "risk_description": risk.risk_description,
             }
         )
@@ -243,9 +219,7 @@ def build_collection_run_dataset_rows(
                 "collected_at": _row_value(ctx.collected_at),
                 "credential_identity": ctx.credential_identity,
                 "source_system_id": ctx.source_system_id,
-                "filter_applied": json.dumps(
-                    ctx.filter_applied, sort_keys=True, default=str
-                ),
+                "filter_applied": json.dumps(ctx.filter_applied, sort_keys=True, default=str),
                 "evidentia_version": ctx.evidentia_version,
             }
         )

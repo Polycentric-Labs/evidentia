@@ -178,71 +178,59 @@ def _normalize_security_hub_id(raw: str) -> str:
 #   aspect of the NIST control but the control's scope is broader.
 # - RELATED_TO — weakest; used only when the connection is indirect.
 
-_CONFIG_RULE_OLIR: Final[
-    dict[str, dict[str, tuple[OLIRRelationship, str]]]
-] = {
+_CONFIG_RULE_OLIR: Final[dict[str, dict[str, tuple[OLIRRelationship, str]]]] = {
     "access-keys-rotated": {
         "AC-2": (
             OLIRRelationship.INTERSECTS_WITH,
-            "AC-2 Account Management encompasses the full credential "
-            "lifecycle; rule evidences one aspect (key age).",
+            "AC-2 Account Management encompasses the full credential lifecycle; rule evidences one aspect (key age).",
         ),
         "IA-5": (
             OLIRRelationship.SUBSET_OF,
-            "IA-5 Authenticator Management requires periodic "
-            "authenticator refresh; rule directly evidences rotation.",
+            "IA-5 Authenticator Management requires periodic authenticator refresh; rule directly evidences rotation.",
         ),
     },
     "iam-password-policy": {
         "IA-5": (
             OLIRRelationship.SUBSET_OF,
-            "IA-5 requires complexity/composition policy; rule "
-            "evidences the policy-existence requirement of IA-5(1).",
+            "IA-5 requires complexity/composition policy; rule evidences the policy-existence requirement of IA-5(1).",
         ),
     },
     "iam-root-access-key-check": {
         "AC-2": (
             OLIRRelationship.SUBSET_OF,
-            "AC-2 privileged-account management; per Security Hub "
-            "FSBP/CIS, root access keys violate AC-2 hygiene.",
+            "AC-2 privileged-account management; per Security Hub FSBP/CIS, root access keys violate AC-2 hygiene.",
         ),
         "AC-6": (
             OLIRRelationship.SUBSET_OF,
-            "AC-6 Least Privilege — root keys bypass boundaries; "
-            "Security Hub IAM.4 'Related requirements' cites AC-6.",
+            "AC-6 Least Privilege — root keys bypass boundaries; Security Hub IAM.4 'Related requirements' cites AC-6.",
         ),
     },
     "iam-user-mfa-enabled": {
         "IA-2": (
             OLIRRelationship.SUBSET_OF,
-            "IA-2(1) MFA for privileged accounts; rule evidences "
-            "MFA presence.",
+            "IA-2(1) MFA for privileged accounts; rule evidences MFA presence.",
         ),
     },
     "iam-user-no-policies-check": {
         "AC-2": (
             OLIRRelationship.INTERSECTS_WITH,
-            "Group-vs-user policy attachment is one axis of account "
-            "management structure.",
+            "Group-vs-user policy attachment is one axis of account management structure.",
         ),
         "AC-6": (
             OLIRRelationship.SUBSET_OF,
-            "AC-6 Least Privilege prefers group-scoped over user-"
-            "attached policies.",
+            "AC-6 Least Privilege prefers group-scoped over user-attached policies.",
         ),
     },
     "mfa-enabled-for-iam-console-access": {
         "IA-2": (
             OLIRRelationship.SUBSET_OF,
-            "IA-2(1) Multifactor Authentication to Privileged "
-            "Accounts; console MFA is the canonical scenario.",
+            "IA-2(1) Multifactor Authentication to Privileged Accounts; console MFA is the canonical scenario.",
         ),
     },
     "root-account-mfa-enabled": {
         "IA-2": (
             OLIRRelationship.SUBSET_OF,
-            "IA-2(1) MFA — root MFA is the highest-privilege auth "
-            "checkpoint.",
+            "IA-2(1) MFA — root MFA is the highest-privilege auth checkpoint.",
         ),
         "AC-6": (
             OLIRRelationship.SUBSET_OF,
@@ -253,29 +241,25 @@ _CONFIG_RULE_OLIR: Final[
     "alb-http-to-https-redirection-check": {
         "SC-8": (
             OLIRRelationship.SUBSET_OF,
-            "SC-8 Transmission Confidentiality — HTTPS redirect "
-            "ensures encryption in transit. FSBP ELB.1 cites SC-8.",
+            "SC-8 Transmission Confidentiality — HTTPS redirect ensures encryption in transit. FSBP ELB.1 cites SC-8.",
         ),
     },
     "elb-tls-https-listeners-only": {
         "SC-8": (
             OLIRRelationship.SUBSET_OF,
-            "SC-8 — TLS-only listeners enforce in-transit encryption "
-            "per FSBP ELB.2.",
+            "SC-8 — TLS-only listeners enforce in-transit encryption per FSBP ELB.2.",
         ),
     },
     "encrypted-volumes": {
         "SC-28": (
             OLIRRelationship.SUBSET_OF,
-            "SC-28 Protection of Information at Rest — EBS volume "
-            "encryption.",
+            "SC-28 Protection of Information at Rest — EBS volume encryption.",
         ),
     },
     "rds-storage-encrypted": {
         "SC-28": (
             OLIRRelationship.SUBSET_OF,
-            "SC-28 at-rest encryption; FSBP RDS.3 'Related "
-            "requirements' cites SC-28.",
+            "SC-28 at-rest encryption; FSBP RDS.3 'Related requirements' cites SC-28.",
         ),
     },
     "s3-bucket-server-side-encryption-enabled": {
@@ -287,20 +271,17 @@ _CONFIG_RULE_OLIR: Final[
     "s3-bucket-ssl-requests-only": {
         "SC-8": (
             OLIRRelationship.SUBSET_OF,
-            "SC-8 in-transit encryption; enforces TLS on all S3 "
-            "requests per FSBP S3.5.",
+            "SC-8 in-transit encryption; enforces TLS on all S3 requests per FSBP S3.5.",
         ),
     },
     "ec2-security-group-attached-to-eni": {
         "AC-4": (
             OLIRRelationship.INTERSECTS_WITH,
-            "AC-4 Information Flow Control — SG attachment is one "
-            "mechanism of flow control.",
+            "AC-4 Information Flow Control — SG attachment is one mechanism of flow control.",
         ),
         "SC-7": (
             OLIRRelationship.SUBSET_OF,
-            "SC-7 Boundary Protection — SGs are boundary-protection "
-            "mechanisms; FSBP EC2.2 cites SC-7.",
+            "SC-7 Boundary Protection — SGs are boundary-protection mechanisms; FSBP EC2.2 cites SC-7.",
         ),
     },
     "rds-instance-public-access-check": {
@@ -310,8 +291,7 @@ _CONFIG_RULE_OLIR: Final[
         ),
         "AC-4": (
             OLIRRelationship.INTERSECTS_WITH,
-            "AC-4 — information flow restriction across public "
-            "boundary.",
+            "AC-4 — information flow restriction across public boundary.",
         ),
         "SC-7": (
             OLIRRelationship.SUBSET_OF,
@@ -341,8 +321,7 @@ _CONFIG_RULE_OLIR: Final[
     "vpc-default-security-group-closed": {
         "AC-4": (
             OLIRRelationship.INTERSECTS_WITH,
-            "AC-4 Information Flow Control — default SG scope "
-            "affects flow policy.",
+            "AC-4 Information Flow Control — default SG scope affects flow policy.",
         ),
         "SC-7": (
             OLIRRelationship.SUBSET_OF,
@@ -356,8 +335,7 @@ _CONFIG_RULE_OLIR: Final[
         ),
         "AU-3": (
             OLIRRelationship.SUBSET_OF,
-            "AU-3 Content of Audit Records — CloudTrail records "
-            "AU-3 required fields.",
+            "AU-3 Content of Audit Records — CloudTrail records AU-3 required fields.",
         ),
         "AU-12": (
             OLIRRelationship.SUBSET_OF,
@@ -367,20 +345,17 @@ _CONFIG_RULE_OLIR: Final[
     "cloud-trail-log-file-validation-enabled": {
         "AU-9": (
             OLIRRelationship.SUBSET_OF,
-            "AU-9 Protection of Audit Information — log-file "
-            "validation = tamper detection; FSBP CloudTrail.4.",
+            "AU-9 Protection of Audit Information — log-file validation = tamper detection; FSBP CloudTrail.4.",
         ),
         "AU-10": (
             OLIRRelationship.INTERSECTS_WITH,
-            "AU-10 Non-Repudiation — validation supports non-"
-            "repudiation of logged events.",
+            "AU-10 Non-Repudiation — validation supports non-repudiation of logged events.",
         ),
     },
     "cloudwatch-log-group-encrypted": {
         "SC-28": (
             OLIRRelationship.SUBSET_OF,
-            "SC-28 — log group KMS encryption protects audit data "
-            "at rest.",
+            "SC-28 — log group KMS encryption protects audit data at rest.",
         ),
         "AU-9": (
             OLIRRelationship.SUBSET_OF,
@@ -400,8 +375,7 @@ _CONFIG_RULE_OLIR: Final[
     "s3-bucket-logging-enabled": {
         "AU-2": (
             OLIRRelationship.SUBSET_OF,
-            "AU-2 — S3 access logging for data-plane events; FSBP "
-            "S3.9 cites AU-2.",
+            "AU-2 — S3 access logging for data-plane events; FSBP S3.9 cites AU-2.",
         ),
         "AU-12": (
             OLIRRelationship.SUBSET_OF,
@@ -411,46 +385,39 @@ _CONFIG_RULE_OLIR: Final[
     "backup-plan-min-frequency-and-min-retention-check": {
         "CP-9": (
             OLIRRelationship.SUBSET_OF,
-            "CP-9 System Backup — frequency + retention policy "
-            "evidence.",
+            "CP-9 System Backup — frequency + retention policy evidence.",
         ),
     },
     "rds-automatic-minor-version-upgrade-enabled": {
         "SI-2": (
             OLIRRelationship.SUBSET_OF,
-            "SI-2 Flaw Remediation — automated minor upgrades are "
-            "one mechanism of timely patching.",
+            "SI-2 Flaw Remediation — automated minor upgrades are one mechanism of timely patching.",
         ),
     },
     "rds-multi-az-support": {
         "CP-9": (
             OLIRRelationship.INTERSECTS_WITH,
-            "CP-9 — multi-AZ supports availability but is distinct "
-            "from backup storage.",
+            "CP-9 — multi-AZ supports availability but is distinct from backup storage.",
         ),
         "CP-10": (
             OLIRRelationship.SUBSET_OF,
-            "CP-10 System Recovery — multi-AZ enables automated "
-            "failover.",
+            "CP-10 System Recovery — multi-AZ enables automated failover.",
         ),
     },
     "ec2-managedinstance-patch-compliance-status-check": {
         "SI-2": (
             OLIRRelationship.SUBSET_OF,
-            "SI-2 Flaw Remediation — patch compliance is primary "
-            "evidence of timely patching.",
+            "SI-2 Flaw Remediation — patch compliance is primary evidence of timely patching.",
         ),
     },
     "ec2-instance-detailed-monitoring-enabled": {
         "CM-8": (
             OLIRRelationship.INTERSECTS_WITH,
-            "CM-8 System Component Inventory — detailed monitoring "
-            "provides component-level telemetry.",
+            "CM-8 System Component Inventory — detailed monitoring provides component-level telemetry.",
         ),
         "SI-4": (
             OLIRRelationship.SUBSET_OF,
-            "SI-4 System Monitoring — detailed monitoring is "
-            "fine-grained system monitoring.",
+            "SI-4 System Monitoring — detailed monitoring is fine-grained system monitoring.",
         ),
     },
     "ec2-instance-managed-by-ssm": {

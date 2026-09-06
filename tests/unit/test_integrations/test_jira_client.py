@@ -56,9 +56,7 @@ class TestJiraConfig:
             "secret-handling contract every callsite relies on."
         )
 
-    def test_from_env_raises_when_required_vars_missing(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_from_env_raises_when_required_vars_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
         for var in (
             "JIRA_BASE_URL",
             "JIRA_EMAIL",
@@ -76,9 +74,7 @@ class TestJiraConfig:
         assert "JIRA_API_TOKEN" in detail
         assert "JIRA_PROJECT_KEY" in detail
 
-    def test_from_env_loads_all_fields(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_from_env_loads_all_fields(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("JIRA_BASE_URL", "https://env.atlassian.net/")
         monkeypatch.setenv("JIRA_EMAIL", "env@x.com")
         monkeypatch.setenv("JIRA_API_TOKEN", "env-token")
@@ -90,9 +86,7 @@ class TestJiraConfig:
         assert cfg.project_key == "ENV"
         assert cfg.issue_type == "Story"
 
-    def test_from_env_overrides_beat_env_vars(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_from_env_overrides_beat_env_vars(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("JIRA_BASE_URL", "https://env.atlassian.net")
         monkeypatch.setenv("JIRA_EMAIL", "env@x.com")
         monkeypatch.setenv("JIRA_API_TOKEN", "env-token")
@@ -116,9 +110,7 @@ class TestTestConnection:
                     },
                 )
             if request.url.path == "/rest/api/3/project/SEC":
-                return httpx.Response(
-                    200, json={"key": "SEC", "name": "Security"}
-                )
+                return httpx.Response(200, json={"key": "SEC", "name": "Security"})
             return httpx.Response(404)
 
         with _client_with_handler(httpx.MockTransport(handler)) as client:
@@ -179,13 +171,8 @@ class TestCreateIssue:
                 import json
 
                 captured["body"] = json.loads(request.content.decode())
-                return httpx.Response(
-                    201, json={"id": "10042", "key": "SEC-42"}
-                )
-            if (
-                request.method == "GET"
-                and request.url.path == "/rest/api/3/issue/SEC-42"
-            ):
+                return httpx.Response(201, json={"id": "10042", "key": "SEC-42"})
+            if request.method == "GET" and request.url.path == "/rest/api/3/issue/SEC-42":
                 return httpx.Response(
                     200,
                     json={
@@ -222,10 +209,7 @@ class TestCreateIssue:
         assert fields["labels"] == ["evidentia", "nist-800-53-rev5-moderate"]
         # ADF wrapper present
         assert fields["description"]["type"] == "doc"
-        assert (
-            fields["description"]["content"][0]["content"][0]["text"]
-            == "Demo description"
-        )
+        assert fields["description"]["content"][0]["content"][0]["text"] == "Demo description"
 
     def test_merges_extra_fields(self) -> None:
         captured: dict[str, Any] = {}

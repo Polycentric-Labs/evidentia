@@ -152,29 +152,20 @@ class TestOMBImpactCategory:
         assert not triggers_minimum_practices(OMBImpactCategory.NEITHER)
 
     def test_rights_triggers(self) -> None:
-        assert triggers_minimum_practices(
-            OMBImpactCategory.RIGHTS_IMPACTING
-        )
+        assert triggers_minimum_practices(OMBImpactCategory.RIGHTS_IMPACTING)
 
     def test_safety_triggers(self) -> None:
-        assert triggers_minimum_practices(
-            OMBImpactCategory.SAFETY_IMPACTING
-        )
+        assert triggers_minimum_practices(OMBImpactCategory.SAFETY_IMPACTING)
 
     def test_both_triggers(self) -> None:
-        assert triggers_minimum_practices(
-            OMBImpactCategory.RIGHTS_AND_SAFETY_IMPACTING
-        )
+        assert triggers_minimum_practices(OMBImpactCategory.RIGHTS_AND_SAFETY_IMPACTING)
 
     def test_enum_values_stable(self) -> None:
         # String values are persisted in YAML; if these change,
         # operator inventories break.
         assert OMBImpactCategory.RIGHTS_IMPACTING.value == "rights_impacting"
         assert OMBImpactCategory.SAFETY_IMPACTING.value == "safety_impacting"
-        assert (
-            OMBImpactCategory.RIGHTS_AND_SAFETY_IMPACTING.value
-            == "rights_and_safety_impacting"
-        )
+        assert OMBImpactCategory.RIGHTS_AND_SAFETY_IMPACTING.value == "rights_and_safety_impacting"
         assert OMBImpactCategory.NEITHER.value == "neither"
 
 
@@ -183,19 +174,13 @@ class TestOMBImpactCategory:
 
 class TestHighImpactDetermination:
     def test_high_impact_triggers(self) -> None:
-        assert high_impact_triggers_minimum_practices(
-            HighImpactDetermination.HIGH_IMPACT
-        )
+        assert high_impact_triggers_minimum_practices(HighImpactDetermination.HIGH_IMPACT)
 
     def test_not_high_impact_does_not_trigger(self) -> None:
-        assert not high_impact_triggers_minimum_practices(
-            HighImpactDetermination.NOT_HIGH_IMPACT
-        )
+        assert not high_impact_triggers_minimum_practices(HighImpactDetermination.NOT_HIGH_IMPACT)
 
     def test_not_assessed_does_not_trigger(self) -> None:
-        assert not high_impact_triggers_minimum_practices(
-            HighImpactDetermination.NOT_ASSESSED
-        )
+        assert not high_impact_triggers_minimum_practices(HighImpactDetermination.NOT_ASSESSED)
 
     def test_triggers_accepts_string_value(self) -> None:
         # Registry entries persist enums as string values; the helper
@@ -206,9 +191,7 @@ class TestHighImpactDetermination:
     def test_enum_values_stable(self) -> None:
         # Persisted in YAML/JSON inventories — must not drift.
         assert HighImpactDetermination.HIGH_IMPACT.value == "high_impact"
-        assert (
-            HighImpactDetermination.NOT_HIGH_IMPACT.value == "not_high_impact"
-        )
+        assert HighImpactDetermination.NOT_HIGH_IMPACT.value == "not_high_impact"
         assert HighImpactDetermination.NOT_ASSESSED.value == "not_assessed"
 
 
@@ -229,9 +212,7 @@ class TestHighImpactBasis:
 
 class TestOMBHighImpactAssessment:
     def test_minimal_construction(self) -> None:
-        a = OMBHighImpactAssessment(
-            determination=HighImpactDetermination.NOT_ASSESSED
-        )
+        a = OMBHighImpactAssessment(determination=HighImpactDetermination.NOT_ASSESSED)
         assert a.bases == []
         assert a.rationale is None
 
@@ -273,9 +254,7 @@ class TestLegacyCrosswalk:
         assert "health_and_safety" in a.bases
 
     def test_both_maps_to_high_impact_with_four_bases(self) -> None:
-        a = crosswalk_from_legacy(
-            OMBImpactCategory.RIGHTS_AND_SAFETY_IMPACTING
-        )
+        a = crosswalk_from_legacy(OMBImpactCategory.RIGHTS_AND_SAFETY_IMPACTING)
         assert a.determination == HighImpactDetermination.HIGH_IMPACT
         assert len(a.bases) == 4
 
@@ -372,15 +351,11 @@ class TestRegistryFederalExtension:
                 rationale="Adjudicates a civil-rights-relevant decision.",
             ),
         )
-        loaded = AISystemRegistryEntry.model_validate_json(
-            entry.model_dump_json()
-        )
+        loaded = AISystemRegistryEntry.model_validate_json(entry.model_dump_json())
         assert loaded.omb_impact == OMBImpactCategory.RIGHTS_IMPACTING
         assert loaded.omb_high_impact is not None
         assert loaded.omb_high_impact.determination == "high_impact"
-        assert loaded.omb_high_impact.bases == [
-            "civil_rights_liberties_privacy"
-        ]
+        assert loaded.omb_high_impact.bases == ["civil_rights_liberties_privacy"]
 
     def test_legacy_omb_only_entry_loads_without_high_impact(self) -> None:
         # An entry serialized with only the legacy field (no
@@ -434,16 +409,12 @@ class TestClassifyChange:
 
     def test_pilot_to_production_is_transformative(self) -> None:
         prior = _make_entry(deployment_status=DeploymentStatus.PILOT)
-        new = prior.model_copy(
-            update={"deployment_status": DeploymentStatus.PRODUCTION}
-        )
+        new = prior.model_copy(update={"deployment_status": DeploymentStatus.PRODUCTION})
         assert classify_change(prior, new) == SCRCategory.TRANSFORMATIVE
 
     def test_proposed_to_in_dev_is_adaptive(self) -> None:
         prior = _make_entry(deployment_status=DeploymentStatus.PROPOSED)
-        new = prior.model_copy(
-            update={"deployment_status": DeploymentStatus.IN_DEVELOPMENT}
-        )
+        new = prior.model_copy(update={"deployment_status": DeploymentStatus.IN_DEVELOPMENT})
         assert classify_change(prior, new) == SCRCategory.ADAPTIVE
 
     def test_fips_escalation_is_transformative(self) -> None:
@@ -465,9 +436,7 @@ class TestClassifyChange:
         self,
     ) -> None:
         prior = _make_entry(omb_impact=OMBImpactCategory.NEITHER)
-        new = prior.model_copy(
-            update={"omb_impact": OMBImpactCategory.RIGHTS_IMPACTING}
-        )
+        new = prior.model_copy(update={"omb_impact": OMBImpactCategory.RIGHTS_IMPACTING})
         assert classify_change(prior, new) == SCRCategory.TRANSFORMATIVE
 
     def test_omb_first_population_is_routine(self) -> None:
@@ -475,18 +444,14 @@ class TestClassifyChange:
         NOT trigger a transformative SCR — operators backfilling the
         federal fields shouldn't get spurious change-requests."""
         prior = _make_entry(omb_impact=None)
-        new = prior.model_copy(
-            update={"omb_impact": OMBImpactCategory.RIGHTS_IMPACTING}
-        )
+        new = prior.model_copy(update={"omb_impact": OMBImpactCategory.RIGHTS_IMPACTING})
         # Only the omb_impact field changed; no adaptive triggers
         # fired. Routine recurring.
         assert classify_change(prior, new) == SCRCategory.ROUTINE_RECURRING
 
     def test_high_impact_escalation_is_transformative(self) -> None:
         prior = _make_entry(
-            omb_high_impact=OMBHighImpactAssessment(
-                determination=HighImpactDetermination.NOT_HIGH_IMPACT
-            )
+            omb_high_impact=OMBHighImpactAssessment(determination=HighImpactDetermination.NOT_HIGH_IMPACT)
         )
         new = prior.model_copy(
             update={
@@ -504,26 +469,14 @@ class TestClassifyChange:
         spurious change-requests."""
         prior = _make_entry(omb_high_impact=None)
         new = prior.model_copy(
-            update={
-                "omb_high_impact": OMBHighImpactAssessment(
-                    determination=HighImpactDetermination.HIGH_IMPACT
-                )
-            }
+            update={"omb_high_impact": OMBHighImpactAssessment(determination=HighImpactDetermination.HIGH_IMPACT)}
         )
         assert classify_change(prior, new) == SCRCategory.ROUTINE_RECURRING
 
     def test_high_impact_not_assessed_to_high_is_transformative(self) -> None:
-        prior = _make_entry(
-            omb_high_impact=OMBHighImpactAssessment(
-                determination=HighImpactDetermination.NOT_ASSESSED
-            )
-        )
+        prior = _make_entry(omb_high_impact=OMBHighImpactAssessment(determination=HighImpactDetermination.NOT_ASSESSED))
         new = prior.model_copy(
-            update={
-                "omb_high_impact": OMBHighImpactAssessment(
-                    determination=HighImpactDetermination.HIGH_IMPACT
-                )
-            }
+            update={"omb_high_impact": OMBHighImpactAssessment(determination=HighImpactDetermination.HIGH_IMPACT)}
         )
         assert classify_change(prior, new) == SCRCategory.TRANSFORMATIVE
 
@@ -541,9 +494,7 @@ class TestEmitSCRForm:
 
     def test_form_carries_status_snapshots(self) -> None:
         prior = _make_entry(deployment_status=DeploymentStatus.PILOT)
-        new = prior.model_copy(
-            update={"deployment_status": DeploymentStatus.PRODUCTION}
-        )
+        new = prior.model_copy(update={"deployment_status": DeploymentStatus.PRODUCTION})
         form = emit_scr_form(prior, new)
         assert form.deployment_status_before == DeploymentStatus.PILOT
         assert form.deployment_status_after == DeploymentStatus.PRODUCTION
@@ -551,9 +502,7 @@ class TestEmitSCRForm:
     def test_operator_override_summary(self) -> None:
         prior = _make_entry()
         new = prior.model_copy(update={"provider": "new"})
-        form = emit_scr_form(
-            prior, new, summary="Custom operator narrative."
-        )
+        form = emit_scr_form(prior, new, summary="Custom operator narrative.")
         assert form.summary == "Custom operator narrative."
 
     def test_category_override(self) -> None:
@@ -592,9 +541,7 @@ class TestEmitSCRForm:
 
     def test_to_markdown_includes_rollback_when_provided(self) -> None:
         entry = _make_entry()
-        form = emit_scr_form(
-            entry, entry, rollback_plan="Roll back via git revert + redeploy."
-        )
+        form = emit_scr_form(entry, entry, rollback_plan="Roll back via git revert + redeploy.")
         md = form.to_markdown()
         assert "## Rollback plan" in md
         assert "git revert" in md
@@ -631,18 +578,14 @@ class TestEmitSCRForm:
 
     def test_default_customer_impact_high_impact_not_high(self) -> None:
         entry = _make_entry(
-            omb_high_impact=OMBHighImpactAssessment(
-                determination=HighImpactDetermination.NOT_HIGH_IMPACT
-            )
+            omb_high_impact=OMBHighImpactAssessment(determination=HighImpactDetermination.NOT_HIGH_IMPACT)
         )
         form = emit_scr_form(entry, entry)
         assert "not OMB M-25-21 high-impact" in form.customer_impact
 
     def test_auto_summary_lists_changes(self) -> None:
         prior = _make_entry()
-        new = prior.model_copy(
-            update={"owner": "new-owner", "provider": "new-vendor"}
-        )
+        new = prior.model_copy(update={"owner": "new-owner", "provider": "new-vendor"})
         form = emit_scr_form(prior, new)
         assert "owner" in form.summary
         assert "provider" in form.summary
@@ -712,12 +655,8 @@ class TestRFC0007Alignment:
                 "service_offering_fedramp_id": "FR-12345",
                 "type_of_change": "AI system inventory entry",
                 "reason_for_change": "New AI use case approval.",
-                "components_and_controls_affected": (
-                    "AC-3, AC-6 — access enforcement scope"
-                ),
-                "business_security_impact_analysis": (
-                    "Low business impact; rights-impacting per OMB §5(b)(i)."
-                ),
+                "components_and_controls_affected": ("AC-3, AC-6 — access enforcement scope"),
+                "business_security_impact_analysis": ("Low business impact; rights-impacting per OMB §5(b)(i)."),
                 "approver_name_and_title": "Jane Doe, CISO",
             }
         )
@@ -752,9 +691,7 @@ class TestRFC0007Alignment:
         self,
     ) -> None:
         prior = _make_entry(deployment_status=DeploymentStatus.PILOT)
-        new = prior.model_copy(
-            update={"deployment_status": DeploymentStatus.PRODUCTION}
-        )
+        new = prior.model_copy(update={"deployment_status": DeploymentStatus.PRODUCTION})
         form = emit_scr_form(
             prior,
             new,
@@ -779,9 +716,7 @@ class TestRFC0007Alignment:
 
     def test_to_oscal_scr_notification_three_pao_conditional(self) -> None:
         prior = _make_entry(deployment_status=DeploymentStatus.PILOT)
-        new = prior.model_copy(
-            update={"deployment_status": DeploymentStatus.PRODUCTION}
-        )
+        new = prior.model_copy(update={"deployment_status": DeploymentStatus.PRODUCTION})
         form = emit_scr_form(prior, new)
         # Without three_pao_name set, it should NOT appear in the
         # notification.
@@ -798,9 +733,7 @@ class TestRFC0007Alignment:
         notif = populated.to_oscal_scr_notification()
         assert "three_pao_name" not in notif
         # With three_pao_name set, it appears.
-        with_3pao = populated.model_copy(
-            update={"three_pao_name": "Acme 3PAO LLC"}
-        )
+        with_3pao = populated.model_copy(update={"three_pao_name": "Acme 3PAO LLC"})
         notif_with = with_3pao.to_oscal_scr_notification()
         assert notif_with["three_pao_name"] == "Acme 3PAO LLC"
 
@@ -899,15 +832,12 @@ class TestMinimumPracticeRecord:
                 issued_on=date(2026, 6, 1),
                 issued_by="Agency CAIO",
                 justification=(
-                    "Fulfilling the practice would create an unacceptable "
-                    "impediment to critical agency operations."
+                    "Fulfilling the practice would create an unacceptable impediment to critical agency operations."
                 ),
                 reported_to_omb_on=date(2026, 6, 15),
             ),
         )
-        back = MinimumPracticeRecord.model_validate(
-            record.model_dump(mode="json")
-        )
+        back = MinimumPracticeRecord.model_validate(record.model_dump(mode="json"))
         assert back.waiver is not None
         assert back.waiver.issued_by == "Agency CAIO"
 
@@ -920,11 +850,7 @@ class TestPracticeCompliance:
             practice_compliance,
         )
 
-        summary = practice_compliance(
-            OMBHighImpactAssessment(
-                determination=HighImpactDetermination.HIGH_IMPACT
-            )
-        )
+        summary = practice_compliance(OMBHighImpactAssessment(determination=HighImpactDetermination.HIGH_IMPACT))
         assert summary.total == 7
         assert len(summary.missing) == 7
         assert not summary.satisfied
@@ -947,13 +873,8 @@ class TestPracticeCompliance:
             issued_by="Agency CAIO",
             justification="System-specific risk assessment.",
         )
-        practices = {
-            p: MinimumPracticeRecord(status=PracticeStatus.IMPLEMENTED)
-            for p in MinimumPractice
-        }
-        practices[MinimumPractice.PUBLIC_FEEDBACK] = MinimumPracticeRecord(
-            status=PracticeStatus.WAIVED, waiver=waiver
-        )
+        practices = {p: MinimumPracticeRecord(status=PracticeStatus.IMPLEMENTED) for p in MinimumPractice}
+        practices[MinimumPractice.PUBLIC_FEEDBACK] = MinimumPracticeRecord(status=PracticeStatus.WAIVED, waiver=waiver)
         summary = practice_compliance(
             OMBHighImpactAssessment(
                 determination=HighImpactDetermination.HIGH_IMPACT,
@@ -975,13 +896,8 @@ class TestPracticeCompliance:
             practice_compliance,
         )
 
-        practices = {
-            p: MinimumPracticeRecord(status=PracticeStatus.IMPLEMENTED)
-            for p in MinimumPractice
-        }
-        practices[MinimumPractice.HUMAN_TRAINING] = MinimumPracticeRecord(
-            status=PracticeStatus.IN_PROGRESS
-        )
+        practices = {p: MinimumPracticeRecord(status=PracticeStatus.IMPLEMENTED) for p in MinimumPractice}
+        practices[MinimumPractice.HUMAN_TRAINING] = MinimumPracticeRecord(status=PracticeStatus.IN_PROGRESS)
         summary = practice_compliance(
             OMBHighImpactAssessment(
                 determination=HighImpactDetermination.HIGH_IMPACT,

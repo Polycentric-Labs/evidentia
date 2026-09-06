@@ -24,9 +24,7 @@ from evidentia_core.oscal.signing import (
 
 # Every test in this module needs GnuPG. Skip the whole module when
 # it's unavailable rather than marking each test individually.
-pytestmark = pytest.mark.skipif(
-    not gpg_available(), reason="gpg binary not installed"
-)
+pytestmark = pytest.mark.skipif(not gpg_available(), reason="gpg binary not installed")
 
 
 _TEST_KEY_EMAIL = "evidentia-test@example.invalid"
@@ -81,10 +79,7 @@ Expire-Date: 0
         check=False,
     )
     if result.returncode != 0:
-        pytest.skip(
-            f"GnuPG test-key generation failed (likely a sandbox / "
-            f"entropy issue): {result.stderr.strip()}"
-        )
+        pytest.skip(f"GnuPG test-key generation failed (likely a sandbox / entropy issue): {result.stderr.strip()}")
     return home
 
 
@@ -99,9 +94,7 @@ def test_sign_then_verify_roundtrip(tmp_path: Path, gnupghome: Path) -> None:
     assert sig_path == artifact.with_suffix(".json.asc")
     assert sig_path.is_file()
     # ASCII-armored sig starts with the PGP header.
-    assert sig_path.read_text(encoding="utf-8").startswith(
-        "-----BEGIN PGP SIGNATURE-----"
-    )
+    assert sig_path.read_text(encoding="utf-8").startswith("-----BEGIN PGP SIGNATURE-----")
 
     result = verify_file(artifact, gnupghome=gnupghome)
     assert result.valid is True
@@ -139,9 +132,7 @@ def test_sign_custom_signature_path(tmp_path: Path, gnupghome: Path) -> None:
     assert returned_sig == custom_sig
     assert custom_sig.is_file()
 
-    result = verify_file(
-        artifact, signature_path=custom_sig, gnupghome=gnupghome
-    )
+    result = verify_file(artifact, signature_path=custom_sig, gnupghome=gnupghome)
     assert result.valid is True
 
 
@@ -159,16 +150,14 @@ def test_sign_missing_artifact_raises(tmp_path: Path, gnupghome: Path) -> None:
 
 def test_verify_missing_signature_raises(tmp_path: Path, gnupghome: Path) -> None:
     artifact = tmp_path / "unsigned.json"
-    artifact.write_text('{}', encoding="utf-8")
+    artifact.write_text("{}", encoding="utf-8")
     with pytest.raises(GPGVerifyError, match="Signature not found"):
         verify_file(artifact, gnupghome=gnupghome)
 
 
-def test_sign_unknown_key_raises_signing_error(
-    tmp_path: Path, gnupghome: Path
-) -> None:
+def test_sign_unknown_key_raises_signing_error(tmp_path: Path, gnupghome: Path) -> None:
     artifact = tmp_path / "x.json"
-    artifact.write_text('{}', encoding="utf-8")
+    artifact.write_text("{}", encoding="utf-8")
     with pytest.raises(GPGSigningError):
         sign_file(artifact, key_id="nonexistent-key@invalid", gnupghome=gnupghome)
 

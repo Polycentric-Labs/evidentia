@@ -76,9 +76,7 @@ class TestResolveHostIsPrivate:
         assert is_private is False
         assert bad == ""
 
-    def test_dns_returning_private_is_flagged_single_resolution(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_dns_returning_private_is_flagged_single_resolution(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """A hostname that resolves to a private IP on the SINGLE
         validation lookup is refused.
 
@@ -91,9 +89,7 @@ class TestResolveHostIsPrivate:
         per-transport level in
         ``tests/unit/test_collectors/test_collector_rebind.py``).
         """
-        monkeypatch.setattr(
-            socket, "getaddrinfo", _fake_getaddrinfo("169.254.169.254")
-        )
+        monkeypatch.setattr(socket, "getaddrinfo", _fake_getaddrinfo("169.254.169.254"))
         is_private, bad = resolve_host_is_private("metadata.evil.example")
         assert is_private is True
         assert bad == "169.254.169.254"
@@ -145,9 +141,7 @@ class TestEnforcePublicHost:
         with pytest.raises(SSRFBlockedError):
             enforce_public_host("https://[::1]:8443/api", subsystem="test")
 
-    def test_unresolvable_host_fails_closed(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_unresolvable_host_fails_closed(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """A host that cannot be resolved cannot be proven public — refused."""
 
         def _boom(*_a: Any, **_k: Any) -> Any:
@@ -155,20 +149,14 @@ class TestEnforcePublicHost:
 
         monkeypatch.setattr(socket, "getaddrinfo", _boom)
         with pytest.raises(SSRFBlockedError) as exc:
-            enforce_public_host(
-                "https://does-not-resolve.invalid/api", subsystem="test"
-            )
+            enforce_public_host("https://does-not-resolve.invalid/api", subsystem="test")
         assert exc.value.resolved_ip == "(unresolvable)"
 
-    def test_hostname_resolving_public_passes(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_hostname_resolving_public_passes(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(socket, "getaddrinfo", _fake_getaddrinfo("8.8.8.8"))
         enforce_public_host("https://api.example.com/v1", subsystem="test")
 
-    def test_hostname_resolving_private_refused(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_hostname_resolving_private_refused(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(socket, "getaddrinfo", _fake_getaddrinfo("10.1.2.3"))
         with pytest.raises(SSRFBlockedError) as exc:
             enforce_public_host("https://intranet.example.com/v1", subsystem="okta")

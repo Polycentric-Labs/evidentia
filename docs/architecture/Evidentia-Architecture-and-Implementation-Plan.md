@@ -869,12 +869,13 @@ def new_id() -> str:
 
 class EvidentiaModel(BaseModel):
     """Base model for all Evidentia objects.
-    
+
     Provides consistent serialization settings:
     - Enums serialize to their string values
     - Datetimes serialize to ISO 8601
     - Extra fields are forbidden (strict schema)
     """
+
     model_config = ConfigDict(
         use_enum_values=True,
         json_encoders={datetime: lambda v: v.isoformat()},
@@ -885,6 +886,7 @@ class EvidentiaModel(BaseModel):
 
 class Severity(str, Enum):
     """Universal severity levels used across gaps, risks, and findings."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -894,6 +896,7 @@ class Severity(str, Enum):
 
 class FrameworkId(str, Enum):
     """Canonical framework identifiers used throughout Evidentia."""
+
     NIST_800_53_REV5 = "nist-800-53-rev5"
     NIST_800_53_MOD = "nist-800-53-mod"
     NIST_800_53_HIGH = "nist-800-53-high"
@@ -907,16 +910,10 @@ class FrameworkId(str, Enum):
 
 class ControlMapping(EvidentiaModel):
     """Maps an entity (evidence, risk, gap) to a specific framework control."""
-    framework: str = Field(
-        description="Framework identifier, e.g. 'nist-800-53-rev5', 'soc2-tsc'"
-    )
-    control_id: str = Field(
-        description="Control identifier within the framework, e.g. 'AC-2', 'CC6.1'"
-    )
-    control_title: Optional[str] = Field(
-        default=None,
-        description="Human-readable control title"
-    )
+
+    framework: str = Field(description="Framework identifier, e.g. 'nist-800-53-rev5', 'soc2-tsc'")
+    control_id: str = Field(description="Control identifier within the framework, e.g. 'AC-2', 'CC6.1'")
+    control_title: Optional[str] = Field(default=None, description="Human-readable control title")
 
     def __str__(self) -> str:
         return f"{self.framework}:{self.control_id}"
@@ -944,6 +941,7 @@ from evidentia_core.models.common import EvidentiaModel, utc_now
 
 class ControlStatus(str, Enum):
     """Implementation status of a control within an organization."""
+
     IMPLEMENTED = "implemented"
     PARTIALLY_IMPLEMENTED = "partially_implemented"
     PLANNED = "planned"
@@ -953,11 +951,11 @@ class ControlStatus(str, Enum):
 
 class ControlImplementation(EvidentiaModel):
     """Represents a single control as implemented by the organization.
-    
+
     This is not a catalog control (what the framework requires) but an
     organizational control (what the org actually does). The gap analyzer
     compares these against catalog controls to find gaps.
-    
+
     Example:
         ControlImplementation(
             id="AC-2",
@@ -970,103 +968,69 @@ class ControlImplementation(EvidentiaModel):
             tags=["identity", "access-control"]
         )
     """
+
     id: str = Field(
-        description="Organization-defined control ID, typically matching framework IDs. "
-                    "E.g. 'AC-2', 'CC6.1', 'A.9.2.1'"
+        description="Organization-defined control ID, typically matching framework IDs. E.g. 'AC-2', 'CC6.1', 'A.9.2.1'"
     )
-    title: Optional[str] = Field(
-        default=None,
-        description="Human-readable control title"
-    )
+    title: Optional[str] = Field(default=None, description="Human-readable control title")
     description: Optional[str] = Field(
-        default=None,
-        description="Description of how the organization implements this control"
+        default=None, description="Description of how the organization implements this control"
     )
-    status: ControlStatus = Field(
-        description="Current implementation status"
-    )
+    status: ControlStatus = Field(description="Current implementation status")
     implementation_notes: Optional[str] = Field(
         default=None,
-        description="Free-text notes on implementation details, compensating controls, "
-                    "or planned improvements"
+        description="Free-text notes on implementation details, compensating controls, or planned improvements",
     )
     responsible_roles: list[str] = Field(
         default_factory=list,
-        description="Roles or teams responsible for this control. "
-                    "E.g. ['IT Security', 'DevOps', 'HR']"
+        description="Roles or teams responsible for this control. E.g. ['IT Security', 'DevOps', 'HR']",
     )
     evidence_references: list[str] = Field(
-        default_factory=list,
-        description="Paths, URIs, or IDs pointing to supporting evidence artifacts"
+        default_factory=list, description="Paths, URIs, or IDs pointing to supporting evidence artifacts"
     )
     last_assessed: Optional[datetime] = Field(
-        default=None,
-        description="When this control was last assessed or validated"
+        default=None, description="When this control was last assessed or validated"
     )
-    owner: Optional[str] = Field(
-        default=None,
-        description="Email or name of the control owner"
-    )
+    owner: Optional[str] = Field(default=None, description="Email or name of the control owner")
     frameworks: list[str] = Field(
         default_factory=list,
-        description="Frameworks this control is claimed to satisfy. "
-                    "E.g. ['nist-800-53-mod', 'soc2-tsc']"
+        description="Frameworks this control is claimed to satisfy. E.g. ['nist-800-53-mod', 'soc2-tsc']",
     )
-    tags: list[str] = Field(
-        default_factory=list,
-        description="Arbitrary tags for filtering and organization"
-    )
+    tags: list[str] = Field(default_factory=list, description="Arbitrary tags for filtering and organization")
 
 
 class ControlInventory(EvidentiaModel):
     """An organization's complete control inventory.
-    
+
     This is the primary input to gap analysis. It can be loaded from:
     - Evidentia YAML format (preferred)
     - CSV with header mapping
     - OSCAL component definition JSON
     - CISO Assistant JSON export
     """
-    organization: str = Field(
-        description="Organization name, used in report headers"
-    )
-    created_at: datetime = Field(
-        default_factory=utc_now,
-        description="When this inventory was created"
-    )
-    updated_at: Optional[datetime] = Field(
-        default=None,
-        description="When this inventory was last updated"
-    )
-    controls: list[ControlImplementation] = Field(
-        description="List of all control implementations"
-    )
+
+    organization: str = Field(description="Organization name, used in report headers")
+    created_at: datetime = Field(default_factory=utc_now, description="When this inventory was created")
+    updated_at: Optional[datetime] = Field(default=None, description="When this inventory was last updated")
+    controls: list[ControlImplementation] = Field(description="List of all control implementations")
     source_format: str = Field(
-        default="evidentia",
-        description="Format of the source data: 'evidentia', 'oscal', 'csv', 'ciso-assistant'"
+        default="evidentia", description="Format of the source data: 'evidentia', 'oscal', 'csv', 'ciso-assistant'"
     )
     source_file: Optional[str] = Field(
-        default=None,
-        description="Path to the source file this inventory was loaded from"
+        default=None, description="Path to the source file this inventory was loaded from"
     )
-    metadata: dict = Field(
-        default_factory=dict,
-        description="Additional metadata from the source format"
-    )
+    metadata: dict = Field(default_factory=dict, description="Additional metadata from the source format")
 
     @property
     def implemented_count(self) -> int:
         """Count of fully implemented controls."""
-        return sum(
-            1 for c in self.controls 
-            if c.status == ControlStatus.IMPLEMENTED
-        )
+        return sum(1 for c in self.controls if c.status == ControlStatus.IMPLEMENTED)
 
     @property
     def total_count(self) -> int:
         """Total number of controls in inventory."""
         return len(self.controls)
-    
+
     def get_control(self, control_id: str) -> Optional[ControlImplementation]:
         """Look up a control by ID (case-insensitive, whitespace-normalized)."""
         normalized = control_id.strip().upper().replace(" ", "-")
@@ -1103,41 +1067,43 @@ from evidentia_core.models.common import (
 
 class EvidenceType(str, Enum):
     """Classification of evidence artifacts by type."""
-    CONFIGURATION = "configuration"       # System configuration exports (e.g., AWS Config rules)
-    LOG = "log"                           # Audit logs, access logs
-    SCREENSHOT = "screenshot"             # UI screenshots (analyzed via vision models)
-    POLICY_DOCUMENT = "policy_document"   # Written policies, procedures
-    AUDIT_REPORT = "audit_report"         # Prior audit reports, attestations
-    API_RESPONSE = "api_response"         # Raw API responses from systems
-    TEST_RESULT = "test_result"           # Penetration test results, scan reports
-    ATTESTATION = "attestation"           # Signed attestation documents
+
+    CONFIGURATION = "configuration"  # System configuration exports (e.g., AWS Config rules)
+    LOG = "log"  # Audit logs, access logs
+    SCREENSHOT = "screenshot"  # UI screenshots (analyzed via vision models)
+    POLICY_DOCUMENT = "policy_document"  # Written policies, procedures
+    AUDIT_REPORT = "audit_report"  # Prior audit reports, attestations
+    API_RESPONSE = "api_response"  # Raw API responses from systems
+    TEST_RESULT = "test_result"  # Penetration test results, scan reports
+    ATTESTATION = "attestation"  # Signed attestation documents
     REPOSITORY_METADATA = "repository_metadata"  # Git repo configuration data
-    IDENTITY_DATA = "identity_data"       # IdP exports (Okta, Entra ID)
+    IDENTITY_DATA = "identity_data"  # IdP exports (Okta, Entra ID)
 
 
 class EvidenceSufficiency(str, Enum):
     """AI-assessed sufficiency of evidence for a control."""
-    SUFFICIENT = "sufficient"       # Evidence fully demonstrates control compliance
-    PARTIAL = "partial"             # Evidence partially demonstrates compliance; gaps exist
-    INSUFFICIENT = "insufficient"   # Evidence does not demonstrate compliance
-    STALE = "stale"                 # Evidence was sufficient but is now past its freshness window
-    UNKNOWN = "unknown"             # Not yet assessed
+
+    SUFFICIENT = "sufficient"  # Evidence fully demonstrates control compliance
+    PARTIAL = "partial"  # Evidence partially demonstrates compliance; gaps exist
+    INSUFFICIENT = "insufficient"  # Evidence does not demonstrate compliance
+    STALE = "stale"  # Evidence was sufficient but is now past its freshness window
+    UNKNOWN = "unknown"  # Not yet assessed
 
 
 class EvidenceArtifact(EvidentiaModel):
     """A single piece of compliance evidence.
-    
+
     An artifact represents one discrete piece of proof that a control is
     implemented and operating effectively. Artifacts are collected by
     collectors (automated) or uploaded manually.
-    
+
     Every artifact includes:
     - Source attribution (which system, which collector)
     - Timestamp (when collected)
     - Content hash (for tamper detection)
     - Control mappings (which controls this evidence supports)
     - Sufficiency assessment (set by AI validator or human reviewer)
-    
+
     Example:
         EvidenceArtifact(
             title="AWS Config: S3 Bucket Encryption Check",
@@ -1160,99 +1126,62 @@ class EvidenceArtifact(EvidentiaModel):
             ]
         )
     """
-    id: str = Field(
-        default_factory=new_id,
-        description="Unique identifier (UUID v4)"
-    )
-    title: str = Field(
-        description="Human-readable title describing what this evidence shows"
-    )
+
+    id: str = Field(default_factory=new_id, description="Unique identifier (UUID v4)")
+    title: str = Field(description="Human-readable title describing what this evidence shows")
     description: Optional[str] = Field(
-        default=None,
-        description="Detailed description of the evidence content and context"
+        default=None, description="Detailed description of the evidence content and context"
     )
-    evidence_type: EvidenceType = Field(
-        description="Classification of this evidence artifact"
-    )
+    evidence_type: EvidenceType = Field(description="Classification of this evidence artifact")
     source_system: str = Field(
-        description="System that produced this evidence. "
-                    "E.g. 'aws-config', 'github', 'okta', 'manual-upload'"
+        description="System that produced this evidence. E.g. 'aws-config', 'github', 'okta', 'manual-upload'"
     )
-    collected_at: datetime = Field(
-        default_factory=utc_now,
-        description="When this evidence was collected (UTC)"
-    )
-    collected_by: str = Field(
-        description="Collector name or user email that produced this evidence"
-    )
+    collected_at: datetime = Field(default_factory=utc_now, description="When this evidence was collected (UTC)")
+    collected_by: str = Field(description="Collector name or user email that produced this evidence")
     # Content
     content: Optional[Any] = Field(
         default=None,
         description="The actual evidence content. JSON for API responses, text for logs, "
-                    "base64 for images. Large content should use file_path instead."
+        "base64 for images. Large content should use file_path instead.",
     )
     content_hash: Optional[str] = Field(
         default=None,
         description="SHA-256 hash of content for tamper detection. "
-                    "Computed automatically on serialization if content is present."
+        "Computed automatically on serialization if content is present.",
     )
     content_format: str = Field(
-        default="json",
-        description="Format of the content field: 'json', 'text', 'base64', 'html'"
+        default="json", description="Format of the content field: 'json', 'text', 'base64', 'html'"
     )
     file_path: Optional[str] = Field(
-        default=None,
-        description="Path to the evidence file if stored on disk (for large artifacts)"
+        default=None, description="Path to the evidence file if stored on disk (for large artifacts)"
     )
-    file_size_bytes: Optional[int] = Field(
-        default=None,
-        description="Size of the evidence file in bytes"
-    )
+    file_size_bytes: Optional[int] = Field(default=None, description="Size of the evidence file in bytes")
     # Control mappings
     control_mappings: list[ControlMapping] = Field(
-        default_factory=list,
-        description="Controls that this evidence supports, across one or more frameworks"
+        default_factory=list, description="Controls that this evidence supports, across one or more frameworks"
     )
     # Validation (populated by evidence validator)
     sufficiency: EvidenceSufficiency = Field(
         default=EvidenceSufficiency.UNKNOWN,
-        description="AI-assessed sufficiency of this evidence for its mapped controls"
+        description="AI-assessed sufficiency of this evidence for its mapped controls",
     )
-    sufficiency_rationale: Optional[str] = Field(
-        default=None,
-        description="Explanation of the sufficiency assessment"
-    )
+    sufficiency_rationale: Optional[str] = Field(default=None, description="Explanation of the sufficiency assessment")
     missing_elements: list[str] = Field(
-        default_factory=list,
-        description="List of elements that would be needed to make this evidence sufficient"
+        default_factory=list, description="List of elements that would be needed to make this evidence sufficient"
     )
     validator_confidence: Optional[float] = Field(
-        default=None,
-        ge=0.0,
-        le=1.0,
-        description="Validator's confidence in the sufficiency assessment (0.0–1.0)"
+        default=None, ge=0.0, le=1.0, description="Validator's confidence in the sufficiency assessment (0.0–1.0)"
     )
-    validated_at: Optional[datetime] = Field(
-        default=None,
-        description="When the sufficiency assessment was performed"
-    )
-    validated_by: Optional[str] = Field(
-        default=None,
-        description="Model or person that performed the validation"
-    )
+    validated_at: Optional[datetime] = Field(default=None, description="When the sufficiency assessment was performed")
+    validated_by: Optional[str] = Field(default=None, description="Model or person that performed the validation")
     # Staleness
     expires_at: Optional[datetime] = Field(
-        default=None,
-        description="When this evidence becomes stale. Configurable per framework."
+        default=None, description="When this evidence becomes stale. Configurable per framework."
     )
     # Metadata
-    tags: list[str] = Field(
-        default_factory=list,
-        description="Arbitrary tags for filtering"
-    )
+    tags: list[str] = Field(default_factory=list, description="Arbitrary tags for filtering")
     metadata: dict = Field(
-        default_factory=dict,
-        description="Collector-specific metadata (region, account ID, org name, etc.)"
+        default_factory=dict, description="Collector-specific metadata (region, account ID, org name, etc.)"
     )
 
     @field_validator("content_hash", mode="before")
@@ -1266,6 +1195,7 @@ class EvidenceArtifact(EvidentiaModel):
         """Compute SHA-256 hash of content for tamper detection."""
         import hashlib
         import json
+
         if self.content is not None:
             content_str = json.dumps(self.content, sort_keys=True, default=str)
             self.content_hash = hashlib.sha256(content_str.encode()).hexdigest()
@@ -1287,45 +1217,23 @@ class EvidenceArtifact(EvidentiaModel):
 
 class EvidenceBundle(EvidentiaModel):
     """A collection of evidence artifacts for an assessment scope.
-    
+
     Bundles group evidence artifacts by assessment (e.g., "SOC 2 Type II 2026")
     and provide metadata about the overall evidence package.
     """
-    id: str = Field(
-        default_factory=new_id,
-        description="Unique identifier (UUID v4)"
-    )
-    title: str = Field(
-        description="Bundle title, e.g. 'SOC 2 Type II Evidence — Q1 2026'"
-    )
-    assessment_scope: str = Field(
-        description="What this bundle covers, e.g. 'SOC 2 Type II 2026'"
-    )
-    frameworks: list[str] = Field(
-        description="Frameworks this evidence bundle supports"
-    )
-    artifacts: list[EvidenceArtifact] = Field(
-        default_factory=list,
-        description="Evidence artifacts in this bundle"
-    )
-    created_at: datetime = Field(
-        default_factory=utc_now
-    )
-    created_by: str = Field(
-        description="User or process that created this bundle"
-    )
+
+    id: str = Field(default_factory=new_id, description="Unique identifier (UUID v4)")
+    title: str = Field(description="Bundle title, e.g. 'SOC 2 Type II Evidence — Q1 2026'")
+    assessment_scope: str = Field(description="What this bundle covers, e.g. 'SOC 2 Type II 2026'")
+    frameworks: list[str] = Field(description="Frameworks this evidence bundle supports")
+    artifacts: list[EvidenceArtifact] = Field(default_factory=list, description="Evidence artifacts in this bundle")
+    created_at: datetime = Field(default_factory=utc_now)
+    created_by: str = Field(description="User or process that created this bundle")
     valid_until: Optional[datetime] = Field(
-        default=None,
-        description="When this bundle expires (e.g., end of audit period)"
+        default=None, description="When this bundle expires (e.g., end of audit period)"
     )
-    notes: Optional[str] = Field(
-        default=None,
-        description="Free-text notes about this evidence bundle"
-    )
-    evidentia_version: str = Field(
-        default="0.1.0",
-        description="Version of Evidentia that generated this bundle"
-    )
+    notes: Optional[str] = Field(default=None, description="Free-text notes about this evidence bundle")
+    evidentia_version: str = Field(default="0.1.0", description="Version of Evidentia that generated this bundle")
 
     @property
     def artifact_count(self) -> int:
@@ -1374,6 +1282,7 @@ from evidentia_core.models.common import EvidentiaModel, new_id, utc_now
 
 class RiskLevel(str, Enum):
     """Overall risk level (derived from likelihood × impact)."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -1383,41 +1292,44 @@ class RiskLevel(str, Enum):
 
 class LikelihoodRating(str, Enum):
     """Likelihood that a threat event will occur (NIST SP 800-30 scale)."""
-    VERY_HIGH = "very_high"     # Almost certain (>90%)
-    HIGH = "high"               # Highly likely (70-90%)
-    MODERATE = "moderate"       # Somewhat likely (30-70%)
-    LOW = "low"                 # Unlikely (10-30%)
-    VERY_LOW = "very_low"       # Negligible (<10%)
+
+    VERY_HIGH = "very_high"  # Almost certain (>90%)
+    HIGH = "high"  # Highly likely (70-90%)
+    MODERATE = "moderate"  # Somewhat likely (30-70%)
+    LOW = "low"  # Unlikely (10-30%)
+    VERY_LOW = "very_low"  # Negligible (<10%)
 
 
 class ImpactRating(str, Enum):
     """Impact if the threat event occurs (NIST SP 800-30 scale)."""
-    VERY_HIGH = "very_high"     # Catastrophic impact to mission/business
-    HIGH = "high"               # Severe impact, significant degradation
-    MODERATE = "moderate"       # Serious impact, notable degradation
-    LOW = "low"                 # Limited impact, minor degradation
-    VERY_LOW = "very_low"       # Negligible impact
+
+    VERY_HIGH = "very_high"  # Catastrophic impact to mission/business
+    HIGH = "high"  # Severe impact, significant degradation
+    MODERATE = "moderate"  # Serious impact, notable degradation
+    LOW = "low"  # Limited impact, minor degradation
+    VERY_LOW = "very_low"  # Negligible impact
 
 
 class RiskTreatment(str, Enum):
     """Risk treatment decision."""
-    MITIGATE = "mitigate"       # Implement controls to reduce risk
-    ACCEPT = "accept"           # Accept the risk with documented rationale
-    TRANSFER = "transfer"       # Transfer via insurance or outsourcing
-    AVOID = "avoid"             # Eliminate the activity causing the risk
-    PENDING = "pending"         # Awaiting review
+
+    MITIGATE = "mitigate"  # Implement controls to reduce risk
+    ACCEPT = "accept"  # Accept the risk with documented rationale
+    TRANSFER = "transfer"  # Transfer via insurance or outsourcing
+    AVOID = "avoid"  # Eliminate the activity causing the risk
+    PENDING = "pending"  # Awaiting review
 
 
 class RiskStatement(EvidentiaModel):
     """A structured risk statement following NIST SP 800-30 Rev 1 format.
-    
+
     Generated by the AI risk statement generator, each risk statement
     decomposes a control gap into its threat components and provides
     actionable remediation guidance.
-    
+
     The structure follows the NIST risk equation:
     Risk = Likelihood(Threat × Vulnerability) × Impact
-    
+
     Example:
         RiskStatement(
             asset="Customer Data Platform — Amazon Redshift data warehouse",
@@ -1440,135 +1352,100 @@ class RiskStatement(EvidentiaModel):
             remediation_priority=1
         )
     """
-    id: str = Field(
-        default_factory=new_id,
-        description="Unique identifier (UUID v4)"
-    )
+
+    id: str = Field(default_factory=new_id, description="Unique identifier (UUID v4)")
     # ── Core NIST SP 800-30 risk statement components ──────────────────
     asset: str = Field(
         description="The system, data, function, or process at risk. "
-                    "Be specific: include system name, data type, and location."
+        "Be specific: include system name, data type, and location."
     )
     threat_source: str = Field(
         description="Who or what could exploit the vulnerability. "
-                    "E.g. 'External threat actor (financial motivation)', "
-                    "'Insider threat (disgruntled employee)', 'Misconfiguration'"
+        "E.g. 'External threat actor (financial motivation)', "
+        "'Insider threat (disgruntled employee)', 'Misconfiguration'"
     )
     threat_event: str = Field(
         description="What the threat source would do. Use specific, "
-                    "technical language. E.g. 'Exfiltrate customer PII via "
-                    "unencrypted S3 bucket with public access enabled'"
+        "technical language. E.g. 'Exfiltrate customer PII via "
+        "unencrypted S3 bucket with public access enabled'"
     )
     vulnerability: str = Field(
         description="The specific weakness that enables the threat. "
-                    "Directly tied to the control gap. E.g. 'S3 bucket in "
-                    "us-east-1 lacks server-side encryption and Block Public Access'"
+        "Directly tied to the control gap. E.g. 'S3 bucket in "
+        "us-east-1 lacks server-side encryption and Block Public Access'"
     )
     predisposing_conditions: list[str] = Field(
         default_factory=list,
         description="Environmental factors that increase likelihood. "
-                    "E.g. ['Public-facing application', 'Multi-tenant architecture', "
-                    "'Previous security incidents in sector']"
+        "E.g. ['Public-facing application', 'Multi-tenant architecture', "
+        "'Previous security incidents in sector']",
     )
     # ── Ratings ────────────────────────────────────────────────────────
-    likelihood: LikelihoodRating = Field(
-        description="Likelihood that the threat event will occur"
-    )
+    likelihood: LikelihoodRating = Field(description="Likelihood that the threat event will occur")
     likelihood_rationale: str = Field(
         description="Specific explanation for the likelihood rating. "
-                    "Must reference concrete factors, not vague statements."
+        "Must reference concrete factors, not vague statements."
     )
-    impact: ImpactRating = Field(
-        description="Impact if the threat event occurs"
-    )
+    impact: ImpactRating = Field(description="Impact if the threat event occurs")
     impact_rationale: str = Field(
         description="Specific explanation for the impact rating. "
-                    "Must reference data types, record counts, regulatory "
-                    "consequences, and business impact."
+        "Must reference data types, record counts, regulatory "
+        "consequences, and business impact."
     )
     risk_level: RiskLevel = Field(
-        description="Overall risk level derived from likelihood × impact "
-                    "using the NIST SP 800-30 risk matrix"
+        description="Overall risk level derived from likelihood × impact using the NIST SP 800-30 risk matrix"
     )
     risk_description: str = Field(
-        description="Full prose risk statement combining all components. "
-                    "Written for executive and auditor audiences."
+        description="Full prose risk statement combining all components. Written for executive and auditor audiences."
     )
     # ── Remediation ────────────────────────────────────────────────────
     recommended_controls: list[str] = Field(
-        description="NIST 800-53 control IDs that would mitigate this risk. "
-                    "E.g. ['SC-28', 'SC-28(1)', 'AU-6']"
+        description="NIST 800-53 control IDs that would mitigate this risk. E.g. ['SC-28', 'SC-28(1)', 'AU-6']"
     )
     remediation_priority: int = Field(
         ge=1,
         le=5,
         description="1 = most urgent, 5 = least urgent. Based on risk level, "
-                    "implementation effort, and cross-framework value."
+        "implementation effort, and cross-framework value.",
     )
     remediation_steps: list[str] = Field(
-        default_factory=list,
-        description="Ordered list of specific remediation actions"
+        default_factory=list, description="Ordered list of specific remediation actions"
     )
     estimated_remediation_effort: Optional[str] = Field(
-        default=None,
-        description="Estimated effort: 'hours', 'days', 'weeks', 'months'"
+        default=None, description="Estimated effort: 'hours', 'days', 'weeks', 'months'"
     )
     # ── Treatment ──────────────────────────────────────────────────────
-    treatment: RiskTreatment = Field(
-        default=RiskTreatment.PENDING,
-        description="Risk treatment decision"
-    )
+    treatment: RiskTreatment = Field(default=RiskTreatment.PENDING, description="Risk treatment decision")
     treatment_rationale: Optional[str] = Field(
-        default=None,
-        description="Rationale for the treatment decision (required if accepted)"
+        default=None, description="Rationale for the treatment decision (required if accepted)"
     )
     # ── Lifecycle ──────────────────────────────────────────────────────
     generated_by: str = Field(
-        default="evidentia-ai",
-        description="'evidentia-ai' for generated, or user email for manual"
+        default="evidentia-ai", description="'evidentia-ai' for generated, or user email for manual"
     )
-    generated_at: datetime = Field(
-        default_factory=utc_now,
-        description="When this risk statement was generated"
-    )
-    model_used: Optional[str] = Field(
-        default=None,
-        description="LLM model used for generation, e.g. 'gpt-4o'"
-    )
-    reviewed_by: Optional[str] = Field(
-        default=None,
-        description="Email of the person who reviewed this risk statement"
-    )
-    reviewed_at: Optional[datetime] = Field(
-        default=None,
-        description="When the risk statement was reviewed"
-    )
-    accepted: bool = Field(
-        default=False,
-        description="Whether this risk statement has been accepted by a reviewer"
-    )
+    generated_at: datetime = Field(default_factory=utc_now, description="When this risk statement was generated")
+    model_used: Optional[str] = Field(default=None, description="LLM model used for generation, e.g. 'gpt-4o'")
+    reviewed_by: Optional[str] = Field(default=None, description="Email of the person who reviewed this risk statement")
+    reviewed_at: Optional[datetime] = Field(default=None, description="When the risk statement was reviewed")
+    accepted: bool = Field(default=False, description="Whether this risk statement has been accepted by a reviewer")
     # ── Mappings ───────────────────────────────────────────────────────
     source_gap_id: Optional[str] = Field(
-        default=None,
-        description="ID of the ControlGap that triggered this risk statement"
+        default=None, description="ID of the ControlGap that triggered this risk statement"
     )
     framework_mappings: list[str] = Field(
         default_factory=list,
-        description="Framework control IDs this risk maps to. "
-                    "E.g. ['nist-800-53-mod:SC-28', 'pci-dss-4:3.5.1']"
+        description="Framework control IDs this risk maps to. E.g. ['nist-800-53-mod:SC-28', 'pci-dss-4:3.5.1']",
     )
-    tags: list[str] = Field(
-        default_factory=list,
-        description="Arbitrary tags for filtering and grouping"
-    )
+    tags: list[str] = Field(default_factory=list, description="Arbitrary tags for filtering and grouping")
 
 
 class RiskRegister(EvidentiaModel):
     """A collection of risk statements for an organization/system.
-    
+
     Serves as the output of the risk statement generator and the
     persistent risk register for ongoing risk management.
     """
+
     id: str = Field(default_factory=new_id)
     organization: str
     system_name: str
@@ -1616,33 +1493,36 @@ from evidentia_core.models.common import EvidentiaModel, new_id, utc_now
 
 class GapSeverity(str, Enum):
     """Severity of a control gap based on framework requirement and implementation state."""
-    CRITICAL = "critical"       # Required by framework, no implementation or compensating control
-    HIGH = "high"               # Required by framework, partially addressed
-    MEDIUM = "medium"           # Recommended control, not implemented
-    LOW = "low"                 # Optional/advisory control, not implemented
+
+    CRITICAL = "critical"  # Required by framework, no implementation or compensating control
+    HIGH = "high"  # Required by framework, partially addressed
+    MEDIUM = "medium"  # Recommended control, not implemented
+    LOW = "low"  # Optional/advisory control, not implemented
     INFORMATIONAL = "informational"  # Noted for completeness, no action required
 
 
 class ImplementationEffort(str, Enum):
     """Estimated effort to remediate a gap."""
-    LOW = "low"            # < 1 week of engineering effort
-    MEDIUM = "medium"      # 1–4 weeks
-    HIGH = "high"          # 1–3 months
+
+    LOW = "low"  # < 1 week of engineering effort
+    MEDIUM = "medium"  # 1–4 weeks
+    HIGH = "high"  # 1–3 months
     VERY_HIGH = "very_high"  # 3+ months
 
 
 class GapStatus(str, Enum):
     """Current status of gap remediation."""
+
     OPEN = "open"
     IN_PROGRESS = "in_progress"
     REMEDIATED = "remediated"
-    ACCEPTED = "accepted"       # Risk accepted — gap will not be closed
+    ACCEPTED = "accepted"  # Risk accepted — gap will not be closed
     NOT_APPLICABLE = "not_applicable"
 
 
 class ControlGap(EvidentiaModel):
     """A single control gap identified by the gap analyzer.
-    
+
     Represents a framework requirement that the organization has not
     fully implemented. Each gap includes:
     - The framework requirement (what's needed)
@@ -1651,145 +1531,90 @@ class ControlGap(EvidentiaModel):
     - Remediation guidance (how to fix it)
     - Priority scoring (what to fix first)
     """
-    id: str = Field(
-        default_factory=new_id,
-        description="Unique identifier (UUID v4)"
-    )
+
+    id: str = Field(default_factory=new_id, description="Unique identifier (UUID v4)")
     # ── Framework requirement ──────────────────────────────────────────
-    framework: str = Field(
-        description="Framework ID, e.g. 'nist-800-53-mod', 'soc2-tsc'"
-    )
-    control_id: str = Field(
-        description="Control ID within the framework, e.g. 'AC-2', 'CC6.1'"
-    )
-    control_title: str = Field(
-        description="Human-readable control title from the catalog"
-    )
-    control_description: str = Field(
-        description="Full control description from the catalog"
-    )
+    framework: str = Field(description="Framework ID, e.g. 'nist-800-53-mod', 'soc2-tsc'")
+    control_id: str = Field(description="Control ID within the framework, e.g. 'AC-2', 'CC6.1'")
+    control_title: str = Field(description="Human-readable control title from the catalog")
+    control_description: str = Field(description="Full control description from the catalog")
     control_family: Optional[str] = Field(
         default=None,
-        description="Control family or category, e.g. 'Access Control', 'Logical and Physical Access Controls'"
+        description="Control family or category, e.g. 'Access Control', 'Logical and Physical Access Controls'",
     )
     # ── Gap details ────────────────────────────────────────────────────
-    gap_severity: GapSeverity = Field(
-        description="Severity based on requirement level and implementation state"
-    )
+    gap_severity: GapSeverity = Field(description="Severity based on requirement level and implementation state")
     implementation_status: str = Field(
         description="Current state: 'missing' (no implementation), 'partial' (incomplete), "
-                    "'planned' (scheduled but not started), 'not_applicable'"
+        "'planned' (scheduled but not started), 'not_applicable'"
     )
-    gap_description: str = Field(
-        description="Specific description of what is missing or incomplete"
-    )
-    status: GapStatus = Field(
-        default=GapStatus.OPEN,
-        description="Current remediation status"
-    )
+    gap_description: str = Field(description="Specific description of what is missing or incomplete")
+    status: GapStatus = Field(default=GapStatus.OPEN, description="Current remediation status")
     # ── Cross-framework analysis ───────────────────────────────────────
     equivalent_controls_in_inventory: list[str] = Field(
         default_factory=list,
         description="Organization control IDs that partially satisfy this requirement. "
-                    "E.g. the org has AC-2 partially implemented — listed here."
+        "E.g. the org has AC-2 partially implemented — listed here.",
     )
     cross_framework_value: list[str] = Field(
         default_factory=list,
         description="Other framework:control_id pairs that this gap also satisfies. "
-                    "E.g. implementing NIST AC-2 also satisfies SOC 2 CC6.1 and ISO A.9.2.1. "
-                    "Format: ['soc2-tsc:CC6.1', 'iso27001-2022:A.9.2.1']"
+        "E.g. implementing NIST AC-2 also satisfies SOC 2 CC6.1 and ISO A.9.2.1. "
+        "Format: ['soc2-tsc:CC6.1', 'iso27001-2022:A.9.2.1']",
     )
     # ── Remediation ────────────────────────────────────────────────────
-    remediation_guidance: str = Field(
-        description="Actionable remediation guidance for this gap"
-    )
-    implementation_effort: ImplementationEffort = Field(
-        description="Estimated engineering effort to close this gap"
-    )
+    remediation_guidance: str = Field(description="Actionable remediation guidance for this gap")
+    implementation_effort: ImplementationEffort = Field(description="Estimated engineering effort to close this gap")
     priority_score: float = Field(
         default=0.0,
         description="Computed priority score (higher = more urgent). "
-                    "Formula: severity_weight × (1 + 0.2 × cross_framework_count) × (1 / effort_weight)"
+        "Formula: severity_weight × (1 + 0.2 × cross_framework_count) × (1 / effort_weight)",
     )
     # ── Ticket tracking ────────────────────────────────────────────────
-    jira_issue_key: Optional[str] = Field(
-        default=None,
-        description="Jira issue key if pushed, e.g. 'SEC-123'"
-    )
-    servicenow_ticket_id: Optional[str] = Field(
-        default=None,
-        description="ServiceNow record sys_id if pushed"
-    )
+    jira_issue_key: Optional[str] = Field(default=None, description="Jira issue key if pushed, e.g. 'SEC-123'")
+    servicenow_ticket_id: Optional[str] = Field(default=None, description="ServiceNow record sys_id if pushed")
     # ── Lifecycle ──────────────────────────────────────────────────────
-    created_at: datetime = Field(
-        default_factory=utc_now
-    )
-    remediated_at: Optional[datetime] = Field(
-        default=None,
-        description="When this gap was marked as remediated"
-    )
-    assigned_to: Optional[str] = Field(
-        default=None,
-        description="Email of the person assigned to remediate this gap"
-    )
-    tags: list[str] = Field(
-        default_factory=list
-    )
+    created_at: datetime = Field(default_factory=utc_now)
+    remediated_at: Optional[datetime] = Field(default=None, description="When this gap was marked as remediated")
+    assigned_to: Optional[str] = Field(default=None, description="Email of the person assigned to remediate this gap")
+    tags: list[str] = Field(default_factory=list)
 
 
 class EfficiencyOpportunity(EvidentiaModel):
     """A control that satisfies multiple framework requirements simultaneously.
-    
+
     These are high-value implementation targets — implementing one control
     closes gaps across multiple frameworks.
     """
-    control_id: str = Field(
-        description="The NIST 800-53 control ID (used as the canonical reference)"
-    )
-    control_title: str = Field(
-        description="Human-readable control title"
-    )
+
+    control_id: str = Field(description="The NIST 800-53 control ID (used as the canonical reference)")
+    control_title: str = Field(description="Human-readable control title")
     frameworks_satisfied: list[str] = Field(
         description="List of framework:control_id pairs this satisfies. "
-                    "E.g. ['nist-800-53-mod:AC-2', 'soc2-tsc:CC6.1', 'iso27001-2022:A.9.2.1']"
+        "E.g. ['nist-800-53-mod:AC-2', 'soc2-tsc:CC6.1', 'iso27001-2022:A.9.2.1']"
     )
-    framework_count: int = Field(
-        description="Number of distinct frameworks satisfied"
-    )
+    framework_count: int = Field(description="Number of distinct frameworks satisfied")
     total_gaps_closed: int = Field(
         description="Total number of gap entries that would be closed by implementing this control"
     )
-    implementation_effort: ImplementationEffort = Field(
-        description="Estimated effort to implement"
-    )
-    value_score: float = Field(
-        description="Efficiency value score = total_gaps_closed / effort_weight"
-    )
+    implementation_effort: ImplementationEffort = Field(description="Estimated effort to implement")
+    value_score: float = Field(description="Efficiency value score = total_gaps_closed / effort_weight")
 
 
 class GapAnalysisReport(EvidentiaModel):
     """Complete gap analysis report.
-    
+
     The primary output of the gap analyzer. Contains all identified gaps,
     efficiency opportunities, and a prioritized remediation roadmap.
     """
+
     id: str = Field(default_factory=new_id)
-    organization: str = Field(
-        description="Organization name from the control inventory"
-    )
-    frameworks_analyzed: list[str] = Field(
-        description="Framework IDs that were analyzed"
-    )
-    analyzed_at: datetime = Field(
-        default_factory=utc_now
-    )
+    organization: str = Field(description="Organization name from the control inventory")
+    frameworks_analyzed: list[str] = Field(description="Framework IDs that were analyzed")
+    analyzed_at: datetime = Field(default_factory=utc_now)
     # ── Summary statistics ─────────────────────────────────────────────
-    total_controls_required: int = Field(
-        description="Total unique controls required across all analyzed frameworks"
-    )
-    total_controls_in_inventory: int = Field(
-        description="Total controls in the organization's inventory"
-    )
+    total_controls_required: int = Field(description="Total unique controls required across all analyzed frameworks")
+    total_controls_in_inventory: int = Field(description="Total controls in the organization's inventory")
     total_gaps: int
     critical_gaps: int
     high_gaps: int
@@ -1798,25 +1623,18 @@ class GapAnalysisReport(EvidentiaModel):
     informational_gaps: int = Field(default=0)
     coverage_percentage: float = Field(
         description="Percentage of required controls that are fully implemented. "
-                    "Formula: (required - gaps) / required × 100"
+        "Formula: (required - gaps) / required × 100"
     )
     # ── Detail ─────────────────────────────────────────────────────────
-    gaps: list[ControlGap] = Field(
-        description="All identified gaps, sorted by priority_score descending"
-    )
+    gaps: list[ControlGap] = Field(description="All identified gaps, sorted by priority_score descending")
     efficiency_opportunities: list[EfficiencyOpportunity] = Field(
-        default_factory=list,
-        description="Controls that satisfy 3+ framework requirements simultaneously"
+        default_factory=list, description="Controls that satisfy 3+ framework requirements simultaneously"
     )
     prioritized_roadmap: list[str] = Field(
-        default_factory=list,
-        description="Ordered list of gap IDs by descending priority_score"
+        default_factory=list, description="Ordered list of gap IDs by descending priority_score"
     )
     # ── Metadata ───────────────────────────────────────────────────────
-    inventory_source: Optional[str] = Field(
-        default=None,
-        description="Path to the inventory file used"
-    )
+    inventory_source: Optional[str] = Field(default=None, description="Path to the inventory file used")
     evidentia_version: str = Field(default="0.1.0")
     notes: Optional[str] = Field(default=None)
 ```
@@ -1842,66 +1660,41 @@ from evidentia_core.models.common import EvidentiaModel
 
 class CatalogControl(EvidentiaModel):
     """A single control from a framework catalog."""
+
     id: str = Field(description="Control ID, e.g. 'AC-2', 'CC6.1'")
     title: str = Field(description="Control title")
     description: str = Field(description="Full control description")
     family: Optional[str] = Field(default=None, description="Control family/group")
     class_: Optional[str] = Field(
-        default=None,
-        alias="class",
-        description="Control class: 'technical', 'operational', 'management'"
+        default=None, alias="class", description="Control class: 'technical', 'operational', 'management'"
     )
-    priority: Optional[str] = Field(
-        default=None,
-        description="NIST priority: 'P1' (most critical) through 'P3'"
-    )
+    priority: Optional[str] = Field(default=None, description="NIST priority: 'P1' (most critical) through 'P3'")
     baseline_impact: list[str] = Field(
-        default_factory=list,
-        description="Baselines this control belongs to: ['low', 'moderate', 'high']"
+        default_factory=list, description="Baselines this control belongs to: ['low', 'moderate', 'high']"
     )
-    enhancements: list[CatalogControl] = Field(
-        default_factory=list,
-        description="Control enhancements (sub-controls)"
-    )
+    enhancements: list[CatalogControl] = Field(default_factory=list, description="Control enhancements (sub-controls)")
     related_controls: list[str] = Field(
-        default_factory=list,
-        description="IDs of related controls within the same framework"
+        default_factory=list, description="IDs of related controls within the same framework"
     )
-    assessment_objectives: list[str] = Field(
-        default_factory=list,
-        description="Assessment objectives from SP 800-53A"
-    )
+    assessment_objectives: list[str] = Field(default_factory=list, description="Assessment objectives from SP 800-53A")
     parameters: dict[str, str] = Field(
-        default_factory=dict,
-        description="Organization-defined parameters and their default values"
+        default_factory=dict, description="Organization-defined parameters and their default values"
     )
 
 
 class ControlCatalog(EvidentiaModel):
     """A complete framework catalog containing all controls.
-    
+
     Loaded from bundled OSCAL JSON files. Provides indexed access
     to controls by ID and family.
     """
-    framework_id: str = Field(
-        description="Canonical framework ID, e.g. 'nist-800-53-rev5'"
-    )
-    framework_name: str = Field(
-        description="Human-readable name, e.g. 'NIST SP 800-53 Revision 5'"
-    )
-    version: str = Field(
-        description="Framework version, e.g. 'Rev 5', '2022', 'v8'"
-    )
-    source: str = Field(
-        description="Source of the catalog data, e.g. 'usnistgov/oscal-content'"
-    )
-    controls: list[CatalogControl] = Field(
-        description="All controls in this catalog"
-    )
-    families: list[str] = Field(
-        default_factory=list,
-        description="List of control families in this catalog"
-    )
+
+    framework_id: str = Field(description="Canonical framework ID, e.g. 'nist-800-53-rev5'")
+    framework_name: str = Field(description="Human-readable name, e.g. 'NIST SP 800-53 Revision 5'")
+    version: str = Field(description="Framework version, e.g. 'Rev 5', '2022', 'v8'")
+    source: str = Field(description="Source of the catalog data, e.g. 'usnistgov/oscal-content'")
+    controls: list[CatalogControl] = Field(description="All controls in this catalog")
+    families: list[str] = Field(default_factory=list, description="List of control families in this catalog")
 
     # ── Index for fast lookup ──────────────────────────────────────────
     _index: dict[str, CatalogControl] = {}
@@ -1930,47 +1723,37 @@ class ControlCatalog(EvidentiaModel):
 
 class FrameworkMapping(EvidentiaModel):
     """A single mapping entry between two frameworks' controls."""
+
     source_control_id: str
     source_control_title: Optional[str] = None
     target_control_id: str
     target_control_title: Optional[str] = None
-    relationship: str = Field(
-        description="Mapping relationship: 'equivalent', 'related', 'partial', 'superset'"
-    )
-    notes: Optional[str] = Field(
-        default=None,
-        description="Notes about this mapping relationship"
-    )
+    relationship: str = Field(description="Mapping relationship: 'equivalent', 'related', 'partial', 'superset'")
+    notes: Optional[str] = Field(default=None, description="Notes about this mapping relationship")
 
 
 class CrosswalkDefinition(EvidentiaModel):
     """A complete crosswalk between two frameworks.
-    
+
     Loaded from bundled JSON files in catalogs/data/mappings/.
     """
+
     source_framework: str
     target_framework: str
     version: str
     generated_at: str
     source: str = Field(
-        description="Authority source for this crosswalk. "
-                    "E.g. 'NIST SP 800-53 Rev5 Appendix H', 'AICPA crosswalk'"
+        description="Authority source for this crosswalk. E.g. 'NIST SP 800-53 Rev5 Appendix H', 'AICPA crosswalk'"
     )
     mappings: list[FrameworkMapping]
 
     def get_target_controls(self, source_control_id: str) -> list[FrameworkMapping]:
         """Get all target controls mapped from a source control."""
-        return [
-            m for m in self.mappings 
-            if m.source_control_id.upper() == source_control_id.strip().upper()
-        ]
+        return [m for m in self.mappings if m.source_control_id.upper() == source_control_id.strip().upper()]
 
     def get_source_controls(self, target_control_id: str) -> list[FrameworkMapping]:
         """Get all source controls mapped to a target control (reverse lookup)."""
-        return [
-            m for m in self.mappings 
-            if m.target_control_id.upper() == target_control_id.strip().upper()
-        ]
+        return [m for m in self.mappings if m.target_control_id.upper() == target_control_id.strip().upper()]
 ```
 
 ### 5.7 Finding Model (evidentia_core/models/finding.py)
@@ -1995,6 +1778,7 @@ from evidentia_core.models.common import EvidentiaModel, Severity, new_id, utc_n
 
 class FindingStatus(str, Enum):
     """Status of a security finding."""
+
     ACTIVE = "active"
     RESOLVED = "resolved"
     SUPPRESSED = "suppressed"
@@ -2002,11 +1786,12 @@ class FindingStatus(str, Enum):
 
 class SecurityFinding(EvidentiaModel):
     """A security finding from an evidence collector.
-    
+
     Findings are the raw output of collectors — they represent a single
     observation about a system's security posture. Findings are then
     transformed into EvidenceArtifacts with control mappings.
     """
+
     id: str = Field(default_factory=new_id)
     title: str
     description: str
@@ -2014,31 +1799,16 @@ class SecurityFinding(EvidentiaModel):
     status: FindingStatus = Field(default=FindingStatus.ACTIVE)
     # Source
     source_system: str = Field(description="E.g. 'aws-security-hub', 'github'")
-    source_finding_id: Optional[str] = Field(
-        default=None,
-        description="Original finding ID in the source system"
-    )
+    source_finding_id: Optional[str] = Field(default=None, description="Original finding ID in the source system")
     # Resource
-    resource_type: Optional[str] = Field(
-        default=None,
-        description="E.g. 'AWS::S3::Bucket', 'GitHub::Repository'"
-    )
-    resource_id: Optional[str] = Field(
-        default=None,
-        description="Resource identifier in the source system"
-    )
+    resource_type: Optional[str] = Field(default=None, description="E.g. 'AWS::S3::Bucket', 'GitHub::Repository'")
+    resource_id: Optional[str] = Field(default=None, description="Resource identifier in the source system")
     resource_region: Optional[str] = Field(default=None)
     resource_account: Optional[str] = Field(default=None)
     # Control mappings
-    control_ids: list[str] = Field(
-        default_factory=list,
-        description="NIST 800-53 control IDs this finding relates to"
-    )
+    control_ids: list[str] = Field(default_factory=list, description="NIST 800-53 control IDs this finding relates to")
     # Raw data
-    raw_data: Optional[Any] = Field(
-        default=None,
-        description="Original finding data from the source system"
-    )
+    raw_data: Optional[Any] = Field(default=None, description="Original finding data from the source system")
     # Timestamps
     first_observed: datetime = Field(default_factory=utc_now)
     last_observed: datetime = Field(default_factory=utc_now)
@@ -2065,83 +1835,60 @@ from evidentia_core.models.common import EvidentiaModel
 
 class SystemComponent(EvidentiaModel):
     """A component of the system being assessed."""
+
     name: str = Field(description="Component name, e.g. 'Web Application'")
-    type: str = Field(description="Component type: 'web_app', 'api', 'database', 'network', 'identity_provider', 'ci_cd'")
+    type: str = Field(
+        description="Component type: 'web_app', 'api', 'database', 'network', 'identity_provider', 'ci_cd'"
+    )
     technology: str = Field(description="Technology stack, e.g. 'React + Node.js', 'Amazon Redshift'")
     data_handled: list[str] = Field(
-        default_factory=list,
-        description="Types of data this component processes, e.g. ['PII', 'PCI-CDE']"
+        default_factory=list, description="Types of data this component processes, e.g. ['PII', 'PCI-CDE']"
     )
     location: Optional[str] = Field(
-        default=None,
-        description="Hosting location, e.g. 'AWS us-east-1', 'On-premises datacenter'"
+        default=None, description="Hosting location, e.g. 'AWS us-east-1', 'On-premises datacenter'"
     )
     notes: Optional[str] = Field(default=None)
 
 
 class SystemContext(EvidentiaModel):
     """Complete system context for risk statement generation.
-    
+
     Provided by the user in a system-context.yaml file. Describes the
     organization, system, data, hosting, components, threat actors,
     existing controls, and risk tolerance.
-    
+
     This context is included in the LLM prompt to generate risk statements
     that are specific to the user's environment.
     """
-    organization: str = Field(
-        description="Organization name"
-    )
-    system_name: str = Field(
-        description="Name of the system being assessed"
-    )
+
+    organization: str = Field(description="Organization name")
+    system_name: str = Field(description="Name of the system being assessed")
     system_description: str = Field(
         description="Free-text description of the system's purpose, scope, and architecture"
     )
     data_classification: list[str] = Field(
-        default_factory=list,
-        description="Types of data processed: 'PII', 'PHI', 'PCI-CDE', 'CUI', 'public'"
+        default_factory=list, description="Types of data processed: 'PII', 'PHI', 'PCI-CDE', 'CUI', 'public'"
     )
-    hosting: str = Field(
-        description="Hosting environment description, e.g. 'AWS (us-east-1, eu-west-1)'"
-    )
+    hosting: str = Field(description="Hosting environment description, e.g. 'AWS (us-east-1, eu-west-1)'")
     components: list[SystemComponent] = Field(
-        default_factory=list,
-        description="System components with their technology stacks"
+        default_factory=list, description="System components with their technology stacks"
     )
     threat_actors: list[str] = Field(
         default_factory=list,
         description="Relevant threat actor categories. "
-                    "E.g. ['External threat actors (financial)', 'Nation-state', 'Insider']"
+        "E.g. ['External threat actors (financial)', 'Nation-state', 'Insider']",
     )
     existing_controls: list[str] = Field(
-        default_factory=list,
-        description="Control IDs already implemented (used for context in risk generation)"
+        default_factory=list, description="Control IDs already implemented (used for context in risk generation)"
     )
-    frameworks: list[str] = Field(
-        default_factory=list,
-        description="Target compliance frameworks"
-    )
-    risk_tolerance: str = Field(
-        default="medium",
-        description="Organization's risk tolerance: 'low', 'medium', 'high'"
-    )
+    frameworks: list[str] = Field(default_factory=list, description="Target compliance frameworks")
+    risk_tolerance: str = Field(default="medium", description="Organization's risk tolerance: 'low', 'medium', 'high'")
     regulatory_requirements: list[str] = Field(
-        default_factory=list,
-        description="Applicable regulations: 'HIPAA', 'PCI DSS', 'GDPR', 'CCPA', 'ITAR'"
+        default_factory=list, description="Applicable regulations: 'HIPAA', 'PCI DSS', 'GDPR', 'CCPA', 'ITAR'"
     )
-    annual_revenue: Optional[str] = Field(
-        default=None,
-        description="Annual revenue range (used for impact assessment)"
-    )
-    employee_count: Optional[int] = Field(
-        default=None,
-        description="Number of employees"
-    )
-    customer_count: Optional[int] = Field(
-        default=None,
-        description="Number of customers/users"
-    )
+    annual_revenue: Optional[str] = Field(default=None, description="Annual revenue range (used for impact assessment)")
+    employee_count: Optional[int] = Field(default=None, description="Number of employees")
+    customer_count: Optional[int] = Field(default=None, description="Number of customers/users")
     notes: Optional[str] = Field(default=None)
 ```
 
@@ -2206,7 +1953,7 @@ DATA_DIR = Path(__file__).parent / "data"
 
 def load_oscal_catalog(catalog_path: Path) -> ControlCatalog:
     """Load an OSCAL Catalog JSON file into a ControlCatalog.
-    
+
     Parses the OSCAL catalog structure:
     {
         "catalog": {
@@ -2234,7 +1981,7 @@ def load_oscal_catalog(catalog_path: Path) -> ControlCatalog:
 
     catalog_data = data.get("catalog", data)
     metadata = catalog_data.get("metadata", {})
-    
+
     controls: list[CatalogControl] = []
     families: list[str] = []
 
@@ -2259,10 +2006,7 @@ def load_oscal_catalog(catalog_path: Path) -> ControlCatalog:
         families=families,
     )
 
-    logger.info(
-        f"Loaded catalog '{framework_name}': "
-        f"{catalog.control_count} controls in {len(families)} families"
-    )
+    logger.info(f"Loaded catalog '{framework_name}': {catalog.control_count} controls in {len(families)} families")
     return catalog
 
 
@@ -2273,14 +2017,14 @@ def _parse_oscal_control(
     """Parse a single OSCAL control into a CatalogControl."""
     control_id = oscal_control.get("id", "").upper()
     title = oscal_control.get("title", "")
-    
+
     # Extract description from parts
     description = ""
     for part in oscal_control.get("parts", []):
         if part.get("name") == "statement":
             description = _extract_prose(part)
             break
-    
+
     # Extract assessment objectives
     objectives: list[str] = []
     for part in oscal_control.get("parts", []):
@@ -2310,7 +2054,7 @@ def _parse_oscal_control(
     for link in oscal_control.get("links", []):
         if link.get("rel") == "related":
             related.append(link.get("href", "").replace("#", "").upper())
-    
+
     # Extract parameters
     parameters: dict[str, str] = {}
     for param in oscal_control.get("params", []):
@@ -2364,7 +2108,7 @@ def _detect_framework_id(path: Path, metadata: dict) -> str:
 
 def load_evidentia_catalog(catalog_path: Path) -> ControlCatalog:
     """Load a Evidentia-format framework catalog.
-    
+
     Used for frameworks that don't have OSCAL catalogs published by NIST
     (SOC 2, ISO 27001, CIS, CMMC, PCI DSS). These are stored as
     Evidentia JSON format with a simplified structure.
@@ -2373,7 +2117,7 @@ def load_evidentia_catalog(catalog_path: Path) -> ControlCatalog:
         data = json.load(f)
 
     controls = [CatalogControl(**c) for c in data.get("controls", [])]
-    
+
     return ControlCatalog(
         framework_id=data["framework_id"],
         framework_name=data["framework_name"],
@@ -2386,7 +2130,7 @@ def load_evidentia_catalog(catalog_path: Path) -> ControlCatalog:
 
 def load_catalog(framework_id: str, custom_path: Optional[Path] = None) -> ControlCatalog:
     """Load a catalog by framework ID.
-    
+
     First checks for a custom path, then looks in the bundled data directory.
     Auto-detects format (OSCAL vs Evidentia) based on file contents.
     """
@@ -2407,10 +2151,7 @@ def load_catalog(framework_id: str, custom_path: Optional[Path] = None) -> Contr
         }
         filename = framework_files.get(framework_id)
         if not filename:
-            raise ValueError(
-                f"Unknown framework '{framework_id}'. "
-                f"Available: {', '.join(framework_files.keys())}"
-            )
+            raise ValueError(f"Unknown framework '{framework_id}'. Available: {', '.join(framework_files.keys())}")
         path = DATA_DIR / filename
 
     if not path.exists():
@@ -2699,23 +2440,23 @@ logger = logging.getLogger(__name__)
 
 class FrameworkRegistry:
     """Central registry for framework catalogs and cross-framework mappings.
-    
+
     Lazily loads catalogs on first access. Caches all loaded catalogs
     in memory for the lifetime of the process.
-    
+
     Usage:
         registry = FrameworkRegistry()
-        
+
         # List available frameworks
         registry.list_frameworks()
         # ['nist-800-53-rev5', 'nist-800-53-mod', 'soc2-tsc', ...]
-        
+
         # Get a catalog
         catalog = registry.get_catalog("nist-800-53-mod")
-        
+
         # Get a specific control
         control = registry.get_control("nist-800-53-mod", "AC-2")
-        
+
         # Get cross-framework mappings
         mappings = registry.crosswalk.get_mapped_controls(
             "nist-800-53-rev5", "AC-2", "soc2-tsc"
@@ -2727,9 +2468,7 @@ class FrameworkRegistry:
     def __init__(self, data_dir: Optional[Path] = None):
         self._data_dir = data_dir or Path(__file__).parent / "data"
         self._catalogs: dict[str, ControlCatalog] = {}
-        self._crosswalk_engine = CrosswalkEngine(
-            mappings_dir=self._data_dir / "mappings"
-        )
+        self._crosswalk_engine = CrosswalkEngine(mappings_dir=self._data_dir / "mappings")
         self._crosswalk_loaded = False
 
     @classmethod
@@ -2760,10 +2499,7 @@ class FrameworkRegistry:
             "cmmc-2-level2": {"name": "CMMC 2.0 Level 2", "controls": "110"},
             "pci-dss-4": {"name": "PCI DSS 4.0", "controls": "~285"},
         }
-        return [
-            {"id": fw_id, **meta}
-            for fw_id, meta in framework_metadata.items()
-        ]
+        return [{"id": fw_id, **meta} for fw_id, meta in framework_metadata.items()]
 
     def get_catalog(self, framework_id: str) -> ControlCatalog:
         """Get a catalog by framework ID (cached)."""
@@ -2854,7 +2590,7 @@ STATUS_ALIASES = {
 
 def load_inventory(path: str | Path) -> ControlInventory:
     """Load a control inventory from any supported format.
-    
+
     Auto-detects format based on file extension and content structure.
     """
     path = Path(path)
@@ -2871,10 +2607,7 @@ def load_inventory(path: str | Path) -> ControlInventory:
     elif suffix == ".json":
         return _parse_json(content, str(path))
     else:
-        raise ValueError(
-            f"Unsupported file extension '{suffix}'. "
-            f"Supported: .yaml, .yml, .json, .csv"
-        )
+        raise ValueError(f"Unsupported file extension '{suffix}'. Supported: .yaml, .yml, .json, .csv")
 
 
 def _parse_json(content: str, source_path: str) -> ControlInventory:
@@ -2883,9 +2616,7 @@ def _parse_json(content: str, source_path: str) -> ControlInventory:
 
     if "component-definition" in data:
         return _parse_oscal_component_definition(data, source_path)
-    elif "ciso_assistant" in data or (
-        isinstance(data, dict) and "framework" in data and "assessments" in data
-    ):
+    elif "ciso_assistant" in data or (isinstance(data, dict) and "framework" in data and "assessments" in data):
         return _parse_ciso_assistant(data, source_path)
     elif "controls" in data:
         # Evidentia JSON format (same structure as YAML)
@@ -2902,33 +2633,31 @@ def _parse_evidentia_yaml(content: str, source_path: str) -> ControlInventory:
     """Parse Evidentia YAML format."""
     data = yaml.safe_load(content)
     if not isinstance(data, dict) or "controls" not in data:
-        raise ValueError(
-            "Invalid Evidentia YAML: expected a mapping with 'controls' key"
-        )
+        raise ValueError("Invalid Evidentia YAML: expected a mapping with 'controls' key")
     return _parse_evidentia_dict(data, source_path, "evidentia")
 
 
-def _parse_evidentia_dict(
-    data: dict, source_path: str, format_name: str
-) -> ControlInventory:
+def _parse_evidentia_dict(data: dict, source_path: str, format_name: str) -> ControlInventory:
     """Parse a Evidentia-format dict (from YAML or JSON)."""
     controls: list[ControlImplementation] = []
     for item in data.get("controls", []):
         status_str = item.get("status", "not_implemented").lower().strip()
         status = STATUS_ALIASES.get(status_str, ControlStatus.NOT_IMPLEMENTED)
-        
-        controls.append(ControlImplementation(
-            id=str(item["id"]).strip(),
-            title=item.get("title"),
-            description=item.get("description"),
-            status=status,
-            implementation_notes=item.get("implementation_notes") or item.get("notes"),
-            responsible_roles=item.get("responsible_roles", []),
-            evidence_references=item.get("evidence_references", []),
-            owner=item.get("owner"),
-            frameworks=item.get("frameworks", []),
-            tags=item.get("tags", []),
-        ))
+
+        controls.append(
+            ControlImplementation(
+                id=str(item["id"]).strip(),
+                title=item.get("title"),
+                description=item.get("description"),
+                status=status,
+                implementation_notes=item.get("implementation_notes") or item.get("notes"),
+                responsible_roles=item.get("responsible_roles", []),
+                evidence_references=item.get("evidence_references", []),
+                owner=item.get("owner"),
+                frameworks=item.get("frameworks", []),
+                tags=item.get("tags", []),
+            )
+        )
 
     return ControlInventory(
         organization=data.get("organization", "Unknown Organization"),
@@ -2974,17 +2703,17 @@ def _parse_csv(content: str, source_path: str) -> ControlInventory:
         status_str = row.get(header_map.get("status", ""), "not_implemented").lower().strip()
         status = STATUS_ALIASES.get(status_str, ControlStatus.NOT_IMPLEMENTED)
 
-        controls.append(ControlImplementation(
-            id=control_id,
-            title=row.get(header_map.get("title", ""), None) or None,
-            description=row.get(header_map.get("description", ""), None) or None,
-            status=status,
-            owner=row.get(header_map.get("owner", ""), None) or None,
-        ))
+        controls.append(
+            ControlImplementation(
+                id=control_id,
+                title=row.get(header_map.get("title", ""), None) or None,
+                description=row.get(header_map.get("description", ""), None) or None,
+                status=status,
+                owner=row.get(header_map.get("owner", ""), None) or None,
+            )
+        )
 
-    logger.info(
-        f"Parsed CSV inventory: {len(controls)} controls from {source_path}"
-    )
+    logger.info(f"Parsed CSV inventory: {len(controls)} controls from {source_path}")
     return ControlInventory(
         organization="Unknown Organization (from CSV)",
         controls=controls,
@@ -3003,7 +2732,7 @@ def _parse_oscal_component_definition(data: dict, source_path: str) -> ControlIn
         for ctrl_impl in component.get("control-implementations", []):
             for impl_req in ctrl_impl.get("implemented-requirements", []):
                 control_id = impl_req.get("control-id", "").upper()
-                
+
                 # Determine status from OSCAL properties
                 status = ControlStatus.IMPLEMENTED
                 for prop in impl_req.get("props", []):
@@ -3020,12 +2749,14 @@ def _parse_oscal_component_definition(data: dict, source_path: str) -> ControlIn
                 for statement in impl_req.get("statements", []):
                     description += statement.get("description", "") + "\n"
 
-                controls.append(ControlImplementation(
-                    id=control_id,
-                    title=None,  # OSCAL doesn't include title in component-definition
-                    description=description.strip() or None,
-                    status=status,
-                ))
+                controls.append(
+                    ControlImplementation(
+                        id=control_id,
+                        title=None,  # OSCAL doesn't include title in component-definition
+                        description=description.strip() or None,
+                        status=status,
+                    )
+                )
 
     return ControlInventory(
         organization=metadata.get("title", "Unknown Organization"),
@@ -3038,7 +2769,7 @@ def _parse_oscal_component_definition(data: dict, source_path: str) -> ControlIn
 def _parse_ciso_assistant(data: dict, source_path: str) -> ControlInventory:
     """Parse a CISO Assistant JSON export into a ControlInventory."""
     controls: list[ControlImplementation] = []
-    
+
     for assessment in data.get("assessments", data.get("compliance_assessments", [])):
         for req in assessment.get("requirements", []):
             control_id = req.get("ref_id", req.get("urn", "")).strip()
@@ -3054,13 +2785,15 @@ def _parse_ciso_assistant(data: dict, source_path: str) -> ControlInventory:
             }
             status = status_map.get(status_value, ControlStatus.NOT_IMPLEMENTED)
 
-            controls.append(ControlImplementation(
-                id=control_id,
-                title=req.get("name"),
-                description=req.get("description"),
-                status=status,
-                implementation_notes=req.get("observation"),
-            ))
+            controls.append(
+                ControlImplementation(
+                    id=control_id,
+                    title=req.get("name"),
+                    description=req.get("description"),
+                    status=status,
+                    implementation_notes=req.get("observation"),
+                )
+            )
 
     return ControlInventory(
         organization=data.get("organization", {}).get("name", "Unknown Organization"),
@@ -3093,7 +2826,7 @@ from evidentia_core.models.catalog import ControlCatalog
 
 def normalize_control_id(raw_id: str) -> str:
     """Normalize a control ID to a canonical form.
-    
+
     Rules:
     1. Strip whitespace and convert to uppercase
     2. Remove common prefixes: "NIST ", "ISO ", "CIS ", "SOC2 "
@@ -3101,28 +2834,28 @@ def normalize_control_id(raw_id: str) -> str:
     4. Preserve dot separators for ISO/SOC2 style: "CC6.1" stays "CC6.1"
     """
     result = raw_id.strip().upper()
-    
+
     # Remove common prefixes
     for prefix in ["NIST ", "ISO ", "CIS ", "SOC2 ", "SOC 2 ", "PCI ", "CMMC "]:
         if result.startswith(prefix):
-            result = result[len(prefix):]
-    
+            result = result[len(prefix) :]
+
     # Handle NIST-style IDs: ensure hyphen between family prefix and number
     # Match patterns like "AC2" → "AC-2", "AU12" → "AU-12"
-    nist_pattern = re.compile(r'^([A-Z]{2,3})(\d+)(.*)$')
+    nist_pattern = re.compile(r"^([A-Z]{2,3})(\d+)(.*)$")
     match = nist_pattern.match(result.replace("-", "").replace(" ", ""))
-    if match and not re.search(r'\.', result):
+    if match and not re.search(r"\.", result):
         family = match.group(1)
         number = match.group(2)
         suffix = match.group(3)
-        # Handle enhancement notation: "AC-2(1)" 
+        # Handle enhancement notation: "AC-2(1)"
         if suffix.startswith("("):
             result = f"{family}-{number}{suffix}"
         elif suffix:
             result = f"{family}-{number}-{suffix}" if suffix.isdigit() else f"{family}-{number}{suffix}"
         else:
             result = f"{family}-{number}"
-    
+
     return result
 
 
@@ -3132,45 +2865,41 @@ def find_best_match(
     threshold: int = 75,
 ) -> Optional[str]:
     """Find the best matching control ID in a catalog using fuzzy matching.
-    
+
     Steps:
     1. Try exact match (after normalization)
     2. Try fuzzy matching on control IDs
     3. Try fuzzy matching on control titles (for natural language input)
-    
+
     Returns the matched catalog control ID, or None if no match found.
     """
     normalized = normalize_control_id(user_control_id)
-    
+
     # 1. Exact match
     exact = catalog.get_control(normalized)
     if exact:
         return exact.id
-    
+
     # 2. Fuzzy match on control IDs
     all_ids = [c.id for c in catalog.controls]
     for c in catalog.controls:
         all_ids.extend(e.id for e in c.enhancements)
-    
-    id_match = process.extractOne(
-        normalized, all_ids, scorer=fuzz.ratio
-    )
+
+    id_match = process.extractOne(normalized, all_ids, scorer=fuzz.ratio)
     if id_match and id_match[1] >= threshold:
         return id_match[0]
-    
+
     # 3. Fuzzy match on titles (for inputs like "Account Management")
     title_map = {}
     for c in catalog.controls:
         title_map[c.title] = c.id
         for e in c.enhancements:
             title_map[e.title] = e.id
-    
-    title_match = process.extractOne(
-        user_control_id, list(title_map.keys()), scorer=fuzz.ratio
-    )
+
+    title_match = process.extractOne(user_control_id, list(title_map.keys()), scorer=fuzz.ratio)
     if title_match and title_match[1] >= threshold:
         return title_map[title_match[0]]
-    
+
     return None
 ```
 
@@ -3238,7 +2967,7 @@ EFFORT_WEIGHT: dict[ImplementationEffort, float] = {
 
 class GapAnalyzer:
     """The core gap analysis engine.
-    
+
     Usage:
         analyzer = GapAnalyzer()
         report = analyzer.analyze(
@@ -3259,7 +2988,7 @@ class GapAnalyzer:
         min_efficiency_frameworks: int = 3,
     ) -> GapAnalysisReport:
         """Run gap analysis against specified frameworks.
-        
+
         Args:
             inventory: Organization's control inventory
             frameworks: List of framework IDs to analyze against
@@ -3268,41 +2997,36 @@ class GapAnalyzer:
                 must satisfy to be flagged as an efficiency opportunity
         """
         logger.info(
-            f"Starting gap analysis for {inventory.organization}: "
-            f"{len(inventory.controls)} controls vs {frameworks}"
+            f"Starting gap analysis for {inventory.organization}: {len(inventory.controls)} controls vs {frameworks}"
         )
 
         # Step 1: Load catalogs
         catalogs = {fw: self.registry.get_catalog(fw) for fw in frameworks}
-        
+
         # Step 2: Build required control set
         required_controls = self._build_required_set(catalogs)
-        
+
         # Step 3: Normalize inventory
         inventory_map = self._normalize_inventory(inventory, catalogs)
-        
+
         # Step 4-5: Identify gaps
-        gaps = self._identify_gaps(
-            required_controls, inventory_map, inventory, catalogs
-        )
-        
+        gaps = self._identify_gaps(required_controls, inventory_map, inventory, catalogs)
+
         # Step 6: Calculate cross-framework value
         self._calculate_cross_framework_value(gaps)
-        
+
         # Step 7: Compute priority scores
         for gap in gaps:
             gap.priority_score = self._compute_priority(gap)
-        
+
         # Sort by priority (descending)
         gaps.sort(key=lambda g: g.priority_score, reverse=True)
-        
+
         # Step 8: Detect efficiency opportunities
         efficiency = []
         if show_efficiency:
-            efficiency = self._detect_efficiency_opportunities(
-                gaps, min_frameworks=min_efficiency_frameworks
-            )
-        
+            efficiency = self._detect_efficiency_opportunities(gaps, min_frameworks=min_efficiency_frameworks)
+
         # Step 9: Build report
         severity_counts = self._count_severities(gaps)
         total_required = len(required_controls)
@@ -3334,18 +3058,16 @@ class GapAnalyzer:
         )
         return report
 
-    def _build_required_set(
-        self, catalogs: dict[str, "ControlCatalog"]
-    ) -> dict[str, list[tuple[str, CatalogControl]]]:
+    def _build_required_set(self, catalogs: dict[str, "ControlCatalog"]) -> dict[str, list[tuple[str, CatalogControl]]]:
         """Build the set of required controls across all frameworks.
-        
+
         Returns: {canonical_control_id: [(framework_id, CatalogControl), ...]}
         This allows tracking which frameworks require each control.
         """
         from evidentia_core.models.catalog import ControlCatalog
-        
+
         required: dict[str, list[tuple[str, CatalogControl]]] = defaultdict(list)
-        
+
         for fw_id, catalog in catalogs.items():
             for control in catalog.controls:
                 key = f"{fw_id}:{control.id}"
@@ -3354,7 +3076,7 @@ class GapAnalyzer:
                 for enhancement in control.enhancements:
                     enh_key = f"{fw_id}:{enhancement.id}"
                     required[enh_key].append((fw_id, enhancement))
-        
+
         return required
 
     def _normalize_inventory(
@@ -3363,21 +3085,21 @@ class GapAnalyzer:
         catalogs: dict,
     ) -> dict[str, ControlImplementation]:
         """Normalize inventory control IDs and build a lookup map.
-        
+
         For each inventory control, attempt to match it to each catalog's
         controls using normalization and fuzzy matching.
-        
+
         Returns: {framework:control_id: ControlImplementation}
         """
         inv_map: dict[str, ControlImplementation] = {}
-        
+
         for impl in inventory.controls:
             for fw_id, catalog in catalogs.items():
                 matched_id = find_best_match(impl.id, catalog)
                 if matched_id:
                     key = f"{fw_id}:{matched_id}"
                     inv_map[key] = impl
-        
+
         return inv_map
 
     def _identify_gaps(
@@ -3396,64 +3118,66 @@ class GapAnalyzer:
 
             if impl is None:
                 # Control is completely missing
-                gaps.append(ControlGap(
-                    framework=fw_id,
-                    control_id=catalog_control.id,
-                    control_title=catalog_control.title,
-                    control_description=catalog_control.description,
-                    control_family=catalog_control.family,
-                    gap_severity=GapSeverity.CRITICAL,
-                    implementation_status="missing",
-                    gap_description=(
-                        f"Control {catalog_control.id} ({catalog_control.title}) "
-                        f"is required by {fw_id} but is not present in the "
-                        f"organization's control inventory."
-                    ),
-                    remediation_guidance=self._generate_remediation_guidance(
-                        catalog_control
-                    ),
-                    implementation_effort=self._estimate_effort(catalog_control),
-                ))
+                gaps.append(
+                    ControlGap(
+                        framework=fw_id,
+                        control_id=catalog_control.id,
+                        control_title=catalog_control.title,
+                        control_description=catalog_control.description,
+                        control_family=catalog_control.family,
+                        gap_severity=GapSeverity.CRITICAL,
+                        implementation_status="missing",
+                        gap_description=(
+                            f"Control {catalog_control.id} ({catalog_control.title}) "
+                            f"is required by {fw_id} but is not present in the "
+                            f"organization's control inventory."
+                        ),
+                        remediation_guidance=self._generate_remediation_guidance(catalog_control),
+                        implementation_effort=self._estimate_effort(catalog_control),
+                    )
+                )
             elif impl.status == ControlStatus.PARTIALLY_IMPLEMENTED:
-                gaps.append(ControlGap(
-                    framework=fw_id,
-                    control_id=catalog_control.id,
-                    control_title=catalog_control.title,
-                    control_description=catalog_control.description,
-                    control_family=catalog_control.family,
-                    gap_severity=GapSeverity.HIGH,
-                    implementation_status="partial",
-                    gap_description=(
-                        f"Control {catalog_control.id} ({catalog_control.title}) "
-                        f"is partially implemented. "
-                        f"Notes: {impl.implementation_notes or 'No details provided.'}"
-                    ),
-                    equivalent_controls_in_inventory=[impl.id],
-                    remediation_guidance=self._generate_remediation_guidance(
-                        catalog_control, partial=True
-                    ),
-                    implementation_effort=ImplementationEffort.MEDIUM,
-                ))
+                gaps.append(
+                    ControlGap(
+                        framework=fw_id,
+                        control_id=catalog_control.id,
+                        control_title=catalog_control.title,
+                        control_description=catalog_control.description,
+                        control_family=catalog_control.family,
+                        gap_severity=GapSeverity.HIGH,
+                        implementation_status="partial",
+                        gap_description=(
+                            f"Control {catalog_control.id} ({catalog_control.title}) "
+                            f"is partially implemented. "
+                            f"Notes: {impl.implementation_notes or 'No details provided.'}"
+                        ),
+                        equivalent_controls_in_inventory=[impl.id],
+                        remediation_guidance=self._generate_remediation_guidance(catalog_control, partial=True),
+                        implementation_effort=ImplementationEffort.MEDIUM,
+                    )
+                )
             elif impl.status == ControlStatus.PLANNED:
-                gaps.append(ControlGap(
-                    framework=fw_id,
-                    control_id=catalog_control.id,
-                    control_title=catalog_control.title,
-                    control_description=catalog_control.description,
-                    control_family=catalog_control.family,
-                    gap_severity=GapSeverity.MEDIUM,
-                    implementation_status="planned",
-                    gap_description=(
-                        f"Control {catalog_control.id} ({catalog_control.title}) "
-                        f"is planned but not yet implemented."
-                    ),
-                    equivalent_controls_in_inventory=[impl.id],
-                    remediation_guidance=(
-                        f"Execute the planned implementation for {catalog_control.id}. "
-                        f"Ensure implementation addresses all assessment objectives."
-                    ),
-                    implementation_effort=ImplementationEffort.LOW,
-                ))
+                gaps.append(
+                    ControlGap(
+                        framework=fw_id,
+                        control_id=catalog_control.id,
+                        control_title=catalog_control.title,
+                        control_description=catalog_control.description,
+                        control_family=catalog_control.family,
+                        gap_severity=GapSeverity.MEDIUM,
+                        implementation_status="planned",
+                        gap_description=(
+                            f"Control {catalog_control.id} ({catalog_control.title}) "
+                            f"is planned but not yet implemented."
+                        ),
+                        equivalent_controls_in_inventory=[impl.id],
+                        remediation_guidance=(
+                            f"Execute the planned implementation for {catalog_control.id}. "
+                            f"Ensure implementation addresses all assessment objectives."
+                        ),
+                        implementation_effort=ImplementationEffort.LOW,
+                    )
+                )
             # IMPLEMENTED and NOT_APPLICABLE are not gaps
 
         return gaps
@@ -3461,26 +3185,24 @@ class GapAnalyzer:
     def _calculate_cross_framework_value(self, gaps: list[ControlGap]) -> None:
         """For each gap, determine which other frameworks would also benefit."""
         crosswalk = self.registry.crosswalk
-        
+
         for gap in gaps:
             # Get all cross-framework mappings for this control
-            cross_value = crosswalk.get_cross_framework_value(
-                gap.framework, gap.control_id
-            )
+            cross_value = crosswalk.get_cross_framework_value(gap.framework, gap.control_id)
             gap.cross_framework_value = cross_value
 
     def _compute_priority(self, gap: ControlGap) -> float:
         """Compute priority score for a gap.
-        
+
         Formula:
             priority = severity_weight × (1 + 0.2 × cross_framework_count) × (1 / effort_weight)
-        
+
         Higher score = higher priority (fix first).
         """
         severity_w = SEVERITY_WEIGHT.get(gap.gap_severity, 1.0)
         cross_fw_bonus = 1 + 0.2 * len(gap.cross_framework_value)
         effort_w = EFFORT_WEIGHT.get(gap.implementation_effort, 2.0)
-        
+
         return round(severity_w * cross_fw_bonus * (1 / effort_w), 3)
 
     def _detect_efficiency_opportunities(
@@ -3489,51 +3211,51 @@ class GapAnalyzer:
         min_frameworks: int = 3,
     ) -> list[EfficiencyOpportunity]:
         """Detect controls that satisfy multiple framework requirements.
-        
+
         Groups gaps by their base control ID (e.g., AC-2 across NIST, SOC2, ISO)
         and identifies controls that appear in min_frameworks or more.
         """
         crosswalk = self.registry.crosswalk
-        
+
         # Group gaps by normalized control concept
         control_groups: dict[str, list[ControlGap]] = defaultdict(list)
         for gap in gaps:
             # Use the control ID as the grouping key
             control_groups[gap.control_id].append(gap)
-        
+
         opportunities: list[EfficiencyOpportunity] = []
-        
+
         for control_id, gap_group in control_groups.items():
             # Count distinct frameworks
             frameworks = set(g.framework for g in gap_group)
-            
+
             # Add cross-framework mappings
             all_satisfied: list[str] = []
             for g in gap_group:
                 all_satisfied.append(f"{g.framework}:{g.control_id}")
                 all_satisfied.extend(g.cross_framework_value)
-            
+
             unique_frameworks = set(s.split(":")[0] for s in all_satisfied)
-            
+
             if len(unique_frameworks) >= min_frameworks:
                 # Pick the most common effort level
-                effort = max(
-                    gap_group, key=lambda g: SEVERITY_WEIGHT.get(g.gap_severity, 0)
-                ).implementation_effort
-                
+                effort = max(gap_group, key=lambda g: SEVERITY_WEIGHT.get(g.gap_severity, 0)).implementation_effort
+
                 effort_w = EFFORT_WEIGHT.get(effort, 2.0)
                 value_score = len(set(all_satisfied)) / effort_w
-                
-                opportunities.append(EfficiencyOpportunity(
-                    control_id=control_id,
-                    control_title=gap_group[0].control_title,
-                    frameworks_satisfied=sorted(set(all_satisfied)),
-                    framework_count=len(unique_frameworks),
-                    total_gaps_closed=len(gap_group),
-                    implementation_effort=effort,
-                    value_score=round(value_score, 2),
-                ))
-        
+
+                opportunities.append(
+                    EfficiencyOpportunity(
+                        control_id=control_id,
+                        control_title=gap_group[0].control_title,
+                        frameworks_satisfied=sorted(set(all_satisfied)),
+                        framework_count=len(unique_frameworks),
+                        total_gaps_closed=len(gap_group),
+                        implementation_effort=effort,
+                        value_score=round(value_score, 2),
+                    )
+                )
+
         # Sort by value score descending
         opportunities.sort(key=lambda o: o.value_score, reverse=True)
         return opportunities
@@ -3563,7 +3285,7 @@ class GapAnalyzer:
         # Heuristic: controls with many enhancements or assessment objectives
         # tend to be more complex
         complexity_score = len(control.enhancements) + len(control.assessment_objectives)
-        
+
         if complexity_score >= 10:
             return ImplementationEffort.VERY_HIGH
         elif complexity_score >= 5:
@@ -3610,7 +3332,7 @@ def export_report(
 ) -> Path:
     """Export a gap analysis report in the specified format."""
     path = Path(output_path)
-    
+
     if format == "json":
         return _export_json(report, path)
     elif format == "csv":
@@ -3636,26 +3358,45 @@ def _export_csv(report: GapAnalysisReport, path: Path) -> Path:
     """Export gaps as CSV (one row per gap)."""
     output = StringIO()
     writer = csv.writer(output)
-    
+
     # Header
-    writer.writerow([
-        "gap_id", "framework", "control_id", "control_title",
-        "gap_severity", "implementation_status", "gap_description",
-        "cross_framework_value", "remediation_guidance",
-        "implementation_effort", "priority_score",
-        "jira_issue_key", "servicenow_ticket_id",
-    ])
-    
+    writer.writerow(
+        [
+            "gap_id",
+            "framework",
+            "control_id",
+            "control_title",
+            "gap_severity",
+            "implementation_status",
+            "gap_description",
+            "cross_framework_value",
+            "remediation_guidance",
+            "implementation_effort",
+            "priority_score",
+            "jira_issue_key",
+            "servicenow_ticket_id",
+        ]
+    )
+
     for gap in report.gaps:
-        writer.writerow([
-            gap.id, gap.framework, gap.control_id, gap.control_title,
-            gap.gap_severity, gap.implementation_status, gap.gap_description,
-            "; ".join(gap.cross_framework_value),
-            gap.remediation_guidance, gap.implementation_effort,
-            gap.priority_score,
-            gap.jira_issue_key or "", gap.servicenow_ticket_id or "",
-        ])
-    
+        writer.writerow(
+            [
+                gap.id,
+                gap.framework,
+                gap.control_id,
+                gap.control_title,
+                gap.gap_severity,
+                gap.implementation_status,
+                gap.gap_description,
+                "; ".join(gap.cross_framework_value),
+                gap.remediation_guidance,
+                gap.implementation_effort,
+                gap.priority_score,
+                gap.jira_issue_key or "",
+                gap.servicenow_ticket_id or "",
+            ]
+        )
+
     path.write_text(output.getvalue(), encoding="utf-8")
     return path
 
@@ -3663,7 +3404,7 @@ def _export_csv(report: GapAnalysisReport, path: Path) -> Path:
 def _export_markdown(report: GapAnalysisReport, path: Path) -> Path:
     """Export as Markdown report."""
     lines: list[str] = []
-    
+
     lines.append(f"# Gap Analysis Report: {report.organization}")
     lines.append(f"")
     lines.append(f"**Date:** {report.analyzed_at.isoformat()}")
@@ -3683,12 +3424,12 @@ def _export_markdown(report: GapAnalysisReport, path: Path) -> Path:
     lines.append(f"| Low | {report.low_gaps} |")
     lines.append(f"| Coverage | {report.coverage_percentage}% |")
     lines.append(f"")
-    
+
     lines.append(f"## Gaps (Prioritized)")
     lines.append(f"")
     lines.append(f"| # | Framework | Control | Severity | Status | Effort | Priority | Cross-FW Value |")
     lines.append(f"|---|---|---|---|---|---|---|---|")
-    
+
     for i, gap in enumerate(report.gaps, 1):
         cross_fw = len(gap.cross_framework_value)
         lines.append(
@@ -3697,7 +3438,7 @@ def _export_markdown(report: GapAnalysisReport, path: Path) -> Path:
             f"{gap.implementation_effort} | {gap.priority_score} | "
             f"{cross_fw} frameworks |"
         )
-    
+
     if report.efficiency_opportunities:
         lines.append(f"")
         lines.append(f"## Efficiency Opportunities")
@@ -3712,21 +3453,21 @@ def _export_markdown(report: GapAnalysisReport, path: Path) -> Path:
                 f"{opp.framework_count} | {opp.total_gaps_closed} | "
                 f"{opp.implementation_effort} | {opp.value_score} |"
             )
-    
+
     path.write_text("\n".join(lines), encoding="utf-8")
     return path
 
 
 def _export_oscal_ar(report: GapAnalysisReport, path: Path) -> Path:
     """Export as OSCAL Assessment Results JSON.
-    
+
     Maps Evidentia gap report to OSCAL assessment-results structure:
     - Each gap → observation + finding
     - Risk statements → risk entries
     - Evidence → observations with evidence references
     """
     from evidentia_core.oscal.exporter import gap_report_to_oscal_ar
-    
+
     oscal_ar = gap_report_to_oscal_ar(report)
     path.write_text(
         json.dumps(oscal_ar, indent=2, default=str),
@@ -3919,9 +3660,7 @@ def _build_risk_context(gap: ControlGap, context: SystemContext) -> str:
     """Build the user prompt with full risk context."""
     components_text = ""
     for comp in context.components:
-        components_text += (
-            f"- {comp.name} ({comp.type}): {comp.technology}"
-        )
+        components_text += f"- {comp.name} ({comp.type}): {comp.technology}"
         if comp.data_handled:
             components_text += f" — handles: {', '.join(comp.data_handled)}"
         if comp.location:
@@ -3955,13 +3694,13 @@ def _build_risk_context(gap: ControlGap, context: SystemContext) -> str:
 
 class RiskStatementGenerator:
     """Generates risk statements from control gaps using LLMs.
-    
+
     Usage:
         generator = RiskStatementGenerator(model="gpt-4o")
-        
+
         # Single gap
         risk = generator.generate(gap=my_gap, system_context=my_context)
-        
+
         # Batch
         risks = generator.generate_batch(
             gaps=report.gaps[:10],
@@ -3987,17 +3726,14 @@ class RiskStatementGenerator:
         system_context: SystemContext,
     ) -> RiskStatement:
         """Generate a single risk statement for a control gap.
-        
+
         Uses Instructor to extract a validated RiskStatement from the LLM response.
         If the LLM returns invalid JSON, Instructor automatically retries up to
         max_retries times.
         """
         user_prompt = _build_risk_context(gap, system_context)
 
-        logger.info(
-            f"Generating risk statement for {gap.framework}:{gap.control_id} "
-            f"using model={self.model}"
-        )
+        logger.info(f"Generating risk statement for {gap.framework}:{gap.control_id} using model={self.model}")
 
         risk: RiskStatement = self.client.chat.completions.create(
             model=self.model,
@@ -4013,14 +3749,9 @@ class RiskStatementGenerator:
         # Enrich with metadata
         risk.source_gap_id = gap.id
         risk.model_used = self.model
-        risk.framework_mappings = [
-            f"{gap.framework}:{gap.control_id}"
-        ] + gap.cross_framework_value
+        risk.framework_mappings = [f"{gap.framework}:{gap.control_id}"] + gap.cross_framework_value
 
-        logger.info(
-            f"Generated risk statement: level={risk.risk_level}, "
-            f"priority={risk.remediation_priority}"
-        )
+        logger.info(f"Generated risk statement: level={risk.risk_level}, priority={risk.remediation_priority}")
         return risk
 
     def generate_batch(
@@ -4031,10 +3762,10 @@ class RiskStatementGenerator:
         on_progress: Optional[callable] = None,
     ) -> list[RiskStatement]:
         """Generate risk statements for multiple gaps.
-        
+
         Processes sequentially (sync version). For async batch processing,
         use generate_batch_async.
-        
+
         Args:
             gaps: Control gaps to generate risk statements for
             system_context: System context for the organization
@@ -4049,18 +3780,14 @@ class RiskStatementGenerator:
                 risk = self.generate(gap, system_context)
                 results.append(risk)
             except Exception as e:
-                logger.error(
-                    f"Failed to generate risk for {gap.control_id}: {e}"
-                )
+                logger.error(f"Failed to generate risk for {gap.control_id}: {e}")
                 # Continue with remaining gaps
                 continue
-            
+
             if on_progress:
                 on_progress(i + 1, total)
 
-        logger.info(
-            f"Batch complete: {len(results)}/{total} risk statements generated"
-        )
+        logger.info(f"Batch complete: {len(results)}/{total} risk statements generated")
         return results
 
     async def generate_async(
@@ -4087,9 +3814,7 @@ class RiskStatementGenerator:
 
         risk.source_gap_id = gap.id
         risk.model_used = self.model
-        risk.framework_mappings = [
-            f"{gap.framework}:{gap.control_id}"
-        ] + gap.cross_framework_value
+        risk.framework_mappings = [f"{gap.framework}:{gap.control_id}"] + gap.cross_framework_value
 
         return risk
 
@@ -4153,6 +3878,7 @@ from evidentia_core.models.evidence import EvidenceArtifact
 
 class ConnectionStatus(EvidentiaModel):
     """Result of a collector connection health check."""
+
     collector: str = ""
     display_name: str = ""
     connected: bool = False
@@ -4167,6 +3893,7 @@ class ConnectionStatus(EvidentiaModel):
 
 class CollectionResult(EvidentiaModel):
     """Result of a single collection run."""
+
     collector: str
     started_at: datetime
     completed_at: datetime
@@ -4179,23 +3906,24 @@ class CollectionResult(EvidentiaModel):
 
 class BaseCollector(ABC):
     """Abstract base class for evidence collectors.
-    
+
     Subclasses must set:
     - name: Machine-readable collector name (e.g., "aws-config")
     - display_name: Human-readable name (e.g., "AWS Config")
-    
+
     Subclasses must implement:
     - check_connection()
     - collect()
     - get_supported_controls()
     """
+
     name: str = ""
     display_name: str = ""
 
     @abstractmethod
     async def check_connection(self) -> ConnectionStatus:
         """Test connectivity, authentication, and required permissions.
-        
+
         Returns a ConnectionStatus with:
         - connected: Can we reach the service?
         - authenticated: Are the credentials valid?
@@ -4211,12 +3939,12 @@ class BaseCollector(ABC):
         frameworks: Optional[list[str]] = None,
     ) -> list[EvidenceArtifact]:
         """Collect evidence artifacts.
-        
+
         Args:
             control_ids: Specific controls to collect evidence for.
                          If None, collect evidence for all supported controls.
             frameworks: Filter to controls relevant to these frameworks.
-        
+
         Returns:
             List of EvidenceArtifact objects with control_mappings populated.
         """
@@ -4225,7 +3953,7 @@ class BaseCollector(ABC):
     @abstractmethod
     def get_supported_controls(self) -> list[str]:
         """Return list of NIST 800-53 control IDs this collector can provide evidence for.
-        
+
         Uses NIST 800-53 as the canonical reference. Cross-framework mapping
         is handled by the framework registry.
         """
@@ -4237,7 +3965,7 @@ class BaseCollector(ABC):
         frameworks: Optional[list[str]] = None,
     ) -> CollectionResult:
         """Execute a full collection run with error handling and timing.
-        
+
         This is the main entry point called by the scheduler and CLI.
         It wraps collect() with timing, error handling, and result packaging.
         """
@@ -4258,15 +3986,13 @@ class BaseCollector(ABC):
                     artifacts_collected=0,
                     errors=[f"Connection failed: {status.error_message}"],
                 )
-            
+
             if not status.permissions_ok:
-                warnings.append(
-                    f"Missing permissions: {', '.join(status.missing_permissions)}"
-                )
+                warnings.append(f"Missing permissions: {', '.join(status.missing_permissions)}")
 
             # Collect
             artifacts = await self.collect(control_ids, frameworks)
-            
+
             # Compute content hashes
             for artifact in artifacts:
                 artifact.compute_hash()
@@ -4313,7 +4039,7 @@ def async_retry(
     retryable_exceptions: tuple = (Exception,),
 ):
     """Decorator for async functions with exponential backoff and jitter.
-    
+
     Args:
         max_retries: Maximum number of retry attempts
         base_delay: Initial delay in seconds
@@ -4321,6 +4047,7 @@ def async_retry(
         exponential_base: Base for exponential calculation
         retryable_exceptions: Tuple of exception types to retry on
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -4333,7 +4060,7 @@ def async_retry(
                     if attempt < max_retries:
                         # Exponential backoff with full jitter
                         delay = min(
-                            base_delay * (exponential_base ** attempt),
+                            base_delay * (exponential_base**attempt),
                             max_delay,
                         )
                         jittered_delay = random.uniform(0, delay)
@@ -4343,11 +4070,11 @@ def async_retry(
                         )
                         await asyncio.sleep(jittered_delay)
                     else:
-                        logger.error(
-                            f"{func.__name__} failed after {max_retries + 1} attempts: {e}"
-                        )
+                        logger.error(f"{func.__name__} failed after {max_retries + 1} attempts: {e}")
             raise last_exception
+
         return wrapper
+
     return decorator
 ```
 
@@ -4430,7 +4157,7 @@ logger = logging.getLogger(__name__)
 
 class AWSConfigCollector(BaseCollector):
     """Collects compliance evidence from AWS Config rules."""
-    
+
     name = "aws-config"
     display_name = "AWS Config"
 
@@ -4456,7 +4183,7 @@ class AWSConfigCollector(BaseCollector):
             client = self._get_client("config", self.regions[0])
             # Test API access
             client.describe_compliance_by_config_rule(Limit=1)
-            
+
             return ConnectionStatus(
                 collector=self.name,
                 display_name=self.display_name,
@@ -4472,7 +4199,7 @@ class AWSConfigCollector(BaseCollector):
                 connected=False,
                 authenticated=False,
                 error_message="No AWS credentials found. Set AWS_ACCESS_KEY_ID and "
-                              "AWS_SECRET_ACCESS_KEY, or configure an IAM role.",
+                "AWS_SECRET_ACCESS_KEY, or configure an IAM role.",
                 last_checked=utc_now(),
             )
         except ClientError as e:
@@ -4516,10 +4243,7 @@ class AWSConfigCollector(BaseCollector):
                 logger.error(f"Failed to collect from {region}: {e}")
                 continue
 
-        logger.info(
-            f"AWS Config collection complete: {len(artifacts)} artifacts "
-            f"from {len(self.regions)} regions"
-        )
+        logger.info(f"AWS Config collection complete: {len(artifacts)} artifacts from {len(self.regions)} regions")
         return artifacts
 
     async def _collect_region(
@@ -4533,24 +4257,21 @@ class AWSConfigCollector(BaseCollector):
 
         # Get all Config rule compliance summaries
         paginator = client.get_paginator("describe_compliance_by_config_rule")
-        
+
         for page in paginator.paginate():
             for rule_result in page.get("ComplianceByConfigRules", []):
                 rule_name = rule_result["ConfigRuleName"]
                 compliance_type = rule_result["Compliance"]["ComplianceType"]
-                
+
                 # Map AWS Config rule to NIST controls
                 nist_controls = AWS_CONFIG_TO_NIST.get(rule_name, [])
-                
+
                 # Filter by requested control IDs if specified
                 if control_ids:
-                    nist_controls = [
-                        c for c in nist_controls 
-                        if c in control_ids
-                    ]
+                    nist_controls = [c for c in nist_controls if c in control_ids]
                     if not nist_controls:
                         continue
-                
+
                 # Get non-compliant resources for failed rules
                 non_compliant_resources = []
                 if compliance_type in ("NON_COMPLIANT",):
@@ -4562,18 +4283,18 @@ class AWSConfigCollector(BaseCollector):
                         )
                         non_compliant_resources = [
                             {
-                                "resource_type": r["EvaluationResultIdentifier"][
-                                    "EvaluationResultQualifier"
-                                ]["ResourceType"],
-                                "resource_id": r["EvaluationResultIdentifier"][
-                                    "EvaluationResultQualifier"
-                                ]["ResourceId"],
+                                "resource_type": r["EvaluationResultIdentifier"]["EvaluationResultQualifier"][
+                                    "ResourceType"
+                                ],
+                                "resource_id": r["EvaluationResultIdentifier"]["EvaluationResultQualifier"][
+                                    "ResourceId"
+                                ],
                             }
                             for r in detail_response.get("EvaluationResults", [])
                         ]
                     except ClientError:
                         pass
-                
+
                 # Build control mappings
                 mappings = [
                     ControlMapping(
@@ -4582,14 +4303,11 @@ class AWSConfigCollector(BaseCollector):
                     )
                     for ctrl_id in nist_controls
                 ]
-                
+
                 # Create evidence artifact
                 artifact = EvidenceArtifact(
                     title=f"AWS Config Rule: {rule_name}",
-                    description=(
-                        f"Compliance status for AWS Config rule '{rule_name}' "
-                        f"in region {region}"
-                    ),
+                    description=(f"Compliance status for AWS Config rule '{rule_name}' in region {region}"),
                     evidence_type=EvidenceType.CONFIGURATION,
                     source_system="aws-config",
                     collected_by=f"evidentia-collectors/{self.name}",
@@ -4650,7 +4368,6 @@ AWS_CONFIG_TO_NIST: dict[str, list[str]] = {
     "iam-group-has-users-check": ["AC-2"],
     "iam-policy-no-statements-with-admin-access": ["AC-6", "AC-6(1)"],
     "iam-policy-no-statements-with-full-access": ["AC-6"],
-    
     # Audit and Accountability (AU)
     "cloud-trail-cloud-watch-logs-enabled": ["AU-6", "AU-6(1)", "AU-12"],
     "cloudtrail-enabled": ["AU-2", "AU-3", "AU-12"],
@@ -4661,18 +4378,15 @@ AWS_CONFIG_TO_NIST: dict[str, list[str]] = {
     "cloudwatch-alarm-action-check": ["AU-6"],
     "cloudwatch-log-group-encrypted": ["AU-9"],
     "cw-loggroup-retention-period-check": ["AU-11"],
-    
     # Configuration Management (CM)
     "ec2-instance-managed-by-systems-manager": ["CM-2", "CM-7", "CM-8"],
     "ec2-managedinstance-patch-compliance-status-check": ["CM-3", "SI-2"],
     "ec2-stopped-instance": ["CM-2"],
     "ec2-instances-in-vpc": ["CM-7", "SC-7"],
     "ec2-ebs-encryption-by-default": ["SC-28", "SC-28(1)"],
-    
     # Identification and Authentication (IA)
     "iam-customer-policy-blocked-kms-actions": ["IA-5"],
     "access-keys-rotated": ["IA-5", "IA-5(1)"],
-    
     # System and Communications Protection (SC)
     "alb-http-to-https-redirection-check": ["SC-8", "SC-8(1)"],
     "elb-tls-https-listeners-only": ["SC-8", "SC-8(1)"],
@@ -4688,14 +4402,12 @@ AWS_CONFIG_TO_NIST: dict[str, list[str]] = {
     "s3-bucket-public-read-prohibited": ["SC-7", "AC-3"],
     "s3-bucket-public-write-prohibited": ["SC-7", "AC-3"],
     "rds-instance-public-access-check": ["SC-7", "AC-3"],
-    
     # System and Information Integrity (SI)
     "guardduty-enabled-centralized": ["SI-4", "SI-4(5)"],
     "securityhub-enabled": ["SI-4"],
     "rds-instance-deletion-protection-enabled": ["SI-12"],
     "s3-bucket-versioning-enabled": ["SI-12"],
     "dynamodb-pitr-enabled": ["SI-12"],
-    
     # Contingency Planning (CP)
     "rds-multi-az-support": ["CP-10"],
     "s3-bucket-replication-enabled": ["CP-9"],
@@ -4734,19 +4446,19 @@ logger = logging.getLogger(__name__)
 
 class GitHubCollector(BaseCollector):
     """Collects compliance evidence from GitHub repositories."""
-    
+
     name = "github"
     display_name = "GitHub"
-    
+
     # Controls this collector provides evidence for
     SUPPORTED_CONTROLS = [
-        "CM-2",   # Baseline Configuration (branch protection)
-        "CM-3",   # Configuration Change Control (PR reviews)
-        "CM-7",   # Least Functionality (repository visibility)
+        "CM-2",  # Baseline Configuration (branch protection)
+        "CM-3",  # Configuration Change Control (PR reviews)
+        "CM-7",  # Least Functionality (repository visibility)
         "SA-11",  # Developer Testing (CI/CD checks)
         "SA-15",  # Development Process (CODEOWNERS, branch rules)
-        "SI-2",   # Flaw Remediation (Dependabot)
-        "SI-7",   # Software Integrity (signed commits)
+        "SI-2",  # Flaw Remediation (Dependabot)
+        "SI-7",  # Software Integrity (signed commits)
         "SC-28",  # Protection of Information at Rest (secret scanning)
     ]
 
@@ -4757,6 +4469,7 @@ class GitHubCollector(BaseCollector):
         base_url: Optional[str] = None,  # For GitHub Enterprise
     ):
         import os
+
         self.token = token or os.environ.get("GITHUB_TOKEN", "")
         self.organizations = organizations or []
         self.base_url = base_url
@@ -4775,7 +4488,7 @@ class GitHubCollector(BaseCollector):
         try:
             user = self.client.get_user()
             _ = user.login  # Force API call
-            
+
             return ConnectionStatus(
                 collector=self.name,
                 display_name=self.display_name,
@@ -4813,9 +4526,9 @@ class GitHubCollector(BaseCollector):
             try:
                 org = self.client.get_organization(org_name)
                 repos = list(org.get_repos(type="all"))
-                
+
                 logger.info(f"Scanning {len(repos)} repos in {org_name}")
-                
+
                 for repo in repos:
                     try:
                         repo_artifacts = self._collect_repo(repo, org_name)
@@ -4823,7 +4536,7 @@ class GitHubCollector(BaseCollector):
                     except GithubException as e:
                         logger.warning(f"Skipping {repo.full_name}: {e}")
                         continue
-                        
+
             except GithubException as e:
                 logger.error(f"Failed to access org {org_name}: {e}")
 
@@ -4832,12 +4545,12 @@ class GitHubCollector(BaseCollector):
     def _collect_repo(self, repo, org_name: str) -> list[EvidenceArtifact]:
         """Collect all security evidence from a single repository."""
         artifacts: list[EvidenceArtifact] = []
-        
+
         # 1. Branch protection rules
         try:
             default_branch = repo.get_branch(repo.default_branch)
             protection = default_branch.get_protection()
-            
+
             bp_data = {
                 "repo": repo.full_name,
                 "branch": repo.default_branch,
@@ -4845,47 +4558,53 @@ class GitHubCollector(BaseCollector):
                 "required_pull_request_reviews": protection.required_pull_request_reviews is not None,
                 "required_reviews_count": (
                     protection.required_pull_request_reviews.required_approving_review_count
-                    if protection.required_pull_request_reviews else 0
+                    if protection.required_pull_request_reviews
+                    else 0
                 ),
                 "required_status_checks": protection.required_status_checks is not None,
-                "require_signed_commits": getattr(protection, 'required_signatures', False),
+                "require_signed_commits": getattr(protection, "required_signatures", False),
                 "dismiss_stale_reviews": (
                     protection.required_pull_request_reviews.dismiss_stale_reviews
-                    if protection.required_pull_request_reviews else False
+                    if protection.required_pull_request_reviews
+                    else False
                 ),
             }
-            
-            artifacts.append(EvidenceArtifact(
-                title=f"Branch Protection: {repo.full_name}/{repo.default_branch}",
-                evidence_type=EvidenceType.CONFIGURATION,
-                source_system="github",
-                collected_by=f"evidentia-collectors/{self.name}",
-                content=bp_data,
-                control_mappings=[
-                    ControlMapping(framework="nist-800-53-rev5", control_id="CM-2"),
-                    ControlMapping(framework="nist-800-53-rev5", control_id="CM-3"),
-                    ControlMapping(framework="nist-800-53-rev5", control_id="SA-15"),
-                ],
-                metadata={"organization": org_name, "repo": repo.full_name},
-            ))
+
+            artifacts.append(
+                EvidenceArtifact(
+                    title=f"Branch Protection: {repo.full_name}/{repo.default_branch}",
+                    evidence_type=EvidenceType.CONFIGURATION,
+                    source_system="github",
+                    collected_by=f"evidentia-collectors/{self.name}",
+                    content=bp_data,
+                    control_mappings=[
+                        ControlMapping(framework="nist-800-53-rev5", control_id="CM-2"),
+                        ControlMapping(framework="nist-800-53-rev5", control_id="CM-3"),
+                        ControlMapping(framework="nist-800-53-rev5", control_id="SA-15"),
+                    ],
+                    metadata={"organization": org_name, "repo": repo.full_name},
+                )
+            )
         except GithubException:
             # Branch protection not configured — this IS evidence (of a gap)
-            artifacts.append(EvidenceArtifact(
-                title=f"Branch Protection Missing: {repo.full_name}",
-                evidence_type=EvidenceType.CONFIGURATION,
-                source_system="github",
-                collected_by=f"evidentia-collectors/{self.name}",
-                content={
-                    "repo": repo.full_name,
-                    "branch": repo.default_branch,
-                    "branch_protection_enabled": False,
-                },
-                control_mappings=[
-                    ControlMapping(framework="nist-800-53-rev5", control_id="CM-2"),
-                    ControlMapping(framework="nist-800-53-rev5", control_id="CM-3"),
-                ],
-                metadata={"organization": org_name, "repo": repo.full_name},
-            ))
+            artifacts.append(
+                EvidenceArtifact(
+                    title=f"Branch Protection Missing: {repo.full_name}",
+                    evidence_type=EvidenceType.CONFIGURATION,
+                    source_system="github",
+                    collected_by=f"evidentia-collectors/{self.name}",
+                    content={
+                        "repo": repo.full_name,
+                        "branch": repo.default_branch,
+                        "branch_protection_enabled": False,
+                    },
+                    control_mappings=[
+                        ControlMapping(framework="nist-800-53-rev5", control_id="CM-2"),
+                        ControlMapping(framework="nist-800-53-rev5", control_id="CM-3"),
+                    ],
+                    metadata={"organization": org_name, "repo": repo.full_name},
+                )
+            )
 
         # 2. Repository visibility and security settings
         repo_security = {
@@ -4896,7 +4615,7 @@ class GitHubCollector(BaseCollector):
             "archived": repo.archived,
             "default_branch": repo.default_branch,
         }
-        
+
         # Check for CODEOWNERS
         try:
             repo.get_contents("CODEOWNERS")
@@ -4908,19 +4627,21 @@ class GitHubCollector(BaseCollector):
             except GithubException:
                 repo_security["has_codeowners"] = False
 
-        artifacts.append(EvidenceArtifact(
-            title=f"Repository Security Settings: {repo.full_name}",
-            evidence_type=EvidenceType.REPOSITORY_METADATA,
-            source_system="github",
-            collected_by=f"evidentia-collectors/{self.name}",
-            content=repo_security,
-            control_mappings=[
-                ControlMapping(framework="nist-800-53-rev5", control_id="CM-7"),
-                ControlMapping(framework="nist-800-53-rev5", control_id="SA-15"),
-                ControlMapping(framework="nist-800-53-rev5", control_id="SI-2"),
-            ],
-            metadata={"organization": org_name, "repo": repo.full_name},
-        ))
+        artifacts.append(
+            EvidenceArtifact(
+                title=f"Repository Security Settings: {repo.full_name}",
+                evidence_type=EvidenceType.REPOSITORY_METADATA,
+                source_system="github",
+                collected_by=f"evidentia-collectors/{self.name}",
+                content=repo_security,
+                control_mappings=[
+                    ControlMapping(framework="nist-800-53-rev5", control_id="CM-7"),
+                    ControlMapping(framework="nist-800-53-rev5", control_id="SA-15"),
+                    ControlMapping(framework="nist-800-53-rev5", control_id="SI-2"),
+                ],
+                metadata={"organization": org_name, "repo": repo.full_name},
+            )
+        )
 
         return artifacts
 
@@ -4958,19 +4679,19 @@ logger = logging.getLogger(__name__)
 
 class OktaCollector(BaseCollector):
     """Collects identity compliance evidence from Okta."""
-    
+
     name = "okta"
     display_name = "Okta"
-    
+
     SUPPORTED_CONTROLS = [
-        "AC-2",   # Account Management
-        "AC-2(3)", # Disable Accounts
-        "AC-7",   # Unsuccessful Logon Attempts
-        "IA-2",   # Identification and Authentication
-        "IA-2(1)", # Multi-Factor Authentication
-        "IA-5",   # Authenticator Management
-        "IA-5(1)", # Password-Based Authentication
-        "PS-4",   # Personnel Termination
+        "AC-2",  # Account Management
+        "AC-2(3)",  # Disable Accounts
+        "AC-7",  # Unsuccessful Logon Attempts
+        "IA-2",  # Identification and Authentication
+        "IA-2(1)",  # Multi-Factor Authentication
+        "IA-5",  # Authenticator Management
+        "IA-5(1)",  # Password-Based Authentication
+        "PS-4",  # Personnel Termination
     ]
 
     def __init__(
@@ -4984,6 +4705,7 @@ class OktaCollector(BaseCollector):
     def _get_client(self):
         """Create Okta SDK client."""
         from okta.client import Client as OktaClient
+
         config = {
             "orgUrl": f"https://{self.domain}",
             "token": self.api_token,
@@ -4994,7 +4716,7 @@ class OktaCollector(BaseCollector):
         try:
             client = self._get_client()
             users, _, err = await client.list_users({"limit": "1"})
-            
+
             if err:
                 return ConnectionStatus(
                     collector=self.name,
@@ -5004,7 +4726,7 @@ class OktaCollector(BaseCollector):
                     error_message=str(err),
                     last_checked=utc_now(),
                 )
-            
+
             return ConnectionStatus(
                 collector=self.name,
                 display_name=self.display_name,
@@ -5033,84 +4755,97 @@ class OktaCollector(BaseCollector):
         # 1. Password Policy
         try:
             policies, _, _ = await client.list_policies({"type": "PASSWORD"})
-            for policy in (policies or []):
+            for policy in policies or []:
                 policy_data = {
                     "policy_name": policy.name,
                     "status": policy.status,
-                    "min_length": getattr(policy.settings, 'password', {}).get('complexity', {}).get('minLength', 'N/A'),
+                    "min_length": getattr(policy.settings, "password", {})
+                    .get("complexity", {})
+                    .get("minLength", "N/A"),
                     "require_lowercase": True,  # Parse from policy settings
                     "require_uppercase": True,
                     "require_number": True,
                     "require_symbol": True,
-                    "max_age_days": getattr(policy.settings, 'password', {}).get('age', {}).get('maxAgeDays', 'N/A'),
-                    "min_age_minutes": getattr(policy.settings, 'password', {}).get('age', {}).get('minAgeMinutes', 'N/A'),
-                    "history_count": getattr(policy.settings, 'password', {}).get('age', {}).get('historyCount', 'N/A'),
+                    "max_age_days": getattr(policy.settings, "password", {}).get("age", {}).get("maxAgeDays", "N/A"),
+                    "min_age_minutes": getattr(policy.settings, "password", {})
+                    .get("age", {})
+                    .get("minAgeMinutes", "N/A"),
+                    "history_count": getattr(policy.settings, "password", {}).get("age", {}).get("historyCount", "N/A"),
                 }
-                
-                artifacts.append(EvidenceArtifact(
-                    title=f"Okta Password Policy: {policy.name}",
-                    evidence_type=EvidenceType.CONFIGURATION,
-                    source_system="okta",
-                    collected_by=f"evidentia-collectors/{self.name}",
-                    content=policy_data,
-                    control_mappings=[
-                        ControlMapping(framework="nist-800-53-rev5", control_id="IA-5"),
-                        ControlMapping(framework="nist-800-53-rev5", control_id="IA-5(1)"),
-                    ],
-                    metadata={"okta_domain": self.domain},
-                ))
+
+                artifacts.append(
+                    EvidenceArtifact(
+                        title=f"Okta Password Policy: {policy.name}",
+                        evidence_type=EvidenceType.CONFIGURATION,
+                        source_system="okta",
+                        collected_by=f"evidentia-collectors/{self.name}",
+                        content=policy_data,
+                        control_mappings=[
+                            ControlMapping(framework="nist-800-53-rev5", control_id="IA-5"),
+                            ControlMapping(framework="nist-800-53-rev5", control_id="IA-5(1)"),
+                        ],
+                        metadata={"okta_domain": self.domain},
+                    )
+                )
         except Exception as e:
             logger.error(f"Failed to collect password policies: {e}")
 
         # 2. MFA Enrollment Policy
         try:
             policies, _, _ = await client.list_policies({"type": "MFA_ENROLL"})
-            for policy in (policies or []):
-                artifacts.append(EvidenceArtifact(
-                    title=f"Okta MFA Policy: {policy.name}",
-                    evidence_type=EvidenceType.CONFIGURATION,
-                    source_system="okta",
-                    collected_by=f"evidentia-collectors/{self.name}",
-                    content={
-                        "policy_name": policy.name,
-                        "status": policy.status,
-                        "factors": "parsed from policy settings",
-                    },
-                    control_mappings=[
-                        ControlMapping(framework="nist-800-53-rev5", control_id="IA-2"),
-                        ControlMapping(framework="nist-800-53-rev5", control_id="IA-2(1)"),
-                    ],
-                    metadata={"okta_domain": self.domain},
-                ))
+            for policy in policies or []:
+                artifacts.append(
+                    EvidenceArtifact(
+                        title=f"Okta MFA Policy: {policy.name}",
+                        evidence_type=EvidenceType.CONFIGURATION,
+                        source_system="okta",
+                        collected_by=f"evidentia-collectors/{self.name}",
+                        content={
+                            "policy_name": policy.name,
+                            "status": policy.status,
+                            "factors": "parsed from policy settings",
+                        },
+                        control_mappings=[
+                            ControlMapping(framework="nist-800-53-rev5", control_id="IA-2"),
+                            ControlMapping(framework="nist-800-53-rev5", control_id="IA-2(1)"),
+                        ],
+                        metadata={"okta_domain": self.domain},
+                    )
+                )
         except Exception as e:
             logger.error(f"Failed to collect MFA policies: {e}")
 
         # 3. Inactive Users (Account Management evidence)
         try:
             from datetime import datetime, timedelta
+
             cutoff = (datetime.utcnow() - timedelta(days=90)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
-            inactive_users, _, _ = await client.list_users({
-                "filter": f'lastLogin lt "{cutoff}"',
-                "limit": "200",
-            })
-            
+            inactive_users, _, _ = await client.list_users(
+                {
+                    "filter": f'lastLogin lt "{cutoff}"',
+                    "limit": "200",
+                }
+            )
+
             inactive_count = len(inactive_users) if inactive_users else 0
-            artifacts.append(EvidenceArtifact(
-                title="Okta Inactive Users (90+ days)",
-                evidence_type=EvidenceType.IDENTITY_DATA,
-                source_system="okta",
-                collected_by=f"evidentia-collectors/{self.name}",
-                content={
-                    "inactive_user_count": inactive_count,
-                    "threshold_days": 90,
-                    "checked_at": utc_now().isoformat(),
-                },
-                control_mappings=[
-                    ControlMapping(framework="nist-800-53-rev5", control_id="AC-2"),
-                    ControlMapping(framework="nist-800-53-rev5", control_id="AC-2(3)"),
-                ],
-                metadata={"okta_domain": self.domain},
-            ))
+            artifacts.append(
+                EvidenceArtifact(
+                    title="Okta Inactive Users (90+ days)",
+                    evidence_type=EvidenceType.IDENTITY_DATA,
+                    source_system="okta",
+                    collected_by=f"evidentia-collectors/{self.name}",
+                    content={
+                        "inactive_user_count": inactive_count,
+                        "threshold_days": 90,
+                        "checked_at": utc_now().isoformat(),
+                    },
+                    control_mappings=[
+                        ControlMapping(framework="nist-800-53-rev5", control_id="AC-2"),
+                        ControlMapping(framework="nist-800-53-rev5", control_id="AC-2(3)"),
+                    ],
+                    metadata={"okta_domain": self.domain},
+                )
+            )
         except Exception as e:
             logger.error(f"Failed to collect inactive users: {e}")
 
@@ -5148,7 +4883,7 @@ logger = logging.getLogger(__name__)
 
 class CollectionScheduler:
     """Manages scheduled evidence collection.
-    
+
     Usage:
         scheduler = CollectionScheduler(
             cron="0 2 * * *",  # Daily at 2am UTC
@@ -5197,7 +4932,7 @@ class CollectionScheduler:
         """Execute a collection run for all configured collectors."""
         logger.info("Starting scheduled collection run")
         self._last_run = utc_now()
-        
+
         collectors = get_enabled_collectors(self.collector_names)
         results: dict[str, CollectionResult] = {}
 
@@ -5205,9 +4940,7 @@ class CollectionScheduler:
             try:
                 result = await collector.run(frameworks=self.frameworks)
                 results[collector.name] = result
-                logger.info(
-                    f"  {collector.name}: {result.artifacts_collected} artifacts"
-                )
+                logger.info(f"  {collector.name}: {result.artifacts_collected} artifacts")
             except Exception as e:
                 logger.error(f"  {collector.name}: FAILED — {e}")
 
@@ -5227,6 +4960,7 @@ class CollectionScheduler:
 
         if all_artifacts:
             from evidentia_core.models.evidence import EvidenceBundle
+
             bundle = EvidenceBundle(
                 title=f"Scheduled Collection — {utc_now().strftime('%Y-%m-%d')}",
                 assessment_scope="Continuous Monitoring",
@@ -5237,6 +4971,7 @@ class CollectionScheduler:
             # Save to output directory
             import json
             from pathlib import Path
+
             output_path = Path(self.output_dir)
             output_path.mkdir(parents=True, exist_ok=True)
             bundle_file = output_path / f"bundle-{utc_now().strftime('%Y%m%d-%H%M%S')}.json"
@@ -5245,11 +4980,13 @@ class CollectionScheduler:
 
             if self.git_commit:
                 import subprocess
+
                 try:
                     subprocess.run(["git", "add", str(bundle_file)], check=True, cwd=self.output_dir)
                     subprocess.run(
                         ["git", "commit", "-m", f"chore(evidence): scheduled collection {utc_now().date()}"],
-                        check=True, cwd=self.output_dir,
+                        check=True,
+                        cwd=self.output_dir,
                     )
                     logger.info("Auto-committed evidence to git")
                 except subprocess.CalledProcessError as e:
@@ -5262,8 +4999,7 @@ class CollectionScheduler:
             "cron": self.cron,
             "last_run": self._last_run.isoformat() if self._last_run else None,
             "last_result": self._last_result,
-            "next_run": str(self._scheduler.get_jobs()[0].next_run_time)
-            if self._scheduler.get_jobs() else None,
+            "next_run": str(self._scheduler.get_jobs()[0].next_run_time) if self._scheduler.get_jobs() else None,
         }
 ```
 
@@ -5365,6 +5101,7 @@ Control Title: {control_title}
 
 class ValidationResult(EvidentiaModel):
     """Structured output from the evidence validator."""
+
     sufficiency: EvidenceSufficiency
     sufficiency_rationale: str
     relevance_score: float = Field(ge=0.0, le=100.0)
@@ -5380,16 +5117,16 @@ from pydantic import Field
 
 class EvidenceValidator:
     """AI-powered evidence sufficiency validator.
-    
+
     Usage:
         validator = EvidenceValidator(model="gpt-4o")
-        
+
         # Validate a single artifact
         validated = validator.validate(
             artifact=my_artifact,
             control=ControlMapping(framework="soc2-tsc", control_id="CC6.1")
         )
-        
+
         # Validate with image (screenshot/PDF)
         validated = validator.validate_file(
             file_path="screenshot.png",
@@ -5412,7 +5149,7 @@ class EvidenceValidator:
         control: Optional[ControlMapping] = None,
     ) -> EvidenceArtifact:
         """Validate a single evidence artifact.
-        
+
         Performs staleness check (rule-based) and AI quality assessment.
         Mutates and returns the artifact with sufficiency fields populated.
         """
@@ -5428,12 +5165,11 @@ class EvidenceValidator:
         framework = control.framework
         max_age = self.staleness_days.get(framework, 365)
         age = (utc_now() - artifact.collected_at).days
-        
+
         if age > max_age:
             artifact.sufficiency = EvidenceSufficiency.STALE
             artifact.sufficiency_rationale = (
-                f"Evidence is {age} days old, exceeding the {max_age}-day "
-                f"freshness requirement for {framework}."
+                f"Evidence is {age} days old, exceeding the {max_age}-day freshness requirement for {framework}."
             )
             artifact.validated_at = utc_now()
             artifact.validated_by = "evidentia-ai/staleness-check"
@@ -5441,6 +5177,7 @@ class EvidenceValidator:
 
         # Step 2: AI quality assessment
         import json
+
         content_str = ""
         if artifact.content is not None:
             if isinstance(artifact.content, (dict, list)):
@@ -5449,7 +5186,7 @@ class EvidenceValidator:
                 content_str = str(artifact.content)
         elif artifact.file_path:
             content_str = f"[File: {artifact.file_path}]"
-        
+
         # Truncate very large content
         if len(content_str) > 8000:
             content_str = content_str[:8000] + "\n... [truncated]"
@@ -5496,7 +5233,7 @@ class EvidenceValidator:
         model: Optional[str] = None,
     ) -> EvidenceArtifact:
         """Validate a file (screenshot, PDF, document) as evidence.
-        
+
         Uses LLM vision capabilities for image files.
         """
         path = Path(file_path)
@@ -5534,7 +5271,7 @@ class EvidenceValidator:
     ) -> EvidenceArtifact:
         """Validate an image file using LLM vision."""
         from evidentia_core.models.evidence import EvidenceType
-        
+
         # Read and encode image
         image_data = base64.b64encode(path.read_bytes()).decode("utf-8")
         mime_type = "image/png" if path.suffix == ".png" else "image/jpeg"
@@ -5556,9 +5293,7 @@ class EvidenceValidator:
                             {"type": "text", "text": prompt},
                             {
                                 "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:{mime_type};base64,{image_data}"
-                                },
+                                "image_url": {"url": f"data:{mime_type};base64,{image_data}"},
                             },
                         ],
                     }
@@ -5605,9 +5340,10 @@ class EvidenceValidator:
         # For PDF validation, extract text first, then validate as text
         # In a production implementation, use pymupdf or pdfplumber
         from evidentia_core.models.evidence import EvidenceType
-        
+
         try:
             import fitz  # PyMuPDF
+
             doc = fitz.open(str(path))
             text = ""
             for page in doc:
@@ -5666,14 +5402,14 @@ SEVERITY_TO_JIRA_PRIORITY: dict[GapSeverity, str] = {
 def format_gap_description(gap: ControlGap) -> str:
     """Format a gap as Jira wiki markup description."""
     cross_fw = ", ".join(gap.cross_framework_value) if gap.cross_framework_value else "None"
-    
+
     return f"""\
 h3. Control Requirement
 
 *Framework:* {gap.framework}
 *Control ID:* {gap.control_id}
 *Control Title:* {gap.control_title}
-*Control Family:* {gap.control_family or 'N/A'}
+*Control Family:* {gap.control_family or "N/A"}
 
 {gap.control_description}
 
@@ -5700,13 +5436,13 @@ h3. Metadata
 
 *Gap ID:* {{monospace:{gap.id}}}
 *Priority Score:* {gap.priority_score}
-*Generated by:* Evidentia v0.1.0 on {gap.created_at.strftime('%Y-%m-%d')}
+*Generated by:* Evidentia v0.1.0 on {gap.created_at.strftime("%Y-%m-%d")}
 """
 
 
 class JiraIntegration:
     """Push gap analysis results to Jira as issues.
-    
+
     Usage:
         jira = JiraIntegration(
             server="https://my-company.atlassian.net",
@@ -5714,7 +5450,7 @@ class JiraIntegration:
             token="...",
             project_key="SEC",
         )
-        
+
         results = jira.create_gap_issues(
             report=gap_report,
             only_severity=["critical", "high"],
@@ -5736,7 +5472,7 @@ class JiraIntegration:
             auth_kwargs = {"basic_auth": (email, token)}
         elif token:
             auth_kwargs = {"token_auth": token}
-        
+
         self.client = JIRA(server=server, **auth_kwargs)
         self.project_key = project_key
         self.issue_type = issue_type
@@ -5749,12 +5485,12 @@ class JiraIntegration:
         dry_run: bool = False,
     ) -> list[dict]:
         """Create one Jira issue per gap.
-        
+
         Args:
             report: The gap analysis report
             only_severity: Filter to these severities (e.g., ["critical", "high"])
             dry_run: If True, return issue previews without creating them
-        
+
         Returns:
             List of {gap_id, jira_key, status, summary} dicts
         """
@@ -5767,31 +5503,32 @@ class JiraIntegration:
 
             # Idempotency: check if issue already exists
             if gap.jira_issue_key:
-                results.append({
-                    "gap_id": gap.id,
-                    "jira_key": gap.jira_issue_key,
-                    "status": "already_exists",
-                    "summary": f"[existing] {gap.control_id}",
-                })
+                results.append(
+                    {
+                        "gap_id": gap.id,
+                        "jira_key": gap.jira_issue_key,
+                        "status": "already_exists",
+                        "summary": f"[existing] {gap.control_id}",
+                    }
+                )
                 continue
 
             # Check for existing issue by label search
             existing = self._find_existing_issue(gap)
             if existing:
                 gap.jira_issue_key = existing
-                results.append({
-                    "gap_id": gap.id,
-                    "jira_key": existing,
-                    "status": "already_exists",
-                    "summary": f"[found existing] {gap.control_id}",
-                })
+                results.append(
+                    {
+                        "gap_id": gap.id,
+                        "jira_key": existing,
+                        "status": "already_exists",
+                        "summary": f"[found existing] {gap.control_id}",
+                    }
+                )
                 continue
 
             # Build issue data
-            summary = (
-                f"[Evidentia] {gap.framework} Gap: "
-                f"{gap.control_id} — {gap.control_title}"
-            )
+            summary = f"[Evidentia] {gap.framework} Gap: {gap.control_id} — {gap.control_title}"
             if len(summary) > 255:
                 summary = summary[:252] + "..."
 
@@ -5804,9 +5541,7 @@ class JiraIntegration:
                 gap.gap_severity,
             ]
 
-            priority = SEVERITY_TO_JIRA_PRIORITY.get(
-                gap.gap_severity, "Medium"
-            )
+            priority = SEVERITY_TO_JIRA_PRIORITY.get(gap.gap_severity, "Medium")
 
             issue_data = {
                 "project": {"key": self.project_key},
@@ -5818,48 +5553,48 @@ class JiraIntegration:
             }
 
             if dry_run:
-                results.append({
-                    "gap_id": gap.id,
-                    "jira_key": "[DRY RUN]",
-                    "status": "would_create",
-                    "summary": summary,
-                    "issue_data": issue_data,
-                })
+                results.append(
+                    {
+                        "gap_id": gap.id,
+                        "jira_key": "[DRY RUN]",
+                        "status": "would_create",
+                        "summary": summary,
+                        "issue_data": issue_data,
+                    }
+                )
             else:
                 try:
                     issue = self.client.create_issue(fields=issue_data)
                     gap.jira_issue_key = issue.key
-                    results.append({
-                        "gap_id": gap.id,
-                        "jira_key": issue.key,
-                        "status": "created",
-                        "summary": summary,
-                    })
+                    results.append(
+                        {
+                            "gap_id": gap.id,
+                            "jira_key": issue.key,
+                            "status": "created",
+                            "summary": summary,
+                        }
+                    )
                     logger.info(f"Created Jira issue {issue.key} for {gap.control_id}")
                 except JIRAError as e:
-                    results.append({
-                        "gap_id": gap.id,
-                        "jira_key": None,
-                        "status": "failed",
-                        "summary": summary,
-                        "error": str(e),
-                    })
+                    results.append(
+                        {
+                            "gap_id": gap.id,
+                            "jira_key": None,
+                            "status": "failed",
+                            "summary": summary,
+                            "error": str(e),
+                        }
+                    )
                     logger.error(f"Failed to create issue for {gap.control_id}: {e}")
 
         created = sum(1 for r in results if r["status"] == "created")
         skipped = sum(1 for r in results if r["status"] == "already_exists")
-        logger.info(
-            f"Jira push complete: {created} created, {skipped} already existed"
-        )
+        logger.info(f"Jira push complete: {created} created, {skipped} already existed")
         return results
 
     def _find_existing_issue(self, gap: ControlGap) -> Optional[str]:
         """Search for an existing issue for this gap using labels."""
-        jql = (
-            f'project = "{self.project_key}" AND '
-            f'labels = "{self.label_prefix}" AND '
-            f'summary ~ "{gap.control_id}"'
-        )
+        jql = f'project = "{self.project_key}" AND labels = "{self.label_prefix}" AND summary ~ "{gap.control_id}"'
         try:
             issues = self.client.search_issues(jql, maxResults=1)
             if issues:
@@ -5868,11 +5603,9 @@ class JiraIntegration:
             pass
         return None
 
-    def update_gap_status_from_jira(
-        self, gap: ControlGap
-    ) -> Optional[str]:
+    def update_gap_status_from_jira(self, gap: ControlGap) -> Optional[str]:
         """Sync Jira issue status back to gap.
-        
+
         Returns the Jira issue status string, or None if not found.
         """
         if not gap.jira_issue_key:
@@ -5905,16 +5638,16 @@ logger = logging.getLogger(__name__)
 # Gap severity → ServiceNow impact/urgency mapping
 SEVERITY_TO_SNOW_IMPACT: dict[GapSeverity, str] = {
     GapSeverity.CRITICAL: "1",  # High
-    GapSeverity.HIGH: "2",      # Medium
-    GapSeverity.MEDIUM: "2",    # Medium
-    GapSeverity.LOW: "3",       # Low
+    GapSeverity.HIGH: "2",  # Medium
+    GapSeverity.MEDIUM: "2",  # Medium
+    GapSeverity.LOW: "3",  # Low
     GapSeverity.INFORMATIONAL: "3",
 }
 
 
 class ServiceNowIntegration:
     """Push gap analysis results to ServiceNow.
-    
+
     Supports creating records in any table:
     - incident (default)
     - sc_task (service catalog tasks)
@@ -5931,13 +5664,16 @@ class ServiceNowIntegration:
         assignment_group: Optional[str] = None,
     ):
         import requests
+
         self.instance_url = instance_url.rstrip("/")
         self.session = requests.Session()
         self.session.auth = (username, password)
-        self.session.headers.update({
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        })
+        self.session.headers.update(
+            {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            }
+        )
         self.table = table
         self.assignment_group = assignment_group
 
@@ -5955,18 +5691,17 @@ class ServiceNowIntegration:
                 continue
 
             if gap.servicenow_ticket_id:
-                results.append({
-                    "gap_id": gap.id,
-                    "sys_id": gap.servicenow_ticket_id,
-                    "status": "already_exists",
-                })
+                results.append(
+                    {
+                        "gap_id": gap.id,
+                        "sys_id": gap.servicenow_ticket_id,
+                        "status": "already_exists",
+                    }
+                )
                 continue
 
             record_data = {
-                "short_description": (
-                    f"[Evidentia] {gap.framework} Gap: "
-                    f"{gap.control_id} — {gap.control_title}"
-                )[:160],
+                "short_description": (f"[Evidentia] {gap.framework} Gap: {gap.control_id} — {gap.control_title}")[:160],
                 "description": self._format_description(gap),
                 "impact": SEVERITY_TO_SNOW_IMPACT.get(gap.gap_severity, "2"),
                 "urgency": SEVERITY_TO_SNOW_IMPACT.get(gap.gap_severity, "2"),
@@ -5978,33 +5713,39 @@ class ServiceNowIntegration:
                 record_data["assignment_group"] = self.assignment_group
 
             if dry_run:
-                results.append({
-                    "gap_id": gap.id,
-                    "sys_id": "[DRY RUN]",
-                    "status": "would_create",
-                    "record_data": record_data,
-                })
+                results.append(
+                    {
+                        "gap_id": gap.id,
+                        "sys_id": "[DRY RUN]",
+                        "status": "would_create",
+                        "record_data": record_data,
+                    }
+                )
             else:
                 try:
                     url = f"{self.instance_url}/api/now/table/{self.table}"
                     response = self.session.post(url, json=record_data)
                     response.raise_for_status()
                     sys_id = response.json()["result"]["sys_id"]
-                    
+
                     gap.servicenow_ticket_id = sys_id
-                    results.append({
-                        "gap_id": gap.id,
-                        "sys_id": sys_id,
-                        "status": "created",
-                    })
+                    results.append(
+                        {
+                            "gap_id": gap.id,
+                            "sys_id": sys_id,
+                            "status": "created",
+                        }
+                    )
                     logger.info(f"Created ServiceNow record {sys_id} for {gap.control_id}")
                 except Exception as e:
-                    results.append({
-                        "gap_id": gap.id,
-                        "sys_id": None,
-                        "status": "failed",
-                        "error": str(e),
-                    })
+                    results.append(
+                        {
+                            "gap_id": gap.id,
+                            "sys_id": None,
+                            "status": "failed",
+                            "error": str(e),
+                        }
+                    )
 
         return results
 
@@ -6068,6 +5809,7 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     # Startup: pre-load catalog registry
     from evidentia_core.catalogs.registry import FrameworkRegistry
+
     registry = FrameworkRegistry.get_instance()
     _ = registry.crosswalk  # Trigger lazy loading
     yield
@@ -7611,6 +7353,7 @@ def sample_gap() -> ControlGap:
 @pytest.fixture
 def sample_context():
     from evidentia_ai.risk_statements.templates import SystemContext, SystemComponent
+
     return SystemContext(
         organization="Acme Corp",
         system_name="Customer Data Platform",
@@ -7619,7 +7362,8 @@ def sample_context():
         hosting="AWS (us-east-1)",
         components=[
             SystemComponent(
-                name="Data Warehouse", type="database",
+                name="Data Warehouse",
+                type="database",
                 technology="Amazon Redshift",
                 data_handled=["PII", "PCI-CDE"],
             )
@@ -7961,9 +7705,7 @@ class StorageBackend(ABC):
         ...
 
     @abstractmethod
-    async def list_gap_reports(
-        self, limit: int = 50, offset: int = 0
-    ) -> list[GapAnalysisReport]:
+    async def list_gap_reports(self, limit: int = 50, offset: int = 0) -> list[GapAnalysisReport]:
         """List gap reports, newest first."""
         ...
 
@@ -7990,9 +7732,7 @@ class StorageBackend(ABC):
         ...
 
     @abstractmethod
-    async def list_evidence_bundles(
-        self, limit: int = 50, offset: int = 0
-    ) -> list[EvidenceBundle]:
+    async def list_evidence_bundles(self, limit: int = 50, offset: int = 0) -> list[EvidenceBundle]:
         """List evidence bundles, newest first."""
         ...
 ```
@@ -8034,7 +7774,7 @@ class FileBackend(StorageBackend):
         self.reports_dir = self.base / "reports"
         self.risks_dir = self.base / "risks"
         self.evidence_dir = self.base / "evidence"
-        
+
         # Create directories
         for d in [self.reports_dir, self.risks_dir, self.evidence_dir]:
             d.mkdir(parents=True, exist_ok=True)
@@ -8050,12 +7790,10 @@ class FileBackend(StorageBackend):
             return None
         return GapAnalysisReport.model_validate_json(path.read_text())
 
-    async def list_gap_reports(
-        self, limit: int = 50, offset: int = 0
-    ) -> list[GapAnalysisReport]:
+    async def list_gap_reports(self, limit: int = 50, offset: int = 0) -> list[GapAnalysisReport]:
         files = sorted(self.reports_dir.glob("*.json"), reverse=True)
         results = []
-        for f in files[offset:offset + limit]:
+        for f in files[offset : offset + limit]:
             try:
                 results.append(GapAnalysisReport.model_validate_json(f.read_text()))
             except Exception:
@@ -8084,12 +7822,10 @@ class FileBackend(StorageBackend):
             return None
         return EvidenceBundle.model_validate_json(path.read_text())
 
-    async def list_evidence_bundles(
-        self, limit: int = 50, offset: int = 0
-    ) -> list[EvidenceBundle]:
+    async def list_evidence_bundles(self, limit: int = 50, offset: int = 0) -> list[EvidenceBundle]:
         files = sorted(self.evidence_dir.glob("*.json"), reverse=True)
         results = []
-        for f in files[offset:offset + limit]:
+        for f in files[offset : offset + limit]:
             try:
                 results.append(EvidenceBundle.model_validate_json(f.read_text()))
             except Exception:

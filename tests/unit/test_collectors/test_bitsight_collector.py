@@ -86,15 +86,9 @@ def test_collect_happy_path_emits_inventory_finding() -> None:
     collector = BitSightCollector(api_token="bs_test", client=mock_client)
     findings = collector.collect()
 
-    assert any(
-        (f.source_finding_id or "").startswith("company-inventory:")
-        for f in findings
-    )
+    assert any((f.source_finding_id or "").startswith("company-inventory:") for f in findings)
     # 820 >> 700 default threshold → no low-rating finding
-    assert not any(
-        (f.source_finding_id or "").startswith("company-low-rating:")
-        for f in findings
-    )
+    assert not any((f.source_finding_id or "").startswith("company-low-rating:") for f in findings)
 
 
 def test_collect_emits_low_rating_finding_below_threshold() -> None:
@@ -107,15 +101,9 @@ def test_collect_emits_low_rating_finding_below_threshold() -> None:
     collector = BitSightCollector(api_token="bs_test", client=mock_client)
     findings = collector.collect()
 
-    low_rating = [
-        f
-        for f in findings
-        if (f.source_finding_id or "").startswith("company-low-rating:")
-    ]
+    low_rating = [f for f in findings if (f.source_finding_id or "").startswith("company-low-rating:")]
     assert len(low_rating) == 1
-    assert "LowCo" in (
-        low_rating[0].title + (low_rating[0].description or "")
-    )
+    assert "LowCo" in (low_rating[0].title + (low_rating[0].description or ""))
 
 
 def test_low_rating_threshold_is_configurable() -> None:
@@ -129,10 +117,7 @@ def test_low_rating_threshold_is_configurable() -> None:
     )
     findings = collector.collect()
 
-    assert any(
-        (f.source_finding_id or "").startswith("company-low-rating:")
-        for f in findings
-    )
+    assert any((f.source_finding_id or "").startswith("company-low-rating:") for f in findings)
 
 
 def test_company_without_rating_still_inventories() -> None:
@@ -142,18 +127,11 @@ def test_company_without_rating_still_inventories() -> None:
     collector = BitSightCollector(api_token="bs_test", client=mock_client)
     findings = collector.collect()
 
-    inv = [
-        f
-        for f in findings
-        if (f.source_finding_id or "").startswith("company-inventory:")
-    ]
+    inv = [f for f in findings if (f.source_finding_id or "").startswith("company-inventory:")]
     assert len(inv) == 1
     # No rating → no low-rating finding (avoid false-positive
     # over numeric None)
-    assert not any(
-        (f.source_finding_id or "").startswith("company-low-rating:")
-        for f in findings
-    )
+    assert not any((f.source_finding_id or "").startswith("company-low-rating:") for f in findings)
 
 
 def test_collect_paginates_via_next_url() -> None:
@@ -170,11 +148,7 @@ def test_collect_paginates_via_next_url() -> None:
     collector = BitSightCollector(api_token="bs_test", client=mock_client)
     findings = collector.collect()
 
-    inventory = [
-        f
-        for f in findings
-        if (f.source_finding_id or "").startswith("company-inventory:")
-    ]
+    inventory = [f for f in findings if (f.source_finding_id or "").startswith("company-inventory:")]
     assert len(inventory) == 2
     assert mock_client.get.call_count == 2
 
@@ -190,11 +164,7 @@ def test_pagination_refuses_cross_host_next_url() -> None:
     collector = BitSightCollector(api_token="bs_test", client=mock_client)
     findings = collector.collect()
 
-    inventory = [
-        f
-        for f in findings
-        if (f.source_finding_id or "").startswith("company-inventory:")
-    ]
+    inventory = [f for f in findings if (f.source_finding_id or "").startswith("company-inventory:")]
     # Only page 1's record collected; cross-host next ignored
     assert len(inventory) == 1
     assert mock_client.get.call_count == 1
@@ -218,11 +188,7 @@ def test_collect_respects_max_companies_ceiling() -> None:
     )
     findings = collector.collect()
 
-    inventory = [
-        f
-        for f in findings
-        if (f.source_finding_id or "").startswith("company-inventory:")
-    ]
+    inventory = [f for f in findings if (f.source_finding_id or "").startswith("company-inventory:")]
     assert len(inventory) == 4
 
 
@@ -254,9 +220,7 @@ def test_collect_raises_auth_error_on_403() -> None:
 
 def test_collect_records_connection_error_in_manifest() -> None:
     mock_client = MagicMock(spec=httpx.Client)
-    mock_client.get = MagicMock(
-        side_effect=httpx.ConnectError("Network unreachable")
-    )
+    mock_client.get = MagicMock(side_effect=httpx.ConnectError("Network unreachable"))
     mock_client.close = MagicMock()
 
     collector = BitSightCollector(api_token="bs_test", client=mock_client)
@@ -270,9 +234,7 @@ def test_collect_records_connection_error_in_manifest() -> None:
 def test_collector_context_manager_does_not_close_injected_client() -> None:
     mock_client = _make_client([_page_response([])])
 
-    with BitSightCollector(
-        api_token="bs_test", client=mock_client
-    ) as collector:
+    with BitSightCollector(api_token="bs_test", client=mock_client) as collector:
         collector.collect()
 
     mock_client.close.assert_not_called()
@@ -335,9 +297,6 @@ def test_rating_uses_round_not_trunc() -> None:
     # Rating now reads as 750 — at-threshold (>=) so still triggers
     # the low-rating finding under inclusive comparison; key check
     # is that "749" never appears in the formatted output.
-    serialized = " ".join(
-        " ".join(str(v) for v in (f.title, f.description or ""))
-        for f in findings
-    )
+    serialized = " ".join(" ".join(str(v) for v in (f.title, f.description or "")) for f in findings)
     assert "749" not in serialized
     assert "750" in serialized

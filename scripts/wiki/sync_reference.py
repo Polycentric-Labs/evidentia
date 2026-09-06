@@ -86,9 +86,7 @@ GENERATOR_REL = "scripts/wiki/sync_reference.py"
 # --- repo-relative source locations the generators read --------------------
 MCP_SERVER_REL = "packages/evidentia-mcp/src/evidentia_mcp/server.py"
 CONFIG_REL = "packages/evidentia-core/src/evidentia_core/config.py"
-FRAMEWORKS_REL = (
-    "packages/evidentia-core/src/evidentia_core/catalogs/data/frameworks.yaml"
-)
+FRAMEWORKS_REL = "packages/evidentia-core/src/evidentia_core/catalogs/data/frameworks.yaml"
 MAPPINGS_REL = "packages/evidentia-core/src/evidentia_core/catalogs/data/mappings"
 PACKAGES_REL = "packages"
 
@@ -263,16 +261,13 @@ def render_cli(rows: list[dict[str, Any]]) -> str:
     if root is not None and root["params"]:
         out.append("## Global options\n\n")
         out.append(
-            "Applied to every command (pass before the subcommand, e.g. "
-            "`evidentia --offline gap analyze ...`).\n\n"
+            "Applied to every command (pass before the subcommand, e.g. `evidentia --offline gap analyze ...`).\n\n"
         )
         out.append(_render_params_table(root["params"]))
         out.append("\n")
 
     # Top-level commands = rows with a single-segment path, sorted.
-    top = sorted(
-        (r for r in rows if len(r["path"]) == 1), key=lambda r: r["path"][0]
-    )
+    top = sorted((r for r in rows if len(r["path"]) == 1), key=lambda r: r["path"][0])
     for top_row in top:
         name = top_row["path"][0]
         out.append(f"## `evidentia {name}`\n\n")
@@ -283,11 +278,7 @@ def render_cli(rows: list[dict[str, Any]]) -> str:
             out.append("\n")
         # Subcommands of this group (any deeper path that starts with name).
         subs = sorted(
-            (
-                r
-                for r in rows
-                if len(r["path"]) > 1 and r["path"][0] == name
-            ),
+            (r for r in rows if len(r["path"]) > 1 and r["path"][0] == name),
             key=lambda r: r["path"],
         )
         for sub in subs:
@@ -453,11 +444,7 @@ def collect_yaml_schema(config_source: str) -> list[dict[str, str]]:
     (``exclude=True``) is skipped. Pure (operates on source text).
     """
     tree = ast.parse(config_source)
-    models: dict[str, ast.ClassDef] = {
-        node.name: node
-        for node in ast.walk(tree)
-        if isinstance(node, ast.ClassDef)
-    }
+    models: dict[str, ast.ClassDef] = {node.name: node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)}
 
     def fields_for(class_name: str, prefix: str) -> list[dict[str, str]]:
         cls = models.get(class_name)
@@ -465,9 +452,7 @@ def collect_yaml_schema(config_source: str) -> list[dict[str, str]]:
             return []
         rows: list[dict[str, str]] = []
         for stmt in cls.body:
-            if not isinstance(stmt, ast.AnnAssign) or not isinstance(
-                stmt.target, ast.Name
-            ):
+            if not isinstance(stmt, ast.AnnAssign) or not isinstance(stmt.target, ast.Name):
                 continue
             key = stmt.target.id
             # Skip the internal diagnostics field (exclude=True).
@@ -639,10 +624,7 @@ def render_catalogs(frameworks: list[dict[str, Any]]) -> str:
         items = sorted(by_family[family], key=lambda f: str(f.get("id", "")))
         label = _FAMILY_LABELS.get(family, family)
         out.append(f"## {label} ({len(items)})\n\n")
-        out.append(
-            "| ID | Name | Version | Tier | Category |\n"
-            "| --- | --- | --- | --- | --- |\n"
-        )
+        out.append("| ID | Name | Version | Tier | Category |\n| --- | --- | --- | --- | --- |\n")
         for fw in items:
             out.append(
                 "| `{id}` | {name} | {version} | {tier} | {category} |\n".format(
@@ -764,18 +746,14 @@ def generate_all(repo_root: Path = REPO_ROOT) -> dict[str, str]:
     # configuration.md — env vars + yaml schema.
     env_vars = collect_env_vars(repo_root / PACKAGES_REL)
     config_source = (repo_root / CONFIG_REL).read_text(encoding="utf-8")
-    out[PAGE_CONFIG] = render_configuration(
-        env_vars, collect_yaml_schema(config_source)
-    )
+    out[PAGE_CONFIG] = render_configuration(env_vars, collect_yaml_schema(config_source))
 
     # catalogs.md — frameworks.yaml.
     manifest_text = (repo_root / FRAMEWORKS_REL).read_text(encoding="utf-8")
     out[PAGE_CATALOGS] = render_catalogs(parse_frameworks_manifest(manifest_text))
 
     # crosswalks.md — mappings/*.json.
-    out[PAGE_CROSSWALKS] = render_crosswalks(
-        collect_crosswalks(repo_root / MAPPINGS_REL)
-    )
+    out[PAGE_CROSSWALKS] = render_crosswalks(collect_crosswalks(repo_root / MAPPINGS_REL))
     return out
 
 
@@ -790,16 +768,9 @@ def _diff_summary(expected: str, actual: str, name: str) -> str:
     act_lines = actual.splitlines()
     for i, (exp, act) in enumerate(zip(exp_lines, act_lines, strict=False)):
         if exp != act:
-            return (
-                f"  {name}: first diff at line {i + 1}\n"
-                f"    committed:   {exp!r}\n"
-                f"    regenerated: {act!r}"
-            )
+            return f"  {name}: first diff at line {i + 1}\n    committed:   {exp!r}\n    regenerated: {act!r}"
     if len(exp_lines) != len(act_lines):
-        return (
-            f"  {name}: line-count differs "
-            f"(committed={len(exp_lines)}, regenerated={len(act_lines)})"
-        )
+        return f"  {name}: line-count differs (committed={len(exp_lines)}, regenerated={len(act_lines)})"
     return f"  {name}: content differs only in trailing bytes / EOL"
 
 
@@ -842,15 +813,13 @@ def main(argv: list[str] | None = None) -> int:
         drift = compare(rendered)
         if drift:
             print(
-                "DRIFT: committed wiki reference pages differ from the live "
-                "code/data:",
+                "DRIFT: committed wiki reference pages differ from the live code/data:",
                 file=sys.stderr,
             )
             for line in drift:
                 print(line, file=sys.stderr)
             print(
-                f"\nRe-run `uv run python {GENERATOR_REL}` (no --check) to "
-                "regenerate the pages, then commit.",
+                f"\nRe-run `uv run python {GENERATOR_REL}` (no --check) to regenerate the pages, then commit.",
                 file=sys.stderr,
             )
             return 1

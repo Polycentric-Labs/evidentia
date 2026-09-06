@@ -35,10 +35,7 @@ from evidentia.cli import traceability as traceability_cmd
 
 app = typer.Typer(
     name="evidentia",
-    help=(
-        "Evidentia: open-source GRC tool for gap analysis, risk statements, "
-        "and compliance automation."
-    ),
+    help=("Evidentia: open-source GRC tool for gap analysis, risk statements, and compliance automation."),
     no_args_is_help=True,
     rich_markup_mode="rich",
 )
@@ -90,34 +87,22 @@ app.add_typer(
 app.add_typer(
     poam_cmd.app,
     name="poam",
-    help=(
-        "Plan-of-Action-and-Milestones — federal-compliance "
-        "remediation tracking (v0.9.0 P2)."
-    ),
+    help=("Plan-of-Action-and-Milestones — federal-compliance remediation tracking (v0.9.0 P2)."),
 )
 app.add_typer(
     conmon_cmd.app,
     name="conmon",
-    help=(
-        "Continuous Monitoring cycle calendar — read-only "
-        "library for assessment + reporting cadences (v0.9.0 P3)."
-    ),
+    help=("Continuous Monitoring cycle calendar — read-only library for assessment + reporting cadences (v0.9.0 P3)."),
 )
 app.add_typer(
     ai_gov_cmd.app,
     name="ai-gov",
-    help=(
-        "AI governance — EU AI Act + NIST AI RMF classification "
-        "+ AI system inventory (v0.9.3 P2)."
-    ),
+    help=("AI governance — EU AI Act + NIST AI RMF classification + AI system inventory (v0.9.3 P2)."),
 )
 app.add_typer(
     evidence_cmd.app,
     name="evidence",
-    help=(
-        "Evidence-artifact lineage commands — WORM-enforced "
-        "append-only versioning (v0.9.6 P2)."
-    ),
+    help=("Evidence-artifact lineage commands — WORM-enforced append-only versioning (v0.9.6 P2)."),
 )
 app.add_typer(
     eval_cmd.app,
@@ -159,8 +144,7 @@ except ImportError:
     _mcp_stub = typer.Typer(
         name="mcp",
         help=(
-            "Model Context Protocol (MCP) server (v0.8.0 P0.3) — "
-            "requires the `evidentia[mcp]` extra to be installed."
+            "Model Context Protocol (MCP) server (v0.8.0 P0.3) — requires the `evidentia[mcp]` extra to be installed."
         ),
     )
 
@@ -168,8 +152,7 @@ except ImportError:
     def _mcp_extra_not_installed(ctx: typer.Context) -> None:
         if ctx.invoked_subcommand is None:
             typer.echo(
-                "The MCP server requires the `evidentia[mcp]` extra. "
-                "Install with: pip install 'evidentia[mcp]'",
+                "The MCP server requires the `evidentia[mcp]` extra. Install with: pip install 'evidentia[mcp]'",
                 err=True,
             )
             raise typer.Exit(code=2)
@@ -184,12 +167,8 @@ console = Console()
 @app.callback()
 def _global_options(
     ctx: typer.Context,
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="Enable verbose (DEBUG) logging."
-    ),
-    quiet: bool = typer.Option(
-        False, "--quiet", "-q", help="Suppress non-error output."
-    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose (DEBUG) logging."),
+    quiet: bool = typer.Option(False, "--quiet", "-q", help="Suppress non-error output."),
     config: typer.FileText | None = typer.Option(
         None,
         "--config",
@@ -280,9 +259,7 @@ def _global_options(
     cfg = load_config(explicit_path)
     ctx.obj = {"config": cfg, "offline": offline, "json_logs": json_logs}
     if cfg.source_path is not None:
-        logging.getLogger("evidentia.config").debug(
-            "Loaded config from %s", cfg.source_path
-        )
+        logging.getLogger("evidentia.config").debug("Loaded config from %s", cfg.source_path)
 
     # v0.9.6 P1: thread the --rbac-identity flag through the
     # process-lifetime singleton. Done last so any earlier error
@@ -428,14 +405,8 @@ def _render_air_gap_report() -> None:
     table.add_column("Detail")
 
     # 1. LLM client — inspect configured model + EVIDENTIA_LLM_API_BASE env
-    model = (
-        os.environ.get("EVIDENTIA_LLM_MODEL")
-        or (cfg.llm.model if cfg.llm else None)
-        or "gpt-4o"
-    )
-    api_base = os.environ.get("EVIDENTIA_LLM_API_BASE") or os.environ.get(
-        "OPENAI_API_BASE"
-    )
+    model = os.environ.get("EVIDENTIA_LLM_MODEL") or (cfg.llm.model if cfg.llm else None) or "gpt-4o"
+    api_base = os.environ.get("EVIDENTIA_LLM_API_BASE") or os.environ.get("OPENAI_API_BASE")
     if any(model.lower().startswith(p) for p in LOCAL_LLM_PREFIXES):
         table.add_row(
             "LLM client",
@@ -462,8 +433,7 @@ def _render_air_gap_report() -> None:
         table.add_row(
             "LLM client",
             "WOULD LEAK",
-            f"model={model} is a cloud model; no local api_base set. "
-            "Set EVIDENTIA_LLM_MODEL=ollama/llama3 or similar.",
+            f"model={model} is a cloud model; no local api_base set. Set EVIDENTIA_LLM_MODEL=ollama/llama3 or similar.",
         )
 
     # 2. Catalog loader — v0.4.0 only loads from bundled + user data dirs,

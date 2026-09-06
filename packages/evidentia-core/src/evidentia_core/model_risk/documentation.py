@@ -92,10 +92,7 @@ def generate_model_documentation(model: ModelInventory) -> str:
     )
 
     # ── §2 Purpose and intended use ──────────────────────────────
-    sections.append(
-        f"## 2. Purpose and intended use\n\n"
-        f"{model.purpose}\n"
-    )
+    sections.append(f"## 2. Purpose and intended use\n\n{model.purpose}\n")
 
     # ── §3 Methodology and design ────────────────────────────────
     sections.append(
@@ -138,16 +135,10 @@ def generate_model_documentation(model: ModelInventory) -> str:
             for o in model.outputs
         )
         sections.append(
-            "## 5. Outputs\n\n"
-            "| Name | Decision type | Downstream consumers |\n"
-            "| --- | --- | --- |\n"
-            f"{output_rows}\n"
+            f"## 5. Outputs\n\n| Name | Decision type | Downstream consumers |\n| --- | --- | --- |\n{output_rows}\n"
         )
     else:
-        sections.append(
-            "## 5. Outputs\n\n"
-            "_No outputs recorded._\n"
-        )
+        sections.append("## 5. Outputs\n\n_No outputs recorded._\n")
 
     # ── §6 Assumptions and limitations ───────────────────────────
     # SR 11-7 §III.A.4 requires documentation of model assumptions
@@ -155,16 +146,12 @@ def generate_model_documentation(model: ModelInventory) -> str:
     # P0.6.1) carries these as free-text under `notes`; a future
     # slice may promote them to structured `assumptions: list[str]`
     # + `limitations: list[str]` fields.
-    sections.append(
-        "## 6. Assumptions and limitations\n\n"
-        f"{_format_optional_text(model.notes)}\n"
-    )
+    sections.append(f"## 6. Assumptions and limitations\n\n{_format_optional_text(model.notes)}\n")
 
     # ── §7 Validation history ────────────────────────────────────
     if model.validation_findings:
         finding_rows = "\n".join(
-            f"| {f.detected_at.isoformat()} | {f.severity} | "
-            f"{f.status} | {f.title} |"
+            f"| {f.detected_at.isoformat()} | {f.severity} | {f.status} | {f.title} |"
             for f in model.validation_findings
         )
         sections.append(
@@ -187,10 +174,7 @@ def generate_model_documentation(model: ModelInventory) -> str:
         )
 
     # ── §8 Monitoring and retirement ────────────────────────────
-    sections.append(
-        "## 8. Monitoring and retirement plan\n\n"
-        f"{_format_optional_text(model.retirement_plan)}\n"
-    )
+    sections.append(f"## 8. Monitoring and retirement plan\n\n{_format_optional_text(model.retirement_plan)}\n")
 
     # ── §9 Audit trail (linked AI risk statements) ───────────────
     sections.append(
@@ -221,8 +205,5 @@ def _tier_text(tier_value: str) -> str:
             "this model is MODERATE materiality; it requires biennial "
             "independent validation and standard documentation rigor"
         ),
-        "tier_3": (
-            "this model is LOW materiality; it requires triennial "
-            "validation and minimum documentation rigor"
-        ),
+        "tier_3": ("this model is LOW materiality; it requires triennial validation and minimum documentation rigor"),
     }.get(tier_value, "tier classification unrecognized")

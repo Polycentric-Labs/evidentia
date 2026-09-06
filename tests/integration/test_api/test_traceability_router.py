@@ -64,12 +64,8 @@ def _matrix_payload(
 
 
 class TestEmit:
-    def test_emit_returns_unsigned_oscal_profile(
-        self, trace_client: TestClient
-    ) -> None:
-        r = trace_client.post(
-            "/api/traceability/emit", json=_matrix_payload()
-        )
+    def test_emit_returns_unsigned_oscal_profile(self, trace_client: TestClient) -> None:
+        r = trace_client.post("/api/traceability/emit", json=_matrix_payload())
         assert r.status_code == 200, r.text
         body = r.json()
 
@@ -77,9 +73,7 @@ class TestEmit:
         # representation decision), not Assessment Results / mapping.
         assert "profile" in body
         profile = body["profile"]
-        assert profile["metadata"]["title"] == (
-            "Control-to-Threat Traceability: Acme"
-        )
+        assert profile["metadata"]["title"] == ("Control-to-Threat Traceability: Acme")
 
         # The imported catalog + the annotated control survive into the
         # emitted document.
@@ -95,9 +89,7 @@ class TestEmit:
         assert res["rlinks"][0]["hashes"][0]["algorithm"] == "SHA-256"
         assert res["rlinks"][0]["hashes"][0]["value"]
 
-    def test_emitted_profile_is_unsigned(
-        self, trace_client: TestClient
-    ) -> None:
+    def test_emitted_profile_is_unsigned(self, trace_client: TestClient) -> None:
         """The HTTP emit MUST be unsigned — no GPG/Sigstore artifact.
 
         Signing is CLI-only. A signed OSCAL document carries its
@@ -107,9 +99,7 @@ class TestEmit:
         resource. Assert none of that leaks into the HTTP response: the
         body is the bare profile and nothing else.
         """
-        r = trace_client.post(
-            "/api/traceability/emit", json=_matrix_payload()
-        )
+        r = trace_client.post("/api/traceability/emit", json=_matrix_payload())
         assert r.status_code == 200, r.text
         body = r.json()
 
@@ -147,9 +137,7 @@ class TestEmit:
 
 
 class TestEmitInvalidInput:
-    def test_empty_mappings_returns_400(
-        self, trace_client: TestClient
-    ) -> None:
+    def test_empty_mappings_returns_400(self, trace_client: TestClient) -> None:
         # A schema-valid matrix with no mappings is insufficient to emit
         # (mirrors the CLI's "nothing to emit" guard) → 400 with the
         # structured detail from evidentia_api.errors.
@@ -162,9 +150,7 @@ class TestEmitInvalidInput:
         assert detail["error"] == "invalid_body"
         assert "message" in detail
 
-    def test_missing_required_field_returns_422(
-        self, trace_client: TestClient
-    ) -> None:
+    def test_missing_required_field_returns_422(self, trace_client: TestClient) -> None:
         # Drop a required field (catalog_href) → Pydantic 422.
         payload = _matrix_payload()
         del payload["catalog_href"]
@@ -175,9 +161,7 @@ class TestEmitInvalidInput:
         r = trace_client.post("/api/traceability/emit", json={})
         assert r.status_code == 422, r.text
 
-    def test_invalid_threat_framework_returns_422(
-        self, trace_client: TestClient
-    ) -> None:
+    def test_invalid_threat_framework_returns_422(self, trace_client: TestClient) -> None:
         payload = _matrix_payload()
         payload["mappings"] = [  # type: ignore[assignment]
             {
@@ -196,9 +180,7 @@ class TestEmitInvalidInput:
 
 
 class TestSigningKnobsRejected:
-    def test_sign_with_gpg_in_body_is_rejected(
-        self, trace_client: TestClient
-    ) -> None:
+    def test_sign_with_gpg_in_body_is_rejected(self, trace_client: TestClient) -> None:
         # The body model forbids extra fields, so a signing knob smuggled
         # into the request is structurally rejected (422) — the HTTP
         # surface offers no way to trigger signing.
@@ -206,9 +188,7 @@ class TestSigningKnobsRejected:
         r = trace_client.post("/api/traceability/emit", json=payload)
         assert r.status_code == 422, r.text
 
-    def test_sign_with_sigstore_in_body_is_rejected(
-        self, trace_client: TestClient
-    ) -> None:
+    def test_sign_with_sigstore_in_body_is_rejected(self, trace_client: TestClient) -> None:
         payload = {**_matrix_payload(), "sign_with_sigstore": True}
         r = trace_client.post("/api/traceability/emit", json=payload)
         assert r.status_code == 422, r.text

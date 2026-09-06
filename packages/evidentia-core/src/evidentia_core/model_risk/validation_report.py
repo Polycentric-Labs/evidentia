@@ -62,9 +62,7 @@ def _disposition_table(findings: list[ValidationFinding]) -> str:
         acc = counts.get(ValidationStatus.ACCEPTED.value, 0)
         defr = counts.get(ValidationStatus.DEFERRED.value, 0)
         total = open_ + rem + acc + defr
-        rows.append(
-            f"| {severity.value} | {open_} | {rem} | {acc} | {defr} | {total} |"
-        )
+        rows.append(f"| {severity.value} | {open_} | {rem} | {acc} | {defr} | {total} |")
         grand_open += open_
         grand_total += total
     rows.append(
@@ -76,9 +74,7 @@ def _disposition_table(findings: list[ValidationFinding]) -> str:
     )
     return (
         "| Severity | Open | Remediated | Accepted | Deferred | Total |\n"
-        "| --- | --- | --- | --- | --- | --- |\n"
-        + "\n".join(rows)
-        + "\n"
+        "| --- | --- | --- | --- | --- | --- |\n" + "\n".join(rows) + "\n"
     )
 
 
@@ -97,19 +93,14 @@ def _findings_table(findings: list[ValidationFinding]) -> str:
         )
     return (
         "| ID | Detected | Severity | Status | Title | Remediation due | Remediated on |\n"
-        "| --- | --- | --- | --- | --- | --- | --- |\n"
-        + "\n".join(rows)
-        + "\n"
+        "| --- | --- | --- | --- | --- | --- | --- |\n" + "\n".join(rows) + "\n"
     )
 
 
 def _open_high_warning(findings: list[ValidationFinding]) -> str:
     """If any HIGH-severity finding is OPEN, prepend a warning callout."""
     open_high = [
-        f
-        for f in findings
-        if f.severity == ValidationSeverity.HIGH.value
-        and f.status == ValidationStatus.OPEN.value
+        f for f in findings if f.severity == ValidationSeverity.HIGH.value and f.status == ValidationStatus.OPEN.value
     ]
     if not open_high:
         return ""
@@ -172,16 +163,10 @@ def generate_validation_report(model: ModelInventory) -> str:
     )
 
     # ── Disposition ──────────────────────────────────────────────
-    sections.append(
-        "## Finding disposition\n\n"
-        f"{_disposition_table(findings)}"
-    )
+    sections.append(f"## Finding disposition\n\n{_disposition_table(findings)}")
 
     # ── Detail ───────────────────────────────────────────────────
-    sections.append(
-        "## Findings detail\n\n"
-        f"{_findings_table(findings)}"
-    )
+    sections.append(f"## Findings detail\n\n{_findings_table(findings)}")
 
     # ── Per-finding remediation narrative ───────────────────────
     if findings:
@@ -196,9 +181,7 @@ def generate_validation_report(model: ModelInventory) -> str:
                 f"**Remediation plan**: "
                 f"{f.remediation_plan if f.remediation_plan else '_None recorded_'}\n"
             )
-        sections.append(
-            "## Remediation narrative\n\n" + "\n".join(narrative_chunks)
-        )
+        sections.append("## Remediation narrative\n\n" + "\n".join(narrative_chunks))
 
     # ── Cycle context ────────────────────────────────────────────
     sections.append(

@@ -90,10 +90,7 @@ def _generate(payload: InitWizardRequest) -> tuple[dict[str, str], list[str]]:
     response_model=InitWizardResponse,
     responses=error_responses(
         {
-            400: (
-                "Unknown ``preset`` (``error: unknown_preset``); "
-                "``detail`` carries ``preset`` + ``valid``."
-            ),
+            400: ("Unknown ``preset`` (``error: unknown_preset``); ``detail`` carries ``preset`` + ``valid``."),
         }
     ),
 )
@@ -118,10 +115,7 @@ async def init_wizard(payload: InitWizardRequest) -> InitWizardResponse:
     response_model=InitWizardCommitResponse,
     responses=error_responses(
         {
-            400: (
-                "Unknown ``preset`` (``error: unknown_preset``); "
-                "``detail`` carries ``preset`` + ``valid``."
-            ),
+            400: ("Unknown ``preset`` (``error: unknown_preset``); ``detail`` carries ``preset`` + ``valid``."),
         }
     ),
 )
@@ -154,6 +148,4 @@ async def init_commit(
         created.append(filename)
     (directory / ".evidentia").mkdir(exist_ok=True)
 
-    return InitWizardCommitResponse(
-        created=created, skipped=skipped, directory=str(directory)
-    )
+    return InitWizardCommitResponse(created=created, skipped=skipped, directory=str(directory))

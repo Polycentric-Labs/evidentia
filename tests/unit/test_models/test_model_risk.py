@@ -174,9 +174,7 @@ class TestModelInventoryConstruction:
 
     def test_extra_fields_rejected(self) -> None:
         # Pydantic extra="forbid" inherited from EvidentiaModel
-        with pytest.raises(
-            ValidationError, match="extra"
-        ):
+        with pytest.raises(ValidationError, match="extra"):
             ModelInventory(
                 name="x",
                 purpose="x",

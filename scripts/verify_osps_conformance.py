@@ -80,6 +80,7 @@ def verification_ref() -> str:
     sha = os.environ.get("GITHUB_SHA", "").strip()
     return sha or "main"
 
+
 # The conformance doc, resolved relative to the repo root (this file lives
 # in scripts/, so the repo root is one parent up).
 CONFORMANCE_DOC = Path(__file__).resolve().parent.parent / "docs" / "OSPS-CONFORMANCE.md"
@@ -103,13 +104,9 @@ URL_PATTERN = re.compile(r"\[[^\]]*\]\((https?://[^\s\)]+)\)")
 # form that returns a true 404 on a missing resource.
 _HTML_BLOB_RE = re.compile(rf"^https?://github\.com/{re.escape(OWNER_REPO)}/blob/main/(.+)$")
 _HTML_TREE_RE = re.compile(rf"^https?://github\.com/{re.escape(OWNER_REPO)}/tree/main/(.+)$")
-_HTML_RELEASE_TAG_RE = re.compile(
-    rf"^https?://github\.com/{re.escape(OWNER_REPO)}/releases/tag/([^/?#]+)$"
-)
+_HTML_RELEASE_TAG_RE = re.compile(rf"^https?://github\.com/{re.escape(OWNER_REPO)}/releases/tag/([^/?#]+)$")
 _HTML_COMMITS_RE = re.compile(rf"^https?://github\.com/{re.escape(OWNER_REPO)}/commits/([^/?#]+)$")
-_HTML_SECURITY_ADVISORIES_RE = re.compile(
-    rf"^https?://github\.com/{re.escape(OWNER_REPO)}/security/advisories/?$"
-)
+_HTML_SECURITY_ADVISORIES_RE = re.compile(rf"^https?://github\.com/{re.escape(OWNER_REPO)}/security/advisories/?$")
 _HTML_REPO_ROOT_RE = re.compile(rf"^https?://github\.com/{re.escape(OWNER_REPO)}/?$")
 
 
@@ -196,11 +193,7 @@ def _endpoint_returns_404(api_endpoint: str) -> bool:
         check=False,
     )
     combined = result.stdout + "\n" + result.stderr
-    return (
-        "HTTP/2.0 404" in combined
-        or "HTTP/1.1 404" in combined
-        or "HTTP/2 404" in combined
-    )
+    return "HTTP/2.0 404" in combined or "HTTP/1.1 404" in combined or "HTTP/2 404" in combined
 
 
 def parse_claims(markdown: str) -> list[tuple[str, str]]:
@@ -229,10 +222,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
 
-    print(
-        f"::notice::Parsed {len(claims)} PASS-claimed controls; "
-        "verifying evidence URLs..."
-    )
+    print(f"::notice::Parsed {len(claims)} PASS-claimed controls; verifying evidence URLs...")
 
     failures: list[tuple[str, str]] = []
     unmapped: list[tuple[str, str]] = []
@@ -258,8 +248,7 @@ def main(argv: list[str] | None = None) -> int:
             if _endpoint_returns_404(api_endpoint):
                 failures.append((control_id, url))
                 print(
-                    f"::error::404 on evidence for {control_id} "
-                    f"(shape={shape}, endpoint={api_endpoint}): {url}",
+                    f"::error::404 on evidence for {control_id} (shape={shape}, endpoint={api_endpoint}): {url}",
                     file=sys.stderr,
                 )
 
@@ -282,10 +271,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
 
-    print(
-        f"::notice::Verified {len(claims)} PASS-claimed controls / "
-        f"{checked} evidence URLs; all resolved."
-    )
+    print(f"::notice::Verified {len(claims)} PASS-claimed controls / {checked} evidence URLs; all resolved.")
     return 0
 
 

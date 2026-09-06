@@ -47,13 +47,16 @@ def run_llm_rater(corpus_file: str, output_file: str) -> int:
     cmd = [
         sys.executable,
         "scripts/llm_rater.py",
-        "--corpus", str(corpus_path),
-        "--output", str(output_path),
-        "--delay", "0.3",
+        "--corpus",
+        str(corpus_path),
+        "--output",
+        str(output_path),
+        "--delay",
+        "0.3",
     ]
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Rating: {corpus_file} -> {output_file}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     result = subprocess.run(cmd, check=False)
     return result.returncode
 
@@ -67,9 +70,12 @@ def run_kappa(corpus_file: str, labels_file: str) -> tuple[float, str, int] | No
     cmd = [
         sys.executable,
         "scripts/compute_inter_rater_kappa.py",
-        "--rater1", str(corpus_path),
-        "--rater2", str(labels_path),
-        "--target", "0.80",
+        "--rater1",
+        str(corpus_path),
+        "--rater2",
+        str(labels_path),
+        "--target",
+        "0.80",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     print(result.stdout)
@@ -88,7 +94,7 @@ def run_kappa(corpus_file: str, labels_file: str) -> tuple[float, str, int] | No
             paren_start = line.find("(")
             paren_end = line.find(")")
             if paren_start != -1 and paren_end != -1:
-                label = line[paren_start + 1:paren_end]
+                label = line[paren_start + 1 : paren_end]
 
     if kappa is None:
         return None
@@ -162,9 +168,7 @@ def main() -> int:
         if labels_path.is_file():
             all_labels.extend(labels_path.read_text(encoding="utf-8").splitlines())
     if all_labels:
-        overall_labels_path.write_text(
-            "\n".join(all_labels) + "\n", encoding="utf-8"
-        )
+        overall_labels_path.write_text("\n".join(all_labels) + "\n", encoding="utf-8")
         print(f"\nConsolidated labels written to: {overall_labels_path}")
 
     all_corpus_path = CALIBRATION_DIR / "corpus-all.jsonl"
@@ -174,9 +178,7 @@ def main() -> int:
         if cp.is_file():
             all_corpus_lines.extend(cp.read_text(encoding="utf-8").splitlines())
     if all_corpus_lines:
-        all_corpus_path.write_text(
-            "\n".join(all_corpus_lines) + "\n", encoding="utf-8"
-        )
+        all_corpus_path.write_text("\n".join(all_corpus_lines) + "\n", encoding="utf-8")
         total = len(all_corpus_lines)
         print(f"\n--- Overall (all {total} entries) ---")
         outcome = run_kappa("corpus-all.jsonl", "labels-llm-all.jsonl")
@@ -184,10 +186,7 @@ def main() -> int:
             kappa, label, _ = outcome
             passed = kappa >= 0.80
             status = "PASS" if passed else "FAIL"
-            print(
-                f"\n| Overall (all) | {total} | {kappa:.4f} "
-                f"| {label} | {status} |"
-            )
+            print(f"\n| Overall (all) | {total} | {kappa:.4f} | {label} | {status} |")
 
     return 0 if any_pass else 1
 

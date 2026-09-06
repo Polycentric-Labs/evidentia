@@ -52,9 +52,7 @@ def openapi_schema() -> dict[str, Any]:
     return create_app(offline=True).openapi()
 
 
-def _success_schema(
-    schema: dict[str, Any], path: str, method: str
-) -> dict[str, Any]:
+def _success_schema(schema: dict[str, Any], path: str, method: str) -> dict[str, Any]:
     operation = schema["paths"][path][method]
     content = operation["responses"]["200"]["content"]["application/json"]
     return content["schema"]
@@ -89,9 +87,7 @@ def test_acquisition_detail_is_shared_by_show_and_set_phase(
     openapi_schema: dict[str, Any],
 ) -> None:
     """Both return record + progress; one model keeps the console simple."""
-    show = _success_schema(
-        openapi_schema, "/api/ai-gov/acquisitions/{acquisition_id}", "get"
-    )
+    show = _success_schema(openapi_schema, "/api/ai-gov/acquisitions/{acquisition_id}", "get")
     set_phase = _success_schema(
         openapi_schema,
         "/api/ai-gov/acquisitions/{acquisition_id}/set-phase",
@@ -104,9 +100,7 @@ def test_list_response_exposes_count_and_items(
     openapi_schema: dict[str, Any],
 ) -> None:
     """The console renders a count badge and iterates the array."""
-    component = openapi_schema["components"]["schemas"][
-        "ListAcquisitionsResponse"
-    ]
+    component = openapi_schema["components"]["schemas"]["ListAcquisitionsResponse"]
     properties = component["properties"]
     assert "count" in properties
     assert properties["acquisitions"]["type"] == "array"

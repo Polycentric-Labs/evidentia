@@ -61,17 +61,13 @@ class TestJiraStatus:
         # Error message is sanitized + correlated by request_id; the
         # specifics (which env var, exception class, etc.) live in the
         # server log only.
-        assert payload["error"] == (
-            "Jira configuration is incomplete or invalid."
-        )
+        assert payload["error"] == ("Jira configuration is incomplete or invalid.")
         assert len(payload["request_id"]) == 12
         # Critical: env-var name + secret-store hints must not leak.
         assert "JIRA_BASE_URL" not in r.text
         assert "JIRA_API_TOKEN" not in r.text
 
-    def test_returns_configured_on_success(
-        self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_returns_configured_on_success(self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
         _set_jira_env(monkeypatch)
 
         def handler(req: httpx.Request) -> httpx.Response:
@@ -102,9 +98,7 @@ class TestJiraStatus:
         _set_jira_env(monkeypatch)
 
         def handler(_: httpx.Request) -> httpx.Response:
-            return httpx.Response(
-                401, json={"errorMessages": ["Bad credentials"]}
-            )
+            return httpx.Response(401, json={"errorMessages": ["Bad credentials"]})
 
         _patch_client_transport(monkeypatch, httpx.MockTransport(handler))
 
@@ -114,9 +108,7 @@ class TestJiraStatus:
         assert payload["configured"] is False
         # Sanitized message + request-id correlation; upstream Jira
         # response codes + error text live in the server log only.
-        assert payload["error"] == (
-            "Jira API call failed; check server logs with the request_id."
-        )
+        assert payload["error"] == ("Jira API call failed; check server logs with the request_id.")
         assert len(payload["request_id"]) == 12
         # v0.9.4 P4.4: previously these asserted against r.text which
         # also covered the random 12-char request_id field; ~0.7% of
@@ -154,9 +146,7 @@ class TestJiraPushSyncValidation:
         assert r.status_code == 400
         assert r.json()["detail"]["error"] == "invalid_id"
 
-    def test_push_missing_report_returns_404(
-        self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_push_missing_report_returns_404(self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
         _set_jira_env(monkeypatch)
         r = api_client.post("/api/integrations/jira/push/0123456789abcdef")
         assert r.status_code == 404
@@ -202,9 +192,7 @@ class TestJiraPushSyncValidation:
 
 
 class TestTableauPublishEndpoint:
-    def test_guarded_server_url_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_guarded_server_url_returns_400(self, api_client: TestClient) -> None:
         # The SSRF/offline guard on the body-controlled ``server_url``
         # deliberately fires BEFORE the report-key lookup, so this
         # request never reaches the invalid-key branch (which the
@@ -220,9 +208,7 @@ class TestTableauPublishEndpoint:
         assert detail["error"] == "invalid_field"
         assert detail["field"] == "server_url"
 
-    def test_missing_server_url_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_missing_server_url_returns_400(self, api_client: TestClient) -> None:
         r = api_client.post(
             "/api/integrations/tableau/publish/0123456789abcdef",
             json={},
@@ -233,9 +219,7 @@ class TestTableauPublishEndpoint:
         assert detail["field"] == "server_url"
         assert "server_url" in detail["message"]
 
-    def test_invalid_risks_array_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_invalid_risks_array_returns_400(self, api_client: TestClient) -> None:
         r = api_client.post(
             "/api/integrations/tableau/publish/0123456789abcdef",
             json={
@@ -249,9 +233,7 @@ class TestTableauPublishEndpoint:
         assert r.status_code == 400
         assert r.json()["detail"]["error"] == "invalid_field"
 
-    def test_private_server_url_refused_ssrf(
-        self, api_client: TestClient
-    ) -> None:
+    def test_private_server_url_refused_ssrf(self, api_client: TestClient) -> None:
         # SSRF guard: a body-controlled server_url pointing at a private /
         # cloud-metadata host (169.254.169.254 = link-local) must be refused
         # BEFORE any outbound, PAT-bearing request — the same network_guard
@@ -266,9 +248,7 @@ class TestTableauPublishEndpoint:
         assert detail["field"] == "server_url"
         assert "tableau" in detail["message"].lower()
 
-    def test_http_server_url_refused_non_tls(
-        self, api_client: TestClient
-    ) -> None:
+    def test_http_server_url_refused_non_tls(self, api_client: TestClient) -> None:
         # The PAT must never go over a plaintext channel: an http:// URL is
         # refused by the TableauConfig https field_validator. block_private
         # is opted out so the SSRF guard does not fire first, isolating the
@@ -287,9 +267,7 @@ class TestTableauPublishEndpoint:
 
 
 class TestPowerBIPublishEndpoint:
-    def test_invalid_key_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_invalid_key_returns_400(self, api_client: TestClient) -> None:
         r = api_client.post(
             "/api/integrations/powerbi/publish/not-a-hex-key",
             json={
@@ -301,9 +279,7 @@ class TestPowerBIPublishEndpoint:
         assert r.status_code == 400
         assert r.json()["detail"]["error"] == "invalid_id"
 
-    def test_missing_workspace_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_missing_workspace_returns_400(self, api_client: TestClient) -> None:
         r = api_client.post(
             "/api/integrations/powerbi/publish/0123456789abcdef",
             json={"tenant_id": "t-1", "client_id": "c-1"},
@@ -314,9 +290,7 @@ class TestPowerBIPublishEndpoint:
         assert detail["field"] == "workspace_id"
         assert "workspace_id" in detail["message"]
 
-    def test_missing_tenant_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_missing_tenant_returns_400(self, api_client: TestClient) -> None:
         r = api_client.post(
             "/api/integrations/powerbi/publish/0123456789abcdef",
             json={"workspace_id": "ws-1", "client_id": "c-1"},
@@ -327,9 +301,7 @@ class TestPowerBIPublishEndpoint:
         assert detail["field"] == "tenant_id"
         assert "tenant_id" in detail["message"]
 
-    def test_missing_client_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_missing_client_returns_400(self, api_client: TestClient) -> None:
         r = api_client.post(
             "/api/integrations/powerbi/publish/0123456789abcdef",
             json={"workspace_id": "ws-1", "tenant_id": "t-1"},
@@ -345,13 +317,9 @@ class TestPowerBIPublishEndpoint:
 
 
 def _set_servicenow_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv(
-        "EVIDENTIA_SERVICENOW_INSTANCE_URL", "https://acme.service-now.com"
-    )
+    monkeypatch.setenv("EVIDENTIA_SERVICENOW_INSTANCE_URL", "https://acme.service-now.com")
     monkeypatch.setenv("EVIDENTIA_SERVICENOW_USER", "svc-user")
-    monkeypatch.setenv(
-        "EVIDENTIA_SERVICENOW_PASSWORD", "sn-secret-never-in-response"
-    )
+    monkeypatch.setenv("EVIDENTIA_SERVICENOW_PASSWORD", "sn-secret-never-in-response")
     monkeypatch.setenv("EVIDENTIA_SERVICENOW_TABLE", "incident")
 
 
@@ -392,23 +360,15 @@ def _patch_servicenow_transport(
             )
         orig_init(self, config, http=http)
 
-    monkeypatch.setattr(
-        sn_client_mod.ServiceNowClient, "__init__", patched_init
-    )
+    monkeypatch.setattr(sn_client_mod.ServiceNowClient, "__init__", patched_init)
 
 
 def _make_report(api_client: TestClient) -> str:
     """Create a saved GapAnalysisReport and return its gap-store key."""
     from pathlib import Path
 
-    fixture_root = (
-        Path(__file__).resolve().parents[3]
-        / "examples"
-        / "meridian-fintech-v2"
-    )
-    inventory = (fixture_root / "my-controls.yaml").read_text(
-        encoding="utf-8"
-    )
+    fixture_root = Path(__file__).resolve().parents[3] / "examples" / "meridian-fintech-v2"
+    inventory = (fixture_root / "my-controls.yaml").read_text(encoding="utf-8")
     r = api_client.post(
         "/api/gap/analyze",
         json={
@@ -436,29 +396,21 @@ class TestServiceNowStatus:
         assert payload["configured"] is False
         # Sanitized message + request-id correlation; env-var names /
         # secret-store hints live in the server log only.
-        assert payload["error"] == (
-            "ServiceNow configuration is incomplete or invalid."
-        )
+        assert payload["error"] == ("ServiceNow configuration is incomplete or invalid.")
         assert len(payload["request_id"]) == 12
         assert "EVIDENTIA_SERVICENOW_INSTANCE_URL" not in r.text
         assert "EVIDENTIA_SERVICENOW_PASSWORD" not in r.text
 
-    def test_returns_configured_on_success(
-        self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_returns_configured_on_success(self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
         _set_servicenow_env(monkeypatch)
 
         def handler(req: httpx.Request) -> httpx.Response:
             # test_connection() probes GET /api/now/table/<table>
             if "/api/now/table/incident" in req.url.path:
-                return httpx.Response(
-                    200, json={"result": [{"sys_id": "abc123"}]}
-                )
+                return httpx.Response(200, json={"result": [{"sys_id": "abc123"}]})
             return httpx.Response(404)
 
-        _patch_servicenow_transport(
-            monkeypatch, httpx.MockTransport(handler)
-        )
+        _patch_servicenow_transport(monkeypatch, httpx.MockTransport(handler))
 
         r = api_client.get("/api/integrations/servicenow/status")
         assert r.status_code == 200, r.text
@@ -476,22 +428,15 @@ class TestServiceNowStatus:
         _set_servicenow_env(monkeypatch)
 
         def handler(_: httpx.Request) -> httpx.Response:
-            return httpx.Response(
-                401, json={"error": {"message": "User Not Authenticated"}}
-            )
+            return httpx.Response(401, json={"error": {"message": "User Not Authenticated"}})
 
-        _patch_servicenow_transport(
-            monkeypatch, httpx.MockTransport(handler)
-        )
+        _patch_servicenow_transport(monkeypatch, httpx.MockTransport(handler))
 
         r = api_client.get("/api/integrations/servicenow/status")
         assert r.status_code == 200
         payload = r.json()
         assert payload["configured"] is False
-        assert payload["error"] == (
-            "ServiceNow API call failed; check server logs with the "
-            "request_id."
-        )
+        assert payload["error"] == ("ServiceNow API call failed; check server logs with the request_id.")
         assert len(payload["request_id"]) == 12
         # Upstream status code + error text must not leak to the wire.
         assert "401" not in payload["error"]
@@ -503,22 +448,14 @@ class TestServiceNowStatus:
 
 
 class TestServiceNowPush:
-    def test_push_invalid_key_returns_400(
-        self, api_client: TestClient
-    ) -> None:
-        r = api_client.post(
-            "/api/integrations/servicenow/push/not-a-hex-key"
-        )
+    def test_push_invalid_key_returns_400(self, api_client: TestClient) -> None:
+        r = api_client.post("/api/integrations/servicenow/push/not-a-hex-key")
         assert r.status_code == 400
         assert r.json()["detail"]["error"] == "invalid_id"
 
-    def test_push_missing_report_returns_404(
-        self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_push_missing_report_returns_404(self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
         _set_servicenow_env(monkeypatch)
-        r = api_client.post(
-            "/api/integrations/servicenow/push/0123456789abcdef"
-        )
+        r = api_client.post("/api/integrations/servicenow/push/0123456789abcdef")
         assert r.status_code == 404
         assert r.json()["detail"]["error"] == "not_found"
 
@@ -562,9 +499,7 @@ class TestServiceNowPush:
                 )
             return httpx.Response(404)
 
-        _patch_servicenow_transport(
-            monkeypatch, httpx.MockTransport(handler)
-        )
+        _patch_servicenow_transport(monkeypatch, httpx.MockTransport(handler))
 
         r = api_client.post(f"/api/integrations/servicenow/push/{key}")
         assert r.status_code == 200, r.text

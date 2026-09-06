@@ -62,16 +62,11 @@ class JiraSyncOutcome(BaseModel):
     action: JiraSyncAction
     issue_key: str | None = Field(
         default=None,
-        description=(
-            "Jira issue key after push/sync — populated on CREATED/UPDATED."
-        ),
+        description=("Jira issue key after push/sync — populated on CREATED/UPDATED."),
     )
     issue_url: str | None = Field(default=None)
     detail: str = Field(
-        description=(
-            "Human-readable one-line explanation — rendered verbatim in "
-            "CLI output and GUI toast messages."
-        ),
+        description=("Human-readable one-line explanation — rendered verbatim in CLI output and GUI toast messages."),
     )
     new_status: GapStatus | None = Field(
         default=None,
@@ -134,10 +129,7 @@ def push_gap_to_jira(
             framework=gap.framework,
             action=JiraSyncAction.SKIPPED,
             issue_key=gap.jira_issue_key,
-            detail=(
-                f"Already linked to {gap.jira_issue_key}; pass force=True "
-                "to create a new issue anyway."
-            ),
+            detail=(f"Already linked to {gap.jira_issue_key}; pass force=True to create a new issue anyway."),
         )
 
     try:
@@ -159,9 +151,7 @@ def push_gap_to_jira(
         labels_raw = payload["labels"]
         extras_raw = payload["extra_fields"]
         labels: list[str] = list(labels_raw) if isinstance(labels_raw, list) else []
-        extras: dict[str, object] = (
-            dict(extras_raw) if isinstance(extras_raw, dict) else {}
-        )
+        extras: dict[str, object] = dict(extras_raw) if isinstance(extras_raw, dict) else {}
         issue: JiraIssue = client.create_issue(
             summary=str(payload["summary"]),
             description=str(payload["description"]),
@@ -265,8 +255,7 @@ def sync_gap_from_jira(
         issue_url=issue.url,
         new_status=mapped,
         detail=(
-            f"Updated gap status: {current.value if current else '?'} -> "
-            f"{mapped.value} (Jira: {issue.status_name})"
+            f"Updated gap status: {current.value if current else '?'} -> {mapped.value} (Jira: {issue.status_name})"
         ),
     )
 
@@ -307,11 +296,7 @@ def push_open_gaps(
         if current_status not in (GapStatus.OPEN, GapStatus.IN_PROGRESS):
             continue
         if severity_filter is not None:
-            severity_str = (
-                gap.gap_severity.value
-                if hasattr(gap.gap_severity, "value")
-                else str(gap.gap_severity)
-            )
+            severity_str = gap.gap_severity.value if hasattr(gap.gap_severity, "value") else str(gap.gap_severity)
             if severity_str not in severity_filter:
                 continue
         if max_issues is not None and created >= max_issues:

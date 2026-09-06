@@ -85,14 +85,9 @@ class MetricsRegistry:
                 bug-prone implicit string comparison).
         """
         if outcome not in _VALID_OUTCOMES:
-            raise ValueError(
-                f"record_event: outcome must be one of "
-                f"{sorted(_VALID_OUTCOMES)}; got {outcome!r}"
-            )
+            raise ValueError(f"record_event: outcome must be one of {sorted(_VALID_OUTCOMES)}; got {outcome!r}")
         with self._lock:
-            self._event_counts[action] = (
-                self._event_counts.get(action, 0) + 1
-            )
+            self._event_counts[action] = self._event_counts.get(action, 0) + 1
             if outcome == "failure":
                 self._failure_count += 1
 
@@ -109,15 +104,8 @@ class MetricsRegistry:
         for action, count in sorted(snapshot.items()):
             # Escape per Prometheus spec — backslash, double-quote,
             # newline.
-            escaped = (
-                action.replace("\\", "\\\\")
-                .replace('"', '\\"')
-                .replace("\n", "\\n")
-            )
-            yield (
-                f'evidentia_audit_events_total{{action="{escaped}"}} '
-                f"{count}"
-            )
+            escaped = action.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
+            yield (f'evidentia_audit_events_total{{action="{escaped}"}} {count}')
 
     @property
     def failure_count(self) -> int:
@@ -170,36 +158,24 @@ def render_metrics(*, api_version: str, uptime_seconds: float) -> str:
     # version label per Prometheus app-info convention.
     lines.append("# HELP evidentia_app_info Evidentia API server info.")
     lines.append("# TYPE evidentia_app_info gauge")
-    escaped_ver = (
-        api_version.replace("\\", "\\\\")
-        .replace('"', '\\"')
-        .replace("\n", "\\n")
-    )
+    escaped_ver = api_version.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
     lines.append(f'evidentia_app_info{{version="{escaped_ver}"}} 1')
 
     # evidentia_uptime_seconds — process uptime gauge.
-    lines.append(
-        "# HELP evidentia_uptime_seconds Seconds since the API process started."
-    )
+    lines.append("# HELP evidentia_uptime_seconds Seconds since the API process started.")
     lines.append("# TYPE evidentia_uptime_seconds gauge")
     # Render with 6-decimal precision; Prometheus expects float text.
     lines.append(f"evidentia_uptime_seconds {uptime_seconds:.6f}")
 
     # evidentia_audit_events_total — per-action counter.
-    lines.append(
-        "# HELP evidentia_audit_events_total "
-        "Cumulative count of audit events per EventAction."
-    )
+    lines.append("# HELP evidentia_audit_events_total Cumulative count of audit events per EventAction.")
     lines.append("# TYPE evidentia_audit_events_total counter")
     event_lines = list(_iter_event_lines())
     lines.extend(event_lines)
 
     # evidentia_audit_events_failures_total — failure counter.
     failure_snapshot = _DEFAULT_REGISTRY.failure_count
-    lines.append(
-        "# HELP evidentia_audit_events_failures_total "
-        "Cumulative count of audit events with outcome=failure."
-    )
+    lines.append("# HELP evidentia_audit_events_failures_total Cumulative count of audit events with outcome=failure.")
     lines.append("# TYPE evidentia_audit_events_failures_total counter")
     lines.append(f"evidentia_audit_events_failures_total {failure_snapshot}")
 

@@ -89,9 +89,7 @@ def _load_stored_report(
         # F-V08-DAST-3 status normalization — with the structured
         # ``detail`` from ``evidentia_api.errors`` (2026-07-06
         # error-shape convergence).
-        raise api_error(
-            400, "invalid_id", str(exc), resource="gap_report"
-        ) from exc
+        raise api_error(400, "invalid_id", str(exc), resource="gap_report") from exc
     if report is None:
         raise api_error(
             404,
@@ -113,9 +111,7 @@ def create_stored_report_read_router(
     so request handling never consults ambient store selection.
     """
     if repository is None:
-        raise TypeError(
-            "create_stored_report_read_router requires a repository."
-        )
+        raise TypeError("create_stored_report_read_router requires a repository.")
 
     report_router = APIRouter()
 
@@ -131,9 +127,7 @@ def create_stored_report_read_router(
     return report_router
 
 
-def _materialize_inventory_content(
-    content: str, inventory_format: str
-) -> Path:
+def _materialize_inventory_content(content: str, inventory_format: str) -> Path:
     """Write inline inventory content to a temp file so ``load_inventory`` can parse it.
 
     The existing loader is path-based (auto-detects format by extension);
@@ -167,10 +161,7 @@ def _materialize_inventory_content(
     response_model=GapAnalysisReport,
     responses=error_responses(
         {
-            400: (
-                "Missing/invalid inventory input or a failed "
-                "inventory parse (``error: invalid_body``)."
-            ),
+            400: ("Missing/invalid inventory input or a failed inventory parse (``error: invalid_body``)."),
         }
     ),
 )
@@ -191,9 +182,7 @@ async def analyze(payload: GapAnalyzeRequest) -> GapAnalysisReport:
     tmp_path: Path | None = None
     try:
         if payload.inventory_content:
-            tmp_path = _materialize_inventory_content(
-                payload.inventory_content, payload.inventory_format
-            )
+            tmp_path = _materialize_inventory_content(payload.inventory_content, payload.inventory_format)
             inventory_source = tmp_path
         else:
             assert payload.inventory_path is not None
@@ -204,9 +193,7 @@ async def analyze(payload: GapAnalyzeRequest) -> GapAnalysisReport:
             # inventories from elsewhere should pass inventory_content
             # instead of inventory_path.
             try:
-                inventory_source = validate_within(
-                    Path(payload.inventory_path), Path.cwd()
-                )
+                inventory_source = validate_within(Path(payload.inventory_path), Path.cwd())
             except PathTraversalError as exc:
                 raise api_error(400, "invalid_body", str(exc)) from exc
 
@@ -244,8 +231,7 @@ def _safe_filename_stem(organization: str) -> str:
     landing in the Content-Disposition filename.
     """
     cleaned = "".join(
-        ch if (ch.isascii() and (ch.isalnum() or ch in "-_")) else "-"
-        for ch in organization.strip()
+        ch if (ch.isascii() and (ch.isalnum() or ch in "-_")) else "-" for ch in organization.strip()
     ).strip("-")
     # Collapse runs of dashes for readability.
     while "--" in cleaned:
@@ -285,10 +271,7 @@ async def export(payload: GapExportRequest) -> Response:
         raise api_error(
             400,
             "unsupported_format",
-            (
-                f"Unsupported format {fmt!r}. "
-                f"Expected one of: {', '.join(GAP_EXPORT_FORMATS)}."
-            ),
+            (f"Unsupported format {fmt!r}. Expected one of: {', '.join(GAP_EXPORT_FORMATS)}."),
             format=fmt,
             supported=list(GAP_EXPORT_FORMATS),
         )
@@ -308,9 +291,7 @@ async def export(payload: GapExportRequest) -> Response:
         try:
             loaded = load_report_by_key(payload.report_key)
         except (InvalidReportKeyError, PathTraversalError) as exc:
-            raise api_error(
-                400, "invalid_id", str(exc), resource="gap_report"
-            ) from exc
+            raise api_error(400, "invalid_id", str(exc), resource="gap_report") from exc
         if loaded is None:
             raise api_error(
                 404,
@@ -387,9 +368,7 @@ async def get_reports() -> dict[str, object]:
             entries.append(
                 {
                     "key": path.stem,
-                    "mtime_iso": datetime.fromtimestamp(
-                        path.stat().st_mtime, tz=UTC
-                    ).isoformat(),
+                    "mtime_iso": datetime.fromtimestamp(path.stat().st_mtime, tz=UTC).isoformat(),
                     "size_bytes": path.stat().st_size,
                     "organization": data.get("organization", "(unknown)"),
                     "frameworks_analyzed": data.get("frameworks_analyzed", []),
@@ -419,10 +398,7 @@ async def get_report(key: str) -> GapAnalysisReport:
     response_model=GapDiff,
     responses=error_responses(
         {
-            400: (
-                "Malformed ``base_key`` / ``head_key`` "
-                "(``error: invalid_id``)."
-            ),
+            400: ("Malformed ``base_key`` / ``head_key`` (``error: invalid_id``)."),
             404: "Base or head report not found (``error: not_found``).",
         }
     ),

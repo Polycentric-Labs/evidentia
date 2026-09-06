@@ -62,10 +62,7 @@ class EvalSample(EvidentiaModel):
     """One prompt's inputs (immutable; audit-trail-stable)."""
 
     prompt_id: str = Field(
-        description=(
-            "Caller-supplied identifier for the prompt. Should "
-            "be unique within an EvalResult."
-        ),
+        description=("Caller-supplied identifier for the prompt. Should be unique within an EvalResult."),
     )
     prompt: str = Field(
         description=(
@@ -96,10 +93,7 @@ class EvalResult(EvidentiaModel):
     """Top-level harness output covering all prompts in one run."""
 
     run_id: str = Field(
-        description=(
-            "ULID identifying this harness run. Threaded into "
-            "every audit event the run emits."
-        ),
+        description=("ULID identifying this harness run. Threaded into every audit event the run emits."),
     )
     started_at: datetime = Field(
         description="UTC timestamp when the harness started.",
@@ -108,32 +102,22 @@ class EvalResult(EvidentiaModel):
         description="UTC timestamp when the harness finished.",
     )
     evidentia_version: str = Field(
-        description=(
-            "Version of evidentia-core orchestrating the eval. "
-            "Pinned so an auditor can reproduce the run."
-        ),
+        description=("Version of evidentia-core orchestrating the eval. Pinned so an auditor can reproduce the run."),
     )
     sample_count_per_prompt: int = Field(
         ge=1,
-        description=(
-            "Number of generation calls per prompt for the "
-            "determinism check."
-        ),
+        description=("Number of generation calls per prompt for the determinism check."),
     )
     samples: list[EvalSample] = Field(
         description="The prompts under test.",
     )
     determinism_results: list[DeterminismResult] = Field(
-        description=(
-            "One :class:`DeterminismResult` per prompt, in the "
-            "same order as :attr:`samples`."
-        ),
+        description=("One :class:`DeterminismResult` per prompt, in the same order as :attr:`samples`."),
     )
     replay_results: list[ReplayResult] = Field(
         default_factory=list,
         description=(
-            "Optional :class:`ReplayResult` per prompt. Empty "
-            "when the harness was run without --check-replay."
+            "Optional :class:`ReplayResult` per prompt. Empty when the harness was run without --check-replay."
         ),
     )
     faithfulness_results: list[PromptFaithfulnessResult] = Field(
@@ -222,10 +206,7 @@ class DFAHarness:
         sample_count_per_prompt: int = 5,
     ) -> None:
         if sample_count_per_prompt < 1:
-            raise ValueError(
-                f"sample_count_per_prompt must be >= 1; got "
-                f"{sample_count_per_prompt}"
-            )
+            raise ValueError(f"sample_count_per_prompt must be >= 1; got {sample_count_per_prompt}")
         self._generator = generator
         self._sample_count = sample_count_per_prompt
 
@@ -269,10 +250,7 @@ class DFAHarness:
         _log.info(
             action=EventAction.AI_EVAL_STARTED,
             outcome=EventOutcome.UNKNOWN,
-            message=(
-                f"DFAH eval started — {len(samples)} prompt(s), "
-                f"{self._sample_count} sample(s) per prompt"
-            ),
+            message=(f"DFAH eval started — {len(samples)} prompt(s), {self._sample_count} sample(s) per prompt"),
             evidentia={
                 "run_id": run_id,
                 "sample_count_per_prompt": self._sample_count,
@@ -316,13 +294,9 @@ class DFAHarness:
                         clauses: list[str],
                         threshold: float,
                     ) -> object:
-                        return _semantic_fn(
-                            claim, clauses, threshold=threshold
-                        )
+                        return _semantic_fn(claim, clauses, threshold=threshold)
 
-                    resolved_score: Callable[..., object] = (
-                        _default_score
-                    )
+                    resolved_score: Callable[..., object] = _default_score
                 else:
                     # Default: stdlib Jaccard.
                     def _default_score_jaccard(
@@ -330,9 +304,7 @@ class DFAHarness:
                         clauses: list[str],
                         threshold: float,
                     ) -> object:
-                        return faithfulness_score(
-                            claim, clauses, threshold=threshold
-                        )
+                        return faithfulness_score(claim, clauses, threshold=threshold)
 
                     resolved_score = _default_score_jaccard
             else:
@@ -392,11 +364,7 @@ class DFAHarness:
                 # det_result.modal_hash. (Same modal-tied logic
                 # as check_replay above.)
                 modal_output = next(
-                    (
-                        o
-                        for o in outputs
-                        if hash_output(o) == det_result.modal_hash
-                    ),
+                    (o for o in outputs if hash_output(o) == det_result.modal_hash),
                     outputs[0],
                 )
                 claims = resolved_extract(modal_output)
@@ -439,11 +407,7 @@ class DFAHarness:
                 # from "we found a violation").
                 _log.info(
                     action=EventAction.AI_EVAL_FAITHFULNESS_CHECKED,
-                    outcome=(
-                        EventOutcome.SUCCESS
-                        if pfr.overall_faithful
-                        else EventOutcome.FAILURE
-                    ),
+                    outcome=(EventOutcome.SUCCESS if pfr.overall_faithful else EventOutcome.FAILURE),
                     message=(
                         f"Faithfulness check completed on prompt "
                         f"{sample.prompt_id!r}: "
@@ -480,9 +444,7 @@ class DFAHarness:
         all_pass = not violations and not replay_violations
         _log.info(
             action=EventAction.AI_EVAL_COMPLETED,
-            outcome=(
-                EventOutcome.SUCCESS if all_pass else EventOutcome.FAILURE
-            ),
+            outcome=(EventOutcome.SUCCESS if all_pass else EventOutcome.FAILURE),
             message=(
                 f"DFAH eval completed — overall determinism rate "
                 f"{result.overall_determinism_rate:.4f}; "
@@ -491,9 +453,7 @@ class DFAHarness:
             ),
             evidentia={
                 "run_id": run_id,
-                "overall_determinism_rate": (
-                    result.overall_determinism_rate
-                ),
+                "overall_determinism_rate": (result.overall_determinism_rate),
                 "determinism_violations": len(violations),
                 "replay_violations": len(replay_violations),
                 "prompt_count": len(samples),

@@ -71,10 +71,10 @@ result = faithfulness_score(
     threshold=0.3,
 )
 
-print(result.score)            # e.g., 0.4
-print(result.passed)           # True (score >= threshold)
-print(result.evidence_clauses) # ["AC-2 requires...", ...]  (top-3)
-print(result.method)           # "jaccard-stdlib"
+print(result.score)  # e.g., 0.4
+print(result.passed)  # True (score >= threshold)
+print(result.evidence_clauses)  # ["AC-2 requires...", ...]  (top-3)
+print(result.method)  # "jaccard-stdlib"
 ```
 
 The result is a Pydantic model — JSON-serializable + Sigstore-
@@ -143,9 +143,9 @@ result = faithfulness_score_semantic(
     ],
     threshold=0.7,  # higher than stdlib default (0.3)
 )
-print(result.score)            # e.g., 0.83
-print(result.passed)           # True
-print(result.method)           # "sentence-transformers"
+print(result.score)  # e.g., 0.83
+print(result.passed)  # True
+print(result.method)  # "sentence-transformers"
 ```
 
 Default model: `sentence-transformers/all-MiniLM-L6-v2` (~90 MB
@@ -180,10 +180,7 @@ Operators wire this into their own loop alongside
 from evidentia_eval import extract_claims, faithfulness_score
 
 claims = extract_claims(generated_text)
-results = [
-    faithfulness_score(claim, source_clauses, threshold=0.3)
-    for claim in claims
-]
+results = [faithfulness_score(claim, source_clauses, threshold=0.3) for claim in claims]
 # Per-claim faithfulness; operator-side aggregation
 ```
 

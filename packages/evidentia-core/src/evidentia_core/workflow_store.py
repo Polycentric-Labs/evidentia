@@ -36,15 +36,12 @@ class InvalidWorkflowIdError(ValueError):
 
 def _validate_id_shape(workflow_id: str) -> None:
     if not isinstance(workflow_id, str) or not workflow_id:
-        raise InvalidWorkflowIdError(
-            f"Invalid workflow ID: empty or non-string: {workflow_id!r}"
-        )
+        raise InvalidWorkflowIdError(f"Invalid workflow ID: empty or non-string: {workflow_id!r}")
     try:
         UUID(workflow_id)
     except (ValueError, AttributeError, TypeError) as e:
         raise InvalidWorkflowIdError(
-            f"Invalid workflow ID: not a UUID-shaped string: "
-            f"{workflow_id!r} ({type(e).__name__}: {e})"
+            f"Invalid workflow ID: not a UUID-shaped string: {workflow_id!r} ({type(e).__name__}: {e})"
         ) from e
 
 
@@ -60,9 +57,7 @@ def get_workflow_store_dir(override: Path | None = None) -> Path:
     return Path(user_data_dir("evidentia", appauthor=False)) / "workflow_store"
 
 
-def save_workflow(
-    workflow: Workflow, *, override: Path | None = None
-) -> Path:
+def save_workflow(workflow: Workflow, *, override: Path | None = None) -> Path:
     """Persist a workflow record. Atomic via os.replace."""
     _validate_id_shape(workflow.id)
     store_dir = get_workflow_store_dir(override)
@@ -75,9 +70,7 @@ def save_workflow(
     try:
         out_path = validate_within(candidate, store_dir)
     except PathTraversalError as e:
-        raise InvalidWorkflowIdError(
-            f"Invalid workflow ID: path-traversal violation: {workflow.id!r}"
-        ) from e
+        raise InvalidWorkflowIdError(f"Invalid workflow ID: path-traversal violation: {workflow.id!r}") from e
     tmp_path = store_dir / f"{workflow.id}.json.tmp"
     tmp_path.write_text(payload, encoding="utf-8")
     os.replace(tmp_path, out_path)
@@ -85,9 +78,7 @@ def save_workflow(
     return out_path
 
 
-def load_workflow_by_id(
-    workflow_id: str, *, override: Path | None = None
-) -> Workflow | None:
+def load_workflow_by_id(workflow_id: str, *, override: Path | None = None) -> Workflow | None:
     """Load a workflow by ID. Returns None for well-formed-unknown IDs."""
     _validate_id_shape(workflow_id)
     store_dir = get_workflow_store_dir(override)
@@ -95,17 +86,13 @@ def load_workflow_by_id(
     try:
         path = validate_within(candidate, store_dir)
     except PathTraversalError as e:
-        raise InvalidWorkflowIdError(
-            f"Invalid workflow ID: path-traversal violation: {workflow_id!r}"
-        ) from e
+        raise InvalidWorkflowIdError(f"Invalid workflow ID: path-traversal violation: {workflow_id!r}") from e
     if not path.exists():
         return None
     return Workflow.model_validate_json(path.read_text(encoding="utf-8"))
 
 
-def list_workflows(
-    *, override: Path | None = None
-) -> list[Workflow]:
+def list_workflows(*, override: Path | None = None) -> list[Workflow]:
     """List all workflows sorted by created_at DESC then id."""
     store_dir = get_workflow_store_dir(override)
     if not store_dir.exists():
@@ -115,11 +102,7 @@ def list_workflows(
         if path.name.endswith(".tmp"):
             continue
         try:
-            workflows.append(
-                Workflow.model_validate_json(
-                    path.read_text(encoding="utf-8")
-                )
-            )
+            workflows.append(Workflow.model_validate_json(path.read_text(encoding="utf-8")))
         except Exception as e:
             logger.warning("Skipping malformed workflow file %s: %s", path, e)
             continue
@@ -128,9 +111,7 @@ def list_workflows(
     return workflows
 
 
-def delete_workflow(
-    workflow_id: str, *, override: Path | None = None
-) -> bool:
+def delete_workflow(workflow_id: str, *, override: Path | None = None) -> bool:
     """Delete a workflow by ID. Returns True if removed."""
     _validate_id_shape(workflow_id)
     store_dir = get_workflow_store_dir(override)
@@ -138,9 +119,7 @@ def delete_workflow(
     try:
         path = validate_within(candidate, store_dir)
     except PathTraversalError as e:
-        raise InvalidWorkflowIdError(
-            f"Invalid workflow ID: path-traversal violation: {workflow_id!r}"
-        ) from e
+        raise InvalidWorkflowIdError(f"Invalid workflow ID: path-traversal violation: {workflow_id!r}") from e
     if not path.exists():
         return False
     path.unlink()

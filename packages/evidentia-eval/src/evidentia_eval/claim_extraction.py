@@ -158,7 +158,7 @@ def extract_claims(
         # Strip common bullet/numbering prefixes.
         for prefix in ("- ", "* ", "• "):
             if line.startswith(prefix):
-                line = line[len(prefix):].strip()
+                line = line[len(prefix) :].strip()
                 break
         # Strip "N." or "N)" numbering at start.
         if len(line) >= 2 and line[0].isdigit():
@@ -168,7 +168,7 @@ def extract_claims(
                     sep_idx = i
                     break
             if sep_idx > 0:
-                rest = line[sep_idx + 1:].strip()
+                rest = line[sep_idx + 1 :].strip()
                 if rest:
                     line = rest
         if line:

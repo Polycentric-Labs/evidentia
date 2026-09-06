@@ -72,9 +72,7 @@ def _set_ci_env(
     """Simulate a GitHub Actions job with optional OIDC token vars."""
     monkeypatch.setenv("GITHUB_ACTIONS", "true")
     if token:
-        monkeypatch.setenv(
-            "ACTIONS_ID_TOKEN_REQUEST_TOKEN", "test-oidc-token"
-        )
+        monkeypatch.setenv("ACTIONS_ID_TOKEN_REQUEST_TOKEN", "test-oidc-token")
     if url:
         monkeypatch.setenv(
             "ACTIONS_ID_TOKEN_REQUEST_URL",
@@ -82,9 +80,7 @@ def _set_ci_env(
         )
 
 
-def _stub_sigstore(
-    monkeypatch: pytest.MonkeyPatch, available: bool
-) -> None:
+def _stub_sigstore(monkeypatch: pytest.MonkeyPatch, available: bool) -> None:
     """Patch sigstore importability without requiring the package."""
     monkeypatch.setattr(
         "evidentia_core.oscal.sigstore.sigstore_available",
@@ -207,9 +203,7 @@ class TestExplicitSign:
         assert _resolve_sign(True, Path("out.json")) is True
         assert _WARNING_FRAGMENT not in capsys.readouterr().err
 
-    def test_explicit_sign_outside_ci_wins(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_explicit_sign_outside_ci_wins(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """``--sign`` doesn't depend on the CI auto-detect at all."""
         _stub_sigstore(monkeypatch, available=False)
         assert _resolve_sign(True, Path("out.json")) is True
@@ -268,9 +262,7 @@ class TestStubSmokeGracefulDegrade:
         loaded = json.loads(out_path.read_text(encoding="utf-8"))
         assert "run_id" in loaded
         # No Sigstore bundle was produced — unsigned degrade.
-        assert not (
-            tmp_path / "result.json.sigstore.json"
-        ).exists()
+        assert not (tmp_path / "result.json.sigstore.json").exists()
         # The degrade warning surfaced (CliRunner mixes stderr
         # into .output on click < 8.2).
         assert _WARNING_FRAGMENT in result.output

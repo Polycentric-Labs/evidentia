@@ -66,12 +66,8 @@ from rich.table import Table
 
 app = typer.Typer(help="Governance commands (3LOD + Effective Challenge + KRI/KPI/KGI + workflows).")
 challenge_app = typer.Typer(help="Effective Challenge log commands.")
-metrics_app = typer.Typer(
-    help="KRI / KPI / KGI metric definitions + observations + reports."
-)
-workflow_app = typer.Typer(
-    help="Process-as-code governance workflows (change-approval, review cycles, etc.)."
-)
+metrics_app = typer.Typer(help="KRI / KPI / KGI metric definitions + observations + reports.")
+workflow_app = typer.Typer(help="Process-as-code governance workflows (change-approval, review cycles, etc.).")
 app.add_typer(challenge_app, name="challenge")
 app.add_typer(metrics_app, name="metrics")
 app.add_typer(workflow_app, name="workflow")
@@ -103,9 +99,7 @@ def _load_classifications(path: Path) -> list[Owner]:
         console.print(f"[red]Error:[/red] could not read {path}: {e}")
         raise typer.Exit(code=1) from e
     except yaml.YAMLError as e:
-        console.print(
-            f"[red]Error:[/red] {path} is not valid YAML: {e}"
-        )
+        console.print(f"[red]Error:[/red] {path} is not valid YAML: {e}")
         raise typer.Exit(code=1) from e
 
     if raw is None:
@@ -113,27 +107,18 @@ def _load_classifications(path: Path) -> list[Owner]:
         # the empty-case narrative.
         return []
     if not isinstance(raw, list):
-        console.print(
-            f"[red]Error:[/red] {path} must be a YAML list of "
-            "owner records (got "
-            f"{type(raw).__name__})."
-        )
+        console.print(f"[red]Error:[/red] {path} must be a YAML list of owner records (got {type(raw).__name__}).")
         raise typer.Exit(code=1)
 
     owners: list[Owner] = []
     for i, entry in enumerate(raw):
         if not isinstance(entry, dict):
-            console.print(
-                f"[red]Error:[/red] entry {i} in {path} is not a mapping; "
-                f"got {type(entry).__name__}."
-            )
+            console.print(f"[red]Error:[/red] entry {i} in {path} is not a mapping; got {type(entry).__name__}.")
             raise typer.Exit(code=1)
         try:
             owners.append(Owner.model_validate(entry))
         except ValidationError as e:
-            console.print(
-                f"[red]Error:[/red] entry {i} in {path} failed validation: {e}"
-            )
+            console.print(f"[red]Error:[/red] entry {i} in {path} failed validation: {e}")
             raise typer.Exit(code=1) from e
     return owners
 
@@ -188,9 +173,7 @@ def lines_report(
         return
 
     if output.exists() and not force:
-        console.print(
-            f"[red]Error:[/red] {output} already exists; pass --force to overwrite."
-        )
+        console.print(f"[red]Error:[/red] {output} already exists; pass --force to overwrite.")
         raise typer.Exit(code=1)
 
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -213,53 +196,60 @@ def _parse_date_or_exit(value: str | None, flag: str) -> date | None:
     try:
         return date.fromisoformat(value)
     except ValueError as e:
-        console.print(
-            f"[red]Error:[/red] {flag} must be ISO-8601 date "
-            f"(YYYY-MM-DD); got {value!r}: {e}"
-        )
+        console.print(f"[red]Error:[/red] {flag} must be ISO-8601 date (YYYY-MM-DD); got {value!r}: {e}")
         raise typer.Exit(code=1) from e
 
 
 @challenge_app.command("add")
 def challenge_add(
     subject_model_id: str = typer.Option(
-        ..., "--subject-model-id",
+        ...,
+        "--subject-model-id",
         help="ModelInventory.id being challenged.",
     ),
     challenger_email: str = typer.Option(
-        ..., "--challenger-email",
+        ...,
+        "--challenger-email",
         help="Email of the independent challenger.",
     ),
     challenger_role: str = typer.Option(
-        ..., "--challenger-role",
+        ...,
+        "--challenger-role",
         help="Challenger's role label (e.g., 'MRM Director').",
     ),
     challenge_date_str: str = typer.Option(
-        ..., "--challenge-date",
+        ...,
+        "--challenge-date",
         help="ISO-8601 date the challenge event occurred (YYYY-MM-DD).",
     ),
     challenge_topic: str = typer.Option(
-        ..., "--challenge-topic",
+        ...,
+        "--challenge-topic",
         help="Short topic label.",
     ),
     challenge_substance: str = typer.Option(
-        ..., "--challenge-substance",
+        ...,
+        "--challenge-substance",
         help="Full substantive challenge text.",
     ),
     response: str | None = typer.Option(
-        None, "--response",
+        None,
+        "--response",
         help="Model owner's documented response (optional; can be added later via edit).",
     ),
     outcome: str = typer.Option(
-        "pending", "--outcome",
+        "pending",
+        "--outcome",
         help="Outcome: accepted / rejected / modify / pending.",
     ),
     outcome_rationale: str | None = typer.Option(
-        None, "--outcome-rationale",
+        None,
+        "--outcome-rationale",
         help="Rationale for the outcome decision.",
     ),
     resolved_at_str: str | None = typer.Option(
-        None, "--resolved-at",
+        None,
+        "--resolved-at",
         help="ISO-8601 date the challenge was resolved.",
     ),
 ) -> None:
@@ -274,10 +264,7 @@ def challenge_add(
     try:
         outcome_enum = ChallengeOutcome(outcome)
     except ValueError as e:
-        console.print(
-            f"[red]Error:[/red] Unknown outcome {outcome!r}; valid: "
-            f"{[o.value for o in ChallengeOutcome]}"
-        )
+        console.print(f"[red]Error:[/red] Unknown outcome {outcome!r}; valid: {[o.value for o in ChallengeOutcome]}")
         raise typer.Exit(code=1) from e
 
     try:
@@ -298,32 +285,31 @@ def challenge_add(
         raise typer.Exit(code=1) from e
 
     save_challenge(challenge)
-    console.print(
-        f"[green]Logged[/green] challenge "
-        f"[bold]{challenge.challenge_topic}[/bold] (id: {challenge.id})"
-    )
+    console.print(f"[green]Logged[/green] challenge [bold]{challenge.challenge_topic}[/bold] (id: {challenge.id})")
 
 
 @challenge_app.command("list")
 def challenge_list(
     subject_model_id: str | None = typer.Option(
-        None, "--subject-model-id",
+        None,
+        "--subject-model-id",
         help="Filter by subject ModelInventory.id.",
     ),
     outcome: str | None = typer.Option(
-        None, "--outcome",
+        None,
+        "--outcome",
         help="Filter by outcome: accepted / rejected / modify / pending.",
     ),
     json_out: bool = typer.Option(
-        False, "--json",
+        False,
+        "--json",
         help="Emit machine-readable JSON array instead of a table.",
     ),
 ) -> None:
     """List challenge records sorted newest-first by challenge_date."""
     if outcome and outcome not in {o.value for o in ChallengeOutcome}:
         console.print(
-            f"[red]Error:[/red] Unknown outcome {outcome!r}; valid: "
-            f"{sorted(o.value for o in ChallengeOutcome)}"
+            f"[red]Error:[/red] Unknown outcome {outcome!r}; valid: {sorted(o.value for o in ChallengeOutcome)}"
         )
         raise typer.Exit(code=1)
 
@@ -334,19 +320,12 @@ def challenge_list(
         challenges = [c for c in challenges if c.outcome == outcome]
 
     if json_out:
-        sys.stdout.write(
-            json.dumps(
-                [c.model_dump(mode="json") for c in challenges], indent=2
-            )
-        )
+        sys.stdout.write(json.dumps([c.model_dump(mode="json") for c in challenges], indent=2))
         sys.stdout.write("\n")
         return
 
     if not challenges:
-        console.print(
-            f"[dim]No challenges in the log "
-            f"({len(list_challenges())} total without filter).[/dim]"
-        )
+        console.print(f"[dim]No challenges in the log ({len(list_challenges())} total without filter).[/dim]")
         return
 
     table = Table(title=f"Effective Challenge log ({len(challenges)} matching)")
@@ -372,7 +351,8 @@ def challenge_list(
 def challenge_show(
     challenge_id: str = typer.Argument(..., help="Challenge ID (UUID)."),
     json_out: bool = typer.Option(
-        False, "--json",
+        False,
+        "--json",
         help="Emit machine-readable JSON instead of formatted text.",
     ),
 ) -> None:
@@ -383,9 +363,7 @@ def challenge_show(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e
     if challenge is None:
-        console.print(
-            f"[red]Error:[/red] No challenge with ID {challenge_id!r} found."
-        )
+        console.print(f"[red]Error:[/red] No challenge with ID {challenge_id!r} found.")
         raise typer.Exit(code=1)
 
     if json_out:
@@ -395,9 +373,7 @@ def challenge_show(
 
     console.print(f"[bold]{challenge.challenge_topic}[/bold]  [dim]({challenge.id})[/dim]")
     console.print(f"  Subject model:      {challenge.subject_model_id}")
-    console.print(
-        f"  Challenger:         {challenge.challenger_email} ({challenge.challenger_role})"
-    )
+    console.print(f"  Challenger:         {challenge.challenger_email} ({challenge.challenger_role})")
     console.print(f"  Challenge date:     {challenge.challenge_date}")
     console.print(f"  Outcome:            [cyan]{challenge.outcome}[/cyan]")
     if challenge.resolved_at:
@@ -420,35 +396,43 @@ def challenge_show(
 def metrics_add(
     name: str = typer.Option(..., "--name", "-n", help="Metric name."),
     description: str = typer.Option(
-        ..., "--description",
+        ...,
+        "--description",
         help="What this metric measures + why it's tracked.",
     ),
     kind: str = typer.Option(
-        ..., "--kind",
+        ...,
+        "--kind",
         help="kri / kpi / kgi.",
     ),
     direction: str = typer.Option(
-        ..., "--direction",
+        ...,
+        "--direction",
         help="higher_is_worse / higher_is_better.",
     ),
     unit: str = typer.Option(
-        ..., "--unit",
+        ...,
+        "--unit",
         help="Measurement unit (e.g., 'per 1000 logins', 'days', '%').",
     ),
     owner_email: str | None = typer.Option(
-        None, "--owner-email",
+        None,
+        "--owner-email",
         help="Email of the metric owner (optional).",
     ),
     warning_threshold: float | None = typer.Option(
-        None, "--warning-threshold",
+        None,
+        "--warning-threshold",
         help="Watch threshold; semantics drive direction.",
     ),
     critical_threshold: float | None = typer.Option(
-        None, "--critical-threshold",
+        None,
+        "--critical-threshold",
         help="Breach threshold; semantics drive direction.",
     ),
     notes: str | None = typer.Option(
-        None, "--notes",
+        None,
+        "--notes",
         help="Optional free-text notes.",
     ),
 ) -> None:
@@ -456,18 +440,12 @@ def metrics_add(
     try:
         kind_enum = MetricKind(kind)
     except ValueError as e:
-        console.print(
-            f"[red]Error:[/red] Unknown kind {kind!r}; valid: "
-            f"{[k.value for k in MetricKind]}"
-        )
+        console.print(f"[red]Error:[/red] Unknown kind {kind!r}; valid: {[k.value for k in MetricKind]}")
         raise typer.Exit(code=1) from e
     try:
         direction_enum = MetricDirection(direction)
     except ValueError as e:
-        console.print(
-            f"[red]Error:[/red] Unknown direction {direction!r}; valid: "
-            f"{[d.value for d in MetricDirection]}"
-        )
+        console.print(f"[red]Error:[/red] Unknown direction {direction!r}; valid: {[d.value for d in MetricDirection]}")
         raise typer.Exit(code=1) from e
 
     try:
@@ -487,10 +465,7 @@ def metrics_add(
         raise typer.Exit(code=1) from e
 
     save_metric(metric)
-    console.print(
-        f"[green]Added[/green] metric "
-        f"[bold]{metric.name}[/bold] (id: {metric.id})"
-    )
+    console.print(f"[green]Added[/green] metric [bold]{metric.name}[/bold] (id: {metric.id})")
 
 
 @metrics_app.command("observe")
@@ -498,11 +473,13 @@ def metrics_observe(
     metric_id: str = typer.Argument(..., help="Metric ID (UUID)."),
     value: float = typer.Option(..., "--value", help="Observation value."),
     observed_at: str = typer.Option(
-        ..., "--observed-at",
+        ...,
+        "--observed-at",
         help="ISO-8601 date (YYYY-MM-DD) the observation was recorded.",
     ),
     note: str | None = typer.Option(
-        None, "--note",
+        None,
+        "--note",
         help="Optional contextual note.",
     ),
 ) -> None:
@@ -513,9 +490,7 @@ def metrics_observe(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e
     if metric is None:
-        console.print(
-            f"[red]Error:[/red] No metric with ID {metric_id!r} found."
-        )
+        console.print(f"[red]Error:[/red] No metric with ID {metric_id!r} found.")
         raise typer.Exit(code=1)
     obs_date = _parse_date_or_exit(observed_at, "--observed-at")
     if obs_date is None:
@@ -525,9 +500,7 @@ def metrics_observe(
         value=value,
         note=note,
     )
-    metric = metric.model_copy(
-        update={"observations": [*metric.observations, new_obs]}
-    )
+    metric = metric.model_copy(update={"observations": [*metric.observations, new_obs]})
     save_metric(metric)
     console.print(
         f"[green]Recorded[/green] observation {value} {metric.unit} on "
@@ -538,30 +511,19 @@ def metrics_observe(
 
 @metrics_app.command("list")
 def metrics_list(
-    kind: str | None = typer.Option(
-        None, "--kind", help="Filter by kri / kpi / kgi."
-    ),
-    json_out: bool = typer.Option(
-        False, "--json", help="Emit machine-readable JSON array."
-    ),
+    kind: str | None = typer.Option(None, "--kind", help="Filter by kri / kpi / kgi."),
+    json_out: bool = typer.Option(False, "--json", help="Emit machine-readable JSON array."),
 ) -> None:
     """List metrics (filterable by kind)."""
     if kind and kind not in {k.value for k in MetricKind}:
-        console.print(
-            f"[red]Error:[/red] Unknown kind {kind!r}; valid: "
-            f"{sorted(k.value for k in MetricKind)}"
-        )
+        console.print(f"[red]Error:[/red] Unknown kind {kind!r}; valid: {sorted(k.value for k in MetricKind)}")
         raise typer.Exit(code=1)
     metrics = list_metrics()
     if kind:
         metrics = [m for m in metrics if m.kind == kind]
 
     if json_out:
-        sys.stdout.write(
-            json.dumps(
-                [m.model_dump(mode="json") for m in metrics], indent=2
-            )
-        )
+        sys.stdout.write(json.dumps([m.model_dump(mode="json") for m in metrics], indent=2))
         sys.stdout.write("\n")
         return
 
@@ -578,11 +540,7 @@ def metrics_list(
     table.add_column("Status", style="cyan")
     table.add_column("Latest")
     for m in metrics:
-        latest = (
-            f"{max(m.observations, key=lambda o: o.observed_at).value}"
-            if m.observations
-            else "—"
-        )
+        latest = f"{max(m.observations, key=lambda o: o.observed_at).value}" if m.observations else "—"
         table.add_row(
             m.id[:8],
             m.name,
@@ -598,9 +556,7 @@ def metrics_list(
 @metrics_app.command("show")
 def metrics_show(
     metric_id: str = typer.Argument(..., help="Metric ID (UUID)."),
-    json_out: bool = typer.Option(
-        False, "--json", help="Emit machine-readable JSON."
-    ),
+    json_out: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
 ) -> None:
     """Show a single metric with full observation history."""
     try:
@@ -609,9 +565,7 @@ def metrics_show(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e
     if metric is None:
-        console.print(
-            f"[red]Error:[/red] No metric with ID {metric_id!r} found."
-        )
+        console.print(f"[red]Error:[/red] No metric with ID {metric_id!r} found.")
         raise typer.Exit(code=1)
 
     if json_out:
@@ -624,36 +578,24 @@ def metrics_show(
     console.print(f"  Direction:          {metric.direction}")
     console.print(f"  Unit:               {metric.unit}")
     console.print(f"  Owner:              {metric.owner_email or '(none)'}")
-    console.print(
-        f"  Warning threshold:  {metric.warning_threshold or '(none)'}"
-    )
-    console.print(
-        f"  Critical threshold: {metric.critical_threshold or '(none)'}"
-    )
+    console.print(f"  Warning threshold:  {metric.warning_threshold or '(none)'}")
+    console.print(f"  Critical threshold: {metric.critical_threshold or '(none)'}")
     console.print(f"  Status:             [cyan]{evaluate_metric(metric).value}[/cyan]")
     console.print(f"  Description:        {metric.description}")
     if metric.notes:
         console.print(f"  Notes:              {metric.notes}")
     if metric.observations:
         console.print(f"  Observations ({len(metric.observations)}):")
-        for o in sorted(
-            metric.observations, key=lambda x: x.observed_at
-        ):
+        for o in sorted(metric.observations, key=lambda x: x.observed_at):
             note = f" — {o.note}" if o.note else ""
-            console.print(
-                f"    - {o.observed_at}: {o.value} {metric.unit}{note}"
-            )
-    console.print(
-        f"  [dim]Created: {metric.created_at}  Updated: {metric.updated_at}[/dim]"
-    )
+            console.print(f"    - {o.observed_at}: {o.value} {metric.unit}{note}")
+    console.print(f"  [dim]Created: {metric.created_at}  Updated: {metric.updated_at}[/dim]")
 
 
 @metrics_app.command("delete")
 def metrics_delete(
     metric_id: str = typer.Argument(..., help="Metric ID (UUID)."),
-    yes: bool = typer.Option(
-        False, "--yes", help="Skip confirmation prompt."
-    ),
+    yes: bool = typer.Option(False, "--yes", help="Skip confirmation prompt."),
 ) -> None:
     """Delete a metric by ID."""
     try:
@@ -662,9 +604,7 @@ def metrics_delete(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e
     if metric is None:
-        console.print(
-            f"[red]Error:[/red] No metric with ID {metric_id!r} found."
-        )
+        console.print(f"[red]Error:[/red] No metric with ID {metric_id!r} found.")
         raise typer.Exit(code=1)
     if not yes:
         confirmed = typer.confirm(
@@ -676,19 +616,20 @@ def metrics_delete(
             raise typer.Exit(code=0)
     deleted = delete_metric(metric_id)
     if deleted:
-        console.print(
-            f"[green]Deleted[/green] metric [bold]{metric.name}[/bold]."
-        )
+        console.print(f"[green]Deleted[/green] metric [bold]{metric.name}[/bold].")
 
 
 @metrics_app.command("report")
 def metrics_report(
     output: Path | None = typer.Option(
-        None, "--output", "-o",
+        None,
+        "--output",
+        "-o",
         help="Output path. If omitted, prints to stdout.",
     ),
     force: bool = typer.Option(
-        False, "--force",
+        False,
+        "--force",
         help="Overwrite the output path if it exists.",
     ),
 ) -> None:
@@ -703,17 +644,12 @@ def metrics_report(
         return
 
     if output.exists() and not force:
-        console.print(
-            f"[red]Error:[/red] {output} already exists; pass --force."
-        )
+        console.print(f"[red]Error:[/red] {output} already exists; pass --force.")
         raise typer.Exit(code=1)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(rendered, encoding="utf-8")
-    console.print(
-        f"[green]Wrote[/green] metrics report to [bold]{output}[/bold] "
-        f"({len(metrics)} metric(s))."
-    )
+    console.print(f"[green]Wrote[/green] metrics report to [bold]{output}[/bold] ({len(metrics)} metric(s)).")
 
 
 # ── Process-as-code workflows (v0.7.11 P1.5 G5) ────────────────────
@@ -754,10 +690,7 @@ def _load_workflow_template(path: Path) -> Workflow:
         raise typer.Exit(code=1) from e
 
     if not isinstance(raw, dict):
-        console.print(
-            f"[red]Error:[/red] {path} must be a YAML mapping; got "
-            f"{type(raw).__name__}."
-        )
+        console.print(f"[red]Error:[/red] {path} must be a YAML mapping; got {type(raw).__name__}.")
         raise typer.Exit(code=1)
 
     try:
@@ -769,9 +702,7 @@ def _load_workflow_template(path: Path) -> Workflow:
     # Auto-promote the first step from PENDING → IN_PROGRESS so the
     # workflow is "active" immediately after run.
     if wf.steps and wf.steps[0].status == WorkflowStepStatus.PENDING.value:
-        first = wf.steps[0].model_copy(
-            update={"status": WorkflowStepStatus.IN_PROGRESS.value}
-        )
+        first = wf.steps[0].model_copy(update={"status": WorkflowStepStatus.IN_PROGRESS.value})
         new_steps = [first, *wf.steps[1:]]
         wf = wf.model_copy(update={"steps": new_steps})
     # Re-evaluate workflow status from the (now in-progress) step list
@@ -782,7 +713,9 @@ def _load_workflow_template(path: Path) -> Workflow:
 @workflow_app.command("run")
 def workflow_run(
     template: Path = typer.Option(
-        ..., "--template", "-t",
+        ...,
+        "--template",
+        "-t",
         help="Path to a YAML workflow-template file.",
     ),
 ) -> None:
@@ -799,19 +732,24 @@ def workflow_run(
 def workflow_advance(
     workflow_id: str = typer.Argument(..., help="Workflow ID (UUID)."),
     step: int = typer.Option(
-        ..., "--step",
+        ...,
+        "--step",
         help="Step index (0-based) to transition.",
     ),
     new_status: str = typer.Option(
-        ..., "--new-status",
+        ...,
+        "--new-status",
         help="approved / rejected / skipped / in_progress.",
     ),
     actor: str = typer.Option(
-        ..., "--actor",
+        ...,
+        "--actor",
         help="Actor identity (typically email).",
     ),
     note: str | None = typer.Option(
-        None, "--note", help="Optional rationale / approval note.",
+        None,
+        "--note",
+        help="Optional rationale / approval note.",
     ),
 ) -> None:
     """Transition a workflow step to a new status."""
@@ -821,16 +759,13 @@ def workflow_advance(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e
     if wf is None:
-        console.print(
-            f"[red]Error:[/red] No workflow with ID {workflow_id!r} found."
-        )
+        console.print(f"[red]Error:[/red] No workflow with ID {workflow_id!r} found.")
         raise typer.Exit(code=1)
     try:
         status_enum = WorkflowStepStatus(new_status)
     except ValueError as e:
         console.print(
-            f"[red]Error:[/red] Unknown new-status {new_status!r}; "
-            f"valid: {[s.value for s in WorkflowStepStatus]}"
+            f"[red]Error:[/red] Unknown new-status {new_status!r}; valid: {[s.value for s in WorkflowStepStatus]}"
         )
         raise typer.Exit(code=1) from e
     try:
@@ -856,7 +791,8 @@ def workflow_advance(
 def workflow_status(
     workflow_id: str = typer.Argument(..., help="Workflow ID (UUID)."),
     json_out: bool = typer.Option(
-        False, "--json",
+        False,
+        "--json",
         help="Emit machine-readable JSON instead of formatted text.",
     ),
 ) -> None:
@@ -867,9 +803,7 @@ def workflow_status(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e
     if wf is None:
-        console.print(
-            f"[red]Error:[/red] No workflow with ID {workflow_id!r} found."
-        )
+        console.print(f"[red]Error:[/red] No workflow with ID {workflow_id!r} found.")
         raise typer.Exit(code=1)
 
     if json_out:
@@ -894,18 +828,12 @@ def workflow_status(
 
 @workflow_app.command("list")
 def workflow_list(
-    json_out: bool = typer.Option(
-        False, "--json", help="Emit machine-readable JSON array."
-    ),
+    json_out: bool = typer.Option(False, "--json", help="Emit machine-readable JSON array."),
 ) -> None:
     """List all workflows newest-first."""
     workflows = list_workflows()
     if json_out:
-        sys.stdout.write(
-            json.dumps(
-                [w.model_dump(mode="json") for w in workflows], indent=2
-            )
-        )
+        sys.stdout.write(json.dumps([w.model_dump(mode="json") for w in workflows], indent=2))
         sys.stdout.write("\n")
         return
 
@@ -936,11 +864,14 @@ def workflow_list(
 def workflow_log(
     workflow_id: str = typer.Argument(..., help="Workflow ID (UUID)."),
     output: Path | None = typer.Option(
-        None, "--output", "-o",
+        None,
+        "--output",
+        "-o",
         help="Output path. If omitted, prints to stdout.",
     ),
     force: bool = typer.Option(
-        False, "--force",
+        False,
+        "--force",
         help="Overwrite the output path if it exists.",
     ),
 ) -> None:
@@ -951,9 +882,7 @@ def workflow_log(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e
     if wf is None:
-        console.print(
-            f"[red]Error:[/red] No workflow with ID {workflow_id!r} found."
-        )
+        console.print(f"[red]Error:[/red] No workflow with ID {workflow_id!r} found.")
         raise typer.Exit(code=1)
     rendered = generate_workflow_log(wf)
 
@@ -964,22 +893,20 @@ def workflow_log(
         return
 
     if output.exists() and not force:
-        console.print(
-            f"[red]Error:[/red] {output} already exists; pass --force."
-        )
+        console.print(f"[red]Error:[/red] {output} already exists; pass --force.")
         raise typer.Exit(code=1)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(rendered, encoding="utf-8")
-    console.print(
-        f"[green]Wrote[/green] workflow log to [bold]{output}[/bold]."
-    )
+    console.print(f"[green]Wrote[/green] workflow log to [bold]{output}[/bold].")
 
 
 @workflow_app.command("delete")
 def workflow_delete(
     workflow_id: str = typer.Argument(..., help="Workflow ID (UUID)."),
     yes: bool = typer.Option(
-        False, "--yes", help="Skip confirmation prompt.",
+        False,
+        "--yes",
+        help="Skip confirmation prompt.",
     ),
 ) -> None:
     """Delete a workflow record by ID."""
@@ -989,9 +916,7 @@ def workflow_delete(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e
     if wf is None:
-        console.print(
-            f"[red]Error:[/red] No workflow with ID {workflow_id!r} found."
-        )
+        console.print(f"[red]Error:[/red] No workflow with ID {workflow_id!r} found.")
         raise typer.Exit(code=1)
     if not yes:
         confirmed = typer.confirm(
@@ -1003,5 +928,3 @@ def workflow_delete(
             raise typer.Exit(code=0)
     delete_workflow(workflow_id)
     console.print(f"[green]Deleted[/green] workflow [bold]{wf.name}[/bold].")
-
-

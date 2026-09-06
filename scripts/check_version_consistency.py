@@ -74,9 +74,7 @@ BUMP_VERSION_PATH = SCRIPTS_DIR / "bump_version.py"
 # dependency versions (``0.1.x`` .. ``0.6.x``) does NOT inflate the gate;
 # in-range coincidental dep versions live in ``frozen`` trees (lockfiles,
 # src docstrings) anyway.
-PROJECT_VERSION_RE = re.compile(
-    r"(?<![\w.])v?0\.(?:[7-9]|[1-9][0-9])\.\d+(?:\.\d+)?(?![\w])"
-)
+PROJECT_VERSION_RE = re.compile(r"(?<![\w.])v?0\.(?:[7-9]|[1-9][0-9])\.\d+(?:\.\d+)?(?![\w])")
 
 # COVERAGE is hard-asserted only for kinds whose literal is ALWAYS present
 # at the current version. The others are advisory:
@@ -116,9 +114,7 @@ def _strip_ts_comments(text: str) -> str:
 
 def _load_bump_module() -> Any:
     """Import scripts/bump_version.py as a module (no __init__.py)."""
-    spec = importlib.util.spec_from_file_location(
-        "bump_version_for_consistency", BUMP_VERSION_PATH
-    )
+    spec = importlib.util.spec_from_file_location("bump_version_for_consistency", BUMP_VERSION_PATH)
     if spec is None or spec.loader is None:  # pragma: no cover - import guard
         sys.exit("Cannot import scripts/bump_version.py")
     module = importlib.util.module_from_spec(spec)
@@ -179,9 +175,7 @@ def check_coverage(bump: Any, manifest: dict[str, list[dict[str, str]]], current
     return failures
 
 
-def check_never_skip(
-    bump: Any, manifest: dict[str, list[dict[str, str]]]
-) -> list[str]:
+def check_never_skip(bump: Any, manifest: dict[str, list[dict[str, str]]]) -> list[str]:
     """Hard-fail any git-tracked file with a project-version literal that is
     in NEITHER tracked NOR frozen.
 
@@ -214,9 +208,7 @@ def check_never_skip(
     return failures
 
 
-def check_anchors(
-    bump: Any, manifest: dict[str, list[dict[str, str]]], current: str
-) -> list[str]:
+def check_anchors(bump: Any, manifest: dict[str, list[dict[str, str]]], current: str) -> list[str]:
     """Assert every anchored line holds EXACTLY ONE current-version literal.
 
     For each ``anchors`` entry, every line in ``path`` containing the literal
@@ -259,8 +251,7 @@ def check_anchors(
         matched_files = bump.expand_manifest_path(spec, all_tracked)
         if not matched_files:
             failures.append(
-                f"anchor path '{spec}' matched no git-tracked file — fix the "
-                f"path in scripts/version_tracked_files.yaml"
+                f"anchor path '{spec}' matched no git-tracked file — fix the path in scripts/version_tracked_files.yaml"
             )
             continue
         for p in matched_files:
@@ -407,19 +398,12 @@ def check_requires_python_in_sync(bump: Any) -> list[str]:
         return [f"cannot read/parse root pyproject.toml: {exc}"]
     root_requires_python = root_data.get("project", {}).get("requires-python")
     if not isinstance(root_requires_python, str) or not root_requires_python:
-        return [
-            "root pyproject.toml is missing a [project] requires-python string"
-        ]
+        return ["root pyproject.toml is missing a [project] requires-python string"]
 
     all_tracked = bump.tracked_files()
-    member_files = sorted(
-        bump.expand_manifest_path("packages/*/pyproject.toml", all_tracked)
-    )
+    member_files = sorted(bump.expand_manifest_path("packages/*/pyproject.toml", all_tracked))
     if not member_files:
-        failures.append(
-            "no packages/*/pyproject.toml files found — fix the glob or the "
-            "workspace layout"
-        )
+        failures.append("no packages/*/pyproject.toml files found — fix the glob or the workspace layout")
         return failures
 
     for p in member_files:
@@ -431,9 +415,7 @@ def check_requires_python_in_sync(bump: Any) -> list[str]:
             continue
         member_requires_python = data.get("project", {}).get("requires-python")
         if not isinstance(member_requires_python, str) or not member_requires_python:
-            failures.append(
-                f"{posix} is missing a [project] requires-python string"
-            )
+            failures.append(f"{posix} is missing a [project] requires-python string")
             continue
         if member_requires_python != root_requires_python:
             failures.append(
@@ -540,9 +522,7 @@ def check_sibling_pins_at_current(bump: Any, current: str) -> list[str]:
             continue
         project = data.get("project", {})
 
-        groups: list[tuple[str, Any]] = [
-            ("dependencies", project.get("dependencies") or [])
-        ]
+        groups: list[tuple[str, Any]] = [("dependencies", project.get("dependencies") or [])]
         for group_name, reqs in (project.get("optional-dependencies") or {}).items():
             groups.append((f"optional-dependencies.{group_name}", reqs))
 
@@ -568,9 +548,7 @@ def check_sibling_pins_at_current(bump: Any, current: str) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--json", action="store_true", help="emit a machine-readable JSON report"
-    )
+    parser.add_argument("--json", action="store_true", help="emit a machine-readable JSON report")
     args = parser.parse_args(argv)
 
     bump = _load_bump_module()
@@ -654,9 +632,7 @@ def main(argv: list[str] | None = None) -> int:
         for f in frontend_failures:
             print(f"  - {f}")
     else:
-        print(
-            "  frontend: PASS — no hardcoded project-version literal in the UI."
-        )
+        print("  frontend: PASS — no hardcoded project-version literal in the UI.")
 
     if requires_python_failures:
         print()
@@ -664,9 +640,7 @@ def main(argv: list[str] | None = None) -> int:
         for f in requires_python_failures:
             print(f"  - {f}")
     else:
-        print(
-            "  requires-python: PASS — root + all member packages agree."
-        )
+        print("  requires-python: PASS — root + all member packages agree.")
 
     if sibling_pin_failures:
         print()
@@ -674,16 +648,12 @@ def main(argv: list[str] | None = None) -> int:
         for f in sibling_pin_failures:
             print(f"  - {f}")
     else:
-        print(
-            "  sibling pins: PASS. Every intra-workspace pin's lower bound "
-            "is the current version."
-        )
+        print("  sibling pins: PASS. Every intra-workspace pin's lower bound is the current version.")
 
     print()
     if all_failures:
         print(
-            f"check_version_consistency: FAIL ({len(all_failures)} issue(s)). "
-            "See scripts/version_tracked_files.yaml."
+            f"check_version_consistency: FAIL ({len(all_failures)} issue(s)). See scripts/version_tracked_files.yaml."
         )
         return 1
     print("check_version_consistency: PASS.")

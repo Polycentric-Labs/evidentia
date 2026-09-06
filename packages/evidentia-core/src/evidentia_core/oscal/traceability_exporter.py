@@ -50,11 +50,7 @@ _NS_UUID = uuid.uuid5(uuid.NAMESPACE_URL, EVIDENTIA_NS)
 
 def _now_iso() -> str:
     """UTC timestamp in OSCAL ``last-modified`` form (``…Z``)."""
-    return (
-        datetime.now(UTC)
-        .isoformat(timespec="seconds")
-        .replace("+00:00", "Z")
-    )
+    return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 def _threat_key(framework: str, threat_id: str) -> str:
@@ -70,9 +66,7 @@ def _mapping_id(m: ControlThreatMapping) -> str:
     """Stable per-mapping identifier (caller-supplied or deterministically derived)."""
     if m.mapping_id:
         return m.mapping_id
-    seed = (
-        f"mapping/{m.control_id}/{m.threat_framework}/{m.threat_id}/{m.relationship}"
-    )
+    seed = f"mapping/{m.control_id}/{m.threat_framework}/{m.threat_id}/{m.relationship}"
     return f"urn:uuid:{uuid.uuid5(_NS_UUID, seed)}"
 
 
@@ -156,8 +150,7 @@ def _mapping_to_add(m: ControlThreatMapping, crosswalk_source: str) -> dict[str,
             {
                 "href": f"#{res_uuid}",
                 "rel": m.relationship,
-                "text": m.threat_name
-                or _threat_key(m.threat_framework, m.threat_id),
+                "text": m.threat_name or _threat_key(m.threat_framework, m.threat_id),
             }
         ],
     }
@@ -217,9 +210,7 @@ def traceability_matrix_to_oscal_profile(
             "imports": [
                 {
                     "href": matrix.catalog_href,
-                    "include-controls": [
-                        {"with-ids": [c.lower() for c in matrix.control_ids]}
-                    ],
+                    "include-controls": [{"with-ids": [c.lower() for c in matrix.control_ids]}],
                 }
             ],
             "merge": {"as-is": True},

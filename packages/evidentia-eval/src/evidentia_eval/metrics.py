@@ -38,28 +38,21 @@ class DeterminismResult(EvidentiaModel):
     )
     sample_count: int = Field(
         ge=1,
-        description=(
-            "Number of generation calls run for this prompt."
-        ),
+        description=("Number of generation calls run for this prompt."),
     )
     sample_hashes: list[str] = Field(
         description=(
-            "SHA-256 hex digests of each sample's normalized "
-            "output, in call order. Length equals sample_count."
+            "SHA-256 hex digests of each sample's normalized output, in call order. Length equals sample_count."
         ),
     )
     modal_hash: str = Field(
         description=(
-            "Hash of the modal output (most-frequent output). "
-            "When sample_count == 1 this is the only output."
+            "Hash of the modal output (most-frequent output). When sample_count == 1 this is the only output."
         ),
     )
     modal_count: int = Field(
         ge=1,
-        description=(
-            "Number of samples whose hash matches modal_hash. "
-            "Determinism rate = modal_count / sample_count."
-        ),
+        description=("Number of samples whose hash matches modal_hash. Determinism rate = modal_count / sample_count."),
     )
     distinct_outputs: int = Field(
         ge=1,
@@ -91,20 +84,13 @@ class ReplayResult(EvidentiaModel):
     """
 
     prompt_id: str = Field(
-        description=(
-            "Caller-supplied identifier for the prompt under "
-            "test."
-        ),
+        description=("Caller-supplied identifier for the prompt under test."),
     )
     original_hash: str = Field(
-        description=(
-            "Hash of the original (first-run) normalized output."
-        ),
+        description=("Hash of the original (first-run) normalized output."),
     )
     replay_hash: str = Field(
-        description=(
-            "Hash of the replay-run normalized output."
-        ),
+        description=("Hash of the replay-run normalized output."),
     )
 
     @property
@@ -129,9 +115,7 @@ def determinism_score(samples: list[str], prompt_id: str) -> DeterminismResult:
         ValueError: ``samples`` is empty.
     """
     if not samples:
-        raise ValueError(
-            "determinism_score requires at least one sample"
-        )
+        raise ValueError("determinism_score requires at least one sample")
     hashes = [hash_output(s) for s in samples]
     counter = Counter(hashes)
     modal_hash, modal_count = counter.most_common(1)[0]
@@ -145,9 +129,7 @@ def determinism_score(samples: list[str], prompt_id: str) -> DeterminismResult:
     )
 
 
-def replay_equivalent(
-    *, original: str, replay: str, prompt_id: str
-) -> ReplayResult:
+def replay_equivalent(*, original: str, replay: str, prompt_id: str) -> ReplayResult:
     """Build a :class:`ReplayResult` from two raw outputs.
 
     Args:

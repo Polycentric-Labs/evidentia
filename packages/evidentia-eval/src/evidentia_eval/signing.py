@@ -94,17 +94,13 @@ def sign_eval_result(
     """
     out = Path(output_path)
     if not out.parent.is_dir():
-        raise FileNotFoundError(
-            f"Output directory does not exist: {out.parent}"
-        )
+        raise FileNotFoundError(f"Output directory does not exist: {out.parent}")
 
     out.write_text(
         result.model_dump_json(indent=2),
         encoding="utf-8",
     )
-    resolved_bundle_path = (
-        Path(bundle_path) if bundle_path else default_bundle_path(out)
-    )
+    resolved_bundle_path = Path(bundle_path) if bundle_path else default_bundle_path(out)
     sign_file(
         out,
         bundle_path=resolved_bundle_path,
@@ -113,10 +109,7 @@ def sign_eval_result(
     _log.info(
         action=EventAction.AI_EVAL_OUTPUT_SIGNED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"Signed eval output {out.name} → "
-            f"{resolved_bundle_path.name}"
-        ),
+        message=(f"Signed eval output {out.name} → {resolved_bundle_path.name}"),
         evidentia={
             "run_id": result.run_id,
             "output_path": str(out),

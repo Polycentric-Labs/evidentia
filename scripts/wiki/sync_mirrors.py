@@ -274,16 +274,9 @@ def _diff_summary(expected: str, actual: str, name: str) -> str:
     # mismatch is reported separately below.
     for i, (exp, act) in enumerate(zip(exp_lines, act_lines, strict=False)):
         if exp != act:
-            return (
-                f"  {name}: first diff at line {i + 1}\n"
-                f"    committed:   {exp!r}\n"
-                f"    regenerated: {act!r}"
-            )
+            return f"  {name}: first diff at line {i + 1}\n    committed:   {exp!r}\n    regenerated: {act!r}"
     if len(exp_lines) != len(act_lines):
-        return (
-            f"  {name}: line-count differs "
-            f"(committed={len(exp_lines)}, regenerated={len(act_lines)})"
-        )
+        return f"  {name}: line-count differs (committed={len(exp_lines)}, regenerated={len(act_lines)})"
     return f"  {name}: content differs only in trailing bytes / EOL"
 
 
@@ -315,8 +308,7 @@ def main(argv: list[str] | None = None) -> int:
         drift = compare(rendered)
         if drift:
             print(
-                "DRIFT: committed wiki mirrors differ from their canonical "
-                "sources:",
+                "DRIFT: committed wiki mirrors differ from their canonical sources:",
                 file=sys.stderr,
             )
             for line in drift:

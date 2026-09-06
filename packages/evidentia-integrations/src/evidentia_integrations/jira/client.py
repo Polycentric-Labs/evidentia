@@ -101,9 +101,7 @@ class JiraClient:
             ``httpx.MockTransport`` so they don't make network calls.
         """
         self._config = config
-        basic = base64.b64encode(
-            f"{config.email}:{config.api_token}".encode()
-        ).decode("ascii")
+        basic = base64.b64encode(f"{config.email}:{config.api_token}".encode()).decode("ascii")
         self._http = http or httpx.Client(
             base_url=config.base_url,
             headers={
@@ -141,13 +139,9 @@ class JiraClient:
     ) -> dict[str, Any]:
         """Issue a request + raise :class:`JiraApiError` on non-2xx."""
         try:
-            response = self._http.request(
-                method, path, json=json, params=params
-            )
+            response = self._http.request(method, path, json=json, params=params)
         except httpx.HTTPError as e:
-            raise JiraApiError(
-                f"Jira request failed: {e}", status_code=0
-            ) from e
+            raise JiraApiError(f"Jira request failed: {e}", status_code=0) from e
 
         if response.status_code == 204:
             return {}
@@ -164,11 +158,7 @@ class JiraClient:
                 error_field = body.get("errors")
                 if isinstance(error_field, dict):
                     errors.extend(f"{k}: {v}" for k, v in error_field.items())
-            excerpt = (
-                response.text[:200] + ("..." if len(response.text) > 200 else "")
-                if not errors
-                else None
-            )
+            excerpt = response.text[:200] + ("..." if len(response.text) > 200 else "") if not errors else None
             raise JiraApiError(
                 f"{method.upper()} {path}",
                 status_code=response.status_code,
@@ -187,9 +177,7 @@ class JiraClient:
         name. Raises :class:`JiraApiError` if either call fails.
         """
         me = self._request("GET", "/rest/api/3/myself")
-        project = self._request(
-            "GET", f"/rest/api/3/project/{self._config.project_key}"
-        )
+        project = self._request("GET", f"/rest/api/3/project/{self._config.project_key}")
         return {
             "user": str(me.get("displayName") or me.get("emailAddress") or "unknown"),
             "project_key": self._config.project_key,
@@ -244,9 +232,7 @@ class JiraClient:
         fields = body.get("fields") or {}
         status = fields.get("status") or {}
         status_name = str(status.get("name") or "unknown")
-        status_category = str(
-            (status.get("statusCategory") or {}).get("key") or "undefined"
-        )
+        status_category = str((status.get("statusCategory") or {}).get("key") or "undefined")
         return JiraIssue(
             key=str(body["key"]),
             id=str(body["id"]),
@@ -282,7 +268,6 @@ class JiraClient:
                 )
                 return
         raise JiraApiError(
-            f"No transition to status {target_status!r} available from this issue's "
-            f"current state",
+            f"No transition to status {target_status!r} available from this issue's current state",
             status_code=409,
         )

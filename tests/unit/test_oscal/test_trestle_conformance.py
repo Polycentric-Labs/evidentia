@@ -201,9 +201,7 @@ def test_vendor_uuid_identity_across_party_and_back_matter() -> None:
         contract_start_date=date(2025, 1, 1),
     )
 
-    ar_dict = gap_report_to_oscal_ar(
-        _make_minimal_report(), vendor_inventory=[vendor]
-    )
+    ar_dict = gap_report_to_oscal_ar(_make_minimal_report(), vendor_inventory=[vendor])
 
     # Round-trip through trestle to confirm OSCAL conformance.
     parsed = trestle_ar.Model.parse_obj(ar_dict)
@@ -213,8 +211,7 @@ def test_vendor_uuid_identity_across_party_and_back_matter() -> None:
     parties = ar.metadata.parties or []
     matching_parties = [p for p in parties if str(p.uuid) == vendor.id]
     assert len(matching_parties) == 1, (
-        f"Expected vendor.id={vendor.id!r} to match exactly one party "
-        f"UUID; found {len(matching_parties)}"
+        f"Expected vendor.id={vendor.id!r} to match exactly one party UUID; found {len(matching_parties)}"
     )
     party = matching_parties[0]
     assert str(party.uuid) == vendor.id
@@ -222,9 +219,7 @@ def test_vendor_uuid_identity_across_party_and_back_matter() -> None:
     # The party MUST carry a ``vendor-id`` prop equal to vendor.id
     # (so a back-matter-blind tool filtering parties[] by vendor-id
     # finds this vendor without having to walk back-matter).
-    party_vendor_id_props = [
-        p for p in (party.props or []) if p.name == "vendor-id"
-    ]
+    party_vendor_id_props = [p for p in (party.props or []) if p.name == "vendor-id"]
     assert len(party_vendor_id_props) == 1
     assert party_vendor_id_props[0].value == vendor.id
 
@@ -232,9 +227,7 @@ def test_vendor_uuid_identity_across_party_and_back_matter() -> None:
     bm = ar.back_matter
     assert bm is not None
     assert bm.resources is not None
-    matching_resources = [
-        r for r in bm.resources if str(r.uuid) == vendor.id
-    ]
+    matching_resources = [r for r in bm.resources if str(r.uuid) == vendor.id]
     assert len(matching_resources) == 1, (
         f"Expected vendor.id={vendor.id!r} to match exactly one "
         f"back-matter resource UUID; found {len(matching_resources)}"
@@ -242,9 +235,7 @@ def test_vendor_uuid_identity_across_party_and_back_matter() -> None:
     resource = matching_resources[0]
     assert str(resource.uuid) == vendor.id
 
-    resource_vendor_id_props = [
-        p for p in (resource.props or []) if p.name == "vendor-id"
-    ]
+    resource_vendor_id_props = [p for p in (resource.props or []) if p.name == "vendor-id"]
     assert len(resource_vendor_id_props) == 1
     assert resource_vendor_id_props[0].value == vendor.id
 
@@ -284,30 +275,18 @@ def test_multiple_vendors_keep_uuid_identity_pairwise() -> None:
     ]
     expected_ids = {v.id for v in vendors}
 
-    ar_dict = gap_report_to_oscal_ar(
-        _make_minimal_report(), vendor_inventory=vendors
-    )
+    ar_dict = gap_report_to_oscal_ar(_make_minimal_report(), vendor_inventory=vendors)
     parsed = trestle_ar.Model.parse_obj(ar_dict)
     ar = parsed.assessment_results
 
     party_ids = {
-        str(p.uuid)
-        for p in (ar.metadata.parties or [])
-        if any(q.name == "vendor-id" for q in (p.props or []))
+        str(p.uuid) for p in (ar.metadata.parties or []) if any(q.name == "vendor-id" for q in (p.props or []))
     }
     bm = ar.back_matter
     assert bm is not None
     assert bm.resources is not None
-    resource_ids = {
-        str(r.uuid)
-        for r in bm.resources
-        if any(q.name == "vendor-id" for q in (r.props or []))
-    }
+    resource_ids = {str(r.uuid) for r in bm.resources if any(q.name == "vendor-id" for q in (r.props or []))}
 
-    assert party_ids == expected_ids, (
-        f"Party UUIDs {party_ids} != expected {expected_ids}"
-    )
-    assert resource_ids == expected_ids, (
-        f"Resource UUIDs {resource_ids} != expected {expected_ids}"
-    )
+    assert party_ids == expected_ids, f"Party UUIDs {party_ids} != expected {expected_ids}"
+    assert resource_ids == expected_ids, f"Resource UUIDs {resource_ids} != expected {expected_ids}"
     assert party_ids == resource_ids

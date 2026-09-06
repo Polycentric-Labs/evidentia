@@ -49,14 +49,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PIN_PATH = (
-    REPO_ROOT
-    / "packages"
-    / "evidentia-core"
-    / "src"
-    / "evidentia_core"
-    / "fedramp"
-    / "schemas"
-    / "UPSTREAM.json"
+    REPO_ROOT / "packages" / "evidentia-core" / "src" / "evidentia_core" / "fedramp" / "schemas" / "UPSTREAM.json"
 )
 
 API_ROOT = "https://api.github.com"
@@ -72,9 +65,7 @@ def _request(url: str, *, raw: bool = False) -> bytes:
     urllib with one retry. Every ``gh`` call is an argument list — no
     shell.
     """
-    accept = (
-        "application/vnd.github.raw+json" if raw else "application/vnd.github+json"
-    )
+    accept = "application/vnd.github.raw+json" if raw else "application/vnd.github+json"
     if shutil.which("gh"):
         result = subprocess.run(
             ["gh", "api", url.removeprefix(API_ROOT + "/"), "-H", f"Accept: {accept}"],
@@ -121,9 +112,7 @@ def probe_rules(pin: dict[str, Any], findings: list[tuple[str, str]]) -> None:
     dataset = json.loads(raw.decode("utf-8"))
 
     live_version = dataset.get("info", {}).get("version", "<missing>")
-    ksi_canonical = json.dumps(
-        dataset.get("KSI", {}), sort_keys=True, separators=(",", ":")
-    ).encode("utf-8")
+    ksi_canonical = json.dumps(dataset.get("KSI", {}), sort_keys=True, separators=(",", ":")).encode("utf-8")
     live_ksi_hash = hashlib.sha256(ksi_canonical).hexdigest()
 
     if live_ksi_hash != rules["ksi_section_sha256"]:
@@ -173,16 +162,11 @@ def probe_schemas(pin: dict[str, Any], findings: list[tuple[str, str]]) -> None:
         findings.append(
             (
                 "MAJOR",
-                f"`{repo}` no longer publishes `{name}` — the CR26 fileset "
-                f"changed under the pin.",
+                f"`{repo}` no longer publishes `{name}` — the CR26 fileset changed under the pin.",
             )
         )
 
-    new_dated = sorted(
-        name
-        for name in set(live_files) - set(baseline)
-        if ruleset_date not in name
-    )
+    new_dated = sorted(name for name in set(live_files) - set(baseline) if ruleset_date not in name)
     if new_dated:
         findings.append(
             (
@@ -194,11 +178,7 @@ def probe_schemas(pin: dict[str, Any], findings: list[tuple[str, str]]) -> None:
                 f"Re-verify the emit target before the next release.",
             )
         )
-    new_undated = sorted(
-        name
-        for name in set(live_files) - set(baseline)
-        if ruleset_date in name
-    )
+    new_undated = sorted(name for name in set(live_files) - set(baseline) if ruleset_date in name)
     if new_undated:
         findings.append(
             (
@@ -212,24 +192,15 @@ def probe_schemas(pin: dict[str, Any], findings: list[tuple[str, str]]) -> None:
     for name, pinned_version in sorted(baseline.items()):
         if name not in live_files:
             continue  # already reported as removed
-        live_schema = json.loads(
-            _request(
-                f"{API_ROOT}/repos/{repo}/contents/{name}", raw=True
-            ).decode("utf-8")
-        )
+        live_schema = json.loads(_request(f"{API_ROOT}/repos/{repo}/contents/{name}", raw=True).decode("utf-8"))
         live_version = str(live_schema.get("$schemaVersion", "<missing>"))
         if live_version == pinned_version:
             continue
-        severity = (
-            "MAJOR"
-            if _semver_major(live_version) != _semver_major(pinned_version)
-            else "NOTICE"
-        )
+        severity = "MAJOR" if _semver_major(live_version) != _semver_major(pinned_version) else "NOTICE"
         findings.append(
             (
                 severity,
-                f"`{name}` $schemaVersion moved {pinned_version} → "
-                f"{live_version}.",
+                f"`{name}` $schemaVersion moved {pinned_version} → {live_version}.",
             )
         )
 
@@ -279,10 +250,7 @@ def main() -> int:
 
     if not findings:
         args.output.write_text("", encoding="utf-8")
-        print(
-            "OK: FedRAMP upstream matches the UPSTREAM.json pins "
-            f"(verified {pin['verified_at']})."
-        )
+        print(f"OK: FedRAMP upstream matches the UPSTREAM.json pins (verified {pin['verified_at']}).")
         return 0
 
     lines = [

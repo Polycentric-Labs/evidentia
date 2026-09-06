@@ -30,9 +30,7 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture(autouse=True)
-def _isolated_retention_store(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def _isolated_retention_store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Point EVIDENTIA_RETENTION_STORE_DIR at an isolated tmp per test."""
     store = tmp_path / "retention-store"
     monkeypatch.setenv("EVIDENTIA_RETENTION_STORE_DIR", str(store))
@@ -50,9 +48,7 @@ def api_client() -> TestClient:
     from evidentia_api.routers import retention as retention_router
 
     app = FastAPI()
-    app.include_router(
-        retention_router.router, prefix="/api", tags=["retention"]
-    )
+    app.include_router(retention_router.router, prefix="/api", tags=["retention"])
     return TestClient(app)
 
 
@@ -71,12 +67,8 @@ def readonly_api_client() -> TestClient:
     from evidentia_api.routers import retention as retention_router
 
     app = FastAPI()
-    app.include_router(
-        retention_router.router, prefix="/api", tags=["retention"]
-    )
-    app.state.rbac_policy = RBACPolicy(
-        identities={}, default_role=Role.READER
-    )
+    app.include_router(retention_router.router, prefix="/api", tags=["retention"])
+    app.state.rbac_policy = RBACPolicy(identities={}, default_role=Role.READER)
     return TestClient(app)
 
 
@@ -94,9 +86,7 @@ def _seed(
     **overrides: object,
 ) -> RetentionMetadata:
     """Persist a RetentionMetadata directly to the store + return it."""
-    days = overrides.pop(
-        "retention_period_days", default_retention_days(classification)
-    )
+    days = overrides.pop("retention_period_days", default_retention_days(classification))
     md = RetentionMetadata(
         classification=classification,  # type: ignore[arg-type]
         retention_period_days=days,  # type: ignore[arg-type]
@@ -110,9 +100,7 @@ def _seed(
 
 
 class TestSetRetention:
-    def test_set_returns_201_with_computed_lock_until(
-        self, api_client: TestClient
-    ) -> None:
+    def test_set_returns_201_with_computed_lock_until(self, api_client: TestClient) -> None:
         r = api_client.post(
             "/api/retention",
             json=_set_payload("sox-404", record_pointer="s3://bucket/x"),
@@ -123,23 +111,16 @@ class TestSetRetention:
         assert body["classification"] == "sox-404"
         # default 7*365 days → lock_until computed by the validator
         assert body["lock_until"] is not None
-        expected = (
-            date.fromisoformat(body["created_at"][:10])
-            + timedelta(days=7 * 365)
-        ).isoformat()
+        expected = (date.fromisoformat(body["created_at"][:10]) + timedelta(days=7 * 365)).isoformat()
         assert body["lock_until"] == expected
         assert body["retention_period_days"] == 7 * 365
         assert body["lifecycle_stage"] == "active"
 
-    def test_set_uses_default_days_when_omitted(
-        self, api_client: TestClient
-    ) -> None:
+    def test_set_uses_default_days_when_omitted(self, api_client: TestClient) -> None:
         r = api_client.post("/api/retention", json=_set_payload("pci-dss"))
         assert r.status_code == 201, r.text
         body = r.json()
-        assert body["retention_period_days"] == default_retention_days(
-            "pci-dss"
-        )
+        assert body["retention_period_days"] == default_retention_days("pci-dss")
 
     def test_set_honors_explicit_days(self, api_client: TestClient) -> None:
         r = api_client.post(
@@ -150,12 +131,8 @@ class TestSetRetention:
         body = r.json()
         assert body["retention_period_days"] == 10
 
-    def test_set_unknown_classification_returns_422(
-        self, api_client: TestClient
-    ) -> None:
-        r = api_client.post(
-            "/api/retention", json=_set_payload("not-a-class")
-        )
+    def test_set_unknown_classification_returns_422(self, api_client: TestClient) -> None:
+        r = api_client.post("/api/retention", json=_set_payload("not-a-class"))
         assert r.status_code == 422
 
 
@@ -174,9 +151,7 @@ class TestListRetention:
         assert body["limit"] >= 2
         assert len(body["items"]) == 2
 
-    def test_list_filters_by_classification(
-        self, api_client: TestClient
-    ) -> None:
+    def test_list_filters_by_classification(self, api_client: TestClient) -> None:
         _seed("sox-404")
         _seed("pci-dss")
         r = api_client.get("/api/retention?classification=pci-dss")
@@ -185,9 +160,7 @@ class TestListRetention:
         assert body["total"] == 1
         assert body["items"][0]["classification"] == "pci-dss"
 
-    def test_list_filters_by_lifecycle(
-        self, api_client: TestClient
-    ) -> None:
+    def test_list_filters_by_lifecycle(self, api_client: TestClient) -> None:
         _seed("sox-404")
         r = api_client.get("/api/retention?lifecycle=active")
         assert r.status_code == 200, r.text
@@ -196,9 +169,7 @@ class TestListRetention:
         assert r2.status_code == 200, r2.text
         assert r2.json()["total"] == 0
 
-    def test_list_unknown_classification_filter_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_list_unknown_classification_filter_returns_400(self, api_client: TestClient) -> None:
         r = api_client.get("/api/retention?classification=bogus")
         assert r.status_code == 400, r.text
         # F-V08-DAST-3 status normalization: manual 4xx carries the
@@ -209,9 +180,7 @@ class TestListRetention:
         assert detail["classification"] == "bogus"
         assert "message" in detail
 
-    def test_list_unknown_lifecycle_filter_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_list_unknown_lifecycle_filter_returns_400(self, api_client: TestClient) -> None:
         r = api_client.get("/api/retention?lifecycle=bogus")
         assert r.status_code == 400, r.text
         detail = r.json()["detail"]
@@ -237,9 +206,7 @@ class TestShowRetention:
         r = api_client.get(f"/api/retention/{uuid.uuid4()}")
         assert r.status_code == 404, r.text
 
-    def test_show_invalid_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_show_invalid_id_returns_404(self, api_client: TestClient) -> None:
         r = api_client.get("/api/retention/not-a-uuid")
         assert r.status_code == 404, r.text
 
@@ -259,9 +226,7 @@ class TestExtendRetention:
         assert r.status_code == 200, r.text
         assert r.json()["lock_until"] == new_lock
 
-    def test_extend_shorten_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_extend_shorten_returns_400(self, api_client: TestClient) -> None:
         md = _seed("generic", retention_period_days=100)
         assert md.lock_until is not None
         earlier = (md.lock_until - timedelta(days=30)).isoformat()
@@ -274,9 +239,7 @@ class TestExtendRetention:
         assert detail["error"] == "invalid_body"
         assert "WORM forbids shortening" in detail["message"]
 
-    def test_extend_missing_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_extend_missing_returns_404(self, api_client: TestClient) -> None:
         import uuid
 
         r = api_client.post(
@@ -290,9 +253,7 @@ class TestExtendRetention:
 
 
 class TestTransitionRetention:
-    def test_transition_active_to_preserved(
-        self, api_client: TestClient
-    ) -> None:
+    def test_transition_active_to_preserved(self, api_client: TestClient) -> None:
         md = _seed("sox-404")
         r = api_client.post(
             f"/api/retention/{md.id}/transition",
@@ -301,9 +262,7 @@ class TestTransitionRetention:
         assert r.status_code == 200, r.text
         assert r.json()["lifecycle_stage"] == "preserved"
 
-    def test_illegal_transition_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_illegal_transition_returns_400(self, api_client: TestClient) -> None:
         # purged is terminal; purged → active is illegal.
         md = _seed("sox-404", lifecycle_stage="purged")
         r = api_client.post(
@@ -315,9 +274,7 @@ class TestTransitionRetention:
         assert detail["error"] == "invalid_body"
         assert "message" in detail
 
-    def test_transition_missing_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_transition_missing_returns_404(self, api_client: TestClient) -> None:
         import uuid
 
         r = api_client.post(
@@ -336,21 +293,15 @@ class TestDeleteRetention:
         r = api_client.delete(f"/api/retention/{md.id}")
         assert r.status_code == 204, r.text
         # gone
-        assert (
-            api_client.get(f"/api/retention/{md.id}").status_code == 404
-        )
+        assert api_client.get(f"/api/retention/{md.id}").status_code == 404
 
-    def test_delete_missing_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_delete_missing_returns_404(self, api_client: TestClient) -> None:
         import uuid
 
         r = api_client.delete(f"/api/retention/{uuid.uuid4()}")
         assert r.status_code == 404, r.text
 
-    def test_delete_invalid_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_delete_invalid_id_returns_404(self, api_client: TestClient) -> None:
         r = api_client.delete("/api/retention/not-a-uuid")
         assert r.status_code == 404, r.text
 
@@ -371,9 +322,7 @@ class TestRetentionReport:
         assert r.status_code == 200, r.text
         assert "# Retention Posture Report" in r.text
 
-    def test_report_not_shadowed_by_id_route(
-        self, api_client: TestClient
-    ) -> None:
+    def test_report_not_shadowed_by_id_route(self, api_client: TestClient) -> None:
         # /retention/report must resolve to the report route, NOT the
         # /retention/{retention_id} param route (which would 404 on the
         # invalid 'report' id).
@@ -394,19 +343,13 @@ class TestRetentionRBAC:
     403, while a read (list) still returns 200.
     """
 
-    def test_anonymous_set_denied_403(
-        self, readonly_api_client: TestClient
-    ) -> None:
+    def test_anonymous_set_denied_403(self, readonly_api_client: TestClient) -> None:
         # POST /retention is gated on require_role("write").
-        r = readonly_api_client.post(
-            "/api/retention", json=_set_payload("sox-404")
-        )
+        r = readonly_api_client.post("/api/retention", json=_set_payload("sox-404"))
         assert r.status_code == 403, r.text
         assert r.json()["detail"]["error"] == "rbac_denied"
 
-    def test_anonymous_delete_denied_403(
-        self, readonly_api_client: TestClient
-    ) -> None:
+    def test_anonymous_delete_denied_403(self, readonly_api_client: TestClient) -> None:
         # Seed directly (store dir isolated by the autouse fixture) so a
         # real record exists; the admin DELETE gate must still deny.
         md = _seed("glba")
@@ -414,9 +357,7 @@ class TestRetentionRBAC:
         assert r.status_code == 403, r.text
         assert r.json()["detail"]["error"] == "rbac_denied"
 
-    def test_anonymous_list_allowed_200(
-        self, readonly_api_client: TestClient
-    ) -> None:
+    def test_anonymous_list_allowed_200(self, readonly_api_client: TestClient) -> None:
         # The list endpoint carries no require_role gate (reads are open),
         # so it returns 200 even under the read-only policy — proving the
         # policy is read-allowed, not blanket-deny.
@@ -458,6 +399,4 @@ def test_retention_error_statuses_documented_in_openapi(
     for path, method, statuses in expected:
         op = schema["paths"][path][method]
         for status in statuses:
-            assert status in op["responses"], (
-                f"{method.upper()} {path} missing documented {status}"
-            )
+            assert status in op["responses"], f"{method.upper()} {path} missing documented {status}"

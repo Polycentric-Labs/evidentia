@@ -91,7 +91,5 @@ def validate_within(candidate: Path, safe_root: Path) -> Path:
     resolved_candidate = candidate.resolve(strict=False)
     resolved_root = safe_root.resolve(strict=False)
     if not resolved_candidate.is_relative_to(resolved_root):
-        raise PathTraversalError(
-            "Path resolves outside the permitted directory."
-        )
+        raise PathTraversalError("Path resolves outside the permitted directory.")
     return resolved_candidate

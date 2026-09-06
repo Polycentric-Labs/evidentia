@@ -64,9 +64,7 @@ TEST_MODE_ENV = "EVIDENTIA_TEST_MODE"
 _log = get_logger("evidentia.audit.retry")
 
 
-def _effective_backoff(
-    initial_backoff: float, max_backoff: float
-) -> tuple[float, float]:
+def _effective_backoff(initial_backoff: float, max_backoff: float) -> tuple[float, float]:
     """Apply the test-mode short-circuit: zero out backoff under EVIDENTIA_TEST_MODE."""
     if os.environ.get(TEST_MODE_ENV):
         return (0.0, 0.0)
@@ -101,9 +99,7 @@ def build_retrying(
     """
     initial, mx = _effective_backoff(initial_backoff, max_backoff)
     retry_condition = (
-        retry_if_exception(retry_predicate)
-        if retry_predicate is not None
-        else retry_if_exception_type(retry_on)
+        retry_if_exception(retry_predicate) if retry_predicate is not None else retry_if_exception_type(retry_on)
     )
     return Retrying(
         stop=stop_after_attempt(max_attempts),

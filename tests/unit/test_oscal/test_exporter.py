@@ -18,9 +18,7 @@ from evidentia_core.models.gap import (
 from evidentia_core.oscal.exporter import gap_report_to_oscal_ar
 
 
-def _make_gap(
-    framework: str, ctrl_id: str, sev: GapSeverity = GapSeverity.HIGH
-) -> ControlGap:
+def _make_gap(framework: str, ctrl_id: str, sev: GapSeverity = GapSeverity.HIGH) -> ControlGap:
     return ControlGap(
         framework=framework,
         control_id=ctrl_id,
@@ -171,9 +169,7 @@ def test_export_with_findings_creates_back_matter_resources() -> None:
     assert resource["uuid"] == "00000000-0000-0000-0000-000000000042"
     # Standards-track hash + Evidentia-ns prop both present
     assert resource["rlinks"][0]["hashes"][0]["algorithm"] == "SHA-256"
-    digest_prop = next(
-        p for p in resource["props"] if p["name"] == "evidence-digest"
-    )
+    digest_prop = next(p for p in resource["props"] if p["name"] == "evidence-digest")
     assert digest_prop["value"].startswith("sha256:")
 
 
@@ -189,9 +185,7 @@ def test_embedded_content_hashes_match_stored_digest() -> None:
     assert digest_bytes(payload) == stored_hex
 
     # And the Evidentia prop encodes the same digest under sha256: prefix.
-    digest_prop = next(
-        p for p in resource["props"] if p["name"] == "evidence-digest"
-    )
+    digest_prop = next(p for p in resource["props"] if p["name"] == "evidence-digest")
     _, prop_hex = parse_digest(digest_prop["value"])
     assert prop_hex == stored_hex
 
@@ -203,11 +197,7 @@ def test_observations_crossref_matching_findings() -> None:
     out = gap_report_to_oscal_ar(_make_report(), findings=[finding])
     observations = out["assessment-results"]["results"][0]["observations"]
 
-    ac2_obs = next(
-        o for o in observations if any(
-            p.get("value") == "AC-2" for p in o.get("props", [])
-        )
-    )
+    ac2_obs = next(o for o in observations if any(p.get("value") == "AC-2" for p in o.get("props", [])))
     assert "relevant-evidence" in ac2_obs
     hrefs = [e["href"] for e in ac2_obs["relevant-evidence"]]
     assert f"#{finding.id}" in hrefs
@@ -222,11 +212,7 @@ def test_observations_without_matching_findings_stay_examine() -> None:
     out = gap_report_to_oscal_ar(_make_report(), findings=[finding])
     observations = out["assessment-results"]["results"][0]["observations"]
 
-    au2_obs = next(
-        o for o in observations if any(
-            p.get("value") == "AU-2" for p in o.get("props", [])
-        )
-    )
+    au2_obs = next(o for o in observations if any(p.get("value") == "AU-2" for p in o.get("props", [])))
     assert au2_obs["methods"] == ["EXAMINE"]
     assert "relevant-evidence" not in au2_obs
 
@@ -239,13 +225,9 @@ def test_finding_spanning_multiple_controls_crossrefs_each() -> None:
     observations = out["assessment-results"]["results"][0]["observations"]
 
     for obs in observations:
-        control_id = next(
-            p["value"] for p in obs["props"] if p["name"] == "control-id"
-        )
+        control_id = next(p["value"] for p in obs["props"] if p["name"] == "control-id")
         evidence_hrefs = {e["href"] for e in obs.get("relevant-evidence", [])}
-        assert f"#{finding.id}" in evidence_hrefs, (
-            f"Expected finding cross-referenced on {control_id}"
-        )
+        assert f"#{finding.id}" in evidence_hrefs, f"Expected finding cross-referenced on {control_id}"
 
 
 def test_finding_with_no_matching_control_still_lands_in_back_matter() -> None:
@@ -305,9 +287,7 @@ def test_vendor_inventory_lands_in_parties_and_back_matter() -> None:
     """Each vendor must appear in BOTH metadata.parties[] (discovery)
     AND back-matter.resources[] (integrity)."""
     vendor = _make_vendor()
-    out = gap_report_to_oscal_ar(
-        _make_report(), vendor_inventory=[vendor]
-    )
+    out = gap_report_to_oscal_ar(_make_report(), vendor_inventory=[vendor])
 
     parties = out["assessment-results"]["metadata"]["parties"]
     # 1 organization (the report org) + 1 vendor party
@@ -322,16 +302,12 @@ def test_vendor_inventory_lands_in_parties_and_back_matter() -> None:
 def test_vendor_party_uuid_matches_resource_uuid() -> None:
     """Cross-reference resolution requires matching UUIDs across surfaces."""
     vendor = _make_vendor()
-    out = gap_report_to_oscal_ar(
-        _make_report(), vendor_inventory=[vendor]
-    )
+    out = gap_report_to_oscal_ar(_make_report(), vendor_inventory=[vendor])
 
     parties = out["assessment-results"]["metadata"]["parties"]
     vendor_party = next(p for p in parties if p["name"] == "Acme SaaS Co")
     resources = out["assessment-results"]["back-matter"]["resources"]
-    vendor_resource = next(
-        r for r in resources if r["title"] == "Acme SaaS Co"
-    )
+    vendor_resource = next(r for r in resources if r["title"] == "Acme SaaS Co")
 
     assert vendor_party["uuid"] == vendor_resource["uuid"]
     assert vendor_party["uuid"] == vendor.id
@@ -341,9 +317,7 @@ def test_vendor_party_carries_tprm_props() -> None:
     """The party props must carry vendor metadata for tooling that
     discovers vendors via standard OSCAL parties."""
     vendor = _make_vendor()
-    out = gap_report_to_oscal_ar(
-        _make_report(), vendor_inventory=[vendor]
-    )
+    out = gap_report_to_oscal_ar(_make_report(), vendor_inventory=[vendor])
 
     parties = out["assessment-results"]["metadata"]["parties"]
     vendor_party = next(p for p in parties if p["name"] == "Acme SaaS Co")
@@ -361,14 +335,10 @@ def test_vendor_resource_has_integrity_hash() -> None:
     """The back-matter resource must carry a SHA-256 hash so tampering
     is detectable via verify_ar_file."""
     vendor = _make_vendor()
-    out = gap_report_to_oscal_ar(
-        _make_report(), vendor_inventory=[vendor]
-    )
+    out = gap_report_to_oscal_ar(_make_report(), vendor_inventory=[vendor])
 
     resources = out["assessment-results"]["back-matter"]["resources"]
-    vendor_resource = next(
-        r for r in resources if r["title"] == "Acme SaaS Co"
-    )
+    vendor_resource = next(r for r in resources if r["title"] == "Acme SaaS Co")
 
     rlinks = vendor_resource["rlinks"]
     assert len(rlinks) == 1
@@ -384,14 +354,10 @@ def test_vendor_resource_canonical_json_round_trips() -> None:
     """The base64-decoded vendor JSON must round-trip back into a
     Vendor model bit-for-bit."""
     vendor = _make_vendor()
-    out = gap_report_to_oscal_ar(
-        _make_report(), vendor_inventory=[vendor]
-    )
+    out = gap_report_to_oscal_ar(_make_report(), vendor_inventory=[vendor])
 
     resources = out["assessment-results"]["back-matter"]["resources"]
-    vendor_resource = next(
-        r for r in resources if r["title"] == "Acme SaaS Co"
-    )
+    vendor_resource = next(r for r in resources if r["title"] == "Acme SaaS Co")
 
     decoded = base64.b64decode(vendor_resource["base64"]["value"])
     import json as _json
@@ -407,23 +373,11 @@ def test_vendor_resource_hash_is_deterministic() -> None:
     """Same Vendor input → same hash, every time. Verifier-side
     correctness depends on this."""
     vendor = _make_vendor()
-    out_1 = gap_report_to_oscal_ar(
-        _make_report(), vendor_inventory=[vendor]
-    )
-    out_2 = gap_report_to_oscal_ar(
-        _make_report(), vendor_inventory=[vendor]
-    )
+    out_1 = gap_report_to_oscal_ar(_make_report(), vendor_inventory=[vendor])
+    out_2 = gap_report_to_oscal_ar(_make_report(), vendor_inventory=[vendor])
 
-    res_1 = next(
-        r
-        for r in out_1["assessment-results"]["back-matter"]["resources"]
-        if r["title"] == "Acme SaaS Co"
-    )
-    res_2 = next(
-        r
-        for r in out_2["assessment-results"]["back-matter"]["resources"]
-        if r["title"] == "Acme SaaS Co"
-    )
+    res_1 = next(r for r in out_1["assessment-results"]["back-matter"]["resources"] if r["title"] == "Acme SaaS Co")
+    res_2 = next(r for r in out_2["assessment-results"]["back-matter"]["resources"] if r["title"] == "Acme SaaS Co")
     hash_1 = res_1["rlinks"][0]["hashes"][0]["value"]
     hash_2 = res_2["rlinks"][0]["hashes"][0]["value"]
     assert hash_1 == hash_2
@@ -437,9 +391,7 @@ def test_vendor_inventory_count_in_metadata_props() -> None:
         _make_vendor(name="VendorB"),
         _make_vendor(name="VendorC"),
     ]
-    out = gap_report_to_oscal_ar(
-        _make_report(), vendor_inventory=vendors
-    )
+    out = gap_report_to_oscal_ar(_make_report(), vendor_inventory=vendors)
 
     md_props = out["assessment-results"]["metadata"]["props"]
     count_prop = next(
@@ -456,9 +408,7 @@ def test_no_vendor_inventory_means_no_vendor_props() -> None:
     out = gap_report_to_oscal_ar(_make_report())
 
     md_props = out["assessment-results"]["metadata"]["props"]
-    assert not any(
-        p["name"] == "vendor-inventory-count" for p in md_props
-    )
+    assert not any(p["name"] == "vendor-inventory-count" for p in md_props)
 
     parties = out["assessment-results"]["metadata"]["parties"]
     # Only the report's organization party — no vendor parties
@@ -485,10 +435,7 @@ def test_vendor_resource_with_findings_coexist() -> None:
     # Each carries a hash
     for r in resources:
         assert "rlinks" in r
-        assert any(
-            h["algorithm"] == "SHA-256"
-            for h in r["rlinks"][0]["hashes"]
-        )
+        assert any(h["algorithm"] == "SHA-256" for h in r["rlinks"][0]["hashes"])
 
 
 class TestEmptyArrayOmission:

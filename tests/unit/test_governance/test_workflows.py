@@ -31,14 +31,10 @@ from evidentia_core.workflow_store import (
 
 class TestEnums:
     def test_step_statuses(self) -> None:
-        assert {s.value for s in WorkflowStepStatus} == {
-            "pending", "in_progress", "approved", "rejected", "skipped"
-        }
+        assert {s.value for s in WorkflowStepStatus} == {"pending", "in_progress", "approved", "rejected", "skipped"}
 
     def test_workflow_statuses(self) -> None:
-        assert {s.value for s in WorkflowStatus} == {
-            "draft", "in_progress", "approved", "rejected", "canceled"
-        }
+        assert {s.value for s in WorkflowStatus} == {"draft", "in_progress", "approved", "rejected", "canceled"}
 
 
 # ── Construction helpers ───────────────────────────────────────────
@@ -77,26 +73,18 @@ class TestCurrentStepIndex:
 
     def test_skips_terminal_steps(self) -> None:
         wf = _three_step_workflow()
-        wf.steps[0] = wf.steps[0].model_copy(
-            update={"status": WorkflowStepStatus.APPROVED.value}
-        )
-        wf.steps[1] = wf.steps[1].model_copy(
-            update={"status": WorkflowStepStatus.IN_PROGRESS.value}
-        )
+        wf.steps[0] = wf.steps[0].model_copy(update={"status": WorkflowStepStatus.APPROVED.value})
+        wf.steps[1] = wf.steps[1].model_copy(update={"status": WorkflowStepStatus.IN_PROGRESS.value})
         assert current_step_index(wf) == 1
 
     def test_returns_none_when_all_terminal(self) -> None:
         wf = _three_step_workflow()
         for i in range(3):
-            wf.steps[i] = wf.steps[i].model_copy(
-                update={"status": WorkflowStepStatus.APPROVED.value}
-            )
+            wf.steps[i] = wf.steps[i].model_copy(update={"status": WorkflowStepStatus.APPROVED.value})
         assert current_step_index(wf) is None
 
     def test_returns_none_for_empty_workflow(self) -> None:
-        wf = Workflow(
-            name="Empty", description="", initiator="x@y.com", steps=[]
-        )
+        wf = Workflow(name="Empty", description="", initiator="x@y.com", steps=[])
         assert current_step_index(wf) is None
 
 
@@ -105,9 +93,7 @@ class TestCurrentStepIndex:
 
 class TestEvaluateWorkflow:
     def test_empty_steps_is_draft(self) -> None:
-        wf = Workflow(
-            name="x", description="x", initiator="x@y.com", steps=[]
-        )
+        wf = Workflow(name="x", description="x", initiator="x@y.com", steps=[])
         assert evaluate_workflow(wf) == WorkflowStatus.DRAFT
 
     def test_in_progress(self) -> None:
@@ -117,27 +103,19 @@ class TestEvaluateWorkflow:
     def test_all_approved_is_approved(self) -> None:
         wf = _three_step_workflow()
         for i in range(3):
-            wf.steps[i] = wf.steps[i].model_copy(
-                update={"status": WorkflowStepStatus.APPROVED.value}
-            )
+            wf.steps[i] = wf.steps[i].model_copy(update={"status": WorkflowStepStatus.APPROVED.value})
         assert evaluate_workflow(wf) == WorkflowStatus.APPROVED
 
     def test_any_rejected_is_rejected(self) -> None:
         wf = _three_step_workflow()
-        wf.steps[0] = wf.steps[0].model_copy(
-            update={"status": WorkflowStepStatus.APPROVED.value}
-        )
-        wf.steps[1] = wf.steps[1].model_copy(
-            update={"status": WorkflowStepStatus.REJECTED.value}
-        )
+        wf.steps[0] = wf.steps[0].model_copy(update={"status": WorkflowStepStatus.APPROVED.value})
+        wf.steps[1] = wf.steps[1].model_copy(update={"status": WorkflowStepStatus.REJECTED.value})
         assert evaluate_workflow(wf) == WorkflowStatus.REJECTED
 
     def test_skipped_counts_as_progress(self) -> None:
         wf = _three_step_workflow()
         for i in range(3):
-            wf.steps[i] = wf.steps[i].model_copy(
-                update={"status": WorkflowStepStatus.SKIPPED.value}
-            )
+            wf.steps[i] = wf.steps[i].model_copy(update={"status": WorkflowStepStatus.SKIPPED.value})
         assert evaluate_workflow(wf) == WorkflowStatus.APPROVED
 
 
@@ -184,9 +162,7 @@ class TestAdvanceWorkflowStep:
 
     def test_cannot_advance_terminal_step(self) -> None:
         wf = _three_step_workflow()
-        wf.steps[0] = wf.steps[0].model_copy(
-            update={"status": WorkflowStepStatus.APPROVED.value}
-        )
+        wf.steps[0] = wf.steps[0].model_copy(update={"status": WorkflowStepStatus.APPROVED.value})
         with pytest.raises(WorkflowAdvanceError):
             advance_workflow_step(
                 wf,
@@ -252,9 +228,7 @@ class TestGenerateWorkflowLog:
         assert "Workflow REJECTED" not in out
 
     def test_empty_workflow_log(self) -> None:
-        wf = Workflow(
-            name="Empty", description="x", initiator="x@y.com", steps=[]
-        )
+        wf = Workflow(name="Empty", description="x", initiator="x@y.com", steps=[])
         out = generate_workflow_log(wf)
         assert "No steps defined" in out
 
@@ -263,18 +237,14 @@ class TestGenerateWorkflowLog:
 
 
 @pytest.fixture()
-def isolated_workflow_store(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def isolated_workflow_store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     store = tmp_path / "workflow-store"
     monkeypatch.setenv(WORKFLOW_STORE_ENV_VAR, str(store))
     return store
 
 
 class TestWorkflowStore:
-    def test_save_and_load_round_trip(
-        self, isolated_workflow_store: Path
-    ) -> None:
+    def test_save_and_load_round_trip(self, isolated_workflow_store: Path) -> None:
         wf = _three_step_workflow()
         save_workflow(wf)
         loaded = load_workflow_by_id(wf.id)
@@ -286,44 +256,32 @@ class TestWorkflowStore:
         save_workflow(_three_step_workflow())
         assert list(isolated_workflow_store.glob("*.tmp")) == []
 
-    def test_load_unknown_returns_none(
-        self, isolated_workflow_store: Path
-    ) -> None:
+    def test_load_unknown_returns_none(self, isolated_workflow_store: Path) -> None:
         result = load_workflow_by_id("00000000-0000-0000-0000-000000000000")
         assert result is None
 
-    def test_load_invalid_id_raises(
-        self, isolated_workflow_store: Path
-    ) -> None:
+    def test_load_invalid_id_raises(self, isolated_workflow_store: Path) -> None:
         with pytest.raises(InvalidWorkflowIdError):
             load_workflow_by_id("not-a-uuid")
 
-    def test_list_newest_first(
-        self, isolated_workflow_store: Path
-    ) -> None:
+    def test_list_newest_first(self, isolated_workflow_store: Path) -> None:
         import time
 
         old = _three_step_workflow()
         save_workflow(old)
         time.sleep(0.01)  # sub-second precision differs by platform
-        new = _three_step_workflow().model_copy(
-            update={"name": "Newer flow"}
-        )
+        new = _three_step_workflow().model_copy(update={"name": "Newer flow"})
         save_workflow(new)
         listed = list_workflows()
         assert len(listed) == 2
         # First should be the newer one (created_at DESC)
         assert listed[0].name == "Newer flow"
 
-    def test_delete_removes(
-        self, isolated_workflow_store: Path
-    ) -> None:
+    def test_delete_removes(self, isolated_workflow_store: Path) -> None:
         wf = _three_step_workflow()
         save_workflow(wf)
         assert delete_workflow(wf.id) is True
         assert load_workflow_by_id(wf.id) is None
 
-    def test_delete_unknown_returns_false(
-        self, isolated_workflow_store: Path
-    ) -> None:
+    def test_delete_unknown_returns_false(self, isolated_workflow_store: Path) -> None:
         assert delete_workflow("00000000-0000-0000-0000-000000000000") is False

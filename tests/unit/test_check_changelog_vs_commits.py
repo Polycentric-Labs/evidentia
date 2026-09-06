@@ -1,4 +1,5 @@
 """Tests for scripts/check_changelog_vs_commits.py (#18 advisory diff)."""
+
 from __future__ import annotations
 
 import sys
@@ -54,10 +55,10 @@ class TestCompare:
         block = adv.changelog_block(_CHANGELOG, "0.11.0")
         assert block is not None
         subjects = [
-            "Feat(gates): Open the v0.11 cycle (#175)",   # mentioned
+            "Feat(gates): Open the v0.11 cycle (#175)",  # mentioned
             "Ci(deps): Add dependency-review gate (#176)",  # mentioned
-            "Fix(api): Undocumented fix (#199)",            # NOT mentioned
-            "Chore: direct commit",                          # no PR ref
+            "Fix(api): Undocumented fix (#199)",  # NOT mentioned
+            "Chore: direct commit",  # no PR ref
         ]
         missing, unreferenced = adv.compare(subjects, block)
         assert missing == ["Fix(api): Undocumented fix (#199)"]
@@ -66,9 +67,7 @@ class TestCompare:
     def test_all_mentioned_is_clean(self) -> None:
         block = adv.changelog_block(_CHANGELOG, "0.11.0")
         assert block is not None
-        missing, unreferenced = adv.compare(
-            ["Feat(gates): Open the v0.11 cycle (#175)"], block
-        )
+        missing, unreferenced = adv.compare(["Feat(gates): Open the v0.11 cycle (#175)"], block)
         assert missing == [] and unreferenced == []
 
 
@@ -101,10 +100,7 @@ class TestMainFailSoft:
             if args[0] == "describe":
                 return "v0.10.17\n"
             if args[0] == "log":
-                return (
-                    "Feat(gates): Open the v0.11 cycle (#175)\n"
-                    "Fix(api): Undocumented fix (#199)\n"
-                )
+                return "Feat(gates): Open the v0.11 cycle (#175)\nFix(api): Undocumented fix (#199)\n"
             raise AssertionError(f"unexpected git call: {args}")
 
         monkeypatch.setattr(adv, "workspace_version", lambda _p: "0.11.0")
@@ -115,7 +111,5 @@ class TestMainFailSoft:
         assert adv.main([]) == 0  # advisory NEVER fails
         out = capsys.readouterr().out
         assert "ADVISORY: PR not mentioned in [0.11.0]: Fix(api)" in out
-        advisory_line = next(
-            line for line in out.splitlines() if "ADVISORY" in line
-        )
+        advisory_line = next(line for line in out.splitlines() if "ADVISORY" in line)
         assert "#175" not in advisory_line

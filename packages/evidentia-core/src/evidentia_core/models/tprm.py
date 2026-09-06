@@ -154,12 +154,8 @@ class FourthParty(EvidentiaModel):
     SaaS vendors all run on the same hyperscaler region.
     """
 
-    name: str = Field(
-        description="Fourth-party legal name (e.g., 'Amazon Web Services')."
-    )
-    type: VendorType = Field(
-        description="Same taxonomy as the parent vendor's `type` field."
-    )
+    name: str = Field(description="Fourth-party legal name (e.g., 'Amazon Web Services').")
+    type: VendorType = Field(description="Same taxonomy as the parent vendor's `type` field.")
     relationship: str = Field(
         description=(
             "Free-text description of the 4th-party relationship — "
@@ -244,17 +240,11 @@ class EvidenceRef(EvidentiaModel):
     )
     file_path: str | None = Field(
         default=None,
-        description=(
-            "If set, path to an external evidence file. Combined with "
-            "``sha256`` for tamper detection."
-        ),
+        description=("If set, path to an external evidence file. Combined with ``sha256`` for tamper detection."),
     )
     sha256: str | None = Field(
         default=None,
-        description=(
-            "SHA-256 digest of the referenced file (lowercase hex). "
-            "Required when ``file_path`` is set."
-        ),
+        description=("SHA-256 digest of the referenced file (lowercase hex). Required when ``file_path`` is set."),
         pattern=r"^[a-f0-9]{64}$",
     )
     sigstore_bundle_path: str | None = Field(
@@ -296,10 +286,7 @@ class EvidenceRef(EvidentiaModel):
                 "evidence file). Both are None."
             )
         if self.file_path is not None and self.sha256 is None:
-            raise ValueError(
-                "EvidenceRef.file_path requires a paired `sha256` digest "
-                "for tamper detection."
-            )
+            raise ValueError("EvidenceRef.file_path requires a paired `sha256` digest for tamper detection.")
         return self
 
 
@@ -457,9 +444,7 @@ class Vendor(EvidentiaModel):
         # (per the EvidentiaModel ``use_enum_values=True`` config); accept
         # both the enum and the string form.
         tier_value = (
-            self.criticality_tier.value
-            if isinstance(self.criticality_tier, CriticalityTier)
-            else self.criticality_tier
+            self.criticality_tier.value if isinstance(self.criticality_tier, CriticalityTier) else self.criticality_tier
         )
         cadence_months = {
             CriticalityTier.CRITICAL.value: 12,

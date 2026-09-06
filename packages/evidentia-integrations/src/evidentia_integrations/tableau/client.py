@@ -118,9 +118,7 @@ class TableauClient:
             server.version = self._config.api_version
             server.auth.sign_in(tableau_auth)
         except Exception as e:
-            raise TableauAuthError(
-                f"Tableau sign-in failed (driver: {type(e).__name__})"
-            ) from e
+            raise TableauAuthError(f"Tableau sign-in failed (driver: {type(e).__name__})") from e
         self._server = server
 
     def _signout(self) -> None:
@@ -154,14 +152,11 @@ class TableauClient:
             )
             projects, _pagination = self._server.projects.get(req_options)
         except Exception as e:
-            raise TableauPublishError(
-                f"Project lookup failed (driver: {type(e).__name__})"
-            ) from e
+            raise TableauPublishError(f"Project lookup failed (driver: {type(e).__name__})") from e
 
         if not projects:
             raise TableauPublishError(
-                f"Project '{project_name}' not found on site "
-                f"'{self._config.site_id or '<default>'}'."
+                f"Project '{project_name}' not found on site '{self._config.site_id or '<default>'}'."
             )
         return str(projects[0].id)
 
@@ -212,24 +207,13 @@ class TableauClient:
         try:
             ds_item = TSC.DatasourceItem(project_id=project_id)
             ds_item.name = datasource_name
-            with tempfile.TemporaryDirectory(
-                prefix="evidentia-tableau-"
-            ) as tmpdir:
+            with tempfile.TemporaryDirectory(prefix="evidentia-tableau-") as tmpdir:
                 tmp_path = Path(tmpdir) / "datasource.csv"
                 tmp_path.write_bytes(csv_bytes)
-                mode = (
-                    TSC.Server.PublishMode.Overwrite
-                    if overwrite
-                    else TSC.Server.PublishMode.CreateNew
-                )
-                published = self._server.datasources.publish(
-                    ds_item, str(tmp_path), mode
-                )
+                mode = TSC.Server.PublishMode.Overwrite if overwrite else TSC.Server.PublishMode.CreateNew
+                published = self._server.datasources.publish(ds_item, str(tmp_path), mode)
                 # Directory cleanup happens automatically at
                 # context exit; no manual unlink needed.
         except Exception as e:
-            raise TableauPublishError(
-                f"Datasource publish failed (driver: "
-                f"{type(e).__name__}): {e}"
-            ) from e
+            raise TableauPublishError(f"Datasource publish failed (driver: {type(e).__name__}): {e}") from e
         return str(published.id)

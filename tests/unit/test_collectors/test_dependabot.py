@@ -65,7 +65,8 @@ def _make_alert(**overrides: Any) -> dict[str, Any]:
 
 
 def _make_collector(
-    *, alerts: list[dict[str, Any]] | None = None,
+    *,
+    alerts: list[dict[str, Any]] | None = None,
     fail_with: Exception | None = None,
     dismissal_policy: dict[str, DismissalVerdict] | None = None,
 ) -> DependabotCollector:
@@ -92,34 +93,17 @@ def test_constructor_rejects_empty_owner_or_repo() -> None:
     with pytest.raises(DependabotCollectorError, match="owner \\+ repo"):
         DependabotCollector(owner="", repo="evidentia", client=MagicMock())
     with pytest.raises(DependabotCollectorError, match="owner \\+ repo"):
-        DependabotCollector(
-            owner="polycentric-labs", repo="", client=MagicMock()
-        )
+        DependabotCollector(owner="polycentric-labs", repo="", client=MagicMock())
 
 
 def test_constructor_uses_default_dismissal_policy() -> None:
     collector = _make_collector()
     # Default: no_bandwidth and tolerable_risk treat_as_open; others resolved.
-    assert (
-        collector.dismissal_policy["no_bandwidth"]
-        == DismissalVerdict.TREAT_AS_OPEN
-    )
-    assert (
-        collector.dismissal_policy["tolerable_risk"]
-        == DismissalVerdict.TREAT_AS_OPEN
-    )
-    assert (
-        collector.dismissal_policy["fix_started"]
-        == DismissalVerdict.TREAT_AS_RESOLVED
-    )
-    assert (
-        collector.dismissal_policy["not_used"]
-        == DismissalVerdict.TREAT_AS_RESOLVED
-    )
-    assert (
-        collector.dismissal_policy["inaccurate"]
-        == DismissalVerdict.TREAT_AS_RESOLVED
-    )
+    assert collector.dismissal_policy["no_bandwidth"] == DismissalVerdict.TREAT_AS_OPEN
+    assert collector.dismissal_policy["tolerable_risk"] == DismissalVerdict.TREAT_AS_OPEN
+    assert collector.dismissal_policy["fix_started"] == DismissalVerdict.TREAT_AS_RESOLVED
+    assert collector.dismissal_policy["not_used"] == DismissalVerdict.TREAT_AS_RESOLVED
+    assert collector.dismissal_policy["inaccurate"] == DismissalVerdict.TREAT_AS_RESOLVED
 
 
 def test_constructor_merges_policy_override_with_defaults() -> None:
@@ -129,15 +113,9 @@ def test_constructor_merges_policy_override_with_defaults() -> None:
         }
     )
     # Override applied.
-    assert (
-        collector.dismissal_policy["tolerable_risk"]
-        == DismissalVerdict.TREAT_AS_RESOLVED
-    )
+    assert collector.dismissal_policy["tolerable_risk"] == DismissalVerdict.TREAT_AS_RESOLVED
     # Other defaults preserved.
-    assert (
-        collector.dismissal_policy["no_bandwidth"]
-        == DismissalVerdict.TREAT_AS_OPEN
-    )
+    assert collector.dismissal_policy["no_bandwidth"] == DismissalVerdict.TREAT_AS_OPEN
 
 
 # ── state → status mapping ───────────────────────────────────────────────
@@ -158,9 +136,7 @@ def test_fixed_alert_maps_to_resolved() -> None:
 def test_auto_dismissed_alert_maps_to_resolved() -> None:
     """auto_dismissed means GitHub auto-closed (package removed / repo
     archived) — functionally resolved."""
-    collector = _make_collector(
-        alerts=[_make_alert(state="auto_dismissed")]
-    )
+    collector = _make_collector(alerts=[_make_alert(state="auto_dismissed")])
     findings = collector.collect()
     assert findings[0].status == FindingStatus.RESOLVED
 
@@ -173,20 +149,16 @@ def test_auto_dismissed_alert_maps_to_resolved() -> None:
     [
         ("fix_started", FindingStatus.RESOLVED),
         ("inaccurate", FindingStatus.RESOLVED),
-        ("no_bandwidth", FindingStatus.ACTIVE),   # auditor-default
+        ("no_bandwidth", FindingStatus.ACTIVE),  # auditor-default
         ("not_used", FindingStatus.RESOLVED),
         ("tolerable_risk", FindingStatus.ACTIVE),  # auditor-default
     ],
 )
-def test_default_dismissal_policy_classification(
-    reason: str, expected_status: FindingStatus
-) -> None:
+def test_default_dismissal_policy_classification(reason: str, expected_status: FindingStatus) -> None:
     """Default policy matches the research-backed auditor interpretation:
     ``no_bandwidth`` and ``tolerable_risk`` surface to auditors as ACTIVE
     (POA&M-tracked gaps), others are RESOLVED."""
-    collector = _make_collector(
-        alerts=[_make_alert(state="dismissed", dismissed_reason=reason)]
-    )
+    collector = _make_collector(alerts=[_make_alert(state="dismissed", dismissed_reason=reason)])
     findings = collector.collect()
     assert findings[0].status == expected_status
 
@@ -195,9 +167,7 @@ def test_policy_override_changes_dismissal_classification() -> None:
     """Operator can reclassify any dismissed_reason."""
     collector = _make_collector(
         alerts=[
-            _make_alert(
-                state="dismissed", dismissed_reason="tolerable_risk"
-            ),
+            _make_alert(state="dismissed", dismissed_reason="tolerable_risk"),
         ],
         dismissal_policy={
             "tolerable_risk": DismissalVerdict.TREAT_AS_RESOLVED,
@@ -248,10 +218,7 @@ def test_si2_mapping_is_subset_of_with_ssdf_citation() -> None:
 def test_ssdf_mappings_use_ssdf_framework_identifier() -> None:
     collector = _make_collector(alerts=[_make_alert()])
     finding = collector.collect()[0]
-    ssdf_mappings = [
-        m for m in finding.control_mappings
-        if m.framework == "nist-sp-800-218-ssdf"
-    ]
+    ssdf_mappings = [m for m in finding.control_mappings if m.framework == "nist-sp-800-218-ssdf"]
     assert len(ssdf_mappings) == 3  # PO.3, PW.4, RV.2
     assert {m.control_id for m in ssdf_mappings} == {"PO.3", "PW.4", "RV.2"}
 
@@ -260,10 +227,7 @@ def test_every_mapping_has_nonempty_justification() -> None:
     collector = _make_collector(alerts=[_make_alert()])
     finding = collector.collect()[0]
     for m in finding.control_mappings:
-        assert m.justification, (
-            f"Empty justification on Dependabot mapping to "
-            f"{m.framework}:{m.control_id}"
-        )
+        assert m.justification, f"Empty justification on Dependabot mapping to {m.framework}:{m.control_id}"
 
 
 # ── severity mapping ─────────────────────────────────────────────────────
@@ -279,9 +243,7 @@ def test_every_mapping_has_nonempty_justification() -> None:
         ("low", "low"),
     ],
 )
-def test_severity_from_advisory(
-    advisory_severity: str, expected: str
-) -> None:
+def test_severity_from_advisory(advisory_severity: str, expected: str) -> None:
     alert = _make_alert()
     alert["security_advisory"]["severity"] = advisory_severity
     alert["security_vulnerability"]["severity"] = advisory_severity
@@ -295,9 +257,7 @@ def test_severity_from_advisory(
 def test_include_dismissed_false_skips_dismissed_alerts() -> None:
     alerts = [
         _make_alert(number=1, state="open"),
-        _make_alert(
-            number=2, state="dismissed", dismissed_reason="inaccurate"
-        ),
+        _make_alert(number=2, state="dismissed", dismissed_reason="inaccurate"),
     ]
     collector = _make_collector(alerts=alerts)
     findings = collector.collect(include_dismissed=False)
@@ -391,9 +351,7 @@ def test_finding_description_includes_cvss_score() -> None:
 
 
 def test_finding_description_includes_dismissal_reason_when_dismissed() -> None:
-    alert = _make_alert(
-        state="dismissed", dismissed_reason="tolerable_risk"
-    )
+    alert = _make_alert(state="dismissed", dismissed_reason="tolerable_risk")
     collector = _make_collector(alerts=[alert])
     finding = collector.collect()[0]
     assert "tolerable_risk" in finding.description
@@ -402,7 +360,9 @@ def test_finding_description_includes_dismissal_reason_when_dismissed() -> None:
 def test_dry_run_returns_empty_without_api_calls() -> None:
     client = MagicMock()
     collector = DependabotCollector(
-        owner="polycentric-labs", repo="evidentia", client=client,
+        owner="polycentric-labs",
+        repo="evidentia",
+        client=client,
     )
     findings = collector.collect(dry_run=True)
     assert findings == []

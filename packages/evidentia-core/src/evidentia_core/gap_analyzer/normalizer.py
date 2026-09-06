@@ -28,7 +28,7 @@ def normalize_control_id(raw_id: str) -> str:
 
     for prefix in ["NIST ", "ISO ", "CIS ", "SOC2 ", "SOC 2 ", "PCI ", "CMMC "]:
         if result.startswith(prefix):
-            result = result[len(prefix):]
+            result = result[len(prefix) :]
 
     # Handle NIST-style IDs: ensure hyphen between family prefix and number
     nist_pattern = re.compile(r"^([A-Z]{2,3})(\d+)(.*)$")
@@ -40,11 +40,7 @@ def normalize_control_id(raw_id: str) -> str:
         if suffix.startswith("("):
             result = f"{family}-{number}{suffix}"
         elif suffix:
-            result = (
-                f"{family}-{number}-{suffix}"
-                if suffix.isdigit()
-                else f"{family}-{number}{suffix}"
-            )
+            result = f"{family}-{number}-{suffix}" if suffix.isdigit() else f"{family}-{number}{suffix}"
         else:
             result = f"{family}-{number}"
 
@@ -93,9 +89,7 @@ def find_best_match(
     if not title_map:
         return None
 
-    title_match = process.extractOne(
-        user_control_id, list(title_map.keys()), scorer=fuzz.ratio
-    )
+    title_match = process.extractOne(user_control_id, list(title_map.keys()), scorer=fuzz.ratio)
     if title_match and title_match[1] >= threshold:
         return title_map[title_match[0]]
 

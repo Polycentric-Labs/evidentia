@@ -245,9 +245,7 @@ class ControlGap(EvidentiaModel):
         description="Severity based on requirement level and implementation state",
     )
     implementation_status: str = Field(
-        description=(
-            "Current state: 'missing', 'partial', 'planned', 'not_applicable'"
-        ),
+        description=("Current state: 'missing', 'partial', 'planned', 'not_applicable'"),
     )
     gap_description: str = Field(
         description="Specific description of what is missing or incomplete",

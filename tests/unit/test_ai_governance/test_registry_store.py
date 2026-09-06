@@ -38,30 +38,20 @@ def sample_entry() -> AISystemRegistryEntry:
 
 class TestGetAIRegistryDir:
     def test_override_wins(self, tmp_path: Path) -> None:
-        assert get_ai_registry_dir(tmp_path / "custom") == (
-            (tmp_path / "custom").expanduser().resolve()
-        )
+        assert get_ai_registry_dir(tmp_path / "custom") == ((tmp_path / "custom").expanduser().resolve())
 
-    def test_env_used_when_no_override(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_env_used_when_no_override(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv(AI_REGISTRY_ENV_VAR, str(tmp_path / "env-dir"))
-        assert get_ai_registry_dir() == (
-            (tmp_path / "env-dir").expanduser().resolve()
-        )
+        assert get_ai_registry_dir() == ((tmp_path / "env-dir").expanduser().resolve())
 
-    def test_platformdirs_fallback(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_platformdirs_fallback(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(AI_REGISTRY_ENV_VAR, raising=False)
         result = get_ai_registry_dir()
         assert "ai_registry" in str(result)
 
 
 class TestAIRegistryStoreCRUD:
-    def test_save_and_load_round_trips(
-        self, tmp_path: Path, sample_entry: AISystemRegistryEntry
-    ) -> None:
+    def test_save_and_load_round_trips(self, tmp_path: Path, sample_entry: AISystemRegistryEntry) -> None:
         store = AIRegistryStore(tmp_path)
         store.save(sample_entry)
         loaded = store.load(sample_entry.system_id)
@@ -70,9 +60,7 @@ class TestAIRegistryStoreCRUD:
         assert loaded.descriptor.name == "resume-screener"
         assert loaded.provider == "acme-ai"
 
-    def test_save_bumps_updated_at(
-        self, tmp_path: Path, sample_entry: AISystemRegistryEntry
-    ) -> None:
+    def test_save_bumps_updated_at(self, tmp_path: Path, sample_entry: AISystemRegistryEntry) -> None:
         store = AIRegistryStore(tmp_path)
         original_updated_at = sample_entry.updated_at
         store.save(sample_entry)
@@ -89,14 +77,9 @@ class TestAIRegistryStoreCRUD:
         with pytest.raises(InvalidAISystemIdError):
             store.load("not-a-uuid")
 
-    def test_list_all_sorts_by_created_at(
-        self, tmp_path: Path
-    ) -> None:
+    def test_list_all_sorts_by_created_at(self, tmp_path: Path) -> None:
         store = AIRegistryStore(tmp_path)
-        descriptors = [
-            AISystemDescriptor(name=f"sys-{i}", purpose="x")
-            for i in range(3)
-        ]
+        descriptors = [AISystemDescriptor(name=f"sys-{i}", purpose="x") for i in range(3)]
         entries = [
             AISystemRegistryEntry(
                 descriptor=d,
@@ -122,9 +105,7 @@ class TestAIRegistryStoreCRUD:
         store = AIRegistryStore(tmp_path / "does-not-exist")
         assert store.list_all() == []
 
-    def test_delete_removes_file(
-        self, tmp_path: Path, sample_entry: AISystemRegistryEntry
-    ) -> None:
+    def test_delete_removes_file(self, tmp_path: Path, sample_entry: AISystemRegistryEntry) -> None:
         store = AIRegistryStore(tmp_path)
         store.save(sample_entry)
         assert store.delete(sample_entry.system_id) is True

@@ -41,9 +41,7 @@ def test_gate_is_not_vacuous() -> None:
 
 def test_every_min_length_1_string_publishes_the_non_blank_pattern() -> None:
     missing = sorted(
-        name
-        for name, variant in _string_props_with_min_length_1()
-        if variant.get("pattern") != NON_BLANK_PATTERN
+        name for name, variant in _string_props_with_min_length_1() if variant.get("pattern") != NON_BLANK_PATTERN
     )
     assert missing == [], (
         "string fields whose schema admits a whitespace-only value the runtime "
@@ -55,9 +53,7 @@ class _Probe(BaseModel):
     value: NonBlankStr
 
 
-@pytest.mark.parametrize(
-    "blank", ["", " ", "\t\n", " ", "", "　  "]
-)
+@pytest.mark.parametrize("blank", ["", " ", "\t\n", " ", "", "　  "])
 def test_non_blank_str_rejects_whitespace_only(blank: str) -> None:
     with pytest.raises(ValidationError):
         _Probe(value=blank)
@@ -69,9 +65,5 @@ def test_non_blank_str_accepts_any_visible_character(value: str) -> None:
 
 
 def test_pattern_rejects_every_python_whitespace_code_point() -> None:
-    leaked = [
-        hex(cp)
-        for cp in range(0x110000)
-        if chr(cp).isspace() and re.search(NON_BLANK_PATTERN, chr(cp))
-    ]
+    leaked = [hex(cp) for cp in range(0x110000) if chr(cp).isspace() and re.search(NON_BLANK_PATTERN, chr(cp))]
     assert leaked == []

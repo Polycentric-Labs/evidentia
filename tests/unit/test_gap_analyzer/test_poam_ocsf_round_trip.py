@@ -151,7 +151,4 @@ def test_empty_remediation_does_not_emit_ocsf_remediation_block() -> None:
     report = _report([gap])
 
     [ocsf_finding] = gap_report_to_ocsf_array(report)
-    assert (
-        "remediation" not in ocsf_finding
-        or ocsf_finding.get("remediation") is None
-    )
+    assert "remediation" not in ocsf_finding or ocsf_finding.get("remediation") is None

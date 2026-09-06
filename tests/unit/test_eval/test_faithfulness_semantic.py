@@ -93,9 +93,7 @@ class TestFaithfulnessSemanticBasics:
             "evidentia_eval.faithfulness_semantic._import_sentence_transformers",
             return_value=_patch_import_returning(model),
         ):
-            result = faithfulness_score_semantic(
-                "claim text", ["matching clause"]
-            )
+            result = faithfulness_score_semantic("claim text", ["matching clause"])
         assert 0.0 <= result.score <= 1.0
         assert result.score == pytest.approx(1.0)
 
@@ -103,9 +101,7 @@ class TestFaithfulnessSemanticBasics:
         """No source → score 0.0, no evidence, no raise."""
         # Mock isn't actually used (early return); patch anyway
         # for symmetry.
-        with mock.patch(
-            "evidentia_eval.faithfulness_semantic._import_sentence_transformers"
-        ):
+        with mock.patch("evidentia_eval.faithfulness_semantic._import_sentence_transformers"):
             result = faithfulness_score_semantic("claim", [])
         assert result.score == 0.0
         assert result.evidence_clauses == []
@@ -116,11 +112,11 @@ class TestFaithfulnessSemanticBasics:
         # Five clauses with descending similarity to claim.
         embeddings = {
             "claim": [1.0, 0.0, 0.0],
-            "best match": [1.0, 0.0, 0.0],          # cos=1.0
-            "second match": [0.9, 0.1, 0.0],        # cos~0.99
-            "third match": [0.5, 0.5, 0.0],         # cos~0.71
-            "fourth match": [0.0, 1.0, 0.0],        # cos=0.0
-            "fifth match": [0.0, 0.0, 1.0],         # cos=0.0
+            "best match": [1.0, 0.0, 0.0],  # cos=1.0
+            "second match": [0.9, 0.1, 0.0],  # cos~0.99
+            "third match": [0.5, 0.5, 0.0],  # cos~0.71
+            "fourth match": [0.0, 1.0, 0.0],  # cos=0.0
+            "fifth match": [0.0, 0.0, 1.0],  # cos=0.0
         }
         model = _make_mock_model(embeddings)
         with mock.patch(
@@ -167,17 +163,18 @@ class TestSemanticFaithfulnessNotAvailable:
         """Without sentence-transformers installed → clear error."""
         # Force the import inside _import_sentence_transformers to
         # raise ImportError.
-        with mock.patch.dict(sys.modules, {"sentence_transformers": None}), pytest.raises(
-            SemanticFaithfulnessNotAvailableError,
-            match="evidentia-ai\\[eval-faithfulness\\]",
+        with (
+            mock.patch.dict(sys.modules, {"sentence_transformers": None}),
+            pytest.raises(
+                SemanticFaithfulnessNotAvailableError,
+                match="evidentia-ai\\[eval-faithfulness\\]",
+            ),
         ):
             faithfulness_score_semantic("c", ["x"])
 
     def test_error_subclasses_importerror(self) -> None:
         """Existing ``except ImportError:`` chains catch it."""
-        assert issubclass(
-            SemanticFaithfulnessNotAvailableError, ImportError
-        )
+        assert issubclass(SemanticFaithfulnessNotAvailableError, ImportError)
 
 
 class TestSemanticFaithfulnessThreshold:
@@ -197,7 +194,5 @@ class TestSemanticFaithfulnessThreshold:
             "evidentia_eval.faithfulness_semantic._import_sentence_transformers",
             return_value=_patch_import_returning(model),
         ):
-            result = faithfulness_score_semantic(
-                "c", ["x"], threshold=0.5
-            )
+            result = faithfulness_score_semantic("c", ["x"], threshold=0.5)
         assert result.threshold == 0.5

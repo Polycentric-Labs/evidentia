@@ -31,9 +31,7 @@ def test_migrate_translates_old_slug_and_warns() -> None:
 
 def test_migrate_keeps_new_slug_when_both_present() -> None:
     with pytest.warns(DeprecationWarning, match=OLD_SLUG):
-        out = migrate_deprecated_slugs(
-            {OLD_SLUG: date(2025, 1, 1), NEW_SLUG: date(2025, 10, 15)}
-        )
+        out = migrate_deprecated_slugs({OLD_SLUG: date(2025, 1, 1), NEW_SLUG: date(2025, 10, 15)})
     assert out == {NEW_SLUG: date(2025, 10, 15)}
 
 

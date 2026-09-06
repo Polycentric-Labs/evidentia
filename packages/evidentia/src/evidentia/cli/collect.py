@@ -133,10 +133,7 @@ def collect_github(
     base_url: str | None = typer.Option(
         None,
         "--base-url",
-        help=(
-            "GitHub API base URL. Default https://api.github.com. "
-            "Override for GitHub Enterprise."
-        ),
+        help=("GitHub API base URL. Default https://api.github.com. Override for GitHub Enterprise."),
     ),
     block_private_ips: bool = SSRF_BLOCK_OPTION,
     output: Path | None = typer.Option(
@@ -154,15 +151,11 @@ def collect_github(
             GitHubCollectorError,
         )
     except ImportError as e:
-        console.print(
-            "[red]Error:[/red] GitHub collector failed to import: " + str(e)
-        )
+        console.print("[red]Error:[/red] GitHub collector failed to import: " + str(e))
         raise typer.Exit(code=1) from e
 
     if "/" not in repo:
-        console.print(
-            "[red]Error:[/red] --repo must be 'owner/repo' format."
-        )
+        console.print("[red]Error:[/red] --repo must be 'owner/repo' format.")
         raise typer.Exit(code=1)
     owner, repo_name = repo.split("/", 1)
 
@@ -195,18 +188,12 @@ def collect_okta(
     inactive_threshold_days: int = typer.Option(
         90,
         "--inactive-threshold-days",
-        help=(
-            "Days since last login that mark an ACTIVE user as "
-            "inactive. Default: 90 (per AC-2(3))."
-        ),
+        help=("Days since last login that mark an ACTIVE user as inactive. Default: 90 (per AC-2(3))."),
     ),
     max_users: int = typer.Option(
         10_000,
         "--max-users",
-        help=(
-            "Hard cap on user enumeration. Default: 10000. "
-            "Increase only if your org is genuinely larger."
-        ),
+        help=("Hard cap on user enumeration. Default: 10000. Increase only if your org is genuinely larger."),
     ),
     block_private_ips: bool = SSRF_BLOCK_OPTION,
     output: Path | None = typer.Option(
@@ -227,17 +214,12 @@ def collect_okta(
             OktaCollectorError,
         )
     except ImportError as e:
-        console.print(
-            "[red]Error:[/red] Okta collector failed to import: " + str(e)
-        )
+        console.print("[red]Error:[/red] Okta collector failed to import: " + str(e))
         raise typer.Exit(code=1) from e
 
     api_token = os.environ.get("OKTA_API_TOKEN")
     if api_token is None:
-        console.print(
-            "[red]Error:[/red] OKTA_API_TOKEN env var not set. "
-            "Set it to a read-only Okta API token."
-        )
+        console.print("[red]Error:[/red] OKTA_API_TOKEN env var not set. Set it to a read-only Okta API token.")
         raise typer.Exit(code=1)
 
     try:
@@ -482,11 +464,7 @@ def collect_sql(
             raise typer.Exit(code=1) from e
 
         # MySQL defaults to a different env-var name unless overridden
-        effective_env = (
-            "EVIDENTIA_MYSQL_PASSWORD"
-            if password_env == "EVIDENTIA_POSTGRES_PASSWORD"
-            else password_env
-        )
+        effective_env = "EVIDENTIA_MYSQL_PASSWORD" if password_env == "EVIDENTIA_POSTGRES_PASSWORD" else password_env
         password = os.environ.get(effective_env)
         if password is None:
             console.print(
@@ -516,9 +494,7 @@ def collect_sql(
                 SQLiteCollectorError,
             )
         except ImportError as e:
-            console.print(
-                "[red]Error:[/red] SQLite collector failed to import: " + str(e)
-            )
+            console.print("[red]Error:[/red] SQLite collector failed to import: " + str(e))
             raise typer.Exit(code=1) from e
 
         # SQLite has no auth — the connection_uri is treated as the
@@ -553,11 +529,7 @@ def collect_sql(
             )
             raise typer.Exit(code=1) from e
 
-        effective_env = (
-            "EVIDENTIA_MSSQL_PASSWORD"
-            if password_env == "EVIDENTIA_POSTGRES_PASSWORD"
-            else password_env
-        )
+        effective_env = "EVIDENTIA_MSSQL_PASSWORD" if password_env == "EVIDENTIA_POSTGRES_PASSWORD" else password_env
         password = os.environ.get(effective_env)
         if password is None:
             console.print(
@@ -593,11 +565,7 @@ def collect_sql(
             )
             raise typer.Exit(code=1) from e
 
-        effective_env = (
-            "EVIDENTIA_ORACLE_PASSWORD"
-            if password_env == "EVIDENTIA_POSTGRES_PASSWORD"
-            else password_env
-        )
+        effective_env = "EVIDENTIA_ORACLE_PASSWORD" if password_env == "EVIDENTIA_POSTGRES_PASSWORD" else password_env
         password = os.environ.get(effective_env)
         if password is None:
             console.print(
@@ -765,18 +733,12 @@ def collect_snowflake(
         None,
         "--role",
         "-r",
-        help=(
-            "Optional role name. Defaults to the user's "
-            "default role."
-        ),
+        help=("Optional role name. Defaults to the user's default role."),
     ),
     login_history_window_days: int = typer.Option(
         90,
         "--login-history-window-days",
-        help=(
-            "How many days back to scan in LOGIN_HISTORY. "
-            "Defaults to 90 (industry-standard window)."
-        ),
+        help=("How many days back to scan in LOGIN_HISTORY. Defaults to 90 (industry-standard window)."),
     ),
     block_private_ips: bool = SSRF_BLOCK_OPTION,
     output: Path | None = typer.Option(
@@ -859,9 +821,7 @@ def collect_snowflake(
             account=account,
             user=user,
             password=password,
-            private_key_path=(
-                str(private_key_path) if private_key_path else None
-            ),
+            private_key_path=(str(private_key_path) if private_key_path else None),
             warehouse=warehouse,
             role=role,
             login_history_window_days=login_history_window_days,
@@ -897,20 +857,14 @@ def collect_vanta(
     base_url: str = typer.Option(
         "https://api.vanta.com",
         "--base-url",
-        help=(
-            "Vanta Public API base URL. Override for staging / "
-            "dev tenants."
-        ),
+        help=("Vanta Public API base URL. Override for staging / dev tenants."),
     ),
     max_vendors: int = typer.Option(
         2000,
         "--max-vendors",
         min=1,
         max=100_000,
-        help=(
-            "Hard cap on vendor enumeration. Default 2000 — covers "
-            "typical orgs without unbounded pagination."
-        ),
+        help=("Hard cap on vendor enumeration. Default 2000 — covers typical orgs without unbounded pagination."),
     ),
     block_private_ips: bool = SSRF_BLOCK_OPTION,
     output: Path | None = typer.Option(
@@ -1009,20 +963,14 @@ def collect_drata(
     base_url: str = typer.Option(
         "https://public-api.drata.com",
         "--base-url",
-        help=(
-            "Drata Public API base URL. Override for staging / "
-            "dev tenants."
-        ),
+        help=("Drata Public API base URL. Override for staging / dev tenants."),
     ),
     max_vendors: int = typer.Option(
         2000,
         "--max-vendors",
         min=1,
         max=100_000,
-        help=(
-            "Hard cap on vendor enumeration. Default 2000 — covers "
-            "typical orgs without unbounded pagination."
-        ),
+        help=("Hard cap on vendor enumeration. Default 2000 — covers typical orgs without unbounded pagination."),
     ),
     block_private_ips: bool = SSRF_BLOCK_OPTION,
     output: Path | None = typer.Option(
@@ -1117,10 +1065,7 @@ def collect_bitsight(
         "--max-companies",
         min=1,
         max=100_000,
-        help=(
-            "Hard cap on portfolio enumeration. Default 2000 — "
-            "covers typical portfolios."
-        ),
+        help=("Hard cap on portfolio enumeration. Default 2000 — covers typical portfolios."),
     ),
     rating_threshold: int = typer.Option(
         700,
@@ -1236,10 +1181,7 @@ def collect_securityscorecard(
         "--max-companies",
         min=1,
         max=100_000,
-        help=(
-            "Hard cap on portfolio enumeration. Default 2000 — "
-            "covers typical portfolios."
-        ),
+        help=("Hard cap on portfolio enumeration. Default 2000 — covers typical portfolios."),
     ),
     score_threshold: int = typer.Option(
         70,
@@ -1317,9 +1259,7 @@ def collect_securityscorecard(
         ) as collector:
             findings = collector.collect()
     except SecurityScorecardCollectorError as e:
-        console.print(
-            f"[red]SecurityScorecard collection failed:[/red] {e}"
-        )
+        console.print(f"[red]SecurityScorecard collection failed:[/red] {e}")
         raise typer.Exit(code=1) from e
 
     _write_findings(
@@ -1397,10 +1337,7 @@ def collect_ocsf(
         raise typer.Exit(code=1) from e
 
     is_url = input_source.lower().startswith(("http://", "https://"))
-    console.print(
-        f"[dim]Ingesting OCSF from "
-        f"{'URL' if is_url else 'file'} [bold]{input_source}[/bold]...[/dim]"
-    )
+    console.print(f"[dim]Ingesting OCSF from {'URL' if is_url else 'file'} [bold]{input_source}[/bold]...[/dim]")
 
     try:
         if is_url:
@@ -1495,8 +1432,7 @@ def collect_nessus(
 
     if get_cadence(cadence_slug) is None:
         console.print(
-            f"[red]Error:[/red] unknown cadence slug {cadence_slug!r}. "
-            "Run `evidentia conmon list` to see available."
+            f"[red]Error:[/red] unknown cadence slug {cadence_slug!r}. Run `evidentia conmon list` to see available."
         )
         raise typer.Exit(code=1)
 
@@ -1605,8 +1541,7 @@ def collect_greenbone(
 
     if get_cadence(cadence_slug) is None:
         console.print(
-            f"[red]Error:[/red] unknown cadence slug {cadence_slug!r}. "
-            "Run `evidentia conmon list` to see available."
+            f"[red]Error:[/red] unknown cadence slug {cadence_slug!r}. Run `evidentia conmon list` to see available."
         )
         raise typer.Exit(code=1)
 
@@ -1681,10 +1616,7 @@ def collect_convert(
     write succeeds.
     """
     if format != "ocsf":
-        console.print(
-            f"[red]Unsupported --format[/red] {format!r}. "
-            "v0.10.1 supports only `ocsf`."
-        )
+        console.print(f"[red]Unsupported --format[/red] {format!r}. v0.10.1 supports only `ocsf`.")
         raise typer.Exit(code=2)
 
     try:
@@ -1698,10 +1630,7 @@ def collect_convert(
 
     raw = json.loads(input_path.read_text(encoding="utf-8"))
     if not isinstance(raw, list):
-        console.print(
-            f"[red]Error:[/red] {input_path} must be a JSON array of "
-            "SecurityFinding objects."
-        )
+        console.print(f"[red]Error:[/red] {input_path} must be a JSON array of SecurityFinding objects.")
         raise typer.Exit(code=1)
 
     findings = [SecurityFinding.model_validate(item) for item in raw]
@@ -1714,9 +1643,7 @@ def collect_convert(
     payload = json.dumps(ocsf_bundle, indent=2, default=str)
     if output is not None:
         output.write_text(payload, encoding="utf-8")
-        console.print(
-            f"[green]Wrote {len(ocsf_bundle)} OCSF Compliance Finding(s) to[/green] {output}"
-        )
+        console.print(f"[green]Wrote {len(ocsf_bundle)} OCSF Compliance Finding(s) to[/green] {output}")
     else:
         console.print(payload)
 
@@ -1731,10 +1658,7 @@ def collect_convert(
     _log = get_logger("evidentia.cli.collect.convert")
     _log.info(
         action=EventAction.COLLECT_OCSF_EMITTED,
-        message=(
-            f"Converted {len(ocsf_bundle)} SecurityFinding(s) to "
-            f"OCSF Compliance Finding bundle"
-        ),
+        message=(f"Converted {len(ocsf_bundle)} SecurityFinding(s) to OCSF Compliance Finding bundle"),
         category=[EventCategory.CONFIGURATION],
         types=[EventType.INFO],
         evidentia={

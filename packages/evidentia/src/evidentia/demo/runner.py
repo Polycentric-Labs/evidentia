@@ -51,9 +51,7 @@ _OUT_PLACEHOLDER = "$OUT"
 # The minimal env an allowlisted ``evidentia`` invocation needs to run. Every
 # other variable in the inherited environment — notably any credential — is
 # dropped by :func:`scrub_env`. ``EVIDENTIA_API_OFFLINE`` is force-set on top.
-ALLOWED_ENV_KEYS: frozenset[str] = frozenset(
-    {"PATH", "HOME", "LANG", "PYTHONIOENCODING", "TERM"}
-)
+ALLOWED_ENV_KEYS: frozenset[str] = frozenset({"PATH", "HOME", "LANG", "PYTHONIOENCODING", "TERM"})
 
 
 def _load_vectors() -> list[list[str]]:
@@ -62,9 +60,7 @@ def _load_vectors() -> list[list[str]]:
     Resolved via ``importlib.resources`` so it works from an installed wheel,
     not just a source checkout.
     """
-    raw = (files("evidentia.demo") / "allowlist.yaml").read_text(
-        encoding="utf-8"
-    )
+    raw = (files("evidentia.demo") / "allowlist.yaml").read_text(encoding="utf-8")
     data = yaml.safe_load(raw)
     vectors = data.get("vectors", []) if isinstance(data, dict) else []
     # Normalize to ``list[list[str]]`` and reject any malformed entry up front
@@ -72,9 +68,7 @@ def _load_vectors() -> list[list[str]]:
     # allowlist.
     parsed: list[list[str]] = []
     for vec in vectors:
-        if not isinstance(vec, list) or not all(
-            isinstance(tok, str) for tok in vec
-        ):
+        if not isinstance(vec, list) or not all(isinstance(tok, str) for tok in vec):
             raise ValueError(f"malformed allowlist vector: {vec!r}")
         parsed.append([str(tok) for tok in vec])
     return parsed

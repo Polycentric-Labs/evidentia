@@ -115,6 +115,4 @@ def parse_envelope(text: str) -> Envelope:
         if not isinstance(sig, str) or not sig:
             raise DSSEError("signature sig must be a non-empty base64 string")
         parsed_sigs.append(Signature(keyid=keyid, sig=sig))
-    return Envelope(
-        payload_type=ptype, payload_b64=payload, signatures=tuple(parsed_sigs)
-    )
+    return Envelope(payload_type=ptype, payload_b64=payload, signatures=tuple(parsed_sigs))

@@ -24,16 +24,12 @@ from fastapi.testclient import TestClient
 
 
 class TestProxyHeadersWiring:
-    def test_off_by_default(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_off_by_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("EVIDENTIA_TRUST_PROXY_HEADERS", raising=False)
         app = create_app()
         assert app.state.trust_proxy_headers is False
 
-    def test_explicit_true(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_explicit_true(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("EVIDENTIA_TRUST_PROXY_HEADERS", raising=False)
         app = create_app(trust_proxy_headers=True)
         assert app.state.trust_proxy_headers is True
@@ -43,9 +39,7 @@ class TestProxyHeadersWiring:
         app = create_app()
         assert app.state.trust_proxy_headers is True
 
-    def test_env_var_off_for_non_one_value(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_env_var_off_for_non_one_value(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Only ``"1"`` activates — ``"true"`` / ``"on"`` / ``"yes"``
         do NOT, matching the project-wide env-var convention used
         by EVIDENTIA_API_SECURITY_HEADERS."""
@@ -53,18 +47,14 @@ class TestProxyHeadersWiring:
         app = create_app()
         assert app.state.trust_proxy_headers is False
 
-    def test_explicit_false_overrides_env_var(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_explicit_false_overrides_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Programmatic ``False`` overrides env var (matches the
         ``security_headers`` convention)."""
         monkeypatch.setenv("EVIDENTIA_TRUST_PROXY_HEADERS", "1")
         app = create_app(trust_proxy_headers=False)
         assert app.state.trust_proxy_headers is False
 
-    def test_doesnt_break_existing_routes(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_doesnt_break_existing_routes(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Smoke test: attaching ProxyHeadersMiddleware does NOT
         break the request path."""
         monkeypatch.setenv("EVIDENTIA_TRUST_PROXY_HEADERS", "1")
@@ -73,24 +63,16 @@ class TestProxyHeadersWiring:
         resp = client.get("/api/health")
         assert resp.status_code == 200
 
-    def test_middleware_attached_when_enabled(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_middleware_attached_when_enabled(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Inspect the middleware stack: ProxyHeadersMiddleware is
         present when ``trust_proxy_headers=True``."""
         monkeypatch.delenv("EVIDENTIA_TRUST_PROXY_HEADERS", raising=False)
         app = create_app(trust_proxy_headers=True)
-        middleware_classes = [
-            m.cls.__name__ for m in app.user_middleware
-        ]
+        middleware_classes = [m.cls.__name__ for m in app.user_middleware]
         assert "ProxyHeadersMiddleware" in middleware_classes
 
-    def test_middleware_absent_when_disabled(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_middleware_absent_when_disabled(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("EVIDENTIA_TRUST_PROXY_HEADERS", raising=False)
         app = create_app(trust_proxy_headers=False)
-        middleware_classes = [
-            m.cls.__name__ for m in app.user_middleware
-        ]
+        middleware_classes = [m.cls.__name__ for m in app.user_middleware]
         assert "ProxyHeadersMiddleware" not in middleware_classes

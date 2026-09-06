@@ -39,17 +39,18 @@ _SAMPLE_SCENARIOS = """
 
 
 class TestQuantify:
-    def test_quantify_to_stdout(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_quantify_to_stdout(self, runner: CliRunner, tmp_path: Path) -> None:
         scenarios = tmp_path / "scenarios.yaml"
         _write(scenarios, _SAMPLE_SCENARIOS)
         result = runner.invoke(
             app,
             [
-                "risk", "quantify",
-                "--method", "open-fair",
-                "--scenarios", str(scenarios),
+                "risk",
+                "quantify",
+                "--method",
+                "open-fair",
+                "--scenarios",
+                str(scenarios),
             ],
         )
         assert result.exit_code == 0, result.output
@@ -57,28 +58,28 @@ class TestQuantify:
         assert "Credential stuffing" in result.output
         assert "Ransomware" in result.output
 
-    def test_quantify_to_file(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_quantify_to_file(self, runner: CliRunner, tmp_path: Path) -> None:
         scenarios = tmp_path / "scenarios.yaml"
         _write(scenarios, _SAMPLE_SCENARIOS)
         out = tmp_path / "report.md"
         result = runner.invoke(
             app,
             [
-                "risk", "quantify",
-                "--method", "open-fair",
-                "--scenarios", str(scenarios),
-                "--output", str(out),
+                "risk",
+                "quantify",
+                "--method",
+                "open-fair",
+                "--scenarios",
+                str(scenarios),
+                "--output",
+                str(out),
             ],
         )
         assert result.exit_code == 0
         body = out.read_text(encoding="utf-8")
         assert "FAIR Risk Quantification Report" in body
 
-    def test_unknown_method_errors(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_unknown_method_errors(self, runner: CliRunner, tmp_path: Path) -> None:
         """v0.7.12: 'fair-mc' is now a valid method (Monte Carlo). Test
         that a truly unknown method still errors."""
         scenarios = tmp_path / "scenarios.yaml"
@@ -86,17 +87,18 @@ class TestQuantify:
         result = runner.invoke(
             app,
             [
-                "risk", "quantify",
-                "--method", "monte-carlo-old-name",
-                "--scenarios", str(scenarios),
+                "risk",
+                "quantify",
+                "--method",
+                "monte-carlo-old-name",
+                "--scenarios",
+                str(scenarios),
             ],
         )
         assert result.exit_code == 1
         assert "must be 'open-fair' or 'fair-mc'" in result.output
 
-    def test_fair_mc_method_runs_simulation(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_fair_mc_method_runs_simulation(self, runner: CliRunner, tmp_path: Path) -> None:
         """v0.7.12 P1.5 G4.1: --method fair-mc runs Monte Carlo +
         renders a report containing P10/P50/P90 percentiles."""
         scenarios = tmp_path / "scenarios.yaml"
@@ -104,11 +106,16 @@ class TestQuantify:
         result = runner.invoke(
             app,
             [
-                "risk", "quantify",
-                "--method", "fair-mc",
-                "--scenarios", str(scenarios),
-                "--iterations", "200",
-                "--seed", "42",
+                "risk",
+                "quantify",
+                "--method",
+                "fair-mc",
+                "--scenarios",
+                str(scenarios),
+                "--iterations",
+                "200",
+                "--seed",
+                "42",
             ],
         )
         assert result.exit_code == 0, f"stderr: {result.output}"
@@ -117,9 +124,7 @@ class TestQuantify:
         assert "P50" in result.output
         assert "P90" in result.output
 
-    def test_fair_mc_csv_export(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_fair_mc_csv_export(self, runner: CliRunner, tmp_path: Path) -> None:
         """v0.7.12 P1.5 G4.1: --csv writes per-iteration ALE samples."""
         scenarios = tmp_path / "scenarios.yaml"
         _write(scenarios, _SAMPLE_SCENARIOS)
@@ -127,12 +132,18 @@ class TestQuantify:
         result = runner.invoke(
             app,
             [
-                "risk", "quantify",
-                "--method", "fair-mc",
-                "--scenarios", str(scenarios),
-                "--iterations", "100",
-                "--seed", "42",
-                "--csv", str(csv_out),
+                "risk",
+                "quantify",
+                "--method",
+                "fair-mc",
+                "--scenarios",
+                str(scenarios),
+                "--iterations",
+                "100",
+                "--seed",
+                "42",
+                "--csv",
+                str(csv_out),
             ],
         )
         assert result.exit_code == 0
@@ -142,55 +153,61 @@ class TestQuantify:
         # 1 header + (scenarios * 100) data rows
         assert len(rows) > 1
 
-    def test_invalid_yaml_errors(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_invalid_yaml_errors(self, runner: CliRunner, tmp_path: Path) -> None:
         scenarios = tmp_path / "broken.yaml"
         scenarios.write_text("{key: [value\n\t}", encoding="utf-8")
         result = runner.invoke(
             app,
             [
-                "risk", "quantify",
-                "--method", "open-fair",
-                "--scenarios", str(scenarios),
+                "risk",
+                "quantify",
+                "--method",
+                "open-fair",
+                "--scenarios",
+                str(scenarios),
             ],
         )
         assert result.exit_code == 1
         assert "not valid" in result.output.lower()
 
-    def test_top_level_must_be_list(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_top_level_must_be_list(self, runner: CliRunner, tmp_path: Path) -> None:
         scenarios = tmp_path / "scalar.yaml"
         scenarios.write_text("not_a_list: true\n", encoding="utf-8")
         result = runner.invoke(
             app,
             [
-                "risk", "quantify",
-                "--method", "open-fair",
-                "--scenarios", str(scenarios),
+                "risk",
+                "quantify",
+                "--method",
+                "open-fair",
+                "--scenarios",
+                str(scenarios),
             ],
         )
         assert result.exit_code == 1
         assert "list of scenario records" in result.output
 
-    def test_invalid_scenario_validation_errors(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_invalid_scenario_validation_errors(self, runner: CliRunner, tmp_path: Path) -> None:
         scenarios = tmp_path / "bad.yaml"
-        _write(scenarios, """
+        _write(
+            scenarios,
+            """
             - name: x
               description: x
               tef: -1
               vulnerability: 0.5
               primary_loss: 1000
-        """)
+        """,
+        )
         result = runner.invoke(
             app,
             [
-                "risk", "quantify",
-                "--method", "open-fair",
-                "--scenarios", str(scenarios),
+                "risk",
+                "quantify",
+                "--method",
+                "open-fair",
+                "--scenarios",
+                str(scenarios),
             ],
         )
         # Negative TEF — Pydantic would normally accept (no constraint
@@ -200,17 +217,18 @@ class TestQuantify:
         # or fails cleanly.
         assert result.exit_code in (0, 1)
 
-    def test_empty_yaml(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_empty_yaml(self, runner: CliRunner, tmp_path: Path) -> None:
         scenarios = tmp_path / "empty.yaml"
         scenarios.write_text("", encoding="utf-8")
         result = runner.invoke(
             app,
             [
-                "risk", "quantify",
-                "--method", "open-fair",
-                "--scenarios", str(scenarios),
+                "risk",
+                "quantify",
+                "--method",
+                "open-fair",
+                "--scenarios",
+                str(scenarios),
             ],
         )
         assert result.exit_code == 0

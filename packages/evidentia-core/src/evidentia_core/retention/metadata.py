@@ -42,16 +42,16 @@ class RetentionClassification(str, Enum):
     policy via the explicit ``retention_period_days`` field.
     """
 
-    SEC_17A_4 = "sec-17a-4"        # 6 years (broker-dealer)
-    FINRA_3110 = "finra-3110"      # 6 years
-    IRS_TAX = "irs-tax"            # 7 years
-    SOX_404 = "sox-404"            # 7 years
-    HIPAA = "hipaa"                # 6 years
-    GLBA = "glba"                  # 5 years
-    PCI_DSS = "pci-dss"            # 1 year
-    MODEL_RISK = "model-risk"      # life + 7 years
-    GDPR = "gdpr"                  # purpose-limited (default 0)
-    GENERIC = "generic"            # operator-defined
+    SEC_17A_4 = "sec-17a-4"  # 6 years (broker-dealer)
+    FINRA_3110 = "finra-3110"  # 6 years
+    IRS_TAX = "irs-tax"  # 7 years
+    SOX_404 = "sox-404"  # 7 years
+    HIPAA = "hipaa"  # 6 years
+    GLBA = "glba"  # 5 years
+    PCI_DSS = "pci-dss"  # 1 year
+    MODEL_RISK = "model-risk"  # life + 7 years
+    GDPR = "gdpr"  # purpose-limited (default 0)
+    GENERIC = "generic"  # operator-defined
 
 
 _DEFAULT_RETENTION_DAYS: dict[str, int] = {
@@ -63,18 +63,14 @@ _DEFAULT_RETENTION_DAYS: dict[str, int] = {
     "glba": 5 * 365,
     "pci-dss": 365,
     "model-risk": 7 * 365,
-    "gdpr": 0,        # purpose-limited; operator must set explicitly
+    "gdpr": 0,  # purpose-limited; operator must set explicitly
     "generic": 7 * 365,  # safe default
 }
 
 
 def default_retention_days(classification: RetentionClassification | str) -> int:
     """Return the canonical default retention period in days for a class."""
-    value = (
-        classification.value
-        if isinstance(classification, RetentionClassification)
-        else classification
-    )
+    value = classification.value if isinstance(classification, RetentionClassification) else classification
     return _DEFAULT_RETENTION_DAYS.get(value, 7 * 365)
 
 
@@ -107,15 +103,9 @@ class RetentionPolicy(EvidentiaModel):
     name in :class:`RetentionMetadata`.
     """
 
-    name: str = Field(
-        description="Policy name (kebab-case canonical form)."
-    )
-    description: str = Field(
-        description="What records this policy applies to + why."
-    )
-    classification: RetentionClassification = Field(
-        description="Regulator-aligned classification."
-    )
+    name: str = Field(description="Policy name (kebab-case canonical form).")
+    description: str = Field(description="What records this policy applies to + why.")
+    classification: RetentionClassification = Field(description="Regulator-aligned classification.")
     retention_period_days: int = Field(
         ge=0,
         description=(
@@ -151,8 +141,7 @@ class RetentionMetadata(EvidentiaModel):
     retention_period_days: int = Field(
         ge=0,
         description=(
-            "Retention period in calendar days from `created_at`. "
-            "Operator may override the per-classification default."
+            "Retention period in calendar days from `created_at`. Operator may override the per-classification default."
         ),
     )
     lifecycle_stage: RetentionLifecycleStage = Field(
@@ -162,8 +151,7 @@ class RetentionMetadata(EvidentiaModel):
     legal_hold: bool = Field(
         default=False,
         description=(
-            "True = under legal hold; record cannot transition to "
-            "EXPIRED or PURGED regardless of retention period."
+            "True = under legal hold; record cannot transition to EXPIRED or PURGED regardless of retention period."
         ),
     )
     lock_until: date | None = Field(
@@ -204,9 +192,7 @@ class RetentionMetadata(EvidentiaModel):
         """Compute `lock_until` from `created_at + retention_period_days`
         when not explicitly set by the operator."""
         if self.lock_until is None and self.retention_period_days > 0:
-            target = self.created_at.date() + timedelta(
-                days=self.retention_period_days
-            )
+            target = self.created_at.date() + timedelta(days=self.retention_period_days)
             object.__setattr__(self, "lock_until", target)
         return self
 
@@ -227,9 +213,7 @@ def is_locked(metadata: RetentionMetadata, today: date | None = None) -> bool:
     """
     if metadata.legal_hold:
         return True
-    if metadata.lifecycle_stage in (
-        RetentionLifecycleStage.PURGED.value,
-    ):
+    if metadata.lifecycle_stage in (RetentionLifecycleStage.PURGED.value,):
         return False
     today = today or date.today()
     if metadata.lock_until is None:
@@ -285,9 +269,7 @@ def transition_lifecycle(
     current = metadata.lifecycle_stage
     new_value = new_stage.value
     if current == RetentionLifecycleStage.PURGED.value:
-        raise RetentionTransitionError(
-            "PURGED is terminal — cannot transition out of it."
-        )
+        raise RetentionTransitionError("PURGED is terminal — cannot transition out of it.")
     if new_value == current:
         return metadata.model_copy(update={"updated_at": utc_now()})
 
@@ -299,15 +281,9 @@ def transition_lifecycle(
     # force_gdpr_purge override path permits ACTIVE → EXPIRED for
     # these records ONLY (legal_hold still trumps).
     is_gdpr_purpose_limited = metadata.retention_period_days == 0
-    can_expire_gdpr = (
-        force_gdpr_purge
-        and is_gdpr_purpose_limited
-        and not metadata.legal_hold
-    )
+    can_expire_gdpr = force_gdpr_purge and is_gdpr_purpose_limited and not metadata.legal_hold
     can_expire = (
-        not metadata.legal_hold
-        and metadata.lock_until is not None
-        and today >= metadata.lock_until
+        not metadata.legal_hold and metadata.lock_until is not None and today >= metadata.lock_until
     ) or can_expire_gdpr
 
     valid_transitions = {
@@ -326,23 +302,17 @@ def transition_lifecycle(
     allowed_for_current = valid_transitions.get(current, {})
     if new_value not in allowed_for_current:
         raise RetentionTransitionError(
-            f"Illegal transition: {current} → {new_value}. "
-            f"Valid from {current}: {sorted(allowed_for_current.keys())}"
+            f"Illegal transition: {current} → {new_value}. Valid from {current}: {sorted(allowed_for_current.keys())}"
         )
     if not allowed_for_current[new_value]:
         # Transition is in the table but pre-conditions fail
         if metadata.legal_hold:
             reason = "legal_hold is True"
         elif metadata.lock_until is not None and today < metadata.lock_until:
-            reason = (
-                f"still inside retention window (lock_until="
-                f"{metadata.lock_until}; today={today})"
-            )
+            reason = f"still inside retention window (lock_until={metadata.lock_until}; today={today})"
         else:
             reason = "pre-condition not met"
-        raise RetentionTransitionError(
-            f"Cannot transition {current} → {new_value}: {reason}"
-        )
+        raise RetentionTransitionError(f"Cannot transition {current} → {new_value}: {reason}")
     return metadata.model_copy(
         update={
             "lifecycle_stage": new_stage.value,
@@ -422,34 +392,23 @@ def generate_retention_report(
         for cls in sorted(cls_counts.keys()):
             rows.append(f"| {cls} | {cls_counts[cls]} |")
         sections.append(
-            "## Per-classification distribution\n\n"
-            "| Classification | Count |\n"
-            "| --- | --- |\n"
-            + "\n".join(rows)
-            + "\n"
+            "## Per-classification distribution\n\n| Classification | Count |\n| --- | --- |\n" + "\n".join(rows) + "\n"
         )
 
     # ── §3 Records eligible for purge ────────────────────────────
     eligible = [
-        m
-        for m in metadata_list
-        if m.lifecycle_stage == RetentionLifecycleStage.EXPIRED.value
-        and not m.legal_hold
+        m for m in metadata_list if m.lifecycle_stage == RetentionLifecycleStage.EXPIRED.value and not m.legal_hold
     ]
     if eligible:
         rows = []
         for m in sorted(eligible, key=lambda x: x.id):
             pointer = m.record_pointer or "_no pointer_"
             lock_until = m.lock_until.isoformat() if m.lock_until else "—"
-            rows.append(
-                f"| `{m.id[:8]}` | {m.classification} | {pointer} | {lock_until} |"
-            )
+            rows.append(f"| `{m.id[:8]}` | {m.classification} | {pointer} | {lock_until} |")
         sections.append(
             "## Records eligible for purge\n\n"
             "| ID | Classification | Pointer | Lock-until |\n"
-            "| --- | --- | --- | --- |\n"
-            + "\n".join(rows)
-            + "\n"
+            "| --- | --- | --- | --- |\n" + "\n".join(rows) + "\n"
         )
 
     # ── §4 Records under legal hold ──────────────────────────────
@@ -462,9 +421,7 @@ def generate_retention_report(
         sections.append(
             "## Records under legal hold\n\n"
             "| ID | Classification | Notes |\n"
-            "| --- | --- | --- |\n"
-            + "\n".join(rows)
-            + "\n"
+            "| --- | --- | --- |\n" + "\n".join(rows) + "\n"
         )
 
     return "\n".join(sections)

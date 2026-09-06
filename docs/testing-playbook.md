@@ -15,6 +15,7 @@ Run before every commit:
 ```bash
 uv sync --all-extras --all-packages   # incl. sigstore + trestle dev-deps
 uv run --no-sync ruff check                   # lint — ENFORCED in CI
+uv run --no-sync ruff format --check .        # formatting, ENFORCED in CI + pre-push
 uv run --no-sync python -m mypy packages/evidentia-core packages/evidentia-collectors packages/evidentia-api packages/evidentia-ai packages/evidentia-integrations packages/evidentia
 uv run --no-sync python -m pytest -q --no-header
 ```
@@ -23,11 +24,14 @@ Expected: ruff lint clean, mypy clean, 849 tests passing (8 skipped,
 16 benign Tier-C placeholder catalog warnings) in ~12 seconds on a
 warm checkout.
 
-`ruff format` is recommended on new code but not enforced in CI as
-of v0.7.0 — much of the pre-existing codebase predates the current
-ruff format config. Format-the-world is tracked as a v0.8.0 cleanup
-task. For new code, run `uv run --no-sync ruff format <files>` before
-committing.
+The whole repository has been `ruff format` clean since the v0.13 cycle:
+one dedicated commit applied the formatter to the 500 files that still
+carried hand-wrapped lines, and `ruff format --check .` now reports
+nothing to change. Run `uv run --no-sync ruff format .` before
+committing so it stays that way. Ruff 0.16 also formats Python code
+fences inside Markdown, so the check covers `docs/` as well. Both
+`ruff check` and `ruff format --check .` are gated in CI (the `ruff`
+job) and by the pre-push hook (`check_ruff` and `check_ruff_format`).
 
 ## Pre-release smoke test sequence
 
@@ -41,8 +45,8 @@ Run after the last commit before tagging. This is the operationalized
 uv run --no-sync ruff check
 uv run --no-sync python -m mypy packages/evidentia-core packages/evidentia-collectors packages/evidentia-api packages/evidentia-ai packages/evidentia-integrations packages/evidentia
 
-# Format new files only (not the whole repo — pre-existing format debt)
-uv run --no-sync ruff format <only-files-touched-this-release>
+# Formatting (whole repo; format-clean since v0.13)
+uv run --no-sync ruff format --check .
 
 # Tests with coverage
 uv run --no-sync python -m pytest -q --cov=packages
@@ -54,7 +58,7 @@ uv build --all-packages
 uvx twine check dist/*
 ```
 
-Acceptance: zero ruff errors, zero mypy errors, all tests passing,
+Acceptance: zero ruff errors, zero files to reformat, zero mypy errors, all tests passing,
 all 6 wheels produced (no `shim-*` wheels), twine check ✅ on all
 distributions.
 

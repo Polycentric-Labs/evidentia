@@ -61,10 +61,7 @@ _log = get_logger("evidentia.api.traceability")
     "/traceability/emit",
     responses=error_responses(
         {
-            400: (
-                "Schema-valid matrix with no mappings — nothing to "
-                "emit (``error: invalid_body``)."
-            ),
+            400: ("Schema-valid matrix with no mappings — nothing to emit (``error: invalid_body``)."),
         }
     ),
 )

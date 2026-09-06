@@ -172,7 +172,7 @@ class TestDeriveAttentionState:
     def test_due_soon_bucket_catches_within_7_days(self) -> None:
         today = date(2026, 5, 8)
         soon = _ms(date(2026, 5, 12))  # 4 days
-        far = _ms(date(2026, 6, 30))   # outside 7-day window
+        far = _ms(date(2026, 6, 30))  # outside 7-day window
         result = derive_attention_state([soon, far], today=today)
         assert len(result["due_soon"]) == 1
         assert result["due_soon"][0].target_date == date(2026, 5, 12)

@@ -39,15 +39,12 @@ class InvalidRetentionIdError(ValueError):
 
 def _validate_id_shape(retention_id: str) -> None:
     if not isinstance(retention_id, str) or not retention_id:
-        raise InvalidRetentionIdError(
-            f"Invalid retention ID: empty or non-string: {retention_id!r}"
-        )
+        raise InvalidRetentionIdError(f"Invalid retention ID: empty or non-string: {retention_id!r}")
     try:
         UUID(retention_id)
     except (ValueError, AttributeError, TypeError) as e:
         raise InvalidRetentionIdError(
-            f"Invalid retention ID: not a UUID-shaped string: "
-            f"{retention_id!r} ({type(e).__name__}: {e})"
+            f"Invalid retention ID: not a UUID-shaped string: {retention_id!r} ({type(e).__name__}: {e})"
         ) from e
 
 
@@ -63,9 +60,7 @@ def get_retention_store_dir(override: Path | None = None) -> Path:
     return Path(user_data_dir("evidentia", appauthor=False)) / "retention_store"
 
 
-def save_retention(
-    metadata: RetentionMetadata, *, override: Path | None = None
-) -> Path:
+def save_retention(metadata: RetentionMetadata, *, override: Path | None = None) -> Path:
     """Persist retention metadata. Atomic via os.replace."""
     _validate_id_shape(metadata.id)
     store_dir = get_retention_store_dir(override)
@@ -78,9 +73,7 @@ def save_retention(
     try:
         out_path = validate_within(candidate, store_dir)
     except PathTraversalError as e:
-        raise InvalidRetentionIdError(
-            f"Invalid retention ID: path-traversal violation: {metadata.id!r}"
-        ) from e
+        raise InvalidRetentionIdError(f"Invalid retention ID: path-traversal violation: {metadata.id!r}") from e
     tmp_path = store_dir / f"{metadata.id}.json.tmp"
     tmp_path.write_text(payload, encoding="utf-8")
     os.replace(tmp_path, out_path)
@@ -88,9 +81,7 @@ def save_retention(
     return out_path
 
 
-def load_retention_by_id(
-    retention_id: str, *, override: Path | None = None
-) -> RetentionMetadata | None:
+def load_retention_by_id(retention_id: str, *, override: Path | None = None) -> RetentionMetadata | None:
     """Load retention metadata by ID."""
     _validate_id_shape(retention_id)
     store_dir = get_retention_store_dir(override)
@@ -98,19 +89,13 @@ def load_retention_by_id(
     try:
         path = validate_within(candidate, store_dir)
     except PathTraversalError as e:
-        raise InvalidRetentionIdError(
-            f"Invalid retention ID: path-traversal violation: {retention_id!r}"
-        ) from e
+        raise InvalidRetentionIdError(f"Invalid retention ID: path-traversal violation: {retention_id!r}") from e
     if not path.exists():
         return None
-    return RetentionMetadata.model_validate_json(
-        path.read_text(encoding="utf-8")
-    )
+    return RetentionMetadata.model_validate_json(path.read_text(encoding="utf-8"))
 
 
-def list_retention(
-    *, override: Path | None = None
-) -> list[RetentionMetadata]:
+def list_retention(*, override: Path | None = None) -> list[RetentionMetadata]:
     """List all retention records sorted by classification then created_at."""
     store_dir = get_retention_store_dir(override)
     if not store_dir.exists():
@@ -120,23 +105,15 @@ def list_retention(
         if path.name.endswith(".tmp"):
             continue
         try:
-            items.append(
-                RetentionMetadata.model_validate_json(
-                    path.read_text(encoding="utf-8")
-                )
-            )
+            items.append(RetentionMetadata.model_validate_json(path.read_text(encoding="utf-8")))
         except Exception as e:
-            logger.warning(
-                "Skipping malformed retention file %s: %s", path, e
-            )
+            logger.warning("Skipping malformed retention file %s: %s", path, e)
             continue
     items.sort(key=lambda m: (m.classification, m.created_at))
     return items
 
 
-def delete_retention(
-    retention_id: str, *, override: Path | None = None
-) -> bool:
+def delete_retention(retention_id: str, *, override: Path | None = None) -> bool:
     """Delete a retention metadata record. Returns True if removed."""
     _validate_id_shape(retention_id)
     store_dir = get_retention_store_dir(override)
@@ -144,9 +121,7 @@ def delete_retention(
     try:
         path = validate_within(candidate, store_dir)
     except PathTraversalError as e:
-        raise InvalidRetentionIdError(
-            f"Invalid retention ID: path-traversal violation: {retention_id!r}"
-        ) from e
+        raise InvalidRetentionIdError(f"Invalid retention ID: path-traversal violation: {retention_id!r}") from e
     if not path.exists():
         return False
     path.unlink()

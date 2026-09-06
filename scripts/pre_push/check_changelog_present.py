@@ -93,9 +93,7 @@ def project_version(pyproject_text: str) -> str | None:
     return None
 
 
-def _changed_pyprojects(
-    base: str, tip: str, repo_root: Path
-) -> list[str]:
+def _changed_pyprojects(base: str, tip: str, repo_root: Path) -> list[str]:
     """Return repo-relative paths of pyproject.toml files changed in range."""
     proc = _run_git(
         ["diff", "--name-only", "--diff-filter=ACMR", base, tip],
@@ -119,9 +117,7 @@ def _git_show(rev: str, path: str, repo_root: Path) -> str | None:
     return proc.stdout
 
 
-def bumped_versions(
-    base: str, tip: str, repo_root: Path
-) -> set[str]:
+def bumped_versions(base: str, tip: str, repo_root: Path) -> set[str]:
     """Return the set of NEW versions introduced by a bump in the range.
 
     For each pyproject.toml changed between ``base`` and ``tip``, compares
@@ -147,9 +143,7 @@ def bumped_versions(
     return new_versions
 
 
-def resolve_range(
-    base_arg: str | None, tip_arg: str | None, repo_root: Path
-) -> tuple[str, str] | None:
+def resolve_range(base_arg: str | None, tip_arg: str | None, repo_root: Path) -> tuple[str, str] | None:
     """Resolve the (base, tip) commit range to diff for bumps.
 
     Returns None when there is no usable range (caller should SKIP).
@@ -160,8 +154,7 @@ def resolve_range(
     if (
         base_arg
         and base_arg != ZERO_SHA
-        and _run_git(["rev-parse", "--verify", "--quiet", f"{base_arg}^{{commit}}"], repo_root).returncode
-        == 0
+        and _run_git(["rev-parse", "--verify", "--quiet", f"{base_arg}^{{commit}}"], repo_root).returncode == 0
     ):
         return (base_arg, tip)
 

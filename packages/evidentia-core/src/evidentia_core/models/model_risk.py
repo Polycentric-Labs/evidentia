@@ -148,9 +148,7 @@ class ModelInput(EvidentiaModel):
     from the inventory rather than being authored from scratch.
     """
 
-    name: str = Field(
-        description="Human-readable input name (e.g., 'FICO score', 'transaction history')."
-    )
+    name: str = Field(description="Human-readable input name (e.g., 'FICO score', 'transaction history').")
     source_system: str = Field(
         description=(
             "Upstream source system identifier (e.g., 'snowflake-prod-warehouse', "
@@ -189,9 +187,7 @@ class ModelOutput(EvidentiaModel):
     downstream consumer + decision type.
     """
 
-    name: str = Field(
-        description="Output / decision name (e.g., 'loan approval probability', 'fraud score')."
-    )
+    name: str = Field(description="Output / decision name (e.g., 'loan approval probability', 'fraud score').")
     decision_type: str = Field(
         description=(
             "Type of decision the output drives (e.g., 'binary classification', "
@@ -220,19 +216,14 @@ class ValidationFinding(EvidentiaModel):
 
     id: str = Field(default_factory=new_id)
     title: str = Field(description="Short summary of the finding.")
-    description: str = Field(
-        description="Full finding description with reproduction steps."
-    )
+    description: str = Field(description="Full finding description with reproduction steps.")
     severity: ValidationSeverity
     status: ValidationStatus = Field(default=ValidationStatus.OPEN)
-    detected_at: date = Field(
-        description="Date the finding was first detected during validation."
-    )
+    detected_at: date = Field(description="Date the finding was first detected during validation.")
     remediation_plan: str | None = Field(
         default=None,
         description=(
-            "Operator's documented remediation plan. None = no plan yet "
-            "(typically for newly-detected findings)."
+            "Operator's documented remediation plan. None = no plan yet (typically for newly-detected findings)."
         ),
     )
     remediation_due_date: date | None = Field(
@@ -241,10 +232,7 @@ class ValidationFinding(EvidentiaModel):
     )
     remediated_at: date | None = Field(
         default=None,
-        description=(
-            "Actual remediation completion date. None unless status is "
-            "REMEDIATED."
-        ),
+        description=("Actual remediation completion date. None unless status is REMEDIATED."),
     )
 
 
@@ -287,9 +275,7 @@ class ModelInventory(EvidentiaModel):
         ),
     )
     tier: Tier
-    owner: str = Field(
-        description="Internal model owner (email or LDAP identifier)."
-    )
+    owner: str = Field(description="Internal model owner (email or LDAP identifier).")
     inputs: list[ModelInput] = Field(
         default_factory=list,
         description="Data sources feeding the model (SR 11-7 §III.A.2).",
@@ -355,21 +341,13 @@ class ModelInventory(EvidentiaModel):
         provenance model without `vendor_id=...` would otherwise
         silently violate the cross-link contract.
         """
-        if (
-            self.vendor_or_internal == Provenance.VENDOR
-            and not self.vendor_id
-        ):
+        if self.vendor_or_internal == Provenance.VENDOR and not self.vendor_id:
             raise ValueError(
-                "vendor-provenance models must set `vendor_id` to "
-                "cross-link the TPRM Vendor inventory record"
+                "vendor-provenance models must set `vendor_id` to cross-link the TPRM Vendor inventory record"
             )
-        if (
-            self.vendor_or_internal == Provenance.INTERNAL
-            and self.vendor_id
-        ):
+        if self.vendor_or_internal == Provenance.INTERNAL and self.vendor_id:
             raise ValueError(
-                "internal-provenance models must not set `vendor_id` "
-                "(it has no meaning for internal models)"
+                "internal-provenance models must not set `vendor_id` (it has no meaning for internal models)"
             )
         return self
 

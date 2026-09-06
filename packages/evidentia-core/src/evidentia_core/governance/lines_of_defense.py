@@ -128,33 +128,22 @@ def generate_lines_report(owners: list[Owner]) -> str:
     for line in (LineOfDefense.FIRST, LineOfDefense.SECOND, LineOfDefense.THIRD):
         n = counts.get(line.value, 0)
         pct = (n / total * 100.0) if total else 0.0
-        line_rows.append(
-            f"| {line.value} | {n} | {pct:.1f}% |"
-        )
+        line_rows.append(f"| {line.value} | {n} | {pct:.1f}% |")
     sections.append(
         "# Three Lines of Defense Distribution\n\n"
         f"_IIA Three Lines Model 2020 distribution across "
         f"{total} classified owners._\n\n"
         "| Line | Count | Share |\n"
-        "| --- | --- | --- |\n"
-        + "\n".join(line_rows)
-        + f"\n| **Total** | **{total}** | 100.0% |\n"
+        "| --- | --- | --- |\n" + "\n".join(line_rows) + f"\n| **Total** | **{total}** | 100.0% |\n"
     )
 
     # ── §2 Crossover warning ─────────────────────────────────────
     by_email: defaultdict[str, set[str]] = defaultdict(set)
     for o in owners:
         by_email[str(o.email)].add(str(o.line_of_defense))
-    crossover = sorted(
-        (email, sorted(lines))
-        for email, lines in by_email.items()
-        if len(lines) > 1
-    )
+    crossover = sorted((email, sorted(lines)) for email, lines in by_email.items() if len(lines) > 1)
     if crossover:
-        crossover_rows = "\n".join(
-            f"| {email} | {' / '.join(lines)} |"
-            for email, lines in crossover
-        )
+        crossover_rows = "\n".join(f"| {email} | {' / '.join(lines)} |" for email, lines in crossover)
         sections.append(
             "## 3LOD crossover warning\n\n"
             f"> ⚠️ **{len(crossover)} owner(s) classified across "
@@ -178,24 +167,15 @@ def generate_lines_report(owners: list[Owner]) -> str:
             key=lambda o: str(o.email),
         )
         if not line_owners:
-            sections.append(
-                f"## {line.value.capitalize()} line\n\n"
-                "_No owners classified to this line._\n"
-            )
+            sections.append(f"## {line.value.capitalize()} line\n\n_No owners classified to this line._\n")
             continue
         rows = []
         for o in line_owners:
-            rows.append(
-                f"| {o.email} | "
-                f"{o.team if o.team else '_—_'} | "
-                f"{o.title if o.title else '_—_'} |"
-            )
+            rows.append(f"| {o.email} | {o.team if o.team else '_—_'} | {o.title if o.title else '_—_'} |")
         sections.append(
             f"## {line.value.capitalize()} line\n\n"
             "| Email | Team | Title |\n"
-            "| --- | --- | --- |\n"
-            + "\n".join(rows)
-            + "\n"
+            "| --- | --- | --- |\n" + "\n".join(rows) + "\n"
         )
 
     # ── §4 Per-team breakdown ────────────────────────────────────
@@ -211,9 +191,7 @@ def generate_lines_report(owners: list[Owner]) -> str:
         sections.append(
             "## Team participation across lines\n\n"
             "| Team | Lines participating |\n"
-            "| --- | --- |\n"
-            + "\n".join(team_rows)
-            + "\n"
+            "| --- | --- |\n" + "\n".join(team_rows) + "\n"
         )
 
     return "\n".join(sections)

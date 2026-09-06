@@ -126,17 +126,14 @@ def sign_file(
     """
     if not gpg_available():
         raise GPGNotAvailableError(
-            "`gpg` binary not found on PATH. "
-            "Install GnuPG (https://gnupg.org/) to sign OSCAL AR exports."
+            "`gpg` binary not found on PATH. Install GnuPG (https://gnupg.org/) to sign OSCAL AR exports."
         )
 
     artifact = Path(artifact_path).resolve()
     if not artifact.is_file():
         raise GPGSigningError(f"Artifact not found: {artifact}")
 
-    sig_path = Path(signature_path) if signature_path else artifact.with_suffix(
-        artifact.suffix + ".asc"
-    )
+    sig_path = Path(signature_path) if signature_path else artifact.with_suffix(artifact.suffix + ".asc")
 
     # ``--batch --yes`` prevents interactive prompts so this function is
     # safe to call from CI. ``--detach-sign --armor`` produces the ASCII
@@ -158,9 +155,7 @@ def sign_file(
     logger.debug("gpg sign cmd: %s (GNUPGHOME=%s)", " ".join(cmd), env.get("GNUPGHOME"))
 
     try:
-        result = subprocess.run(
-            cmd, check=False, capture_output=True, text=True, env=env or None
-        )
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True, env=env or None)
     except FileNotFoundError as e:  # pragma: no cover — gpg_available() checked
         raise GPGNotAvailableError(str(e)) from e
 
@@ -176,10 +171,7 @@ def sign_file(
                 "stderr": result.stderr.strip()[:500],  # truncate for log size
             },
         )
-        raise GPGSigningError(
-            f"gpg --detach-sign failed (exit {result.returncode}): "
-            f"{result.stderr.strip()}"
-        )
+        raise GPGSigningError(f"gpg --detach-sign failed (exit {result.returncode}): {result.stderr.strip()}")
 
     _log.info(
         action=EventAction.SIGN_GPG_SIGNED,
@@ -225,17 +217,14 @@ def verify_file(
     """
     if not gpg_available():
         raise GPGNotAvailableError(
-            "`gpg` binary not found on PATH. "
-            "Install GnuPG (https://gnupg.org/) to verify signed OSCAL AR exports."
+            "`gpg` binary not found on PATH. Install GnuPG (https://gnupg.org/) to verify signed OSCAL AR exports."
         )
 
     artifact = Path(artifact_path).resolve()
     if not artifact.is_file():
         raise GPGVerifyError(f"Artifact not found: {artifact}")
 
-    sig_path = Path(signature_path) if signature_path else artifact.with_suffix(
-        artifact.suffix + ".asc"
-    )
+    sig_path = Path(signature_path) if signature_path else artifact.with_suffix(artifact.suffix + ".asc")
     if not sig_path.is_file():
         raise GPGVerifyError(f"Signature not found: {sig_path}")
 
@@ -254,9 +243,7 @@ def verify_file(
     logger.debug("gpg verify cmd: %s", " ".join(cmd))
 
     try:
-        result = subprocess.run(
-            cmd, check=False, capture_output=True, text=True, env=env or None
-        )
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True, env=env or None)
     except FileNotFoundError as e:  # pragma: no cover — gpg_available() checked
         raise GPGNotAvailableError(str(e)) from e
 

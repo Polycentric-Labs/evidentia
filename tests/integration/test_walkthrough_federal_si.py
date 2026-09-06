@@ -26,9 +26,7 @@ import pytest
 from evidentia.cli.main import app
 from typer.testing import CliRunner
 
-WALKTHROUGH_DIR = (
-    Path(__file__).parent.parent / "data" / "walkthrough-federal-si"
-)
+WALKTHROUGH_DIR = Path(__file__).parent.parent / "data" / "walkthrough-federal-si"
 
 
 @pytest.fixture()
@@ -37,9 +35,7 @@ def runner() -> CliRunner:
 
 
 @pytest.fixture()
-def isolated_registry(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def isolated_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     registry_dir = tmp_path / "walkthrough-registry"
     monkeypatch.setenv("EVIDENTIA_AI_REGISTRY_DIR", str(registry_dir))
     return registry_dir
@@ -144,9 +140,7 @@ def test_step4_classify_minimal_risk(runner: CliRunner) -> None:
     assert body["eu_ai_act_tier"] == "minimal"
 
 
-def test_steps5_6_7_register_list_update_retire(
-    runner: CliRunner, isolated_registry: Path
-) -> None:
+def test_steps5_6_7_register_list_update_retire(runner: CliRunner, isolated_registry: Path) -> None:
     """Steps 5-7: register + list + update + retire lifecycle
     end-to-end against the walk-through fixtures."""
     # Step 5: register
@@ -171,9 +165,7 @@ def test_steps5_6_7_register_list_update_retire(
     system_id = match.group(1)
 
     # Step 6: list with tier=high filter — should contain our entry
-    list_result = runner.invoke(
-        app, ["ai-gov", "list", "--tier", "high", "--json"]
-    )
+    list_result = runner.invoke(app, ["ai-gov", "list", "--tier", "high", "--json"])
     assert list_result.exit_code == 0
     listing = json.loads(list_result.output)
     assert any(e["system_id"] == system_id for e in listing)
@@ -192,15 +184,11 @@ def test_steps5_6_7_register_list_update_retire(
     assert update_result.exit_code == 0
 
     # Step 7b: retire (preserves entry)
-    retire_result = runner.invoke(
-        app, ["ai-gov", "retire", system_id]
-    )
+    retire_result = runner.invoke(app, ["ai-gov", "retire", system_id])
     assert retire_result.exit_code == 0
 
     # Verify retired status persisted.
-    show_result = runner.invoke(
-        app, ["ai-gov", "show", system_id, "--json"]
-    )
+    show_result = runner.invoke(app, ["ai-gov", "show", system_id, "--json"])
     assert show_result.exit_code == 0
     body = json.loads(show_result.output)
     assert body["deployment_status"] == "retired"

@@ -304,11 +304,7 @@ class EvidenceBundle(EvidentiaModel):
 
     @property
     def sufficient_count(self) -> int:
-        return sum(
-            1
-            for a in self.artifacts
-            if a.sufficiency == EvidenceSufficiency.SUFFICIENT.value
-        )
+        return sum(1 for a in self.artifacts if a.sufficiency == EvidenceSufficiency.SUFFICIENT.value)
 
     @property
     def stale_count(self) -> int:

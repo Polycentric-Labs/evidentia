@@ -41,24 +41,16 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture
-def gov_client(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Iterator[TestClient]:
+def gov_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     """A TestClient over a local app holding ONLY the governance router.
 
     Each of the three governance stores is redirected to an isolated
     tmp subdirectory so saved records never touch the developer's real
     user-data dir or leak across tests.
     """
-    monkeypatch.setenv(
-        "EVIDENTIA_CHALLENGE_STORE_DIR", str(tmp_path / "challenge-store")
-    )
-    monkeypatch.setenv(
-        "EVIDENTIA_METRIC_STORE_DIR", str(tmp_path / "metric-store")
-    )
-    monkeypatch.setenv(
-        "EVIDENTIA_WORKFLOW_STORE_DIR", str(tmp_path / "workflow-store")
-    )
+    monkeypatch.setenv("EVIDENTIA_CHALLENGE_STORE_DIR", str(tmp_path / "challenge-store"))
+    monkeypatch.setenv("EVIDENTIA_METRIC_STORE_DIR", str(tmp_path / "metric-store"))
+    monkeypatch.setenv("EVIDENTIA_WORKFLOW_STORE_DIR", str(tmp_path / "workflow-store"))
     from evidentia_api.routers import governance as governance_router
 
     app = FastAPI()
@@ -68,9 +60,7 @@ def gov_client(
 
 
 @pytest.fixture
-def gov_readonly_client(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Iterator[TestClient]:
+def gov_readonly_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     """A governance TestClient under a restrictive read-only RBAC policy.
 
     Identical store isolation to ``gov_client``, but installs a
@@ -80,22 +70,14 @@ def gov_readonly_client(
     gates deny — proving those gates actually bite (they are inert under
     the permissive DEFAULT_POLICY the other tests run with).
     """
-    monkeypatch.setenv(
-        "EVIDENTIA_CHALLENGE_STORE_DIR", str(tmp_path / "challenge-store")
-    )
-    monkeypatch.setenv(
-        "EVIDENTIA_METRIC_STORE_DIR", str(tmp_path / "metric-store")
-    )
-    monkeypatch.setenv(
-        "EVIDENTIA_WORKFLOW_STORE_DIR", str(tmp_path / "workflow-store")
-    )
+    monkeypatch.setenv("EVIDENTIA_CHALLENGE_STORE_DIR", str(tmp_path / "challenge-store"))
+    monkeypatch.setenv("EVIDENTIA_METRIC_STORE_DIR", str(tmp_path / "metric-store"))
+    monkeypatch.setenv("EVIDENTIA_WORKFLOW_STORE_DIR", str(tmp_path / "workflow-store"))
     from evidentia_api.routers import governance as governance_router
 
     app = FastAPI()
     app.include_router(governance_router.router, prefix="/api")
-    app.state.rbac_policy = RBACPolicy(
-        identities={}, default_role=Role.READER
-    )
+    app.state.rbac_policy = RBACPolicy(identities={}, default_role=Role.READER)
     with TestClient(app) as client:
         yield client
 
@@ -212,18 +194,14 @@ def _make_workflow(name: str = "WF") -> Workflow:
 
 class TestCreateChallenge:
     def test_create_returns_201(self, gov_client: TestClient) -> None:
-        r = gov_client.post(
-            "/api/governance/challenges", json=_challenge_payload()
-        )
+        r = gov_client.post("/api/governance/challenges", json=_challenge_payload())
         assert r.status_code == 201, r.text
         body = r.json()
         assert body["id"]
         assert body["challenge_topic"] == "Methodology — feature selection"
         assert body["outcome"] == "pending"
 
-    def test_invalid_outcome_returns_422(
-        self, gov_client: TestClient
-    ) -> None:
+    def test_invalid_outcome_returns_422(self, gov_client: TestClient) -> None:
         r = gov_client.post(
             "/api/governance/challenges",
             json=_challenge_payload(outcome="not-real"),
@@ -246,22 +224,12 @@ class TestListChallenges:
         assert r.json()["total"] == 2
 
     def test_subject_model_id_filter(self, gov_client: TestClient) -> None:
-        save_challenge(
-            _make_challenge(subject_model_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-        )
-        save_challenge(
-            _make_challenge(subject_model_id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
-        )
-        r = gov_client.get(
-            "/api/governance/challenges"
-            "?subject_model_id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
-        )
+        save_challenge(_make_challenge(subject_model_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
+        save_challenge(_make_challenge(subject_model_id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"))
+        r = gov_client.get("/api/governance/challenges?subject_model_id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
         body = r.json()
         assert body["total"] == 1
-        assert (
-            body["items"][0]["subject_model_id"]
-            == "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
-        )
+        assert body["items"][0]["subject_model_id"] == "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 
     def test_outcome_filter(self, gov_client: TestClient) -> None:
         save_challenge(_make_challenge(outcome=ChallengeOutcome.ACCEPTED))
@@ -271,9 +239,7 @@ class TestListChallenges:
         assert body["total"] == 1
         assert body["items"][0]["outcome"] == "accepted"
 
-    def test_invalid_outcome_filter_returns_400(
-        self, gov_client: TestClient
-    ) -> None:
+    def test_invalid_outcome_filter_returns_400(self, gov_client: TestClient) -> None:
         r = gov_client.get("/api/governance/challenges?outcome=bogus")
         assert r.status_code == 400
         detail = r.json()["detail"]
@@ -291,10 +257,7 @@ class TestGetChallenge:
         assert r.json()["id"] == c.id
 
     def test_unknown_returns_404(self, gov_client: TestClient) -> None:
-        r = gov_client.get(
-            "/api/governance/challenges/"
-            "00000000-0000-0000-0000-000000000000"
-        )
+        r = gov_client.get("/api/governance/challenges/00000000-0000-0000-0000-000000000000")
         assert r.status_code == 404
         detail = r.json()["detail"]
         assert detail["error"] == "not_found"
@@ -318,9 +281,7 @@ class TestCreateMetric:
         assert body["id"]
         assert body["name"] == "Failed-login rate"
 
-    def test_create_response_includes_computed_status(
-        self, gov_client: TestClient
-    ) -> None:
+    def test_create_response_includes_computed_status(self, gov_client: TestClient) -> None:
         # Create must splice the computed status alongside the persisted
         # fields, consistent with list / show / observe. A freshly
         # created metric has no observations → status == "no_data".
@@ -330,16 +291,12 @@ class TestCreateMetric:
         assert body["status"] == "no_data"
 
     def test_invalid_kind_returns_422(self, gov_client: TestClient) -> None:
-        r = gov_client.post(
-            "/api/governance/metrics", json=_metric_payload(kind="not-real")
-        )
+        r = gov_client.post("/api/governance/metrics", json=_metric_payload(kind="not-real"))
         assert r.status_code == 422
 
 
 class TestObserveMetric:
-    def test_observe_appends_and_recomputes_status(
-        self, gov_client: TestClient
-    ) -> None:
+    def test_observe_appends_and_recomputes_status(self, gov_client: TestClient) -> None:
         m = _make_metric()
         save_metric(m)
         r = gov_client.post(
@@ -364,12 +321,9 @@ class TestObserveMetric:
         # warn 3.0 <= 4.0 < crit 5.0 → WATCH
         assert body["status"] == "watch"
 
-    def test_observe_unknown_returns_404(
-        self, gov_client: TestClient
-    ) -> None:
+    def test_observe_unknown_returns_404(self, gov_client: TestClient) -> None:
         r = gov_client.post(
-            "/api/governance/metrics/"
-            "00000000-0000-0000-0000-000000000000/observations",
+            "/api/governance/metrics/00000000-0000-0000-0000-000000000000/observations",
             json={"value": 1.0, "observed_at": "2026-05-10"},
         )
         assert r.status_code == 404
@@ -382,13 +336,7 @@ class TestListMetrics:
         assert r.json()["total"] == 0
 
     def test_lists_with_status(self, gov_client: TestClient) -> None:
-        save_metric(
-            _make_metric(
-                observations=[
-                    MetricObservation(observed_at=date(2026, 5, 1), value=6.0)
-                ]
-            )
-        )
+        save_metric(_make_metric(observations=[MetricObservation(observed_at=date(2026, 5, 1), value=6.0)]))
         r = gov_client.get("/api/governance/metrics")
         body = r.json()
         assert body["total"] == 1
@@ -420,13 +368,7 @@ class TestMetricReportOrdering:
     """The static /report path MUST resolve before /{metric_id}."""
 
     def test_report_returns_markdown(self, gov_client: TestClient) -> None:
-        save_metric(
-            _make_metric(
-                observations=[
-                    MetricObservation(observed_at=date(2026, 5, 1), value=6.0)
-                ]
-            )
-        )
+        save_metric(_make_metric(observations=[MetricObservation(observed_at=date(2026, 5, 1), value=6.0)]))
         r = gov_client.get("/api/governance/metrics/report")
         assert r.status_code == 200, r.text
         assert r.headers["content-type"].startswith("text/plain")
@@ -441,11 +383,7 @@ class TestMetricReportOrdering:
 
 class TestGetMetric:
     def test_get_returns_with_status(self, gov_client: TestClient) -> None:
-        m = _make_metric(
-            observations=[
-                MetricObservation(observed_at=date(2026, 5, 1), value=1.0)
-            ]
-        )
+        m = _make_metric(observations=[MetricObservation(observed_at=date(2026, 5, 1), value=1.0)])
         save_metric(m)
         r = gov_client.get(f"/api/governance/metrics/{m.id}")
         assert r.status_code == 200
@@ -455,10 +393,7 @@ class TestGetMetric:
         assert body["status"] == "comfortable"
 
     def test_unknown_returns_404(self, gov_client: TestClient) -> None:
-        r = gov_client.get(
-            "/api/governance/metrics/"
-            "00000000-0000-0000-0000-000000000000"
-        )
+        r = gov_client.get("/api/governance/metrics/00000000-0000-0000-0000-000000000000")
         assert r.status_code == 404
 
     def test_invalid_id_returns_404(self, gov_client: TestClient) -> None:
@@ -475,13 +410,8 @@ class TestDeleteMetric:
         r2 = gov_client.get(f"/api/governance/metrics/{m.id}")
         assert r2.status_code == 404
 
-    def test_delete_unknown_returns_404(
-        self, gov_client: TestClient
-    ) -> None:
-        r = gov_client.delete(
-            "/api/governance/metrics/"
-            "00000000-0000-0000-0000-000000000000"
-        )
+    def test_delete_unknown_returns_404(self, gov_client: TestClient) -> None:
+        r = gov_client.delete("/api/governance/metrics/00000000-0000-0000-0000-000000000000")
         assert r.status_code == 404
 
 
@@ -491,12 +421,8 @@ class TestDeleteMetric:
 
 
 class TestRunWorkflow:
-    def test_run_auto_promotes_and_sets_status(
-        self, gov_client: TestClient
-    ) -> None:
-        r = gov_client.post(
-            "/api/governance/workflows", json=_workflow_payload()
-        )
+    def test_run_auto_promotes_and_sets_status(self, gov_client: TestClient) -> None:
+        r = gov_client.post("/api/governance/workflows", json=_workflow_payload())
         assert r.status_code == 201, r.text
         body = r.json()
         assert body["id"]
@@ -505,9 +431,7 @@ class TestRunWorkflow:
         # evaluate_workflow → IN_PROGRESS once step 0 is active
         assert body["status"] == "in_progress"
 
-    def test_run_invalid_body_returns_422(
-        self, gov_client: TestClient
-    ) -> None:
+    def test_run_invalid_body_returns_422(self, gov_client: TestClient) -> None:
         # missing required 'initiator'
         r = gov_client.post(
             "/api/governance/workflows",
@@ -535,9 +459,7 @@ class TestAdvanceWorkflow:
         # Next step auto-promoted
         assert body["steps"][1]["status"] == "in_progress"
 
-    def test_advance_out_of_order_returns_400(
-        self, gov_client: TestClient
-    ) -> None:
+    def test_advance_out_of_order_returns_400(self, gov_client: TestClient) -> None:
         wf = _make_workflow()
         save_workflow(wf)
         # Step 1 is not the active step (step 0 is) → WorkflowAdvanceError
@@ -554,12 +476,9 @@ class TestAdvanceWorkflow:
         assert detail["error"] == "invalid_body"
         assert "active step" in detail["message"]
 
-    def test_advance_unknown_workflow_returns_404(
-        self, gov_client: TestClient
-    ) -> None:
+    def test_advance_unknown_workflow_returns_404(self, gov_client: TestClient) -> None:
         r = gov_client.post(
-            "/api/governance/workflows/"
-            "00000000-0000-0000-0000-000000000000/advance",
+            "/api/governance/workflows/00000000-0000-0000-0000-000000000000/advance",
             json={
                 "step_index": 0,
                 "new_status": "approved",
@@ -578,10 +497,7 @@ class TestGetWorkflow:
         assert r.json()["id"] == wf.id
 
     def test_unknown_returns_404(self, gov_client: TestClient) -> None:
-        r = gov_client.get(
-            "/api/governance/workflows/"
-            "00000000-0000-0000-0000-000000000000"
-        )
+        r = gov_client.get("/api/governance/workflows/00000000-0000-0000-0000-000000000000")
         assert r.status_code == 404
 
     def test_invalid_id_returns_404(self, gov_client: TestClient) -> None:
@@ -612,10 +528,7 @@ class TestWorkflowLog:
         assert "# Workflow Audit Log" in r.text
 
     def test_log_unknown_returns_404(self, gov_client: TestClient) -> None:
-        r = gov_client.get(
-            "/api/governance/workflows/"
-            "00000000-0000-0000-0000-000000000000/log"
-        )
+        r = gov_client.get("/api/governance/workflows/00000000-0000-0000-0000-000000000000/log")
         assert r.status_code == 404
 
 
@@ -628,13 +541,8 @@ class TestDeleteWorkflow:
         r2 = gov_client.get(f"/api/governance/workflows/{wf.id}")
         assert r2.status_code == 404
 
-    def test_delete_unknown_returns_404(
-        self, gov_client: TestClient
-    ) -> None:
-        r = gov_client.delete(
-            "/api/governance/workflows/"
-            "00000000-0000-0000-0000-000000000000"
-        )
+    def test_delete_unknown_returns_404(self, gov_client: TestClient) -> None:
+        r = gov_client.delete("/api/governance/workflows/00000000-0000-0000-0000-000000000000")
         assert r.status_code == 404
 
 
@@ -644,9 +552,7 @@ class TestDeleteWorkflow:
 
 
 class TestLinesReport:
-    def test_returns_markdown_from_posted_owners(
-        self, gov_client: TestClient
-    ) -> None:
+    def test_returns_markdown_from_posted_owners(self, gov_client: TestClient) -> None:
         owners = [
             {
                 "email": "alice@example.com",
@@ -665,16 +571,12 @@ class TestLinesReport:
         assert "# Three Lines of Defense Distribution" in r.text
         assert "alice@example.com" in r.text
 
-    def test_empty_owner_list_returns_markdown(
-        self, gov_client: TestClient
-    ) -> None:
+    def test_empty_owner_list_returns_markdown(self, gov_client: TestClient) -> None:
         r = gov_client.post("/api/governance/lines-report", json=[])
         assert r.status_code == 200
         assert "# Three Lines of Defense Distribution" in r.text
 
-    def test_invalid_owner_returns_422(
-        self, gov_client: TestClient
-    ) -> None:
+    def test_invalid_owner_returns_422(self, gov_client: TestClient) -> None:
         r = gov_client.post(
             "/api/governance/lines-report",
             json=[{"email": "x@example.com", "line_of_defense": "bogus"}],
@@ -696,19 +598,13 @@ class TestGovernanceRBAC:
     DELETE → 403, while a read (list) still returns 200.
     """
 
-    def test_anonymous_create_metric_denied_403(
-        self, gov_readonly_client: TestClient
-    ) -> None:
+    def test_anonymous_create_metric_denied_403(self, gov_readonly_client: TestClient) -> None:
         # POST /governance/metrics is gated on require_role("write").
-        r = gov_readonly_client.post(
-            "/api/governance/metrics", json=_metric_payload()
-        )
+        r = gov_readonly_client.post("/api/governance/metrics", json=_metric_payload())
         assert r.status_code == 403, r.text
         assert r.json()["detail"]["error"] == "rbac_denied"
 
-    def test_anonymous_delete_metric_denied_403(
-        self, gov_readonly_client: TestClient
-    ) -> None:
+    def test_anonymous_delete_metric_denied_403(self, gov_readonly_client: TestClient) -> None:
         # Seed directly (store env vars are isolated by the fixture) so a
         # real record exists; the admin DELETE gate must still deny.
         m = _make_metric()
@@ -717,9 +613,7 @@ class TestGovernanceRBAC:
         assert r.status_code == 403, r.text
         assert r.json()["detail"]["error"] == "rbac_denied"
 
-    def test_anonymous_list_metrics_allowed_200(
-        self, gov_readonly_client: TestClient
-    ) -> None:
+    def test_anonymous_list_metrics_allowed_200(self, gov_readonly_client: TestClient) -> None:
         # The read endpoint carries no require_role gate (reads are open),
         # so it returns 200 even under the read-only policy — proving the
         # policy is read-allowed, not blanket-deny.
@@ -769,9 +663,7 @@ class TestGovernanceOpenApiErrorDocs:
     contract). Uses the project-wide app so the schema reflects the
     registered router."""
 
-    def test_governance_error_statuses_documented_in_openapi(
-        self, api_client: TestClient
-    ) -> None:
+    def test_governance_error_statuses_documented_in_openapi(self, api_client: TestClient) -> None:
         schema = api_client.get("/api/openapi.json").json()
         expected: list[tuple[str, str, list[str]]] = [
             ("/api/governance/challenges", "post", ["403", "422"]),
@@ -811,6 +703,4 @@ class TestGovernanceOpenApiErrorDocs:
         for path, method, statuses in expected:
             responses = schema["paths"][path][method]["responses"]
             for status in statuses:
-                assert status in responses, (
-                    f"{method.upper()} {path} missing {status}"
-                )
+                assert status in responses, f"{method.upper()} {path} missing {status}"

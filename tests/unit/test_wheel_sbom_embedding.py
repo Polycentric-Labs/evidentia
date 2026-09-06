@@ -3,6 +3,7 @@
 Marked slow: invokes `uv build` in a subprocess. Skips when uv is
 unavailable (e.g. minimal CI containers).
 """
+
 from __future__ import annotations
 
 import shutil
@@ -15,9 +16,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-pytestmark = pytest.mark.skipif(
-    shutil.which("uv") is None, reason="uv not on PATH"
-)
+pytestmark = pytest.mark.skipif(shutil.which("uv") is None, reason="uv not on PATH")
 
 
 def test_core_wheel_embeds_sbom_via_sdist_path(tmp_path: Path) -> None:
@@ -26,12 +25,16 @@ def test_core_wheel_embeds_sbom_via_sdist_path(tmp_path: Path) -> None:
     (gitignored sbom/ must ride the sdist via the artifacts config)."""
     gen = subprocess.run(
         [sys.executable, "scripts/gen_package_sboms.py", "--only", "evidentia-core"],
-        cwd=REPO_ROOT, capture_output=True, text=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
     )
     assert gen.returncode == 0, gen.stderr
     build = subprocess.run(
         ["uv", "build", "--package", "evidentia-core", "-o", str(tmp_path)],
-        cwd=REPO_ROOT, capture_output=True, text=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
     )
     assert build.returncode == 0, build.stderr
     wheel = next(tmp_path.glob("evidentia_core-*.whl"))
@@ -48,7 +51,9 @@ def test_core_wheel_builds_clean_without_sboms(tmp_path: Path) -> None:
         shutil.rmtree(sbom_dir)
     build = subprocess.run(
         ["uv", "build", "--package", "evidentia-core", "-o", str(tmp_path)],
-        cwd=REPO_ROOT, capture_output=True, text=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
     )
     assert build.returncode == 0, build.stderr
     wheel = next(tmp_path.glob("evidentia_core-*.whl"))

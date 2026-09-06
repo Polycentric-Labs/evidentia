@@ -47,9 +47,7 @@ from evidentia_core.audit.provenance import (
 from evidentia_eval import DFAHarness, EvalSample
 
 
-def _resolve_sign(
-    sign_flag: bool | None, output: Path | None
-) -> bool:
+def _resolve_sign(sign_flag: bool | None, output: Path | None) -> bool:
     """v0.8.2 P3.2 — resolve the tri-state ``--sign / --no-sign``.
 
     When ``sign_flag`` is None (the default), Sigstore signing
@@ -96,10 +94,7 @@ def _resolve_sign(
     if not sigstore_available():
         return False
     # v0.10.9 A: require OIDC-token obtainability, not just CI.
-    if not (
-        os.environ.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN")
-        and os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL")
-    ):
+    if not (os.environ.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN") and os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL")):
         typer.echo(
             "CI detected but no OIDC token (id-token: write "
             "missing); writing unsigned output; grant `id-token: "
@@ -109,6 +104,7 @@ def _resolve_sign(
         )
         return False
     return True
+
 
 app = typer.Typer(
     name="eval",
@@ -129,24 +125,18 @@ def _eval_callback() -> None:
     direct invocation."""
 
 
-def _exit_per_threshold(
-    overall_rate: float, threshold: float, output_path: Path | None
-) -> None:
+def _exit_per_threshold(overall_rate: float, threshold: float, output_path: Path | None) -> None:
     """Exit 0 if rate >= threshold, 1 otherwise."""
     if overall_rate < threshold:
         typer.echo(
-            f"Determinism rate {overall_rate:.4f} BELOW threshold "
-            f"{threshold:.4f} — failing CI gate.",
+            f"Determinism rate {overall_rate:.4f} BELOW threshold {threshold:.4f} — failing CI gate.",
             err=True,
         )
         if output_path is not None:
-            typer.echo(
-                f"Full per-prompt report: {output_path}", err=True
-            )
+            typer.echo(f"Full per-prompt report: {output_path}", err=True)
         sys.exit(1)
     typer.echo(
-        f"Determinism rate {overall_rate:.4f} >= threshold "
-        f"{threshold:.4f} — PASS.",
+        f"Determinism rate {overall_rate:.4f} >= threshold {threshold:.4f} — PASS.",
     )
 
 
@@ -156,10 +146,7 @@ def stub_smoke(
         5,
         "--samples-per-prompt",
         "-n",
-        help=(
-            "Number of generation calls per prompt for the "
-            "determinism check."
-        ),
+        help=("Number of generation calls per prompt for the determinism check."),
     ),
     fail_on_determinism_rate_below: float = typer.Option(
         0.95,
@@ -175,9 +162,7 @@ def stub_smoke(
         "--output",
         "-o",
         help=(
-            "Write the full :class:`EvalResult` JSON to this "
-            "path. When omitted, only the summary line goes to "
-            "stdout."
+            "Write the full :class:`EvalResult` JSON to this path. When omitted, only the summary line goes to stdout."
         ),
     ),
     sign: bool | None = typer.Option(
@@ -218,24 +203,16 @@ def stub_smoke(
     samples = [
         EvalSample(
             prompt_id="smoke-AC-2",
-            prompt=(
-                "Generate a risk statement for control AC-2 "
-                "(Account Management) at a fintech SaaS."
-            ),
+            prompt=("Generate a risk statement for control AC-2 (Account Management) at a fintech SaaS."),
         ),
         EvalSample(
             prompt_id="smoke-AC-3",
-            prompt=(
-                "Generate a risk statement for control AC-3 "
-                "(Access Enforcement) at a healthcare provider."
-            ),
+            prompt=("Generate a risk statement for control AC-3 (Access Enforcement) at a healthcare provider."),
         ),
         EvalSample(
             prompt_id="smoke-CM-2",
             prompt=(
-                "Generate a risk statement for control CM-2 "
-                "(Baseline Configuration) at a financial-services "
-                "firm."
+                "Generate a risk statement for control CM-2 (Baseline Configuration) at a financial-services firm."
             ),
         ),
     ]
@@ -256,32 +233,17 @@ def stub_smoke(
             from evidentia_eval.signing import sign_eval_result
 
             _, bundle_path = sign_eval_result(result, output)
-            typer.echo(
-                f"Eval output signed → {bundle_path.name}"
-            )
+            typer.echo(f"Eval output signed → {bundle_path.name}")
         else:
             output.write_text(
                 result.model_dump_json(indent=2),
                 encoding="utf-8",
             )
 
-    typer.echo(
-        f"Eval run {result.run_id} — "
-        f"{len(samples)} prompt(s), "
-        f"{samples_per_prompt} sample(s) per prompt"
-    )
-    typer.echo(
-        f"  • overall determinism rate: "
-        f"{result.overall_determinism_rate:.4f}"
-    )
-    typer.echo(
-        f"  • determinism violations: "
-        f"{len(result.determinism_violations)}"
-    )
-    typer.echo(
-        f"  • replay violations: "
-        f"{len(result.replay_violations)}"
-    )
+    typer.echo(f"Eval run {result.run_id} — {len(samples)} prompt(s), {samples_per_prompt} sample(s) per prompt")
+    typer.echo(f"  • overall determinism rate: {result.overall_determinism_rate:.4f}")
+    typer.echo(f"  • determinism violations: {len(result.determinism_violations)}")
+    typer.echo(f"  • replay violations: {len(result.replay_violations)}")
     _exit_per_threshold(
         result.overall_determinism_rate,
         fail_on_determinism_rate_below,
@@ -344,10 +306,7 @@ def risk_determinism(
         None,
         "--output",
         "-o",
-        help=(
-            "Write the EvalResult JSON to this path. When "
-            "omitted, only the summary line goes to stdout."
-        ),
+        help=("Write the EvalResult JSON to this path. When omitted, only the summary line goes to stdout."),
     ),
     model: str | None = typer.Option(
         None,
@@ -372,10 +331,7 @@ def risk_determinism(
     check_replay: bool = typer.Option(
         False,
         "--check-replay",
-        help=(
-            "Additionally run a single replay-equivalence pass "
-            "per gap (re-uses the determinism context)."
-        ),
+        help=("Additionally run a single replay-equivalence pass per gap (re-uses the determinism context)."),
     ),
     sign: bool | None = typer.Option(
         None,
@@ -503,8 +459,7 @@ def risk_determinism(
         raise typer.Exit(code=2)
     if faithfulness_method not in {"jaccard", "semantic"}:
         typer.echo(
-            f"--faithfulness-method must be 'jaccard' or 'semantic'; "
-            f"got {faithfulness_method!r}.",
+            f"--faithfulness-method must be 'jaccard' or 'semantic'; got {faithfulness_method!r}.",
             err=True,
         )
         raise typer.Exit(code=2)
@@ -514,9 +469,7 @@ def risk_determinism(
         "fixed",
     }:
         typer.echo(
-            f"--faithfulness-threshold-mode must be "
-            f"'framework-aware' or 'fixed'; got "
-            f"{faithfulness_threshold_mode!r}.",
+            f"--faithfulness-threshold-mode must be 'framework-aware' or 'fixed'; got {faithfulness_threshold_mode!r}.",
             err=True,
         )
         raise typer.Exit(code=2)
@@ -527,38 +480,25 @@ def risk_determinism(
         try:
             import yaml as _yaml
 
-            raw = _yaml.safe_load(
-                source_clauses_file.read_text(encoding="utf-8")
-            )
+            raw = _yaml.safe_load(source_clauses_file.read_text(encoding="utf-8"))
             if not isinstance(raw, dict):
                 raise ValueError(
-                    "--source-clauses-file YAML must be a mapping at "
-                    "the top level (prompt_id → list[str])."
+                    "--source-clauses-file YAML must be a mapping at the top level (prompt_id → list[str])."
                 )
             for prompt_id_key, clauses in raw.items():
-                if not isinstance(clauses, list) or not all(
-                    isinstance(c, str) for c in clauses
-                ):
-                    raise ValueError(
-                        f"--source-clauses-file entry for "
-                        f"{prompt_id_key!r} must be list[str]."
-                    )
-                source_clauses_by_prompt[str(prompt_id_key)] = list(
-                    clauses
-                )
+                if not isinstance(clauses, list) or not all(isinstance(c, str) for c in clauses):
+                    raise ValueError(f"--source-clauses-file entry for {prompt_id_key!r} must be list[str].")
+                source_clauses_by_prompt[str(prompt_id_key)] = list(clauses)
         except Exception as exc:
             typer.echo(
-                f"Error loading --source-clauses-file at "
-                f"{source_clauses_file}: {exc}",
+                f"Error loading --source-clauses-file at {source_clauses_file}: {exc}",
                 err=True,
             )
             raise typer.Exit(code=2) from exc
 
     # Load the gap report.
     try:
-        report = GapAnalysisReport.model_validate(
-            _json.loads(gaps.read_text(encoding="utf-8"))
-        )
+        report = GapAnalysisReport.model_validate(_json.loads(gaps.read_text(encoding="utf-8")))
     except Exception as exc:
         typer.echo(f"Error loading gap report at {gaps}: {exc}", err=True)
         raise typer.Exit(code=2) from exc
@@ -620,20 +560,15 @@ def risk_determinism(
     # the constructor args are None — match `evidentia risk
     # generate` precedence.
     try:
-        generator = RiskStatementGenerator(
-            model=model, temperature=temperature
-        )
+        generator = RiskStatementGenerator(model=model, temperature=temperature)
     except Exception as exc:
         typer.echo(
-            f"RiskStatementGenerator construction failed: "
-            f"{type(exc).__name__}: {exc}",
+            f"RiskStatementGenerator construction failed: {type(exc).__name__}: {exc}",
             err=True,
         )
         raise typer.Exit(code=2) from exc
 
-    def _live_generator(
-        prompt: str, _ctx: GenerationContext
-    ) -> str:
+    def _live_generator(prompt: str, _ctx: GenerationContext) -> str:
         # ``prompt`` is the prompt_id (we set EvalSample.prompt =
         # prompt_id). Look up the structured ControlGap.
         gap = samples_by_id[prompt]
@@ -649,9 +584,7 @@ def risk_determinism(
         return GenerationContext(
             model=model or "evidentia-default",
             temperature=temperature if temperature is not None else 0.0,
-            prompt_hash=compute_prompt_hash(
-                "risk-statement-system", prompt_id
-            ),
+            prompt_hash=compute_prompt_hash("risk-statement-system", prompt_id),
         )
 
     harness = DFAHarness(
@@ -666,9 +599,7 @@ def risk_determinism(
         f"calls"
     )
     if check_replay:
-        typer.echo(
-            f"  • plus {len(eval_samples)} replay calls"
-        )
+        typer.echo(f"  • plus {len(eval_samples)} replay calls")
 
     # v0.8.7 P2: resolve the harness threshold per the
     # threshold-mode flag. Precedence:
@@ -686,11 +617,7 @@ def risk_determinism(
     if faithfulness_threshold is not None:
         resolved_threshold = faithfulness_threshold
         threshold_source = "explicit"
-    elif (
-        faithfulness_threshold_mode == "framework-aware"
-        and check_faithfulness
-        and eval_samples
-    ):
+    elif faithfulness_threshold_mode == "framework-aware" and check_faithfulness and eval_samples:
         from evidentia_eval.faithfulness import resolve_threshold
 
         # Extract framework from first sample's prompt_id
@@ -699,13 +626,8 @@ def risk_determinism(
         framework_for_threshold: str | None = None
         if ":" in first_prompt_id:
             framework_for_threshold = first_prompt_id.split(":", 1)[0]
-        resolved_threshold = resolve_threshold(
-            framework_for_threshold, method=faithfulness_method
-        )
-        threshold_source = (
-            f"framework-aware (framework="
-            f"{framework_for_threshold!r})"
-        )
+        resolved_threshold = resolve_threshold(framework_for_threshold, method=faithfulness_method)
+        threshold_source = f"framework-aware (framework={framework_for_threshold!r})"
     else:
         from evidentia_eval.faithfulness import (
             DEFAULT_FAITHFULNESS_THRESHOLD,
@@ -715,10 +637,7 @@ def risk_determinism(
         threshold_source = "fixed (framework-agnostic default)"
 
     if check_faithfulness:
-        typer.echo(
-            f"  • faithfulness threshold: {resolved_threshold:.2f} "
-            f"({threshold_source})"
-        )
+        typer.echo(f"  • faithfulness threshold: {resolved_threshold:.2f} ({threshold_source})")
 
     result = harness.run(
         samples=eval_samples,
@@ -734,54 +653,28 @@ def risk_determinism(
             from evidentia_eval.signing import sign_eval_result
 
             _, bundle_path = sign_eval_result(result, output)
-            typer.echo(
-                f"Eval output signed → {bundle_path.name}"
-            )
+            typer.echo(f"Eval output signed → {bundle_path.name}")
         else:
             output.write_text(
                 result.model_dump_json(indent=2),
                 encoding="utf-8",
             )
 
-    typer.echo(
-        f"Eval run {result.run_id} — "
-        f"{len(eval_samples)} gap(s)"
-    )
-    typer.echo(
-        f"  • overall determinism rate: "
-        f"{result.overall_determinism_rate:.4f}"
-    )
-    typer.echo(
-        f"  • determinism violations: "
-        f"{len(result.determinism_violations)}"
-    )
+    typer.echo(f"Eval run {result.run_id} — {len(eval_samples)} gap(s)")
+    typer.echo(f"  • overall determinism rate: {result.overall_determinism_rate:.4f}")
+    typer.echo(f"  • determinism violations: {len(result.determinism_violations)}")
     if check_replay:
-        typer.echo(
-            f"  • replay violations: "
-            f"{len(result.replay_violations)}"
-        )
+        typer.echo(f"  • replay violations: {len(result.replay_violations)}")
     if check_faithfulness:
         # v0.8.5 P1: aggregate per-prompt faithfulness results.
         # Each PromptFaithfulnessResult is one prompt; per-prompt
         # passed_count + failed_count are claim-level counts.
-        total_claims = sum(
-            len(pfr.claims) for pfr in result.faithfulness_results
-        )
-        total_failed = sum(
-            pfr.failed_count for pfr in result.faithfulness_results
-        )
-        prompts_with_violations = sum(
-            1
-            for pfr in result.faithfulness_results
-            if pfr.failed_count > 0
-        )
+        total_claims = sum(len(pfr.claims) for pfr in result.faithfulness_results)
+        total_failed = sum(pfr.failed_count for pfr in result.faithfulness_results)
+        prompts_with_violations = sum(1 for pfr in result.faithfulness_results if pfr.failed_count > 0)
+        typer.echo(f"  • faithfulness method: {faithfulness_method} (threshold {resolved_threshold:.2f})")
         typer.echo(
-            f"  • faithfulness method: {faithfulness_method} "
-            f"(threshold {resolved_threshold:.2f})"
-        )
-        typer.echo(
-            f"  • faithfulness claims scored: {total_claims} "
-            f"across {len(result.faithfulness_results)} prompt(s)"
+            f"  • faithfulness claims scored: {total_claims} across {len(result.faithfulness_results)} prompt(s)"
         )
         typer.echo(
             f"  • faithfulness violations: {total_failed} "
@@ -810,9 +703,7 @@ def verify(
         "--bundle",
         "-b",
         help=(
-            "Path to the Sigstore bundle. Defaults to "
-            "<output_path>.sigstore.json (the canonical naming "
-            "from --sign)."
+            "Path to the Sigstore bundle. Defaults to <output_path>.sigstore.json (the canonical naming from --sign)."
         ),
     ),
     expected_identity: str | None = typer.Option(
@@ -931,22 +822,14 @@ def verify(
     if verify_result.valid:
         typer.echo(f"VALID — {output_path.name}")
         if verify_result.signer_identity:
-            typer.echo(
-                f"  • signer: {verify_result.signer_identity}"
-            )
+            typer.echo(f"  • signer: {verify_result.signer_identity}")
         if verify_result.signer_issuer:
-            typer.echo(
-                f"  • issuer: {verify_result.signer_issuer}"
-            )
+            typer.echo(f"  • issuer: {verify_result.signer_issuer}")
         if verify_result.rekor_log_index is not None:
-            typer.echo(
-                f"  • rekor log index: "
-                f"{verify_result.rekor_log_index}"
-            )
+            typer.echo(f"  • rekor log index: {verify_result.rekor_log_index}")
         sys.exit(0)
     typer.echo(
-        f"INVALID — {output_path.name}: "
-        f"{verify_result.details or 'verification returned valid=False'}",
+        f"INVALID — {output_path.name}: {verify_result.details or 'verification returned valid=False'}",
         err=True,
     )
     sys.exit(1)

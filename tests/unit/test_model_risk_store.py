@@ -47,16 +47,12 @@ class TestGetModelStoreDir:
         result = get_model_store_dir(tmp_path)
         assert result == tmp_path.expanduser().resolve()
 
-    def test_env_var_used_when_no_override(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_env_var_used_when_no_override(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("EVIDENTIA_MODEL_STORE_DIR", str(tmp_path))
         result = get_model_store_dir()
         assert result == tmp_path.expanduser().resolve()
 
-    def test_explicit_override_beats_env(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_explicit_override_beats_env(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         env_dir = tmp_path / "env"
         override = tmp_path / "override"
         env_dir.mkdir()

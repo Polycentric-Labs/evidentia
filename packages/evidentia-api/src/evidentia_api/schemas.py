@@ -229,9 +229,7 @@ class InitWizardCommitResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     created: list[str] = Field(description="Filenames written this call.")
-    skipped: list[str] = Field(
-        description="Filenames left untouched because they already existed."
-    )
+    skipped: list[str] = Field(description="Filenames left untouched because they already existed.")
     directory: str = Field(description="Absolute server directory written to.")
 
 

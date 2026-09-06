@@ -97,11 +97,7 @@ def test_resolve_fragment_falls_back_to_any_rlink(tmp_path: Path) -> None:
 
 def test_resolve_fragment_missing_uuid_raises(tmp_path: Path) -> None:
     """An unknown UUID with no matching resource raises ProfileResolutionError."""
-    profile = {
-        "profile": {
-            "back-matter": {"resources": [{"uuid": "other-uuid", "rlinks": []}]}
-        }
-    }
+    profile = {"profile": {"back-matter": {"resources": [{"uuid": "other-uuid", "rlinks": []}]}}}
     with pytest.raises(ProfileResolutionError, match="does not match"):
         _resolve_href("#abc-uuid", tmp_path, profile=profile)
 
@@ -129,16 +125,12 @@ def _minimal_catalog() -> dict:
                         {
                             "id": "ac-2",
                             "title": "Account Management",
-                            "parts": [
-                                {"name": "statement", "prose": "Manage accounts."}
-                            ],
+                            "parts": [{"name": "statement", "prose": "Manage accounts."}],
                         },
                         {
                             "id": "ac-3",
                             "title": "Access Enforcement",
-                            "parts": [
-                                {"name": "statement", "prose": "Enforce authorizations."}
-                            ],
+                            "parts": [{"name": "statement", "prose": "Enforce authorizations."}],
                         },
                     ],
                 }

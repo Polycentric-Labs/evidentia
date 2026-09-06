@@ -86,9 +86,7 @@ def generate(
     from evidentia_core.models.gap import GapAnalysisReport
 
     if not gaps and not gap_id:
-        console.print(
-            "[red]Error: must provide either --gaps or --gap-id.[/red]"
-        )
+        console.print("[red]Error: must provide either --gaps or --gap-id.[/red]")
         raise typer.Exit(code=1)
 
     # v0.2.1: resolve LLM model/temperature via config precedence:
@@ -97,9 +95,7 @@ def generate(
 
     cfg_obj = ctx.obj.get("config") if ctx.obj else None
     cfg: EvidentiaConfig = cfg_obj if cfg_obj is not None else EvidentiaConfig()
-    resolved_model = get_default(
-        cfg, model, "llm.model", env_var="EVIDENTIA_LLM_MODEL"
-    )
+    resolved_model = get_default(cfg, model, "llm.model", env_var="EVIDENTIA_LLM_MODEL")
     # Temperature is harder to precedence via get_default (0.0 is falsy) —
     # do it explicitly. Flag > env > yaml.
     import contextlib
@@ -114,9 +110,7 @@ def generate(
 
     console.print(f"[cyan]Loading system context from[/cyan] [bold]{context}[/bold]...")
     sys_ctx = SystemContext.from_yaml(context)
-    console.print(
-        f"[green]Loaded:[/green] {sys_ctx.organization} / {sys_ctx.system_name}"
-    )
+    console.print(f"[green]Loaded:[/green] {sys_ctx.organization} / {sys_ctx.system_name}")
 
     # v0.2.1: when --gaps is omitted, load the most recent report from
     # the user-dir gap store (populated by every `gap analyze` run).
@@ -154,17 +148,11 @@ def generate(
         f"[cyan]Generating risk statements for[/cyan] "
         f"[bold]{len(target_gaps)}[/bold] gaps using model "
         f"[bold]{resolved_model or 'default'}[/bold]"
-        + (
-            f" @ temperature={resolved_temperature}"
-            if resolved_temperature is not None
-            else ""
-        )
+        + (f" @ temperature={resolved_temperature}" if resolved_temperature is not None else "")
         + "..."
     )
 
-    generator = RiskStatementGenerator(
-        model=resolved_model, temperature=resolved_temperature
-    )
+    generator = RiskStatementGenerator(model=resolved_model, temperature=resolved_temperature)
 
     risks = []
     with Progress(
@@ -175,14 +163,10 @@ def generate(
         task = progress.add_task("Generating...", total=len(target_gaps))
         for gap in target_gaps:
             try:
-                risk = generator.generate(
-                    gap, sys_ctx, emit_trace=emit_trace
-                )
+                risk = generator.generate(gap, sys_ctx, emit_trace=emit_trace)
                 risks.append(risk)
             except Exception as e:
-                console.print(
-                    f"[red]Failed for {gap.control_id}: {e}[/red]"
-                )
+                console.print(f"[red]Failed for {gap.control_id}: {e}[/red]")
             progress.advance(task)
 
     # Write output
@@ -194,9 +178,7 @@ def generate(
         ),
         encoding="utf-8",
     )
-    console.print(
-        f"[green]Generated[/green] {len(risks)}/{len(target_gaps)} risk statements"
-    )
+    console.print(f"[green]Generated[/green] {len(risks)}/{len(target_gaps)} risk statements")
     console.print(f"[green]Output:[/green] [bold]{output}[/bold]")
 
 
@@ -225,35 +207,24 @@ def _load_scenarios_or_exit(path: Path) -> list[OpenFAIRScenario]:
             # Try YAML first (it's a JSON superset for valid JSON)
             raw = yaml.safe_load(text)
     except (yaml.YAMLError, json.JSONDecodeError) as e:
-        console.print(
-            f"[red]Error:[/red] {path} is not valid YAML/JSON: {e}"
-        )
+        console.print(f"[red]Error:[/red] {path} is not valid YAML/JSON: {e}")
         raise typer.Exit(code=1) from e
 
     if raw is None:
         return []
     if not isinstance(raw, list):
-        console.print(
-            f"[red]Error:[/red] {path} must be a list of scenario "
-            f"records (got {type(raw).__name__})."
-        )
+        console.print(f"[red]Error:[/red] {path} must be a list of scenario records (got {type(raw).__name__}).")
         raise typer.Exit(code=1)
 
     scenarios: list[OpenFAIRScenario] = []
     for i, entry in enumerate(raw):
         if not isinstance(entry, dict):
-            console.print(
-                f"[red]Error:[/red] entry {i} in {path} is not a "
-                f"mapping; got {type(entry).__name__}."
-            )
+            console.print(f"[red]Error:[/red] entry {i} in {path} is not a mapping; got {type(entry).__name__}.")
             raise typer.Exit(code=1)
         try:
             scenarios.append(OpenFAIRScenario.model_validate(entry))
         except ValidationError as e:
-            console.print(
-                f"[red]Error:[/red] entry {i} in {path} failed "
-                f"validation: {e}"
-            )
+            console.print(f"[red]Error:[/red] entry {i} in {path} failed validation: {e}")
             raise typer.Exit(code=1) from e
     return scenarios
 
@@ -340,10 +311,7 @@ def quantify(
           ...
     """
     if method not in ("open-fair", "fair-mc"):
-        console.print(
-            f"[red]Error:[/red] --method must be 'open-fair' or 'fair-mc' "
-            f"(got {method!r})."
-        )
+        console.print(f"[red]Error:[/red] --method must be 'open-fair' or 'fair-mc' (got {method!r}).")
         raise typer.Exit(code=1)
 
     scenarios_list = _load_scenarios_or_exit(scenarios)
@@ -352,10 +320,7 @@ def quantify(
         rendered = generate_risk_quantification_report(scenarios_list)
     else:  # fair-mc
         if iterations < 1:
-            console.print(
-                f"[red]Error:[/red] --iterations must be >= 1 (got "
-                f"{iterations})."
-            )
+            console.print(f"[red]Error:[/red] --iterations must be >= 1 (got {iterations}).")
             raise typer.Exit(code=1)
         from evidentia_core.risk_quant.monte_carlo import (
             generate_monte_carlo_report,
@@ -380,10 +345,7 @@ def quantify(
                 for sc, res in sims:
                     for i, ale in enumerate(res.samples, start=1):
                         writer.writerow([sc.name, i, ale])
-            console.print(
-                f"[green]Wrote[/green] {len(sims)} scenario(s) × "
-                f"{iterations} iterations to {csv_path}"
-            )
+            console.print(f"[green]Wrote[/green] {len(sims)} scenario(s) × {iterations} iterations to {csv_path}")
 
     if output is None:
         sys.stdout.write(rendered)
@@ -392,15 +354,11 @@ def quantify(
         return
 
     if output.exists() and not force:
-        console.print(
-            f"[red]Error:[/red] {output} already exists; pass --force "
-            f"to overwrite."
-        )
+        console.print(f"[red]Error:[/red] {output} already exists; pass --force to overwrite.")
         raise typer.Exit(code=1)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(rendered, encoding="utf-8")
     console.print(
-        f"[green]Wrote[/green] FAIR quantification report to "
-        f"[bold]{output}[/bold] ({len(scenarios_list)} scenario(s))."
+        f"[green]Wrote[/green] FAIR quantification report to [bold]{output}[/bold] ({len(scenarios_list)} scenario(s))."
     )

@@ -63,9 +63,7 @@ class _RebindingResolver:
         self, host: str, port: Any, *args: Any, **kwargs: Any
     ) -> list[tuple[int, int, int, str, tuple[Any, ...]]]:
         if host != self._host:
-            return [
-                (socket.AF_INET, socket.SOCK_STREAM, 0, "", (PUBLIC_IP, port))
-            ]
+            return [(socket.AF_INET, socket.SOCK_STREAM, 0, "", (PUBLIC_IP, port))]
         with self._lock:
             self.calls += 1
             ip = PUBLIC_IP if self.calls == 1 else REBOUND_PRIVATE_IP
@@ -210,9 +208,7 @@ def test_postgres_psycopg_rebind_defeated(
 
     monkeypatch.setattr(psycopg, "connect", _fake_connect)
 
-    collector = PostgresCollector(
-        connection_uri=f"postgresql://reader@{host}:5432/app", password="pw"
-    )
+    collector = PostgresCollector(connection_uri=f"postgresql://reader@{host}:5432/app", password="pw")
     with pytest.raises(PostgresConnectionError):
         collector._ensure_connected()
 
@@ -244,13 +240,9 @@ def test_postgres_multi_ip_rebind_defeated(
     public_ip_2 = "93.184.216.35"
     calls = {"n": 0}
 
-    def _multi_then_private(
-        h: str, port: Any, *a: Any, **k: Any
-    ) -> list[tuple[int, int, int, str, tuple[Any, ...]]]:
+    def _multi_then_private(h: str, port: Any, *a: Any, **k: Any) -> list[tuple[int, int, int, str, tuple[Any, ...]]]:
         if h != host:
-            return [
-                (socket.AF_INET, socket.SOCK_STREAM, 0, "", (PUBLIC_IP, port))
-            ]
+            return [(socket.AF_INET, socket.SOCK_STREAM, 0, "", (PUBLIC_IP, port))]
         calls["n"] += 1
         if calls["n"] == 1:
             # validation lookup: two public A records
@@ -259,9 +251,7 @@ def test_postgres_multi_ip_rebind_defeated(
                 (socket.AF_INET, socket.SOCK_STREAM, 0, "", (public_ip_2, port)),
             ]
         # any re-resolution rebinds to the private metadata IP
-        return [
-            (socket.AF_INET, socket.SOCK_STREAM, 0, "", (REBOUND_PRIVATE_IP, port))
-        ]
+        return [(socket.AF_INET, socket.SOCK_STREAM, 0, "", (REBOUND_PRIVATE_IP, port))]
 
     monkeypatch.setattr(socket, "getaddrinfo", _multi_then_private)
 
@@ -273,9 +263,7 @@ def test_postgres_multi_ip_rebind_defeated(
 
     monkeypatch.setattr(psycopg, "connect", _fake_connect)
 
-    collector = PostgresCollector(
-        connection_uri=f"postgresql://reader@{host}:5432/app", password="pw"
-    )
+    collector = PostgresCollector(connection_uri=f"postgresql://reader@{host}:5432/app", password="pw")
     with pytest.raises(PostgresConnectionError):
         collector._ensure_connected()
 

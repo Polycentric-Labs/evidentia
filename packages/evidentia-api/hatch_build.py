@@ -59,15 +59,12 @@ class FrontendBundleHook(BuildHookInterface):  # type: ignore[misc]
         self._embed_sbom(build_data)
 
         if os.environ.get("EVIDENTIA_SKIP_FRONTEND_BUILD"):
-            logger.info(
-                "EVIDENTIA_SKIP_FRONTEND_BUILD set; leaving static/ untouched."
-            )
+            logger.info("EVIDENTIA_SKIP_FRONTEND_BUILD set; leaving static/ untouched.")
             return
 
         if not _UI_DIR.is_dir():
             logger.warning(
-                "Frontend dir %s not found; skipping static bundle. "
-                "The wheel will serve a dev-placeholder page.",
+                "Frontend dir %s not found; skipping static bundle. The wheel will serve a dev-placeholder page.",
                 _UI_DIR,
             )
             return
@@ -76,8 +73,7 @@ class FrontendBundleHook(BuildHookInterface):  # type: ignore[misc]
         if (not _UI_DIST.is_dir() or not any(_UI_DIST.iterdir())) and not _try_npm_build():
             # Node unavailable or build failed. Ship without the SPA.
             logger.warning(
-                "Frontend build unavailable; static/ will remain empty. "
-                "The wheel will serve a dev-placeholder page."
+                "Frontend build unavailable; static/ will remain empty. The wheel will serve a dev-placeholder page."
             )
             return
 
@@ -95,11 +91,7 @@ class FrontendBundleHook(BuildHookInterface):  # type: ignore[misc]
         sbom_dir = os.path.join(self.root, "sbom")
         if not os.path.isdir(sbom_dir):
             return
-        files = sorted(
-            os.path.join(sbom_dir, f)
-            for f in os.listdir(sbom_dir)
-            if f.endswith(".cdx.json")
-        )
+        files = sorted(os.path.join(sbom_dir, f) for f in os.listdir(sbom_dir) if f.endswith(".cdx.json"))
         build_data.setdefault("sbom_files", []).extend(files)
 
     def _copy_dist_to_static(self) -> None:
@@ -144,9 +136,7 @@ def _try_npm_build() -> bool:
 
     lockfile = _UI_DIR / "package-lock.json"
     install_cmd = (
-        [npm, "ci", "--no-audit", "--no-fund"]
-        if lockfile.is_file()
-        else [npm, "install", "--no-audit", "--no-fund"]
+        [npm, "ci", "--no-audit", "--no-fund"] if lockfile.is_file() else [npm, "install", "--no-audit", "--no-fund"]
     )
 
     for cmd in (install_cmd, [npm, "run", "build"]):

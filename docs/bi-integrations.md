@@ -192,9 +192,7 @@ from evidentia_integrations.tableau import (
 )
 from evidentia_core.models.gap import GapAnalysisReport
 
-report = GapAnalysisReport.model_validate_json(
-    open("gap-report.json").read()
-)
+report = GapAnalysisReport.model_validate_json(open("gap-report.json").read())
 
 config = TableauConfig(
     server_url="https://us-east-1.online.tableau.com",
@@ -293,9 +291,7 @@ from evidentia_integrations.powerbi import (
 )
 from evidentia_core.models.gap import GapAnalysisReport
 
-report = GapAnalysisReport.model_validate_json(
-    open("gap-report.json").read()
-)
+report = GapAnalysisReport.model_validate_json(open("gap-report.json").read())
 
 config = PowerBIConfig(
     workspace_id="11111111-1111-1111-1111-111111111111",

@@ -45,9 +45,7 @@ class SMTPConfig:
         if not self.host:
             raise ValueError("SMTP host required")
         if self.port <= 0 or self.port > 65535:
-            raise ValueError(
-                f"SMTP port must be in (0, 65535]; got {self.port}"
-            )
+            raise ValueError(f"SMTP port must be in (0, 65535]; got {self.port}")
         if not self.recipients:
             raise ValueError("at least one recipient required")
         # v0.9.5 F-V93-S8 closure: validate each recipient against
@@ -82,15 +80,11 @@ class SMTPConfig:
             # form and they're a common SMTP-injection vector.
             if any(ch.isspace() or ord(ch) < 32 for ch in addr):
                 raise ValueError(
-                    f"recipient {recipient!r} contains whitespace "
-                    f"or control characters; not a valid RFC 5321 "
-                    f"address"
+                    f"recipient {recipient!r} contains whitespace or control characters; not a valid RFC 5321 address"
                 )
         if not self.use_starttls:
             # Plaintext SMTP is unsupported by design.
-            raise ValueError(
-                "use_starttls=False is unsupported; STARTTLS is required"
-            )
+            raise ValueError("use_starttls=False is unsupported; STARTTLS is required")
 
 
 class SMTPAlertChannel:
@@ -138,13 +132,8 @@ class SMTPAlertChannel:
 
     @staticmethod
     def _subject(obs: CycleObservation) -> str:
-        state_label = (
-            "OVERDUE" if obs.state.value == "overdue" else "due soon"
-        )
-        return (
-            f"[Evidentia CONMON] {obs.cadence.slug} {state_label} "
-            f"(next-due {obs.next_due.isoformat()})"
-        )
+        state_label = "OVERDUE" if obs.state.value == "overdue" else "due soon"
+        return f"[Evidentia CONMON] {obs.cadence.slug} {state_label} (next-due {obs.next_due.isoformat()})"
 
     @staticmethod
     def _body(obs: CycleObservation) -> str:

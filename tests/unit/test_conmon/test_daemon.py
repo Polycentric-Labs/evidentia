@@ -89,9 +89,7 @@ class TestStateFileRoundTrip:
 
     def test_load_rejects_non_iso_date(self, tmp_path: Path) -> None:
         state_file = tmp_path / "state.yaml"
-        state_file.write_text(
-            "nist-800-53-rev5-ca7: not-a-date\n", encoding="utf-8"
-        )
+        state_file.write_text("nist-800-53-rev5-ca7: not-a-date\n", encoding="utf-8")
         with pytest.raises(ValueError, match="ISO-8601 date"):
             load_state_file(state_file)
 
@@ -122,12 +120,8 @@ class TestMarkCompleted:
 
     def test_subsequent_mark_returns_previous(self, tmp_path: Path) -> None:
         state_file = tmp_path / "state.yaml"
-        mark_completed(
-            state_file, "nist-800-53-rev5-ca7", date(2026, 4, 1)
-        )
-        previous = mark_completed(
-            state_file, "nist-800-53-rev5-ca7", date(2026, 5, 1)
-        )
+        mark_completed(state_file, "nist-800-53-rev5-ca7", date(2026, 4, 1))
+        previous = mark_completed(state_file, "nist-800-53-rev5-ca7", date(2026, 5, 1))
         assert previous == date(2026, 4, 1)
 
     def test_unknown_slug_raises(self, tmp_path: Path) -> None:
@@ -135,9 +129,7 @@ class TestMarkCompleted:
         with pytest.raises(ValueError, match="unknown cadence slug"):
             mark_completed(state_file, "no-such-cadence", date(2026, 5, 1))
 
-    def test_emits_audit_event(
-        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_emits_audit_event(self, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
         state_file = tmp_path / "state.yaml"
         with caplog.at_level("INFO", logger="evidentia_core.conmon.daemon"):
             mark_completed(
@@ -145,10 +137,7 @@ class TestMarkCompleted:
                 "nist-800-53-rev5-ca7",
                 date(2026, 5, 1),
             )
-        actions = [
-            getattr(r, "ecs_record", {}).get("event", {}).get("action")
-            for r in caplog.records
-        ]
+        actions = [getattr(r, "ecs_record", {}).get("event", {}).get("action") for r in caplog.records]
         assert EventAction.CONMON_CYCLE_MARKED_COMPLETED.value in actions
 
 
@@ -158,9 +147,7 @@ class TestMarkCompleted:
 class TestPollOnce:
     """Pure classification path (no audit emission, no callbacks)."""
 
-    def test_buckets_overdue_due_soon_current(
-        self, tmp_path: Path
-    ) -> None:
+    def test_buckets_overdue_due_soon_current(self, tmp_path: Path) -> None:
         state_file = tmp_path / "state.yaml"
         save_state_file(
             state_file,
@@ -179,15 +166,9 @@ class TestPollOnce:
         cfg = DaemonConfig(state_file=state_file, window_days=14)
         result = poll_once(cfg, today=date(2026, 5, 25))
 
-        assert {o.cadence.slug for o in result.overdue} == {
-            "nist-800-53-rev5-ca7"
-        }
-        assert {o.cadence.slug for o in result.due_soon} == {
-            "fedramp-conmon-annual"
-        }
-        assert {o.cadence.slug for o in result.current} == {
-            "fedramp-conmon-poam"
-        }
+        assert {o.cadence.slug for o in result.overdue} == {"nist-800-53-rev5-ca7"}
+        assert {o.cadence.slug for o in result.due_soon} == {"fedramp-conmon-annual"}
+        assert {o.cadence.slug for o in result.current} == {"fedramp-conmon-poam"}
         assert result.unknown_slugs == []
 
     def test_unknown_slugs_collected(self, tmp_path: Path) -> None:
@@ -207,9 +188,7 @@ class TestPollOnce:
 class TestRunDaemon:
     """The full poll loop with synchronous sleep injection."""
 
-    def test_emits_started_and_stopped_events(
-        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_emits_started_and_stopped_events(self, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
         state_file = tmp_path / "state.yaml"
         save_state_file(state_file, {})
         cfg = DaemonConfig(
@@ -226,10 +205,7 @@ class TestRunDaemon:
         with caplog.at_level("INFO", logger="evidentia_core.conmon.daemon"):
             run_daemon(cfg, shutdown_event=shutdown, sleep_fn=fake_sleep)
 
-        action_values = {
-            getattr(r, "ecs_record", {}).get("event", {}).get("action")
-            for r in caplog.records
-        }
+        action_values = {getattr(r, "ecs_record", {}).get("event", {}).get("action") for r in caplog.records}
         assert EventAction.CONMON_DAEMON_STARTED.value in action_values
         assert EventAction.CONMON_DAEMON_STOPPED.value in action_values
 
@@ -263,9 +239,7 @@ class TestRunDaemon:
         assert len(observations) == 1
         assert observations[0].cadence.slug == "nist-800-53-rev5-ca7"
 
-    def test_callback_exception_does_not_stop_daemon(
-        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_callback_exception_does_not_stop_daemon(self, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
         state_file = tmp_path / "state.yaml"
         save_state_file(
             state_file,
@@ -293,15 +267,10 @@ class TestRunDaemon:
                 sleep_fn=fake_sleep,
             )
 
-        action_values = {
-            getattr(r, "ecs_record", {}).get("event", {}).get("action")
-            for r in caplog.records
-        }
+        action_values = {getattr(r, "ecs_record", {}).get("event", {}).get("action") for r in caplog.records}
         assert EventAction.CONMON_DAEMON_STOPPED.value in action_values
 
-    def test_missing_state_file_keeps_polling(
-        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_missing_state_file_keeps_polling(self, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
         state_file = tmp_path / "does_not_exist.yaml"
         cfg = DaemonConfig(
             state_file=state_file,
@@ -317,8 +286,5 @@ class TestRunDaemon:
         with caplog.at_level("INFO", logger="evidentia_core.conmon.daemon"):
             run_daemon(cfg, shutdown_event=shutdown, sleep_fn=fake_sleep)
 
-        action_values = {
-            getattr(r, "ecs_record", {}).get("event", {}).get("action")
-            for r in caplog.records
-        }
+        action_values = {getattr(r, "ecs_record", {}).get("event", {}).get("action") for r in caplog.records}
         assert EventAction.CONMON_DAEMON_STOPPED.value in action_values

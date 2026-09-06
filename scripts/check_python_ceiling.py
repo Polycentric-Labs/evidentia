@@ -40,9 +40,7 @@ DEFAULT_TARGET = "3.15.0"
 _Opener = Callable[..., Any]
 
 
-def fetch_requires_python(
-    package: str, opener: _Opener = urllib.request.urlopen
-) -> str | None:
+def fetch_requires_python(package: str, opener: _Opener = urllib.request.urlopen) -> str | None:
     """GET PyPI's JSON API and return ``info.requires_python`` (may be None
     if the field is null/absent). FAIL-SOFT: any of a network error, a
     malformed payload, or a missing key returns None rather than raising —
@@ -78,9 +76,7 @@ def ceiling_allows(requires_python: str | None, target: str = DEFAULT_TARGET) ->
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--package", default=DEFAULT_PACKAGE, help="PyPI package to watch")
-    ap.add_argument(
-        "--target", default=DEFAULT_TARGET, help="Python version the cap is blocking"
-    )
+    ap.add_argument("--target", default=DEFAULT_TARGET, help="Python version the cap is blocking")
     ap.add_argument("--output", required=True, help="nudge markdown path")
     args = ap.parse_args(argv)
 
@@ -97,7 +93,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if ceiling_allows(requires_python, args.target):
         finding = (
-            f"- **{args.package}** now declares `requires_python = \"{requires_python}\"`, "
+            f'- **{args.package}** now declares `requires_python = "{requires_python}"`, '
             f"which allows Python {args.target}, so the `requires-python<3.15` cap in the "
             "root `pyproject.toml` can be lifted."
         )
@@ -108,7 +104,7 @@ def main(argv: list[str] | None = None) -> int:
         Path(args.output).write_text("", encoding="utf-8")
         print(
             f"check_python_ceiling: {args.package} requires_python "
-            f"\"{requires_python}\" still caps below {args.target}, 0 finding(s)"
+            f'"{requires_python}" still caps below {args.target}, 0 finding(s)'
         )
     return 0
 

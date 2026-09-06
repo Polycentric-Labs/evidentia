@@ -217,13 +217,9 @@ class SQLiteCollector:
             # pass safe_root=Path("/") here to opt in to unbounded
             # access. Refusing-by-default is preferable to
             # accepting-by-default.
-            effective_safe_root = (
-                Path(safe_root) if safe_root is not None else Path.cwd()
-            )
+            effective_safe_root = Path(safe_root) if safe_root is not None else Path.cwd()
             try:
-                self._database_path = validate_within(
-                    candidate, effective_safe_root
-                )
+                self._database_path = validate_within(candidate, effective_safe_root)
             except PathTraversalError as e:
                 raise SQLiteCollectorError(
                     f"database_path resolves outside safe_root "
@@ -259,13 +255,9 @@ class SQLiteCollector:
         import sqlite3
 
         if self._database_path is None:
-            raise SQLiteCollectorError(
-                "_ensure_connected called without a database_path."
-            )
+            raise SQLiteCollectorError("_ensure_connected called without a database_path.")
         if not self._database_path.is_file():
-            raise SQLiteConnectionError(
-                f"SQLite database file not found: {self._database_path}"
-            )
+            raise SQLiteConnectionError(f"SQLite database file not found: {self._database_path}")
         try:
             # Open read-only via URI to enforce the read-only contract
             # at the connection level. PRAGMA writes are still rejected.
@@ -277,9 +269,7 @@ class SQLiteCollector:
             uri = f"file:{quoted}?mode=ro"
             self._connection = sqlite3.connect(uri, uri=True)
         except Exception as e:
-            raise SQLiteConnectionError(
-                f"Could not open SQLite database (driver: {type(e).__name__})"
-            ) from e
+            raise SQLiteConnectionError(f"Could not open SQLite database (driver: {type(e).__name__})") from e
         return self._connection
 
     # ── Context + provenance ────────────────────────────────────────
@@ -307,9 +297,7 @@ class SQLiteCollector:
 
         return {
             "version": self._cached_version,
-            "database_path": str(self._database_path)
-            if self._database_path
-            else None,
+            "database_path": str(self._database_path) if self._database_path else None,
         }
 
     # ── High-level orchestration ────────────────────────────────────
@@ -350,16 +338,12 @@ class SQLiteCollector:
                     "id": COLLECTOR_ID,
                     "version": current_version(),
                 },
-                "database_path": str(self._database_path)
-                if self._database_path
-                else None,
+                "database_path": str(self._database_path) if self._database_path else None,
             },
         ):
             _log.info(
                 action=EventAction.COLLECT_STARTED,
-                message=(
-                    f"SQLite collection starting for {self._database_path}"
-                ),
+                message=(f"SQLite collection starting for {self._database_path}"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.START],
             )
@@ -388,20 +372,12 @@ class SQLiteCollector:
                         error={"type": "SQLiteQueryError", "message": str(e)},
                     )
                 except Exception as e:
-                    errors.append(
-                        f"{sub_check.__name__}: unexpected error: {e}"
-                    )
+                    errors.append(f"{sub_check.__name__}: unexpected error: {e}")
 
             _log.info(
                 action=EventAction.COLLECT_COMPLETED,
-                outcome=(
-                    EventOutcome.SUCCESS
-                    if not errors
-                    else EventOutcome.FAILURE
-                ),
-                message=(
-                    f"SQLite collection completed: {len(findings)} findings"
-                ),
+                outcome=(EventOutcome.SUCCESS if not errors else EventOutcome.FAILURE),
+                message=(f"SQLite collection completed: {len(findings)} findings"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.END],
                 evidentia={
@@ -416,15 +392,9 @@ class SQLiteCollector:
             collector_version=current_version(),
             collection_started_at=started_at,
             collection_finished_at=utc_now(),
-            source_system_ids=[
-                f"sqlite:{self._database_path}"
-                if self._database_path
-                else "sqlite:unknown"
-            ],
+            source_system_ids=[f"sqlite:{self._database_path}" if self._database_path else "sqlite:unknown"],
             filters_applied={
-                "database_path": str(self._database_path)
-                if self._database_path
-                else "unknown",
+                "database_path": str(self._database_path) if self._database_path else "unknown",
             },
             coverage_counts=[
                 CoverageCount(
@@ -443,9 +413,7 @@ class SQLiteCollector:
 
     # ── Sub-checks ──────────────────────────────────────────────────
 
-    def _file_acl_findings(
-        self, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _file_acl_findings(self, context: CollectionContext) -> list[SecurityFinding]:
         if self._database_path is None:
             return []
         try:
@@ -469,13 +437,7 @@ class SQLiteCollector:
         if world_readable:
             gaps.append("world-readable (mode bit 0o004)")
 
-        severity = (
-            Severity.HIGH
-            if world_writable
-            else Severity.MEDIUM
-            if world_readable
-            else Severity.INFORMATIONAL
-        )
+        severity = Severity.HIGH if world_writable else Severity.MEDIUM if world_readable else Severity.INFORMATIONAL
 
         return [
             SecurityFinding(
@@ -486,26 +448,18 @@ class SQLiteCollector:
                 description=(
                     f"Database file {self._database_path}: mode bits "
                     f"{mode_octal}, owner uid={st.st_uid}, gid={st.st_gid}. "
-                    + (
-                        "Gaps: " + ", ".join(gaps) + ". "
-                        if gaps
-                        else "Permissions look restrictive. "
-                    )
+                    + ("Gaps: " + ", ".join(gaps) + ". " if gaps else "Permissions look restrictive. ")
                     + "AC-3 evidence — operator should confirm only the "
                     "intended principal(s) can read/write this file. "
                     "On distributed filesystems, see BLIND_SPOT "
                     "EVIDENTIA-SQLITE-FILE-ACL-MULTI-HOST."
                 ),
                 severity=severity,
-                status=(
-                    FindingStatus.ACTIVE if gaps else FindingStatus.RESOLVED
-                ),
+                status=(FindingStatus.ACTIVE if gaps else FindingStatus.RESOLVED),
                 # v0.10.0: world-readable/world-writable file modes
                 # fail the AC-3 file-ACL check; restrictive permissions
                 # pass.
-                compliance_status=ComplianceStatus.FAIL
-                if gaps
-                else ComplianceStatus.PASS,
+                compliance_status=ComplianceStatus.FAIL if gaps else ComplianceStatus.PASS,
                 source_system="sqlite",
                 source_finding_id=f"file-acl:{self._database_path}",
                 resource_type="SQLite::File",
@@ -523,9 +477,7 @@ class SQLiteCollector:
             )
         ]
 
-    def _write_privilege_findings(
-        self, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _write_privilege_findings(self, context: CollectionContext) -> list[SecurityFinding]:
         # The collector opens read-only via URI. But the underlying
         # filesystem permissions may still allow the calling process
         # to write. Probe os.access() to detect.
@@ -536,9 +488,7 @@ class SQLiteCollector:
             return []
         return [
             SecurityFinding(
-                title=(
-                    "SQLite database file is writable by the calling process"
-                ),
+                title=("SQLite database file is writable by the calling process"),
                 description=(
                     f"The collector opened {self._database_path} via "
                     "file:?mode=ro URI (read-only at SQLite level), but "
@@ -554,9 +504,7 @@ class SQLiteCollector:
                 # failed least-privilege check.
                 compliance_status=ComplianceStatus.FAIL,
                 source_system="sqlite",
-                source_finding_id=(
-                    f"EVIDENTIA-WRITE-PRIV-DETECTED:{self._database_path}"
-                ),
+                source_finding_id=(f"EVIDENTIA-WRITE-PRIV-DETECTED:{self._database_path}"),
                 resource_type="SQLite::File",
                 resource_id=str(self._database_path),
                 control_ids=[m.control_id for m in _WRITE_PRIV_MAPPINGS],
@@ -565,9 +513,7 @@ class SQLiteCollector:
             )
         ]
 
-    def _journal_mode_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _journal_mode_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
@@ -576,19 +522,14 @@ class SQLiteCollector:
                 cur.execute("PRAGMA synchronous")
                 sync = str((cur.fetchone() or [""])[0])
             except Exception as e:
-                raise SQLiteQueryError(
-                    f"Could not read journal_mode / synchronous: {e}"
-                ) from e
+                raise SQLiteQueryError(f"Could not read journal_mode / synchronous: {e}") from e
 
             self._cached_journal_mode = journal
             # WAL + FULL is strongest combination
             is_strong = journal == "WAL" and sync.upper() in {"FULL", "2"}
             return [
                 SecurityFinding(
-                    title=(
-                        f"SQLite durability config: journal={journal}, "
-                        f"sync={sync}"
-                    ),
+                    title=(f"SQLite durability config: journal={journal}, sync={sync}"),
                     description=(
                         f"PRAGMA journal_mode={journal}, PRAGMA "
                         f"synchronous={sync}. SC-28 evidence — the "
@@ -599,19 +540,13 @@ class SQLiteCollector:
                         "power failure."
                     ),
                     severity=Severity.INFORMATIONAL,
-                    status=(
-                        FindingStatus.RESOLVED
-                        if is_strong
-                        else FindingStatus.ACTIVE
-                    ),
+                    status=(FindingStatus.RESOLVED if is_strong else FindingStatus.ACTIVE),
                     # v0.10.0: durability configuration is informational
                     # evidence — the SC-28 check requires operator
                     # judgement on whether the chosen mode meets policy.
                     compliance_status=ComplianceStatus.UNKNOWN,
                     source_system="sqlite",
-                    source_finding_id=(
-                        f"durability:{self._database_path}"
-                    ),
+                    source_finding_id=(f"durability:{self._database_path}"),
                     resource_type="SQLite::Database",
                     resource_id=str(self._database_path),
                     control_ids=[m.control_id for m in _DURABILITY_MAPPINGS],
@@ -626,9 +561,7 @@ class SQLiteCollector:
         finally:
             cur.close()
 
-    def _integrity_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _integrity_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
@@ -637,39 +570,23 @@ class SQLiteCollector:
                 cur.execute("PRAGMA foreign_key_check")
                 fk_violations = list(cur.fetchall())
             except Exception as e:
-                raise SQLiteQueryError(
-                    f"Could not run PRAGMA integrity_check: {e}"
-                ) from e
+                raise SQLiteQueryError(f"Could not run PRAGMA integrity_check: {e}") from e
 
             ok = integrity.lower() == "ok" and not fk_violations
             return [
                 SecurityFinding(
-                    title=(
-                        f"SQLite integrity: {'OK' if ok else 'violations'}"
-                    ),
+                    title=(f"SQLite integrity: {'OK' if ok else 'violations'}"),
                     description=(
                         f"PRAGMA integrity_check returned {integrity!r}; "
                         f"foreign_key_check returned "
                         f"{len(fk_violations)} violations. "
-                        + (
-                            "Database integrity verified clean."
-                            if ok
-                            else "Integrity issues require operator review."
-                        )
+                        + ("Database integrity verified clean." if ok else "Integrity issues require operator review.")
                     ),
-                    severity=(
-                        Severity.INFORMATIONAL
-                        if ok
-                        else Severity.HIGH
-                    ),
-                    status=(
-                        FindingStatus.RESOLVED if ok else FindingStatus.ACTIVE
-                    ),
+                    severity=(Severity.INFORMATIONAL if ok else Severity.HIGH),
+                    status=(FindingStatus.RESOLVED if ok else FindingStatus.ACTIVE),
                     # v0.10.0: integrity violations fail the SI-7
                     # check; a clean integrity_check passes.
-                    compliance_status=ComplianceStatus.PASS
-                    if ok
-                    else ComplianceStatus.FAIL,
+                    compliance_status=ComplianceStatus.PASS if ok else ComplianceStatus.FAIL,
                     source_system="sqlite",
                     source_finding_id=f"integrity:{self._database_path}",
                     resource_type="SQLite::Database",
@@ -685,9 +602,7 @@ class SQLiteCollector:
         finally:
             cur.close()
 
-    def _encryption_extension_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _encryption_extension_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         # Probe well-known encryption-extension PRAGMAs; each error
         # silently falls through to the next since we don't know
         # which extension (if any) is loaded.
@@ -709,10 +624,7 @@ class SQLiteCollector:
         encrypted = cipher_version is not None
         return [
             SecurityFinding(
-                title=(
-                    f"SQLite encryption extension: "
-                    f"{'detected' if encrypted else 'not detected'}"
-                ),
+                title=(f"SQLite encryption extension: {'detected' if encrypted else 'not detected'}"),
                 description=(
                     f"Cipher probe result: {cipher_version or 'no extension detected'}. "
                     "SC-28 evidence — positive detection evidences "
@@ -723,11 +635,7 @@ class SQLiteCollector:
                     "should provide out-of-band evidence."
                 ),
                 severity=Severity.INFORMATIONAL,
-                status=(
-                    FindingStatus.RESOLVED
-                    if encrypted
-                    else FindingStatus.ACTIVE
-                ),
+                status=(FindingStatus.RESOLVED if encrypted else FindingStatus.ACTIVE),
                 # v0.10.0: encryption-extension detection is INCONCLUSIVE
                 # when negative (see BLIND_SPOT), so the SC-28 status is
                 # UNKNOWN regardless of probe outcome — positive matches
@@ -735,9 +643,7 @@ class SQLiteCollector:
                 # actually encrypted.
                 compliance_status=ComplianceStatus.UNKNOWN,
                 source_system="sqlite",
-                source_finding_id=(
-                    f"encryption-extension:{self._database_path}"
-                ),
+                source_finding_id=(f"encryption-extension:{self._database_path}"),
                 resource_type="SQLite::Database",
                 resource_id=str(self._database_path),
                 control_ids=[m.control_id for m in _ENCRYPTION_MAPPINGS],

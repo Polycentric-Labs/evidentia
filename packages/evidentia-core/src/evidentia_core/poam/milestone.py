@@ -89,20 +89,14 @@ def resolve_milestone_id(item: ControlGap, partial: str) -> str:
         if milestone.id == partial:
             return milestone.id
 
-    prefix_matches = [
-        milestone for milestone in item.poam_milestones
-        if milestone.id.startswith(partial)
-    ]
+    prefix_matches = [milestone for milestone in item.poam_milestones if milestone.id.startswith(partial)]
     if len(prefix_matches) == 1:
         return prefix_matches[0].id
     if len(prefix_matches) > 1:
         raise AmbiguousMilestoneIdError(
-            f"ambiguous milestone id {partial!r} matches "
-            f"{len(prefix_matches)} milestones; use more characters"
+            f"ambiguous milestone id {partial!r} matches {len(prefix_matches)} milestones; use more characters"
         )
-    raise MilestoneNotFoundError(
-        f"No milestone {partial!r} on POA&M {item.id!r}."
-    )
+    raise MilestoneNotFoundError(f"No milestone {partial!r} on POA&M {item.id!r}.")
 
 
 def sort_milestones_by_target_date(

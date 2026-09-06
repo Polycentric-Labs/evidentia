@@ -102,9 +102,7 @@ def test_crosswalk_to_800_53_covers_every_indicator() -> None:
         / "mappings"
         / "fedramp-ksi-2026_to_nist-800-53-rev5.json"
     )
-    crosswalk = CrosswalkDefinition.model_validate(
-        json.loads(crosswalk_path.read_text(encoding="utf-8"))
-    )
+    crosswalk = CrosswalkDefinition.model_validate(json.loads(crosswalk_path.read_text(encoding="utf-8")))
     assert crosswalk.source_framework == "fedramp-ksi-2026"
     assert crosswalk.target_framework == "nist-800-53-rev5"
     assert crosswalk.verification == "self-attested-via-upstream"
@@ -116,9 +114,5 @@ def test_crosswalk_to_800_53_covers_every_indicator() -> None:
     unmapped_upstream = {"KSI-CNA-OFA", "KSI-PIY-RES"}
     assert mapped_sources == {c.id for c in catalog.controls} - unmapped_upstream
     # Base-control folding: enhancement citations survive in notes.
-    at2 = next(
-        m
-        for m in crosswalk.mappings
-        if m.source_control_id == "KSI-CED-RAT" and m.target_control_id == "AT-2"
-    )
+    at2 = next(m for m in crosswalk.mappings if m.source_control_id == "KSI-CED-RAT" and m.target_control_id == "AT-2")
     assert "at-2.2" in (at2.notes or "")

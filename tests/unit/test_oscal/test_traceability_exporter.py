@@ -173,9 +173,9 @@ class TestTraceabilityProfileVerifies:
     def test_tampered_back_matter_is_detected(self, tmp_path: Path) -> None:
         doc = traceability_matrix_to_oscal_profile(_sample_matrix())
         # Flip a resource's embedded payload WITHOUT updating its stored hash.
-        doc["profile"]["back-matter"]["resources"][0]["base64"]["value"] = (
-            base64.b64encode(b'{"tampered":true}').decode("ascii")
-        )
+        doc["profile"]["back-matter"]["resources"][0]["base64"]["value"] = base64.b64encode(
+            b'{"tampered":true}'
+        ).decode("ascii")
         path = tmp_path / "tampered.profile.json"
         path.write_text(json.dumps(doc), encoding="utf-8")
 

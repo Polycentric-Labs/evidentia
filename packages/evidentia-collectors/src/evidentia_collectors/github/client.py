@@ -158,9 +158,7 @@ class GitHubClient:
         try:
             response = self._pinned_request(method, path)
         except httpx.HTTPError as e:
-            raise GitHubApiError(
-                f"GitHub request failed: {e}", status_code=0
-            ) from e
+            raise GitHubApiError(f"GitHub request failed: {e}", status_code=0) from e
 
         if 200 <= response.status_code < 300:
             try:
@@ -199,9 +197,7 @@ class GitHubClient:
         try:
             response = self._pinned_request(method, path, params=params)
         except httpx.HTTPError as e:
-            raise GitHubApiError(
-                f"GitHub request failed: {e}", status_code=0
-            ) from e
+            raise GitHubApiError(f"GitHub request failed: {e}", status_code=0) from e
 
         if 200 <= response.status_code < 300:
             try:
@@ -225,14 +221,10 @@ class GitHubClient:
         """Return repo metadata (default branch, visibility, pushed_at, etc)."""
         result = self._request("GET", f"/repos/{owner}/{repo}")
         if result is None:
-            raise GitHubApiError(
-                f"Empty response for repo {owner}/{repo}", status_code=0
-            )
+            raise GitHubApiError(f"Empty response for repo {owner}/{repo}", status_code=0)
         return result
 
-    def get_branch_protection(
-        self, owner: str, repo: str, branch: str
-    ) -> dict[str, Any] | None:
+    def get_branch_protection(self, owner: str, repo: str, branch: str) -> dict[str, Any] | None:
         """Return branch protection rules, or ``None`` if branch is unprotected.
 
         A 404 response (common for unprotected branches) returns ``None``;
@@ -244,9 +236,7 @@ class GitHubClient:
             expected_status={404},
         )
 
-    def get_contents(
-        self, owner: str, repo: str, path: str
-    ) -> dict[str, Any] | None:
+    def get_contents(self, owner: str, repo: str, path: str) -> dict[str, Any] | None:
         """Return file contents metadata or ``None`` if the path doesn't exist."""
         return self._request(
             "GET",
@@ -280,9 +270,7 @@ class GitHubClient:
             return []
         return [item for item in response if isinstance(item, dict)]
 
-    def are_vulnerability_alerts_enabled(
-        self, owner: str, repo: str
-    ) -> bool:
+    def are_vulnerability_alerts_enabled(self, owner: str, repo: str) -> bool:
         """Return True iff Dependabot vulnerability alerts are enabled.
 
         Added v0.10.6 for the OSPS-VM-05.03 helper. GitHub's
@@ -293,13 +281,9 @@ class GitHubClient:
         :class:`ComplianceStatus.UNKNOWN`.
         """
         try:
-            response = self._pinned_request(
-                "GET", f"/repos/{owner}/{repo}/vulnerability-alerts"
-            )
+            response = self._pinned_request("GET", f"/repos/{owner}/{repo}/vulnerability-alerts")
         except httpx.HTTPError as e:
-            raise GitHubApiError(
-                f"vulnerability-alerts probe failed: {e}", status_code=0
-            ) from e
+            raise GitHubApiError(f"vulnerability-alerts probe failed: {e}", status_code=0) from e
         if response.status_code == 204:
             return True
         if response.status_code == 404:
@@ -330,9 +314,7 @@ class GitHubClient:
                 params={"per_page": 1},
             )
         except httpx.HTTPError as e:
-            raise GitHubApiError(
-                f"code-scanning probe failed: {e}", status_code=0
-            ) from e
+            raise GitHubApiError(f"code-scanning probe failed: {e}", status_code=0) from e
         if 200 <= response.status_code < 300:
             return True
         if response.status_code in {403, 404}:
@@ -344,9 +326,7 @@ class GitHubClient:
             body_excerpt=excerpt,
         )
 
-    def list_security_advisories(
-        self, owner: str, repo: str
-    ) -> list[dict[str, Any]]:
+    def list_security_advisories(self, owner: str, repo: str) -> list[dict[str, Any]]:
         """Return published repository security advisories.
 
         Added v0.10.6 for the OSPS-VM-04.01 helper. The endpoint

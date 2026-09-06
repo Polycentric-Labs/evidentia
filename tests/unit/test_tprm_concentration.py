@@ -53,19 +53,13 @@ class TestComputeConcentration:
 
     def test_unsupported_dimension_rejected(self) -> None:
         with pytest.raises(ValueError, match="Unsupported"):
-            compute_concentration(
-                [_make_vendor("A")], ["nonexistent-dim"]
-            )
+            compute_concentration([_make_vendor("A")], ["nonexistent-dim"])
 
     def test_threshold_out_of_range_rejected(self) -> None:
         with pytest.raises(ValueError, match="threshold"):
-            compute_concentration(
-                [_make_vendor("A")], ["region"], threshold=150.0
-            )
+            compute_concentration([_make_vendor("A")], ["region"], threshold=150.0)
         with pytest.raises(ValueError, match="threshold"):
-            compute_concentration(
-                [_make_vendor("A")], ["region"], threshold=-1.0
-            )
+            compute_concentration([_make_vendor("A")], ["region"], threshold=-1.0)
 
     def test_region_dimension_distribution(self) -> None:
         vendors = [
@@ -113,9 +107,7 @@ class TestComputeConcentration:
             _make_vendor("C", region="us-east-1"),
             _make_vendor("D", region="eu-west-1"),
         ]
-        report = compute_concentration(
-            vendors, ["region"], threshold=50.0
-        )
+        report = compute_concentration(vendors, ["region"], threshold=50.0)
         dim = report.dimensions[0]
         flagged = dim.threshold_violations
         assert len(flagged) == 1
@@ -129,9 +121,7 @@ class TestComputeConcentration:
             _make_vendor("A", region="us-east-1"),
             _make_vendor("B", region="eu-west-1"),
         ]
-        report = compute_concentration(
-            vendors, ["region"], threshold=50.0
-        )
+        report = compute_concentration(vendors, ["region"], threshold=50.0)
         flagged_count = len(report.dimensions[0].threshold_violations)
         assert flagged_count == 2  # both at 50%; both flagged
 
@@ -193,9 +183,7 @@ class TestComputeConcentration:
         # Azure: 1 vendor (SaaS-on-Azure) as 4th-party
         assert values["Azure (4th-party)"] == 1
         # Stripe is not a cloud provider — must NOT appear in any form
-        assert all(
-            "Stripe" not in v for v in values
-        ), f"Stripe leaked into cloud-provider dimension: {values!r}"
+        assert all("Stripe" not in v for v in values), f"Stripe leaked into cloud-provider dimension: {values!r}"
         # Old un-suffixed labels must NOT appear
         assert "AWS Direct" not in values
         assert "Azure" not in values
@@ -252,20 +240,14 @@ class TestComputeConcentration:
                 ],
             ),
         ]
-        report = compute_concentration(
-            vendors, ["regulatory-classification"]
-        )
-        values = {
-            v.value: v.count for v in report.dimensions[0].distribution
-        }
+        report = compute_concentration(vendors, ["regulatory-classification"])
+        values = {v.value: v.count for v in report.dimensions[0].distribution}
         assert values[RegulatoryClassification.MODEL.value] == 2
         assert values[RegulatoryClassification.CUSTODY.value] == 1
 
     def test_multiple_dimensions_preserve_input_order(self) -> None:
         vendors = [_make_vendor("A", region="us-east-1")]
-        report = compute_concentration(
-            vendors, ["service-category", "region", "criticality-tier"]
-        )
+        report = compute_concentration(vendors, ["service-category", "region", "criticality-tier"])
         assert [d.dimension for d in report.dimensions] == [
             "service-category",
             "region",
@@ -283,9 +265,7 @@ class TestRenderHtmlReport:
             _make_vendor("B", region="us-east-1"),
             _make_vendor("C", region="eu-west-1"),
         ]
-        report = compute_concentration(
-            vendors, ["region"], threshold=50.0
-        )
+        report = compute_concentration(vendors, ["region"], threshold=50.0)
         html_str = render_html_report(report)
         assert "<!DOCTYPE html>" in html_str
         assert "Vendor Concentration Risk Report" in html_str
@@ -335,9 +315,7 @@ class TestRenderHtmlReport:
         assert "≥33.3%" in html_str
 
     def test_threshold_label_when_unset(self) -> None:
-        report = compute_concentration(
-            [_make_vendor("A", region="x")], ["region"]
-        )
+        report = compute_concentration([_make_vendor("A", region="x")], ["region"])
         html_str = render_html_report(report)
         assert "n/a" in html_str
 
@@ -375,15 +353,13 @@ class TestCsvInjectionDefense:
         "malicious_name",
         [
             "=cmd|'/c calc'!A0",
-            "=HYPERLINK(\"http://attacker.example\",\"Click\")",
+            '=HYPERLINK("http://attacker.example","Click")',
             "+SUM(A1)",
             "-2+3",
             "@SUM(1+1)",
         ],
     )
-    def test_concentration_csv_neutralizes_formula_lead_chars(
-        self, malicious_name: str
-    ) -> None:
+    def test_concentration_csv_neutralizes_formula_lead_chars(self, malicious_name: str) -> None:
         # 4th-party name is one of the user-controlled cells
         v = Vendor(
             name="Parent",
@@ -414,10 +390,7 @@ class TestCsvInjectionDefense:
         assert len(data_rows) == 1
         value_cell = data_rows[0][1]
         # Defused: cell starts with a single-quote
-        assert value_cell.startswith("'"), (
-            f"Expected single-quote prefix on defused cell; "
-            f"got {value_cell!r}"
-        )
+        assert value_cell.startswith("'"), f"Expected single-quote prefix on defused cell; got {value_cell!r}"
         # Original malicious name follows the prefix unchanged
         assert value_cell == "'" + malicious_name
 
@@ -438,9 +411,7 @@ class TestCsvInjectionDefense:
         # is not in the formula-lead set)
         for line in csv_str.split("\n"):
             if "us-east-1" in line:
-                assert "'us-east-1" not in line, (
-                    f"Safe value should not be prefixed: {line!r}"
-                )
+                assert "'us-east-1" not in line, f"Safe value should not be prefixed: {line!r}"
 
 
 class TestRenderCsvReport:
@@ -450,14 +421,10 @@ class TestRenderCsvReport:
             _make_vendor("B", region="us-east-1"),
             _make_vendor("C", region="eu-west-1"),
         ]
-        report = compute_concentration(
-            vendors, ["region"], threshold=50.0
-        )
+        report = compute_concentration(vendors, ["region"], threshold=50.0)
         csv_str = render_csv_report(report)
         lines = csv_str.strip().split("\n")
-        assert lines[0].rstrip("\r") == (
-            "dimension,value,count,percentage,exceeds_threshold"
-        )
+        assert lines[0].rstrip("\r") == ("dimension,value,count,percentage,exceeds_threshold")
         # 2 distinct values → 2 rows + 1 header
         assert len(lines) == 3
         # us-east-1 row should have exceeds_threshold=true (66.7% > 50)

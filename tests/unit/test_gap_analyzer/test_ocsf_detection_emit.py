@@ -90,9 +90,7 @@ def test_each_gap_becomes_one_ocsf_detection_finding() -> None:
         gap_report_to_ocsf_detection_array,
     )
 
-    report = _report(
-        [_gap("AC-2", GapSeverity.HIGH), _gap("AC-3", GapSeverity.MEDIUM)]
-    )
+    report = _report([_gap("AC-2", GapSeverity.HIGH), _gap("AC-3", GapSeverity.MEDIUM)])
     detection_array = gap_report_to_ocsf_detection_array(report)
 
     assert len(detection_array) == 2
@@ -118,8 +116,7 @@ def test_severity_id_maps_from_gap_severity() -> None:
         ]
     )
     by_finding = {
-        entry["finding_info"]["uid"]: entry["severity_id"]
-        for entry in gap_report_to_ocsf_detection_array(report)
+        entry["finding_info"]["uid"]: entry["severity_id"] for entry in gap_report_to_ocsf_detection_array(report)
     }
     # OCSF SeverityID: 1=Informational, 2=Low, 3=Medium, 4=High, 5=Critical
     gap_id_to_severity = {
@@ -154,10 +151,7 @@ def test_status_id_maps_from_gap_status() -> None:
     na_gap.status = GapStatus.NOT_APPLICABLE
 
     report = _report([open_gap, inprog_gap, remediated_gap, accepted_gap, na_gap])
-    by_uid = {
-        entry["finding_info"]["uid"]: entry["status_id"]
-        for entry in gap_report_to_ocsf_detection_array(report)
-    }
+    by_uid = {entry["finding_info"]["uid"]: entry["status_id"] for entry in gap_report_to_ocsf_detection_array(report)}
     assert by_uid[open_gap.id] == 1
     assert by_uid[inprog_gap.id] == 1
     assert by_uid[remediated_gap.id] == 4
@@ -259,9 +253,7 @@ def test_export_report_format_ocsf_detection_writes_array_to_path(
     """End-to-end via the public export_report dispatch: --format
     ocsf-detection writes a JSON array to disk that round-trips into
     a list of dicts with the expected OCSF Detection Finding shape."""
-    report = _report(
-        [_gap("AC-2", GapSeverity.CRITICAL), _gap("AC-3", GapSeverity.LOW)]
-    )
+    report = _report([_gap("AC-2", GapSeverity.CRITICAL), _gap("AC-3", GapSeverity.LOW)])
     output_path = tmp_path / "gaps.ocsf-detection.json"
 
     returned_path = export_report(report, output_path, format="ocsf-detection")

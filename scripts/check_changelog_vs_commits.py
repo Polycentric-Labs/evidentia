@@ -112,16 +112,14 @@ def main(argv: list[str] | None = None) -> int:
 
     if (_git("tag", "-l", f"v{version}") or "").strip():
         print(
-            f"check_changelog_vs_commits: v{version} is already tagged — "
-            "no release being prepped, nothing to compare."
+            f"check_changelog_vs_commits: v{version} is already tagged — no release being prepped, nothing to compare."
         )
         return 0
 
     base = (_git("describe", "--tags", "--abbrev=0", "HEAD") or "").strip()
     if not base:
         print(
-            "WARN: no reachable release tag (shallow clone or no tags) — "
-            "skipping the advisory diff",
+            "WARN: no reachable release tag (shallow clone or no tags) — skipping the advisory diff",
             file=sys.stderr,
         )
         return 0
@@ -146,10 +144,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     missing, unreferenced = compare(subjects, block)
-    print(
-        f"check_changelog_vs_commits: {len(subjects)} commit(s) in "
-        f"{base}..HEAD vs the [{version}] block:"
-    )
+    print(f"check_changelog_vs_commits: {len(subjects)} commit(s) in {base}..HEAD vs the [{version}] block:")
     for subject in missing:
         print(f"  ADVISORY: PR not mentioned in [{version}]: {subject}")
     for subject in unreferenced:

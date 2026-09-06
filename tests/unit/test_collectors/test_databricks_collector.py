@@ -127,9 +127,7 @@ def _make_mock_client(
     if sp_list_raises is not None:
         client.service_principals.list.side_effect = sp_list_raises
     else:
-        client.service_principals.list.return_value = (
-            service_principals or []
-        )
+        client.service_principals.list.return_value = service_principals or []
 
     if scope_list_raises is not None:
         client.secrets.list_scopes.side_effect = scope_list_raises
@@ -144,9 +142,7 @@ def _make_mock_client(
 
 class TestConstruction:
     def test_requires_host_or_client(self) -> None:
-        with pytest.raises(
-            DatabricksCollectorError, match="requires either host"
-        ):
+        with pytest.raises(DatabricksCollectorError, match="requires either host"):
             DatabricksCollector()
 
     def test_accepts_injected_client(self) -> None:
@@ -181,9 +177,7 @@ class TestPublicSurface:
 
     def test_exception_hierarchy(self) -> None:
         assert issubclass(DatabricksAuthError, DatabricksCollectorError)
-        assert issubclass(
-            DatabricksPermissionError, DatabricksCollectorError
-        )
+        assert issubclass(DatabricksPermissionError, DatabricksCollectorError)
 
 
 # ── PAT inventory sub-check tests ──────────────────────────────────
@@ -204,8 +198,9 @@ class TestPATInventory:
         # creation/expiry within the 90-day window so no long-lived
         # findings emit.
         inventory_findings = [
-            f for f in findings if f.title.startswith("Databricks PAT ")
-            and "lifetime" not in f.title and "no expiry" not in f.title
+            f
+            for f in findings
+            if f.title.startswith("Databricks PAT ") and "lifetime" not in f.title and "no expiry" not in f.title
         ]
         assert len(inventory_findings) == 3
         for f in inventory_findings:
@@ -265,18 +260,14 @@ class TestPATInventory:
         # Simulate the SDK raising a permission-denied error —
         # the collector heuristic-detects this from the message and
         # records it in manifest.errors[] without aborting the run.
-        pat_err = RuntimeError(
-            "PERMISSION_DENIED: token_management permission required"
-        )
+        pat_err = RuntimeError("PERMISSION_DENIED: token_management permission required")
         client = _make_mock_client(pat_list_raises=pat_err)
         with DatabricksCollector(client=client) as c:
             findings, manifest = c.collect_v2()
 
         assert findings == []
         assert manifest.is_complete is False
-        assert any(
-            "permission" in err.lower() for err in manifest.errors
-        )
+        assert any("permission" in err.lower() for err in manifest.errors)
 
 
 # ── Manifest tests ────────────────────────────────────────────────
@@ -284,16 +275,12 @@ class TestPATInventory:
 
 class TestManifest:
     def test_manifest_lists_pat_resource_type(self) -> None:
-        client = _make_mock_client(
-            pats=[_make_mock_pat(token_id="tok-x")]
-        )
+        client = _make_mock_client(pats=[_make_mock_pat(token_id="tok-x")])
         with DatabricksCollector(client=client) as c:
             _findings, manifest = c.collect_v2()
 
         assert manifest.collector_id == COLLECTOR_ID
-        resource_types = [
-            cc.resource_type for cc in manifest.coverage_counts
-        ]
+        resource_types = [cc.resource_type for cc in manifest.coverage_counts]
         assert "databricks-pat" in resource_types
 
     def test_manifest_flags_other_sub_checks_as_empty(self) -> None:
@@ -325,9 +312,7 @@ class TestLifecycle:
         # raise.
 
     def test_dry_run_yields_empty_findings(self) -> None:
-        client = _make_mock_client(
-            pats=[_make_mock_pat(token_id="tok-x")]
-        )
+        client = _make_mock_client(pats=[_make_mock_pat(token_id="tok-x")])
         c = DatabricksCollector(client=client)
         findings = c.collect(dry_run=True)
         assert findings == []
@@ -406,14 +391,8 @@ class TestClusterCompliance:
             _make_mock_cluster(
                 cluster_id="c-with-init",
                 init_scripts=[
-                    MagicMock(
-                        dbfs=MagicMock(
-                            destination="dbfs:/init/bootstrap.sh"
-                        )
-                    ),
-                    MagicMock(
-                        dbfs=MagicMock(destination="dbfs:/init/perms.sh")
-                    ),
+                    MagicMock(dbfs=MagicMock(destination="dbfs:/init/bootstrap.sh")),
+                    MagicMock(dbfs=MagicMock(destination="dbfs:/init/perms.sh")),
                 ],
             ),
         ]
@@ -441,10 +420,7 @@ class TestServicePrincipal:
             findings, _manifest = c.collect_v2()
 
         sp_inventory = [
-            f
-            for f in findings
-            if f.resource_type == "Databricks::ServicePrincipal"
-            and "Inactive" not in f.title
+            f for f in findings if f.resource_type == "Databricks::ServicePrincipal" and "Inactive" not in f.title
         ]
         assert len(sp_inventory) == 2
 
@@ -488,32 +464,24 @@ class TestSecretScope:
     def test_databricks_backed_scope_emits_advisory_finding(
         self,
     ) -> None:
-        scope = _make_mock_secret_scope(
-            name="prod-secrets", backend_type="DATABRICKS"
-        )
+        scope = _make_mock_secret_scope(name="prod-secrets", backend_type="DATABRICKS")
         client = _make_mock_client(secret_scopes=[scope])
         with DatabricksCollector(client=client) as c:
             findings, _manifest = c.collect_v2()
 
-        advisory = [
-            f for f in findings if "consider KMS-backed" in f.title
-        ]
+        advisory = [f for f in findings if "consider KMS-backed" in f.title]
         assert len(advisory) == 1
         assert advisory[0].severity == Severity.LOW
 
     def test_key_vault_backed_scope_emits_positive_finding(
         self,
     ) -> None:
-        scope = _make_mock_secret_scope(
-            name="kv-prod", backend_type="AZURE_KEYVAULT"
-        )
+        scope = _make_mock_secret_scope(name="kv-prod", backend_type="AZURE_KEYVAULT")
         client = _make_mock_client(secret_scopes=[scope])
         with DatabricksCollector(client=client) as c:
             findings, _manifest = c.collect_v2()
 
-        preferred = [
-            f for f in findings if "preferred SC-12 posture" in f.title
-        ]
+        preferred = [f for f in findings if "preferred SC-12 posture" in f.title]
         assert len(preferred) == 1
         assert preferred[0].severity == Severity.INFORMATIONAL
 
@@ -532,9 +500,7 @@ class TestManifestAfterAllSubChecks:
         with DatabricksCollector(client=client) as c:
             _findings, manifest = c.collect_v2()
 
-        resource_types = {
-            cc.resource_type for cc in manifest.coverage_counts
-        }
+        resource_types = {cc.resource_type for cc in manifest.coverage_counts}
         # All 4 evidence sources implemented in P0.1 should appear.
         assert resource_types >= {
             "databricks-pat",
@@ -568,77 +534,56 @@ class TestExtraLTSFromEnv:
     ``DATABRICKS_EXTRA_LTS_RUNTIMES`` (comma-separated).
     """
 
-    def test_no_env_var_returns_empty(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_no_env_var_returns_empty(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from evidentia_collectors.databricks.collector import (
             _extra_lts_from_env,
         )
-        monkeypatch.delenv(
-            "DATABRICKS_EXTRA_LTS_RUNTIMES", raising=False
-        )
+
+        monkeypatch.delenv("DATABRICKS_EXTRA_LTS_RUNTIMES", raising=False)
         assert _extra_lts_from_env() == frozenset()
 
-    def test_single_value_lowercased(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_single_value_lowercased(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from evidentia_collectors.databricks.collector import (
             _extra_lts_from_env,
         )
-        monkeypatch.setenv(
-            "DATABRICKS_EXTRA_LTS_RUNTIMES", "17.3.X-LTS"
-        )
+
+        monkeypatch.setenv("DATABRICKS_EXTRA_LTS_RUNTIMES", "17.3.X-LTS")
         assert _extra_lts_from_env() == frozenset({"17.3.x-lts"})
 
-    def test_multi_value_comma_separated(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_multi_value_comma_separated(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from evidentia_collectors.databricks.collector import (
             _extra_lts_from_env,
         )
+
         monkeypatch.setenv(
             "DATABRICKS_EXTRA_LTS_RUNTIMES",
             "17.3.x-lts, 18.0.x-lts ,19.1.x-lts",
         )
-        assert _extra_lts_from_env() == frozenset(
-            {"17.3.x-lts", "18.0.x-lts", "19.1.x-lts"}
-        )
+        assert _extra_lts_from_env() == frozenset({"17.3.x-lts", "18.0.x-lts", "19.1.x-lts"})
 
-    def test_empty_entries_dropped(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_empty_entries_dropped(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from evidentia_collectors.databricks.collector import (
             _extra_lts_from_env,
         )
+
         monkeypatch.setenv(
             "DATABRICKS_EXTRA_LTS_RUNTIMES",
             "17.3.x-lts,,  ,18.0.x-lts",
         )
-        assert _extra_lts_from_env() == frozenset(
-            {"17.3.x-lts", "18.0.x-lts"}
-        )
+        assert _extra_lts_from_env() == frozenset({"17.3.x-lts", "18.0.x-lts"})
 
-    def test_is_current_lts_includes_env_extras(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_is_current_lts_includes_env_extras(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Operator-supplied entries are honored by
         ``_is_current_lts()`` via the merged allowlist."""
         from evidentia_collectors.databricks.collector import (
             _is_current_lts,
         )
+
         # 17.3 is NOT in the in-package allowlist (only 14.3 / 15.4 / 16.4)
-        monkeypatch.delenv(
-            "DATABRICKS_EXTRA_LTS_RUNTIMES", raising=False
-        )
-        assert not _is_current_lts(
-            "17.3.x-lts-photon-scala2.12"
-        )
+        monkeypatch.delenv("DATABRICKS_EXTRA_LTS_RUNTIMES", raising=False)
+        assert not _is_current_lts("17.3.x-lts-photon-scala2.12")
         # With env-var override, it's recognized via the
         # startswith() prefix match (17.3.x-lts matches
         # 17.3.x-lts-photon-scala2.12).
-        monkeypatch.setenv(
-            "DATABRICKS_EXTRA_LTS_RUNTIMES", "17.3.x-lts"
-        )
-        assert _is_current_lts(
-            "17.3.x-lts-photon-scala2.12"
-        )
+        monkeypatch.setenv("DATABRICKS_EXTRA_LTS_RUNTIMES", "17.3.x-lts")
+        assert _is_current_lts("17.3.x-lts-photon-scala2.12")

@@ -130,8 +130,7 @@ class KsiIndicatorEntry(EvidentiaModel):
     persistence_cycles: list[KsiPersistenceCycle] = Field(
         default_factory=list,
         description=(
-            "CONMON cadences implementing this KSI persistently; rendered "
-            "as cycle statements per SDR-CSX-KSI"
+            "CONMON cadences implementing this KSI persistently; rendered as cycle statements per SDR-CSX-KSI"
         ),
     )
 
@@ -180,10 +179,7 @@ class KsiStatusDocument(EvidentiaModel):
     """The operator's KSI status file (YAML) — input to `evidentia conmon ksi`."""
 
     certification_package_overview_uri: str = Field(
-        description=(
-            "Full URI of the provider's Certification Package Overview "
-            "document (SDR schema required field)"
-        ),
+        description=("Full URI of the provider's Certification Package Overview document (SDR schema required field)"),
     )
     document_version: str = Field(
         description="SDR document version (SDR-CSO-MTD)",

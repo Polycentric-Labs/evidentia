@@ -184,6 +184,7 @@ Run from a clean worktree:
 ```bash
 uv sync --all-extras --all-packages
 uv run --no-sync ruff check
+uv run --no-sync ruff format --check .
 uv run --no-sync python -m mypy \
   packages/evidentia-core packages/evidentia-collectors \
   packages/evidentia-api packages/evidentia-ai \
@@ -229,6 +230,7 @@ docker rmi evidentia:rc
 Acceptance:
 
 - [ ] ruff: `All checks passed!`
+- [ ] ruff format: `N files already formatted`, no `Would reformat` line
 - [ ] mypy: `Success: no issues found in N source files`
 - [ ] pytest: ≥ 857 passed (the v0.7.0 baseline; will grow over
       time), ≤ 8 skipped, 16 benign Tier-C warnings

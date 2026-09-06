@@ -43,9 +43,7 @@ def _mock_dns(monkeypatch: pytest.MonkeyPatch) -> None:
         except OSError:
             pass
         # Fake DNS: hostnames map to a public IP unless test overrides.
-        return [
-            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("93.184.215.14", port or 0))
-        ]
+        return [(socket.AF_INET, socket.SOCK_STREAM, 0, "", ("93.184.215.14", port or 0))]
 
     monkeypatch.setattr(socket, "getaddrinfo", _fake_getaddrinfo)
 
@@ -74,15 +72,11 @@ class TestWebhookConfig:
 
     def test_rejects_empty_secret(self) -> None:
         with pytest.raises(ValueError, match="secret required"):
-            WebhookConfig(
-                url="https://hooks.example.com/in", secret=""
-            )
+            WebhookConfig(url="https://hooks.example.com/in", secret="")
 
     def test_accepts_public_https(self) -> None:
         """Public HTTPS URL is the default-allowed shape (no opt-ins)."""
-        cfg = WebhookConfig(
-            url="https://hooks.example.com/in", secret="s"
-        )
+        cfg = WebhookConfig(url="https://hooks.example.com/in", secret="s")
         assert cfg.url == "https://hooks.example.com/in"
 
     # v0.9.4 P1.2 SSRF mitigation — default-deny tests.
@@ -101,9 +95,7 @@ class TestWebhookConfig:
         )
         assert cfg.url == "http://hooks.example.com/in"
 
-    def test_rejects_loopback_by_default(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_rejects_loopback_by_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """v0.9.4 F-V93-S2: 127.0.0.1 rejected without opt-in."""
         with pytest.raises(ValueError, match=r"non-public|loopback|private"):
             WebhookConfig(url="https://127.0.0.1/hook", secret="s")
@@ -117,9 +109,7 @@ class TestWebhookConfig:
         """v0.9.4 F-V93-S2: 169.254.169.254 (cloud metadata) rejected.
         This is the cloud-IAM-credential-exfiltration vector that
         motivated default-deny."""
-        with pytest.raises(
-            ValueError, match=r"non-public|link-local|reserved"
-        ):
+        with pytest.raises(ValueError, match=r"non-public|link-local|reserved"):
             WebhookConfig(
                 url="https://169.254.169.254/latest/meta-data/iam/security-credentials/",
                 secret="s",
@@ -145,9 +135,7 @@ class TestWebhookConfig:
         )
         assert cfg.url == "https://10.0.0.5/hook"
 
-    def test_rejects_unresolvable_hostname(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_rejects_unresolvable_hostname(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """v0.9.4 F-V93-S2: hostname resolution failure raises clearly."""
 
         def _fail_resolve(*args: object, **kwargs: object) -> None:
@@ -155,15 +143,11 @@ class TestWebhookConfig:
 
         monkeypatch.setattr(socket, "getaddrinfo", _fail_resolve)
         with pytest.raises(ValueError, match="did not resolve"):
-            WebhookConfig(
-                url="https://does-not-exist.invalid/hook", secret="s"
-            )
+            WebhookConfig(url="https://does-not-exist.invalid/hook", secret="s")
 
 
 class TestWebhookAlertChannel:
-    def test_dispatch_sends_signed_post(
-        self, sample_observation: CycleObservation
-    ) -> None:
+    def test_dispatch_sends_signed_post(self, sample_observation: CycleObservation) -> None:
         cfg = WebhookConfig(
             url="https://hooks.example.com/in",
             secret="shared-secret",
@@ -189,18 +173,14 @@ class TestWebhookAlertChannel:
         timestamp = request_arg.headers["X-evidentia-timestamp"]
         signature_header = request_arg.headers["X-evidentia-signature"]
         signed_material = f"{timestamp}.".encode() + body
-        expected = hmac.new(
-            b"shared-secret", signed_material, hashlib.sha256
-        ).hexdigest()
+        expected = hmac.new(b"shared-secret", signed_material, hashlib.sha256).hexdigest()
         assert signature_header == f"sha256={expected}"
         # Timestamp is a unix-epoch integer string (≤ 11 chars
         # until year 5138 — sanity range).
         assert timestamp.isdigit()
         assert 10 <= len(timestamp) <= 11
 
-    def test_payload_shape(
-        self, sample_observation: CycleObservation
-    ) -> None:
+    def test_payload_shape(self, sample_observation: CycleObservation) -> None:
         cfg = WebhookConfig(
             url="https://hooks.example.com/in",
             secret="shared-secret",
@@ -222,9 +202,7 @@ class TestWebhookAlertChannel:
         assert payload["last_completed"] == "2025-01-01"
         assert payload["next_due"] == "2025-02-01"
 
-    def test_http_error_raises(
-        self, sample_observation: CycleObservation
-    ) -> None:
+    def test_http_error_raises(self, sample_observation: CycleObservation) -> None:
         cfg = WebhookConfig(
             url="https://hooks.example.com/in",
             secret="shared-secret",

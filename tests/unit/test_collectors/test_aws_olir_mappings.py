@@ -54,12 +54,8 @@ def test_security_hub_mapping_unknown_returns_empty() -> None:
 
 def test_security_hub_mapping_uses_subset_of_authoritative_claim() -> None:
     mappings = map_security_hub_control_to_control_mappings("fsbp.cloudtrail.1")
-    assert all(
-        m.relationship == OLIRRelationship.SUBSET_OF for m in mappings
-    )
-    assert all(
-        "FSBP" in m.justification or "CIS" in m.justification for m in mappings
-    )
+    assert all(m.relationship == OLIRRelationship.SUBSET_OF for m in mappings)
+    assert all("FSBP" in m.justification or "CIS" in m.justification for m in mappings)
 
 
 def test_security_hub_mapping_legacy_str_variant_still_works() -> None:
@@ -71,13 +67,20 @@ def test_security_hub_mapping_legacy_str_variant_still_works() -> None:
 @pytest.mark.parametrize(
     "rule_name",
     [
-        "access-keys-rotated", "iam-password-policy",
-        "iam-root-access-key-check", "iam-user-mfa-enabled",
-        "iam-user-no-policies-check", "mfa-enabled-for-iam-console-access",
-        "root-account-mfa-enabled", "alb-http-to-https-redirection-check",
-        "elb-tls-https-listeners-only", "encrypted-volumes",
-        "rds-storage-encrypted", "s3-bucket-server-side-encryption-enabled",
-        "s3-bucket-ssl-requests-only", "cloudtrail-enabled",
+        "access-keys-rotated",
+        "iam-password-policy",
+        "iam-root-access-key-check",
+        "iam-user-mfa-enabled",
+        "iam-user-no-policies-check",
+        "mfa-enabled-for-iam-console-access",
+        "root-account-mfa-enabled",
+        "alb-http-to-https-redirection-check",
+        "elb-tls-https-listeners-only",
+        "encrypted-volumes",
+        "rds-storage-encrypted",
+        "s3-bucket-server-side-encryption-enabled",
+        "s3-bucket-ssl-requests-only",
+        "cloudtrail-enabled",
         "cloud-trail-log-file-validation-enabled",
         "multi-region-cloudtrail-enabled",
     ],
@@ -85,17 +88,23 @@ def test_security_hub_mapping_legacy_str_variant_still_works() -> None:
 def test_every_major_config_rule_has_olir_classification(rule_name: str) -> None:
     mappings = map_config_rule_to_control_mappings(rule_name)
     assert mappings, f"No OLIR mapping for {rule_name!r}"
-    assert all(m.justification for m in mappings), (
-        f"Empty justification on mapping for {rule_name!r}"
-    )
+    assert all(m.justification for m in mappings), f"Empty justification on mapping for {rule_name!r}"
 
 
 @pytest.mark.parametrize(
     "control_id",
     [
-        "fsbp.iam.1", "fsbp.iam.4", "fsbp.iam.6", "fsbp.iam.8",
-        "fsbp.s3.1", "fsbp.s3.2", "fsbp.s3.3", "fsbp.s3.5",
-        "fsbp.cloudtrail.1", "cis.1.4", "cis.1.5",
+        "fsbp.iam.1",
+        "fsbp.iam.4",
+        "fsbp.iam.6",
+        "fsbp.iam.8",
+        "fsbp.s3.1",
+        "fsbp.s3.2",
+        "fsbp.s3.3",
+        "fsbp.s3.5",
+        "fsbp.cloudtrail.1",
+        "cis.1.4",
+        "cis.1.5",
     ],
 )
 def test_every_major_security_hub_control_has_olir_classification(
@@ -103,7 +112,5 @@ def test_every_major_security_hub_control_has_olir_classification(
 ) -> None:
     mappings = map_security_hub_control_to_control_mappings(control_id)
     assert mappings, f"No OLIR mapping for {control_id!r}"
-    assert all(
-        m.relationship == OLIRRelationship.SUBSET_OF for m in mappings
-    )
+    assert all(m.relationship == OLIRRelationship.SUBSET_OF for m in mappings)
     assert all(m.justification for m in mappings)

@@ -31,9 +31,7 @@ async def doctor() -> dict[str, object]:
     so the GUI can render badges + severity coloring per-subsystem.
     """
     py_version = ".".join(str(v) for v in sys.version_info[:3])
-    subsystems: list[dict[str, str]] = [
-        {"name": "Python", "status": "ok", "detail": py_version}
-    ]
+    subsystems: list[dict[str, str]] = [{"name": "Python", "status": "ok", "detail": py_version}]
 
     for pkg in (
         "evidentia_core",
@@ -44,13 +42,9 @@ async def doctor() -> dict[str, object]:
     ):
         try:
             __import__(pkg)
-            subsystems.append(
-                {"name": pkg, "status": "ok", "detail": "installed"}
-            )
+            subsystems.append({"name": pkg, "status": "ok", "detail": "installed"})
         except ImportError as e:
-            subsystems.append(
-                {"name": pkg, "status": "missing", "detail": str(e)}
-            )
+            subsystems.append({"name": pkg, "status": "missing", "detail": str(e)})
 
     # Catalogs + crosswalks
     try:
@@ -74,9 +68,7 @@ async def doctor() -> dict[str, object]:
             }
         )
     except Exception as e:  # pragma: no cover — defensive
-        subsystems.append(
-            {"name": "OSCAL catalogs", "status": "fail", "detail": str(e)}
-        )
+        subsystems.append({"name": "OSCAL catalogs", "status": "fail", "detail": str(e)})
 
     # LLM provider detection (no key values returned; just presence)
     llm_keys = {
@@ -91,9 +83,7 @@ async def doctor() -> dict[str, object]:
             "name": "LLM provider",
             "status": "ok" if detected else "warn",
             "detail": (
-                ", ".join(detected)
-                if detected
-                else "No API key detected — set OPENAI_API_KEY, ANTHROPIC_API_KEY, etc."
+                ", ".join(detected) if detected else "No API key detected — set OPENAI_API_KEY, ANTHROPIC_API_KEY, etc."
             ),
         }
     )
@@ -112,14 +102,8 @@ async def check_air_gap() -> AirGapCheckResponse:
     any_leaks = False
 
     cfg = load_config()
-    model = (
-        os.environ.get("EVIDENTIA_LLM_MODEL")
-        or (cfg.llm.model if cfg.llm else None)
-        or "gpt-4o"
-    )
-    api_base = os.environ.get("EVIDENTIA_LLM_API_BASE") or os.environ.get(
-        "OPENAI_API_BASE"
-    )
+    model = os.environ.get("EVIDENTIA_LLM_MODEL") or (cfg.llm.model if cfg.llm else None) or "gpt-4o"
+    api_base = os.environ.get("EVIDENTIA_LLM_API_BASE") or os.environ.get("OPENAI_API_BASE")
 
     # Subsystem: LLM client
     if any(model.lower().startswith(p) for p in LOCAL_LLM_PREFIXES):

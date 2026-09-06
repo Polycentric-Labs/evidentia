@@ -59,13 +59,9 @@ def _load_oscal_json(path: Path) -> dict[str, Any]:
         except RecursionError as exc:
             # CWE-674: a pathologically deeply-nested JSON document exhausts
             # json's recursion limit. Convert to the module's typed error.
-            raise ProfileResolutionError(
-                f"OSCAL file {path} is nested too deeply to parse"
-            ) from exc
+            raise ProfileResolutionError(f"OSCAL file {path} is nested too deeply to parse") from exc
     if not isinstance(data, dict):
-        raise ProfileResolutionError(
-            f"OSCAL file {path} must contain a JSON object at top level"
-        )
+        raise ProfileResolutionError(f"OSCAL file {path} must contain a JSON object at top level")
     return data
 
 
@@ -183,9 +179,11 @@ def _apply_set_parameters(
     Returns a new control with updated parameters; input is not mutated.
     """
     overrides: dict[str, str] = {}
-    for modify in profile.get("profile", {}).get("modify", []) if isinstance(
-        profile.get("profile", {}).get("modify"), list
-    ) else [profile.get("profile", {}).get("modify", {})]:
+    for modify in (
+        profile.get("profile", {}).get("modify", [])
+        if isinstance(profile.get("profile", {}).get("modify"), list)
+        else [profile.get("profile", {}).get("modify", {})]
+    ):
         if not modify:
             continue
         for sp in modify.get("set-parameters", []):
@@ -209,9 +207,7 @@ def _apply_set_parameters(
         updated[pid] = val
     # Recursive: apply to enhancements too
     new_enhancements = [_apply_set_parameters(profile, e) for e in control.enhancements]
-    return control.model_copy(
-        update={"parameters": updated, "enhancements": new_enhancements}
-    )
+    return control.model_copy(update={"parameters": updated, "enhancements": new_enhancements})
 
 
 def _apply_alter(
@@ -281,23 +277,17 @@ def _filter_controls(
             if with_children:
                 out.append(ctrl)  # keep enhancements as-is
             else:
-                filtered_enh = _filter_controls(
-                    ctrl.enhancements, included, excluded, include_all, with_children
-                )
+                filtered_enh = _filter_controls(ctrl.enhancements, included, excluded, include_all, with_children)
                 out.append(ctrl.model_copy(update={"enhancements": filtered_enh}))
         else:
             # Parent not included, but an enhancement might be
-            filtered_enh = _filter_controls(
-                ctrl.enhancements, included, excluded, include_all, with_children
-            )
+            filtered_enh = _filter_controls(ctrl.enhancements, included, excluded, include_all, with_children)
             if filtered_enh:
                 out.append(ctrl.model_copy(update={"enhancements": filtered_enh}))
     return out
 
 
-def _load_source_catalog(
-    profile_path: Path, profile: dict[str, Any]
-) -> ControlCatalog:
+def _load_source_catalog(profile_path: Path, profile: dict[str, Any]) -> ControlCatalog:
     """Resolve the profile's import href and load the source OSCAL catalog.
 
     Minimal: takes the first import's href. Multiple imports require
@@ -307,17 +297,13 @@ def _load_source_catalog(
     profile_section = _require_mapping(profile.get("profile", {}), "profile")
     imports = _iter_mappings(profile_section.get("imports", []), "profile.imports")
     if not imports:
-        raise ProfileResolutionError(
-            f"Profile {profile_path.name} has no imports — nothing to resolve"
-        )
+        raise ProfileResolutionError(f"Profile {profile_path.name} has no imports — nothing to resolve")
 
     base_dir = profile_path.parent
     first_import = imports[0]
     href = first_import.get("href", "")
     if not href:
-        raise ProfileResolutionError(
-            f"Profile {profile_path.name} first import missing href"
-        )
+        raise ProfileResolutionError(f"Profile {profile_path.name} first import missing href")
 
     try:
         catalog_path = _resolve_href(href, base_dir, profile=profile)
@@ -329,28 +315,21 @@ def _load_source_catalog(
         # Convert to the module's typed error rather than leaking an
         # uncaught exception (CWE-248; fuzz-found in fuzz_oscal_profile).
         raise ProfileResolutionError(
-            f"Profile {profile_path.name} import href {href!r} resolves to an "
-            f"unusable path: {exc}"
+            f"Profile {profile_path.name} import href {href!r} resolves to an unusable path: {exc}"
         ) from exc
     if catalog_missing:
-        raise ProfileResolutionError(
-            f"Source catalog not found: {catalog_path} (profile href: {href!r})"
-        )
+        raise ProfileResolutionError(f"Source catalog not found: {catalog_path} (profile href: {href!r})")
 
     raw = _load_oscal_json(catalog_path)
     catalog_data = _require_mapping(raw.get("catalog", raw), "source catalog")
-    metadata = _require_mapping(
-        catalog_data.get("metadata", {}), "source catalog metadata"
-    )
+    metadata = _require_mapping(catalog_data.get("metadata", {}), "source catalog metadata")
 
     controls: list[CatalogControl] = []
     families: list[str] = []
     for group in _iter_mappings(catalog_data.get("groups", []), "catalog.groups"):
         family_title = group.get("title", "")
         families.append(family_title)
-        for oscal_control in _iter_mappings(
-            group.get("controls", []), "group.controls"
-        ):
+        for oscal_control in _iter_mappings(group.get("controls", []), "group.controls"):
             controls.append(_parse_oscal_control(oscal_control, family_title))
 
     title = str(metadata.get("title", catalog_path.stem))
@@ -390,16 +369,12 @@ def resolve_profile(
     try:
         source_catalog = _load_source_catalog(profile_path, profile)
         profile_section = _require_mapping(profile.get("profile", {}), "profile")
-        profile_meta = _require_mapping(
-            profile_section.get("metadata", {}), "profile.metadata"
-        )
+        profile_meta = _require_mapping(profile_section.get("metadata", {}), "profile.metadata")
 
         included, with_children, excluded = _collect_included_ids(profile)
         include_all = not included
 
-        filtered = _filter_controls(
-            source_catalog.controls, included, excluded, include_all, with_children
-        )
+        filtered = _filter_controls(source_catalog.controls, included, excluded, include_all, with_children)
 
         # Apply modifications (set-parameters + alters) to every surviving control
         filtered = [_apply_set_parameters(profile, c) for c in filtered]
@@ -414,12 +389,10 @@ def resolve_profile(
                 surviving_families.append(c.family)
                 seen_families.add(c.family)
 
-        framework_id = override_framework_id or str(
-            profile_meta.get("title", profile_path.stem)
-        ).lower().replace(" ", "-")
-        framework_name = override_framework_name or profile_meta.get(
-            "title", source_catalog.framework_name
+        framework_id = override_framework_id or str(profile_meta.get("title", profile_path.stem)).lower().replace(
+            " ", "-"
         )
+        framework_name = override_framework_name or profile_meta.get("title", source_catalog.framework_name)
 
         resolved = ControlCatalog(
             framework_id=framework_id,
@@ -454,8 +427,7 @@ def resolve_profile(
         # denial-of-service (CWE-248; fuzz-found in fuzz_oscal_profile).
         # Genuinely unexpected error types still propagate.
         raise ProfileResolutionError(
-            f"Profile {profile_path.name} is malformed and could not be "
-            f"resolved: {exc}"
+            f"Profile {profile_path.name} is malformed and could not be resolved: {exc}"
         ) from exc
 
 
@@ -479,10 +451,7 @@ def catalog_to_oscal_json(catalog: ControlCatalog) -> dict[str, Any]:
                 "version": catalog.version,
                 "oscal-version": OSCAL_SCHEMA_VERSION,
             },
-            "groups": [
-                {"title": family, "controls": ctrls}
-                for family, ctrls in groups.items()
-            ],
+            "groups": [{"title": family, "controls": ctrls} for family, ctrls in groups.items()],
         }
     }
 
@@ -508,14 +477,9 @@ def _control_to_oscal(control: CatalogControl) -> dict[str, Any]:
     if control.priority:
         out["props"] = [{"name": "priority", "value": control.priority}]
     if control.parameters:
-        out["params"] = [
-            {"id": pid, "label": val} for pid, val in control.parameters.items()
-        ]
+        out["params"] = [{"id": pid, "label": val} for pid, val in control.parameters.items()]
     if control.related_controls:
-        out["links"] = [
-            {"rel": "related", "href": f"#{c.lower()}"}
-            for c in control.related_controls
-        ]
+        out["links"] = [{"rel": "related", "href": f"#{c.lower()}"} for c in control.related_controls]
     if control.enhancements:
         out["controls"] = [_control_to_oscal(e) for e in control.enhancements]
     return out

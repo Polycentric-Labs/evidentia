@@ -82,11 +82,7 @@ class WorkflowStepEvent(EvidentiaModel):
     """One timestamped state-transition on a workflow step."""
 
     occurred_at: datetime = Field(default_factory=utc_now)
-    actor: str = Field(
-        description=(
-            "Identity who performed the transition (typically email)."
-        )
-    )
+    actor: str = Field(description=("Identity who performed the transition (typically email)."))
     from_status: WorkflowStepStatus
     to_status: WorkflowStepStatus
     note: str | None = Field(
@@ -149,9 +145,7 @@ class Workflow(EvidentiaModel):
     """
 
     id: str = Field(default_factory=new_id)
-    name: str = Field(
-        description="Workflow instance name (e.g., 'Credit-model-v3 quarterly review 2026-Q1')."
-    )
+    name: str = Field(description="Workflow instance name (e.g., 'Credit-model-v3 quarterly review 2026-Q1').")
     template: str | None = Field(
         default=None,
         description=(
@@ -160,14 +154,11 @@ class Workflow(EvidentiaModel):
             "template library + use this field for traceability."
         ),
     )
-    description: str = Field(
-        description="Workflow purpose narrative."
-    )
+    description: str = Field(description="Workflow purpose narrative.")
     subject: str | None = Field(
         default=None,
         description=(
-            "What/who is the workflow about (e.g., 'Model X', "
-            "'Vendor Y', 'Change request CR-1234'). Free-text."
+            "What/who is the workflow about (e.g., 'Model X', 'Vendor Y', 'Change request CR-1234'). Free-text."
         ),
     )
     steps: list[WorkflowStep] = Field(
@@ -178,9 +169,7 @@ class Workflow(EvidentiaModel):
         default=WorkflowStatus.DRAFT,
         description="Overall workflow status (derived from step states).",
     )
-    initiator: str = Field(
-        description="Identity (typically email) that initiated the workflow."
-    )
+    initiator: str = Field(description="Identity (typically email) that initiated the workflow.")
 
     # Auto-populated metadata
     created_at: datetime = Field(default_factory=utc_now)
@@ -223,9 +212,10 @@ def evaluate_workflow(workflow: Workflow) -> WorkflowStatus:
         return WorkflowStatus.APPROVED
     # Some non-terminal step exists. If we've made any progress
     # past the first step, we're IN_PROGRESS; otherwise DRAFT.
-    if statuses[0] == WorkflowStepStatus.PENDING.value and len(
-        [s for s in statuses if s != WorkflowStepStatus.PENDING.value]
-    ) == 0:
+    if (
+        statuses[0] == WorkflowStepStatus.PENDING.value
+        and len([s for s in statuses if s != WorkflowStepStatus.PENDING.value]) == 0
+    ):
         return WorkflowStatus.DRAFT
     return WorkflowStatus.IN_PROGRESS
 
@@ -267,21 +257,16 @@ def advance_workflow_step(
       - ``updated_at`` refreshed
     """
     if step_index < 0 or step_index >= len(workflow.steps):
-        raise WorkflowAdvanceError(
-            f"Step index {step_index} out of range "
-            f"(workflow has {len(workflow.steps)} step(s))"
-        )
+        raise WorkflowAdvanceError(f"Step index {step_index} out of range (workflow has {len(workflow.steps)} step(s))")
     target_step = workflow.steps[step_index]
     if target_step.status in _TERMINAL_STEP_STATES:
         raise WorkflowAdvanceError(
-            f"Step {step_index} ({target_step.name!r}) is already "
-            f"terminal ({target_step.status}); cannot transition."
+            f"Step {step_index} ({target_step.name!r}) is already terminal ({target_step.status}); cannot transition."
         )
     active_idx = current_step_index(workflow)
     if active_idx is not None and step_index != active_idx:
         raise WorkflowAdvanceError(
-            f"Step {step_index} is not the active step "
-            f"(active is index {active_idx}); steps must execute in order."
+            f"Step {step_index} is not the active step (active is index {active_idx}); steps must execute in order."
         )
 
     # Build the new step with appended event + new status
@@ -310,12 +295,9 @@ def advance_workflow_step(
             WorkflowStepStatus.SKIPPED,
         }
         and step_index + 1 < len(new_steps)
-        and new_steps[step_index + 1].status
-        == WorkflowStepStatus.PENDING.value
+        and new_steps[step_index + 1].status == WorkflowStepStatus.PENDING.value
     ):
-        promoted = new_steps[step_index + 1].model_copy(
-            update={"status": WorkflowStepStatus.IN_PROGRESS.value}
-        )
+        promoted = new_steps[step_index + 1].model_copy(update={"status": WorkflowStepStatus.IN_PROGRESS.value})
         new_steps[step_index + 1] = promoted
 
     new_workflow = workflow.model_copy(
@@ -325,18 +307,13 @@ def advance_workflow_step(
         }
     )
     # Re-evaluate workflow-level status from the updated step states
-    new_workflow = new_workflow.model_copy(
-        update={"status": evaluate_workflow(new_workflow)}
-    )
+    new_workflow = new_workflow.model_copy(update={"status": evaluate_workflow(new_workflow)})
     return new_workflow
 
 
 def _format_event(e: WorkflowStepEvent) -> str:
     note = f" — {e.note}" if e.note else ""
-    return (
-        f"`{e.occurred_at.isoformat()}` **{e.actor}**: "
-        f"{e.from_status} → {e.to_status}{note}"
-    )
+    return f"`{e.occurred_at.isoformat()}` **{e.actor}**: {e.from_status} → {e.to_status}{note}"
 
 
 def generate_workflow_log(workflow: Workflow) -> str:
@@ -375,41 +352,29 @@ def generate_workflow_log(workflow: Workflow) -> str:
     )
 
     if not workflow.steps:
-        sections.append(
-            "## Steps\n\n_No steps defined._\n"
-        )
+        sections.append("## Steps\n\n_No steps defined._\n")
         return "\n".join(sections)
 
     # ── §2 Per-step status table ────────────────────────────────
     rows = []
     for i, step in enumerate(workflow.steps):
         sla = f"{step.sla_days}d" if step.sla_days else "—"
-        rows.append(
-            f"| {i} | {step.name} | {step.required_role} | "
-            f"{step.status} | {sla} | {len(step.history)} |"
-        )
+        rows.append(f"| {i} | {step.name} | {step.required_role} | {step.status} | {sla} | {len(step.history)} |")
     sections.append(
         "## Steps\n\n"
         "| # | Name | Required role | Status | SLA | Events |\n"
-        "| --- | --- | --- | --- | --- | --- |\n"
-        + "\n".join(rows)
-        + "\n"
+        "| --- | --- | --- | --- | --- | --- |\n" + "\n".join(rows) + "\n"
     )
 
     # ── §3 Per-step event narrative ─────────────────────────────
     sections.append("## Event narrative\n")
     for i, step in enumerate(workflow.steps):
-        sections.append(
-            f"### Step {i} — {step.name} (`{step.status}`)\n\n"
-            f"**Required role**: {step.required_role}\n"
-        )
+        sections.append(f"### Step {i} — {step.name} (`{step.status}`)\n\n**Required role**: {step.required_role}\n")
         if step.description:
             sections.append(f"**Description**: {step.description}\n")
         if not step.history:
             sections.append("_No events yet._\n")
         else:
-            sections.append("Events:\n\n" + "\n".join(
-                f"- {_format_event(e)}" for e in step.history
-            ) + "\n")
+            sections.append("Events:\n\n" + "\n".join(f"- {_format_event(e)}" for e in step.history) + "\n")
 
     return "\n".join(sections)

@@ -135,9 +135,7 @@ def require_role(action: str) -> Any:
 
     def _dependency(request: Request) -> None:
         identity = _get_request_identity(request)
-        policy: RBACPolicy | TenantRBACPolicy = getattr(
-            request.app.state, "rbac_policy", DEFAULT_POLICY
-        )
+        policy: RBACPolicy | TenantRBACPolicy = getattr(request.app.state, "rbac_policy", DEFAULT_POLICY)
         # v0.9.8 P1.4: dispatch to multi-tenant when the operator's
         # policy demands it. The principal carries any tenant claim
         # as an ``@@<tenant>`` suffix; the multi-tenant decision
@@ -145,9 +143,7 @@ def require_role(action: str) -> Any:
         # claim-spoofing by routing the claim through the
         # authenticated principal, NOT through env vars or headers.
         if isinstance(policy, TenantRBACPolicy):
-            granted = check_permission_multi_tenant(
-                identity, action, policy=policy
-            )
+            granted = check_permission_multi_tenant(identity, action, policy=policy)
         else:
             granted = check_permission(identity, action, policy=policy)
         if not granted:

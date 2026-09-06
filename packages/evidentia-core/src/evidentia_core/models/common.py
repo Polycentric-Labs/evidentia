@@ -124,9 +124,7 @@ def enum_value(v: object) -> str:
 # generated a lone U+0085). Spelling the set out makes the published schema and
 # the runtime agree in every engine (JSON Schema patterns are ECMA-262 searches,
 # so the class is deliberately unanchored). Keep in sync with ``str.isspace()``.
-NON_BLANK_PATTERN = (
-    r"[^\s\x1c-\x1f\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]"
-)
+NON_BLANK_PATTERN = r"[^\s\x1c-\x1f\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]"
 
 # The one string type to use for any free-text field that must not be blank. It
 # publishes ``minLength: 1`` AND the pattern above, so a schema-driven client (or
@@ -227,12 +225,8 @@ class ControlMapping(EvidentiaModel):
     mapping tables upgraded in v0.7.0 set explicit stronger relationships.
     """
 
-    framework: str = Field(
-        description="Framework identifier, e.g. 'nist-800-53-rev5', 'soc2-tsc'"
-    )
-    control_id: str = Field(
-        description="Control identifier within the framework, e.g. 'AC-2', 'CC6.1'"
-    )
+    framework: str = Field(description="Framework identifier, e.g. 'nist-800-53-rev5', 'soc2-tsc'")
+    control_id: str = Field(description="Control identifier within the framework, e.g. 'AC-2', 'CC6.1'")
     control_title: str | None = Field(
         default=None,
         description="Human-readable control title",

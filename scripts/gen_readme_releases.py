@@ -138,9 +138,7 @@ def detect_current_version() -> str:
     script stays stdlib-only and import-free).
     """
     if not CORE_PYPROJECT_PATH.exists():
-        raise FileNotFoundError(
-            f"cannot detect current version: {CORE_PYPROJECT_PATH} missing"
-        )
+        raise FileNotFoundError(f"cannot detect current version: {CORE_PYPROJECT_PATH} missing")
     for line in CORE_PYPROJECT_PATH.read_text(encoding="utf-8").splitlines():
         m = re.match(r'\s*version\s*=\s*"(\d+\.\d+\.\d+(?:\.\d+)?)"', line)
         if m:
@@ -232,9 +230,7 @@ def condense_theme(body: str, version: str) -> str:
         return ""
     theme = m.group("theme").strip()
     # Strip a leading `vX.Y.Z` self-reference and the dash/space after it.
-    theme = re.sub(
-        rf"^v?{re.escape(version)}\s*[—–-]\s*", "", theme
-    ).strip()
+    theme = re.sub(rf"^v?{re.escape(version)}\s*[—–-]\s*", "", theme).strip()
     # Collapse internal whitespace WITHOUT turning ` + ` clause separators
     # into commas (clause capping below relies on the ` + ` delimiter).
     theme = re.sub(r"\s+", " ", theme).rstrip(". ").strip()
@@ -258,9 +254,7 @@ def _extract_added_bullets(body: str) -> list[str]:
     summary.
     """
     section_order = ["Added", "Changed", "Fixed", "Docs", "Security"]
-    section_re = {
-        name: re.compile(rf"^### {name}\s*$", re.MULTILINE) for name in section_order
-    }
+    section_re = {name: re.compile(rf"^### {name}\s*$", re.MULTILINE) for name in section_order}
     next_h3_re = re.compile(r"^#{2,3} ", re.MULTILINE)
 
     for name in section_order:
@@ -371,12 +365,9 @@ def splice_into_readme(readme_text: str, new_block_body: str) -> str:
         raise ValueError("README has no '## Recent Releases' header")
     full_m = FULL_HISTORY_RE.search(readme_text, pos=header_m.end())
     if full_m is None:
-        raise ValueError(
-            "README has no 'Full release history:' line after the "
-            "'## Recent Releases' header"
-        )
+        raise ValueError("README has no 'Full release history:' line after the '## Recent Releases' header")
     prefix = readme_text[: header_m.end()]
-    suffix = readme_text[full_m.start():]
+    suffix = readme_text[full_m.start() :]
     # One blank line after the header, the block, then one blank line before
     # the 'Full release history:' line — matching the existing layout.
     return f"{prefix}\n\n{new_block_body}\n\n{suffix}"
@@ -389,13 +380,11 @@ def extract_readme_block_versions(readme_text: str) -> list[str]:
         return []
     full_m = FULL_HISTORY_RE.search(readme_text, pos=header_m.end())
     end = full_m.start() if full_m else len(readme_text)
-    block = readme_text[header_m.end():end]
+    block = readme_text[header_m.end() : end]
     return [m.group("version") for m in README_ENTRY_RE.finditer(block)]
 
 
-def check_readme_current(
-    readme_text: str, current_version: str
-) -> tuple[bool, str]:
+def check_readme_current(readme_text: str, current_version: str) -> tuple[bool, str]:
     """Return (ok, message) for the staleness guard.
 
     OK iff the README block has EXACTLY ``TOP_N`` entries AND the newest
@@ -404,8 +393,7 @@ def check_readme_current(
     versions = extract_readme_block_versions(readme_text)
     if len(versions) != TOP_N:
         return False, (
-            f"README Recent-Releases block has {len(versions)} entr(ies), "
-            f"expected exactly {TOP_N}: {versions}"
+            f"README Recent-Releases block has {len(versions)} entr(ies), expected exactly {TOP_N}: {versions}"
         )
     if versions[0] != current_version:
         return False, (
@@ -414,8 +402,7 @@ def check_readme_current(
             f"`python scripts/gen_readme_releases.py`"
         )
     return True, (
-        f"README Recent-Releases block is current: {TOP_N} entries, "
-        f"newest v{versions[0]} == project {current_version}"
+        f"README Recent-Releases block is current: {TOP_N} entries, newest v{versions[0]} == project {current_version}"
     )
 
 
@@ -446,8 +433,7 @@ def main(argv: list[str] | None = None) -> int:
     blocks = parse_changelog_blocks(changelog_text)
     if len(blocks) < TOP_N:
         print(
-            f"error: CHANGELOG has only {len(blocks)} dated release block(s); "
-            f"need at least {TOP_N}",
+            f"error: CHANGELOG has only {len(blocks)} dated release block(s); need at least {TOP_N}",
             file=sys.stderr,
         )
         return 2

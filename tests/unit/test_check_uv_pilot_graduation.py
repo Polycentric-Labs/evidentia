@@ -1,4 +1,5 @@
 """Tests for scripts/check_uv_pilot_graduation.py (H5 pilot-graduation watcher)."""
+
 from __future__ import annotations
 
 import sys
@@ -15,18 +16,13 @@ _PREVIEW_STDERR = (
     "Pass `--preview-features audit` to disable this warning.\n"
 )
 _AUDIT_STDOUT = (
-    "Resolved 257 packages in 14ms\n"
-    "Found 2 known vulnerabilities and no adverse project statuses "
-    "in 248 packages\n"
+    "Resolved 257 packages in 14ms\nFound 2 known vulnerabilities and no adverse project statuses in 248 packages\n"
 )
 
 
 class TestClassifyAuditProbe:
     def test_preview_warning_present(self) -> None:
-        assert (
-            watcher.classify_audit_probe(0, _AUDIT_STDOUT, _PREVIEW_STDERR)
-            == "preview"
-        )
+        assert watcher.classify_audit_probe(0, _AUDIT_STDOUT, _PREVIEW_STDERR) == "preview"
 
     def test_graduated_when_warning_gone(self) -> None:
         assert watcher.classify_audit_probe(0, _AUDIT_STDOUT, "") == "graduated"
@@ -35,25 +31,16 @@ class TestClassifyAuditProbe:
         # `uv audit` exits non-zero when advisories exist — the exit code is
         # not the ran/didn't-run signal.
         assert watcher.classify_audit_probe(1, _AUDIT_STDOUT, "") == "graduated"
-        assert (
-            watcher.classify_audit_probe(1, _AUDIT_STDOUT, _PREVIEW_STDERR)
-            == "preview"
-        )
+        assert watcher.classify_audit_probe(1, _AUDIT_STDOUT, _PREVIEW_STDERR) == "preview"
 
     def test_unrecognized_output_is_indeterminate(self) -> None:
-        assert watcher.classify_audit_probe(2, "", "error: no lockfile") == (
-            "indeterminate"
-        )
+        assert watcher.classify_audit_probe(2, "", "error: no lockfile") == ("indeterminate")
         assert watcher.classify_audit_probe(127, "", "") == "indeterminate"
 
 
 class TestChangelogGraduationHits:
     def test_stabilize_phrasing_matches_either_order(self) -> None:
-        text = (
-            "## 0.12.0\n"
-            "- Stabilize `uv audit` (#12345)\n"
-            "- `UV_MALWARE_CHECK` is now stable and on by default\n"
-        )
+        text = "## 0.12.0\n- Stabilize `uv audit` (#12345)\n- `UV_MALWARE_CHECK` is now stable and on by default\n"
         hits = watcher.changelog_graduation_hits(text)
         assert len(hits) == 2
         assert "Stabilize `uv audit`" in hits[0]
@@ -86,19 +73,13 @@ class TestFetchChangelogFailSoft:
 
 
 class TestMain:
-    def test_offline_run_writes_empty_findings_and_exits_zero(
-        self, tmp_path: Path
-    ) -> None:
+    def test_offline_run_writes_empty_findings_and_exits_zero(self, tmp_path: Path) -> None:
         out = tmp_path / "findings.md"
-        rc = watcher.main(
-            ["--output", str(out), "--skip-probe", "--skip-fetch"]
-        )
+        rc = watcher.main(["--output", str(out), "--skip-probe", "--skip-fetch"])
         assert rc == 0
         assert out.read_text(encoding="utf-8") == ""
 
-    def test_graduated_probe_produces_finding(
-        self, tmp_path: Path, monkeypatch
-    ) -> None:
+    def test_graduated_probe_produces_finding(self, tmp_path: Path, monkeypatch) -> None:
         monkeypatch.setattr(watcher, "run_audit_probe", lambda: "graduated")
         out = tmp_path / "findings.md"
         rc = watcher.main(["--output", str(out), "--skip-fetch"])
@@ -107,9 +88,7 @@ class TestMain:
         assert "graduate" in text
         assert "--preview-features audit" in text
 
-    def test_preview_probe_produces_no_finding(
-        self, tmp_path: Path, monkeypatch
-    ) -> None:
+    def test_preview_probe_produces_no_finding(self, tmp_path: Path, monkeypatch) -> None:
         monkeypatch.setattr(watcher, "run_audit_probe", lambda: "preview")
         out = tmp_path / "findings.md"
         rc = watcher.main(["--output", str(out), "--skip-fetch"])

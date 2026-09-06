@@ -18,9 +18,7 @@ def runner() -> CliRunner:
 
 
 @pytest.fixture(autouse=True)
-def isolated_retention_store(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def isolated_retention_store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     store = tmp_path / "retention-store"
     monkeypatch.setenv(RETENTION_STORE_ENV_VAR, str(store))
     return store
@@ -33,8 +31,10 @@ def _add_record(
     legal_hold: bool = False,
 ) -> str:
     args = [
-        "retention", "set",
-        "--classification", classification,
+        "retention",
+        "set",
+        "--classification",
+        classification,
     ]
     if legal_hold:
         args.append("--legal-hold")
@@ -63,9 +63,7 @@ class TestRetentionSet:
 
     def test_with_legal_hold(self, runner: CliRunner) -> None:
         rid = _add_record(runner, legal_hold=True)
-        result = runner.invoke(
-            app, ["retention", "show", rid, "--json"]
-        )
+        result = runner.invoke(app, ["retention", "show", rid, "--json"])
         data = json.loads(result.output)
         assert data["legal_hold"] is True
 
@@ -112,7 +110,8 @@ class TestRetentionShow:
         result = runner.invoke(
             app,
             [
-                "retention", "show",
+                "retention",
+                "show",
                 "00000000-0000-0000-0000-000000000000",
             ],
         )
@@ -128,8 +127,11 @@ class TestRetentionExtend:
         result = runner.invoke(
             app,
             [
-                "retention", "extend", rid,
-                "--new-lock-until", "2099-12-31",
+                "retention",
+                "extend",
+                rid,
+                "--new-lock-until",
+                "2099-12-31",
             ],
         )
         assert result.exit_code == 0
@@ -140,8 +142,11 @@ class TestRetentionExtend:
         result = runner.invoke(
             app,
             [
-                "retention", "extend", rid,
-                "--new-lock-until", "2020-01-01",  # very past
+                "retention",
+                "extend",
+                rid,
+                "--new-lock-until",
+                "2020-01-01",  # very past
             ],
         )
         assert result.exit_code == 1
@@ -157,8 +162,11 @@ class TestRetentionTransition:
         result = runner.invoke(
             app,
             [
-                "retention", "transition", rid,
-                "--new-stage", "preserved",
+                "retention",
+                "transition",
+                rid,
+                "--new-stage",
+                "preserved",
             ],
         )
         assert result.exit_code == 0
@@ -169,22 +177,26 @@ class TestRetentionTransition:
         result = runner.invoke(
             app,
             [
-                "retention", "transition", rid,
-                "--new-stage", "weird-stage",
+                "retention",
+                "transition",
+                rid,
+                "--new-stage",
+                "weird-stage",
             ],
         )
         assert result.exit_code == 1
         assert "Unknown stage" in result.output
 
-    def test_active_to_expired_rejected_inside_window(
-        self, runner: CliRunner
-    ) -> None:
+    def test_active_to_expired_rejected_inside_window(self, runner: CliRunner) -> None:
         rid = _add_record(runner)
         result = runner.invoke(
             app,
             [
-                "retention", "transition", rid,
-                "--new-stage", "expired",
+                "retention",
+                "transition",
+                rid,
+                "--new-stage",
+                "expired",
             ],
         )
         # Inside window → rejected with clear error
@@ -197,9 +209,7 @@ class TestRetentionTransition:
 class TestRetentionDelete:
     def test_delete_with_yes(self, runner: CliRunner) -> None:
         rid = _add_record(runner)
-        result = runner.invoke(
-            app, ["retention", "delete", rid, "--yes"]
-        )
+        result = runner.invoke(app, ["retention", "delete", rid, "--yes"])
         assert result.exit_code == 0
 
 

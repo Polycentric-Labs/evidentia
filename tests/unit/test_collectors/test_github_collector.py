@@ -82,9 +82,7 @@ class TestVisibility:
         with _make_collector(handler) as c:
             findings = c.collect()
 
-        visibility = next(
-            f for f in findings if f.source_finding_id == "acme/platform:visibility"
-        )
+        visibility = next(f for f in findings if f.source_finding_id == "acme/platform:visibility")
         assert visibility.severity == Severity.INFORMATIONAL
         assert visibility.status == FindingStatus.RESOLVED
         assert "AC-3" in visibility.control_ids
@@ -101,9 +99,7 @@ class TestVisibility:
         with _make_collector(handler) as c:
             findings = c.collect()
 
-        visibility = next(
-            f for f in findings if f.source_finding_id == "acme/platform:visibility"
-        )
+        visibility = next(f for f in findings if f.source_finding_id == "acme/platform:visibility")
         assert visibility.severity == Severity.MEDIUM
         assert visibility.status == FindingStatus.ACTIVE
 
@@ -123,9 +119,7 @@ class TestBranchProtection:
         with _make_collector(handler) as c:
             findings = c.collect()
 
-        prot = next(
-            f for f in findings if "unprotected" in (f.source_finding_id or "")
-        )
+        prot = next(f for f in findings if "unprotected" in (f.source_finding_id or ""))
         assert prot.severity == Severity.HIGH
         assert set(prot.control_ids) >= {"SA-11", "CM-3"}
 
@@ -140,16 +134,12 @@ class TestBranchProtection:
         with _make_collector(handler) as c:
             findings = c.collect()
 
-        rule_ids = {
-            f.source_finding_id for f in findings if f.source_finding_id
-        }
+        rule_ids = {f.source_finding_id for f in findings if f.source_finding_id}
         assert "acme/platform:main:pr_review" in rule_ids
         assert "acme/platform:main:status_checks" in rule_ids
         assert "acme/platform:main:enforce_admins" in rule_ids
 
-        pr_review = next(
-            f for f in findings if f.source_finding_id == "acme/platform:main:pr_review"
-        )
+        pr_review = next(f for f in findings if f.source_finding_id == "acme/platform:main:pr_review")
         assert pr_review.status == FindingStatus.RESOLVED
 
     def test_zero_reviewers_emits_high_severity_finding(self) -> None:
@@ -160,9 +150,7 @@ class TestBranchProtection:
                 return httpx.Response(
                     200,
                     json={
-                        "required_pull_request_reviews": {
-                            "required_approving_review_count": 0
-                        },
+                        "required_pull_request_reviews": {"required_approving_review_count": 0},
                         "required_status_checks": {"contexts": ["ci/tests"]},
                         "enforce_admins": {"enabled": True},
                     },
@@ -172,9 +160,7 @@ class TestBranchProtection:
         with _make_collector(handler) as c:
             findings = c.collect()
 
-        pr_review = next(
-            f for f in findings if f.source_finding_id == "acme/platform:main:pr_review"
-        )
+        pr_review = next(f for f in findings if f.source_finding_id == "acme/platform:main:pr_review")
         assert pr_review.severity == Severity.HIGH
         assert pr_review.status == FindingStatus.ACTIVE
 
@@ -202,9 +188,7 @@ class TestCodeowners:
         with _make_collector(handler) as c:
             findings = c.collect()
 
-        co = next(
-            f for f in findings if f.source_finding_id == "acme/platform:codeowners"
-        )
+        co = next(f for f in findings if f.source_finding_id == "acme/platform:codeowners")
         assert co.status == FindingStatus.RESOLVED
         assert co.severity == Severity.INFORMATIONAL
         assert "SA-11" in co.control_ids
@@ -220,10 +204,7 @@ class TestCodeowners:
         with _make_collector(handler) as c:
             findings = c.collect()
 
-        co = next(
-            f for f in findings
-            if f.source_finding_id == "acme/platform:codeowners-missing"
-        )
+        co = next(f for f in findings if f.source_finding_id == "acme/platform:codeowners-missing")
         assert co.severity == Severity.MEDIUM
         assert co.status == FindingStatus.ACTIVE
 
@@ -267,9 +248,7 @@ class TestRepoReadErrors:
 # ── v0.10.0: compliance_status + OCSF round-trip ─────────────────────────
 
 
-def _full_handler(
-    *, private: bool = True, codeowners: bool = True
-) -> Callable[[httpx.Request], httpx.Response]:
+def _full_handler(*, private: bool = True, codeowners: bool = True) -> Callable[[httpx.Request], httpx.Response]:
     """A handler serving a repo + full protection + (optional) CODEOWNERS."""
 
     def handler(req: httpx.Request) -> httpx.Response:
@@ -279,9 +258,7 @@ def _full_handler(
             return httpx.Response(200, json=_protection_full())
         if "/contents/" in req.url.path:
             if codeowners and req.url.path.endswith(".github/CODEOWNERS"):
-                return httpx.Response(
-                    200, json={"path": ".github/CODEOWNERS"}
-                )
+                return httpx.Response(200, json={"path": ".github/CODEOWNERS"})
             return httpx.Response(404)
         return httpx.Response(404)
 
@@ -293,9 +270,7 @@ def test_private_repo_compliance_status_is_pass() -> None:
 
     with _make_collector(_full_handler(private=True)) as c:
         findings = c.collect()
-    vis = next(
-        f for f in findings if f.source_finding_id == "acme/platform:visibility"
-    )
+    vis = next(f for f in findings if f.source_finding_id == "acme/platform:visibility")
     assert vis.compliance_status == ComplianceStatus.PASS
 
 
@@ -304,9 +279,7 @@ def test_public_repo_compliance_status_is_warning() -> None:
 
     with _make_collector(_full_handler(private=False)) as c:
         findings = c.collect()
-    vis = next(
-        f for f in findings if f.source_finding_id == "acme/platform:visibility"
-    )
+    vis = next(f for f in findings if f.source_finding_id == "acme/platform:visibility")
     assert vis.compliance_status == ComplianceStatus.WARNING
 
 
@@ -315,11 +288,7 @@ def test_protected_branch_subfinding_compliance_status_is_pass() -> None:
 
     with _make_collector(_full_handler()) as c:
         findings = c.collect()
-    pr_review = next(
-        f
-        for f in findings
-        if f.source_finding_id == "acme/platform:main:pr_review"
-    )
+    pr_review = next(f for f in findings if f.source_finding_id == "acme/platform:main:pr_review")
     assert pr_review.compliance_status == ComplianceStatus.PASS
 
 
@@ -328,11 +297,7 @@ def test_missing_codeowners_compliance_status_is_fail() -> None:
 
     with _make_collector(_full_handler(codeowners=False)) as c:
         findings = c.collect()
-    co = next(
-        f
-        for f in findings
-        if f.source_finding_id == "acme/platform:codeowners-missing"
-    )
+    co = next(f for f in findings if f.source_finding_id == "acme/platform:codeowners-missing")
     assert co.compliance_status == ComplianceStatus.FAIL
 
 

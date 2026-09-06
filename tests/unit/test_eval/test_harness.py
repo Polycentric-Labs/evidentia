@@ -58,6 +58,7 @@ def _isolate_from_ci_autosign(monkeypatch: pytest.MonkeyPatch) -> None:
     """
     monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
 
+
 # ── 1. Normalization + hashing ────────────────────────────────────
 
 
@@ -96,18 +97,14 @@ class TestNormalization:
 
 class TestDeterminismScore:
     def test_perfect_determinism(self) -> None:
-        result = determinism_score(
-            ["x", "x", "x", "x", "x"], prompt_id="p"
-        )
+        result = determinism_score(["x", "x", "x", "x", "x"], prompt_id="p")
         assert result.passed is True
         assert result.determinism_rate == 1.0
         assert result.distinct_outputs == 1
         assert result.modal_count == 5
 
     def test_all_distinct(self) -> None:
-        result = determinism_score(
-            ["a", "b", "c", "d"], prompt_id="p"
-        )
+        result = determinism_score(["a", "b", "c", "d"], prompt_id="p")
         assert result.passed is False
         assert result.distinct_outputs == 4
         assert result.modal_count == 1
@@ -115,9 +112,7 @@ class TestDeterminismScore:
 
     def test_partial_determinism(self) -> None:
         # 3 of 5 samples match (the modal output).
-        result = determinism_score(
-            ["x", "x", "x", "y", "z"], prompt_id="p"
-        )
+        result = determinism_score(["x", "x", "x", "y", "z"], prompt_id="p")
         assert result.passed is False
         assert result.distinct_outputs == 3
         assert result.modal_count == 3
@@ -125,9 +120,7 @@ class TestDeterminismScore:
 
     def test_normalization_collapses_equivalents(self) -> None:
         # "x.", " x ", "x" should all hash to the same bucket.
-        result = determinism_score(
-            ["x.", " x ", "x"], prompt_id="p"
-        )
+        result = determinism_score(["x.", " x ", "x"], prompt_id="p")
         assert result.passed is True
         assert result.distinct_outputs == 1
 
@@ -141,17 +134,13 @@ class TestDeterminismScore:
 
 class TestReplayEquivalent:
     def test_identical_outputs(self) -> None:
-        r = replay_equivalent(
-            original="Risk", replay="Risk", prompt_id="p"
-        )
+        r = replay_equivalent(original="Risk", replay="Risk", prompt_id="p")
         assert r.equivalent is True
 
     def test_normalization_equivalent(self) -> None:
         # Trailing period + extra space should not register as
         # a replay violation.
-        r = replay_equivalent(
-            original="Risk.", replay="  Risk", prompt_id="p"
-        )
+        r = replay_equivalent(original="Risk.", replay="  Risk", prompt_id="p")
         assert r.equivalent is True
 
     def test_substantively_different(self) -> None:
@@ -181,9 +170,7 @@ class _CounterStub:
     def __init__(self) -> None:
         self._n = 0
 
-    def __call__(
-        self, prompt: str, _ctx: GenerationContext
-    ) -> str:
+    def __call__(self, prompt: str, _ctx: GenerationContext) -> str:
         self._n += 1
         return f"output-{self._n}-for-{prompt}"
 
@@ -198,9 +185,7 @@ def _make_ctx(prompt_id: str) -> GenerationContext:
 
 class TestHarnessRun:
     def test_deterministic_stub_passes(self) -> None:
-        harness = DFAHarness(
-            generator=_det_stub, sample_count_per_prompt=5
-        )
+        harness = DFAHarness(generator=_det_stub, sample_count_per_prompt=5)
         result = harness.run(
             samples=[
                 EvalSample(prompt_id="p1", prompt="A"),
@@ -215,9 +200,7 @@ class TestHarnessRun:
 
     def test_nondeterministic_stub_caught(self) -> None:
         stub = _CounterStub()
-        harness = DFAHarness(
-            generator=stub, sample_count_per_prompt=4
-        )
+        harness = DFAHarness(generator=stub, sample_count_per_prompt=4)
         result = harness.run(
             samples=[EvalSample(prompt_id="p1", prompt="A")],
             context_factory=_make_ctx,
@@ -229,9 +212,7 @@ class TestHarnessRun:
         assert det.passed is False
 
     def test_replay_check_when_deterministic(self) -> None:
-        harness = DFAHarness(
-            generator=_det_stub, sample_count_per_prompt=3
-        )
+        harness = DFAHarness(generator=_det_stub, sample_count_per_prompt=3)
         result = harness.run(
             samples=[EvalSample(prompt_id="p1", prompt="A")],
             context_factory=_make_ctx,
@@ -242,9 +223,7 @@ class TestHarnessRun:
 
     def test_replay_check_when_nondeterministic(self) -> None:
         stub = _CounterStub()
-        harness = DFAHarness(
-            generator=stub, sample_count_per_prompt=2
-        )
+        harness = DFAHarness(generator=stub, sample_count_per_prompt=2)
         result = harness.run(
             samples=[EvalSample(prompt_id="p1", prompt="A")],
             context_factory=_make_ctx,
@@ -254,9 +233,7 @@ class TestHarnessRun:
         assert result.replay_results[0].equivalent is False
 
     def test_eval_result_serializes_round_trip(self) -> None:
-        harness = DFAHarness(
-            generator=_det_stub, sample_count_per_prompt=2
-        )
+        harness = DFAHarness(generator=_det_stub, sample_count_per_prompt=2)
         result = harness.run(
             samples=[EvalSample(prompt_id="p1", prompt="A")],
             context_factory=_make_ctx,
@@ -264,10 +241,7 @@ class TestHarnessRun:
         dumped = result.model_dump_json()
         round_tripped = EvalResult.model_validate_json(dumped)
         assert round_tripped.run_id == result.run_id
-        assert (
-            round_tripped.overall_determinism_rate
-            == result.overall_determinism_rate
-        )
+        assert round_tripped.overall_determinism_rate == result.overall_determinism_rate
 
     def test_invalid_sample_count_raises(self) -> None:
         with pytest.raises(ValueError, match="sample_count_per_prompt"):
@@ -288,9 +262,7 @@ class TestEvalCLI:
         assert "PASS" in result.stdout
         assert "1.0000" in result.stdout
 
-    def test_stub_smoke_writes_output(
-        self, tmp_path: Path
-    ) -> None:
+    def test_stub_smoke_writes_output(self, tmp_path: Path) -> None:
         runner = CliRunner()
         out_path = tmp_path / "result.json"
         result = runner.invoke(
@@ -324,9 +296,7 @@ class TestRiskDeterminismCLI:
     is replaced with deterministic / non-deterministic stubs.
     """
 
-    def test_risk_determinism_passes_with_deterministic_mock(
-        self, tmp_path: Path
-    ) -> None:
+    def test_risk_determinism_passes_with_deterministic_mock(self, tmp_path: Path) -> None:
         """Mock `RiskStatementGenerator.generate` to always return
         the same RiskStatement; harness should report 1.0
         determinism rate.
@@ -458,9 +428,7 @@ class TestRiskDeterminismCLI:
         assert loaded["determinism_results"][0]["modal_count"] == 3
         assert loaded["determinism_results"][0]["distinct_outputs"] == 1
 
-    def test_risk_determinism_missing_gap_id_exits_2(
-        self, tmp_path: Path
-    ) -> None:
+    def test_risk_determinism_missing_gap_id_exits_2(self, tmp_path: Path) -> None:
         from evidentia_core.models.gap import GapAnalysisReport
 
         report = GapAnalysisReport(
@@ -529,9 +497,7 @@ class TestRiskDeterminismFaithfulnessCLI:
     scoring without writing Python.
     """
 
-    def _make_minimal_fixture(
-        self, tmp_path: Path
-    ) -> tuple[Path, Path]:
+    def _make_minimal_fixture(self, tmp_path: Path) -> tuple[Path, Path]:
         """Returns (gaps.json, context.yaml) on disk."""
         from evidentia_core.models.gap import (
             ControlGap,
@@ -588,9 +554,7 @@ class TestRiskDeterminismFaithfulnessCLI:
         )
         return gaps_file, ctx_file
 
-    def test_check_faithfulness_without_source_clauses_file_exits_2(
-        self, tmp_path: Path
-    ) -> None:
+    def test_check_faithfulness_without_source_clauses_file_exits_2(self, tmp_path: Path) -> None:
         """--check-faithfulness without --source-clauses-file →
         exit 2 with clear error message before LLM calls fire.
         """
@@ -612,9 +576,7 @@ class TestRiskDeterminismFaithfulnessCLI:
         # stdout), so the usage error message lands on result.stderr.
         assert "--source-clauses-file" in (result.stderr or "")
 
-    def test_invalid_faithfulness_method_exits_2(
-        self, tmp_path: Path
-    ) -> None:
+    def test_invalid_faithfulness_method_exits_2(self, tmp_path: Path) -> None:
         """Unknown --faithfulness-method (not 'jaccard' or
         'semantic') → exit 2.
         """
@@ -634,18 +596,14 @@ class TestRiskDeterminismFaithfulnessCLI:
         )
         assert result.exit_code == 2
 
-    def test_source_clauses_file_malformed_yaml_exits_2(
-        self, tmp_path: Path
-    ) -> None:
+    def test_source_clauses_file_malformed_yaml_exits_2(self, tmp_path: Path) -> None:
         """--source-clauses-file with non-mapping top-level YAML
         → exit 2.
         """
         gaps_file, ctx_file = self._make_minimal_fixture(tmp_path)
         bad_yaml = tmp_path / "clauses.yaml"
         # Top-level list, not a mapping.
-        bad_yaml.write_text(
-            "- a\n- b\n", encoding="utf-8"
-        )
+        bad_yaml.write_text("- a\n- b\n", encoding="utf-8")
         runner = CliRunner()
         result = runner.invoke(
             eval_cli_app,
@@ -662,15 +620,13 @@ class TestRiskDeterminismFaithfulnessCLI:
         )
         assert result.exit_code == 2
 
-    def test_source_clauses_file_non_string_clauses_exits_2(
-        self, tmp_path: Path
-    ) -> None:
+    def test_source_clauses_file_non_string_clauses_exits_2(self, tmp_path: Path) -> None:
         """--source-clauses-file entry value not list[str] → exit 2."""
         gaps_file, ctx_file = self._make_minimal_fixture(tmp_path)
         bad_yaml = tmp_path / "clauses.yaml"
         # Map value is a dict, not list[str].
         bad_yaml.write_text(
-            'nist-800-53-rev5:AC-2:\n  not: a-list\n',
+            "nist-800-53-rev5:AC-2:\n  not: a-list\n",
             encoding="utf-8",
         )
         runner = CliRunner()
@@ -689,9 +645,7 @@ class TestRiskDeterminismFaithfulnessCLI:
         )
         assert result.exit_code == 2
 
-    def test_check_faithfulness_passes_with_mocked_scoring(
-        self, tmp_path: Path
-    ) -> None:
+    def test_check_faithfulness_passes_with_mocked_scoring(self, tmp_path: Path) -> None:
         """Happy path: --check-faithfulness + --source-clauses-file
         + mocked claim_extraction + mocked faithfulness scoring →
         harness completes; faithfulness summary surfaces in stdout.
@@ -719,7 +673,7 @@ class TestRiskDeterminismFaithfulnessCLI:
         gaps_file, ctx_file = self._make_minimal_fixture(tmp_path)
         clauses_file = tmp_path / "clauses.yaml"
         clauses_file.write_text(
-            'nist-800-53-rev5:AC-2:\n'
+            "nist-800-53-rev5:AC-2:\n"
             '  - "The information system enforces approved authorizations."\n'
             '  - "Account management procedures cover provisioning."\n',
             encoding="utf-8",
@@ -837,9 +791,7 @@ class TestFaithfulnessThresholdMode:
        → harness uses framework-aware default (NIST 0.60).
     """
 
-    def _make_minimal_fixture(
-        self, tmp_path: Path
-    ) -> tuple[Path, Path]:
+    def _make_minimal_fixture(self, tmp_path: Path) -> tuple[Path, Path]:
         """Returns (gaps.json, context.yaml) on disk; reuses the
         single-NIST-AC-2-gap pattern from
         TestRiskDeterminismFaithfulnessCLI."""
@@ -916,14 +868,9 @@ class TestFaithfulnessThresholdMode:
         assert result.exit_code == 2
         # Click 8.2+ keeps stderr separate; the invalid-choice usage error
         # lands on stderr (no longer merged into stdout).
-        assert (
-            "framework-aware" in (result.stderr or "")
-            or "fixed" in (result.stderr or "")
-        )
+        assert "framework-aware" in (result.stderr or "") or "fixed" in (result.stderr or "")
 
-    def test_fixed_mode_uses_0_30(
-        self, tmp_path: Path
-    ) -> None:
+    def test_fixed_mode_uses_0_30(self, tmp_path: Path) -> None:
         """--faithfulness-threshold-mode=fixed → harness threshold
         is DEFAULT_FAITHFULNESS_THRESHOLD (0.30) framework-
         agnostic. Verified via stdout summary line."""
@@ -942,8 +889,7 @@ class TestFaithfulnessThresholdMode:
         gaps_file, ctx_file = self._make_minimal_fixture(tmp_path)
         clauses_file = tmp_path / "clauses.yaml"
         clauses_file.write_text(
-            'nist-800-53-rev5:AC-2:\n'
-            '  - "Account management procedures."\n',
+            'nist-800-53-rev5:AC-2:\n  - "Account management procedures."\n',
             encoding="utf-8",
         )
 
@@ -1023,9 +969,7 @@ class TestFaithfulnessThresholdMode:
         assert "threshold: 0.30" in result.stdout
         assert "fixed" in result.stdout
 
-    def test_framework_aware_mode_uses_nist_0_60(
-        self, tmp_path: Path
-    ) -> None:
+    def test_framework_aware_mode_uses_nist_0_60(self, tmp_path: Path) -> None:
         """--faithfulness-threshold-mode=framework-aware (default)
         + prompt_id "nist-800-53-rev5:AC-2" → harness threshold
         is the framework-agnostic fallback (since "nist-800-53-

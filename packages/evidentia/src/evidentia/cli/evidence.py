@@ -71,23 +71,15 @@ def _load_yaml_artifact_or_exit(path: Path) -> EvidenceArtifact:
     try:
         raw = yaml_mod.safe_load(path.read_text(encoding="utf-8")) or {}
     except yaml_mod.YAMLError as exc:
-        console.print(
-            f"[red]Error:[/red] could not parse {path}: {exc}"
-        )
+        console.print(f"[red]Error:[/red] could not parse {path}: {exc}")
         raise typer.Exit(code=2) from exc
     if not isinstance(raw, dict):
-        console.print(
-            f"[red]Error:[/red] {path} must contain a mapping at the "
-            f"top level; got {type(raw).__name__}"
-        )
+        console.print(f"[red]Error:[/red] {path} must contain a mapping at the top level; got {type(raw).__name__}")
         raise typer.Exit(code=2)
     try:
         return EvidenceArtifact.model_validate(raw)
     except ValidationError as exc:
-        console.print(
-            f"[red]Error:[/red] {path} does not match the "
-            f"EvidenceArtifact schema:\n{exc}"
-        )
+        console.print(f"[red]Error:[/red] {path} does not match the EvidenceArtifact schema:\n{exc}")
         raise typer.Exit(code=2) from exc
 
 
@@ -116,10 +108,7 @@ def evidence_save(
     store_dir: Path | None = typer.Option(
         None,
         "--store-dir",
-        help=(
-            "Override the evidence-store directory. Defaults to "
-            f"${EVIDENCE_STORE_ENV_VAR} or platformdirs."
-        ),
+        help=(f"Override the evidence-store directory. Defaults to ${EVIDENCE_STORE_ENV_VAR} or platformdirs."),
     ),
     output_json: bool = typer.Option(
         False,
@@ -157,10 +146,7 @@ def evidence_save(
     _log.info(
         action=EventAction.EVIDENCE_VERSION_PERSISTED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"Persisted evidence v{artifact.version} for lineage "
-            f"{artifact.effective_lineage_id}"
-        ),
+        message=(f"Persisted evidence v{artifact.version} for lineage {artifact.effective_lineage_id}"),
         evidentia={
             "artifact_id": artifact.id,
             "lineage_id": artifact.effective_lineage_id,
@@ -202,10 +188,7 @@ def evidence_history(
     store_dir: Path | None = typer.Option(
         None,
         "--store-dir",
-        help=(
-            "Override the evidence-store directory. Defaults to "
-            f"${EVIDENCE_STORE_ENV_VAR} or platformdirs."
-        ),
+        help=(f"Override the evidence-store directory. Defaults to ${EVIDENCE_STORE_ENV_VAR} or platformdirs."),
     ),
     output_json: bool = typer.Option(
         False,
@@ -249,14 +232,10 @@ def evidence_history(
         return
 
     if not artifacts:
-        console.print(
-            f"[yellow]No versions found for lineage {lineage_id}.[/yellow]"
-        )
+        console.print(f"[yellow]No versions found for lineage {lineage_id}.[/yellow]")
         return
 
-    table = Table(
-        title=f"Lineage {lineage_id} — {len(artifacts)} version(s)"
-    )
+    table = Table(title=f"Lineage {lineage_id} — {len(artifacts)} version(s)")
     table.add_column("v", justify="right")
     table.add_column("Artifact ID", style="dim")
     table.add_column("Title")
@@ -293,10 +272,7 @@ def evidence_show(
     store_dir: Path | None = typer.Option(
         None,
         "--store-dir",
-        help=(
-            "Override the evidence-store directory. Defaults to "
-            f"${EVIDENCE_STORE_ENV_VAR} or platformdirs."
-        ),
+        help=(f"Override the evidence-store directory. Defaults to ${EVIDENCE_STORE_ENV_VAR} or platformdirs."),
     ),
     output_json: bool = typer.Option(
         False,
@@ -306,27 +282,19 @@ def evidence_show(
 ) -> None:
     """Render one specific version of a lineage chain."""
     try:
-        artifact = load_evidence_version(
-            lineage_id, version, evidence_store_dir=store_dir
-        )
+        artifact = load_evidence_version(lineage_id, version, evidence_store_dir=store_dir)
     except InvalidEvidenceIdError as exc:
         console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(code=2) from exc
 
     if artifact is None:
-        console.print(
-            f"[red]Error:[/red] no v{version} found for lineage "
-            f"{lineage_id}."
-        )
+        console.print(f"[red]Error:[/red] no v{version} found for lineage {lineage_id}.")
         raise typer.Exit(code=1)
 
     _log.info(
         action=EventAction.EVIDENCE_LINEAGE_QUERIED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"Loaded v{version} of lineage {lineage_id} (artifact "
-            f"{artifact.id})"
-        ),
+        message=(f"Loaded v{version} of lineage {lineage_id} (artifact {artifact.id})"),
         evidentia={
             "lineage_id": lineage_id,
             "version": version,
@@ -338,9 +306,7 @@ def evidence_show(
         console.print_json(artifact.model_dump_json())
         return
 
-    console.print(
-        f"[bold]{artifact.title}[/bold]  [dim]({artifact.id})[/dim]"
-    )
+    console.print(f"[bold]{artifact.title}[/bold]  [dim]({artifact.id})[/dim]")
     console.print(f"  Lineage:        [cyan]{artifact.effective_lineage_id}[/cyan]")
     console.print(f"  Version:        {artifact.version}")
     if artifact.predecessor_id:

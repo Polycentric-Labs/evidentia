@@ -91,9 +91,7 @@ class TestGetStoreDir:
         result = get_evidence_store_dir()
         assert result == (tmp_path / "env-dir").resolve()
 
-    def test_platform_default_when_unset(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_platform_default_when_unset(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(EVIDENCE_STORE_ENV_VAR, raising=False)
         result = get_evidence_store_dir()
         assert result.name == "evidence_store"
@@ -110,9 +108,7 @@ class TestUuidValidation:
         path = save_evidence(artifact, evidence_store_dir=store_dir)
         assert path.exists()
 
-    def test_brace_wrapped_uuid_canonicalized(
-        self, store_dir: Path
-    ) -> None:
+    def test_brace_wrapped_uuid_canonicalized(self, store_dir: Path) -> None:
         raw = uuid4()
         artifact = _make_artifact(lineage_id=f"{{{raw}}}")
         save_evidence(artifact, evidence_store_dir=store_dir)
@@ -142,9 +138,7 @@ class TestSavePath:
         # Directory name matches the artifact's id (lineage root).
         assert path.parent.name == artifact.id
 
-    def test_writes_v2_via_new_version_helper(
-        self, store_dir: Path
-    ) -> None:
+    def test_writes_v2_via_new_version_helper(self, store_dir: Path) -> None:
         v1 = _make_artifact()
         save_evidence(v1, evidence_store_dir=store_dir)
         v2 = v1.new_version(content={"bucket": "v2", "policy": "allow"})
@@ -198,9 +192,7 @@ class TestWORMEnforcement:
             save_evidence(artifact, evidence_store_dir=store_dir)
         assert exc_info.value.lineage_id == artifact.id
 
-    def test_violation_suggests_new_version_in_message(
-        self, store_dir: Path
-    ) -> None:
+    def test_violation_suggests_new_version_in_message(self, store_dir: Path) -> None:
         artifact = _make_artifact()
         save_evidence(artifact, evidence_store_dir=store_dir)
         with pytest.raises(EvidenceWORMViolation) as exc_info:
@@ -208,9 +200,7 @@ class TestWORMEnforcement:
         assert "new_version" in str(exc_info.value)
         assert "v2" in str(exc_info.value)
 
-    def test_overwrite_at_chain_head_blocked(
-        self, store_dir: Path
-    ) -> None:
+    def test_overwrite_at_chain_head_blocked(self, store_dir: Path) -> None:
         v1 = _make_artifact()
         save_evidence(v1, evidence_store_dir=store_dir)
         v2 = v1.new_version(content={"x": 2})
@@ -221,9 +211,7 @@ class TestWORMEnforcement:
         # Suggested next = current head (2) + 1 = 3.
         assert exc_info.value.next_version == 3
 
-    def test_no_temp_file_left_after_violation(
-        self, store_dir: Path
-    ) -> None:
+    def test_no_temp_file_left_after_violation(self, store_dir: Path) -> None:
         import contextlib
 
         artifact = _make_artifact()
@@ -246,66 +234,44 @@ class TestLoadEvidenceVersion:
             content={"key": "value", "nested": [1, 2, 3]},
         )
         save_evidence(artifact, evidence_store_dir=store_dir)
-        loaded = load_evidence_version(
-            artifact.id, 1, evidence_store_dir=store_dir
-        )
+        loaded = load_evidence_version(artifact.id, 1, evidence_store_dir=store_dir)
         assert loaded is not None
         assert loaded.title == "Round-trip test"
         assert loaded.content == {"key": "value", "nested": [1, 2, 3]}
 
-    def test_load_unknown_lineage_returns_none(
-        self, store_dir: Path
-    ) -> None:
+    def test_load_unknown_lineage_returns_none(self, store_dir: Path) -> None:
         unknown = str(uuid4())
-        result = load_evidence_version(
-            unknown, 1, evidence_store_dir=store_dir
-        )
+        result = load_evidence_version(unknown, 1, evidence_store_dir=store_dir)
         assert result is None
 
-    def test_load_missing_version_returns_none(
-        self, store_dir: Path
-    ) -> None:
+    def test_load_missing_version_returns_none(self, store_dir: Path) -> None:
         artifact = _make_artifact()
         save_evidence(artifact, evidence_store_dir=store_dir)
         # v1 exists; v2 doesn't.
-        result = load_evidence_version(
-            artifact.id, 2, evidence_store_dir=store_dir
-        )
+        result = load_evidence_version(artifact.id, 2, evidence_store_dir=store_dir)
         assert result is None
 
     def test_load_invalid_uuid_raises(self, store_dir: Path) -> None:
         with pytest.raises(InvalidEvidenceIdError):
-            load_evidence_version(
-                "not-a-uuid", 1, evidence_store_dir=store_dir
-            )
+            load_evidence_version("not-a-uuid", 1, evidence_store_dir=store_dir)
 
     def test_load_version_zero_rejected(self, store_dir: Path) -> None:
         with pytest.raises(ValueError):
-            load_evidence_version(
-                str(uuid4()), 0, evidence_store_dir=store_dir
-            )
+            load_evidence_version(str(uuid4()), 0, evidence_store_dir=store_dir)
 
-    def test_load_negative_version_rejected(
-        self, store_dir: Path
-    ) -> None:
+    def test_load_negative_version_rejected(self, store_dir: Path) -> None:
         with pytest.raises(ValueError):
-            load_evidence_version(
-                str(uuid4()), -1, evidence_store_dir=store_dir
-            )
+            load_evidence_version(str(uuid4()), -1, evidence_store_dir=store_dir)
 
 
 class TestListLineage:
     def test_empty_for_unknown_lineage(self, store_dir: Path) -> None:
-        assert list_lineage(
-            str(uuid4()), evidence_store_dir=store_dir
-        ) == []
+        assert list_lineage(str(uuid4()), evidence_store_dir=store_dir) == []
 
     def test_single_version_chain(self, store_dir: Path) -> None:
         artifact = _make_artifact()
         save_evidence(artifact, evidence_store_dir=store_dir)
-        chain = list_lineage(
-            artifact.id, evidence_store_dir=store_dir
-        )
+        chain = list_lineage(artifact.id, evidence_store_dir=store_dir)
         assert len(chain) == 1
         assert chain[0].version == 1
 
@@ -319,9 +285,7 @@ class TestListLineage:
         chain = list_lineage(v1.id, evidence_store_dir=store_dir)
         assert [a.version for a in chain] == [1, 2, 3]
 
-    def test_chain_traversal_preserves_predecessors(
-        self, store_dir: Path
-    ) -> None:
+    def test_chain_traversal_preserves_predecessors(self, store_dir: Path) -> None:
         v1 = _make_artifact()
         save_evidence(v1, evidence_store_dir=store_dir)
         v2 = v1.new_version(content={"x": 2})
@@ -406,9 +370,7 @@ class TestMirrorToWORM:
         worm_backend: LocalFilesystemWORM,
     ) -> None:
         artifact = _make_artifact(title="Mirror round-trip")
-        record_id = mirror_to_worm(
-            artifact, worm_backend, _retention_metadata()
-        )
+        record_id = mirror_to_worm(artifact, worm_backend, _retention_metadata())
         loaded = fetch_from_worm(
             artifact.effective_lineage_id,
             artifact.version,
@@ -423,9 +385,7 @@ class TestMirrorToWORM:
         worm_backend: LocalFilesystemWORM,
     ) -> None:
         artifact = _make_artifact()
-        record_id = mirror_to_worm(
-            artifact, worm_backend, _retention_metadata()
-        )
+        record_id = mirror_to_worm(artifact, worm_backend, _retention_metadata())
         assert record_id == f"{artifact.effective_lineage_id}_v1"
 
     def test_duplicate_mirror_raises_worm_error(
@@ -435,9 +395,7 @@ class TestMirrorToWORM:
         artifact = _make_artifact()
         mirror_to_worm(artifact, worm_backend, _retention_metadata())
         with pytest.raises(WORMBackendError):
-            mirror_to_worm(
-                artifact, worm_backend, _retention_metadata()
-            )
+            mirror_to_worm(artifact, worm_backend, _retention_metadata())
 
     def test_mirror_chain_versions_distinct(
         self,
@@ -495,9 +453,7 @@ class TestAutoMirrorEnvVar:
             _resolve_auto_mirror_backend,
         )
 
-        monkeypatch.delenv(
-            EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR, raising=False
-        )
+        monkeypatch.delenv(EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR, raising=False)
         # save proceeds without invoking the mirror; resolver
         # returns None signaling "no mirror".
         assert _resolve_auto_mirror_backend() is None
@@ -515,9 +471,7 @@ class TestAutoMirrorEnvVar:
         )
 
         monkeypatch.setenv(EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR, "1")
-        monkeypatch.delenv(
-            EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR, raising=False
-        )
+        monkeypatch.delenv(EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR, raising=False)
         artifact = _make_artifact()
         with pytest.raises(RuntimeError, match="BACKEND_FACTORY"):
             save_evidence(artifact, evidence_store_dir=store_dir)
@@ -596,9 +550,7 @@ class TestAutoMirrorEnvVar:
         module = types.ModuleType("test_auto_mirror_factory_mod")
         backend = LocalFilesystemWORM(root=worm_root)
 
-        def make_backend() -> (
-            tuple[LocalFilesystemWORM, RetentionMetadata]
-        ):
+        def make_backend() -> tuple[LocalFilesystemWORM, RetentionMetadata]:
             return backend, RetentionMetadata(
                 classification=RetentionClassification.IRS_TAX.value,
                 retention_period_days=2555,
@@ -624,9 +576,7 @@ class TestAutoMirrorEnvVar:
             save_evidence(artifact, evidence_store_dir=store_dir)
             # Mirror record_id = <lineage>_v1; backend stores it as
             # <root>/<record_id>.bin sidecar.
-            expected_record = (
-                worm_root / f"{artifact.effective_lineage_id}_v1.bin"
-            )
+            expected_record = worm_root / f"{artifact.effective_lineage_id}_v1.bin"
             assert expected_record.exists()
         finally:
             sys.modules.pop("test_auto_mirror_factory_mod", None)
@@ -644,9 +594,7 @@ class TestAutoMirrorEnvVar:
 
         module = types.ModuleType("test_failing_mirror_mod")
 
-        def make_backend() -> (
-            tuple[LocalFilesystemWORM, RetentionMetadata]
-        ):
+        def make_backend() -> tuple[LocalFilesystemWORM, RetentionMetadata]:
             class BrokenBackend(LocalFilesystemWORM):
                 def put(self, *args: object, **kwargs: object) -> None:
                     raise WORMBackendError("simulated failure")
@@ -676,9 +624,7 @@ class TestAutoMirrorEnvVar:
             # Should NOT raise — local-store write succeeds; mirror
             # failure is logged as a warning.
             with caplog.at_level(logging.WARNING):
-                path = save_evidence(
-                    artifact, evidence_store_dir=store_dir
-                )
+                path = save_evidence(artifact, evidence_store_dir=store_dir)
             assert path.exists()
             assert "Auto-mirror to WORM backend failed" in caplog.text
         finally:

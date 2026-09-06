@@ -32,9 +32,7 @@ def _report(organization: str = "Explicit Root") -> GapAnalysisReport:
 
 def _repository_type() -> type[Any]:
     repository_type = getattr(gap_store, "GapReportRepository", None)
-    assert repository_type is not None, (
-        "GapReportRepository must provide the explicit-root store seam"
-    )
+    assert repository_type is not None, "GapReportRepository must provide the explicit-root store seam"
     return cast(type[Any], repository_type)
 
 
@@ -114,9 +112,7 @@ def test_repository_rejects_revalidator_root_change(
         "GapStoreRootChangedError",
         None,
     )
-    assert root_changed_error is not None, (
-        "GapStoreRootChangedError must make root drift a typed failure"
-    )
+    assert root_changed_error is not None, "GapStoreRootChangedError must make root drift a typed failure"
     repository = repository_type(
         bound_root,
         root_revalidator=lambda: different_root,

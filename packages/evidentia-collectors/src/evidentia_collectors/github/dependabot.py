@@ -236,9 +236,7 @@ class DependabotCollector:
         dismissal_policy: dict[str, DismissalVerdict] | None = None,
     ) -> None:
         if not owner or not repo:
-            raise DependabotCollectorError(
-                "DependabotCollector requires non-empty owner + repo."
-            )
+            raise DependabotCollectorError("DependabotCollector requires non-empty owner + repo.")
         self.owner = owner
         self.repo = repo
         self._client = client or GitHubClient(token=token)
@@ -303,10 +301,7 @@ class DependabotCollector:
         if dry_run:
             _log.info(
                 action=EventAction.COLLECT_STARTED,
-                message=(
-                    f"Dependabot dry-run for {self.slug} — would enumerate "
-                    "open + fixed + dismissed alerts"
-                ),
+                message=(f"Dependabot dry-run for {self.slug} — would enumerate open + fixed + dismissed alerts"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.INFO],
                 evidentia={
@@ -348,9 +343,7 @@ class DependabotCollector:
                 "repo": self.slug,
                 "include_dismissed": include_dismissed,
                 "include_auto_dismissed": include_auto_dismissed,
-                "dismissal_policy": {
-                    k: v.value for k, v in self.dismissal_policy.items()
-                },
+                "dismissal_policy": {k: v.value for k, v in self.dismissal_policy.items()},
             },
         )
 
@@ -377,9 +370,7 @@ class DependabotCollector:
         ):
             _log.info(
                 action=EventAction.COLLECT_STARTED,
-                message=(
-                    f"Dependabot collection starting for {self.slug}"
-                ),
+                message=(f"Dependabot collection starting for {self.slug}"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.START],
             )
@@ -388,22 +379,15 @@ class DependabotCollector:
                 all_alerts = self._fetch_all_pages()
                 for alert in all_alerts:
                     state = str(alert.get("state") or "").lower()
-                    counts_by_state[state] = counts_by_state.get(
-                        state, 0
-                    ) + 1
+                    counts_by_state[state] = counts_by_state.get(state, 0) + 1
 
                     # Apply inclusion filters.
                     if state == "dismissed" and not include_dismissed:
                         continue
-                    if (
-                        state == "auto_dismissed"
-                        and not include_auto_dismissed
-                    ):
+                    if state == "auto_dismissed" and not include_auto_dismissed:
                         continue
 
-                    findings.append(
-                        self._alert_to_finding(alert, context)
-                    )
+                    findings.append(self._alert_to_finding(alert, context))
             except GitHubApiError as e:
                 errors.append(f"dependabot: GitHubApiError: {e}")
                 _log.error(
@@ -421,9 +405,7 @@ class DependabotCollector:
                     error={"type": type(e).__name__, "message": str(e)},
                 )
             except Exception as e:
-                errors.append(
-                    f"dependabot: {type(e).__name__}: {e}"
-                )
+                errors.append(f"dependabot: {type(e).__name__}: {e}")
                 _log.error(
                     action=EventAction.COLLECT_FAILED,
                     outcome=EventOutcome.FAILURE,
@@ -436,9 +418,7 @@ class DependabotCollector:
                 empty_categories.append("github-dependabot-alerts")
                 _log.info(
                     action=EventAction.MANIFEST_EMPTY_SET_ATTESTED,
-                    message=(
-                        "Dependabot: zero alerts (attested empty)"
-                    ),
+                    message=("Dependabot: zero alerts (attested empty)"),
                 )
 
             manifest = CollectionManifest(
@@ -458,33 +438,22 @@ class DependabotCollector:
                         resource_type=f"github-dependabot-alert-{state}",
                         scanned=count,
                         matched_filter=count,
-                        collected=sum(
-                            1
-                            for f in findings
-                            if (f.raw_data or {}).get("state") == state
-                        ),
+                        collected=sum(1 for f in findings if (f.raw_data or {}).get("state") == state),
                     )
                     for state, count in counts_by_state.items()
                     if count > 0
                 ],
                 total_findings=len(findings),
                 is_complete=not errors,
-                incomplete_reason=(
-                    "; ".join(errors) if errors else None
-                ),
+                incomplete_reason=("; ".join(errors) if errors else None),
                 empty_categories=empty_categories,
                 errors=errors,
             )
 
             _log.info(
                 action=EventAction.COLLECT_COMPLETED,
-                outcome=EventOutcome.SUCCESS
-                if not errors
-                else EventOutcome.FAILURE,
-                message=(
-                    f"Dependabot completed: {len(findings)} findings "
-                    f"({counts_by_state})"
-                ),
+                outcome=EventOutcome.SUCCESS if not errors else EventOutcome.FAILURE,
+                message=(f"Dependabot completed: {len(findings)} findings ({counts_by_state})"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.END],
                 evidentia={
@@ -513,8 +482,7 @@ class DependabotCollector:
                     action=EventAction.COLLECT_ABORTED,
                     outcome=EventOutcome.FAILURE,
                     message=(
-                        "Dependabot pagination hit 100-page safety cap "
-                        "(10k alerts). Some alerts may not be collected."
+                        "Dependabot pagination hit 100-page safety cap (10k alerts). Some alerts may not be collected."
                     ),
                 )
                 break
@@ -522,9 +490,7 @@ class DependabotCollector:
 
     # ── alert → finding ──────────────────────────────────────────────
 
-    def _alert_to_finding(
-        self, alert: dict[str, Any], context: CollectionContext
-    ) -> SecurityFinding:
+    def _alert_to_finding(self, alert: dict[str, Any], context: CollectionContext) -> SecurityFinding:
         """Convert a Dependabot alert JSON to a SecurityFinding.
 
         Applies the dismissal policy to reclassify ambiguous
@@ -532,11 +498,7 @@ class DependabotCollector:
         verdicts.
         """
         state = str(alert.get("state") or "open").lower()
-        dismissed_reason = (
-            str(alert.get("dismissed_reason"))
-            if alert.get("dismissed_reason")
-            else None
-        )
+        dismissed_reason = str(alert.get("dismissed_reason")) if alert.get("dismissed_reason") else None
 
         # Dismissal-policy classification. Open/fixed/auto_dismissed
         # map directly to ACTIVE/RESOLVED; 'dismissed' depends on the
@@ -550,14 +512,8 @@ class DependabotCollector:
             # or repo archived — functionally resolved.
             status = FindingStatus.RESOLVED
         elif state == "dismissed" and dismissed_reason:
-            verdict = self.dismissal_policy.get(
-                dismissed_reason, DismissalVerdict.TREAT_AS_OPEN
-            )
-            status = (
-                FindingStatus.ACTIVE
-                if verdict == DismissalVerdict.TREAT_AS_OPEN
-                else FindingStatus.RESOLVED
-            )
+            verdict = self.dismissal_policy.get(dismissed_reason, DismissalVerdict.TREAT_AS_OPEN)
+            status = FindingStatus.ACTIVE if verdict == DismissalVerdict.TREAT_AS_OPEN else FindingStatus.RESOLVED
         else:
             # Unknown state → ACTIVE (safer default for audit).
             status = FindingStatus.ACTIVE
@@ -571,7 +527,7 @@ class DependabotCollector:
 
         severity = _severity_from_advisory(advisory, vulnerability)
 
-        package = (vulnerability.get("package") or {})
+        package = vulnerability.get("package") or {}
         pkg_name = str(package.get("name") or "")
         pkg_ecosystem = str(package.get("ecosystem") or "")
 
@@ -579,20 +535,10 @@ class DependabotCollector:
         # policy-treated-as-open) alert is a failed check; a fixed or
         # resolved-dismissal alert passes. GitHub supplies the first
         # patched version — that is the remediation.
-        compliance_status = (
-            ComplianceStatus.FAIL
-            if status == FindingStatus.ACTIVE
-            else ComplianceStatus.PASS
-        )
-        patched = (vulnerability.get("first_patched_version") or {}).get(
-            "identifier"
-        )
+        compliance_status = ComplianceStatus.FAIL if status == FindingStatus.ACTIVE else ComplianceStatus.PASS
+        patched = (vulnerability.get("first_patched_version") or {}).get("identifier")
         pkg_label = f"{pkg_ecosystem}/{pkg_name}" if pkg_ecosystem else pkg_name
-        remediation = (
-            f"Upgrade {pkg_label} to {patched} or later."
-            if patched and pkg_name
-            else None
-        )
+        remediation = f"Upgrade {pkg_label} to {patched} or later." if patched and pkg_name else None
 
         title_parts = [ghsa_id or cve_id or f"Dependabot alert #{alert.get('number')}"]
         if pkg_name:
@@ -603,17 +549,13 @@ class DependabotCollector:
             str(advisory.get("summary") or "")[:500],
         ]
         if pkg_ecosystem and pkg_name:
-            description_parts.append(
-                f"Package: {pkg_ecosystem}/{pkg_name}"
-            )
+            description_parts.append(f"Package: {pkg_ecosystem}/{pkg_name}")
         if cvss_score is not None:
             description_parts.append(f"CVSS v3 base: {cvss_score}")
         if cve_id:
             description_parts.append(f"CVE: {cve_id}")
         if state == "dismissed" and dismissed_reason:
-            description_parts.append(
-                f"Dismissal reason: {dismissed_reason}"
-            )
+            description_parts.append(f"Dismissal reason: {dismissed_reason}")
         description = "\n".join(description_parts)[:2000]
 
         return SecurityFinding(
@@ -631,8 +573,7 @@ class DependabotCollector:
             collection_context=context,
             raw_data=alert,
             first_observed=_to_datetime(alert.get("created_at")),
-            last_observed=_to_datetime(alert.get("updated_at"))
-            or _to_datetime(alert.get("created_at")),
+            last_observed=_to_datetime(alert.get("updated_at")) or _to_datetime(alert.get("created_at")),
             resolved_at=(
                 _to_datetime(alert.get("fixed_at"))
                 or _to_datetime(alert.get("dismissed_at"))
@@ -644,18 +585,14 @@ class DependabotCollector:
 # ── helpers ──────────────────────────────────────────────────────────────
 
 
-def _severity_from_advisory(
-    advisory: dict[str, Any], vulnerability: dict[str, Any]
-) -> Severity:
+def _severity_from_advisory(advisory: dict[str, Any], vulnerability: dict[str, Any]) -> Severity:
     """Compute severity from the GitHub-advisory severity label.
 
     Dependabot alerts use (critical, high, medium, low). We map
     directly. CVSS v3 score is included in raw_data for reviewers
     who want to requalify.
     """
-    label = str(
-        advisory.get("severity") or vulnerability.get("severity") or "medium"
-    ).lower()
+    label = str(advisory.get("severity") or vulnerability.get("severity") or "medium").lower()
     lookup = {
         "critical": Severity.CRITICAL,
         "high": Severity.HIGH,

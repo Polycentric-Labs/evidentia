@@ -60,9 +60,9 @@ Mappings: 115
 ```python
 from evidentia_collectors.github import GitHubClient
 from evidentia_collectors.github.osps import (
-    populate_osps_ac_03_01,    # branch protection on default branch
-    populate_osps_le_02_01,    # OSI/FSF-recognized SPDX license
-    populate_osps_vm_05_03,    # Dependabot enabled
+    populate_osps_ac_03_01,  # branch protection on default branch
+    populate_osps_le_02_01,  # OSI/FSF-recognized SPDX license
+    populate_osps_vm_05_03,  # Dependabot enabled
     # ... 13 more
 )
 

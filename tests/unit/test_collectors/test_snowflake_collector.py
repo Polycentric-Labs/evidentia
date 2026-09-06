@@ -227,9 +227,7 @@ def _make_collector(
         **kwargs,
     )
     # Inject the mock connection directly, bypassing _ensure_connected.
-    collector._connection = _MockConnection(
-        responses or _baseline_responses()
-    )
+    collector._connection = _MockConnection(responses or _baseline_responses())
     return collector
 
 
@@ -311,9 +309,7 @@ class TestPublicSurface:
         )
 
         assert issubclass(SnowflakeAuthError, SnowflakeCollectorError)
-        assert issubclass(
-            SnowflakePermissionError, SnowflakeCollectorError
-        )
+        assert issubclass(SnowflakePermissionError, SnowflakeCollectorError)
         assert issubclass(SnowflakeQueryError, SnowflakeCollectorError)
 
 
@@ -366,13 +362,10 @@ class TestLoginHistory:
         inventory = [
             f
             for f in findings
-            if f.source_finding_id is not None
-            and f.source_finding_id.startswith("login-history-inventory:")
+            if f.source_finding_id is not None and f.source_finding_id.startswith("login-history-inventory:")
         ]
         assert len(inventory) == 2
-        users = sorted(
-            f.resource_id for f in inventory if f.resource_id
-        )
+        users = sorted(f.resource_id for f in inventory if f.resource_id)
         assert users == ["ALICE", "BOB"]
 
     def test_login_history_inventory_is_resolved(self) -> None:
@@ -381,12 +374,7 @@ class TestLoginHistory:
         context = c._build_context("test-run")
         findings, _ = c._login_history_findings(context)
         for f in findings:
-            if (
-                f.source_finding_id is not None
-                and f.source_finding_id.startswith(
-                    "login-history-inventory:"
-                )
-            ):
+            if f.source_finding_id is not None and f.source_finding_id.startswith("login-history-inventory:"):
                 assert f.status == FindingStatus.RESOLVED
                 assert f.severity == Severity.INFORMATIONAL
 
@@ -396,19 +384,13 @@ class TestLoginHistory:
         context = c._build_context("test-run")
         findings, _ = c._login_history_findings(context)
         failed = [
-            f
-            for f in findings
-            if f.source_finding_id is not None
-            and f.source_finding_id.startswith("login-failed:")
+            f for f in findings if f.source_finding_id is not None and f.source_finding_id.startswith("login-failed:")
         ]
         assert len(failed) == 1
         assert failed[0].status == FindingStatus.ACTIVE
         assert failed[0].severity == Severity.LOW
         assert failed[0].resource_id == "BOB"
-        assert any(
-            "AC-7" in m.control_id
-            for m in failed[0].control_mappings
-        )
+        assert any("AC-7" in m.control_id for m in failed[0].control_mappings)
 
     def test_login_history_coverage_count(self) -> None:
         c = _make_collector()
@@ -432,10 +414,7 @@ class TestUserInventory:
         context = c._build_context("test-run")
         findings, _ = c._user_inventory_findings(context)
         inventory = [
-            f
-            for f in findings
-            if f.source_finding_id is not None
-            and f.source_finding_id.startswith("user-inventory:")
+            f for f in findings if f.source_finding_id is not None and f.source_finding_id.startswith("user-inventory:")
         ]
         # 4 users in baseline
         assert len(inventory) == 4
@@ -448,10 +427,7 @@ class TestUserInventory:
         context = c._build_context("test-run")
         findings, _ = c._user_inventory_findings(context)
         mfa_gap = [
-            f
-            for f in findings
-            if f.source_finding_id is not None
-            and f.source_finding_id.startswith("mfa-disabled:")
+            f for f in findings if f.source_finding_id is not None and f.source_finding_id.startswith("mfa-disabled:")
         ]
         # Bob has password + no MFA → MFA-gap finding.
         # Carol has password + no MFA + disabled → ALSO an MFA-gap
@@ -461,17 +437,12 @@ class TestUserInventory:
         # Dave is key-pair only (no password) → no MFA finding.
         # Alice has MFA → no finding.
         # So we expect 2 MFA gaps: BOB + CAROL.
-        gap_users = sorted(
-            f.resource_id for f in mfa_gap if f.resource_id
-        )
+        gap_users = sorted(f.resource_id for f in mfa_gap if f.resource_id)
         assert gap_users == ["BOB", "CAROL"]
         for f in mfa_gap:
             assert f.severity == Severity.MEDIUM
             assert f.status == FindingStatus.ACTIVE
-            assert any(
-                m.control_id == "IA-2(1)"
-                for m in f.control_mappings
-            )
+            assert any(m.control_id == "IA-2(1)" for m in f.control_mappings)
 
     def test_disabled_user_emits_finding(self) -> None:
         c = _make_collector()
@@ -479,10 +450,7 @@ class TestUserInventory:
         context = c._build_context("test-run")
         findings, _ = c._user_inventory_findings(context)
         disabled = [
-            f
-            for f in findings
-            if f.source_finding_id is not None
-            and f.source_finding_id.startswith("user-disabled:")
+            f for f in findings if f.source_finding_id is not None and f.source_finding_id.startswith("user-disabled:")
         ]
         assert len(disabled) == 1
         assert disabled[0].resource_id == "CAROL"
@@ -497,8 +465,7 @@ class TestUserInventory:
         never_loggedin = [
             f
             for f in findings
-            if f.source_finding_id is not None
-            and f.source_finding_id.startswith("user-never-logged-in:")
+            if f.source_finding_id is not None and f.source_finding_id.startswith("user-never-logged-in:")
         ]
         # Dave never logged in but is enabled → one finding.
         # Carol never logged in but is disabled → suppressed.
@@ -518,8 +485,7 @@ class TestGrantInventory:
         inventory = [
             f
             for f in findings
-            if f.source_finding_id is not None
-            and f.source_finding_id.startswith("grant-inventory:")
+            if f.source_finding_id is not None and f.source_finding_id.startswith("grant-inventory:")
         ]
         # 3 grantees in baseline (ALICE/BOB/EVE)
         assert len(inventory) == 3
@@ -532,8 +498,7 @@ class TestGrantInventory:
         privileged = [
             f
             for f in findings
-            if f.source_finding_id is not None
-            and f.source_finding_id.startswith("privileged-grant:")
+            if f.source_finding_id is not None and f.source_finding_id.startswith("privileged-grant:")
         ]
         # Eve holds ACCOUNTADMIN; one privileged-grant finding
         assert len(privileged) == 1
@@ -555,10 +520,7 @@ class TestNetworkPolicies:
         inv = [
             f
             for f in findings
-            if f.source_finding_id is not None
-            and f.source_finding_id.startswith(
-                "network-policy-inventory:"
-            )
+            if f.source_finding_id is not None and f.source_finding_id.startswith("network-policy-inventory:")
         ]
         assert len(inv) == 1
         assert inv[0].resource_id == "PROD_ALLOWLIST"
@@ -581,11 +543,7 @@ class TestNetworkPolicies:
         c.test_connection()
         context = c._build_context("test-run")
         findings, _ = c._network_policy_findings(context)
-        gap = [
-            f
-            for f in findings
-            if f.source_finding_id == "network-policy-none-assigned"
-        ]
+        gap = [f for f in findings if f.source_finding_id == "network-policy-none-assigned"]
         assert len(gap) == 1
         assert gap[0].severity == Severity.MEDIUM
         assert gap[0].status == FindingStatus.ACTIVE
@@ -600,14 +558,8 @@ class TestPolicyInventory:
         c.test_connection()
         context = c._build_context("test-run")
         findings, _ = c._policy_inventory_findings(context)
-        masking = [
-            f for f in findings if f.resource_type == "snowflake-masking-policy"
-        ]
-        row_access = [
-            f
-            for f in findings
-            if f.resource_type == "snowflake-row-access-policy"
-        ]
+        masking = [f for f in findings if f.resource_type == "snowflake-masking-policy"]
+        row_access = [f for f in findings if f.resource_type == "snowflake-row-access-policy"]
         # 2 databases × 1 masking policy each = 2 findings
         assert len(masking) == 2
         # 2 databases × 1 row-access policy each = 2 findings
@@ -637,18 +589,13 @@ class TestManifest:
         c = _make_collector()
         findings, manifest = c.collect_v2()
         assert isinstance(findings, list)
-        assert all(
-            isinstance(f.collection_context, CollectionContext)
-            for f in findings
-        )
+        assert all(isinstance(f.collection_context, CollectionContext) for f in findings)
         assert isinstance(manifest, CollectionManifest)
         assert manifest.collector_id == COLLECTOR_ID
         assert manifest.is_complete is True
         assert manifest.total_findings == len(findings)
         # Manifest carries source_system_ids populated post-test_connection.
-        assert any(
-            sid.startswith("snowflake:") for sid in manifest.source_system_ids
-        )
+        assert any(sid.startswith("snowflake:") for sid in manifest.source_system_ids)
 
     def test_collect_v2_coverage_includes_all_categories(self) -> None:
         c = _make_collector()
@@ -688,27 +635,21 @@ class TestQuotedIdentifierEscape:
             SnowflakeCollector,
         )
 
-        assert SnowflakeCollector._quote_snowflake_identifier(
-            "PROD_DB"
-        ) == '"PROD_DB"'
+        assert SnowflakeCollector._quote_snowflake_identifier("PROD_DB") == '"PROD_DB"'
 
     def test_quote_identifier_with_embedded_quote(self) -> None:
         from evidentia_collectors.snowflake.collector import (
             SnowflakeCollector,
         )
 
-        assert SnowflakeCollector._quote_snowflake_identifier(
-            'my"db'
-        ) == '"my""db"'
+        assert SnowflakeCollector._quote_snowflake_identifier('my"db') == '"my""db"'
 
     def test_quote_identifier_with_multiple_embedded_quotes(self) -> None:
         from evidentia_collectors.snowflake.collector import (
             SnowflakeCollector,
         )
 
-        assert SnowflakeCollector._quote_snowflake_identifier(
-            'a"b"c'
-        ) == '"a""b""c"'
+        assert SnowflakeCollector._quote_snowflake_identifier('a"b"c') == '"a""b""c"'
 
     def test_quote_identifier_passthrough_for_alphanumerics(self) -> None:
         from evidentia_collectors.snowflake.collector import (
@@ -716,9 +657,7 @@ class TestQuotedIdentifierEscape:
         )
 
         # Snowflake identifier can have alphanumerics + underscore
-        assert SnowflakeCollector._quote_snowflake_identifier(
-            "MY_DB_2025"
-        ) == '"MY_DB_2025"'
+        assert SnowflakeCollector._quote_snowflake_identifier("MY_DB_2025") == '"MY_DB_2025"'
 
 
 # ── TestErrorPath ──────────────────────────────────────────────────
@@ -736,9 +675,7 @@ class TestErrorPath:
         # tolerates that. Instead, swap the cursor's execute to raise.
 
         class _RaisingCursor(_MockCursor):
-            def execute(
-                self, query: str, params: Any = None
-            ) -> None:
+            def execute(self, query: str, params: Any = None) -> None:
                 if "LOGIN_HISTORY" in query:
                     raise RuntimeError("simulated query failure")
                 super().execute(query, params)
@@ -749,6 +686,4 @@ class TestErrorPath:
         c._connection.cursor = _new_cursor  # type: ignore[union-attr]
         _findings, manifest = c.collect_v2()
         assert manifest.is_complete is False
-        assert any(
-            "login_history" in err for err in manifest.errors
-        )
+        assert any("login_history" in err for err in manifest.errors)

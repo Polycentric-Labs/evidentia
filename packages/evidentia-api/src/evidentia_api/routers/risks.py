@@ -72,9 +72,7 @@ def _load_report(key: str) -> GapAnalysisReport:
         # 400 (the F-V08-DAST-3 status normalization is unchanged)
         # with the structured detail object from
         # :mod:`evidentia_api.errors`.
-        raise api_error(
-            400, "invalid_id", str(exc), resource="gap_report"
-        ) from exc
+        raise api_error(400, "invalid_id", str(exc), resource="gap_report") from exc
     if report is None:
         raise api_error(
             404,
@@ -94,9 +92,7 @@ def _pick_gaps(
     if gap_ids:
         wanted = set(gap_ids)
         return [g for g in report.gaps if g.id in wanted]
-    return sorted(
-        report.gaps, key=lambda g: g.priority_score, reverse=True
-    )[:top_n]
+    return sorted(report.gaps, key=lambda g: g.priority_score, reverse=True)[:top_n]
 
 
 async def _stream_risk_generation(
@@ -147,9 +143,7 @@ async def _stream_risk_generation(
         system_context = SystemContext.from_yaml(context_path)
     except Exception as e:
         logger.warning("Malformed system context %s: %s", context_path, e)
-        yield json.dumps(
-            {"phase": "error", "detail": f"Could not load system_context: {e}"}
-        )
+        yield json.dumps({"phase": "error", "detail": f"Could not load system_context: {e}"})
         return
 
     generated = 0
@@ -157,13 +151,9 @@ async def _stream_risk_generation(
 
     # Use asyncio.as_completed for true parallelism. Streaming in arrival
     # order keeps the UI responsive even if one gap is slow.
-    tasks: list[
-        asyncio.Task[tuple[int, ControlGap, object | None, str | None]]
-    ] = []
+    tasks: list[asyncio.Task[tuple[int, ControlGap, object | None, str | None]]] = []
 
-    async def _one(
-        index: int, gap: ControlGap
-    ) -> tuple[int, ControlGap, object | None, str | None]:
+    async def _one(index: int, gap: ControlGap) -> tuple[int, ControlGap, object | None, str | None]:
         try:
             # `generate_async` is the async path shipped since v0.3.0.
             risk = await generator.generate_async(gap, system_context)
@@ -192,11 +182,7 @@ async def _stream_risk_generation(
         index, gap, risk, err = await coro
         if risk is not None:
             generated += 1
-            risk_payload = (
-                risk.model_dump(mode="json")
-                if hasattr(risk, "model_dump")
-                else risk
-            )
+            risk_payload = risk.model_dump(mode="json") if hasattr(risk, "model_dump") else risk
             yield json.dumps(
                 {
                     "phase": "progress",
@@ -230,14 +216,8 @@ async def _stream_risk_generation(
     "/risk/generate",
     responses=error_responses(
         {
-            400: (
-                "Malformed ``report_key`` (``error: invalid_id``); "
-                "raised before the SSE stream starts."
-            ),
-            404: (
-                "No such stored report (``error: not_found``); "
-                "raised before the SSE stream starts."
-            ),
+            400: ("Malformed ``report_key`` (``error: invalid_id``); raised before the SSE stream starts."),
+            404: ("No such stored report (``error: not_found``); raised before the SSE stream starts."),
         }
     ),
 )
@@ -326,9 +306,7 @@ class OpenFairScenarioResult(BaseModel):
     lef: float = Field(description="Loss Event Frequency (events/yr).")
     loss_magnitude: float = Field(description="Loss Magnitude per event ($).")
     ale: float = Field(description="Annualized Loss Expectancy ($).")
-    risk_category: str = Field(
-        description="FAIR risk band (severe/high/significant/moderate/low)."
-    )
+    risk_category: str = Field(description="FAIR risk band (severe/high/significant/moderate/low).")
 
 
 class OpenFairQuantifyResponse(BaseModel):
@@ -383,10 +361,7 @@ def quantify(
         raise api_error(
             400,
             "unknown_method",
-            (
-                "method must be one of "
-                f"{', '.join(_QUANTIFY_METHODS)} (got {payload.method!r})."
-            ),
+            (f"method must be one of {', '.join(_QUANTIFY_METHODS)} (got {payload.method!r})."),
             method=payload.method,
             valid=list(_QUANTIFY_METHODS),
         )

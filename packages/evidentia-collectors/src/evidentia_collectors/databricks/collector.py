@@ -313,8 +313,7 @@ class DatabricksCollector:
     ) -> None:
         if not host and client is None:
             raise DatabricksCollectorError(
-                "DatabricksCollector requires either host= or "
-                "client= (an injected WorkspaceClient for testing)."
+                "DatabricksCollector requires either host= or client= (an injected WorkspaceClient for testing)."
             )
         self._host = host
         self._client = client
@@ -385,16 +384,13 @@ class DatabricksCollector:
             from databricks.sdk import WorkspaceClient
         except ImportError as e:
             raise DatabricksCollectorError(
-                "databricks-sdk is not installed. Install via:\n"
-                "    pip install evidentia-collectors[databricks]"
+                "databricks-sdk is not installed. Install via:\n    pip install evidentia-collectors[databricks]"
             ) from e
 
         try:
             self._client = WorkspaceClient(host=self._host)
         except Exception as e:
-            raise DatabricksAuthError(
-                f"Failed to construct Databricks WorkspaceClient: {e}"
-            ) from e
+            raise DatabricksAuthError(f"Failed to construct Databricks WorkspaceClient: {e}") from e
         return self._client
 
     def _resolution_pin(self) -> Any:
@@ -418,26 +414,16 @@ class DatabricksCollector:
             with self._resolution_pin():
                 me = client.current_user.me()
         except Exception as e:
-            raise DatabricksAuthError(
-                f"current_user.me() failed — auth misconfigured? {e}"
-            ) from e
+            raise DatabricksAuthError(f"current_user.me() failed — auth misconfigured? {e}") from e
 
-        self._cached_user_name = (
-            getattr(me, "user_name", None) or "unknown"
-        )
+        self._cached_user_name = getattr(me, "user_name", None) or "unknown"
         # workspace_id is part of the SDK config; we read it from the
         # client's config object rather than a separate API call.
-        self._cached_workspace_url = (
-            getattr(getattr(client, "config", None), "host", None)
-            or self._host
-            or "unknown"
-        )
+        self._cached_workspace_url = getattr(getattr(client, "config", None), "host", None) or self._host or "unknown"
         try:
             from databricks.sdk import version as _sdk_version_mod
 
-            self._cached_sdk_version = getattr(
-                _sdk_version_mod, "__version__", "unknown"
-            )
+            self._cached_sdk_version = getattr(_sdk_version_mod, "__version__", "unknown")
         except Exception:
             self._cached_sdk_version = "unknown"
         return {
@@ -460,9 +446,7 @@ class DatabricksCollector:
 
     # ── Sub-check: PAT inventory (v0.7.8 P0.1 first slice) ──────────
 
-    def _pat_inventory_findings(
-        self, client: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _pat_inventory_findings(self, client: Any, context: CollectionContext) -> list[SecurityFinding]:
         """List workspace PATs and emit findings for security posture.
 
         Emits:
@@ -499,9 +483,7 @@ class DatabricksCollector:
                     Unauthenticated as _SdkUnauthenticated,
                 )
 
-                if isinstance(
-                    e, (_SdkPermissionDenied, _SdkUnauthenticated)
-                ):
+                if isinstance(e, (_SdkPermissionDenied, _SdkUnauthenticated)):
                     raise DatabricksPermissionError(
                         "PAT inventory requires token_management or "
                         "workspace-admin permission; SDK "
@@ -515,13 +497,9 @@ class DatabricksCollector:
                 msg = str(e).lower()
                 if "permission" in msg or "not authorized" in msg:
                     raise DatabricksPermissionError(
-                        "PAT inventory requires token_management or "
-                        "workspace-admin permission; SDK denied: "
-                        f"{e}"
+                        f"PAT inventory requires token_management or workspace-admin permission; SDK denied: {e}"
                     ) from e
-            raise DatabricksCollectorError(
-                f"PAT inventory call failed: {e}"
-            ) from e
+            raise DatabricksCollectorError(f"PAT inventory call failed: {e}") from e
 
         # Per-PAT inventory findings — RESOLVED status because each
         # entry is just an enumeration (not a problem). Long-lived /
@@ -567,9 +545,7 @@ class DatabricksCollector:
             if expiry_ms in (None, 0, -1):
                 findings.append(
                     SecurityFinding(
-                        title=(
-                            f"Databricks PAT {tok_id} has no expiry"
-                        ),
+                        title=(f"Databricks PAT {tok_id} has no expiry"),
                         description=(
                             "PAT was issued without an expiry date. "
                             "OWASP + NIST AC-2(11) recommend "
@@ -590,9 +566,7 @@ class DatabricksCollector:
                             "expiry_time_ms": expiry_ms,
                         },
                         source_system="databricks",
-                        source_finding_id=(
-                            f"databricks-pat-never-expires:{tok_id}"
-                        ),
+                        source_finding_id=(f"databricks-pat-never-expires:{tok_id}"),
                         control_mappings=PAT_NEVER_EXPIRES_MAPPINGS,
                         collection_context=context,
                     )
@@ -630,14 +604,10 @@ class DatabricksCollector:
                                 "token_id": str(tok_id),
                                 "owner_id": str(owner),
                                 "lifetime_days": round(lifetime_days, 1),
-                                "threshold_days": (
-                                    _LONG_LIVED_THRESHOLD_DAYS
-                                ),
+                                "threshold_days": (_LONG_LIVED_THRESHOLD_DAYS),
                             },
                             source_system="databricks",
-                            source_finding_id=(
-                                f"databricks-pat-long-lived:{tok_id}"
-                            ),
+                            source_finding_id=(f"databricks-pat-long-lived:{tok_id}"),
                             control_mappings=PAT_LONG_LIVED_MAPPINGS,
                             collection_context=context,
                         )
@@ -647,9 +617,7 @@ class DatabricksCollector:
 
     # ── Sub-check: cluster compliance ───────────────────────────────
 
-    def _cluster_compliance_findings(
-        self, client: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _cluster_compliance_findings(self, client: Any, context: CollectionContext) -> list[SecurityFinding]:
         """List workspace clusters and emit configuration-management findings.
 
         Emits:
@@ -671,12 +639,8 @@ class DatabricksCollector:
         except Exception as e:
             msg = str(e).lower()
             if "permission" in msg or "not authorized" in msg:
-                raise DatabricksPermissionError(
-                    f"Cluster inventory denied: {e}"
-                ) from e
-            raise DatabricksCollectorError(
-                f"Cluster inventory call failed: {e}"
-            ) from e
+                raise DatabricksPermissionError(f"Cluster inventory denied: {e}") from e
+            raise DatabricksCollectorError(f"Cluster inventory call failed: {e}") from e
 
         for cl in clusters:
             cluster_id = getattr(cl, "cluster_id", "unknown")
@@ -719,10 +683,7 @@ class DatabricksCollector:
             if not _is_current_lts(runtime):
                 findings.append(
                     SecurityFinding(
-                        title=(
-                            f"Databricks cluster {name} runtime "
-                            f"is outdated"
-                        ),
+                        title=(f"Databricks cluster {name} runtime is outdated"),
                         description=(
                             f"Cluster {cluster_id} runs runtime "
                             f"{runtime!r} which is not on the "
@@ -738,22 +699,15 @@ class DatabricksCollector:
                         # the SI-2 flaw-remediation check.
                         compliance_status=ComplianceStatus.FAIL,
                         source_system="databricks",
-                        source_finding_id=(
-                            f"databricks-cluster-outdated-runtime"
-                            f":{cluster_id}"
-                        ),
+                        source_finding_id=(f"databricks-cluster-outdated-runtime:{cluster_id}"),
                         resource_id=str(cluster_id),
                         resource_type="Databricks::Cluster",
                         raw_data={
                             "cluster_id": str(cluster_id),
                             "spark_version": runtime,
-                            "current_lts_allowlist": sorted(
-                                _CURRENT_LTS_RUNTIMES
-                            ),
+                            "current_lts_allowlist": sorted(_CURRENT_LTS_RUNTIMES),
                         },
-                        control_mappings=(
-                            CLUSTER_OUTDATED_RUNTIME_MAPPINGS
-                        ),
+                        control_mappings=(CLUSTER_OUTDATED_RUNTIME_MAPPINGS),
                         collection_context=context,
                     )
                 )
@@ -785,10 +739,7 @@ class DatabricksCollector:
                         # this API surface — see BLIND_SPOT).
                         compliance_status=ComplianceStatus.UNKNOWN,
                         source_system="databricks",
-                        source_finding_id=(
-                            f"databricks-cluster-init-scripts"
-                            f":{cluster_id}"
-                        ),
+                        source_finding_id=(f"databricks-cluster-init-scripts:{cluster_id}"),
                         resource_id=str(cluster_id),
                         resource_type="Databricks::Cluster",
                         raw_data={
@@ -804,9 +755,7 @@ class DatabricksCollector:
 
     # ── Sub-check: service principals ───────────────────────────────
 
-    def _service_principal_findings(
-        self, client: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _service_principal_findings(self, client: Any, context: CollectionContext) -> list[SecurityFinding]:
         """List workspace service principals and emit AC-2 + AC-3 findings.
 
         Emits:
@@ -823,12 +772,8 @@ class DatabricksCollector:
         except Exception as e:
             msg = str(e).lower()
             if "permission" in msg or "not authorized" in msg:
-                raise DatabricksPermissionError(
-                    f"Service principal inventory denied: {e}"
-                ) from e
-            raise DatabricksCollectorError(
-                f"Service principal inventory call failed: {e}"
-            ) from e
+                raise DatabricksPermissionError(f"Service principal inventory denied: {e}") from e
+            raise DatabricksCollectorError(f"Service principal inventory call failed: {e}") from e
 
         for sp in principals:
             sp_id = getattr(sp, "id", "unknown")
@@ -839,9 +784,7 @@ class DatabricksCollector:
 
             findings.append(
                 SecurityFinding(
-                    title=(
-                        f"Databricks service principal {display_name}"
-                    ),
+                    title=(f"Databricks service principal {display_name}"),
                     description=(
                         f"Service principal {sp_id} "
                         f"(application_id={app_id}, "
@@ -865,9 +808,7 @@ class DatabricksCollector:
                         "active": bool(active),
                         "group_memberships_count": len(groups),
                     },
-                    control_mappings=(
-                        SERVICE_PRINCIPAL_INVENTORY_MAPPINGS
-                    ),
+                    control_mappings=(SERVICE_PRINCIPAL_INVENTORY_MAPPINGS),
                     collection_context=context,
                 )
             )
@@ -875,10 +816,7 @@ class DatabricksCollector:
             if not active:
                 findings.append(
                     SecurityFinding(
-                        title=(
-                            f"Inactive service principal "
-                            f"{display_name} still enabled"
-                        ),
+                        title=(f"Inactive service principal {display_name} still enabled"),
                         description=(
                             "Service principal is marked inactive in "
                             "the workspace identity graph but remains "
@@ -894,9 +832,7 @@ class DatabricksCollector:
                         # check.
                         compliance_status=ComplianceStatus.FAIL,
                         source_system="databricks",
-                        source_finding_id=(
-                            f"databricks-sp-inactive:{sp_id}"
-                        ),
+                        source_finding_id=(f"databricks-sp-inactive:{sp_id}"),
                         resource_id=str(sp_id),
                         resource_type="Databricks::ServicePrincipal",
                         raw_data={
@@ -904,9 +840,7 @@ class DatabricksCollector:
                             "application_id": str(app_id),
                             "active": False,
                         },
-                        control_mappings=(
-                            SERVICE_PRINCIPAL_INACTIVE_MAPPINGS
-                        ),
+                        control_mappings=(SERVICE_PRINCIPAL_INACTIVE_MAPPINGS),
                         collection_context=context,
                     )
                 )
@@ -915,9 +849,7 @@ class DatabricksCollector:
 
     # ── Sub-check: secret scopes ────────────────────────────────────
 
-    def _secret_scope_findings(
-        self, client: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _secret_scope_findings(self, client: Any, context: CollectionContext) -> list[SecurityFinding]:
         """List workspace secret scopes and emit SC-12 findings.
 
         Emits:
@@ -936,27 +868,18 @@ class DatabricksCollector:
         except Exception as e:
             msg = str(e).lower()
             if "permission" in msg or "not authorized" in msg:
-                raise DatabricksPermissionError(
-                    f"Secret scope inventory denied: {e}"
-                ) from e
-            raise DatabricksCollectorError(
-                f"Secret scope inventory call failed: {e}"
-            ) from e
+                raise DatabricksPermissionError(f"Secret scope inventory denied: {e}") from e
+            raise DatabricksCollectorError(f"Secret scope inventory call failed: {e}") from e
 
         for sc in scopes:
             name = getattr(sc, "name", "unknown")
             backend_type = getattr(sc, "backend_type", None)
-            backend_str = (
-                str(backend_type) if backend_type is not None else "unknown"
-            )
+            backend_str = str(backend_type) if backend_type is not None else "unknown"
 
             findings.append(
                 SecurityFinding(
                     title=f"Databricks secret scope {name}",
-                    description=(
-                        f"Secret scope {name!r} uses backend_type="
-                        f"{backend_str}."
-                    ),
+                    description=(f"Secret scope {name!r} uses backend_type={backend_str}."),
                     severity=Severity.INFORMATIONAL,
                     status=FindingStatus.RESOLVED,
                     # v0.10.0: secret-scope inventory is informational
@@ -979,10 +902,7 @@ class DatabricksCollector:
             if "azure_keyvault" in backend_lower or "keyvault" in backend_lower:
                 findings.append(
                     SecurityFinding(
-                        title=(
-                            f"Secret scope {name} uses Azure Key Vault "
-                            f"backing (preferred SC-12 posture)"
-                        ),
+                        title=(f"Secret scope {name} uses Azure Key Vault backing (preferred SC-12 posture)"),
                         description=(
                             "Azure Key Vault-backed scope delegates "
                             "secret encryption to a cloud-provider "
@@ -995,28 +915,21 @@ class DatabricksCollector:
                         # preferred SC-12 posture — passes the check.
                         compliance_status=ComplianceStatus.PASS,
                         source_system="databricks",
-                        source_finding_id=(
-                            f"databricks-secret-scope-keyvault:{name}"
-                        ),
+                        source_finding_id=(f"databricks-secret-scope-keyvault:{name}"),
                         resource_id=str(name),
                         resource_type="Databricks::SecretScope",
                         raw_data={
                             "name": str(name),
                             "backend_type": backend_str,
                         },
-                        control_mappings=(
-                            SECRET_SCOPE_KEY_VAULT_BACKED_MAPPINGS
-                        ),
+                        control_mappings=(SECRET_SCOPE_KEY_VAULT_BACKED_MAPPINGS),
                         collection_context=context,
                     )
                 )
             elif "databricks" in backend_lower:
                 findings.append(
                     SecurityFinding(
-                        title=(
-                            f"Secret scope {name} uses Databricks-"
-                            f"backed storage (consider KMS-backed)"
-                        ),
+                        title=(f"Secret scope {name} uses Databricks-backed storage (consider KMS-backed)"),
                         description=(
                             "Databricks-backed scope encrypts secrets "
                             "with a workspace-controlled key. For "
@@ -1034,19 +947,14 @@ class DatabricksCollector:
                         # assurance environments.
                         compliance_status=ComplianceStatus.WARNING,
                         source_system="databricks",
-                        source_finding_id=(
-                            f"databricks-secret-scope-databricks-"
-                            f"backed:{name}"
-                        ),
+                        source_finding_id=(f"databricks-secret-scope-databricks-backed:{name}"),
                         resource_id=str(name),
                         resource_type="Databricks::SecretScope",
                         raw_data={
                             "name": str(name),
                             "backend_type": backend_str,
                         },
-                        control_mappings=(
-                            SECRET_SCOPE_DATABRICKS_BACKED_MAPPINGS
-                        ),
+                        control_mappings=(SECRET_SCOPE_DATABRICKS_BACKED_MAPPINGS),
                         collection_context=context,
                     )
                 )
@@ -1073,9 +981,7 @@ class DatabricksCollector:
         findings, _manifest = self.collect_v2()
         return findings
 
-    def collect_v2(
-        self, *, run_id: str | None = None
-    ) -> tuple[list[SecurityFinding], CollectionManifest]:
+    def collect_v2(self, *, run_id: str | None = None) -> tuple[list[SecurityFinding], CollectionManifest]:
         """Run every enabled sub-check and return findings + manifest.
 
         v0.7.8 P0.1 ships ONE complete sub-check (PAT inventory).
@@ -1092,9 +998,7 @@ class DatabricksCollector:
         except DatabricksCollectorError:
             raise
         except Exception as e:
-            raise DatabricksAuthError(
-                f"Could not establish Databricks SDK auth: {e}"
-            ) from e
+            raise DatabricksAuthError(f"Could not establish Databricks SDK auth: {e}") from e
 
         client = self._ensure_client()
         context = self._build_context(run_id)
@@ -1115,11 +1019,7 @@ class DatabricksCollector:
         ):
             _log.info(
                 action=EventAction.COLLECT_STARTED,
-                message=(
-                    f"Databricks collection starting for "
-                    f"{self._cached_user_name}@"
-                    f"{self._cached_workspace_url}"
-                ),
+                message=(f"Databricks collection starting for {self._cached_user_name}@{self._cached_workspace_url}"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.START],
             )
@@ -1147,10 +1047,7 @@ class DatabricksCollector:
                     _log.warning(
                         action=EventAction.COLLECT_FAILED,
                         outcome=EventOutcome.FAILURE,
-                        message=(
-                            f"Sub-check {sub_check.__name__} "
-                            f"permission-denied: {e}"
-                        ),
+                        message=(f"Sub-check {sub_check.__name__} permission-denied: {e}"),
                         error={
                             "type": "DatabricksPermissionError",
                             "message": str(e),
@@ -1161,26 +1058,18 @@ class DatabricksCollector:
                     _log.warning(
                         action=EventAction.COLLECT_FAILED,
                         outcome=EventOutcome.FAILURE,
-                        message=(
-                            f"Sub-check {sub_check.__name__} "
-                            f"failed: {e}"
-                        ),
+                        message=(f"Sub-check {sub_check.__name__} failed: {e}"),
                         error={
                             "type": type(e).__name__,
                             "message": str(e),
                         },
                     )
 
-            outcome = (
-                EventOutcome.SUCCESS if not errors else EventOutcome.FAILURE
-            )
+            outcome = EventOutcome.SUCCESS if not errors else EventOutcome.FAILURE
             _log.info(
                 action=EventAction.COLLECT_COMPLETED,
                 outcome=outcome,
-                message=(
-                    f"Databricks collection completed: "
-                    f"{len(findings)} findings, {len(errors)} errors"
-                ),
+                message=(f"Databricks collection completed: {len(findings)} findings, {len(errors)} errors"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.END],
             )
@@ -1213,8 +1102,7 @@ class DatabricksCollector:
             collection_started_at=context.collected_at,
             collection_finished_at=utc_now(),
             source_system_ids=[
-                f"databricks:{self._cached_user_name or 'unknown'}"
-                f"@{self._cached_workspace_url or 'unknown'}"
+                f"databricks:{self._cached_user_name or 'unknown'}@{self._cached_workspace_url or 'unknown'}"
             ],
             filters_applied={
                 "user": self._cached_user_name or "unknown",
@@ -1231,16 +1119,14 @@ class DatabricksCollector:
             ],
             total_findings=len(findings),
             is_complete=not errors,
-            incomplete_reason=(
-                "; ".join(errors) if errors else None
-            ),
+            incomplete_reason=("; ".join(errors) if errors else None),
             empty_categories=[
                 # Sub-checks not yet implemented in v0.7.8 P0.1 —
                 # flagged so consumers know this manifest is PARTIAL
                 # evidence until the follow-up commits land them:
-                "workspace_audit_log",      # needs SQL Warehouse plumbing
-                "table_lineage",            # needs SQL Warehouse plumbing
-                "network_policy",           # needs Account API auth path
+                "workspace_audit_log",  # needs SQL Warehouse plumbing
+                "table_lineage",  # needs SQL Warehouse plumbing
+                "network_policy",  # needs Account API auth path
             ],
             errors=errors,
         )
@@ -1252,8 +1138,7 @@ class DatabricksCollector:
             _log.info(
                 action=EventAction.COLLECT_COMPLETED,
                 message=(
-                    f"Databricks manifest emitted: run_id={run_id}, "
-                    f"findings={len(findings)}, errors={len(errors)}"
+                    f"Databricks manifest emitted: run_id={run_id}, findings={len(findings)}, errors={len(errors)}"
                 ),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.INFO],

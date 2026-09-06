@@ -105,9 +105,7 @@ def test_stub_loads_as_tier_c_placeholder(framework_id: str) -> None:
 
     for ctrl in catalog.controls:
         # No normative text — only the licensed-content placeholder.
-        assert ctrl.description == (
-            "[Licensed content — see license_url for authoritative text.]"
-        )
+        assert ctrl.description == ("[Licensed content — see license_url for authoritative text.]")
         assert ctrl.license_required is True
         assert ctrl.license_url
 
@@ -220,6 +218,4 @@ def test_crosswalk_engine_indexes_fda_to_sw96_mappings() -> None:
         "aami-sw96",
     )
     assert mapped, "expected at least one mapped SW96 process area"
-    assert any(
-        m.target_control_id == "aami-sw96-pa-security-risk-control" for m in mapped
-    )
+    assert any(m.target_control_id == "aami-sw96-pa-security-risk-control" for m in mapped)

@@ -24,9 +24,7 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture(autouse=True)
-def _isolated_poam_store(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def _isolated_poam_store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Point EVIDENTIA_POAM_STORE_DIR at an isolated tmp for each test."""
     store = tmp_path / "poam-store"
     monkeypatch.setenv("EVIDENTIA_POAM_STORE_DIR", str(store))
@@ -71,9 +69,7 @@ def _make_gap(
 
 
 class TestCreatePoam:
-    def test_create_returns_201_with_stamped_fields(
-        self, api_client: TestClient
-    ) -> None:
+    def test_create_returns_201_with_stamped_fields(self, api_client: TestClient) -> None:
         r = api_client.post("/api/poam/items", json=_make_payload())
         assert r.status_code == 201, r.text
         body = r.json()
@@ -81,9 +77,7 @@ class TestCreatePoam:
         assert body["control_id"] == "AC-2"
         assert body["poam_milestones"] == []
 
-    def test_invalid_severity_returns_422(
-        self, api_client: TestClient
-    ) -> None:
+    def test_invalid_severity_returns_422(self, api_client: TestClient) -> None:
         payload = _make_payload(severity="not-a-real-severity")
         r = api_client.post("/api/poam/items", json=payload)
         assert r.status_code == 422
@@ -118,9 +112,7 @@ class TestListPoams:
         assert body["total"] == 1
         assert body["items"][0]["gap_severity"] == "critical"
 
-    def test_invalid_severity_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_invalid_severity_returns_400(self, api_client: TestClient) -> None:
         r = api_client.get("/api/poam/items?severity=not-real")
         assert r.status_code == 400
         # F-V08-DAST-3 status normalization: manual 4xx carries the
@@ -152,14 +144,10 @@ class TestGetPoam:
         assert r.json()["id"] == gap.id
 
     def test_get_unknown_returns_404(self, api_client: TestClient) -> None:
-        r = api_client.get(
-            "/api/poam/items/00000000-0000-0000-0000-000000000000"
-        )
+        r = api_client.get("/api/poam/items/00000000-0000-0000-0000-000000000000")
         assert r.status_code == 404
 
-    def test_get_invalid_id_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_get_invalid_id_returns_404(self, api_client: TestClient) -> None:
         # Shape-violation widened to 404 per TPRM precedent.
         r = api_client.get("/api/poam/items/not-a-uuid")
         assert r.status_code == 404
@@ -169,17 +157,13 @@ class TestGetPoam:
 
 
 class TestReplacePoam:
-    def test_replace_preserves_id_and_created_at(
-        self, api_client: TestClient
-    ) -> None:
+    def test_replace_preserves_id_and_created_at(self, api_client: TestClient) -> None:
         gap = _make_gap()
         save_poam(gap)
         # Client tries to overwrite id, but server pins it
         payload = _make_payload()
         payload["id"] = "different-id"  # type: ignore[assignment]
-        r = api_client.put(
-            f"/api/poam/items/{gap.id}", json=payload
-        )
+        r = api_client.put(f"/api/poam/items/{gap.id}", json=payload)
         # The "different-id" body fails Pydantic UUID validation
         # because gap.id is a UUID and Pydantic typing on ControlGap.id
         # accepts any string per the model; so this might pass or 422.
@@ -187,9 +171,7 @@ class TestReplacePoam:
         if r.status_code == 200:
             assert r.json()["id"] == gap.id
 
-    def test_replace_unknown_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_replace_unknown_returns_404(self, api_client: TestClient) -> None:
         r = api_client.put(
             "/api/poam/items/00000000-0000-0000-0000-000000000000",
             json=_make_payload(),
@@ -210,12 +192,8 @@ class TestDeletePoam:
         r2 = api_client.get(f"/api/poam/items/{gap.id}")
         assert r2.status_code == 404
 
-    def test_delete_unknown_returns_404(
-        self, api_client: TestClient
-    ) -> None:
-        r = api_client.delete(
-            "/api/poam/items/00000000-0000-0000-0000-000000000000"
-        )
+    def test_delete_unknown_returns_404(self, api_client: TestClient) -> None:
+        r = api_client.delete("/api/poam/items/00000000-0000-0000-0000-000000000000")
         assert r.status_code == 404
 
 
@@ -223,9 +201,7 @@ class TestDeletePoam:
 
 
 class TestAddMilestone:
-    def test_add_milestone_returns_updated_poam(
-        self, api_client: TestClient
-    ) -> None:
+    def test_add_milestone_returns_updated_poam(self, api_client: TestClient) -> None:
         gap = _make_gap()
         save_poam(gap)
         r = api_client.post(
@@ -241,9 +217,7 @@ class TestAddMilestone:
         assert len(body["poam_milestones"]) == 1
         assert body["poam_milestones"][0]["description"] == "Deliver Okta"
 
-    def test_add_to_unknown_poam_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_add_to_unknown_poam_returns_404(self, api_client: TestClient) -> None:
         r = api_client.post(
             "/api/poam/items/00000000-0000-0000-0000-000000000000/milestones",
             json={
@@ -255,9 +229,7 @@ class TestAddMilestone:
 
 
 class TestUpdateMilestone:
-    def test_update_milestone_status_forward(
-        self, api_client: TestClient
-    ) -> None:
+    def test_update_milestone_status_forward(self, api_client: TestClient) -> None:
         gap = _make_gap()
         gap.poam_milestones.append(
             Milestone(
@@ -275,9 +247,7 @@ class TestUpdateMilestone:
         body = r.json()
         assert body["poam_milestones"][0]["status"] == "in_progress"
 
-    def test_backward_transition_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_backward_transition_returns_400(self, api_client: TestClient) -> None:
         gap = _make_gap()
         gap.poam_milestones.append(
             Milestone(
@@ -297,16 +267,11 @@ class TestUpdateMilestone:
         assert detail["error"] == "invalid_body"
         assert "Invalid state transition" in detail["message"]
 
-    def test_update_unknown_milestone_returns_404(
-        self, api_client: TestClient
-    ) -> None:
+    def test_update_unknown_milestone_returns_404(self, api_client: TestClient) -> None:
         gap = _make_gap()
         save_poam(gap)
         r = api_client.patch(
-            (
-                f"/api/poam/items/{gap.id}/milestones/"
-                f"00000000-0000-0000-0000-000000000000"
-            ),
+            (f"/api/poam/items/{gap.id}/milestones/00000000-0000-0000-0000-000000000000"),
             json={"status": "in_progress"},
         )
         assert r.status_code == 404
@@ -323,9 +288,7 @@ class TestCalendar:
         assert body["overdue"] == []
         assert body["due_soon"] == []
 
-    def test_overdue_milestone_surfaces(
-        self, api_client: TestClient
-    ) -> None:
+    def test_overdue_milestone_surfaces(self, api_client: TestClient) -> None:
         gap = _make_gap()
         gap.poam_milestones.append(
             Milestone(
@@ -340,9 +303,7 @@ class TestCalendar:
         assert len(body["overdue"]) == 1
         assert body["overdue"][0]["control_id"] == "nist-800-53-rev5:AC-2"
 
-    def test_invalid_today_returns_400(
-        self, api_client: TestClient
-    ) -> None:
+    def test_invalid_today_returns_400(self, api_client: TestClient) -> None:
         r = api_client.get("/api/poam/calendar?today=not-a-date")
         assert r.status_code == 400
         detail = r.json()["detail"]
@@ -377,6 +338,4 @@ def test_poam_error_statuses_documented_in_openapi(
     for path, method, statuses in expected:
         op = schema["paths"][path][method]
         for status in statuses:
-            assert status in op["responses"], (
-                f"{method.upper()} {path} missing documented {status}"
-            )
+            assert status in op["responses"], f"{method.upper()} {path} missing documented {status}"

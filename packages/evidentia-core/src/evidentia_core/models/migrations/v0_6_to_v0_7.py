@@ -37,10 +37,7 @@ def is_legacy_finding_payload(payload: Any) -> bool:
     if not isinstance(payload, dict):
         return False
     has_legacy_field = "control_ids" in payload
-    lacks_v07_fields = (
-        "collection_context" not in payload
-        and "control_mappings" not in payload
-    )
+    lacks_v07_fields = "collection_context" not in payload and "control_mappings" not in payload
     return has_legacy_field and lacks_v07_fields
 
 
@@ -62,9 +59,7 @@ def load_legacy_finding(payload: dict[str, Any]) -> SecurityFinding:
             evidentia={
                 "migration": "v0_6_to_v0_7",
                 "source_finding_id": payload.get("id"),
-                "legacy_control_ids_count": len(
-                    payload.get("control_ids") or []
-                ),
+                "legacy_control_ids_count": len(payload.get("control_ids") or []),
             },
         )
 
@@ -85,8 +80,7 @@ def migrate_findings_json(path: str | Path) -> list[SecurityFinding]:
         return [load_legacy_finding(raw)]
 
     raise ValueError(
-        f"Unsupported findings payload shape ({type(raw).__name__}); "
-        "expected JSON object or array of objects"
+        f"Unsupported findings payload shape ({type(raw).__name__}); expected JSON object or array of objects"
     )
 
 

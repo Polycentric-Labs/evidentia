@@ -123,16 +123,19 @@ def test_cross_framework_value_populated():
     )
 
 
-@pytest.mark.parametrize("fmt,ext", [
-    ("json", "json"),
-    ("csv", "csv"),
-    ("markdown", "md"),
-    ("oscal-ar", "json"),
-    ("sarif", "sarif"),
-    # v0.10.5 Phase 7 + Phase 8 — gap-output format expansions
-    ("ocsf-detection", "json"),
-    ("cyclonedx-vex", "json"),
-])
+@pytest.mark.parametrize(
+    "fmt,ext",
+    [
+        ("json", "json"),
+        ("csv", "csv"),
+        ("markdown", "md"),
+        ("oscal-ar", "json"),
+        ("sarif", "sarif"),
+        # v0.10.5 Phase 7 + Phase 8 — gap-output format expansions
+        ("ocsf-detection", "json"),
+        ("cyclonedx-vex", "json"),
+    ],
+)
 def test_export_all_formats(tmp_path, fmt, ext):
     inv = load_inventory(FIXTURES / "sample-inventory.yaml")
     report = GapAnalyzer().analyze(

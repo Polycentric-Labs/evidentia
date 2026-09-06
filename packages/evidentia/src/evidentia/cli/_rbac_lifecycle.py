@@ -122,11 +122,7 @@ def get_rbac_policy() -> RBACPolicy | TenantRBACPolicy:
         assert _CACHED_POLICY is not None  # invariant; load sets both
         return _CACHED_POLICY
     policy_path = os.environ.get(ENV_RBAC_POLICY_FILE)
-    _CACHED_POLICY = (
-        load_rbac_policy_auto(Path(policy_path))
-        if policy_path
-        else DEFAULT_POLICY
-    )
+    _CACHED_POLICY = load_rbac_policy_auto(Path(policy_path)) if policy_path else DEFAULT_POLICY
     _CACHED_POLICY_LOADED = True
     return _CACHED_POLICY
 

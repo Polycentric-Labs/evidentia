@@ -79,11 +79,7 @@ def _repo_dict(
         "visibility": "private" if private else "public",
         "default_branch": default_branch,
         "has_issues": has_issues,
-        "license": (
-            {"spdx_id": license_spdx, "key": (license_spdx or "").lower()}
-            if license_spdx
-            else None
-        ),
+        "license": ({"spdx_id": license_spdx, "key": (license_spdx or "").lower()} if license_spdx else None),
         "security_and_analysis": security_and_analysis or {},
     }
 
@@ -108,12 +104,8 @@ def _assert_osps_finding_shape(
     if scope_suffix is not None:
         assert finding.source_finding_id.endswith(scope_suffix)
     # control_mappings contains the expected osps-baseline mapping
-    osps_mappings = [
-        m for m in finding.control_mappings if m.framework == "osps-baseline"
-    ]
-    assert len(osps_mappings) >= 1, (
-        f"Expected osps-baseline mapping on {control_id} finding"
-    )
+    osps_mappings = [m for m in finding.control_mappings if m.framework == "osps-baseline"]
+    assert len(osps_mappings) >= 1, f"Expected osps-baseline mapping on {control_id} finding"
     assert any(m.control_id == control_id for m in osps_mappings)
     # resource_type / resource_id present per the impl contract
     assert finding.resource_type == "GitHub::Repository"
@@ -341,9 +333,7 @@ class TestOspsLe0201:
 class TestOspsLe0301:
     def test_pass_when_license_file_present(self) -> None:
         gh = MagicMock()
-        gh.get_contents.side_effect = lambda owner, repo, path: (
-            {"path": "LICENSE"} if path == "LICENSE" else None
-        )
+        gh.get_contents.side_effect = lambda owner, repo, path: {"path": "LICENSE"} if path == "LICENSE" else None
         finding = populate_osps_le_03_01(gh, OWNER, REPO)
         _assert_osps_finding_shape(
             finding,
@@ -527,9 +517,7 @@ class TestOspsVm0301:
     def test_pass_when_pvr_enabled(self) -> None:
         gh = MagicMock()
         gh.get_repo.return_value = _repo_dict(
-            security_and_analysis={
-                "private_vulnerability_reporting": {"status": "enabled"}
-            },
+            security_and_analysis={"private_vulnerability_reporting": {"status": "enabled"}},
         )
         finding = populate_osps_vm_03_01(gh, OWNER, REPO)
         _assert_osps_finding_shape(
@@ -541,9 +529,7 @@ class TestOspsVm0301:
     def test_fail_when_pvr_disabled(self) -> None:
         gh = MagicMock()
         gh.get_repo.return_value = _repo_dict(
-            security_and_analysis={
-                "private_vulnerability_reporting": {"status": "disabled"}
-            },
+            security_and_analysis={"private_vulnerability_reporting": {"status": "disabled"}},
         )
         finding = populate_osps_vm_03_01(gh, OWNER, REPO)
         _assert_osps_finding_shape(
@@ -570,9 +556,7 @@ class TestOspsVm0401:
     def test_pass_when_security_advisories_endpoint_responds(self) -> None:
         gh = MagicMock()
         gh.get_repo.return_value = _repo_dict(private=False)
-        gh.list_security_advisories.return_value = [
-            {"ghsa_id": "GHSA-xxxx-yyyy-zzzz"}
-        ]
+        gh.list_security_advisories.return_value = [{"ghsa_id": "GHSA-xxxx-yyyy-zzzz"}]
         finding = populate_osps_vm_04_01(gh, OWNER, REPO)
         _assert_osps_finding_shape(
             finding,
@@ -669,10 +653,7 @@ class TestOspsCoverageRegistry:
 
         for control_id, helper_name in OSPS_COVERAGE.items():
             helper = getattr(osps_module, helper_name, None)
-            assert callable(helper), (
-                f"OSPS_COVERAGE[{control_id!r}] -> "
-                f"{helper_name!r} not callable"
-            )
+            assert callable(helper), f"OSPS_COVERAGE[{control_id!r}] -> {helper_name!r} not callable"
 
     def test_every_coverage_entry_is_a_real_osps_id(self) -> None:
         """Every OSPS_COVERAGE key follows the OSPS-XX-YY.ZZ shape."""
@@ -680,10 +661,7 @@ class TestOspsCoverageRegistry:
 
         pattern = re.compile(r"^OSPS-[A-Z]{2}-\d{2}\.\d{2}$")
         for control_id in OSPS_COVERAGE:
-            assert pattern.match(control_id), (
-                f"OSPS_COVERAGE key {control_id!r} doesn't match "
-                "OSPS-XX-YY.ZZ pattern"
-            )
+            assert pattern.match(control_id), f"OSPS_COVERAGE key {control_id!r} doesn't match OSPS-XX-YY.ZZ pattern"
 
 
 # ── Determinism (v0.10.5 P10 idempotency) ──────────────────────────────
@@ -747,9 +725,7 @@ class TestOspsHelperErrorPaths:
         complete with partial evidence, not abort."""
         gh = MagicMock()
         gh.get_repo.return_value = _repo_dict()
-        gh.get_branch_protection.side_effect = GitHubApiError(
-            "boom", status_code=500
-        )
+        gh.get_branch_protection.side_effect = GitHubApiError("boom", status_code=500)
         finding = populate_osps_ac_03_01(gh, OWNER, REPO)
         # Indeterminate — neither PASS nor FAIL is honest.
         assert finding.compliance_status == ComplianceStatus.UNKNOWN
@@ -775,9 +751,7 @@ class TestFilePresentAtAnyTristate:
         """Every candidate 404s → ABSENT, no carried error."""
         gh = MagicMock()
         gh.get_contents.return_value = None  # 404 → None per client contract
-        result = _file_present_at_any(
-            gh, OWNER, REPO, ("SECURITY.md", ".github/SECURITY.md")
-        )
+        result = _file_present_at_any(gh, OWNER, REPO, ("SECURITY.md", ".github/SECURITY.md"))
         assert result.outcome is _FileProbeOutcome.ABSENT
         assert result.path is None
         assert result.error is None
@@ -787,9 +761,7 @@ class TestFilePresentAtAnyTristate:
         the probe short-circuits the remaining candidates."""
         gh = MagicMock()
         gh.get_contents.side_effect = lambda owner, repo, path: (
-            {"path": "docs/SECURITY.md"}
-            if path == "docs/SECURITY.md"
-            else None
+            {"path": "docs/SECURITY.md"} if path == "docs/SECURITY.md" else None
         )
         result = _file_present_at_any(
             gh,
@@ -805,12 +777,8 @@ class TestFilePresentAtAnyTristate:
         """Every candidate 5xx-fails with no hit → INDETERMINATE, and the
         last error is carried for the UNKNOWN finding's description."""
         gh = MagicMock()
-        gh.get_contents.side_effect = GitHubApiError(
-            "upstream 503", status_code=503
-        )
-        result = _file_present_at_any(
-            gh, OWNER, REPO, ("LICENSE", "LICENSE.md", "COPYING")
-        )
+        gh.get_contents.side_effect = GitHubApiError("upstream 503", status_code=503)
+        result = _file_present_at_any(gh, OWNER, REPO, ("LICENSE", "LICENSE.md", "COPYING"))
         assert result.outcome is _FileProbeOutcome.INDETERMINATE
         assert result.path is None
         assert result.error is not None
@@ -898,9 +866,7 @@ class TestFileProbeHelperEmitsUnknown:
         (populate_osps_vm_06_02, "OSPS-VM-06.02"),
     ],
 )
-def test_every_helper_returns_a_securityfinding(
-    helper: Any, control_id: str
-) -> None:
+def test_every_helper_returns_a_securityfinding(helper: Any, control_id: str) -> None:
     """Smoke test: each helper, given a permissive MagicMock, returns
     a real SecurityFinding (not None, not a dict, not an exception)."""
     gh = MagicMock()
@@ -914,7 +880,4 @@ def test_every_helper_returns_a_securityfinding(
 
     finding = helper(gh, OWNER, REPO)
     assert isinstance(finding, SecurityFinding)
-    assert any(
-        m.framework == "osps-baseline" and m.control_id == control_id
-        for m in finding.control_mappings
-    )
+    assert any(m.framework == "osps-baseline" and m.control_id == control_id for m in finding.control_mappings)

@@ -42,9 +42,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-UV_CHANGELOG_URL = (
-    "https://raw.githubusercontent.com/astral-sh/uv/main/CHANGELOG.md"
-)
+UV_CHANGELOG_URL = "https://raw.githubusercontent.com/astral-sh/uv/main/CHANGELOG.md"
 
 # Stabilization phrasing near the feature name, on one changelog line
 # (either order — lookaheads). Kept deliberately loose: release-notes
@@ -57,16 +55,12 @@ _STABILIZE = (
 # Feature names matched as substrings (no \b): `UV_MALWARE_CHECK` has no
 # word boundary around "malware" (underscores are word chars), and the
 # stabilization-phrasing co-occurrence already filters noise.
-_GRADUATION_RE = re.compile(
-    rf"(?im)^(?=.*(?:audit|malware))(?=.*{_STABILIZE}).*$"
-)
+_GRADUATION_RE = re.compile(rf"(?im)^(?=.*(?:audit|malware))(?=.*{_STABILIZE}).*$")
 
 _PREVIEW_MARKERS = ("experimental", "preview")
 
 
-def classify_audit_probe(
-    returncode: int, stdout: str, stderr: str
-) -> str:
+def classify_audit_probe(returncode: int, stdout: str, stderr: str) -> str:
     """Classify a no-preview-flag ``uv audit --locked`` run.
 
     Returns one of:
@@ -120,9 +114,7 @@ def fetch_changelog(
     opener: Callable[..., Any] = urllib.request.urlopen,
 ) -> str | None:
     """GET uv's CHANGELOG.md. FAIL-SOFT: any error returns None."""
-    req = urllib.request.Request(
-        UV_CHANGELOG_URL, headers={"Accept": "text/plain"}
-    )
+    req = urllib.request.Request(UV_CHANGELOG_URL, headers={"Accept": "text/plain"})
     try:
         # Fixed https host (raw.githubusercontent.com); 30s covers connect,
         # read-phase stalls raise bare TimeoutError — caught as OSError.
@@ -176,9 +168,7 @@ def main(argv: list[str] | None = None) -> int:
             if not hits:
                 print("changelog probe: no stabilization language found")
 
-    Path(args.output).write_text(
-        "\n".join(findings) + ("\n" if findings else ""), encoding="utf-8"
-    )
+    Path(args.output).write_text("\n".join(findings) + ("\n" if findings else ""), encoding="utf-8")
     for line in findings:
         print(line)
     print(f"check_uv_pilot_graduation: {len(findings)} finding(s)")

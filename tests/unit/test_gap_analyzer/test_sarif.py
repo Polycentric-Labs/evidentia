@@ -58,9 +58,7 @@ def test_sarif_has_version_schema_and_driver() -> None:
 
 
 def test_each_gap_becomes_a_result() -> None:
-    report = _report(
-        [_gap("AC-2", GapSeverity.HIGH), _gap("AC-3", GapSeverity.MEDIUM)]
-    )
+    report = _report([_gap("AC-2", GapSeverity.HIGH), _gap("AC-3", GapSeverity.MEDIUM)])
     results = gap_report_to_sarif(report)["runs"][0]["results"]
     assert len(results) == 2
     assert {r["ruleId"] for r in results} == {
@@ -79,10 +77,7 @@ def test_gap_severity_maps_to_sarif_level() -> None:
             _gap("I", GapSeverity.INFORMATIONAL),
         ]
     )
-    levels = {
-        r["ruleId"].split("/")[1]: r["level"]
-        for r in gap_report_to_sarif(report)["runs"][0]["results"]
-    }
+    levels = {r["ruleId"].split("/")[1]: r["level"] for r in gap_report_to_sarif(report)["runs"][0]["results"]}
     assert levels == {
         "C": "error",
         "H": "error",
@@ -94,9 +89,7 @@ def test_gap_severity_maps_to_sarif_level() -> None:
 
 def test_rules_are_deduplicated_per_control() -> None:
     # The same control twice -> one rule, two results.
-    report = _report(
-        [_gap("AC-2", GapSeverity.HIGH), _gap("AC-2", GapSeverity.LOW)]
-    )
+    report = _report([_gap("AC-2", GapSeverity.HIGH), _gap("AC-2", GapSeverity.LOW)])
     sarif = gap_report_to_sarif(report)
     assert len(sarif["runs"][0]["tool"]["driver"]["rules"]) == 1
     assert len(sarif["runs"][0]["results"]) == 2
@@ -118,12 +111,8 @@ def test_remediation_guidance_in_result_message() -> None:
 
 def test_result_has_physical_and_logical_location() -> None:
     report = _report([_gap("AC-2", GapSeverity.HIGH)])
-    location = gap_report_to_sarif(report)["runs"][0]["results"][0][
-        "locations"
-    ][0]
-    assert location["physicalLocation"]["artifactLocation"]["uri"] == (
-        "inventory.yaml"
-    )
+    location = gap_report_to_sarif(report)["runs"][0]["results"][0]["locations"][0]
+    assert location["physicalLocation"]["artifactLocation"]["uri"] == ("inventory.yaml")
     assert location["logicalLocations"][0]["kind"] == "control"
 
 

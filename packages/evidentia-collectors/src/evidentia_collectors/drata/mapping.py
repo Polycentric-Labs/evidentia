@@ -23,8 +23,7 @@ VENDOR_INVENTORY_MAPPINGS: list[ControlMapping] = [
         control_title="Supply Chain Risk Management Plan",
         relationship=OLIRRelationship.SUBSET_OF,
         justification=(
-            "An itemized inventory of third-party vendors with risk "
-            "attributes is one of the SR-2 plan artifacts."
+            "An itemized inventory of third-party vendors with risk attributes is one of the SR-2 plan artifacts."
         ),
     ),
     ControlMapping(
@@ -53,8 +52,7 @@ VENDOR_INVENTORY_MAPPINGS: list[ControlMapping] = [
         framework="occ-2013-29",
         control_id="III.A",
         control_title=(
-            "Risk Management — Planning, Due Diligence, "
-            "Contract Negotiation, Ongoing Monitoring, Termination"
+            "Risk Management — Planning, Due Diligence, Contract Negotiation, Ongoing Monitoring, Termination"
         ),
         relationship=OLIRRelationship.SUBSET_OF,
         justification=(
@@ -120,9 +118,6 @@ VENDOR_HIGH_RISK_MAPPINGS: list[ControlMapping] = [
         control_id="II.D",
         control_title="Ongoing Monitoring",
         relationship=OLIRRelationship.SUBSET_OF,
-        justification=(
-            "Same ongoing-monitoring expectation as OCC 2013-29 "
-            "§III.A.4 from the FRB framing."
-        ),
+        justification=("Same ongoing-monitoring expectation as OCC 2013-29 §III.A.4 from the FRB framing."),
     ),
 ]

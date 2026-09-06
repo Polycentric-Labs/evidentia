@@ -203,10 +203,7 @@ class PromptFaithfulnessResult(EvidentiaModel):
     """
 
     prompt_id: str = Field(
-        description=(
-            "Caller-supplied identifier for the prompt under "
-            "test (matches :class:`EvalSample.prompt_id`)."
-        ),
+        description=("Caller-supplied identifier for the prompt under test (matches :class:`EvalSample.prompt_id`)."),
     )
     claims: list[FaithfulnessResult] = Field(
         description=(
@@ -292,9 +289,7 @@ def resolve_threshold(
         Threshold in [0, 1].
     """
     if method == "jaccard" and framework is not None:
-        return DEFAULT_THRESHOLDS_BY_FRAMEWORK_JACCARD.get(
-            framework, DEFAULT_FAITHFULNESS_THRESHOLD
-        )
+        return DEFAULT_THRESHOLDS_BY_FRAMEWORK_JACCARD.get(framework, DEFAULT_FAITHFULNESS_THRESHOLD)
     return DEFAULT_FAITHFULNESS_THRESHOLD
 
 
@@ -339,18 +334,11 @@ def _bootstrap_confidence(
     for _ in range(n_resamples):
         # Sample with replacement; the resampled set may be
         # smaller than the original (some tokens not picked).
-        resampled_indices = [
-            rng.randrange(n_tokens) for _ in range(n_tokens)
-        ]
-        resampled_tokens = {
-            token_list[i] for i in resampled_indices
-        }
+        resampled_indices = [rng.randrange(n_tokens) for _ in range(n_tokens)]
+        resampled_tokens = {token_list[i] for i in resampled_indices}
         # Max jaccard across all clauses for this resample.
         best = max(
-            (
-                _jaccard(resampled_tokens, ct)
-                for ct in clause_token_sets
-            ),
+            (_jaccard(resampled_tokens, ct) for ct in clause_token_sets),
             default=0.0,
         )
         scores.append(best)
@@ -358,9 +346,7 @@ def _bootstrap_confidence(
     # Compute stddev. Bessel-corrected (n-1) sample stddev;
     # numerically stable enough for n=100.
     mean = sum(scores) / len(scores)
-    variance = sum((s - mean) ** 2 for s in scores) / (
-        len(scores) - 1
-    )
+    variance = sum((s - mean) ** 2 for s in scores) / (len(scores) - 1)
     stddev = variance**0.5
     # Stddev is naturally in [0, 0.5] for jaccard values in
     # [0, 1] — max stddev when half the resamples score 0 and
@@ -428,9 +414,7 @@ def faithfulness_score(
         ValueError: ``threshold`` is outside [0, 1].
     """
     if not (0.0 <= threshold <= 1.0):
-        raise ValueError(
-            f"threshold must be in [0, 1]; got {threshold}"
-        )
+        raise ValueError(f"threshold must be in [0, 1]; got {threshold}")
     clauses = list(source_clauses)
     claim_tokens = _tokenize(claim)
 
@@ -441,8 +425,7 @@ def faithfulness_score(
 
     # Score each clause; preserve original-clause order in ties.
     scored: list[tuple[str, float]] = [
-        (clause, _jaccard(claim_tokens, ct))
-        for clause, ct in zip(clauses, clause_token_sets, strict=True)
+        (clause, _jaccard(claim_tokens, ct)) for clause, ct in zip(clauses, clause_token_sets, strict=True)
     ]
     # Sort descending by score; stable on ties (preserves input
     # order, which is the conventional auditor-friendly default).

@@ -20,9 +20,7 @@ def runner() -> CliRunner:
     return CliRunner()
 
 
-def test_collect_ocsf_file_mode_writes_findings_json(
-    runner: CliRunner, tmp_path: Path
-) -> None:
+def test_collect_ocsf_file_mode_writes_findings_json(runner: CliRunner, tmp_path: Path) -> None:
     """`collect ocsf -i <file>` reads the fixture and writes SecurityFinding JSON."""
     out = tmp_path / "findings.json"
     result = runner.invoke(
@@ -46,9 +44,7 @@ def test_collect_ocsf_file_mode_writes_findings_json(
     assert findings[1]["compliance_status"] == "warning"
 
 
-def test_collect_ocsf_url_mode_rejects_http(
-    runner: CliRunner, tmp_path: Path
-) -> None:
+def test_collect_ocsf_url_mode_rejects_http(runner: CliRunner, tmp_path: Path) -> None:
     """The CLI surfaces the HTTPS-only policy as a non-zero exit + clear error."""
     result = runner.invoke(
         app,
@@ -65,9 +61,7 @@ def test_collect_ocsf_url_mode_rejects_http(
     assert "HTTPS-only" in result.output
 
 
-def test_collect_ocsf_rejects_unsupported_class_uid(
-    runner: CliRunner, tmp_path: Path
-) -> None:
+def test_collect_ocsf_rejects_unsupported_class_uid(runner: CliRunner, tmp_path: Path) -> None:
     bad = tmp_path / "bad.json"
     bad.write_text(json.dumps({"class_uid": 9999, "category_uid": 2}), encoding="utf-8")
     result = runner.invoke(

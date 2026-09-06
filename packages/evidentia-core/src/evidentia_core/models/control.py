@@ -35,8 +35,7 @@ class ControlImplementation(EvidentiaModel):
 
     id: str = Field(
         description=(
-            "Organization-defined control ID, typically matching framework IDs. "
-            "E.g. 'AC-2', 'CC6.1', 'A.9.2.1'"
+            "Organization-defined control ID, typically matching framework IDs. E.g. 'AC-2', 'CC6.1', 'A.9.2.1'"
         )
     )
     title: str | None = Field(
@@ -52,10 +51,7 @@ class ControlImplementation(EvidentiaModel):
     )
     implementation_notes: str | None = Field(
         default=None,
-        description=(
-            "Free-text notes on implementation details, compensating controls, "
-            "or planned improvements"
-        ),
+        description=("Free-text notes on implementation details, compensating controls, or planned improvements"),
     )
     responsible_roles: list[str] = Field(
         default_factory=list,
@@ -133,9 +129,7 @@ class ControlInventory(EvidentiaModel):
     @property
     def implemented_count(self) -> int:
         """Count of fully implemented controls."""
-        return sum(
-            1 for c in self.controls if c.status == ControlStatus.IMPLEMENTED.value
-        )
+        return sum(1 for c in self.controls if c.status == ControlStatus.IMPLEMENTED.value)
 
     @property
     def total_count(self) -> int:

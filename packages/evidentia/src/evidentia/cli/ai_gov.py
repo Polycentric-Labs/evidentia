@@ -72,10 +72,7 @@ def _load_descriptor(path: Path) -> AISystemDescriptor:
         raise typer.Exit(code=1) from exc
 
     if not isinstance(raw, dict):
-        console.print(
-            f"[red]Error:[/red] {path} must be a YAML mapping; "
-            f"got {type(raw).__name__}"
-        )
+        console.print(f"[red]Error:[/red] {path} must be a YAML mapping; got {type(raw).__name__}")
         raise typer.Exit(code=1)
 
     # v0.9.4 P1.4 F-V93-Q14: narrow except to (ValidationError, ValueError)
@@ -116,20 +113,12 @@ def _render_classification_body(
         "limited": "cyan",
         "minimal": "green",
     }.get(str(classification.eu_ai_act_tier), "white")
-    console.print(
-        f"  EU AI Act tier:     "
-        f"[{tier_style}]{classification.eu_ai_act_tier}[/{tier_style}]"
-    )
-    console.print(
-        f"  NIST AI RMF (top):  "
-        f"{classification.applicable_nist_ai_rmf_functions[0]}"
-    )
+    console.print(f"  EU AI Act tier:     [{tier_style}]{classification.eu_ai_act_tier}[/{tier_style}]")
+    console.print(f"  NIST AI RMF (top):  {classification.applicable_nist_ai_rmf_functions[0]}")
     console.print("  Rationale:")
     for line in classification.rationale:
         console.print(f"    • {line}")
-    console.print(
-        f"\n[dim italic]{classification.disclaimer}[/dim italic]"
-    )
+    console.print(f"\n[dim italic]{classification.disclaimer}[/dim italic]")
 
 
 # ── classify ──────────────────────────────────────────────────────
@@ -159,10 +148,7 @@ def ai_gov_classify(
     _log.info(
         action=EventAction.AI_SYSTEM_CLASSIFIED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"AI system {descriptor.name!r} classified as "
-            f"{classification.eu_ai_act_tier}"
-        ),
+        message=(f"AI system {descriptor.name!r} classified as {classification.eu_ai_act_tier}"),
         evidentia={
             "descriptor_name": descriptor.name,
             "eu_ai_act_tier": str(classification.eu_ai_act_tier),
@@ -202,10 +188,7 @@ def ai_gov_register(
     deployment_status: str = typer.Option(
         "proposed",
         "--deployment-status",
-        help=(
-            "Lifecycle status: proposed / in_development / pilot / "
-            "production / retired. Default: proposed."
-        ),
+        help=("Lifecycle status: proposed / in_development / pilot / production / retired. Default: proposed."),
     ),
 ) -> None:
     """Classify + persist an AI system to the registry."""
@@ -244,10 +227,7 @@ def ai_gov_register(
     _log.info(
         action=EventAction.AI_SYSTEM_REGISTERED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"AI system {entry.descriptor.name!r} registered "
-            f"(system_id={entry.system_id})"
-        ),
+        message=(f"AI system {entry.descriptor.name!r} registered (system_id={entry.system_id})"),
         evidentia={
             "system_id": entry.system_id,
             "descriptor_name": entry.descriptor.name,
@@ -258,14 +238,9 @@ def ai_gov_register(
         },
     )
 
-    console.print(
-        f"[green]Registered[/green] AI system: "
-        f"[bold]{entry.descriptor.name}[/bold]"
-    )
+    console.print(f"[green]Registered[/green] AI system: [bold]{entry.descriptor.name}[/bold]")
     console.print(f"  system_id: {entry.system_id}")
-    console.print(
-        f"  EU AI Act tier: {entry.classification.eu_ai_act_tier}"
-    )
+    console.print(f"  EU AI Act tier: {entry.classification.eu_ai_act_tier}")
 
 
 # ── list ──────────────────────────────────────────────────────────
@@ -276,10 +251,7 @@ def ai_gov_list(
     tier: str | None = typer.Option(
         None,
         "--tier",
-        help=(
-            "Filter by EU AI Act tier: unacceptable, high, limited, "
-            "or minimal."
-        ),
+        help=("Filter by EU AI Act tier: unacceptable, high, limited, or minimal."),
     ),
     output_json: bool = typer.Option(
         False,
@@ -295,17 +267,10 @@ def ai_gov_list(
         try:
             tier_enum = EUAIActTier(tier)
         except ValueError:
-            console.print(
-                f"[red]Error:[/red] unknown tier {tier!r}. Valid: "
-                f"{', '.join(t.value for t in EUAIActTier)}"
-            )
+            console.print(f"[red]Error:[/red] unknown tier {tier!r}. Valid: {', '.join(t.value for t in EUAIActTier)}")
             raise typer.Exit(code=1) from None
         # v0.9.3 F-V93-Q7 review fix: drop redundant str() wrapper.
-        entries = [
-            e
-            for e in entries
-            if e.classification.eu_ai_act_tier == tier_enum.value
-        ]
+        entries = [e for e in entries if e.classification.eu_ai_act_tier == tier_enum.value]
 
     if output_json:
         typer.echo(
@@ -360,10 +325,7 @@ def ai_gov_show(
         raise typer.Exit(code=1) from exc
 
     if entry is None:
-        console.print(
-            f"[red]Error:[/red] no registered AI system with ID "
-            f"{system_id!r}"
-        )
+        console.print(f"[red]Error:[/red] no registered AI system with ID {system_id!r}")
         raise typer.Exit(code=1)
 
     if output_json:
@@ -391,18 +353,12 @@ def ai_gov_update(
     deployment_status: str | None = typer.Option(
         None,
         "--deployment-status",
-        help=(
-            "New lifecycle status: proposed / in_development / pilot "
-            "/ production / retired. Unchanged if omitted."
-        ),
+        help=("New lifecycle status: proposed / in_development / pilot / production / retired. Unchanged if omitted."),
     ),
     ssp_reference: str | None = typer.Option(
         None,
         "--ssp-reference",
-        help=(
-            "v0.9.6 P3: URI / handle for the System Security Plan. "
-            "Unchanged if omitted."
-        ),
+        help=("v0.9.6 P3: URI / handle for the System Security Plan. Unchanged if omitted."),
     ),
     emit_scr: Path | None = typer.Option(
         None,
@@ -434,10 +390,7 @@ def ai_gov_update(
         raise typer.Exit(code=1) from exc
 
     if entry is None:
-        console.print(
-            f"[red]Error:[/red] no registered AI system with ID "
-            f"{system_id!r}"
-        )
+        console.print(f"[red]Error:[/red] no registered AI system with ID {system_id!r}")
         raise typer.Exit(code=1)
 
     # Validate deployment-status upfront (matches v0.9.3 F-V93-Q8 pattern).
@@ -492,17 +445,12 @@ def ai_gov_update(
         emit_scr.parent.mkdir(parents=True, exist_ok=True)
         json_path = emit_scr.with_suffix(".json")
         md_path = emit_scr.with_suffix(".md")
-        json_path.write_text(
-            scr_form.model_dump_json(indent=2), encoding="utf-8"
-        )
+        json_path.write_text(scr_form.model_dump_json(indent=2), encoding="utf-8")
         md_path.write_text(scr_form.to_markdown(), encoding="utf-8")
         _log.info(
             action=EventAction.AI_SYSTEM_SCR_EMITTED,
             outcome=EventOutcome.SUCCESS,
-            message=(
-                f"SCR form ({scr_form.category}) emitted for system "
-                f"{system_id} → {json_path}, {md_path}"
-            ),
+            message=(f"SCR form ({scr_form.category}) emitted for system {system_id} → {json_path}, {md_path}"),
             evidentia={
                 "system_id": system_id,
                 "scr_id": scr_form.scr_id,
@@ -511,18 +459,13 @@ def ai_gov_update(
                 "md_path": str(md_path),
             },
         )
-        console.print(
-            f"[green]SCR emitted[/green] "
-            f"([bold]{scr_form.category}[/bold]) → "
-            f"{json_path}, {md_path}"
-        )
+        console.print(f"[green]SCR emitted[/green] ([bold]{scr_form.category}[/bold]) → {json_path}, {md_path}")
 
     _log.info(
         action=EventAction.AI_SYSTEM_UPDATED,
         outcome=EventOutcome.SUCCESS,
         message=(
-            f"AI system {entry.descriptor.name!r} updated "
-            f"(system_id={system_id}; fields={sorted(updates.keys())})"
+            f"AI system {entry.descriptor.name!r} updated (system_id={system_id}; fields={sorted(updates.keys())})"
         ),
         evidentia={
             "system_id": system_id,
@@ -531,10 +474,7 @@ def ai_gov_update(
         },
     )
 
-    console.print(
-        f"[green]Updated[/green] AI system "
-        f"[bold]{entry.descriptor.name}[/bold]"
-    )
+    console.print(f"[green]Updated[/green] AI system [bold]{entry.descriptor.name}[/bold]")
     _render_registry_entry(updated)
 
 
@@ -563,10 +503,7 @@ def ai_gov_retire(
         raise typer.Exit(code=1) from exc
 
     if entry is None:
-        console.print(
-            f"[red]Error:[/red] no registered AI system with ID "
-            f"{system_id!r}"
-        )
+        console.print(f"[red]Error:[/red] no registered AI system with ID {system_id!r}")
         raise typer.Exit(code=1)
 
     if entry.deployment_status == DeploymentStatus.RETIRED:
@@ -577,18 +514,13 @@ def ai_gov_retire(
         )
         return
 
-    retired = entry.model_copy(
-        update={"deployment_status": DeploymentStatus.RETIRED}
-    )
+    retired = entry.model_copy(update={"deployment_status": DeploymentStatus.RETIRED})
     store.save(retired)
 
     _log.info(
         action=EventAction.AI_SYSTEM_RETIRED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"AI system {entry.descriptor.name!r} retired "
-            f"(system_id={system_id})"
-        ),
+        message=(f"AI system {entry.descriptor.name!r} retired (system_id={system_id})"),
         evidentia={
             "system_id": system_id,
             "descriptor_name": entry.descriptor.name,
@@ -597,10 +529,7 @@ def ai_gov_retire(
         },
     )
 
-    console.print(
-        f"[green]Retired[/green] AI system "
-        f"[bold]{entry.descriptor.name}[/bold] (entry preserved for audit)"
-    )
+    console.print(f"[green]Retired[/green] AI system [bold]{entry.descriptor.name}[/bold] (entry preserved for audit)")
 
 
 # ── categorize-fips (v0.9.6 P3) ───────────────────────────────────
@@ -655,10 +584,7 @@ def ai_gov_categorize_fips(
         raise typer.Exit(code=1) from exc
 
     if entry is None:
-        console.print(
-            f"[red]Error:[/red] no registered AI system with ID "
-            f"{system_id!r}"
-        )
+        console.print(f"[red]Error:[/red] no registered AI system with ID {system_id!r}")
         raise typer.Exit(code=1)
 
     try:
@@ -696,11 +622,7 @@ def ai_gov_categorize_fips(
     # serialization). Pydantic ``use_enum_values=True`` on
     # EvidentiaModel means cat.overall is already a string after
     # the validator runs, but we coerce defensively for the f-string.
-    overall_str = (
-        cat.overall.value
-        if isinstance(cat.overall, FIPS199Impact)
-        else str(cat.overall)
-    )
+    overall_str = cat.overall.value if isinstance(cat.overall, FIPS199Impact) else str(cat.overall)
     console.print(
         f"[green]FIPS 199 categorized[/green] [bold]{entry.descriptor.name}[/bold] "
         f"→ overall=[cyan]{overall_str}[/cyan] "
@@ -719,9 +641,7 @@ def ai_gov_set_omb_impact(
         ...,
         "--category",
         help=(
-            "OMB M-24-10 §5(b) category: rights_impacting / "
-            "safety_impacting / rights_and_safety_impacting / "
-            "neither."
+            "OMB M-24-10 §5(b) category: rights_impacting / safety_impacting / rights_and_safety_impacting / neither."
         ),
     ),
 ) -> None:
@@ -758,10 +678,7 @@ def ai_gov_set_omb_impact(
         raise typer.Exit(code=1) from exc
 
     if entry is None:
-        console.print(
-            f"[red]Error:[/red] no registered AI system with ID "
-            f"{system_id!r}"
-        )
+        console.print(f"[red]Error:[/red] no registered AI system with ID {system_id!r}")
         raise typer.Exit(code=1)
 
     try:
@@ -779,10 +696,7 @@ def ai_gov_set_omb_impact(
     _log.info(
         action=EventAction.AI_SYSTEM_OMB_CLASSIFIED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"OMB M-24-10 classified AI system "
-            f"{entry.descriptor.name!r} as {omb_cat}"
-        ),
+        message=(f"OMB M-24-10 classified AI system {entry.descriptor.name!r} as {omb_cat}"),
         evidentia={
             "system_id": system_id,
             "omb_impact": str(omb_cat),
@@ -790,8 +704,7 @@ def ai_gov_set_omb_impact(
     )
 
     console.print(
-        f"[green]OMB M-24-10[/green] classified [bold]{entry.descriptor.name}[/bold] "
-        f"→ [cyan]{omb_cat.value}[/cyan]"
+        f"[green]OMB M-24-10[/green] classified [bold]{entry.descriptor.name}[/bold] → [cyan]{omb_cat.value}[/cyan]"
     )
     console.print(
         "[dim italic]Note: OMB M-24-10 was rescinded 2025-04-03 by "
@@ -808,10 +721,7 @@ def ai_gov_set_high_impact(
     determination: str = typer.Option(
         ...,
         "--determination",
-        help=(
-            "OMB M-25-21 high-impact determination: high_impact / "
-            "not_high_impact / not_assessed."
-        ),
+        help=("OMB M-25-21 high-impact determination: high_impact / not_high_impact / not_assessed."),
     ),
     basis: list[str] = typer.Option(
         [],
@@ -850,10 +760,7 @@ def ai_gov_set_high_impact(
         raise typer.Exit(code=1) from exc
 
     if entry is None:
-        console.print(
-            f"[red]Error:[/red] no registered AI system with ID "
-            f"{system_id!r}"
-        )
+        console.print(f"[red]Error:[/red] no registered AI system with ID {system_id!r}")
         raise typer.Exit(code=1)
 
     try:
@@ -871,8 +778,7 @@ def ai_gov_set_high_impact(
             basis_enums.append(HighImpactBasis(raw.lower()))
         except ValueError:
             console.print(
-                f"[red]Error:[/red] unknown basis {raw!r}. Valid: "
-                f"{', '.join(b.value for b in HighImpactBasis)}"
+                f"[red]Error:[/red] unknown basis {raw!r}. Valid: {', '.join(b.value for b in HighImpactBasis)}"
             )
             raise typer.Exit(code=1) from None
 
@@ -899,8 +805,7 @@ def ai_gov_set_high_impact(
         action=EventAction.AI_SYSTEM_HIGH_IMPACT_CLASSIFIED,
         outcome=EventOutcome.SUCCESS,
         message=(
-            f"OMB M-25-21 high-impact classified AI system "
-            f"{entry.descriptor.name!r} as {determination_enum.value}"
+            f"OMB M-25-21 high-impact classified AI system {entry.descriptor.name!r} as {determination_enum.value}"
         ),
         evidentia={
             "system_id": system_id,
@@ -909,9 +814,7 @@ def ai_gov_set_high_impact(
         },
     )
 
-    basis_str = (
-        ", ".join(b.value for b in basis_enums) if basis_enums else "—"
-    )
+    basis_str = ", ".join(b.value for b in basis_enums) if basis_enums else "—"
     console.print(
         f"[green]OMB M-25-21[/green] high-impact classified "
         f"[bold]{entry.descriptor.name}[/bold] → "
@@ -938,8 +841,7 @@ def ai_gov_set_practice(
         ...,
         "--status",
         help=(
-            "Practice status: implemented / in_progress / not_started / "
-            "waived (waived requires the --waiver-* flags)."
+            "Practice status: implemented / in_progress / not_started / waived (waived requires the --waiver-* flags)."
         ),
     ),
     notes: str | None = typer.Option(
@@ -965,10 +867,7 @@ def ai_gov_set_practice(
     waiver_justification: str | None = typer.Option(
         None,
         "--waiver-justification",
-        help=(
-            "The CAIO's written determination (M-25-21 §4(a)(ii)). "
-            "Required for waived."
-        ),
+        help=("The CAIO's written determination (M-25-21 §4(a)(ii)). Required for waived."),
     ),
     waiver_certified_on: str | None = typer.Option(
         None,
@@ -1006,10 +905,7 @@ def ai_gov_set_practice(
         try:
             return _date.fromisoformat(value)
         except ValueError as exc:
-            console.print(
-                f"[red]Error:[/red] {flag} must be ISO-8601 date "
-                f"(YYYY-MM-DD); got {value!r}: {exc}"
-            )
+            console.print(f"[red]Error:[/red] {flag} must be ISO-8601 date (YYYY-MM-DD); got {value!r}: {exc}")
             raise typer.Exit(code=1) from exc
 
     store = AIRegistryStore()
@@ -1020,10 +916,7 @@ def ai_gov_set_practice(
         raise typer.Exit(code=1) from exc
 
     if entry is None:
-        console.print(
-            f"[red]Error:[/red] no registered AI system with ID "
-            f"{system_id!r}"
-        )
+        console.print(f"[red]Error:[/red] no registered AI system with ID {system_id!r}")
         raise typer.Exit(code=1)
 
     if entry.omb_high_impact is None:
@@ -1038,8 +931,7 @@ def ai_gov_set_practice(
         practice_enum = MinimumPractice(practice.lower())
     except ValueError:
         console.print(
-            f"[red]Error:[/red] unknown practice {practice!r}. Valid: "
-            f"{', '.join(p.value for p in MinimumPractice)}"
+            f"[red]Error:[/red] unknown practice {practice!r}. Valid: {', '.join(p.value for p in MinimumPractice)}"
         )
         raise typer.Exit(code=1) from None
 
@@ -1047,8 +939,7 @@ def ai_gov_set_practice(
         status_enum = PracticeStatus(status.lower())
     except ValueError:
         console.print(
-            f"[red]Error:[/red] unknown status {status!r}. Valid: "
-            f"{', '.join(s.value for s in PracticeStatus)}"
+            f"[red]Error:[/red] unknown status {status!r}. Valid: {', '.join(s.value for s in PracticeStatus)}"
         )
         raise typer.Exit(code=1) from None
 
@@ -1077,12 +968,8 @@ def ai_gov_set_practice(
             issued_on=issued_on,
             issued_by=waiver_issued_by,
             justification=waiver_justification,
-            last_certified_on=_parse_date(
-                waiver_certified_on, "--waiver-certified-on"
-            ),
-            reported_to_omb_on=_parse_date(
-                waiver_reported_on, "--waiver-reported-on"
-            ),
+            last_certified_on=_parse_date(waiver_certified_on, "--waiver-certified-on"),
+            reported_to_omb_on=_parse_date(waiver_reported_on, "--waiver-reported-on"),
         )
 
     try:
@@ -1121,11 +1008,7 @@ def ai_gov_set_practice(
 
     summary = practice_compliance(updated_assessment)
     recorded_count = summary.total - len(summary.missing)
-    tail = (
-        "[green]all satisfied[/green]"
-        if summary.satisfied
-        else f"{len(summary.missing)} unrecorded"
-    )
+    tail = "[green]all satisfied[/green]" if summary.satisfied else f"{len(summary.missing)} unrecorded"
     console.print(
         f"[green]OMB M-25-21[/green] practice "
         f"[bold]{practice_enum.value}[/bold] → "
@@ -1139,11 +1022,7 @@ def ai_gov_set_practice(
         f"{summary.waived} waived); {tail}"
     )
     raw_determination = assessment.determination
-    determination_value = (
-        raw_determination
-        if isinstance(raw_determination, str)
-        else raw_determination.value
-    )
+    determination_value = raw_determination if isinstance(raw_determination, str) else raw_determination.value
     if determination_value != HighImpactDetermination.HIGH_IMPACT.value:
         console.print(
             "  [yellow]Advisory:[/yellow] determination is not "
@@ -1165,9 +1044,7 @@ app.add_typer(acquisition_app, name="acquisition")
 
 @acquisition_app.command("register")
 def acquisition_register(
-    name: str = typer.Argument(
-        ..., help="Operator-facing name for the procurement."
-    ),
+    name: str = typer.Argument(..., help="Operator-facing name for the procurement."),
     solicitation_ref: str | None = typer.Option(
         None,
         "--solicitation-ref",
@@ -1182,8 +1059,7 @@ def acquisition_register(
         "not_assessed",
         "--likely-high-impact",
         help=(
-            "M-25-22 §4(a) initial determination (M-25-21 vocabulary): "
-            "high_impact / not_high_impact / not_assessed."
+            "M-25-22 §4(a) initial determination (M-25-21 vocabulary): high_impact / not_high_impact / not_assessed."
         ),
     ),
     covered_note: str | None = typer.Option(
@@ -1233,10 +1109,7 @@ def acquisition_register(
     _log.info(
         action=EventAction.AI_ACQUISITION_REGISTERED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"AI acquisition {name!r} registered for OMB M-25-22 "
-            f"lifecycle tracking"
-        ),
+        message=(f"AI acquisition {name!r} registered for OMB M-25-22 lifecycle tracking"),
         evidentia={
             "acquisition_id": acquisition.acquisition_id,
             "likely_high_impact": determination.value,
@@ -1289,9 +1162,7 @@ def acquisition_list(
         table.add_row(
             record.acquisition_id,
             record.name,
-            determination
-            if isinstance(determination, str)
-            else determination.value,
+            determination if isinstance(determination, str) else determination.value,
             f"{progress.total - len(progress.missing)}/{progress.total}",
         )
     console.print(table)
@@ -1319,10 +1190,7 @@ def acquisition_show(
         raise typer.Exit(code=1) from exc
 
     if record is None:
-        console.print(
-            f"[red]Error:[/red] no tracked acquisition with ID "
-            f"{acquisition_id!r}"
-        )
+        console.print(f"[red]Error:[/red] no tracked acquisition with ID {acquisition_id!r}")
         raise typer.Exit(code=1)
 
     progress = acquisition_progress(record)
@@ -1346,10 +1214,7 @@ def acquisition_show(
     if record.linked_system_id:
         console.print(f"  Linked system: {record.linked_system_id}")
     determination = record.likely_high_impact
-    console.print(
-        f"  Likely high-impact: "
-        f"{determination if isinstance(determination, str) else determination.value}"
-    )
+    console.print(f"  Likely high-impact: {determination if isinstance(determination, str) else determination.value}")
     if record.covered_note:
         console.print(f"  Coverage note: {record.covered_note}")
 
@@ -1366,8 +1231,7 @@ def acquisition_show(
     # Persisted records round-trip enum keys as plain strings
     # (use_enum_values); normalize either shape to the string value.
     recorded: dict[str, AcquisitionPhaseRecord] = {
-        (phase.value if isinstance(phase, AcquisitionPhase) else phase): rec
-        for phase, rec in record.phases.items()
+        (phase.value if isinstance(phase, AcquisitionPhase) else phase): rec for phase, rec in record.phases.items()
     }
 
     for phase in AcquisitionPhase:
@@ -1387,8 +1251,7 @@ def acquisition_show(
         f"  Lifecycle: {progress.complete} complete, "
         f"{progress.in_progress} in progress, "
         f"{progress.not_started} not started, "
-        f"{len(progress.missing)} unrecorded"
-        + (" — [green]complete[/green]" if progress.lifecycle_complete else "")
+        f"{len(progress.missing)} unrecorded" + (" — [green]complete[/green]" if progress.lifecycle_complete else "")
     )
 
 
@@ -1441,18 +1304,14 @@ def acquisition_set_phase(
         raise typer.Exit(code=1) from exc
 
     if record is None:
-        console.print(
-            f"[red]Error:[/red] no tracked acquisition with ID "
-            f"{acquisition_id!r}"
-        )
+        console.print(f"[red]Error:[/red] no tracked acquisition with ID {acquisition_id!r}")
         raise typer.Exit(code=1)
 
     try:
         phase_enum = AcquisitionPhase(phase.lower())
     except ValueError:
         console.print(
-            f"[red]Error:[/red] unknown phase {phase!r}. Valid: "
-            f"{', '.join(p.value for p in AcquisitionPhase)}"
+            f"[red]Error:[/red] unknown phase {phase!r}. Valid: {', '.join(p.value for p in AcquisitionPhase)}"
         )
         raise typer.Exit(code=1) from None
 
@@ -1460,8 +1319,7 @@ def acquisition_set_phase(
         status_enum = AcquisitionPhaseStatus(status.lower())
     except ValueError:
         console.print(
-            f"[red]Error:[/red] unknown status {status!r}. Valid: "
-            f"{', '.join(s.value for s in AcquisitionPhaseStatus)}"
+            f"[red]Error:[/red] unknown status {status!r}. Valid: {', '.join(s.value for s in AcquisitionPhaseStatus)}"
         )
         raise typer.Exit(code=1) from None
 
@@ -1471,8 +1329,7 @@ def acquisition_set_phase(
             parsed_reviewed = _date.fromisoformat(last_reviewed)
         except ValueError as exc:
             console.print(
-                f"[red]Error:[/red] --last-reviewed must be ISO-8601 date "
-                f"(YYYY-MM-DD); got {last_reviewed!r}: {exc}"
+                f"[red]Error:[/red] --last-reviewed must be ISO-8601 date (YYYY-MM-DD); got {last_reviewed!r}: {exc}"
             )
             raise typer.Exit(code=1) from exc
 
@@ -1514,10 +1371,5 @@ def acquisition_set_phase(
         f"  Lifecycle: {progress.total - len(progress.missing)}/"
         f"{progress.total} recorded ({progress.complete} complete, "
         f"{progress.in_progress} in progress, {progress.not_started} not "
-        f"started)"
-        + (
-            "; [green]lifecycle complete[/green]"
-            if progress.lifecycle_complete
-            else ""
-        )
+        f"started)" + ("; [green]lifecycle complete[/green]" if progress.lifecycle_complete else "")
     )

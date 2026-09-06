@@ -61,10 +61,7 @@ class ServiceNowSyncOutcome(BaseModel):
     record_number: str | None = Field(default=None)
     record_url: str | None = Field(default=None)
     detail: str = Field(
-        description=(
-            "Human-readable one-line explanation — rendered verbatim "
-            "in CLI output and GUI toast messages."
-        ),
+        description=("Human-readable one-line explanation — rendered verbatim in CLI output and GUI toast messages."),
     )
 
 
@@ -78,31 +75,19 @@ class ServiceNowSyncResult(BaseModel):
 
     @property
     def created(self) -> int:
-        return sum(
-            1 for o in self.outcomes
-            if o.action == ServiceNowSyncAction.CREATED
-        )
+        return sum(1 for o in self.outcomes if o.action == ServiceNowSyncAction.CREATED)
 
     @property
     def existing(self) -> int:
-        return sum(
-            1 for o in self.outcomes
-            if o.action == ServiceNowSyncAction.EXISTING
-        )
+        return sum(1 for o in self.outcomes if o.action == ServiceNowSyncAction.EXISTING)
 
     @property
     def skipped(self) -> int:
-        return sum(
-            1 for o in self.outcomes
-            if o.action == ServiceNowSyncAction.SKIPPED
-        )
+        return sum(1 for o in self.outcomes if o.action == ServiceNowSyncAction.SKIPPED)
 
     @property
     def errored(self) -> int:
-        return sum(
-            1 for o in self.outcomes
-            if o.action == ServiceNowSyncAction.ERRORED
-        )
+        return sum(1 for o in self.outcomes if o.action == ServiceNowSyncAction.ERRORED)
 
 
 # ── Single-gap ────────────────────────────────────────────────────────────
@@ -135,11 +120,7 @@ def push_gap_to_servicenow(
 
     if correlation_id and not force:
         try:
-            existing: ServiceNowRecord | None = (
-                client.find_existing_by_correlation(
-                    correlation_id=correlation_id
-                )
-            )
+            existing: ServiceNowRecord | None = client.find_existing_by_correlation(correlation_id=correlation_id)
         except ServiceNowApiError as e:
             return ServiceNowSyncOutcome(
                 gap_id=gap.id,
@@ -157,10 +138,7 @@ def push_gap_to_servicenow(
                 sys_id=existing.sys_id,
                 record_number=existing.number,
                 record_url=existing.url,
-                detail=(
-                    f"Existing record {existing.number}; pass "
-                    "force=True to create a new one."
-                ),
+                detail=(f"Existing record {existing.number}; pass force=True to create a new one."),
             )
 
     try:
@@ -203,9 +181,7 @@ def push_open_gaps(
     """
     result = ServiceNowSyncResult()
     for gap in report.gaps:
-        status_value = (
-            gap.status.value if hasattr(gap.status, "value") else str(gap.status)
-        )
+        status_value = gap.status.value if hasattr(gap.status, "value") else str(gap.status)
         if status_value not in {"open", "in_progress"}:
             result.outcomes.append(
                 ServiceNowSyncOutcome(
@@ -217,7 +193,5 @@ def push_open_gaps(
                 )
             )
             continue
-        result.outcomes.append(
-            push_gap_to_servicenow(gap, client, force=force)
-        )
+        result.outcomes.append(push_gap_to_servicenow(gap, client, force=force))
     return result

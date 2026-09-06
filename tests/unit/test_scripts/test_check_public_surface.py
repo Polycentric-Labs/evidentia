@@ -85,15 +85,11 @@ class TestFrozenImportExtraction:
         statements = check.parse_frozen_imports(SECTION_5_DOC)
         assert not any(s.lstrip().startswith("#") for s in statements)
 
-    def test_every_extracted_statement_is_valid_python(
-        self, check: Any
-    ) -> None:
+    def test_every_extracted_statement_is_valid_python(self, check: Any) -> None:
         for statement in check.parse_frozen_imports(SECTION_5_DOC):
             compile(statement, "<frozen-import>", "exec")
 
-    def test_missing_section_is_an_error_not_a_silent_pass(
-        self, check: Any
-    ) -> None:
+    def test_missing_section_is_an_error_not_a_silent_pass(self, check: Any) -> None:
         """A renamed heading must fail loudly, never vacuously pass."""
         with pytest.raises(check.SurfaceParseError):
             check.parse_frozen_imports("# api-stability\n\nNo section five.\n")
@@ -130,9 +126,7 @@ class TestMcpToolTable:
 
     def test_does_not_bleed_into_the_next_table(self, check: Any) -> None:
         """The env-var table follows; its rows must not be read as tools."""
-        assert "EVIDENTIA_POAM_STORE_DIR" not in check.parse_frozen_mcp_tools(
-            MCP_DOC
-        )
+        assert "EVIDENTIA_POAM_STORE_DIR" not in check.parse_frozen_mcp_tools(MCP_DOC)
 
     def test_a_removed_frozen_tool_fails(self, check: Any) -> None:
         failures = check.compare_mcp_tools(
@@ -142,9 +136,7 @@ class TestMcpToolTable:
         assert len(failures) == 1
         assert "get_control" in failures[0]
 
-    def test_an_undocumented_new_tool_fails_as_doc_drift(
-        self, check: Any
-    ) -> None:
+    def test_an_undocumented_new_tool_fails_as_doc_drift(self, check: Any) -> None:
         """Adding a tool is non-breaking, but the table must record it."""
         failures = check.compare_mcp_tools(
             frozen={"list_frameworks"},
@@ -154,12 +146,7 @@ class TestMcpToolTable:
         assert "brand_new_tool" in failures[0]
 
     def test_matching_sets_pass(self, check: Any) -> None:
-        assert (
-            check.compare_mcp_tools(
-                frozen={"list_frameworks"}, live={"list_frameworks"}
-            )
-            == []
-        )
+        assert check.compare_mcp_tools(frozen={"list_frameworks"}, live={"list_frameworks"}) == []
 
 
 # ── env-var public contract ────────────────────────────────────────
@@ -167,9 +154,7 @@ class TestMcpToolTable:
 
 class TestEnvVarContract:
     def test_parses_the_frozen_env_var_names(self, check: Any) -> None:
-        assert check.parse_frozen_env_vars(MCP_DOC) == {
-            "EVIDENTIA_POAM_STORE_DIR"
-        }
+        assert check.parse_frozen_env_vars(MCP_DOC) == {"EVIDENTIA_POAM_STORE_DIR"}
 
     def test_a_frozen_var_absent_from_code_fails(self, check: Any) -> None:
         """A frozen var vanishing from the source is a silent break."""
@@ -195,13 +180,11 @@ class TestEnvVarContract:
             == []
         )
 
-    def test_discovers_env_vars_from_source(
-        self, check: Any, tmp_path: Path
-    ) -> None:
+    def test_discovers_env_vars_from_source(self, check: Any, tmp_path: Path) -> None:
         pkg = tmp_path / "packages" / "demo" / "src" / "demo"
         pkg.mkdir(parents=True)
         (pkg / "mod.py").write_text(
-            'import os\n'
+            "import os\n"
             'A = os.environ.get("EVIDENTIA_ALPHA")\n'
             'B = os.getenv("EVIDENTIA_BETA", "x")\n'
             'C = os.environ["NOT_OURS"]\n',

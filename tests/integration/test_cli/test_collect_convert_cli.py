@@ -85,9 +85,7 @@ def test_convert_writes_ocsf_bundle(runner: CliRunner, tmp_path: Path) -> None:
     assert bundle[0]["unmapped"]["evidentia"]["source_system"] == "aws-config"
 
 
-def test_convert_rejects_unsupported_format(
-    runner: CliRunner, tmp_path: Path
-) -> None:
+def test_convert_rejects_unsupported_format(runner: CliRunner, tmp_path: Path) -> None:
     """Only `ocsf` is supported in v0.10.1."""
     findings_in = _findings_json_fixture(tmp_path)
     result = runner.invoke(
@@ -105,9 +103,7 @@ def test_convert_rejects_unsupported_format(
     assert "Unsupported --format" in result.output
 
 
-def test_convert_rejects_non_list_input(
-    runner: CliRunner, tmp_path: Path
-) -> None:
+def test_convert_rejects_non_list_input(runner: CliRunner, tmp_path: Path) -> None:
     """Input must be a JSON array of SecurityFinding objects."""
     bad = tmp_path / "scalar.json"
     bad.write_text(json.dumps({"not": "a list"}), encoding="utf-8")

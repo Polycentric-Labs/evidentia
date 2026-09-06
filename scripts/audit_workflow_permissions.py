@@ -103,24 +103,19 @@ def audit_workflow(path: Path) -> tuple[str, str]:
     if top_level_perms is None:
         # Check per-job
         jobs = data.get("jobs", {})
-        jobs_with_perms = sum(
-            1 for j in jobs.values()
-            if isinstance(j, dict) and "permissions" in j
-        )
+        jobs_with_perms = sum(1 for j in jobs.values() if isinstance(j, dict) and "permissions" in j)
         if jobs_with_perms == len(jobs) and jobs_with_perms > 0:
             return ("OK", "all jobs declare explicit permissions")
         return ("WARN", "no top-level permissions and not all jobs declare permissions")
 
     if top_level_perms == "write-all" or (
-        isinstance(top_level_perms, dict)
-        and any(v == "write" for v in top_level_perms.values())
+        isinstance(top_level_perms, dict) and any(v == "write" for v in top_level_perms.values())
     ):
         reason = find_justification(text)
         if reason is not None:
             return (
                 "JUSTIFIED",
-                f"top-level permissions={top_level_perms} grants write; "
-                f"JUSTIFIED: {reason}",
+                f"top-level permissions={top_level_perms} grants write; JUSTIFIED: {reason}",
             )
         return (
             "FAIL",
@@ -161,7 +156,11 @@ def main() -> int:
     workflows = sorted(WORKFLOWS_DIR.glob("*.yml")) + sorted(WORKFLOWS_DIR.glob("*.yaml"))
 
     by_status: dict[str, list[tuple[str, str]]] = {
-        "OK": [], "WARN": [], "FAIL": [], "JUSTIFIED": [], "ERROR": [],
+        "OK": [],
+        "WARN": [],
+        "FAIL": [],
+        "JUSTIFIED": [],
+        "ERROR": [],
     }
     results: dict[str, dict[str, str]] = {}
     for wf in workflows:

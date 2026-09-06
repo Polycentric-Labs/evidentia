@@ -116,9 +116,7 @@ class DrataQueryError(DrataCollectorError, SaaSQueryError):
 BLIND_SPOTS: list[dict[str, str]] = [
     {
         "id": "EVIDENTIA-DRATA-CONTROL-TESTS-DEFERRED",
-        "title": (
-            "Drata control test results not yet collected"
-        ),
+        "title": ("Drata control test results not yet collected"),
         "description": (
             "Drata's per-control test evidence (the SOC-2 / ISO-27001 "
             "readiness signal that drives most operators' Drata usage) "
@@ -130,9 +128,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
     },
     {
         "id": "EVIDENTIA-DRATA-OAUTH-CLIENT-CREDENTIALS",
-        "title": (
-            "OAuth 2.0 client-credentials flow not yet implemented"
-        ),
+        "title": ("OAuth 2.0 client-credentials flow not yet implemented"),
         "description": (
             "The collector authenticates via static Bearer token "
             "(Personal API token). The full OAuth 2.0 client-"
@@ -143,9 +139,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
     },
     {
         "id": "EVIDENTIA-DRATA-WEBHOOK-EVENTS",
-        "title": (
-            "Drata webhook event ingestion not implemented"
-        ),
+        "title": ("Drata webhook event ingestion not implemented"),
         "description": (
             "Drata supports webhook subscriptions for vendor + control "
             "state changes (push model). The collector is pull-only "
@@ -157,9 +151,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
     },
     {
         "id": "EVIDENTIA-DRATA-FIELD-SHAPE-DEFENSIVE",
-        "title": (
-            "Vendor JSON shape parsed defensively"
-        ),
+        "title": ("Vendor JSON shape parsed defensively"),
         "description": (
             "The collector extracts only the well-known ``id`` + "
             "``name`` fields explicitly; everything else is "
@@ -232,9 +224,7 @@ class DrataCollector(BaseSaaSCollector):
         )
         self._max_vendors = max_vendors
 
-    def _paginate(
-        self, path: str, **params: Any
-    ) -> list[dict[str, Any]]:
+    def _paginate(self, path: str, **params: Any) -> list[dict[str, Any]]:
         """Pull a paginated endpoint to its natural end (or hard cap).
 
         Drata uses cursor-based pagination — responses carry a
@@ -273,23 +263,13 @@ class DrataCollector(BaseSaaSCollector):
                 out = out[: self._max_vendors]
                 break
             # Drata top-level cursor field
-            next_cursor = (
-                data.get("nextPageToken")
-                or data.get("next_page_token")
-            )
+            next_cursor = data.get("nextPageToken") or data.get("next_page_token")
             # Fallback to Vanta-style nested pageInfo for forward
             # compatibility (no harm if Drata never emits it).
             if not next_cursor:
-                page_info = (
-                    data.get("pageInfo")
-                    or data.get("page_info")
-                    or {}
-                )
+                page_info = data.get("pageInfo") or data.get("page_info") or {}
                 if isinstance(page_info, dict):
-                    next_cursor = (
-                        page_info.get("endCursor")
-                        or page_info.get("end_cursor")
-                    )
+                    next_cursor = page_info.get("endCursor") or page_info.get("end_cursor")
             if not next_cursor or not isinstance(next_cursor, str):
                 break
             if cursor is not None and next_cursor == cursor:
@@ -333,9 +313,7 @@ class DrataCollector(BaseSaaSCollector):
             vendors = self._paginate("/public/v1/vendors")
             scanned = len(vendors)
             for v in vendors:
-                findings.extend(
-                    self._vendor_to_findings(v, context)
-                )
+                findings.extend(self._vendor_to_findings(v, context))
         except DrataAuthError:
             _log.warning(
                 action=EventAction.COLLECT_FAILED,
@@ -384,14 +362,8 @@ class DrataCollector(BaseSaaSCollector):
         # contextlib.suppress wrapping on the audit logger.
         _log.info(
             action=EventAction.COLLECT_COMPLETED,
-            outcome=(
-                EventOutcome.SUCCESS if not errors
-                else EventOutcome.UNKNOWN
-            ),
-            message=(
-                f"Drata collection finished: {len(findings)} "
-                f"finding(s) across {scanned} vendor(s)"
-            ),
+            outcome=(EventOutcome.SUCCESS if not errors else EventOutcome.UNKNOWN),
+            message=(f"Drata collection finished: {len(findings)} finding(s) across {scanned} vendor(s)"),
             evidentia={
                 "run_id": run_id,
                 "collector_id": COLLECTOR_ID,
@@ -404,9 +376,7 @@ class DrataCollector(BaseSaaSCollector):
 
     # ── per-vendor mapping ─────────────────────────────────────────
 
-    def _vendor_to_findings(
-        self, vendor: dict[str, Any], context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _vendor_to_findings(self, vendor: dict[str, Any], context: CollectionContext) -> list[SecurityFinding]:
         """Project a Drata vendor JSON dict into one or more findings.
 
         Always emits an inventory finding (RESOLVED + INFORMATIONAL —
@@ -414,18 +384,8 @@ class DrataCollector(BaseSaaSCollector):
         vendor as high-risk, emits an additional ACTIVE finding at
         MEDIUM severity calling for operator review.
         """
-        vendor_id = str(
-            vendor.get("id")
-            or vendor.get("vendorId")
-            or vendor.get("uuid")
-            or "unknown"
-        )
-        vendor_name = str(
-            vendor.get("name")
-            or vendor.get("displayName")
-            or vendor.get("vendorName")
-            or "unknown"
-        )
+        vendor_id = str(vendor.get("id") or vendor.get("vendorId") or vendor.get("uuid") or "unknown")
+        vendor_name = str(vendor.get("name") or vendor.get("displayName") or vendor.get("vendorName") or "unknown")
         out: list[SecurityFinding] = [
             SecurityFinding(
                 title=f"Drata vendor inventoried: {vendor_name}",
@@ -456,9 +416,7 @@ class DrataCollector(BaseSaaSCollector):
         if self._is_high_risk(vendor):
             out.append(
                 SecurityFinding(
-                    title=(
-                        f"Drata-flagged high-risk vendor: {vendor_name}"
-                    ),
+                    title=(f"Drata-flagged high-risk vendor: {vendor_name}"),
                     description=(
                         f"Vendor {vendor_name!r} (Drata id: "
                         f"{vendor_id}) carries a HIGH or CRITICAL "
@@ -477,9 +435,7 @@ class DrataCollector(BaseSaaSCollector):
                     # operator review per OCC 2013-29 §III.A.4.
                     compliance_status=ComplianceStatus.FAIL,
                     source_system="drata",
-                    source_finding_id=(
-                        f"vendor-high-risk:{vendor_id}"
-                    ),
+                    source_finding_id=(f"vendor-high-risk:{vendor_id}"),
                     resource_type="drata-vendor",
                     resource_id=vendor_id,
                     collection_context=context,
@@ -506,31 +462,36 @@ class DrataCollector(BaseSaaSCollector):
         # cover `severity`, `tier`, `risk` (bare), `riskRating`,
         # `risk_rating`, `riskClass`, `risk_class`.
         for key in (
-            "riskLevel", "risk_level",
-            "riskTier", "risk_tier",
-            "riskRating", "risk_rating",
-            "riskClass", "risk_class",
-            "severity", "tier", "risk",
+            "riskLevel",
+            "risk_level",
+            "riskTier",
+            "risk_tier",
+            "riskRating",
+            "risk_rating",
+            "riskClass",
+            "risk_class",
+            "severity",
+            "tier",
+            "risk",
         ):
             value = vendor.get(key)
-            if isinstance(value, str) and value.upper() in (
-                "HIGH", "CRITICAL", "SEVERE"
-            ):
+            if isinstance(value, str) and value.upper() in ("HIGH", "CRITICAL", "SEVERE"):
                 return True
         # Some Drata exports nest risk under a `riskAssessment` block.
         # v0.7.13 P3 L-2: also probe `assessment` / `risk_summary`
         # nested blocks under the same set of inner keys.
         for outer in (
-            "riskAssessment", "risk_assessment",
-            "assessment", "risk_summary", "riskSummary",
+            "riskAssessment",
+            "risk_assessment",
+            "assessment",
+            "risk_summary",
+            "riskSummary",
         ):
             block = vendor.get(outer)
             if isinstance(block, dict):
                 for key in ("level", "tier", "severity", "rating", "class"):
                     value = block.get(key)
-                    if isinstance(value, str) and value.upper() in (
-                        "HIGH", "CRITICAL", "SEVERE"
-                    ):
+                    if isinstance(value, str) and value.upper() in ("HIGH", "CRITICAL", "SEVERE"):
                         return True
         # Drata also sometimes uses `inherentRisk` or `residualRisk`
         # numeric fields on a 1-5 / 1-25 scale; treat 4+ on a 5-scale

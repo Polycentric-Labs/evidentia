@@ -193,9 +193,7 @@ class MySQLCollector:
         if self._connection is not None:
             return self._connection
         if not self._connection_uri:
-            raise MySQLCollectorError(
-                "_ensure_connected called without a connection_uri."
-            )
+            raise MySQLCollectorError("_ensure_connected called without a connection_uri.")
         # SECURE-BY-DEFAULT (threat-model T2): refuse a connection_uri whose
         # host resolves to a private / loopback / link-local / metadata address
         # BEFORE importing the driver or opening a socket. Guard-before-import
@@ -238,9 +236,7 @@ class MySQLCollector:
             with pin_resolved_host(host, validated_ips):
                 self._connection = pymysql.connect(**kwargs)
         except Exception as e:
-            raise MySQLConnectionError(
-                f"Could not connect to MySQL (driver: {type(e).__name__})"
-            ) from e
+            raise MySQLConnectionError(f"Could not connect to MySQL (driver: {type(e).__name__})") from e
         return self._connection
 
     # ── Context + provenance ────────────────────────────────────────
@@ -285,9 +281,7 @@ class MySQLCollector:
         cur = conn.cursor()
         try:
             try:
-                cur.execute(
-                    "SELECT @@global.read_only, @@session.transaction_read_only"
-                )
+                cur.execute("SELECT @@global.read_only, @@session.transaction_read_only")
                 row = cur.fetchone()
                 # Either flag being TRUE (1) is a read-only signal.
                 global_ro = bool(row[0]) if row else False
@@ -299,9 +293,7 @@ class MySQLCollector:
             create_temp_succeeded = False
             try:
                 cur.execute("START TRANSACTION")
-                cur.execute(
-                    "CREATE TEMPORARY TABLE evidentia_priv_probe_temp (id int)"
-                )
+                cur.execute("CREATE TEMPORARY TABLE evidentia_priv_probe_temp (id int)")
                 create_temp_succeeded = True
                 cur.execute("ROLLBACK")
             except Exception:
@@ -338,9 +330,7 @@ class MySQLCollector:
         except MySQLCollectorError:
             raise
         except Exception as e:
-            raise MySQLConnectionError(
-                f"Could not establish + probe MySQL connection: {e}"
-            ) from e
+            raise MySQLConnectionError(f"Could not establish + probe MySQL connection: {e}") from e
 
         context = self._build_context(run_id)
         errors: list[str] = []
@@ -360,18 +350,13 @@ class MySQLCollector:
         ):
             _log.info(
                 action=EventAction.COLLECT_STARTED,
-                message=(
-                    f"MySQL collection starting for "
-                    f"{self._cached_user}@{self._cached_db}"
-                ),
+                message=(f"MySQL collection starting for {self._cached_user}@{self._cached_db}"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.START],
             )
 
             if not probe["read_only"] or probe["can_create_temp_table"]:
-                findings.append(
-                    self._write_priv_detected_finding(probe, context)
-                )
+                findings.append(self._write_priv_detected_finding(probe, context))
 
             conn = self._connection
             assert conn is not None
@@ -394,28 +379,18 @@ class MySQLCollector:
                         error={"type": "MySQLQueryError", "message": str(e)},
                     )
                 except Exception as e:
-                    errors.append(
-                        f"{sub_check.__name__}: unexpected error: {e}"
-                    )
+                    errors.append(f"{sub_check.__name__}: unexpected error: {e}")
                     _log.error(
                         action=EventAction.COLLECT_FAILED,
                         outcome=EventOutcome.FAILURE,
-                        message=(
-                            f"Sub-check {sub_check.__name__} unexpected error"
-                        ),
+                        message=(f"Sub-check {sub_check.__name__} unexpected error"),
                         error={"type": type(e).__name__, "message": str(e)},
                     )
 
             _log.info(
                 action=EventAction.COLLECT_COMPLETED,
-                outcome=(
-                    EventOutcome.SUCCESS
-                    if not errors
-                    else EventOutcome.FAILURE
-                ),
-                message=(
-                    f"MySQL collection completed: {len(findings)} findings"
-                ),
+                outcome=(EventOutcome.SUCCESS if not errors else EventOutcome.FAILURE),
+                message=(f"MySQL collection completed: {len(findings)} findings"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.END],
                 evidentia={
@@ -430,9 +405,7 @@ class MySQLCollector:
             collector_version=current_version(),
             collection_started_at=started_at,
             collection_finished_at=utc_now(),
-            source_system_ids=[
-                f"mysql:{self._cached_user}@{self._cached_db}"
-            ],
+            source_system_ids=[f"mysql:{self._cached_user}@{self._cached_db}"],
             filters_applied={
                 "user": self._cached_user or "unknown",
                 "database": self._cached_db or "unknown",
@@ -460,9 +433,7 @@ class MySQLCollector:
         context: CollectionContext,
     ) -> SecurityFinding:
         return SecurityFinding(
-            title=(
-                f"MySQL principal {self._cached_user!r} has write privilege"
-            ),
+            title=(f"MySQL principal {self._cached_user!r} has write privilege"),
             description=(
                 f"Principal ({self._cached_user}) connected to "
                 f"{self._cached_db} with write capability detected via "
@@ -479,10 +450,7 @@ class MySQLCollector:
             # failed least-privilege check.
             compliance_status=ComplianceStatus.FAIL,
             source_system="mysql",
-            source_finding_id=(
-                f"EVIDENTIA-WRITE-PRIV-DETECTED:{self._cached_user}@"
-                f"{self._cached_db}"
-            ),
+            source_finding_id=(f"EVIDENTIA-WRITE-PRIV-DETECTED:{self._cached_user}@{self._cached_db}"),
             resource_type="MySQL::Principal",
             resource_id=str(self._cached_user or "unknown"),
             control_ids=[m.control_id for m in WRITE_PRIV_DETECTED_MAPPINGS],
@@ -493,29 +461,17 @@ class MySQLCollector:
             },
         )
 
-    def _user_role_inventory_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _user_role_inventory_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
-                cur.execute(
-                    "SELECT User, Host, Super_priv, account_locked "
-                    "FROM mysql.user ORDER BY User, Host"
-                )
+                cur.execute("SELECT User, Host, Super_priv, account_locked FROM mysql.user ORDER BY User, Host")
                 rows = cur.fetchall()
             except Exception as e:
-                raise MySQLQueryError(
-                    f"Could not enumerate mysql.user: {e}"
-                ) from e
+                raise MySQLQueryError(f"Could not enumerate mysql.user: {e}") from e
 
-            super_users = [
-                f"{r[0]}@{r[1]}" for r in rows
-                if str(r[2] or "").upper() == "Y"
-            ]
-            locked_count = sum(
-                1 for r in rows if str(r[3] or "").upper() == "Y"
-            )
+            super_users = [f"{r[0]}@{r[1]}" for r in rows if str(r[2] or "").upper() == "Y"]
+            locked_count = sum(1 for r in rows if str(r[3] or "").upper() == "Y")
             return [
                 SecurityFinding(
                     title=(
@@ -532,11 +488,7 @@ class MySQLCollector:
                         "the SUPER list against the inventory of DBA-tier "
                         "human + automation principals."
                     ),
-                    severity=(
-                        Severity.MEDIUM
-                        if len(super_users) > 3
-                        else Severity.INFORMATIONAL
-                    ),
+                    severity=(Severity.MEDIUM if len(super_users) > 3 else Severity.INFORMATIONAL),
                     status=FindingStatus.ACTIVE,
                     # v0.10.0: a user/role inventory is informational
                     # evidence, not a pass/fail check.
@@ -545,9 +497,7 @@ class MySQLCollector:
                     source_finding_id=f"user-inventory:{self._cached_db}",
                     resource_type="MySQL::Server",
                     resource_id=str(self._cached_db or "unknown"),
-                    control_ids=[
-                        m.control_id for m in USER_ROLE_INVENTORY_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in USER_ROLE_INVENTORY_MAPPINGS],
                     collection_context=context,
                     raw_data={
                         "total_accounts": len(rows),
@@ -559,9 +509,7 @@ class MySQLCollector:
         finally:
             cur.close()
 
-    def _privilege_grant_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _privilege_grant_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
@@ -572,17 +520,12 @@ class MySQLCollector:
                 )
                 rows = cur.fetchall()
             except Exception as e:
-                raise MySQLQueryError(
-                    f"Could not enumerate information_schema.TABLE_PRIVILEGES: {e}"
-                ) from e
+                raise MySQLQueryError(f"Could not enumerate information_schema.TABLE_PRIVILEGES: {e}") from e
 
             top_grantees = [(str(r[0]), int(r[1])) for r in rows]
             return [
                 SecurityFinding(
-                    title=(
-                        f"MySQL privilege grants: {len(rows)} grantees "
-                        "with table-level privileges"
-                    ),
+                    title=(f"MySQL privilege grants: {len(rows)} grantees with table-level privileges"),
                     description=(
                         f"information_schema.TABLE_PRIVILEGES shows "
                         f"{len(rows)} grantees with table-level privileges. "
@@ -598,9 +541,7 @@ class MySQLCollector:
                     source_finding_id=f"privilege-grants:{self._cached_db}",
                     resource_type="MySQL::Server",
                     resource_id=str(self._cached_db or "unknown"),
-                    control_ids=[
-                        m.control_id for m in PRIVILEGE_GRANT_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in PRIVILEGE_GRANT_MAPPINGS],
                     collection_context=context,
                     raw_data={
                         "grantee_count": len(rows),
@@ -611,9 +552,7 @@ class MySQLCollector:
         finally:
             cur.close()
 
-    def _audit_log_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _audit_log_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         settings = self._read_variables(
             conn,
             [
@@ -631,29 +570,23 @@ class MySQLCollector:
         # Audit-plugin presence is best-effort; plugin variables only
         # exist if the plugin is loaded
         has_enterprise_audit = "audit_log_policy" in settings and settings["audit_log_policy"]
-        has_mariadb_audit = "server_audit_logging" in settings and settings[
-            "server_audit_logging"
-        ].lower() in {"on", "1"}
+        has_mariadb_audit = "server_audit_logging" in settings and settings["server_audit_logging"].lower() in {
+            "on",
+            "1",
+        }
 
         severity = Severity.MEDIUM if gaps else Severity.INFORMATIONAL
         status = FindingStatus.ACTIVE if gaps else FindingStatus.RESOLVED
 
         return [
             SecurityFinding(
-                title=(
-                    "MySQL audit-log configuration: "
-                    f"{'gaps detected' if gaps else 'baseline OK'}"
-                ),
+                title=(f"MySQL audit-log configuration: {'gaps detected' if gaps else 'baseline OK'}"),
                 description=(
                     "MySQL audit-log evidence per AU-2 + AU-3. "
                     f"Settings: {settings}. "
                     f"Enterprise Audit plugin: {has_enterprise_audit}. "
                     f"MariaDB Audit plugin: {has_mariadb_audit}. "
-                    + (
-                        "Gaps: " + ", ".join(gaps) + ". "
-                        if gaps
-                        else "No common gaps detected. "
-                    )
+                    + ("Gaps: " + ", ".join(gaps) + ". " if gaps else "No common gaps detected. ")
                     + "MySQL Community lacks a built-in audit plugin "
                     "(see BLIND_SPOT EVIDENTIA-MYSQL-AUDIT-PLUGIN-COMMUNITY); "
                     "operators on Community should consider Percona "
@@ -663,9 +596,7 @@ class MySQLCollector:
                 status=status,
                 # v0.10.0: audit-log gaps fail the AU-2/AU-3 check;
                 # a clean baseline passes.
-                compliance_status=ComplianceStatus.FAIL
-                if gaps
-                else ComplianceStatus.PASS,
+                compliance_status=ComplianceStatus.FAIL if gaps else ComplianceStatus.PASS,
                 source_system="mysql",
                 source_finding_id=f"audit-log:{self._cached_db}",
                 resource_type="MySQL::Server",
@@ -681,9 +612,7 @@ class MySQLCollector:
             )
         ]
 
-    def _crypto_config_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _crypto_config_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         settings = self._read_variables(
             conn,
             [
@@ -710,19 +639,14 @@ class MySQLCollector:
         # mysql_native_password is the legacy weak hash; caching_sha2_password
         # is the modern default in MySQL 8.0+
         if auth_plugin and "native_password" in auth_plugin:
-            gaps.append(
-                f"default_authentication_plugin={auth_plugin!r} (legacy)"
-            )
+            gaps.append(f"default_authentication_plugin={auth_plugin!r} (legacy)")
 
         severity = Severity.HIGH if gaps else Severity.INFORMATIONAL
         status = FindingStatus.ACTIVE if gaps else FindingStatus.RESOLVED
 
         return [
             SecurityFinding(
-                title=(
-                    "MySQL crypto configuration: "
-                    f"{'gaps detected' if gaps else 'baseline OK'}"
-                ),
+                title=(f"MySQL crypto configuration: {'gaps detected' if gaps else 'baseline OK'}"),
                 description=(
                     f"MySQL SC-12 evidence: have_ssl="
                     f"{settings.get('have_ssl', '?')!r}, "
@@ -731,11 +655,7 @@ class MySQLCollector:
                     f"tls_version={settings.get('tls_version', '?')!r}, "
                     "default_authentication_plugin="
                     f"{auth_plugin or '?'!r}. "
-                    + (
-                        "Gaps: " + ", ".join(gaps) + ". "
-                        if gaps
-                        else ""
-                    )
+                    + ("Gaps: " + ", ".join(gaps) + ". " if gaps else "")
                     + "caching_sha2_password (MySQL 8.0+ default) is the "
                     "modern minimum; mysql_native_password is the legacy "
                     "weak hash. require_secure_transport=on enforces "
@@ -745,9 +665,7 @@ class MySQLCollector:
                 status=status,
                 # v0.10.0: crypto-config gaps fail the SC-12 check;
                 # a clean baseline passes.
-                compliance_status=ComplianceStatus.FAIL
-                if gaps
-                else ComplianceStatus.PASS,
+                compliance_status=ComplianceStatus.FAIL if gaps else ComplianceStatus.PASS,
                 source_system="mysql",
                 source_finding_id=f"crypto-config:{self._cached_db}",
                 resource_type="MySQL::Server",
@@ -758,9 +676,7 @@ class MySQLCollector:
             )
         ]
 
-    def _encryption_at_rest_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _encryption_at_rest_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         settings = self._read_variables(
             conn,
             [
@@ -771,19 +687,13 @@ class MySQLCollector:
             ],
         )
 
-        encrypt_tables = settings.get(
-            "innodb_encrypt_tables", ""
-        ).lower() in {"on", "1", "force"}
-        default_encrypt = settings.get(
-            "default_table_encryption", ""
-        ).lower() in {"on", "1"}
+        encrypt_tables = settings.get("innodb_encrypt_tables", "").lower() in {"on", "1", "force"}
+        default_encrypt = settings.get("default_table_encryption", "").lower() in {"on", "1"}
         has_keyring = bool(settings.get("keyring_file_data"))
 
         gaps: list[str] = []
         if not (encrypt_tables or default_encrypt):
-            gaps.append(
-                "innodb_encrypt_tables=off and default_table_encryption=off"
-            )
+            gaps.append("innodb_encrypt_tables=off and default_table_encryption=off")
         if not has_keyring:
             gaps.append("no keyring plugin loaded (keyring_file_data empty)")
 
@@ -792,10 +702,7 @@ class MySQLCollector:
 
         return [
             SecurityFinding(
-                title=(
-                    "MySQL encryption-at-rest: "
-                    f"{'gaps detected' if gaps else 'baseline OK'}"
-                ),
+                title=(f"MySQL encryption-at-rest: {'gaps detected' if gaps else 'baseline OK'}"),
                 description=(
                     f"MySQL SC-28 evidence: "
                     f"innodb_encrypt_tables="
@@ -803,11 +710,7 @@ class MySQLCollector:
                     f"default_table_encryption="
                     f"{settings.get('default_table_encryption', '?')!r}, "
                     f"keyring loaded: {has_keyring}. "
-                    + (
-                        "Gaps: " + ", ".join(gaps) + ". "
-                        if gaps
-                        else ""
-                    )
+                    + ("Gaps: " + ", ".join(gaps) + ". " if gaps else "")
                     + "InnoDB tablespace encryption requires both an "
                     "encryption setting AND a loaded keyring plugin to "
                     "be effective."
@@ -816,16 +719,12 @@ class MySQLCollector:
                 status=status,
                 # v0.10.0: encryption-at-rest gaps fail the SC-28 check;
                 # a clean baseline passes.
-                compliance_status=ComplianceStatus.FAIL
-                if gaps
-                else ComplianceStatus.PASS,
+                compliance_status=ComplianceStatus.FAIL if gaps else ComplianceStatus.PASS,
                 source_system="mysql",
                 source_finding_id=f"encryption-at-rest:{self._cached_db}",
                 resource_type="MySQL::Server",
                 resource_id=str(self._cached_db or "unknown"),
-                control_ids=[
-                    m.control_id for m in ENCRYPTION_AT_REST_MAPPINGS
-                ],
+                control_ids=[m.control_id for m in ENCRYPTION_AT_REST_MAPPINGS],
                 collection_context=context,
                 raw_data={
                     "settings": settings,
@@ -835,12 +734,8 @@ class MySQLCollector:
             )
         ]
 
-    def _connection_limit_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
-        settings = self._read_variables(
-            conn, ["max_connections", "max_user_connections"]
-        )
+    def _connection_limit_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
+        settings = self._read_variables(conn, ["max_connections", "max_user_connections"])
         try:
             max_conn = int(settings.get("max_connections", "0"))
         except (TypeError, ValueError):
@@ -848,9 +743,7 @@ class MySQLCollector:
 
         return [
             SecurityFinding(
-                title=(
-                    f"MySQL connection limits: max_connections={max_conn}"
-                ),
+                title=(f"MySQL connection limits: max_connections={max_conn}"),
                 description=(
                     f"max_connections={max_conn}, max_user_connections="
                     f"{settings.get('max_user_connections', '?')!r}. "
@@ -865,9 +758,7 @@ class MySQLCollector:
                 source_finding_id=f"connection-limits:{self._cached_db}",
                 resource_type="MySQL::Server",
                 resource_id=str(self._cached_db or "unknown"),
-                control_ids=[
-                    m.control_id for m in CONNECTION_LIMIT_MAPPINGS
-                ],
+                control_ids=[m.control_id for m in CONNECTION_LIMIT_MAPPINGS],
                 collection_context=context,
                 raw_data={"settings": settings, "max_connections": max_conn},
             )
@@ -875,9 +766,7 @@ class MySQLCollector:
 
     # ── Helpers ─────────────────────────────────────────────────────
 
-    def _read_variables(
-        self, conn: Any, names: list[str]
-    ) -> dict[str, str]:
+    def _read_variables(self, conn: Any, names: list[str]) -> dict[str, str]:
         """Read SHOW VARIABLES values for a list of names.
 
         Missing names map to empty string. SHOW VARIABLES filters

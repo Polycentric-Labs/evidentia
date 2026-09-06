@@ -32,9 +32,7 @@ def runner() -> CliRunner:
 
 
 @pytest.fixture(autouse=True)
-def _isolated_stores(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def _isolated_stores(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Isolate poam_store + gap_store for each test."""
     poam_dir = tmp_path / "poam-store"
     monkeypatch.setenv("EVIDENTIA_POAM_STORE_DIR", str(poam_dir))
@@ -67,15 +65,9 @@ def _make_report(gaps: list[ControlGap]) -> GapAnalysisReport:
         total_controls_required=100,
         total_controls_in_inventory=80,
         total_gaps=len(gaps),
-        critical_gaps=sum(
-            1 for g in gaps if g.gap_severity == GapSeverity.CRITICAL
-        ),
-        high_gaps=sum(
-            1 for g in gaps if g.gap_severity == GapSeverity.HIGH
-        ),
-        medium_gaps=sum(
-            1 for g in gaps if g.gap_severity == GapSeverity.MEDIUM
-        ),
+        critical_gaps=sum(1 for g in gaps if g.gap_severity == GapSeverity.CRITICAL),
+        high_gaps=sum(1 for g in gaps if g.gap_severity == GapSeverity.HIGH),
+        medium_gaps=sum(1 for g in gaps if g.gap_severity == GapSeverity.MEDIUM),
         low_gaps=sum(1 for g in gaps if g.gap_severity == GapSeverity.LOW),
         coverage_percentage=80.0,
         gaps=gaps,
@@ -206,17 +198,13 @@ class TestPoamList:
         save_poam(_make_gap("AC-1", GapSeverity.LOW))
         save_poam(_make_gap("AC-2", GapSeverity.CRITICAL))
         # default lists only open (both are open) but with severity filter
-        result = runner.invoke(
-            app, ["poam", "list", "--severity", "critical", "--json"]
-        )
+        result = runner.invoke(app, ["poam", "list", "--severity", "critical", "--json"])
         items = json.loads(result.output)
         assert len(items) == 1
         assert items[0]["gap_severity"] == "critical"
 
     def test_severity_filter_invalid_errors(self, runner: CliRunner) -> None:
-        result = runner.invoke(
-            app, ["poam", "list", "--severity", "not-a-real-severity"]
-        )
+        result = runner.invoke(app, ["poam", "list", "--severity", "not-a-real-severity"])
         assert result.exit_code == 1
         assert "unknown severity" in result.output
 
@@ -250,17 +238,13 @@ class TestPoamShow:
     def test_show_json_emits_full_record(self, runner: CliRunner) -> None:
         gap = _make_gap("AC-2", GapSeverity.HIGH)
         save_poam(gap)
-        result = runner.invoke(
-            app, ["poam", "show", gap.id, "--json"]
-        )
+        result = runner.invoke(app, ["poam", "show", gap.id, "--json"])
         assert result.exit_code == 0
         body = json.loads(result.output)
         assert body["id"] == gap.id
 
     def test_show_unknown_id_errors(self, runner: CliRunner) -> None:
-        result = runner.invoke(
-            app, ["poam", "show", "00000000-0000-0000-0000-000000000000"]
-        )
+        result = runner.invoke(app, ["poam", "show", "00000000-0000-0000-0000-000000000000"])
         assert result.exit_code == 1
         assert "No POA&M" in result.output
 
@@ -273,14 +257,10 @@ class TestPoamShow:
 
 
 class TestPoamUpdate:
-    def test_update_status_to_remediated_fires_closed_event(
-        self, runner: CliRunner
-    ) -> None:
+    def test_update_status_to_remediated_fires_closed_event(self, runner: CliRunner) -> None:
         gap = _make_gap("AC-2", GapSeverity.HIGH)
         save_poam(gap)
-        result = runner.invoke(
-            app, ["poam", "update", gap.id, "--status", "remediated"]
-        )
+        result = runner.invoke(app, ["poam", "update", gap.id, "--status", "remediated"])
         assert result.exit_code == 0, result.output
         # Re-fetch to verify
         show = runner.invoke(app, ["poam", "show", gap.id, "--json"])
@@ -316,9 +296,7 @@ class TestPoamUpdate:
     def test_update_invalid_status_errors(self, runner: CliRunner) -> None:
         gap = _make_gap("AC-2", GapSeverity.HIGH)
         save_poam(gap)
-        result = runner.invoke(
-            app, ["poam", "update", gap.id, "--status", "not-valid"]
-        )
+        result = runner.invoke(app, ["poam", "update", gap.id, "--status", "not-valid"])
         assert result.exit_code == 1
 
 
@@ -349,9 +327,7 @@ class TestMilestoneAdd:
         assert body["poam_milestones"][0]["description"] == "Deliver Okta integration"
         assert body["poam_milestones"][0]["status"] == "planned"
 
-    def test_add_milestone_invalid_date_errors(
-        self, runner: CliRunner
-    ) -> None:
+    def test_add_milestone_invalid_date_errors(self, runner: CliRunner) -> None:
         gap = _make_gap("AC-2", GapSeverity.HIGH)
         save_poam(gap)
         result = runner.invoke(
@@ -375,9 +351,7 @@ class TestMilestoneAdd:
 
 
 class TestMilestoneUpdate:
-    def test_update_milestone_status_forward(
-        self, runner: CliRunner
-    ) -> None:
+    def test_update_milestone_status_forward(self, runner: CliRunner) -> None:
         gap = _make_gap("AC-2", GapSeverity.HIGH)
         gap.poam_milestones.append(
             Milestone(
@@ -404,9 +378,7 @@ class TestMilestoneUpdate:
         body = json.loads(show.output)
         assert body["poam_milestones"][0]["status"] == "in_progress"
 
-    def test_invalid_backward_transition_blocked(
-        self, runner: CliRunner
-    ) -> None:
+    def test_invalid_backward_transition_blocked(self, runner: CliRunner) -> None:
         gap = _make_gap("AC-2", GapSeverity.HIGH)
         gap.poam_milestones.append(
             Milestone(
@@ -432,9 +404,7 @@ class TestMilestoneUpdate:
         assert result.exit_code == 1
         assert "invalid state transition" in result.output
 
-    def test_unknown_milestone_id_errors(
-        self, runner: CliRunner
-    ) -> None:
+    def test_unknown_milestone_id_errors(self, runner: CliRunner) -> None:
         gap = _make_gap("AC-2", GapSeverity.HIGH)
         save_poam(gap)
         result = runner.invoke(
@@ -453,9 +423,7 @@ class TestMilestoneUpdate:
 
     def test_update_accepts_full_uuid(self, runner: CliRunner) -> None:
         gap = _make_gap("AC-2", GapSeverity.HIGH)
-        gap.poam_milestones.append(
-            Milestone(target_date=date(2026, 6, 30), description="phase 1")
-        )
+        gap.poam_milestones.append(Milestone(target_date=date(2026, 6, 30), description="phase 1"))
         save_poam(gap)
         ms_id = gap.poam_milestones[0].id
         result = runner.invoke(
@@ -475,14 +443,10 @@ class TestMilestoneUpdate:
         body = json.loads(show.output)
         assert body["poam_milestones"][0]["status"] == "in_progress"
 
-    def test_update_accepts_displayed_eight_char_prefix(
-        self, runner: CliRunner
-    ) -> None:
+    def test_update_accepts_displayed_eight_char_prefix(self, runner: CliRunner) -> None:
         """The 8-char prefix the CLI shows the operator must work."""
         gap = _make_gap("AC-2", GapSeverity.HIGH)
-        gap.poam_milestones.append(
-            Milestone(target_date=date(2026, 6, 30), description="phase 1")
-        )
+        gap.poam_milestones.append(Milestone(target_date=date(2026, 6, 30), description="phase 1"))
         save_poam(gap)
         ms_prefix = gap.poam_milestones[0].id[:8]
         result = runner.invoke(
@@ -502,16 +466,10 @@ class TestMilestoneUpdate:
         body = json.loads(show.output)
         assert body["poam_milestones"][0]["status"] == "in_progress"
 
-    def test_prefix_updates_the_right_milestone(
-        self, runner: CliRunner
-    ) -> None:
+    def test_prefix_updates_the_right_milestone(self, runner: CliRunner) -> None:
         gap = _make_gap("AC-2", GapSeverity.HIGH)
-        gap.poam_milestones.append(
-            Milestone(target_date=date(2026, 6, 30), description="phase 1")
-        )
-        gap.poam_milestones.append(
-            Milestone(target_date=date(2026, 7, 31), description="phase 2")
-        )
+        gap.poam_milestones.append(Milestone(target_date=date(2026, 6, 30), description="phase 1"))
+        gap.poam_milestones.append(Milestone(target_date=date(2026, 7, 31), description="phase 2"))
         save_poam(gap)
         target = gap.poam_milestones[1]  # phase 2
         result = runner.invoke(
@@ -529,15 +487,11 @@ class TestMilestoneUpdate:
         assert result.exit_code == 0, result.output
         show = runner.invoke(app, ["poam", "show", gap.id, "--json"])
         body = json.loads(show.output)
-        statuses = {
-            m["description"]: m["status"] for m in body["poam_milestones"]
-        }
+        statuses = {m["description"]: m["status"] for m in body["poam_milestones"]}
         assert statuses["phase 2"] == "in_progress"
         assert statuses["phase 1"] == "planned"
 
-    def test_ambiguous_prefix_errors_clearly(
-        self, runner: CliRunner
-    ) -> None:
+    def test_ambiguous_prefix_errors_clearly(self, runner: CliRunner) -> None:
         gap = _make_gap("AC-2", GapSeverity.HIGH)
         # Two milestones sharing the same 8-char prefix.
         gap.poam_milestones.append(
@@ -574,9 +528,7 @@ class TestMilestoneUpdate:
         assert "ambiguous milestone id '3f70eae3' matches 2 milestones" in flat
         assert "use more characters" in flat
 
-    def test_add_then_update_displayed_prefix_round_trip(
-        self, runner: CliRunner
-    ) -> None:
+    def test_add_then_update_displayed_prefix_round_trip(self, runner: CliRunner) -> None:
         """End-to-end: add a milestone, scrape the prefix the CLI
         printed, feed it back to `milestone update`."""
         gap = _make_gap("AC-2", GapSeverity.HIGH)
@@ -628,14 +580,10 @@ class TestMilestoneUpdate:
 
 
 class TestPoamDelete:
-    def test_delete_with_yes_flag_skips_prompt(
-        self, runner: CliRunner
-    ) -> None:
+    def test_delete_with_yes_flag_skips_prompt(self, runner: CliRunner) -> None:
         gap = _make_gap("AC-2", GapSeverity.HIGH)
         save_poam(gap)
-        result = runner.invoke(
-            app, ["poam", "delete", gap.id, "--yes"]
-        )
+        result = runner.invoke(app, ["poam", "delete", gap.id, "--yes"])
         assert result.exit_code == 0
         # Verify gone
         show = runner.invoke(app, ["poam", "show", gap.id])
@@ -644,9 +592,7 @@ class TestPoamDelete:
     def test_delete_prompt_cancel(self, runner: CliRunner) -> None:
         gap = _make_gap("AC-2", GapSeverity.HIGH)
         save_poam(gap)
-        result = runner.invoke(
-            app, ["poam", "delete", gap.id], input="n\n"
-        )
+        result = runner.invoke(app, ["poam", "delete", gap.id], input="n\n")
         assert result.exit_code == 0
         assert "Cancelled" in result.output
 
@@ -655,12 +601,8 @@ class TestPoamDelete:
 
 
 class TestPoamCalendar:
-    def test_empty_calendar_shows_clean_message(
-        self, runner: CliRunner
-    ) -> None:
-        result = runner.invoke(
-            app, ["poam", "calendar", "--today", "2026-05-08"]
-        )
+    def test_empty_calendar_shows_clean_message(self, runner: CliRunner) -> None:
+        result = runner.invoke(app, ["poam", "calendar", "--today", "2026-05-08"])
         assert result.exit_code == 0
         assert "No overdue or due-soon" in result.output
 
@@ -674,9 +616,7 @@ class TestPoamCalendar:
             )
         )
         save_poam(gap)
-        result = runner.invoke(
-            app, ["poam", "calendar", "--today", "2026-05-08"]
-        )
+        result = runner.invoke(app, ["poam", "calendar", "--today", "2026-05-08"])
         assert result.exit_code == 0
         assert "OVERDUE milestones" in result.output
 

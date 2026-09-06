@@ -132,9 +132,7 @@ def sign_file(
     artifact = Path(artifact_path)
     if not artifact.is_file():
         raise SigstoreSigningError(f"Artifact not found: {artifact}")
-    resolved_bundle = (
-        Path(bundle_path) if bundle_path else default_bundle_path(artifact)
-    )
+    resolved_bundle = Path(bundle_path) if bundle_path else default_bundle_path(artifact)
 
     from sigstore.models import ClientTrustConfig
     from sigstore.oidc import IdentityToken, detect_credential
@@ -205,9 +203,7 @@ def verify_file(
     artifact = Path(artifact_path)
     if not artifact.is_file():
         raise SigstoreVerifyError(f"Artifact not found: {artifact}")
-    resolved_bundle = (
-        Path(bundle_path) if bundle_path else default_bundle_path(artifact)
-    )
+    resolved_bundle = Path(bundle_path) if bundle_path else default_bundle_path(artifact)
     if not resolved_bundle.is_file():
         raise SigstoreVerifyError(f"Sigstore bundle not found: {resolved_bundle}")
 
@@ -267,12 +263,8 @@ def _extract_signer_metadata(bundle: object) -> tuple[str | None, str | None]:
         cert = bundle.signing_certificate  # type: ignore[attr-defined]
         from cryptography import x509
 
-        sans = cert.extensions.get_extension_for_oid(
-            x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME
-        ).value
-        identity = next(
-            (str(n.value) for n in sans if hasattr(n, "value")), None
-        )
+        sans = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME).value
+        identity = next((str(n.value) for n in sans if hasattr(n, "value")), None)
         return identity, _extract_oidc_issuer(cert)
     except Exception:
         return None, None
@@ -294,9 +286,7 @@ def _extract_oidc_issuer(cert: Any) -> str | None:
     from cryptography import x509
 
     try:
-        ext = cert.extensions.get_extension_for_oid(
-            x509.ObjectIdentifier(_FULCIO_OIDC_ISSUER_V2_OID)
-        ).value
+        ext = cert.extensions.get_extension_for_oid(x509.ObjectIdentifier(_FULCIO_OIDC_ISSUER_V2_OID)).value
         from pyasn1.codec.der.decoder import decode as der_decode
         from pyasn1.type.char import UTF8String
 
@@ -305,10 +295,7 @@ def _extract_oidc_issuer(cert: Any) -> str | None:
         return str(der_decode(ext.value, UTF8String)[0].decode())
     except Exception:
         try:
-            return (
-                f"{cert.issuer.rfc4514_string()} "
-                f"(X.509 DN; OIDC issuer unavailable)"
-            )
+            return f"{cert.issuer.rfc4514_string()} (X.509 DN; OIDC issuer unavailable)"
         except Exception:
             return None
 

@@ -71,9 +71,7 @@ def _report(gaps: list[ControlGap]) -> GapAnalysisReport:
 def test_each_gap_becomes_one_ocsf_compliance_finding() -> None:
     from evidentia_core.gap_analyzer.ocsf import gap_report_to_ocsf_array
 
-    report = _report(
-        [_gap("AC-2", GapSeverity.HIGH), _gap("AC-3", GapSeverity.MEDIUM)]
-    )
+    report = _report([_gap("AC-2", GapSeverity.HIGH), _gap("AC-3", GapSeverity.MEDIUM)])
     ocsf_array = gap_report_to_ocsf_array(report)
 
     assert len(ocsf_array) == 2
@@ -97,8 +95,7 @@ def test_ocsf_severity_id_maps_from_gap_severity() -> None:
         ]
     )
     by_control = {
-        entry["compliance"]["requirements"][0]: entry["severity_id"]
-        for entry in gap_report_to_ocsf_array(report)
+        entry["compliance"]["requirements"][0]: entry["severity_id"] for entry in gap_report_to_ocsf_array(report)
     }
     # OCSF SeverityID: 1=Informational, 2=Low, 3=Medium, 4=High, 5=Critical
     assert by_control == {"C": 5, "H": 4, "M": 3, "L": 2, "I": 1}
@@ -165,9 +162,7 @@ def test_export_report_format_ocsf_writes_array_to_path(tmp_path: Path) -> None:
     """End-to-end via the public export_report dispatch: --format ocsf
     writes a JSON array to disk that round-trips into a list of dicts
     with the expected OCSF shape."""
-    report = _report(
-        [_gap("AC-2", GapSeverity.CRITICAL), _gap("AC-3", GapSeverity.LOW)]
-    )
+    report = _report([_gap("AC-2", GapSeverity.CRITICAL), _gap("AC-3", GapSeverity.LOW)])
     output_path = tmp_path / "gaps.ocsf.json"
 
     returned_path = export_report(report, output_path, format="ocsf")

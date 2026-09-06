@@ -62,9 +62,7 @@ def _fake_explanation(
     )
 
 
-def _fake_control(
-    control_id: str = "AC-2", title: str = "Account Management"
-) -> CatalogControl:
+def _fake_control(control_id: str = "AC-2", title: str = "Account Management") -> CatalogControl:
     return CatalogControl(
         id=control_id,
         title=title,
@@ -127,9 +125,7 @@ def test_load_returns_none_when_missing() -> None:
 def test_cache_miss_on_different_model() -> None:
     exp = _fake_explanation()
     store(exp, model="gpt-4o", temperature=0.1)
-    assert (
-        load_cached("nist-800-53-rev5", "AC-2", "claude-opus-4", 0.1) is None
-    )
+    assert load_cached("nist-800-53-rev5", "AC-2", "claude-opus-4", 0.1) is None
 
 
 def test_corrupt_cache_file_returns_none(tmp_path: Path) -> None:
@@ -164,9 +160,7 @@ def test_generator_cache_hit_skips_llm() -> None:
     # Pre-populate the cache for (nist-800-53-rev5, AC-2, gpt-4o, 0.1)
     store(_fake_explanation(), model="gpt-4o", temperature=0.1)
 
-    with patch(
-        "evidentia_ai.explain.generator.get_instructor_client"
-    ) as mock_client_factory:
+    with patch("evidentia_ai.explain.generator.get_instructor_client") as mock_client_factory:
         mock_client = MagicMock()
         mock_client_factory.return_value = mock_client
         gen = ExplanationGenerator(model="gpt-4o", temperature=0.1)
@@ -177,9 +171,7 @@ def test_generator_cache_hit_skips_llm() -> None:
 
 
 def test_generator_cache_miss_calls_llm_and_caches() -> None:
-    with patch(
-        "evidentia_ai.explain.generator.get_instructor_client"
-    ) as mock_client_factory:
+    with patch("evidentia_ai.explain.generator.get_instructor_client") as mock_client_factory:
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = _fake_explanation()
         mock_client_factory.return_value = mock_client
@@ -192,29 +184,21 @@ def test_generator_cache_miss_calls_llm_and_caches() -> None:
 
 def test_generator_refresh_bypasses_cache() -> None:
     store(_fake_explanation(), model="gpt-4o", temperature=0.1)
-    with patch(
-        "evidentia_ai.explain.generator.get_instructor_client"
-    ) as mock_client_factory:
+    with patch("evidentia_ai.explain.generator.get_instructor_client") as mock_client_factory:
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = _fake_explanation()
         mock_client_factory.return_value = mock_client
         gen = ExplanationGenerator(model="gpt-4o", temperature=0.1)
-        gen.generate(
-            _fake_control(), framework_id="nist-800-53-rev5", refresh=True
-        )
+        gen.generate(_fake_control(), framework_id="nist-800-53-rev5", refresh=True)
         mock_client.chat.completions.create.assert_called_once()
 
 
 def test_generator_use_cache_false_bypasses_both_read_and_write() -> None:
-    with patch(
-        "evidentia_ai.explain.generator.get_instructor_client"
-    ) as mock_client_factory:
+    with patch("evidentia_ai.explain.generator.get_instructor_client") as mock_client_factory:
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = _fake_explanation()
         mock_client_factory.return_value = mock_client
-        gen = ExplanationGenerator(
-            model="gpt-4o", temperature=0.1, use_cache=False
-        )
+        gen = ExplanationGenerator(model="gpt-4o", temperature=0.1, use_cache=False)
         gen.generate(_fake_control(), framework_id="nist-800-53-rev5")
     # Nothing written to cache
     assert load_cached("nist-800-53-rev5", "AC-2", "gpt-4o", 0.1) is None
@@ -227,15 +211,11 @@ def test_generator_echoes_framework_and_control_ids_even_if_llm_drifts() -> None
         control_id="WRONG-ID",
         control_title="Wrong title",
     )
-    with patch(
-        "evidentia_ai.explain.generator.get_instructor_client"
-    ) as mock_client_factory:
+    with patch("evidentia_ai.explain.generator.get_instructor_client") as mock_client_factory:
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = llm_output
         mock_client_factory.return_value = mock_client
-        gen = ExplanationGenerator(
-            model="gpt-4o", temperature=0.1, use_cache=False
-        )
+        gen = ExplanationGenerator(model="gpt-4o", temperature=0.1, use_cache=False)
         result = gen.generate(
             _fake_control(control_id="AC-2", title="Account Management"),
             framework_id="nist-800-53-rev5",
@@ -337,9 +317,7 @@ def _make_litellm_exc(exc_cls: type[BaseException]) -> BaseException:
     if exc_cls is RateLimitError:
         return RateLimitError("rate limited", llm_provider="openai", model="gpt-4o")
     if exc_cls is APIConnectionError:
-        return APIConnectionError(
-            message="conn refused", llm_provider="openai", model="gpt-4o"
-        )
+        return APIConnectionError(message="conn refused", llm_provider="openai", model="gpt-4o")
     if exc_cls is Timeout:
         return Timeout("timeout", model="gpt-4o", llm_provider="openai")
     if exc_cls is InternalServerError:
@@ -450,9 +428,7 @@ def test_generate_unexpected_exception_wraps_as_explain_generation_failed() -> N
 
 
 def test_generate_offline_violation_propagates_unwrapped() -> None:
-    with _patched_create(
-        side_effect=[OfflineViolationError(subsystem="evidentia_ai", target="gpt-4o")]
-    ):
+    with _patched_create(side_effect=[OfflineViolationError(subsystem="evidentia_ai", target="gpt-4o")]):
         gen = ExplanationGenerator(use_cache=False)
         with pytest.raises(OfflineViolationError):
             gen.generate(_fake_control(), framework_id="nist-800-53-rev5")
@@ -468,20 +444,14 @@ def test_generate_emits_ai_explain_generated_event_on_success(
             result = gen.generate(_fake_control(), framework_id="nist-800-53-rev5")
 
     success_records = [
-        r for r in caplog.records
-        if (
-            hasattr(r, "ecs_record")
-            and r.ecs_record["event"]["action"]
-            == EventAction.AI_EXPLAIN_GENERATED.value
-        )
+        r
+        for r in caplog.records
+        if (hasattr(r, "ecs_record") and r.ecs_record["event"]["action"] == EventAction.AI_EXPLAIN_GENERATED.value)
     ]
     assert len(success_records) == 1
     # L2: prompt_hash surfaced in success event
     assert result.generation_context is not None
-    assert (
-        success_records[0].ecs_record["evidentia"]["prompt_hash"]
-        == result.generation_context.prompt_hash
-    )
+    assert success_records[0].ecs_record["evidentia"]["prompt_hash"] == result.generation_context.prompt_hash
 
 
 def test_generate_emits_ai_explain_cache_hit_event(
@@ -494,12 +464,9 @@ def test_generate_emits_ai_explain_cache_hit_event(
             gen.generate(_fake_control(), framework_id="nist-800-53-rev5")
 
     cache_records = [
-        r for r in caplog.records
-        if (
-            hasattr(r, "ecs_record")
-            and r.ecs_record["event"]["action"]
-            == EventAction.AI_EXPLAIN_CACHE_HIT.value
-        )
+        r
+        for r in caplog.records
+        if (hasattr(r, "ecs_record") and r.ecs_record["event"]["action"] == EventAction.AI_EXPLAIN_CACHE_HIT.value)
     ]
     assert len(cache_records) == 1
 
@@ -514,12 +481,9 @@ def test_generate_emits_ai_explain_failed_event_with_run_id(
             gen.generate(_fake_control(), framework_id="nist-800-53-rev5")
 
     failure_records = [
-        r for r in caplog.records
-        if (
-            hasattr(r, "ecs_record")
-            and r.ecs_record["event"]["action"]
-            == EventAction.AI_EXPLAIN_FAILED.value
-        )
+        r
+        for r in caplog.records
+        if (hasattr(r, "ecs_record") and r.ecs_record["event"]["action"] == EventAction.AI_EXPLAIN_FAILED.value)
     ]
     assert len(failure_records) == 1
     assert failure_records[0].ecs_record["evidentia"]["run_id"] is not None
@@ -540,12 +504,9 @@ def test_generate_emits_ai_explain_retry_events_with_trace_id(
             result = gen.generate(_fake_control(), framework_id="nist-800-53-rev5")
 
     retry_records = [
-        r for r in caplog.records
-        if (
-            hasattr(r, "ecs_record")
-            and r.ecs_record["event"]["action"]
-            == EventAction.AI_EXPLAIN_RETRY.value
-        )
+        r
+        for r in caplog.records
+        if (hasattr(r, "ecs_record") and r.ecs_record["event"]["action"] == EventAction.AI_EXPLAIN_RETRY.value)
     ]
     assert len(retry_records) == 2
     assert result.generation_context is not None

@@ -11,10 +11,10 @@ Every Evidentia model subclasses `EvidentiaModel` (`packages/evidentia-core/src/
 ```python
 class EvidentiaModel(BaseModel):
     model_config = ConfigDict(
-        use_enum_values=True,      # enums serialize to their .value string
-        extra="forbid",            # unknown fields raise at parse time
-        str_strip_whitespace=True, # leading/trailing whitespace stripped on input
-        populate_by_name=True,     # field aliases AND names both accepted
+        use_enum_values=True,  # enums serialize to their .value string
+        extra="forbid",  # unknown fields raise at parse time
+        str_strip_whitespace=True,  # leading/trailing whitespace stripped on input
+        populate_by_name=True,  # field aliases AND names both accepted
     )
 ```
 

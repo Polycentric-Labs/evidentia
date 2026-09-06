@@ -71,8 +71,7 @@ def test_normalize_output_has_no_lowercase_ascii(raw: str) -> None:
     for char in out:
         if char.isascii() and char.isalpha():
             assert not char.islower(), (
-                f"Lowercase ASCII letter {char!r} in normalize output "
-                f"{out!r} (input was {raw!r})"
+                f"Lowercase ASCII letter {char!r} in normalize output {out!r} (input was {raw!r})"
             )
 
 
@@ -104,14 +103,13 @@ def test_normalize_strips_documented_prefixes(raw: str) -> None:
             # The function should strip the first occurrence. If the
             # remainder ALSO starts with the same prefix, the function
             # only strips one — that's consistent with the source.
-            after_strip = upper[len(prefix):]
+            after_strip = upper[len(prefix) :]
             if not after_strip.startswith(prefix):
                 # The simple case: input had exactly one occurrence
                 # of the prefix at the head. Output must not start
                 # with that prefix.
                 assert not out.startswith(prefix), (
-                    f"Output {out!r} retained prefix {prefix!r} "
-                    f"that input {raw!r} had at the head"
+                    f"Output {out!r} retained prefix {prefix!r} that input {raw!r} had at the head"
                 )
             # else: pathological doubled-prefix case; skip assertion.
             break  # only check the first matched prefix

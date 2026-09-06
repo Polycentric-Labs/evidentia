@@ -77,9 +77,7 @@ def _security_findings() -> st.SearchStrategy[object]:
         SecurityFinding,
     )
 
-    severities = st.sampled_from(
-        ["informational", "low", "medium", "high", "critical"]
-    )
+    severities = st.sampled_from(["informational", "low", "medium", "high", "critical"])
     # FindingStatus enum (per packages/evidentia-core/src/evidentia_core/models/finding.py)
     # is exactly {active, resolved, suppressed} — the same vocabulary
     # OCSF Compliance Finding uses for status_id 1 (New/Active),

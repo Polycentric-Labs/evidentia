@@ -17,16 +17,10 @@ class PowerBIConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     workspace_id: str = Field(
-        description=(
-            "Power BI workspace ID (a UUID). The dataset is created "
-            "in this workspace."
-        ),
+        description=("Power BI workspace ID (a UUID). The dataset is created in this workspace."),
     )
     tenant_id: str = Field(
-        description=(
-            "Azure AD tenant ID (a UUID). Required for the OAuth2 "
-            "client-credentials flow."
-        ),
+        description=("Azure AD tenant ID (a UUID). Required for the OAuth2 client-credentials flow."),
     )
     client_id: str = Field(
         description=(
@@ -55,14 +49,10 @@ class PowerBIConfig(BaseModel):
     authority_url: str = Field(
         default="https://login.microsoftonline.com",
         description=(
-            "Azure AD authority URL. Sovereign clouds use a "
-            "different authority — overridable for those tenants."
+            "Azure AD authority URL. Sovereign clouds use a different authority — overridable for those tenants."
         ),
     )
     api_scope: str = Field(
         default="https://analysis.windows.net/powerbi/api/.default",
-        description=(
-            "OAuth2 scope for the Power BI service. Service-"
-            "principal flow uses /.default."
-        ),
+        description=("OAuth2 scope for the Power BI service. Service-principal flow uses /.default."),
     )

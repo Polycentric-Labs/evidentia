@@ -138,11 +138,7 @@ class RBACPolicy(EvidentiaModel):
         :class:`Role` here so callers always get the enum + can
         call :meth:`Role.outranks_or_equal`.
         """
-        raw = (
-            self.default_role
-            if identity is None
-            else self.identities.get(identity, self.default_role)
-        )
+        raw = self.default_role if identity is None else self.identities.get(identity, self.default_role)
         return Role(raw) if not isinstance(raw, Role) else raw
 
 
@@ -215,12 +211,7 @@ def load_policy_from_file(path: Path) -> RBACPolicy:
     try:
         data = yaml_mod.safe_load(raw)
     except yaml_mod.YAMLError as exc:
-        raise ValueError(
-            f"RBAC policy file {path} is not valid YAML/JSON: {exc}"
-        ) from exc
+        raise ValueError(f"RBAC policy file {path} is not valid YAML/JSON: {exc}") from exc
     if not isinstance(data, dict):
-        raise ValueError(
-            f"RBAC policy file {path} must be a mapping; "
-            f"got {type(data).__name__}"
-        )
+        raise ValueError(f"RBAC policy file {path} must be a mapping; got {type(data).__name__}")
     return RBACPolicy.model_validate(data)

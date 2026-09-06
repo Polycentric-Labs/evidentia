@@ -59,16 +59,12 @@ class TestABCsAreAbstract:
 
 
 class TestLocalTokenAuthProvider:
-    def test_authenticates_valid_bearer_token(
-        self, tmp_path: Path
-    ) -> None:
+    def test_authenticates_valid_bearer_token(self, tmp_path: Path) -> None:
         token_file = tmp_path / "token.txt"
         token_file.write_text("secret-abc123")
         provider = LocalTokenAuthProvider(token_file=token_file)
 
-        result = provider.authenticate(
-            authorization_header="Bearer secret-abc123"
-        )
+        result = provider.authenticate(authorization_header="Bearer secret-abc123")
         assert result.authenticated is True
         assert result.principal == "local-operator"
         assert result.reason is None
@@ -87,9 +83,7 @@ class TestLocalTokenAuthProvider:
         token_file.write_text("secret")
         provider = LocalTokenAuthProvider(token_file=token_file)
 
-        result = provider.authenticate(
-            authorization_header="malformed-no-scheme"
-        )
+        result = provider.authenticate(authorization_header="malformed-no-scheme")
         assert result.authenticated is False
         assert result.reason is not None and "malformed" in result.reason.lower()
 
@@ -98,9 +92,7 @@ class TestLocalTokenAuthProvider:
         token_file.write_text("secret")
         provider = LocalTokenAuthProvider(token_file=token_file)
 
-        result = provider.authenticate(
-            authorization_header="Basic dXNlcjpwYXNz"
-        )
+        result = provider.authenticate(authorization_header="Basic dXNlcjpwYXNz")
         assert result.authenticated is False
         assert result.reason is not None and "Bearer" in result.reason
 
@@ -109,15 +101,11 @@ class TestLocalTokenAuthProvider:
         token_file.write_text("expected-token")
         provider = LocalTokenAuthProvider(token_file=token_file)
 
-        result = provider.authenticate(
-            authorization_header="Bearer wrong-token"
-        )
+        result = provider.authenticate(authorization_header="Bearer wrong-token")
         assert result.authenticated is False
         assert result.reason is not None and "invalid" in result.reason.lower()
 
-    def test_missing_token_file_raises(
-        self, tmp_path: Path
-    ) -> None:
+    def test_missing_token_file_raises(self, tmp_path: Path) -> None:
         with pytest.raises(FileNotFoundError):
             LocalTokenAuthProvider(token_file=tmp_path / "nope.txt")
 
@@ -157,9 +145,7 @@ class TestLocalTokenAuthProvider:
     def test_custom_provider_name(self, tmp_path: Path) -> None:
         token_file = tmp_path / "token.txt"
         token_file.write_text("x")
-        provider = LocalTokenAuthProvider(
-            token_file=token_file, provider_name="my-auth"
-        )
+        provider = LocalTokenAuthProvider(token_file=token_file, provider_name="my-auth")
         assert provider.name() == "my-auth"
 
     def test_auth_result_is_frozen(self) -> None:
@@ -204,16 +190,12 @@ class TestFilesystemStorageBackend:
             base_dir=tmp_path / "data",
             record_type=_SampleRecord,
         )
-        backend.save(
-            record_id="rec1", record=_SampleRecord(name="x", value=1)
-        )
+        backend.save(record_id="rec1", record=_SampleRecord(name="x", value=1))
         backend.delete("rec1")
         with pytest.raises(KeyError):
             backend.load("rec1")
 
-    def test_delete_missing_raises_keyerror(
-        self, tmp_path: Path
-    ) -> None:
+    def test_delete_missing_raises_keyerror(self, tmp_path: Path) -> None:
         backend = FilesystemStorageBackend[_SampleRecord](
             base_dir=tmp_path / "data",
             record_type=_SampleRecord,
@@ -226,18 +208,12 @@ class TestFilesystemStorageBackend:
             base_dir=tmp_path / "data",
             record_type=_SampleRecord,
         )
-        backend.save(
-            record_id="alice", record=_SampleRecord(name="a", value=1)
-        )
-        backend.save(
-            record_id="bob", record=_SampleRecord(name="b", value=2)
-        )
+        backend.save(record_id="alice", record=_SampleRecord(name="a", value=1))
+        backend.save(record_id="bob", record=_SampleRecord(name="b", value=2))
         ids = sorted(backend.list_records())
         assert ids == ["alice", "bob"]
 
-    def test_invalid_id_with_path_separator_rejected(
-        self, tmp_path: Path
-    ) -> None:
+    def test_invalid_id_with_path_separator_rejected(self, tmp_path: Path) -> None:
         backend = FilesystemStorageBackend[_SampleRecord](
             base_dir=tmp_path / "data",
             record_type=_SampleRecord,
@@ -259,9 +235,7 @@ class TestFilesystemStorageBackend:
                 record=_SampleRecord(name="x", value=1),
             )
 
-    def test_corrupt_record_raises_value_error(
-        self, tmp_path: Path
-    ) -> None:
+    def test_corrupt_record_raises_value_error(self, tmp_path: Path) -> None:
         base = tmp_path / "data"
         base.mkdir(parents=True)
         # Write a JSON file that doesn't conform to _SampleRecord.
@@ -286,51 +260,31 @@ class TestFilesystemStorageBackend:
 
 
 class TestLocalDirectoryMarketplaceProvider:
-    def test_lists_catalogs_from_directory(
-        self, tmp_path: Path
-    ) -> None:
+    def test_lists_catalogs_from_directory(self, tmp_path: Path) -> None:
         # Create 2 fake OSCAL catalogs.
-        (tmp_path / "catalog-a.json").write_text(
-            json.dumps({"catalog": {"uuid": "a", "controls": []}})
-        )
-        (tmp_path / "catalog-b.json").write_text(
-            json.dumps({"catalog": {"uuid": "b", "controls": []}})
-        )
+        (tmp_path / "catalog-a.json").write_text(json.dumps({"catalog": {"uuid": "a", "controls": []}}))
+        (tmp_path / "catalog-b.json").write_text(json.dumps({"catalog": {"uuid": "b", "controls": []}}))
 
-        provider = LocalDirectoryMarketplaceProvider(
-            base_dir=tmp_path
-        )
+        provider = LocalDirectoryMarketplaceProvider(base_dir=tmp_path)
         manifests = list(provider.list_catalogs())
         ids = sorted(m.catalog_id for m in manifests)
         assert ids == ["catalog-a", "catalog-b"]
 
     def test_fetch_catalog_returns_dict(self, tmp_path: Path) -> None:
         catalog_data = {"catalog": {"uuid": "test", "controls": []}}
-        (tmp_path / "test-cat.json").write_text(
-            json.dumps(catalog_data)
-        )
+        (tmp_path / "test-cat.json").write_text(json.dumps(catalog_data))
 
-        provider = LocalDirectoryMarketplaceProvider(
-            base_dir=tmp_path
-        )
+        provider = LocalDirectoryMarketplaceProvider(base_dir=tmp_path)
         result = provider.fetch_catalog("test-cat")
         assert result == catalog_data
 
-    def test_fetch_missing_catalog_raises_keyerror(
-        self, tmp_path: Path
-    ) -> None:
-        provider = LocalDirectoryMarketplaceProvider(
-            base_dir=tmp_path
-        )
+    def test_fetch_missing_catalog_raises_keyerror(self, tmp_path: Path) -> None:
+        provider = LocalDirectoryMarketplaceProvider(base_dir=tmp_path)
         with pytest.raises(KeyError):
             provider.fetch_catalog("nonexistent")
 
-    def test_manifest_metadata_overrides_inferred(
-        self, tmp_path: Path
-    ) -> None:
-        (tmp_path / "my-cat.json").write_text(
-            json.dumps({"catalog": {"uuid": "x"}})
-        )
+    def test_manifest_metadata_overrides_inferred(self, tmp_path: Path) -> None:
+        (tmp_path / "my-cat.json").write_text(json.dumps({"catalog": {"uuid": "x"}}))
         (tmp_path / "manifest.json").write_text(
             json.dumps(
                 {
@@ -346,9 +300,7 @@ class TestLocalDirectoryMarketplaceProvider:
             )
         )
 
-        provider = LocalDirectoryMarketplaceProvider(
-            base_dir=tmp_path
-        )
+        provider = LocalDirectoryMarketplaceProvider(base_dir=tmp_path)
         manifests = list(provider.list_catalogs())
         assert len(manifests) == 1
         m = manifests[0]
@@ -356,18 +308,12 @@ class TestLocalDirectoryMarketplaceProvider:
         assert m.version == "2026.05"
         assert m.license == "Apache-2.0"
 
-    def test_malformed_manifest_falls_back_to_filename(
-        self, tmp_path: Path
-    ) -> None:
-        (tmp_path / "my-cat.json").write_text(
-            json.dumps({"catalog": {"uuid": "x"}})
-        )
+    def test_malformed_manifest_falls_back_to_filename(self, tmp_path: Path) -> None:
+        (tmp_path / "my-cat.json").write_text(json.dumps({"catalog": {"uuid": "x"}}))
         # Malformed manifest.json — should not crash the provider.
         (tmp_path / "manifest.json").write_text("{broken")
 
-        provider = LocalDirectoryMarketplaceProvider(
-            base_dir=tmp_path
-        )
+        provider = LocalDirectoryMarketplaceProvider(base_dir=tmp_path)
         manifests = list(provider.list_catalogs())
         assert len(manifests) == 1
         assert manifests[0].catalog_id == "my-cat"
@@ -376,22 +322,16 @@ class TestLocalDirectoryMarketplaceProvider:
 
     def test_corrupt_catalog_json_raises(self, tmp_path: Path) -> None:
         (tmp_path / "corrupt.json").write_text("not valid json {")
-        provider = LocalDirectoryMarketplaceProvider(
-            base_dir=tmp_path
-        )
+        provider = LocalDirectoryMarketplaceProvider(base_dir=tmp_path)
         with pytest.raises(ValueError):
             provider.fetch_catalog("corrupt")
 
     def test_missing_base_dir_raises(self, tmp_path: Path) -> None:
         with pytest.raises(FileNotFoundError):
-            LocalDirectoryMarketplaceProvider(
-                base_dir=tmp_path / "does-not-exist"
-            )
+            LocalDirectoryMarketplaceProvider(base_dir=tmp_path / "does-not-exist")
 
     def test_default_provider_name(self, tmp_path: Path) -> None:
-        provider = LocalDirectoryMarketplaceProvider(
-            base_dir=tmp_path
-        )
+        provider = LocalDirectoryMarketplaceProvider(base_dir=tmp_path)
         assert provider.name() == "local-directory"
 
 

@@ -59,6 +59,12 @@
 #                                  frozen MCP tool table against the live
 #                                  server, and asserts every frozen env var
 #                                  still appears in packages/*/src)
+#  18. check_ruff_format          (`ruff format --check . --no-cache`; the
+#                                  tree has been format-clean since the v0.13
+#                                  whole-repo reformat, so any file the
+#                                  formatter would change blocks the push,
+#                                  matching the format step in the CI
+#                                  `ruff` job)
 #
 # All checks run before the hook exits, so the operator sees every
 # failure at once.
@@ -392,6 +398,12 @@ run_check "check_roadmap_currency" \
 #     the same environment the wiki-drift checks above already require.
 run_check "check_public_surface" \
     run_py "${REPO_ROOT}/scripts/check_public_surface.py" || true
+
+# 18. ruff format check (v0.13 format-the-world follow-through): one dedicated
+#     commit reformatted the whole tree, and from then on any file the
+#     formatter would change is a push blocker, matching the format step in
+#     the CI `ruff` job. `--no-cache` for the same reason as check 15.
+run_check "check_ruff_format" run_ruff format --check . --no-cache || true
 
 # ---------------------------------------------------------------------------
 # Verdict.

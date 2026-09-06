@@ -125,8 +125,7 @@ with DatabricksCollector(
 ) as collector:
     findings, manifest = collector.collect_v2()
 
-print(f"Collected {len(findings)} findings; "
-      f"manifest is_complete={manifest.is_complete}")
+print(f"Collected {len(findings)} findings; manifest is_complete={manifest.is_complete}")
 ```
 
 ### BLIND_SPOTS

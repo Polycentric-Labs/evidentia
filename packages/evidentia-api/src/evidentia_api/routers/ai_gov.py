@@ -134,9 +134,7 @@ _NON_BLANK_SCHEMA: dict[str, Any] = {"pattern": NON_BLANK_PATTERN}
 # For optional fields the pattern must sit INSIDE the string variant of the
 # anyOf, where schema-driven clients read it; a Field-level json_schema_extra
 # would land on the wrapper instead.
-_OptionalNonBlank256 = Annotated[
-    str, Field(min_length=1, max_length=256, json_schema_extra=_NON_BLANK_SCHEMA)
-]
+_OptionalNonBlank256 = Annotated[str, Field(min_length=1, max_length=256, json_schema_extra=_NON_BLANK_SCHEMA)]
 
 _SYSTEM_ID_PATH = FastAPIPath(
     description="Registered AI system ID (UUID).",
@@ -188,15 +186,9 @@ class RegisterRequest(BaseModel):
     )
 
     descriptor: AISystemDescriptor
-    provider: str = Field(
-        min_length=1, max_length=256, json_schema_extra=_NON_BLANK_SCHEMA
-    )
-    owner: str = Field(
-        min_length=1, max_length=256, json_schema_extra=_NON_BLANK_SCHEMA
-    )
-    deployment_status: DeploymentStatus = Field(
-        default=DeploymentStatus.PROPOSED
-    )
+    provider: str = Field(min_length=1, max_length=256, json_schema_extra=_NON_BLANK_SCHEMA)
+    owner: str = Field(min_length=1, max_length=256, json_schema_extra=_NON_BLANK_SCHEMA)
+    deployment_status: DeploymentStatus = Field(default=DeploymentStatus.PROPOSED)
 
 
 # ── idempotency (v0.9.4 P1.3 + v0.9.4 Step 5.A F-V94-Q1 closure) ──
@@ -294,15 +286,11 @@ def _prune_idempotency_store(
     cutoff_iso = ttl_cutoff.isoformat()
 
     # Drop entries older than the TTL.
-    fresh = {
-        k: v for k, v in store.items() if v.get("recorded_at", "") >= cutoff_iso
-    }
+    fresh = {k: v for k, v in store.items() if v.get("recorded_at", "") >= cutoff_iso}
 
     # If still over cap, FIFO-evict oldest by recorded_at ascending.
     if len(fresh) > IDEMPOTENCY_MAX_ENTRIES:
-        sorted_keys = sorted(
-            fresh.keys(), key=lambda k: fresh[k].get("recorded_at", "")
-        )
+        sorted_keys = sorted(fresh.keys(), key=lambda k: fresh[k].get("recorded_at", ""))
         keep_keys = set(sorted_keys[-IDEMPOTENCY_MAX_ENTRIES:])
         fresh = {k: v for k, v in fresh.items() if k in keep_keys}
 
@@ -337,10 +325,7 @@ async def ai_gov_classify(
     _log.info(
         action=EventAction.AI_SYSTEM_CLASSIFIED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"AI system {descriptor.name!r} classified "
-            f"(tier={classification.eu_ai_act_tier})"
-        ),
+        message=(f"AI system {descriptor.name!r} classified (tier={classification.eu_ai_act_tier})"),
         evidentia={
             "descriptor_name": descriptor.name,
             "eu_ai_act_tier": str(classification.eu_ai_act_tier),
@@ -361,10 +346,7 @@ async def ai_gov_classify(
                 "(``error: invalid_body``), or an undecodable request "
                 f"body ({BODY_PARSE_ERROR_400})."
             ),
-            409: (
-                "``X-Idempotency-Key`` reuse with a different body "
-                "(``error: idempotency_key_conflict``)."
-            ),
+            409: ("``X-Idempotency-Key`` reuse with a different body (``error: idempotency_key_conflict``)."),
             429: RATE_LIMITED_429,
         }
     ),
@@ -380,31 +362,16 @@ async def ai_gov_classify(
             "200": {
                 "links": {
                     "GetSystem": {
-                        "operationId": (
-                            "ai_gov_get_system_api_ai_gov_systems"
-                            "__system_id__get"
-                        ),
-                        "parameters": {
-                            "system_id": "$response.body#/system_id"
-                        },
+                        "operationId": ("ai_gov_get_system_api_ai_gov_systems__system_id__get"),
+                        "parameters": {"system_id": "$response.body#/system_id"},
                     },
                     "UpdateSystem": {
-                        "operationId": (
-                            "ai_gov_update_system_api_ai_gov_systems"
-                            "__system_id__put"
-                        ),
-                        "parameters": {
-                            "system_id": "$response.body#/system_id"
-                        },
+                        "operationId": ("ai_gov_update_system_api_ai_gov_systems__system_id__put"),
+                        "parameters": {"system_id": "$response.body#/system_id"},
                     },
                     "DeleteSystem": {
-                        "operationId": (
-                            "ai_gov_delete_system_api_ai_gov_systems"
-                            "__system_id__delete"
-                        ),
-                        "parameters": {
-                            "system_id": "$response.body#/system_id"
-                        },
+                        "operationId": ("ai_gov_delete_system_api_ai_gov_systems__system_id__delete"),
+                        "parameters": {"system_id": "$response.body#/system_id"},
                     },
                 }
             }
@@ -453,25 +420,17 @@ async def ai_gov_register(
     if x_idempotency_key is not None:
         # Lock the idempotency-store read-modify-write to prevent
         # racing concurrent retries from creating duplicates.
-        lock_path = _idempotency_store_path().with_suffix(
-            _idempotency_store_path().suffix + ".lock"
-        )
+        lock_path = _idempotency_store_path().with_suffix(_idempotency_store_path().suffix + ".lock")
         with FileLock(lock_path, timeout_seconds=5.0):
             store = _load_idempotency_store()
             existing = store.get(x_idempotency_key)
             if existing is not None:
                 if existing["body_hash"] == body_hash:
                     # Idempotent replay: return prior system_id.
-                    prior_entry = AIRegistryStore().load(
-                        existing["system_id"]
-                    )
+                    prior_entry = AIRegistryStore().load(existing["system_id"])
                     return {
                         "system_id": existing["system_id"],
-                        "entry": (
-                            prior_entry.model_dump(mode="json")
-                            if prior_entry is not None
-                            else None
-                        ),
+                        "entry": (prior_entry.model_dump(mode="json") if prior_entry is not None else None),
                         "idempotent_replay": True,
                     }
                 raise api_error(
@@ -528,10 +487,7 @@ async def ai_gov_register(
     _log.info(
         action=EventAction.AI_SYSTEM_REGISTERED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"AI system {entry.descriptor.name!r} registered "
-            f"(system_id={entry.system_id})"
-        ),
+        message=(f"AI system {entry.descriptor.name!r} registered (system_id={entry.system_id})"),
         evidentia={
             "system_id": entry.system_id,
             "descriptor_name": entry.descriptor.name,
@@ -555,21 +511,14 @@ async def ai_gov_register(
     "/ai-gov/systems",
     responses=error_responses(
         {
-            400: (
-                "Unknown ``tier`` filter value (``error: "
-                "unknown_tier``); ``detail`` carries ``tier`` + "
-                "``valid``."
-            ),
+            400: ("Unknown ``tier`` filter value (``error: unknown_tier``); ``detail`` carries ``tier`` + ``valid``."),
         }
     ),
 )
 async def ai_gov_list_systems(
     tier: str | None = Query(
         default=None,
-        description=(
-            "Optional EU AI Act tier filter: unacceptable, high, "
-            "limited, minimal."
-        ),
+        description=("Optional EU AI Act tier filter: unacceptable, high, limited, minimal."),
     ),
 ) -> list[dict[str, Any]]:
     """List registered AI systems with optional tier filter."""
@@ -584,10 +533,7 @@ async def ai_gov_list_systems(
             raise api_error(
                 400,
                 "unknown_tier",
-                (
-                    f"Unknown tier {tier!r}; valid: "
-                    f"{', '.join(t.value for t in EUAIActTier)}"
-                ),
+                (f"Unknown tier {tier!r}; valid: {', '.join(t.value for t in EUAIActTier)}"),
                 tier=tier,
                 valid=[t.value for t in EUAIActTier],
             ) from exc
@@ -595,11 +541,7 @@ async def ai_gov_list_systems(
         # round-trips eu_ai_act_tier as the raw string value (the model
         # sets use_enum_values=True), so direct equality is correct and
         # robust to future model-config changes.
-        entries = [
-            e
-            for e in entries
-            if e.classification.eu_ai_act_tier == tier_enum.value
-        ]
+        entries = [e for e in entries if e.classification.eu_ai_act_tier == tier_enum.value]
     return [e.model_dump(mode="json") for e in entries]
 
 
@@ -622,9 +564,7 @@ async def ai_gov_get_system(
     try:
         entry = AIRegistryStore().load(system_id)
     except InvalidAISystemIdError as exc:
-        raise api_error(
-            400, "invalid_id", str(exc), resource="ai_system"
-        ) from exc
+        raise api_error(400, "invalid_id", str(exc), resource="ai_system") from exc
     if entry is None:
         raise api_error(
             404,
@@ -641,9 +581,7 @@ async def ai_gov_get_system(
 
 @router.delete(
     "/ai-gov/systems/{system_id}",
-    responses=error_responses(
-        {400: "Malformed ``system_id`` (``error: invalid_id``)."}
-    ),
+    responses=error_responses({400: "Malformed ``system_id`` (``error: invalid_id``)."}),
 )
 async def ai_gov_delete_system(
     system_id: str = _SYSTEM_ID_PATH,
@@ -653,9 +591,7 @@ async def ai_gov_delete_system(
     try:
         removed = AIRegistryStore().delete(system_id)
     except InvalidAISystemIdError as exc:
-        raise api_error(
-            400, "invalid_id", str(exc), resource="ai_system"
-        ) from exc
+        raise api_error(400, "invalid_id", str(exc), resource="ai_system") from exc
     if removed:
         # v0.9.4 Step 5.A F-V94-Q12 closure: emit the new
         # AI_SYSTEM_DELETED action (instead of overloading
@@ -743,15 +679,11 @@ class UpdateSystemRequest(BaseModel):
                 },
                 {
                     "required": ["deployment_status"],
-                    "properties": {
-                        "deployment_status": {"not": {"type": "null"}}
-                    },
+                    "properties": {"deployment_status": {"not": {"type": "null"}}},
                 },
                 {
                     "required": ["ssp_reference"],
-                    "properties": {
-                        "ssp_reference": {"not": {"type": "null"}}
-                    },
+                    "properties": {"ssp_reference": {"not": {"type": "null"}}},
                 },
             ]
         }
@@ -771,15 +703,9 @@ class FIPS199CategorizeRequest(BaseModel):
     when supplied — a mismatch is a 400 domain error).
     """
 
-    confidentiality: FIPS199Impact = Field(
-        description="FIPS 199 confidentiality impact: low / moderate / high."
-    )
-    integrity: FIPS199Impact = Field(
-        description="FIPS 199 integrity impact: low / moderate / high."
-    )
-    availability: FIPS199Impact = Field(
-        description="FIPS 199 availability impact: low / moderate / high."
-    )
+    confidentiality: FIPS199Impact = Field(description="FIPS 199 confidentiality impact: low / moderate / high.")
+    integrity: FIPS199Impact = Field(description="FIPS 199 integrity impact: low / moderate / high.")
+    availability: FIPS199Impact = Field(description="FIPS 199 availability impact: low / moderate / high.")
     overall: FIPS199Impact | None = Field(
         default=None,
         description=(
@@ -802,8 +728,7 @@ class OMBImpactRequest(BaseModel):
 
     category: OMBImpactCategory = Field(
         description=(
-            "OMB M-24-10 §5(b) category: rights_impacting / "
-            "safety_impacting / rights_and_safety_impacting / neither."
+            "OMB M-24-10 §5(b) category: rights_impacting / safety_impacting / rights_and_safety_impacting / neither."
         )
     )
 
@@ -816,16 +741,12 @@ class HighImpactRequest(BaseModel):
     """
 
     determination: HighImpactDetermination = Field(
-        description=(
-            "OMB M-25-21 high-impact determination: high_impact / "
-            "not_high_impact / not_assessed."
-        )
+        description=("OMB M-25-21 high-impact determination: high_impact / not_high_impact / not_assessed.")
     )
     bases: list[HighImpactBasis] = Field(
         default_factory=list,
         description=(
-            "Consequence area(s) that make the system high-impact. "
-            "Meaningful only when determination is high_impact."
+            "Consequence area(s) that make the system high-impact. Meaningful only when determination is high_impact."
         ),
     )
     rationale: str | None = Field(default=None, max_length=4000)
@@ -846,9 +767,7 @@ class HighImpactRequest(BaseModel):
         }
     ),
 )
-async def ai_gov_update_system(
-    body: UpdateSystemRequest, system_id: str = _SYSTEM_ID_PATH
-) -> dict[str, Any]:
+async def ai_gov_update_system(body: UpdateSystemRequest, system_id: str = _SYSTEM_ID_PATH) -> dict[str, Any]:
     """Partially update a registered AI system.
 
     Fields omitted from the body are left unchanged. The merged entry
@@ -872,10 +791,7 @@ async def ai_gov_update_system(
         raise api_error(
             400,
             "invalid_body",
-            (
-                "No fields to update — supply at least one of owner / "
-                "provider / deployment_status / ssp_reference."
-            ),
+            ("No fields to update — supply at least one of owner / provider / deployment_status / ssp_reference."),
         )
 
     # Re-validate the merged dict so field validators run (a raw
@@ -935,18 +851,13 @@ async def ai_gov_retire_system(system_id: str) -> dict[str, Any]:
         }
 
     prior_status = entry.deployment_status
-    retired = entry.model_copy(
-        update={"deployment_status": DeploymentStatus.RETIRED}
-    )
+    retired = entry.model_copy(update={"deployment_status": DeploymentStatus.RETIRED})
     AIRegistryStore().save(retired)
 
     _log.info(
         action=EventAction.AI_SYSTEM_RETIRED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"AI system {entry.descriptor.name!r} retired via API "
-            f"(system_id={system_id})"
-        ),
+        message=(f"AI system {entry.descriptor.name!r} retired via API (system_id={system_id})"),
         evidentia={
             "system_id": system_id,
             "descriptor_name": entry.descriptor.name,
@@ -975,9 +886,7 @@ async def ai_gov_retire_system(system_id: str) -> dict[str, Any]:
         }
     ),
 )
-async def ai_gov_categorize_fips(
-    system_id: str, body: FIPS199CategorizeRequest
-) -> dict[str, Any]:
+async def ai_gov_categorize_fips(system_id: str, body: FIPS199CategorizeRequest) -> dict[str, Any]:
     """Set FIPS 199 categorization on a registered AI system.
 
     The overall high-water-mark is auto-computed from the three
@@ -1004,8 +913,7 @@ async def ai_gov_categorize_fips(
         action=EventAction.AI_SYSTEM_FIPS_CATEGORIZED,
         outcome=EventOutcome.SUCCESS,
         message=(
-            f"FIPS 199 categorized AI system {entry.descriptor.name!r} "
-            f"via API as {cat.overall} (system_id={system_id})"
+            f"FIPS 199 categorized AI system {entry.descriptor.name!r} via API as {cat.overall} (system_id={system_id})"
         ),
         evidentia={
             "system_id": system_id,
@@ -1030,9 +938,7 @@ async def ai_gov_categorize_fips(
     # ``deprecated: true`` marker and — via the router's
     # DeprecationAwareRoute class — the RFC 8594 response headers.
     deprecated=True,
-    openapi_extra=successor_version(
-        "/api/ai-gov/systems/{system_id}/set-high-impact"
-    ),
+    openapi_extra=successor_version("/api/ai-gov/systems/{system_id}/set-high-impact"),
     responses=error_responses(
         {
             403: RBAC_DENIED_403,
@@ -1040,9 +946,7 @@ async def ai_gov_categorize_fips(
         }
     ),
 )
-async def ai_gov_set_omb_impact(
-    system_id: str, body: OMBImpactRequest
-) -> dict[str, Any]:
+async def ai_gov_set_omb_impact(system_id: str, body: OMBImpactRequest) -> dict[str, Any]:
     """Set the OMB M-24-10 impact category on a registered AI system.
 
     DEPRECATED (v0.10.12): OMB M-24-10 was rescinded 2025-04-03 and
@@ -1079,18 +983,13 @@ async def ai_gov_set_omb_impact(
     dependencies=[require_role("write")],
     responses=error_responses(
         {
-            400: (
-                "M-25-21 domain-validation failure "
-                "(``error: invalid_body``)."
-            ),
+            400: ("M-25-21 domain-validation failure (``error: invalid_body``)."),
             403: RBAC_DENIED_403,
             404: "No such registered system (``error: not_found``).",
         }
     ),
 )
-async def ai_gov_set_high_impact(
-    system_id: str, body: HighImpactRequest
-) -> dict[str, Any]:
+async def ai_gov_set_high_impact(system_id: str, body: HighImpactRequest) -> dict[str, Any]:
     """Set the OMB M-25-21 high-impact AI determination on a system.
 
     Supersedes ``set-omb-impact`` after M-24-10's 2025-04-03 rescission
@@ -1154,12 +1053,7 @@ class SetPracticeRequest(BaseModel):
             "human_oversight / remedies_and_appeals / public_feedback."
         )
     )
-    status: PracticeStatus = Field(
-        description=(
-            "Practice status: implemented / in_progress / not_started / "
-            "waived."
-        )
-    )
+    status: PracticeStatus = Field(description=("Practice status: implemented / in_progress / not_started / waived."))
     notes: str | None = Field(default=None, max_length=4000)
     last_reviewed: date | None = Field(
         default=None,
@@ -1167,10 +1061,7 @@ class SetPracticeRequest(BaseModel):
     )
     waiver: PracticeWaiver | None = Field(
         default=None,
-        description=(
-            "The CAIO waiver record (M-25-21 §4(a)(ii)) — required iff "
-            "status is waived."
-        ),
+        description=("The CAIO waiver record (M-25-21 §4(a)(ii)) — required iff status is waived."),
     )
 
 
@@ -1184,14 +1075,9 @@ class SetPracticeResponse(BaseModel):
     """
 
     system_id: str = Field(description="The registered system's UUID.")
-    entry: AISystemRegistryEntry = Field(
-        description="The full registry entry after the update."
-    )
+    entry: AISystemRegistryEntry = Field(description="The full registry entry after the update.")
     practice_compliance: PracticeComplianceSummary = Field(
-        description=(
-            "M-25-21 minimum-practice roll-up recomputed from the "
-            "updated assessment."
-        )
+        description=("M-25-21 minimum-practice roll-up recomputed from the updated assessment.")
     )
 
 
@@ -1211,9 +1097,7 @@ class SetPracticeResponse(BaseModel):
         }
     ),
 )
-async def ai_gov_set_practice(
-    system_id: str, body: SetPracticeRequest
-) -> dict[str, Any]:
+async def ai_gov_set_practice(system_id: str, body: SetPracticeRequest) -> dict[str, Any]:
     """Record an OMB M-25-21 minimum-practice status on a system (v0.11).
 
     Fills the per-practice extension point reserved at v0.10.12.
@@ -1227,10 +1111,7 @@ async def ai_gov_set_practice(
         raise api_error(
             400,
             "invalid_body",
-            (
-                "No M-25-21 assessment on this entry yet — record the "
-                "high-impact determination first (set-high-impact)."
-            ),
+            ("No M-25-21 assessment on this entry yet — record the high-impact determination first (set-high-impact)."),
         )
 
     try:
@@ -1285,16 +1166,13 @@ class RegisterAcquisitionRequest(BaseModel):
     M-25-21 vocabulary (defaults to ``not_assessed``).
     """
 
-    name: str = Field(
-        min_length=1, max_length=256, json_schema_extra=_NON_BLANK_SCHEMA
-    )
+    name: str = Field(min_length=1, max_length=256, json_schema_extra=_NON_BLANK_SCHEMA)
     solicitation_reference: str | None = Field(default=None, max_length=256)
     description: str | None = Field(default=None, max_length=4000)
     likely_high_impact: HighImpactDetermination = Field(
         default=HighImpactDetermination.NOT_ASSESSED,
         description=(
-            "M-25-22 §4(a) initial determination (M-25-21 vocabulary): "
-            "high_impact / not_high_impact / not_assessed."
+            "M-25-22 §4(a) initial determination (M-25-21 vocabulary): high_impact / not_high_impact / not_assessed."
         ),
     )
     covered_note: str | None = Field(default=None, max_length=2000)
@@ -1316,9 +1194,7 @@ class SetAcquisitionPhaseRequest(BaseModel):
             "contract_closeout."
         )
     )
-    status: AcquisitionPhaseStatus = Field(
-        description="Phase status: not_started / in_progress / complete."
-    )
+    status: AcquisitionPhaseStatus = Field(description="Phase status: not_started / in_progress / complete.")
     notes: str | None = Field(default=None, max_length=4000)
     last_reviewed: date | None = Field(
         default=None,
@@ -1348,21 +1224,15 @@ def _load_acquisition_or_404(acquisition_id: str) -> AIAcquisition:
 class RegisterAcquisitionResponse(BaseModel):
     """201-shaped 200 body for ``POST /ai-gov/acquisitions``."""
 
-    acquisition_id: str = Field(
-        description="UUID of the newly tracked acquisition."
-    )
-    acquisition: AIAcquisition = Field(
-        description="The stored M-25-22 lifecycle record."
-    )
+    acquisition_id: str = Field(description="UUID of the newly tracked acquisition.")
+    acquisition: AIAcquisition = Field(description="The stored M-25-22 lifecycle record.")
 
 
 class ListAcquisitionsResponse(BaseModel):
     """200 body for ``GET /ai-gov/acquisitions``."""
 
     count: int = Field(description="Number of tracked acquisitions.")
-    acquisitions: list[AIAcquisition] = Field(
-        description="Every tracked M-25-22 lifecycle record."
-    )
+    acquisitions: list[AIAcquisition] = Field(description="Every tracked M-25-22 lifecycle record.")
 
 
 class AcquisitionDetailResponse(BaseModel):
@@ -1372,12 +1242,8 @@ class AcquisitionDetailResponse(BaseModel):
     model — the console renders a single detail view for either.
     """
 
-    acquisition: AIAcquisition = Field(
-        description="The M-25-22 lifecycle record."
-    )
-    progress: AcquisitionProgressSummary = Field(
-        description="§4 phase-completion roll-up derived from the record."
-    )
+    acquisition: AIAcquisition = Field(description="The M-25-22 lifecycle record.")
+    progress: AcquisitionProgressSummary = Field(description="§4 phase-completion roll-up derived from the record.")
 
 
 @router.post(
@@ -1386,10 +1252,7 @@ class AcquisitionDetailResponse(BaseModel):
     response_model=RegisterAcquisitionResponse,
     responses=error_responses(
         {
-            400: (
-                "M-25-22 domain-validation failure "
-                "(``error: invalid_body``)."
-            ),
+            400: ("M-25-22 domain-validation failure (``error: invalid_body``)."),
             403: RBAC_DENIED_403,
         }
     ),
@@ -1415,10 +1278,7 @@ async def ai_gov_register_acquisition(
     _log.info(
         action=EventAction.AI_ACQUISITION_REGISTERED,
         outcome=EventOutcome.SUCCESS,
-        message=(
-            f"AI acquisition {body.name!r} registered for OMB M-25-22 "
-            f"lifecycle tracking via API"
-        ),
+        message=(f"AI acquisition {body.name!r} registered for OMB M-25-22 lifecycle tracking via API"),
         evidentia={
             "acquisition_id": acquisition.acquisition_id,
             "likely_high_impact": str(body.likely_high_impact),
@@ -1446,9 +1306,7 @@ async def ai_gov_list_acquisitions() -> dict[str, Any]:
 @router.get(
     "/ai-gov/acquisitions/{acquisition_id}",
     response_model=AcquisitionDetailResponse,
-    responses=error_responses(
-        {404: "No such tracked acquisition (``error: not_found``)."}
-    ),
+    responses=error_responses({404: "No such tracked acquisition (``error: not_found``)."}),
 )
 async def ai_gov_get_acquisition(acquisition_id: str) -> dict[str, Any]:
     """Get one acquisition + its lifecycle progress roll-up."""
@@ -1465,18 +1323,13 @@ async def ai_gov_get_acquisition(acquisition_id: str) -> dict[str, Any]:
     response_model=AcquisitionDetailResponse,
     responses=error_responses(
         {
-            400: (
-                "M-25-22 domain-validation failure "
-                "(``error: invalid_body``)."
-            ),
+            400: ("M-25-22 domain-validation failure (``error: invalid_body``)."),
             403: RBAC_DENIED_403,
             404: "No such tracked acquisition (``error: not_found``).",
         }
     ),
 )
-async def ai_gov_set_acquisition_phase(
-    acquisition_id: str, body: SetAcquisitionPhaseRequest
-) -> dict[str, Any]:
+async def ai_gov_set_acquisition_phase(acquisition_id: str, body: SetAcquisitionPhaseRequest) -> dict[str, Any]:
     """Record an M-25-22 §4 lifecycle-phase status on an acquisition."""
     record = _load_acquisition_or_404(acquisition_id)
 
@@ -1498,8 +1351,7 @@ async def ai_gov_set_acquisition_phase(
         action=EventAction.AI_ACQUISITION_PHASE_RECORDED,
         outcome=EventOutcome.SUCCESS,
         message=(
-            f"M-25-22 lifecycle phase {body.phase} recorded as "
-            f"{body.status} on acquisition {record.name!r} via API"
+            f"M-25-22 lifecycle phase {body.phase} recorded as {body.status} on acquisition {record.name!r} via API"
         ),
         evidentia={
             "acquisition_id": acquisition_id,

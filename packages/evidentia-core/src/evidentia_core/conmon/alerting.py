@@ -86,9 +86,7 @@ def resolve_secret(
         # File path operator-controlled; trust it.
         value = file_arg.read_text(encoding="utf-8").strip()
         if not value:
-            raise ValueError(
-                f"{purpose}: file {file_arg} is empty"
-            )
+            raise ValueError(f"{purpose}: file {file_arg} is empty")
         return value
 
     env_value = os.environ.get(env_var, "").strip()
@@ -96,8 +94,7 @@ def resolve_secret(
         return env_value
 
     raise ValueError(
-        f"{purpose}: provide via --*-file flag or {env_var} env "
-        f"var; CLI value flags are not accepted for secrets"
+        f"{purpose}: provide via --*-file flag or {env_var} env var; CLI value flags are not accepted for secrets"
     )
 
 
@@ -167,9 +164,7 @@ class AlertDeduper:
     # frozen at first load — a subprocess editing the state file
     # advances mtime + we re-read.
     _cache_mtime_ns: int | None = field(default=None, init=False, repr=False)
-    _cache_state: dict[str, datetime] | None = field(
-        default=None, init=False, repr=False
-    )
+    _cache_state: dict[str, datetime] | None = field(default=None, init=False, repr=False)
 
     @classmethod
     def from_hours(
@@ -200,11 +195,7 @@ class AlertDeduper:
             mtime_ns = self.state_file.stat().st_mtime_ns
         except OSError:
             mtime_ns = None
-        if (
-            mtime_ns is not None
-            and self._cache_mtime_ns == mtime_ns
-            and self._cache_state is not None
-        ):
+        if mtime_ns is not None and self._cache_mtime_ns == mtime_ns and self._cache_state is not None:
             # Cache valid: return a copy so callers mutating the dict
             # don't corrupt the cache.
             return dict(self._cache_state)
@@ -219,9 +210,7 @@ class AlertDeduper:
             # both fire conflicting audit events (the second racer
             # quietly observes the first racer's backup).
             backup_ts = datetime.now(tz=UTC).strftime("%Y%m%dT%H%M%SZ")
-            backup_path = self.state_file.with_suffix(
-                f"{self.state_file.suffix}.corrupt-{backup_ts}"
-            )
+            backup_path = self.state_file.with_suffix(f"{self.state_file.suffix}.corrupt-{backup_ts}")
             # Best-effort rename; if a concurrent dispatcher already
             # backed up this corruption window, our rename will fail
             # (file gone) and we skip the audit event.
@@ -289,9 +278,7 @@ class AlertDeduper:
     def _key(obs: CycleObservation) -> str:
         return f"{obs.cadence.slug}|{obs.state.value}"
 
-    def list_entries(
-        self, slug_filter: str | None = None
-    ) -> list[tuple[str, str, datetime]]:
+    def list_entries(self, slug_filter: str | None = None) -> list[tuple[str, str, datetime]]:
         """Return all dedup entries as ``(slug, state, last_dispatched)``
         tuples, sorted by ``last_dispatched`` descending (newest first).
 
@@ -324,9 +311,7 @@ class AlertDeduper:
         entries.sort(key=lambda e: e[2], reverse=True)
         return entries
 
-    def should_suppress(
-        self, obs: CycleObservation, now: datetime | None = None
-    ) -> bool:
+    def should_suppress(self, obs: CycleObservation, now: datetime | None = None) -> bool:
         """Return True if an alert for this (slug, state) was fired
         within the suppression window. Pure read; does NOT mark.
         """
@@ -340,9 +325,7 @@ class AlertDeduper:
             last = last.replace(tzinfo=UTC)
         return (check_now - last) < self.suppression
 
-    def mark_dispatched(
-        self, obs: CycleObservation, now: datetime | None = None
-    ) -> None:
+    def mark_dispatched(self, obs: CycleObservation, now: datetime | None = None) -> None:
         """Record that an alert was dispatched for this (slug, state).
         Caller invokes this AFTER a successful channel.dispatch().
 
@@ -366,20 +349,14 @@ class AlertDeduper:
 
         def _do_mark() -> None:
             state = self._load_state()
-            state[self._key(obs)] = (
-                now if now is not None else datetime.now(tz=UTC)
-            )
+            state[self._key(obs)] = now if now is not None else datetime.now(tz=UTC)
             self._save_state(state)
 
         if self.use_lock:
             from evidentia_core.security import FileLock
 
-            lock_path = self.state_file.with_suffix(
-                self.state_file.suffix + ".lock"
-            )
-            with FileLock(
-                lock_path, timeout_seconds=self.lock_timeout_seconds
-            ):
+            lock_path = self.state_file.with_suffix(self.state_file.suffix + ".lock")
+            with FileLock(lock_path, timeout_seconds=self.lock_timeout_seconds):
                 _do_mark()
         else:
             _do_mark()
@@ -427,9 +404,7 @@ def make_alert_handler(
                 evidentia={
                     "cadence_slug": obs.cadence.slug,
                     "state": obs.state.value,
-                    "suppression_window_hours": (
-                        deduper.suppression.total_seconds() / 3600
-                    ),
+                    "suppression_window_hours": (deduper.suppression.total_seconds() / 3600),
                 },
             )
             return
@@ -442,11 +417,7 @@ def make_alert_handler(
                 _log.warning(
                     action=EventAction.CONMON_ALERT_DISPATCHED,
                     outcome=EventOutcome.FAILURE,
-                    message=(
-                        f"alert dispatch failed on channel "
-                        f"{channel.name!r} for {obs.cadence.slug!r}: "
-                        f"{exc}"
-                    ),
+                    message=(f"alert dispatch failed on channel {channel.name!r} for {obs.cadence.slug!r}: {exc}"),
                     evidentia={
                         "cadence_slug": obs.cadence.slug,
                         "state": obs.state.value,
@@ -459,9 +430,7 @@ def make_alert_handler(
                 action=EventAction.CONMON_ALERT_DISPATCHED,
                 outcome=EventOutcome.SUCCESS,
                 message=(
-                    f"alert dispatched on channel {channel.name!r} "
-                    f"for {obs.cadence.slug!r} state="
-                    f"{obs.state.value!r}"
+                    f"alert dispatched on channel {channel.name!r} for {obs.cadence.slug!r} state={obs.state.value!r}"
                 ),
                 evidentia={
                     "cadence_slug": obs.cadence.slug,

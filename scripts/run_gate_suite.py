@@ -27,7 +27,7 @@ Scopes
   ``wiki_reference_drift`` + ``wiki_api_docs_drift``). This is the set the
   pre-push hook and the push/PR ``consistency.yml`` enforce on every change.
 * ``full`` — ``consistency`` PLUS the heavyweight gates
-  (``pytest`` + ``mypy`` + ``ruff`` + ``osv`` + ``parity``). This is
+  (``pytest`` + ``mypy`` + ``ruff`` + ``ruff_format`` + ``osv`` + ``parity``). This is
   the set the tag-time ``gate`` job runs before any artifact is
   published.
 
@@ -172,6 +172,7 @@ _FULL_ONLY_CHECKS: tuple[Check, ...] = (
     Check("pytest", ("python", "-m", "pytest", "tests/", "-q")),
     Check("mypy", ("mypy", *_MYPY_PACKAGES, "--strict-optional")),
     Check("ruff", ("ruff", "check", ".")),
+    Check("ruff_format", ("ruff", "format", "--check", ".")),
     Check("osv", ("python", "scripts/run_osv_scan.py")),
     # The CLI<->GUI parity gate (v0.10.9 item D: advisory -> blocking).
     # Full-only because it imports the live CLI app for the leaf walk —
@@ -193,9 +194,7 @@ def checks_for_scope(scope: str) -> tuple[Check, ...]:
     try:
         return _SCOPES[scope]
     except KeyError:  # pragma: no cover - argparse `choices` guards the CLI
-        raise ValueError(
-            f"unknown scope {scope!r}; expected one of {sorted(_SCOPES)}"
-        ) from None
+        raise ValueError(f"unknown scope {scope!r}; expected one of {sorted(_SCOPES)}") from None
 
 
 def _run_check(check: Check) -> int:
@@ -246,10 +245,7 @@ def main(argv: list[str] | None = None) -> int:
             print(check.name)
         return 0
 
-    print(
-        f"Running the '{args.scope}' gate suite "
-        f"({len(selected)} check(s)): {', '.join(c.name for c in selected)}"
-    )
+    print(f"Running the '{args.scope}' gate suite ({len(selected)} check(s)): {', '.join(c.name for c in selected)}")
 
     failures: list[str] = []
     for check in selected:
@@ -258,10 +254,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print("\n" + "=" * 62)
     if failures:
-        print(
-            f"GATE SUITE ({args.scope}): FAILED — "
-            f"{len(failures)} of {len(selected)} check(s) failed:"
-        )
+        print(f"GATE SUITE ({args.scope}): FAILED — {len(failures)} of {len(selected)} check(s) failed:")
         for name in failures:
             print(f"  - {name}")
         print("=" * 62)

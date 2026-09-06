@@ -1,4 +1,5 @@
 """Tests for scripts/enrich_release_sbom.py + scripts/check_sbom_ntia.py (H4/#17)."""
+
 from __future__ import annotations
 
 import json

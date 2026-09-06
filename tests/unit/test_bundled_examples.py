@@ -107,8 +107,7 @@ def test_bundled_inventory_control_ids_exist_in_quickstart_catalog() -> None:
     bundled_ids = {c.id for c in inv.controls}
     missing = bundled_ids - catalog_ids
     assert not missing, (
-        f"Bundled inventory references control IDs absent from "
-        f"{QUICKSTART_FRAMEWORK}: {sorted(missing)}"
+        f"Bundled inventory references control IDs absent from {QUICKSTART_FRAMEWORK}: {sorted(missing)}"
     )
 
 
@@ -133,9 +132,7 @@ def test_bundled_inventory_runs_gap_analysis_end_to_end() -> None:
     assert 0.0 < report.coverage_percentage < 100.0
 
 
-def test_bundled_inventory_runs_via_gap_analyze_cli(
-    runner: CliRunner, tmp_path: Path
-) -> None:
+def test_bundled_inventory_runs_via_gap_analyze_cli(runner: CliRunner, tmp_path: Path) -> None:
     """The documented quickstart CLI works against the bundled file.
 
     Mirrors exactly how a `pip install evidentia` user runs the

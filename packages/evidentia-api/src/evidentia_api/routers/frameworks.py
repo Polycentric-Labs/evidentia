@@ -42,9 +42,7 @@ async def list_frameworks(
 @router.get(
     "/frameworks/{framework_id}",
     response_model=ControlCatalog,
-    responses=error_responses(
-        {404: "Unknown ``framework_id`` (``error: not_found``)."}
-    ),
+    responses=error_responses({404: "Unknown ``framework_id`` (``error: not_found``)."}),
 )
 async def get_framework(
     framework_id: str,
@@ -73,10 +71,7 @@ async def get_framework(
     response_model=CatalogControl,
     responses=error_responses(
         {
-            404: (
-                "Unknown ``framework_id`` or ``control_id`` "
-                "(``error: not_found``)."
-            ),
+            404: ("Unknown ``framework_id`` or ``control_id`` (``error: not_found``)."),
         }
     ),
 )

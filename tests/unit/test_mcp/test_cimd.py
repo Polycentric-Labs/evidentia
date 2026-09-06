@@ -54,15 +54,11 @@ class TestCIMDDocumentModel:
             tos_uri="https://example.test/tos",
         )
         # Serialize + deserialize.
-        round_trip = CIMDDocument.model_validate_json(
-            doc.model_dump_json()
-        )
+        round_trip = CIMDDocument.model_validate_json(doc.model_dump_json())
         assert round_trip == doc
 
     def test_has_scope_empty_scope_denies_all(self) -> None:
-        doc = CIMDDocument(
-            client_id="empty-scope-client", client_name="Empty"
-        )
+        doc = CIMDDocument(client_id="empty-scope-client", client_name="Empty")
         assert doc.has_scope("list_frameworks") is False
         assert doc.has_scope("anything") is False
 
@@ -93,9 +89,7 @@ class TestCIMDDocumentModel:
 
 
 class TestCIMDRegistryFromFile:
-    def _write_registry(
-        self, tmp_path: Path, payload: dict[str, object]
-    ) -> Path:
+    def _write_registry(self, tmp_path: Path, payload: dict[str, object]) -> Path:
         path = tmp_path / "cimd.json"
         path.write_text(json.dumps(payload), encoding="utf-8")
         return path
@@ -122,51 +116,32 @@ class TestCIMDRegistryFromFile:
         registry = CIMDRegistry.from_file(path)
         assert registry.version == CIMD_REGISTRY_VERSION
         assert len(registry.clients) == 2
-        assert registry.clients["claude-desktop"].has_scope(
-            "gap_analyze"
-        )
-        assert (
-            registry.clients["readonly-agent"].has_scope("gap_analyze")
-            is False
-        )
+        assert registry.clients["claude-desktop"].has_scope("gap_analyze")
+        assert registry.clients["readonly-agent"].has_scope("gap_analyze") is False
 
     def test_load_empty_clients(self, tmp_path: Path) -> None:
-        path = self._write_registry(
-            tmp_path, {"version": 1, "clients": {}}
-        )
+        path = self._write_registry(tmp_path, {"version": 1, "clients": {}})
         registry = CIMDRegistry.from_file(path)
         assert registry.clients == {}
 
-    def test_malformed_json_raises_value_error(
-        self, tmp_path: Path
-    ) -> None:
+    def test_malformed_json_raises_value_error(self, tmp_path: Path) -> None:
         path = tmp_path / "cimd.json"
         path.write_text("not valid json {{{", encoding="utf-8")
         with pytest.raises(ValueError, match="Invalid JSON"):
             CIMDRegistry.from_file(path)
 
-    def test_top_level_list_raises_value_error(
-        self, tmp_path: Path
-    ) -> None:
+    def test_top_level_list_raises_value_error(self, tmp_path: Path) -> None:
         path = tmp_path / "cimd.json"
         path.write_text(json.dumps([1, 2, 3]), encoding="utf-8")
         with pytest.raises(ValueError, match="JSON object"):
             CIMDRegistry.from_file(path)
 
-    def test_unsupported_version_raises_value_error(
-        self, tmp_path: Path
-    ) -> None:
-        path = self._write_registry(
-            tmp_path, {"version": 99, "clients": {}}
-        )
-        with pytest.raises(
-            ValueError, match="Unsupported CIMD registry version"
-        ):
+    def test_unsupported_version_raises_value_error(self, tmp_path: Path) -> None:
+        path = self._write_registry(tmp_path, {"version": 99, "clients": {}})
+        with pytest.raises(ValueError, match="Unsupported CIMD registry version"):
             CIMDRegistry.from_file(path)
 
-    def test_validation_failure_in_client_doc(
-        self, tmp_path: Path
-    ) -> None:
+    def test_validation_failure_in_client_doc(self, tmp_path: Path) -> None:
         path = self._write_registry(
             tmp_path,
             {
@@ -182,9 +157,7 @@ class TestCIMDRegistryFromFile:
         with pytest.raises(ValueError, match="failed validation"):
             CIMDRegistry.from_file(path)
 
-    def test_missing_file_raises_file_not_found(
-        self, tmp_path: Path
-    ) -> None:
+    def test_missing_file_raises_file_not_found(self, tmp_path: Path) -> None:
         path = tmp_path / "does_not_exist.json"
         with pytest.raises(FileNotFoundError):
             CIMDRegistry.from_file(path)
@@ -239,9 +212,7 @@ class TestCIMDInBuildServer:
         server = build_server(cimd_registry=registry)
         attached = server.evidentia_cimd  # type: ignore[attr-defined]
         assert attached is registry
-        assert attached.clients["test-client"].has_scope(
-            "list_frameworks"
-        )
+        assert attached.clients["test-client"].has_scope("list_frameworks")
 
 
 # ── 5. CLI --cimd-registry round-trip ────────────────────────────
@@ -262,9 +233,7 @@ class TestCIMDCLIFlag:
         param_names = {p.name for p in serve_cmd.params}
         assert "cimd_registry_path" in param_names
 
-    def test_cimd_registry_invalid_path_exits_2(
-        self, tmp_path: Path
-    ) -> None:
+    def test_cimd_registry_invalid_path_exits_2(self, tmp_path: Path) -> None:
         from evidentia_mcp.cli import app
         from typer.testing import CliRunner
 

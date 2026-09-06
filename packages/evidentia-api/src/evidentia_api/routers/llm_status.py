@@ -54,7 +54,8 @@ async def llm_status() -> LlmStatusResponse:
     providers["ollama"] = LlmProviderState(
         configured=local_configured,
         source=(
-            f"model:{model}" if any(model.lower().startswith(p) for p in LOCAL_LLM_PREFIXES)
+            f"model:{model}"
+            if any(model.lower().startswith(p) for p in LOCAL_LLM_PREFIXES)
             else ("env:EVIDENTIA_LLM_API_BASE" if local_configured else None)
         ),
     )

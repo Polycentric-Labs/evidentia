@@ -56,9 +56,7 @@ def test_roundtrip_user_manifest(tmp_path) -> None:
         license="Copyright ISO/IEC — licensed copy",
         placeholder=False,
     )
-    saved = save_user_manifest(
-        FrameworkManifest(version=1, frameworks=[entry]), tmp_path
-    )
+    saved = save_user_manifest(FrameworkManifest(version=1, frameworks=[entry]), tmp_path)
     assert saved == user_manifest_path(tmp_path)
     assert saved.exists()
 

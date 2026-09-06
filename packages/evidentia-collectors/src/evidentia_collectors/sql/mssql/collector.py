@@ -79,10 +79,7 @@ class MSSQLQueryError(MSSQLCollectorError):
 BLIND_SPOTS: list[dict[str, str]] = [
     {
         "id": "EVIDENTIA-MSSQL-EXTENDED-EVENTS",
-        "title": (
-            "Extended Events sessions outside the SQL Audit subsystem "
-            "are not enumerated"
-        ),
+        "title": ("Extended Events sessions outside the SQL Audit subsystem are not enumerated"),
         "description": (
             "MS SQL Server has multiple audit-trail mechanisms: SQL "
             "Audit (sys.server_audits), Extended Events sessions, and "
@@ -95,9 +92,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
     },
     {
         "id": "EVIDENTIA-MSSQL-AZURE-SQL-FEATURE-MATRIX",
-        "title": (
-            "Azure SQL Database / Managed Instance feature differences"
-        ),
+        "title": ("Azure SQL Database / Managed Instance feature differences"),
         "description": (
             "Azure SQL Database lacks server-level objects "
             "(sys.server_audits doesn't return rows for managed "
@@ -110,9 +105,7 @@ BLIND_SPOTS: list[dict[str, str]] = [
     },
     {
         "id": "EVIDENTIA-MSSQL-ALWAYS-ENCRYPTED-COLUMN-VISIBILITY",
-        "title": (
-            "Always Encrypted column metadata requires CMK access"
-        ),
+        "title": ("Always Encrypted column metadata requires CMK access"),
         "description": (
             "Always Encrypted (column-level encryption) reports the "
             "presence of column master keys in "
@@ -188,9 +181,7 @@ class MSSQLCollector:
                 self._connection.close()
             self._connection = None
 
-    def _build_connection_string(
-        self, uri: str, *, pinned_ip: str | None = None
-    ) -> str:
+    def _build_connection_string(self, uri: str, *, pinned_ip: str | None = None) -> str:
         """Convert mssql://user@host:1433/dbname into a pyodbc
         connection string. The password is supplied separately via
         the password= kwarg (NOT via the URI) per the secret protocol.
@@ -233,9 +224,7 @@ class MSSQLCollector:
         if self._connection is not None:
             return self._connection
         if not self._connection_uri:
-            raise MSSQLCollectorError(
-                "_ensure_connected called without a connection_uri."
-            )
+            raise MSSQLCollectorError("_ensure_connected called without a connection_uri.")
         # SECURE-BY-DEFAULT (threat-model T2): refuse a connection_uri whose
         # host resolves to a private / loopback / link-local / metadata address
         # BEFORE importing the driver or opening a socket. Guard-before-import
@@ -263,7 +252,7 @@ class MSSQLCollector:
         except ImportError as e:
             raise MSSQLCollectorError(
                 "pyodbc is not installed. Install via the [sql-mssql] "
-                "extra: pip install \"evidentia-collectors[sql-mssql]\""
+                'extra: pip install "evidentia-collectors[sql-mssql]"'
             ) from e
         # F-V1010-S1: the ODBC driver resolves natively (the getaddrinfo
         # pin does NOT reach it), so we pin at the connection-string level
@@ -271,16 +260,12 @@ class MSSQLCollector:
         # original hostname (see _build_connection_string). The getaddrinfo
         # pin is also held as defense-in-depth for any Python-side lookup.
         pinned_ip = validated_ips[0] if validated_ips else None
-        conn_str = self._build_connection_string(
-            self._connection_uri, pinned_ip=pinned_ip
-        )
+        conn_str = self._build_connection_string(self._connection_uri, pinned_ip=pinned_ip)
         try:
             with pin_resolved_host(host, validated_ips):
                 self._connection = pyodbc.connect(conn_str, autocommit=True)
         except Exception as e:
-            raise MSSQLConnectionError(
-                f"Could not connect to MSSQL (driver: {type(e).__name__})"
-            ) from e
+            raise MSSQLConnectionError(f"Could not connect to MSSQL (driver: {type(e).__name__})") from e
         return self._connection
 
     # ── Context + provenance ────────────────────────────────────────
@@ -301,10 +286,7 @@ class MSSQLCollector:
         conn = self._ensure_connected()
         cur = conn.cursor()
         try:
-            cur.execute(
-                "SELECT SUSER_SNAME(), DB_NAME(), "
-                "CAST(SERVERPROPERTY('ProductVersion') AS NVARCHAR(128))"
-            )
+            cur.execute("SELECT SUSER_SNAME(), DB_NAME(), CAST(SERVERPROPERTY('ProductVersion') AS NVARCHAR(128))")
             row = cur.fetchone()
             self._cached_user = str(row[0]) if row else None
             self._cached_db = str(row[1] or "") if row else None
@@ -323,9 +305,7 @@ class MSSQLCollector:
             "is_db_datawriter": is_writer,
         }
 
-    def _probe_write_privilege(
-        self, conn: Any
-    ) -> tuple[bool, bool, bool]:
+    def _probe_write_privilege(self, conn: Any) -> tuple[bool, bool, bool]:
         """Check IS_SRVROLEMEMBER('sysadmin') + IS_ROLEMEMBER('db_owner')
         + IS_ROLEMEMBER('db_datawriter'). Any of the three == True is
         a least-privilege violation."""
@@ -333,9 +313,7 @@ class MSSQLCollector:
         try:
             try:
                 cur.execute(
-                    "SELECT IS_SRVROLEMEMBER('sysadmin'), "
-                    "IS_ROLEMEMBER('db_owner'), "
-                    "IS_ROLEMEMBER('db_datawriter')"
+                    "SELECT IS_SRVROLEMEMBER('sysadmin'), IS_ROLEMEMBER('db_owner'), IS_ROLEMEMBER('db_datawriter')"
                 )
                 row = cur.fetchone()
                 is_sysadmin = bool(row[0]) if row else False
@@ -373,9 +351,7 @@ class MSSQLCollector:
         except MSSQLCollectorError:
             raise
         except Exception as e:
-            raise MSSQLConnectionError(
-                f"Could not establish + probe MSSQL connection: {e}"
-            ) from e
+            raise MSSQLConnectionError(f"Could not establish + probe MSSQL connection: {e}") from e
 
         context = self._build_context(run_id)
         errors: list[str] = []
@@ -395,22 +371,13 @@ class MSSQLCollector:
         ):
             _log.info(
                 action=EventAction.COLLECT_STARTED,
-                message=(
-                    f"MSSQL collection starting for "
-                    f"{self._cached_user}@{self._cached_db}"
-                ),
+                message=(f"MSSQL collection starting for {self._cached_user}@{self._cached_db}"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.START],
             )
 
-            if (
-                probe["is_sysadmin"]
-                or probe["is_db_owner"]
-                or probe["is_db_datawriter"]
-            ):
-                findings.append(
-                    self._write_priv_detected_finding(probe, context)
-                )
+            if probe["is_sysadmin"] or probe["is_db_owner"] or probe["is_db_datawriter"]:
+                findings.append(self._write_priv_detected_finding(probe, context))
 
             conn = self._connection
             assert conn is not None
@@ -433,28 +400,18 @@ class MSSQLCollector:
                         error={"type": "MSSQLQueryError", "message": str(e)},
                     )
                 except Exception as e:
-                    errors.append(
-                        f"{sub_check.__name__}: unexpected error: {e}"
-                    )
+                    errors.append(f"{sub_check.__name__}: unexpected error: {e}")
                     _log.error(
                         action=EventAction.COLLECT_FAILED,
                         outcome=EventOutcome.FAILURE,
-                        message=(
-                            f"Sub-check {sub_check.__name__} unexpected error"
-                        ),
+                        message=(f"Sub-check {sub_check.__name__} unexpected error"),
                         error={"type": type(e).__name__, "message": str(e)},
                     )
 
             _log.info(
                 action=EventAction.COLLECT_COMPLETED,
-                outcome=(
-                    EventOutcome.SUCCESS
-                    if not errors
-                    else EventOutcome.FAILURE
-                ),
-                message=(
-                    f"MSSQL collection completed: {len(findings)} findings"
-                ),
+                outcome=(EventOutcome.SUCCESS if not errors else EventOutcome.FAILURE),
+                message=(f"MSSQL collection completed: {len(findings)} findings"),
                 category=[EventCategory.CONFIGURATION],
                 types=[EventType.END],
                 evidentia={
@@ -469,9 +426,7 @@ class MSSQLCollector:
             collector_version=current_version(),
             collection_started_at=started_at,
             collection_finished_at=utc_now(),
-            source_system_ids=[
-                f"mssql:{self._cached_user}@{self._cached_db}"
-            ],
+            source_system_ids=[f"mssql:{self._cached_user}@{self._cached_db}"],
             filters_applied={
                 "user": self._cached_user or "unknown",
                 "database": self._cached_db or "unknown",
@@ -507,10 +462,7 @@ class MSSQLCollector:
             roles.append("db_datawriter")
         roles_str = ", ".join(roles)
         return SecurityFinding(
-            title=(
-                f"MSSQL principal {self._cached_user!r} has write "
-                f"privilege ({roles_str})"
-            ),
+            title=(f"MSSQL principal {self._cached_user!r} has write privilege ({roles_str})"),
             description=(
                 f"Principal ({self._cached_user}) connected to "
                 f"{self._cached_db} is a member of: {roles_str}. "
@@ -519,18 +471,13 @@ class MSSQLCollector:
                 "privilege violates AC-6 least-privilege and increases "
                 "blast radius of credential compromise."
             ),
-            severity=(
-                Severity.HIGH if probe["is_sysadmin"] else Severity.MEDIUM
-            ),
+            severity=(Severity.HIGH if probe["is_sysadmin"] else Severity.MEDIUM),
             status=FindingStatus.ACTIVE,
             # v0.10.0: write privilege on the audit principal is a
             # failed least-privilege check.
             compliance_status=ComplianceStatus.FAIL,
             source_system="mssql",
-            source_finding_id=(
-                f"EVIDENTIA-WRITE-PRIV-DETECTED:{self._cached_user}@"
-                f"{self._cached_db}"
-            ),
+            source_finding_id=(f"EVIDENTIA-WRITE-PRIV-DETECTED:{self._cached_user}@{self._cached_db}"),
             resource_type="MSSQL::Principal",
             resource_id=str(self._cached_user or "unknown"),
             control_ids=[m.control_id for m in WRITE_PRIV_DETECTED_MAPPINGS],
@@ -543,9 +490,7 @@ class MSSQLCollector:
             },
         )
 
-    def _user_role_inventory_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _user_role_inventory_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
@@ -557,9 +502,7 @@ class MSSQLCollector:
                 )
                 rows = list(cur.fetchall())
             except Exception as e:
-                raise MSSQLQueryError(
-                    f"Could not enumerate sys.server_principals: {e}"
-                ) from e
+                raise MSSQLQueryError(f"Could not enumerate sys.server_principals: {e}") from e
 
             disabled_count = sum(1 for r in rows if r[2])
             sql_logins = [r[0] for r in rows if r[1] == "SQL_LOGIN"]
@@ -580,11 +523,7 @@ class MSSQLCollector:
                         "Windows / Azure AD logins are typically "
                         "preferred over SQL Authentication."
                     ),
-                    severity=(
-                        Severity.MEDIUM
-                        if len(sql_logins) > 5
-                        else Severity.INFORMATIONAL
-                    ),
+                    severity=(Severity.MEDIUM if len(sql_logins) > 5 else Severity.INFORMATIONAL),
                     status=FindingStatus.ACTIVE,
                     # v0.10.0: a user/principal inventory is
                     # informational evidence, not a pass/fail check.
@@ -593,9 +532,7 @@ class MSSQLCollector:
                     source_finding_id=f"user-inventory:{self._cached_db}",
                     resource_type="MSSQL::Server",
                     resource_id=str(self._cached_db or "unknown"),
-                    control_ids=[
-                        m.control_id for m in USER_ROLE_INVENTORY_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in USER_ROLE_INVENTORY_MAPPINGS],
                     collection_context=context,
                     raw_data={
                         "total_principals": len(rows),
@@ -607,9 +544,7 @@ class MSSQLCollector:
         finally:
             cur.close()
 
-    def _privilege_grant_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _privilege_grant_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
@@ -621,16 +556,11 @@ class MSSQLCollector:
                 row = cur.fetchone()
                 sysadmin_count = int(row[0]) if row else 0
             except Exception as e:
-                raise MSSQLQueryError(
-                    f"Could not enumerate server-role members: {e}"
-                ) from e
+                raise MSSQLQueryError(f"Could not enumerate server-role members: {e}") from e
 
             return [
                 SecurityFinding(
-                    title=(
-                        f"MSSQL sysadmin role has {sysadmin_count} "
-                        f"members"
-                    ),
+                    title=(f"MSSQL sysadmin role has {sysadmin_count} members"),
                     description=(
                         f"{sysadmin_count} principals are members of "
                         "the server-level sysadmin fixed role. AC-6 "
@@ -646,26 +576,16 @@ class MSSQLCollector:
                         if sysadmin_count > 2
                         else Severity.INFORMATIONAL
                     ),
-                    status=(
-                        FindingStatus.ACTIVE
-                        if sysadmin_count > 2
-                        else FindingStatus.RESOLVED
-                    ),
+                    status=(FindingStatus.ACTIVE if sysadmin_count > 2 else FindingStatus.RESOLVED),
                     # v0.10.0: excessive sysadmin grants fail the AC-6
                     # least-privilege check; a small (<=2) membership
                     # passes.
-                    compliance_status=ComplianceStatus.FAIL
-                    if sysadmin_count > 2
-                    else ComplianceStatus.PASS,
+                    compliance_status=ComplianceStatus.FAIL if sysadmin_count > 2 else ComplianceStatus.PASS,
                     source_system="mssql",
-                    source_finding_id=(
-                        f"sysadmin-membership:{self._cached_db}"
-                    ),
+                    source_finding_id=(f"sysadmin-membership:{self._cached_db}"),
                     resource_type="MSSQL::ServerRole",
                     resource_id="sysadmin",
-                    control_ids=[
-                        m.control_id for m in PRIVILEGE_GRANT_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in PRIVILEGE_GRANT_MAPPINGS],
                     collection_context=context,
                     raw_data={"sysadmin_member_count": sysadmin_count},
                 )
@@ -673,33 +593,24 @@ class MSSQLCollector:
         finally:
             cur.close()
 
-    def _audit_log_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _audit_log_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
                 cur.execute(
-                    "SELECT COUNT(*), "
-                    "SUM(CASE WHEN is_state_enabled = 1 THEN 1 ELSE 0 END) "
-                    "FROM sys.server_audits"
+                    "SELECT COUNT(*), SUM(CASE WHEN is_state_enabled = 1 THEN 1 ELSE 0 END) FROM sys.server_audits"
                 )
                 row = cur.fetchone()
                 total_audits = int(row[0]) if row else 0
                 enabled_audits = int(row[1] or 0) if row else 0
             except Exception as e:
-                raise MSSQLQueryError(
-                    f"Could not enumerate sys.server_audits: {e}"
-                ) from e
+                raise MSSQLQueryError(f"Could not enumerate sys.server_audits: {e}") from e
 
             audit_configured = total_audits > 0
             audit_enabled = enabled_audits > 0
             return [
                 SecurityFinding(
-                    title=(
-                        f"MSSQL SQL Audit: {total_audits} configured, "
-                        f"{enabled_audits} enabled"
-                    ),
+                    title=(f"MSSQL SQL Audit: {total_audits} configured, {enabled_audits} enabled"),
                     description=(
                         f"sys.server_audits returned {total_audits} "
                         f"audit configurations; {enabled_audits} are "
@@ -709,30 +620,16 @@ class MSSQLCollector:
                         "writing to a tamper-resistant target (file "
                         "share, Application Log, Security Log)."
                     ),
-                    severity=(
-                        Severity.INFORMATIONAL
-                        if audit_enabled
-                        else Severity.MEDIUM
-                    ),
-                    status=(
-                        FindingStatus.RESOLVED
-                        if audit_enabled
-                        else FindingStatus.ACTIVE
-                    ),
+                    severity=(Severity.INFORMATIONAL if audit_enabled else Severity.MEDIUM),
+                    status=(FindingStatus.RESOLVED if audit_enabled else FindingStatus.ACTIVE),
                     # v0.10.0: audit-disabled fails the AU-2 check;
                     # at least one enabled audit passes.
-                    compliance_status=ComplianceStatus.PASS
-                    if audit_enabled
-                    else ComplianceStatus.FAIL,
+                    compliance_status=ComplianceStatus.PASS if audit_enabled else ComplianceStatus.FAIL,
                     source_system="mssql",
-                    source_finding_id=(
-                        f"server-audit:{self._cached_db}"
-                    ),
+                    source_finding_id=(f"server-audit:{self._cached_db}"),
                     resource_type="MSSQL::Server",
                     resource_id=str(self._cached_db or "unknown"),
-                    control_ids=[
-                        m.control_id for m in AUDIT_LOG_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in AUDIT_LOG_MAPPINGS],
                     collection_context=context,
                     raw_data={
                         "total_audits": total_audits,
@@ -744,9 +641,7 @@ class MSSQLCollector:
         finally:
             cur.close()
 
-    def _tde_encryption_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _tde_encryption_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
@@ -760,9 +655,7 @@ class MSSQLCollector:
                 )
                 rows = list(cur.fetchall())
             except Exception as e:
-                raise MSSQLQueryError(
-                    f"Could not query TDE state: {e}"
-                ) from e
+                raise MSSQLQueryError(f"Could not query TDE state: {e}") from e
 
             # encryption_state values:
             # 0 = no DEK present, no encryption
@@ -791,30 +684,16 @@ class MSSQLCollector:
                         "production user databases storing sensitive "
                         "data should have TDE enabled."
                     ),
-                    severity=(
-                        Severity.MEDIUM
-                        if unencrypted_dbs
-                        else Severity.INFORMATIONAL
-                    ),
-                    status=(
-                        FindingStatus.ACTIVE
-                        if unencrypted_dbs
-                        else FindingStatus.RESOLVED
-                    ),
+                    severity=(Severity.MEDIUM if unencrypted_dbs else Severity.INFORMATIONAL),
+                    status=(FindingStatus.ACTIVE if unencrypted_dbs else FindingStatus.RESOLVED),
                     # v0.10.0: unencrypted user databases fail the
                     # SC-28 check; all-encrypted passes.
-                    compliance_status=ComplianceStatus.FAIL
-                    if unencrypted_dbs
-                    else ComplianceStatus.PASS,
+                    compliance_status=ComplianceStatus.FAIL if unencrypted_dbs else ComplianceStatus.PASS,
                     source_system="mssql",
-                    source_finding_id=(
-                        f"tde-state:{self._cached_db}"
-                    ),
+                    source_finding_id=(f"tde-state:{self._cached_db}"),
                     resource_type="MSSQL::Server",
                     resource_id=str(self._cached_db or "unknown"),
-                    control_ids=[
-                        m.control_id for m in ENCRYPTION_AT_REST_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in ENCRYPTION_AT_REST_MAPPINGS],
                     collection_context=context,
                     raw_data={
                         "encrypted_databases": encrypted_dbs,
@@ -826,9 +705,7 @@ class MSSQLCollector:
         finally:
             cur.close()
 
-    def _tls_config_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _tls_config_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
@@ -843,18 +720,12 @@ class MSSQLCollector:
                 auth_scheme = str(row[1] or "") if row else ""
                 encrypt_option = str(row[2] or "") if row else ""
             except Exception as e:
-                raise MSSQLQueryError(
-                    f"Could not read connection properties: {e}"
-                ) from e
+                raise MSSQLQueryError(f"Could not read connection properties: {e}") from e
 
             encrypted = encrypt_option.upper() in {"TRUE", "1"}
             return [
                 SecurityFinding(
-                    title=(
-                        f"MSSQL connection: protocol={protocol}, "
-                        f"auth={auth_scheme}, "
-                        f"encrypted={encrypted}"
-                    ),
+                    title=(f"MSSQL connection: protocol={protocol}, auth={auth_scheme}, encrypted={encrypted}"),
                     description=(
                         f"CONNECTIONPROPERTY: protocol_type={protocol}, "
                         f"auth_scheme={auth_scheme}, "
@@ -866,31 +737,17 @@ class MSSQLCollector:
                         "password policy or replaced with Windows / "
                         "Azure AD authentication."
                     ),
-                    severity=(
-                        Severity.INFORMATIONAL
-                        if encrypted
-                        else Severity.MEDIUM
-                    ),
-                    status=(
-                        FindingStatus.RESOLVED
-                        if encrypted
-                        else FindingStatus.ACTIVE
-                    ),
+                    severity=(Severity.INFORMATIONAL if encrypted else Severity.MEDIUM),
+                    status=(FindingStatus.RESOLVED if encrypted else FindingStatus.ACTIVE),
                     # v0.10.0: cleartext (encrypt_option != TRUE) fails
                     # the SC-12 in-transit-encryption check; encrypted
                     # passes.
-                    compliance_status=ComplianceStatus.PASS
-                    if encrypted
-                    else ComplianceStatus.FAIL,
+                    compliance_status=ComplianceStatus.PASS if encrypted else ComplianceStatus.FAIL,
                     source_system="mssql",
-                    source_finding_id=(
-                        f"tls-config:{self._cached_db}"
-                    ),
+                    source_finding_id=(f"tls-config:{self._cached_db}"),
                     resource_type="MSSQL::Connection",
                     resource_id=str(self._cached_db or "unknown"),
-                    control_ids=[
-                        m.control_id for m in CRYPTO_CONFIG_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in CRYPTO_CONFIG_MAPPINGS],
                     collection_context=context,
                     raw_data={
                         "protocol_type": protocol,
@@ -903,32 +760,23 @@ class MSSQLCollector:
         finally:
             cur.close()
 
-    def _connection_limit_findings(
-        self, conn: Any, context: CollectionContext
-    ) -> list[SecurityFinding]:
+    def _connection_limit_findings(self, conn: Any, context: CollectionContext) -> list[SecurityFinding]:
         cur = conn.cursor()
         try:
             try:
                 cur.execute(
-                    "SELECT name, CAST(value_in_use AS INT) "
-                    "FROM sys.configurations "
-                    "WHERE name = 'user connections'"
+                    "SELECT name, CAST(value_in_use AS INT) FROM sys.configurations WHERE name = 'user connections'"
                 )
                 row = cur.fetchone()
                 user_conn_limit = int(row[1]) if row else 0
             except Exception as e:
-                raise MSSQLQueryError(
-                    f"Could not query sys.configurations: {e}"
-                ) from e
+                raise MSSQLQueryError(f"Could not query sys.configurations: {e}") from e
 
             # 0 = unlimited (default)
             limit_set = user_conn_limit > 0
             return [
                 SecurityFinding(
-                    title=(
-                        f"MSSQL user_connections: "
-                        f"{user_conn_limit if limit_set else 'unlimited'}"
-                    ),
+                    title=(f"MSSQL user_connections: {user_conn_limit if limit_set else 'unlimited'}"),
                     description=(
                         f"sp_configure 'user connections' = "
                         f"{user_conn_limit} ({'limit set' if limit_set else 'unlimited (default)'}). "
@@ -944,14 +792,10 @@ class MSSQLCollector:
                     # informational evidence, not a pass/fail check.
                     compliance_status=ComplianceStatus.UNKNOWN,
                     source_system="mssql",
-                    source_finding_id=(
-                        f"connection-limits:{self._cached_db}"
-                    ),
+                    source_finding_id=(f"connection-limits:{self._cached_db}"),
                     resource_type="MSSQL::Server",
                     resource_id=str(self._cached_db or "unknown"),
-                    control_ids=[
-                        m.control_id for m in CONNECTION_LIMIT_MAPPINGS
-                    ],
+                    control_ids=[m.control_id for m in CONNECTION_LIMIT_MAPPINGS],
                     collection_context=context,
                     raw_data={
                         "user_connections_limit": user_conn_limit,

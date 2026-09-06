@@ -94,12 +94,8 @@ from hypothesis import HealthCheck, Phase, settings  # noqa: E402
 # EVIDENTIA_CATALOG_DIR) — so a run left un-isolated would write fuzz catalogs,
 # rewrite the real frameworks.yaml manifest, and could unlink a real
 # user-imported catalog in the developer's actual store.
-os.environ["EVIDENTIA_AI_REGISTRY_DIR"] = tempfile.mkdtemp(
-    prefix="evidentia-dast-stateful-registry-"
-)
-os.environ["EVIDENTIA_CATALOG_DIR"] = tempfile.mkdtemp(
-    prefix="evidentia-dast-stateful-catalog-"
-)
+os.environ["EVIDENTIA_AI_REGISTRY_DIR"] = tempfile.mkdtemp(prefix="evidentia-dast-stateful-registry-")
+os.environ["EVIDENTIA_CATALOG_DIR"] = tempfile.mkdtemp(prefix="evidentia-dast-stateful-catalog-")
 
 # Neutralize the token-bucket rate limiter for the fuzz. The limiter
 # (60/min, burst 10 on POST /ai-gov/register) throttles the hundreds of
@@ -135,9 +131,7 @@ _LINKED_LIFECYCLES = (
 
 
 def _make_state_machine() -> type:
-    schema = schemathesis.openapi.from_asgi(
-        "/api/openapi.json", create_app(offline=True)
-    )
+    schema = schemathesis.openapi.from_asgi("/api/openapi.json", create_app(offline=True))
     schema = schema.include(path_regex=_LINKED_LIFECYCLES)
     return schema.as_state_machine()
 

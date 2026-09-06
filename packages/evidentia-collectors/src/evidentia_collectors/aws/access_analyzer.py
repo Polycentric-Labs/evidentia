@@ -215,14 +215,12 @@ _VALID_POLICY_MAPPINGS = [
     _mapping(
         "AC-2",
         OLIRRelationship.INTERSECTS_WITH,
-        "AC-2 — overly permissive policies affect account-management "
-        "scope.",
+        "AC-2 — overly permissive policies affect account-management scope.",
     ),
     _mapping(
         "AC-6",
         OLIRRelationship.SUBSET_OF,
-        "AC-6 — wildcard policies violate least privilege at the "
-        "design stage.",
+        "AC-6 — wildcard policies violate least privilege at the design stage.",
     ),
 ]
 
@@ -348,8 +346,7 @@ class AccessAnalyzerCollector:
             import boto3
         except ImportError as e:  # pragma: no cover
             raise AccessAnalyzerCollectorError(
-                "boto3 is not installed. Install the collectors AWS extra: "
-                "`pip install 'evidentia-collectors[aws]'`."
+                "boto3 is not installed. Install the collectors AWS extra: `pip install 'evidentia-collectors[aws]'`."
             ) from e
 
         self._session = boto3.Session(region_name=region, profile_name=profile)
@@ -360,8 +357,7 @@ class AccessAnalyzerCollector:
         if service not in self._clients:
             if self._session is None:
                 raise AccessAnalyzerCollectorError(
-                    f"No boto3 client available for {service!r}; pass "
-                    "_clients to the constructor when mocking."
+                    f"No boto3 client available for {service!r}; pass _clients to the constructor when mocking."
                 )
             self._clients[service] = self._session.client(service)
         return self._clients[service]
@@ -400,17 +396,12 @@ class AccessAnalyzerCollector:
 
     # ── collection orchestration ────────────────────────────────────
 
-    def collect(
-        self, *, include_archived: bool = False, dry_run: bool = False
-    ) -> list[SecurityFinding]:
+    def collect(self, *, include_archived: bool = False, dry_run: bool = False) -> list[SecurityFinding]:
         """Return findings. Backward-compat-style API."""
         if dry_run:
             _log.info(
                 action=EventAction.COLLECT_STARTED,
-                message=(
-                    f"Access Analyzer dry-run for {self.analyzer_arn} — "
-                    "would enumerate findings with pagination"
-                ),
+                message=(f"Access Analyzer dry-run for {self.analyzer_arn} — would enumerate findings with pagination"),
                 category=[EventCategory.IAM],
                 types=[EventType.INFO],
                 evidentia={
@@ -423,9 +414,7 @@ class AccessAnalyzerCollector:
         findings, _manifest = self.collect_v2(include_archived=include_archived)
         return findings
 
-    def collect_v2(
-        self, *, include_archived: bool = False
-    ) -> tuple[list[SecurityFinding], CollectionManifest]:
+    def collect_v2(self, *, include_archived: bool = False) -> tuple[list[SecurityFinding], CollectionManifest]:
         """Enterprise-grade orchestrator.
 
         Returns ``(findings, manifest)`` with per-resource-type coverage
@@ -468,10 +457,7 @@ class AccessAnalyzerCollector:
         ):
             _log.info(
                 action=EventAction.COLLECT_STARTED,
-                message=(
-                    f"Access Analyzer collection starting for "
-                    f"{self.analyzer_arn}"
-                ),
+                message=(f"Access Analyzer collection starting for {self.analyzer_arn}"),
                 category=[EventCategory.IAM],
                 types=[EventType.START],
             )
@@ -486,9 +472,7 @@ class AccessAnalyzerCollector:
                     page_count += 1
                     for raw_finding in page.get("findings", []):
                         if isinstance(raw_finding, dict):
-                            findings.append(
-                                self._finding_from_raw(raw_finding, context)
-                            )
+                            findings.append(self._finding_from_raw(raw_finding, context))
 
                     next_token = page.get("nextToken")
                     if not next_token:
@@ -498,15 +482,11 @@ class AccessAnalyzerCollector:
                 _log.error(
                     action=EventAction.COLLECT_FAILED,
                     outcome=EventOutcome.FAILURE,
-                    message=(
-                        f"Access Analyzer collection failed (transient): {e}"
-                    ),
+                    message=(f"Access Analyzer collection failed (transient): {e}"),
                     error={"type": type(e).__name__, "message": str(e)},
                 )
             except Exception as e:
-                errors.append(
-                    f"access-analyzer: {type(e).__name__}: {e}"
-                )
+                errors.append(f"access-analyzer: {type(e).__name__}: {e}")
                 _log.error(
                     action=EventAction.COLLECT_FAILED,
                     outcome=EventOutcome.FAILURE,
@@ -519,10 +499,7 @@ class AccessAnalyzerCollector:
                 empty_categories.append("aws-access-analyzer-active")
                 _log.info(
                     action=EventAction.MANIFEST_EMPTY_SET_ATTESTED,
-                    message=(
-                        "Access Analyzer: zero active findings "
-                        "(attested empty)"
-                    ),
+                    message=("Access Analyzer: zero active findings (attested empty)"),
                 )
 
             manifest = CollectionManifest(
@@ -547,9 +524,7 @@ class AccessAnalyzerCollector:
                 ],
                 total_findings=len(findings),
                 is_complete=not errors,
-                incomplete_reason=(
-                    "; ".join(errors) if errors else None
-                ),
+                incomplete_reason=("; ".join(errors) if errors else None),
                 empty_categories=empty_categories,
                 # Blind-spot disclosures as manifest warnings. The
                 # OSCAL exporter also picks these up for back-matter
@@ -560,9 +535,7 @@ class AccessAnalyzerCollector:
 
             _log.info(
                 action=EventAction.COLLECT_COMPLETED,
-                outcome=EventOutcome.SUCCESS
-                if not errors
-                else EventOutcome.FAILURE,
+                outcome=EventOutcome.SUCCESS if not errors else EventOutcome.FAILURE,
                 message=(
                     f"Access Analyzer completed: {len(findings)} findings "
                     f"across {page_count} page(s), {len(errors)} errors"
@@ -579,9 +552,7 @@ class AccessAnalyzerCollector:
 
     # ── Finding conversion ──────────────────────────────────────────
 
-    def _finding_from_raw(
-        self, raw: dict[str, Any], context: CollectionContext
-    ) -> SecurityFinding:
+    def _finding_from_raw(self, raw: dict[str, Any], context: CollectionContext) -> SecurityFinding:
         """Convert an Access Analyzer API finding dict to a SecurityFinding."""
         finding_id = str(raw.get("id") or "")
         resource = str(raw.get("resource") or "")
@@ -597,8 +568,10 @@ class AccessAnalyzerCollector:
             severity = Severity.HIGH
         elif finding_type.lower().startswith("external"):
             severity = Severity.MEDIUM
-        elif finding_type in {"UnusedIAMRole", "UnusedIAMUserAccessKey",
-                              "UnusedIAMUserPassword"} or finding_type == "UnusedPermission":
+        elif (
+            finding_type in {"UnusedIAMRole", "UnusedIAMUserAccessKey", "UnusedIAMUserPassword"}
+            or finding_type == "UnusedPermission"
+        ):
             severity = Severity.LOW
         else:
             severity = Severity.MEDIUM
@@ -608,17 +581,9 @@ class AccessAnalyzerCollector:
 
         # Status mapping: AWS Active → FindingStatus.ACTIVE;
         # Resolved/Archived → RESOLVED.
-        status_enum = (
-            FindingStatus.ACTIVE
-            if status == "ACTIVE"
-            else FindingStatus.RESOLVED
-        )
+        status_enum = FindingStatus.ACTIVE if status == "ACTIVE" else FindingStatus.RESOLVED
 
-        title = (
-            f"Public access: {resource}"
-            if is_public
-            else f"{finding_type}: {resource or finding_id}"
-        )[:200]
+        title = (f"Public access: {resource}" if is_public else f"{finding_type}: {resource or finding_id}")[:200]
         description = (
             f"AWS IAM Access Analyzer finding ({finding_type}) on "
             f"resource {resource or '(none)'} "
@@ -645,13 +610,10 @@ class AccessAnalyzerCollector:
             collection_context=context,
             raw_data=_jsonify(raw),
             first_observed=_to_datetime(raw.get("createdAt")),
-            last_observed=_to_datetime(raw.get("updatedAt"))
-            or _to_datetime(raw.get("analyzedAt")),
+            last_observed=_to_datetime(raw.get("updatedAt")) or _to_datetime(raw.get("analyzedAt")),
         )
 
-    def _mappings_for_type(
-        self, finding_type: str, is_public: bool
-    ) -> list[ControlMapping]:
+    def _mappings_for_type(self, finding_type: str, is_public: bool) -> list[ControlMapping]:
         """Return the OLIR-typed ControlMappings for a finding type."""
         if is_public and finding_type.lower().startswith("external"):
             return _EXTERNAL_PUBLIC_ACCESS_MAPPINGS

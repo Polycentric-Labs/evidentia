@@ -37,92 +37,57 @@ def test_verify_result_frozen_dataclass() -> None:
 
 
 def test_default_bundle_path_appends_sigstore_json() -> None:
-    assert (
-        default_bundle_path("audit.oscal-ar.json")
-        == Path("audit.oscal-ar.json.sigstore.json")
-    )
+    assert default_bundle_path("audit.oscal-ar.json") == Path("audit.oscal-ar.json.sigstore.json")
 
 
 def test_sigstore_available_returns_bool() -> None:
     assert isinstance(sigstore_available(), bool)
 
 
-def test_sign_raises_not_available_when_library_missing(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setattr(
-        "evidentia_core.oscal.sigstore.sigstore_available", lambda: False
-    )
+def test_sign_raises_not_available_when_library_missing(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr("evidentia_core.oscal.sigstore.sigstore_available", lambda: False)
     artifact = tmp_path / "x.json"
     artifact.write_text("{}")
     with pytest.raises(SigstoreNotAvailableError, match="pip install"):
         sign_file(artifact)
 
 
-def test_verify_raises_not_available_when_library_missing(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setattr(
-        "evidentia_core.oscal.sigstore.sigstore_available", lambda: False
-    )
+def test_verify_raises_not_available_when_library_missing(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr("evidentia_core.oscal.sigstore.sigstore_available", lambda: False)
     artifact = tmp_path / "x.json"
     artifact.write_text("{}")
     with pytest.raises(SigstoreNotAvailableError):
         verify_file(artifact)
 
 
-def test_sign_raises_airgap_error_in_offline_mode(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setattr(
-        "evidentia_core.oscal.sigstore.sigstore_available", lambda: True
-    )
-    monkeypatch.setattr(
-        "evidentia_core.network_guard.is_offline", lambda: True
-    )
+def test_sign_raises_airgap_error_in_offline_mode(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr("evidentia_core.oscal.sigstore.sigstore_available", lambda: True)
+    monkeypatch.setattr("evidentia_core.network_guard.is_offline", lambda: True)
     artifact = tmp_path / "x.json"
     artifact.write_text("{}")
     with pytest.raises(SigstoreAirGapError, match=r"[Aa]ir-gap"):
         sign_file(artifact)
 
 
-def test_verify_raises_airgap_error_in_offline_mode(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setattr(
-        "evidentia_core.oscal.sigstore.sigstore_available", lambda: True
-    )
-    monkeypatch.setattr(
-        "evidentia_core.network_guard.is_offline", lambda: True
-    )
+def test_verify_raises_airgap_error_in_offline_mode(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr("evidentia_core.oscal.sigstore.sigstore_available", lambda: True)
+    monkeypatch.setattr("evidentia_core.network_guard.is_offline", lambda: True)
     artifact = tmp_path / "x.json"
     artifact.write_text("{}")
     with pytest.raises(SigstoreAirGapError):
         verify_file(artifact)
 
 
-def test_sign_raises_signing_error_for_missing_artifact(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setattr(
-        "evidentia_core.oscal.sigstore.sigstore_available", lambda: True
-    )
-    monkeypatch.setattr(
-        "evidentia_core.network_guard.is_offline", lambda: False
-    )
+def test_sign_raises_signing_error_for_missing_artifact(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr("evidentia_core.oscal.sigstore.sigstore_available", lambda: True)
+    monkeypatch.setattr("evidentia_core.network_guard.is_offline", lambda: False)
     with pytest.raises(SigstoreSigningError, match="Artifact not found"):
         sign_file(tmp_path / "does-not-exist.json")
 
 
-def test_verify_raises_verify_error_for_missing_bundle(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setattr(
-        "evidentia_core.oscal.sigstore.sigstore_available", lambda: True
-    )
-    monkeypatch.setattr(
-        "evidentia_core.network_guard.is_offline", lambda: False
-    )
+def test_verify_raises_verify_error_for_missing_bundle(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr("evidentia_core.oscal.sigstore.sigstore_available", lambda: True)
+    monkeypatch.setattr("evidentia_core.network_guard.is_offline", lambda: False)
     artifact = tmp_path / "x.json"
     artifact.write_text("{}")
     with pytest.raises(SigstoreVerifyError, match="bundle not found"):
@@ -168,12 +133,8 @@ def _patch_verify_env(
     ``tests/unit/test_mcp/test_sigstore_signer.py`` — exercises the
     control flow without network access or real Sigstore infra.
     """
-    monkeypatch.setattr(
-        "evidentia_core.oscal.sigstore.sigstore_available", lambda: True
-    )
-    monkeypatch.setattr(
-        "evidentia_core.network_guard.is_offline", lambda: False
-    )
+    monkeypatch.setattr("evidentia_core.oscal.sigstore.sigstore_available", lambda: True)
+    monkeypatch.setattr("evidentia_core.network_guard.is_offline", lambda: False)
     bundle_class = MagicMock()
     bundle_class.from_json.return_value = MagicMock(name="Bundle-instance")
     verifier_class = MagicMock()
@@ -186,9 +147,7 @@ def _patch_verify_env(
     return {"policy": policy_module}
 
 
-def test_verify_both_flags_builds_identity_policy(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_verify_both_flags_builds_identity_policy(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Both pinning kwargs → policy.Identity carries them verbatim."""
     stubs = _patch_verify_env(monkeypatch)
     artifact = tmp_path / "x.json"
@@ -208,9 +167,7 @@ def test_verify_both_flags_builds_identity_policy(
     stubs["policy"].UnsafeNoOp.assert_not_called()
 
 
-def test_verify_no_flags_uses_unsafe_noop_policy(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_verify_no_flags_uses_unsafe_noop_policy(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Neither pinning kwarg → UnsafeNoOp (the CLI layer warns, F-V109-2)."""
     stubs = _patch_verify_env(monkeypatch)
     artifact = tmp_path / "x.json"
@@ -258,10 +215,7 @@ def _fake_fulcio_cert(
     def _get_ext(oid: x509.ObjectIdentifier) -> MagicMock:
         if oid == x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME:
             return san_ext
-        if (
-            oid.dotted_string == "1.3.6.1.4.1.57264.1.8"
-            and oidc_issuer is not None
-        ):
+        if oid.dotted_string == "1.3.6.1.4.1.57264.1.8" and oidc_issuer is not None:
             unrecognized = MagicMock(name="UnrecognizedExtension")
             unrecognized.value = _der_utf8(oidc_issuer)
             ext = MagicMock(name="Extension")
@@ -329,9 +283,7 @@ sigstore_integration = pytest.mark.skipif(
 @sigstore_integration
 def test_sign_then_verify_integration(tmp_path: Path) -> None:
     artifact = tmp_path / "audit.oscal-ar.json"
-    artifact.write_text(
-        '{"assessment-results": {"test": true}}', encoding="utf-8"
-    )
+    artifact.write_text('{"assessment-results": {"test": true}}', encoding="utf-8")
 
     bundle_path = sign_file(artifact)
     assert bundle_path.is_file()

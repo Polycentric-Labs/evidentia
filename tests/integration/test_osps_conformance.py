@@ -59,10 +59,7 @@ def test_validator_exits_zero_on_valid_yaml(tmp_path: Path) -> None:
 
     result = _run_validator(valid)
 
-    assert result.returncode == 0, (
-        f"Validator failed on valid YAML.\n"
-        f"stdout: {result.stdout}\nstderr: {result.stderr}"
-    )
+    assert result.returncode == 0, f"Validator failed on valid YAML.\nstdout: {result.stdout}\nstderr: {result.stderr}"
     assert "OK:" in result.stdout
 
 
@@ -139,6 +136,7 @@ def test_osps_conformance_md_has_first_mover_claim() -> None:
     # those prefixes + collapse whitespace before checking the
     # logical phrase.
     import re as _re
+
     doc_flat = _re.sub(r"\s*>\s*", " ", doc)
     doc_flat = " ".join(doc_flat.split())
     assert "first public open-source project" in doc_flat
@@ -172,9 +170,7 @@ def test_osps_conformance_md_lists_known_honest_gaps() -> None:
         "attestation_method",
     ],
 )
-def test_validator_flags_each_missing_required_field(
-    tmp_path: Path, field: str
-) -> None:
+def test_validator_flags_each_missing_required_field(tmp_path: Path, field: str) -> None:
     """Validator flags each of the 5 non-controls required top-level fields when absent."""
     import yaml
 

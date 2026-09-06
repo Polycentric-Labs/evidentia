@@ -114,9 +114,7 @@ def _text(s: str) -> TextContent:
 
 class TestPassThroughWhenSigningOff:
     @pytest.mark.asyncio
-    async def test_unset_env_returns_tuple_verbatim(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_unset_env_returns_tuple_verbatim(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Signing off → the inner result (a tuple) is returned as-is."""
         monkeypatch.delenv(EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR, raising=False)
         inner = ([_text('{"k":"v"}')], {"k": "v"})
@@ -127,9 +125,7 @@ class TestPassThroughWhenSigningOff:
         assert result is inner  # identical object — no wrapping
 
     @pytest.mark.asyncio
-    async def test_unset_env_returns_content_list_verbatim(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_unset_env_returns_content_list_verbatim(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR, raising=False)
         inner = [_text("plain")]
         server = _make_server_returning(inner)
@@ -142,9 +138,7 @@ class TestPassThroughWhenSigningOff:
 
 class TestEnvelopeInMeta:
     @pytest.mark.asyncio
-    async def test_tuple_result_signs_structured_content(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_tuple_result_signs_structured_content(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """The real output-schema-tool shape: (content, structured).
 
         The wrapper must return a CallToolResult whose structuredContent
@@ -174,9 +168,7 @@ class TestEnvelopeInMeta:
         assert envelope["tool_name"] == "get_control"
 
     @pytest.mark.asyncio
-    async def test_content_list_result_wraps_under_result_key(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_content_list_result_wraps_under_result_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """A no-output-schema tool returns only a content list."""
         _enable_signing(monkeypatch)
         content = [_text("alpha"), _text("beta")]
@@ -195,9 +187,7 @@ class TestEnvelopeInMeta:
         assert envelope["signature"] is not None
 
     @pytest.mark.asyncio
-    async def test_bare_dict_result_synthesizes_content(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_bare_dict_result_synthesizes_content(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """A bare structured dict gets a synthesized TextContent block."""
         _enable_signing(monkeypatch)
         server = _make_server_returning({"ok": True})
@@ -211,9 +201,7 @@ class TestEnvelopeInMeta:
         assert result.meta[SIGNED_OUTPUT_META_KEY]["payload"] == {"ok": True}
 
     @pytest.mark.asyncio
-    async def test_calltoolresult_input_merges_existing_meta(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_calltoolresult_input_merges_existing_meta(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """A CallToolResult input keeps its existing _meta + adds the envelope."""
         _enable_signing(monkeypatch)
         inner = CallToolResult(
@@ -233,9 +221,7 @@ class TestEnvelopeInMeta:
         assert SIGNED_OUTPUT_META_KEY in result.meta
 
     @pytest.mark.asyncio
-    async def test_unrecognized_shape_passes_through_unsigned(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_unrecognized_shape_passes_through_unsigned(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """A shape the normalizer doesn't model is returned unsigned."""
         _enable_signing(monkeypatch)
         sentinel = 42  # not tuple/dict/CallToolResult/iterable
@@ -244,18 +230,13 @@ class TestEnvelopeInMeta:
         assert await server.call_tool("t", {}) == 42
 
     @pytest.mark.asyncio
-    async def test_signing_is_deterministic(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_signing_is_deterministic(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _enable_signing(monkeypatch)
         server = _make_server_returning(([_text("x")], {"x": 1}))
         wrap_signed_output(server)
         a = await server.call_tool("t", {})
         b = await server.call_tool("t", {})
-        assert (
-            a.meta[SIGNED_OUTPUT_META_KEY]["signature"]
-            == b.meta[SIGNED_OUTPUT_META_KEY]["signature"]
-        )
+        assert a.meta[SIGNED_OUTPUT_META_KEY]["signature"] == b.meta[SIGNED_OUTPUT_META_KEY]["signature"]
 
 
 # ── 3. Signer-failure non-fatal ──────────────────────────────────
@@ -263,9 +244,7 @@ class TestEnvelopeInMeta:
 
 class TestSignerFailureNonFatal:
     @pytest.mark.asyncio
-    async def test_signer_raises_yields_signing_error(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_signer_raises_yields_signing_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """A failing signer → envelope carries signing_error; result still valid."""
         _enable_signing(monkeypatch, factory_attr="make_failing_signer")
         server = _make_server_returning(([_text("x")], {"ok": True}))
@@ -285,9 +264,7 @@ class TestSignerFailureNonFatal:
 
 class TestLayerComposition:
     @pytest.mark.asyncio
-    async def test_scope_denial_short_circuits_signing(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_scope_denial_short_circuits_signing(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """A scope-gate denial raises before signing — no envelope emitted."""
         from unittest.mock import MagicMock
 
@@ -354,9 +331,7 @@ class TestRealServerIntegration:
         return server
 
     @pytest.mark.asyncio
-    async def test_real_tool_signing_off_is_unwrapped(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_real_tool_signing_off_is_unwrapped(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Signing off → the real tuple from convert_result passes through."""
         monkeypatch.delenv(EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR, raising=False)
         server = self._build_real_server()
@@ -369,9 +344,7 @@ class TestRealServerIntegration:
         assert len(result) == 2
 
     @pytest.mark.asyncio
-    async def test_real_tool_signing_on_produces_valid_signed_result(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_real_tool_signing_on_produces_valid_signed_result(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Signing on → a well-formed CallToolResult with the envelope in _meta.
 
         Crucially: the structured content is the tool's REAL output,
@@ -414,9 +387,7 @@ class TestBuildServerWiring:
         assert getattr(server, "_evidentia_scope_wrapped", False) is True
 
     @pytest.mark.asyncio
-    async def test_build_server_real_tool_signed_end_to_end(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_build_server_real_tool_signed_end_to_end(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """build_server() + a real bundled tool + signing on → valid result."""
         from evidentia_mcp.server import build_server
 

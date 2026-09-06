@@ -29,9 +29,7 @@ LAST_UPDATED = datetime(2026, 7, 14, 12, 0, tzinfo=UTC)
 def _status(indicators: dict[str, Any]) -> KsiStatusDocument:
     return KsiStatusDocument.model_validate(
         {
-            "certification_package_overview_uri": (
-                "https://provider.example/fedramp/cpo.json"
-            ),
+            "certification_package_overview_uri": ("https://provider.example/fedramp/cpo.json"),
             "document_version": "1.0.0",
             "source": "unit tests",
             "indicators": indicators,
@@ -120,9 +118,7 @@ class TestBuildSdrDocument:
                 }
             ],
         }
-        doc = build_sdr_document(
-            _status({"KSI-MLA-ALA": entry}), last_updated=LAST_UPDATED
-        )
+        doc = build_sdr_document(_status({"KSI-MLA-ALA": entry}), last_updated=LAST_UPDATED)
         ev = doc["keySecurityIndicators"][0]["ksiEvidence"][0]
         assert ev == {
             "evidenceType": "Audit Record",
@@ -161,13 +157,9 @@ class TestPersistenceCycles:
     def test_cycle_statement_without_state_anchor(self) -> None:
         entry = {
             "implementation": ["Measure."],
-            "persistence_cycles": [
-                {"cadence_slug": "nist-800-53-rev5-ca7", "note": "Owner: SecOps."}
-            ],
+            "persistence_cycles": [{"cadence_slug": "nist-800-53-rev5-ca7", "note": "Owner: SecOps."}],
         }
-        doc = build_sdr_document(
-            _status({"KSI-CED-RAT": entry}), last_updated=LAST_UPDATED
-        )
+        doc = build_sdr_document(_status({"KSI-CED-RAT": entry}), last_updated=LAST_UPDATED)
         statement = doc["keySecurityIndicators"][0]["ksiImplementation"][1]
         assert "last completed" not in statement
         assert statement.endswith("Owner: SecOps.")
@@ -178,9 +170,7 @@ class TestPersistenceCycles:
             "persistence_cycles": [{"cadence_slug": "totally-not-real"}],
         }
         with pytest.raises(ValueError, match="unknown CONMON cadence slug"):
-            build_sdr_document(
-                _status({"KSI-CED-RAT": entry}), last_updated=LAST_UPDATED
-            )
+            build_sdr_document(_status({"KSI-CED-RAT": entry}), last_updated=LAST_UPDATED)
 
 
 class TestValidateSdrDocument:
@@ -216,9 +206,7 @@ class TestModels:
                 {
                     "KSI-CED-RAT": {
                         "implementation": ["Measure."],
-                        "evidence": [
-                            {"evidence_type": "Vibes", "description": "no"}
-                        ],
+                        "evidence": [{"evidence_type": "Vibes", "description": "no"}],
                     }
                 }
             )
@@ -251,9 +239,7 @@ class TestCoverage:
 
     def test_full_coverage_is_complete(self) -> None:
         catalog = load_ksi_catalog()
-        status = _status(
-            {control.id: _minimal_entry() for control in catalog.controls}
-        )
+        status = _status({control.id: _minimal_entry() for control in catalog.controls})
         coverage = ksi_coverage(status)
         assert coverage.complete
         assert coverage.addressed == coverage.total == 46

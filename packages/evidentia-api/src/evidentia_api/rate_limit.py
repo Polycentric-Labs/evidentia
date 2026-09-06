@@ -101,15 +101,11 @@ class TokenBucketRateLimiter:
         max_tracked_clients: int = 10000,
     ) -> None:
         if rate_per_minute < 0:
-            raise ValueError(
-                f"rate_per_minute must be >= 0; got {rate_per_minute}"
-            )
+            raise ValueError(f"rate_per_minute must be >= 0; got {rate_per_minute}")
         if burst < 1:
             raise ValueError(f"burst must be >= 1; got {burst}")
         if max_tracked_clients < 1:
-            raise ValueError(
-                f"max_tracked_clients must be >= 1; got {max_tracked_clients}"
-            )
+            raise ValueError(f"max_tracked_clients must be >= 1; got {max_tracked_clients}")
         self._rate_per_second = rate_per_minute / 60.0
         self._burst = float(burst)
         self._max_tracked = max_tracked_clients
@@ -272,11 +268,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         key = (request.method, request.url.path)
         if key in self._paths:
-            client_host = (
-                request.client.host
-                if request.client is not None
-                else "unknown"
-            )
+            client_host = request.client.host if request.client is not None else "unknown"
             if not self._limiter.check(client_host):
                 # 2026-07-06 error-shape convergence: structured,
                 # machine-readable detail (see evidentia_api.errors).

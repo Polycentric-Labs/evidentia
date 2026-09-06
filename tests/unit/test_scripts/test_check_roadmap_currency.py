@@ -24,9 +24,7 @@ SCRIPT_PATH = REPO_ROOT / "scripts" / "check_roadmap_currency.py"
 @pytest.fixture(scope="module")
 def rc() -> object:
     """Import scripts/check_roadmap_currency.py as a module (no __init__.py)."""
-    spec = importlib.util.spec_from_file_location(
-        "check_roadmap_currency", SCRIPT_PATH
-    )
+    spec = importlib.util.spec_from_file_location("check_roadmap_currency", SCRIPT_PATH)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     sys.modules["check_roadmap_currency"] = module
@@ -58,9 +56,7 @@ def test_parser_requires_leading_version_token(rc) -> None:
 
 def test_parser_skips_version_heading_without_status(rc) -> None:
     """`## v0.7.0+ — Quality signals, ...` has no status word — skipped."""
-    headings, _ = rc.parse_roadmap(
-        "## v0.7.0+ — Quality signals, more integrations, UI polish\n"
-    )
+    headings, _ = rc.parse_roadmap("## v0.7.0+ — Quality signals, more integrations, UI polish\n")
     assert headings == []
 
 
@@ -97,12 +93,7 @@ def test_parser_umbrella_vs_concrete_classification(rc) -> None:
 
 
 def test_parser_skips_fenced_code_blocks(rc) -> None:
-    text = (
-        "## v0.11 — theme — PLANNED\n"
-        "```\n"
-        "## v0.12 — example inside a fence — SHIPPED\n"
-        "```\n"
-    )
+    text = "## v0.11 — theme — PLANNED\n```\n## v0.12 — example inside a fence — SHIPPED\n```\n"
     headings, h2_lines = rc.parse_roadmap(text)
     assert [h.version for h in headings] == ["0.11"]
     assert h2_lines == [1]
@@ -110,11 +101,7 @@ def test_parser_skips_fenced_code_blocks(rc) -> None:
 
 def test_parser_h2_boundaries_include_statusless_h2(rc) -> None:
     """Every `## ` line is a section boundary, status-bearing or not."""
-    text = (
-        "## v0.11 — theme — PLANNED\n"
-        "body\n"
-        "## Deferred / rejected items\n"
-    )
+    text = "## v0.11 — theme — PLANNED\nbody\n## Deferred / rejected items\n"
     _, h2_lines = rc.parse_roadmap(text)
     assert h2_lines == [1, 3]
 
@@ -129,18 +116,14 @@ def test_a0_exactly_one_planned_h2(rc) -> None:
     none, _ = rc.parse_roadmap("## v0.10.x — line — SHIPPED\n")
     assert len(rc.check_a0_single_open_cycle(none)) == 1
 
-    two, _ = rc.parse_roadmap(
-        "## v0.11 — theme — PLANNED\n## v0.12 — next — PLANNED\n"
-    )
+    two, _ = rc.parse_roadmap("## v0.11 — theme — PLANNED\n## v0.12 — next — PLANNED\n")
     (failure,) = rc.check_a0_single_open_cycle(two)
     assert "2 PLANNED h2" in failure
 
 
 def test_a0_planned_h3_does_not_count(rc) -> None:
     """Only h2 headings define the open cycle; PLANNED h3s are cycle content."""
-    headings, _ = rc.parse_roadmap(
-        "## v0.11 — theme — PLANNED\n### v0.11.3 — later patch — PLANNED\n"
-    )
+    headings, _ = rc.parse_roadmap("## v0.11 — theme — PLANNED\n### v0.11.3 — later patch — PLANNED\n")
     assert rc.check_a0_single_open_cycle(headings) == []
 
 
@@ -148,9 +131,7 @@ def test_a0_planned_h3_does_not_count(rc) -> None:
 
 
 def test_a1_concrete_planned_with_shipped_block_fires(rc) -> None:
-    headings, _ = rc.parse_roadmap(
-        "### v0.10.5 — artifacts — PLANNED\n### v0.10.9 — debt — PLANNED\n"
-    )
+    headings, _ = rc.parse_roadmap("### v0.10.5 — artifacts — PLANNED\n### v0.10.9 — debt — PLANNED\n")
     failures = rc.check_a1_planned_never_shipped(headings, ["0.10.5"])
     assert len(failures) == 1 and "[0.10.5]" in failures[0]
 
@@ -162,9 +143,7 @@ def test_a1_reserved_with_shipped_block_fires(rc) -> None:
 
 def test_a1_umbrella_planned_with_cycle_blocks_fires(rc) -> None:
     headings, _ = rc.parse_roadmap("## v0.10.x — line — PLANNED\n")
-    failures = rc.check_a1_planned_never_shipped(
-        headings, ["0.10.0", "0.10.5", "0.9.9"]
-    )
+    failures = rc.check_a1_planned_never_shipped(headings, ["0.10.0", "0.10.5", "0.9.9"])
     assert len(failures) == 1 and "2 shipped" in failures[0]
 
 
@@ -175,9 +154,7 @@ def test_a1_umbrella_cycle_prefix_is_exact(rc) -> None:
 
 
 def test_a1_shipped_and_unshipped_planned_pass(rc) -> None:
-    headings, _ = rc.parse_roadmap(
-        "### v0.10.6 — shipped fine — SHIPPED\n### v0.12.0 — future — PLANNED\n"
-    )
+    headings, _ = rc.parse_roadmap("### v0.10.6 — shipped fine — SHIPPED\n### v0.12.0 — future — PLANNED\n")
     assert rc.check_a1_planned_never_shipped(headings, ["0.10.6"]) == []
 
 
@@ -185,11 +162,7 @@ def test_a1_shipped_and_unshipped_planned_pass(rc) -> None:
 
 
 def test_a2_planned_umbrella_holding_shipped_entries_fires(rc) -> None:
-    text = (
-        "## v0.10.x — line — PLANNED\n"
-        "### v0.10.6 — a — SHIPPED\n"
-        "### v0.10.9 — b — PLANNED\n"
-    )
+    text = "## v0.10.x — line — PLANNED\n### v0.10.6 — a — SHIPPED\n### v0.10.9 — b — PLANNED\n"
     headings, h2_lines = rc.parse_roadmap(text)
     failures = rc.check_a2_planned_umbrella_pure(headings, h2_lines, 3)
     assert len(failures) == 1 and "v0.10.6" in failures[0]
@@ -228,17 +201,12 @@ def _docs_tree(tmp_path: Path, *plan_names: str) -> Path:
 def test_a3_open_cycle_without_plan_link_fires(rc, tmp_path: Path) -> None:
     text = "## v0.11 — theme — PLANNED\n\nNo plan link here.\n"
     headings, h2_lines = rc.parse_roadmap(text)
-    failures = rc.check_a3_open_cycle_has_plan(
-        headings, h2_lines, text.splitlines(), _docs_tree(tmp_path)
-    )
+    failures = rc.check_a3_open_cycle_has_plan(headings, h2_lines, text.splitlines(), _docs_tree(tmp_path))
     assert len(failures) == 1 and "links no" in failures[0]
 
 
 def test_a3_version_mismatched_plan_link_fires(rc, tmp_path: Path) -> None:
-    text = (
-        "## v0.11 — theme — PLANNED\n"
-        "Full plan: [old](releases/plans/v0.10.9-plan.md).\n"
-    )
+    text = "## v0.11 — theme — PLANNED\nFull plan: [old](releases/plans/v0.10.9-plan.md).\n"
     headings, h2_lines = rc.parse_roadmap(text)
     failures = rc.check_a3_open_cycle_has_plan(
         headings, h2_lines, text.splitlines(), _docs_tree(tmp_path, "v0.10.9-plan.md")
@@ -247,28 +215,19 @@ def test_a3_version_mismatched_plan_link_fires(rc, tmp_path: Path) -> None:
 
 
 def test_a3_missing_plan_file_fires(rc, tmp_path: Path) -> None:
-    text = (
-        "## v0.11 — theme — PLANNED\n"
-        "Full plan: [plan](releases/plans/v0.11-plan.md).\n"
-    )
+    text = "## v0.11 — theme — PLANNED\nFull plan: [plan](releases/plans/v0.11-plan.md).\n"
     headings, h2_lines = rc.parse_roadmap(text)
-    failures = rc.check_a3_open_cycle_has_plan(
-        headings, h2_lines, text.splitlines(), _docs_tree(tmp_path)
-    )
+    failures = rc.check_a3_open_cycle_has_plan(headings, h2_lines, text.splitlines(), _docs_tree(tmp_path))
     assert len(failures) == 1 and "does not exist on disk" in failures[0]
 
 
 def test_a3_matching_on_disk_plan_passes(rc, tmp_path: Path) -> None:
     text = (
-        "## v0.11 — theme — PLANNED\n"
-        "Full plan: [plan](releases/plans/v0.11-plan.md).\n"
-        "## v1.0 — stability — RESERVED\n"
+        "## v0.11 — theme — PLANNED\nFull plan: [plan](releases/plans/v0.11-plan.md).\n## v1.0 — stability — RESERVED\n"
     )
     headings, h2_lines = rc.parse_roadmap(text)
     assert (
-        rc.check_a3_open_cycle_has_plan(
-            headings, h2_lines, text.splitlines(), _docs_tree(tmp_path, "v0.11-plan.md")
-        )
+        rc.check_a3_open_cycle_has_plan(headings, h2_lines, text.splitlines(), _docs_tree(tmp_path, "v0.11-plan.md"))
         == []
     )
 
@@ -288,9 +247,7 @@ def test_a3_link_must_live_inside_the_open_cycle_section(rc, tmp_path: Path) -> 
     assert len(failures) == 1
 
 
-def test_a3_is_intro_scoped_a_sub_entry_plan_link_does_not_count(
-    rc, tmp_path: Path
-) -> None:
+def test_a3_is_intro_scoped_a_sub_entry_plan_link_does_not_count(rc, tmp_path: Path) -> None:
     """The exact v0.10.x shape: the PLANNED umbrella's own intro links no plan
     doc, while a sub-h3 body links an OLD per-patch plan — that must NOT
     satisfy the cycle-level claim."""
@@ -308,10 +265,7 @@ def test_a3_is_intro_scoped_a_sub_entry_plan_link_does_not_count(
 
 
 def test_a3_concrete_planned_h2_expects_full_version(rc, tmp_path: Path) -> None:
-    text = (
-        "## v0.11.2 — hot patch — PLANNED\n"
-        "Full plan: [plan](releases/plans/v0.11.2-plan.md).\n"
-    )
+    text = "## v0.11.2 — hot patch — PLANNED\nFull plan: [plan](releases/plans/v0.11.2-plan.md).\n"
     headings, h2_lines = rc.parse_roadmap(text)
     assert (
         rc.check_a3_open_cycle_has_plan(
@@ -328,12 +282,8 @@ def test_a3_concrete_planned_h2_expects_full_version(rc, tmp_path: Path) -> None
 
 
 def test_a4_reports_missing_latest_cycle_entries_only(rc) -> None:
-    headings, _ = rc.parse_roadmap(
-        "## v0.10.x — line — SHIPPED\n### v0.10.16 — a — SHIPPED\n"
-    )
-    advisory = rc.check_a4_latest_cycle_backfilled(
-        headings, ["0.9.9", "0.10.16", "0.10.17"]
-    )
+    headings, _ = rc.parse_roadmap("## v0.10.x — line — SHIPPED\n### v0.10.16 — a — SHIPPED\n")
+    advisory = rc.check_a4_latest_cycle_backfilled(headings, ["0.9.9", "0.10.16", "0.10.17"])
     # 0.10.17 is missing; 0.9.9 is a PRIOR cycle (not checked); the umbrella
     # heading does not cover a concrete version.
     assert len(advisory) == 1 and "[0.10.17]" in advisory[0]
@@ -341,9 +291,7 @@ def test_a4_reports_missing_latest_cycle_entries_only(rc) -> None:
 
 def test_a4_latest_cycle_is_numeric_not_lexicographic(rc) -> None:
     """0.10.16 > 0.10.9 numerically — the latest cycle must be 0.10, complete."""
-    headings, _ = rc.parse_roadmap(
-        "### v0.10.9 — a — SHIPPED\n### v0.10.16 — b — SHIPPED\n"
-    )
+    headings, _ = rc.parse_roadmap("### v0.10.9 — a — SHIPPED\n### v0.10.16 — b — SHIPPED\n")
     assert rc.check_a4_latest_cycle_backfilled(headings, ["0.10.9", "0.10.16"]) == []
 
 
@@ -369,9 +317,7 @@ def test_broken_tree_shape_fires_a1_a2_a3(rc, tmp_path: Path) -> None:
         "### v0.10.6 — crosswalks — SHIPPED\n"
         "### v0.11 — federal theme — PLANNED (post-deep-dive)\n"
     )
-    report = rc.run_checks(
-        roadmap, changelog("0.10.5", "0.10.6"), _docs_tree(tmp_path, "v0.10.5-plan.md")
-    )
+    report = rc.run_checks(roadmap, changelog("0.10.5", "0.10.6"), _docs_tree(tmp_path, "v0.10.5-plan.md"))
     assert len(report.a1) == 2  # the PLANNED umbrella + the PLANNED v0.10.5
     assert len(report.a2) == 1  # SHIPPED v0.10.6 inside the PLANNED umbrella
     assert len(report.a3) == 1  # the cycle's own intro links no plan doc
@@ -389,9 +335,7 @@ def test_fixed_tree_shape_is_green(rc, tmp_path: Path) -> None:
         "### v0.10.5 — artifacts — SHIPPED\n"
         "### v0.10.6 — crosswalks — SHIPPED\n"
     )
-    report = rc.run_checks(
-        roadmap, changelog("0.10.5", "0.10.6"), _docs_tree(tmp_path, "v0.11-plan.md")
-    )
+    report = rc.run_checks(roadmap, changelog("0.10.5", "0.10.6"), _docs_tree(tmp_path, "v0.11-plan.md"))
     assert report.failures == []
     assert report.a4_advisory == []
 
@@ -401,9 +345,7 @@ def test_fixed_tree_shape_is_green(rc, tmp_path: Path) -> None:
 
 def test_a5_passes_on_descending_h2_order(rc) -> None:
     headings, _ = rc.parse_roadmap(
-        "## v1.0 — stability — RESERVED\n"
-        "## v0.12 — hardening — SHIPPED\n"
-        "## v0.9.9 — hygiene — SHIPPED\n"
+        "## v1.0 — stability — RESERVED\n## v0.12 — hardening — SHIPPED\n## v0.9.9 — hygiene — SHIPPED\n"
     )
     assert rc.check_a5_descending_version_order(headings) == []
 
@@ -412,9 +354,7 @@ def test_a5_fires_on_ascending_h2_order(rc) -> None:
     """The through-v0.11.2 shape: oldest at the top, which buried the open cycle
     2,300 lines down and left a stale wish list sitting below v1.0."""
     headings, _ = rc.parse_roadmap(
-        "## v0.3.0 — first — SHIPPED\n"
-        "## v0.9.0 — federal — SHIPPED\n"
-        "## v1.0 — stability — PLANNED\n"
+        "## v0.3.0 — first — SHIPPED\n## v0.9.0 — federal — SHIPPED\n## v1.0 — stability — PLANNED\n"
     )
     failures = rc.check_a5_descending_version_order(headings)
     assert len(failures) == 2
@@ -425,9 +365,7 @@ def test_a5_tolerates_umbrella_and_plus_forms(rc) -> None:
     """``_numeric_key`` raises on ``x``; A5 carries its own key so ``v0.10.x``
     and ``v1.1+`` do not crash the gate."""
     headings, _ = rc.parse_roadmap(
-        "## v1.1+ — later — RESERVED\n"
-        "## v0.10.x — research line — SHIPPED\n"
-        "## v0.10.5 — artifacts — SHIPPED\n"
+        "## v1.1+ — later — RESERVED\n## v0.10.x — research line — SHIPPED\n## v0.10.5 — artifacts — SHIPPED\n"
     )
     assert rc.check_a5_descending_version_order(headings) == []
 
@@ -436,18 +374,12 @@ def test_a5_plus_form_ranks_above_its_bare_version(rc) -> None:
     """``v1.1+`` ("this version and beyond") ranks ABOVE plain ``v1.1``. The
     old key erased the ``+`` and treated the two as equal, so this valid
     layout wrongly failed the gate."""
-    headings, _ = rc.parse_roadmap(
-        "## v1.1+ - beyond - RESERVED\n"
-        "## v1.1 - cycle - SHIPPED\n"
-    )
+    headings, _ = rc.parse_roadmap("## v1.1+ - beyond - RESERVED\n## v1.1 - cycle - SHIPPED\n")
     assert rc.check_a5_descending_version_order(headings) == []
 
 
 def test_a5_fires_when_bare_version_sits_above_its_plus_form(rc) -> None:
-    headings, _ = rc.parse_roadmap(
-        "## v1.1 - cycle - SHIPPED\n"
-        "## v1.1+ - beyond - RESERVED\n"
-    )
+    headings, _ = rc.parse_roadmap("## v1.1 - cycle - SHIPPED\n## v1.1+ - beyond - RESERVED\n")
     failures = rc.check_a5_descending_version_order(headings)
     assert len(failures) == 1
     assert "must sort BELOW" in failures[0]
@@ -459,20 +391,14 @@ def test_a5_bare_cycle_umbrella_ranks_above_its_concrete_releases(rc) -> None:
     the file lays every cycle out: umbrella first, patches inside or below.
     The old key ranked a bare cycle BELOW its patches (patch = -1), the
     opposite of the layout, and its docstring asserted the wrong thing."""
-    headings, _ = rc.parse_roadmap(
-        "## v0.11 - cycle - SHIPPED\n"
-        "## v0.11.2 - patch - SHIPPED\n"
-    )
+    headings, _ = rc.parse_roadmap("## v0.11 - cycle - SHIPPED\n## v0.11.2 - patch - SHIPPED\n")
     assert rc.check_a5_descending_version_order(headings) == []
 
 
 def test_a5_fires_on_equal_versions(rc) -> None:
     """The ``>=`` branch: two h2s carrying the SAME version are flagged as a
     violation, never tolerated as a tie."""
-    headings, _ = rc.parse_roadmap(
-        "## v0.12 - one - SHIPPED\n"
-        "## v0.12 - two - SHIPPED\n"
-    )
+    headings, _ = rc.parse_roadmap("## v0.12 - one - SHIPPED\n## v0.12 - two - SHIPPED\n")
     failures = rc.check_a5_descending_version_order(headings)
     assert len(failures) == 1
     assert "must sort BELOW" in failures[0]
@@ -481,11 +407,7 @@ def test_a5_fires_on_equal_versions(rc) -> None:
 def test_a5_ignores_headings_without_version_token_or_status(rc) -> None:
     """Malformed and non-status headings never reach A5: no leading version
     token, or no trailing status word, means the heading is not tracked."""
-    headings, _ = rc.parse_roadmap(
-        "## version notes\n"
-        "## v1.0 - open - PLANNED\n"
-        "## v0.9.x has no status word here\n"
-    )
+    headings, _ = rc.parse_roadmap("## version notes\n## v1.0 - open - PLANNED\n## v0.9.x has no status word here\n")
     assert [h.version for h in headings] == ["1.0"]
     assert rc.check_a5_descending_version_order(headings) == []
 
@@ -493,9 +415,7 @@ def test_a5_ignores_headings_without_version_token_or_status(rc) -> None:
 def test_a5_counts_toward_gate_failure(rc, tmp_path: Path) -> None:
     """A5 is a failing assertion, not an advisory like A4."""
     report = rc.run_checks(
-        "## v0.11 — theme — PLANNED\n"
-        "Full plan: [p](releases/plans/v0.11-plan.md).\n"
-        "## v1.0 — later — RESERVED\n",
+        "## v0.11 — theme — PLANNED\nFull plan: [p](releases/plans/v0.11-plan.md).\n## v1.0 — later — RESERVED\n",
         changelog("0.10.5"),
         _docs_tree(tmp_path, "v0.11-plan.md"),
     )

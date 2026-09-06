@@ -1,4 +1,5 @@
 """Tests for scripts/gen_package_sboms.py (PEP 770 per-wheel SBOMs)."""
+
 from __future__ import annotations
 
 import sys
@@ -14,8 +15,14 @@ def test_discovers_all_eight_packages() -> None:
     pkgs = g.discover_packages(REPO_ROOT)
     names = sorted(p["name"] for p in pkgs)
     assert names == [
-        "evidentia", "evidentia-ai", "evidentia-api", "evidentia-collectors",
-        "evidentia-core", "evidentia-eval", "evidentia-integrations", "evidentia-mcp",
+        "evidentia",
+        "evidentia-ai",
+        "evidentia-api",
+        "evidentia-collectors",
+        "evidentia-core",
+        "evidentia-eval",
+        "evidentia-integrations",
+        "evidentia-mcp",
     ]
 
 
@@ -71,9 +78,7 @@ def test_npm_sbom_determinized(tmp_path: Path, monkeypatch) -> None:
     }
     out = g._determinize_npm_sbom(raw, purl_seed="pkg:pypi/evidentia-api@0.0.0")
     assert out["serialNumber"] == "urn:uuid:" + str(
-        __import__("uuid").uuid5(
-            __import__("uuid").NAMESPACE_URL, "pkg:pypi/evidentia-api@0.0.0#npm"
-        )
+        __import__("uuid").uuid5(__import__("uuid").NAMESPACE_URL, "pkg:pypi/evidentia-api@0.0.0#npm")
     )
     assert "timestamp" not in out["metadata"]
     assert out["components"][0]["name"] == "react"

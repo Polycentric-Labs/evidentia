@@ -36,9 +36,7 @@ class TestHealth:
         # notice (threat-model §4(c)).
         assert isinstance(payload["auth_configured"], bool)
 
-    def test_health_path_matches_dockerfile_healthcheck(
-        self, api_client: TestClient
-    ) -> None:
+    def test_health_path_matches_dockerfile_healthcheck(self, api_client: TestClient) -> None:
         # The Dockerfile HEALTHCHECK at the repo root calls
         # http://localhost:8000/api/health — guard against a future
         # router-prefix refactor silently breaking the container's
@@ -91,9 +89,7 @@ class TestDoctor:
         monkeypatch.setenv("EVIDENTIA_LLM_MODEL", "ollama/llama3")
         r = api_client.post("/api/doctor/check-air-gap")
         assert r.status_code == 200
-        llm_check = next(
-            c for c in r.json()["checks"] if c["subsystem"] == "llm_client"
-        )
+        llm_check = next(c for c in r.json()["checks"] if c["subsystem"] == "llm_client")
         assert llm_check["status"] == "ok"
 
     def test_check_air_gap_with_cloud_model_reports_would_leak(
@@ -104,9 +100,7 @@ class TestDoctor:
         monkeypatch.delenv("OPENAI_API_BASE", raising=False)
         r = api_client.post("/api/doctor/check-air-gap")
         payload = r.json()
-        llm_check = next(
-            c for c in payload["checks"] if c["subsystem"] == "llm_client"
-        )
+        llm_check = next(c for c in payload["checks"] if c["subsystem"] == "llm_client")
         assert llm_check["status"] == "would_leak"
         assert payload["air_gapped"] is False
 

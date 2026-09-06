@@ -255,12 +255,7 @@ def test_no_sibling_json_loads_or_yaml_safe_load_in_catalogs_module() -> None:
     import re
 
     catalogs_dir = (
-        Path(__file__).resolve().parents[3]
-        / "packages"
-        / "evidentia-core"
-        / "src"
-        / "evidentia_core"
-        / "catalogs"
+        Path(__file__).resolve().parents[3] / "packages" / "evidentia-core" / "src" / "evidentia_core" / "catalogs"
     )
     forbidden_calls = re.compile(r"\b(json\.loads|yaml\.safe_load)\s*\(")
     # The choke-point invariant applies to CATALOG FILE reads. Files
@@ -295,10 +290,7 @@ def test_no_sibling_json_loads_or_yaml_safe_load_in_catalogs_module() -> None:
                 "(v0.10.4 P1 choke-point invariant)."
             )
 
-    assert not violations, (
-        "v0.10.4 P1 choke-point invariant violated:\n  "
-        + "\n  ".join(violations)
-    )
+    assert not violations, "v0.10.4 P1 choke-point invariant violated:\n  " + "\n  ".join(violations)
 
 
 # ── v0.10.4 P3 framework_id collision guard ──────────────────────
@@ -342,22 +334,16 @@ def test_regenerate_manifest_scan_dir_rejects_framework_id_collision(
     import importlib.util
     import sys
 
-    scripts_catalogs = (
-        Path(__file__).resolve().parents[3] / "scripts" / "catalogs"
-    )
+    scripts_catalogs = Path(__file__).resolve().parents[3] / "scripts" / "catalogs"
     monkeypatch.syspath_prepend(str(scripts_catalogs))
 
-    gen_spec = importlib.util.spec_from_file_location(
-        "_generators", scripts_catalogs / "_generators.py"
-    )
+    gen_spec = importlib.util.spec_from_file_location("_generators", scripts_catalogs / "_generators.py")
     assert gen_spec is not None and gen_spec.loader is not None
     gen_mod = importlib.util.module_from_spec(gen_spec)
     sys.modules["_generators"] = gen_mod
     gen_spec.loader.exec_module(gen_mod)
 
-    rm_spec = importlib.util.spec_from_file_location(
-        "regenerate_manifest", scripts_catalogs / "regenerate_manifest.py"
-    )
+    rm_spec = importlib.util.spec_from_file_location("regenerate_manifest", scripts_catalogs / "regenerate_manifest.py")
     assert rm_spec is not None and rm_spec.loader is not None
     rm = importlib.util.module_from_spec(rm_spec)
     rm_spec.loader.exec_module(rm)

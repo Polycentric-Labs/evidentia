@@ -30,10 +30,7 @@ class ServiceNowConfig(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     instance_url: str = Field(
-        description=(
-            "ServiceNow instance URL, e.g. 'https://acme.service-now.com'. "
-            "MUST be HTTPS. No trailing slash."
-        ),
+        description=("ServiceNow instance URL, e.g. 'https://acme.service-now.com'. MUST be HTTPS. No trailing slash."),
     )
     user: str = Field(description="ServiceNow basic-auth username.")
     password: str = Field(
@@ -63,10 +60,7 @@ class ServiceNowConfig(BaseModel):
     def _validate_https_and_strip_slash(cls, v: str) -> str:
         v = v.rstrip("/")
         if not v.startswith("https://"):
-            raise ValueError(
-                "instance_url must use https:// — refusing to send "
-                "credentials over a non-TLS channel."
-            )
+            raise ValueError("instance_url must use https:// — refusing to send credentials over a non-TLS channel.")
         return v
 
     @classmethod
@@ -78,18 +72,10 @@ class ServiceNowConfig(BaseModel):
         password: str | None = None,
         table_name: str | None = None,
     ) -> ServiceNowConfig:
-        resolved_url = instance_url or os.environ.get(
-            "EVIDENTIA_SERVICENOW_INSTANCE_URL"
-        )
+        resolved_url = instance_url or os.environ.get("EVIDENTIA_SERVICENOW_INSTANCE_URL")
         resolved_user = user or os.environ.get("EVIDENTIA_SERVICENOW_USER")
-        resolved_pwd = password or os.environ.get(
-            "EVIDENTIA_SERVICENOW_PASSWORD"
-        )
-        resolved_table = (
-            table_name
-            or os.environ.get("EVIDENTIA_SERVICENOW_TABLE")
-            or "incident"
-        )
+        resolved_pwd = password or os.environ.get("EVIDENTIA_SERVICENOW_PASSWORD")
+        resolved_table = table_name or os.environ.get("EVIDENTIA_SERVICENOW_TABLE") or "incident"
 
         missing: list[str] = []
         if not resolved_url:
