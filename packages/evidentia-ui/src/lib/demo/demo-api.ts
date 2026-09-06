@@ -62,6 +62,8 @@ import type {
   ConmonCheckRequest,
   ConmonCheckResponse,
   ConmonHealthRequest,
+  ConmonSeriesRequest,
+  ConmonSeriesResponse,
   ConmonMarkCompletedRequest,
   ConmonMarkCompletedResponse,
   AISystemDescriptor,
@@ -514,7 +516,8 @@ const DEMO_OSCAL_VERIFY: Record<string, unknown> = {
   digest_check: "passed",
   signature_check: "not checked",
   sigstore_check: "skipped (offline)",
-  summary: "Demo verdict — the live build runs the real chain-of-custody check.",
+  summary:
+    "Demo verdict — the live build runs the real chain-of-custody check.",
 };
 
 // Baked UNSIGNED OSCAL profile returned by the traceability emit verb.
@@ -802,7 +805,8 @@ export const demoApi = {
   tprmConcentration: (_params?: {
     by?: string;
     threshold?: number;
-  }): Promise<ConcentrationReport> => Promise.resolve(clone(DEMO_CONCENTRATION)),
+  }): Promise<ConcentrationReport> =>
+    Promise.resolve(clone(DEMO_CONCENTRATION)),
   ddQuestionnaireGenerate: (
     _vendorId: string,
     _params?: { format?: string },
@@ -819,16 +823,18 @@ export const demoApi = {
     // questionnaire carries no `questions`, so an empty/partial doc yields
     // an empty `responses` map — exactly what the server would return.
     const questions =
-      (document as { questions?: Array<{ id?: string; vendor_response?: string }> })
-        .questions ?? [];
+      (
+        document as {
+          questions?: Array<{ id?: string; vendor_response?: string }>;
+        }
+      ).questions ?? [];
     const responses: Record<string, string> = {};
     for (const q of questions) {
       if (q?.id) responses[q.id] = q.vendor_response ?? "";
     }
     return Promise.resolve({
       vendor: { id: vendor.id ?? vendorId, name: vendor.name },
-      questionnaire_id:
-        (document as { id?: string | null }).id ?? null,
+      questionnaire_id: (document as { id?: string | null }).id ?? null,
       format: (document as { format?: string | null }).format ?? null,
       responses,
       ingested_at: "2026-06-21T00:00:00Z",
@@ -866,6 +872,40 @@ export const demoApi = {
     _body: ConmonHealthRequest,
   ): Promise<Record<string, unknown>> =>
     Promise.resolve({ status: "ok", overdue: 0, due_soon: 0 }),
+  conmonSeries: (body: ConmonSeriesRequest): Promise<ConmonSeriesResponse> =>
+    Promise.resolve({
+      series: {
+        slug: body.slug,
+        frequency: "weekly",
+        interval_days: 7,
+        window_start: "2026-06-01T00:00:00+00:00",
+        window_end: "2026-06-21T23:59:59+00:00",
+        tolerance_days: body.tolerance_days ?? 2,
+        observations: [
+          {
+            collected_at: "2026-06-01T12:00:00+00:00",
+            lineage_id: "0f4c2b7e-3c1a-4f6e-9d2a-8b7c6d5e4f30",
+            version: 1,
+            source_system: "nessus",
+          },
+          {
+            collected_at: "2026-06-08T12:00:00+00:00",
+            lineage_id: "7a1d9e52-6b3f-4c8d-a2e1-5f0b9c8d7e61",
+            version: 1,
+            source_system: "nessus",
+          },
+          {
+            collected_at: "2026-06-15T12:00:00+00:00",
+            lineage_id: "c3e8f1a0-2d4b-4e6f-8a9c-1b2d3e4f5a67",
+            version: 1,
+            source_system: "nessus",
+          },
+        ],
+        gaps: [],
+        verdict: "continuous",
+      },
+      description: `Cadence evidence for ${body.slug}: 3 observations between 2026-06-01 and 2026-06-21. Every interval holds an observation within tolerance. Verdict: continuous. A gap-free dated series is evidence of cadence and nothing more; the counts are what the evidence store holds, not what was performed.`,
+    }),
   conmonMarkCompleted: (
     body: ConmonMarkCompletedRequest,
   ): Promise<ConmonMarkCompletedResponse> =>
@@ -902,7 +942,9 @@ export const demoApi = {
     const page = items.slice(skip, skip + limit);
     return Promise.resolve({ total, skip, limit, items: clone(page) });
   },
-  createChallenge: (challenge: EffectiveChallenge): Promise<EffectiveChallenge> =>
+  createChallenge: (
+    challenge: EffectiveChallenge,
+  ): Promise<EffectiveChallenge> =>
     Promise.resolve({
       ...clone(challenge),
       id: `demo-chal-${Date.now()}`,
@@ -1013,7 +1055,9 @@ export const demoApi = {
     const page = items.slice(skip, skip + limit);
     return Promise.resolve({ total, skip, limit, items: clone(page) });
   },
-  createRetention: (payload: RetentionCreatePayload): Promise<RetentionMetadata> =>
+  createRetention: (
+    payload: RetentionCreatePayload,
+  ): Promise<RetentionMetadata> =>
     Promise.resolve({
       ...clone(DEMO_RETENTION[0]),
       ...clone(payload),
@@ -1135,9 +1179,7 @@ export const demoApi = {
       source: "bundled",
       path: `bundled://${frameworkId}.yaml`,
     }),
-  catalogLicenseInfo: (
-    frameworkId: string,
-  ): Promise<Record<string, unknown>> =>
+  catalogLicenseInfo: (frameworkId: string): Promise<Record<string, unknown>> =>
     Promise.resolve({
       framework_id: frameworkId,
       license_required: false,
@@ -1154,9 +1196,7 @@ export const demoApi = {
   catalogRemove: (_frameworkId: string): Promise<void> => Promise.resolve(),
 
   // ── Risk quantification (FAIR / OpenFAIR) ─────────────────────────────
-  riskQuantify: (
-    _body: RiskQuantifyRequest,
-  ): Promise<RiskQuantifyResponse> =>
+  riskQuantify: (_body: RiskQuantifyRequest): Promise<RiskQuantifyResponse> =>
     Promise.resolve({
       method: "open-fair",
       scenario_count: 0,
@@ -1201,9 +1241,7 @@ export const demoApi = {
     _descriptor: AISystemDescriptor,
   ): Promise<AISystemClassification> =>
     Promise.resolve(clone(DEMO_AI_CLASSIFICATION)),
-  registerAiSystem: (
-    body: AISystemRegisterRequest,
-  ): Promise<AISystemEntry> =>
+  registerAiSystem: (body: AISystemRegisterRequest): Promise<AISystemEntry> =>
     Promise.resolve({
       ...clone(DEMO_AI_SYSTEMS[0]),
       owner: body.owner,
@@ -1352,9 +1390,7 @@ export const demoApi = {
   },
 
   // ── OSCAL (verify) ────────────────────────────────────────────────────
-  oscalVerify: (
-    _body: OscalVerifyRequest,
-  ): Promise<Record<string, unknown>> =>
+  oscalVerify: (_body: OscalVerifyRequest): Promise<Record<string, unknown>> =>
     Promise.resolve(clone(DEMO_OSCAL_VERIFY)),
 
   // ── Traceability (Control↔Threat matrix → OSCAL profile) ──────────────
