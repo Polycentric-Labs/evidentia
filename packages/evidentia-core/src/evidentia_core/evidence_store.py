@@ -60,6 +60,8 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Iterator
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID
 
@@ -555,3 +557,51 @@ __all__ = [
     "load_evidence_version",
     "save_evidence",
 ]
+
+
+def _as_utc(value: datetime | None) -> datetime | None:
+    """Normalise a bound to aware UTC; a naive value is read as UTC."""
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
+
+
+def iter_artifacts(
+    evidence_store_dir: Path | None = None,
+    *,
+    since: datetime | None = None,
+    until: datetime | None = None,
+    source_system: str | None = None,
+    metadata: dict[str, object] | None = None,
+) -> Iterator[EvidenceArtifact]:
+    """Yield every artifact version in the store that matches the filters.
+
+    A linear walk over :func:`list_lineages` and :func:`list_lineage`: the
+    store has no index, v0.13 store sizes make the walk acceptable, and an
+    index sidecar is a documented follow-up (V13-01 design, section 2.2).
+    Filters: ``collected_at`` within ``[since, until]`` inclusive (naive bounds
+    are read as UTC), ``source_system`` equality, and equality on every
+    ``metadata`` key given. Results come in lineage-id then version order, not
+    time order; callers that need a series sort on ``collected_at``.
+    """
+    store_root = get_evidence_store_dir(evidence_store_dir)
+    lower = _as_utc(since)
+    upper = _as_utc(until)
+    for lineage_id in list_lineages(store_root):
+        for artifact in list_lineage(lineage_id, store_root):
+            collected = _as_utc(artifact.collected_at)
+            if collected is None:
+                continue
+            if lower is not None and collected < lower:
+                continue
+            if upper is not None and collected > upper:
+                continue
+            if source_system is not None and artifact.source_system != source_system:
+                continue
+            if metadata and any(
+                artifact.metadata.get(key) != value for key, value in metadata.items()
+            ):
+                continue
+            yield artifact
