@@ -31,6 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   state file takes the date of its latest evidence artifact, the state file wins
   where it has a date, and check rows gain a series verdict; the state file becomes
   optional when the store is given.
+- **Nessus scan ingest (V13-05, first half).** `evidentia collect nessus --file` parses a
+  Nessus v2 export with `defusedxml` (entities refused, 50 MB cap) into one finding per
+  report item (deterministic ids, RA-5 and SI-2 mappings, trimmed plugin output) plus a
+  collection manifest, and saves one evidence artifact whose `metadata.cadence_slug`
+  (default `fedramp-conmon-scans`) feeds `conmon series`. `POST
+  /api/collectors/nessus/collect` takes the XML text only and saves to the server's own
+  store; the console's Collect page gains a Nessus tab; the new `scan` extra carries
+  `defusedxml`. Importers do not raise the README collector count. See
+  `docs/vuln-scan-collectors.md`.
 
 ### Changed
 
