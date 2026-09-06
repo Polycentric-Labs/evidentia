@@ -49,5 +49,7 @@ trailers naming AI tools are not accepted.
 
 ## Organisation policy
 
-Polycentric Labs maintains one AI-assistance policy shared by its projects. This
-page is Evidentia's project-level record under that policy.
+Polycentric Labs maintains one AI-assistance policy shared by its projects,
+published at
+[github.com/Polycentric-Labs/.github/blob/main/AI_POLICY.md](https://github.com/Polycentric-Labs/.github/blob/main/AI_POLICY.md).
+This page is Evidentia's project-level record under that policy.
