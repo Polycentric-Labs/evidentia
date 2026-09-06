@@ -58,7 +58,7 @@
 # from cosign verification, NOT `:latest`):
 #   docker build -f docker/Dockerfile.demo \
 #       --build-arg BASE=ghcr.io/polycentric-labs/evidentia@sha256:<digest> \
-#       -t evidentia-demo:v0.12.0 .
+#       -t evidentia-demo:v0.12.1 .
 #
 # Smoke test (before the signed digest exists — BASE is overridable so the
 # multi-stage build + the allowlist/refusal logic are testable against a bare
@@ -74,7 +74,7 @@
 #   docker run --rm --network none --read-only --tmpfs /tmp \
 #       --memory 512m --cpus 1 --pids-limit 256 \
 #       --security-opt no-new-privileges --cap-drop ALL \
-#       evidentia-demo:v0.12.0 doctor
+#       evidentia-demo:v0.12.1 doctor
 
 # The signed release digest is the default BASE at deploy time. Declared here as a
 # GLOBAL ARG (before the first FROM) so the final stage's `FROM ${BASE}` can
@@ -89,7 +89,7 @@ ARG BASE=ghcr.io/polycentric-labs/evidentia@sha256:00000000000000000000000000000
 # Uses the SAME SHA-pinned slim base as the main Dockerfile's builder. Everything
 # that needs a shell (vendoring pyyaml) happens here; the final stage only COPYs
 # the finished /opt/evidentia-demo tree.
-FROM python:3.13-slim@sha256:ffb752e139c0a19692a43af8d8523b274222dd68eebad5d583b45c2201c6e30a AS assets
+FROM python:3.13-slim@sha256:9d2e5553305c7c7b0097999bb17187c69b921ccd6bc9d40e4bb5ebe652c00285 AS assets
 
 # The Tier-1 runner + its argv allowlist, overlaid at the exact repo state onto
 # the runner the demo exposes. They land in a dedicated package tree on the

@@ -1,6 +1,6 @@
 # Evidentia roadmap
 
-**Last updated: 2026-08-28, at the v0.13 cycle open; current release v0.12.0.**
+**Last updated: 2026-09-05, at the day-N container rebuild release; current release v0.12.1.**
 
 > **Engineering practices**, how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
@@ -172,6 +172,25 @@ EU-AI-Act ↔ ISO/IEC 42001 crosswalk was NOT built (licensed-text
 verdict recorded in the plan → v1.1). Also: the v1.0 review protocol
 committed, the Q3 safeguards sweep recorded, the container rebuilt on
 the current DHI base, and the repo root tidied 19 → 12 tracked files.
+
+### v0.12.1 - Container rebuild on a fresh hardened base (day-N CVE response) - SHIPPED (released 2026-09-05)
+
+A rebuild patch in the v0.10.18 pattern: the 2026-08-31 post-publish
+rescan of the published v0.12.0 image surfaced three High openssl CVEs
+(DEBIAN-CVE-2026-14456 / -14457 / -18798, fixed in 3.5.7), so both
+pinned bases move to their current digests (the base-freshness drift
+in issue #258) and the image is rebuilt, re-signed and re-attested.
+Closes the two open Dependabot advisories (transformers, browserslist),
+quiets the weekly Dependabot uv job (typer/rich ignore rules with
+removal triggers), and makes the ai-gov descriptor schema agree with
+the strip-then-validate runtime in every regex engine (the 2026-09-03
+DAST finding). Because a tag ships everything on `main`, it also
+carries the v0.13 cycle's opening batch: Python 3.14 support
+(`requires-python <3.15`), the OSCAL empty-array conformance fix, the
+`occ-sr-26-2` designator correction with deprecation aliases, the
+CIMD-misnomer retirement, roadmap-gate and FedRAMP-generator hardening,
+the Dependabot cooldown-spec fix, and the routine dependency batches
+including compliance-trestle 5.0.
 
 ### v0.12.0 - Pre-1.0 hardening: the project's promises become enforceable - SHIPPED (released 2026-08-22)
 

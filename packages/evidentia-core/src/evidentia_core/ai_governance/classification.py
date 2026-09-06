@@ -117,6 +117,22 @@ class NISTAIRMFFunction(str, Enum):
     """Allocate risk resources, document, respond."""
 
 
+# "At least one character that survives ``str.strip()``." EvidentiaModel sets
+# ``str_strip_whitespace=True``, so a whitespace-only value passes a raw
+# ``min_length=1`` in the PUBLISHED schema but fails post-strip validation at
+# runtime, which schemathesis (correctly) reports as RejectedPositiveData on
+# POST /api/ai-gov/register. The 2026-07-06 fix used ``\S``; the 2026-09-03
+# DAST run showed that is not enough: regex engines disagree on whether
+# U+00A0 and its relatives are whitespace, while Python's strip removes every
+# code point listed here. Spelling the set out makes the published schema and
+# the runtime agree in every engine (JSON Schema patterns are ECMA-262
+# searches, so the class is deliberately unanchored). Keep in sync with
+# ``str.isspace()``.
+_NON_BLANK_PATTERN = (
+    r"[^\s\x1c-\x1f\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]"
+)
+
+
 class AISystemDescriptor(EvidentiaModel):
     """Operator-supplied use-case attributes for classification.
 
@@ -129,26 +145,14 @@ class AISystemDescriptor(EvidentiaModel):
     name: str = Field(
         min_length=1,
         max_length=256,
-        # 2026-07-06 stateful-DAST finding (H-2 Step 4): EvidentiaModel
-        # sets str_strip_whitespace=True, so a whitespace-only value
-        # (e.g. "\t") passes this raw min_length=1 in the PUBLISHED
-        # schema but fails post-strip validation at runtime -> a
-        # schema-valid-per-the-doc request gets rejected, which
-        # schemathesis's positive_data_acceptance check (correctly)
-        # flags as RejectedPositiveData on POST /api/ai-gov/register
-        # (AISystemDescriptor is RegisterRequest.descriptor). ``\S``
-        # (unanchored — JSON Schema ``pattern`` is a search, not a
-        # fullmatch) mirrors "at least one non-whitespace character"
-        # so the published schema matches the strip+min_length runtime
-        # behavior instead of over-promising. Mirror in ``purpose``
-        # below; keep both in sync with EvidentiaModel's strip config.
-        pattern=r"\S",
+        # See _NON_BLANK_PATTERN above (2026-07-06 and 2026-09-03 DAST findings).
+        pattern=_NON_BLANK_PATTERN,
         description="Human-readable AI system name (free text).",
     )
     purpose: str = Field(
         min_length=1,
         max_length=2048,
-        pattern=r"\S",
+        pattern=_NON_BLANK_PATTERN,
         description="Plain-English description of what the system does.",
     )
     annex_iii_domain: AnnexIIIDomain = Field(

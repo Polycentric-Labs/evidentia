@@ -111,6 +111,19 @@ updates:
       - dependency-name: "mcp"
         update-types:
           - "version-update:semver-major"
+      # typer is DELIBERATELY capped <0.27 in packages/evidentia/pyproject.toml
+      # (0.x minors are breaking-prone; the bump gets isolated review). Without
+      # this ignore, Dependabot's uv job still tries 0.27.x every week, hits the
+      # cap, and records a dependency_file_not_resolvable job ERROR (the weekly
+      # red "Dependabot Updates" run since 2026-08-29). REMOVAL TRIGGER: the
+      # typer cap review lifts the pyproject cap; drop both in that PR.
+      - dependency-name: "typer"
+        versions: [">=0.27"]
+      # rich 15 is blocked by a TRANSITIVE cap (instructor pins rich<15), so the
+      # same job-error pattern fires for rich. REMOVAL TRIGGER: instructor
+      # releases with rich>=15 allowed (check its metadata), then drop this.
+      - dependency-name: "rich"
+        versions: [">=15"]
 
   # ---------------------------------------------------------------------
   # Frontend (npm — packages/evidentia-ui)
@@ -238,7 +251,7 @@ updates:
       # ignoring would not catch it; #127 arrived through the minor+patch
       # group). Base-image moves stay a deliberate maintainer decision even
       # now that the stack itself runs on 3.14 (requires-python <3.15 since
-      # v0.13): the v0.10.12 container break (engineering-practices lesson 1;
+      # v0.12.1): the v0.10.12 container break (engineering-practices lesson 1;
       # PR #127 closed on this basis) came from an unreviewed base bump, and
       # the DHI runtime digest must move in step with the builder tag, so a
       # 3.14 base is a scheduled migration once DHI 3.14 coverage is
