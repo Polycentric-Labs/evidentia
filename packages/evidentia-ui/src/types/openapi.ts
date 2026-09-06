@@ -703,7 +703,7 @@ export interface paths {
          *     Mirrors the ``evidentia collect nessus`` CLI verb. Request body:
          *
          *     - ``content`` (required): the ``<NessusClientData_v2>`` XML text.
-         *       No path and no URL — the server never reads a client-named file;
+         *       No path and no URL: the server never reads a client-named file;
          *       this is a text-upload ingest only.
          *     - ``cadence_slug`` (optional): defaults to ``fedramp-conmon-scans``.
          *       Must name a registered cadence.
@@ -715,7 +715,7 @@ export interface paths {
          *
          *     NO credentials: file/text ingest only, mirroring the OCSF inline-
          *     ``content`` mode's trust posture. Third-party XML is parsed with
-         *     ``defusedxml`` — entity expansion and external references are
+         *     ``defusedxml``: entity expansion and external references are
          *     refused before any element is read.
          */
         post: operations["nessus_collect_api_collectors_nessus_collect_post"];

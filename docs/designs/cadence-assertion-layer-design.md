@@ -1,6 +1,6 @@
 # Design: the cadence assertion layer (V13-01) and vulnerability-scan ingest (V13-05)
 
-Status: DRAFT for design review, 2026-09-06. Scope items V13-01 and V13-05 of
+Status: built through batch 6 (V13-01 and the file-ingest half of V13-05), 2026-09-06; the API pollers in section 3 remain planned. Scope items V13-01 and V13-05 of
 [the v0.13 plan](../releases/plans/v0.13-plan.md). Ratified constraints that bind
 this design: extension-first (answer 10: fold the layer into existing verbs, at
 most one new leaf), 100 percent console parity at the tag (answer 11), a gap-free
@@ -146,7 +146,7 @@ they follow once the ingest shape is stable.
 
 ## 3. Sequencing
 
-1. Batch 4 (V13-01 core): frequency extension and `interval_days`,
+1. Batch 4 (V13-01 core, landed in PR #284): frequency extension and `interval_days`,
    (the `--evidence-store` mode on `conmon check` and `conmon health` landed in
    batch 5 as `use_evidence_store` on the API and a Series column on the CLI),
    `iter_artifacts`, `CadenceSeries` and `assert_series`, the `conmon series`
@@ -154,9 +154,9 @@ they follow once the ingest shape is stable.
    (`conmon-runbook.md` section, `api-stability.md` rows). Exit: unit tests on
    synthetic series covering every verdict and the tolerance edge, DAST stateless
    run green on the new operation.
-2. Batch 5 (V13-05 first half): Nessus ingest with fixtures under
+2. Batch 5 (V13-05 first half, landed in PR #285): Nessus ingest with fixtures under
    `tests/fixtures/scans/`, evidence artifact write, series end-to-end test.
-3. Batch 6 (V13-05 second half): Greenbone ingest, `docs/vuln-scan-collectors.md`,
+3. Batch 6 (V13-05 second half, this batch): Greenbone ingest, `docs/vuln-scan-collectors.md`,
    capability-matrix delta.
 4. Later: API pollers, the evidence-store index sidecar, and a persisted
    completion history for conmon if the state file's single date proves limiting.

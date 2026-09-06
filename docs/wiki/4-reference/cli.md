@@ -349,7 +349,7 @@ Ingest a Nessus v2 (.nessus) XML scan export (v0.13 V13-05).
 | Flag / argument | Description |
 | --- | --- |
 | `--file` | Path to a Nessus v2 (.nessus) XML scan export. |
-| `--cadence-slug` | Cadence slug the saved evidence artifact declares via metadata.cadence_slug (evidentia conmon series reads it). Must name a registered cadence — run `evidentia conmon list` to see available. |
+| `--cadence-slug` | Cadence slug the saved evidence artifact declares via metadata.cadence_slug (evidentia conmon series reads it). Must name a registered cadence; run `evidentia conmon list` to see available. |
 | `--evidence-store` | Evidence store root directory override. Defaults to EVIDENTIA_EVIDENCE_STORE_DIR, else the platform user-data directory (evidentia_core.evidence_store.get_evidence_store_dir). |
 | `--save-evidence, --no-save-evidence` | Persist the scan-report evidence artifact. Default True. |
 | `--plugin-output-max-chars` | Cap on plugin_output length embedded in each finding's raw_data. Default 4000. |
