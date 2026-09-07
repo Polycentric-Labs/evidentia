@@ -518,10 +518,10 @@ docstring-parser==0.18.0 \
     --hash=sha256:292510982205c12b1248696f44959db3cdd1740237a968ea1e2e7a900eeb2015 \
     --hash=sha256:b3fcbed555c47d8479be0796ef7e19c2670d428d72e96da63f3a40122860374b
     # via instructor
-evidentia[gui]==0.12.1 \
+evidentia==0.12.1 \
     --hash=sha256:79b73b6b2abaf03b8eaf705e827063e0c85bc9c990c4a99b15e7891dac55ae22 \
     --hash=sha256:bcc0e35a9f249ed9baf9917ab10e476c974429cfcd06c965f6eeae81036d5120
-    # via -r requirements.in
+    # via -r docker/requirements.in
 evidentia-ai==0.12.1 \
     --hash=sha256:57be880cc59ce6475a2d22be93581bfdaf331e8009aa50a82c8ce20445985c52 \
     --hash=sha256:a23d401b24152079485e26765f0c52c047b683a2c3817491608bd332425b138e
@@ -2082,7 +2082,7 @@ tenacity==9.1.4 \
     #   evidentia-ai
     #   evidentia-core
     #   instructor
-thefuzz[speedup]==0.22.1 \
+thefuzz==0.22.1 \
     --hash=sha256:59729b33556850b90e1093c4cf9e618af6f2e4c985df193fdf3c5b5cf02ca481 \
     --hash=sha256:7138039a7ecf540da323792d8592ef9902b1d79eb78c147d4f20664de79f3680
     # via evidentia-core
@@ -2187,12 +2187,16 @@ typing-extensions==4.16.0 \
     --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 \
     --hash=sha256:dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5
     # via
+    #   aiohttp
+    #   aiosignal
     #   anyio
     #   fastapi
     #   huggingface-hub
     #   openai
     #   pydantic
     #   pydantic-core
+    #   referencing
+    #   starlette
     #   typing-inspection
 typing-inspection==0.4.4 \
     --hash=sha256:547274fa6b0a561ccf549cc9524b999a578e737d015d8709d021f9d0d13bea47 \
@@ -2205,10 +2209,10 @@ urllib3==2.7.0 \
     --hash=sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c \
     --hash=sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897
     # via
-    #   -r requirements.in
+    #   -r docker/requirements.in
     #   botocore
     #   requests
-uvicorn[standard]==0.52.4 \
+uvicorn==0.52.4 \
     --hash=sha256:73acfee47a0b133c5de13d219492d62d8a31e935f4fe6e41a232451a15379f86 \
     --hash=sha256:f86e41a149d7d05a9969337e3946a9c171c06a5d42680896daaba624aeac8da1
     # via evidentia-api
