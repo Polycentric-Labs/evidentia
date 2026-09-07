@@ -160,18 +160,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-    # Same batch-poisoning pattern as `mcp` above, on the npm side:
-    # @tanstack/react-table 8.21.3 -> 9.1.2 is a breaking major that rode
-    # the 20-package npm-runtime group (PRs #234, #242), failing the
-    # frontend typecheck + build check and holding 19 unrelated runtime
-    # bumps hostage. v9 restructures the table API that GapTable.tsx is
-    # built on, so it is a deliberate migration, not a bump.
-    # REMOVAL TRIGGER: the tracked "react-table v9 migration (GapTable)"
-    # item in docs/ROADMAP.md lands — drop this entry in that PR.
-    ignore:
-      - dependency-name: "@tanstack/react-table"
-        update-types:
-          - "version-update:semver-major"
 
   # ---------------------------------------------------------------------
   # GitHub Actions (workflow files in .github/workflows/)

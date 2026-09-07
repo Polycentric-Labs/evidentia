@@ -526,7 +526,9 @@ Items deferred from Phase B audit v3 + integration plan §"v1.1+":
   a deliberate migration, not a bump. Majors are ignored in
   `.github/dependabot.yml` until it lands, for the same
   batch-poisoning reason (it was holding 19 unrelated npm-runtime bumps
-  hostage). **Drop the ignore in the migration's own PR.**
+  hostage). **Drop the ignore in the migration's own PR.** Landed
+  2026-09-07 in v0.13 batch 8 (V13-19): `GapTable` runs on 9.2.4 and the
+  ignore is gone.
 
 ## v0.10.x - Research-driven integration & AI-governance line - SHIPPED
 
