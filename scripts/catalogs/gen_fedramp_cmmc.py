@@ -7,6 +7,8 @@ then fills in the real control text from the bundled NIST catalog.
 Baseline MEMBERSHIP is NOT authored here. It is read from the vendored
 provenance file `upstream/fedramp-rev5-baselines.json`, extracted from the
 FedRAMP PMO's own OSCAL profiles. Do not hand-edit the membership lists.
+The file is produced by `scripts/catalogs/build_fedramp_baselines.py`,
+which also has a `--check` mode.
 
 History, so the mistake is not repeated: through v0.11.2 the Low and LI-SaaS
 lists were derived as `[c for c in FEDRAMP_MODERATE if "(" not in c][:125]`

@@ -133,9 +133,22 @@ def test_vendored_provenance_is_recorded(vendored: dict) -> None:
     only record of where this data legitimately came from."""
     prov = vendored["provenance"]
     assert prov["source_url"].startswith("https://")
-    assert prov["published"] and prov["retrieved"]
+    assert prov["published"] and prov["retrieved"] and prov["reverified"]
     for key in ("low", "moderate", "high", "li-saas"):
         assert len(prov["files"][key]["sha256"]) == 64
+    assert "scripts/catalogs/build_fedramp_baselines.py" in prov["builder"]
+    assert (REPO_ROOT / "scripts" / "catalogs" / "build_fedramp_baselines.py").exists()
+
+
+def test_li_saas_methods_note_matches_the_data(vendored: dict) -> None:
+    """``notes.li_saas_methods`` is derived text, not hand-authored; keep it
+    honest against the data it describes rather than freezing today's wording."""
+    li_saas_methods = vendored["li_saas_methods"]
+    li_saas_baseline = vendored["baselines"]["li-saas"]
+    note = vendored["notes"]["li_saas_methods"]
+    assert note.startswith(f"{len(li_saas_methods)} of the {len(li_saas_baseline)}")
+    missing = set(li_saas_baseline) - set(li_saas_methods)
+    assert missing == {"IA-2(12)"}
 
 
 @pytest.mark.parametrize("name", sorted(BASELINES))

@@ -12,6 +12,13 @@
 # the python-ceiling-watch.yml / uv-pilot-watch.yml sentinel pattern; its
 # own liveness is covered by the G10 dead-trigger detector
 # (base-freshness.yml).
+#
+# Also compares the live OSCAL-Foundation/fedramp-resources republisher
+# against the FedRAMP Rev 5 baseline profile pins in
+# scripts/catalogs/upstream/fedramp-rev5-baselines.json. A MAJOR finding
+# there re-syncs through scripts/catalogs/build_fedramp_baselines.py
+# (--allow-upstream-change, review the diff, regenerate the catalogs); a
+# NOTICE finding just refreshes the pin at the next deliberate re-sync.
 name: fedramp schema watch
 
 on:
@@ -62,7 +69,7 @@ jobs:
           TITLE="FedRAMP upstream drift — re-verify the CR26 pins (fedramp-schema-watch)"
           BODY=$(printf '%s\n\n%s\n' \
             "$(cat drift-findings.md)" \
-            "Action: follow the re-sync procedure in packages/evidentia-core/src/evidentia_core/fedramp/schemas/README.md (re-verify upstream, bump UPSTREAM.json, re-vendor schemas and/or re-run scripts/catalogs/gen_fedramp_ksi.py + gen_fedramp_frr.py + regenerate_manifest.py, review the diff). This is a scheduled sentinel — MAJOR findings also red this run; NOTICE findings only track here.")
+            "Action: schema/KSI findings follow the re-sync procedure in packages/evidentia-core/src/evidentia_core/fedramp/schemas/README.md (re-verify upstream, bump UPSTREAM.json, re-vendor schemas and/or re-run scripts/catalogs/gen_fedramp_ksi.py + gen_fedramp_frr.py + regenerate_manifest.py, review the diff). Baseline findings re-sync through scripts/catalogs/build_fedramp_baselines.py (--allow-upstream-change, review the diff, regenerate the fedramp-rev5-* catalogs). This is a scheduled sentinel: MAJOR findings also red this run, NOTICE findings only track here.")
           existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
             --search "in:title \"$TITLE\"" --json number -q '.[0].number' || echo "")
           if [ -n "$existing" ]; then
