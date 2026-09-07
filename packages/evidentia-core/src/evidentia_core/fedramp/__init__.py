@@ -5,7 +5,10 @@ v0.11 Wave 2: the Security Decision Record (SDR) KSI emitter behind
 (SDR-CSO-FRR). Validated offline against the vendored CR26
 schemas in :mod:`evidentia_core.fedramp.schemas` (provenance pins in
 ``schemas/UPSTREAM.json``; drift is watched by the weekly
-``fedramp-schema-watch`` sentinel).
+``fedramp-schema-watch`` sentinel). Significant Change Notifications
+(SCN-CSO-INF) validate the same way through :func:`validate_scn_document`,
+which checks documents produced by
+:meth:`evidentia_core.ai_governance.scr.SCRForm.to_scn_document`.
 """
 
 from evidentia_core.fedramp.ksi import (
@@ -19,6 +22,7 @@ from evidentia_core.fedramp.ksi import (
     load_ksi_catalog,
     validate_sdr_document,
 )
+from evidentia_core.fedramp.scn import validate_scn_document
 
 __all__ = [
     "FRR_CATALOG_ID",
@@ -29,5 +33,6 @@ __all__ = [
     "ksi_coverage",
     "load_frr_catalog",
     "load_ksi_catalog",
+    "validate_scn_document",
     "validate_sdr_document",
 ]

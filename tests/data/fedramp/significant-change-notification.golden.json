@@ -1,0 +1,18 @@
+{
+  "certificationPackageOverviewUri": "https://provider.example/fedramp/cpo.json",
+  "changeType": "Adaptive",
+  "changeTypeExplanation": "Adaptive because it changes infrastructure without a new system boundary.",
+  "changeDescription": "Adds a redundant availability zone to the production deployment.",
+  "reason": "Sustained load is approaching the current capacity ceiling.",
+  "customerImpact": "No customer-facing downtime; capacity increases only.",
+  "planAndTimeline": {
+    "summary": "Provision the zone, validate failover, then enable traffic.",
+    "plannedStart": "2026-10-01"
+  },
+  "impactedControls": [
+    "AC-2",
+    "CM-6"
+  ],
+  "impactAnalysis": "Low risk; adds capacity without new external exposure.",
+  "assessorName": "Acme Assessors LLC"
+}

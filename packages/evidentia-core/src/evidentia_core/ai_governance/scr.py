@@ -246,6 +246,15 @@ def classify_change(
     return SCRCategory.ROUTINE_RECURRING
 
 
+#: Maps the two SCN-eligible categories to the SCN schema's changeType
+#: enum values. Routine Recurring has no entry: :meth:`SCRForm.
+#: to_scn_document` rejects that category before this mapping is used.
+_SCN_CHANGE_TYPE_BY_CATEGORY: dict[str, str] = {
+    SCRCategory.ADAPTIVE.value: "Adaptive",
+    SCRCategory.TRANSFORMATIVE.value: "Transformative",
+}
+
+
 class SCRForm(EvidentiaModel):
     """FedRAMP Significant Change Request form (v0.9.6 P3 + v0.9.7 P3).
 
@@ -269,11 +278,14 @@ class SCRForm(EvidentiaModel):
     backward-compat with v0.9.6 emissions) + a
     :meth:`to_oscal_scr_notification` method emitting the canonical
     RFC-0007 wire format. The existing :meth:`to_markdown` writer
-    is unchanged.
+    is unchanged. :meth:`to_scn_document` emits the newer SCN-CSO-INF
+    wire shape defined by the vendored FedRAMP schema;
+    ``evidentia_core.fedramp.validate_scn_document`` checks the
+    result against it directly.
 
     The :meth:`to_markdown` + :meth:`to_oscal_scr_notification` +
-    ``model_dump_json()`` writers cover the three operator-facing
-    emit paths.
+    :meth:`to_scn_document` + ``model_dump_json()`` writers cover
+    the four operator-facing emit paths.
     """
 
     scr_id: str = Field(
@@ -438,6 +450,28 @@ class SCRForm(EvidentiaModel):
         ),
     )
 
+    # ── SCN-CSO-INF alignment: both fields Optional, non-breaking.
+    # See fedramp/scn.py for the vendored schema this feeds.
+    certification_package_overview_uri: str | None = Field(
+        default=None,
+        max_length=2048,
+        description=(
+            "SCN-CSO-INF required field. Full URI of the provider's "
+            "Certification Package Overview document. The same "
+            "value the SDR emitter carries in "
+            "KsiStatusDocument.certification_package_overview_uri."
+        ),
+    )
+    change_type_explanation: str | None = Field(
+        default=None,
+        max_length=8000,
+        description=(
+            "Optional SCN-CSO-INF categorization explanation: why "
+            "the change was categorized as Adaptive or "
+            "Transformative."
+        ),
+    )
+
     def to_oscal_scr_notification(self) -> dict[str, object]:
         """Emit the SCR in RFC-0007 Significant Change Notification format.
 
@@ -510,6 +544,65 @@ class SCRForm(EvidentiaModel):
             out["control_verification_steps"] = self.plan_and_timeline
             if self.rollback_plan:
                 out["rollback_plan"] = self.rollback_plan
+        return out
+
+    def to_scn_document(self) -> dict[str, object]:
+        """Emit the SCN-CSO-INF wire shape for a Significant Change Notification.
+
+        Returns a JSON-serializable dict matching the vendored
+        ``fedramp-significant-change-notifications-schema-2026-06-24.json``
+        (schema version 0.1.2). Callers validate the result with
+        ``evidentia_core.fedramp.validate_scn_document``.
+        :meth:`to_oscal_scr_notification` keeps emitting the older
+        RFC-0007 draft field list unchanged; this method is the
+        newer, schema-conformant writer.
+
+        Raises:
+            ValueError: When ``category`` is routine_recurring (that
+                category does not require a Significant Change
+                Notification per SCN-RTR, so no document is emitted
+                for it), or when
+                ``certification_package_overview_uri`` is None (the
+                SCN schema requires it; construct the form with the
+                field set, or call ``SCRForm.model_validate({**form.
+                model_dump(), "certification_package_overview_uri":
+                ...})``).
+        """
+        if self.category == SCRCategory.ROUTINE_RECURRING.value:
+            raise ValueError(
+                "Cannot emit a Significant Change Notification: "
+                "category is routine_recurring. Routine recurring "
+                "changes (SCN-RTR) do not require a Significant "
+                "Change Notification, so no document is emitted for "
+                "this category."
+            )
+        if self.certification_package_overview_uri is None:
+            raise ValueError(
+                "Cannot emit an SCN document: "
+                "certification_package_overview_uri is None. "
+                "Construct the form with it set, or call "
+                "SCRForm.model_validate({**form.model_dump(), "
+                '"certification_package_overview_uri": ...}).'
+            )
+        out: dict[str, object] = {
+            "certificationPackageOverviewUri": self.certification_package_overview_uri,
+            "changeType": _SCN_CHANGE_TYPE_BY_CATEGORY[self.category],
+        }
+        if self.change_type_explanation:
+            out["changeTypeExplanation"] = self.change_type_explanation
+        out["changeDescription"] = self.summary
+        if self.reason_for_change:
+            out["reason"] = self.reason_for_change
+        out["customerImpact"] = self.customer_impact
+        out["planAndTimeline"] = {
+            "summary": self.plan_and_timeline,
+            "plannedStart": self.proposed_date.isoformat(),
+        }
+        out["impactedControls"] = list(self.impacted_controls)
+        if self.business_security_impact_analysis:
+            out["impactAnalysis"] = self.business_security_impact_analysis
+        if self.three_pao_name:
+            out["assessorName"] = self.three_pao_name
         return out
 
     def to_markdown(self) -> str:
