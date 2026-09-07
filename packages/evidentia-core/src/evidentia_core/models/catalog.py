@@ -14,7 +14,8 @@ defaults — existing v0.1.x catalog JSONs continue to parse under
 from __future__ import annotations
 
 import re
-from typing import Any, Literal
+from collections.abc import Iterable
+from typing import Any, Literal, NamedTuple
 
 from pydantic import Field, PrivateAttr
 
@@ -51,6 +52,52 @@ def _normalize_control_id(raw: str) -> str:
 # tooling can type-check hand-authored mappings; ``FrameworkMapping.relationship``
 # remains a plain ``str`` for backward compatibility with v0.1.x JSON.
 RelationshipType = Literal["equivalent", "related", "partial", "superset", "subset", "intersects"]
+
+#: How much control text a catalog carries. Derived from the controls, never
+#: declared: ``full`` when every non-withdrawn control has statement text that
+#: differs from its title, ``headings`` when none does (the catalog carries
+#: control numbering and titles only), ``partial`` otherwise. The redistribution
+#: tier says what may be redistributed; this says what is actually there.
+TextDepth = Literal["full", "partial", "headings"]
+
+
+class StatementRow(NamedTuple):
+    """The four facts about one catalog entry that decide whether it carries text."""
+
+    title: str
+    text: str
+    placeholder: bool
+    withdrawn: bool
+
+
+def _collapse(value: str) -> str:
+    return " ".join(value.split()).casefold()
+
+
+def has_statement(row: StatementRow) -> bool:
+    """True when the entry carries statement text of its own.
+
+    A placeholder never counts, and neither does text that merely repeats the
+    title, which is the shape of a heading-only catalog.
+    """
+    text = _collapse(row.text)
+    return bool(text) and text != _collapse(row.title) and not row.placeholder
+
+
+def derive_text_depth(rows: Iterable[StatementRow]) -> TextDepth:
+    """Classify a catalog's text depth from its entries.
+
+    Withdrawn entries are left out: an upstream source carries no statement
+    for a control it has withdrawn, and that absence says nothing about the
+    depth of the catalog. An empty catalog is ``headings``.
+    """
+    eligible = [row for row in rows if not row.withdrawn]
+    with_text = sum(1 for row in eligible if has_statement(row))
+    if with_text == 0:
+        return "headings"
+    if with_text == len(eligible):
+        return "full"
+    return "partial"
 
 
 class CatalogControl(EvidentiaModel):
@@ -149,6 +196,12 @@ class CatalogControl(EvidentiaModel):
         default=False,
         description="True if the description field is a placeholder rather than "
         "authoritative control text (pairs with license_required for Tier C stubs)",
+    )
+    withdrawn: bool = Field(
+        default=False,
+        description="True when the publisher has withdrawn this control (the OSCAL "
+        "`status` prop reads `withdrawn`). A withdrawn control carries no statement "
+        "upstream, is skipped by gap analysis, and does not count toward text depth.",
     )
 
 
@@ -259,6 +312,18 @@ class ControlCatalog(EvidentiaModel):
     def control_count(self) -> int:
         """Total number of controls (including enhancements)."""
         return len(self._index)
+
+    def statement_rows(self) -> list[StatementRow]:
+        """One :class:`StatementRow` per indexed control, enhancements included."""
+        return [
+            StatementRow(ctrl.title, ctrl.description, ctrl.placeholder, ctrl.withdrawn)
+            for ctrl in self._index.values()
+        ]
+
+    @property
+    def text_depth(self) -> TextDepth:
+        """Derived text depth of this catalog (see :data:`TextDepth`)."""
+        return derive_text_depth(self.statement_rows())
 
 
 class FrameworkMapping(EvidentiaModel):

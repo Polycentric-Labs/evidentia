@@ -1,6 +1,6 @@
 {
   "source_framework": "nist-csf-2.0",
-  "target_framework": "nist-800-53-mod",
+  "target_framework": "nist-800-53-rev5",
   "version": "CSF 2.0 / 800-53 Rev 5",
   "generated_at": "2026-04-16",
   "source": "Derived from NIST OLIR informative references",

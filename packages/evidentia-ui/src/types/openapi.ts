@@ -3839,6 +3839,12 @@ export interface components {
              * @description Control title
              */
             title: string;
+            /**
+             * Withdrawn
+             * @description True when the publisher has withdrawn this control (the OSCAL `status` prop reads `withdrawn`). A withdrawn control carries no statement upstream, is skipped by gap analysis, and does not count toward text depth.
+             * @default false
+             */
+            withdrawn: boolean;
         };
         /**
          * CatalogImportPayload

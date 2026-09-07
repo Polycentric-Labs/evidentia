@@ -158,20 +158,29 @@ class TestLicenseInfo:
 
 class TestCrosswalk:
     def test_returns_mappings_for_known_pair(self, cat_client: TestClient) -> None:
-        # GV.OC-01 in nist-csf-2.0 maps to AC-1 in nist-800-53-mod
-        # (bundled crosswalk nist-csf-2.0_to_nist-800-53-mod.json).
-        r = cat_client.get("/api/catalog/crosswalk?source=nist-csf-2.0&target=nist-800-53-mod&control=GV.OC-01")
+        # GV.OC-01 in nist-csf-2.0 maps to AC-1 in nist-800-53-rev5
+        # (bundled crosswalk nist-csf-2.0_to_nist-800-53-rev5.json).
+        r = cat_client.get("/api/catalog/crosswalk?source=nist-csf-2.0&target=nist-800-53-rev5&control=GV.OC-01")
         assert r.status_code == 200, r.text
         body = r.json()
         assert body["source"] == "nist-csf-2.0"
-        assert body["target"] == "nist-800-53-mod"
+        assert body["target"] == "nist-800-53-rev5"
         assert body["control"] == "GV.OC-01"
         assert body["total"] >= 1
         target_ids = {m["target_control_id"] for m in body["mappings"]}
         assert "AC-1" in target_ids
 
+    def test_baseline_member_resolves_through_its_family(self, cat_client: TestClient) -> None:
+        # The crosswalk is keyed on the full catalog; the moderate baseline is a
+        # member of that family, so the same lookup answers for it.
+        r = cat_client.get(
+            "/api/catalog/crosswalk?source=nist-csf-2.0&target=nist-800-53-rev5-moderate&control=GV.OC-01"
+        )
+        assert r.status_code == 200, r.text
+        assert "AC-1" in {m["target_control_id"] for m in r.json()["mappings"]}
+
     def test_no_mappings_returns_empty_envelope(self, cat_client: TestClient) -> None:
-        r = cat_client.get("/api/catalog/crosswalk?source=nist-csf-2.0&target=nist-800-53-mod&control=ZZ.NO-99")
+        r = cat_client.get("/api/catalog/crosswalk?source=nist-csf-2.0&target=nist-800-53-rev5&control=ZZ.NO-99")
         assert r.status_code == 200, r.text
         body = r.json()
         assert body["total"] == 0

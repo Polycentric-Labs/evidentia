@@ -17,6 +17,7 @@ from typing import Any, Literal
 
 from pydantic import Field, PrivateAttr
 
+from evidentia_core.models.catalog import StatementRow, TextDepth, derive_text_depth
 from evidentia_core.models.common import EvidentiaModel
 
 # Subject-rights vocabulary. Matches the common GDPR/CCPA/state-law framing.
@@ -165,3 +166,12 @@ class ObligationCatalog(EvidentiaModel):
     @property
     def obligation_count(self) -> int:
         return len(self._index)
+
+    def statement_rows(self) -> list[StatementRow]:
+        """One :class:`StatementRow` per obligation."""
+        return [StatementRow(o.title, o.description, o.placeholder, False) for o in self.obligations]
+
+    @property
+    def text_depth(self) -> TextDepth:
+        """Derived text depth of this catalog (see :data:`TextDepth`)."""
+        return derive_text_depth(self.statement_rows())

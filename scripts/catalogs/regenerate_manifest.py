@@ -3,16 +3,62 @@
 This makes the manifest truthful by construction — the contents of
 data/<tier>/ ARE the manifest. No hand-maintained sync required.
 
-Run this script whenever catalogs are added/removed/modified.
+Two columns are derived rather than copied: ``text_depth`` is computed by
+loading every catalog through the same loaders the runtime uses, and
+``crosswalk_family`` comes from the :data:`CROSSWALK_FAMILIES` table below,
+which names the catalogs that are baselines or maturity levels of a larger
+catalog and therefore inherit its crosswalks.
+
+Run this script whenever catalogs are added/removed/modified
+(``uv run python scripts/catalogs/regenerate_manifest.py``; it imports
+``evidentia_core``).
 """
 
 from __future__ import annotations
 
 import json
 import sys
+from pathlib import Path
 
 import yaml
 from _generators import DATA_ROOT  # type: ignore[import-not-found]
+from evidentia_core.catalogs.loader import (
+    load_evidentia_catalog,
+    load_non_control_catalog,
+    load_oscal_catalog,
+)
+
+# Member catalog id -> family id. A crosswalk keyed on the family applies to
+# every member (see evidentia_core.catalogs.crosswalk). The NIST baselines
+# and the FedRAMP baselines are subsets of the full Rev 5 catalog; the legacy
+# 16-control sample is a subset too; the three OSPS maturity levels are
+# applicability filters over one baseline whose crosswalks key on
+# ``osps-baseline``.
+CROSSWALK_FAMILIES: dict[str, str] = {
+    "nist-800-53-rev5-low": "nist-800-53-rev5",
+    "nist-800-53-rev5-moderate": "nist-800-53-rev5",
+    "nist-800-53-rev5-high": "nist-800-53-rev5",
+    "nist-800-53-rev5-privacy": "nist-800-53-rev5",
+    "fedramp-rev5-low": "nist-800-53-rev5",
+    "fedramp-rev5-moderate": "nist-800-53-rev5",
+    "fedramp-rev5-high": "nist-800-53-rev5",
+    "fedramp-rev5-li-saas": "nist-800-53-rev5",
+    "nist-800-53-mod": "nist-800-53-rev5",
+    "osps-baseline-m1": "osps-baseline",
+    "osps-baseline-m2": "osps-baseline",
+    "osps-baseline-m3": "osps-baseline",
+}
+
+
+def derive_text_depth(path: Path, data: dict) -> str:
+    """Load the catalog file the way the runtime does and read its text depth."""
+    if "catalog" in data:
+        return load_oscal_catalog(path).text_depth
+    if data.get("category", "control") != "control":
+        depth = load_non_control_catalog(path).text_depth
+        return str(depth)
+    return load_evidentia_catalog(path).text_depth
+
 
 TIER_DIRS: dict[str, tuple[str, str]] = {
     # dir_name: (default_tier_guess, default_category_guess)
@@ -54,11 +100,7 @@ def scan_dir(subdir: str) -> list[dict]:
     tier_default, category_default = TIER_DIRS[subdir]
     entries: list[dict] = []
 
-    candidates = sorted(
-        list(dir_path.glob("*.json"))
-        + list(dir_path.glob("*.yaml"))
-        + list(dir_path.glob("*.yml"))
-    )
+    candidates = sorted(list(dir_path.glob("*.json")) + list(dir_path.glob("*.yaml")) + list(dir_path.glob("*.yml")))
     # v0.10.6 P1: skip OSCAL-Catalog sidecar artifacts (`*.oscal.json` /
     # `*.oscal.yaml`). These are downstream-consumption artifacts (e.g.,
     # `osps-baseline.oscal.json` is the OSCAL Catalog 1.2.1 serialization
@@ -66,20 +108,14 @@ def scan_dir(subdir: str) -> list[dict]:
     # they don't carry `framework_id` and shouldn't appear as a separate
     # manifest entry. The companion Evidentia YAMLs (e.g.
     # `osps-baseline-m1.yaml`) are the manifest-registered entries.
-    candidates = [
-        p for p in candidates
-        if not (p.name.endswith(".oscal.json") or p.name.endswith(".oscal.yaml"))
-    ]
+    candidates = [p for p in candidates if not (p.name.endswith(".oscal.json") or p.name.endswith(".oscal.yaml"))]
     for path in candidates:
         try:
             text = path.read_text(encoding="utf-8")
             if path.suffix.lower() in (".yaml", ".yml"):
                 data = yaml.safe_load(text)
                 if not isinstance(data, dict):
-                    raise ValueError(
-                        f"YAML top-level must be a mapping, got "
-                        f"{type(data).__name__}"
-                    )
+                    raise ValueError(f"YAML top-level must be a mapping, got {type(data).__name__}")
             else:
                 data = json.loads(text)
         except (OSError, json.JSONDecodeError, yaml.YAMLError, ValueError) as exc:
@@ -117,6 +153,10 @@ def scan_dir(subdir: str) -> list[dict]:
         if data.get("placeholder"):
             entry["placeholder"] = True
         entry["refresh"] = infer_refresh(entry["tier"], entry["category"])
+        entry["text_depth"] = derive_text_depth(path, data)
+        family = CROSSWALK_FAMILIES.get(entry["id"])
+        if family is not None:
+            entry["crosswalk_family"] = family
         entries.append(entry)
 
     # v0.10.4 P3 collision guard: assert no two entries in the same
@@ -168,7 +208,7 @@ def main() -> None:
 #   id            Canonical framework ID (kebab-case; stable across versions).
 #   name          Human-readable name shown in `catalog list`.
 #   version       Framework version string.
-#   tier          A | B | C | D — redistribution tier (see ATTRIBUTION.md).
+#   tier          A | B | C | D, the redistribution tier (docs/contributing-a-catalog.md).
 #   category      control | technique | vulnerability | obligation.
 #   path          JSON path relative to data/ directory.
 #   source_url    Upstream URL.
@@ -177,6 +217,8 @@ def main() -> None:
 #   license_url   URL where users can license/download authoritative text.
 #   placeholder   true if this catalog is a stub (no authoritative text).
 #   refresh       Adapter schedule: daily | weekly | monthly | manual.
+#   text_depth    full | partial | headings; derived from the catalog file, never declared.
+#   crosswalk_family  family id whose crosswalks also apply (baselines, maturity levels).
 
 """
     # width=200 pins PyYAML's word-wrap behavior so the regenerated

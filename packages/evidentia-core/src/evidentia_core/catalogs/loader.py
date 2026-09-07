@@ -262,6 +262,13 @@ def _parse_oscal_control(oscal_control: dict[str, Any], family: str, _depth: int
         if prop.get("name") == "priority":
             priority = prop.get("value")
 
+    # A withdrawn control (the OSCAL ``status`` prop) carries no statement
+    # upstream; the flag lets gap analysis and text-depth derivation skip it.
+    withdrawn = any(
+        prop.get("name") == "status" and str(prop.get("value", "")).strip().lower() == "withdrawn"
+        for prop in _iter_mappings(oscal_control.get("props", []), "control.props")
+    )
+
     # Extract baseline impact from properties
     baseline_impact: list[str] = []
     for prop in _iter_mappings(oscal_control.get("props", []), "control.props"):
@@ -301,6 +308,7 @@ def _parse_oscal_control(oscal_control: dict[str, Any], family: str, _depth: int
         related_controls=related,
         assessment_objectives=objectives,
         parameters=parameters,
+        withdrawn=withdrawn,
     )
 
 

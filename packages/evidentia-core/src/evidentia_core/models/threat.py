@@ -16,6 +16,7 @@ from typing import Any, Literal
 
 from pydantic import Field, PrivateAttr
 
+from evidentia_core.models.catalog import StatementRow, TextDepth, derive_text_depth
 from evidentia_core.models.common import EvidentiaModel
 
 # Broad categories for threats, following common industry groupings.
@@ -123,6 +124,15 @@ class TechniqueCatalog(EvidentiaModel):
         """Total techniques including sub-techniques."""
         return len(self._index)
 
+    def statement_rows(self) -> list[StatementRow]:
+        """One :class:`StatementRow` per technique; a deprecated technique counts as withdrawn."""
+        return [StatementRow(t.name, t.description, False, t.deprecated) for t in self.techniques]
+
+    @property
+    def text_depth(self) -> TextDepth:
+        """Derived text depth of this catalog (see :data:`TextDepth`)."""
+        return derive_text_depth(self.statement_rows())
+
 
 class Vulnerability(EvidentiaModel):
     """A single known-exploited or published vulnerability.
@@ -192,3 +202,14 @@ class VulnerabilityCatalog(EvidentiaModel):
     @property
     def vulnerability_count(self) -> int:
         return len(self._index)
+
+    def statement_rows(self) -> list[StatementRow]:
+        """One :class:`StatementRow` per vulnerability, titled by name or CVE id."""
+        return [
+            StatementRow(v.vulnerability_name or v.cve_id, v.description, False, False) for v in self.vulnerabilities
+        ]
+
+    @property
+    def text_depth(self) -> TextDepth:
+        """Derived text depth of this catalog (see :data:`TextDepth`)."""
+        return derive_text_depth(self.statement_rows())

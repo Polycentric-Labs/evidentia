@@ -20,10 +20,13 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
+from evidentia_core.models.catalog import TextDepth
+
 logger = logging.getLogger(__name__)
 
-# Redistribution tiers. See ATTRIBUTION.md for the full framework-by-framework
-# legal analysis; short version:
+# Redistribution tiers. docs/contributing-a-catalog.md holds the per-tier
+# redistribution rules; each manifest entry's ``license`` and ``source_url``
+# carry the per-catalog statement. Short version:
 #   A — verbatim redistribution OK (US federal works, CC-BY, public-domain).
 #   B — free to use but with conditions (MITRE ATT&CK, CISA KEV).
 #   C — copyrighted, stub only (ISO, SOC 2 TSC, PCI DSS, HITRUST, CIS).
@@ -83,6 +86,16 @@ class FrameworkManifestEntry(BaseModel):
     refresh: RefreshSchedule = Field(
         default="manual",
         description="Refresh CI schedule — daily/weekly/monthly/manual",
+    )
+    text_depth: TextDepth | None = Field(
+        default=None,
+        description="Derived text depth of the catalog (full, partial or headings); "
+        "None when the entry predates the derivation",
+    )
+    crosswalk_family: str | None = Field(
+        default=None,
+        description="Family id whose crosswalks also apply to this catalog, for a "
+        "baseline or maturity level of a larger catalog (e.g. 'nist-800-53-rev5')",
     )
 
 
