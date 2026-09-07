@@ -8,3 +8,9 @@
 # Windows checkout) would change the bytes the harness replays. Treat them as
 # binary so git never touches them. Seed corpus JSON stays text.
 tests/fuzz/corpus/**/crash-* binary
+
+# The vendored FedRAMP schemas are pinned to upstream by sha256 of their bytes
+# (UPSTREAM.json sha256_upstream). Upstream publishes LF; keep the checkout LF
+# on every platform so `sha256sum <file>` matches the pin, not only the
+# EOL-independent `git hash-object` blob id.
+packages/evidentia-core/src/evidentia_core/fedramp/schemas/*.json text eol=lf

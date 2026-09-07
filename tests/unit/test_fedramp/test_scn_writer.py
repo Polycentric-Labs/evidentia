@@ -130,7 +130,14 @@ class TestScnWriter:
 
 class TestVendoredSchemaProvenance:
     def test_sha256_matches_upstream_pin(self) -> None:
+        """The vendored SCN schema is the upstream file, byte for byte.
+
+        Upstream publishes LF line endings. A checkout with core.autocrlf
+        set (the default on Windows runners) rewrites text files to CRLF, so
+        the bytes are normalized back to LF before hashing; the pin itself is
+        the sha256 of the upstream bytes.
+        """
         upstream = json.loads(UPSTREAM_PATH.read_text(encoding="utf-8"))
         pin = upstream["schemas"]["vendored"][SCN_SCHEMA_PATH.name]
-        digest = hashlib.sha256(SCN_SCHEMA_PATH.read_bytes()).hexdigest()
-        assert digest == pin["sha256_upstream"]
+        raw = SCN_SCHEMA_PATH.read_bytes().replace(b"\r\n", b"\n")
+        assert hashlib.sha256(raw).hexdigest() == pin["sha256_upstream"]
