@@ -9,6 +9,12 @@ repos are "2026 Public Preview" drafts that move frequently; the KSI
 emitter's correctness rests on these pins, so drift must surface on a
 cadence, not at the next release.
 
+Also compares the live ``OSCAL-Foundation/fedramp-resources`` republisher
+against the pins in ``scripts/catalogs/upstream/fedramp-rev5-baselines.json``
+(the vendored file ``scripts/catalogs/build_fedramp_baselines.py`` builds).
+That is a separate upstream from the two above: the FedRAMP Rev 5 baseline
+profiles, not the KSI dataset or the CR26 schemas.
+
 Severity model (drives the workflow's red/notice split):
 
 - **MAJOR** — the emit target itself moved: the KSI section's content
@@ -22,6 +28,17 @@ Severity model (drives the workflow's red/notice split):
   ``$ref``-defect fix PR merging — time to drop our local delta),
   dataset version bumps that leave the KSI section untouched.
 
+The baseline probe uses the same two severities for a different reason,
+since there is no schema version to read there:
+
+- **MAJOR**: a tracked baseline profile disappeared from the republisher
+  listing, or its blob changed and a fresh extraction (membership, or for
+  LI-SaaS also the method props) no longer matches what is vendored. The
+  shipped ``fedramp-rev5-*`` catalogs are stale.
+- **NOTICE**: a tracked profile's blob changed but a fresh extraction
+  still matches the vendored data exactly. Upstream metadata churn with
+  nothing to act on beyond refreshing the pin at the next re-sync.
+
 Exit codes: 0 = clean or findings written (the workflow greps severity);
 3 = a probe failed (network/API) — the run goes red rather than
 false-green.
@@ -30,8 +47,11 @@ Usage:
     python3 scripts/check_fedramp_upstream_drift.py --output findings.md
 
 Stdlib-only by design (the sentinel runs on a bare runner without
-``uv sync``). Sends ``GITHUB_TOKEN`` when present; anonymous works too
-(≈14 requests per run against a 60/hr unauthenticated limit).
+``uv sync``); the baseline probe imports ``scripts/catalogs/
+build_fedramp_baselines.py`` by path for the same reason. Sends
+``GITHUB_TOKEN`` when present; anonymous works too (≈14 requests per run
+in the steady state, one more per drifted baseline profile, against a
+60/hr unauthenticated limit).
 """
 
 from __future__ import annotations
@@ -40,6 +60,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -47,10 +68,17 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+# scripts/catalogs holds the baseline extractor's id-conversion and
+# extraction logic. The workflow runs this probe without `uv sync`, so a
+# path insert is the only way to reuse it rather than duplicating it.
+sys.path.insert(0, str(Path(__file__).resolve().parent / "catalogs"))
+from build_fedramp_baselines import li_saas_methods, membership
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PIN_PATH = (
     REPO_ROOT / "packages" / "evidentia-core" / "src" / "evidentia_core" / "fedramp" / "schemas" / "UPSTREAM.json"
 )
+BASELINES_PIN_PATH = REPO_ROOT / "scripts" / "catalogs" / "upstream" / "fedramp-rev5-baselines.json"
 
 API_ROOT = "https://api.github.com"
 SCHEMA_FILE_PREFIX = "fedramp-"
@@ -226,6 +254,73 @@ def probe_schemas(pin: dict[str, Any], findings: list[tuple[str, str]]) -> None:
             )
 
 
+_SOURCE_URL_RE = re.compile(
+    r"^https://raw\.githubusercontent\.com/(?P<owner>[^/]+)/(?P<repo>[^/]+)/(?P<ref>[^/]+)/(?P<dir>.+)/$"
+)
+
+
+def probe_baselines(vendored: dict[str, Any], findings: list[tuple[str, str]]) -> None:
+    """Probe OSCAL-Foundation/fedramp-resources: the four Rev 5 baseline profiles.
+
+    Unlike ``probe_rules``/``probe_schemas`` there is no version field to
+    read here, so drift is judged by re-running the same extraction the
+    vendored file itself was built with (imported from
+    ``build_fedramp_baselines.py``) and comparing the result.
+    """
+    prov = vendored["provenance"]
+    match = _SOURCE_URL_RE.match(prov["source_url"])
+    if match is None:
+        raise RuntimeError(f"unexpected provenance.source_url shape, cannot probe: {prov['source_url']!r}")
+    owner, repo, ref, subdir = match["owner"], match["repo"], match["ref"], match["dir"]
+
+    listing = _get_json(f"{API_ROOT}/repos/{owner}/{repo}/contents/{subdir}?ref={ref}")
+    live_files = {item["name"]: item["sha"] for item in listing if item.get("type") == "file"}
+
+    for key, entry in prov["files"].items():
+        filename = entry["file"]
+        live_sha = live_files.get(filename)
+        if live_sha is None:
+            findings.append(
+                (
+                    "MAJOR",
+                    f"the republisher no longer publishes `{filename}`; the source that "
+                    f"fed this data has already disappeared once (GSA/fedramp-automation).",
+                )
+            )
+            continue
+        if live_sha == entry["git_blob_sha"]:
+            continue
+
+        raw = _request(f"{API_ROOT}/repos/{owner}/{repo}/contents/{subdir}/{filename}?ref={ref}", raw=True)
+        profile = json.loads(raw)
+        extraction_matches = membership(profile) == vendored["baselines"][key]
+        if key == "li-saas" and extraction_matches:
+            extraction_matches = li_saas_methods(profile) == vendored["li_saas_methods"]
+
+        if extraction_matches:
+            findings.append(
+                (
+                    "NOTICE",
+                    f"`{filename}` blob drifted (`{live_sha[:12]}…` vs pinned "
+                    f"`{entry['git_blob_sha'][:12]}…`) but a fresh extraction matches the "
+                    f"vendored `{key}` data exactly. Metadata-only churn; re-run "
+                    f"scripts/catalogs/build_fedramp_baselines.py to refresh the pins at "
+                    f"the next deliberate re-sync.",
+                )
+            )
+        else:
+            findings.append(
+                (
+                    "MAJOR",
+                    f"`{filename}` changed and a fresh extraction no longer matches the "
+                    f"vendored `{key}` data. The shipped `fedramp-rev5-*` catalogs are "
+                    f"stale: re-run `scripts/catalogs/build_fedramp_baselines.py "
+                    f"--allow-upstream-change`, review the diff, and regenerate the "
+                    f"catalogs.",
+                )
+            )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -238,11 +333,14 @@ def main() -> int:
 
     with open(PIN_PATH, encoding="utf-8") as f:
         pin = json.load(f)
+    with open(BASELINES_PIN_PATH, encoding="utf-8") as f:
+        baselines_pin = json.load(f)
 
     findings: list[tuple[str, str]] = []
     try:
         probe_rules(pin, findings)
         probe_schemas(pin, findings)
+        probe_baselines(baselines_pin, findings)
     except Exception as exc:
         print(f"probe failed: {exc}", file=sys.stderr)
         args.output.write_text("", encoding="utf-8")
@@ -256,15 +354,18 @@ def main() -> int:
     lines = [
         "FedRAMP upstream drift against the pins in "
         "`packages/evidentia-core/src/evidentia_core/fedramp/schemas/"
-        "UPSTREAM.json` (weekly `fedramp-schema-watch` sentinel):",
+        "UPSTREAM.json` and `scripts/catalogs/upstream/fedramp-rev5-baselines.json` "
+        "(weekly `fedramp-schema-watch` sentinel):",
         "",
     ]
     lines.extend(f"- **{severity}**: {text}" for severity, text in findings)
     lines += [
         "",
-        "Re-sync procedure: `evidentia_core/fedramp/schemas/README.md`. "
-        "MAJOR findings red the sentinel run until the pins are "
-        "deliberately re-verified and bumped.",
+        "Re-sync procedure: `evidentia_core/fedramp/schemas/README.md` for the schema "
+        "pins, `scripts/catalogs/build_fedramp_baselines.py` "
+        "(`--allow-upstream-change`, then review the diff) for the baseline pins. "
+        "MAJOR findings red the sentinel run until the pins are deliberately "
+        "re-verified and bumped.",
     ]
     args.output.write_text("\n".join(lines) + "\n", encoding="utf-8")
     for severity, text in findings:

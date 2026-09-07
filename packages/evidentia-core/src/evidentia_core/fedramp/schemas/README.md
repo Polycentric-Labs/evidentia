@@ -10,7 +10,10 @@ the `fedramp-schema-watch` drift sentinel and both catalog generators
 (`scripts/catalogs/gen_fedramp_ksi.py` for the KSI catalog,
 `scripts/catalogs/gen_fedramp_frr.py` for the provider-facing
 Requirements catalog; the FRR generator reuses the KSI generator's fetch
-and sha256 check so the two cannot disagree about the dataset).
+and sha256 check so the two cannot disagree about the dataset). This
+directory also holds the schema that `SCRForm.to_scn_document` (in
+`evidentia_core.ai_governance.scr`) emits Significant Change Notification
+(SCN-CSO-INF) documents against.
 
 ## Files
 
@@ -18,8 +21,9 @@ and sha256 check so the two cannot disagree about the dataset).
 |------|-------------------|
 | `fedramp-security-decision-record-schema-2026-06-24.json` | Byte-identical to upstream (re-vendored 2026-09-06 at schema 1.1.1) |
 | `fedramp-common-definitions-schema-2026-06-24.json` | Byte-identical to upstream (re-vendored 2026-09-06 at schema 0.3.0) |
+| `fedramp-significant-change-notifications-schema-2026-06-24.json` | Byte-identical to upstream (vendored 2026-09-07 at schema 0.1.2) |
 
-Both copies are verifiable against upstream by git blob SHA: `git
+All three copies are verifiable against upstream by git blob SHA: `git
 hash-object <file>` must equal the `blob_sha` recorded in `UPSTREAM.json`.
 
 ## History: the `$ref` local delta (2026-07-18 → 2026-08-21, now retired)

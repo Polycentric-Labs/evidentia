@@ -56,6 +56,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of a refresh path, the coarse 2SV signal, the Reports API's retention window, and the
   enumeration caps. The evidence-collector count moves from 14 to 15. See
   `docs/designs/google-workspace-collector-design.md`.
+- **FedRAMP Significant Change Notification writer (V13-17).** `SCRForm.to_scn_document()`
+  emits the SCN-CSO-INF JSON shape and `evidentia_core.fedramp.validate_scn_document()`
+  validates it offline against the vendored
+  `fedramp-significant-change-notifications-schema-2026-06-24.json` (0.1.2, byte-identical
+  to `FedRAMP/schemas@c3ed146`, pinned in `UPSTREAM.json` and watched by the
+  `fedramp-schema-watch` sentinel like the SDR schemas). Two optional `SCRForm` fields carry
+  the certification package overview URI and the categorization explanation; the schema
+  admits only the Adaptive and Transformative categories, so the writer raises for a
+  routine recurring change. A golden document is round-tripped through the validator in
+  the tests. `to_oscal_scr_notification()` still emits the RFC-0007 draft field list
+  unchanged.
+- **In-repo FedRAMP baseline extractor and sentinel coverage (V13-20).**
+  `scripts/catalogs/build_fedramp_baselines.py` re-derives
+  `scripts/catalogs/upstream/fedramp-rev5-baselines.json` from the FedRAMP PMO OSCAL
+  profiles (fetched from the OSCAL Foundation republication, or read from a directory),
+  re-checks every membership invariant, refuses a profile whose sha256 differs from the
+  recorded pin unless the change is accepted explicitly, and has a `--check` mode that
+  compares a fresh derivation against the vendored copy. The vendored file was re-derived on
+  2026-09-07 with identical membership and methods (the date sits in its new
+  `provenance.reverified`, beside the original `retrieved`); its notes now record that 155
+  of the 156 LI-SaaS controls carry a FedRAMP Tailored method and that `IA-2(12)` carries
+  none.
+  The weekly `fedramp-schema-watch` sentinel also probes the four profiles at the
+  republisher: a missing profile or a changed membership is MAJOR, metadata-only churn is a
+  NOTICE.
 
 ### Changed
 
@@ -94,6 +119,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from a hardcoded single row to four real per-resource-type rows; and the
   user-inventory finding's `raw_data` gains a full `status_counts` breakdown. No CLI, API
   or console surface changed.
+- **`@tanstack/react-table` 8.20.5 to 9.2.4 (V13-19).** `GapTable` moves to the v9 API
+  (`useTable` with an explicit `tableFeatures` set, `sortFn`, instance methods called on
+  their instances); the rendered table and its sorting, filtering and density controls
+  are unchanged and now covered by a component test. This is the single-dependency major
+  bump the v0.12 isolation rule reserves for a scheduled migration, and the Dependabot
+  `ignore` rule that held the major back is removed with it.
 
 ### Removed
 
@@ -122,6 +153,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `security-decision-record` (1.1.1) schemas are byte-identical to
   `FedRAMP/schemas@c3ed146` again; `FedRAMP/rules` did not move, so the KSI and FRR
   catalogs are unchanged.
+- **The `catalog pin` promise is withdrawn (V13-14).** `api-stability.md`,
+  `v1.0-transition.md` and the wiki's frozen-surfaces and catalog-inventory pages described
+  a `catalog pin <framework> <version>` command as the operator escape hatch for bundled
+  catalog drift; the verb never existed. The pages now describe the real one: import the
+  catalog copy assessed against with `catalog import`, which shadows the bundled catalog
+  under the same id, and confirm with `catalog where`. The verb is not built (v0.13 plan,
+  ratified answer 8).
 
 ## [0.12.1] - 2026-09-05
 

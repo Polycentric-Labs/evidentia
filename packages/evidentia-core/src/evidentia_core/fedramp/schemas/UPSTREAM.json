@@ -1,6 +1,6 @@
 {
   "comment": "Provenance pins for the vendored FedRAMP CR26 artifacts. Single source of truth for scripts/check_fedramp_upstream_drift.py (the fedramp-schema-watch sentinel baseline) and for scripts/catalogs/gen_fedramp_ksi.py (the KSI catalog generator pin). Update ONLY via a deliberate re-sync: re-vendor, re-verify, and re-run the generator together. See README.md in this directory.",
-  "verified_at": "2026-09-06",
+  "verified_at": "2026-09-07",
   "rules": {
     "repo": "FedRAMP/rules",
     "commit": "58efbf3d898496dd4a3a419eba78e458bbad5cb6",
@@ -38,6 +38,11 @@
       "fedramp-common-definitions-schema-2026-06-24.json": {
         "blob_sha": "6f3a53739dd6382634aeac138c86a603d08049ca",
         "sha256_upstream": "ed810d60584580fb86cda3f846d94504a14e09538122c27c5b5231d41151d6de",
+        "local_delta": null
+      },
+      "fedramp-significant-change-notifications-schema-2026-06-24.json": {
+        "blob_sha": "5cf1d2511ae4cbf1b586ca78640bde2fcc8d561a",
+        "sha256_upstream": "2f26b2b57b3e5c3f9247c6aaea51faf65d1da5d4340777be6785d95fe47abc83",
         "local_delta": null
       }
     }

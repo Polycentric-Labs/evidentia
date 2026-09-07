@@ -6,8 +6,9 @@
     "republisher": "OSCAL-Foundation/fedramp-resources (GSA/fedramp-automation was taken down; HTTP 404)",
     "published": "2024-09-24T02:24:00Z",
     "retrieved": "2026-08-22",
-    "validation": "Membership cross-validated three ways by the research pass (profile with-ids, resolved-catalog walk, and Internet Archive copies of the deleted GSA originals, identical in set and order), then independently re-extracted here from the profiles and re-checked against every invariant.",
-    "builder": "build_fedramp_vendor.py (maintainer-side extractor; re-derives this file from the source_url profiles and re-checks every invariant in gen_fedramp_cmmc.py::_assert_baseline_invariants)",
+    "reverified": "2026-09-07",
+    "validation": "Membership cross-validated three ways by the research pass (profile with-ids, resolved-catalog walk, and Internet Archive copies of the deleted GSA originals, identical in set and order), then independently re-extracted here from the profiles and re-checked against every invariant. The in-repo extractor named in builder re-derives this file from the same profiles; reverified is the date of its last run, and --check repeats the derivation and compares.",
+    "builder": "scripts/catalogs/build_fedramp_baselines.py (in-repo extractor: fetches the source_url profiles, or reads them from --from-dir, re-derives this file and re-checks every invariant; --check compares a fresh derivation against the vendored copy)",
     "files": {
       "low": {
         "file": "FedRAMP_rev5_LOW-baseline_profile.json",
@@ -47,7 +48,8 @@
   "notes": {
     "pm_pt_excluded": "SP 800-53B Table 3-13 (PM) and Table 3-15 (PT): not allocated to the security control baselines. Neither family appears in any FedRAMP baseline.",
     "li_saas": "LI-SaaS selects exactly the same 156 control ids as Low, in the same order. The FedRAMP Tailored tailoring is NOT a smaller control set: it is the per-control `method` property carried in li_saas_methods below. A catalog that stores only ids cannot express attest-versus-assess.",
-    "withdrawn": "CM-8(5), CP-2(4), SA-12 and SC-13(1) are withdrawn in NIST SP 800-53 Rev 5 and must never appear in a baseline."
+    "withdrawn": "CM-8(5), CP-2(4), SA-12 and SC-13(1) are withdrawn in NIST SP 800-53 Rev 5 and must never appear in a baseline.",
+    "li_saas_methods": "155 of the 156 LI-SaaS controls carry at least one FedRAMP Tailored method (ATTEST 76, ASSESS 65, CONDITIONAL 20, NSO 13, FED 3); 22 carry two. Controls with no method prop: IA-2(12) (its profile alteration adds no method)."
   },
   "baselines": {
     "low": [

@@ -1,9 +1,17 @@
 import {
+  columnFilteringFeature,
+  columnVisibilityFeature,
+  createFilteredRowModel,
+  createSortedRowModel,
   flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  useReactTable,
+  globalFilteringFeature,
+  rowSortingFeature,
+  sortFn_alphanumeric,
+  sortFn_basic,
+  sortFn_datetime,
+  sortFn_text,
+  tableFeatures,
+  useTable,
   type ColumnDef,
   type SortingState,
 } from "@tanstack/react-table";
@@ -29,6 +37,31 @@ const DENSITY_OPTIONS: readonly [Density, string][] = [
   ["comfortable", "Comfy"],
 ];
 
+// Table V9 requires features to be declared up front rather than bundled
+// into the hook. columnFilteringFeature is not used for its own sake (no
+// per-column filters render); it is required here because both
+// globalFilteringFeature and the filteredRowModel factory depend on it at
+// the type level. columnVisibilityFeature is likewise never toggled, but it
+// is what puts `row.getVisibleCells()` on the Row prototype. Sort functions
+// are registered individually rather than through the deprecated
+// whole-registry `sortFns` export, so `sortFn: "auto"` (the default for
+// every column but Severity) can resolve whichever built-in the
+// auto-detector picks from a column's sampled values.
+const features = tableFeatures({
+  rowSortingFeature,
+  columnFilteringFeature,
+  columnVisibilityFeature,
+  globalFilteringFeature,
+  sortedRowModel: createSortedRowModel(),
+  filteredRowModel: createFilteredRowModel(),
+  sortFns: {
+    alphanumeric: sortFn_alphanumeric,
+    basic: sortFn_basic,
+    datetime: sortFn_datetime,
+    text: sortFn_text,
+  },
+});
+
 export function GapTable({ gaps }: { gaps: ControlGap[] }) {
   const [filter, setFilter] = useState("");
   const [sorting, setSorting] = useState<SortingState>([
@@ -37,36 +70,38 @@ export function GapTable({ gaps }: { gaps: ControlGap[] }) {
   // Local presentation-only density control (CSS keys off data-density).
   const [density, setDensity] = useState<Density>("compact");
 
-  const columns = useMemo<ColumnDef<ControlGap>[]>(
+  const columns = useMemo<ColumnDef<typeof features, ControlGap>[]>(
     () => [
       {
         accessorKey: "framework",
         header: "Framework",
-        cell: ({ getValue }) => (
-          <code className="kbd">{String(getValue())}</code>
+        cell: ({ row }) => (
+          <code className="kbd">{String(row.original.framework)}</code>
         ),
       },
       {
         accessorKey: "control_id",
         header: "Control",
-        cell: ({ getValue }) => (
-          <span className="mono text-xs">{String(getValue())}</span>
+        cell: ({ row }) => (
+          <span className="mono text-xs">
+            {String(row.original.control_id)}
+          </span>
         ),
       },
       {
         accessorKey: "control_title",
         header: "Title",
-        cell: ({ getValue }) => (
-          <span className="line-1 text-sm">{String(getValue())}</span>
+        cell: ({ row }) => (
+          <span className="line-1 text-sm">
+            {String(row.original.control_title)}
+          </span>
         ),
       },
       {
         accessorKey: "gap_severity",
         header: "Severity",
-        sortingFn: (a, b, id) =>
-          SEVERITY_RANK[
-            a.getValue(id) as keyof typeof SEVERITY_RANK
-          ] -
+        sortFn: (a, b, id) =>
+          SEVERITY_RANK[a.getValue(id) as keyof typeof SEVERITY_RANK] -
           SEVERITY_RANK[b.getValue(id) as keyof typeof SEVERITY_RANK],
         cell: ({ row }) => (
           <Badge variant={severityBadge(row.original.gap_severity)}>
@@ -112,15 +147,13 @@ export function GapTable({ gaps }: { gaps: ControlGap[] }) {
     [],
   );
 
-  const table = useReactTable({
+  const table = useTable({
+    features,
     data: gaps,
     columns,
     state: { sorting, globalFilter: filter },
     onSortingChange: setSorting,
     onGlobalFilterChange: setFilter,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     globalFilterFn: (row, _columnId, value) => {
       const q = String(value).toLowerCase();
       return (
@@ -176,9 +209,7 @@ export function GapTable({ gaps }: { gaps: ControlGap[] }) {
                     <th
                       key={header.id}
                       scope="col"
-                      className={cn(
-                        header.column.getCanSort() && "sortable",
-                      )}
+                      className={cn(header.column.getCanSort() && "sortable")}
                       onClick={header.column.getToggleSortingHandler()}
                     >
                       {flexRender(
