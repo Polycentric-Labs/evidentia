@@ -55,7 +55,7 @@ Equally important is what you should *not* depend on:
 
 - **Anything underscore-prefixed** — `_internal.*`, `_helper` / `_utils` / `_compat` modules, private methods (`def _compute_score`). Private is private.
 - **Test fixtures and utilities** — everything under `tests/` (data files, `conftest.py` factories, helpers).
-- **Bundled catalog content** — catalogs evolve as authoritative sources publish updates (NIST revisions, ISO amendments, EU enforcement dates). Content changes are patch-level, not API breaks; explicit version-pinning via a `catalog pin <framework> <version>` command is planned (not yet available — track it on the roadmap).
+- **Bundled catalog content**: catalogs evolve as authoritative sources publish updates (NIST revisions, ISO amendments, EU enforcement dates). Content changes are patch-level, not API breaks. No `catalog pin` command exists or is scheduled; to hold an assessment to a fixed version, import the copy you assessed against with `evidentia catalog import` (a user-imported catalog shadows the bundled one under the same id, and `evidentia catalog where` shows which copy resolves).
 - **Threshold defaults** — faithfulness, determinism, and health-scoring defaults may be tuned between releases based on calibration; they are documented in CHANGELOG and overridable via CLI flags (`--faithfulness-threshold`, `--faithfulness-threshold-mode`, `--fail-on-determinism-rate-below`, `--health-score-weights`).
 - **Scripts** (`scripts/`), **Docker image internals** (only the container's CLI interface is stable, not its file layout or base image), and **MCP tool descriptions/metadata** (the names are frozen; the prose is not).
 - **The web UI** (`packages/evidentia-ui/`), CI workflows, and dev tooling are out of scope entirely.

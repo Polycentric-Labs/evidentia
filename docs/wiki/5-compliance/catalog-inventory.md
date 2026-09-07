@@ -123,17 +123,18 @@ licensed copy with `evidentia catalog import`. See
 [Contributing a catalog](contributing-a-catalog.md) for the catalog
 schema if you are hand-authoring one.
 
-## Adding or pinning a catalog
+## Adding a catalog or holding a version
 
 - **Add a new framework**: 3-file PR — see
   [Contributing a catalog](contributing-a-catalog.md).
-- **Pin a catalog version** (planned): a `catalog pin <framework> <version>`
-  command — so an authoritative-source refresh does not shift your assessment
-  baseline — is planned (not yet available; track it on the roadmap). Catalog
-  content is a non-frozen surface
+- **Hold a catalog version**: no `catalog pin` command exists or is scheduled.
+  So that an authoritative-source refresh does not shift your assessment
+  baseline, import the catalog version you assessed against with
+  `evidentia catalog import`; a user-imported catalog shadows the bundled one
+  under the same framework id, and `evidentia catalog where <framework>` shows
+  which copy resolves. Catalog content is a non-frozen surface
   ([api-stability.md](../6-project/api-stability.md) §"Bundled catalog
-  content") — it evolves as NIST / ISO / EU sources publish updates, and the
-  pin will be the operator escape hatch.
+  content"): it evolves as NIST / ISO / EU sources publish updates.
 
 ## See also
 
