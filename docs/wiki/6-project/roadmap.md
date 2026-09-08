@@ -107,6 +107,15 @@ signatures"), and pre-release-review PROCEED-CLEAN.
 Post-v1.0 packaging and distribution direction is tracked outside this
 public roadmap.
 
+**Recorded operator walkthrough (before reviewer outreach, added 2026-09-08):**
+once the frozen `v1.0.0-rc.N` candidate exists, an agent drives the CLI and the
+web console end to end on the maintainer's machine under computer use, narrating
+each step for the maintainer as it goes, and the session is captured as demo
+videos that travel with the review pack next to the scenario pack in
+[`v1.0-review-protocol.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v1.0-review-protocol.md). The
+maintainer watches live and interrupts; nothing is published from the recording
+without a separate decision.
+
 ## v0.13 - The shared spine and the correctness debt - PLANNED
 
 **The open cycle** (opened 2026-08-28, ratified the same day with all twelve
