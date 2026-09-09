@@ -117,18 +117,19 @@ def derive_text_depth(rows: Iterable[StatementRow]) -> TextDepth:
 
 _CatalogSourceScalar = str | int | float | bool | None
 _T = TypeVar("_T")
+_MapValue = TypeVar("_MapValue", covariant=True)
 
 
 @dataclass(frozen=True, slots=True, init=False, eq=False)
-class _SourceMap[MapValue](Mapping[str, MapValue]):
+class _SourceMap(Mapping[str, _MapValue]):
     """Detached immutable scalar mapping with an explicit copy protocol."""
 
-    _data: Mapping[str, MapValue]
+    _data: Mapping[str, _MapValue]
 
-    def __init__(self, values: Mapping[str, MapValue]) -> None:
+    def __init__(self, values: Mapping[str, _MapValue]) -> None:
         object.__setattr__(self, "_data", MappingProxyType(dict(values)))
 
-    def __getitem__(self, key: str) -> MapValue:
+    def __getitem__(self, key: str) -> _MapValue:
         return self._data[key]
 
     def __iter__(self) -> Iterator[str]:

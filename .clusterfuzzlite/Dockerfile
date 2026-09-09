@@ -10,12 +10,10 @@ FROM gcr.io/oss-fuzz-base/base-builder-python@sha256:bb4b09f7376cd0f2188344e8b29
 
 # Digest-pinned (OpenSSF Scorecard Pinned-Dependencies). base-builder-python
 # ships Python 3.11; Evidentia declares requires-python >=3.12, so build.sh
-# installs with --ignore-requires-python (every harness-reached module imports
-# clean on 3.11 — the only 3.12-syntax files, plugins/storage/*, are unreached
-# by the six harnesses). atheris is compiled against the base's 3.11, so we
-# deliberately do NOT swap the interpreter. Bump this digest on a cadence —
-# OSS-Fuzz rebuilds the base frequently and a stale pin drifts behind the
-# toolchain CFLite expects.
+# installs with --ignore-requires-python and verifies each actual harness import
+# before packaging. atheris is compiled against the base interpreter, so keep
+# the interpreter and fuzzing toolchain together. Bump this digest on a cadence:
+# OSS-Fuzz rebuilds the base frequently and a stale pin can drift behind CFLite.
 
 # Copy the whole repo into $SRC/evidentia (ClusterFuzzLite mounts the
 # checkout here at build time).

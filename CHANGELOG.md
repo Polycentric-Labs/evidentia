@@ -242,6 +242,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Fuzzing toolchain compatibility.** Keep catalog source mappings importable by
+  the pinned Python 3.11 fuzzing image. Each harness now imports before packaging,
+  so unsupported syntax fails directly instead of becoming a missing-module error
+  in every packaged fuzzer.
 - Render control titles, statements, guidance and family text literally in CLI
   catalog views, including bracket-like source text that previously raised markup
   errors. Correct the historical CMS ARS 5.1 edition date to 2023-07-26.
