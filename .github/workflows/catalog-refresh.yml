@@ -44,17 +44,19 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
+          version: "0.12.12"
           enable-cache: true
           python-version: "3.12"
 
       - name: Sync workspace
-        run: uv sync --all-packages
+        run: uv sync --locked --all-packages
 
       - name: Regenerate manifest from disk
         id: regen
+        shell: bash
         run: |
-          set -e
-          uv run python scripts/catalogs/regenerate_manifest.py | tee regen.out
+          set -euo pipefail
+          uv run --locked python scripts/catalogs/regenerate_manifest.py | tee regen.out
           # Detect drift against committed manifest. `--ignore-all-space`
           # belt-and-suspenders against PyYAML word-wrap drift across
           # versions/locales (the script pins width=200 to mitigate at
@@ -69,7 +71,7 @@ jobs:
           fi
 
       - name: Run bundled catalog smoke tests
-        run: uv run pytest tests/unit/test_catalogs/ -q
+        run: uv run --locked pytest tests/unit/test_catalogs/ -q
 
       # v0.2.1: per-adapter refresh steps will land here. Each adapter
       # fetches from its upstream source, regenerates the affected

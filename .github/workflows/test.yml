@@ -51,7 +51,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
-          version: "latest"
+          version: "0.12.12"
 
       - name: Set up Python
         run: uv python install 3.12
@@ -61,10 +61,10 @@ jobs:
         # zero optional DB/cloud drivers installed (guard-before-import).
         env:
           EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
-        run: uv sync --all-packages
+        run: uv sync --locked --all-packages
 
       - name: SSRF guard holds with zero drivers
-        run: uv run pytest tests/unit/test_collectors/test_collector_ssrf_guard.py::TestSQLCollectorsSSRF -q
+        run: uv run --locked pytest tests/unit/test_collectors/test_collector_ssrf_guard.py::TestSQLCollectorsSSRF -q
 
   test:
     name: pytest (${{ matrix.os }}, Python ${{ matrix.python-version }})
@@ -87,7 +87,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
-          version: "latest"
+          version: "0.12.12"
           # v0.9.5: disable cache on Windows runners — the Post Install
           # uv cache-save step has shown intermittent tar/zstd failures
           # on Windows that mark the whole job red despite all tests
@@ -112,15 +112,15 @@ jobs:
         # (the CI-vs-local gate-fidelity gap that surfaced at v0.10.10).
         env:
           EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
-        run: uv sync --all-extras --all-packages
+        run: uv sync --locked --all-extras --all-packages
 
       - name: Run tests (with coverage on Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: uv run pytest tests/ -q --cov --cov-report=xml --cov-report=term
+        run: uv run --locked pytest tests/ -q --cov --cov-report=xml --cov-report=term
 
       - name: Run tests (no coverage on non-Linux)
         if: matrix.os != 'ubuntu-latest'
-        run: uv run pytest tests/ -q
+        run: uv run --locked pytest tests/ -q
 
       # v0.7.10 P2: upload Linux coverage to Codecov for the
       # OpenSSF Silver `test_statement_coverage80` MUST.
@@ -157,7 +157,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
-          version: "latest"
+          version: "0.12.12"
           enable-cache: true
 
       - name: Set up Python
@@ -166,13 +166,13 @@ jobs:
       - name: Sync workspace
         env:
           EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
-        run: uv sync --all-packages
+        run: uv sync --locked --all-packages
 
       - name: Run ruff
-        run: uv run ruff check .
+        run: uv run --locked ruff check .
 
       - name: Run ruff format check
-        run: uv run ruff format --check .
+        run: uv run --locked ruff format --check .
 
   requirements-drift:
     name: docker/requirements drift
@@ -186,14 +186,14 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
-          version: "latest"
+          version: "0.12.12"
           enable-cache: true
 
       - name: Set up Python
         run: uv python install 3.12
 
       - name: Check for security-sensitive package drift
-        run: uv run python scripts/check_requirements_drift.py
+        run: uv run --locked python scripts/check_requirements_drift.py
 
   openapi-drift:
     name: openapi schema drift
@@ -209,7 +209,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
-          version: "latest"
+          version: "0.12.12"
           enable-cache: true
 
       - name: Set up Python
@@ -222,20 +222,20 @@ jobs:
         # separately in the `frontend-test` job below.
         env:
           EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
-        run: uv sync --all-packages
+        run: uv sync --locked --all-packages
 
       # First drift-gate of the GUI type-parity chain (see
       # scripts/dump_openapi.py): re-dump the live FastAPI schema and fail
       # if it diverged from the committed openapi.json. The second gate
       # (committed types vs. committed JSON) lives in `frontend-test`.
       - name: Regenerate openapi.json
-        run: uv run python scripts/dump_openapi.py
+        run: uv run --locked python scripts/dump_openapi.py
 
       - name: Fail if openapi.json drifted from the live API schema
         run: |
           if ! git diff --exit-code -- packages/evidentia-ui/openapi.json; then
             echo "::error::packages/evidentia-ui/openapi.json is out of sync with the live FastAPI schema."
-            echo "Run 'uv run python scripts/dump_openapi.py', then"
+            echo "Run 'uv run --locked python scripts/dump_openapi.py', then"
             echo "'npm --prefix packages/evidentia-ui run gen:types' to refresh the types,"
             echo "and commit both packages/evidentia-ui/openapi.json and"
             echo "packages/evidentia-ui/src/types/openapi.ts."
@@ -254,7 +254,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
-          version: "latest"
+          version: "0.12.12"
           enable-cache: true
 
       - name: Set up Python
@@ -268,7 +268,7 @@ jobs:
         # documented pre-push gate scan the same SBOM (v0.9.8
         # gate-fidelity lesson — a CI gate and its checklist counterpart
         # must run the same check).
-        run: uv sync --all-extras --all-packages
+        run: uv sync --locked --all-extras --all-packages
 
       # osv-scanner surfaces transitive + DISPUTED advisories that the
       # Dependabot alert feed suppresses (the disputed pyjwt CVE that
@@ -309,7 +309,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
-          version: "latest"
+          version: "0.12.12"
 
       - name: Set up Python
         run: uv python install 3.12
@@ -346,7 +346,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
-          version: "latest"
+          version: "0.12.12"
 
       - name: Set up Python
         run: uv python install 3.12
@@ -355,7 +355,7 @@ jobs:
         env:
           EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
           UV_MALWARE_CHECK: "1"
-        run: uv sync --all-packages --preview-features malware-check
+        run: uv sync --locked --all-packages --preview-features malware-check
 
   typecheck:
     name: mypy
@@ -369,7 +369,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
-          version: "latest"
+          version: "0.12.12"
           enable-cache: true
 
       - name: Set up Python
@@ -381,7 +381,7 @@ jobs:
         # --all-extras is required: without the optional extras
         # installed, mypy resolves sigstore / psycopg / etc. as Any
         # and silently skips type-checking every extra-gated path.
-        run: uv sync --all-extras --all-packages
+        run: uv sync --locked --all-extras --all-packages
 
       # v0.2.1: added advisory-only. v0.3.0: flipped to strict — mypy is
       # now a required check. Pydantic plugin enabled via [tool.mypy] in
@@ -404,7 +404,7 @@ jobs:
       # which is a TypeScript / Node workspace member).
       - name: Run mypy
         run: |
-          uv run mypy \
+          uv run --locked mypy \
             packages/evidentia-core/src/evidentia_core \
             packages/evidentia/src/evidentia \
             packages/evidentia-api/src/evidentia_api \
@@ -475,9 +475,7 @@ jobs:
 
       - name: Vitest unit tests
         working-directory: packages/evidentia-ui
-        # Tests are advisory until v0.4.0-alpha.2 lands the component test
-        # suite; `|| true` keeps the build green if there are no tests yet.
-        run: npm run test -- --run || true
+        run: npm run test -- --run
 
       - name: Vite production build
         working-directory: packages/evidentia-ui

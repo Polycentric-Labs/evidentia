@@ -20,7 +20,7 @@ v0.10.7.** Layers 1 and 3 are explicitly deferred.
 | Layer | Purpose | Status |
 |---|---|---|
 | **L1 — local Scorecard sweep** | Run an OpenSSF Scorecard pass locally before push | **DEFERRED to v0.10.8+** — duplicates the scheduled CI Scorecard workflow with no new signal |
-| **L2: blocking checks** | 19 fast checks that BLOCK the push on failure | **SHIPPED v0.10.7**; grown each cycle since |
+| **L2: blocking checks** | 20 fast checks that BLOCK the push on failure | **SHIPPED v0.10.7**; grown each cycle since |
 | **L3 — warning-only** | actionlint + online pinact advisories | **DEFERRED to v0.10.8+** — catches syntax errors the GitHub Actions UI already surfaces |
 
 The marginal value of L1 + L3 did not justify the added push latency +
@@ -62,6 +62,60 @@ kept in step with it. Numbering matches that header.
 | 17 | `check_public_surface` | `scripts/check_public_surface.py` | a frozen model module, symbol or callable that does not resolve, an undocumented model module, a frozen import that no longer resolves, an MCP frozen-tool/live-server mismatch, or a frozen env var that vanished from `packages/*/src` |
 | 18 | `check_ruff_format` | `ruff format --check . --no-cache` | any file the formatter would change (the tree has been format-clean since the v0.13 whole-repo reformat) |
 | 19 | `check_catalog_truth` | `scripts/check_catalog_truth.py` | a manifest text_depth that disagrees with the depth derived from its catalog, an invalid crosswalk framework id, crosswalk ids that fail to resolve against the bundled catalogs, a Tier C catalog missing the placeholder/license_required/headings invariant, or a stale catalog-inventory summary block |
+| 20 | `check_workflow_gate_fidelity` | `scripts/check_workflow_gate_fidelity.py` | an unreviewed workflow source, missing or ambiguous check/job/step identity, missing required PR or queue coverage, or failure masking in an enforced validation step |
+
+## PR admission before the merge queue
+
+The local pre-push checks run before a feature branch is published. Once PR
+jobs finish, `scripts/check_pr_readiness.py` collects GitHub evidence for the
+reviewed PR number and full head SHA. It makes read-only GitHub requests and
+writes a local JSON receipt. It does not submit the PR to the queue.
+The current collector accepts same-repository PRs; fork PRs require a separate
+reviewed admission path.
+
+From the repository root with the development environment already synced,
+these commands work in PowerShell and Bash:
+
+```text
+uv run --no-sync python scripts/check_workflow_gate_fidelity.py
+uv run --no-sync python scripts/check_pr_readiness.py --help
+```
+
+Use the admission command's `--pr`, `--head` and `--output` arguments to name
+the reviewed PR, full 40-character commit and an ignored local receipt path.
+The caller must check its exit code, `ready`, head, checker/policy identity,
+invocation ID and expiry before submitting that exact head through the queue.
+Each run creates a new receipt; an older receipt is not evidence for a rerun.
+The JSON contains captured repository evidence and should remain local.
+
+The policy declares a minimum set of required checks independently of live
+rules. Live additional required checks must also resolve to a unique reviewed
+identity. Applicable workflows must have their complete job and mandatory-step
+records. Renamed and deleted paths participate in applicability, and incomplete
+file lists fail closed. The checker binds current run attempts, check suites,
+jobs and checks to the expected PR and commits, then compares two normalized
+captures before issuing a receipt with a 120-second lifetime.
+
+CodSpeed benchmark execution and its external analysis are separate evidence.
+The analysis must resolve to the reviewed head and base and complete after the
+selected benchmark step. The provider does not attest the GitHub run/attempt
+ID, so this remains a commit-and-time linkage. API conclusions cannot expose
+an error already converted to success by a shell command or by an action's
+internal handling. Source review and execution logs are still needed for those
+cases, including the existing advisory security pilots.
+
+The workflow guard verifies reviewed sources and rejects missing coverage or
+changed enforcement. A source or policy change requires review and a new
+normalized content digest; updating a digest alone does not establish that a
+new command is safe. The guard supports the repository's declared static
+workflow patterns and rejects unsupported forms rather than guessing.
+
+GitHub enforces required checks at the protected merge; the local receipt
+does not. It can become stale immediately after collection. Verify the actual queue
+candidate and its source tree, then inspect the merged SHA and all resulting
+main checks. PR fuzzing and CodSpeed are not certified queue lanes. Treat a
+combined source tree that differs from the tested tree as unverified until
+matching evidence exists.
 
 ### 1. check_action_pins — and the pinact SKIP-vs-BLOCK rule
 

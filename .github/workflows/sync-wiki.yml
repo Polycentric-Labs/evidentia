@@ -123,21 +123,22 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
+          version: "0.12.12"
           enable-cache: true
           python-version: "3.12"
 
       - name: Install workspace
-        run: uv sync --all-packages
+        run: uv sync --locked --all-packages
 
       # Regenerate the 5 reference pages (cli / mcp-tools / configuration /
       # catalogs / crosswalks) from the live code/data.
       - name: Refresh wiki reference pages
-        run: uv run python scripts/wiki/sync_reference.py
+        run: uv run --locked python scripts/wiki/sync_reference.py
 
       # Regenerate the 7 per-package API pages from each package's public
       # surface.
       - name: Refresh wiki API pages
-        run: uv run python scripts/wiki/sync_api_docs.py
+        run: uv run --locked python scripts/wiki/sync_api_docs.py
 
       - name: Run wiki sync
         env:

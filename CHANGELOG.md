@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Workflow and PR admission verification.** A reviewed policy binds checks to
+  their source workflows, jobs, steps and GitHub Apps. The existing consistency
+  and pre-push gates validate workflow coverage and enforcement. A separate
+  read-only command checks complete PR evidence and writes a short-lived local
+  receipt before queue submission, including external performance analysis.
 - **CMS ARS 5.2 and CJIS 6.1 companion catalogs (V13-09).** The CMS import
   retains 1,681 source rows in 605 control/enhancement reference units. The CJIS
   companion retains 1,533 fragments in 324 reference units with role and scenario
@@ -242,6 +247,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **CI failure propagation and dependency identity.** Frontend unit-test failures
+  now fail their existing job. Container catalog smoke checks cannot lose a
+  producer failure when shortening output, and scheduled catalog regeneration
+  propagates pipeline errors. Scoped CI workflows pin uv and reject stale
+  project locks while retaining their existing groups and extras. PR fuzzing
+  also runs for bundled data and dependency-declaration changes.
 - **Fuzzing toolchain compatibility.** Keep catalog source mappings importable by
   the pinned Python 3.11 fuzzing image. Each harness now imports before packaging,
   so unsupported syntax fails directly instead of becoming a missing-module error

@@ -49,6 +49,7 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
+          version: "0.12.12"
           enable-cache: true
           python-version: "3.12"
 
@@ -56,7 +57,7 @@ jobs:
         # --all-packages so evidentia.cli.main.app imports for the live leaf walk.
         env:
           EVIDENTIA_SKIP_FRONTEND_BUILD: "1"
-        run: uv sync --all-packages
+        run: uv sync --locked --all-packages
 
       - name: Run CLI<->GUI parity gate (blocking)
         # BLOCKING: check_parity.py's exit code fails the job on a regression.

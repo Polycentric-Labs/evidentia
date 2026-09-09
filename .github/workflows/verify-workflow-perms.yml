@@ -52,11 +52,12 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
+          version: "0.12.12"
           enable-cache: true
           python-version: "3.12"
 
       - name: Sync workspace
-        run: uv sync --all-packages
+        run: uv sync --locked --all-packages
 
       - name: Audit workflow permissions (--strict)
         run: uv run --no-sync python scripts/audit_workflow_permissions.py --strict
@@ -78,11 +79,12 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
+          version: "0.12.12"
           enable-cache: true
           python-version: "3.12"
 
       - name: Sync workspace
-        run: uv sync --all-packages
+        run: uv sync --locked --all-packages
 
       - name: Check workflow tools + extras (--strict)
         run: uv run --no-sync python scripts/check_workflow_tools.py --strict

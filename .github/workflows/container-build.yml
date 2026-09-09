@@ -303,13 +303,14 @@ jobs:
 
       - name: Smoke test — `evidentia catalog list`
         if: steps.relevant.outputs.relevant == 'true'
+        shell: bash
         run: |
-          # Validate the bundled catalog set ships in the image.
-          # `catalog` is the canonical subcommand (not `frameworks`).
-          # Pipe to head to limit log noise; we just need to see at
-          # least one framework row to know the catalog data made it
-          # through the install.
-          docker run --rm evidentia:smoke catalog list | head -10
+          # Capture first so a failed catalog command cannot become success.
+          output="${RUNNER_TEMP:?RUNNER_TEMP is required}/evidentia-catalog-smoke.txt"
+          trap 'rm -f "$output"' EXIT
+          docker run --rm evidentia:smoke catalog list > "$output"
+          test -s "$output"
+          head -n 10 "$output"
 
       - name: Smoke test — image labels
         if: steps.relevant.outputs.relevant == 'true'

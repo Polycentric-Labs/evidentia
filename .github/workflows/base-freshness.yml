@@ -121,11 +121,12 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
+          version: "0.12.12"
           enable-cache: true
           python-version: "3.12"
 
       - name: Sync workspace
-        run: uv sync --all-packages
+        run: uv sync --locked --all-packages
 
       - name: Detect dead / never-fired trigger events
         env:

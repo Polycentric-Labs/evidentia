@@ -399,6 +399,10 @@
       "job_id": "fuzzing",
       "paths": [
         "packages/**/*.py",
+        "packages/**/data/**",
+        "packages/**/pyproject.toml",
+        "pyproject.toml",
+        "uv.lock",
         "tests/fuzz/**",
         ".clusterfuzzlite/**",
         ".github/workflows/cflite-pr.yml"
@@ -1113,22 +1117,22 @@
     }
   ],
   "workflow_sources": {
-    ".github/workflows/action-smoke-test.yml": "0fe7758d3fcb005eedf1fd973cba917ed6fd7d6387a394b81a216fce357de592",
-    ".github/workflows/cflite-pr.yml": "b418a6fb323737075ff1f9f91a8f0d076b8e7431d5e294040a1c1c6a401ded5b",
+    ".github/workflows/action-smoke-test.yml": "bdd161e6b7a9ea5b5bf405185640cba569f7f8e4d046c8a06956f8a48317c154",
+    ".github/workflows/cflite-pr.yml": "3746e04a0f1b58591f4912958972aa897bdc65f6775c58e8c099822ef4399cd9",
     ".github/workflows/codeql.yml": "3cd755f47df072ebccef50e3b1416b6010ab0af68740647f11095506e337bc96",
-    ".github/workflows/codspeed.yml": "a0a488cdf6eab8f15dd6437d088470f7764d9d69827514475ba43d671e75806a",
-    ".github/workflows/consistency.yml": "d3aa83103203d5ba4f763e741f7d9f5bcc30e7bcc9accac4f507356b9ec1aa1f",
-    ".github/workflows/container-build.yml": "c0565fef63928211852d1750186235624d08877fb8f055134cda5a592e08ed3c",
-    ".github/workflows/dast.yml": "f3d2d95849e34a6a8fabcd24f9e67b3a3b099f8d7404109cae06ff660c69ce34",
+    ".github/workflows/codspeed.yml": "6d535663fc99986758209bb5d477a9ce2714a6201fb480373557beacb077cff7",
+    ".github/workflows/consistency.yml": "67d99768345b7052ae46bb0da2c8cd1ae2e72e8905423f3bf8db14c7afc71618",
+    ".github/workflows/container-build.yml": "1d60ccf1b7708f4b1223e8ab68a475da65503b6e87474eb6667d386b5064f800",
+    ".github/workflows/dast.yml": "9df39643384162572848a46929896a2146058f989b686de77bf3156de8fde7c9",
     ".github/workflows/dependabot-auto-merge.yml": "ea85f822d63763aacd80a89776b4385f2d82dd141fdc963a713bb0ab1e41a508",
     ".github/workflows/dependency-review.yml": "a130cb411d3d1a462840924c4b025330758b1b813573b4aae9a67fd6ee883694",
-    ".github/workflows/evidentia.yml": "229bc62d79520f8267ccd34318f70eab69693a4536930e1f303c33d207858a22",
-    ".github/workflows/parity.yml": "8fc4f9589e9bc0f6e48e04a513ba5510c725ade9dd788347cd4644cab52108ef",
+    ".github/workflows/evidentia.yml": "dd4ef1e122f4c1dfc005298f8b97e05e22bb97f3edb4ad2c7a3c0f097b217f12",
+    ".github/workflows/parity.yml": "d96e6d4e861bd674f25ac024a9f500b75b4bf8444eb0b96883151b8a8dffb6fb",
     ".github/workflows/secret-scan.yml": "4818415e7e79184a3c3fb17e4c1b048d3e392f131b4244758e111628d78a8d23",
-    ".github/workflows/test.yml": "b168c90075be19179599c65c51a654173ca9e00266c250db20d56b6510edd8a8",
+    ".github/workflows/test.yml": "53caaf9d5c415bf309566858176959bae26785e45d9e480e87531fde0a339c7a",
     ".github/workflows/verify-changelog.yml": "264df97c1f6edd7863e30e82670988792279fd02f0114303c91c0cb313b7c59f",
     ".github/workflows/verify-osps-conformance.yml": "1e072be9855d60f2ab9fd70ba471c92e9b21e828a044c1e092e52bffce96e778",
-    ".github/workflows/verify-workflow-perms.yml": "1dfc7c8fc895d5e888cc05b5233b34812ac927be6a9a2785d686edf7e54dece3",
+    ".github/workflows/verify-workflow-perms.yml": "3da76a441f4b0ba854de3723b7d4f32ad3170df2df77559c20869ecd0886d9c2",
     ".github/workflows/zizmor.yml": "34b86b6d43a8a1d19237b042b95c9b7f5355b419d07ca1d9795dc170dd6e03fc"
   },
   "codspeed_linkage": {
