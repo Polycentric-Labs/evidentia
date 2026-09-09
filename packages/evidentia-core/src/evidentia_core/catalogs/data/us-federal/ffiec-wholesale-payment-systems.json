@@ -1,0 +1,390 @@
+{
+  "framework_id": "ffiec-wholesale-payment-systems",
+  "framework_name": "FFIEC IT Examination Handbook - Wholesale Payment Systems booklet",
+  "version": "July 2004",
+  "source": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/",
+  "tier": "A",
+  "category": "control",
+  "placeholder": false,
+  "families": [
+    "Interbank Payment and Messaging Systems",
+    "Securities Settlement Systems",
+    "Intrabank Payment and Messaging Systems",
+    "Wholesale Payment Systems Risk Management"
+  ],
+  "controls": [
+    {
+      "id": "local.interbank-payment-and-messaging-systems",
+      "title": "Interbank Payment and Messaging Systems",
+      "description": "",
+      "family": "Interbank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/interbank-payment-and-messaging-systems/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.interbank-payment-and-messaging-systems.fedwire-and-clearing-house-interbank-payments-system-chips",
+      "title": "Fedwire and Clearing House Interbank Payments System (CHIPS)",
+      "description": "",
+      "family": "Interbank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/interbank-payment-and-messaging-systems/fedwire-and-clearing-house-interbank-payments-system-chips/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.interbank-payment-and-messaging-systems.fedwire-and-clearing-house-interbank-payments-system-chips.fedwire-funds-service",
+      "title": "Fedwire Funds Service",
+      "description": "",
+      "family": "Interbank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/interbank-payment-and-messaging-systems/fedwire-and-clearing-house-interbank-payments-system-chips/fedwire-funds-service/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.interbank-payment-and-messaging-systems.fedwire-and-clearing-house-interbank-payments-system-chips.chips",
+      "title": "CHIPS",
+      "description": "",
+      "family": "Interbank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/interbank-payment-and-messaging-systems/fedwire-and-clearing-house-interbank-payments-system-chips/chips/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.interbank-payment-and-messaging-systems.other-clearinghouse-settlement-and-messaging-systems",
+      "title": "Other Clearinghouse, Settlement, and Messaging Systems",
+      "description": "",
+      "family": "Interbank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/interbank-payment-and-messaging-systems/other-clearinghouse-settlement-and-messaging-systems/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.interbank-payment-and-messaging-systems.other-clearinghouse-settlement-and-messaging-systems.national-settlement-service-nss",
+      "title": "National Settlement Service (NSS)",
+      "description": "",
+      "family": "Interbank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/interbank-payment-and-messaging-systems/other-clearinghouse-settlement-and-messaging-systems/national-settlement-service-nss/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.interbank-payment-and-messaging-systems.other-clearinghouse-settlement-and-messaging-systems.society-for-worldwide-interbank-financial-telecommunication-swift",
+      "title": "Society for Worldwide Interbank Financial Telecommunication (SWIFT)",
+      "description": "",
+      "family": "Interbank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/interbank-payment-and-messaging-systems/other-clearinghouse-settlement-and-messaging-systems/society-for-worldwide-interbank-financial-telecommunication-swift/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.interbank-payment-and-messaging-systems.other-clearinghouse-settlement-and-messaging-systems.telex-based-messaging-systems",
+      "title": "Telex-based Messaging Systems",
+      "description": "",
+      "family": "Interbank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/interbank-payment-and-messaging-systems/other-clearinghouse-settlement-and-messaging-systems/telex-based-messaging-systems/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.interbank-payment-and-messaging-systems.other-clearinghouse-settlement-and-messaging-systems.continuous-linked-settlement-cls-bank",
+      "title": "Continuous Linked Settlement (CLS) Bank",
+      "description": "",
+      "family": "Interbank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/interbank-payment-and-messaging-systems/other-clearinghouse-settlement-and-messaging-systems/continuous-linked-settlement-cls-bank/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.securities-settlement-systems",
+      "title": "Securities Settlement Systems",
+      "description": "",
+      "family": "Securities Settlement Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/securities-settlement-systems/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.securities-settlement-systems.us-government-securities",
+      "title": "U.S. Government Securities",
+      "description": "",
+      "family": "Securities Settlement Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/securities-settlement-systems/us-government-securities/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.securities-settlement-systems.us-government-securities.fixed-income-clearing-corporation-ficc",
+      "title": "Fixed Income Clearing Corporation (FICC)",
+      "description": "",
+      "family": "Securities Settlement Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/securities-settlement-systems/us-government-securities/fixed-income-clearing-corporation-ficc/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.securities-settlement-systems.us-government-securities.fedwire-securities-service",
+      "title": "Fedwire Securities Service",
+      "description": "",
+      "family": "Securities Settlement Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/securities-settlement-systems/us-government-securities/fedwire-securities-service/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.securities-settlement-systems.corporate-and-municipal-securities",
+      "title": "Corporate and Municipal Securities",
+      "description": "",
+      "family": "Securities Settlement Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/securities-settlement-systems/corporate-and-municipal-securities/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.securities-settlement-systems.corporate-and-municipal-securities.national-securities-clearing-corporation-nscc",
+      "title": "National Securities Clearing Corporation (NSCC)",
+      "description": "",
+      "family": "Securities Settlement Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/securities-settlement-systems/corporate-and-municipal-securities/national-securities-clearing-corporation-nscc/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.securities-settlement-systems.corporate-and-municipal-securities.depository-trust-company-dtc",
+      "title": "Depository Trust Company (DTC)",
+      "description": "",
+      "family": "Securities Settlement Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/securities-settlement-systems/corporate-and-municipal-securities/depository-trust-company-dtc/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.intrabank-payment-and-messaging-systems",
+      "title": "Intrabank Payment and Messaging Systems",
+      "description": "",
+      "family": "Intrabank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/intrabank-payment-and-messaging-systems/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.intrabank-payment-and-messaging-systems.internally-developed-and-off-the-shelf-funds-transfer-systems",
+      "title": "Internally Developed and Off-The-Shelf Funds Transfer Systems",
+      "description": "",
+      "family": "Intrabank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/intrabank-payment-and-messaging-systems/internally-developed-and-off-the-shelf-funds-transfer-systems/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.intrabank-payment-and-messaging-systems.internally-developed-and-off-the-shelf-funds-transfer-systems.payment-messaging-systems",
+      "title": "Payment Messaging Systems",
+      "description": "",
+      "family": "Intrabank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/intrabank-payment-and-messaging-systems/internally-developed-and-off-the-shelf-funds-transfer-systems/payment-messaging-systems/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.intrabank-payment-and-messaging-systems.internally-developed-and-off-the-shelf-funds-transfer-systems.in-house-terminals",
+      "title": "In-house Terminals",
+      "description": "",
+      "family": "Intrabank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/intrabank-payment-and-messaging-systems/internally-developed-and-off-the-shelf-funds-transfer-systems/in-house-terminals/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.intrabank-payment-and-messaging-systems.internally-developed-and-off-the-shelf-funds-transfer-systems.non-automated-payment-order-origination",
+      "title": "Non-automated Payment Order Origination",
+      "description": "",
+      "family": "Intrabank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/intrabank-payment-and-messaging-systems/internally-developed-and-off-the-shelf-funds-transfer-systems/non-automated-payment-order-origination/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.intrabank-payment-and-messaging-systems.funds-transfer-operations-wire-room",
+      "title": "Funds Transfer Operations (Wire Room)",
+      "description": "",
+      "family": "Intrabank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/intrabank-payment-and-messaging-systems/funds-transfer-operations-wire-room/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.intrabank-payment-and-messaging-systems.funds-transfer-operations-wire-room.computer-and-network-operations-supporting-funds-transfer",
+      "title": "Computer and Network Operations Supporting Funds Transfer",
+      "description": "",
+      "family": "Intrabank Payment and Messaging Systems",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/intrabank-payment-and-messaging-systems/funds-transfer-operations-wire-room/computer-and-network-operations-supporting-funds-transfer/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.wholesale-payment-systems-risk-management",
+      "title": "Wholesale Payment Systems Risk Management",
+      "description": "",
+      "family": "Wholesale Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/wholesale-payment-systems-risk-management/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.wholesale-payment-systems-risk-management.payments-system-risk-psr-policy",
+      "title": "Payments System Risk (PSR) Policy",
+      "description": "",
+      "family": "Wholesale Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/wholesale-payment-systems-risk-management/payments-system-risk-psr-policy/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.wholesale-payment-systems-risk-management.strategic-risk",
+      "title": "Strategic Risk",
+      "description": "",
+      "family": "Wholesale Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/wholesale-payment-systems-risk-management/strategic-risk/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.wholesale-payment-systems-risk-management.credit-risk",
+      "title": "Credit Risk",
+      "description": "",
+      "family": "Wholesale Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/wholesale-payment-systems-risk-management/credit-risk/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.wholesale-payment-systems-risk-management.credit-risk.customer-daylight-overdrafts",
+      "title": "Customer Daylight Overdrafts",
+      "description": "",
+      "family": "Wholesale Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/wholesale-payment-systems-risk-management/credit-risk/customer-daylight-overdrafts/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.wholesale-payment-systems-risk-management.credit-risk.settlement-risk",
+      "title": "Settlement Risk",
+      "description": "",
+      "family": "Wholesale Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/wholesale-payment-systems-risk-management/credit-risk/settlement-risk/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.wholesale-payment-systems-risk-management.liquidity-risk",
+      "title": "Liquidity Risk",
+      "description": "",
+      "family": "Wholesale Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/wholesale-payment-systems-risk-management/liquidity-risk/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.wholesale-payment-systems-risk-management.legal-compliance-risk",
+      "title": "Legal (Compliance) Risk",
+      "description": "",
+      "family": "Wholesale Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/wholesale-payment-systems-risk-management/legal-compliance-risk/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.wholesale-payment-systems-risk-management.operational-transaction-risk",
+      "title": "Operational (Transaction) Risk",
+      "description": "",
+      "family": "Wholesale Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/wholesale-payment-systems-risk-management/operational-transaction-risk/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.wholesale-payment-systems-risk-management.operational-transaction-risk.internal-and-operational-controls",
+      "title": "Internal and Operational Controls",
+      "description": "",
+      "family": "Wholesale Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/wholesale-payment-systems-risk-management/operational-transaction-risk/internal-and-operational-controls/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.wholesale-payment-systems-risk-management.operational-transaction-risk.audit",
+      "title": "Audit",
+      "description": "",
+      "family": "Wholesale Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/wholesale-payment-systems-risk-management/operational-transaction-risk/audit/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.wholesale-payment-systems-risk-management.operational-transaction-risk.information-security",
+      "title": "Information Security",
+      "description": "",
+      "family": "Wholesale Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/wholesale-payment-systems-risk-management/operational-transaction-risk/information-security/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.wholesale-payment-systems-risk-management.operational-transaction-risk.business-continuity-planning-bcp",
+      "title": "Business Continuity Planning (BCP)",
+      "description": "",
+      "family": "Wholesale Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/wholesale-payment-systems-risk-management/operational-transaction-risk/business-continuity-planning-bcp/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.wholesale-payment-systems-risk-management.operational-transaction-risk.vendor-and-third-party-management",
+      "title": "Vendor and Third-Party Management",
+      "description": "",
+      "family": "Wholesale Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/wholesale-payment-systems-risk-management/operational-transaction-risk/vendor-and-third-party-management/",
+        "id_origin": "local"
+      }
+    }
+  ],
+  "status": "current",
+  "notes": "Public HTML body headings only. Introductions, appendices, examination procedures, and narrative statements are omitted. Heading coverage does not establish full assessment coverage. IDs beginning local. are stable Evidentia identifiers derived from source heading URL paths; they are not publisher control IDs. Edition source: https://ithandbook.ffiec.gov/media/zdobvcx5/ffiec_itbooklet_wholesalepaymentsystems.pdf.",
+  "verified_on": "2026-09-09"
+}

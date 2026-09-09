@@ -142,6 +142,10 @@ export interface FrameworkListEntry {
   placeholder: string;
   license_required: string;
   text_depth: string;
+  status?: ControlCatalog["status"] | "";
+  notes?: string | null;
+  verified_on?: string | null;
+  superseded_by?: string | null;
 }
 
 export interface FrameworkListResponse {

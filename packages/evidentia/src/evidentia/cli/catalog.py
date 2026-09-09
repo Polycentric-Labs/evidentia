@@ -31,6 +31,7 @@ from evidentia_core.models.catalog import ControlCatalog, TextDepth
 from evidentia_core.models.obligation import ObligationCatalog
 from evidentia_core.models.threat import TechniqueCatalog, VulnerabilityCatalog
 from rich.console import Console
+from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
 
@@ -41,6 +42,48 @@ console = Console()
 # -----------------------------------------------------------------------
 # Discovery & rendering
 # -----------------------------------------------------------------------
+
+
+def _currency_lines(item: ControlCatalog | FrameworkManifestEntry) -> list[str]:
+    """Render source metadata literally so user-supplied brackets cannot hide a notice."""
+    lines = []
+    for label, value in (
+        ("Status", item.status),
+        ("Verified on", item.verified_on),
+        ("Successor", item.superseded_by),
+        ("Notice", item.notes),
+    ):
+        if value is not None:
+            lines.append(f"[bold]{label}:[/bold] {escape(str(value))}")
+    return lines
+
+
+def _show_currency(catalog: ControlCatalog) -> None:
+    lines = _currency_lines(catalog)
+    if lines:
+        console.print(Panel("\n".join(lines), title="Catalog currency", border_style="yellow"))
+    for jurisdiction, context in catalog.audit_contexts.items():
+        lines = [
+            f"Authority: {context.authority}",
+            f"Audit version: {context.version}",
+            f"Verified on: {context.verified_on}",
+            f"Source scope through: {context.valid_through or 'unknown'}",
+            f"Source: {context.source_url}",
+        ]
+        if context.notes:
+            lines.append(context.notes)
+        console.print(Panel(escape("\n".join(lines)), title=f"Audit context: {escape(jurisdiction)}"))
+    if catalog.audit_contexts:
+        console.print("Unlisted authorities have no verified audit-version context.", markup=False)
+    if catalog.publication_notices:
+        console.print("[bold]Published revisions[/bold]")
+        console.print(
+            "These notices are outside the assessed controls; dates never activate them automatically.", markup=False
+        )
+        for notice in catalog.publication_notices:
+            values = notice.model_dump(mode="json", exclude_none=True)
+            lines = [f"{key.replace('_', ' ')}: {value}" for key, value in values.items() if key != "id"]
+            console.print(Panel(escape("\n".join(lines)), title=escape(notice.id)))
 
 
 @app.command("list")
@@ -113,6 +156,8 @@ def list_frameworks(
         flag = ""
         if entry.placeholder:
             flag = " [yellow](stub)[/yellow]"
+        if entry.status:
+            flag += f" [yellow]({escape(entry.status)})[/yellow]"
         table.add_row(
             entry.id,
             entry.name + flag,
@@ -143,6 +188,8 @@ def show_catalog(
         console.print(f"[red]Error loading catalog '{framework}': {e}[/red]")
         raise typer.Exit(code=1) from e
 
+    _show_currency(catalog)
+
     if control:
         ctrl = catalog.get_control(control)
         if not ctrl:
@@ -161,6 +208,11 @@ def show_catalog(
             f"[bold]Family:[/bold] {ctrl.family or '-'}\n\n"
             f"[bold]Description:[/bold]\n{description_block}\n"
         )
+        if ctrl.priority:
+            body += f"\n[bold]Priority:[/bold] {escape(ctrl.priority)}\n"
+        if ctrl.properties:
+            body += "\n[bold]Publisher properties:[/bold]\n"
+            body += "\n".join(f"{escape(key)}: {escape(value)}" for key, value in ctrl.properties.items()) + "\n"
         if ctrl.objective:
             body += f"\n[bold]Objective:[/bold]\n{ctrl.objective}\n"
         if ctrl.guidance:
@@ -308,6 +360,7 @@ def import_catalog(
             placeholder=False,
             license_terms=license_terms,
             text_depth=resolved.text_depth,
+            catalog=resolved,
         )
         console.print(
             f"[green]Resolved profile and imported as '{resolved.framework_id}' "
@@ -378,6 +431,7 @@ def import_catalog(
             placeholder=placeholder,
             license_terms=license_terms,
             text_depth=text_depth,
+            catalog=loaded_catalog if isinstance(loaded_catalog, ControlCatalog) else None,
         )
     finally:
         # Keep cleanup failures separate from validation and publication errors.
@@ -420,7 +474,7 @@ def where_framework(
             f"[bold]Tier:[/bold] {entry.tier}  "
             f"[bold]Category:[/bold] {entry.category}\n"
             f"[bold]Placeholder:[/bold] {entry.placeholder}\n"
-            f"[bold]Text depth:[/bold] {entry.text_depth or '-'}",
+            f"[bold]Text depth:[/bold] {entry.text_depth or '-'}\n" + "\n".join(_currency_lines(entry)),
             title=framework_id,
             border_style="cyan",
         )
@@ -446,12 +500,13 @@ def license_info(
         f"[bold]Placeholder:[/bold] {entry.placeholder}",
         f"[bold]Text depth:[/bold] {entry.text_depth or '-'}",
     ]
+    lines.extend(_currency_lines(entry))
     if entry.license:
-        lines.append(f"[bold]License:[/bold] {entry.license}")
+        lines.append(f"[bold]License:[/bold] {escape(entry.license)}")
     if entry.license_url:
-        lines.append(f"[bold]License URL:[/bold] {entry.license_url}")
+        lines.append(f"[bold]License URL:[/bold] {escape(entry.license_url)}")
     if entry.source_url:
-        lines.append(f"[bold]Source URL:[/bold] {entry.source_url}")
+        lines.append(f"[bold]Source URL:[/bold] {escape(entry.source_url)}")
     console.print(Panel("\n".join(lines), title=f"License: {framework_id}", border_style="cyan"))
 
 
@@ -503,6 +558,7 @@ def _add_to_user_manifest(
     placeholder: bool,
     license_terms: str | None,
     text_depth: TextDepth | None = None,
+    catalog: ControlCatalog | None = None,
 ) -> None:
     """Append or replace an entry in the user manifest."""
     user = load_user_manifest(catalog_dir)
@@ -514,9 +570,16 @@ def _add_to_user_manifest(
         tier=tier,
         category="control",
         path=path,
-        license=license_terms,
+        license=license_terms if license_terms is not None else catalog.license_terms if catalog else None,
         placeholder=placeholder,
         text_depth=text_depth,
+        status=catalog.status if catalog else None,
+        notes=catalog.notes if catalog else None,
+        verified_on=catalog.verified_on if catalog else None,
+        superseded_by=catalog.superseded_by if catalog else None,
+        source_url=catalog.source if catalog else None,
+        license_url=catalog.license_url if catalog else None,
+        license_required=catalog.license_required if catalog else False,
     )
     updated = FrameworkManifest(version=user.version, frameworks=[*kept, new_entry])
     save_user_manifest(updated, catalog_dir)

@@ -1,0 +1,449 @@
+{
+  "framework_id": "ffiec-retail-payment-systems",
+  "framework_name": "FFIEC IT Examination Handbook - Retail Payment Systems booklet",
+  "version": "April 2016",
+  "source": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/",
+  "tier": "A",
+  "category": "control",
+  "placeholder": false,
+  "families": [
+    "Retail Payment Systems Overview",
+    "Payment Instruments, Clearing, and Settlement",
+    "Retail Payment Systems Risk Management"
+  ],
+  "controls": [
+    {
+      "id": "local.retail-payment-systems-overview",
+      "title": "Retail Payment Systems Overview",
+      "description": "",
+      "family": "Retail Payment Systems Overview",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-overview/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement",
+      "title": "Payment Instruments, Clearing, and Settlement",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.check-based-payments",
+      "title": "Check-Based Payments",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/check-based-payments/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.check-based-payments.remotely-created-checks",
+      "title": "Remotely Created Checks",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/check-based-payments/remotely-created-checks/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.check-based-payments.electronically-created-payment-orders",
+      "title": "Electronically Created Payment Orders",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/check-based-payments/electronically-created-payment-orders/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.check-based-payments.remote-deposit-capture",
+      "title": "Remote Deposit Capture",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/check-based-payments/remote-deposit-capture/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.check-clearing-houses",
+      "title": "Check Clearing Houses",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/check-clearing-houses/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.the-automated-clearing-house-ach",
+      "title": "The Automated Clearing House (ACH)",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/the-automated-clearing-house-ach/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.the-automated-clearing-house-ach.the-ach-network",
+      "title": "The ACH Network",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/the-automated-clearing-house-ach/the-ach-network/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.the-automated-clearing-house-ach.nacha-rule-and-product-changes",
+      "title": "NACHA Rule and Product Changes",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/the-automated-clearing-house-ach/nacha-rule-and-product-changes/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.card-based-electronic-payments",
+      "title": "Card-Based Electronic Payments",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/card-based-electronic-payments/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.card-based-electronic-payments.general-purpose-credit-cards",
+      "title": "General Purpose Credit Cards",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/card-based-electronic-payments/general-purpose-credit-cards/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.card-based-electronic-payments.co-brandedaffinity-credit-cards",
+      "title": "Co-Branded/Affinity Credit Cards",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/card-based-electronic-payments/co-brandedaffinity-credit-cards/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.card-based-electronic-payments.debit-and-atm-cards",
+      "title": "Debit and ATM Cards",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/card-based-electronic-payments/debit-and-atm-cards/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.card-based-electronic-payments.eftpos-networks",
+      "title": "EFT/POS Networks",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/card-based-electronic-payments/eftpos-networks/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.card-based-electronic-payments.prepaid-stored-value-cards",
+      "title": "Prepaid (Stored Value) Cards",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/card-based-electronic-payments/prepaid-stored-value-cards/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.card-based-electronic-payments.payroll-cards",
+      "title": "Payroll Cards",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/card-based-electronic-payments/payroll-cards/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.card-based-electronic-payments.general-spending-reloadable-cards",
+      "title": "General Spending Reloadable Cards",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/card-based-electronic-payments/general-spending-reloadable-cards/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.card-based-electronic-payments.online-person-to-person-p2p-account-to-account-a2a-payments-and-electronic-cash",
+      "title": "Online Person-to-person (P2P), Account-to-Account (A2A) Payments and Electronic Cash",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/card-based-electronic-payments/online-person-to-person-p2p-account-to-account-a2a-payments-and-electronic-cash/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.emerging-retail-payment-technologies",
+      "title": "Emerging Retail Payment Technologies",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/emerging-retail-payment-technologies/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.emerging-retail-payment-technologies.contactless-payment-cards-proximity-payments-and-other-devices",
+      "title": "Contactless Payment Cards, Proximity Payments and Other Devices",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/emerging-retail-payment-technologies/contactless-payment-cards-proximity-payments-and-other-devices/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.emerging-retail-payment-technologies.biometrics-for-payment-initiation-and-authentication",
+      "title": "Biometrics for Payment Initiation and Authentication",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/emerging-retail-payment-technologies/biometrics-for-payment-initiation-and-authentication/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.payment-instruments-clearing-and-settlement.emerging-retail-payment-technologies.emerging-network-technologies",
+      "title": "Emerging Network Technologies",
+      "description": "",
+      "family": "Payment Instruments, Clearing, and Settlement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/payment-instruments-clearing-and-settlement/emerging-retail-payment-technologies/emerging-network-technologies/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management",
+      "title": "Retail Payment Systems Risk Management",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.payment-system-risk-psr-policy",
+      "title": "Payment System Risk (PSR) Policy",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/payment-system-risk-psr-policy/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.strategic-risk",
+      "title": "Strategic Risk",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/strategic-risk/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.credit-risk",
+      "title": "Credit Risk",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/credit-risk/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.liquidity-risk",
+      "title": "Liquidity Risk",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/liquidity-risk/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.legal-compliance-risk",
+      "title": "Legal (Compliance) Risk",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/legal-compliance-risk/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.operational-risk",
+      "title": "Operational Risk",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/operational-risk/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.operational-risk.audit",
+      "title": "Audit",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/operational-risk/audit/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.operational-risk.information-security",
+      "title": "Information Security",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/operational-risk/information-security/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.operational-risk.business-continuity-planning",
+      "title": "Business Continuity Planning",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/operational-risk/business-continuity-planning/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.operational-risk.vendor-and-third-party-management",
+      "title": "Vendor and Third-Party Management",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/operational-risk/vendor-and-third-party-management/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.retail-payment-instrument-specific-risk-management-controls",
+      "title": "Retail Payment Instrument Specific Risk Management Controls",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/retail-payment-instrument-specific-risk-management-controls/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.retail-payment-instrument-specific-risk-management-controls.checks",
+      "title": "Checks",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/retail-payment-instrument-specific-risk-management-controls/checks/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.retail-payment-instrument-specific-risk-management-controls.ach",
+      "title": "ACH",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/retail-payment-instrument-specific-risk-management-controls/ach/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.retail-payment-instrument-specific-risk-management-controls.third-party-ach-processing",
+      "title": "Third-Party ACH Processing",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/retail-payment-instrument-specific-risk-management-controls/third-party-ach-processing/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.retail-payment-instrument-specific-risk-management-controls.credit-cards",
+      "title": "Credit Cards",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/retail-payment-instrument-specific-risk-management-controls/credit-cards/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.retail-payment-instrument-specific-risk-management-controls.debitatm-cards",
+      "title": "Debit/ATM Cards",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/retail-payment-instrument-specific-risk-management-controls/debitatm-cards/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.retail-payment-instrument-specific-risk-management-controls.cardpin-issuance",
+      "title": "Card/PIN Issuance",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/retail-payment-instrument-specific-risk-management-controls/cardpin-issuance/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.retail-payment-instrument-specific-risk-management-controls.merchant-acquiring",
+      "title": "Merchant Acquiring",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/retail-payment-instrument-specific-risk-management-controls/merchant-acquiring/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.retail-payment-systems-risk-management.retail-payment-instrument-specific-risk-management-controls.eftpos-and-credit-card-networks",
+      "title": "EFT/POS and Credit Card Networks",
+      "description": "",
+      "family": "Retail Payment Systems Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/retail-payment-systems-risk-management/retail-payment-instrument-specific-risk-management-controls/eftpos-and-credit-card-networks/",
+        "id_origin": "local"
+      }
+    }
+  ],
+  "status": "current",
+  "notes": "Public HTML body headings only. Introductions, appendices, examination procedures, and narrative statements are omitted. Heading coverage does not establish full assessment coverage. IDs beginning local. are stable Evidentia identifiers derived from source heading URL paths; they are not publisher control IDs. Edition source: https://ithandbook.ffiec.gov/media/saniy4dq/ffiec_itbooklet_retailpaymentsystems.pdf.",
+  "verified_on": "2026-09-09"
+}

@@ -410,7 +410,13 @@ function LicenseInfoSection() {
             <dl className="stack-2 mt-4 text-sm">
               <WhereRow label="License" value={field("license")} />
               <WhereRow label="Tier" value={field("tier")} />
-              <WhereRow label="URL" value={field("url")} mono />
+              <WhereRow label="Source URL" value={field("source_url")} mono />
+              <WhereRow label="License URL" value={field("license_url")} mono />
+              <WhereRow label="Text depth" value={field("text_depth")} />
+              <WhereRow label="Status" value={field("status")} />
+              <WhereRow label="Verified on" value={field("verified_on")} />
+              <WhereRow label="Successor" value={field("superseded_by")} />
+              <WhereRow label="Notice" value={field("notes")} />
             </dl>
           )}
         </CardContent>

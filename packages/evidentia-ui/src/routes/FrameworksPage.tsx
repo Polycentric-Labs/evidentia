@@ -3,12 +3,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -78,7 +73,11 @@ export function FrameworksPage() {
           onChange={(e) => setSearch(e.target.value)}
           aria-label="Search frameworks"
         />
-        <div className="row gap-2" role="radiogroup" aria-label="Filter by tier">
+        <div
+          className="row gap-2"
+          role="radiogroup"
+          aria-label="Filter by tier"
+        >
           {TIER_OPTIONS.map(([value, label]) => (
             <button
               key={value ?? "all"}
@@ -125,7 +124,9 @@ export function FrameworksPage() {
       {query.isLoading && (
         <ul
           className="reset grid"
-          style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}
+          style={{
+            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          }}
         >
           {Array.from({ length: 6 }).map((_, i) => (
             <li key={i} className="reset">
@@ -158,14 +159,26 @@ export function FrameworksPage() {
                   <div className="row gap-2 wrap">
                     <Badge variant="outline">Tier {fw.tier}</Badge>
                     <Badge variant="secondary">{fw.category}</Badge>
+                    <Badge
+                      variant={
+                        fw.status === "retired" ? "destructive" : "outline"
+                      }
+                    >
+                      {fw.status || "status unknown"}
+                    </Badge>
                     {fw.placeholder === "true" && (
                       <Badge variant="destructive">placeholder</Badge>
                     )}
                   </div>
                   <CardTitle className="base">{fw.name}</CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0 text-xs muted">
-                  <code className="kbd">{fw.id}</code> &middot; {fw.version}
+                <CardContent className="pt-0 text-xs muted stack-2">
+                  <p>
+                    <code className="kbd">{fw.id}</code> &middot; {fw.version}
+                  </p>
+                  {fw.notes && <p>{fw.notes}</p>}
+                  {fw.verified_on && <p>Source checked: {fw.verified_on}</p>}
+                  {fw.superseded_by && <p>Successor: {fw.superseded_by}</p>}
                 </CardContent>
               </Card>
             </Link>

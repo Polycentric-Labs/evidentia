@@ -569,3 +569,77 @@ class TestCatalogOpenApiErrorDocs:
             responses = schema["paths"][path][method]["responses"]
             for status in statuses:
                 assert status in responses, f"{method.upper()} {path} missing {status}"
+
+
+def test_import_preserves_currency_in_where_and_license_info(cat_client: TestClient) -> None:
+    data = {
+        **_SAMPLE_CATALOG,
+        "status": "retired",
+        "notes": "Use the successor catalog.",
+        "verified_on": "2026-09-09",
+        "superseded_by": "acme-next",
+        "source": "https://example.org/source",
+        "license_url": "https://example.org/license",
+        "license_required": True,
+    }
+    payload = {"framework_id": "acme-internal", "content": json.dumps(data), "tier": "C"}
+    response = cat_client.post("/api/catalog/import", json=payload)
+    assert response.status_code == 201, response.text
+    for url in ("/api/catalog/where?framework_id=acme-internal", "/api/catalog/license-info/acme-internal"):
+        response = cat_client.get(url)
+        assert response.status_code == 200
+        body = response.json()
+        assert body["status"] == "retired"
+        assert body["notes"] == "Use the successor catalog."
+        assert body["verified_on"] == "2026-09-09"
+        assert body["superseded_by"] == "acme-next"
+    body = cat_client.get("/api/catalog/license-info/acme-internal").json()
+    assert body["source_url"] == "https://example.org/source"
+    assert body["license_url"] == "https://example.org/license"
+    assert body["license_required"] is True
+
+
+def test_yaml_import_preserves_unquoted_nested_dates(cat_client: TestClient, tmp_path: Path) -> None:
+    content = (
+        yaml.safe_dump(_SAMPLE_CATALOG)
+        + """
+verified_on: 2026-09-09
+audit_contexts:
+  US-TX:
+    authority: Example CSA
+    version: '5.9.5'
+    source_url: https://example.org/audit
+    verified_on: 2026-09-09
+    valid_through: 2027-03-31
+publication_notices:
+  - id: FUTURE-1
+    title: Future publication
+    status: approved-future
+    source_url: https://example.org/revision
+    approved_on: 2026-08-10
+    effective_on: 2029-10-01
+"""
+    )
+    response = cat_client.post(
+        "/api/catalog/import", json={"framework_id": "acme-internal", "format": "yaml", "content": content}
+    )
+    assert response.status_code == 201, response.text
+    saved = json.loads((tmp_path / "user-catalogs/acme-internal.json").read_text(encoding="utf-8"))
+    assert saved["verified_on"] == "2026-09-09"
+    assert saved["audit_contexts"]["US-TX"]["valid_through"] == "2027-03-31"
+    assert saved["publication_notices"][0]["effective_on"] == "2029-10-01"
+    assert cat_client.get("/api/catalog/license-info/acme-internal").json()["verified_on"] == "2026-09-09"
+
+
+def test_yaml_non_json_value_rejection_preserves_existing_import(cat_client: TestClient, tmp_path: Path) -> None:
+    assert cat_client.post("/api/catalog/import", json=_import_payload()).status_code == 201
+    folder = tmp_path / "user-catalogs"
+    before = {p.name: p.read_bytes() for p in folder.iterdir() if p.is_file()}
+    content = yaml.safe_dump(_SAMPLE_CATALOG) + "notes: !!set {one: null, two: null}\n"
+    response = cat_client.post(
+        "/api/catalog/import",
+        json={"framework_id": "acme-internal", "format": "yaml", "content": content, "force": True},
+    )
+    assert response.status_code == 400, response.text
+    assert response.json()["detail"]["error"] == "invalid_body"
+    assert {p.name: p.read_bytes() for p in folder.iterdir() if p.is_file()} == before

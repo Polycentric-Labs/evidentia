@@ -77,12 +77,18 @@ describe("CatalogPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("runs a License-info lookup and renders license + tier + url", async () => {
+  it("runs a License-info lookup and renders the actual source, license and currency fields", async () => {
     const user = userEvent.setup();
     mockedApi.catalogLicenseInfo.mockResolvedValue({
       license: "CC-BY-4.0",
       tier: "B",
-      url: "https://example.com/license",
+      license_url: "https://example.com/license",
+      source_url: "https://example.com/source",
+      text_depth: "headings",
+      status: "retired",
+      notes: "Consult the successor catalog.",
+      verified_on: "2026-09-09",
+      superseded_by: "next-framework",
     });
 
     renderWithClient(<CatalogPage />);
@@ -100,6 +106,10 @@ describe("CatalogPage", () => {
     expect(
       screen.getByText("https://example.com/license"),
     ).toBeInTheDocument();
+    expect(screen.getByText("https://example.com/source")).toBeInTheDocument();
+    expect(screen.getByText("retired")).toBeInTheDocument();
+    expect(screen.getByText("Consult the successor catalog.")).toBeInTheDocument();
+    expect(screen.getByText("2026-09-09")).toBeInTheDocument();
   });
 
   it("submits the import form with the entered fields", async () => {

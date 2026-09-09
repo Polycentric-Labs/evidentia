@@ -1,0 +1,1063 @@
+{
+  "framework_id": "ffiec-aio",
+  "framework_name": "FFIEC IT Examination Handbook - Architecture, Infrastructure, and Operations booklet",
+  "version": "June 2021",
+  "source": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/",
+  "tier": "A",
+  "category": "control",
+  "placeholder": false,
+  "families": [
+    "I Architecture, Infrastructure, and Operations",
+    "II Architecture, Infrastructure, and Operations Governance",
+    "III Common AIO Risk Management Topics",
+    "IV Architecture",
+    "V Infrastructure",
+    "VI Operations",
+    "VII Evolving Technologies"
+  ],
+  "controls": [
+    {
+      "id": "I",
+      "title": "I Architecture, Infrastructure, and Operations",
+      "description": "",
+      "family": "I Architecture, Infrastructure, and Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/i-architecture-infrastructure-and-operations/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II",
+      "title": "II Architecture, Infrastructure, and Operations Governance",
+      "description": "",
+      "family": "II Architecture, Infrastructure, and Operations Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/ii-architecture-infrastructure-and-operations-governance/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.A",
+      "title": "II.A Board and Senior Management Responsibilities",
+      "description": "",
+      "family": "II Architecture, Infrastructure, and Operations Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/ii-architecture-infrastructure-and-operations-governance/iia-board-and-senior-management-responsibilities/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.A.1",
+      "title": "II.A.1 Strategic Planning",
+      "description": "",
+      "family": "II Architecture, Infrastructure, and Operations Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/ii-architecture-infrastructure-and-operations-governance/iia-board-and-senior-management-responsibilities/iia1-strategic-planning/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.A.2",
+      "title": "II.A.2 Enterprise Risk Management",
+      "description": "",
+      "family": "II Architecture, Infrastructure, and Operations Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/ii-architecture-infrastructure-and-operations-governance/iia-board-and-senior-management-responsibilities/iia2-enterprise-risk-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B",
+      "title": "II.B Other Roles and Responsibilities",
+      "description": "",
+      "family": "II Architecture, Infrastructure, and Operations Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/ii-architecture-infrastructure-and-operations-governance/iib-other-roles-and-responsibilities/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B.1",
+      "title": "II.B.1 IT Management Responsibilities",
+      "description": "",
+      "family": "II Architecture, Infrastructure, and Operations Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/ii-architecture-infrastructure-and-operations-governance/iib-other-roles-and-responsibilities/iib1-it-management-responsibilities/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B.1(a)",
+      "title": "II.B.1(a) Chief Architect",
+      "description": "",
+      "family": "II Architecture, Infrastructure, and Operations Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/ii-architecture-infrastructure-and-operations-governance/iib-other-roles-and-responsibilities/iib1-it-management-responsibilities/iib1-a-chief-architect/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B.1(b)",
+      "title": "II.B.1(b) Chief Data Officer",
+      "description": "",
+      "family": "II Architecture, Infrastructure, and Operations Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/ii-architecture-infrastructure-and-operations-governance/iib-other-roles-and-responsibilities/iib1-it-management-responsibilities/iib1-b-chief-data-officer/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B.1(c)",
+      "title": "II.B.1(c) IT Operations Management",
+      "description": "",
+      "family": "II Architecture, Infrastructure, and Operations Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/ii-architecture-infrastructure-and-operations-governance/iib-other-roles-and-responsibilities/iib1-it-management-responsibilities/iib1-c-it-operations-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B.2",
+      "title": "II.B.2 IT Operations Personnel Responsibilities",
+      "description": "",
+      "family": "II Architecture, Infrastructure, and Operations Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/ii-architecture-infrastructure-and-operations-governance/iib-other-roles-and-responsibilities/iib2-it-operations-personnel-responsibilities/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.C",
+      "title": "II.C Policies, Standards, and Procedures",
+      "description": "",
+      "family": "II Architecture, Infrastructure, and Operations Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/ii-architecture-infrastructure-and-operations-governance/iic-policies-standards-and-procedures/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.D",
+      "title": "II.D Internal Audit, Independent Reviews, and Certification Processes",
+      "description": "",
+      "family": "II Architecture, Infrastructure, and Operations Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/ii-architecture-infrastructure-and-operations-governance/iid-internal-audit-independent-reviews-and-certification-processes/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.E",
+      "title": "II.E Communication",
+      "description": "",
+      "family": "II Architecture, Infrastructure, and Operations Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/ii-architecture-infrastructure-and-operations-governance/iie-communication/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.F",
+      "title": "II.F Board and Senior Management Reporting",
+      "description": "",
+      "family": "II Architecture, Infrastructure, and Operations Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/ii-architecture-infrastructure-and-operations-governance/iif-board-and-senior-management-reporting/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III",
+      "title": "III Common AIO Risk Management Topics",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.A",
+      "title": "III.A Data Governance and Data Management",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiia-data-governance-and-data-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.A.1",
+      "title": "III.A.1 Data Identification and Classification",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiia-data-governance-and-data-management/iiia1-data-identification-and-classification/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.A.2",
+      "title": "III.A.2 Database Management",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiia-data-governance-and-data-management/iiia2-database-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.A.2(a)",
+      "title": "III.A.2(a) Database Security",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiia-data-governance-and-data-management/iiia2-database-management/iiia2-a-database-security/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.A.3",
+      "title": "III.A.3 Non-Production Environments",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiia-data-governance-and-data-management/iiia3-non-production-environments/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.A.4",
+      "title": "III.A.4 Data Analytics",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiia-data-governance-and-data-management/iiia4-data-analytics/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.B",
+      "title": "III.B IT Asset Management",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiib-it-asset-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.B.1",
+      "title": "III.B.1 Technology Asset Inventory",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiib-it-asset-management/iiib1-technology-asset-inventory/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.B.1(a)",
+      "title": "III.B.1(a) Hardware Inventory",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiib-it-asset-management/iiib1-technology-asset-inventory/iiib1-a-hardware-inventory/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.B.1(b)",
+      "title": "III.B.1(b) Software Inventory",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiib-it-asset-management/iiib1-technology-asset-inventory/iiib1-b-software-inventory/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.B.2",
+      "title": "III.B.2 IT Asset End-of-Life",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiib-it-asset-management/iiib2-it-asset-end-of-life/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.B.3",
+      "title": "III.B.3 Shadow IT",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiib-it-asset-management/iiib3-shadow-it/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.C",
+      "title": "III.C IT and Business Environment Representations",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiic-it-and-business-environment-representations/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.C.1",
+      "title": "III.C.1 Network Diagrams",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiic-it-and-business-environment-representations/iiic1-network-diagrams/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.C.2",
+      "title": "III.C.2 Data Flow Diagrams",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiic-it-and-business-environment-representations/iiic2-data-flow-diagrams/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.C.3",
+      "title": "III.C.3 Business Process Diagrams and Narratives",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiic-it-and-business-environment-representations/iiic3-business-process-diagrams-and-narratives/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.D",
+      "title": "III.D Managing Change in AIO",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiid-managing-change-in-aio/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.D.1",
+      "title": "III.D.1 Change Management",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiid-managing-change-in-aio/iiid1-change-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.D.2",
+      "title": "III.D.2 Transitioning From Strategic Change Management to Day-to-Day Operations",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiid-managing-change-in-aio/iiid2-transitioning-from-strategic-change-management-to-day-to-day-operations/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.E",
+      "title": "III.E Oversight of Third-Party Service Providers",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiie-oversight-of-third-party-service-providers/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.F",
+      "title": "III.F Resilience",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiif-resilience/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.G",
+      "title": "III.G Remote Access",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiig-remote-access/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.H",
+      "title": "III.H Personally Owned Devices",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiih-personally-owned-devices/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.I",
+      "title": "III.I File Exchange",
+      "description": "",
+      "family": "III Common AIO Risk Management Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iii-common-aio-risk-management-topics/iiii-file-exchange/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV",
+      "title": "IV Architecture",
+      "description": "",
+      "family": "IV Architecture",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iv-architecture/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.A",
+      "title": "IV.A Architecture Plan",
+      "description": "",
+      "family": "IV Architecture",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iv-architecture/iva-architecture-plan/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.B",
+      "title": "IV.B Design Objectives",
+      "description": "",
+      "family": "IV Architecture",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iv-architecture/ivb-design-objectives/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.C",
+      "title": "IV.C IT Architecture Design",
+      "description": "",
+      "family": "IV Architecture",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iv-architecture/ivc-it-architecture-design/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.D",
+      "title": "IV.D Enterprise Architecture",
+      "description": "",
+      "family": "IV Architecture",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/iv-architecture/ivd-enterprise-architecture/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V",
+      "title": "V Infrastructure",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.A",
+      "title": "V.A Hardware",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/va-hardware/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.B",
+      "title": "V.B Network and Telecommunications",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vb-network-and-telecommunications/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.B.1",
+      "title": "V.B.1 Network",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vb-network-and-telecommunications/vb1-network/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.B.2",
+      "title": "V.B.2 Telecommunications",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vb-network-and-telecommunications/vb2-telecommunications/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.B.2(a)",
+      "title": "V.B.2(a) Voice Communications",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vb-network-and-telecommunications/vb2-telecommunications/vb2-a-voice-communications/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.B.2(b)",
+      "title": "V.B.2(b) Data Communications",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vb-network-and-telecommunications/vb2-telecommunications/vb2-b-data-communications/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.C",
+      "title": "V.C Software",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vc-software/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.C.1",
+      "title": "V.C.1 Internally and Externally Developed Software",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vc-software/vc1-internally-and-externally-developed-software/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.C.2",
+      "title": "V.C.2 Software Types",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vc-software/vc2-software-types/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.C.2(a)",
+      "title": "V.C.2(a) Open Source Software",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vc-software/vc2-software-types/vc2-a-open-source-software/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.C.2(b)",
+      "title": "V.C.2(b) Mainframe Security Software",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vc-software/vc2-software-types/vc2-b-mainframe-security-software/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.C.2(c)",
+      "title": "V.C.2(c) Application Programming Interfaces",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vc-software/vc2-software-types/vc2-c-application-programming-interfaces/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.C.3",
+      "title": "V.C.3 Software Hosting",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vc-software/vc3-software-hosting/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.D",
+      "title": "V.D Environmental Controls",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vd-environmental-controls/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.D.1",
+      "title": "V.D.1 Heating, Ventilation, and Air Conditioning",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vd-environmental-controls/vd1-heating-ventilation-and-air-conditioning/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.D.2",
+      "title": "V.D.2 Smoke and Fire",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vd-environmental-controls/vd2-smoke-and-fire/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.D.3",
+      "title": "V.D.3 Water",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vd-environmental-controls/vd3-water/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.D.4",
+      "title": "V.D.4 Power",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/vd-environmental-controls/vd4-power/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.E",
+      "title": "V.E Physical Access Controls",
+      "description": "",
+      "family": "V Infrastructure",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/v-infrastructure/ve-physical-access-controls/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI",
+      "title": "VI Operations",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.A",
+      "title": "VI.A Operational Controls",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/via-operational-controls/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.A.1",
+      "title": "VI.A.1 Operating Centers",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/via-operational-controls/via1-operating-centers/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.A.2",
+      "title": "VI.A.2 Authorization Boundary",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/via-operational-controls/via2-authorization-boundary/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.A.3",
+      "title": "VI.A.3 Identity and Access Management",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/via-operational-controls/via3-identity-and-access-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.A.4",
+      "title": "VI.A.4 Personnel Controls",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/via-operational-controls/via4-personnel-controls/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.B",
+      "title": "VI.B IT Operational Processes",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vib-it-operational-processes/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.B.1",
+      "title": "VI.B.1 Maintenance",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vib-it-operational-processes/vib1-maintenance/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.B.2",
+      "title": "VI.B.2 Configuration Management",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vib-it-operational-processes/vib2-configuration-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.B.3",
+      "title": "VI.B.3 Vulnerability and Patch Management",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vib-it-operational-processes/vib3-vulnerability-and-patch-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.B.3(a)",
+      "title": "VI.B.3(a) Vulnerability Management",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vib-it-operational-processes/vib3-vulnerability-and-patch-management/vib3-a-vulnerability-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.B.3(b)",
+      "title": "VI.B.3(b) Patch Management",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vib-it-operational-processes/vib3-vulnerability-and-patch-management/vib3-b-patch-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.B.4",
+      "title": "VI.B.4 Backup and Replication Processes",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vib-it-operational-processes/vib4-backup-and-replication-processes/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.B.5",
+      "title": "VI.B.5 Scheduling",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vib-it-operational-processes/vib5-scheduling/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.B.6",
+      "title": "VI.B.6 Capacity Management",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vib-it-operational-processes/vib6-capacity-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.B.7",
+      "title": "VI.B.7 Log Management",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vib-it-operational-processes/vib7-log-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.B.8",
+      "title": "VI.B.8 Disposal of Data and Media",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vib-it-operational-processes/vib8-disposal-of-data-and-media/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.C",
+      "title": "VI.C Service and Support Processes",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vic-service-and-support-processes/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.C.1",
+      "title": "VI.C.1 Service Management",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vic-service-and-support-processes/vic1-service-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.C.2",
+      "title": "VI.C.2 Operational Support",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vic-service-and-support-processes/vic2-operational-support/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.C.3",
+      "title": "VI.C.3 IT Support",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vic-service-and-support-processes/vic3-it-support/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.C.4",
+      "title": "VI.C.4 Event, Incident, and Problem Management",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vic-service-and-support-processes/vic4-event-incident-and-problem-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.D",
+      "title": "VI.D Ongoing Monitoring and Evaluation Processes",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vid-ongoing-monitoring-and-evaluation-processes/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.D.1",
+      "title": "VI.D.1 Monitoring and Reporting",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vid-ongoing-monitoring-and-evaluation-processes/vid1-monitoring-and-reporting/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.D.2",
+      "title": "VI.D.2 IT and Operations Key Performance Indicators",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vid-ongoing-monitoring-and-evaluation-processes/vid2-it-and-operations-key-performance-indicators/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.D.3",
+      "title": "VI.D.3 Control Self-Assessments",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vid-ongoing-monitoring-and-evaluation-processes/vid3-control-self-assessments/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.D.4",
+      "title": "VI.D.4 Continuous Improvement",
+      "description": "",
+      "family": "VI Operations",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vi-operations/vid-ongoing-monitoring-and-evaluation-processes/vid4-continuous-improvement/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII",
+      "title": "VII Evolving Technologies",
+      "description": "",
+      "family": "VII Evolving Technologies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vii-evolving-technologies/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.A",
+      "title": "VII.A Cloud Computing",
+      "description": "",
+      "family": "VII Evolving Technologies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vii-evolving-technologies/viia-cloud-computing/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.A.1",
+      "title": "VII.A.1 Essential Characteristics",
+      "description": "",
+      "family": "VII Evolving Technologies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vii-evolving-technologies/viia-cloud-computing/viia1-essential-characteristics/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.A.2",
+      "title": "VII.A.2 Cloud Service Models",
+      "description": "",
+      "family": "VII Evolving Technologies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vii-evolving-technologies/viia-cloud-computing/viia2-cloud-service-models/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.A.3",
+      "title": "VII.A.3 Cloud Deployment Models",
+      "description": "",
+      "family": "VII Evolving Technologies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vii-evolving-technologies/viia-cloud-computing/viia3-cloud-deployment-models/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.A.4",
+      "title": "VII.A.4 Shared Responsibilities",
+      "description": "",
+      "family": "VII Evolving Technologies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vii-evolving-technologies/viia-cloud-computing/viia4-shared-responsibilities/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.A.5",
+      "title": "VII.A.5 Risk Considerations for Cloud Computing",
+      "description": "",
+      "family": "VII Evolving Technologies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vii-evolving-technologies/viia-cloud-computing/viia5-risk-considerations-for-cloud-computing/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.A.5(a)",
+      "title": "VII.A.5(a) Access Control Considerations",
+      "description": "",
+      "family": "VII Evolving Technologies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vii-evolving-technologies/viia-cloud-computing/viia5-risk-considerations-for-cloud-computing/viia5-a-access-control-considerations/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B",
+      "title": "VII.B Zero Trust Architecture",
+      "description": "",
+      "family": "VII Evolving Technologies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vii-evolving-technologies/viib-zero-trust-architecture/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.C",
+      "title": "VII.C Microservices",
+      "description": "",
+      "family": "VII Evolving Technologies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vii-evolving-technologies/viic-microservices/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.D",
+      "title": "VII.D Artificial Intelligence and Machine Learning",
+      "description": "",
+      "family": "VII Evolving Technologies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vii-evolving-technologies/viid-artificial-intelligence-and-machine-learning/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.E",
+      "title": "VII.E Internet of Things",
+      "description": "",
+      "family": "VII Evolving Technologies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/vii-evolving-technologies/viie-internet-of-things/",
+        "id_origin": "published_heading_locator"
+      }
+    }
+  ],
+  "status": "current",
+  "notes": "Public HTML body headings only. Introductions, appendices, examination procedures, and narrative statements are omitted. Heading coverage does not establish full assessment coverage. IDs are published document section locators, not official assessment control IDs. Edition source: https://ithandbook.ffiec.gov/media/ywfm2ftz/ffiec_itbooklet_aio.pdf. Released 2021-06-30: https://www.ffiec.gov/news/press-releases/2021/pr-06-30.",
+  "verified_on": "2026-09-09"
+}

@@ -1,0 +1,280 @@
+{
+  "framework_id": "ffiec-supervision-technology-service-providers",
+  "framework_name": "FFIEC IT Examination Handbook - Supervision of Technology Service Providers booklet",
+  "version": "October 2012",
+  "source": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/",
+  "tier": "A",
+  "category": "control",
+  "placeholder": false,
+  "families": [
+    "Supervisory Policy",
+    "Supervisory Programs",
+    "Roles and Responsibilities",
+    "Risk-Based Supervision"
+  ],
+  "controls": [
+    {
+      "id": "local.supervisory-policy",
+      "title": "Supervisory Policy",
+      "description": "",
+      "family": "Supervisory Policy",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/supervisory-policy/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.supervisory-policy.examination-responsibility",
+      "title": "Examination Responsibility",
+      "description": "",
+      "family": "Supervisory Policy",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/supervisory-policy/examination-responsibility/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.supervisory-policy.examination-responsibility.a-insured-financial-institution",
+      "title": "A. Insured Financial Institution",
+      "description": "",
+      "family": "Supervisory Policy",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/supervisory-policy/examination-responsibility/a-insured-financial-institution/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.supervisory-policy.examination-responsibility.b-insured-financial-institution-as-tsp",
+      "title": "B. Insured Financial Institution as TSP",
+      "description": "",
+      "family": "Supervisory Policy",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/supervisory-policy/examination-responsibility/b-insured-financial-institution-as-tsp/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.supervisory-policy.examination-responsibility.c-holding-company-and-non-bank-subsidiary-of-the-holding-company",
+      "title": "C. Holding Company and Non-Bank Subsidiary of the Holding Company",
+      "description": "",
+      "family": "Supervisory Policy",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/supervisory-policy/examination-responsibility/c-holding-company-and-non-bank-subsidiary-of-the-holding-company/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.supervisory-policy.examination-responsibility.d-bank-service-company-as-tsp",
+      "title": "D. Bank Service Company as TSP",
+      "description": "",
+      "family": "Supervisory Policy",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/supervisory-policy/examination-responsibility/d-bank-service-company-as-tsp/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.supervisory-policy.examination-responsibility.e-independent-tsps-including-those-in-the-multi-regional-data-processing-servicers-program",
+      "title": "E. Independent TSPs, Including Those in the Multi-Regional Data Processing Servicers Program",
+      "description": "",
+      "family": "Supervisory Policy",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/supervisory-policy/examination-responsibility/e-independent-tsps-including-those-in-the-multi-regional-data-processing-servicers-program/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.supervisory-programs",
+      "title": "Supervisory Programs",
+      "description": "",
+      "family": "Supervisory Programs",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/supervisory-programs/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.supervisory-programs.mdps-program",
+      "title": "MDPS Program",
+      "description": "",
+      "family": "Supervisory Programs",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/supervisory-programs/mdps-program/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.supervisory-programs.regional-tsp-program",
+      "title": "Regional TSP Program",
+      "description": "",
+      "family": "Supervisory Programs",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/supervisory-programs/regional-tsp-program/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.supervisory-programs.supervision-of-foreign-based-tsp-program",
+      "title": "Supervision of Foreign-Based TSP Program",
+      "description": "",
+      "family": "Supervisory Programs",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/supervisory-programs/supervision-of-foreign-based-tsp-program/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.supervisory-programs.shared-application-software-review-program",
+      "title": "Shared Application Software Review Program",
+      "description": "",
+      "family": "Supervisory Programs",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/supervisory-programs/shared-application-software-review-program/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.roles-and-responsibilities",
+      "title": "Roles and Responsibilities",
+      "description": "",
+      "family": "Roles and Responsibilities",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/roles-and-responsibilities/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.roles-and-responsibilities.agency-in-charge",
+      "title": "Agency-In-Charge",
+      "description": "",
+      "family": "Roles and Responsibilities",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/roles-and-responsibilities/agency-in-charge/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.roles-and-responsibilities.central-point-of-contact",
+      "title": "Central Point of Contact",
+      "description": "",
+      "family": "Roles and Responsibilities",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/roles-and-responsibilities/central-point-of-contact/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.roles-and-responsibilities.examiner-in-charge-of-site-or-activity",
+      "title": "Examiner-In-Charge of Site or Activity",
+      "description": "",
+      "family": "Roles and Responsibilities",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/roles-and-responsibilities/examiner-in-charge-of-site-or-activity/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.risk-based-supervision",
+      "title": "Risk-Based Supervision",
+      "description": "",
+      "family": "Risk-Based Supervision",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/risk-based-supervision/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.risk-based-supervision.risk-based-examination-priority-ranking",
+      "title": "Risk-Based-Examination Priority Ranking",
+      "description": "",
+      "family": "Risk-Based Supervision",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/risk-based-supervision/risk-based-examination-priority-ranking/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.risk-based-supervision.uniform-rating-system-for-information-technology",
+      "title": "Uniform Rating System for Information Technology",
+      "description": "",
+      "family": "Risk-Based Supervision",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/risk-based-supervision/uniform-rating-system-for-information-technology/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.risk-based-supervision.frequency-of-examinations",
+      "title": "Frequency of Examinations",
+      "description": "",
+      "family": "Risk-Based Supervision",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/risk-based-supervision/frequency-of-examinations/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.risk-based-supervision.risks-associated-with-tsps",
+      "title": "Risks Associated With TSPs",
+      "description": "",
+      "family": "Risk-Based Supervision",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/risk-based-supervision/risks-associated-with-tsps/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.risk-based-supervision.risk-management",
+      "title": "Risk Management",
+      "description": "",
+      "family": "Risk-Based Supervision",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/risk-based-supervision/risk-management/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.risk-based-supervision.audit-and-internal-controls",
+      "title": "Audit and Internal Controls",
+      "description": "",
+      "family": "Risk-Based Supervision",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/risk-based-supervision/audit-and-internal-controls/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.risk-based-supervision.report-of-examination",
+      "title": "Report of Examination",
+      "description": "",
+      "family": "Risk-Based Supervision",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/risk-based-supervision/report-of-examination/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.risk-based-supervision.roe-distribution",
+      "title": "ROE Distribution",
+      "description": "",
+      "family": "Risk-Based Supervision",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/risk-based-supervision/roe-distribution/",
+        "id_origin": "local"
+      }
+    },
+    {
+      "id": "local.risk-based-supervision.customer-list",
+      "title": "Customer List",
+      "description": "",
+      "family": "Risk-Based Supervision",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/risk-based-supervision/customer-list/",
+        "id_origin": "local"
+      }
+    }
+  ],
+  "status": "current",
+  "notes": "Public HTML body headings only. Introductions, appendices, examination procedures, and narrative statements are omitted. Heading coverage does not establish full assessment coverage. IDs beginning local. are stable Evidentia identifiers derived from source heading URL paths; they are not publisher control IDs. Edition source: https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/. Released 2012-10-31: https://www.occ.ustreas.gov/news-issuances/bulletins/2012/bulletin-2012-34.html. Public HTML headings only. The linked booklet PDF is excluded because it carries nonpublic markings. The edition date is corroborated by the public OCC release.",
+  "verified_on": "2026-09-09"
+}

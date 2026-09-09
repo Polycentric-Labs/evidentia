@@ -1,31 +1,15 @@
-"""Generate FFIEC IT Examination Handbook bundled catalogs (v0.7.10 P1).
+"""Generate retained FFIEC catalogs and current handbook heading catalogs.
 
-Authoritative source: <https://ithandbook.ffiec.gov/>. The FFIEC IT
-Examination Handbook is published by the Federal Financial
-Institutions Examination Council (a US federal interagency body
-encompassing OCC + FRB + FDIC + NCUA + CFPB + State Liaison
-Committee) and is **public domain** — works of the US federal
-government are not eligible for copyright per 17 USC §105, and
-inter-agency examination handbooks are explicitly classed as such.
-
-This generator emits Tier A control catalogs for one of the 5
-booklets in the FFIEC IT Handbook stack. The other 4 booklets
-(Information Security / Audit / Management / Operations / plus
-this one — Outsourcing Technology Services) follow the same
-pattern; the v0.7.10 P1 first slice ships only the Outsourcing
-booklet to establish the shape, with the remaining 4 + the FFIEC
-Cybersecurity Assessment Tool + the OCC/SR 26-02 model-risk
-catalog deferred to follow-up P1 sub-batches.
-
-Cadence: each booklet is published ~once per several years; the
-v0.7.10 manifest pins the 2004-published Outsourcing booklet which
-remains the active examination guidance (last revised June 2004
-plus 2008 + 2010 supplements; FFIEC has not retired it).
+Historical control tables retain their IDs and descriptions for existing
+assessments. Operations and CAT carry dated lifecycle notices. The current
+booklet generator adds six catalogs from reviewed public HTML body headings.
+These sources and scopes are recorded in each catalog's metadata.
 """
 
 from __future__ import annotations
 
 from _generators import emit_control_catalog  # type: ignore[import-not-found]
+from gen_ffiec_current import main as generate_current_booklets
 
 
 # ---------------------------------------------------------------------------
@@ -623,7 +607,7 @@ FFIEC_MANAGEMENT_CONTROLS: list[dict[str, str]] = [
 # ---------------------------------------------------------------------------
 # FFIEC IT Examination Handbook — Operations booklet
 # ---------------------------------------------------------------------------
-FFIEC_OPERATIONS_URL = "https://ithandbook.ffiec.gov/it-booklets/operations.aspx"
+FFIEC_OPERATIONS_URL = "https://www.ffiec.gov/news/press-releases/2021/pr-06-30"
 
 FFIEC_OPERATIONS_CONTROLS: list[dict[str, str]] = [
     # --- 1. Operations Governance ---
@@ -981,12 +965,12 @@ FFIEC_INFOSEC_CONTROLS: list[dict[str, str]] = [
 # FFIEC Cybersecurity Assessment Tool (CAT)
 # ---------------------------------------------------------------------------
 #
-# The full FFIEC CAT has ~400 evaluation items across 5 domains × 5
-# maturity tiers. We bundle a representative subset focused on the
-# baseline-tier items + the most commonly-cited evolving / advanced
-# items, totaling ~50 items. Operators wanting the full 400-item
-# instrument can `evidentia catalog import` from the FFIEC PDF.
-FFIEC_CAT_URL = "https://www.ffiec.gov/cyberassessmenttool.htm"
+# This historical representative subset contains 33 controls. CAT retired
+# on 2025-08-31; preserve the existing IDs for prior assessment references.
+FFIEC_CAT_URL = (
+    "https://www.ffiec.gov/sites/default/files/media/press-releases/2024/"
+    "cat-sunset-statement-ffiec-letterhead.pdf"
+)
 
 FFIEC_CAT_CONTROLS: list[dict[str, str]] = [
     # --- 1. Cyber Risk Management + Oversight ---
@@ -1209,6 +1193,14 @@ def main() -> None:
         ],
         controls=FFIEC_OPERATIONS_CONTROLS,
         tier="A",
+        status="superseded",
+        verified_on="2026-09-09",
+        superseded_by="ffiec-aio",
+        notes=(
+            "Superseded on 2021-06-30 by Architecture, Infrastructure, and Operations (ffiec-aio). "
+            "The July 2004 edition and all 27 historical control records are retained for existing references. "
+            "No equivalence mapping to the successor's section locators is implied."
+        ),
     )
 
     emit_control_catalog(
@@ -1248,7 +1240,16 @@ def main() -> None:
         ],
         controls=FFIEC_CAT_CONTROLS,
         tier="A",
+        status="retired",
+        verified_on="2026-09-09",
+        notes=(
+            "Retired by FFIEC on 2025-08-31. All 33 controls in this historical representative subset are retained. "
+            "The source statement points to NIST CSF 2.0, CISA Cybersecurity Performance Goals, "
+            "CRI's Cyber Profile, and CIS Critical Security Controls as alternatives. "
+            "No one-to-one equivalence or single successor is asserted."
+        ),
     )
+    generate_current_booklets()
 
 
 if __name__ == "__main__":

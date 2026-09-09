@@ -143,6 +143,26 @@ model exposes it as `.text_depth`, and `scripts/check_catalog_truth.py`
 fails the `consistency` gate if the manifest column disagrees with the
 files. `evidentia catalog list` shows it in the `Text` column.
 
+## Currency and source scope
+
+Control catalogs may carry `status` (`current`, `superseded`, `retired` or
+`historical`), `notes`, `verified_on` and `superseded_by`. Omit unverified facts;
+absence does not mean current. Retain predecessor IDs when their controls have
+historical assessment value, and do not claim a successor is equivalent.
+
+Use independent string-valued control `properties` for publisher tags and raw
+baseline or overlay labels. Priority, Existing status and applicability are
+separate facts. `audit_contexts` maps a named authority jurisdiction to its
+published audit version, source, verification date and optional `valid_through`.
+Unlisted authorities remain unknown.
+
+Future or pending revisions belong in `publication_notices`, outside `controls`.
+Keep publication, approval, order-effective and standard-applicability dates
+separate. Neither dates nor notices change gap-analysis membership. The
+[catalog currency guide](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/catalog-currency.md) gives the verified examples and
+explains the limitations. `text_depth` measures the presence of statement text;
+it does not certify source accuracy or verbatim quotation.
+
 ## OSCAL sidecar artifacts (v0.10.6+)
 
 A bundled catalog MAY ship a companion OSCAL Catalog 1.2.1

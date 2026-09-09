@@ -176,6 +176,16 @@ def test_stub_generator_leaves_yaml_catalogs_to_their_canonical_files(monkeypatc
 
     monkeypatch.setattr(helpers, "emit_control_catalog", capture_emission)
     monkeypatch.setitem(sys.modules, "_generators", helpers)
+    monkeypatch.syspath_prepend(str(scripts_dir))
+    # The legacy entry point delegates Swift to a sibling module. Bind that
+    # module to the same capture helper and restore both cache entries after.
+    headings_spec = importlib.util.spec_from_file_location(
+        "gen_currency_headings", scripts_dir / "gen_currency_headings.py"
+    )
+    assert headings_spec is not None and headings_spec.loader is not None
+    headings = importlib.util.module_from_spec(headings_spec)
+    monkeypatch.setitem(sys.modules, "gen_currency_headings", headings)
+    headings_spec.loader.exec_module(headings)
     runpy.run_path(str(scripts_dir / "gen_stubs.py"))
 
     assert "iso-42001-2023" in emitted

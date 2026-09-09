@@ -1,12 +1,13 @@
 {
   "framework_id": "cisa-cpgs",
   "framework_name": "CISA Cross-Sector Cybersecurity Performance Goals",
-  "version": "1.0.1 (Mar 2023)",
-  "source": "Cybersecurity and Infrastructure Security Agency (CISA) — https://cisa.gov/cross-sector-cybersecurity-performance-goals",
+  "version": "2.0 (December 2025)",
+  "source": "https://www.cisa.gov/sites/default/files/2025-12/CPG_Report_2.0_508c.pdf",
   "tier": "A",
   "category": "control",
   "placeholder": false,
   "families": [
+    "Govern",
     "Identify",
     "Protect",
     "Detect",
@@ -16,219 +17,346 @@
   "controls": [
     {
       "id": "1.A",
-      "title": "Asset Inventory",
-      "description": "Asset Inventory",
-      "family": "Identify"
+      "title": "ESTABLISH CYBERSECURITY RESPONSIBILITIES",
+      "description": "ESTABLISH CYBERSECURITY RESPONSIBILITIES",
+      "family": "Govern",
+      "properties": {
+        "function": "Govern",
+        "source_page": "13"
+      }
     },
     {
       "id": "1.B",
-      "title": "Organizational Cybersecurity Leadership",
-      "description": "Organizational Cybersecurity Leadership",
-      "family": "Identify"
+      "title": "MANAGE CYBERSECURITY OVERSIGHT",
+      "description": "MANAGE CYBERSECURITY OVERSIGHT",
+      "family": "Govern",
+      "properties": {
+        "function": "Govern",
+        "source_page": "13"
+      }
     },
     {
       "id": "1.C",
-      "title": "Mitigation of Known Vulnerabilities",
-      "description": "Mitigation of Known Vulnerabilities",
-      "family": "Identify"
+      "title": "MAINTAIN INCIDENT RESPONSE PLANS",
+      "description": "MAINTAIN INCIDENT RESPONSE PLANS",
+      "family": "Govern",
+      "properties": {
+        "function": "Govern",
+        "source_page": "14"
+      }
     },
     {
       "id": "1.D",
-      "title": "Third-Party Validation of Cybersecurity Control Effectiveness",
-      "description": "Third-Party Validation of Cybersecurity Control Effectiveness",
-      "family": "Identify"
+      "title": "SUPPLY CHAIN INCIDENT REPORTING & VULNERABILITY DISCLOSURE",
+      "description": "SUPPLY CHAIN INCIDENT REPORTING & VULNERABILITY DISCLOSURE",
+      "family": "Govern",
+      "properties": {
+        "function": "Govern",
+        "source_page": "14"
+      }
     },
     {
       "id": "1.E",
-      "title": "Supply Chain Incident Reporting",
-      "description": "Supply Chain Incident Reporting",
-      "family": "Identify"
-    },
-    {
-      "id": "1.F",
-      "title": "Supply Chain Vulnerability Disclosure",
-      "description": "Supply Chain Vulnerability Disclosure",
-      "family": "Identify"
-    },
-    {
-      "id": "1.G",
-      "title": "Vendor/Supplier Cybersecurity Requirements",
-      "description": "Vendor/Supplier Cybersecurity Requirements",
-      "family": "Identify"
+      "title": "MANAGE RISKS FROM MANAGED SERVICE PROVIDERS",
+      "description": "MANAGE RISKS FROM MANAGED SERVICE PROVIDERS",
+      "family": "Govern",
+      "properties": {
+        "function": "Govern",
+        "source_page": "15"
+      }
     },
     {
       "id": "2.A",
-      "title": "Changing Default Passwords",
-      "description": "Changing Default Passwords",
-      "family": "Protect"
+      "title": "MANAGE ORGANIZATIONAL ASSETS",
+      "description": "MANAGE ORGANIZATIONAL ASSETS",
+      "family": "Identify",
+      "properties": {
+        "function": "Identify",
+        "source_page": "16"
+      }
     },
     {
       "id": "2.B",
-      "title": "Minimum Password Strength",
-      "description": "Minimum Password Strength",
-      "family": "Protect"
+      "title": "MITIGATE KNOWN VULNERABILITIES",
+      "description": "MITIGATE KNOWN VULNERABILITIES",
+      "family": "Identify",
+      "properties": {
+        "function": "Identify",
+        "source_page": "16"
+      }
     },
     {
       "id": "2.C",
-      "title": "Unique Credentials",
-      "description": "Unique Credentials",
-      "family": "Protect"
+      "title": "OBTAIN INDEPENDENT VALIDATION OF CYBERSECURITY CONTROLS",
+      "description": "OBTAIN INDEPENDENT VALIDATION OF CYBERSECURITY CONTROLS",
+      "family": "Identify",
+      "properties": {
+        "function": "Identify",
+        "source_page": "17"
+      }
     },
     {
       "id": "2.D",
-      "title": "Revoking Credentials for Departing Employees",
-      "description": "Revoking Credentials for Departing Employees",
-      "family": "Protect"
+      "title": "MAINTAIN VULNERABILITY DISCLOSURE/REPORTING PROCESS",
+      "description": "MAINTAIN VULNERABILITY DISCLOSURE/REPORTING PROCESS",
+      "family": "Identify",
+      "properties": {
+        "function": "Identify",
+        "source_page": "17"
+      }
     },
     {
       "id": "2.E",
-      "title": "Separating User and Privileged Accounts",
-      "description": "Separating User and Privileged Accounts",
-      "family": "Protect"
-    },
-    {
-      "id": "2.F",
-      "title": "Network Segmentation",
-      "description": "Network Segmentation",
-      "family": "Protect"
-    },
-    {
-      "id": "2.G",
-      "title": "Detection of Unsuccessful (Automated) Login Attempts",
-      "description": "Detection of Unsuccessful (Automated) Login Attempts",
-      "family": "Protect"
-    },
-    {
-      "id": "2.H",
-      "title": "Phishing-Resistant Multi-Factor Authentication (MFA)",
-      "description": "Phishing-Resistant Multi-Factor Authentication (MFA)",
-      "family": "Protect"
-    },
-    {
-      "id": "2.I",
-      "title": "Basic Cybersecurity Training",
-      "description": "Basic Cybersecurity Training",
-      "family": "Protect"
-    },
-    {
-      "id": "2.J",
-      "title": "OT Cybersecurity Training",
-      "description": "OT Cybersecurity Training",
-      "family": "Protect"
-    },
-    {
-      "id": "2.K",
-      "title": "Strong and Agile Encryption",
-      "description": "Strong and Agile Encryption",
-      "family": "Protect"
-    },
-    {
-      "id": "2.L",
-      "title": "Secure Sensitive Data",
-      "description": "Secure Sensitive Data",
-      "family": "Protect"
-    },
-    {
-      "id": "2.M",
-      "title": "Email Security",
-      "description": "Email Security",
-      "family": "Protect"
-    },
-    {
-      "id": "2.N",
-      "title": "Disable Macros by Default",
-      "description": "Disable Macros by Default",
-      "family": "Protect"
-    },
-    {
-      "id": "2.O",
-      "title": "Document Device Configurations",
-      "description": "Document Device Configurations",
-      "family": "Protect"
-    },
-    {
-      "id": "2.P",
-      "title": "Document Network Topology",
-      "description": "Document Network Topology",
-      "family": "Protect"
-    },
-    {
-      "id": "2.Q",
-      "title": "Hardware and Software Approval Process",
-      "description": "Hardware and Software Approval Process",
-      "family": "Protect"
-    },
-    {
-      "id": "2.R",
-      "title": "System Back Ups",
-      "description": "System Back Ups",
-      "family": "Protect"
-    },
-    {
-      "id": "2.S",
-      "title": "Incident Response Plans",
-      "description": "Incident Response Plans",
-      "family": "Protect"
-    },
-    {
-      "id": "2.T",
-      "title": "Log Collection",
-      "description": "Log Collection",
-      "family": "Protect"
-    },
-    {
-      "id": "2.U",
-      "title": "Secure Log Storage",
-      "description": "Secure Log Storage",
-      "family": "Protect"
-    },
-    {
-      "id": "2.V",
-      "title": "Prohibit Connection of Unauthorized Devices",
-      "description": "Prohibit Connection of Unauthorized Devices",
-      "family": "Protect"
-    },
-    {
-      "id": "2.W",
-      "title": "No Exploitable Services on the Internet",
-      "description": "No Exploitable Services on the Internet",
-      "family": "Protect"
-    },
-    {
-      "id": "2.X",
-      "title": "Limit OT Connections to Public Internet",
-      "description": "Limit OT Connections to Public Internet",
-      "family": "Protect"
+      "title": "DOCUMENT NETWORK TOPOLOGY",
+      "description": "DOCUMENT NETWORK TOPOLOGY",
+      "family": "Identify",
+      "properties": {
+        "function": "Identify",
+        "source_page": "18"
+      }
     },
     {
       "id": "3.A",
-      "title": "Detecting Relevant Threats and TTPs",
-      "description": "Detecting Relevant Threats and TTPs",
-      "family": "Detect"
+      "title": "CHANGE DEFAULT PASSWORDS",
+      "description": "CHANGE DEFAULT PASSWORDS",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "19"
+      }
+    },
+    {
+      "id": "3.B",
+      "title": "ESTABLISH MINIMUM PASSWORD STRENGTH",
+      "description": "ESTABLISH MINIMUM PASSWORD STRENGTH",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "19"
+      }
+    },
+    {
+      "id": "3.C",
+      "title": "CREATE UNIQUE CREDENTIALS",
+      "description": "CREATE UNIQUE CREDENTIALS",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "20"
+      }
+    },
+    {
+      "id": "3.D",
+      "title": "REVOKE CREDENTIALS FOR DEPARTING STAFF",
+      "description": "REVOKE CREDENTIALS FOR DEPARTING STAFF",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "20"
+      }
+    },
+    {
+      "id": "3.E",
+      "title": "MONITOR UNSUCCESSFUL (AUTOMATED) LOGIN ATTEMPTS",
+      "description": "MONITOR UNSUCCESSFUL (AUTOMATED) LOGIN ATTEMPTS",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "21"
+      }
+    },
+    {
+      "id": "3.F",
+      "title": "IMPLEMENT MULTIFACTOR AUTHENTICATION (MFA)",
+      "description": "IMPLEMENT MULTIFACTOR AUTHENTICATION (MFA)",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "21"
+      }
+    },
+    {
+      "id": "3.G",
+      "title": "ADMINISTRATORS MAINTAIN SEPARATE USER AND PRIVILEGED ACCOUNTS",
+      "description": "ADMINISTRATORS MAINTAIN SEPARATE USER AND PRIVILEGED ACCOUNTS",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "22"
+      }
+    },
+    {
+      "id": "3.H",
+      "title": "IMPLEMENT THE PRINCIPLES OF LEAST PRIVILEGE",
+      "description": "IMPLEMENT THE PRINCIPLES OF LEAST PRIVILEGE",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "22"
+      }
+    },
+    {
+      "id": "3.I",
+      "title": "IMPLEMENT LOGICAL/PHYSICAL NETWORK SEGMENTATION",
+      "description": "IMPLEMENT LOGICAL/PHYSICAL NETWORK SEGMENTATION",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "23"
+      }
+    },
+    {
+      "id": "3.J",
+      "title": "IMPLEMENT CYBERSECURITY TRAINING",
+      "description": "IMPLEMENT CYBERSECURITY TRAINING",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "23"
+      }
+    },
+    {
+      "id": "3.K",
+      "title": "UTILIZE STRONG ENCRYPTION",
+      "description": "UTILIZE STRONG ENCRYPTION",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "24"
+      }
+    },
+    {
+      "id": "3.L",
+      "title": "ENABLE EMAIL SECURITY",
+      "description": "ENABLE EMAIL SECURITY",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "24"
+      }
+    },
+    {
+      "id": "3.M",
+      "title": "DISABLE AUTORUN & MACROS BY DEFAULT",
+      "description": "DISABLE AUTORUN & MACROS BY DEFAULT",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "25"
+      }
+    },
+    {
+      "id": "3.N",
+      "title": "ESTABLISH CHANGE MANAGEMENT PROCESSES",
+      "description": "ESTABLISH CHANGE MANAGEMENT PROCESSES",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "25"
+      }
+    },
+    {
+      "id": "3.O",
+      "title": "MAINTAIN SYSTEM BACKUPS & RESTORATION ABILITY",
+      "description": "MAINTAIN SYSTEM BACKUPS & RESTORATION ABILITY",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "26"
+      }
+    },
+    {
+      "id": "3.P",
+      "title": "MAINTAIN HARDWARE & SOFTWARE APPROVAL PROCESS",
+      "description": "MAINTAIN HARDWARE & SOFTWARE APPROVAL PROCESS",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "26"
+      }
+    },
+    {
+      "id": "3.Q",
+      "title": "MAINTAIN LOG COLLECTION & STORAGE",
+      "description": "MAINTAIN LOG COLLECTION & STORAGE",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "27"
+      }
+    },
+    {
+      "id": "3.R",
+      "title": "PROHIBIT CONNECTION OF UNAUTHORIZED DEVICES",
+      "description": "PROHIBIT CONNECTION OF UNAUTHORIZED DEVICES",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "27"
+      }
+    },
+    {
+      "id": "3.S",
+      "title": "SECURE INTERNET-FACING DEVICES",
+      "description": "SECURE INTERNET-FACING DEVICES",
+      "family": "Protect",
+      "properties": {
+        "function": "Protect",
+        "source_page": "28"
+      }
     },
     {
       "id": "4.A",
-      "title": "Incident Reporting",
-      "description": "Incident Reporting",
-      "family": "Respond"
+      "title": "ESTABLISH MALICIOUS CODE DETECTION",
+      "description": "ESTABLISH MALICIOUS CODE DETECTION",
+      "family": "Detect",
+      "properties": {
+        "function": "Detect",
+        "source_page": "29"
+      }
     },
     {
       "id": "4.B",
-      "title": "Vulnerability Disclosure/Reporting",
-      "description": "Vulnerability Disclosure/Reporting",
-      "family": "Respond"
-    },
-    {
-      "id": "4.C",
-      "title": "Deploy Security.txt Files",
-      "description": "Deploy Security.txt Files",
-      "family": "Respond"
+      "title": "IDENTIFY ADVERSE EVENTS",
+      "description": "IDENTIFY ADVERSE EVENTS",
+      "family": "Detect",
+      "properties": {
+        "function": "Detect",
+        "source_page": "29"
+      }
     },
     {
       "id": "5.A",
-      "title": "Incident Planning and Preparedness",
-      "description": "Incident Planning and Preparedness",
-      "family": "Recover"
+      "title": "ESTABLISH INCIDENT COMMUNICATION PROCEDURES",
+      "description": "ESTABLISH INCIDENT COMMUNICATION PROCEDURES",
+      "family": "Respond",
+      "properties": {
+        "function": "Respond",
+        "source_page": "30"
+      }
+    },
+    {
+      "id": "5.B",
+      "title": "ESTABLISH INCIDENT REPORTING PROCEDURES",
+      "description": "ESTABLISH INCIDENT REPORTING PROCEDURES",
+      "family": "Respond",
+      "properties": {
+        "function": "Respond",
+        "source_page": "30"
+      }
+    },
+    {
+      "id": "6.A",
+      "title": "EXECUTE INCIDENT RECOVERY PLAN",
+      "description": "EXECUTE INCIDENT RECOVERY PLAN",
+      "family": "Recover",
+      "properties": {
+        "function": "Recover",
+        "source_page": "31"
+      }
     }
-  ]
+  ],
+  "status": "current",
+  "notes": "Version 2.0 contains 34 goals across six functions. It replaces the earlier bundled 36-goal subset. Existing evidence references require review because reused IDs can identify different goals; no automatic equivalence or crosswalk is provided. This catalog contains headings only.",
+  "verified_on": "2026-09-09"
 }

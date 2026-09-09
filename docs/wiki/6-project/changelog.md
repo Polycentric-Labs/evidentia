@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Catalog currency notices (V13-09, first catalog batch).** Optional lifecycle,
+  verification-date, successor, per-authority audit-context and publication-notice
+  fields preserve source scope without changing gap applicability automatically.
+  CLI, API and console views expose the notices. Imported catalogs retain validated
+  currency and licensing metadata. Six additional FFIEC booklets supply 373 public
+  body headings; Swift's 2026 attestation catalog adds 32 licensed-text placeholders.
+  Historical FFIEC Operations, CAT and Swift 2024 references remain available with
+  explicit notices. See [Catalog currency](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/catalog-currency.md).
 - **Cadence evidence series (V13-01).** `evidentia conmon series <slug>` reads the
   evidence store, builds the dated series of artifacts linked to a cadence through
   `metadata.cadence_slug`, and judges it `continuous`, `gapped`, `insufficient` or
@@ -123,6 +131,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Catalog source corrections (V13-09).** CISA CPG 2.0 replaces the stale subset
+  with 34 goal headings across six functions. CMMC Level 1 now uses the current 15
+  FAR-based identifiers instead of 17 older NIST-style rows. NERC carries 13 current
+  US standard headings as Tier C, with 15 approved future records and one pending
+  record outside the assessed controls. EU AI Act and NYDFS date metadata preserve
+  scope and transition distinctions. FDA's existing 2026-02-03 guidance reference
+  was rechecked. These are non-frozen catalog-content changes, with no automatic
+  ID equivalence or activation on elapsed dates. CMS/CJIS content follows separately.
 - **Direct JSON catalog imports are validated before registration.** `evidentia catalog
   import` now loads the supplied catalog through the category-aware loader to derive its
   text depth. Malformed catalogs that previously passed import are rejected with exit 1;
@@ -218,6 +234,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   roadmap entries are left as written.
 
 ### Fixed
+
+- Accept unquoted YAML date fields in API catalog imports. Unsupported YAML values return 400 before replacing an installed catalog. Render imported source and license strings literally in CLI output.
+
+- Correct NYDFS CISO, governing-body, Class A monitoring and notice headings; add section 500.24. Prior evidence tied to the corrected IDs needs review. Keep EU AI Act Article 27 date metadata within its Annex III and deployer scope.
+
+- **Catalog license links in the console.** The license view now reads the API's
+  `source_url` and `license_url` fields instead of a nonexistent `url` field.
+- **Native catalog metadata preservation.** Loading native catalogs now retains
+  declared family hierarchy and existing EU risk-category and legacy-note fields.
 
 - **UI build dependency security.** The `js-yaml` override now requires at least
   4.3.2, fixing [CVE-2026-84375](https://github.com/nodeca/js-yaml/security/advisories/GHSA-2883-xcg3-v3hh)

@@ -340,7 +340,7 @@ def test_regenerate_manifest_scan_dir_rejects_framework_id_collision(
     gen_spec = importlib.util.spec_from_file_location("_generators", scripts_catalogs / "_generators.py")
     assert gen_spec is not None and gen_spec.loader is not None
     gen_mod = importlib.util.module_from_spec(gen_spec)
-    sys.modules["_generators"] = gen_mod
+    monkeypatch.setitem(sys.modules, "_generators", gen_mod)
     gen_spec.loader.exec_module(gen_mod)
 
     rm_spec = importlib.util.spec_from_file_location("regenerate_manifest", scripts_catalogs / "regenerate_manifest.py")

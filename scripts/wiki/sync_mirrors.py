@@ -12,7 +12,7 @@ generates each mirror from its canonical source instead, and a
 
 What a mirror page is
 ---------------------
-For each of the 13 ``(canonical_source, wiki_mirror)`` mappings in
+For each of the 14 ``(canonical_source, wiki_mirror)`` mappings in
 :data:`MIRRORS`, the generator:
 
 1. Reads the canonical source verbatim.
@@ -60,7 +60,7 @@ break rendering -- raw URLs differ).
 Modes
 -----
 ``sync_mirrors.py``
-    Generate / update all 13 mirror pages in place under ``docs/wiki/``.
+    Generate / update all 14 mirror pages in place under ``docs/wiki/``.
 ``sync_mirrors.py --check``
     Do not write. Exit 0 if every committed mirror matches what would be
     regenerated from its canonical source; exit 1 + print which mirrors
@@ -104,8 +104,8 @@ class Mirror:
     mirror: str
 
 
-# The 13 mirror mappings (canonical source -> generated wiki mirror).
-# 6-project (9) + 5-compliance (4). Order is the order the index pages
+# The 14 mirror mappings (canonical source -> generated wiki mirror).
+# 6-project (9) + 5-compliance (5). Order is the order the index pages
 # list them, for a readable default-mode log.
 MIRRORS: tuple[Mirror, ...] = (
     # --- 6-project (9) ---
@@ -118,7 +118,8 @@ MIRRORS: tuple[Mirror, ...] = (
     Mirror(".github/CONTRIBUTING.md", "docs/wiki/6-project/contributing.md"),
     Mirror("docs/EOL.md", "docs/wiki/6-project/eol.md"),
     Mirror("docs/verification.md", "docs/wiki/6-project/verification.md"),
-    # --- 5-compliance (4) ---
+    # --- 5-compliance (5) ---
+    Mirror("docs/catalog-currency.md", "docs/wiki/5-compliance/catalog-currency.md"),
     Mirror("docs/ocsf-mapping.md", "docs/wiki/5-compliance/ocsf-mapping.md"),
     Mirror("docs/gemara-mapping.md", "docs/wiki/5-compliance/gemara-mapping.md"),
     Mirror(

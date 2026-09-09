@@ -1,12 +1,8 @@
-"""Generate US regulatory catalogs — Tier A (US Government work, public domain).
+"""Generate US regulatory and related catalog references.
 
-HIPAA Security Rule, HIPAA Privacy Rule, HIPAA Breach Notification,
-GLBA Safeguards Rule, NY DFS Part 500, NERC CIP v7, FDA 21 CFR Part 11,
-IRS 1075, CMS ARS, CJIS Security Policy, CISA Cybersecurity Performance
-Goals (CPGs).
-
-All are US federal regulations or federal agency documents. Statute and
-regulation text is not copyrightable (17 U.S.C. § 105).
+Federal agency works, New York regulation and NERC material have different
+redistribution terms. Each emitted catalog declares its own tier and scope.
+NERC includes headings and factual publication notices only, pending text permission.
 """
 
 from __future__ import annotations
@@ -196,132 +192,26 @@ emit_control_catalog(
 # NY DFS Part 500 — Cybersecurity Requirements for Financial Services Companies
 # ---------------------------------------------------------------------------
 
-NYDFS = [
-    ("500.2", "Cybersecurity program", "Program Requirements"),
-    ("500.3", "Cybersecurity policy", "Program Requirements"),
-    ("500.4(a)", "Chief Information Security Officer (CISO)", "Governance"),
-    ("500.4(b)", "CISO reporting to board", "Governance"),
-    ("500.4(c)", "CISO qualifications and oversight of third-party CISOs", "Governance"),
-    ("500.4(d)", "Reporting of material cybersecurity issues", "Governance"),
-    ("500.5", "Vulnerability management", "Program Requirements"),
-    ("500.6", "Audit trail", "Program Requirements"),
-    ("500.7", "Access privileges and management", "Access Controls"),
-    ("500.8", "Application security", "Program Requirements"),
-    ("500.9", "Risk assessment", "Program Requirements"),
-    ("500.10", "Cybersecurity personnel and intelligence", "Governance"),
-    ("500.11", "Third-party service provider security policy", "Third-Party"),
-    ("500.12", "Multi-factor authentication", "Access Controls"),
-    ("500.13", "Asset management and data retention requirements", "Program Requirements"),
-    ("500.14(a)", "Monitoring and training", "Program Requirements"),
-    ("500.14(b)", "Cybersecurity awareness training", "Program Requirements"),
-    ("500.15", "Encryption of nonpublic information", "Data Protection"),
-    ("500.16", "Incident response plan", "Incident Response"),
-    ("500.17(a)", "Notification of cybersecurity events — to superintendent", "Incident Response"),
-    ("500.17(b)", "Notices of extortion payment", "Incident Response"),
-    ("500.17(c)", "Annual certification of compliance", "Governance"),
-    ("500.18", "Confidentiality", "Program Requirements"),
-    ("500.19", "Exemptions", "General"),
-    ("500.20", "Enforcement", "General"),
-    ("500.21", "Effective date", "General"),
-    ("500.22", "Transitional periods", "General"),
-    ("500.23", "Severability", "General"),
-]
+from gen_nydfs_currency import main as generate_nydfs_currency
 
-emit_control_catalog(
-    framework_id="ny-dfs-500",
-    framework_name="NY DFS 23 NYCRR Part 500 — Cybersecurity Requirements",
-    version="Amendment 2 (Nov 2023)",
-    source="NYS Department of Financial Services — 23 NYCRR 500 (state regulation)",
-    families=["Program Requirements", "Governance", "Access Controls", "Data Protection", "Incident Response", "Third-Party", "General"],
-    controls=[{"id": c, "title": t, "description": t, "family": f} for c, t, f in NYDFS],
-    tier="A",
-)
+generate_nydfs_currency()
+
+# ---------------------------------------------------------------------------
+# CISA Cross-Sector Cybersecurity Performance Goals, version 2.0
+# ---------------------------------------------------------------------------
+
+from gen_currency_headings import generate_cisa_catalog
+
+generate_cisa_catalog()
 
 
 # ---------------------------------------------------------------------------
-# CISA Cross-Sector Cybersecurity Performance Goals (CPGs) — 2023
+# NERC CIP: current US designators and separate publication notices
 # ---------------------------------------------------------------------------
 
-CISA_CPGS = [
-    ("1.A", "Asset Inventory", "Identify"),
-    ("1.B", "Organizational Cybersecurity Leadership", "Identify"),
-    ("1.C", "Mitigation of Known Vulnerabilities", "Identify"),
-    ("1.D", "Third-Party Validation of Cybersecurity Control Effectiveness", "Identify"),
-    ("1.E", "Supply Chain Incident Reporting", "Identify"),
-    ("1.F", "Supply Chain Vulnerability Disclosure", "Identify"),
-    ("1.G", "Vendor/Supplier Cybersecurity Requirements", "Identify"),
-    ("2.A", "Changing Default Passwords", "Protect"),
-    ("2.B", "Minimum Password Strength", "Protect"),
-    ("2.C", "Unique Credentials", "Protect"),
-    ("2.D", "Revoking Credentials for Departing Employees", "Protect"),
-    ("2.E", "Separating User and Privileged Accounts", "Protect"),
-    ("2.F", "Network Segmentation", "Protect"),
-    ("2.G", "Detection of Unsuccessful (Automated) Login Attempts", "Protect"),
-    ("2.H", "Phishing-Resistant Multi-Factor Authentication (MFA)", "Protect"),
-    ("2.I", "Basic Cybersecurity Training", "Protect"),
-    ("2.J", "OT Cybersecurity Training", "Protect"),
-    ("2.K", "Strong and Agile Encryption", "Protect"),
-    ("2.L", "Secure Sensitive Data", "Protect"),
-    ("2.M", "Email Security", "Protect"),
-    ("2.N", "Disable Macros by Default", "Protect"),
-    ("2.O", "Document Device Configurations", "Protect"),
-    ("2.P", "Document Network Topology", "Protect"),
-    ("2.Q", "Hardware and Software Approval Process", "Protect"),
-    ("2.R", "System Back Ups", "Protect"),
-    ("2.S", "Incident Response Plans", "Protect"),
-    ("2.T", "Log Collection", "Protect"),
-    ("2.U", "Secure Log Storage", "Protect"),
-    ("2.V", "Prohibit Connection of Unauthorized Devices", "Protect"),
-    ("2.W", "No Exploitable Services on the Internet", "Protect"),
-    ("2.X", "Limit OT Connections to Public Internet", "Protect"),
-    ("3.A", "Detecting Relevant Threats and TTPs", "Detect"),
-    ("4.A", "Incident Reporting", "Respond"),
-    ("4.B", "Vulnerability Disclosure/Reporting", "Respond"),
-    ("4.C", "Deploy Security.txt Files", "Respond"),
-    ("5.A", "Incident Planning and Preparedness", "Recover"),
-]
+from gen_nerc_currency import main as generate_nerc_currency
 
-emit_control_catalog(
-    framework_id="cisa-cpgs",
-    framework_name="CISA Cross-Sector Cybersecurity Performance Goals",
-    version="1.0.1 (Mar 2023)",
-    source="Cybersecurity and Infrastructure Security Agency (CISA) — https://cisa.gov/cross-sector-cybersecurity-performance-goals",
-    families=["Identify", "Protect", "Detect", "Respond", "Recover"],
-    controls=[{"id": c, "title": t, "description": t, "family": f} for c, t, f in CISA_CPGS],
-    tier="A",
-)
-
-
-# ---------------------------------------------------------------------------
-# NERC CIP v7 — Critical Infrastructure Protection (bulk electric system)
-# ---------------------------------------------------------------------------
-
-NERC_CIP = [
-    ("CIP-002-5.1a", "Cyber Security — BES Cyber System Categorization", "Categorization"),
-    ("CIP-003-8", "Cyber Security — Security Management Controls", "Governance"),
-    ("CIP-004-6", "Cyber Security — Personnel & Training", "Personnel"),
-    ("CIP-005-6", "Cyber Security — Electronic Security Perimeter(s)", "Access Controls"),
-    ("CIP-006-6", "Cyber Security — Physical Security of BES Cyber Systems", "Physical Security"),
-    ("CIP-007-6", "Cyber Security — System Security Management", "System Security"),
-    ("CIP-008-6", "Cyber Security — Incident Reporting and Response Planning", "Incident Response"),
-    ("CIP-009-6", "Cyber Security — Recovery Plans for BES Cyber Systems", "Recovery"),
-    ("CIP-010-3", "Cyber Security — Configuration Change Management and Vulnerability Assessments", "Configuration"),
-    ("CIP-011-2", "Cyber Security — Information Protection", "Information Protection"),
-    ("CIP-012-1", "Cyber Security — Communications between Control Centers", "Communications"),
-    ("CIP-013-1", "Cyber Security — Supply Chain Risk Management", "Supply Chain"),
-    ("CIP-014-2", "Physical Security — Bulk Electric System", "Physical Security"),
-]
-
-emit_control_catalog(
-    framework_id="nerc-cip-v7",
-    framework_name="NERC CIP — Critical Infrastructure Protection Reliability Standards",
-    version="v7 (2020-2024 effective dates)",
-    source="North American Electric Reliability Corporation (NERC) — NERC CIP standards (public)",
-    families=["Categorization", "Governance", "Personnel", "Access Controls", "Physical Security", "System Security", "Incident Response", "Recovery", "Configuration", "Information Protection", "Communications", "Supply Chain"],
-    controls=[{"id": c, "title": t, "description": t, "family": f} for c, t, f in NERC_CIP],
-    tier="A",
-)
-
+generate_nerc_currency()
 
 # ---------------------------------------------------------------------------
 # FDA 21 CFR Part 11 — Electronic Records; Electronic Signatures
