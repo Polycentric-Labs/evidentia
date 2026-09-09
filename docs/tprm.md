@@ -9,8 +9,8 @@ the Evidentia evidence chain.
 ## Why TPRM in Evidentia
 
 OCC Bulletin 2013-29, FRB SR 13-19, FFIEC IT Examination Handbook
-Outsourcing booklet, and the SR 11-7 / OCC 2011-12 / SR 26-02 /
-OCC 2026-13a model-risk regulatory stack all expect financial-
+Outsourcing booklet, and the SR 11-7 / OCC 2011-12 / SR 26-2 /
+OCC Bulletin 2026-13 model-risk regulatory stack all expect financial-
 services institutions to maintain a comprehensive third-party risk
 program with a documented vendor inventory, scheduled due-diligence
 review cadence, ongoing-monitoring posture for high-tier vendors,

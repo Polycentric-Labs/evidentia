@@ -20,8 +20,8 @@ does not duplicate either.
 - A working Evidentia install (`evidentia catalog list` should print a table).
 - For the web-console steps, the UI running: `evidentia serve` (needs the `[gui]`
   extra) — see [Serve the local web UI](serve-the-web-ui.md).
-- To import a licensed framework, the catalog document itself — a JSON (or YAML)
-  control catalog, or an OSCAL profile + source catalog pair.
+- To import a licensed framework through the CLI, a JSON control catalog or
+  an OSCAL profile with its source catalog. The web console also accepts YAML.
 - On Windows, if a `catalog` command crashes with a `UnicodeEncodeError` (some
   catalog names carry Unicode cp1252 can't print), set the encoding first:
   `$env:PYTHONIOENCODING = "utf-8"` in PowerShell, or `export
@@ -35,8 +35,8 @@ evidentia catalog list
 
 The table shows every catalog Evidentia can resolve: its **Framework ID** (the
 id every other verb takes), **Name**, **Tier** (A–D redistribution tier),
-**Category**, control count, **Source** (`bundled` or `user`), and whether it
-loaded. Narrow the list with the filters:
+**Category**, control count, **Text** depth, **Source** (`bundled` or `user`),
+and whether it loaded. Narrow the list with the filters:
 
 ```bash
 evidentia catalog list --tier=A
@@ -75,7 +75,7 @@ evidentia catalog where nist-800-53-mod
 ```
 
 It reports the **Source** (`bundled` or `user`), the on-disk **Path**, the
-**Tier**, the **Category**, and whether the entry is a placeholder. Use it to
+**Tier**, the **Category**, **Text depth**, and whether the entry is a placeholder. Use it to
 confirm an import took effect (Source flips to `user`) or to find the file a
 catalog is loading from. An unknown id is reported as not found.
 
@@ -85,10 +85,10 @@ Redistributable control text is tiered; some frameworks require a license to
 ship their full text. `license-info` surfaces that metadata:
 
 ```bash
-evidentia catalog license-info iso-27001
+evidentia catalog license-info iso-27001-2022
 ```
 
-It prints the tier, the redistribution license / terms, and the source URL so
+It prints the tier, text depth, redistribution license / terms, and the source URL so
 you can confirm whether you may redistribute a catalog before you import or share
 it. See [Reference → Catalogs](../4-reference/catalogs.md) for the full tier
 policy.
@@ -99,13 +99,16 @@ A crosswalk answers "this control in framework A — what does it map to in
 framework B?". All three flags are required:
 
 ```bash
-evidentia catalog crosswalk --source=nist-800-53 --target=soc2-tsc --control=AC-2
+evidentia catalog crosswalk --source=nist-800-53-rev5 --target=soc2-tsc --control=AC-2
 ```
 
 `--source` (`-s`), `--target` (`-t`), and `--control` (`-c`) name the source
 framework, target framework, and the source control id. A control with no
-mapping is a successful zero-result, not an error — Evidentia tells you no
-mappings were found rather than failing.
+mapping is a successful zero-result, not an error: Evidentia tells you no
+mappings were found rather than failing. A baseline id works too
+(`--source=fedramp-rev5-moderate`): baselines inherit the crosswalks of their
+parent catalog through the manifest's `crosswalk_family` column, so the same
+lookup answers for every NIST and FedRAMP Rev 5 baseline.
 
 ## Step 6 — Import your own catalog
 

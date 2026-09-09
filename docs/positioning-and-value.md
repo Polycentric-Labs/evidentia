@@ -227,7 +227,7 @@ The 23 routers cover:
   verification.
 - **GRC programs** — third-party risk management (`tprm`: vendor
   inventory, concentration risk, CAIQ/SIG questionnaires), model risk
-  management (`model-risk`: SR 11-7 / OCC 2026-13a inventory), governance
+  management (`model-risk`: SR 11-7 / OCC 2026-13 inventory), governance
   (`governance`: KRI/KPI/KGI metrics, Effective Challenge, Three-Lines
   reporting), AI governance (`ai-gov`: EU AI Act tiering + NIST AI RMF
   inventory + FIPS-199/OMB leveling), POA&M tracking, continuous-monitoring
@@ -365,34 +365,41 @@ network guard described in [§3.7](#37-supply-chain--security-hardening).
 - **Tableau publish** (`[tableau]` extra) — publishes 3 datasets to Tableau Server / Cloud as CSV-based data sources: `evidentia-gaps` (one row per ControlGap), `evidentia-risks` (NIST SP 800-30 shape with AI-provenance fields), and `evidentia-collection-runs` (the CollectionContext audit trail). PAT auth via the `TABLEAU_PAT_NAME` + `TABLEAU_PAT_SECRET` env vars (never accepted as flag values). `tableauserverclient>=0.30` (pure Python). A `.hyper`-extract publish path remains a roadmap enhancement under a separate `[tableau-hyper]` extra (it would require the heavyweight `tableauhyperapi` native binary).
 - **Power BI publish** (`[powerbi]` extra) — pushes the same 3 datasets as Power BI Push Datasets via the REST API + Azure AD service-principal OAuth2 (MSAL Python). Full-refresh semantics by default (clear-then-push), 10,000-row batching per Power BI's documented limit, and schema-declared dataset auto-creation via `ensure_dataset` (idempotent re-runs). Auth: a service principal with `Dataset.ReadWrite.All`; the client secret is read from `POWERBI_CLIENT_SECRET` server-side and never appears in request bodies. `msal>=1.31` driver.
 
-### 3.6 Bundled framework catalogs (96 total, four redistribution tiers)
+### 3.6 Bundled framework catalogs (97 total, four redistribution tiers)
 
 **97 catalogs** verified by the canonical
 `scripts/check_doc_counts.py` gate, which counts every `frameworks:`
 entry in the catalogs manifest
 (`packages/evidentia-core/src/evidentia_core/catalogs/data/frameworks.yaml`) —
-exactly the list `FrameworkRegistry.list_frameworks()` returns. Of the 97,
-**74 ship as real catalogs** (control/technique/vulnerability/obligation
-text bundled) and **22 are licensed placeholder stubs** (public clause
-numbering + neutral titles only; you load your licensed copy via
-`evidentia catalog import`). The 22 placeholders are exactly the Tier-C
-licensed frameworks; Tiers A, B, and D contain no placeholders. The
-four redistribution tiers (see [contributing a catalog](contributing-a-catalog.md)
-for the licensing model) sum to the stated total — **50 + 4 + 22 + 20 = 96**:
+exactly the list `FrameworkRegistry.list_frameworks()` returns. Two
+independent attributes describe each one. The **redistribution tier**
+says what may be redistributed; the **text depth** (derived from the
+catalog file by `regenerate_manifest.py`, never declared) says how much
+control text is actually there. Of the 97, **32 carry full text** for
+every non-withdrawn entry and **65 carry headings only** (control
+numbering and titles): the 22 Tier-C licensed placeholders (you load
+your licensed copy via `evidentia catalog import`), 26 Tier-A control
+catalogs, 2 Tier-D regulations (NIS2, DORA) and the 15 state privacy
+statutes. `scripts/check_catalog_truth.py` fails the consistency gate if
+the manifest's depth column ever disagrees with the files. The four
+redistribution tiers (see [contributing a catalog](contributing-a-catalog.md)
+for the licensing model) sum to the stated total: **51 + 4 + 22 + 20 = 97**.
 
-- **Tier A — Verbatim public-domain / open-licensed (50 frameworks)**:
-  **39 US federal** — NIST SP 800-53 Rev 5 baselines (Low / Moderate /
-  High / Privacy, 5.2.0), 800-171 r2/r3, 800-172, CSF 2.0, AI RMF 1.0,
-  Privacy Framework 1.0, SSDF 800-218; FedRAMP Rev 5 baselines (Low /
-  Moderate / High / LI-SaaS); CMMC 2.0 L1/L2/L3; HIPAA Security / Privacy
-  / Breach Notification; GLBA Safeguards, NY DFS 500, NERC CIP v7, FDA 21
+- **Tier A, public-domain or open-licensed (51 frameworks; 25 with full
+  text, 26 heading-only)**: **41 US frameworks**: the full NIST SP 800-53
+  Rev 5 catalog and its Low / Moderate / High / Privacy baselines (plus
+  the legacy 16-control sample), 800-171 r2/r3, 800-172, CSF 2.0, AI RMF
+  1.0, Privacy Framework 1.0, SSDF 800-218; FedRAMP Rev 5 baselines (Low /
+  Moderate / High / LI-SaaS) and the CR26 Key Security Indicator and
+  Requirements catalogs; CMMC 2.0 L1/L2/L3; HIPAA Security / Privacy /
+  Breach Notification; GLBA Safeguards, NY DFS 500, NERC CIP v7, FDA 21
   CFR Part 11, FDA Section 524B premarket-cybersecurity categories, IRS
   1075, CMS ARS 5.1, FBI CJIS v6, CISA CPGs, the 5 FFIEC IT Examination
-  Handbook booklets + FFIEC CAT, and OCC 2026-13a / FRB SR 26-02 model-risk
-  guidance. **10 international + open-source** — UK NCSC CAF 3.2, UK Cyber
-  Essentials, Australian Essential Eight, Australian ISM, Canada ITSG-33,
-  NZ NZISM, plus the three OpenSSF OSPS Baseline maturity levels
-  (Apache-2.0, redistributable verbatim).
+  Handbook booklets + FFIEC CAT, and OCC Bulletin 2026-13 / FRB SR 26-2
+  model-risk guidance. **10 international + open-source**: UK NCSC CAF
+  3.2, UK Cyber Essentials, Australian Essential Eight, Australian ISM,
+  Canada ITSG-33, NZ NZISM, EU AI Act, plus the three OpenSSF OSPS
+  Baseline maturity levels (Apache-2.0, redistributable verbatim).
 - **Tier B — Threat / vulnerability catalogs (4 frameworks)**: MITRE
   ATT&CK Enterprise, MITRE CAPEC (sample), MITRE CWE (2024 Top 25 sample),
   CISA KEV (sample; refresh CI pulls the full KEV daily).
@@ -403,12 +410,13 @@ for the licensing model) sum to the stated total — **50 + 4 + 22 + 20 = 96**:
   Kubernetes / RHEL 9); SCF 2024; IEC 62443; SOC 2 Trust Services
   Criteria; ANSI/AAMI SW96; ISO 14971. Public clause numbering only —
   `evidentia catalog import` loads your licensed copy.
-- **Tier D — Statutory obligations (20 frameworks, government edicts,
-  uncopyrightable)**: EU GDPR, EU AI Act, EU NIS2, EU DORA, UK DPA 2018,
-  Canada PIPEDA, plus 15 comprehensive US state privacy laws bundled as of
-  the current release (CA CCPA/CPRA, CO, CT, DE, FL, IA, MD MODPA, MN, MT,
-  NH, OR, TN, TX, UT, VA). Maryland MODPA is the strictest
-  (sale-of-sensitive-data prohibition).
+- **Tier D, statutory obligations (20 frameworks; 3 with full obligation
+  text, 17 heading-level)**: EU
+  GDPR, UK DPA 2018 and Canada PIPEDA restate their obligations in full;
+  EU NIS2, EU DORA and the 15 comprehensive US state privacy laws bundled
+  as of the current release (CA CCPA/CPRA, CO, CT, DE, FL, IA, MD MODPA,
+  MN, MT, NH, OR, TN, TX, UT, VA) are heading-level references to the
+  statute's structure.
 
 Per-catalog accounting is the manifest itself; the headline count is
 machine-checked on every push by `check_doc_counts.py`, so this number
