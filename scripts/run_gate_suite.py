@@ -175,6 +175,10 @@ _CONSISTENCY_CHECKS: tuple[Check, ...] = (
         "catalog_truth",
         ("python", "scripts/check_catalog_truth.py"),
     ),
+    Check(
+        "workflow_gate_fidelity",
+        ("python", "scripts/check_workflow_gate_fidelity.py"),
+    ),
 )
 
 # The heavyweight gates, appended to the consistency tuple to form
@@ -220,7 +224,7 @@ def _run_check(check: Check) -> int:
     # that erodes trust in the gate. One environment definition, used locally
     # AND in CI, so "passes locally" and "passes in CI" cannot mean two
     # different things.
-    cmd = ["uv", "run", "--all-extras", "--all-packages", *check.argv]
+    cmd = ["uv", "run", "--locked", "--all-extras", "--all-packages", *check.argv]
     print(f"\n--- {check.name} ---")
     print(f"$ {' '.join(cmd)}")
     proc = subprocess.run(cmd, check=False)

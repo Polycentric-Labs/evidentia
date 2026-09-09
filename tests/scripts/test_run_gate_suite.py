@@ -34,6 +34,7 @@ def test_scopes_are_declarative() -> None:
         "docs_health",
         "readme_releases",
         "roadmap_currency",
+        "workflow_gate_fidelity",
     } <= consistency
     assert consistency < full
     assert {"pytest", "mypy", "ruff", "ruff_format", "osv", "parity"} <= full
@@ -46,3 +47,31 @@ def test_cli_lists_checks_without_running(capsys) -> None:
     rc = g.main(["--scope", "consistency", "--list"])
     out = capsys.readouterr().out
     assert rc == 0 and "version_consistency" in out
+
+
+def test_workflow_fidelity_failure_blocks_the_gate_suite(monkeypatch, capsys) -> None:
+    calls = []
+
+    def run_check(check):
+        calls.append(check.name)
+        return 1 if check.name == "workflow_gate_fidelity" else 0
+
+    monkeypatch.setattr(g, "_run_check", run_check)
+    assert g.main(["--scope", "consistency"]) == 1
+    assert calls == [check.name for check in g.checks_for_scope("consistency")]
+    assert "workflow_gate_fidelity" in capsys.readouterr().out
+
+
+def test_check_runtime_keeps_locked_workspace_and_propagates_failure(monkeypatch) -> None:
+    import subprocess
+
+    observed = []
+
+    def run(argv, *, check):
+        observed.append((argv, check))
+        return subprocess.CompletedProcess(argv, 7)
+
+    monkeypatch.setattr(g.subprocess, "run", run)
+    gate = g.Check("workflow_gate_fidelity", ("python", "scripts/check_workflow_gate_fidelity.py"))
+    assert g._run_check(gate) == 7
+    assert observed == [(["uv", "run", "--locked", "--all-extras", "--all-packages", *gate.argv], False)]

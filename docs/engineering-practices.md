@@ -52,6 +52,37 @@ produces commits the platform cannot sign. Every workflow that produces a
 required check also runs on the merge-queue event, or the queue would stall
 waiting for a result that never arrives.
 
+**Complete evidence before queue submission.** The reviewed policy in
+`.github/verification-policy.json` binds checks to their GitHub App, workflow,
+job and validation steps. The local workflow guard checks source identity,
+coverage and failure propagation through the existing consistency job and
+pre-push hook. Changing a workflow requires reviewing its policy changes too.
+The frontend test command must report a failing test as a failed step. Container
+catalog output is captured before truncating its display, and the scheduled
+catalog generator uses Bash pipeline failure propagation.
+
+The separate PR admission command checks all applicable jobs, their current
+run attempts and mandatory steps, including the external CodSpeed analysis.
+It reads the evidence twice and writes a receipt that expires after 120 seconds.
+Missing, failed, pending, stale, cancelled or unapproved skipped evidence blocks
+admission. A successful receipt is a local observation, not an atomic merge
+permission. Maintainers still use the protected queue, verify the candidate's
+source tree, and check the resulting main commit. See the
+[admission procedure](pre-push-gate.md#pr-admission-before-the-merge-queue).
+
+**Strict documentation before main.** `docs build (strict)` is required from
+GitHub Actions on PRs and queue candidates. It reuses the existing build job;
+Pages still publishes after merge. The expected App identity prevents another
+integration from satisfying the same check name.
+[GitHub required status checks](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets#require-status-checks-to-pass-before-merging)
+describe that source binding.
+
+CodSpeed and PR fuzzing remain separate assurance lanes. Their current runners
+are not accepted as merge-group verification. A green benchmark upload alone
+is not a green performance analysis. Passing tests cannot guarantee that a
+later provider outage, new advisory or fuzz discovery will never fail a run;
+such failures remain visible and must be investigated before the next merge.
+
 **A pre-release review before every tag.** Releases are tag-driven, and each
 tag is preceded by a structured pre-release review: a checklist-and-skill
 discipline that walks the version bumps, the changelog, the documentation
@@ -70,6 +101,14 @@ half-finished release where the packages shipped but the image did not.
 ---
 
 ## Supply-chain integrity
+
+The scoped project CI workflows pin uv to `0.12.12` and use `--locked`
+for project synchronization and ordinary project commands. A stale lockfile
+fails validation instead of being rewritten in CI. The selected extras and
+dependency groups remain job-specific; the no-extras collector guard still
+runs without optional drivers. Commands following an explicit locked setup
+may retain `--no-sync`. Release and consumer installers have separate contracts.
+See [uv locking and syncing](https://docs.astral.sh/uv/concepts/projects/sync/).
 
 Evidentia's releases are designed to be independently verifiable end to end:
 
@@ -200,12 +239,13 @@ publicly.
   reduction, not a CVE-count win (the distroless base still carries unfixable
   advisories) — and removing `curl` is not egress denial (Python
   `socket`/`urllib` remain).
-- **Secret scanning.** A pinned gitleaks binary scans the full history on every
-  push and pull request, complementing a local pre-push secret scan. Systemic
-  secret-scanner false positives are encoded the same way — as value-precise
-  allowlist regexes in committed config, matched against the flagged secret
-  *value*, never as a path allowlist over source directories — and verified
-  locally before landing.
+- **Secret scanning.** The pre-push gate requires the same pinned Gitleaks
+  version, full-history command, config and redaction settings as CI. Missing
+  tools, version or command drift, and scan findings block publication. The
+  existing local filename and focused pattern checks also run. Verified public
+  constants can receive an anchored exact-value exception after a positive
+  detection control proves other values still fail. Source directories and
+  default detection rules remain covered.
 - **Defensive guards in the code itself.** Network-egress paths enforce a
   public-host SSRF guard that fires *before* any optional driver import, so the
   security property holds even with zero optional extras installed — a property

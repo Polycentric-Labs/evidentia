@@ -1,0 +1,1144 @@
+{
+  "version": 2,
+  "repository": "Polycentric-Labs/evidentia",
+  "baseline": [
+    {
+      "context": "Analyze (actions)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/codeql.yml"
+    },
+    {
+      "context": "Analyze (javascript-typescript)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/codeql.yml"
+    },
+    {
+      "context": "Analyze (python)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/codeql.yml"
+    },
+    {
+      "context": "Audit workflow permissions (strict)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/verify-workflow-perms.yml"
+    },
+    {
+      "context": "Build + smoke test",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/container-build.yml"
+    },
+    {
+      "context": "CLI<->GUI parity",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/parity.yml"
+    },
+    {
+      "context": "Check workflow tools (strict)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/verify-workflow-perms.yml"
+    },
+    {
+      "context": "docker/requirements drift",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml"
+    },
+    {
+      "context": "frontend (typecheck + build)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml"
+    },
+    {
+      "context": "gitleaks (default ruleset + allowlist)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/secret-scan.yml"
+    },
+    {
+      "context": "mypy",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml"
+    },
+    {
+      "context": "openapi schema drift",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml"
+    },
+    {
+      "context": "osv-scanner (SBOM)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml"
+    },
+    {
+      "context": "pytest (macos-latest, Python 3.12)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml"
+    },
+    {
+      "context": "pytest (macos-latest, Python 3.14)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml"
+    },
+    {
+      "context": "pytest (ubuntu-latest, Python 3.12)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml"
+    },
+    {
+      "context": "pytest (ubuntu-latest, Python 3.14)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml"
+    },
+    {
+      "context": "pytest (windows-latest, Python 3.12)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml"
+    },
+    {
+      "context": "pytest (windows-latest, Python 3.14)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml"
+    },
+    {
+      "context": "pytest no-extras (collector SSRF guard fidelity)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml"
+    },
+    {
+      "context": "ruff",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml"
+    },
+    {
+      "context": "staleness guards (version + docs + README)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/consistency.yml"
+    },
+    {
+      "context": "verify-conformance-evidence",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/verify-osps-conformance.yml"
+    },
+    {
+      "context": "zizmor (Actions static analysis)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/zizmor.yml"
+    },
+    {
+      "context": "docs build (strict)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/consistency.yml"
+    }
+  ],
+  "extra": [
+    {
+      "context": "codspeed benchmarks (pilot, non-blocking)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/codspeed.yml"
+    },
+    {
+      "context": "CodSpeed Performance Analysis",
+      "integration_id": 257293,
+      "workflow": null
+    }
+  ],
+  "mandatory_steps": {
+    "Composite action against Meridian": [
+      "Checkout PR",
+      "Install uv",
+      "Sync workspace + install evidentia-core editable from PR",
+      "Run gap-analysis composite action against Meridian",
+      "Verify expected outputs landed"
+    ],
+    "fuzzing": [
+      "Build Fuzzers",
+      "Run Fuzzers"
+    ],
+    "Analyze (python)": [
+      "Checkout",
+      "Initialize CodeQL",
+      "Perform CodeQL Analysis"
+    ],
+    "Analyze (javascript-typescript)": [
+      "Checkout",
+      "Initialize CodeQL",
+      "Perform CodeQL Analysis"
+    ],
+    "Analyze (actions)": [
+      "Checkout",
+      "Initialize CodeQL",
+      "Perform CodeQL Analysis"
+    ],
+    "codspeed benchmarks (pilot, non-blocking)": [
+      "Checkout",
+      "Install uv",
+      "Set up Python",
+      "Sync workspace",
+      "Run CodSpeed benchmarks"
+    ],
+    "staleness guards (version + docs + README)": [
+      "Checkout",
+      "Install uv",
+      "Set up Python",
+      "Sync workspace",
+      "Run consistency gate suite (SSOT)"
+    ],
+    "docs build (strict)": [
+      "Checkout",
+      "Set up uv",
+      "Install docs toolchain",
+      "Build site (strict)"
+    ],
+    "Build + smoke test": [
+      "Checkout",
+      "Determine whether container-relevant paths changed"
+    ],
+    "schemathesis (stateless + stateful)": [
+      "Checkout",
+      "Install uv",
+      "Set up Python",
+      "Sync workspace",
+      "Run DAST suites (stateless + stateful schemathesis)"
+    ],
+    "Enable auto-merge (Dependabot patch)": [
+      "Fetch Dependabot metadata",
+      "Enable auto-merge for in-scope patch updates"
+    ],
+    "Dependency review (PR delta)": [
+      "Review PR dependency changes"
+    ],
+    "Meridian gap diff": [
+      "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "Run astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d",
+      "Sync workspace (dogfood the local build, not pip)",
+      "Analyze head",
+      "Restore baseline",
+      "Gap diff (markdown for PR comment)",
+      "Post PR comment",
+      "Gate on regressions"
+    ],
+    "CLI<->GUI parity": [
+      "Checkout",
+      "Set up uv",
+      "Sync workspace",
+      "Run CLI<->GUI parity gate (blocking)"
+    ],
+    "gitleaks (default ruleset + allowlist)": [
+      "Checkout",
+      "Install gitleaks (pinned binary, SHA256-verified)",
+      "Run gitleaks (scan git history)"
+    ],
+    "pytest no-extras (collector SSRF guard fidelity)": [
+      "Checkout",
+      "Install uv",
+      "Set up Python",
+      "Sync workspace WITHOUT optional extras",
+      "SSRF guard holds with zero drivers"
+    ],
+    "pytest (ubuntu-latest, Python 3.12)": [
+      "Checkout",
+      "Install uv",
+      "Set up Python 3.12",
+      "Sync workspace"
+    ],
+    "pytest (ubuntu-latest, Python 3.14)": [
+      "Checkout",
+      "Install uv",
+      "Set up Python 3.14",
+      "Sync workspace"
+    ],
+    "pytest (windows-latest, Python 3.12)": [
+      "Checkout",
+      "Install uv",
+      "Set up Python 3.12",
+      "Sync workspace"
+    ],
+    "pytest (windows-latest, Python 3.14)": [
+      "Checkout",
+      "Install uv",
+      "Set up Python 3.14",
+      "Sync workspace"
+    ],
+    "pytest (macos-latest, Python 3.12)": [
+      "Checkout",
+      "Install uv",
+      "Set up Python 3.12",
+      "Sync workspace"
+    ],
+    "pytest (macos-latest, Python 3.14)": [
+      "Checkout",
+      "Install uv",
+      "Set up Python 3.14",
+      "Sync workspace"
+    ],
+    "ruff": [
+      "Checkout",
+      "Install uv",
+      "Set up Python",
+      "Sync workspace",
+      "Run ruff",
+      "Run ruff format check"
+    ],
+    "docker/requirements drift": [
+      "Checkout",
+      "Install uv",
+      "Set up Python",
+      "Check for security-sensitive package drift"
+    ],
+    "openapi schema drift": [
+      "Checkout",
+      "Install uv",
+      "Set up Python",
+      "Sync workspace",
+      "Regenerate openapi.json",
+      "Fail if openapi.json drifted from the live API schema"
+    ],
+    "osv-scanner (SBOM)": [
+      "Checkout",
+      "Install uv",
+      "Set up Python",
+      "Sync workspace",
+      "Install osv-scanner (v2.4.0, checksum-verified)",
+      "Run osv-scanner SBOM gate"
+    ],
+    "uv audit (pilot, non-blocking)": [
+      "Checkout",
+      "Install uv",
+      "Set up Python",
+      "uv audit (locked)"
+    ],
+    "uv malware check (pilot, non-blocking)": [
+      "Checkout",
+      "Install uv",
+      "Set up Python",
+      "Sync with OSV malware check"
+    ],
+    "mypy": [
+      "Checkout",
+      "Install uv",
+      "Set up Python",
+      "Sync workspace",
+      "Run mypy"
+    ],
+    "frontend (typecheck + build)": [
+      "Checkout",
+      "Set up Node",
+      "Install frontend deps",
+      "Verify frontend registry signatures + provenance",
+      "Regenerate API types from openapi.json",
+      "Fail if committed API types drifted from openapi.json",
+      "TypeScript typecheck",
+      "Vitest unit tests",
+      "Vite production build",
+      "Upload dist as artifact"
+    ],
+    "verify": [
+      "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "Set up Python",
+      "Extract workspace version from pyproject.toml",
+      "Verify CHANGELOG block presence + size",
+      "Advisory \u2014 commits since last tag vs the CHANGELOG block"
+    ],
+    "verify-conformance-evidence": [
+      "Checkout",
+      "Set up Python",
+      "Install pyyaml",
+      "Parse docs/OSPS-CONFORMANCE.md and verify evidence claims",
+      "Validate machine-readable companion schema (if present)",
+      "Install cue (v0.17.0, checksum-verified)",
+      "Validate security-insights.yml against the Security Insights v2.2.0 schema"
+    ],
+    "Audit workflow permissions (strict)": [
+      "Checkout",
+      "Set up uv",
+      "Sync workspace",
+      "Audit workflow permissions (--strict)"
+    ],
+    "Check workflow tools (strict)": [
+      "Checkout",
+      "Set up uv",
+      "Sync workspace",
+      "Check workflow tools + extras (--strict)"
+    ],
+    "zizmor (Actions static analysis)": [
+      "Checkout",
+      "Audit workflows with zizmor (online, SHA-pinned action)"
+    ]
+  },
+  "workflow_jobs": [
+    {
+      "context": "Composite action against Meridian",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/action-smoke-test.yml",
+      "job_id": "smoke",
+      "paths": [
+        ".github/actions/gap-analysis/**",
+        ".github/workflows/action-smoke-test.yml",
+        "packages/evidentia/**",
+        "packages/evidentia-core/**",
+        "packages/evidentia-ai/**",
+        "examples/meridian-fintech-v2/**"
+      ],
+      "steps": [
+        "Checkout PR",
+        "Install uv",
+        "Sync workspace + install evidentia-core editable from PR",
+        "Run gap-analysis composite action against Meridian",
+        "Verify expected outputs landed"
+      ],
+      "mandatory_steps": [
+        "Checkout PR",
+        "Install uv",
+        "Sync workspace + install evidentia-core editable from PR",
+        "Run gap-analysis composite action against Meridian",
+        "Verify expected outputs landed"
+      ]
+    },
+    {
+      "context": "fuzzing",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/cflite-pr.yml",
+      "job_id": "fuzzing",
+      "paths": [
+        "packages/**/*.py",
+        "packages/**/data/**",
+        "packages/**/pyproject.toml",
+        "pyproject.toml",
+        "uv.lock",
+        "tests/fuzz/**",
+        ".clusterfuzzlite/**",
+        ".github/workflows/cflite-pr.yml"
+      ],
+      "steps": [
+        "Build Fuzzers",
+        "Run Fuzzers"
+      ],
+      "mandatory_steps": [
+        "Build Fuzzers",
+        "Run Fuzzers"
+      ]
+    },
+    {
+      "context": "Analyze (python)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/codeql.yml",
+      "job_id": "analyze",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Initialize CodeQL",
+        "Perform CodeQL Analysis"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Initialize CodeQL",
+        "Perform CodeQL Analysis"
+      ]
+    },
+    {
+      "context": "Analyze (javascript-typescript)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/codeql.yml",
+      "job_id": "analyze",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Initialize CodeQL",
+        "Perform CodeQL Analysis"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Initialize CodeQL",
+        "Perform CodeQL Analysis"
+      ]
+    },
+    {
+      "context": "Analyze (actions)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/codeql.yml",
+      "job_id": "analyze",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Initialize CodeQL",
+        "Perform CodeQL Analysis"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Initialize CodeQL",
+        "Perform CodeQL Analysis"
+      ]
+    },
+    {
+      "context": "codspeed benchmarks (pilot, non-blocking)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/codspeed.yml",
+      "job_id": "benchmarks",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace",
+        "Run CodSpeed benchmarks"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace",
+        "Run CodSpeed benchmarks"
+      ]
+    },
+    {
+      "context": "staleness guards (version + docs + README)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/consistency.yml",
+      "job_id": "consistency",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace",
+        "Run consistency gate suite (SSOT)"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace",
+        "Run consistency gate suite (SSOT)"
+      ]
+    },
+    {
+      "context": "docs build (strict)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/consistency.yml",
+      "job_id": "docs-build",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Set up uv",
+        "Install docs toolchain",
+        "Build site (strict)"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Set up uv",
+        "Install docs toolchain",
+        "Build site (strict)"
+      ]
+    },
+    {
+      "context": "Build + smoke test",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/container-build.yml",
+      "job_id": "build",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Determine whether container-relevant paths changed",
+        "Set up Docker Buildx",
+        "Determine latest published evidentia version (from PyPI)",
+        "Wait for PyPI propagation",
+        "Regenerate hash-pinned requirements.txt against PyPI",
+        "Install osv-scanner (v2.4.0, checksum-verified)",
+        "osv-scan regenerated container requirements",
+        "Build image (load into local Docker, not pushed)",
+        "Smoke test \u2014 `evidentia version`",
+        "Smoke test \u2014 `evidentia catalog list`",
+        "Smoke test \u2014 image labels",
+        "Smoke test \u2014 non-root execution"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Determine whether container-relevant paths changed"
+      ]
+    },
+    {
+      "context": "schemathesis (stateless + stateful)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/dast.yml",
+      "job_id": "dast",
+      "paths": [
+        "packages/evidentia-api/**",
+        "packages/evidentia-core/src/evidentia_core/models/**",
+        "packages/evidentia-core/src/evidentia_core/ai_governance/**",
+        "packages/evidentia-core/src/evidentia_core/catalogs/**",
+        "tests/dast/**",
+        ".github/workflows/dast.yml"
+      ],
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace",
+        "Run DAST suites (stateless + stateful schemathesis)"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace",
+        "Run DAST suites (stateless + stateful schemathesis)"
+      ]
+    },
+    {
+      "context": "Enable auto-merge (Dependabot patch)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/dependabot-auto-merge.yml",
+      "job_id": "auto-merge",
+      "paths": null,
+      "steps": [
+        "Fetch Dependabot metadata",
+        "Enable auto-merge for in-scope patch updates"
+      ],
+      "mandatory_steps": [
+        "Fetch Dependabot metadata",
+        "Enable auto-merge for in-scope patch updates"
+      ],
+      "allow_non_dependabot_skip": true
+    },
+    {
+      "context": "Dependency review (PR delta)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/dependency-review.yml",
+      "job_id": "dependency-review",
+      "paths": null,
+      "steps": [
+        "Review PR dependency changes"
+      ],
+      "mandatory_steps": [
+        "Review PR dependency changes"
+      ]
+    },
+    {
+      "context": "Meridian gap diff",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/evidentia.yml",
+      "job_id": "compliance",
+      "paths": [
+        "examples/meridian-fintech-v2/my-controls*.yaml",
+        "packages/evidentia-core/src/evidentia_core/catalogs/data/**",
+        ".github/workflows/evidentia.yml"
+      ],
+      "steps": [
+        "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "Run astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d",
+        "Sync workspace (dogfood the local build, not pip)",
+        "Analyze head",
+        "Restore baseline",
+        "Seed baseline on cache miss (first run ever or key bump)",
+        "Gap diff (markdown for PR comment)",
+        "Post PR comment",
+        "Gate on regressions"
+      ],
+      "mandatory_steps": [
+        "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "Run astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d",
+        "Sync workspace (dogfood the local build, not pip)",
+        "Analyze head",
+        "Restore baseline",
+        "Gap diff (markdown for PR comment)",
+        "Post PR comment",
+        "Gate on regressions"
+      ]
+    },
+    {
+      "context": "CLI<->GUI parity",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/parity.yml",
+      "job_id": "parity",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Set up uv",
+        "Sync workspace",
+        "Run CLI<->GUI parity gate (blocking)"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Set up uv",
+        "Sync workspace",
+        "Run CLI<->GUI parity gate (blocking)"
+      ]
+    },
+    {
+      "context": "gitleaks (default ruleset + allowlist)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/secret-scan.yml",
+      "job_id": "gitleaks",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install gitleaks (pinned binary, SHA256-verified)",
+        "Run gitleaks (scan git history)"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install gitleaks (pinned binary, SHA256-verified)",
+        "Run gitleaks (scan git history)"
+      ]
+    },
+    {
+      "context": "pytest no-extras (collector SSRF guard fidelity)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml",
+      "job_id": "no-extras-smoke",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace WITHOUT optional extras",
+        "SSRF guard holds with zero drivers"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace WITHOUT optional extras",
+        "SSRF guard holds with zero drivers"
+      ]
+    },
+    {
+      "context": "pytest (ubuntu-latest, Python 3.12)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml",
+      "job_id": "test",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python 3.12",
+        "Sync workspace",
+        "Run tests (with coverage on Linux)",
+        "Run tests (no coverage on non-Linux)",
+        "Upload coverage to Codecov"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python 3.12",
+        "Sync workspace"
+      ]
+    },
+    {
+      "context": "pytest (ubuntu-latest, Python 3.14)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml",
+      "job_id": "test",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python 3.14",
+        "Sync workspace",
+        "Run tests (with coverage on Linux)",
+        "Run tests (no coverage on non-Linux)",
+        "Upload coverage to Codecov"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python 3.14",
+        "Sync workspace"
+      ]
+    },
+    {
+      "context": "pytest (windows-latest, Python 3.12)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml",
+      "job_id": "test",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python 3.12",
+        "Sync workspace",
+        "Run tests (with coverage on Linux)",
+        "Run tests (no coverage on non-Linux)",
+        "Upload coverage to Codecov"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python 3.12",
+        "Sync workspace"
+      ]
+    },
+    {
+      "context": "pytest (windows-latest, Python 3.14)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml",
+      "job_id": "test",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python 3.14",
+        "Sync workspace",
+        "Run tests (with coverage on Linux)",
+        "Run tests (no coverage on non-Linux)",
+        "Upload coverage to Codecov"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python 3.14",
+        "Sync workspace"
+      ]
+    },
+    {
+      "context": "pytest (macos-latest, Python 3.12)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml",
+      "job_id": "test",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python 3.12",
+        "Sync workspace",
+        "Run tests (with coverage on Linux)",
+        "Run tests (no coverage on non-Linux)",
+        "Upload coverage to Codecov"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python 3.12",
+        "Sync workspace"
+      ]
+    },
+    {
+      "context": "pytest (macos-latest, Python 3.14)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml",
+      "job_id": "test",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python 3.14",
+        "Sync workspace",
+        "Run tests (with coverage on Linux)",
+        "Run tests (no coverage on non-Linux)",
+        "Upload coverage to Codecov"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python 3.14",
+        "Sync workspace"
+      ]
+    },
+    {
+      "context": "ruff",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml",
+      "job_id": "lint",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace",
+        "Run ruff",
+        "Run ruff format check"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace",
+        "Run ruff",
+        "Run ruff format check"
+      ]
+    },
+    {
+      "context": "docker/requirements drift",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml",
+      "job_id": "requirements-drift",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Check for security-sensitive package drift"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Check for security-sensitive package drift"
+      ]
+    },
+    {
+      "context": "openapi schema drift",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml",
+      "job_id": "openapi-drift",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace",
+        "Regenerate openapi.json",
+        "Fail if openapi.json drifted from the live API schema"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace",
+        "Regenerate openapi.json",
+        "Fail if openapi.json drifted from the live API schema"
+      ]
+    },
+    {
+      "context": "osv-scanner (SBOM)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml",
+      "job_id": "osv-scan",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace",
+        "Install osv-scanner (v2.4.0, checksum-verified)",
+        "Run osv-scanner SBOM gate"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace",
+        "Install osv-scanner (v2.4.0, checksum-verified)",
+        "Run osv-scanner SBOM gate"
+      ]
+    },
+    {
+      "context": "uv audit (pilot, non-blocking)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml",
+      "job_id": "uv-audit",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "uv audit (locked)"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "uv audit (locked)"
+      ]
+    },
+    {
+      "context": "uv malware check (pilot, non-blocking)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml",
+      "job_id": "uv-malware-check",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync with OSV malware check"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync with OSV malware check"
+      ]
+    },
+    {
+      "context": "mypy",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml",
+      "job_id": "typecheck",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace",
+        "Run mypy"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Install uv",
+        "Set up Python",
+        "Sync workspace",
+        "Run mypy"
+      ]
+    },
+    {
+      "context": "frontend (typecheck + build)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/test.yml",
+      "job_id": "frontend-test",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Set up Node",
+        "Install frontend deps",
+        "Verify frontend registry signatures + provenance",
+        "Regenerate API types from openapi.json",
+        "Fail if committed API types drifted from openapi.json",
+        "TypeScript typecheck",
+        "Vitest unit tests",
+        "Vite production build",
+        "Upload dist as artifact"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Set up Node",
+        "Install frontend deps",
+        "Verify frontend registry signatures + provenance",
+        "Regenerate API types from openapi.json",
+        "Fail if committed API types drifted from openapi.json",
+        "TypeScript typecheck",
+        "Vitest unit tests",
+        "Vite production build",
+        "Upload dist as artifact"
+      ]
+    },
+    {
+      "context": "verify",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/verify-changelog.yml",
+      "job_id": "verify",
+      "paths": [
+        "pyproject.toml",
+        "CHANGELOG.md",
+        "scripts/extract_changelog_block.py",
+        "scripts/check_changelog_vs_commits.py",
+        ".github/workflows/verify-changelog.yml"
+      ],
+      "steps": [
+        "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "Set up Python",
+        "Extract workspace version from pyproject.toml",
+        "Verify CHANGELOG block presence + size",
+        "Advisory \u2014 commits since last tag vs the CHANGELOG block"
+      ],
+      "mandatory_steps": [
+        "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "Set up Python",
+        "Extract workspace version from pyproject.toml",
+        "Verify CHANGELOG block presence + size",
+        "Advisory \u2014 commits since last tag vs the CHANGELOG block"
+      ]
+    },
+    {
+      "context": "verify-conformance-evidence",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/verify-osps-conformance.yml",
+      "job_id": "verify-conformance-evidence",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Set up Python",
+        "Install pyyaml",
+        "Parse docs/OSPS-CONFORMANCE.md and verify evidence claims",
+        "Validate machine-readable companion schema (if present)",
+        "Install cue (v0.17.0, checksum-verified)",
+        "Validate security-insights.yml against the Security Insights v2.2.0 schema"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Set up Python",
+        "Install pyyaml",
+        "Parse docs/OSPS-CONFORMANCE.md and verify evidence claims",
+        "Validate machine-readable companion schema (if present)",
+        "Install cue (v0.17.0, checksum-verified)",
+        "Validate security-insights.yml against the Security Insights v2.2.0 schema"
+      ]
+    },
+    {
+      "context": "Audit workflow permissions (strict)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/verify-workflow-perms.yml",
+      "job_id": "audit-permissions",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Set up uv",
+        "Sync workspace",
+        "Audit workflow permissions (--strict)"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Set up uv",
+        "Sync workspace",
+        "Audit workflow permissions (--strict)"
+      ]
+    },
+    {
+      "context": "Check workflow tools (strict)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/verify-workflow-perms.yml",
+      "job_id": "check-workflow-tools",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Set up uv",
+        "Sync workspace",
+        "Check workflow tools + extras (--strict)"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Set up uv",
+        "Sync workspace",
+        "Check workflow tools + extras (--strict)"
+      ]
+    },
+    {
+      "context": "zizmor (Actions static analysis)",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/zizmor.yml",
+      "job_id": "zizmor",
+      "paths": null,
+      "steps": [
+        "Checkout",
+        "Audit workflows with zizmor (online, SHA-pinned action)"
+      ],
+      "mandatory_steps": [
+        "Checkout",
+        "Audit workflows with zizmor (online, SHA-pinned action)"
+      ]
+    }
+  ],
+  "workflow_sources": {
+    ".github/workflows/action-smoke-test.yml": "bdd161e6b7a9ea5b5bf405185640cba569f7f8e4d046c8a06956f8a48317c154",
+    ".github/workflows/cflite-pr.yml": "3746e04a0f1b58591f4912958972aa897bdc65f6775c58e8c099822ef4399cd9",
+    ".github/workflows/codeql.yml": "3cd755f47df072ebccef50e3b1416b6010ab0af68740647f11095506e337bc96",
+    ".github/workflows/codspeed.yml": "6d535663fc99986758209bb5d477a9ce2714a6201fb480373557beacb077cff7",
+    ".github/workflows/consistency.yml": "67d99768345b7052ae46bb0da2c8cd1ae2e72e8905423f3bf8db14c7afc71618",
+    ".github/workflows/container-build.yml": "1d60ccf1b7708f4b1223e8ab68a475da65503b6e87474eb6667d386b5064f800",
+    ".github/workflows/dast.yml": "9df39643384162572848a46929896a2146058f989b686de77bf3156de8fde7c9",
+    ".github/workflows/dependabot-auto-merge.yml": "ea85f822d63763aacd80a89776b4385f2d82dd141fdc963a713bb0ab1e41a508",
+    ".github/workflows/dependency-review.yml": "a130cb411d3d1a462840924c4b025330758b1b813573b4aae9a67fd6ee883694",
+    ".github/workflows/evidentia.yml": "dd4ef1e122f4c1dfc005298f8b97e05e22bb97f3edb4ad2c7a3c0f097b217f12",
+    ".github/workflows/parity.yml": "d96e6d4e861bd674f25ac024a9f500b75b4bf8444eb0b96883151b8a8dffb6fb",
+    ".github/workflows/secret-scan.yml": "4818415e7e79184a3c3fb17e4c1b048d3e392f131b4244758e111628d78a8d23",
+    ".github/workflows/test.yml": "53caaf9d5c415bf309566858176959bae26785e45d9e480e87531fde0a339c7a",
+    ".github/workflows/verify-changelog.yml": "264df97c1f6edd7863e30e82670988792279fd02f0114303c91c0cb313b7c59f",
+    ".github/workflows/verify-osps-conformance.yml": "1e072be9855d60f2ab9fd70ba471c92e9b21e828a044c1e092e52bffce96e778",
+    ".github/workflows/verify-workflow-perms.yml": "3da76a441f4b0ba854de3723b7d4f32ad3170df2df77559c20869ecd0886d9c2",
+    ".github/workflows/zizmor.yml": "34b86b6d43a8a1d19237b042b95c9b7f5355b419d07ca1d9795dc170dd6e03fc"
+  },
+  "codspeed_linkage": {
+    "minimum_commit_prefix_length": 7,
+    "require_git_resolution": true,
+    "require_completed_after_benchmark": "strictly_later",
+    "provider_run_id_attested": false
+  }
+}

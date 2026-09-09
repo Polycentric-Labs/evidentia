@@ -26,6 +26,10 @@ on:
   pull_request:
     paths:
       - "packages/**/*.py"
+      - "packages/**/data/**"
+      - "packages/**/pyproject.toml"
+      - "pyproject.toml"
+      - "uv.lock"
       - "tests/fuzz/**"
       - ".clusterfuzzlite/**"
       - ".github/workflows/cflite-pr.yml"

@@ -51,16 +51,16 @@ jobs:
 
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
-          version: "latest"
+          version: "0.12.12"
           python-version: "3.12"
 
       - name: Sync workspace (dogfood the local build, not pip)
-        run: uv sync --all-packages
+        run: uv sync --locked --all-packages
 
       # ---- Head (current PR state; main after merge) ----
       - name: Analyze head
         run: |
-          uv run evidentia gap analyze \
+          uv run --locked evidentia gap analyze \
             --inventory examples/meridian-fintech-v2/my-controls.yaml \
             --frameworks nist-800-53-rev5-moderate,soc2-tsc \
             --output /tmp/head.json \
@@ -101,7 +101,7 @@ jobs:
       - name: Gap diff (markdown for PR comment)
         if: github.event_name == 'pull_request'
         run: |
-          uv run evidentia gap diff \
+          uv run --locked evidentia gap diff \
             --base /tmp/base.json \
             --head /tmp/head.json \
             --format markdown \
@@ -148,7 +148,7 @@ jobs:
       - name: Gate on regressions
         if: github.event_name == 'pull_request'
         run: |
-          uv run evidentia gap diff \
+          uv run --locked evidentia gap diff \
             --base /tmp/base.json \
             --head /tmp/head.json \
             --format github \
