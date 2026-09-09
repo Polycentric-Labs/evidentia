@@ -221,10 +221,14 @@ def _effective_run_setting(
 
 
 def _commands(value: object) -> list[str]:
+    body = _text(value, "run command")
+    if "${{" in body:
+        raise WorkflowFidelityError("Unsupported Actions interpolation in protected run command")
+    if re.search(r"[\x00-\x08\x0b-\x1f\x7f-\x9f\u2028\u2029]", body):
+        raise WorkflowFidelityError("Unsupported control separator in protected run command")
+    # Bash comments end at LF; Unicode separators must not reveal hidden commands.
     return [
-        line.strip()
-        for line in _text(value, "run command").splitlines()
-        if line.strip() and not line.lstrip().startswith("#")
+        line.strip(" \t") for line in body.split("\n") if line.strip(" \t") and not line.lstrip(" \t").startswith("#")
     ]
 
 

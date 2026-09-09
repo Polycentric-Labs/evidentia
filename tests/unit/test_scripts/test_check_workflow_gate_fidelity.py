@@ -357,3 +357,86 @@ def test_scheduled_refresh_producer_failure_cannot_be_hidden(
     write_workflow(checkout, path, workflow)
     with pytest.raises(guard.WorkflowFidelityError, match=r"[Rr]efresh"):
         guard.validate_workflows(*checkout)
+
+
+PROTECTED_STEPS = [
+    (FRONTEND, "frontend-test", "Vitest unit tests"),
+    (".github/workflows/container-build.yml", "build", "Smoke test \u2014 `evidentia catalog list`"),
+    (".github/workflows/catalog-refresh.yml", "refresh", "Regenerate manifest from disk"),
+]
+NON_BASH_SEPARATORS = ["\r", "\v", "\f", "\x1c", "\x1d", "\x1e", "\x85", "\u2028", "\u2029"]
+
+
+@pytest.mark.parametrize("path,job_id,step_name", PROTECTED_STEPS)
+def test_actions_interpolation_cannot_hide_in_run_comments(
+    checkout: tuple[Path, dict[str, Any]], guard: Any, path: str, job_id: str, step_name: str
+) -> None:
+    workflow = guard.parse_workflow((checkout[0] / path).read_bytes())
+    step = next(step for step in workflow["jobs"][job_id]["steps"] if step.get("name") == step_name)
+    step["run"] = "# ${{ github.event.pull_request.title }}\n" + step["run"]
+    write_workflow(checkout, path, workflow)
+    with pytest.raises(guard.WorkflowFidelityError, match="interpolation"):
+        guard.validate_workflows(*checkout)
+
+
+@pytest.mark.parametrize("path,job_id,step_name", PROTECTED_STEPS)
+@pytest.mark.parametrize("separator", NON_BASH_SEPARATORS)
+def test_non_bash_separators_cannot_hide_protected_commands(
+    checkout: tuple[Path, dict[str, Any]], guard: Any, path: str, job_id: str, step_name: str, separator: str
+) -> None:
+    workflow = guard.parse_workflow((checkout[0] / path).read_bytes())
+    step = next(step for step in workflow["jobs"][job_id]["steps"] if step.get("name") == step_name)
+    body = "# hidden command" + separator + step["run"].replace("\n", separator)
+    step["run"] = body
+    # ASCII escapes retain the separator in a quoted YAML scalar exactly.
+    raw = yaml.safe_dump(workflow, sort_keys=False, allow_unicode=False).encode("utf-8")
+    (checkout[0] / path).write_bytes(raw)
+    if path in checkout[1]["workflow_sources"]:
+        checkout[1]["workflow_sources"][path] = hashlib.sha256(raw).hexdigest()
+    parsed = guard.parse_workflow(raw)
+    assert next(step for step in parsed["jobs"][job_id]["steps"] if step.get("name") == step_name)["run"] == body
+    with pytest.raises(guard.WorkflowFidelityError, match="separator"):
+        guard.validate_workflows(*checkout)
+
+
+@pytest.mark.parametrize("whitespace", ["\u00a0", "\u202f", "\u3000"])
+@pytest.mark.parametrize("position", ["prefix", "suffix"])
+def test_unicode_whitespace_cannot_change_vitest_arguments(
+    checkout: tuple[Path, dict[str, Any]], guard: Any, whitespace: str, position: str
+) -> None:
+    workflow, job = frontend(checkout, guard)
+    step = next(step for step in job["steps"] if step["name"] == "Vitest unit tests")
+    step["run"] = (
+        whitespace + step["run"].strip(" \t\n") if position == "prefix" else step["run"].strip(" \t\n") + whitespace
+    )
+    write_workflow(checkout, FRONTEND, workflow)
+    with pytest.raises(guard.WorkflowFidelityError, match="Vitest"):
+        guard.validate_workflows(*checkout)
+
+
+@pytest.mark.parametrize("separator", ["\n", *NON_BASH_SEPARATORS])
+def test_bash_comment_ends_only_at_lf(separator: str, tmp_path: Path) -> None:
+    bash = shutil.which("bash")
+    assert bash is not None, "The supported CI platforms provide Bash"
+    command = "npm() { printf 'called'; return 23; }\n# comment" + separator + "npm run test -- --run"
+    result = subprocess.run(
+        [bash, "--noprofile", "--norc", "-e", "-o", "pipefail", "-c", command],
+        cwd=tmp_path,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == (23 if separator == "\n" else 0)
+    assert result.stdout == (b"called" if separator == "\n" else b"")
+
+
+@pytest.mark.parametrize("path,job_id,step_name", PROTECTED_STEPS)
+@pytest.mark.parametrize("line_ending", [b"\n", b"\r\n"])
+def test_protected_commands_accept_ordinary_yaml_line_endings(
+    checkout: tuple[Path, dict[str, Any]], guard: Any, path: str, job_id: str, step_name: str, line_ending: bytes
+) -> None:
+    source = checkout[0] / path
+    source.write_bytes(source.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", line_ending))
+    workflow = guard.parse_workflow(source.read_bytes())
+    body = next(step for step in workflow["jobs"][job_id]["steps"] if step.get("name") == step_name)["run"]
+    assert "\r" not in body
+    guard.validate_workflows(*checkout)

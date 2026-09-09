@@ -76,6 +76,7 @@
 #                                  catalogs, and byte-compares the generated
 #                                  inventory block)
 #  20. check_workflow_gate_fidelity (reviewed workflow coverage and enforcing steps)
+#  21. check_gitleaks (CI-pinned scanner and full git-history secret rules)
 #
 # All checks run before the hook exits, so the operator sees every
 # failure at once.
@@ -432,6 +433,13 @@ fi
 # 20. Keep reviewed workflow coverage and failure propagation enforced.
 if ! run_check "check_workflow_gate_fidelity" \
     run_py "${REPO_ROOT}/scripts/check_workflow_gate_fidelity.py"; then
+    # run_check records the failure for the final verdict.
+    :
+fi
+
+# 21. Run the same version and full-history secret scan as CI.
+if ! run_check "check_gitleaks" \
+    run_py "${SCRIPTS_DIR}/check_gitleaks.py"; then
     # run_check records the failure for the final verdict.
     :
 fi

@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Local secret-scan parity.** The pre-push gate now requires the CI-pinned
+  Gitleaks binary and full-history scan. A verified public workflow checksum has
+  an exact-value exception; default secret detection remains enabled.
 - **Workflow and PR admission verification.** A reviewed policy binds checks to
   their source workflows, jobs, steps and GitHub Apps. The existing consistency
   and pre-push gates validate workflow coverage and enforcement. A separate

@@ -20,7 +20,7 @@ v0.10.7.** Layers 1 and 3 are explicitly deferred.
 | Layer | Purpose | Status |
 |---|---|---|
 | **L1 — local Scorecard sweep** | Run an OpenSSF Scorecard pass locally before push | **DEFERRED to v0.10.8+** — duplicates the scheduled CI Scorecard workflow with no new signal |
-| **L2: blocking checks** | 20 fast checks that BLOCK the push on failure | **SHIPPED v0.10.7**; grown each cycle since |
+| **L2: blocking checks** | 21 fast checks that BLOCK the push on failure | **SHIPPED v0.10.7**; grown each cycle since |
 | **L3 — warning-only** | actionlint + online pinact advisories | **DEFERRED to v0.10.8+** — catches syntax errors the GitHub Actions UI already surfaces |
 
 The marginal value of L1 + L3 did not justify the added push latency +
@@ -63,6 +63,28 @@ kept in step with it. Numbering matches that header.
 | 18 | `check_ruff_format` | `ruff format --check . --no-cache` | any file the formatter would change (the tree has been format-clean since the v0.13 whole-repo reformat) |
 | 19 | `check_catalog_truth` | `scripts/check_catalog_truth.py` | a manifest text_depth that disagrees with the depth derived from its catalog, an invalid crosswalk framework id, crosswalk ids that fail to resolve against the bundled catalogs, a Tier C catalog missing the placeholder/license_required/headings invariant, or a stale catalog-inventory summary block |
 | 20 | `check_workflow_gate_fidelity` | `scripts/check_workflow_gate_fidelity.py` | an unreviewed workflow source, missing or ambiguous check/job/step identity, missing required PR or queue coverage, or failure masking in an enforced validation step |
+| 21 | `check_gitleaks` | `scripts/pre_push/check_gitleaks.py` | a missing or wrong-version scanner, CI command drift, or a full-history secret finding |
+
+## Full secret-scan parity
+
+Install the Gitleaks version pinned in
+[secret-scan.yml](../.github/workflows/secret-scan.yml) from the
+[official release](https://github.com/gitleaks/gitleaks/releases/tag/v8.30.1),
+verify its published archive checksum, and put the binary on PATH. The current
+pin is 8.30.1. The local gate requires that version and the same git-history
+scan, config and redaction flags as CI. Missing tools and command drift block
+the push. The existing filename and focused pattern checks still run.
+
+From the repository root, in PowerShell or Bash:
+
+```text
+uv run --no-sync python scripts/pre_push/check_gitleaks.py
+```
+
+The wrapper does not print scanner output or match values. To investigate a
+failure, keep Gitleaks redaction enabled and inspect only the required local
+diagnostics. A verified public workflow checksum has one anchored exact-value
+exception in `.gitleaks.toml`; other values remain subject to the default rules.
 
 ## PR admission before the merge queue
 

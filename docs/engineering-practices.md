@@ -239,12 +239,13 @@ publicly.
   reduction, not a CVE-count win (the distroless base still carries unfixable
   advisories) — and removing `curl` is not egress denial (Python
   `socket`/`urllib` remain).
-- **Secret scanning.** A pinned gitleaks binary scans the full history on every
-  push and pull request, complementing a local pre-push secret scan. Systemic
-  secret-scanner false positives are encoded the same way — as value-precise
-  allowlist regexes in committed config, matched against the flagged secret
-  *value*, never as a path allowlist over source directories — and verified
-  locally before landing.
+- **Secret scanning.** The pre-push gate requires the same pinned Gitleaks
+  version, full-history command, config and redaction settings as CI. Missing
+  tools, version or command drift, and scan findings block publication. The
+  existing local filename and focused pattern checks also run. Verified public
+  constants can receive an anchored exact-value exception after a positive
+  detection control proves other values still fail. Source directories and
+  default detection rules remain covered.
 - **Defensive guards in the code itself.** Network-egress paths enforce a
   public-host SSRF guard that fires *before* any optional driver import, so the
   security property holds even with zero optional extras installed — a property

@@ -71,4 +71,8 @@ regexes = [
     '''RSAPrivateKey''',
     '''Ed25519PublicKey''',
     '''RSAPublicKey''',
+    # SHA-256 of the public secret-scan.yml workflow, recorded in the
+    # verification policy. The generic rule treats its field name as a
+    # credential assignment. Match only this independently verified digest.
+    '''^4818415e7e79184a3c3fb17e4c1b048d3e392f131b4244758e111628d78a8d23$''',
 ]
