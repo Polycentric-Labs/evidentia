@@ -14,13 +14,27 @@ defaults — existing v0.1.x catalog JSONs continue to parse under
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator, Mapping
+from copy import deepcopy
+from dataclasses import dataclass
 from datetime import date
-from typing import Any, Literal, NamedTuple
+from types import MappingProxyType
+from typing import Any, Literal, NamedTuple, Self, TypeVar
 
-from pydantic import Field, PrivateAttr
+from pydantic import (
+    ConfigDict,
+    Field,
+    GetJsonSchemaHandler,
+    PrivateAttr,
+    SerializerFunctionWrapHandler,
+    field_serializer,
+    field_validator,
+    model_serializer,
+)
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import CoreSchema
 
-from evidentia_core.models.common import EvidentiaModel
+from evidentia_core.models.common import EvidentiaModel, NonBlankStr
 
 # NIST publications render enhancement IDs as ``AC-2(1)(a)`` while NIST OSCAL
 # content renders them as ``ac-2.1.a``. Both are valid. We normalize to the
@@ -99,6 +113,127 @@ def derive_text_depth(rows: Iterable[StatementRow]) -> TextDepth:
     if with_text == len(eligible):
         return "full"
     return "partial"
+
+
+_CatalogSourceScalar = str | int | float | bool | None
+_T = TypeVar("_T")
+_MapValue = TypeVar("_MapValue", covariant=True)
+
+
+@dataclass(frozen=True, slots=True, init=False, eq=False)
+class _SourceMap(Mapping[str, _MapValue]):
+    """Detached immutable scalar mapping with an explicit copy protocol."""
+
+    _data: Mapping[str, _MapValue]
+
+    def __init__(self, values: Mapping[str, _MapValue]) -> None:
+        object.__setattr__(self, "_data", MappingProxyType(dict(values)))
+
+    def __getitem__(self, key: str) -> _MapValue:
+        return self._data[key]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._data)
+
+    def __len__(self) -> int:
+        return len(self._data)
+
+    def __copy__(self) -> Self:
+        return self
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> Self:
+        # This private type is created only after scalar validation. Its keys
+        # and values are immutable, so sharing it cannot alias mutable cells.
+        memo[id(self)] = self
+        return self
+
+
+class CatalogSourceRow(EvidentiaModel):
+    """Source evidence, independent of indexed controls and applicability."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        strict=True,
+        allow_inf_nan=False,
+        str_strip_whitespace=False,
+        revalidate_instances="always",
+    )
+
+    source_sha256: str = Field(
+        pattern=r"^[0-9a-f]{64}$", description="Claimed SHA-256 of source bytes; not proof of authenticity"
+    )
+    sheet: NonBlankStr = Field(description="Literal nonblank source sheet name")
+    row: int = Field(ge=1, description="One-based physical source row")
+    source_id: _CatalogSourceScalar
+    source_id_format: str | None = None
+    interpreted_id: str | None = None
+    kind: Literal["aggregate", "clause", "fragment"]
+    values: Mapping[str, _CatalogSourceScalar]
+    resolved_values: Mapping[str, _CatalogSourceScalar] = Field(
+        default_factory=dict,
+        validate_default=True,
+        description="Reviewed source merge-anchor values, separate from raw physical blanks",
+    )
+    provenance: Mapping[str, str] = Field(default_factory=dict, validate_default=True)
+
+    @field_validator("source_id", mode="before")
+    @classmethod
+    def normalize_source_id_date(cls, value: Any) -> Any:
+        if isinstance(value, date):
+            return value.isoformat()
+        if type(value) not in (str, int, float, bool, type(None)):
+            raise ValueError("Source cells must be JSON scalars or dates")
+        return value
+
+    @field_validator("values", "resolved_values", mode="before")
+    @classmethod
+    def normalize_date_values(cls, value: Any) -> Any:
+        if isinstance(value, Mapping):
+            return {key: cls.normalize_source_id_date(cell) for key, cell in value.items()}
+        return value
+
+    @field_validator("values", "resolved_values", "provenance", mode="after")
+    @classmethod
+    def freeze_mapping(cls, value: Mapping[str, _T]) -> Mapping[str, _T]:
+        return _SourceMap(value)
+
+    @field_serializer("values", "resolved_values")
+    def serialize_scalar_mapping(self, value: Mapping[str, _CatalogSourceScalar]) -> dict[str, _CatalogSourceScalar]:
+        return dict(value)
+
+    @field_serializer("provenance")
+    def serialize_provenance(self, value: Mapping[str, str]) -> dict[str, str]:
+        return dict(value)
+
+    def _validation_data(self) -> dict[str, Any]:
+        # Copy raw values, not JSON. JSON serialization can turn NaN into null
+        # before validation has a chance to reject it.
+        return dict(self.__dict__)
+
+    def model_copy(self, *, update: Mapping[str, Any] | None = None, deep: bool = False) -> Self:
+        data = self._validation_data()
+        if deep:
+            data = deepcopy(data)
+        if update:
+            data.update(update)
+        checked = type(self).model_validate(data)
+        checked.__pydantic_fields_set__ = self.model_fields_set | set(update or {})
+        return checked
+
+    @model_serializer(mode="wrap")
+    def validate_before_serialization(self, handler: SerializerFunctionWrapHandler) -> Any:
+        # model_construct remains a trusted Pydantic bypass. Validate raw data
+        # before every model serialization, including nested response output.
+        checked = type(self).model_validate(self._validation_data())
+        checked.__pydantic_fields_set__ = self.model_fields_set.copy()
+        return handler(checked)
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, schema: CoreSchema, handler: GetJsonSchemaHandler) -> JsonSchemaValue:
+        # Validation and wire fields match; the wrapper only validates.
+        if handler.mode == "serialization":
+            return cls.model_json_schema(mode="validation")
+        return handler(schema)
 
 
 class CatalogControl(EvidentiaModel):
@@ -208,6 +343,11 @@ class CatalogControl(EvidentiaModel):
     properties: dict[str, str] = Field(
         default_factory=dict,
         description="Independent publisher attributes, such as Existing tags and raw baseline or overlay labels",
+    )
+
+    source_rows: list[CatalogSourceRow] = Field(
+        default_factory=list,
+        description="Source evidence outside control indexes, statement counts and gap denominators",
     )
 
 

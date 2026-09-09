@@ -1,8 +1,8 @@
 {
   "framework_id": "cms-ars-5.1",
-  "framework_name": "CMS Acceptable Risk Safeguards (ARS) 5.1",
-  "version": "5.1 (2022)",
-  "source": "CMS Information Security & Privacy Group — CMS-specific overlay on NIST SP 800-53 Rev 5",
+  "framework_name": "CMS ARS 5.1 (historical family summaries)",
+  "version": "5.1 (2023-07-26)",
+  "source": "https://security.cms.gov/policy-guidance/cms-acceptable-risk-safeguards-ars",
   "tier": "A",
   "category": "control",
   "placeholder": false,
@@ -142,5 +142,9 @@
       "description": "Supply Chain Risk Management — CMS-tailored",
       "family": "Supply Chain"
     }
-  ]
+  ],
+  "status": "historical",
+  "notes": "Preserves 19 legacy CMS-* family summaries for existing assessment references. These are selected headings, not an archived full ARS 5.1 catalog. The edition date is corrected from 2022 to 2023-07-26. Review CMS ARS 5.2 for current source content; old family IDs do not map automatically to the new control and enhancement IDs.",
+  "verified_on": "2026-09-09",
+  "superseded_by": "cms-ars-5.2"
 }

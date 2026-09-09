@@ -1,6 +1,10 @@
 /** TypeScript mirrors of CatalogControl + ControlCatalog from
  *  evidentia_core.models.catalog. */
 
+import type { components } from "@/types/openapi";
+
+export type CatalogSourceRow = components["schemas"]["CatalogSourceRow"];
+
 export interface CatalogControl {
   id: string;
   title: string;
@@ -10,6 +14,7 @@ export interface CatalogControl {
   control_class?: string | null;
   priority?: string | null;
   properties?: Record<string, string>;
+  source_rows?: CatalogSourceRow[];
   withdrawn?: boolean;
   baseline_impact: string[];
   enhancements: CatalogControl[];

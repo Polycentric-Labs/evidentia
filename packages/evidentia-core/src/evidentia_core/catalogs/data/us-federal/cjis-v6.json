@@ -1,8 +1,8 @@
 {
   "framework_id": "cjis-v6",
-  "framework_name": "FBI CJIS Security Policy v6.0",
-  "version": "6.0 (Dec 2024)",
-  "source": "FBI Criminal Justice Information Services Division — CJIS Security Policy (federal agency document)",
+  "framework_name": "FBI CJIS v6.0 (historical selected headings)",
+  "version": "6.0 (2024-12-27)",
+  "source": "https://le.fbi.gov/cjis-division/cjis-security-policy-resource-center",
   "tier": "A",
   "category": "control",
   "placeholder": false,
@@ -165,5 +165,9 @@
       "description": "Mobile Devices",
       "family": "Mobile Devices"
     }
-  ]
+  ],
+  "status": "historical",
+  "notes": "Preserves 24 legacy selected headings for existing assessment references. Original source coverage has not been verified against the full version 6.0 policy. The successor is a version 6.1 companion reference catalog with different addresses and coverage; assessment evidence is not migrated automatically. Publication version does not determine a state authority's audit version.",
+  "verified_on": "2026-09-09",
+  "superseded_by": "cjis-v6.1"
 }

@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **CMS ARS 5.2 and CJIS 6.1 companion catalogs (V13-09).** The CMS import
+  retains 1,681 source rows in 605 control/enhancement reference units. The CJIS
+  companion retains 1,533 fragments in 324 reference units with role and scenario
+  qualifications, independent audit/priority/cloud fields and reviewed source
+  annotations. CLI and console control details expose original source evidence.
+  Historical CMS and CJIS records remain available without automatic migration.
+  The companion does not claim complete policy coverage or universal applicability.
+- **Catalog source evidence.** Optional source rows preserve original cell values,
+  source locations, identifier interpretations and explicit spreadsheet merge anchors
+  through native and API imports. These rows do not add assessed controls.
 - **Catalog currency notices (V13-09, first catalog batch).** Optional lifecycle,
   verification-date, successor, per-authority audit-context and publication-notice
   fields preserve source scope without changing gap applicability automatically.
@@ -235,6 +245,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Fuzzing toolchain compatibility.** Keep catalog source mappings importable by
+  the pinned Python 3.11 fuzzing image. Each harness now imports before packaging,
+  so unsupported syntax fails directly instead of becoming a missing-module error
+  in every packaged fuzzer.
+- Render control titles, statements, guidance and family text literally in CLI
+  catalog views, including bracket-like source text that previously raised markup
+  errors. Correct the historical CMS ARS 5.1 edition date to 2023-07-26.
+- **YAML catalog imports.** Non-string mapping keys reject before JSON conversion
+  can coerce or collapse source cells; rejected imports preserve installed files.
+- **Nested gap requirements.** Gap analysis now visits active enhancements at every
+  depth and excludes every descendant of a withdrawn control. Inventory matching
+  also searches every depth by ID or title with the existing fuzzy thresholds.
 - Accept unquoted YAML date fields in API catalog imports. Unsupported YAML values return 400 before replacing an installed catalog. Render imported source and license strings literally in CLI output.
 
 - Correct NYDFS CISO, governing-body, Class A monitoring and notice headings; add section 500.24. Prior evidence tied to the corrected IDs needs review. Keep EU AI Act Article 27 date metadata within its Annex III and deployer scope.

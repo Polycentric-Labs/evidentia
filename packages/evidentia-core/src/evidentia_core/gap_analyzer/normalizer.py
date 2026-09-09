@@ -67,9 +67,11 @@ def find_best_match(
         return exact.id
 
     # 2. Fuzzy match on control IDs
-    all_ids: list[str] = [c.id for c in catalog.controls]
-    for c in catalog.controls:
-        all_ids.extend(e.id for e in c.enhancements)
+    # Keep the original level order so tied ID matches retain precedence.
+    controls_by_level = list(catalog.controls)
+    for control in controls_by_level:
+        controls_by_level.extend(control.enhancements)
+    all_ids = [control.id for control in controls_by_level]
 
     id_match = process.extractOne(normalized, all_ids, scorer=fuzz.ratio)
     if id_match and id_match[1] >= threshold:
@@ -79,12 +81,13 @@ def find_best_match(
 
     # 3. Fuzzy match on titles (for inputs like "Account Management")
     title_map: dict[str, str] = {}
-    for c in catalog.controls:
-        if c.title:
-            title_map[c.title] = c.id
-        for e in c.enhancements:
-            if e.title:
-                title_map[e.title] = e.id
+    # Titles retain the original parent/child order within each branch.
+    pending = list(reversed(catalog.controls))
+    while pending:
+        control = pending.pop()
+        if control.title:
+            title_map[control.title] = control.id
+        pending.extend(reversed(control.enhancements))
 
     if not title_map:
         return None

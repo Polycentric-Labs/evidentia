@@ -58,3 +58,83 @@ def test_bundled_full_catalog_reports_no_withdrawn_gaps() -> None:
     assert "AC-13" not in ids
     assert "AC-2.10" not in ids and "AC-2(10)" not in ids
     assert "AC-2" in ids
+
+
+def _deep_catalog(*, top_withdrawn: bool = False, middle_withdrawn: bool = False) -> ControlCatalog:
+    return ControlCatalog(
+        framework_id="deep",
+        framework_name="Deep",
+        version="1",
+        source="test",
+        controls=[
+            CatalogControl(
+                id="AC-1",
+                title="Top",
+                description="Top statement.",
+                withdrawn=top_withdrawn,
+                enhancements=[
+                    CatalogControl(
+                        id="AC-1(1)",
+                        title="Middle",
+                        description="Middle statement.",
+                        withdrawn=middle_withdrawn,
+                        enhancements=[CatalogControl(id="AC-1(1)(a)", title="Leaf", description="Leaf statement.")],
+                    ),
+                    CatalogControl(id="AC-1(2)", title="Sibling", description="Sibling statement."),
+                ],
+            ),
+            CatalogControl(id="AC-2", title="Last", description="Last statement."),
+        ],
+    )
+
+
+@pytest.mark.parametrize(
+    ("top_withdrawn", "middle_withdrawn", "expected"),
+    [
+        (False, False, ["deep:AC-1", "deep:AC-1(1)", "deep:AC-1(1)(a)", "deep:AC-1(2)", "deep:AC-2"]),
+        (True, False, ["deep:AC-2"]),
+        (False, True, ["deep:AC-1", "deep:AC-1(2)", "deep:AC-2"]),
+    ],
+)
+def test_required_set_visits_all_active_depths_and_excludes_withdrawn_subtrees(
+    top_withdrawn: bool, middle_withdrawn: bool, expected: list[str]
+) -> None:
+    catalog = _deep_catalog(top_withdrawn=top_withdrawn, middle_withdrawn=middle_withdrawn)
+    required = GapAnalyzer()._build_required_set({"deep": catalog})
+    assert list(required) == expected
+    assert [item[0][1].id for item in required.values()] == [key.removeprefix("deep:") for key in expected]
+
+
+@pytest.mark.parametrize("depth", [1, 2])
+@pytest.mark.parametrize("inventory_id", ["CC-3", "CC-03", "Escalation Journey Review"])
+def test_implemented_descendants_match_by_id_fuzzy_id_and_title(
+    monkeypatch: pytest.MonkeyPatch, depth: int, inventory_id: str
+) -> None:
+    leaf = CatalogControl(id="CC-3", title="Escalation Journey Review", description="Review escalations.")
+    middle = CatalogControl(
+        id="BB-2",
+        title="Resource Inventory",
+        description="Maintain resources.",
+        enhancements=[leaf] if depth == 2 else [],
+    )
+    top = CatalogControl(
+        id="AA-1",
+        title="Policy Foundation",
+        description="Maintain policy.",
+        enhancements=[middle] if depth == 2 else [middle, leaf],
+    )
+    catalog = ControlCatalog(framework_id="deep", framework_name="Deep", version="1", source="test", controls=[top])
+    analyzer = GapAnalyzer()
+    monkeypatch.setattr(analyzer.registry, "get_catalog", lambda framework_id: catalog)
+    inventory = ControlInventory(
+        organization="Test",
+        controls=[
+            ControlImplementation(id=value, status=ControlStatus.IMPLEMENTED)
+            for value in ("AA-1", "BB-2", inventory_id)
+        ],
+    )
+    report = analyzer.analyze(inventory, ["deep"], show_efficiency=False)
+    assert report.total_controls_required == 3
+    assert report.total_gaps == 0
+    assert report.gaps == []
+    assert report.coverage_percentage == 100.0

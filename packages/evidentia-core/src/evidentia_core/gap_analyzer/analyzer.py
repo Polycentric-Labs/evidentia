@@ -242,18 +242,16 @@ class GapAnalyzer:
         """
         required: dict[str, list[tuple[str, CatalogControl]]] = defaultdict(list)
 
+        def visit(fw_id: str, control: CatalogControl) -> None:
+            if control.withdrawn:
+                return
+            required[f"{fw_id}:{control.id}"].append((fw_id, control))
+            for enhancement in control.enhancements:
+                visit(fw_id, enhancement)
+
         for fw_id, catalog in catalogs.items():
             for control in catalog.controls:
-                if control.withdrawn:
-                    continue
-                key = f"{fw_id}:{control.id}"
-                required[key].append((fw_id, control))
-                # Include enhancements as separate requirements
-                for enhancement in control.enhancements:
-                    if enhancement.withdrawn:
-                        continue
-                    enh_key = f"{fw_id}:{enhancement.id}"
-                    required[enh_key].append((fw_id, enhancement))
+                visit(fw_id, control)
 
         return required
 

@@ -300,6 +300,23 @@ class CatalogImportPayload(BaseModel):
     )
 
 
+def _require_string_mapping_keys(data: object) -> None:
+    """Reject keys that JSON would coerce before catalog validation sees them."""
+    pending = [data]
+    seen: set[int] = set()
+    while pending:
+        value = pending.pop()
+        if not isinstance(value, (dict, list)) or id(value) in seen:
+            continue
+        seen.add(id(value))
+        if isinstance(value, dict):
+            if any(not isinstance(key, str) for key in value):
+                raise ValueError("Catalog mapping keys must be strings; YAML keys are not converted")
+            pending.extend(value.values())
+        else:
+            pending.extend(value)
+
+
 def _json_catalog_date(value: object) -> str:
     """Preserve YAML date scalars as ISO strings; reject other non-JSON values."""
     if isinstance(value, date):
@@ -422,6 +439,7 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
     try:
         staged_path = validate_within(Path(staging_dir) / "catalog.json", user_dir)
         try:
+            _require_string_mapping_keys(data)
             serialized = json.dumps(data, indent=2, ensure_ascii=False, default=_json_catalog_date)
         except (TypeError, ValueError) as exc:
             raise api_error(400, "invalid_body", f"Catalog content cannot be represented as JSON: {exc}") from exc

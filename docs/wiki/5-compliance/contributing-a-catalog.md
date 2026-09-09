@@ -163,6 +163,45 @@ separate. Neither dates nor notices change gap-analysis membership. The
 explains the limitations. `text_depth` measures the presence of statement text;
 it does not certify source accuracy or verbatim quotation.
 
+## Source rows and spreadsheet fidelity
+
+Attach optional `source_rows` to a `CatalogControl` when source cells need to
+remain inspectable. These evidence rows do not add controls, statements or gap
+requirements. Each row requires a lowercase SHA-256 claim, a literal nonblank
+sheet name, a positive integer row, a scalar `source_id`, a `kind` of `aggregate`,
+`clause` or `fragment`, and a `values` mapping. Optional `source_id_format` and
+`interpreted_id` retain an explicitly reviewed identifier interpretation.
+Surrounding whitespace in a valid sheet name is preserved.
+
+Map exact, unique source column names to finite JSON scalars. Null, empty text,
+booleans, numbers and whitespace are distinct. Dates and datetimes become ISO
+text. Quote YAML values when text such as `005` must stay a string. Parsed
+mappings cannot recover duplicate input keys; API YAML imports reject non-string
+keys before JSON conversion could collapse them. Builders must check exact
+headers and duplicate IDs before constructing mappings.
+
+Use `resolved_values` only for reviewed spreadsheet merge-anchor projections,
+with the source anchor recorded in `provenance`. Keep physical follower blanks
+in `values`. Do not forward-fill arbitrary blanks or infer applicability from
+priority, audit dates or another row's classification. Both optional mappings
+default to empty. Source rows and their scalar mappings resist ordinary mutation,
+detach input aliases and support deep copying. Invalid copied evidence fails
+model serialization rather than silently changing a nonfinite value to null.
+
+Native JSON/YAML, API imports, saved reloads and framework/control responses
+retain rows, including nested enhancements. CLI control details show JSON scalar
+representations; console details are read-only. Browser number handling does not
+promise arbitrary numeric precision when exporting or rewriting source files.
+The pinned source projections remain the regeneration inputs. SHA-256 syntax
+validation establishes a provenance claim, not publisher authentication.
+
+See `gen_cms_ars.py`, `gen_cjis_companion.py` and the corresponding JSON inputs in
+`scripts/catalogs/sources/` for complete examples. Both generators have explicit
+input/output paths and a `--check` mode. They preserve approved source corrections
+beside their original cells and reject changed interpretation preconditions.
+The [currency guide](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/catalog-currency.md#cms-and-cjis-source-evidence) describes
+source scope, historical references and independent audit contexts.
+
 ## OSCAL sidecar artifacts (v0.10.6+)
 
 A bundled catalog MAY ship a companion OSCAL Catalog 1.2.1

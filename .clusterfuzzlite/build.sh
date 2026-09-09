@@ -14,11 +14,10 @@
 # evidentia_collectors (ocsf collector), pydantic, pyyaml, and — for the
 # OCSF mapping path — the optional [ocsf] extra (py-ocsf-models).
 # --ignore-requires-python: the base image ships Python 3.11, but the workspace
-# declares requires-python >=3.12 as a runtime floor. Every harness-reached
-# module imports clean on 3.11 (the only PEP 695 generic classes live in the
-# unreached plugins/storage/*); atheris is built against the base's 3.11, so we
-# install on 3.11 rather than swap the interpreter. Without this flag the build
-# fails at "No matching distribution ... requires a different Python".
+# declares requires-python >=3.12 as a runtime floor. Harness-reached modules
+# must remain importable on 3.11; the preflight below checks each one before
+# packaging. atheris is built against the base interpreter, so do not replace
+# it independently of the fuzzing toolchain.
 pip3 install --ignore-requires-python \
   "$SRC/evidentia/packages/evidentia-core[ocsf]" \
   "$SRC/evidentia/packages/evidentia-collectors"
@@ -32,6 +31,11 @@ cd "$PYFUZZ_DIR"
 
 for harness in fuzz_*.py; do
   name="${harness%.py}"
+  # Import the actual harness before freezing it. PyInstaller can omit a module
+  # with unsupported syntax and report only a missing module at startup.
+  # The alternate run name leaves the harness main function uncalled.
+  python3 -c "import runpy, sys; runpy.run_path(sys.argv[1], run_name='__fuzz_build_import__')" \
+    "$PYFUZZ_DIR/$harness"
   # --add-data bundles the shared _harness_util.py into each fuzzer. The
   # harnesses do `from _harness_util import to_text`, but compile_python_fuzzer
   # runs PyInstaller from a temp copy of the script, so the sibling module is

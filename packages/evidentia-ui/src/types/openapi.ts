@@ -3874,6 +3874,11 @@ export interface components {
              */
             risk_tier?: string | null;
             /**
+             * Source Rows
+             * @description Source evidence outside control indexes, statement counts and gap denominators
+             */
+            source_rows?: components["schemas"]["CatalogSourceRow"][];
+            /**
              * Tier
              * @description Redistribution tier: 'A' (public domain), 'B' (free-restricted), 'C' (copyrighted, license required), 'D' (government regulation)
              */
@@ -4000,6 +4005,53 @@ export interface components {
              * @description Short published heading
              */
             title: string;
+        };
+        /**
+         * CatalogSourceRow
+         * @description Source evidence, independent of indexed controls and applicability.
+         */
+        CatalogSourceRow: {
+            /** Interpreted Id */
+            interpreted_id?: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "aggregate" | "clause" | "fragment";
+            /** Provenance */
+            provenance?: {
+                [key: string]: string;
+            };
+            /**
+             * Resolved Values
+             * @description Reviewed source merge-anchor values, separate from raw physical blanks
+             */
+            resolved_values?: {
+                [key: string]: string | number | boolean | null;
+            };
+            /**
+             * Row
+             * @description One-based physical source row
+             */
+            row: number;
+            /**
+             * Sheet
+             * @description Literal nonblank source sheet name
+             */
+            sheet: string;
+            /** Source Id */
+            source_id: string | number | boolean | null;
+            /** Source Id Format */
+            source_id_format?: string | null;
+            /**
+             * Source Sha256
+             * @description Claimed SHA-256 of source bytes; not proof of authenticity
+             */
+            source_sha256: string;
+            /** Values */
+            values: {
+                [key: string]: string | number | boolean | null;
+            };
         };
         /**
          * ChallengeOutcome

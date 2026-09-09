@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -106,3 +110,60 @@ class TestFrameworksOpenApiErrorDocs:
             responses = schema["paths"][path][method]["responses"]
             for status in statuses:
                 assert status in responses, f"{method.upper()} {path} missing {status}"
+
+
+def test_source_row_response_schema_preserves_declared_fields(api_client: TestClient) -> None:
+    schemas = api_client.get("/api/openapi.json").json()["components"]["schemas"]
+    row_ref = schemas["CatalogControl"]["properties"]["source_rows"]["items"]["$ref"].rsplit("/", 1)[-1]
+    row = schemas[row_ref]
+    assert set(row["properties"]) == {
+        "source_sha256",
+        "sheet",
+        "row",
+        "source_id",
+        "source_id_format",
+        "interpreted_id",
+        "kind",
+        "values",
+        "resolved_values",
+        "provenance",
+    }
+    assert row["additionalProperties"] is False
+    assert row["properties"]["values"]["type"] == "object"
+    assert row["properties"]["kind"]["enum"] == ["aggregate", "clause", "fragment"]
+
+
+@pytest.mark.parametrize(
+    ("framework", "selected_control", "expected_rows"),
+    [("cms-ars-5.2", "MA-04(04)", 1681), ("cjis-v6.1", "5.20", 1533)],
+)
+def test_bundled_source_rows_survive_full_http_responses(
+    api_client: TestClient,
+    framework: str,
+    selected_control: str,
+    expected_rows: int,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("EVIDENTIA_CATALOG_DIR", str(tmp_path / "user-catalogs"))
+    root = Path(__file__).resolve().parents[3]
+    path = root / "packages/evidentia-core/src/evidentia_core/catalogs/data/us-federal" / f"{framework}.json"
+    original = json.loads(path.read_text(encoding="utf-8"))
+    expected = {
+        control["id"]: [
+            {"source_id_format": None, "interpreted_id": None, "resolved_values": {}, "provenance": {}, **row}
+            for row in control["source_rows"]
+        ]
+        for control in original["controls"]
+    }
+    response = api_client.get(f"/api/frameworks/{framework}")
+    assert response.status_code == 200, response.text[:1000]
+    actual = {control["id"]: control["source_rows"] for control in response.json()["controls"]}
+    assert sum(map(len, actual.values())) == expected_rows
+    # JSON text comparison also distinguishes true/1, 5/5.0 and negative zero.
+    assert json.dumps(actual, sort_keys=True) == json.dumps(expected, sort_keys=True)
+    detail = api_client.get(f"/api/frameworks/{framework}/controls/{selected_control}")
+    assert detail.status_code == 200, detail.text[:1000]
+    assert json.dumps(detail.json()["source_rows"], sort_keys=True) == json.dumps(
+        expected[selected_control], sort_keys=True
+    )

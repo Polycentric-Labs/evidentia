@@ -17,6 +17,7 @@ crosswalks are read-only and shared.
 from __future__ import annotations
 
 import json
+import math
 import os
 from collections.abc import Iterator
 from pathlib import Path
@@ -643,3 +644,172 @@ def test_yaml_non_json_value_rejection_preserves_existing_import(cat_client: Tes
     assert response.status_code == 400, response.text
     assert response.json()["detail"]["error"] == "invalid_body"
     assert {p.name: p.read_bytes() for p in folder.iterdir() if p.is_file()} == before
+
+
+def _source_row_catalog_payload() -> dict[str, object]:
+    from datetime import date
+
+    row = {
+        "source_sha256": "b" * 64,
+        "sheet": " v6.1 ",
+        "row": 1461,
+        "source_id": 5.2,
+        "source_id_format": "0.00",
+        "interpreted_id": "5.20",
+        "kind": "fragment",
+        "values": {" raw\n": " \u00a0 ", "null": None, "empty": "", "bool": True, "int": 5, "float": 5.0, "U": None},
+        "resolved_values": {"U": "Existing", "null": None, "bool": True, "int": 5, "float": 5.0, "zero": -0.0},
+        "provenance": {"U:anchor": "U1460", "U:merged_range": "U1460:U1461"},
+    }
+    dated_row = {
+        **row,
+        "row": 1462,
+        "source_id": date(2026, 7, 23),
+        "values": {"date": date(2026, 7, 23), "date_text": "2026-07-23"},
+        "resolved_values": {"date": date(2026, 7, 23)},
+    }
+    return {
+        "framework_id": "acme-source-rows",
+        "framework_name": "Source rows",
+        "source": "test",
+        "version": "1",
+        "controls": [
+            {
+                "id": "AC-1",
+                "title": "Top",
+                "description": "Maintain a policy.",
+                "source_rows": [row],
+                "enhancements": [
+                    {
+                        "id": "AC-1(1)",
+                        "title": "Child",
+                        "description": "Apply the policy.",
+                        "enhancements": [
+                            {
+                                "id": "AC-1(1)(a)",
+                                "title": "Leaf",
+                                "description": "Review the policy.",
+                                "source_rows": [dated_row],
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+
+
+@pytest.mark.parametrize("fmt", ["json", "yaml"])
+@pytest.mark.parametrize("source_id", [None, "", "005", 0, 2**80, 5.0, 5.2, -0.0, True, False])
+def test_imported_source_rows_survive_saved_reload_and_both_http_responses(
+    cat_client: TestClient, fmt: str, source_id: object
+) -> None:
+    from evidentia_api.routers import frameworks
+    from evidentia_core.catalogs.loader import load_evidentia_catalog
+    from evidentia_core.catalogs.registry import FrameworkRegistry
+
+    app = cat_client.app
+    assert isinstance(app, FastAPI)
+    app.include_router(frameworks.router, prefix="/api")
+    data = _source_row_catalog_payload()
+    data["controls"][0]["source_rows"][0]["source_id"] = source_id
+    json_content = json.dumps(data, default=lambda value: value.isoformat())
+    expected = json.loads(json_content)
+    content = json_content if fmt == "json" else yaml.safe_dump(data, sort_keys=False)
+    FrameworkRegistry.reset_instance()
+    try:
+        imported = cat_client.post(
+            "/api/catalog/import", json={"framework_id": "acme-source-rows", "format": fmt, "content": content}
+        )
+        assert imported.status_code == 201, imported.text
+        saved_path = Path(imported.json()["path"])
+        saved = json.loads(saved_path.read_text(encoding="utf-8"))
+        assert saved["controls"] == expected["controls"]
+        loaded = load_evidentia_catalog(saved_path)
+        assert loaded.control_count == 3
+        assert loaded.get_control("5.20") is None
+        top = cat_client.get("/api/frameworks/acme-source-rows")
+        leaf = cat_client.get("/api/frameworks/acme-source-rows/controls/AC-1.1.A")
+        assert top.status_code == leaf.status_code == 200
+        expected_top = expected["controls"][0]
+        expected_leaf = expected_top["enhancements"][0]["enhancements"][0]
+        assert top.json()["controls"][0]["source_rows"] == expected_top["source_rows"]
+        assert leaf.json()["source_rows"] == expected_leaf["source_rows"]
+        assert (
+            top.json()["controls"][0]["enhancements"][0]["enhancements"][0]["source_rows"]
+            == expected_leaf["source_rows"]
+        )
+        actual_row = top.json()["controls"][0]["source_rows"][0]
+        assert type(actual_row["source_id"]) is type(source_id)
+        if isinstance(source_id, float) and source_id == 0:
+            assert math.copysign(1, actual_row["source_id"]) == math.copysign(1, source_id)
+        for mapping in ("values", "resolved_values"):
+            for key, expected_value in expected_top["source_rows"][0][mapping].items():
+                actual_value = actual_row[mapping][key]
+                assert type(actual_value) is type(expected_value)
+                if isinstance(expected_value, float) and expected_value == 0:
+                    assert math.copysign(1, actual_value) == math.copysign(1, expected_value)
+        assert type(top.json()["controls"][0]["source_rows"][0]["values"]["int"]) is int
+        assert type(top.json()["controls"][0]["source_rows"][0]["values"]["float"]) is float
+        assert cat_client.get("/api/frameworks/acme-source-rows/controls/5.20").status_code == 404
+    finally:
+        FrameworkRegistry.reset_instance()
+
+
+@pytest.mark.parametrize("fmt", ["json", "yaml"])
+@pytest.mark.parametrize("field", ["source_id", "values", "resolved_values"])
+def test_invalid_source_evidence_force_import_preserves_installed_bytes(
+    cat_client: TestClient, fmt: str, field: str
+) -> None:
+    data = _source_row_catalog_payload()
+    content = json.dumps(data, default=lambda value: value.isoformat())
+    valid_payload = {"framework_id": "acme-source-rows", "format": "json", "content": content}
+    created = cat_client.post("/api/catalog/import", json=valid_payload)
+    assert created.status_code == 201, created.text
+    saved = Path(created.json()["path"])
+    before = {path.name: path.read_bytes() for path in saved.parent.iterdir() if path.is_file()}
+    changed = json.loads(content)
+    row = changed["controls"][0]["source_rows"][0]
+    row[field] = float("nan") if field == "source_id" else {"bad": float("nan")}
+    invalid_content = json.dumps(changed) if fmt == "json" else yaml.safe_dump(changed, sort_keys=False)
+    rejected = cat_client.post(
+        "/api/catalog/import",
+        json={"framework_id": "acme-source-rows", "format": fmt, "content": invalid_content, "force": True},
+    )
+    assert rejected.status_code == 400, rejected.text
+    assert rejected.json()["detail"]["error"] == "invalid_body"
+    assert {path.name: path.read_bytes() for path in saved.parent.iterdir() if path.is_file()} == before
+    assert not list(saved.parent.glob(".catalog-import-*"))
+
+
+@pytest.mark.parametrize("field", ["values", "resolved_values", "provenance"])
+@pytest.mark.parametrize("nested", [False, True])
+@pytest.mark.parametrize("bad_key", [1, 1.5, False, None])
+def test_yaml_non_string_source_keys_reject_before_lossy_json_staging(
+    cat_client: TestClient, field: str, nested: bool, bad_key: object
+) -> None:
+    data = _source_row_catalog_payload()
+    created = cat_client.post(
+        "/api/catalog/import",
+        json={"framework_id": "acme-source-rows", "format": "yaml", "content": yaml.safe_dump(data, sort_keys=False)},
+    )
+    assert created.status_code == 201, created.text
+    saved = Path(created.json()["path"])
+    before = {path.name: path.read_bytes() for path in saved.parent.iterdir() if path.is_file()}
+    control = data["controls"][0]
+    if nested:
+        control = control["enhancements"][0]["enhancements"][0]
+    control["source_rows"][0][field] = {bad_key: "non-string key cell", str(bad_key): "string key cell"}
+    rejected = cat_client.post(
+        "/api/catalog/import",
+        json={
+            "framework_id": "acme-source-rows",
+            "format": "yaml",
+            "content": yaml.safe_dump(data, sort_keys=False),
+            "force": True,
+        },
+    )
+    assert rejected.status_code == 400, rejected.text
+    assert rejected.json()["detail"]["error"] == "invalid_body"
+    assert {path.name: path.read_bytes() for path in saved.parent.iterdir() if path.is_file()} == before
+    assert not list(saved.parent.glob(".catalog-import-*"))
