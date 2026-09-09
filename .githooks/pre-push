@@ -65,6 +65,16 @@
 #                                  formatter would change blocks the push,
 #                                  matching the format step in the CI
 #                                  `ruff` job)
+#  19. check_catalog_truth        (v0.13: the inventory-summary table on the
+#                                  catalog docs page and the manifest/crosswalk
+#                                  claims behind it were unchecked; this
+#                                  compares each catalog's declared text_depth
+#                                  against its derived depth, validates
+#                                  crosswalk framework ids against the
+#                                  bundled/family/external sets, checks
+#                                  crosswalk id resolution against the bundled
+#                                  catalogs, and byte-compares the generated
+#                                  inventory block)
 #
 # All checks run before the hook exits, so the operator sees every
 # failure at once.
@@ -404,6 +414,19 @@ run_check "check_public_surface" \
 #     formatter would change is a push blocker, matching the format step in
 #     the CI `ruff` job. `--no-cache` for the same reason as check 15.
 run_check "check_ruff_format" run_ruff format --check . --no-cache || true
+
+# 19. Catalog truth (v0.13): the catalog-inventory summary table and the
+#     manifest/crosswalk claims it renders had no mechanical check. This
+#     compares each catalog's declared text_depth against the depth derived
+#     from its controls, crosswalk framework ids against the bundled/family/
+#     external sets, and crosswalk id resolution against the bundled
+#     catalogs. It imports the workspace, so it needs the same environment
+#     the wiki-drift checks and check_public_surface already require.
+if ! run_check "check_catalog_truth" \
+    run_py "${REPO_ROOT}/scripts/check_catalog_truth.py"; then
+    # run_check records the failure; the final verdict below blocks the push.
+    :
+fi
 
 # ---------------------------------------------------------------------------
 # Verdict.

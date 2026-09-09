@@ -20,7 +20,7 @@ v0.10.7.** Layers 1 and 3 are explicitly deferred.
 | Layer | Purpose | Status |
 |---|---|---|
 | **L1 — local Scorecard sweep** | Run an OpenSSF Scorecard pass locally before push | **DEFERRED to v0.10.8+** — duplicates the scheduled CI Scorecard workflow with no new signal |
-| **L2 — blocking checks** | 17 fast checks that BLOCK the push on failure | **SHIPPED v0.10.7**; grown each cycle since |
+| **L2: blocking checks** | 19 fast checks that BLOCK the push on failure | **SHIPPED v0.10.7**; grown each cycle since |
 | **L3 — warning-only** | actionlint + online pinact advisories | **DEFERRED to v0.10.8+** — catches syntax errors the GitHub Actions UI already surfaces |
 
 The marginal value of L1 + L3 did not justify the added push latency +
@@ -59,8 +59,9 @@ kept in step with it. Numbering matches that header.
 | 14 | `check_doc_counts` | `scripts/check_doc_counts.py` | a README at-a-glance count that disagrees with code-derived truth |
 | 15 | `check_ruff` | `ruff check . --no-cache` | any lint error (shifted left from CI so a cached pass cannot hide one) |
 | 16 | `check_roadmap_currency` | `scripts/check_roadmap_currency.py` | a ROADMAP status heading disagreeing with the CHANGELOG, more than one open cycle, or an open cycle with no on-disk plan doc |
-| 17 | `check_public_surface` | `scripts/check_public_surface.py` | a §5 frozen import that no longer resolves, an MCP frozen-tool/live-server mismatch, or a frozen env var that vanished from `packages/*/src` |
+| 17 | `check_public_surface` | `scripts/check_public_surface.py` | a frozen model module, symbol or callable that does not resolve, an undocumented model module, a frozen import that no longer resolves, an MCP frozen-tool/live-server mismatch, or a frozen env var that vanished from `packages/*/src` |
 | 18 | `check_ruff_format` | `ruff format --check . --no-cache` | any file the formatter would change (the tree has been format-clean since the v0.13 whole-repo reformat) |
+| 19 | `check_catalog_truth` | `scripts/check_catalog_truth.py` | a manifest text_depth that disagrees with the depth derived from its catalog, an invalid crosswalk framework id, crosswalk ids that fail to resolve against the bundled catalogs, a Tier C catalog missing the placeholder/license_required/headings invariant, or a stale catalog-inventory summary block |
 
 ### 1. check_action_pins — and the pinact SKIP-vs-BLOCK rule
 

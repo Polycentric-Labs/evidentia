@@ -1,131 +1,165 @@
 # Catalog inventory
 
-Evidentia bundles **96 framework catalogs** in-tree. This page is the
-compliance-angled view: it groups those catalogs by region / standard
-family and, for each group, tells you **what is production-grade
-authoritative text versus a licensing placeholder**, and **what you may
-redistribute**.
+Evidentia bundles **97 framework catalogs** in-tree. This page is the
+compliance-angled view: it groups those catalogs by region and standard
+family and, for each group, tells you **what you may redistribute** (the
+tier), **how much control text the file actually carries** (the text depth),
+and where a placeholder needs your licensed copy.
 
-For the flat, sortable, always-current table of every catalog ID +
-version + tier + category, see the auto-generated
-[Reference → Catalogs](../4-reference/catalogs.md) page (regenerated from
-the live `frameworks.yaml` manifest on every CI run). This page does not
+For the flat, sortable, always-current table of every catalog id, version,
+tier, text depth and category, see the auto-generated
+[Reference: Catalogs](../4-reference/catalogs.md) page (regenerated from the
+live `frameworks.yaml` manifest on every CI run). This page does not
 duplicate that table; it explains the *posture* behind it. Run
-`evidentia catalog list` to enumerate catalogs at runtime.
+`evidentia catalog list` to enumerate catalogs at runtime; the `Text` column
+is the text depth.
 
-## The licensing tiers (what you can actually use)
+## Redistribution tier and text depth
 
-Every catalog carries a redistribution **tier**. The tier is the single
-most important fact for a compliance program, because it tells you
-whether Evidentia ships the authoritative control text or only the
-neutral control numbering:
+Every catalog carries two independent facts.
 
-| Tier | What ships | Production-grade? | Redistribution |
-|---|---|---|---|
-| **A** | Full authoritative control text | ✅ Yes — public-domain / open-licensed source | Bundled verbatim; freely redistributable |
-| **B** | Full authoritative content (sample subset for some) | ✅ Yes — free with attribution | Bundled with attribution |
-| **C** | Control IDs + neutral titles **only** (text is copyrighted) | ⚠️ Placeholder — you supply the licensed text | Not bundled; `license_url` points to where to obtain it |
-| **D** | Paraphrased obligation / regulation references | ✅ Usable — statutory obligations restated | Bundled (statutes/regulations are not copyrightable) |
+The **redistribution tier** is the legal posture: what Evidentia may bundle and
+what you may redistribute.
 
-The current distribution across all 96 catalogs:
-
-| Tier | Count | Meaning for your program |
+| Tier | Redistribution | Typical sources |
 |---|---|---|
-| A | **50** | Drop-in. Full text bundled. Most US federal + international control frameworks. |
-| B | **4** | Drop-in with attribution. MITRE ATT&CK / CAPEC / CWE + CISA KEV. |
-| C | **22** | **Placeholder.** ISO, CIS, PCI DSS, COBIT, SOC 2, etc. — import your licensed copy via `evidentia catalog import`. |
-| D | **20** | Usable. Privacy statutes + EU regulations, restated as obligations. |
+| **A** | Public-domain or open-licensed; bundled and freely redistributable | US federal works, Apache-2.0 upstreams |
+| **B** | Free to use with attribution | MITRE ATT&CK / CAPEC / CWE, CISA KEV |
+| **C** | Copyrighted; only the public numbering and neutral titles ship, as a placeholder | ISO, CIS, PCI DSS, SOC 2, HITRUST, COBIT |
+| **D** | Government regulation or statute, restated as obligations | GDPR, NIS2, DORA, US state privacy laws |
 
-**The Tier-C distinction is the one to internalize.** A Tier-C catalog
-(e.g. `iso-27001-2022`, `pci-dss-4.0.1`, `soc2-tsc`) ships only the
-public control numbering (ISO 27001 Annex A IDs, SOC 2 CC1–CC9 / A1 /
-C1 / P1–P8 / PI1, etc.) and a `license_url`. It is a **scaffold, not a
-finished catalog** — gap analysis against it will key off the right
-control IDs, but the control text your auditors read must come from your
-licensed copy. All 22 Tier-C catalogs are flagged `placeholder: true` +
-`license_required: true` in the manifest, so they are unambiguous at
-runtime.
+The **text depth** is what is actually in the file, derived from the entries by
+`evidentia_core.models.catalog.derive_text_depth` and never declared:
 
-See [`ATTRIBUTION.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/ATTRIBUTION.md)
-at the repo root for the per-source license statements.
+| Text depth | Meaning |
+|---|---|
+| `full` | Every non-withdrawn entry carries statement text that differs from its title |
+| `partial` | Some entries do |
+| `headings` | None does: the catalog carries control numbering and titles only |
+
+Through v0.12 this page said "Tier A = full authoritative control text". That
+was not true: the tier never measured text, and 26 Tier-A catalogs carry
+headings only. The manifest column is regenerated from the files by
+`scripts/catalogs/regenerate_manifest.py`, and `scripts/check_catalog_truth.py`
+fails the `consistency` gate whenever the column, the families or the
+crosswalk identifiers disagree with the files. The block below is written by
+that script.
+
+<!-- BEGIN catalog-truth (generated by scripts/check_catalog_truth.py) -->
+The current distribution across all 97 catalogs, derived from the manifest and the
+catalog files themselves (the text depth is computed, never declared):
+
+| Tier | Catalogs | Full text | Partial text | Headings only |
+|---|---|---|---|---|
+| A | 51 | 25 | 0 | 26 |
+| B | 4 | 4 | 0 | 0 |
+| C | 22 | 0 | 0 | 22 |
+| D | 20 | 3 | 0 | 17 |
+<!-- END catalog-truth -->
+
+A Tier-C catalog
+(for example `iso-27001-2022`, `pci-dss-4.0.1`, `soc2-tsc`) ships only the
+public control numbering (ISO 27001 Annex A ids, SOC 2 CC1 to CC9 / A1 / C1 /
+P1 to P8 / PI1, and so on) and a `license_url`. It provides a starting structure: gap analysis against it keys off the control ids,
+but the control text your auditors read must come from your licensed copy.
+All 22 Tier-C catalogs are flagged `placeholder: true` and
+`license_required: true` in the manifest, so they are unambiguous at runtime.
+
+A heading-only Tier-A or Tier-D catalog is different in kind: nothing is
+withheld for licensing reasons, the bundled file simply captures the
+framework's structure (ids, titles, families) and not the statement text.
+Gap analysis works the same way; the difference shows in the `Text` column,
+in `control_description` on each gap, and in what `evidentia explain` has to
+work with. Filling those catalogs in is tracked on the roadmap; the point of
+the column is that the product says which ones they are.
+
+Per-catalog license statements are the `license` and `source_url` columns of
+the manifest; `evidentia catalog license-info <id>` prints them together with
+the tier and the text depth.
 
 ## By region / standard family
 
-### US Federal (38 catalogs — all Tier-A)
+### US Federal (41 catalogs, all Tier-A)
 
-The deepest coverage area, and entirely production-grade. Includes:
+The deepest coverage area. Full text in the NIST SP 800-53 Rev 5 catalog and
+its baselines, the FedRAMP Rev 5 baselines and CR26 catalogs, NIST CSF 2.0,
+the FFIEC stack, the FDA Section 524B categories and the OCC / FRB model-risk
+guidance; headings only in the rest (marked below).
 
-- **NIST SP 800-53 Rev 5** — Low / Moderate / High / Privacy baselines
-  (resolved from `usnistgov/oscal-content`, CC0) plus the legacy
-  16-control `nist-800-53-mod` sample retained for backward compatibility.
-- **FedRAMP Rev 5** — Low / Moderate / High / LI-SaaS baselines.
-- **CMMC 2.0** — Level 1 / 2 / 3.
-- **NIST SP 800-171** Rev 2 + Rev 3, **800-172**, **CSF 2.0**,
-  **SSDF 800-218**, **AI RMF 1.0**, **Privacy Framework 1.0**.
-- **HIPAA** (Security / Privacy / Breach), **GLBA Safeguards**,
-  **CJIS v6**, **IRS Pub 1075**, **CMS ARS 5.1**, **FDA 21 CFR Part 11**,
-  **NERC CIP**, **NY DFS Part 500**, **CISA CPGs**.
-- **The full FFIEC IT Examination Handbook stack** — Audit, Management,
-  Information Security, Operations, Outsourcing booklets + the
-  Cybersecurity Assessment Tool.
-- **OCC Bulletin 2026-13a / FRB SR 26-02** (model risk; supersedes the
-  SR 11-7 / OCC 2011-12 line).
+- **NIST SP 800-53 Rev 5**: the full 1,196-entry catalog (182 of them
+  withdrawn upstream and flagged as such) plus the Low / Moderate / High /
+  Privacy baselines (resolved from `usnistgov/oscal-content`, CC0), and the
+  legacy 16-control `nist-800-53-mod` sample retained for backward
+  compatibility. The baselines and the sample belong to the
+  `nist-800-53-rev5` crosswalk family.
+- **FedRAMP Rev 5**: Low / Moderate / High / LI-SaaS baselines (same family),
+  plus the CR26 Key Security Indicator and Requirements catalogs.
+- **CMMC 2.0**: Level 1 / 2 / 3 (headings only).
+- **NIST SP 800-171** Rev 2 and Rev 3, **800-172**, **AI RMF 1.0**,
+  **Privacy Framework 1.0**, **SSDF 800-218** (headings only); **CSF 2.0**
+  (full text).
+- **HIPAA** (Security / Privacy / Breach), **GLBA Safeguards**, **CJIS v6**,
+  **IRS Pub 1075**, **CMS ARS 5.1**, **FDA 21 CFR Part 11**, **NERC CIP**,
+  **NY DFS Part 500**, **CISA CPGs** (headings only).
+- **The full FFIEC IT Examination Handbook stack**: Audit, Management,
+  Information Security, Operations, Outsourcing booklets and the
+  Cybersecurity Assessment Tool (full text).
+- **OCC Bulletin 2026-13 / FRB SR 26-2** (model risk; supersedes the
+  SR 11-7 / OCC 2011-12 line; full text).
 
-All ship verbatim because US Government works are public domain.
+The manifest records the source and redistribution terms for each catalog.
 
 ### International (15 catalogs)
 
-Mostly Tier-A; a handful of EU regulations are Tier-D obligations:
-
-- **Tier-A control frameworks**: Australian Essential Eight + ISM,
-  Canada ITSG-33, NZ NZISM, UK Cyber Essentials + NCSC CAF 3.2,
-  EU AI Act, and the **3 OpenSSF OSPS Baseline maturity catalogs**
-  (M1 / M2 / M3 — verbatim under upstream Apache-2.0; see the
+- **Tier-A control frameworks**: Australian Essential Eight and ISM, Canada
+  ITSG-33, NZ NZISM, UK Cyber Essentials and NCSC CAF 3.2 (headings only);
+  EU AI Act (full text); and the **3 OpenSSF OSPS Baseline maturity
+  catalogs** (M1 / M2 / M3, verbatim under upstream Apache-2.0, full text;
+  they belong to the `osps-baseline` crosswalk family; see the
   [OSPS Baseline mapping](osps-baseline-mapping.md) showcase page).
-- **Tier-D obligations / regulations**: EU GDPR, EU NIS2, EU DORA,
-  Canada PIPEDA, UK DPA 2018. (GDPR / PIPEDA / DPA are categorized
-  `obligation`; NIS2 + DORA are `control`-category regulations restated
-  as paraphrased references.)
+- **Tier-D obligations and regulations**: EU GDPR, Canada PIPEDA and UK DPA
+  2018 restate their obligations in full (categorized `obligation`); EU NIS2
+  and EU DORA are `control`-category regulations captured at heading level.
 
-### US State Privacy (15 catalogs — all Tier-D obligations)
+### US State Privacy (15 catalogs, all Tier-D obligations)
 
-The complete set of comprehensive US state consumer-privacy laws:
-California (CCPA/CPRA), Colorado, Connecticut, Delaware, Florida, Iowa,
-Maryland, Minnesota, Montana, New Hampshire, Oregon, Tennessee, Texas,
-Utah, Virginia. Each is a paraphrased obligation reference (state
-statutes are not copyrightable under the government-edicts doctrine), so
-all 15 are bundled and usable.
+The bundled set covers fifteen US state consumer-privacy laws: California
+(CCPA/CPRA), Colorado, Connecticut, Delaware, Florida, Iowa, Maryland,
+Minnesota, Montana, New Hampshire, Oregon, Tennessee, Texas, Utah, Virginia.
+State statutes are not copyrightable under the government-edicts doctrine, so
+all 15 are bundled; each captures the statute's obligation structure at
+heading level (`headings`), not the statutory text.
 
-### Threat Intelligence (4 catalogs — all Tier-B)
+### Threat Intelligence (4 catalogs, all Tier-B, full text)
 
-Cross-reference frameworks that ride alongside control catalogs:
-MITRE **ATT&CK Enterprise**, **CAPEC**, **CWE** (2024 Top-25 sample),
-and the **CISA KEV** sample. Tier-B because they are free to use with
-attribution; the KEV sample is a daily-refreshable subset of the full
-catalog.
+Cross-reference frameworks that ride alongside control catalogs: MITRE
+**ATT&CK Enterprise**, **CAPEC**, **CWE** (2024 Top-25 sample), and the
+**CISA KEV** sample. Tier-B because they are free to use with attribution; the
+KEV sample is a daily-refreshable subset of the full catalog.
 
-### License-required placeholders (20 catalogs — all Tier-C)
+### License-required placeholders (22 catalogs, all Tier-C, headings only)
 
-These are the frameworks whose control **text** is copyrighted, so
-Evidentia ships only the public numbering + a `license_url`:
+These are the frameworks whose control **text** is copyrighted, so Evidentia
+ships only the public numbering, neutral titles and a `license_url`:
 
-- **ISO/IEC**: 27001:2022, 27002:2022, 27017:2015, 27018:2019,
-  27701:2019, 42001:2023, 22301:2019.
-- **CIS**: Critical Security Controls v8.1 + the AWS / Azure / GCP /
+- **ISO/IEC**: 27001:2022, 27002:2022, 27017:2015, 27018:2019, 27701:2019,
+  42001:2023 (the 38 Annex A control identifiers under their nine
+  objectives), 22301:2019, 14971.
+- **CIS**: Critical Security Controls v8.1 and the AWS / Azure / GCP /
   Kubernetes / RHEL 9 Foundations Benchmarks.
-- **Others**: PCI DSS v4.0.1, COBIT 2019, HITRUST CSF v11, IEC 62443,
-  SCF 2024, SWIFT CSCF 2024, **SOC 2 Trust Services Criteria**.
+- **Others**: PCI DSS v4.0.1, COBIT 2019, HITRUST CSF v11, IEC 62443, SCF
+  2024, SWIFT CSCF 2024, **SOC 2 Trust Services Criteria**, ANSI/AAMI SW96.
 
-To use one of these for a real assessment, obtain the authoritative text
-from the source (`license_url` is in the manifest + on the
-[Reference → Catalogs](../4-reference/catalogs.md) page) and load your
-licensed copy with `evidentia catalog import`. See
-[Contributing a catalog](contributing-a-catalog.md) for the catalog
-schema if you are hand-authoring one.
+To use one of these for a real assessment, obtain the authoritative text from
+the source (`license_url` is in the manifest and on the
+[Reference: Catalogs](../4-reference/catalogs.md) page) and load your licensed
+copy with `evidentia catalog import`. See
+[Contributing a catalog](contributing-a-catalog.md) for the catalog schema if
+you are hand-authoring one.
 
 ## Adding a catalog or holding a version
 
-- **Add a new framework**: 3-file PR — see
+- **Add a new framework**: 3-file PR; see
   [Contributing a catalog](contributing-a-catalog.md).
 - **Hold a catalog version**: no `catalog pin` command exists or is scheduled.
   So that an authoritative-source refresh does not shift your assessment
@@ -133,16 +167,16 @@ schema if you are hand-authoring one.
   `evidentia catalog import`; a user-imported catalog shadows the bundled one
   under the same framework id, and `evidentia catalog where <framework>` shows
   which copy resolves. Catalog content is a non-frozen surface
-  ([api-stability.md](../6-project/api-stability.md) §"Bundled catalog
+  ([api-stability.md](../6-project/api-stability.md) "Bundled catalog
   content"): it evolves as NIST / ISO / EU sources publish updates.
 
 ## See also
 
-- [Reference → Catalogs](../4-reference/catalogs.md) — the flat,
-  always-current table (auto-generated from the manifest).
-- [Crosswalk index](crosswalk-index.md) — how the bundled catalogs map
-  to one another.
-- [OSPS Baseline mapping](osps-baseline-mapping.md) — the showcase
-  deep-dive on the 3 OSPS Baseline catalogs + their crosswalks.
-- [`ATTRIBUTION.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/ATTRIBUTION.md)
-  — per-source license statements.
+- [Reference: Catalogs](../4-reference/catalogs.md), the flat, always-current
+  table (auto-generated from the manifest).
+- [Crosswalk index](crosswalk-index.md), how the bundled catalogs map to one
+  another, and which crosswalk identifiers resolve.
+- [OSPS Baseline mapping](osps-baseline-mapping.md), the showcase deep-dive
+  on the 3 OSPS Baseline catalogs and their crosswalks.
+- [Contributing a catalog](contributing-a-catalog.md), the per-tier
+  redistribution rules and the text-depth derivation.
