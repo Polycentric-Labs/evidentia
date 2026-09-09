@@ -63,6 +63,10 @@ class CrosswalkEngine:
         self._forward: dict[tuple[str, str, str], list[FrameworkMapping]] = {}
         # Reverse index built from each forward entry
         self._reverse: dict[tuple[str, str, str], list[FrameworkMapping]] = {}
+        # Control ID buckets share the mapping lists and retain each
+        # direction's insertion order across member and family keys.
+        self._forward_by_control: dict[str, dict[tuple[str, str, str], list[FrameworkMapping]]] = {}
+        self._reverse_by_control: dict[str, dict[tuple[str, str, str], list[FrameworkMapping]]] = {}
         self._crosswalks: list[CrosswalkDefinition] = []
 
     @property
@@ -106,7 +110,9 @@ class CrosswalkEngine:
                 mapping.source_control_id.upper(),
                 crosswalk.target_framework,
             )
-            self._forward.setdefault(src_key, []).append(mapping)
+            forward_mappings = self._forward.setdefault(src_key, [])
+            forward_mappings.append(mapping)
+            self._forward_by_control.setdefault(src_key[1], {})[src_key] = forward_mappings
 
             # Reverse mapping (swap source/target)
             rev_mapping = FrameworkMapping(
@@ -122,7 +128,9 @@ class CrosswalkEngine:
                 mapping.target_control_id.upper(),
                 crosswalk.source_framework,
             )
-            self._reverse.setdefault(rev_key, []).append(rev_mapping)
+            reverse_mappings = self._reverse.setdefault(rev_key, [])
+            reverse_mappings.append(rev_mapping)
+            self._reverse_by_control.setdefault(rev_key[1], {})[rev_key] = reverse_mappings
 
         return crosswalk
 
@@ -166,12 +174,12 @@ class CrosswalkEngine:
         keys = set(self.lookup_keys(framework))
         results: dict[str, list[FrameworkMapping]] = {}
 
-        for (src_fw, src_ctl, tgt_fw), mappings in self._forward.items():
-            if src_fw in keys and src_ctl == ctl:
+        for (src_fw, _, tgt_fw), mappings in self._forward_by_control.get(ctl, {}).items():
+            if src_fw in keys:
                 results.setdefault(tgt_fw, []).extend(mappings)
 
-        for (src_fw, src_ctl, tgt_fw), mappings in self._reverse.items():
-            if src_fw in keys and src_ctl == ctl:
+        for (src_fw, _, tgt_fw), mappings in self._reverse_by_control.get(ctl, {}).items():
+            if src_fw in keys:
                 results.setdefault(tgt_fw, []).extend(mappings)
 
         return results

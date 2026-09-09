@@ -230,6 +230,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   top-level controls and recursively nested groups. `resolve_profile()` gains an
   optional keyword-only `source_catalog_path` override for a single-import profile.
   An explicit override with multiple imports fails because its source is ambiguous.
+  Direct CLI and API imports tolerate denied temporary-directory removal without
+  recursive cleanup on Python 3.12 POSIX systems. API framework IDs reject trailing
+  newlines and Windows device basenames, and resolved destinations must remain
+  inside the user catalog directory.
+- **Crosswalk lookup cost.** Mapping lookups use a control-ID index instead of
+  scanning the whole graph for every gap. Mapping order, duplicate rows, incremental
+  loads and returned report content are preserved.
 - **Published schema and runtime agree on non-blank strings.** `NonBlankStr`
   (`evidentia_core.models.common`) carries `minLength: 1` plus the full Python
   whitespace class, and every stripping core model uses it, so a schema-driven client

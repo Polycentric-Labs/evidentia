@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import mkdtemp
 
 import typer
 from evidentia_core.catalogs.manifest import (
@@ -351,8 +351,9 @@ def import_catalog(
 
     # Validate the exact import payload before replacing a user's catalog.
     # A rejected --force import must leave the previous catalog intact.
-    with TemporaryDirectory(prefix=".catalog-import-", dir=user_dir, ignore_cleanup_errors=True) as staging_dir:
-        staged_path = Path(staging_dir) / out_path.name
+    staging_dir = mkdtemp(prefix=".catalog-import-", dir=user_dir)
+    try:
+        staged_path = Path(staging_dir) / "catalog.json"
         if framework_id or name:
             staged_path.write_text(json.dumps(data, indent=2), encoding="utf-8", newline="\n")
         else:
@@ -378,6 +379,10 @@ def import_catalog(
             license_terms=license_terms,
             text_depth=text_depth,
         )
+    finally:
+        # Keep cleanup failures separate from validation and publication errors.
+        # rmtree's ignore_errors avoids tempfile's recursive permission retry.
+        shutil.rmtree(staging_dir, ignore_errors=True)
 
     shadow_note = ""
     if load_manifest().get(resolved_id) is not None:

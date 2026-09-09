@@ -14,9 +14,11 @@ import os
 from pathlib import Path
 
 import pytest
+from evidentia.cli import catalog as catalog_cli
 from evidentia.cli.main import app
 from evidentia_core.catalogs.registry import FrameworkRegistry
 from evidentia_core.catalogs.user_dir import load_user_manifest
+from rich.console import Console
 from typer.testing import CliRunner
 
 
@@ -71,7 +73,8 @@ def _minimal_user_catalog(tmp_path: Path, framework_id: str = "my-custom-fw") ->
 # -----------------------------------------------------------------------------
 
 
-def test_catalog_list_runs_without_error(runner: CliRunner) -> None:
+def test_catalog_list_runs_without_error(runner: CliRunner, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(catalog_cli, "console", Console(width=80))
     result = runner.invoke(app, ["catalog", "list"])
     assert result.exit_code == 0, result.output
     assert "Framework" in result.output
@@ -92,8 +95,9 @@ def test_catalog_list_category_filter(runner: CliRunner) -> None:
     assert "eu-gdpr" in result.output or "obligation" in result.output
 
 
-def test_catalog_list_shows_text_depth_column(runner: CliRunner) -> None:
+def test_catalog_list_shows_text_depth_column(runner: CliRunner, monkeypatch: pytest.MonkeyPatch) -> None:
     """The Text column shows each catalog's derived depth, not a declared one."""
+    monkeypatch.setattr(catalog_cli, "console", Console(width=200))
     result = runner.invoke(app, ["catalog", "list"])
     assert result.exit_code == 0, result.output
     assert "Text" in result.output
@@ -321,7 +325,9 @@ def test_profile_import_uses_explicit_catalog(
     assert entry.text_depth == "full"
 
 
-def test_profile_import_missing_override_preserves_user_state(runner: CliRunner, tmp_path: Path) -> None:
+def test_profile_import_missing_override_preserves_user_state(
+    runner: CliRunner, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """A missing explicit source fails before --force can replace a catalog."""
     original = _minimal_user_catalog(tmp_path)
     imported = runner.invoke(app, ["catalog", "import", str(original)])
@@ -333,6 +339,8 @@ def test_profile_import_missing_override_preserves_user_state(runner: CliRunner,
     profile_data = json.loads(profile.read_text(encoding="utf-8"))
     profile_data["profile"]["imports"][0]["href"] = source.name
     profile.write_text(json.dumps(profile_data), encoding="utf-8")
+    missing_source = tmp_path / "missing-override.json"
+    monkeypatch.setattr(catalog_cli, "console", Console(width=len(str(missing_source)) + 100))
 
     result = runner.invoke(
         app,
@@ -342,7 +350,7 @@ def test_profile_import_missing_override_preserves_user_state(runner: CliRunner,
             "--profile",
             str(profile),
             "--catalog",
-            str(tmp_path / "missing-override.json"),
+            str(missing_source),
             "--framework-id",
             "my-custom-fw",
             "--force",
@@ -377,9 +385,14 @@ def test_profile_import_rejects_ambiguous_override(runner: CliRunner, tmp_path: 
     assert load_user_manifest().get("my-baseline") is None
 
 
+@pytest.mark.parametrize("posix_directory_unlink", [False, True])
 @pytest.mark.parametrize("replace_existing", [False, True])
 def test_catalog_import_publishes_manifest_before_scratch_cleanup(
-    runner: CliRunner, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, replace_existing: bool
+    runner: CliRunner,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    replace_existing: bool,
+    posix_directory_unlink: bool,
 ) -> None:
     """A locked staging directory cannot leave the published catalog without its manifest."""
     source = _minimal_user_catalog(tmp_path)
@@ -392,6 +405,7 @@ def test_catalog_import_publishes_manifest_before_scratch_cleanup(
     replacement["controls"][0]["description"] = ""
     source.write_text(json.dumps(replacement), encoding="utf-8")
     real_rmdir = os.rmdir
+    real_unlink = os.unlink
     manifests_at_cleanup = []
 
     def locked_staging_directory(path: str, *args: object, **kwargs: object) -> None:
@@ -400,8 +414,15 @@ def test_catalog_import_publishes_manifest_before_scratch_cleanup(
             raise PermissionError("Synthetic staging directory lock")
         real_rmdir(path, *args, **kwargs)
 
+    def posix_unlink(path: str, *args: object, **kwargs: object) -> None:
+        if Path(path).name.startswith(".catalog-import-"):
+            raise IsADirectoryError("POSIX unlink cannot remove a staging directory")
+        real_unlink(path, *args, **kwargs)
+
     with monkeypatch.context() as cleanup_fault:
         cleanup_fault.setattr(os, "rmdir", locked_staging_directory)
+        if posix_directory_unlink:
+            cleanup_fault.setattr(os, "unlink", posix_unlink)
         result = runner.invoke(
             app,
             ["catalog", "import", str(source), "--force", "--tier", "B", "--license-terms", "Synthetic license"],
