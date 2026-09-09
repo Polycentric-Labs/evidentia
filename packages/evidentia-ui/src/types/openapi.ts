@@ -3721,6 +3721,43 @@ export interface components {
             window_start: string;
         };
         /**
+         * CatalogAuditContext
+         * @description A source-verified audit version for one named authority, not a national default.
+         */
+        CatalogAuditContext: {
+            /**
+             * Authority
+             * @description Authority that published this audit scope
+             */
+            authority: string;
+            /**
+             * Notes
+             * @description Scope and limits of the audit-version statement
+             */
+            notes?: string | null;
+            /**
+             * Source Url
+             * @description Primary source for this authority's audit version
+             */
+            source_url: string;
+            /**
+             * Valid Through
+             * @description Last date explicitly covered by the source; None means unknown
+             */
+            valid_through?: string | null;
+            /**
+             * Verified On
+             * Format: date
+             * @description Date the cited source was checked
+             */
+            verified_on: string;
+            /**
+             * Version
+             * @description Version used by the named authority for audits
+             */
+            version: string;
+        };
+        /**
          * CatalogControl
          * @description A single control from a framework catalog.
          */
@@ -3816,9 +3853,16 @@ export interface components {
             placeholder: boolean;
             /**
              * Priority
-             * @description NIST priority: 'P1' (most critical) through 'P3'
+             * @description Publisher priority label, such as P1 through P4; independent of status and applicability
              */
             priority?: string | null;
+            /**
+             * Properties
+             * @description Independent publisher attributes, such as Existing tags and raw baseline or overlay labels
+             */
+            properties?: {
+                [key: string]: string;
+            };
             /**
              * Related Controls
              * @description IDs of related controls within the same framework
@@ -3894,6 +3938,68 @@ export interface components {
              * @default C
              */
             tier: string;
+        };
+        /**
+         * CatalogPublicationNotice
+         * @description A publication record outside the assessed controls, with no automatic activation.
+         */
+        CatalogPublicationNotice: {
+            /**
+             * Approved On
+             * @description Approval or order issuance date
+             */
+            approved_on?: string | null;
+            /**
+             * Effective On
+             * @description Standard's general applicability date
+             */
+            effective_on?: string | null;
+            /**
+             * Id
+             * @description Publisher's designator for the announced revision
+             */
+            id: string;
+            /**
+             * Inactive On
+             * @description Publisher's inactive date for this revision, when verified
+             */
+            inactive_on?: string | null;
+            /**
+             * Notes
+             * @description Jurisdiction, phased dates and source limitations
+             */
+            notes?: string | null;
+            /**
+             * Order Effective On
+             * @description Effective date of the approving legal order
+             */
+            order_effective_on?: string | null;
+            /**
+             * Published On
+             * @description Publication date, when verified
+             */
+            published_on?: string | null;
+            /**
+             * Source Url
+             * @description Primary source for the publication status
+             */
+            source_url: string;
+            /**
+             * Status
+             * @description Status verified in the source, independent of elapsed calendar dates
+             * @enum {string}
+             */
+            status: "approved-future" | "approved-superseded" | "pending";
+            /**
+             * Superseded By
+             * @description Successor designator, when verified
+             */
+            superseded_by?: string | null;
+            /**
+             * Title
+             * @description Short published heading
+             */
+            title: string;
         };
         /**
          * ChallengeOutcome
@@ -4209,6 +4315,13 @@ export interface components {
              */
             annex_iii_risk_categories?: string[] | null;
             /**
+             * Audit Contexts
+             * @description Audit versions keyed by authority jurisdiction, such as US-TX; absent authorities are unknown
+             */
+            audit_contexts?: {
+                [key: string]: components["schemas"]["CatalogAuditContext"];
+            };
+            /**
              * Category
              * @description Catalog type — 'control' for compliance frameworks, 'technique' for ATT&CK/CWE/CAPEC, 'vulnerability' for KEV, 'obligation' for privacy laws.
              * @default control
@@ -4259,16 +4372,36 @@ export interface components {
              */
             license_url?: string | null;
             /**
+             * Notes
+             * @description Operator notice about source scope and currency
+             */
+            notes?: string | null;
+            /**
              * Placeholder
              * @description True if the catalog as a whole is a stub (all controls have placeholder text)
              * @default false
              */
             placeholder: boolean;
             /**
+             * Publication Notices
+             * @description Announced revisions outside the assessed controls; dates never activate them automatically
+             */
+            publication_notices?: components["schemas"]["CatalogPublicationNotice"][];
+            /**
              * Source
              * @description Source of the catalog data, e.g. 'usnistgov/oscal-content'
              */
             source: string;
+            /**
+             * Status
+             * @description Publisher lifecycle in the stated scope; None means unverified
+             */
+            status?: ("current" | "superseded" | "retired" | "historical") | null;
+            /**
+             * Superseded By
+             * @description Successor framework ID, without implying equivalence
+             */
+            superseded_by?: string | null;
             /**
              * Tier
              * @description Redistribution tier: 'A', 'B', 'C', 'D' (see CatalogControl.tier)
@@ -4279,6 +4412,11 @@ export interface components {
              * @description v0.9.3 P2.1: optional cycle-note documenting catalog enrichment scope. Free-form.
              */
             v0_9_3_note?: string | null;
+            /**
+             * Verified On
+             * @description Date the catalog's source and currency were checked
+             */
+            verified_on?: string | null;
             /**
              * Version
              * @description Framework version, e.g. 'Rev 5', '2022', 'v8'

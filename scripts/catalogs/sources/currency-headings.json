@@ -1,0 +1,1046 @@
+{
+  "catalogs": [
+    {
+      "metadata": {
+        "framework_id": "cisa-cpgs",
+        "framework_name": "CISA Cross-Sector Cybersecurity Performance Goals",
+        "version": "2.0 (December 2025)",
+        "source": "https://www.cisa.gov/sites/default/files/2025-12/CPG_Report_2.0_508c.pdf",
+        "families": [
+          "Govern",
+          "Identify",
+          "Protect",
+          "Detect",
+          "Respond",
+          "Recover"
+        ],
+        "tier": "A",
+        "status": "current",
+        "notes": "Version 2.0 contains 34 goals across six functions. It replaces the earlier bundled 36-goal subset. Existing evidence references require review because reused IDs can identify different goals; no automatic equivalence or crosswalk is provided. This catalog contains headings only.",
+        "verified_on": "2026-09-09"
+      },
+      "provenance": {
+        "publisher": "Cybersecurity and Infrastructure Security Agency",
+        "document_date": "2025-12",
+        "verified_on": "2026-09-09",
+        "source_url": "https://www.cisa.gov/sites/default/files/2025-12/CPG_Report_2.0_508c.pdf",
+        "sha256": "44ace92a275468d1946868855c44cb9d914ef0ce3d6656ebca5c9b9fa879f85e",
+        "extraction": "The pypdf layout mode pairs each ID and heading on PDF pages 13 through 31. Plain extraction misorders several two-column headings. Whitespace and the ID separator are normalized; heading text and capitalization are retained."
+      },
+      "controls": [
+        {
+          "id": "1.A",
+          "title": "ESTABLISH CYBERSECURITY RESPONSIBILITIES",
+          "family": "Govern",
+          "properties": {
+            "function": "Govern",
+            "source_page": "13"
+          }
+        },
+        {
+          "id": "1.B",
+          "title": "MANAGE CYBERSECURITY OVERSIGHT",
+          "family": "Govern",
+          "properties": {
+            "function": "Govern",
+            "source_page": "13"
+          }
+        },
+        {
+          "id": "1.C",
+          "title": "MAINTAIN INCIDENT RESPONSE PLANS",
+          "family": "Govern",
+          "properties": {
+            "function": "Govern",
+            "source_page": "14"
+          }
+        },
+        {
+          "id": "1.D",
+          "title": "SUPPLY CHAIN INCIDENT REPORTING & VULNERABILITY DISCLOSURE",
+          "family": "Govern",
+          "properties": {
+            "function": "Govern",
+            "source_page": "14"
+          }
+        },
+        {
+          "id": "1.E",
+          "title": "MANAGE RISKS FROM MANAGED SERVICE PROVIDERS",
+          "family": "Govern",
+          "properties": {
+            "function": "Govern",
+            "source_page": "15"
+          }
+        },
+        {
+          "id": "2.A",
+          "title": "MANAGE ORGANIZATIONAL ASSETS",
+          "family": "Identify",
+          "properties": {
+            "function": "Identify",
+            "source_page": "16"
+          }
+        },
+        {
+          "id": "2.B",
+          "title": "MITIGATE KNOWN VULNERABILITIES",
+          "family": "Identify",
+          "properties": {
+            "function": "Identify",
+            "source_page": "16"
+          }
+        },
+        {
+          "id": "2.C",
+          "title": "OBTAIN INDEPENDENT VALIDATION OF CYBERSECURITY CONTROLS",
+          "family": "Identify",
+          "properties": {
+            "function": "Identify",
+            "source_page": "17"
+          }
+        },
+        {
+          "id": "2.D",
+          "title": "MAINTAIN VULNERABILITY DISCLOSURE/REPORTING PROCESS",
+          "family": "Identify",
+          "properties": {
+            "function": "Identify",
+            "source_page": "17"
+          }
+        },
+        {
+          "id": "2.E",
+          "title": "DOCUMENT NETWORK TOPOLOGY",
+          "family": "Identify",
+          "properties": {
+            "function": "Identify",
+            "source_page": "18"
+          }
+        },
+        {
+          "id": "3.A",
+          "title": "CHANGE DEFAULT PASSWORDS",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "19"
+          }
+        },
+        {
+          "id": "3.B",
+          "title": "ESTABLISH MINIMUM PASSWORD STRENGTH",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "19"
+          }
+        },
+        {
+          "id": "3.C",
+          "title": "CREATE UNIQUE CREDENTIALS",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "20"
+          }
+        },
+        {
+          "id": "3.D",
+          "title": "REVOKE CREDENTIALS FOR DEPARTING STAFF",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "20"
+          }
+        },
+        {
+          "id": "3.E",
+          "title": "MONITOR UNSUCCESSFUL (AUTOMATED) LOGIN ATTEMPTS",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "21"
+          }
+        },
+        {
+          "id": "3.F",
+          "title": "IMPLEMENT MULTIFACTOR AUTHENTICATION (MFA)",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "21"
+          }
+        },
+        {
+          "id": "3.G",
+          "title": "ADMINISTRATORS MAINTAIN SEPARATE USER AND PRIVILEGED ACCOUNTS",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "22"
+          }
+        },
+        {
+          "id": "3.H",
+          "title": "IMPLEMENT THE PRINCIPLES OF LEAST PRIVILEGE",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "22"
+          }
+        },
+        {
+          "id": "3.I",
+          "title": "IMPLEMENT LOGICAL/PHYSICAL NETWORK SEGMENTATION",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "23"
+          }
+        },
+        {
+          "id": "3.J",
+          "title": "IMPLEMENT CYBERSECURITY TRAINING",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "23"
+          }
+        },
+        {
+          "id": "3.K",
+          "title": "UTILIZE STRONG ENCRYPTION",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "24"
+          }
+        },
+        {
+          "id": "3.L",
+          "title": "ENABLE EMAIL SECURITY",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "24"
+          }
+        },
+        {
+          "id": "3.M",
+          "title": "DISABLE AUTORUN & MACROS BY DEFAULT",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "25"
+          }
+        },
+        {
+          "id": "3.N",
+          "title": "ESTABLISH CHANGE MANAGEMENT PROCESSES",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "25"
+          }
+        },
+        {
+          "id": "3.O",
+          "title": "MAINTAIN SYSTEM BACKUPS & RESTORATION ABILITY",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "26"
+          }
+        },
+        {
+          "id": "3.P",
+          "title": "MAINTAIN HARDWARE & SOFTWARE APPROVAL PROCESS",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "26"
+          }
+        },
+        {
+          "id": "3.Q",
+          "title": "MAINTAIN LOG COLLECTION & STORAGE",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "27"
+          }
+        },
+        {
+          "id": "3.R",
+          "title": "PROHIBIT CONNECTION OF UNAUTHORIZED DEVICES",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "27"
+          }
+        },
+        {
+          "id": "3.S",
+          "title": "SECURE INTERNET-FACING DEVICES",
+          "family": "Protect",
+          "properties": {
+            "function": "Protect",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "4.A",
+          "title": "ESTABLISH MALICIOUS CODE DETECTION",
+          "family": "Detect",
+          "properties": {
+            "function": "Detect",
+            "source_page": "29"
+          }
+        },
+        {
+          "id": "4.B",
+          "title": "IDENTIFY ADVERSE EVENTS",
+          "family": "Detect",
+          "properties": {
+            "function": "Detect",
+            "source_page": "29"
+          }
+        },
+        {
+          "id": "5.A",
+          "title": "ESTABLISH INCIDENT COMMUNICATION PROCEDURES",
+          "family": "Respond",
+          "properties": {
+            "function": "Respond",
+            "source_page": "30"
+          }
+        },
+        {
+          "id": "5.B",
+          "title": "ESTABLISH INCIDENT REPORTING PROCEDURES",
+          "family": "Respond",
+          "properties": {
+            "function": "Respond",
+            "source_page": "30"
+          }
+        },
+        {
+          "id": "6.A",
+          "title": "EXECUTE INCIDENT RECOVERY PLAN",
+          "family": "Recover",
+          "properties": {
+            "function": "Recover",
+            "source_page": "31"
+          }
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "framework_id": "swift-cscf-2024",
+        "framework_name": "SWIFT Customer Security Controls Framework (CSCF) v2024",
+        "version": "v2024",
+        "source": "SWIFT",
+        "families": [
+          "1. Restrict Internet Access and Protect Critical Systems",
+          "2. Reduce Attack Surface and Vulnerabilities",
+          "3. Physically Secure the Environment",
+          "4. Prevent Compromise of Credentials",
+          "5. Manage Identities and Segregate Privileges",
+          "6. Detect Anomalous Activity to Systems or Transaction Records",
+          "7. Plan for Incident Response and Information Sharing"
+        ],
+        "tier": "C",
+        "placeholder": true,
+        "license_required": true,
+        "license_terms": "© SWIFT. CSCF is available to SWIFT customers via MySWIFT.",
+        "license_url": "https://www.swift.com/myswift/customer-security-programme-csp",
+        "status": "historical",
+        "notes": "Historical bundled table retained for reference. The original v2024 source table was not verified; source fidelity is unknown. Use swift-cscf-2026 for the verified 2026 attestation heading set. No automatic equivalence is implied.",
+        "superseded_by": "swift-cscf-2026"
+      },
+      "provenance": {
+        "original_table_verified": false,
+        "source_url": "https://www.swift.com/myswift/customer-security-programme-csp",
+        "sha256": null,
+        "reviewed_on": "2026-09-09",
+        "extraction": "Retained the existing 33 bundled ID/title/family rows. This is not a verified reproduction of the original v2024 publisher table."
+      },
+      "controls": [
+        {
+          "id": "1.1",
+          "title": "SWIFT Environment Protection",
+          "family": "1. Restrict Internet Access and Protect Critical Systems"
+        },
+        {
+          "id": "1.2",
+          "title": "Operating System Privileged Account Control",
+          "family": "1. Restrict Internet Access and Protect Critical Systems"
+        },
+        {
+          "id": "1.3",
+          "title": "Virtualisation or Cloud Platform Protection",
+          "family": "1. Restrict Internet Access and Protect Critical Systems"
+        },
+        {
+          "id": "1.4",
+          "title": "Restriction of Internet Access",
+          "family": "1. Restrict Internet Access and Protect Critical Systems"
+        },
+        {
+          "id": "1.5",
+          "title": "Customer Environment Protection (A4 architecture)",
+          "family": "1. Restrict Internet Access and Protect Critical Systems"
+        },
+        {
+          "id": "2.1",
+          "title": "Internal Data Flow Security",
+          "family": "2. Reduce Attack Surface and Vulnerabilities"
+        },
+        {
+          "id": "2.2",
+          "title": "Security Updates",
+          "family": "2. Reduce Attack Surface and Vulnerabilities"
+        },
+        {
+          "id": "2.3",
+          "title": "System Hardening",
+          "family": "2. Reduce Attack Surface and Vulnerabilities"
+        },
+        {
+          "id": "2.4A",
+          "title": "Back Office Data Flow Security",
+          "family": "2. Reduce Attack Surface and Vulnerabilities"
+        },
+        {
+          "id": "2.5A",
+          "title": "External Transmission Data Protection",
+          "family": "2. Reduce Attack Surface and Vulnerabilities"
+        },
+        {
+          "id": "2.6",
+          "title": "Operator Session Confidentiality and Integrity",
+          "family": "2. Reduce Attack Surface and Vulnerabilities"
+        },
+        {
+          "id": "2.7",
+          "title": "Vulnerability Scanning",
+          "family": "2. Reduce Attack Surface and Vulnerabilities"
+        },
+        {
+          "id": "2.8A",
+          "title": "Critical Activity Outsourcing",
+          "family": "2. Reduce Attack Surface and Vulnerabilities"
+        },
+        {
+          "id": "2.9",
+          "title": "Transaction Business Controls",
+          "family": "2. Reduce Attack Surface and Vulnerabilities"
+        },
+        {
+          "id": "2.10",
+          "title": "Application Hardening",
+          "family": "2. Reduce Attack Surface and Vulnerabilities"
+        },
+        {
+          "id": "2.11A",
+          "title": "RMA Business Controls",
+          "family": "2. Reduce Attack Surface and Vulnerabilities"
+        },
+        {
+          "id": "3.1",
+          "title": "Physical Security",
+          "family": "3. Physically Secure the Environment"
+        },
+        {
+          "id": "4.1",
+          "title": "Password Policy",
+          "family": "4. Prevent Compromise of Credentials"
+        },
+        {
+          "id": "4.2",
+          "title": "Multi-factor Authentication",
+          "family": "4. Prevent Compromise of Credentials"
+        },
+        {
+          "id": "5.1",
+          "title": "Logical Access Control",
+          "family": "5. Manage Identities and Segregate Privileges"
+        },
+        {
+          "id": "5.2",
+          "title": "Token Management",
+          "family": "5. Manage Identities and Segregate Privileges"
+        },
+        {
+          "id": "5.3A",
+          "title": "Personnel Vetting Process",
+          "family": "5. Manage Identities and Segregate Privileges"
+        },
+        {
+          "id": "5.4",
+          "title": "Physical and Logical Password Storage",
+          "family": "5. Manage Identities and Segregate Privileges"
+        },
+        {
+          "id": "6.1",
+          "title": "Malware Protection",
+          "family": "6. Detect Anomalous Activity to Systems or Transaction Records"
+        },
+        {
+          "id": "6.2",
+          "title": "Software Integrity",
+          "family": "6. Detect Anomalous Activity to Systems or Transaction Records"
+        },
+        {
+          "id": "6.3",
+          "title": "Database Integrity",
+          "family": "6. Detect Anomalous Activity to Systems or Transaction Records"
+        },
+        {
+          "id": "6.4",
+          "title": "Logging and Monitoring",
+          "family": "6. Detect Anomalous Activity to Systems or Transaction Records"
+        },
+        {
+          "id": "6.5A",
+          "title": "Intrusion Detection",
+          "family": "6. Detect Anomalous Activity to Systems or Transaction Records"
+        },
+        {
+          "id": "7.1",
+          "title": "Cyber Incident Response Planning",
+          "family": "7. Plan for Incident Response and Information Sharing"
+        },
+        {
+          "id": "7.2",
+          "title": "Security Training and Awareness",
+          "family": "7. Plan for Incident Response and Information Sharing"
+        },
+        {
+          "id": "7.3A",
+          "title": "Penetration Testing",
+          "family": "7. Plan for Incident Response and Information Sharing"
+        },
+        {
+          "id": "7.4A",
+          "title": "Scenario Risk Assessment",
+          "family": "7. Plan for Incident Response and Information Sharing"
+        },
+        {
+          "id": "7.5",
+          "title": "Incident Response Collaboration",
+          "family": "7. Plan for Incident Response and Information Sharing"
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "framework_id": "swift-cscf-2026",
+        "framework_name": "Swift Customer Security Controls Framework (CSCF) v2026",
+        "version": "v2026 (1 July 2025)",
+        "source": "https://www2.swift.com/knowledgecentre/rest/v1/publications/cscf_dd/_latest/CSCF_v2026_202507015.pdf?logDownload=true",
+        "families": [
+          "1. Restrict Internet Access and Protect Critical Systems from General IT Environment",
+          "2. Reduce Attack Surface and Vulnerabilities",
+          "3. Physically Secure the Environment",
+          "4. Prevent Compromise of Credentials",
+          "5. Manage Identities and Separate Privileges",
+          "6. Detect Anomalous Activity to Systems or Transaction Records",
+          "7. Plan for Incident Response and Information Sharing"
+        ],
+        "tier": "C",
+        "placeholder": true,
+        "license_required": true,
+        "license_terms": "Copyright Swift. All rights reserved. Control body text requires an authorized copy and is not bundled.",
+        "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+        "status": "current",
+        "notes": "This is the 2026 attestation edition, with 32 heading rows. Swift also publishes v2027 for attestations in the second half of 2027. Mandatory and advisory designations describe the summary table; architecture-specific cells qualify applicability and can make an otherwise mandatory control advisory. Consult the licensed source for requirements and scope.",
+        "verified_on": "2026-09-09"
+      },
+      "provenance": {
+        "publisher": "Swift",
+        "document_date": "2025-07-01",
+        "verified_on": "2026-09-09",
+        "source_url": "https://www2.swift.com/knowledgecentre/rest/v1/publications/cscf_dd/_latest/CSCF_v2026_202507015.pdf?logDownload=true",
+        "sha256": null,
+        "extraction": "Reviewed the public PDF outline and page 28 summary table in Chrome without login. Direct download timed out, so the PDF hash is unverified. The page 136 legal notice restricts redistribution.",
+        "release_comparison": "The official v2025 page 27 table already has 32 rows, 2.8 without A, and the v2026 titles. The only ID change between those summary tables is 2.4A to 2.4. No 7.5 appears in either table."
+      },
+      "controls": [
+        {
+          "id": "1.1",
+          "title": "Swift Environment Protection",
+          "family": "1. Restrict Internet Access and Protect Critical Systems from General IT Environment",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "1.2",
+          "title": "Operating System Privileged Account Control",
+          "family": "1. Restrict Internet Access and Protect Critical Systems from General IT Environment",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "1.3",
+          "title": "Virtualisation or Cloud Platform Protection",
+          "family": "1. Restrict Internet Access and Protect Critical Systems from General IT Environment",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "1.4",
+          "title": "Restriction of Internet Access",
+          "family": "1. Restrict Internet Access and Protect Critical Systems from General IT Environment",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "1.5",
+          "title": "Customer Environment Protection",
+          "family": "1. Restrict Internet Access and Protect Critical Systems from General IT Environment",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "2.1",
+          "title": "Internal Data Flow Security",
+          "family": "2. Reduce Attack Surface and Vulnerabilities",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "2.2",
+          "title": "Security Updates",
+          "family": "2. Reduce Attack Surface and Vulnerabilities",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "2.3",
+          "title": "System Hardening",
+          "family": "2. Reduce Attack Surface and Vulnerabilities",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "2.4",
+          "title": "Back Office Data Flow Security",
+          "family": "2. Reduce Attack Surface and Vulnerabilities",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "2.5A",
+          "title": "External Transmission Data Protection",
+          "family": "2. Reduce Attack Surface and Vulnerabilities",
+          "properties": {
+            "designation": "advisory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "2.6",
+          "title": "Operator Session Confidentiality and Integrity",
+          "family": "2. Reduce Attack Surface and Vulnerabilities",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "2.7",
+          "title": "Vulnerability Scanning",
+          "family": "2. Reduce Attack Surface and Vulnerabilities",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "2.8",
+          "title": "Outsourced Critical Activity Protection",
+          "family": "2. Reduce Attack Surface and Vulnerabilities",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "2.9",
+          "title": "Transaction Business Controls",
+          "family": "2. Reduce Attack Surface and Vulnerabilities",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "2.10",
+          "title": "Application Hardening",
+          "family": "2. Reduce Attack Surface and Vulnerabilities",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "2.11A",
+          "title": "RMA Business Controls",
+          "family": "2. Reduce Attack Surface and Vulnerabilities",
+          "properties": {
+            "designation": "advisory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "3.1",
+          "title": "Physical Security",
+          "family": "3. Physically Secure the Environment",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "4.1",
+          "title": "Password Policy",
+          "family": "4. Prevent Compromise of Credentials",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "4.2",
+          "title": "Multi-Factor Authentication",
+          "family": "4. Prevent Compromise of Credentials",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "5.1",
+          "title": "Logical Access Control",
+          "family": "5. Manage Identities and Separate Privileges",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "5.2",
+          "title": "Token Management",
+          "family": "5. Manage Identities and Separate Privileges",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "5.3A",
+          "title": "Staff Screening Process",
+          "family": "5. Manage Identities and Separate Privileges",
+          "properties": {
+            "designation": "advisory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "5.4",
+          "title": "Password Repository Protection",
+          "family": "5. Manage Identities and Separate Privileges",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "6.1",
+          "title": "Malware Protection",
+          "family": "6. Detect Anomalous Activity to Systems or Transaction Records",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "6.2",
+          "title": "Software Integrity",
+          "family": "6. Detect Anomalous Activity to Systems or Transaction Records",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "6.3",
+          "title": "Database Integrity",
+          "family": "6. Detect Anomalous Activity to Systems or Transaction Records",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "6.4",
+          "title": "Logging and Monitoring",
+          "family": "6. Detect Anomalous Activity to Systems or Transaction Records",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "6.5A",
+          "title": "Intrusion Detection",
+          "family": "6. Detect Anomalous Activity to Systems or Transaction Records",
+          "properties": {
+            "designation": "advisory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "7.1",
+          "title": "Cyber Incident Response Planning",
+          "family": "7. Plan for Incident Response and Information Sharing",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "7.2",
+          "title": "Security Training and Awareness",
+          "family": "7. Plan for Incident Response and Information Sharing",
+          "properties": {
+            "designation": "mandatory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "7.3A",
+          "title": "Penetration Testing",
+          "family": "7. Plan for Incident Response and Information Sharing",
+          "properties": {
+            "designation": "advisory",
+            "source_page": "28"
+          }
+        },
+        {
+          "id": "7.4A",
+          "title": "Scenario-based Risk Assessment",
+          "family": "7. Plan for Incident Response and Information Sharing",
+          "properties": {
+            "designation": "advisory",
+            "source_page": "28"
+          }
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "framework_id": "cmmc-2-l1",
+        "framework_name": "CMMC 2.0 Level 1 (Foundational)",
+        "version": "2.0 (Assessment Guide 2.13, September 2024)",
+        "source": "https://dodcio.defense.gov/Portals/0/Documents/CMMC/AssessmentGuideL1v2.pdf",
+        "families": [
+          "Access Control",
+          "Identification and Authentication",
+          "Media Protection",
+          "Physical Protection",
+          "System and Communications Protection",
+          "System and Information Integrity"
+        ],
+        "tier": "A",
+        "status": "current",
+        "notes": "Bundled catalog content is not frozen. This edition replaces the earlier 17 NIST-style Level 1 IDs with the 15 FAR-based guide IDs. Existing evidence references require review; no automatic equivalence or migration is provided. These headings concern Federal Contract Information (FCI), not the Level 2 CUI requirements.",
+        "verified_on": "2026-09-09"
+      },
+      "provenance": {
+        "publisher": "Department of Defense Chief Information Officer",
+        "document_date": "2024-09",
+        "document_version": "2.13",
+        "verified_on": "2026-09-09",
+        "source_url": "https://dodcio.defense.gov/Portals/0/Documents/CMMC/AssessmentGuideL1v2.pdf",
+        "sha256": null,
+        "extraction": "Reviewed the primary PDF table of contents on pages iii and iv and the requirement identifiers. Direct download returned HTTP 403; the browser-extracted PDF hash is unverified. source_page uses the printed requirement page number.",
+        "title_case_note": "The table of contents and running headers spell ProTection with a capital T for SI.L1-b.1.xiii; retained literally.",
+        "redistribution": "The guide has Distribution Statement A and is approved for public release with unlimited distribution."
+      },
+      "controls": [
+        {
+          "id": "AC.L1-b.1.i",
+          "title": "Authorized Access Control [FCI Data]",
+          "family": "Access Control",
+          "properties": {
+            "data_category": "FCI",
+            "far_reference": "52.204-21(b)(1)(i)",
+            "source_page": "12"
+          }
+        },
+        {
+          "id": "AC.L1-b.1.ii",
+          "title": "Transaction & Function Control [FCI Data]",
+          "family": "Access Control",
+          "properties": {
+            "data_category": "FCI",
+            "far_reference": "52.204-21(b)(1)(ii)",
+            "source_page": "15"
+          }
+        },
+        {
+          "id": "AC.L1-b.1.iii",
+          "title": "External Connections [FCI Data]",
+          "family": "Access Control",
+          "properties": {
+            "data_category": "FCI",
+            "far_reference": "52.204-21(b)(1)(iii)",
+            "source_page": "17"
+          }
+        },
+        {
+          "id": "AC.L1-b.1.iv",
+          "title": "Control Public Information [FCI Data]",
+          "family": "Access Control",
+          "properties": {
+            "data_category": "FCI",
+            "far_reference": "52.204-21(b)(1)(iv)",
+            "source_page": "20"
+          }
+        },
+        {
+          "id": "IA.L1-b.1.v",
+          "title": "Identification [FCI Data]",
+          "family": "Identification and Authentication",
+          "properties": {
+            "data_category": "FCI",
+            "far_reference": "52.204-21(b)(1)(v)",
+            "source_page": "22"
+          }
+        },
+        {
+          "id": "IA.L1-b.1.vi",
+          "title": "Authentication [FCI Data]",
+          "family": "Identification and Authentication",
+          "properties": {
+            "data_category": "FCI",
+            "far_reference": "52.204-21(b)(1)(vi)",
+            "source_page": "24"
+          }
+        },
+        {
+          "id": "MP.L1-b.1.vii",
+          "title": "Media Disposal [FCI Data]",
+          "family": "Media Protection",
+          "properties": {
+            "data_category": "FCI",
+            "far_reference": "52.204-21(b)(1)(vii)",
+            "source_page": "27"
+          }
+        },
+        {
+          "id": "PE.L1-b.1.viii",
+          "title": "Limit Physical Access [FCI Data]",
+          "family": "Physical Protection",
+          "properties": {
+            "data_category": "FCI",
+            "far_reference": "52.204-21(b)(1)(viii)",
+            "source_page": "29"
+          }
+        },
+        {
+          "id": "PE.L1-b.1.ix",
+          "title": "Manage Visitors & Physical Access [FCI Data]",
+          "family": "Physical Protection",
+          "properties": {
+            "data_category": "FCI",
+            "far_reference": "52.204-21(b)(1)(ix)",
+            "source_page": "31"
+          }
+        },
+        {
+          "id": "SC.L1-b.1.x",
+          "title": "Boundary Protection [FCI Data]",
+          "family": "System and Communications Protection",
+          "properties": {
+            "data_category": "FCI",
+            "far_reference": "52.204-21(b)(1)(x)",
+            "source_page": "34"
+          }
+        },
+        {
+          "id": "SC.L1-b.1.xi",
+          "title": "Public-Access System Separation [FCI Data]",
+          "family": "System and Communications Protection",
+          "properties": {
+            "data_category": "FCI",
+            "far_reference": "52.204-21(b)(1)(xi)",
+            "source_page": "37"
+          }
+        },
+        {
+          "id": "SI.L1-b.1.xii",
+          "title": "Flaw Remediation [FCI Data]",
+          "family": "System and Information Integrity",
+          "properties": {
+            "data_category": "FCI",
+            "far_reference": "52.204-21(b)(1)(xii)",
+            "source_page": "39"
+          }
+        },
+        {
+          "id": "SI.L1-b.1.xiii",
+          "title": "Malicious Code ProTection [FCI Data]",
+          "family": "System and Information Integrity",
+          "properties": {
+            "data_category": "FCI",
+            "far_reference": "52.204-21(b)(1)(xiii)",
+            "source_page": "42"
+          }
+        },
+        {
+          "id": "SI.L1-b.1.xiv",
+          "title": "Update Malicious Code Protection [FCI Data]",
+          "family": "System and Information Integrity",
+          "properties": {
+            "data_category": "FCI",
+            "far_reference": "52.204-21(b)(1)(xiv)",
+            "source_page": "45"
+          }
+        },
+        {
+          "id": "SI.L1-b.1.xv",
+          "title": "System & File Scanning [FCI Data]",
+          "family": "System and Information Integrity",
+          "properties": {
+            "data_category": "FCI",
+            "far_reference": "52.204-21(b)(1)(xv)",
+            "source_page": "47"
+          }
+        }
+      ]
+    }
+  ]
+}

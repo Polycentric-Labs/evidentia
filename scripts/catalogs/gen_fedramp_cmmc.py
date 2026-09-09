@@ -217,35 +217,10 @@ for baseline_name, baseline_controls in [
 # CMMC 2.0 Level 1, Level 2, Level 3
 # ---------------------------------------------------------------------------
 
-CMMC_L1 = [
-    ("AC.L1-3.1.1", "Authorized Access Control", "Access Control"),
-    ("AC.L1-3.1.2", "Transaction & Function Control", "Access Control"),
-    ("AC.L1-3.1.20", "External Connections", "Access Control"),
-    ("AC.L1-3.1.22", "Control Public Information", "Access Control"),
-    ("IA.L1-3.5.1", "Identification", "Identification and Authentication"),
-    ("IA.L1-3.5.2", "Authentication", "Identification and Authentication"),
-    ("MP.L1-3.8.3", "Media Disposal", "Media Protection"),
-    ("PE.L1-3.10.1", "Limit Physical Access", "Physical Protection"),
-    ("PE.L1-3.10.3", "Escort Visitors", "Physical Protection"),
-    ("PE.L1-3.10.4", "Physical Access Logs", "Physical Protection"),
-    ("PE.L1-3.10.5", "Manage Physical Access", "Physical Protection"),
-    ("SC.L1-3.13.1", "Boundary Protection", "System and Communications Protection"),
-    ("SC.L1-3.13.5", "Public-Access System Separation", "System and Communications Protection"),
-    ("SI.L1-3.14.1", "Flaw Remediation", "System and Information Integrity"),
-    ("SI.L1-3.14.2", "Malicious Code Protection", "System and Information Integrity"),
-    ("SI.L1-3.14.4", "Update Malicious Code Protection", "System and Information Integrity"),
-    ("SI.L1-3.14.5", "System & File Scanning", "System and Information Integrity"),
-]
+if _RUN_AS_SCRIPT:
+    from gen_currency_headings import generate_cmmc_level1
 
-_emit(
-    framework_id="cmmc-2-l1",
-    framework_name="CMMC 2.0 Level 1 (Foundational)",
-    version="2.0 (2024 Final Rule)",
-    source=f"DoD CIO — {CMMC_URL} (U.S. Government work). Based on the 17 FAR 52.204-21 basic safeguarding practices.",
-    families=["Access Control", "Identification and Authentication", "Media Protection", "Physical Protection", "System and Communications Protection", "System and Information Integrity"],
-    controls=[{"id": c, "title": t, "description": t, "family": f} for c, t, f in CMMC_L1],
-    tier="A",
-)
+    generate_cmmc_level1()
 
 
 # CMMC Level 2 = all 110 NIST 800-171 Rev 2 requirements (DoD has pinned to Rev 2

@@ -25,11 +25,15 @@ version: 1
 frameworks:
 - id: cisa-cpgs
   name: CISA Cross-Sector Cybersecurity Performance Goals
-  version: 1.0.1 (Mar 2023)
+  version: 2.0 (December 2025)
   tier: A
   category: control
   path: us-federal/cisa-cpgs.json
-  source_url: Cybersecurity and Infrastructure Security Agency (CISA) — https://cisa.gov/cross-sector-cybersecurity-performance-goals
+  source_url: https://www.cisa.gov/sites/default/files/2025-12/CPG_Report_2.0_508c.pdf
+  status: current
+  notes: Version 2.0 contains 34 goals across six functions. It replaces the earlier bundled 36-goal subset. Existing evidence references require review because reused IDs can identify different goals;
+    no automatic equivalence or crosswalk is provided. This catalog contains headings only.
+  verified_on: '2026-09-09'
   refresh: monthly
   text_depth: headings
 - id: cjis-v6
@@ -43,11 +47,15 @@ frameworks:
   text_depth: headings
 - id: cmmc-2-l1
   name: CMMC 2.0 Level 1 (Foundational)
-  version: 2.0 (2024 Final Rule)
+  version: 2.0 (Assessment Guide 2.13, September 2024)
   tier: A
   category: control
   path: us-federal/cmmc-2-l1.json
-  source_url: DoD CIO — https://dodcio.defense.gov/CMMC/ (U.S. Government work). Based on the 17 FAR 52.204-21 basic safeguarding practices.
+  source_url: https://dodcio.defense.gov/Portals/0/Documents/CMMC/AssessmentGuideL1v2.pdf
+  status: current
+  notes: Bundled catalog content is not frozen. This edition replaces the earlier 17 NIST-style Level 1 IDs with the 15 FAR-based guide IDs. Existing evidence references require review; no automatic equivalence
+    or migration is provided. These headings concern Federal Contract Information (FCI), not the Level 2 CUI requirements.
+  verified_on: '2026-09-09'
   refresh: monthly
   text_depth: headings
 - id: cmmc-2-l2
@@ -162,6 +170,19 @@ frameworks:
   refresh: monthly
   text_depth: full
   crosswalk_family: nist-800-53-rev5
+- id: ffiec-aio
+  name: FFIEC IT Examination Handbook - Architecture, Infrastructure, and Operations booklet
+  version: June 2021
+  tier: A
+  category: control
+  path: us-federal/ffiec-aio.json
+  source_url: https://ithandbook.ffiec.gov/it-booklets/architecture-infrastructure-and-operations/
+  status: current
+  notes: 'Public HTML body headings only. Introductions, appendices, examination procedures, and narrative statements are omitted. Heading coverage does not establish full assessment coverage. IDs are published
+    document section locators, not official assessment control IDs. Edition source: https://ithandbook.ffiec.gov/media/ywfm2ftz/ffiec_itbooklet_aio.pdf. Released 2021-06-30: https://www.ffiec.gov/news/press-releases/2021/pr-06-30.'
+  verified_on: '2026-09-09'
+  refresh: monthly
+  text_depth: headings
 - id: ffiec-audit
   name: FFIEC IT Examination Handbook — Audit booklet
   version: April 2012
@@ -171,15 +192,47 @@ frameworks:
   source_url: https://ithandbook.ffiec.gov/it-booklets/audit.aspx
   refresh: monthly
   text_depth: full
+- id: ffiec-business-continuity-management
+  name: FFIEC IT Examination Handbook - Business Continuity Management booklet
+  version: November 2019
+  tier: A
+  category: control
+  path: us-federal/ffiec-business-continuity-management.json
+  source_url: https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/
+  status: current
+  notes: 'Public HTML body headings only. Introductions, appendices, examination procedures, and narrative statements are omitted. Heading coverage does not establish full assessment coverage. IDs are published
+    document section locators, not official assessment control IDs. Edition source: https://ithandbook.ffiec.gov/media/2nifgh2b/ffiec_itbooklet_businesscontinuitymanagement_v3.pdf. Released 2019-11-14:
+    https://www.ffiec.gov/news/press-releases/2019/pr-11-14.'
+  verified_on: '2026-09-09'
+  refresh: monthly
+  text_depth: headings
 - id: ffiec-cat
   name: FFIEC Cybersecurity Assessment Tool
   version: 2017 (representative subset)
   tier: A
   category: control
   path: us-federal/ffiec-cat.json
-  source_url: https://www.ffiec.gov/cyberassessmenttool.htm
+  source_url: https://www.ffiec.gov/sites/default/files/media/press-releases/2024/cat-sunset-statement-ffiec-letterhead.pdf
+  status: retired
+  notes: Retired by FFIEC on 2025-08-31. All 33 controls in this historical representative subset are retained. The source statement points to NIST CSF 2.0, CISA Cybersecurity Performance Goals, CRI's Cyber
+    Profile, and CIS Critical Security Controls as alternatives. No one-to-one equivalence or single successor is asserted.
+  verified_on: '2026-09-09'
   refresh: monthly
   text_depth: full
+- id: ffiec-development-acquisition-maintenance
+  name: FFIEC IT Examination Handbook - Development, Acquisition, and Maintenance booklet
+  version: August 2024
+  tier: A
+  category: control
+  path: us-federal/ffiec-development-acquisition-maintenance.json
+  source_url: https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/
+  status: current
+  notes: 'Public HTML body headings only. Introductions, appendices, examination procedures, and narrative statements are omitted. Heading coverage does not establish full assessment coverage. IDs are published
+    document section locators, not official assessment control IDs. Edition source: https://ithandbook.ffiec.gov/media/m21ni0b3/ffiec_itbooklet_developmentandacquisition.pdf. Released 2024-08-29: https://www.fdic.gov/news/financial-institution-letters/2024/updated-ffiec-it-examination-handbook-development.
+    The PDF edition is August 2024. FDIC FIL-60-2024 and the FFIEC archive date the release to 2024-08-29; the migrated FFIEC release page instead displays 2024-09-29.'
+  verified_on: '2026-09-09'
+  refresh: monthly
+  text_depth: headings
 - id: ffiec-information-security
   name: FFIEC IT Examination Handbook — Information Security booklet
   version: September 2016
@@ -204,7 +257,12 @@ frameworks:
   tier: A
   category: control
   path: us-federal/ffiec-operations.json
-  source_url: https://ithandbook.ffiec.gov/it-booklets/operations.aspx
+  source_url: https://www.ffiec.gov/news/press-releases/2021/pr-06-30
+  status: superseded
+  notes: Superseded on 2021-06-30 by Architecture, Infrastructure, and Operations (ffiec-aio). The July 2004 edition and all 27 historical control records are retained for existing references. No equivalence
+    mapping to the successor's section locators is implied.
+  verified_on: '2026-09-09'
+  superseded_by: ffiec-aio
   refresh: monthly
   text_depth: full
 - id: ffiec-outsourcing
@@ -216,6 +274,47 @@ frameworks:
   source_url: https://ithandbook.ffiec.gov/it-booklets/outsourcing-technology-services.aspx
   refresh: monthly
   text_depth: full
+- id: ffiec-retail-payment-systems
+  name: FFIEC IT Examination Handbook - Retail Payment Systems booklet
+  version: April 2016
+  tier: A
+  category: control
+  path: us-federal/ffiec-retail-payment-systems.json
+  source_url: https://ithandbook.ffiec.gov/it-booklets/retail-payment-systems/
+  status: current
+  notes: 'Public HTML body headings only. Introductions, appendices, examination procedures, and narrative statements are omitted. Heading coverage does not establish full assessment coverage. IDs beginning
+    local. are stable Evidentia identifiers derived from source heading URL paths; they are not publisher control IDs. Edition source: https://ithandbook.ffiec.gov/media/saniy4dq/ffiec_itbooklet_retailpaymentsystems.pdf.'
+  verified_on: '2026-09-09'
+  refresh: monthly
+  text_depth: headings
+- id: ffiec-supervision-technology-service-providers
+  name: FFIEC IT Examination Handbook - Supervision of Technology Service Providers booklet
+  version: October 2012
+  tier: A
+  category: control
+  path: us-federal/ffiec-supervision-technology-service-providers.json
+  source_url: https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/
+  status: current
+  notes: 'Public HTML body headings only. Introductions, appendices, examination procedures, and narrative statements are omitted. Heading coverage does not establish full assessment coverage. IDs beginning
+    local. are stable Evidentia identifiers derived from source heading URL paths; they are not publisher control IDs. Edition source: https://ithandbook.ffiec.gov/it-booklets/supervision-of-technology-service-providers/.
+    Released 2012-10-31: https://www.occ.ustreas.gov/news-issuances/bulletins/2012/bulletin-2012-34.html. Public HTML headings only. The linked booklet PDF is excluded because it carries nonpublic markings.
+    The edition date is corroborated by the public OCC release.'
+  verified_on: '2026-09-09'
+  refresh: monthly
+  text_depth: headings
+- id: ffiec-wholesale-payment-systems
+  name: FFIEC IT Examination Handbook - Wholesale Payment Systems booklet
+  version: July 2004
+  tier: A
+  category: control
+  path: us-federal/ffiec-wholesale-payment-systems.json
+  source_url: https://ithandbook.ffiec.gov/it-booklets/wholesale-payment-systems/
+  status: current
+  notes: 'Public HTML body headings only. Introductions, appendices, examination procedures, and narrative statements are omitted. Heading coverage does not establish full assessment coverage. IDs beginning
+    local. are stable Evidentia identifiers derived from source heading URL paths; they are not publisher control IDs. Edition source: https://ithandbook.ffiec.gov/media/zdobvcx5/ffiec_itbooklet_wholesalepaymentsystems.pdf.'
+  verified_on: '2026-09-09'
+  refresh: monthly
+  text_depth: headings
 - id: glba-safeguards
   name: GLBA Safeguards Rule (16 CFR § 314)
   version: 2023 (Notification Amendment)
@@ -262,13 +361,22 @@ frameworks:
   refresh: monthly
   text_depth: headings
 - id: nerc-cip-v7
-  name: NERC CIP — Critical Infrastructure Protection Reliability Standards
-  version: v7 (2020-2024 effective dates)
-  tier: A
+  name: NERC CIP - US enforced standards (heading catalog)
+  version: US enforcement snapshot 2026-09-09
+  tier: C
   category: control
   path: us-federal/nerc-cip-v7.json
-  source_url: North American Electric Reliability Corporation (NERC) — NERC CIP standards (public)
-  refresh: monthly
+  source_url: https://www.nerc.com/standards/reliability-standards/cip
+  license: NERC copyrighted material. IDs, short headings and factual dates only; authoritative requirements require separate permission.
+  license_url: https://www.nerc.com/legal-privacy-policy
+  status: current
+  notes: 13 standards currently subject to US enforcement as verified on 2026-09-09. The legacy framework handle does not name a uniform v7 suite. Requirement text and glossary definitions are excluded
+    pending permission. Approved future revisions are separate notices and do not enter assessment totals. Canadian jurisdictions and requirement-specific phase-ins need separate scoping; nothing activates
+    automatically as dates pass.
+  verified_on: '2026-09-09'
+  license_required: true
+  placeholder: true
+  refresh: manual
   text_depth: headings
 - id: nist-800-171-r2
   name: NIST SP 800-171 Rev 2 — Protecting CUI in Nonfederal Systems
@@ -394,12 +502,19 @@ frameworks:
   refresh: monthly
   text_depth: headings
 - id: ny-dfs-500
-  name: NY DFS 23 NYCRR Part 500 — Cybersecurity Requirements
-  version: Amendment 2 (Nov 2023)
-  tier: A
+  name: NY DFS 23 NYCRR Part 500 - Cybersecurity Requirements
+  version: Second Amendment (2023-11-01); transitions completed 2025-11-01
+  tier: D
   category: control
   path: us-federal/ny-dfs-500.json
-  source_url: NYS Department of Financial Services — 23 NYCRR 500 (state regulation)
+  source_url: https://www.dfs.ny.gov/cybersecurity/23-NYCRR-Part-500
+  license: New York regulation; heading-only catalog with links to the issuing authority.
+  status: current
+  notes: 'Section headings and selected subsection summaries, not full regulatory text or every clause. The 2023 Second Amendment became effective on 2023-11-01. Its final scheduled transition periods ended
+    2025-11-01. This does not end ongoing entity-specific periods: section 500.19(h), for example, allows 180 days after loss of an exemption. Applicability depends on covered-entity status and exemptions.
+    This heading catalog does not assess those conditions. DFS labels its linked formatted text as a convenience copy rather than the official version. Recheck prior evidence attached to 500.4(c)/(d), 500.14(b),
+    500.16 and 500.17(a)/(b)/(c): earlier bundled headings misidentified their subjects. Section 500.24 is now included. No automatic evidence migration or applicability determination is performed.'
+  verified_on: '2026-09-09'
   refresh: monthly
   text_depth: headings
 - id: occ-sr-26-2
@@ -449,11 +564,16 @@ frameworks:
   text_depth: full
 - id: eu-ai-act
   name: EU AI Act (Regulation 2024/1689)
-  version: Regulation (EU) 2024/1689
+  version: 2024/1689; application dates amended by 2026/1744
   tier: A
   category: control
   path: international/eu-ai-act.json
-  source_url: Official Journal of the European Union — EU AI Act (regulation text)
+  source_url: https://eur-lex.europa.eu/eli/reg/2026/1744/oj/eng
+  notes: Article-level editorial summaries, not verbatim law or a full consolidation. Applicability dates were checked against enacted Regulation (EU) 2026/1744, published 2026-07-24 and in force 2026-07-27.
+    Chapter III Sections 1-3, except Article 6(5), apply from 2027-12-02 for Annex III systems and 2028-08-02 for Annex I systems where the provision applies. Article 27(1) has its own Annex III and deployer
+    limits. The general date remains 2026-08-02; specified new Article 5 prohibitions apply from 2026-12-02. Earlier prohibitions and GPAI provisions keep their earlier dates. Scope and transitional provisions
+    require separate review; dates do not filter gap analysis.
+  verified_on: '2026-09-09'
   refresh: monthly
   text_depth: full
 - id: eu-dora
@@ -963,7 +1083,8 @@ frameworks:
   category: control
   path: stubs/iso-42001-2023.json
   source_url: ISO/IEC — ISO/IEC 42001:2023
-  license: © ISO/IEC.
+  license: © ISO/IEC. Control text is copyrighted. Ships as a stub with public Annex A numbering and neutral control titles. Purchase the standard from ISO and import your licensed copy via `evidentia catalog
+    import`.
   license_url: https://www.iso.org/standard/81230
   license_required: true
   placeholder: true
@@ -1018,6 +1139,27 @@ frameworks:
   source_url: SWIFT
   license: © SWIFT. CSCF is available to SWIFT customers via MySWIFT.
   license_url: https://www.swift.com/myswift/customer-security-programme-csp
+  status: historical
+  notes: Historical bundled table retained for reference. The original v2024 source table was not verified; source fidelity is unknown. Use swift-cscf-2026 for the verified 2026 attestation heading set.
+    No automatic equivalence is implied.
+  superseded_by: swift-cscf-2026
+  license_required: true
+  placeholder: true
+  refresh: manual
+  text_depth: headings
+- id: swift-cscf-2026
+  name: Swift Customer Security Controls Framework (CSCF) v2026
+  version: v2026 (1 July 2025)
+  tier: C
+  category: control
+  path: stubs/swift-cscf-2026.json
+  source_url: https://www2.swift.com/knowledgecentre/rest/v1/publications/cscf_dd/_latest/CSCF_v2026_202507015.pdf?logDownload=true
+  license: Copyright Swift. All rights reserved. Control body text requires an authorized copy and is not bundled.
+  license_url: https://www2.swift.com/knowledgecentre/publications/cscf_dd
+  status: current
+  notes: This is the 2026 attestation edition, with 32 heading rows. Swift also publishes v2027 for attestations in the second half of 2027. Mandatory and advisory designations describe the summary table;
+    architecture-specific cells qualify applicability and can make an otherwise mandatory control advisory. Consult the licensed source for requirements and scope.
+  verified_on: '2026-09-09'
   license_required: true
   placeholder: true
   refresh: manual

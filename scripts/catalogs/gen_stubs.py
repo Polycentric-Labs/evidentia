@@ -529,65 +529,12 @@ emit_control_catalog(
 
 
 # ---------------------------------------------------------------------------
-# SWIFT CSCF v2024 — SWIFT Customer Security Controls Framework
+# Swift CSCF historical table and verified v2026 headings
 # ---------------------------------------------------------------------------
 
-SWIFT_CSCF = [
-    ("1.1", "SWIFT Environment Protection", "1. Restrict Internet Access and Protect Critical Systems"),
-    ("1.2", "Operating System Privileged Account Control", "1. Restrict Internet Access and Protect Critical Systems"),
-    ("1.3", "Virtualisation or Cloud Platform Protection", "1. Restrict Internet Access and Protect Critical Systems"),
-    ("1.4", "Restriction of Internet Access", "1. Restrict Internet Access and Protect Critical Systems"),
-    (
-        "1.5",
-        "Customer Environment Protection (A4 architecture)",
-        "1. Restrict Internet Access and Protect Critical Systems",
-    ),
-    ("2.1", "Internal Data Flow Security", "2. Reduce Attack Surface and Vulnerabilities"),
-    ("2.2", "Security Updates", "2. Reduce Attack Surface and Vulnerabilities"),
-    ("2.3", "System Hardening", "2. Reduce Attack Surface and Vulnerabilities"),
-    ("2.4A", "Back Office Data Flow Security", "2. Reduce Attack Surface and Vulnerabilities"),
-    ("2.5A", "External Transmission Data Protection", "2. Reduce Attack Surface and Vulnerabilities"),
-    ("2.6", "Operator Session Confidentiality and Integrity", "2. Reduce Attack Surface and Vulnerabilities"),
-    ("2.7", "Vulnerability Scanning", "2. Reduce Attack Surface and Vulnerabilities"),
-    ("2.8A", "Critical Activity Outsourcing", "2. Reduce Attack Surface and Vulnerabilities"),
-    ("2.9", "Transaction Business Controls", "2. Reduce Attack Surface and Vulnerabilities"),
-    ("2.10", "Application Hardening", "2. Reduce Attack Surface and Vulnerabilities"),
-    ("2.11A", "RMA Business Controls", "2. Reduce Attack Surface and Vulnerabilities"),
-    ("3.1", "Physical Security", "3. Physically Secure the Environment"),
-    ("4.1", "Password Policy", "4. Prevent Compromise of Credentials"),
-    ("4.2", "Multi-factor Authentication", "4. Prevent Compromise of Credentials"),
-    ("5.1", "Logical Access Control", "5. Manage Identities and Segregate Privileges"),
-    ("5.2", "Token Management", "5. Manage Identities and Segregate Privileges"),
-    ("5.3A", "Personnel Vetting Process", "5. Manage Identities and Segregate Privileges"),
-    ("5.4", "Physical and Logical Password Storage", "5. Manage Identities and Segregate Privileges"),
-    ("6.1", "Malware Protection", "6. Detect Anomalous Activity to Systems or Transaction Records"),
-    ("6.2", "Software Integrity", "6. Detect Anomalous Activity to Systems or Transaction Records"),
-    ("6.3", "Database Integrity", "6. Detect Anomalous Activity to Systems or Transaction Records"),
-    ("6.4", "Logging and Monitoring", "6. Detect Anomalous Activity to Systems or Transaction Records"),
-    ("6.5A", "Intrusion Detection", "6. Detect Anomalous Activity to Systems or Transaction Records"),
-    ("7.1", "Cyber Incident Response Planning", "7. Plan for Incident Response and Information Sharing"),
-    ("7.2", "Security Training and Awareness", "7. Plan for Incident Response and Information Sharing"),
-    ("7.3A", "Penetration Testing", "7. Plan for Incident Response and Information Sharing"),
-    ("7.4A", "Scenario Risk Assessment", "7. Plan for Incident Response and Information Sharing"),
-    ("7.5", "Incident Response Collaboration", "7. Plan for Incident Response and Information Sharing"),
-]
+from gen_currency_headings import generate_swift_catalogs
 
-emit_control_catalog(
-    framework_id="swift-cscf-2024",
-    framework_name="SWIFT Customer Security Controls Framework (CSCF) v2024",
-    version="v2024",
-    source="SWIFT",
-    families=sorted({f for _, _, f in SWIFT_CSCF}),
-    controls=[
-        make_stub_control(c, t, f, "https://www.swift.com/myswift/customer-security-programme-csp")
-        for c, t, f in SWIFT_CSCF
-    ],
-    tier="C",
-    placeholder=True,
-    license_required=True,
-    license_terms="© SWIFT. CSCF is available to SWIFT customers via MySWIFT.",
-    license_url="https://www.swift.com/myswift/customer-security-programme-csp",
-)
+generate_swift_catalogs()
 
 
 # ---------------------------------------------------------------------------

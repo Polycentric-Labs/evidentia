@@ -12,6 +12,36 @@ import {
 } from "@/components/ui/card";
 import { api } from "@/lib/api";
 
+const NOTICE_DATES = [
+  ["approved_on", "Approved"],
+  ["published_on", "Published"],
+  ["order_effective_on", "Order effective"],
+  ["effective_on", "Applicable"],
+  ["inactive_on", "Inactive"],
+] as const;
+
+function SourceReference({ value, label }: { value: string; label: string }) {
+  let clickable = false;
+  try {
+    const url = new URL(value);
+    clickable =
+      /^https?:\/\//i.test(value) &&
+      (url.protocol === "https:" || url.protocol === "http:") &&
+      !url.username &&
+      !url.password &&
+      !/[\u0000-\u0020\u007f]/.test(value);
+  } catch {
+    // Catalog sources can be repository names or other non-URL references.
+  }
+  return clickable ? (
+    <a href={value} target="_blank" rel="noopener noreferrer">
+      {label}
+    </a>
+  ) : (
+    <span>{value || "Not provided"}</span>
+  );
+}
+
 export function FrameworkDetailPage() {
   const { id } = useParams<{ id: string }>();
   const query = useQuery({
@@ -95,16 +125,159 @@ export function FrameworkDetailPage() {
         <div className="row gap-2 wrap">
           <Badge variant="outline">Tier {catalog.tier ?? "?"}</Badge>
           <Badge variant="secondary">{catalog.category}</Badge>
-          {catalog.placeholder && <Badge variant="destructive">placeholder</Badge>}
+          <Badge
+            variant={catalog.status === "retired" ? "destructive" : "outline"}
+          >
+            {catalog.status || "status unknown"}
+          </Badge>
+          {catalog.placeholder && (
+            <Badge variant="destructive">placeholder</Badge>
+          )}
           {catalog.license_required && <Badge>license required</Badge>}
         </div>
         <h1 className="page-title">{catalog.framework_name}</h1>
         <p className="page-sub">
           <code className="kbd">{catalog.framework_id}</code> &middot; version{" "}
-          {catalog.version} &middot; {catalog.controls.length} top-level controls
-          ({catalog.families.length} families)
+          {catalog.version} &middot; {catalog.controls.length} top-level
+          controls ({catalog.families.length} families)
         </p>
       </header>
+
+      <section aria-label="Catalog context">
+        <Card>
+          <CardHeader>
+            <CardTitle className="base">Catalog context</CardTitle>
+            {catalog.notes && (
+              <CardDescription>{catalog.notes}</CardDescription>
+            )}
+          </CardHeader>
+          <CardContent className="pt-0 text-sm stack-2">
+            <dl className="stack-2">
+              <div>
+                <dt className="muted">Source checked</dt>
+                <dd>{catalog.verified_on || "Unknown"}</dd>
+              </div>
+              {catalog.superseded_by && (
+                <div>
+                  <dt className="muted">Successor</dt>
+                  <dd>
+                    <Link
+                      to={`/frameworks/${encodeURIComponent(catalog.superseded_by)}`}
+                    >
+                      {catalog.superseded_by}
+                    </Link>
+                  </dd>
+                </div>
+              )}
+              <div>
+                <dt className="muted">Source</dt>
+                <dd>
+                  <SourceReference
+                    value={catalog.source}
+                    label="Catalog source"
+                  />
+                </dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
+      </section>
+
+      {Object.keys(catalog.audit_contexts ?? {}).length > 0 && (
+        <section aria-label="Audit contexts" className="stack-3">
+          <h2 className="h2">Audit contexts</h2>
+          <p className="text-sm muted">
+            Unlisted CSA audit versions are unknown.
+          </p>
+          {Object.entries(catalog.audit_contexts ?? {}).map(
+            ([jurisdiction, context]) => (
+              <article key={jurisdiction} aria-label={jurisdiction}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="base">{jurisdiction}</CardTitle>
+                    <CardDescription>{context.authority}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0 text-sm stack-2">
+                    <dl className="stack-2">
+                      <div>
+                        <dt className="muted">Audit version</dt>
+                        <dd>{context.version}</dd>
+                      </div>
+                      <div>
+                        <dt className="muted">Source checked</dt>
+                        <dd>{context.verified_on}</dd>
+                      </div>
+                      <div>
+                        <dt className="muted">Source valid through</dt>
+                        <dd>{context.valid_through || "Unknown"}</dd>
+                      </div>
+                      <div>
+                        <dt className="muted">Source</dt>
+                        <dd>
+                          <SourceReference
+                            value={context.source_url}
+                            label="Audit source"
+                          />
+                        </dd>
+                      </div>
+                    </dl>
+                    {context.notes && <p>{context.notes}</p>}
+                  </CardContent>
+                </Card>
+              </article>
+            ),
+          )}
+        </section>
+      )}
+
+      {(catalog.publication_notices?.length ?? 0) > 0 && (
+        <section aria-label="Publication notices" className="stack-3">
+          <h2 className="h2">Publication notices</h2>
+          <p className="text-sm muted">
+            Publication records are outside the assessed controls and do not
+            activate automatically.
+          </p>
+          {catalog.publication_notices?.map((notice) => (
+            <article key={notice.id} aria-label={notice.id}>
+              <Card>
+                <CardHeader className="stack-2">
+                  <div className="row gap-2 wrap">
+                    <CardTitle className="base mono">{notice.id}</CardTitle>
+                    <Badge variant="outline">{notice.status}</Badge>
+                  </div>
+                  <CardDescription>{notice.title}</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0 text-sm stack-2">
+                  <dl className="stack-2">
+                    {NOTICE_DATES.map(([field, label]) => (
+                      <div key={field}>
+                        <dt className="muted">{label}</dt>
+                        <dd>{notice[field] || "Unknown"}</dd>
+                      </div>
+                    ))}
+                    {notice.superseded_by && (
+                      <div>
+                        <dt className="muted">Successor designator</dt>
+                        <dd>{notice.superseded_by}</dd>
+                      </div>
+                    )}
+                    <div>
+                      <dt className="muted">Source</dt>
+                      <dd>
+                        <SourceReference
+                          value={notice.source_url}
+                          label="Publication source"
+                        />
+                      </dd>
+                    </div>
+                  </dl>
+                  {notice.notes && <p>{notice.notes}</p>}
+                </CardContent>
+              </Card>
+            </article>
+          ))}
+        </section>
+      )}
 
       {catalog.license_terms && (
         <Card>
@@ -129,9 +302,19 @@ export function FrameworkDetailPage() {
                     style={{ alignItems: "flex-start" }}
                   >
                     <CardTitle className="base mono">{ctrl.id}</CardTitle>
-                    {ctrl.family && (
-                      <Badge variant="outline">{ctrl.family}</Badge>
-                    )}
+                    <div className="row gap-2 wrap">
+                      {ctrl.family && (
+                        <Badge variant="outline">{ctrl.family}</Badge>
+                      )}
+                      {ctrl.priority && (
+                        <Badge variant="secondary">
+                          Priority: {ctrl.priority}
+                        </Badge>
+                      )}
+                      {ctrl.withdrawn && (
+                        <Badge variant="secondary">withdrawn</Badge>
+                      )}
+                    </div>
                   </div>
                   <CardDescription>{ctrl.title}</CardDescription>
                 </CardHeader>
@@ -148,6 +331,29 @@ export function FrameworkDetailPage() {
                       Placeholder control. Supply your licensed copy via{" "}
                       <code className="kbd">evidentia catalog import</code>.
                     </span>
+                  </CardContent>
+                )}
+                {Object.keys(ctrl.properties ?? {}).length > 0 && (
+                  <CardContent className="pt-0 text-sm">
+                    <dl className="stack-2">
+                      {Object.entries(ctrl.properties ?? {}).map(
+                        ([key, value]) => (
+                          <div key={key}>
+                            <dt className="muted">{key}</dt>
+                            <dd>
+                              {key === "source_url" ? (
+                                <SourceReference
+                                  value={value}
+                                  label="Control source"
+                                />
+                              ) : (
+                                value
+                              )}
+                            </dd>
+                          </div>
+                        ),
+                      )}
+                    </dl>
                   </CardContent>
                 )}
               </Card>

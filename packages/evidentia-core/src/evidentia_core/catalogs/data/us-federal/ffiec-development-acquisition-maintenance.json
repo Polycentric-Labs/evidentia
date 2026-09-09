@@ -1,0 +1,1113 @@
+{
+  "framework_id": "ffiec-development-acquisition-maintenance",
+  "framework_name": "FFIEC IT Examination Handbook - Development, Acquisition, and Maintenance booklet",
+  "version": "August 2024",
+  "source": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/",
+  "tier": "A",
+  "category": "control",
+  "placeholder": false,
+  "families": [
+    "I Overview of Development, Acquisition, and Maintenance",
+    "II Governance of Development, Acquisition, and Maintenance",
+    "III Risk Management of Development, Acquisition, and Maintenance",
+    "IV Common Development, Acquisition, and Maintenance Risk Topics",
+    "V Development",
+    "VI Acquisition",
+    "VII Maintenance"
+  ],
+  "controls": [
+    {
+      "id": "I",
+      "title": "I Overview of Development, Acquisition, and Maintenance",
+      "description": "",
+      "family": "I Overview of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/i-overview-of-development-acquisition-and-maintenance/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II",
+      "title": "II Governance of Development, Acquisition, and Maintenance",
+      "description": "",
+      "family": "II Governance of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/ii-governance-of-development-acquisition-and-maintenance/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.A",
+      "title": "II.A Policies, Standards, and Procedures",
+      "description": "",
+      "family": "II Governance of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/ii-governance-of-development-acquisition-and-maintenance/iia-policies-standards-and-procedures/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B",
+      "title": "II.B Roles and Responsibilities",
+      "description": "",
+      "family": "II Governance of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/ii-governance-of-development-acquisition-and-maintenance/iib-roles-and-responsibilities/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B.1",
+      "title": "II.B.1 Board, Senior Management, and Other Common Roles",
+      "description": "",
+      "family": "II Governance of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/ii-governance-of-development-acquisition-and-maintenance/iib-roles-and-responsibilities/iib1-board-senior-management-and-other-common-roles/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B.2",
+      "title": "II.B.2 IT Project Management Roles",
+      "description": "",
+      "family": "II Governance of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/ii-governance-of-development-acquisition-and-maintenance/iib-roles-and-responsibilities/iib2-it-project-management-roles/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B.3",
+      "title": "II.B.3 Development Roles",
+      "description": "",
+      "family": "II Governance of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/ii-governance-of-development-acquisition-and-maintenance/iib-roles-and-responsibilities/iib3-development-roles/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B.4",
+      "title": "II.B.4 Acquisition Roles",
+      "description": "",
+      "family": "II Governance of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/ii-governance-of-development-acquisition-and-maintenance/iib-roles-and-responsibilities/iib4-acquisition-roles/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B.5",
+      "title": "II.B.5 Maintenance Roles",
+      "description": "",
+      "family": "II Governance of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/ii-governance-of-development-acquisition-and-maintenance/iib-roles-and-responsibilities/iib5-maintenance-roles/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B.6",
+      "title": "II.B.6 Other Common Development, Acquisition, and Maintenance Roles",
+      "description": "",
+      "family": "II Governance of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/ii-governance-of-development-acquisition-and-maintenance/iib-roles-and-responsibilities/iib6-other-common-development-acquisition-and-maintenance-roles/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B.7",
+      "title": "II.B.7 Supply Chain Roles",
+      "description": "",
+      "family": "II Governance of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/ii-governance-of-development-acquisition-and-maintenance/iib-roles-and-responsibilities/iib7-supply-chain-roles/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B.8",
+      "title": "II.B.8 Other Support Functions",
+      "description": "",
+      "family": "II Governance of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/ii-governance-of-development-acquisition-and-maintenance/iib-roles-and-responsibilities/iib8-other-support-functions/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B.9",
+      "title": "II.B.9 Audit's Role",
+      "description": "",
+      "family": "II Governance of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/ii-governance-of-development-acquisition-and-maintenance/iib-roles-and-responsibilities/iib9-audits-role/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III",
+      "title": "III Risk Management of Development, Acquisition, and Maintenance",
+      "description": "",
+      "family": "III Risk Management of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iii-risk-management-of-development-acquisition-and-maintenance/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.A",
+      "title": "III.A Risk Identification",
+      "description": "",
+      "family": "III Risk Management of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iii-risk-management-of-development-acquisition-and-maintenance/iiia-risk-identification/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.B",
+      "title": "III.B Risk Measurement",
+      "description": "",
+      "family": "III Risk Management of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iii-risk-management-of-development-acquisition-and-maintenance/iiib-risk-measurement/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.C",
+      "title": "III.C Risk Monitoring and Reporting",
+      "description": "",
+      "family": "III Risk Management of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iii-risk-management-of-development-acquisition-and-maintenance/iiic-risk-monitoring-and-reporting/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.D",
+      "title": "III.D Controlling or Mitigating Risk",
+      "description": "",
+      "family": "III Risk Management of Development, Acquisition, and Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iii-risk-management-of-development-acquisition-and-maintenance/iiid-controlling-or-mitigating-risk/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV",
+      "title": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.A",
+      "title": "IV.A Open-Source",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/iva-open-source/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.B",
+      "title": "IV.B Commercial-off-the-Shelf",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivb-commercial-off-the-shelf/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.C",
+      "title": "IV.C Licenses, Agreements, and Copyright Protection",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivc-licenses-agreements-and-copyright-protection/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.C.1",
+      "title": "IV.C.1 Software Licenses",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivc-licenses-agreements-and-copyright-protection/ivc1-software-licenses/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.C.1(a)",
+      "title": "IV.C.1(a) Free and Open-Source Software Licenses",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivc-licenses-agreements-and-copyright-protection/ivc1-software-licenses/ivc1-a-free-and-open-source-software-licenses/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.C.1(b)",
+      "title": "IV.C.1(b) Proprietary Software Licenses",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivc-licenses-agreements-and-copyright-protection/ivc1-software-licenses/ivc1-b-proprietary-software-licenses/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.C.2",
+      "title": "IV.C.2 Hardware Licenses",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivc-licenses-agreements-and-copyright-protection/ivc2-hardware-licenses/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.C.3",
+      "title": "IV.C.3 Copyright Protection",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivc-licenses-agreements-and-copyright-protection/ivc3-copyright-protection/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.D",
+      "title": "IV.D Secure Development",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivd-secure-development/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.E",
+      "title": "IV.E Data",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ive-data/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.F",
+      "title": "IV.F Secure Operating Environments",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivf-secure-operating-environments/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.G",
+      "title": "IV.G Microservices",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivg-microservices/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.H",
+      "title": "IV.H Containers",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivh-containers/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.I",
+      "title": "IV.I Application Programming Interfaces",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivi-application-programming-interfaces/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.I.1",
+      "title": "IV.I.1 API Gateway",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivi-application-programming-interfaces/ivi1-api-gateway/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.I.2",
+      "title": "IV.I.2 API Risk Mitigation",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivi-application-programming-interfaces/ivi2-api-risk-mitigation/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.J",
+      "title": "IV.J Methodologies",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivj-methodologies/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.J.1",
+      "title": "IV.J.1 Waterfall",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivj-methodologies/ivj1-waterfall/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.J.2",
+      "title": "IV.J.2 Agile",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivj-methodologies/ivj2-agile/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.K",
+      "title": "IV.K Quality Management",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivk-quality-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.L",
+      "title": "IV.L Documentation Standards",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivl-documentation-standards/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.M",
+      "title": "IV.M Post-Implementation Review",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivm-post-implementation-review/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.N",
+      "title": "IV.N IT Project Management",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivn-it-project-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.N.1",
+      "title": "IV.N.1 IT Project Phases",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivn-it-project-management/ivn1-it-project-phases/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.N.1(a)",
+      "title": "IV.N.1(a) Initiation",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivn-it-project-management/ivn1-it-project-phases/ivn1-a-initiation/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.N.1(b)",
+      "title": "IV.N.1(b) Planning",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivn-it-project-management/ivn1-it-project-phases/ivn1-b-planning/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.N.1(c)",
+      "title": "IV.N.1(c) Execution",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivn-it-project-management/ivn1-it-project-phases/ivn1-c-execution/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.N.1(d)",
+      "title": "IV.N.1(d) Closeout",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivn-it-project-management/ivn1-it-project-phases/ivn1-d-closeout/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.N.2",
+      "title": "IV.N.2 Monitoring and Controlling",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivn-it-project-management/ivn2-monitoring-and-controlling/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.N.3",
+      "title": "IV.N.3 IT Project Documentation",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivn-it-project-management/ivn3-it-project-documentation/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.N.3(a)",
+      "title": "IV.N.3(a) IT Project Request",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivn-it-project-management/ivn3-it-project-documentation/ivn3-a-it-project-request/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.N.3(b)",
+      "title": "IV.N.3(b) Business Case",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivn-it-project-management/ivn3-it-project-documentation/ivn3-b-business-case/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.N.3(c)",
+      "title": "IV.N.3(c) Feasibility Study",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivn-it-project-management/ivn3-it-project-documentation/ivn3-c-feasibility-study/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.N.3(d)",
+      "title": "IV.N.3(d) IT Project Plans",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivn-it-project-management/ivn3-it-project-documentation/ivn3-d-it-project-plans/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.N.3(e)",
+      "title": "IV.N.3(e) Closeout Documentation",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivn-it-project-management/ivn3-it-project-documentation/ivn3-e-closeout-documentation/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.O",
+      "title": "IV.O System Development Life Cycle",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivo-system-development-life-cycle/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.O.1",
+      "title": "IV.O.1 SDLC Phases",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivo-system-development-life-cycle/ivo1-sdlc-phases/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.O.1(a)",
+      "title": "IV.O.1(a) Initiation",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivo-system-development-life-cycle/ivo1-sdlc-phases/ivo1-a-initiation/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.O.1(b)",
+      "title": "IV.O.1(b) Development or Acquisition",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivo-system-development-life-cycle/ivo1-sdlc-phases/ivo1-b-development-or-acquisition/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.O.1(c)",
+      "title": "IV.O.1(c) Implementation and Assessment",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivo-system-development-life-cycle/ivo1-sdlc-phases/ivo1-c-implementation-and-assessment/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.O.1(d)",
+      "title": "IV.O.1(d) Operations and Maintenance",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivo-system-development-life-cycle/ivo1-sdlc-phases/ivo1-d-operations-and-maintenance/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.O.1(e)",
+      "title": "IV.O.1(e) Sunset and Disposal",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivo-system-development-life-cycle/ivo1-sdlc-phases/ivo1-e-sunset-and-disposal/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.P",
+      "title": "IV.P Third-Party Relationship Risk Management",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivp-third-party-relationship-risk-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.P.1",
+      "title": "IV.P.1 Planning",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivp-third-party-relationship-risk-management/ivp1-planning/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.P.2",
+      "title": "IV.P.2 Due Diligence and Third-Party Selection",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivp-third-party-relationship-risk-management/ivp2-due-diligence-and-third-party-selection/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.P.3",
+      "title": "IV.P.3 Contract Negotiation",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivp-third-party-relationship-risk-management/ivp3-contract-negotiation/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.Q",
+      "title": "IV.Q Supply Chain Considerations",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivq-supply-chain-considerations/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.Q.1",
+      "title": "IV.Q.1 Supply Chain Risk Management",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivq-supply-chain-considerations/ivq1-supply-chain-risk-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.Q.2",
+      "title": "IV.Q.2 Software Bill of Material",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivq-supply-chain-considerations/ivq2-software-bill-of-material/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.Q.3",
+      "title": "IV.Q.3 Enterprise Risk Management and Supply Chain Risks",
+      "description": "",
+      "family": "IV Common Development, Acquisition, and Maintenance Risk Topics",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iv-common-development-acquisition-and-maintenance-risk-topics/ivq-supply-chain-considerations/ivq3-enterprise-risk-management-and-supply-chain-risks/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V",
+      "title": "V Development",
+      "description": "",
+      "family": "V Development",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/v-development/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.A",
+      "title": "V.A Development Standards and Controls",
+      "description": "",
+      "family": "V Development",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/v-development/va-development-standards-and-controls/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.B",
+      "title": "V.B Testing",
+      "description": "",
+      "family": "V Development",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/v-development/vb-testing/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.C",
+      "title": "V.C DevOps and DevSecOps",
+      "description": "",
+      "family": "V Development",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/v-development/vc-devops-and-devsecops/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.C.1",
+      "title": "V.C.1 DevOps",
+      "description": "",
+      "family": "V Development",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/v-development/vc-devops-and-devsecops/vc1-devops/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.C.2",
+      "title": "V.C.2 DevSecOps",
+      "description": "",
+      "family": "V Development",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/v-development/vc-devops-and-devsecops/vc2-devsecops/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.D",
+      "title": "V.D Functional Development Types",
+      "description": "",
+      "family": "V Development",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/v-development/vd-functional-development-types/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.D.1",
+      "title": "V.D.1 Model Development",
+      "description": "",
+      "family": "V Development",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/v-development/vd-functional-development-types/vd1-model-development/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.D.2",
+      "title": "V.D.2 Database Development",
+      "description": "",
+      "family": "V Development",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/v-development/vd-functional-development-types/vd2-database-development/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI",
+      "title": "VI Acquisition",
+      "description": "",
+      "family": "VI Acquisition",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vi-acquisition/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.A",
+      "title": "VI.A Acquisition Policies, Standards, and Procedures",
+      "description": "",
+      "family": "VI Acquisition",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vi-acquisition/via-acquisition-policies-standards-and-procedures/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.B",
+      "title": "VI.B Acquisition Projects",
+      "description": "",
+      "family": "VI Acquisition",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vi-acquisition/vib-acquisition-projects/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.C",
+      "title": "VI.C Solicitation",
+      "description": "",
+      "family": "VI Acquisition",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vi-acquisition/vic-solicitation/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.D",
+      "title": "VI.D Evaluation",
+      "description": "",
+      "family": "VI Acquisition",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vi-acquisition/vid-evaluation/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.E",
+      "title": "VI.E Contracts and Other Agreements",
+      "description": "",
+      "family": "VI Acquisition",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vi-acquisition/vie-contracts-and-other-agreements/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.E.1",
+      "title": "VI.E.1 Statement of Work",
+      "description": "",
+      "family": "VI Acquisition",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vi-acquisition/vie-contracts-and-other-agreements/vie1-statement-of-work/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.E.2",
+      "title": "VI.E.2 Master Services Agreement",
+      "description": "",
+      "family": "VI Acquisition",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vi-acquisition/vie-contracts-and-other-agreements/vie2-master-services-agreement/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.E.3",
+      "title": "VI.E.3 Service Level Agreement",
+      "description": "",
+      "family": "VI Acquisition",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vi-acquisition/vie-contracts-and-other-agreements/vie3-service-level-agreement/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.E.4",
+      "title": "VI.E.4 Contracts",
+      "description": "",
+      "family": "VI Acquisition",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vi-acquisition/vie-contracts-and-other-agreements/vie4-contracts/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.E.5",
+      "title": "VI.E.5 Escrowed Source Code Agreements and Documentation",
+      "description": "",
+      "family": "VI Acquisition",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vi-acquisition/vie-contracts-and-other-agreements/vie5-escrowed-source-code-agreements-and-documentation/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI.E.6",
+      "title": "VI.E.6 Exit Strategy",
+      "description": "",
+      "family": "VI Acquisition",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vi-acquisition/vie-contracts-and-other-agreements/vie6-exit-strategy/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII",
+      "title": "VII Maintenance",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.A",
+      "title": "VII.A Preventive Maintenance",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viia-preventive-maintenance/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B",
+      "title": "VII.B Change Management",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viib-change-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B.1",
+      "title": "VII.B.1 Implementing Changes",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viib-change-management/viib1-implementing-changes/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B.2",
+      "title": "VII.B.2 Additional Control Considerations in Change Management",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viib-change-management/viib2-additional-control-considerations-in-change-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B.2(a)",
+      "title": "VII.B.2(a) Data Controls in the Testing Environment",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viib-change-management/viib2-additional-control-considerations-in-change-management/viib2-a-data-controls-in-the-testing-environment/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B.2(b)",
+      "title": "VII.B.2(b) Library Controls",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viib-change-management/viib2-additional-control-considerations-in-change-management/viib2-b-library-controls/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B.2(c)",
+      "title": "VII.B.2(c) Code Repository Controls",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viib-change-management/viib2-additional-control-considerations-in-change-management/viib2-c-code-repository-controls/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B.3",
+      "title": "VII.B.3 Change Types",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viib-change-management/viib3-change-types/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B.3(a)",
+      "title": "VII.B.3(a) Routine Modifications",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viib-change-management/viib3-change-types/viib3-a-routine-modifications/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B.3(b)",
+      "title": "VII.B.3(b) Major Modifications",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viib-change-management/viib3-change-types/viib3-b-major-modifications/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B.3(c)",
+      "title": "VII.B.3(c) Emergency Modifications",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viib-change-management/viib3-change-types/viib3-c-emergency-modifications/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B.4",
+      "title": "VII.B.4 Change Management Documentation",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viib-change-management/viib4-change-management-documentation/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B.4(a)",
+      "title": "VII.B.4(a) Change Request Form",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viib-change-management/viib4-change-management-documentation/viib4-a-change-request-form/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B.4(b)",
+      "title": "VII.B.4(b) Impact Analysis",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viib-change-management/viib4-change-management-documentation/viib4-b-impact-analysis/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B.4(c)",
+      "title": "VII.B.4(c) Rollback or Back-Out Plan",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viib-change-management/viib4-change-management-documentation/viib4-c-rollback-or-back-out-plan/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.C",
+      "title": "VII.C End-of-Life",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viic-end-of-life/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.D",
+      "title": "VII.D Termination and Disposal",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viid-termination-and-disposal/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.E",
+      "title": "VII.E Maintenance Documentation",
+      "description": "",
+      "family": "VII Maintenance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/vii-maintenance/viie-maintenance-documentation/",
+        "id_origin": "published_heading_locator"
+      }
+    }
+  ],
+  "status": "current",
+  "notes": "Public HTML body headings only. Introductions, appendices, examination procedures, and narrative statements are omitted. Heading coverage does not establish full assessment coverage. IDs are published document section locators, not official assessment control IDs. Edition source: https://ithandbook.ffiec.gov/media/m21ni0b3/ffiec_itbooklet_developmentandacquisition.pdf. Released 2024-08-29: https://www.fdic.gov/news/financial-institution-letters/2024/updated-ffiec-it-examination-handbook-development. The PDF edition is August 2024. FDIC FIL-60-2024 and the FFIEC archive date the release to 2024-08-29; the migrated FFIEC release page instead displays 2024-09-29.",
+  "verified_on": "2026-09-09"
+}

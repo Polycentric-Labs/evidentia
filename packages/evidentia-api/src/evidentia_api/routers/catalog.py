@@ -44,6 +44,7 @@ import json
 import os
 import re
 import shutil
+from datetime import date
 from pathlib import Path
 from tempfile import mkdtemp
 
@@ -63,7 +64,7 @@ from evidentia_core.catalogs.user_dir import (
     resolve_catalog_path,
     save_user_manifest,
 )
-from evidentia_core.models.catalog import TextDepth
+from evidentia_core.models.catalog import ControlCatalog, TextDepth
 from evidentia_core.models.common import NonBlankStr
 from evidentia_core.security.paths import validate_within
 from fastapi import APIRouter, Query
@@ -198,6 +199,10 @@ async def where_framework(
         "category": entry.category,
         "placeholder": entry.placeholder,
         "text_depth": entry.text_depth,
+        "status": entry.status,
+        "notes": entry.notes,
+        "verified_on": entry.verified_on,
+        "superseded_by": entry.superseded_by,
     }
 
 
@@ -241,6 +246,10 @@ async def license_info(framework_id: str) -> dict[str, object]:
         "license_url": entry.license_url,
         "source_url": entry.source_url,
         "text_depth": entry.text_depth,
+        "status": entry.status,
+        "notes": entry.notes,
+        "verified_on": entry.verified_on,
+        "superseded_by": entry.superseded_by,
     }
 
 
@@ -289,6 +298,13 @@ class CatalogImportPayload(BaseModel):
         default=False,
         description="Overwrite an existing user import with the same ID.",
     )
+
+
+def _json_catalog_date(value: object) -> str:
+    """Preserve YAML date scalars as ISO strings; reject other non-JSON values."""
+    if isinstance(value, date):
+        return value.isoformat()
+    raise TypeError(f"Unsupported catalog value type: {type(value).__name__}")
 
 
 @router.post(
@@ -405,7 +421,11 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
     staging_dir = mkdtemp(prefix=".catalog-import-", dir=user_dir)
     try:
         staged_path = validate_within(Path(staging_dir) / "catalog.json", user_dir)
-        staged_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        try:
+            serialized = json.dumps(data, indent=2, ensure_ascii=False, default=_json_catalog_date)
+        except (TypeError, ValueError) as exc:
+            raise api_error(400, "invalid_body", f"Catalog content cannot be represented as JSON: {exc}") from exc
+        staged_path.write_text(serialized, encoding="utf-8", newline="\n")
         try:
             loaded_catalog = load_evidentia_catalog(staged_path)
         except Exception as exc:  # normalize any load error to 400
@@ -425,6 +445,7 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
             placeholder=placeholder,
             license_terms=payload.license_terms,
             text_depth=loaded_catalog.text_depth,
+            catalog=loaded_catalog,
         )
     finally:
         # Do not let denied cleanup undo a completed import or hide its error.
@@ -518,6 +539,7 @@ def _add_to_user_manifest(
     placeholder: bool,
     license_terms: str | None,
     text_depth: TextDepth | None = None,
+    catalog: ControlCatalog | None = None,
 ) -> None:
     """Append or replace an entry in the user manifest.
 
@@ -534,9 +556,16 @@ def _add_to_user_manifest(
         tier=tier,  # type: ignore[arg-type]  # validated upstream to A/B/C/D shape
         category="control",
         path=path,
-        license=license_terms,
+        license=license_terms if license_terms is not None else catalog.license_terms if catalog else None,
         placeholder=placeholder,
         text_depth=text_depth,
+        status=catalog.status if catalog else None,
+        notes=catalog.notes if catalog else None,
+        verified_on=catalog.verified_on if catalog else None,
+        superseded_by=catalog.superseded_by if catalog else None,
+        source_url=catalog.source if catalog else None,
+        license_url=catalog.license_url if catalog else None,
+        license_required=catalog.license_required if catalog else False,
     )
     updated = FrameworkManifest(version=user.version, frameworks=[*kept, new_entry])
     save_user_manifest(updated)

@@ -1,27 +1,25 @@
 # 5. Compliance
 
-The compliance-tool differentiator section. What catalogs Evidentia ships, what conformance Evidentia itself claims, how to browse + use the framework crosswalks, and how to contribute a catalog.
+Use this section to check what catalogs Evidentia bundles, what its own
+conformance evidence supports, and how crosswalks and catalog imports work.
 
 ## Pages in this section
 
-- **[Catalog inventory](catalog-inventory.md)** — 96 framework catalogs by region/standard family + version pin + last-update date + maintainer.
+- **[Catalog inventory](catalog-inventory.md)**: framework families, redistribution tiers and the text actually bundled.
+- **[Catalog currency](catalog-currency.md)**: dated source checks, historical catalogs, ID changes and applicability limits.
+- **[Framework conformance](framework-conformance.md)**: Evidentia's own standards claims and supporting evidence.
+- **[Crosswalk index](crosswalk-index.md)**: bundled mappings and their source and target families.
+- **[OSPS Baseline mapping](osps-baseline-mapping.md)**: the upstream assessment requirements, bundled mappings and GitHub collector checks.
+- **[OCSF mapping](ocsf-mapping.md)**: the normative `SecurityFinding` field map, ingestion and detection behavior.
+- **[Gemara mapping](gemara-mapping.md)**: Evidentia's alignment with the OpenSSF Gemara taxonomy.
+- **[Financial-sector overlay](financial-sector-overlay.md)**: catalog composition for banks, broker-dealers, insurers and credit unions.
+- **[Contributing a catalog](contributing-a-catalog.md)**: the catalog schema, redistribution rules and required validation.
 
-- **[Framework conformance](framework-conformance.md)** — standards Evidentia ITSELF conforms to (OSPS Baseline, NIST 800-53 self-assessment, OpenSSF Best Practices Silver, etc.).
+## Keeping these pages current
 
-- **[Crosswalk index](crosswalk-index.md)** — browse + filter all 13 crosswalks.
-
-- **[OSPS Baseline mapping](osps-baseline-mapping.md)** — OSPS Baseline v2026.02.19 walkthrough + Evidentia's conformance status per assessment-requirement + the 5 OSPS crosswalks + the 16 GitHub OSPS collector helpers.
-
-- **[OCSF mapping](ocsf-mapping.md)** — NORMATIVE `SecurityFinding` ↔ OCSF field map (v0.10.0 + v0.10.5 ingestion + detection).
-
-- **[Gemara mapping](gemara-mapping.md)** — NORMATIVE Evidentia ↔ OpenSSF Gemara taxonomy alignment (Catalogs / Logs / Documents / Entities / Collections).
-
-- **[Financial-sector overlay](financial-sector-overlay.md)** — composition pattern for federally-supervised banks, broker-dealers, insurers, credit unions (OCC + FRB + FDIC + NCUA + FFIEC + state insurance + SR 11-7 / SR 26-02 + OCC Bulletin 2026-13a).
-
-- **[Contributing a catalog](contributing-a-catalog.md)** — 3-file PR recipe + YAML-vs-JSON comparison + required schema + tier conventions.
-
-## How to use this section
-
-This section is the answer to "does Evidentia cover [framework X]?" + "how do I use Evidentia's mapping outputs in [audit / compliance / SIEM workflow]?" The OSPS Baseline mapping page is the showcase of the v0.10.6 first-mover work.
-
-All eight pages above are live. The three compliance-angled pages (`catalog-inventory.md`, `framework-conformance.md`, `crosswalk-index.md`) are hand-authored against the live catalog manifest + crosswalk files + `OSPS-CONFORMANCE.md`; the four mirror pages (`ocsf-mapping`, `gemara-mapping`, `financial-sector-overlay`, `contributing-a-catalog`) are generated mirrors of their `docs/<file>.md` sources, produced by `scripts/wiki/sync_mirrors.py` and regenerated in CI by `.github/workflows/sync-wiki.yml`. `osps-baseline-mapping.md` is the fully-detailed showcase page.
+The catalog inventory, framework conformance and crosswalk index are maintained
+against the repository's data and evidence. The catalog inventory includes a
+generated count table. OCSF, Gemara, financial-sector overlay, catalog currency
+and catalog contribution pages are generated mirrors of their canonical
+`docs/` sources. `scripts/wiki/sync_mirrors.py` refreshes those mirrors, and the
+wiki synchronization workflow publishes them after the required checks pass.

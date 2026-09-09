@@ -2,7 +2,7 @@
   "framework_id": "ffiec-cat",
   "framework_name": "FFIEC Cybersecurity Assessment Tool",
   "version": "2017 (representative subset)",
-  "source": "https://www.ffiec.gov/cyberassessmenttool.htm",
+  "source": "https://www.ffiec.gov/sites/default/files/media/press-releases/2024/cat-sunset-statement-ffiec-letterhead.pdf",
   "tier": "A",
   "category": "control",
   "placeholder": false,
@@ -212,5 +212,8 @@
       "description": "Live-fire (red-team / threat-led) resilience testing performed periodically (FFIEC CAT Domain 5, Advanced).",
       "family": "5. Cyber Incident Management + Resilience"
     }
-  ]
+  ],
+  "status": "retired",
+  "notes": "Retired by FFIEC on 2025-08-31. All 33 controls in this historical representative subset are retained. The source statement points to NIST CSF 2.0, CISA Cybersecurity Performance Goals, CRI's Cyber Profile, and CIS Critical Security Controls as alternatives. No one-to-one equivalence or single successor is asserted.",
+  "verified_on": "2026-09-09"
 }

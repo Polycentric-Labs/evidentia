@@ -442,3 +442,69 @@ def test_catalog_import_publishes_manifest_before_scratch_cleanup(
     assert entry.license == "Synthetic license"
     assert entry.text_depth == "headings"
     assert all(manifest == load_user_manifest().model_dump(mode="json") for manifest in manifests_at_cleanup)
+
+
+def test_imported_currency_is_visible_and_preserved(
+    runner: CliRunner, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(catalog_cli, "console", Console(width=200))
+    path = _minimal_user_catalog(tmp_path)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data.update(
+        {
+            "status": "retired",
+            "notes": "[source] Consult successor.",
+            "verified_on": "2026-09-09",
+            "superseded_by": "my-next-fw",
+            "source": "https://example.org/source",
+            "license_url": "https://example.org/license",
+            "license_required": True,
+        }
+    )
+    path.write_text(json.dumps(data), encoding="utf-8")
+    result = runner.invoke(app, ["catalog", "import", str(path), "--tier", "C"])
+    assert result.exit_code == 0, result.output
+    entry = load_user_manifest().get("my-custom-fw")
+    assert entry and entry.status == "retired"
+    assert entry.superseded_by == "my-next-fw"
+    assert entry.license_required
+    for command in ("where", "license-info", "show"):
+        result = runner.invoke(app, ["catalog", command, "my-custom-fw"])
+        assert result.exit_code == 0, result.output
+        assert "retired" in result.output
+        assert "[source] Consult successor." in result.output
+        assert "2026-09-09" in result.output
+    listing = runner.invoke(app, ["catalog", "list", "--user-only"])
+    assert listing.exit_code == 0, listing.output
+    assert "retired" in listing.output
+
+
+def test_show_exposes_dates_without_treating_publications_as_controls(
+    runner: CliRunner, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(catalog_cli, "console", Console(width=200))
+    result = runner.invoke(app, ["catalog", "show", "nerc-cip-v7"])
+    assert result.exit_code == 0, result.output
+    assert "Published revisions" in result.output
+    assert "CIP-015-2" in result.output
+    assert "2029-10-01" in result.output
+    assert "Total: 13 controls" in result.output
+    result = runner.invoke(app, ["catalog", "show", "nerc-cip-v7", "--control", "CIP-012-2"])
+    assert result.exit_code == 0, result.output
+    assert "2026-07-01" in result.output
+
+
+@pytest.mark.parametrize("field", ["source", "license_url", "license_terms"])
+def test_imported_license_metadata_is_rendered_literally(
+    runner: CliRunner, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str
+) -> None:
+    monkeypatch.setattr(catalog_cli, "console", Console(width=200))
+    source = _minimal_user_catalog(tmp_path)
+    data = json.loads(source.read_text(encoding="utf-8"))
+    data[field] = "https://example.org/[/bold]"
+    source.write_text(json.dumps(data), encoding="utf-8")
+    result = runner.invoke(app, ["catalog", "import", str(source), "--tier", "C"])
+    assert result.exit_code == 0, result.output
+    result = runner.invoke(app, ["catalog", "license-info", "my-custom-fw"])
+    assert result.exit_code == 0, result.output
+    assert "https://example.org/[/bold]" in result.output

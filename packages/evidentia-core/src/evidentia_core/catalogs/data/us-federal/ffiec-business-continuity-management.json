@@ -1,0 +1,565 @@
+{
+  "framework_id": "ffiec-business-continuity-management",
+  "framework_name": "FFIEC IT Examination Handbook - Business Continuity Management booklet",
+  "version": "November 2019",
+  "source": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/",
+  "tier": "A",
+  "category": "control",
+  "placeholder": false,
+  "families": [
+    "I Business Continuity Management",
+    "II Business Continuity Management Governance",
+    "III Risk Management",
+    "IV Business Continuity Strategies",
+    "V Business Continuity Plan",
+    "VI Training",
+    "VII Exercises and Tests",
+    "VIII Maintenance and Improvement",
+    "IX Board Reporting"
+  ],
+  "controls": [
+    {
+      "id": "I",
+      "title": "I Business Continuity Management",
+      "description": "",
+      "family": "I Business Continuity Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/i-business-continuity-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II",
+      "title": "II Business Continuity Management Governance",
+      "description": "",
+      "family": "II Business Continuity Management Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/ii-business-continuity-management-governance/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.A",
+      "title": "II.A Board and Senior Management Responsibilities",
+      "description": "",
+      "family": "II Business Continuity Management Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/ii-business-continuity-management-governance/iia-board-and-senior-management-responsibilities/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "II.B",
+      "title": "II.B Audit",
+      "description": "",
+      "family": "II Business Continuity Management Governance",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/ii-business-continuity-management-governance/iib-audit/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III",
+      "title": "III Risk Management",
+      "description": "",
+      "family": "III Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iii-risk-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.A",
+      "title": "III.A Business Impact Analysis",
+      "description": "",
+      "family": "III Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iii-risk-management/iiia-business-impact-analysis/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.A.1",
+      "title": "III.A.1 Identification of Critical Business Functions",
+      "description": "",
+      "family": "III Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iii-risk-management/iiia-business-impact-analysis/iiia1-identification-of-critical-business-functions/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.A.2",
+      "title": "III.A.2 Interdependency Analysis",
+      "description": "",
+      "family": "III Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iii-risk-management/iiia-business-impact-analysis/iiia2-interdependency-analysis/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.A.3",
+      "title": "III.A.3 Impact of Disruption",
+      "description": "",
+      "family": "III Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iii-risk-management/iiia-business-impact-analysis/iiia3-impact-of-disruption/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.B",
+      "title": "III.B Risk Assessment",
+      "description": "",
+      "family": "III Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iii-risk-management/iiib-risk-assessment/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.B.1",
+      "title": "III.B.1 Risk Identification",
+      "description": "",
+      "family": "III Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iii-risk-management/iiib-risk-assessment/iiib1-risk-identification/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "III.B.2",
+      "title": "III.B.2 Likelihood and Impact",
+      "description": "",
+      "family": "III Risk Management",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iii-risk-management/iiib-risk-assessment/iiib2-likelihood-and-impact/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV",
+      "title": "IV Business Continuity Strategies",
+      "description": "",
+      "family": "IV Business Continuity Strategies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iv-business-continuity-strategies/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.A",
+      "title": "IV.A Resilience",
+      "description": "",
+      "family": "IV Business Continuity Strategies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iv-business-continuity-strategies/iva-resilience/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.A.1",
+      "title": "IV.A.1 Physical",
+      "description": "",
+      "family": "IV Business Continuity Strategies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iv-business-continuity-strategies/iva-resilience/iva1-physical/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.A.2",
+      "title": "IV.A.2 Cyber Resilience",
+      "description": "",
+      "family": "IV Business Continuity Strategies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iv-business-continuity-strategies/iva-resilience/iva2-cyber-resilience/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.A.3",
+      "title": "IV.A.3 Data Backup and Replication",
+      "description": "",
+      "family": "IV Business Continuity Strategies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iv-business-continuity-strategies/iva-resilience/iva3-data-backup-and-replication/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.A.4",
+      "title": "IV.A.4 Personnel",
+      "description": "",
+      "family": "IV Business Continuity Strategies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iv-business-continuity-strategies/iva-resilience/iva4-personnel/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.A.5",
+      "title": "IV.A.5 Third-Party Service Providers",
+      "description": "",
+      "family": "IV Business Continuity Strategies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iv-business-continuity-strategies/iva-resilience/iva5-third-party-service-providers/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.A.6",
+      "title": "IV.A.6 Telecommunications",
+      "description": "",
+      "family": "IV Business Continuity Strategies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iv-business-continuity-strategies/iva-resilience/iva6-telecommunications/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.A.7",
+      "title": "IV.A.7 Power",
+      "description": "",
+      "family": "IV Business Continuity Strategies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iv-business-continuity-strategies/iva-resilience/iva7-power/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.A.8",
+      "title": "IV.A.8 Change Management",
+      "description": "",
+      "family": "IV Business Continuity Strategies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iv-business-continuity-strategies/iva-resilience/iva8-change-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IV.B",
+      "title": "IV.B Communications",
+      "description": "",
+      "family": "IV Business Continuity Strategies",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/iv-business-continuity-strategies/ivb-communications/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V",
+      "title": "V Business Continuity Plan",
+      "description": "",
+      "family": "V Business Continuity Plan",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/v-business-continuity-plan/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.A",
+      "title": "V.A Event Management",
+      "description": "",
+      "family": "V Business Continuity Plan",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/v-business-continuity-plan/va-event-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.B",
+      "title": "V.B Continuity and Recovery",
+      "description": "",
+      "family": "V Business Continuity Plan",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/v-business-continuity-plan/vb-continuity-and-recovery/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.C",
+      "title": "V.C Facilities and Infrastructure",
+      "description": "",
+      "family": "V Business Continuity Plan",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/v-business-continuity-plan/vc-facilities-and-infrastructure/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.C.1",
+      "title": "V.C.1 Data Center Recovery Alternatives",
+      "description": "",
+      "family": "V Business Continuity Plan",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/v-business-continuity-plan/vc-facilities-and-infrastructure/vc1-data-center-recovery-alternatives/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.C.2",
+      "title": "V.C.2 Branch Relocation",
+      "description": "",
+      "family": "V Business Continuity Plan",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/v-business-continuity-plan/vc-facilities-and-infrastructure/vc2-branch-relocation/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.D",
+      "title": "V.D Payment Systems",
+      "description": "",
+      "family": "V Business Continuity Plan",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/v-business-continuity-plan/vd-payment-systems/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.E",
+      "title": "V.E Liquidity Considerations",
+      "description": "",
+      "family": "V Business Continuity Plan",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/v-business-continuity-plan/ve-liquidity-considerations/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.F",
+      "title": "V.F Other Components",
+      "description": "",
+      "family": "V Business Continuity Plan",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/v-business-continuity-plan/vf-other-components/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.F.1",
+      "title": "V.F.1 Incident Response",
+      "description": "",
+      "family": "V Business Continuity Plan",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/v-business-continuity-plan/vf-other-components/vf1-incident-response/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.F.2",
+      "title": "V.F.2 Disaster Recovery",
+      "description": "",
+      "family": "V Business Continuity Plan",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/v-business-continuity-plan/vf-other-components/vf2-disaster-recovery/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "V.F.3",
+      "title": "V.F.3 Crisis or Emergency Management",
+      "description": "",
+      "family": "V Business Continuity Plan",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/v-business-continuity-plan/vf-other-components/vf3-crisis-or-emergency-management/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VI",
+      "title": "VI Training",
+      "description": "",
+      "family": "VI Training",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vi-training/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII",
+      "title": "VII Exercises and Tests",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.A",
+      "title": "VII.A Exercise and Test Program",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/viia-exercise-and-test-program/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.B",
+      "title": "VII.B Exercise and Test Policy",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/viib-exercise-and-test-policy/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.C",
+      "title": "VII.C Exercise and Test Strategies",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/viic-exercise-and-test-strategies/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.D",
+      "title": "VII.D Exercise and Test Objectives",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/viid-exercise-and-test-objectives/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.E",
+      "title": "VII.E Exercise and Test Plans",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/viie-exercise-and-test-plans/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.F",
+      "title": "VII.F Exercise and Test Scenarios",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/viif-exercise-and-test-scenarios/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.G",
+      "title": "VII.G Exercise and Test Methods",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/viig-exercise-and-test-methods/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.G.1",
+      "title": "VII.G.1 Full-Scale Exercise",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/viig-exercise-and-test-methods/viig1-full-scale-exercise/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.G.2",
+      "title": "VII.G.2 Limited-Scale Exercise",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/viig-exercise-and-test-methods/viig2-limited-scale-exercise/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.G.3",
+      "title": "VII.G.3 Tabletop Exercise",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/viig-exercise-and-test-methods/viig3-tabletop-exercise/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.G.4",
+      "title": "VII.G.4 Tests",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/viig-exercise-and-test-methods/viig4-tests/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.H",
+      "title": "VII.H Industry Exercises and Resilience",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/viih-industry-exercises-and-resilience/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.I",
+      "title": "VII.I Third-Party Service Provider Testing",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/viii-third-party-service-provider-testing/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.J",
+      "title": "VII.J Testing for Core and Significant Firms",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/viij-testing-for-core-and-significant-firms/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VII.K",
+      "title": "VII.K Post-Exercise and Post-Test Actions",
+      "description": "",
+      "family": "VII Exercises and Tests",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/vii-exercises-and-tests/viik-post-exercise-and-post-test-actions/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "VIII",
+      "title": "VIII Maintenance and Improvement",
+      "description": "",
+      "family": "VIII Maintenance and Improvement",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/viii-maintenance-and-improvement/",
+        "id_origin": "published_heading_locator"
+      }
+    },
+    {
+      "id": "IX",
+      "title": "IX Board Reporting",
+      "description": "",
+      "family": "IX Board Reporting",
+      "properties": {
+        "source_url": "https://ithandbook.ffiec.gov/it-booklets/business-continuity-management/ix-board-reporting/",
+        "id_origin": "published_heading_locator"
+      }
+    }
+  ],
+  "status": "current",
+  "notes": "Public HTML body headings only. Introductions, appendices, examination procedures, and narrative statements are omitted. Heading coverage does not establish full assessment coverage. IDs are published document section locators, not official assessment control IDs. Edition source: https://ithandbook.ffiec.gov/media/2nifgh2b/ffiec_itbooklet_businesscontinuitymanagement_v3.pdf. Released 2019-11-14: https://www.ffiec.gov/news/press-releases/2019/pr-11-14.",
+  "verified_on": "2026-09-09"
+}

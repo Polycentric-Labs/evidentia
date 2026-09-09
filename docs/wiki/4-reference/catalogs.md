@@ -3,7 +3,7 @@
 
 > **Auto-generated page.** This page is generated from the live Evidentia codebase by [`scripts/wiki/sync_reference.py`](https://github.com/Polycentric-Labs/evidentia/blob/main/scripts/wiki/sync_reference.py). Do not edit it by hand; change the underlying code/data and re-run the generator (`uv run python scripts/wiki/sync_reference.py`).
 
-Evidentia ships **97** framework catalogs in-tree. The **Tier** is the redistribution posture: what you may redistribute, and whether the control text is licensed. The **Text** column is the derived text depth: `full` means every non-withdrawn control carries statement text distinct from its title, `partial` means some do, and `headings` means none do, so the catalog carries control numbering and titles only. Use `evidentia catalog list` to enumerate them at runtime.
+Evidentia ships **104** framework catalogs in-tree. The **Tier** is the redistribution posture: what you may redistribute, and whether the control text is licensed. The **Text** column is the derived text depth: `full` means every non-withdrawn control carries statement text distinct from its title, `partial` means some do, and `headings` means none do, so the catalog carries control numbering and titles only. Use `evidentia catalog list` to enumerate them at runtime.
 
 ## Tiers
 
@@ -22,15 +22,15 @@ Catalogs grouped by their derived text depth:
 | --- | --- |
 | full | 32 |
 | partial | 0 |
-| headings | 65 |
+| headings | 72 |
 
-## US Federal (41)
+## US Federal (47)
 
 | ID | Name | Version | Tier | Text | Category |
 | --- | --- | --- | --- | --- | --- |
-| `cisa-cpgs` | CISA Cross-Sector Cybersecurity Performance Goals | 1.0.1 (Mar 2023) | A | headings | control |
+| `cisa-cpgs` | CISA Cross-Sector Cybersecurity Performance Goals | 2.0 (December 2025) | A | headings | control |
 | `cjis-v6` | FBI CJIS Security Policy v6.0 | 6.0 (Dec 2024) | A | headings | control |
-| `cmmc-2-l1` | CMMC 2.0 Level 1 (Foundational) | 2.0 (2024 Final Rule) | A | headings | control |
+| `cmmc-2-l1` | CMMC 2.0 Level 1 (Foundational) | 2.0 (Assessment Guide 2.13, September 2024) | A | headings | control |
 | `cmmc-2-l2` | CMMC 2.0 Level 2 (Advanced) | 2.0 (2024 Final Rule) | A | headings | control |
 | `cmmc-2-l3` | CMMC 2.0 Level 3 (Expert) | 2.0 (2024 Final Rule) | A | headings | control |
 | `cms-ars-5.1` | CMS Acceptable Risk Safeguards (ARS) 5.1 | 5.1 (2022) | A | headings | control |
@@ -42,18 +42,24 @@ Catalogs grouped by their derived text depth:
 | `fedramp-rev5-li-saas` | FedRAMP Rev 5 LI-SAAS Baseline | Rev 5 (profiles published 2024-09-24) | A | full | control |
 | `fedramp-rev5-low` | FedRAMP Rev 5 Low Baseline | Rev 5 (profiles published 2024-09-24) | A | full | control |
 | `fedramp-rev5-moderate` | FedRAMP Rev 5 Moderate Baseline | Rev 5 (profiles published 2024-09-24) | A | full | control |
+| `ffiec-aio` | FFIEC IT Examination Handbook - Architecture, Infrastructure, and Operations booklet | June 2021 | A | headings | control |
 | `ffiec-audit` | FFIEC IT Examination Handbook: Audit booklet | April 2012 | A | full | control |
+| `ffiec-business-continuity-management` | FFIEC IT Examination Handbook - Business Continuity Management booklet | November 2019 | A | headings | control |
 | `ffiec-cat` | FFIEC Cybersecurity Assessment Tool | 2017 (representative subset) | A | full | control |
+| `ffiec-development-acquisition-maintenance` | FFIEC IT Examination Handbook - Development, Acquisition, and Maintenance booklet | August 2024 | A | headings | control |
 | `ffiec-information-security` | FFIEC IT Examination Handbook: Information Security booklet | September 2016 | A | full | control |
 | `ffiec-management` | FFIEC IT Examination Handbook: Management booklet | November 2015 | A | full | control |
 | `ffiec-operations` | FFIEC IT Examination Handbook: Operations booklet | July 2004 | A | full | control |
 | `ffiec-outsourcing` | FFIEC IT Examination Handbook: Outsourcing Technology Services booklet | June 2004 + 2008/2010 supplements | A | full | control |
+| `ffiec-retail-payment-systems` | FFIEC IT Examination Handbook - Retail Payment Systems booklet | April 2016 | A | headings | control |
+| `ffiec-supervision-technology-service-providers` | FFIEC IT Examination Handbook - Supervision of Technology Service Providers booklet | October 2012 | A | headings | control |
+| `ffiec-wholesale-payment-systems` | FFIEC IT Examination Handbook - Wholesale Payment Systems booklet | July 2004 | A | headings | control |
 | `glba-safeguards` | GLBA Safeguards Rule (16 CFR § 314) | 2023 (Notification Amendment) | A | headings | control |
 | `hipaa-breach` | HIPAA Breach Notification Rule (45 CFR § 164 Subpart D) | 2013 | A | headings | control |
 | `hipaa-privacy` | HIPAA Privacy Rule (45 CFR § 164 Subpart E) | 2013 (Omnibus Rule) | A | headings | control |
 | `hipaa-security` | HIPAA Security Rule (45 CFR § 164 Subpart C) | 2013 (Omnibus Rule) | A | headings | control |
 | `irs-1075` | IRS Publication 1075: Tax Information Security Guidelines | November 2021 | A | headings | control |
-| `nerc-cip-v7` | NERC CIP: Critical Infrastructure Protection Reliability Standards | v7 (2020-2024 effective dates) | A | headings | control |
+| `nerc-cip-v7` | NERC CIP - US enforced standards (heading catalog) | US enforcement snapshot 2026-09-09 | C | headings | control |
 | `nist-800-171-r2` | NIST SP 800-171 Rev 2: Protecting CUI in Nonfederal Systems | Rev 2 (2020) | A | headings | control |
 | `nist-800-171-r3` | NIST SP 800-171 Rev 3: Protecting CUI in Nonfederal Systems | Rev 3 (May 2024) | A | headings | control |
 | `nist-800-172` | NIST SP 800-172: Enhanced Security Requirements for Protecting CUI | 1.0 (Feb 2021) | A | headings | control |
@@ -67,7 +73,7 @@ Catalogs grouped by their derived text depth:
 | `nist-csf-2.0` | NIST Cybersecurity Framework 2.0 | 2.0 | A | full | control |
 | `nist-privacy-framework-1.0` | NIST Privacy Framework 1.0 | 1.0 (Jan 2020) | A | headings | control |
 | `nist-ssdf-800-218` | NIST SP 800-218 Secure Software Development Framework (SSDF) | 1.1 (Feb 2022) | A | headings | control |
-| `ny-dfs-500` | NY DFS 23 NYCRR Part 500: Cybersecurity Requirements | Amendment 2 (Nov 2023) | A | headings | control |
+| `ny-dfs-500` | NY DFS 23 NYCRR Part 500 - Cybersecurity Requirements | Second Amendment (2023-11-01); transitions completed 2025-11-01 | D | headings | control |
 | `occ-sr-26-2` | OCC Bulletin 2026-13 / FRB SR 26-2: Supervisory Guidance on Model Risk Management | April 17, 2026 (supersedes OCC 2011-12 / SR 11-7) | A | full | control |
 
 ## International (15)
@@ -78,7 +84,7 @@ Catalogs grouped by their derived text depth:
 | `au-ism` | Australian Information Security Manual | September 2024 | A | headings | control |
 | `canada-itsg-33` | Canada ITSG-33: IT Security Risk Management: A Lifecycle Approach | December 2014 (current) | A | headings | control |
 | `canada-pipeda` | Canada PIPEDA: Personal Information Protection and Electronic Documents Act | S.C. 2000, c. 5 (current) | D | full | obligation |
-| `eu-ai-act` | EU AI Act (Regulation 2024/1689) | Regulation (EU) 2024/1689 | A | full | control |
+| `eu-ai-act` | EU AI Act (Regulation 2024/1689) | 2024/1689; application dates amended by 2026/1744 | A | full | control |
 | `eu-dora` | EU Digital Operational Resilience Act (DORA) | Regulation (EU) 2022/2554 | D | headings | control |
 | `eu-gdpr` | EU General Data Protection Regulation (GDPR) | Regulation (EU) 2016/679 | D | full | obligation |
 | `eu-nis2` | EU NIS2 Directive | Directive (EU) 2022/2555 | D | headings | control |
@@ -119,7 +125,7 @@ Catalogs grouped by their derived text depth:
 | `mitre-capec` | MITRE Common Attack Pattern Enumeration and Classification (CAPEC): Sample | v3.9 (2024) | B | full | technique |
 | `mitre-cwe` | MITRE Common Weakness Enumeration (CWE): 2024 Top 25 Sample | 4.14 (2024) | B | full | technique |
 
-## License-required (stub) (22)
+## License-required (stub) (23)
 
 | ID | Name | Version | Tier | Text | Category |
 | --- | --- | --- | --- | --- | --- |
@@ -145,4 +151,5 @@ Catalogs grouped by their derived text depth:
 | `scf-2024` | Secure Controls Framework (SCF) 2024 | 2024 | C | headings | control |
 | `soc2-tsc` | SOC 2 Trust Services Criteria (stub) | 2017 (with 2022 Points of Focus revisions) | C | headings | control |
 | `swift-cscf-2024` | SWIFT Customer Security Controls Framework (CSCF) v2024 | v2024 | C | headings | control |
+| `swift-cscf-2026` | Swift Customer Security Controls Framework (CSCF) v2026 | v2026 (1 July 2025) | C | headings | control |
 

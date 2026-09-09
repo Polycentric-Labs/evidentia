@@ -160,6 +160,10 @@ class FrameworkRegistry:
                 "placeholder": str(e.placeholder).lower(),
                 "license_required": str(e.license_required).lower(),
                 "text_depth": e.text_depth or "",
+                "status": e.status or "",
+                "notes": e.notes or "",
+                "verified_on": e.verified_on.isoformat() if e.verified_on else "",
+                "superseded_by": e.superseded_by or "",
             }
             for e in entries
         ]

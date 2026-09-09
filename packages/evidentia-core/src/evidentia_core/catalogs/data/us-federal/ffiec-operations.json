@@ -2,7 +2,7 @@
   "framework_id": "ffiec-operations",
   "framework_name": "FFIEC IT Examination Handbook — Operations booklet",
   "version": "July 2004",
-  "source": "https://ithandbook.ffiec.gov/it-booklets/operations.aspx",
+  "source": "https://www.ffiec.gov/news/press-releases/2021/pr-06-30",
   "tier": "A",
   "category": "control",
   "placeholder": false,
@@ -179,5 +179,9 @@
       "description": "Operations leadership reviews performance + risk indicators with senior management on a documented cadence.",
       "family": "8. Operations Reporting"
     }
-  ]
+  ],
+  "status": "superseded",
+  "notes": "Superseded on 2021-06-30 by Architecture, Infrastructure, and Operations (ffiec-aio). The July 2004 edition and all 27 historical control records are retained for existing references. No equivalence mapping to the successor's section locators is implied.",
+  "verified_on": "2026-09-09",
+  "superseded_by": "ffiec-aio"
 }

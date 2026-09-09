@@ -349,5 +349,8 @@
   ],
   "license_required": true,
   "license_terms": "© SWIFT. CSCF is available to SWIFT customers via MySWIFT.",
-  "license_url": "https://www.swift.com/myswift/customer-security-programme-csp"
+  "license_url": "https://www.swift.com/myswift/customer-security-programme-csp",
+  "status": "historical",
+  "notes": "Historical bundled table retained for reference. The original v2024 source table was not verified; source fidelity is unknown. Use swift-cscf-2026 for the verified 2026 attestation heading set. No automatic equivalence is implied.",
+  "superseded_by": "swift-cscf-2026"
 }

@@ -1,8 +1,8 @@
 {
   "framework_id": "cmmc-2-l1",
   "framework_name": "CMMC 2.0 Level 1 (Foundational)",
-  "version": "2.0 (2024 Final Rule)",
-  "source": "DoD CIO — https://dodcio.defense.gov/CMMC/ (U.S. Government work). Based on the 17 FAR 52.204-21 basic safeguarding practices.",
+  "version": "2.0 (Assessment Guide 2.13, September 2024)",
+  "source": "https://dodcio.defense.gov/Portals/0/Documents/CMMC/AssessmentGuideL1v2.pdf",
   "tier": "A",
   "category": "control",
   "placeholder": false,
@@ -16,106 +16,172 @@
   ],
   "controls": [
     {
-      "id": "AC.L1-3.1.1",
-      "title": "Authorized Access Control",
-      "description": "Authorized Access Control",
-      "family": "Access Control"
+      "id": "AC.L1-b.1.i",
+      "title": "Authorized Access Control [FCI Data]",
+      "description": "Authorized Access Control [FCI Data]",
+      "family": "Access Control",
+      "properties": {
+        "data_category": "FCI",
+        "far_reference": "52.204-21(b)(1)(i)",
+        "source_page": "12"
+      }
     },
     {
-      "id": "AC.L1-3.1.2",
-      "title": "Transaction & Function Control",
-      "description": "Transaction & Function Control",
-      "family": "Access Control"
+      "id": "AC.L1-b.1.ii",
+      "title": "Transaction & Function Control [FCI Data]",
+      "description": "Transaction & Function Control [FCI Data]",
+      "family": "Access Control",
+      "properties": {
+        "data_category": "FCI",
+        "far_reference": "52.204-21(b)(1)(ii)",
+        "source_page": "15"
+      }
     },
     {
-      "id": "AC.L1-3.1.20",
-      "title": "External Connections",
-      "description": "External Connections",
-      "family": "Access Control"
+      "id": "AC.L1-b.1.iii",
+      "title": "External Connections [FCI Data]",
+      "description": "External Connections [FCI Data]",
+      "family": "Access Control",
+      "properties": {
+        "data_category": "FCI",
+        "far_reference": "52.204-21(b)(1)(iii)",
+        "source_page": "17"
+      }
     },
     {
-      "id": "AC.L1-3.1.22",
-      "title": "Control Public Information",
-      "description": "Control Public Information",
-      "family": "Access Control"
+      "id": "AC.L1-b.1.iv",
+      "title": "Control Public Information [FCI Data]",
+      "description": "Control Public Information [FCI Data]",
+      "family": "Access Control",
+      "properties": {
+        "data_category": "FCI",
+        "far_reference": "52.204-21(b)(1)(iv)",
+        "source_page": "20"
+      }
     },
     {
-      "id": "IA.L1-3.5.1",
-      "title": "Identification",
-      "description": "Identification",
-      "family": "Identification and Authentication"
+      "id": "IA.L1-b.1.v",
+      "title": "Identification [FCI Data]",
+      "description": "Identification [FCI Data]",
+      "family": "Identification and Authentication",
+      "properties": {
+        "data_category": "FCI",
+        "far_reference": "52.204-21(b)(1)(v)",
+        "source_page": "22"
+      }
     },
     {
-      "id": "IA.L1-3.5.2",
-      "title": "Authentication",
-      "description": "Authentication",
-      "family": "Identification and Authentication"
+      "id": "IA.L1-b.1.vi",
+      "title": "Authentication [FCI Data]",
+      "description": "Authentication [FCI Data]",
+      "family": "Identification and Authentication",
+      "properties": {
+        "data_category": "FCI",
+        "far_reference": "52.204-21(b)(1)(vi)",
+        "source_page": "24"
+      }
     },
     {
-      "id": "MP.L1-3.8.3",
-      "title": "Media Disposal",
-      "description": "Media Disposal",
-      "family": "Media Protection"
+      "id": "MP.L1-b.1.vii",
+      "title": "Media Disposal [FCI Data]",
+      "description": "Media Disposal [FCI Data]",
+      "family": "Media Protection",
+      "properties": {
+        "data_category": "FCI",
+        "far_reference": "52.204-21(b)(1)(vii)",
+        "source_page": "27"
+      }
     },
     {
-      "id": "PE.L1-3.10.1",
-      "title": "Limit Physical Access",
-      "description": "Limit Physical Access",
-      "family": "Physical Protection"
+      "id": "PE.L1-b.1.viii",
+      "title": "Limit Physical Access [FCI Data]",
+      "description": "Limit Physical Access [FCI Data]",
+      "family": "Physical Protection",
+      "properties": {
+        "data_category": "FCI",
+        "far_reference": "52.204-21(b)(1)(viii)",
+        "source_page": "29"
+      }
     },
     {
-      "id": "PE.L1-3.10.3",
-      "title": "Escort Visitors",
-      "description": "Escort Visitors",
-      "family": "Physical Protection"
+      "id": "PE.L1-b.1.ix",
+      "title": "Manage Visitors & Physical Access [FCI Data]",
+      "description": "Manage Visitors & Physical Access [FCI Data]",
+      "family": "Physical Protection",
+      "properties": {
+        "data_category": "FCI",
+        "far_reference": "52.204-21(b)(1)(ix)",
+        "source_page": "31"
+      }
     },
     {
-      "id": "PE.L1-3.10.4",
-      "title": "Physical Access Logs",
-      "description": "Physical Access Logs",
-      "family": "Physical Protection"
+      "id": "SC.L1-b.1.x",
+      "title": "Boundary Protection [FCI Data]",
+      "description": "Boundary Protection [FCI Data]",
+      "family": "System and Communications Protection",
+      "properties": {
+        "data_category": "FCI",
+        "far_reference": "52.204-21(b)(1)(x)",
+        "source_page": "34"
+      }
     },
     {
-      "id": "PE.L1-3.10.5",
-      "title": "Manage Physical Access",
-      "description": "Manage Physical Access",
-      "family": "Physical Protection"
+      "id": "SC.L1-b.1.xi",
+      "title": "Public-Access System Separation [FCI Data]",
+      "description": "Public-Access System Separation [FCI Data]",
+      "family": "System and Communications Protection",
+      "properties": {
+        "data_category": "FCI",
+        "far_reference": "52.204-21(b)(1)(xi)",
+        "source_page": "37"
+      }
     },
     {
-      "id": "SC.L1-3.13.1",
-      "title": "Boundary Protection",
-      "description": "Boundary Protection",
-      "family": "System and Communications Protection"
+      "id": "SI.L1-b.1.xii",
+      "title": "Flaw Remediation [FCI Data]",
+      "description": "Flaw Remediation [FCI Data]",
+      "family": "System and Information Integrity",
+      "properties": {
+        "data_category": "FCI",
+        "far_reference": "52.204-21(b)(1)(xii)",
+        "source_page": "39"
+      }
     },
     {
-      "id": "SC.L1-3.13.5",
-      "title": "Public-Access System Separation",
-      "description": "Public-Access System Separation",
-      "family": "System and Communications Protection"
+      "id": "SI.L1-b.1.xiii",
+      "title": "Malicious Code ProTection [FCI Data]",
+      "description": "Malicious Code ProTection [FCI Data]",
+      "family": "System and Information Integrity",
+      "properties": {
+        "data_category": "FCI",
+        "far_reference": "52.204-21(b)(1)(xiii)",
+        "source_page": "42"
+      }
     },
     {
-      "id": "SI.L1-3.14.1",
-      "title": "Flaw Remediation",
-      "description": "Flaw Remediation",
-      "family": "System and Information Integrity"
+      "id": "SI.L1-b.1.xiv",
+      "title": "Update Malicious Code Protection [FCI Data]",
+      "description": "Update Malicious Code Protection [FCI Data]",
+      "family": "System and Information Integrity",
+      "properties": {
+        "data_category": "FCI",
+        "far_reference": "52.204-21(b)(1)(xiv)",
+        "source_page": "45"
+      }
     },
     {
-      "id": "SI.L1-3.14.2",
-      "title": "Malicious Code Protection",
-      "description": "Malicious Code Protection",
-      "family": "System and Information Integrity"
-    },
-    {
-      "id": "SI.L1-3.14.4",
-      "title": "Update Malicious Code Protection",
-      "description": "Update Malicious Code Protection",
-      "family": "System and Information Integrity"
-    },
-    {
-      "id": "SI.L1-3.14.5",
-      "title": "System & File Scanning",
-      "description": "System & File Scanning",
-      "family": "System and Information Integrity"
+      "id": "SI.L1-b.1.xv",
+      "title": "System & File Scanning [FCI Data]",
+      "description": "System & File Scanning [FCI Data]",
+      "family": "System and Information Integrity",
+      "properties": {
+        "data_category": "FCI",
+        "far_reference": "52.204-21(b)(1)(xv)",
+        "source_page": "47"
+      }
     }
-  ]
+  ],
+  "status": "current",
+  "notes": "Bundled catalog content is not frozen. This edition replaces the earlier 17 NIST-style Level 1 IDs with the 15 FAR-based guide IDs. Existing evidence references require review; no automatic equivalence or migration is provided. These headings concern Federal Contract Information (FCI), not the Level 2 CUI requirements.",
+  "verified_on": "2026-09-09"
 }

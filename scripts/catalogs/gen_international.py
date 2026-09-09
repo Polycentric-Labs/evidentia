@@ -93,40 +93,9 @@ emit_obligation_catalog(
 # EU AI Act (Regulation 2024/1689)
 # ---------------------------------------------------------------------------
 
-EU_AI_ACT = [
-    ("AIA.Art.5", "Prohibited AI practices", "Prohibitions"),
-    ("AIA.Art.9", "Risk management system", "High-Risk AI Systems"),
-    ("AIA.Art.10", "Data and data governance", "High-Risk AI Systems"),
-    ("AIA.Art.11", "Technical documentation", "High-Risk AI Systems"),
-    ("AIA.Art.12", "Record-keeping (logs)", "High-Risk AI Systems"),
-    ("AIA.Art.13", "Transparency and provision of information to deployers", "High-Risk AI Systems"),
-    ("AIA.Art.14", "Human oversight", "High-Risk AI Systems"),
-    ("AIA.Art.15", "Accuracy, robustness and cybersecurity", "High-Risk AI Systems"),
-    ("AIA.Art.16", "Obligations of providers of high-risk AI systems", "High-Risk AI Systems"),
-    ("AIA.Art.17", "Quality management system", "High-Risk AI Systems"),
-    ("AIA.Art.18", "Documentation keeping", "High-Risk AI Systems"),
-    ("AIA.Art.19", "Automatically generated logs", "High-Risk AI Systems"),
-    ("AIA.Art.26", "Obligations of deployers of high-risk AI systems", "Deployer Obligations"),
-    ("AIA.Art.27", "Fundamental rights impact assessment (FRIA)", "Deployer Obligations"),
-    ("AIA.Art.50", "Transparency obligations for providers and deployers of certain AI systems", "Transparency"),
-    ("AIA.Art.51", "Classification of general-purpose AI models as GPAI models with systemic risk", "GPAI"),
-    ("AIA.Art.53", "Obligations for providers of general-purpose AI models", "GPAI"),
-    ("AIA.Art.55", "Obligations for providers of general-purpose AI models with systemic risk", "GPAI"),
-    ("AIA.Art.72", "Post-market monitoring system", "Post-Market"),
-    ("AIA.Art.73", "Reporting of serious incidents", "Post-Market"),
-    ("AIA.Art.99", "Penalties", "Penalties"),
-]
+from gen_eu_ai_act import main as generate_eu_ai_act
 
-emit_control_catalog(
-    framework_id="eu-ai-act",
-    framework_name="EU AI Act (Regulation 2024/1689)",
-    version="Regulation (EU) 2024/1689",
-    source="Official Journal of the European Union — EU AI Act (regulation text)",
-    families=["Prohibitions", "High-Risk AI Systems", "Deployer Obligations", "Transparency", "GPAI", "Post-Market", "Penalties"],
-    controls=[{"id": c, "title": t, "description": t, "family": f} for c, t, f in EU_AI_ACT],
-    tier="D",
-)
-
+generate_eu_ai_act()
 
 # ---------------------------------------------------------------------------
 # EU NIS2 Directive (Directive (EU) 2022/2555)

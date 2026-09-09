@@ -9,6 +9,8 @@ export interface CatalogControl {
   class?: string | null;
   control_class?: string | null;
   priority?: string | null;
+  properties?: Record<string, string>;
+  withdrawn?: boolean;
   baseline_impact: string[];
   enhancements: CatalogControl[];
   related_controls: string[];
@@ -22,6 +24,31 @@ export interface CatalogControl {
   license_required: boolean;
   license_url?: string | null;
   placeholder: boolean;
+}
+
+export type CatalogStatus = "current" | "superseded" | "retired" | "historical";
+
+export interface CatalogAuditContext {
+  authority: string;
+  version: string;
+  source_url: string;
+  verified_on: string;
+  valid_through?: string | null;
+  notes?: string | null;
+}
+
+export interface CatalogPublicationNotice {
+  id: string;
+  title: string;
+  status: "approved-future" | "approved-superseded" | "pending";
+  source_url: string;
+  approved_on?: string | null;
+  published_on?: string | null;
+  order_effective_on?: string | null;
+  effective_on?: string | null;
+  inactive_on?: string | null;
+  superseded_by?: string | null;
+  notes?: string | null;
 }
 
 export interface ControlCatalog {
@@ -38,4 +65,10 @@ export interface ControlCatalog {
   license_terms?: string | null;
   license_url?: string | null;
   placeholder: boolean;
+  status?: CatalogStatus | null;
+  notes?: string | null;
+  verified_on?: string | null;
+  superseded_by?: string | null;
+  audit_contexts?: Record<string, CatalogAuditContext>;
+  publication_notices?: CatalogPublicationNotice[];
 }

@@ -25,7 +25,7 @@ Test plan:
 8. ``compare`` (the pure comparison the ``--check`` gate builds on)
    returns no drift on a match, flags a mutated committed mirror, and
    reports a missing committed mirror.
-9. The 13 ``MIRRORS`` mappings are well-formed: unique mirror paths, each
+9. The 14 ``MIRRORS`` mappings are well-formed: unique mirror paths, each
    mirror under ``docs/wiki/{5-compliance,6-project}/``.
 """
 
@@ -192,18 +192,18 @@ def test_compare_flags_missing_committed_file(mod: Any, tmp_path: Path) -> None:
 
 def test_mirror_mappings_are_well_formed(mod: Any) -> None:
     mirrors = mod.MIRRORS
-    assert len(mirrors) == 13
+    assert len(mirrors) == 14
     mirror_paths = [m.mirror for m in mirrors]
     # Unique mirror destinations.
-    assert len(set(mirror_paths)) == 13
+    assert len(set(mirror_paths)) == 14
     # Every mirror lands under one of the two wiki sections.
     for m in mirrors:
         assert m.mirror.startswith(("docs/wiki/6-project/", "docs/wiki/5-compliance/")), m.mirror
         assert m.mirror.endswith(".md")
         # Source is a repo-relative path (no leading slash, no scheme).
         assert not m.source.startswith(("/", "http"))
-    # 9 in 6-project, 4 in 5-compliance per the D6 spec.
+    # Nine project mirrors and five compliance mirrors.
     proj = sum(1 for m in mirrors if m.mirror.startswith("docs/wiki/6-project/"))
     comp = sum(1 for m in mirrors if m.mirror.startswith("docs/wiki/5-compliance/"))
     assert proj == 9
-    assert comp == 4
+    assert comp == 5

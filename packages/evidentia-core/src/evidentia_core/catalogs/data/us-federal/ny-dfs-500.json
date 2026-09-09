@@ -1,18 +1,18 @@
 {
   "framework_id": "ny-dfs-500",
-  "framework_name": "NY DFS 23 NYCRR Part 500 — Cybersecurity Requirements",
-  "version": "Amendment 2 (Nov 2023)",
-  "source": "NYS Department of Financial Services — 23 NYCRR 500 (state regulation)",
-  "tier": "A",
+  "framework_name": "NY DFS 23 NYCRR Part 500 - Cybersecurity Requirements",
+  "version": "Second Amendment (2023-11-01); transitions completed 2025-11-01",
+  "source": "https://www.dfs.ny.gov/cybersecurity/23-NYCRR-Part-500",
+  "tier": "D",
   "category": "control",
   "placeholder": false,
   "families": [
     "Program Requirements",
     "Governance",
     "Access Controls",
+    "Third-Party",
     "Data Protection",
     "Incident Response",
-    "Third-Party",
     "General"
   ],
   "controls": [
@@ -36,20 +36,20 @@
     },
     {
       "id": "500.4(b)",
-      "title": "CISO reporting to board",
-      "description": "CISO reporting to board",
+      "title": "CISO report to the senior governing body",
+      "description": "CISO report to the senior governing body",
       "family": "Governance"
     },
     {
       "id": "500.4(c)",
-      "title": "CISO qualifications and oversight of third-party CISOs",
-      "description": "CISO qualifications and oversight of third-party CISOs",
+      "title": "CISO reporting of material cybersecurity issues",
+      "description": "CISO reporting of material cybersecurity issues",
       "family": "Governance"
     },
     {
       "id": "500.4(d)",
-      "title": "Reporting of material cybersecurity issues",
-      "description": "Reporting of material cybersecurity issues",
+      "title": "Senior governing body oversight",
+      "description": "Senior governing body oversight",
       "family": "Governance"
     },
     {
@@ -108,14 +108,14 @@
     },
     {
       "id": "500.14(a)",
-      "title": "Monitoring and training",
-      "description": "Monitoring and training",
+      "title": "Monitoring, malicious-code protection and cybersecurity awareness training",
+      "description": "Monitoring, malicious-code protection and cybersecurity awareness training",
       "family": "Program Requirements"
     },
     {
       "id": "500.14(b)",
-      "title": "Cybersecurity awareness training",
-      "description": "Cybersecurity awareness training",
+      "title": "Class A endpoint detection and response and centralized logging",
+      "description": "Class A endpoint detection and response and centralized logging",
       "family": "Program Requirements"
     },
     {
@@ -126,27 +126,27 @@
     },
     {
       "id": "500.16",
-      "title": "Incident response plan",
-      "description": "Incident response plan",
+      "title": "Incident response and business continuity management",
+      "description": "Incident response and business continuity management",
       "family": "Incident Response"
     },
     {
       "id": "500.17(a)",
-      "title": "Notification of cybersecurity events — to superintendent",
-      "description": "Notification of cybersecurity events — to superintendent",
+      "title": "Notice of cybersecurity incident",
+      "description": "Notice of cybersecurity incident",
       "family": "Incident Response"
     },
     {
       "id": "500.17(b)",
-      "title": "Notices of extortion payment",
-      "description": "Notices of extortion payment",
-      "family": "Incident Response"
+      "title": "Notice of compliance",
+      "description": "Notice of compliance",
+      "family": "Governance"
     },
     {
       "id": "500.17(c)",
-      "title": "Annual certification of compliance",
-      "description": "Annual certification of compliance",
-      "family": "Governance"
+      "title": "Notice and explanation of extortion payment",
+      "description": "Notice and explanation of extortion payment",
+      "family": "Incident Response"
     },
     {
       "id": "500.18",
@@ -170,19 +170,35 @@
       "id": "500.21",
       "title": "Effective date",
       "description": "Effective date",
-      "family": "General"
+      "family": "General",
+      "properties": {
+        "amendment_effective_on": "2023-11-01"
+      }
     },
     {
       "id": "500.22",
       "title": "Transitional periods",
       "description": "Transitional periods",
-      "family": "General"
+      "family": "General",
+      "properties": {
+        "last_amendment_transition_on": "2025-11-01"
+      }
     },
     {
       "id": "500.23",
       "title": "Severability",
       "description": "Severability",
       "family": "General"
+    },
+    {
+      "id": "500.24",
+      "title": "Exemptions from electronic filing and submission requirements",
+      "description": "Exemptions from electronic filing and submission requirements",
+      "family": "General"
     }
-  ]
+  ],
+  "license_terms": "New York regulation; heading-only catalog with links to the issuing authority.",
+  "status": "current",
+  "notes": "Section headings and selected subsection summaries, not full regulatory text or every clause. The 2023 Second Amendment became effective on 2023-11-01. Its final scheduled transition periods ended 2025-11-01. This does not end ongoing entity-specific periods: section 500.19(h), for example, allows 180 days after loss of an exemption. Applicability depends on covered-entity status and exemptions. This heading catalog does not assess those conditions. DFS labels its linked formatted text as a convenience copy rather than the official version. Recheck prior evidence attached to 500.4(c)/(d), 500.14(b), 500.16 and 500.17(a)/(b)/(c): earlier bundled headings misidentified their subjects. Section 500.24 is now included. No automatic evidence migration or applicability determination is performed.",
+  "verified_on": "2026-09-09"
 }

@@ -1,0 +1,474 @@
+{
+  "framework_id": "swift-cscf-2026",
+  "framework_name": "Swift Customer Security Controls Framework (CSCF) v2026",
+  "version": "v2026 (1 July 2025)",
+  "source": "https://www2.swift.com/knowledgecentre/rest/v1/publications/cscf_dd/_latest/CSCF_v2026_202507015.pdf?logDownload=true",
+  "tier": "C",
+  "category": "control",
+  "placeholder": true,
+  "families": [
+    "1. Restrict Internet Access and Protect Critical Systems from General IT Environment",
+    "2. Reduce Attack Surface and Vulnerabilities",
+    "3. Physically Secure the Environment",
+    "4. Prevent Compromise of Credentials",
+    "5. Manage Identities and Separate Privileges",
+    "6. Detect Anomalous Activity to Systems or Transaction Records",
+    "7. Plan for Incident Response and Information Sharing"
+  ],
+  "controls": [
+    {
+      "id": "1.1",
+      "title": "Swift Environment Protection",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "1. Restrict Internet Access and Protect Critical Systems from General IT Environment",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "1.2",
+      "title": "Operating System Privileged Account Control",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "1. Restrict Internet Access and Protect Critical Systems from General IT Environment",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "1.3",
+      "title": "Virtualisation or Cloud Platform Protection",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "1. Restrict Internet Access and Protect Critical Systems from General IT Environment",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "1.4",
+      "title": "Restriction of Internet Access",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "1. Restrict Internet Access and Protect Critical Systems from General IT Environment",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "1.5",
+      "title": "Customer Environment Protection",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "1. Restrict Internet Access and Protect Critical Systems from General IT Environment",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "2.1",
+      "title": "Internal Data Flow Security",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "2. Reduce Attack Surface and Vulnerabilities",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "2.2",
+      "title": "Security Updates",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "2. Reduce Attack Surface and Vulnerabilities",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "2.3",
+      "title": "System Hardening",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "2. Reduce Attack Surface and Vulnerabilities",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "2.4",
+      "title": "Back Office Data Flow Security",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "2. Reduce Attack Surface and Vulnerabilities",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "2.5A",
+      "title": "External Transmission Data Protection",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "2. Reduce Attack Surface and Vulnerabilities",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "advisory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "2.6",
+      "title": "Operator Session Confidentiality and Integrity",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "2. Reduce Attack Surface and Vulnerabilities",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "2.7",
+      "title": "Vulnerability Scanning",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "2. Reduce Attack Surface and Vulnerabilities",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "2.8",
+      "title": "Outsourced Critical Activity Protection",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "2. Reduce Attack Surface and Vulnerabilities",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "2.9",
+      "title": "Transaction Business Controls",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "2. Reduce Attack Surface and Vulnerabilities",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "2.10",
+      "title": "Application Hardening",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "2. Reduce Attack Surface and Vulnerabilities",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "2.11A",
+      "title": "RMA Business Controls",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "2. Reduce Attack Surface and Vulnerabilities",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "advisory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "3.1",
+      "title": "Physical Security",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "3. Physically Secure the Environment",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "4.1",
+      "title": "Password Policy",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "4. Prevent Compromise of Credentials",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "4.2",
+      "title": "Multi-Factor Authentication",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "4. Prevent Compromise of Credentials",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "5.1",
+      "title": "Logical Access Control",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "5. Manage Identities and Separate Privileges",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "5.2",
+      "title": "Token Management",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "5. Manage Identities and Separate Privileges",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "5.3A",
+      "title": "Staff Screening Process",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "5. Manage Identities and Separate Privileges",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "advisory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "5.4",
+      "title": "Password Repository Protection",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "5. Manage Identities and Separate Privileges",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "6.1",
+      "title": "Malware Protection",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "6. Detect Anomalous Activity to Systems or Transaction Records",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "6.2",
+      "title": "Software Integrity",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "6. Detect Anomalous Activity to Systems or Transaction Records",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "6.3",
+      "title": "Database Integrity",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "6. Detect Anomalous Activity to Systems or Transaction Records",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "6.4",
+      "title": "Logging and Monitoring",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "6. Detect Anomalous Activity to Systems or Transaction Records",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "6.5A",
+      "title": "Intrusion Detection",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "6. Detect Anomalous Activity to Systems or Transaction Records",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "advisory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "7.1",
+      "title": "Cyber Incident Response Planning",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "7. Plan for Incident Response and Information Sharing",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "7.2",
+      "title": "Security Training and Awareness",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "7. Plan for Incident Response and Information Sharing",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "mandatory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "7.3A",
+      "title": "Penetration Testing",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "7. Plan for Incident Response and Information Sharing",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "advisory",
+        "source_page": "28"
+      }
+    },
+    {
+      "id": "7.4A",
+      "title": "Scenario-based Risk Assessment",
+      "description": "[Licensed content. See license_url for authoritative text.]",
+      "family": "7. Plan for Incident Response and Information Sharing",
+      "placeholder": true,
+      "tier": "C",
+      "license_required": true,
+      "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+      "properties": {
+        "designation": "advisory",
+        "source_page": "28"
+      }
+    }
+  ],
+  "license_required": true,
+  "license_terms": "Copyright Swift. All rights reserved. Control body text requires an authorized copy and is not bundled.",
+  "license_url": "https://www2.swift.com/knowledgecentre/publications/cscf_dd",
+  "status": "current",
+  "notes": "This is the 2026 attestation edition, with 32 heading rows. Swift also publishes v2027 for attestations in the second half of 2027. Mandatory and advisory designations describe the summary table; architecture-specific cells qualify applicability and can make an otherwise mandatory control advisory. Consult the licensed source for requirements and scope.",
+  "verified_on": "2026-09-09"
+}

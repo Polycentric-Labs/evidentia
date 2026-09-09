@@ -240,7 +240,9 @@ class CatalogPublicationNotice(EvidentiaModel):
     published_on: date | None = Field(default=None, description="Publication date, when verified")
     order_effective_on: date | None = Field(default=None, description="Effective date of the approving legal order")
     effective_on: date | None = Field(default=None, description="Standard's general applicability date")
-    inactive_on: date | None = Field(default=None, description="Published last active date, when verified")
+    inactive_on: date | None = Field(
+        default=None, description="Publisher's inactive date for this revision, when verified"
+    )
     superseded_by: str | None = Field(default=None, description="Successor designator, when verified")
     notes: str | None = Field(default=None, description="Jurisdiction, phased dates and source limitations")
 
