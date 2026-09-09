@@ -3,7 +3,7 @@
 
 > **Auto-generated page.** This page is generated from the live Evidentia codebase by [`scripts/wiki/sync_reference.py`](https://github.com/Polycentric-Labs/evidentia/blob/main/scripts/wiki/sync_reference.py). Do not edit it by hand; change the underlying code/data and re-run the generator (`uv run python scripts/wiki/sync_reference.py`).
 
-Evidentia ships **104** framework catalogs in-tree. The **Tier** is the redistribution posture: what you may redistribute, and whether the control text is licensed. The **Text** column is the derived text depth: `full` means every non-withdrawn control carries statement text distinct from its title, `partial` means some do, and `headings` means none do, so the catalog carries control numbering and titles only. Use `evidentia catalog list` to enumerate them at runtime.
+Evidentia ships **106** framework catalogs in-tree. The **Tier** is the redistribution posture: what you may redistribute, and whether the control text is licensed. The **Text** column is the derived text depth: `full` means every non-withdrawn control carries statement text distinct from its title, `partial` means some do, and `headings` means none do, so the catalog carries control numbering and titles only. Use `evidentia catalog list` to enumerate them at runtime.
 
 ## Tiers
 
@@ -20,20 +20,22 @@ Catalogs grouped by their derived text depth:
 
 | Text depth | Catalogs |
 | --- | --- |
-| full | 32 |
+| full | 34 |
 | partial | 0 |
 | headings | 72 |
 
-## US Federal (47)
+## US Federal (49)
 
 | ID | Name | Version | Tier | Text | Category |
 | --- | --- | --- | --- | --- | --- |
 | `cisa-cpgs` | CISA Cross-Sector Cybersecurity Performance Goals | 2.0 (December 2025) | A | headings | control |
-| `cjis-v6` | FBI CJIS Security Policy v6.0 | 6.0 (Dec 2024) | A | headings | control |
+| `cjis-v6` | FBI CJIS v6.0 (historical selected headings) | 6.0 (2024-12-27) | A | headings | control |
+| `cjis-v6.1` | FBI CJIS Security Policy v6.1 - Requirements Companion Reference | 6.1 | A | full | control |
 | `cmmc-2-l1` | CMMC 2.0 Level 1 (Foundational) | 2.0 (Assessment Guide 2.13, September 2024) | A | headings | control |
 | `cmmc-2-l2` | CMMC 2.0 Level 2 (Advanced) | 2.0 (2024 Final Rule) | A | headings | control |
 | `cmmc-2-l3` | CMMC 2.0 Level 3 (Expert) | 2.0 (2024 Final Rule) | A | headings | control |
-| `cms-ars-5.1` | CMS Acceptable Risk Safeguards (ARS) 5.1 | 5.1 (2022) | A | headings | control |
+| `cms-ars-5.1` | CMS ARS 5.1 (historical family summaries) | 5.1 (2023-07-26) | A | headings | control |
+| `cms-ars-5.2` | CMS Acceptable Risk Safeguards (ARS) 5.2 | 5.2 | A | full | control |
 | `fda-21-cfr-pt11` | FDA 21 CFR Part 11: Electronic Records; Electronic Signatures | 1997 (with guidance updates) | A | headings | control |
 | `fda-524b-appendix1` | FDA Section 524B Premarket Cybersecurity: Security Control Categories | 2026-02-03 (final guidance) | A | full | control |
 | `fedramp-frr-2026` | FedRAMP Requirements: provider-facing rules (Consolidated Rules for 2026) | 2026.07.14.01 (CR26) | A | full | control |

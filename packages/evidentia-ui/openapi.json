@@ -1257,8 +1257,9 @@
             "type": "integer"
           },
           "sheet": {
-            "description": "Literal source sheet name",
+            "description": "Literal nonblank source sheet name",
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Sheet",
             "type": "string"
           },

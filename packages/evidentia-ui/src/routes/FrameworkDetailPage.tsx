@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useId, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import type { CatalogControl, CatalogSourceRow } from "@/types/catalog";
 
 const NOTICE_DATES = [
   ["approved_on", "Approved"],
@@ -39,6 +41,231 @@ function SourceReference({ value, label }: { value: string; label: string }) {
     </a>
   ) : (
     <span>{value || "Not provided"}</span>
+  );
+}
+
+function SourceValue({ value }: { value: CatalogSourceRow["source_id"] }) {
+  if (value === null) return <span className="muted">Blank (null)</span>;
+  if (value === "") return <span className="muted">Empty text ("")</span>;
+  const kind =
+    typeof value === "string"
+      ? /^\s+$/.test(value)
+        ? "whitespace-only text"
+        : "text"
+      : typeof value;
+  return (
+    <>
+      <span style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+        {typeof value === "boolean" ? String(value) : value}
+      </span>
+      <span className="muted"> ({kind})</span>
+    </>
+  );
+}
+
+function SourceRowDetail({
+  row,
+  controlId,
+}: {
+  row: CatalogSourceRow;
+  controlId: string;
+}) {
+  const resolved = row.resolved_values ?? {};
+  const columns = [
+    ...new Set([...Object.keys(row.values), ...Object.keys(resolved)]),
+  ];
+  const provenance = Object.entries(row.provenance ?? {});
+  return (
+    <article
+      aria-label={`${controlId}, source row ${row.row}`}
+      className="stack-3"
+    >
+      <h3 className="base">
+        {controlId}: source row {row.row}
+      </h3>
+      <dl className="stack-2">
+        <div>
+          <dt className="muted">Sheet</dt>
+          <dd>
+            <SourceValue value={row.sheet} />
+          </dd>
+        </div>
+        <div>
+          <dt className="muted">Physical row</dt>
+          <dd>{row.row}</dd>
+        </div>
+        <div>
+          <dt className="muted">Row kind</dt>
+          <dd>{row.kind}</dd>
+        </div>
+        <div>
+          <dt className="muted">Original identifier</dt>
+          <dd>
+            <SourceValue value={row.source_id} />
+          </dd>
+        </div>
+        <div>
+          <dt className="muted">Source number format</dt>
+          <dd>
+            {row.source_id_format == null ? (
+              "Not provided"
+            ) : (
+              <SourceValue value={row.source_id_format} />
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt className="muted">Interpreted identifier</dt>
+          <dd>
+            {row.interpreted_id == null ? (
+              "Not provided"
+            ) : (
+              <SourceValue value={row.interpreted_id} />
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt className="muted">Source SHA-256 (claimed)</dt>
+          <dd>
+            <code style={{ overflowWrap: "anywhere" }}>
+              {row.source_sha256}
+            </code>
+          </dd>
+        </div>
+      </dl>
+      {columns.length > 0 ? (
+        <div className="table-wrap">
+          <table className="tbl">
+            <caption className="sr-only">Source cells</caption>
+            <thead>
+              <tr>
+                <th scope="col">Column</th>
+                <th scope="col">Original cell</th>
+                <th scope="col">Merge-anchor value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {columns.map((column) => (
+                <tr key={column}>
+                  <th
+                    scope="row"
+                    style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
+                  >
+                    {column}
+                  </th>
+                  <td>
+                    {Object.hasOwn(row.values, column) ? (
+                      <SourceValue value={row.values[column]} />
+                    ) : (
+                      "Column not retained"
+                    )}
+                  </td>
+                  <td>
+                    {Object.hasOwn(resolved, column) ? (
+                      <SourceValue value={resolved[column]} />
+                    ) : (
+                      "No merge projection"
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="muted">No source columns retained.</p>
+      )}
+      <div className="stack-2">
+        <h4 className="base">Provenance</h4>
+        {provenance.length > 0 ? (
+          <dl className="stack-2">
+            {provenance.map(([key, value]) => (
+              <div key={key}>
+                <dt
+                  className="muted"
+                  style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
+                >
+                  {key}
+                </dt>
+                <dd
+                  style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
+                >
+                  {key === "source_url" && value !== "" ? (
+                    <SourceReference value={value} label={value} />
+                  ) : (
+                    <SourceValue value={value} />
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <p className="muted">No provenance provided.</p>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function sourceRowCount(control: CatalogControl): number {
+  return (
+    (control.source_rows?.length ?? 0) +
+    control.enhancements.reduce(
+      (count, enhancement) => count + sourceRowCount(enhancement),
+      0,
+    )
+  );
+}
+
+function SourceRowsContent({ control }: { control: CatalogControl }) {
+  return (
+    <>
+      {control.source_rows?.map((row, index) => (
+        <SourceRowDetail
+          key={`${row.sheet}:${row.row}:${index}`}
+          row={row}
+          controlId={control.id}
+        />
+      ))}
+      {control.enhancements.map((enhancement) => (
+        <SourceRowsContent key={enhancement.id} control={enhancement} />
+      ))}
+    </>
+  );
+}
+
+function ControlSourceRows({ control }: { control: CatalogControl }) {
+  const [expanded, setExpanded] = useState(false);
+  const panelId = useId();
+  const count = sourceRowCount(control);
+  if (count === 0) return null;
+  return (
+    <CardContent className="pt-0 text-sm stack-3">
+      <Button
+        variant="outline"
+        size="sm"
+        aria-label={`Source rows for ${control.id} (${count})`}
+        aria-expanded={expanded}
+        aria-controls={panelId}
+        onClick={() => setExpanded(!expanded)}
+      >
+        Source rows ({count})
+      </Button>
+      {expanded && (
+        <section
+          id={panelId}
+          aria-label={`Source rows for ${control.id}`}
+          className="stack-6"
+        >
+          <p className="muted">
+            Source evidence does not add assessed controls. Original cells and
+            reviewed merge-anchor values are shown separately. Row properties do
+            not determine applicability.
+          </p>
+          <SourceRowsContent control={control} />
+        </section>
+      )}
+    </CardContent>
   );
 }
 
@@ -356,6 +583,7 @@ export function FrameworkDetailPage() {
                     </dl>
                   </CardContent>
                 )}
+                <ControlSourceRows control={ctrl} />
               </Card>
             </li>
           ))}

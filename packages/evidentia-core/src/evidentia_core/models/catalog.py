@@ -34,7 +34,7 @@ from pydantic import (
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import CoreSchema
 
-from evidentia_core.models.common import EvidentiaModel
+from evidentia_core.models.common import EvidentiaModel, NonBlankStr
 
 # NIST publications render enhancement IDs as ``AC-2(1)(a)`` while NIST OSCAL
 # content renders them as ``ac-2.1.a``. Both are valid. We normalize to the
@@ -161,7 +161,7 @@ class CatalogSourceRow(EvidentiaModel):
     source_sha256: str = Field(
         pattern=r"^[0-9a-f]{64}$", description="Claimed SHA-256 of source bytes; not proof of authenticity"
     )
-    sheet: str = Field(min_length=1, description="Literal source sheet name")
+    sheet: NonBlankStr = Field(description="Literal nonblank source sheet name")
     row: int = Field(ge=1, description="One-based physical source row")
     source_id: _CatalogSourceScalar
     source_id_format: str | None = None

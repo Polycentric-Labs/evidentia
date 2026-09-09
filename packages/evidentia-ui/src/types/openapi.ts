@@ -4036,7 +4036,7 @@ export interface components {
             row: number;
             /**
              * Sheet
-             * @description Literal source sheet name
+             * @description Literal nonblank source sheet name
              */
             sheet: string;
             /** Source Id */

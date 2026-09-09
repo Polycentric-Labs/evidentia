@@ -138,6 +138,61 @@ These corrections do not migrate evidence automatically.
 `audit_contexts` holds a version and dated source per named authority. It does
 not turn a publisher's latest edition into every state's audit version. Only
 listed authorities have verified context, and `valid_through` bounds a source's
-stated coverage. CMS ARS 5.2 and CJIS 6.1 content imports are the next catalog
-batch in V13-09; their current bundled content is not upgraded by these schema
-fields alone.
+stated coverage. The CMS and CJIS imports below retain their separate source
+and audit contexts.
+
+## CMS and CJIS source evidence
+
+`cms-ars-5.2` retains all 1,681 data rows in the reviewed CMS workbook sheet.
+Its 605 reference units comprise 243 base controls and 362 enhancements; 1,076
+clause rows remain attached evidence. Baseline, MAC, HVA, FTI, priority and
+frequency columns stay independent. Blank cells never inherit applicability.
+The [CMS source page](https://security.cms.gov/policy-guidance/cms-acceptable-risk-safeguards-ars)
+dates ARS 5.2 to 2026-07-01 and ARS 5.1 to 2023-07-26. CMS and supporting
+organizations must tailor the source to their systems. Earlier applicability
+decisions do not transfer automatically.
+
+`cjis-v6.1` imports the FBI's
+[Requirements Companion Document](https://le.fbi.gov/cjis-division/cjis-security-policy-resource-center/requirement-companion-document-pdf)
+for the [2026-06-25 policy](https://le.fbi.gov/file-repository/cjis_security_policy_v6-1_20260625-1.pdf).
+All 1,533 physical statement fragments remain in source order across 324
+reference units. Three numbered CSO clauses attach to section 3.2.2.
+Structural ancestors support navigation only. Roles, conditions, alternative
+paths, exceptions and table fragments still require entity and scenario
+review. The unit count is not an official requirement count, and the companion
+is not the complete 473-page policy. Audit dates, priorities and IaaS/PaaS/SaaS
+columns remain separate. Only US-TX has a verified audit context: [Texas DPS](https://www.dps.texas.gov/section/crime-records/cjis-documents)
+uses version 5.9.5 through 2027-03-31. Later Texas periods and other authorities
+remain unknown.
+
+The historical `cms-ars-5.1` and `cjis-v6` catalogs retain all 19 and 24 previous
+records, respectively. Their notices identify the limited coverage and point
+to the new catalogs without migrating evidence or claiming equivalent IDs.
+
+```bash
+evidentia catalog show cms-ars-5.2 --control AC-01
+evidentia catalog show cjis-v6.1 --control AT-3
+evidentia catalog show cjis-v6.1 --control 5.20
+```
+
+Control details expose `source_rows` through CLI JSON and an expandable console
+view. Each row has a source SHA-256 claim, sheet and physical row, raw identifier,
+optional format and interpretation, original scalar values and provenance.
+`values` preserves physical cells; `resolved_values` carries only reviewed
+spreadsheet merge-anchor values. A physical blank can therefore coexist with a
+known merged value. Null, empty text, numbers and booleans remain distinct.
+The numeric source value `5.2` and format `0.00` remain separate from the reviewed
+CJIS identifier `5.20`. Source rows never add indexed controls or gap requirements.
+
+Pinned text projections under `scripts/catalogs/sources/` retain the reviewed
+cell metadata. Regeneration needs no network or workbook parser:
+
+```bash
+uv run --no-sync python scripts/catalogs/gen_cms_ars.py --check
+uv run --no-sync python scripts/catalogs/gen_cjis_companion.py --check
+```
+
+Government text is attributed to CMS, FBI and the cited NIST publications.
+Workbook artwork, seals, logos and referenced third-party standards are excluded
+from these text projections. The source hashes bind the reviewed inputs; they
+do not authenticate a publisher or grant rights over separately cited material.

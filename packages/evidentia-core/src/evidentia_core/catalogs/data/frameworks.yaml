@@ -36,13 +36,38 @@ frameworks:
   verified_on: '2026-09-09'
   refresh: monthly
   text_depth: headings
+- id: cjis-v6.1
+  name: FBI CJIS Security Policy v6.1 - Requirements Companion Reference
+  version: '6.1'
+  tier: A
+  category: control
+  path: us-federal/cjis-v6.1.json
+  source_url: https://le.fbi.gov/cjis-division/cjis-security-policy-resource-center/requirements-companion-document-excel
+  license: Government-authored FBI companion text with source attribution. FBI policy section 1.5 permits sharing version 6.0 and later. This classification does not cover separately copyrighted third-party
+    material, seals or logos. Referenced third-party standards and workbook artwork are not included.
+  license_url: https://www.justice.gov/legalpolicies
+  status: current
+  notes: 'Companion edition 6.1, published 2026-06-25. The 20260723 filename is not the edition date. Retains 1,533 physical statement fragments in 324 reference units: 294 modern control/enhancement addresses
+    and 30 numeric sections. The three CSO clause addresses remain under 3.2.2; 27 structural ancestors are navigation metadata only. These are implementation groupings, not an official FBI requirement
+    count or a universal assessment denominator. Ordered context, role qualifications, alternatives, exceptions, table fragments and source omissions are retained. Full policy prose, discussion and appendices
+    are outside this companion import. No automatic assessment migration from cjis-v6 or automatic applicability determination is performed. Companion reference only. Review the assessed actor, device,
+    scenario and selected alternative before assessment. Applicability is unknown until that review; another actor''s duty is not an automatic pass. Priority, audit dates and cloud responsibility do not
+    select applicable requirements.'
+  verified_on: '2026-09-09'
+  refresh: monthly
+  text_depth: full
 - id: cjis-v6
-  name: FBI CJIS Security Policy v6.0
-  version: 6.0 (Dec 2024)
+  name: FBI CJIS v6.0 (historical selected headings)
+  version: 6.0 (2024-12-27)
   tier: A
   category: control
   path: us-federal/cjis-v6.json
-  source_url: FBI Criminal Justice Information Services Division — CJIS Security Policy (federal agency document)
+  source_url: https://le.fbi.gov/cjis-division/cjis-security-policy-resource-center
+  status: historical
+  notes: Preserves 24 legacy selected headings for existing assessment references. Original source coverage has not been verified against the full version 6.0 policy. The successor is a version 6.1 companion
+    reference catalog with different addresses and coverage; assessment evidence is not migrated automatically. Publication version does not determine a state authority's audit version.
+  verified_on: '2026-09-09'
+  superseded_by: cjis-v6.1
   refresh: monthly
   text_depth: headings
 - id: cmmc-2-l1
@@ -77,14 +102,38 @@ frameworks:
   refresh: monthly
   text_depth: headings
 - id: cms-ars-5.1
-  name: CMS Acceptable Risk Safeguards (ARS) 5.1
-  version: 5.1 (2022)
+  name: CMS ARS 5.1 (historical family summaries)
+  version: 5.1 (2023-07-26)
   tier: A
   category: control
   path: us-federal/cms-ars-5.1.json
-  source_url: CMS Information Security & Privacy Group — CMS-specific overlay on NIST SP 800-53 Rev 5
+  source_url: https://security.cms.gov/policy-guidance/cms-acceptable-risk-safeguards-ars
+  status: historical
+  notes: Preserves 19 legacy CMS-* family summaries for existing assessment references. These are selected headings, not an archived full ARS 5.1 catalog. The edition date is corrected from 2022 to 2023-07-26.
+    Review CMS ARS 5.2 for current source content; old family IDs do not map automatically to the new control and enhancement IDs.
+  verified_on: '2026-09-09'
+  superseded_by: cms-ars-5.2
   refresh: monthly
   text_depth: headings
+- id: cms-ars-5.2
+  name: CMS Acceptable Risk Safeguards (ARS) 5.2
+  version: '5.2'
+  tier: A
+  category: control
+  path: us-federal/cms-ars-5.2.json
+  source_url: https://www.cms.gov/files/document/acceptable-risk-safeguards-5-2.xlsx
+  license: CMS-authored text is treated as U.S. government material with attribution. Referenced third-party standards and workbook artwork are not bundled. This does not claim a universal public-domain
+    or CC0 grant.
+  license_url: https://www.cms.gov/about-cms/web-policies-important-links/about-website/link-to-us
+  status: current
+  notes: 'CMS ARS 5.2 edition dated 2026-07-01, publisher review 2026-07-16. Complete A2:N1682 cell projection: 605 aggregate reference controls and enhancements, with 1076 clause records retained as source
+    evidence. The 605 count describes the imported workbook; it is not a universal assessment scope. CMS Baseline, MAC ARS, HVA Overlay, FTI Overlay and priorities remain independent source values. Blank
+    values are unknown and do not inherit applicability. Select the appropriate CMS and organization scope before assessment; this is not a blanket requirement for every hospital. Three documented identifier
+    interpretations preserve the original values. No automatic mapping from historical CMS-* IDs or NIST equivalence is asserted. Source hyperlinks are retained without fetching their targets. Raw source
+    rows preserve whitespace; presentation fields use existing catalog model behavior. Workbook SHA-256: 6d7881b1c186aa1df10b3e91dd7c7287b030f7aa8e61390ca83d08117987a444. Source projection: scripts/catalogs/sources/cms-ars-5.2-source.json.'
+  verified_on: '2026-09-09'
+  refresh: monthly
+  text_depth: full
 - id: fda-21-cfr-pt11
   name: FDA 21 CFR Part 11 — Electronic Records; Electronic Signatures
   version: 1997 (with guidance updates)

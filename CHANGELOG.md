@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **CMS ARS 5.2 and CJIS 6.1 companion catalogs (V13-09).** The CMS import
+  retains 1,681 source rows in 605 control/enhancement reference units. The CJIS
+  companion retains 1,533 fragments in 324 reference units with role and scenario
+  qualifications, independent audit/priority/cloud fields and reviewed source
+  annotations. CLI and console control details expose original source evidence.
+  Historical CMS and CJIS records remain available without automatic migration.
+  The companion does not claim complete policy coverage or universal applicability.
 - **Catalog source evidence.** Optional source rows preserve original cell values,
   source locations, identifier interpretations and explicit spreadsheet merge anchors
   through native and API imports. These rows do not add assessed controls.
@@ -235,6 +242,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Render control titles, statements, guidance and family text literally in CLI
+  catalog views, including bracket-like source text that previously raised markup
+  errors. Correct the historical CMS ARS 5.1 edition date to 2023-07-26.
 - **YAML catalog imports.** Non-string mapping keys reject before JSON conversion
   can coerce or collapse source cells; rejected imports preserve installed files.
 - **Nested gap requirements.** Gap analysis now visits active enhancements at every

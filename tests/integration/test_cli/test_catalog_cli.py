@@ -508,3 +508,78 @@ def test_imported_license_metadata_is_rendered_literally(
     result = runner.invoke(app, ["catalog", "license-info", "my-custom-fw"])
     assert result.exit_code == 0, result.output
     assert "https://example.org/[/bold]" in result.output
+
+
+@pytest.mark.parametrize("nested", [False, True])
+def test_source_rows_are_visible_without_becoming_controls(
+    runner: CliRunner, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, nested: bool
+) -> None:
+    monkeypatch.setattr(catalog_cli, "console", Console(width=200))
+    source = _minimal_user_catalog(tmp_path)
+    data = json.loads(source.read_text(encoding="utf-8"))
+    row = {
+        "source_sha256": "a" * 64,
+        "sheet": "Evidence [/bold]",
+        "row": 1461,
+        "source_id": 5.2,
+        "source_id_format": "0.00",
+        "interpreted_id": "5.20",
+        "kind": "fragment",
+        "values": {
+            "Location": 5.2,
+            "Physical blank": None,
+            "Empty text": "",
+            "Boolean": False,
+            "Whole number": 5,
+            "Decimal": 5.0,
+            "Negative zero": -0.0,
+            "Large number": 2**80,
+            "Literal": "[/bold] <script>alert(1)</script>",
+            "Date": "2026-06-25",
+        },
+        "resolved_values": {"Physical blank": "Existing"},
+        "provenance": {"Physical blank": "U1460:U1462; anchor U1460"},
+    }
+    ctrl = data["controls"][0]
+    if nested:
+        leaf = {"id": "CUST-1-A-I", "title": "Nested source", "description": "Source statement", "source_rows": [row]}
+        ctrl["enhancements"] = [
+            {"id": "CUST-1-A", "title": "Intermediate", "description": "Group", "enhancements": [leaf]}
+        ]
+        target = leaf["id"]
+    else:
+        ctrl["source_rows"] = [row]
+        target = ctrl["id"]
+    source.write_text(json.dumps(data), encoding="utf-8")
+    imported = runner.invoke(app, ["catalog", "import", str(source)])
+    assert imported.exit_code == 0, imported.output
+    shown = runner.invoke(app, ["catalog", "show", "my-custom-fw", "--control", target])
+    assert shown.exit_code == 0, shown.output
+    assert "Source evidence" in shown.output
+    for key, value in row.items():
+        if isinstance(value, dict):
+            for cell, scalar in value.items():
+                assert json.dumps(cell) + ": " + json.dumps(scalar) in shown.output
+        else:
+            assert json.dumps(key) + ": " + json.dumps(value) in shown.output
+    listing = runner.invoke(app, ["catalog", "show", "my-custom-fw"])
+    assert listing.exit_code == 0, listing.output
+    assert "Total: 1 controls" in listing.output
+    assert "Source evidence" not in listing.output
+
+
+@pytest.mark.parametrize("field", ["title", "description", "family", "objective", "guidance"])
+def test_control_source_text_is_rendered_literally(
+    runner: CliRunner, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str
+) -> None:
+    monkeypatch.setattr(catalog_cli, "console", Console(width=200))
+    source = _minimal_user_catalog(tmp_path)
+    data = json.loads(source.read_text(encoding="utf-8"))
+    literal = "Source [/bold] <script>alert(1)</script>"
+    data["controls"][0][field] = literal
+    source.write_text(json.dumps(data), encoding="utf-8")
+    imported = runner.invoke(app, ["catalog", "import", str(source)])
+    assert imported.exit_code == 0, imported.output
+    shown = runner.invoke(app, ["catalog", "show", "my-custom-fw", "--control", "CUST-1"])
+    assert shown.exit_code == 0, shown.output
+    assert literal in shown.output

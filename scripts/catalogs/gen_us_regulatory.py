@@ -292,12 +292,11 @@ emit_control_catalog(
 
 
 # ---------------------------------------------------------------------------
-# CMS Acceptable Risk Safeguards (ARS) 5.1 — Medicare/Medicaid systems
+# CMS ARS 5.1 historical family summaries
 # ---------------------------------------------------------------------------
 
 CMS_ARS = [
-    # CMS ARS inherits from NIST 800-53 Rev 5 High with CMS-specific enhancements
-    # Summary control areas:
+    # Preserve legacy headings without asserting baseline or control equivalence.
     ("CMS-AC", "Access Control — CMS-tailored 800-53 Rev 5", "Access Control"),
     ("CMS-AT", "Awareness and Training — CMS-tailored 800-53 Rev 5", "Awareness and Training"),
     ("CMS-AU", "Audit and Accountability — CMS-tailored 800-53 Rev 5", "Audit and Accountability"),
@@ -321,17 +320,21 @@ CMS_ARS = [
 
 emit_control_catalog(
     framework_id="cms-ars-5.1",
-    framework_name="CMS Acceptable Risk Safeguards (ARS) 5.1",
-    version="5.1 (2022)",
-    source="CMS Information Security & Privacy Group — CMS-specific overlay on NIST SP 800-53 Rev 5",
+    framework_name="CMS ARS 5.1 (historical family summaries)",
+    version="5.1 (2023-07-26)",
+    source="https://security.cms.gov/policy-guidance/cms-acceptable-risk-safeguards-ars",
     families=["Access Control", "Awareness and Training", "Audit and Accountability", "Security Assessment", "Configuration Management", "Contingency Planning", "Identification and Authentication", "Incident Response", "Maintenance", "Media Protection", "Physical and Environmental", "Planning", "Program Management", "Personnel Security", "Risk Assessment", "System and Services Acquisition", "System and Communications Protection", "System and Information Integrity", "Supply Chain"],
     controls=[{"id": c, "title": t, "description": t, "family": f} for c, t, f in CMS_ARS],
+    status="historical",
+    verified_on="2026-09-09",
+    superseded_by="cms-ars-5.2",
+    notes="Preserves 19 legacy CMS-* family summaries for existing assessment references. These are selected headings, not an archived full ARS 5.1 catalog. The edition date is corrected from 2022 to 2023-07-26. Review CMS ARS 5.2 for current source content; old family IDs do not map automatically to the new control and enhancement IDs.",
     tier="A",
 )
 
 
 # ---------------------------------------------------------------------------
-# CJIS Security Policy v6.0 (FBI) — Law enforcement data protection
+# CJIS v6.0 historical selected headings
 # ---------------------------------------------------------------------------
 
 CJIS = [
@@ -363,14 +366,29 @@ CJIS = [
 
 emit_control_catalog(
     framework_id="cjis-v6",
-    framework_name="FBI CJIS Security Policy v6.0",
-    version="6.0 (Dec 2024)",
-    source="FBI Criminal Justice Information Services Division — CJIS Security Policy (federal agency document)",
+    framework_name="FBI CJIS v6.0 (historical selected headings)",
+    version="6.0 (2024-12-27)",
+    source="https://le.fbi.gov/cjis-division/cjis-security-policy-resource-center",
     families=["Information Exchange", "Security Awareness Training", "Incident Response", "Auditing", "Access Control", "Identification and Authentication", "Configuration Management", "Media Protection", "Physical Protection", "System and Communications Protection", "Personnel Security", "Mobile Devices"],
     controls=[{"id": c, "title": t, "description": t, "family": f} for c, t, f in CJIS],
+    status="historical",
+    verified_on="2026-09-09",
+    superseded_by="cjis-v6.1",
+    notes="Preserves 24 legacy selected headings for existing assessment references. Original source coverage has not been verified against the full version 6.0 policy. The successor is a version 6.1 companion reference catalog with different addresses and coverage; assessment evidence is not migrated automatically. Publication version does not determine a state authority's audit version.",
     tier="A",
 )
 
 
 if __name__ == "__main__":
+    import _generators as catalog_helpers
+    from gen_cjis_companion import main as generate_cjis_companion
+    from gen_cms_ars import main as generate_cms_ars
+
+    for generate, filename in (
+        (generate_cms_ars, "cms-ars-5.2.json"),
+        (generate_cjis_companion, "cjis-v6.1.json"),
+    ):
+        output = catalog_helpers.DATA_ROOT / "us-federal" / filename
+        if generate(["--output", str(output)]) != 0:
+            raise SystemExit(1)
     print("Generated US regulatory catalogs.")

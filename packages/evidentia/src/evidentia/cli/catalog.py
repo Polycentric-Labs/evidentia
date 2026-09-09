@@ -196,16 +196,16 @@ def show_catalog(
             console.print(f"[red]Control '{control}' not found in '{framework}'.[/red]")
             raise typer.Exit(code=1)
 
-        # Placeholder rendering — show license URL instead of placeholder prose
+        # Show the license URL in place of licensed body text.
         if ctrl.placeholder and ctrl.license_url:
-            description_block = f"[yellow]\\[Licensed content — see {ctrl.license_url}][/yellow]"
+            description_block = f"[yellow]\\[Licensed content - see {escape(ctrl.license_url)}][/yellow]"
         else:
-            description_block = ctrl.description
+            description_block = escape(ctrl.description)
 
         body = (
-            f"[bold]ID:[/bold] {ctrl.id}\n"
-            f"[bold]Title:[/bold] {ctrl.title}\n"
-            f"[bold]Family:[/bold] {ctrl.family or '-'}\n\n"
+            f"[bold]ID:[/bold] {escape(ctrl.id)}\n"
+            f"[bold]Title:[/bold] {escape(ctrl.title)}\n"
+            f"[bold]Family:[/bold] {escape(ctrl.family or '-')}\n\n"
             f"[bold]Description:[/bold]\n{description_block}\n"
         )
         if ctrl.priority:
@@ -214,23 +214,29 @@ def show_catalog(
             body += "\n[bold]Publisher properties:[/bold]\n"
             body += "\n".join(f"{escape(key)}: {escape(value)}" for key, value in ctrl.properties.items()) + "\n"
         if ctrl.objective:
-            body += f"\n[bold]Objective:[/bold]\n{ctrl.objective}\n"
+            body += f"\n[bold]Objective:[/bold]\n{escape(ctrl.objective)}\n"
         if ctrl.guidance:
-            body += f"\n[bold]Guidance:[/bold]\n{ctrl.guidance}\n"
+            body += f"\n[bold]Guidance:[/bold]\n{escape(ctrl.guidance)}\n"
         if ctrl.enhancements:
             body += f"\n[bold]Enhancements:[/bold] {len(ctrl.enhancements)}\n"
             for enh in ctrl.enhancements[:10]:
-                body += f"  * {enh.id}: {enh.title}\n"
-        console.print(Panel(body, title=f"{framework} / {ctrl.id}", border_style="cyan"))
+                body += f"  * {escape(enh.id)}: {escape(enh.title)}\n"
+        console.print(Panel(body, title=escape(f"{framework} / {ctrl.id}"), border_style="cyan"))
+        if ctrl.source_rows:
+            console.print("[bold]Source evidence[/bold]")
+            console.print_json(
+                json=json.dumps([row.model_dump(mode="json") for row in ctrl.source_rows], ensure_ascii=True, indent=2),
+                highlight=False,
+            )
         return
 
-    table = Table(title=f"{catalog.framework_name} ({catalog.framework_id})")
+    table = Table(title=escape(f"{catalog.framework_name} ({catalog.framework_id})"))
     table.add_column("Control ID", style="cyan", no_wrap=True)
     table.add_column("Title")
     table.add_column("Family", style="dim")
 
     for ctrl in catalog.controls:
-        table.add_row(ctrl.id, ctrl.title, ctrl.family or "")
+        table.add_row(escape(ctrl.id), escape(ctrl.title), escape(ctrl.family or ""))
 
     console.print(table)
     console.print(f"[dim]Total: {len(catalog.controls)} controls[/dim]")
