@@ -13,9 +13,10 @@ class TestListFrameworks:
         assert payload["total"] > 0
         # 82 is the current v0.3.1/v0.4.0 bundled count.
         assert payload["total"] >= 80
-        # Entries carry the manifest shape.
+        # Entries carry the manifest shape, including the derived text depth.
         fw = payload["frameworks"][0]
-        assert set(fw.keys()) >= {"id", "name", "version", "tier", "category"}
+        assert set(fw.keys()) >= {"id", "name", "version", "tier", "category", "text_depth"}
+        assert all("text_depth" in entry for entry in payload["frameworks"])
 
     def test_filter_by_tier(self, api_client: TestClient) -> None:
         r = api_client.get("/api/frameworks", params={"tier": "A"})

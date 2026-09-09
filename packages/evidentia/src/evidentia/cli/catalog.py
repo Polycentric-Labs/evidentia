@@ -2,7 +2,7 @@
 
 v0.2.0 introduces:
 - ``import`` / ``where`` / ``license-info`` / ``remove`` for user-supplied catalogs
-- ``list`` filtered by tier and category
+- ``list`` filtered by tier and category, with each catalog's derived text depth
 - OSCAL profile resolution via ``--profile`` + ``--catalog`` on import
 """
 
@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import typer
 from evidentia_core.catalogs.manifest import (
@@ -26,6 +27,9 @@ from evidentia_core.catalogs.user_dir import (
     resolve_catalog_path,
     save_user_manifest,
 )
+from evidentia_core.models.catalog import ControlCatalog, TextDepth
+from evidentia_core.models.obligation import ObligationCatalog
+from evidentia_core.models.threat import TechniqueCatalog, VulnerabilityCatalog
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -81,6 +85,7 @@ def list_frameworks(
     table.add_column("Tier", justify="center")
     table.add_column("Category", style="dim")
     table.add_column("Controls", justify="right", style="green")
+    table.add_column("Text", justify="center")
     table.add_column("Source", style="dim")
     table.add_column("Loaded", justify="center")
 
@@ -114,6 +119,7 @@ def list_frameworks(
             entry.tier,
             entry.category,
             count,
+            entry.text_depth or "-",
             source,
             loaded,
         )
@@ -300,6 +306,7 @@ def import_catalog(
             path=out_path.name,
             placeholder=False,
             license_terms=license_terms,
+            text_depth=resolved.text_depth,
         )
         console.print(
             f"[green]Resolved profile and imported as '{resolved.framework_id}' "
@@ -339,13 +346,25 @@ def import_catalog(
         console.print(f"[red]A user-imported '{resolved_id}' already exists — use --force to overwrite.[/red]")
         raise typer.Exit(code=1)
 
-    if framework_id or name:
-        # We modified the payload; write the new version
-        with open(out_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-    else:
-        # Byte-for-byte copy
-        shutil.copy2(source, out_path)
+    from evidentia_core.catalogs.loader import load_any_catalog
+
+    # Validate the exact import payload before replacing a user's catalog.
+    # A rejected --force import must leave the previous catalog intact.
+    with TemporaryDirectory(prefix=".catalog-import-", dir=user_dir) as staging_dir:
+        staged_path = Path(staging_dir) / out_path.name
+        if framework_id or name:
+            staged_path.write_text(json.dumps(data, indent=2), encoding="utf-8", newline="\n")
+        else:
+            shutil.copy2(source, staged_path)
+        try:
+            loaded_catalog = load_any_catalog(resolved_id, custom_path=staged_path)
+        except (ValueError, OSError, TypeError) as exc:
+            console.print(f"[red]Catalog validation failed: {exc}[/red]")
+            raise typer.Exit(code=1) from exc
+        if not isinstance(loaded_catalog, (ControlCatalog, ObligationCatalog, TechniqueCatalog, VulnerabilityCatalog)):
+            raise TypeError(f"Unsupported catalog type: {type(loaded_catalog).__name__}")
+        text_depth = loaded_catalog.text_depth
+        staged_path.replace(out_path)
 
     _add_to_user_manifest(
         catalog_dir=catalog_dir,
@@ -356,6 +375,7 @@ def import_catalog(
         path=out_path.name,
         placeholder=placeholder,
         license_terms=license_terms,
+        text_depth=text_depth,
     )
 
     shadow_note = ""
@@ -393,7 +413,8 @@ def where_framework(
             f"[bold]Path:[/bold] {path}\n"
             f"[bold]Tier:[/bold] {entry.tier}  "
             f"[bold]Category:[/bold] {entry.category}\n"
-            f"[bold]Placeholder:[/bold] {entry.placeholder}",
+            f"[bold]Placeholder:[/bold] {entry.placeholder}\n"
+            f"[bold]Text depth:[/bold] {entry.text_depth or '-'}",
             title=framework_id,
             border_style="cyan",
         )
@@ -417,6 +438,7 @@ def license_info(
         f"[bold]Tier:[/bold] {entry.tier}",
         f"[bold]License required:[/bold] {entry.license_required}",
         f"[bold]Placeholder:[/bold] {entry.placeholder}",
+        f"[bold]Text depth:[/bold] {entry.text_depth or '-'}",
     ]
     if entry.license:
         lines.append(f"[bold]License:[/bold] {entry.license}")
@@ -474,6 +496,7 @@ def _add_to_user_manifest(
     path: str,
     placeholder: bool,
     license_terms: str | None,
+    text_depth: TextDepth | None = None,
 ) -> None:
     """Append or replace an entry in the user manifest."""
     user = load_user_manifest(catalog_dir)
@@ -487,6 +510,7 @@ def _add_to_user_manifest(
         path=path,
         license=license_terms,
         placeholder=placeholder,
+        text_depth=text_depth,
     )
     updated = FrameworkManifest(version=user.version, frameworks=[*kept, new_entry])
     save_user_manifest(updated, catalog_dir)

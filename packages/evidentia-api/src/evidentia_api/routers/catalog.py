@@ -59,6 +59,7 @@ from evidentia_core.catalogs.user_dir import (
     resolve_catalog_path,
     save_user_manifest,
 )
+from evidentia_core.models.catalog import TextDepth
 from evidentia_core.models.common import NonBlankStr
 from evidentia_core.security.paths import validate_within
 from fastapi import APIRouter, Query
@@ -192,6 +193,7 @@ async def where_framework(
         "tier": entry.tier,
         "category": entry.category,
         "placeholder": entry.placeholder,
+        "text_depth": entry.text_depth,
     }
 
 
@@ -234,6 +236,7 @@ async def license_info(framework_id: str) -> dict[str, object]:
         "license": entry.license,
         "license_url": entry.license_url,
         "source_url": entry.source_url,
+        "text_depth": entry.text_depth,
     }
 
 
@@ -400,7 +403,7 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
     # then load it back through the core loader.
     out_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     try:
-        load_evidentia_catalog(out_path)
+        loaded_catalog = load_evidentia_catalog(out_path)
     except Exception as exc:  # normalize any load error to 400
         # Roll back the partial write so a bad import is a no-op.
         out_path.unlink(missing_ok=True)
@@ -418,6 +421,7 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
         path=out_path.name,
         placeholder=placeholder,
         license_terms=payload.license_terms,
+        text_depth=loaded_catalog.text_depth,
     )
 
     shadows_bundled = load_manifest().get(payload.framework_id) is not None
@@ -506,6 +510,7 @@ def _add_to_user_manifest(
     path: str,
     placeholder: bool,
     license_terms: str | None,
+    text_depth: TextDepth | None = None,
 ) -> None:
     """Append or replace an entry in the user manifest.
 
@@ -524,6 +529,7 @@ def _add_to_user_manifest(
         path=path,
         license=license_terms,
         placeholder=placeholder,
+        text_depth=text_depth,
     )
     updated = FrameworkManifest(version=user.version, frameworks=[*kept, new_entry])
     save_user_manifest(updated)

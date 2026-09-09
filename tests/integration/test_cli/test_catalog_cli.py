@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 from evidentia.cli.main import app
 from evidentia_core.catalogs.registry import FrameworkRegistry
+from evidentia_core.catalogs.user_dir import load_user_manifest
 from typer.testing import CliRunner
 
 
@@ -90,6 +91,24 @@ def test_catalog_list_category_filter(runner: CliRunner) -> None:
     assert "eu-gdpr" in result.output or "obligation" in result.output
 
 
+def test_catalog_list_shows_text_depth_column(runner: CliRunner) -> None:
+    """The Text column shows each catalog's derived depth, not a declared one."""
+    result = runner.invoke(app, ["catalog", "list"])
+    assert result.exit_code == 0, result.output
+    assert "Text" in result.output
+    # The bundled set spans every depth except partial (none currently
+    # exists): at least one full and one headings-only catalog ship.
+    assert "headings" in result.output
+    assert "full" in result.output
+
+
+def test_catalog_license_info_shows_text_depth(runner: CliRunner) -> None:
+    """nist-800-53-rev5 carries authoritative NIST text end to end."""
+    result = runner.invoke(app, ["catalog", "license-info", "nist-800-53-rev5"])
+    assert result.exit_code == 0, result.output
+    assert "Text depth: full" in result.output
+
+
 # -----------------------------------------------------------------------------
 # catalog import / where / license-info / remove — round trip
 # -----------------------------------------------------------------------------
@@ -103,6 +122,13 @@ def test_catalog_import_then_where_then_remove(runner: CliRunner, tmp_path: Path
     result = runner.invoke(app, ["catalog", "import", str(source)])
     assert result.exit_code == 0, result.output
     assert "Imported" in result.output or "imported" in result.output
+
+    # The user manifest entry carries a derived (non-null) text_depth,
+    # computed from the imported catalog rather than left unset.
+    user_manifest = load_user_manifest()
+    imported_entry = user_manifest.get("my-custom-fw")
+    assert imported_entry is not None
+    assert imported_entry.text_depth is not None
 
     # Where
     result = runner.invoke(app, ["catalog", "where", "my-custom-fw"])
@@ -207,3 +233,32 @@ def test_version_command(runner: CliRunner) -> None:
     result = runner.invoke(app, ["version"])
     assert result.exit_code == 0, result.output
     assert "Evidentia" in result.output
+
+
+@pytest.mark.parametrize("replace_existing", [False, True])
+def test_invalid_catalog_import_preserves_existing_state(
+    runner: CliRunner, tmp_path: Path, replace_existing: bool
+) -> None:
+    """Validation rejects content before publishing it in the user directory."""
+    user_catalog = tmp_path / "user-catalogs" / "my-custom-fw.json"
+    if replace_existing:
+        original = _minimal_user_catalog(tmp_path)
+        imported = runner.invoke(app, ["catalog", "import", str(original)])
+        assert imported.exit_code == 0, imported.output
+    previous_bytes = user_catalog.read_bytes() if replace_existing else None
+    previous_manifest = load_user_manifest().model_dump()
+    invalid = tmp_path / "invalid.json"
+    invalid.write_text(
+        json.dumps({"framework_id": "my-custom-fw", "controls": "invalid"}),
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(app, ["catalog", "import", str(invalid), "--force"])
+
+    assert result.exit_code == 1
+    if replace_existing:
+        assert user_catalog.read_bytes() == previous_bytes
+    else:
+        assert not user_catalog.exists()
+    assert load_user_manifest().model_dump() == previous_manifest
+    assert "Catalog validation failed" in result.output

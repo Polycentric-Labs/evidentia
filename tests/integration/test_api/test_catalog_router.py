@@ -109,6 +109,15 @@ class TestWhere:
         assert body["source"] == "bundled"
         assert body["path"]
         assert body["shadowed"] is False
+        # nist-csf-2.0 carries authoritative NIST subcategory text end to end.
+        assert body["text_depth"] == "full"
+
+    def test_headings_only_framework_reports_its_depth(self, cat_client: TestClient) -> None:
+        # iso-27001-2022 is a Tier C stub: public Annex A numbering and
+        # neutral titles only, no statement text.
+        r = cat_client.get("/api/catalog/where?framework_id=iso-27001-2022")
+        assert r.status_code == 200, r.text
+        assert r.json()["text_depth"] == "headings"
 
     def test_unknown_framework_returns_404(self, cat_client: TestClient) -> None:
         r = cat_client.get("/api/catalog/where?framework_id=does-not-exist")
@@ -139,6 +148,12 @@ class TestLicenseInfo:
         assert "tier" in body
         assert "license_required" in body
         assert "placeholder" in body
+        assert body["text_depth"] == "full"
+
+    def test_headings_only_framework_reports_its_depth(self, cat_client: TestClient) -> None:
+        r = cat_client.get("/api/catalog/license-info/iso-27001-2022")
+        assert r.status_code == 200, r.text
+        assert r.json()["text_depth"] == "headings"
 
     def test_unknown_framework_returns_404(self, cat_client: TestClient) -> None:
         r = cat_client.get("/api/catalog/license-info/does-not-exist")
@@ -237,6 +252,17 @@ class TestImport:
         r = cat_client.post("/api/catalog/import", json=payload)
         assert r.status_code == 400, r.text
         assert r.json()["detail"]["error"] == "invalid_id"
+
+    def test_import_sets_text_depth_on_manifest_entry(self, cat_client: TestClient) -> None:
+        # _SAMPLE_CATALOG's one control carries a real description, distinct
+        # from its title, so the imported entry derives to "full".
+        r = cat_client.post("/api/catalog/import", json=_import_payload())
+        assert r.status_code == 201, r.text
+        w = cat_client.get("/api/catalog/where?framework_id=acme-internal")
+        assert w.status_code == 200, w.text
+        text_depth = w.json()["text_depth"]
+        assert isinstance(text_depth, str)
+        assert text_depth == "full"
 
     def test_content_framework_id_mismatch_uses_path_id(self, cat_client: TestClient) -> None:
         # The path/body framework_id is authoritative for where the file

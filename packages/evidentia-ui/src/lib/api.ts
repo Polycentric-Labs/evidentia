@@ -141,6 +141,7 @@ export interface FrameworkListEntry {
   category: string;
   placeholder: string;
   license_required: string;
+  text_depth: string;
 }
 
 export interface FrameworkListResponse {
