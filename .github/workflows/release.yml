@@ -168,7 +168,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6.4.0 # zizmor: ignore[cache-poisoning]
         with:
-          node-version: "20"
+          node-version: "24"
           # No npm cache in the release build (zizmor cache-poisoning hardening):
           # a poisoned cache could taint the released wheel's bundled SPA. The
           # release runs rarely, so the cache speedup isn't worth the risk.

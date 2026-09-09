@@ -219,6 +219,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **UI build dependency security.** The `js-yaml` override now requires at least
+  4.3.2, fixing [CVE-2026-84375](https://github.com/nodeca/js-yaml/security/advisories/GHSA-2883-xcg3-v3hh)
+  in development tooling. Frontend CI, release builds and the dev container use
+  Node 24, matching the supported engine range of the current `jsdom` dependency.
 - **Catalog import preservation and OSCAL source selection.** The API validates
   JSON and YAML imports in a temporary file before replacing an installed catalog,
   preserving the existing catalog and manifest when validation rejects a forced
