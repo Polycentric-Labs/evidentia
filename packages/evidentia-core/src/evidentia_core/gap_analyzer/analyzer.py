@@ -234,16 +234,24 @@ class GapAnalyzer:
     def _build_required_set(self, catalogs: dict[str, ControlCatalog]) -> dict[str, list[tuple[str, CatalogControl]]]:
         """Build the set of required controls across all frameworks.
 
+        Withdrawn controls (and their enhancements) are not requirements: the
+        publisher retired them, so their absence from an inventory is not a
+        gap. NIST SP 800-53 Rev 5 carries 182 such entries.
+
         Returns: {framework:control_id: [(framework_id, CatalogControl), ...]}
         """
         required: dict[str, list[tuple[str, CatalogControl]]] = defaultdict(list)
 
         for fw_id, catalog in catalogs.items():
             for control in catalog.controls:
+                if control.withdrawn:
+                    continue
                 key = f"{fw_id}:{control.id}"
                 required[key].append((fw_id, control))
                 # Include enhancements as separate requirements
                 for enhancement in control.enhancements:
+                    if enhancement.withdrawn:
+                        continue
                     enh_key = f"{fw_id}:{enhancement.id}"
                     required[enh_key].append((fw_id, enhancement))
 

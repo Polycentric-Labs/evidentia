@@ -1281,12 +1281,18 @@ export const demoApi = {
       framework_id: frameworkId,
       source: "bundled",
       path: `bundled://${frameworkId}.yaml`,
+      text_depth:
+        DEMO_FRAMEWORKS.frameworks.find((entry) => entry.id === frameworkId)
+          ?.text_depth ?? null,
     }),
   catalogLicenseInfo: (frameworkId: string): Promise<Record<string, unknown>> =>
     Promise.resolve({
       framework_id: frameworkId,
       license_required: false,
       license_terms: null,
+      text_depth:
+        DEMO_FRAMEWORKS.frameworks.find((entry) => entry.id === frameworkId)
+          ?.text_depth ?? null,
     }),
   catalogImport: (
     payload: CatalogImportPayload,

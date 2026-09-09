@@ -9,7 +9,7 @@
 #   id            Canonical framework ID (kebab-case; stable across versions).
 #   name          Human-readable name shown in `catalog list`.
 #   version       Framework version string.
-#   tier          A | B | C | D — redistribution tier (see ATTRIBUTION.md).
+#   tier          A | B | C | D, the redistribution tier (docs/contributing-a-catalog.md).
 #   category      control | technique | vulnerability | obligation.
 #   path          JSON path relative to data/ directory.
 #   source_url    Upstream URL.
@@ -18,6 +18,8 @@
 #   license_url   URL where users can license/download authoritative text.
 #   placeholder   true if this catalog is a stub (no authoritative text).
 #   refresh       Adapter schedule: daily | weekly | monthly | manual.
+#   text_depth    full | partial | headings; derived from the catalog file, never declared.
+#   crosswalk_family  family id whose crosswalks also apply (baselines, maturity levels).
 
 version: 1
 frameworks:
@@ -29,6 +31,7 @@ frameworks:
   path: us-federal/cisa-cpgs.json
   source_url: Cybersecurity and Infrastructure Security Agency (CISA) — https://cisa.gov/cross-sector-cybersecurity-performance-goals
   refresh: monthly
+  text_depth: headings
 - id: cjis-v6
   name: FBI CJIS Security Policy v6.0
   version: 6.0 (Dec 2024)
@@ -37,6 +40,7 @@ frameworks:
   path: us-federal/cjis-v6.json
   source_url: FBI Criminal Justice Information Services Division — CJIS Security Policy (federal agency document)
   refresh: monthly
+  text_depth: headings
 - id: cmmc-2-l1
   name: CMMC 2.0 Level 1 (Foundational)
   version: 2.0 (2024 Final Rule)
@@ -45,6 +49,7 @@ frameworks:
   path: us-federal/cmmc-2-l1.json
   source_url: DoD CIO — https://dodcio.defense.gov/CMMC/ (U.S. Government work). Based on the 17 FAR 52.204-21 basic safeguarding practices.
   refresh: monthly
+  text_depth: headings
 - id: cmmc-2-l2
   name: CMMC 2.0 Level 2 (Advanced)
   version: 2.0 (2024 Final Rule)
@@ -53,6 +58,7 @@ frameworks:
   path: us-federal/cmmc-2-l2.json
   source_url: DoD CIO — https://dodcio.defense.gov/CMMC/. Level 2 = all 110 NIST SP 800-171 Rev 2 requirements.
   refresh: monthly
+  text_depth: headings
 - id: cmmc-2-l3
   name: CMMC 2.0 Level 3 (Expert)
   version: 2.0 (2024 Final Rule)
@@ -61,6 +67,7 @@ frameworks:
   path: us-federal/cmmc-2-l3.json
   source_url: DoD CIO — https://dodcio.defense.gov/CMMC/. Level 3 = Level 2 + subset of NIST SP 800-172 enhanced requirements.
   refresh: monthly
+  text_depth: headings
 - id: cms-ars-5.1
   name: CMS Acceptable Risk Safeguards (ARS) 5.1
   version: 5.1 (2022)
@@ -69,6 +76,7 @@ frameworks:
   path: us-federal/cms-ars-5.1.json
   source_url: CMS Information Security & Privacy Group — CMS-specific overlay on NIST SP 800-53 Rev 5
   refresh: monthly
+  text_depth: headings
 - id: fda-21-cfr-pt11
   name: FDA 21 CFR Part 11 — Electronic Records; Electronic Signatures
   version: 1997 (with guidance updates)
@@ -77,6 +85,7 @@ frameworks:
   path: us-federal/fda-21-cfr-pt11.json
   source_url: FDA — 21 CFR Part 11 (U.S. federal regulation)
   refresh: monthly
+  text_depth: headings
 - id: fda-524b-appendix1
   name: FDA Section 524B Premarket Cybersecurity — Security Control Categories
   version: 2026-02-03 (final guidance)
@@ -89,6 +98,7 @@ frameworks:
     submissions to include a vulnerability-management plan, secure-by-design processes covering updates and patches, and a software bill of materials (SBOM). U.S. Government work, not subject to copyright
     (17 U.S.C. 105); category names reproduced verbatim, characterizations written in Evidentia''s own words.'
   refresh: monthly
+  text_depth: full
 - id: fedramp-frr-2026
   name: FedRAMP Requirements — provider-facing rules (Consolidated Rules for 2026)
   version: 2026.07.14.01 (CR26)
@@ -97,6 +107,7 @@ frameworks:
   path: us-federal/fedramp-frr-2026.json
   source_url: FedRAMP — https://github.com/FedRAMP/rules @ 58efbf3d8984 (fedramp-consolidated-rules.json)
   refresh: monthly
+  text_depth: full
 - id: fedramp-ksi-2026
   name: FedRAMP Key Security Indicators (Consolidated Rules for 2026)
   version: 2026.07.14.01 (CR26)
@@ -105,6 +116,7 @@ frameworks:
   path: us-federal/fedramp-ksi-2026.json
   source_url: FedRAMP — https://github.com/FedRAMP/rules @ 58efbf3d8984 (fedramp-consolidated-rules.json)
   refresh: monthly
+  text_depth: full
 - id: fedramp-rev5-high
   name: FedRAMP Rev 5 High Baseline
   version: Rev 5 (profiles published 2024-09-24)
@@ -114,6 +126,8 @@ frameworks:
   source_url: FedRAMP PMO, https://www.fedramp.gov (U.S. Government work, public domain). Baseline is a tailored subset of NIST SP 800-53 Rev 5. Control membership extracted from the FedRAMP PMO OSCAL profiles
     published 2024-09-24, retrieved 2026-08-22 from OSCAL-Foundation/fedramp-resources.
   refresh: monthly
+  text_depth: full
+  crosswalk_family: nist-800-53-rev5
 - id: fedramp-rev5-li-saas
   name: FedRAMP Rev 5 LI-SAAS Baseline
   version: Rev 5 (profiles published 2024-09-24)
@@ -124,6 +138,8 @@ frameworks:
     profiles published 2024-09-24, retrieved 2026-08-22 from OSCAL-Foundation/fedramp-resources. NOTE: LI-SaaS selects the same control set as Low. The FedRAMP Tailored distinction is carried by a per-control
     method property (ATTEST, ASSESS, CONDITIONAL, NSO, FED) which this pointer catalog does not yet represent.'
   refresh: monthly
+  text_depth: full
+  crosswalk_family: nist-800-53-rev5
 - id: fedramp-rev5-low
   name: FedRAMP Rev 5 Low Baseline
   version: Rev 5 (profiles published 2024-09-24)
@@ -133,6 +149,8 @@ frameworks:
   source_url: FedRAMP PMO, https://www.fedramp.gov (U.S. Government work, public domain). Baseline is a tailored subset of NIST SP 800-53 Rev 5. Control membership extracted from the FedRAMP PMO OSCAL profiles
     published 2024-09-24, retrieved 2026-08-22 from OSCAL-Foundation/fedramp-resources.
   refresh: monthly
+  text_depth: full
+  crosswalk_family: nist-800-53-rev5
 - id: fedramp-rev5-moderate
   name: FedRAMP Rev 5 Moderate Baseline
   version: Rev 5 (profiles published 2024-09-24)
@@ -142,6 +160,8 @@ frameworks:
   source_url: FedRAMP PMO, https://www.fedramp.gov (U.S. Government work, public domain). Baseline is a tailored subset of NIST SP 800-53 Rev 5. Control membership extracted from the FedRAMP PMO OSCAL profiles
     published 2024-09-24, retrieved 2026-08-22 from OSCAL-Foundation/fedramp-resources.
   refresh: monthly
+  text_depth: full
+  crosswalk_family: nist-800-53-rev5
 - id: ffiec-audit
   name: FFIEC IT Examination Handbook — Audit booklet
   version: April 2012
@@ -150,6 +170,7 @@ frameworks:
   path: us-federal/ffiec-audit.json
   source_url: https://ithandbook.ffiec.gov/it-booklets/audit.aspx
   refresh: monthly
+  text_depth: full
 - id: ffiec-cat
   name: FFIEC Cybersecurity Assessment Tool
   version: 2017 (representative subset)
@@ -158,6 +179,7 @@ frameworks:
   path: us-federal/ffiec-cat.json
   source_url: https://www.ffiec.gov/cyberassessmenttool.htm
   refresh: monthly
+  text_depth: full
 - id: ffiec-information-security
   name: FFIEC IT Examination Handbook — Information Security booklet
   version: September 2016
@@ -166,6 +188,7 @@ frameworks:
   path: us-federal/ffiec-information-security.json
   source_url: https://ithandbook.ffiec.gov/it-booklets/information-security.aspx
   refresh: monthly
+  text_depth: full
 - id: ffiec-management
   name: FFIEC IT Examination Handbook — Management booklet
   version: November 2015
@@ -174,6 +197,7 @@ frameworks:
   path: us-federal/ffiec-management.json
   source_url: https://ithandbook.ffiec.gov/it-booklets/management.aspx
   refresh: monthly
+  text_depth: full
 - id: ffiec-operations
   name: FFIEC IT Examination Handbook — Operations booklet
   version: July 2004
@@ -182,6 +206,7 @@ frameworks:
   path: us-federal/ffiec-operations.json
   source_url: https://ithandbook.ffiec.gov/it-booklets/operations.aspx
   refresh: monthly
+  text_depth: full
 - id: ffiec-outsourcing
   name: FFIEC IT Examination Handbook — Outsourcing Technology Services booklet
   version: June 2004 + 2008/2010 supplements
@@ -190,6 +215,7 @@ frameworks:
   path: us-federal/ffiec-outsourcing.json
   source_url: https://ithandbook.ffiec.gov/it-booklets/outsourcing-technology-services.aspx
   refresh: monthly
+  text_depth: full
 - id: glba-safeguards
   name: GLBA Safeguards Rule (16 CFR § 314)
   version: 2023 (Notification Amendment)
@@ -198,6 +224,7 @@ frameworks:
   path: us-federal/glba-safeguards.json
   source_url: FTC — 16 CFR 314 (U.S. federal regulation)
   refresh: monthly
+  text_depth: headings
 - id: hipaa-breach
   name: HIPAA Breach Notification Rule (45 CFR § 164 Subpart D)
   version: '2013'
@@ -206,6 +233,7 @@ frameworks:
   path: us-federal/hipaa-breach.json
   source_url: HHS OCR — 45 CFR 164 Subpart D (U.S. federal regulation)
   refresh: monthly
+  text_depth: headings
 - id: hipaa-privacy
   name: HIPAA Privacy Rule (45 CFR § 164 Subpart E)
   version: 2013 (Omnibus Rule)
@@ -214,6 +242,7 @@ frameworks:
   path: us-federal/hipaa-privacy.json
   source_url: HHS OCR — 45 CFR 164 Subpart E (U.S. federal regulation)
   refresh: monthly
+  text_depth: headings
 - id: hipaa-security
   name: HIPAA Security Rule (45 CFR § 164 Subpart C)
   version: 2013 (Omnibus Rule)
@@ -222,6 +251,7 @@ frameworks:
   path: us-federal/hipaa-security.json
   source_url: HHS OCR — 45 CFR 164 (U.S. federal regulation, not copyrightable)
   refresh: monthly
+  text_depth: headings
 - id: irs-1075
   name: IRS Publication 1075 — Tax Information Security Guidelines
   version: November 2021
@@ -230,6 +260,7 @@ frameworks:
   path: us-federal/irs-1075.json
   source_url: IRS Publication 1075 (U.S. federal agency document)
   refresh: monthly
+  text_depth: headings
 - id: nerc-cip-v7
   name: NERC CIP — Critical Infrastructure Protection Reliability Standards
   version: v7 (2020-2024 effective dates)
@@ -238,6 +269,7 @@ frameworks:
   path: us-federal/nerc-cip-v7.json
   source_url: North American Electric Reliability Corporation (NERC) — NERC CIP standards (public)
   refresh: monthly
+  text_depth: headings
 - id: nist-800-171-r2
   name: NIST SP 800-171 Rev 2 — Protecting CUI in Nonfederal Systems
   version: Rev 2 (2020)
@@ -246,6 +278,7 @@ frameworks:
   path: us-federal/nist-800-171-r2.json
   source_url: NIST (U.S. Government work, public domain) — https://csrc.nist.gov/publications/detail/sp/800-171/rev-2/final
   refresh: monthly
+  text_depth: headings
 - id: nist-800-171-r3
   name: NIST SP 800-171 Rev 3 — Protecting CUI in Nonfederal Systems
   version: Rev 3 (May 2024)
@@ -254,6 +287,7 @@ frameworks:
   path: us-federal/nist-800-171-r3.json
   source_url: NIST (U.S. Government work, public domain) — https://csrc.nist.gov/pubs/sp/800/171/r3/final
   refresh: monthly
+  text_depth: headings
 - id: nist-800-172
   name: NIST SP 800-172 — Enhanced Security Requirements for Protecting CUI
   version: 1.0 (Feb 2021)
@@ -262,6 +296,7 @@ frameworks:
   path: us-federal/nist-800-172.json
   source_url: NIST (U.S. Government work, public domain) — https://csrc.nist.gov/publications/detail/sp/800-172/final
   refresh: monthly
+  text_depth: headings
 - id: nist-800-53-mod
   name: NIST SP 800-53 Moderate Baseline (legacy 16-control sample — prefer nist-800-53-rev5-moderate)
   version: Rev 5
@@ -271,6 +306,8 @@ frameworks:
   source_url: v0.1.x paraphrased 16-control sample. Retained for v0.2.0 yaml-pin backward compatibility; deprecated in v0.2.1, removal planned for v0.3.0. Use framework_id 'nist-800-53-rev5-moderate' for
     the full 287-control FedRAMP-aligned baseline derived from usnistgov/oscal-content@v1.4.0.
   refresh: monthly
+  text_depth: full
+  crosswalk_family: nist-800-53-rev5
 - id: nist-800-53-rev5-high
   name: NIST SP 800-53 Rev 5 High Baseline
   version: 5.2.0
@@ -279,6 +316,8 @@ frameworks:
   path: us-federal/nist-800-53-rev5-high.json
   source_url: usnistgov/oscal-content@v1.4.0 — NIST_SP-800-53_rev5_HIGH-baseline_profile.json resolved against NIST_SP-800-53_rev5_catalog.json (CC0 / U.S. Government work)
   refresh: monthly
+  text_depth: full
+  crosswalk_family: nist-800-53-rev5
 - id: nist-800-53-rev5-low
   name: NIST SP 800-53 Rev 5 Low Baseline
   version: 5.2.0
@@ -287,6 +326,8 @@ frameworks:
   path: us-federal/nist-800-53-rev5-low.json
   source_url: usnistgov/oscal-content@v1.4.0 — NIST_SP-800-53_rev5_LOW-baseline_profile.json resolved against NIST_SP-800-53_rev5_catalog.json (CC0 / U.S. Government work)
   refresh: monthly
+  text_depth: full
+  crosswalk_family: nist-800-53-rev5
 - id: nist-800-53-rev5-moderate
   name: NIST SP 800-53 Rev 5 Moderate Baseline
   version: 5.2.0
@@ -295,6 +336,8 @@ frameworks:
   path: us-federal/nist-800-53-rev5-moderate.json
   source_url: usnistgov/oscal-content@v1.4.0 — NIST_SP-800-53_rev5_MODERATE-baseline_profile.json resolved against NIST_SP-800-53_rev5_catalog.json (CC0 / U.S. Government work)
   refresh: monthly
+  text_depth: full
+  crosswalk_family: nist-800-53-rev5
 - id: nist-800-53-rev5-privacy
   name: NIST SP 800-53 Rev 5 Privacy Baseline
   version: 5.2.0
@@ -303,6 +346,8 @@ frameworks:
   path: us-federal/nist-800-53-rev5-privacy.json
   source_url: usnistgov/oscal-content@v1.4.0 — NIST_SP-800-53_rev5_PRIVACY-baseline_profile.json resolved against NIST_SP-800-53_rev5_catalog.json (CC0 / U.S. Government work)
   refresh: monthly
+  text_depth: full
+  crosswalk_family: nist-800-53-rev5
 - id: nist-800-53-rev5
   name: nist-800-53-rev5
   version: unknown
@@ -310,6 +355,7 @@ frameworks:
   category: control
   path: us-federal/nist-800-53-rev5.json
   refresh: monthly
+  text_depth: full
 - id: nist-ai-rmf-1.0
   name: NIST AI Risk Management Framework 1.0
   version: 1.0 (Jan 2023)
@@ -318,6 +364,7 @@ frameworks:
   path: us-federal/nist-ai-rmf-1.0.json
   source_url: NIST (U.S. Government work, public domain) — https://www.nist.gov/itl/ai-risk-management-framework
   refresh: monthly
+  text_depth: headings
 - id: nist-csf-2.0
   name: NIST Cybersecurity Framework 2.0
   version: '2.0'
@@ -327,6 +374,7 @@ frameworks:
   source_url: NIST (https://www.nist.gov/cyberframework) — U.S. Government work, public domain
   license_url: https://www.nist.gov/cyberframework
   refresh: monthly
+  text_depth: full
 - id: nist-privacy-framework-1.0
   name: NIST Privacy Framework 1.0
   version: 1.0 (Jan 2020)
@@ -335,6 +383,7 @@ frameworks:
   path: us-federal/nist-privacy-framework-1.0.json
   source_url: NIST (U.S. Government work, public domain) — https://www.nist.gov/privacy-framework
   refresh: monthly
+  text_depth: headings
 - id: nist-ssdf-800-218
   name: NIST SP 800-218 Secure Software Development Framework (SSDF)
   version: 1.1 (Feb 2022)
@@ -343,6 +392,7 @@ frameworks:
   path: us-federal/nist-ssdf-800-218.json
   source_url: NIST (U.S. Government work, public domain) — https://csrc.nist.gov/publications/detail/sp/800-218/final
   refresh: monthly
+  text_depth: headings
 - id: ny-dfs-500
   name: NY DFS 23 NYCRR Part 500 — Cybersecurity Requirements
   version: Amendment 2 (Nov 2023)
@@ -351,6 +401,7 @@ frameworks:
   path: us-federal/ny-dfs-500.json
   source_url: NYS Department of Financial Services — 23 NYCRR 500 (state regulation)
   refresh: monthly
+  text_depth: headings
 - id: occ-sr-26-2
   name: OCC Bulletin 2026-13 / FRB SR 26-2 — Supervisory Guidance on Model Risk Management
   version: April 17, 2026 (supersedes OCC 2011-12 / SR 11-7)
@@ -359,6 +410,7 @@ frameworks:
   path: us-federal/occ-sr-26-2.json
   source_url: 'https://www.federalreserve.gov/supervisionreg/srletters/sr2602.htm (parallel: OCC Bulletin 2026-13)'
   refresh: monthly
+  text_depth: full
 - id: au-essential-8
   name: Australian Essential Eight
   version: Nov 2023
@@ -367,6 +419,7 @@ frameworks:
   path: international/au-essential-8.json
   source_url: Australian Cyber Security Centre (ACSC) — https://cyber.gov.au/essential-eight (Creative Commons BY 4.0)
   refresh: monthly
+  text_depth: headings
 - id: au-ism
   name: Australian Information Security Manual
   version: September 2024
@@ -375,6 +428,7 @@ frameworks:
   path: international/au-ism.json
   source_url: Australian Signals Directorate (ACSC) — https://cyber.gov.au/ism (Creative Commons BY 4.0)
   refresh: monthly
+  text_depth: headings
 - id: canada-itsg-33
   name: 'Canada ITSG-33 — IT Security Risk Management: A Lifecycle Approach'
   version: December 2014 (current)
@@ -383,6 +437,7 @@ frameworks:
   path: international/canada-itsg-33.json
   source_url: Canadian Centre for Cyber Security (CCCS) — ITSG-33 Annex 3A (public document)
   refresh: monthly
+  text_depth: headings
 - id: canada-pipeda
   name: Canada PIPEDA — Personal Information Protection and Electronic Documents Act
   version: S.C. 2000, c. 5 (current)
@@ -391,6 +446,7 @@ frameworks:
   path: international/canada-pipeda.json
   source_url: Government of Canada — https://laws-lois.justice.gc.ca/eng/acts/P-8.6/ (federal statute)
   refresh: monthly
+  text_depth: full
 - id: eu-ai-act
   name: EU AI Act (Regulation 2024/1689)
   version: Regulation (EU) 2024/1689
@@ -399,6 +455,7 @@ frameworks:
   path: international/eu-ai-act.json
   source_url: Official Journal of the European Union — EU AI Act (regulation text)
   refresh: monthly
+  text_depth: full
 - id: eu-dora
   name: EU Digital Operational Resilience Act (DORA)
   version: Regulation (EU) 2022/2554
@@ -407,6 +464,7 @@ frameworks:
   path: international/eu-dora.json
   source_url: Official Journal of the European Union — DORA (regulation text)
   refresh: monthly
+  text_depth: headings
 - id: eu-gdpr
   name: EU General Data Protection Regulation (GDPR)
   version: Regulation (EU) 2016/679
@@ -415,6 +473,7 @@ frameworks:
   path: international/eu-gdpr.json
   source_url: Official Journal of the European Union L 119, 4 May 2016
   refresh: monthly
+  text_depth: full
 - id: eu-nis2
   name: EU NIS2 Directive
   version: Directive (EU) 2022/2555
@@ -423,6 +482,7 @@ frameworks:
   path: international/eu-nis2.json
   source_url: Official Journal of the European Union — NIS2 Directive (regulation text)
   refresh: monthly
+  text_depth: headings
 - id: nz-nzism
   name: New Zealand Information Security Manual (NZISM)
   version: Version 3.7 (Dec 2024)
@@ -431,6 +491,7 @@ frameworks:
   path: international/nz-nzism.json
   source_url: Government Communications Security Bureau (GCSB) — https://nzism.gcsb.govt.nz (Creative Commons BY 4.0)
   refresh: monthly
+  text_depth: headings
 - id: osps-baseline-m1
   name: OpenSSF OSPS Baseline (Maturity Level 1)
   version: 2026.02.19+m1
@@ -441,6 +502,8 @@ frameworks:
   license: Apache License 2.0 (OpenSSF OSPS Baseline). Verbatim redistribution permitted; Tier-A in Evidentia.
   license_url: https://www.apache.org/licenses/LICENSE-2.0
   refresh: monthly
+  text_depth: full
+  crosswalk_family: osps-baseline
 - id: osps-baseline-m2
   name: OpenSSF OSPS Baseline (Maturity Level 2)
   version: 2026.02.19+m2
@@ -451,6 +514,8 @@ frameworks:
   license: Apache License 2.0 (OpenSSF OSPS Baseline). Verbatim redistribution permitted; Tier-A in Evidentia.
   license_url: https://www.apache.org/licenses/LICENSE-2.0
   refresh: monthly
+  text_depth: full
+  crosswalk_family: osps-baseline
 - id: osps-baseline-m3
   name: OpenSSF OSPS Baseline (Maturity Level 3)
   version: 2026.02.19+m3
@@ -461,6 +526,8 @@ frameworks:
   license: Apache License 2.0 (OpenSSF OSPS Baseline). Verbatim redistribution permitted; Tier-A in Evidentia.
   license_url: https://www.apache.org/licenses/LICENSE-2.0
   refresh: monthly
+  text_depth: full
+  crosswalk_family: osps-baseline
 - id: uk-cyber-essentials
   name: UK Cyber Essentials
   version: Montpellier (Apr 2025)
@@ -469,6 +536,7 @@ frameworks:
   path: international/uk-cyber-essentials.json
   source_url: IASME / UK NCSC — Cyber Essentials scheme (Open Government Licence v3.0)
   refresh: monthly
+  text_depth: headings
 - id: uk-dpa-2018
   name: UK Data Protection Act 2018
   version: c. 12 (2018) as amended
@@ -477,6 +545,7 @@ frameworks:
   path: international/uk-dpa-2018.json
   source_url: UK Parliament — https://www.legislation.gov.uk/ukpga/2018/12 (Open Government Licence v3.0)
   refresh: monthly
+  text_depth: full
 - id: uk-ncsc-caf-3.2
   name: UK NCSC Cyber Assessment Framework (CAF) v3.2
   version: 3.2 (2024)
@@ -485,6 +554,7 @@ frameworks:
   path: international/uk-ncsc-caf-3.2.json
   source_url: UK National Cyber Security Centre — https://www.ncsc.gov.uk/collection/cyber-assessment-framework (Open Government Licence v3.0)
   refresh: monthly
+  text_depth: headings
 - id: us-ca-ccpa-cpra
   name: California Consumer Privacy Act / California Privacy Rights Act (CCPA/CPRA)
   version: Cal. Civ. Code § 1798.100 et seq. (CCPA 2020; CPRA amendments 2023)
@@ -493,6 +563,7 @@ frameworks:
   path: state-privacy/us-ca-ccpa-cpra.json
   source_url: California Office of the Attorney General / California Privacy Protection Agency (US state statute, not copyrightable under government edicts doctrine)
   refresh: monthly
+  text_depth: headings
 - id: us-co-cpa
   name: Colorado Privacy Act (CPA)
   version: Colo. Rev. Stat. § 6-1-1301 et seq.
@@ -501,6 +572,7 @@ frameworks:
   path: state-privacy/us-co-cpa.json
   source_url: Colorado General Assembly (US state statute, not copyrightable under government edicts doctrine)
   refresh: monthly
+  text_depth: headings
 - id: us-ct-ctdpa
   name: Connecticut Data Privacy Act (CTDPA)
   version: Conn. Gen. Stat. § 42-515 et seq.
@@ -509,6 +581,7 @@ frameworks:
   path: state-privacy/us-ct-ctdpa.json
   source_url: Connecticut General Assembly (US state statute, not copyrightable under government edicts doctrine)
   refresh: monthly
+  text_depth: headings
 - id: us-de-dpdpa
   name: Delaware Personal Data Privacy Act (DPDPA)
   version: Del. Code tit. 6 § 12D-101 et seq.
@@ -517,6 +590,7 @@ frameworks:
   path: state-privacy/us-de-dpdpa.json
   source_url: Delaware General Assembly (US state statute, not copyrightable under government edicts doctrine)
   refresh: monthly
+  text_depth: headings
 - id: us-fl-fdbr
   name: Florida Digital Bill of Rights (FDBR)
   version: Fla. Stat. § 501.702 et seq.
@@ -525,6 +599,7 @@ frameworks:
   path: state-privacy/us-fl-fdbr.json
   source_url: Florida Legislature (US state statute, not copyrightable under government edicts doctrine)
   refresh: monthly
+  text_depth: headings
 - id: us-ia-icdpa
   name: Iowa Consumer Data Protection Act (ICDPA)
   version: Iowa Code § 715D et seq.
@@ -533,6 +608,7 @@ frameworks:
   path: state-privacy/us-ia-icdpa.json
   source_url: Iowa Legislature (US state statute, not copyrightable under government edicts doctrine)
   refresh: monthly
+  text_depth: headings
 - id: us-md-mdpa
   name: Maryland Online Data Privacy Act (MODPA)
   version: Md. Code § 14-4601 et seq.
@@ -541,6 +617,7 @@ frameworks:
   path: state-privacy/us-md-mdpa.json
   source_url: Maryland General Assembly (US state statute, not copyrightable under government edicts doctrine)
   refresh: monthly
+  text_depth: headings
 - id: us-mn-mncdpa
   name: Minnesota Consumer Data Privacy Act (MCDPA)
   version: Minn. Stat. § 325O
@@ -549,6 +626,7 @@ frameworks:
   path: state-privacy/us-mn-mncdpa.json
   source_url: Minnesota Legislature (US state statute, not copyrightable under government edicts doctrine)
   refresh: monthly
+  text_depth: headings
 - id: us-mt-mcdpa
   name: Montana Consumer Data Privacy Act (MCDPA)
   version: Mont. Code § 30-14-2801 et seq.
@@ -557,6 +635,7 @@ frameworks:
   path: state-privacy/us-mt-mcdpa.json
   source_url: Montana Legislature (US state statute, not copyrightable under government edicts doctrine)
   refresh: monthly
+  text_depth: headings
 - id: us-nh-nhpa
   name: New Hampshire Privacy Act (NHPA)
   version: NH Rev. Stat. § 507-H et seq.
@@ -565,6 +644,7 @@ frameworks:
   path: state-privacy/us-nh-nhpa.json
   source_url: New Hampshire General Court (US state statute, not copyrightable under government edicts doctrine)
   refresh: monthly
+  text_depth: headings
 - id: us-or-ocpa
   name: Oregon Consumer Privacy Act (OCPA)
   version: Or. Rev. Stat. § 646A.570 et seq.
@@ -573,6 +653,7 @@ frameworks:
   path: state-privacy/us-or-ocpa.json
   source_url: Oregon Legislature (US state statute, not copyrightable under government edicts doctrine)
   refresh: monthly
+  text_depth: headings
 - id: us-tn-tipa
   name: Tennessee Information Protection Act (TIPA)
   version: Tenn. Code § 47-18-3201 et seq.
@@ -581,6 +662,7 @@ frameworks:
   path: state-privacy/us-tn-tipa.json
   source_url: Tennessee General Assembly (US state statute, not copyrightable under government edicts doctrine)
   refresh: monthly
+  text_depth: headings
 - id: us-tx-tdpsa
   name: Texas Data Privacy and Security Act (TDPSA)
   version: Tex. Bus. & Com. Code § 541 et seq.
@@ -589,6 +671,7 @@ frameworks:
   path: state-privacy/us-tx-tdpsa.json
   source_url: Texas Legislature (US state statute, not copyrightable under government edicts doctrine)
   refresh: monthly
+  text_depth: headings
 - id: us-ut-ucpa
   name: Utah Consumer Privacy Act (UCPA)
   version: Utah Code § 13-61 et seq.
@@ -597,6 +680,7 @@ frameworks:
   path: state-privacy/us-ut-ucpa.json
   source_url: Utah Legislature (US state statute, not copyrightable under government edicts doctrine)
   refresh: monthly
+  text_depth: headings
 - id: us-va-vcdpa
   name: Virginia Consumer Data Protection Act (VCDPA)
   version: Va. Code § 59.1-575 et seq.
@@ -605,6 +689,7 @@ frameworks:
   path: state-privacy/us-va-vcdpa.json
   source_url: Virginia General Assembly (US state statute, not copyrightable under government edicts doctrine)
   refresh: monthly
+  text_depth: headings
 - id: cisa-kev
   name: CISA Known Exploited Vulnerabilities (sample)
   version: Continuously updated (sample as of early 2026)
@@ -614,6 +699,7 @@ frameworks:
   source_url: CISA — https://www.cisa.gov/known-exploited-vulnerabilities-catalog (U.S. Government work)
   license: U.S. Government work, public domain. Sample bundled in Evidentia; refresh CI pulls the full KEV daily.
   refresh: daily
+  text_depth: full
 - id: mitre-attack-enterprise
   name: MITRE ATT&CK Enterprise
   version: v15.1 (2024)
@@ -623,6 +709,7 @@ frameworks:
   source_url: MITRE Corporation — https://attack.mitre.org (free to use with attribution)
   license: © MITRE Corporation. ATT&CK is freely available under MITRE's terms of use.
   refresh: weekly
+  text_depth: full
 - id: mitre-capec
   name: MITRE Common Attack Pattern Enumeration and Classification (CAPEC) — Sample
   version: v3.9 (2024)
@@ -632,6 +719,7 @@ frameworks:
   source_url: MITRE Corporation — https://capec.mitre.org (free to use)
   license: © MITRE Corporation. CAPEC is freely available.
   refresh: weekly
+  text_depth: full
 - id: mitre-cwe
   name: MITRE Common Weakness Enumeration (CWE) — 2024 Top 25 Sample
   version: 4.14 (2024)
@@ -641,6 +729,7 @@ frameworks:
   source_url: MITRE Corporation — https://cwe.mitre.org (free to use)
   license: © MITRE Corporation. CWE is freely available.
   refresh: weekly
+  text_depth: full
 - id: aami-sw96
   name: ANSI/AAMI SW96 — Security risk management for medical device manufacturers
   version: ANSI/AAMI SW96:2023
@@ -655,6 +744,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: cis-benchmark-aws
   name: CIS Amazon Web Services Foundations Benchmark
   version: Current
@@ -667,6 +757,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: cis-benchmark-azure
   name: CIS Microsoft Azure Foundations Benchmark
   version: Current
@@ -679,6 +770,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: cis-benchmark-gcp
   name: CIS Google Cloud Platform Foundations Benchmark
   version: Current
@@ -691,6 +783,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: cis-benchmark-kubernetes
   name: CIS Kubernetes Benchmark
   version: Current
@@ -703,6 +796,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: cis-benchmark-rhel9
   name: CIS Red Hat Enterprise Linux 9 Benchmark
   version: Current
@@ -715,6 +809,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: cis-controls-v8.1
   name: CIS Critical Security Controls v8.1
   version: v8.1 (2024)
@@ -728,6 +823,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: cobit-2019
   name: COBIT 2019
   version: 2019 (with 2022 focus area guides)
@@ -740,6 +836,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: hitrust-csf-v11
   name: HITRUST CSF v11
   version: v11
@@ -752,6 +849,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: iec-62443
   name: IEC 62443 — Industrial Automation and Control Systems Security
   version: Multiple parts (2018-2023)
@@ -764,6 +862,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: iso-14971
   name: ISO 14971 — Application of risk management to medical devices
   version: ISO 14971:2019
@@ -777,6 +876,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: iso-22301-2019
   name: ISO 22301:2019 — Business Continuity Management System
   version: '2019'
@@ -789,6 +889,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: iso-27001-2022
   name: ISO/IEC 27001:2022 (Annex A controls)
   version: '2022'
@@ -802,6 +903,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: iso-27002-2022
   name: ISO/IEC 27002:2022 — Code of Practice for Information Security Controls
   version: '2022'
@@ -814,6 +916,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: iso-27017-2015
   name: ISO/IEC 27017:2015 — Cloud services
   version: '2015'
@@ -826,6 +929,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: iso-27018-2019
   name: ISO/IEC 27018:2019 — Protection of PII in Public Clouds
   version: '2019'
@@ -838,6 +942,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: iso-27701-2019
   name: ISO/IEC 27701:2019 — Privacy Information Management
   version: '2019'
@@ -850,6 +955,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: iso-42001-2023
   name: ISO/IEC 42001:2023 — AI Management System
   version: '2023'
@@ -862,6 +968,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: pci-dss-4.0.1
   name: PCI DSS v4.0.1
   version: 4.0.1 (June 2024)
@@ -874,6 +981,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: scf-2024
   name: Secure Controls Framework (SCF) 2024
   version: '2024'
@@ -886,6 +994,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: soc2-tsc
   name: SOC 2 Trust Services Criteria (stub)
   version: 2017 (with 2022 Points of Focus revisions)
@@ -899,6 +1008,7 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings
 - id: swift-cscf-2024
   name: SWIFT Customer Security Controls Framework (CSCF) v2024
   version: v2024
@@ -911,3 +1021,4 @@ frameworks:
   license_required: true
   placeholder: true
   refresh: manual
+  text_depth: headings

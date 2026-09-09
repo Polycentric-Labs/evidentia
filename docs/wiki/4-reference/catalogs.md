@@ -3,136 +3,146 @@
 
 > **Auto-generated page.** This page is generated from the live Evidentia codebase by [`scripts/wiki/sync_reference.py`](https://github.com/Polycentric-Labs/evidentia/blob/main/scripts/wiki/sync_reference.py). Do not edit it by hand; change the underlying code/data and re-run the generator (`uv run python scripts/wiki/sync_reference.py`).
 
-Evidentia ships **97** framework catalogs in-tree. Tier-A/B catalogs carry authoritative control text; tier-C catalogs are placeholders (control text is copyrighted — only IDs + neutral titles ship, with a `license_url` to obtain the full text); tier-D catalogs are paraphrased obligation/regulation references. Use `evidentia catalog list` to enumerate them at runtime.
+Evidentia ships **97** framework catalogs in-tree. The **Tier** is the redistribution posture: what you may redistribute, and whether the control text is licensed. The **Text** column is the derived text depth: `full` means every non-withdrawn control carries statement text distinct from its title, `partial` means some do, and `headings` means none do, so the catalog carries control numbering and titles only. Use `evidentia catalog list` to enumerate them at runtime.
 
 ## Tiers
 
 | Tier | Meaning |
 | --- | --- |
-| A | A — authoritative public-domain / open text |
-| B | B — authoritative, free with attribution |
-| C | C — placeholder (control text copyrighted) |
-| D | D — obligation/regulation (paraphrased) |
+| A | Public-domain or open-licensed, redistributable verbatim |
+| B | Free to use with attribution |
+| C | Copyrighted, only public numbering and neutral titles ship (placeholder) |
+| D | Government regulation or statute, restated as obligations |
+
+## Text depth
+
+Catalogs grouped by their derived text depth:
+
+| Text depth | Catalogs |
+| --- | --- |
+| full | 32 |
+| partial | 0 |
+| headings | 65 |
 
 ## US Federal (41)
 
-| ID | Name | Version | Tier | Category |
-| --- | --- | --- | --- | --- |
-| `cisa-cpgs` | CISA Cross-Sector Cybersecurity Performance Goals | 1.0.1 (Mar 2023) | A | control |
-| `cjis-v6` | FBI CJIS Security Policy v6.0 | 6.0 (Dec 2024) | A | control |
-| `cmmc-2-l1` | CMMC 2.0 Level 1 (Foundational) | 2.0 (2024 Final Rule) | A | control |
-| `cmmc-2-l2` | CMMC 2.0 Level 2 (Advanced) | 2.0 (2024 Final Rule) | A | control |
-| `cmmc-2-l3` | CMMC 2.0 Level 3 (Expert) | 2.0 (2024 Final Rule) | A | control |
-| `cms-ars-5.1` | CMS Acceptable Risk Safeguards (ARS) 5.1 | 5.1 (2022) | A | control |
-| `fda-21-cfr-pt11` | FDA 21 CFR Part 11 — Electronic Records; Electronic Signatures | 1997 (with guidance updates) | A | control |
-| `fda-524b-appendix1` | FDA Section 524B Premarket Cybersecurity — Security Control Categories | 2026-02-03 (final guidance) | A | control |
-| `fedramp-frr-2026` | FedRAMP Requirements — provider-facing rules (Consolidated Rules for 2026) | 2026.07.14.01 (CR26) | A | control |
-| `fedramp-ksi-2026` | FedRAMP Key Security Indicators (Consolidated Rules for 2026) | 2026.07.14.01 (CR26) | A | control |
-| `fedramp-rev5-high` | FedRAMP Rev 5 High Baseline | Rev 5 (profiles published 2024-09-24) | A | control |
-| `fedramp-rev5-li-saas` | FedRAMP Rev 5 LI-SAAS Baseline | Rev 5 (profiles published 2024-09-24) | A | control |
-| `fedramp-rev5-low` | FedRAMP Rev 5 Low Baseline | Rev 5 (profiles published 2024-09-24) | A | control |
-| `fedramp-rev5-moderate` | FedRAMP Rev 5 Moderate Baseline | Rev 5 (profiles published 2024-09-24) | A | control |
-| `ffiec-audit` | FFIEC IT Examination Handbook — Audit booklet | April 2012 | A | control |
-| `ffiec-cat` | FFIEC Cybersecurity Assessment Tool | 2017 (representative subset) | A | control |
-| `ffiec-information-security` | FFIEC IT Examination Handbook — Information Security booklet | September 2016 | A | control |
-| `ffiec-management` | FFIEC IT Examination Handbook — Management booklet | November 2015 | A | control |
-| `ffiec-operations` | FFIEC IT Examination Handbook — Operations booklet | July 2004 | A | control |
-| `ffiec-outsourcing` | FFIEC IT Examination Handbook — Outsourcing Technology Services booklet | June 2004 + 2008/2010 supplements | A | control |
-| `glba-safeguards` | GLBA Safeguards Rule (16 CFR § 314) | 2023 (Notification Amendment) | A | control |
-| `hipaa-breach` | HIPAA Breach Notification Rule (45 CFR § 164 Subpart D) | 2013 | A | control |
-| `hipaa-privacy` | HIPAA Privacy Rule (45 CFR § 164 Subpart E) | 2013 (Omnibus Rule) | A | control |
-| `hipaa-security` | HIPAA Security Rule (45 CFR § 164 Subpart C) | 2013 (Omnibus Rule) | A | control |
-| `irs-1075` | IRS Publication 1075 — Tax Information Security Guidelines | November 2021 | A | control |
-| `nerc-cip-v7` | NERC CIP — Critical Infrastructure Protection Reliability Standards | v7 (2020-2024 effective dates) | A | control |
-| `nist-800-171-r2` | NIST SP 800-171 Rev 2 — Protecting CUI in Nonfederal Systems | Rev 2 (2020) | A | control |
-| `nist-800-171-r3` | NIST SP 800-171 Rev 3 — Protecting CUI in Nonfederal Systems | Rev 3 (May 2024) | A | control |
-| `nist-800-172` | NIST SP 800-172 — Enhanced Security Requirements for Protecting CUI | 1.0 (Feb 2021) | A | control |
-| `nist-800-53-mod` | NIST SP 800-53 Moderate Baseline (legacy 16-control sample — prefer nist-800-53-rev5-moderate) | Rev 5 | A | control |
-| `nist-800-53-rev5` | nist-800-53-rev5 | unknown | A | control |
-| `nist-800-53-rev5-high` | NIST SP 800-53 Rev 5 High Baseline | 5.2.0 | A | control |
-| `nist-800-53-rev5-low` | NIST SP 800-53 Rev 5 Low Baseline | 5.2.0 | A | control |
-| `nist-800-53-rev5-moderate` | NIST SP 800-53 Rev 5 Moderate Baseline | 5.2.0 | A | control |
-| `nist-800-53-rev5-privacy` | NIST SP 800-53 Rev 5 Privacy Baseline | 5.2.0 | A | control |
-| `nist-ai-rmf-1.0` | NIST AI Risk Management Framework 1.0 | 1.0 (Jan 2023) | A | control |
-| `nist-csf-2.0` | NIST Cybersecurity Framework 2.0 | 2.0 | A | control |
-| `nist-privacy-framework-1.0` | NIST Privacy Framework 1.0 | 1.0 (Jan 2020) | A | control |
-| `nist-ssdf-800-218` | NIST SP 800-218 Secure Software Development Framework (SSDF) | 1.1 (Feb 2022) | A | control |
-| `ny-dfs-500` | NY DFS 23 NYCRR Part 500 — Cybersecurity Requirements | Amendment 2 (Nov 2023) | A | control |
-| `occ-sr-26-2` | OCC Bulletin 2026-13 / FRB SR 26-2 — Supervisory Guidance on Model Risk Management | April 17, 2026 (supersedes OCC 2011-12 / SR 11-7) | A | control |
+| ID | Name | Version | Tier | Text | Category |
+| --- | --- | --- | --- | --- | --- |
+| `cisa-cpgs` | CISA Cross-Sector Cybersecurity Performance Goals | 1.0.1 (Mar 2023) | A | headings | control |
+| `cjis-v6` | FBI CJIS Security Policy v6.0 | 6.0 (Dec 2024) | A | headings | control |
+| `cmmc-2-l1` | CMMC 2.0 Level 1 (Foundational) | 2.0 (2024 Final Rule) | A | headings | control |
+| `cmmc-2-l2` | CMMC 2.0 Level 2 (Advanced) | 2.0 (2024 Final Rule) | A | headings | control |
+| `cmmc-2-l3` | CMMC 2.0 Level 3 (Expert) | 2.0 (2024 Final Rule) | A | headings | control |
+| `cms-ars-5.1` | CMS Acceptable Risk Safeguards (ARS) 5.1 | 5.1 (2022) | A | headings | control |
+| `fda-21-cfr-pt11` | FDA 21 CFR Part 11: Electronic Records; Electronic Signatures | 1997 (with guidance updates) | A | headings | control |
+| `fda-524b-appendix1` | FDA Section 524B Premarket Cybersecurity: Security Control Categories | 2026-02-03 (final guidance) | A | full | control |
+| `fedramp-frr-2026` | FedRAMP Requirements: provider-facing rules (Consolidated Rules for 2026) | 2026.07.14.01 (CR26) | A | full | control |
+| `fedramp-ksi-2026` | FedRAMP Key Security Indicators (Consolidated Rules for 2026) | 2026.07.14.01 (CR26) | A | full | control |
+| `fedramp-rev5-high` | FedRAMP Rev 5 High Baseline | Rev 5 (profiles published 2024-09-24) | A | full | control |
+| `fedramp-rev5-li-saas` | FedRAMP Rev 5 LI-SAAS Baseline | Rev 5 (profiles published 2024-09-24) | A | full | control |
+| `fedramp-rev5-low` | FedRAMP Rev 5 Low Baseline | Rev 5 (profiles published 2024-09-24) | A | full | control |
+| `fedramp-rev5-moderate` | FedRAMP Rev 5 Moderate Baseline | Rev 5 (profiles published 2024-09-24) | A | full | control |
+| `ffiec-audit` | FFIEC IT Examination Handbook: Audit booklet | April 2012 | A | full | control |
+| `ffiec-cat` | FFIEC Cybersecurity Assessment Tool | 2017 (representative subset) | A | full | control |
+| `ffiec-information-security` | FFIEC IT Examination Handbook: Information Security booklet | September 2016 | A | full | control |
+| `ffiec-management` | FFIEC IT Examination Handbook: Management booklet | November 2015 | A | full | control |
+| `ffiec-operations` | FFIEC IT Examination Handbook: Operations booklet | July 2004 | A | full | control |
+| `ffiec-outsourcing` | FFIEC IT Examination Handbook: Outsourcing Technology Services booklet | June 2004 + 2008/2010 supplements | A | full | control |
+| `glba-safeguards` | GLBA Safeguards Rule (16 CFR § 314) | 2023 (Notification Amendment) | A | headings | control |
+| `hipaa-breach` | HIPAA Breach Notification Rule (45 CFR § 164 Subpart D) | 2013 | A | headings | control |
+| `hipaa-privacy` | HIPAA Privacy Rule (45 CFR § 164 Subpart E) | 2013 (Omnibus Rule) | A | headings | control |
+| `hipaa-security` | HIPAA Security Rule (45 CFR § 164 Subpart C) | 2013 (Omnibus Rule) | A | headings | control |
+| `irs-1075` | IRS Publication 1075: Tax Information Security Guidelines | November 2021 | A | headings | control |
+| `nerc-cip-v7` | NERC CIP: Critical Infrastructure Protection Reliability Standards | v7 (2020-2024 effective dates) | A | headings | control |
+| `nist-800-171-r2` | NIST SP 800-171 Rev 2: Protecting CUI in Nonfederal Systems | Rev 2 (2020) | A | headings | control |
+| `nist-800-171-r3` | NIST SP 800-171 Rev 3: Protecting CUI in Nonfederal Systems | Rev 3 (May 2024) | A | headings | control |
+| `nist-800-172` | NIST SP 800-172: Enhanced Security Requirements for Protecting CUI | 1.0 (Feb 2021) | A | headings | control |
+| `nist-800-53-mod` | NIST SP 800-53 Moderate Baseline (legacy 16-control sample: prefer nist-800-53-rev5-moderate) | Rev 5 | A | full | control |
+| `nist-800-53-rev5` | nist-800-53-rev5 | unknown | A | full | control |
+| `nist-800-53-rev5-high` | NIST SP 800-53 Rev 5 High Baseline | 5.2.0 | A | full | control |
+| `nist-800-53-rev5-low` | NIST SP 800-53 Rev 5 Low Baseline | 5.2.0 | A | full | control |
+| `nist-800-53-rev5-moderate` | NIST SP 800-53 Rev 5 Moderate Baseline | 5.2.0 | A | full | control |
+| `nist-800-53-rev5-privacy` | NIST SP 800-53 Rev 5 Privacy Baseline | 5.2.0 | A | full | control |
+| `nist-ai-rmf-1.0` | NIST AI Risk Management Framework 1.0 | 1.0 (Jan 2023) | A | headings | control |
+| `nist-csf-2.0` | NIST Cybersecurity Framework 2.0 | 2.0 | A | full | control |
+| `nist-privacy-framework-1.0` | NIST Privacy Framework 1.0 | 1.0 (Jan 2020) | A | headings | control |
+| `nist-ssdf-800-218` | NIST SP 800-218 Secure Software Development Framework (SSDF) | 1.1 (Feb 2022) | A | headings | control |
+| `ny-dfs-500` | NY DFS 23 NYCRR Part 500: Cybersecurity Requirements | Amendment 2 (Nov 2023) | A | headings | control |
+| `occ-sr-26-2` | OCC Bulletin 2026-13 / FRB SR 26-2: Supervisory Guidance on Model Risk Management | April 17, 2026 (supersedes OCC 2011-12 / SR 11-7) | A | full | control |
 
 ## International (15)
 
-| ID | Name | Version | Tier | Category |
-| --- | --- | --- | --- | --- |
-| `au-essential-8` | Australian Essential Eight | Nov 2023 | A | control |
-| `au-ism` | Australian Information Security Manual | September 2024 | A | control |
-| `canada-itsg-33` | Canada ITSG-33 — IT Security Risk Management: A Lifecycle Approach | December 2014 (current) | A | control |
-| `canada-pipeda` | Canada PIPEDA — Personal Information Protection and Electronic Documents Act | S.C. 2000, c. 5 (current) | D | obligation |
-| `eu-ai-act` | EU AI Act (Regulation 2024/1689) | Regulation (EU) 2024/1689 | A | control |
-| `eu-dora` | EU Digital Operational Resilience Act (DORA) | Regulation (EU) 2022/2554 | D | control |
-| `eu-gdpr` | EU General Data Protection Regulation (GDPR) | Regulation (EU) 2016/679 | D | obligation |
-| `eu-nis2` | EU NIS2 Directive | Directive (EU) 2022/2555 | D | control |
-| `nz-nzism` | New Zealand Information Security Manual (NZISM) | Version 3.7 (Dec 2024) | A | control |
-| `osps-baseline-m1` | OpenSSF OSPS Baseline (Maturity Level 1) | 2026.02.19+m1 | A | control |
-| `osps-baseline-m2` | OpenSSF OSPS Baseline (Maturity Level 2) | 2026.02.19+m2 | A | control |
-| `osps-baseline-m3` | OpenSSF OSPS Baseline (Maturity Level 3) | 2026.02.19+m3 | A | control |
-| `uk-cyber-essentials` | UK Cyber Essentials | Montpellier (Apr 2025) | A | control |
-| `uk-dpa-2018` | UK Data Protection Act 2018 | c. 12 (2018) as amended | D | obligation |
-| `uk-ncsc-caf-3.2` | UK NCSC Cyber Assessment Framework (CAF) v3.2 | 3.2 (2024) | A | control |
+| ID | Name | Version | Tier | Text | Category |
+| --- | --- | --- | --- | --- | --- |
+| `au-essential-8` | Australian Essential Eight | Nov 2023 | A | headings | control |
+| `au-ism` | Australian Information Security Manual | September 2024 | A | headings | control |
+| `canada-itsg-33` | Canada ITSG-33: IT Security Risk Management: A Lifecycle Approach | December 2014 (current) | A | headings | control |
+| `canada-pipeda` | Canada PIPEDA: Personal Information Protection and Electronic Documents Act | S.C. 2000, c. 5 (current) | D | full | obligation |
+| `eu-ai-act` | EU AI Act (Regulation 2024/1689) | Regulation (EU) 2024/1689 | A | full | control |
+| `eu-dora` | EU Digital Operational Resilience Act (DORA) | Regulation (EU) 2022/2554 | D | headings | control |
+| `eu-gdpr` | EU General Data Protection Regulation (GDPR) | Regulation (EU) 2016/679 | D | full | obligation |
+| `eu-nis2` | EU NIS2 Directive | Directive (EU) 2022/2555 | D | headings | control |
+| `nz-nzism` | New Zealand Information Security Manual (NZISM) | Version 3.7 (Dec 2024) | A | headings | control |
+| `osps-baseline-m1` | OpenSSF OSPS Baseline (Maturity Level 1) | 2026.02.19+m1 | A | full | control |
+| `osps-baseline-m2` | OpenSSF OSPS Baseline (Maturity Level 2) | 2026.02.19+m2 | A | full | control |
+| `osps-baseline-m3` | OpenSSF OSPS Baseline (Maturity Level 3) | 2026.02.19+m3 | A | full | control |
+| `uk-cyber-essentials` | UK Cyber Essentials | Montpellier (Apr 2025) | A | headings | control |
+| `uk-dpa-2018` | UK Data Protection Act 2018 | c. 12 (2018) as amended | D | full | obligation |
+| `uk-ncsc-caf-3.2` | UK NCSC Cyber Assessment Framework (CAF) v3.2 | 3.2 (2024) | A | headings | control |
 
 ## US State Privacy (15)
 
-| ID | Name | Version | Tier | Category |
-| --- | --- | --- | --- | --- |
-| `us-ca-ccpa-cpra` | California Consumer Privacy Act / California Privacy Rights Act (CCPA/CPRA) | Cal. Civ. Code § 1798.100 et seq. (CCPA 2020; CPRA amendments 2023) | D | obligation |
-| `us-co-cpa` | Colorado Privacy Act (CPA) | Colo. Rev. Stat. § 6-1-1301 et seq. | D | obligation |
-| `us-ct-ctdpa` | Connecticut Data Privacy Act (CTDPA) | Conn. Gen. Stat. § 42-515 et seq. | D | obligation |
-| `us-de-dpdpa` | Delaware Personal Data Privacy Act (DPDPA) | Del. Code tit. 6 § 12D-101 et seq. | D | obligation |
-| `us-fl-fdbr` | Florida Digital Bill of Rights (FDBR) | Fla. Stat. § 501.702 et seq. | D | obligation |
-| `us-ia-icdpa` | Iowa Consumer Data Protection Act (ICDPA) | Iowa Code § 715D et seq. | D | obligation |
-| `us-md-mdpa` | Maryland Online Data Privacy Act (MODPA) | Md. Code § 14-4601 et seq. | D | obligation |
-| `us-mn-mncdpa` | Minnesota Consumer Data Privacy Act (MCDPA) | Minn. Stat. § 325O | D | obligation |
-| `us-mt-mcdpa` | Montana Consumer Data Privacy Act (MCDPA) | Mont. Code § 30-14-2801 et seq. | D | obligation |
-| `us-nh-nhpa` | New Hampshire Privacy Act (NHPA) | NH Rev. Stat. § 507-H et seq. | D | obligation |
-| `us-or-ocpa` | Oregon Consumer Privacy Act (OCPA) | Or. Rev. Stat. § 646A.570 et seq. | D | obligation |
-| `us-tn-tipa` | Tennessee Information Protection Act (TIPA) | Tenn. Code § 47-18-3201 et seq. | D | obligation |
-| `us-tx-tdpsa` | Texas Data Privacy and Security Act (TDPSA) | Tex. Bus. & Com. Code § 541 et seq. | D | obligation |
-| `us-ut-ucpa` | Utah Consumer Privacy Act (UCPA) | Utah Code § 13-61 et seq. | D | obligation |
-| `us-va-vcdpa` | Virginia Consumer Data Protection Act (VCDPA) | Va. Code § 59.1-575 et seq. | D | obligation |
+| ID | Name | Version | Tier | Text | Category |
+| --- | --- | --- | --- | --- | --- |
+| `us-ca-ccpa-cpra` | California Consumer Privacy Act / California Privacy Rights Act (CCPA/CPRA) | Cal. Civ. Code § 1798.100 et seq. (CCPA 2020; CPRA amendments 2023) | D | headings | obligation |
+| `us-co-cpa` | Colorado Privacy Act (CPA) | Colo. Rev. Stat. § 6-1-1301 et seq. | D | headings | obligation |
+| `us-ct-ctdpa` | Connecticut Data Privacy Act (CTDPA) | Conn. Gen. Stat. § 42-515 et seq. | D | headings | obligation |
+| `us-de-dpdpa` | Delaware Personal Data Privacy Act (DPDPA) | Del. Code tit. 6 § 12D-101 et seq. | D | headings | obligation |
+| `us-fl-fdbr` | Florida Digital Bill of Rights (FDBR) | Fla. Stat. § 501.702 et seq. | D | headings | obligation |
+| `us-ia-icdpa` | Iowa Consumer Data Protection Act (ICDPA) | Iowa Code § 715D et seq. | D | headings | obligation |
+| `us-md-mdpa` | Maryland Online Data Privacy Act (MODPA) | Md. Code § 14-4601 et seq. | D | headings | obligation |
+| `us-mn-mncdpa` | Minnesota Consumer Data Privacy Act (MCDPA) | Minn. Stat. § 325O | D | headings | obligation |
+| `us-mt-mcdpa` | Montana Consumer Data Privacy Act (MCDPA) | Mont. Code § 30-14-2801 et seq. | D | headings | obligation |
+| `us-nh-nhpa` | New Hampshire Privacy Act (NHPA) | NH Rev. Stat. § 507-H et seq. | D | headings | obligation |
+| `us-or-ocpa` | Oregon Consumer Privacy Act (OCPA) | Or. Rev. Stat. § 646A.570 et seq. | D | headings | obligation |
+| `us-tn-tipa` | Tennessee Information Protection Act (TIPA) | Tenn. Code § 47-18-3201 et seq. | D | headings | obligation |
+| `us-tx-tdpsa` | Texas Data Privacy and Security Act (TDPSA) | Tex. Bus. & Com. Code § 541 et seq. | D | headings | obligation |
+| `us-ut-ucpa` | Utah Consumer Privacy Act (UCPA) | Utah Code § 13-61 et seq. | D | headings | obligation |
+| `us-va-vcdpa` | Virginia Consumer Data Protection Act (VCDPA) | Va. Code § 59.1-575 et seq. | D | headings | obligation |
 
 ## Threat Intelligence (4)
 
-| ID | Name | Version | Tier | Category |
-| --- | --- | --- | --- | --- |
-| `cisa-kev` | CISA Known Exploited Vulnerabilities (sample) | Continuously updated (sample as of early 2026) | B | vulnerability |
-| `mitre-attack-enterprise` | MITRE ATT&CK Enterprise | v15.1 (2024) | B | technique |
-| `mitre-capec` | MITRE Common Attack Pattern Enumeration and Classification (CAPEC) — Sample | v3.9 (2024) | B | technique |
-| `mitre-cwe` | MITRE Common Weakness Enumeration (CWE) — 2024 Top 25 Sample | 4.14 (2024) | B | technique |
+| ID | Name | Version | Tier | Text | Category |
+| --- | --- | --- | --- | --- | --- |
+| `cisa-kev` | CISA Known Exploited Vulnerabilities (sample) | Continuously updated (sample as of early 2026) | B | full | vulnerability |
+| `mitre-attack-enterprise` | MITRE ATT&CK Enterprise | v15.1 (2024) | B | full | technique |
+| `mitre-capec` | MITRE Common Attack Pattern Enumeration and Classification (CAPEC): Sample | v3.9 (2024) | B | full | technique |
+| `mitre-cwe` | MITRE Common Weakness Enumeration (CWE): 2024 Top 25 Sample | 4.14 (2024) | B | full | technique |
 
 ## License-required (stub) (22)
 
-| ID | Name | Version | Tier | Category |
-| --- | --- | --- | --- | --- |
-| `aami-sw96` | ANSI/AAMI SW96 — Security risk management for medical device manufacturers | ANSI/AAMI SW96:2023 | C | control |
-| `cis-benchmark-aws` | CIS Amazon Web Services Foundations Benchmark | Current | C | control |
-| `cis-benchmark-azure` | CIS Microsoft Azure Foundations Benchmark | Current | C | control |
-| `cis-benchmark-gcp` | CIS Google Cloud Platform Foundations Benchmark | Current | C | control |
-| `cis-benchmark-kubernetes` | CIS Kubernetes Benchmark | Current | C | control |
-| `cis-benchmark-rhel9` | CIS Red Hat Enterprise Linux 9 Benchmark | Current | C | control |
-| `cis-controls-v8.1` | CIS Critical Security Controls v8.1 | v8.1 (2024) | C | control |
-| `cobit-2019` | COBIT 2019 | 2019 (with 2022 focus area guides) | C | control |
-| `hitrust-csf-v11` | HITRUST CSF v11 | v11 | C | control |
-| `iec-62443` | IEC 62443 — Industrial Automation and Control Systems Security | Multiple parts (2018-2023) | C | control |
-| `iso-14971` | ISO 14971 — Application of risk management to medical devices | ISO 14971:2019 | C | control |
-| `iso-22301-2019` | ISO 22301:2019 — Business Continuity Management System | 2019 | C | control |
-| `iso-27001-2022` | ISO/IEC 27001:2022 (Annex A controls) | 2022 | C | control |
-| `iso-27002-2022` | ISO/IEC 27002:2022 — Code of Practice for Information Security Controls | 2022 | C | control |
-| `iso-27017-2015` | ISO/IEC 27017:2015 — Cloud services | 2015 | C | control |
-| `iso-27018-2019` | ISO/IEC 27018:2019 — Protection of PII in Public Clouds | 2019 | C | control |
-| `iso-27701-2019` | ISO/IEC 27701:2019 — Privacy Information Management | 2019 | C | control |
-| `iso-42001-2023` | ISO/IEC 42001:2023 — AI Management System | 2023 | C | control |
-| `pci-dss-4.0.1` | PCI DSS v4.0.1 | 4.0.1 (June 2024) | C | control |
-| `scf-2024` | Secure Controls Framework (SCF) 2024 | 2024 | C | control |
-| `soc2-tsc` | SOC 2 Trust Services Criteria (stub) | 2017 (with 2022 Points of Focus revisions) | C | control |
-| `swift-cscf-2024` | SWIFT Customer Security Controls Framework (CSCF) v2024 | v2024 | C | control |
+| ID | Name | Version | Tier | Text | Category |
+| --- | --- | --- | --- | --- | --- |
+| `aami-sw96` | ANSI/AAMI SW96: Security risk management for medical device manufacturers | ANSI/AAMI SW96:2023 | C | headings | control |
+| `cis-benchmark-aws` | CIS Amazon Web Services Foundations Benchmark | Current | C | headings | control |
+| `cis-benchmark-azure` | CIS Microsoft Azure Foundations Benchmark | Current | C | headings | control |
+| `cis-benchmark-gcp` | CIS Google Cloud Platform Foundations Benchmark | Current | C | headings | control |
+| `cis-benchmark-kubernetes` | CIS Kubernetes Benchmark | Current | C | headings | control |
+| `cis-benchmark-rhel9` | CIS Red Hat Enterprise Linux 9 Benchmark | Current | C | headings | control |
+| `cis-controls-v8.1` | CIS Critical Security Controls v8.1 | v8.1 (2024) | C | headings | control |
+| `cobit-2019` | COBIT 2019 | 2019 (with 2022 focus area guides) | C | headings | control |
+| `hitrust-csf-v11` | HITRUST CSF v11 | v11 | C | headings | control |
+| `iec-62443` | IEC 62443: Industrial Automation and Control Systems Security | Multiple parts (2018-2023) | C | headings | control |
+| `iso-14971` | ISO 14971: Application of risk management to medical devices | ISO 14971:2019 | C | headings | control |
+| `iso-22301-2019` | ISO 22301:2019: Business Continuity Management System | 2019 | C | headings | control |
+| `iso-27001-2022` | ISO/IEC 27001:2022 (Annex A controls) | 2022 | C | headings | control |
+| `iso-27002-2022` | ISO/IEC 27002:2022: Code of Practice for Information Security Controls | 2022 | C | headings | control |
+| `iso-27017-2015` | ISO/IEC 27017:2015: Cloud services | 2015 | C | headings | control |
+| `iso-27018-2019` | ISO/IEC 27018:2019: Protection of PII in Public Clouds | 2019 | C | headings | control |
+| `iso-27701-2019` | ISO/IEC 27701:2019: Privacy Information Management | 2019 | C | headings | control |
+| `iso-42001-2023` | ISO/IEC 42001:2023: AI Management System | 2023 | C | headings | control |
+| `pci-dss-4.0.1` | PCI DSS v4.0.1 | 4.0.1 (June 2024) | C | headings | control |
+| `scf-2024` | Secure Controls Framework (SCF) 2024 | 2024 | C | headings | control |
+| `soc2-tsc` | SOC 2 Trust Services Criteria (stub) | 2017 (with 2022 Points of Focus revisions) | C | headings | control |
+| `swift-cscf-2024` | SWIFT Customer Security Controls Framework (CSCF) v2024 | v2024 | C | headings | control |
 

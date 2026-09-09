@@ -35,4 +35,22 @@ describe("demo fixtures", () => {
     expect(ids).toContain("nist-800-53-rev5-moderate");
     expect(ids).toContain("soc2-tsc");
   });
+
+  it.each([
+    ["nist-800-53-rev5-moderate", "full"],
+    ["nist-800-53-rev5-high", "full"],
+    ["nist-800-53-rev5-low", "full"],
+    ["nist-csf-2.0", "full"],
+    ["fedramp-rev5-moderate", "full"],
+    ["cmmc-2-l2", "headings"],
+    ["eu-gdpr", "full"],
+    ["mitre-attack-enterprise", "full"],
+    ["soc2-tsc", "headings"],
+    ["iso-27001-2022", "headings"],
+  ])("reports the bundled text depth for %s", (id, expectedDepth) => {
+    const framework = DEMO_FRAMEWORKS.frameworks.find(
+      (entry) => entry.id === id,
+    );
+    expect(framework?.text_depth).toBe(expectedDepth);
+  });
 });

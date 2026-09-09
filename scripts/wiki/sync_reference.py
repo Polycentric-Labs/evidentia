@@ -33,12 +33,15 @@ The 5 pages
     Evidentia reads but does not define).
 ``catalogs.md``
     Table of bundled framework catalogs parsed from ``frameworks.yaml``,
-    grouped by family directory. The headline count is computed from the
-    manifest, never hardcoded.
+    grouped by family directory, with each catalog's redistribution tier and
+    derived text depth. The headline count and the text-depth summary are
+    both computed from the manifest, never hardcoded.
 ``crosswalks.md``
     Table of the crosswalk JSONs under ``catalogs/data/mappings/`` — source ->
-    target framework, verification posture, mapping-row count. Counts computed
-    from the actual files.
+    target framework, verification posture, mapping-row count, and how many
+    of each side's ids resolve against the bundled catalogs. Counts computed
+    from the actual files, resolution measured against a fresh
+    ``FrameworkRegistry``.
 
 Each page carries a generated banner: an HTML-comment provenance marker
 (machine-detectable, non-rendering) + a short visible blockquote naming this
@@ -69,9 +72,16 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 import yaml
+
+if TYPE_CHECKING:
+    # Only for type hints. The heavier evidentia_core import stays lazy
+    # (inside the functions that actually need it at runtime) so this module
+    # keeps loading via bare importlib without the project installed, the
+    # way the CLI/MCP collectors already do for typer / evidentia_mcp.
+    from evidentia_core.catalogs.crosswalk import CrosswalkResolution
 
 # scripts/wiki/sync_reference.py -> repo root is two parents up.
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -568,12 +578,15 @@ _FAMILY_LABELS: dict[str, str] = {
     "stubs": "License-required (stub)",
 }
 
-# Human labels for the redistribution tier.
+# Human labels for the redistribution tier. License-only: the tier says what
+# may be redistributed and whether the text is licensed, nothing about how
+# much control text the catalog actually carries; that is the derived
+# `text_depth` column, computed separately per catalog.
 _TIER_LABELS: dict[str, str] = {
-    "A": "A — authoritative public-domain / open text",
-    "B": "B — authoritative, free with attribution",
-    "C": "C — placeholder (control text copyrighted)",
-    "D": "D — obligation/regulation (paraphrased)",
+    "A": "Public-domain or open-licensed, redistributable verbatim",
+    "B": "Free to use with attribution",
+    "C": "Copyrighted, only public numbering and neutral titles ship (placeholder)",
+    "D": "Government regulation or statute, restated as obligations",
 }
 
 
@@ -586,21 +599,29 @@ def parse_frameworks_manifest(manifest_text: str) -> list[dict[str, Any]]:
     return frameworks
 
 
+#: The three text-depth values a catalog can be classified as, in the fixed
+#: display order used by the summary table (mirrors
+#: ``evidentia_core.models.catalog.TextDepth``).
+_TEXT_DEPTH_ORDER: tuple[str, ...] = ("full", "partial", "headings")
+
+
 def render_catalogs(frameworks: list[dict[str, Any]]) -> str:
     """Render catalogs.md from the parsed manifest (pure).
 
-    The headline count + every per-family subtotal is computed from
-    ``frameworks`` — nothing is hardcoded.
+    The headline count, every per-family subtotal, and the text-depth
+    summary are all computed from ``frameworks``; nothing is hardcoded.
     """
     out = [build_banner("Bundled catalogs")]
     total = len(frameworks)
     out.append(
-        f"Evidentia ships **{total}** framework catalogs in-tree. Tier-A/B "
-        f"catalogs carry authoritative control text; tier-C catalogs are "
-        f"placeholders (control text is copyrighted — only IDs + neutral "
-        f"titles ship, with a `license_url` to obtain the full text); tier-D "
-        f"catalogs are paraphrased obligation/regulation references. Use "
-        f"`evidentia catalog list` to enumerate them at runtime.\n\n"
+        f"Evidentia ships **{total}** framework catalogs in-tree. The "
+        f"**Tier** is the redistribution posture: what you may redistribute, "
+        f"and whether the control text is licensed. The **Text** column is "
+        f"the derived text depth: `full` means every non-withdrawn control "
+        f"carries statement text distinct from its title, `partial` means "
+        f"some do, and `headings` means none do, so the catalog carries "
+        f"control numbering and titles only. Use `evidentia catalog list` to "
+        f"enumerate them at runtime.\n\n"
     )
 
     # Tier legend.
@@ -608,6 +629,20 @@ def render_catalogs(frameworks: list[dict[str, Any]]) -> str:
     out.append("| Tier | Meaning |\n| --- | --- |\n")
     for tier in sorted(_TIER_LABELS):
         out.append(f"| {tier} | {_md_escape_cell(_TIER_LABELS[tier])} |\n")
+    out.append("\n")
+
+    # Text-depth summary: a count per depth, computed from the same rows
+    # the per-family tables below render.
+    out.append("## Text depth\n\n")
+    out.append("Catalogs grouped by their derived text depth:\n\n")
+    depth_counts: dict[str, int] = dict.fromkeys(_TEXT_DEPTH_ORDER, 0)
+    for fw in frameworks:
+        depth = fw.get("text_depth")
+        if depth in depth_counts:
+            depth_counts[depth] += 1
+    out.append("| Text depth | Catalogs |\n| --- | --- |\n")
+    for depth in _TEXT_DEPTH_ORDER:
+        out.append(f"| {depth} | {depth_counts[depth]} |\n")
     out.append("\n")
 
     # Group by family directory (first path segment); deterministic order.
@@ -624,19 +659,20 @@ def render_catalogs(frameworks: list[dict[str, Any]]) -> str:
         items = sorted(by_family[family], key=lambda f: str(f.get("id", "")))
         label = _FAMILY_LABELS.get(family, family)
         out.append(f"## {label} ({len(items)})\n\n")
-        out.append("| ID | Name | Version | Tier | Category |\n| --- | --- | --- | --- | --- |\n")
+        out.append("| ID | Name | Version | Tier | Text | Category |\n| --- | --- | --- | --- | --- | --- |\n")
         for fw in items:
             out.append(
-                "| `{id}` | {name} | {version} | {tier} | {category} |\n".format(
+                "| `{id}` | {name} | {version} | {tier} | {text_depth} | {category} |\n".format(
                     id=_md_escape_cell(str(fw.get("id", ""))),
                     name=_md_escape_cell(str(fw.get("name", ""))),
                     version=_md_escape_cell(str(fw.get("version", ""))),
                     tier=_md_escape_cell(str(fw.get("tier", ""))),
+                    text_depth=_md_escape_cell(str(fw.get("text_depth") or "-")),
                     category=_md_escape_cell(str(fw.get("category", ""))),
                 )
             )
         out.append("\n")
-    return "".join(out)
+    return "".join(out).replace(" \u2014 ", ": ").replace("\u2014", "-")
 
 
 # ---------------------------------------------------------------------------
@@ -644,35 +680,98 @@ def render_catalogs(frameworks: list[dict[str, Any]]) -> str:
 # ---------------------------------------------------------------------------
 
 
-def parse_crosswalk(name: str, payload: dict[str, Any]) -> dict[str, Any]:
+def _format_resolution(resolved: int, rows: int, ratio: float | None) -> str:
+    """Render one side of a crosswalk resolution as a display string.
+
+    ``"not bundled"`` when the reference id set is unknown (no bundled
+    catalog or family exists for that framework); otherwise ``"n/N (p%)"``
+    with an integer percent, where ``n`` is ``resolved`` and ``N`` is
+    ``rows``.
+    """
+    if ratio is None:
+        return "not bundled"
+    return f"{resolved}/{rows} ({round(ratio * 100)}%)"
+
+
+def parse_crosswalk(
+    name: str,
+    payload: dict[str, Any],
+    resolution: CrosswalkResolution | None = None,
+) -> dict[str, Any]:
     """Extract the row data for one crosswalk JSON payload (pure).
 
     ``name`` is the JSON filename. Handles both shapes present in-tree: the
     OSPS-extracted files (which carry ``verification`` / ``provenance``) and
     the hand-authored files (which carry only ``source`` / ``version``).
     Missing fields render as ``"—"`` downstream.
+
+    ``resolution``, when given, is a
+    ``evidentia_core.catalogs.crosswalk.CrosswalkResolution`` measuring how
+    many of this crosswalk's source/target ids exist in the bundled
+    catalogs; it becomes the ``source_resolved`` / ``target_resolved``
+    display strings (``"n/N (p%)"``, or ``"not bundled"`` when that side has
+    no bundled catalog or family to resolve against). ``None`` (no registry
+    available to measure against) renders both sides as ``"not bundled"``:
+    there is nothing to measure either way.
     """
     mappings = payload.get("mappings")
     row_count = len(mappings) if isinstance(mappings, list) else 0
+    if resolution is not None:
+        source_resolved = _format_resolution(resolution.source_resolved, resolution.rows, resolution.source_ratio)
+        target_resolved = _format_resolution(resolution.target_resolved, resolution.rows, resolution.target_ratio)
+    else:
+        source_resolved = "not bundled"
+        target_resolved = "not bundled"
     return {
         "file": name,
         "source": str(payload.get("source_framework", "")),
         "target": str(payload.get("target_framework", "")),
         "verification": str(payload.get("verification", "")),
         "rows": row_count,
+        "source_resolved": source_resolved,
+        "target_resolved": target_resolved,
     }
 
 
-def collect_crosswalks(mappings_dir: Path) -> list[dict[str, Any]]:
+class CatalogIdResolver(Protocol):
+    """Lookup interface shared by runtime and bundled-only catalog resolvers."""
+
+    def control_ids_for(self, framework_id: str) -> frozenset[str] | None: ...
+
+
+def collect_crosswalks(
+    mappings_dir: Path,
+    registry: CatalogIdResolver | None = None,
+) -> list[dict[str, Any]]:
     """Parse every ``*.json`` under ``mappings_dir`` into crosswalk rows.
 
     Returns rows sorted by filename (deterministic). Reads the JSON files;
     the per-file extraction (:func:`parse_crosswalk`) is pure.
+
+    ``registry``, when given as a catalog-id resolver, makes each row
+    also carry how many of its source and target ids resolve against the
+    bundled catalogs: the payload is parsed into a ``CrosswalkDefinition``,
+    ``registry.control_ids_for(...)`` looks up each side's normalized id
+    set (or ``None`` when that framework is not bundled), and
+    ``resolve_crosswalk`` measures the crosswalk against them. ``None``
+    skips this measurement entirely (every row reads ``"not bundled"``).
     """
+    from evidentia_core.catalogs.crosswalk import resolve_crosswalk
+    from evidentia_core.models.catalog import CrosswalkDefinition
+
     rows: list[dict[str, Any]] = []
     for json_path in sorted(mappings_dir.glob("*.json")):
         payload = json.loads(json_path.read_text(encoding="utf-8"))
-        rows.append(parse_crosswalk(json_path.name, payload))
+        resolution = None
+        if registry is not None:
+            crosswalk = CrosswalkDefinition(**payload)
+            resolution = resolve_crosswalk(
+                crosswalk,
+                source_ids=registry.control_ids_for(crosswalk.source_framework),
+                target_ids=registry.control_ids_for(crosswalk.target_framework),
+                file=json_path.name,
+            )
+        rows.append(parse_crosswalk(json_path.name, payload, resolution))
     return rows
 
 
@@ -680,7 +779,7 @@ def render_crosswalks(rows: list[dict[str, Any]]) -> str:
     """Render crosswalks.md from the collected crosswalk rows (pure).
 
     The headline count + the total mapping-row sum are computed from
-    ``rows`` — nothing hardcoded.
+    ``rows`` - nothing hardcoded.
     """
     out = [build_banner("Crosswalks")]
     total = len(rows)
@@ -693,22 +792,31 @@ def render_crosswalks(rows: list[dict[str, Any]]) -> str:
         f"efficiency. The **verification** column records the posture: "
         f"crosswalks marked `self-attested-via-upstream` are auto-extracted "
         f"from an upstream source and not independently hand-verified; an "
-        f"empty posture marks an Evidentia-authored concordance. Always "
-        f"verify a mapping before relying on it for an audit.\n\n"
+        f"empty posture marks an Evidentia-authored concordance. The "
+        f"**Source ids resolved** / **Target ids resolved** columns show how "
+        f"many of a crosswalk's rows point at ids that exist in the bundled "
+        f"catalogs, as `n/N (p%)`; a target with no bundled catalog to "
+        f"resolve against (`eu-cra`, `nist-800-161`, `pci-dss-4.0`) reads "
+        f"`not bundled`. Always verify a mapping before relying on it for an "
+        f"audit.\n\n"
     )
     out.append(
         "| Crosswalk file | Source framework | Target framework | "
-        "Verification | Mapping rows |\n"
-        "| --- | --- | --- | --- | --- |\n"
+        "Verification | Mapping rows | Source ids resolved | "
+        "Target ids resolved |\n"
+        "| --- | --- | --- | --- | --- | --- | --- |\n"
     )
     for row in rows:
         out.append(
-            "| `{file}` | `{source}` | `{target}` | {verification} | {rows} |\n".format(
+            "| `{file}` | `{source}` | `{target}` | {verification} | {rows} | "
+            "{source_resolved} | {target_resolved} |\n".format(
                 file=_md_escape_cell(row["file"]),
-                source=_md_escape_cell(row["source"]) or "—",
-                target=_md_escape_cell(row["target"]) or "—",
-                verification=_md_escape_cell(row["verification"]) or "—",
+                source=_md_escape_cell(row["source"]) or "-",
+                target=_md_escape_cell(row["target"]) or "-",
+                verification=_md_escape_cell(row["verification"]) or "-",
                 rows=row["rows"],
+                source_resolved=_md_escape_cell(row["source_resolved"]),
+                target_resolved=_md_escape_cell(row["target_resolved"]),
             )
         )
     out.append("\n")
@@ -752,8 +860,18 @@ def generate_all(repo_root: Path = REPO_ROOT) -> dict[str, str]:
     manifest_text = (repo_root / FRAMEWORKS_REL).read_text(encoding="utf-8")
     out[PAGE_CATALOGS] = render_catalogs(parse_frameworks_manifest(manifest_text))
 
-    # crosswalks.md — mappings/*.json.
-    out[PAGE_CROSSWALKS] = render_crosswalks(collect_crosswalks(repo_root / MAPPINGS_REL))
+    # Use the truth gate's bundled-only resolver so local imports cannot
+    # change the reference page. Keep script lookup local to this import.
+    scripts_dir = str(REPO_ROOT / "scripts")
+    sys.path.insert(0, scripts_dir)
+    try:
+        from check_catalog_truth import BundledCatalogResolver
+    finally:
+        sys.path.remove(scripts_dir)
+
+    out[PAGE_CROSSWALKS] = render_crosswalks(
+        collect_crosswalks(repo_root / MAPPINGS_REL, registry=BundledCatalogResolver())
+    )
     return out
 
 

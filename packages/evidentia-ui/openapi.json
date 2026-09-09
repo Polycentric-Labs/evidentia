@@ -907,6 +907,12 @@
             "description": "Control title",
             "title": "Title",
             "type": "string"
+          },
+          "withdrawn": {
+            "default": false,
+            "description": "True when the publisher has withdrawn this control (the OSCAL `status` prop reads `withdrawn`). A withdrawn control carries no statement upstream, is skipped by gap analysis, and does not count toward text depth.",
+            "title": "Withdrawn",
+            "type": "boolean"
           }
         },
         "required": [

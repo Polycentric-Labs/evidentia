@@ -20,7 +20,8 @@ React + Vite + TypeScript + shadcn/ui frontend for **Evidentia**. Served by the 
 
 ## Development
 
-Requires Node 20+ and npm (or pnpm/yarn if you prefer — `package-lock.json` is checked in).
+Use Node 24.15.0 or later in the 24.x release line and npm. CI and the dev
+container use Node 24; `package-lock.json` is checked in.
 
 ```bash
 # Install deps

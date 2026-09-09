@@ -163,6 +163,18 @@ _CONSISTENCY_CHECKS: tuple[Check, ...] = (
         "public_surface",
         ("python", "scripts/check_public_surface.py"),
     ),
+    # Catalog-truth gate (v0.13): the manifest's per-catalog text_depth and
+    # crosswalk_family columns, and the crosswalk files' framework ids and id
+    # resolution, had no mechanical check either. It belongs in this fast
+    # scope for the same reason public_surface does: it imports the
+    # workspace (loads every bundled catalog and crosswalk through
+    # evidentia_core), which the same `uv run --all-extras --all-packages`
+    # env already provides, and it guards the number the README quotes most,
+    # the catalog inventory's tier/text-depth breakdown.
+    Check(
+        "catalog_truth",
+        ("python", "scripts/check_catalog_truth.py"),
+    ),
 )
 
 # The heavyweight gates, appended to the consistency tuple to form

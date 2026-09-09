@@ -8,7 +8,7 @@ Evidentia ships the first publicly-distributed NIST OSCAL Catalog 1.2.1 serializ
 
 - **1 OSCAL Catalog 1.2.1 serialization** at `osps-baseline.oscal.json`. Top-level-control granularity (41 controls). Validates against `compliance-trestle` Pydantic models (re-validated at 4.2.0, 2026-07-10).
 
-- **5 inter-framework crosswalks** at `mappings/osps-baseline_to_{nist-ssdf-800-218,nist-csf-2.0,eu-cra,pci-dss-4.0,nist-800-161}.json`. Row counts: 115 / 52 / 107 / 200 / 200. All carry `provenance: upstream-osps-guidelines` and `verification: self-attested-via-upstream` (auto-extracted from upstream OSPS Baseline `guidelines[]` array at the pinned commit; not independently hand-verified — see verification posture below).
+- **5 inter-framework crosswalks** at `mappings/osps-baseline_to_{nist-ssdf-800-218,nist-csf-2.0,eu-cra,pci-dss-4.0,nist-800-161}.json`. Rows are keyed at OSPS assessment-requirement level (for example `OSPS-AC-01.01`, not the top-level control `OSPS-AC-01`) and declare `source_framework: osps-baseline`, the `crosswalk_family` all three bundled OSPS catalogs share, so an `osps-baseline-m1`, `-m2` or `-m3` gap analysis resolves through them. Current row counts are on the generated crosswalks reference page: [`docs/wiki/4-reference/crosswalks.md`](../4-reference/crosswalks.md). All carry `provenance: upstream-osps-guidelines` and `verification: self-attested-via-upstream` (auto-extracted from upstream OSPS Baseline `guidelines[]` array at the pinned commit, not independently hand-verified; see verification posture below).
 
 - **16 GitHub OSPS collector helpers** at `packages/evidentia-collectors/src/evidentia_collectors/github/osps.py`. Cover AC + BR + DO + GV + LE + QA + VM family assessment-requirements via GitHub REST API. Each helper emits a `SecurityFinding` with `compliance_status` mapped from the GitHub API observation.
 
@@ -35,9 +35,10 @@ Evidentia self-attests against the OSPS Baseline at [`OSPS-CONFORMANCE.md`](http
 ## How to use the OSPS crosswalks
 
 ```python
-from evidentia_core.catalogs.crosswalk import load_crosswalk
+from evidentia_core.catalogs.crosswalk import CrosswalkEngine, MAPPINGS_DIR
 
-cw = load_crosswalk("osps-baseline_to_nist-ssdf-800-218")
+engine = CrosswalkEngine()
+cw = engine.load_crosswalk(MAPPINGS_DIR / "osps-baseline_to_nist-ssdf-800-218.json")
 print(f"{cw.source_framework} → {cw.target_framework}")
 print(f"Verification: {cw.verification}")
 print(f"Mappings: {len(cw.mappings)}")
@@ -47,12 +48,12 @@ for m in cw.mappings[:3]:
 
 Output:
 ```
-osps-baseline-2026.02.19 → nist-ssdf-800-218
+osps-baseline → nist-ssdf-800-218
 Verification: self-attested-via-upstream
-Mappings: 115
-  OSPS-AC-03.01 → PO.1.1 (related)
-  OSPS-AC-03.01 → PW.1.1 (related)
-  OSPS-BR-06.01 → PS.2.1 (related)
+Mappings: 226
+  OSPS-AC-01.01 → PO.3.2 (related)
+  OSPS-AC-01.01 → PS.1.1 (related)
+  OSPS-AC-01.01 → PS.2.1 (related)
 ```
 
 ## Running GitHub OSPS conformance checks
@@ -77,11 +78,8 @@ Full list of 16 helpers: see [`evidentia_collectors.github.osps`](../4-reference
 
 The OSPS Baseline OSCAL conversion was proposed for inclusion in the canonical `awesome-oscal` list maintained by the OSCAL Club community group: [oscal-club/awesome-oscal#59](https://github.com/oscal-club/awesome-oscal/pull/59).
 
-## What's next (v0.10.7+)
+## Further verification
 
-- Hand-verification pass on the 5 OSPS crosswalks (upgrade `"self-attested-via-upstream"` → `"hand-checked"` where SME review confirms accuracy).
-- `scripts/catalogs/gen_osps_crosswalks.py` deterministic regeneration script (reduces sweep burden on next upstream OSPS bump).
-- Workflow-permissions audit promoted to blocking CI gate with `JUSTIFIED` annotation support.
-- New SHA-pinning check on `verify-osps-conformance.yml` itself (closes the v0.10.6 Step 7.D Scorecard alert #123).
-
-See [`docs/wiki/6-project/roadmap.md`](../6-project/roadmap.md) for the full v0.10.7 backlog.
+The five upstream-derived crosswalks retain their `self-attested-via-upstream`
+posture. An operator with subject-matter expertise must verify each mapping
+before audit use. See the [roadmap](../6-project/roadmap.md) for the open cycle.

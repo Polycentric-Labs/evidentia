@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { demoApi, simulateSse } from "./demo-api";
+import { DEMO_FRAMEWORKS } from "./fixtures";
 
 describe("demo-api", () => {
   it("returns the hero report list with no network", async () => {
@@ -10,6 +11,38 @@ describe("demo-api", () => {
     const r = await demoApi.getGapReport("meridian-fintech-v2:baseline");
     expect(r.total_gaps).toBe(311);
   });
+
+  describe.each(["catalogWhere", "catalogLicenseInfo"] as const)(
+    "%s text depth",
+    (endpoint) => {
+      it.each(DEMO_FRAMEWORKS.frameworks)(
+        "agrees with the framework list for $id",
+        async ({ id }) => {
+          const list = await demoApi.listFrameworks();
+          const entry = list.frameworks.find(
+            (framework) => framework.id === id,
+          );
+          const detail = await demoApi[endpoint](id);
+          expect(entry).toBeDefined();
+          expect(detail.text_depth).toBe(entry?.text_depth);
+        },
+      );
+
+      it.each(["soc2-tsc", "iso-27001-2022"])(
+        "reports headings for the %s stub",
+        async (id) => {
+          expect((await demoApi[endpoint](id)).text_depth).toBe("headings");
+        },
+      );
+
+      it("does not claim a depth for an unknown framework", async () => {
+        expect(
+          (await demoApi[endpoint]("unknown-framework")).text_depth,
+        ).toBeNull();
+      });
+    },
+  );
+
   it("simulateSse emits a start then a terminal done", async () => {
     const events: Array<{ phase: string }> = [];
     await simulateSse(

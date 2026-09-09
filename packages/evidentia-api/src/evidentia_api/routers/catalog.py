@@ -41,7 +41,11 @@ Security
 from __future__ import annotations
 
 import json
+import os
 import re
+import shutil
+from pathlib import Path
+from tempfile import mkdtemp
 
 import yaml
 from evidentia_core.audit import EventAction, EventOutcome, get_logger
@@ -59,6 +63,7 @@ from evidentia_core.catalogs.user_dir import (
     resolve_catalog_path,
     save_user_manifest,
 )
+from evidentia_core.models.catalog import TextDepth
 from evidentia_core.models.common import NonBlankStr
 from evidentia_core.security.paths import validate_within
 from fastapi import APIRouter, Query
@@ -82,6 +87,10 @@ _log = get_logger("evidentia.api.catalog")
 # is permitted), so a validated ID can never traverse out of the user
 # catalog dir when used to build ``<user_dir>/<framework_id>.json``.
 _FRAMEWORK_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
+# DOS device basenames stay reserved when followed by an extension.
+_RESERVED_FRAMEWORK_IDS = frozenset(
+    {"con", "prn", "aux", "nul"} | {f"com{i}" for i in range(1, 10)} | {f"lpt{i}" for i in range(1, 10)}
+)
 
 
 def _validate_framework_id(framework_id: str) -> str:
@@ -92,25 +101,21 @@ def _validate_framework_id(framework_id: str) -> str:
     user-imported IDs are all kebab-case (e.g. ``nist-csf-2.0``), so a
     well-formed ID always matches; only crafted inputs fail here.
 
-    Returns the (unchanged) ``framework_id`` so callers reassign it
-    (``framework_id = _validate_framework_id(framework_id)``). This is the
-    first-line *shape* guard (fast 400 on a malformed id). It is NOT the
-    CodeQL barrier for the import write-path: CodeQL's ``py/path-injection``
-    traces ``payload.framework_id`` THROUGH this helper (it returns its arg)
-    into ``out_path``. Runtime containment is downstream — ``out_path`` is
-    routed through ``evidentia_core.security.paths.validate_within``
-    (resolve + assert is_relative_to). CodeQL's ``py/path-injection`` still
-    flags this class (path-injection does not consume the MaD barrier model);
-    the finding is a dismissed false positive.
+    The whole value must match, including its final character. Filesystem
+    callers also resolve and check the destination against the user root.
     """
-    if ".." in framework_id or not _FRAMEWORK_ID_RE.match(framework_id):
+    if (
+        ".." in framework_id
+        or not _FRAMEWORK_ID_RE.fullmatch(framework_id)
+        or framework_id.partition(".")[0] in _RESERVED_FRAMEWORK_IDS
+    ):
         raise api_error(
             400,
             "invalid_id",
             (
                 f"Invalid framework_id {framework_id!r}; expected a "
                 "kebab-case identifier matching "
-                f"{_FRAMEWORK_ID_RE.pattern} (no path separators)."
+                f"{_FRAMEWORK_ID_RE.pattern} (no path separators or reserved device names)."
             ),
             resource="framework",
         )
@@ -192,6 +197,7 @@ async def where_framework(
         "tier": entry.tier,
         "category": entry.category,
         "placeholder": entry.placeholder,
+        "text_depth": entry.text_depth,
     }
 
 
@@ -234,6 +240,7 @@ async def license_info(framework_id: str) -> dict[str, object]:
         "license": entry.license,
         "license_url": entry.license_url,
         "source_url": entry.source_url,
+        "text_depth": entry.text_depth,
     }
 
 
@@ -375,17 +382,15 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
     placeholder = bool(data.get("placeholder", False))
 
     user_dir = ensure_user_dir()
-    # Write-path containment (CWE-22) — runtime defense-in-depth.
-    # ``framework_id`` is regex-validated above (no '..', no separators), so the
-    # join already lands inside the user catalog dir; wrapping it in
-    # ``validate_within`` (resolve() + assert is_relative_to(user_dir)) makes that
-    # containment EXPLICIT and is the write-side analog of the resolve_catalog_path
-    # read-side guard for the read-back loader path
-    # (alert #164: payload.framework_id -> out_path -> load_evidentia_catalog ->
-    # _load_catalog_data -> read_text). CodeQL's py/path-injection does not
-    # recognize this guard (it ignores the MaD barrier model), so the finding is
-    # a dismissed false positive; validate_within returns the resolved path.
-    out_path = validate_within(user_dir / f"{framework_id}.json", user_dir)
+    # Resolve links before checking a separator-terminated root. The explicit
+    # string check also makes containment visible to standard path analysis.
+    out_filename = os.path.realpath(user_dir / f"{framework_id}.json")
+    root_prefix = os.path.join(os.path.realpath(user_dir), "")
+    if not out_filename.startswith(root_prefix):
+        raise api_error(
+            400, "invalid_id", "Import path resolves outside the user catalog directory.", resource="framework"
+        )
+    out_path = validate_within(Path(out_filename), user_dir)
     if out_path.exists() and not payload.force:
         raise api_error(
             400,
@@ -395,30 +400,36 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
             resource_id=payload.framework_id,
         )
 
-    # Validate the catalog shape BEFORE writing so a malformed body never
-    # leaves a half-imported file on disk. Write to the canonical path,
-    # then load it back through the core loader.
-    out_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    # Validate a staged file on the same filesystem before replacing the
+    # installed catalog. Invalid force imports leave its bytes and manifest intact.
+    staging_dir = mkdtemp(prefix=".catalog-import-", dir=user_dir)
     try:
-        load_evidentia_catalog(out_path)
-    except Exception as exc:  # normalize any load error to 400
-        # Roll back the partial write so a bad import is a no-op.
-        out_path.unlink(missing_ok=True)
-        raise api_error(
-            400,
-            "invalid_body",
-            f"Catalog content failed validation: {exc}",
-        ) from exc
+        staged_path = validate_within(Path(staging_dir) / "catalog.json", user_dir)
+        staged_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        try:
+            loaded_catalog = load_evidentia_catalog(staged_path)
+        except Exception as exc:  # normalize any load error to 400
+            raise api_error(
+                400,
+                "invalid_body",
+                f"Catalog content failed validation: {exc}",
+            ) from exc
+        staged_path.replace(out_path)
 
-    _add_to_user_manifest(
-        framework_id=payload.framework_id,
-        name=resolved_name,
-        version=version,
-        tier=tier,
-        path=out_path.name,
-        placeholder=placeholder,
-        license_terms=payload.license_terms,
-    )
+        _add_to_user_manifest(
+            framework_id=payload.framework_id,
+            name=resolved_name,
+            version=version,
+            tier=tier,
+            path=out_path.name,
+            placeholder=placeholder,
+            license_terms=payload.license_terms,
+            text_depth=loaded_catalog.text_depth,
+        )
+    finally:
+        # Do not let denied cleanup undo a completed import or hide its error.
+        # rmtree's ignore_errors avoids tempfile's recursive permission retry.
+        shutil.rmtree(staging_dir, ignore_errors=True)
 
     shadows_bundled = load_manifest().get(payload.framework_id) is not None
     _log.info(
@@ -506,6 +517,7 @@ def _add_to_user_manifest(
     path: str,
     placeholder: bool,
     license_terms: str | None,
+    text_depth: TextDepth | None = None,
 ) -> None:
     """Append or replace an entry in the user manifest.
 
@@ -524,6 +536,7 @@ def _add_to_user_manifest(
         path=path,
         license=license_terms,
         placeholder=placeholder,
+        text_depth=text_depth,
     )
     updated = FrameworkManifest(version=user.version, frameworks=[*kept, new_entry])
     save_user_manifest(updated)

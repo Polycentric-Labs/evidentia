@@ -4,7 +4,7 @@
 // enabled)". Provides a guaranteed-reproducible contributor
 // environment so anyone with VS Code (and the Dev Containers
 // extension) can clone the repo, click "Reopen in Container", and
-// have a fully-pinned Python 3.12 + Node 20 + GPG + git + gh
+// have a Python 3.12 + Node 24 + GPG + git + gh
 // toolchain ready to run `uv sync --all-packages` + tests + the
 // composite action smoke test.
 //
@@ -23,10 +23,10 @@
   // Tooling features (layered onto the base image).
   // ---------------------------------------------------------------
   "features": {
-    // Node 20 — matches the release.yml + test.yml `actions/setup-node`
+    // Node 24 matches the release.yml + test.yml `actions/setup-node`
     // pin. Needed for the evidentia-ui Vite build hatchling hook.
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "20"
+      "version": "24"
     },
     // GitHub CLI for the publishing-authority workflow + gh API
     // helpers documented in CLAUDE.md.

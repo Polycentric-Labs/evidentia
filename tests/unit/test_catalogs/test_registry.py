@@ -61,10 +61,15 @@ def test_load_bundled_soc2_catalog_is_licensed_stub():
 def test_crosswalk_loads_bundled_mappings():
     registry = FrameworkRegistry.get_instance()
     crosswalk = registry.crosswalk
-    assert "nist-800-53-mod" in crosswalk.available_frameworks or "nist-800-53-rev5" in crosswalk.available_frameworks
-    # Should have at least one mapping
-    mapped = crosswalk.get_all_mapped_controls("nist-800-53-mod", "AC-2")
-    if not mapped:
-        # The bundled crosswalk uses nist-800-53-rev5 as the source key
-        mapped = crosswalk.get_all_mapped_controls("nist-800-53-rev5", "AC-2")
-    assert len(mapped) > 0
+    # The bundled crosswalks key on the full catalog; the legacy 16-control
+    # sample is a member of that family and resolves through it.
+    assert "nist-800-53-rev5" in crosswalk.available_frameworks
+    assert len(crosswalk.get_all_mapped_controls("nist-800-53-rev5", "AC-2")) > 0
+    assert len(crosswalk.get_all_mapped_controls("nist-800-53-mod", "AC-2")) > 0
+
+
+def test_list_frameworks_carries_text_depth():
+    rows = FrameworkRegistry.get_instance().list_frameworks()
+    by_id = {row["id"]: row for row in rows}
+    assert by_id["nist-800-53-rev5"]["text_depth"] == "full"
+    assert by_id["iso-27001-2022"]["text_depth"] == "headings"

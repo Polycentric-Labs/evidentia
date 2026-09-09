@@ -185,6 +185,7 @@ export const FDA_524B_FRAMEWORK: FrameworkListResponse = {
       category: "control",
       placeholder: "false",
       license_required: "false",
+      text_depth: "full",
     },
   ],
 };

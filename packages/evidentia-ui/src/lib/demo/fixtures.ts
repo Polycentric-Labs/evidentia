@@ -802,6 +802,7 @@ export const DEMO_FRAMEWORKS: FrameworkListResponse = {
       category: "control",
       placeholder: "false",
       license_required: "false",
+      text_depth: "full",
     },
     {
       id: "nist-800-53-rev5-high",
@@ -811,6 +812,7 @@ export const DEMO_FRAMEWORKS: FrameworkListResponse = {
       category: "control",
       placeholder: "false",
       license_required: "false",
+      text_depth: "full",
     },
     {
       id: "nist-800-53-rev5-low",
@@ -820,6 +822,7 @@ export const DEMO_FRAMEWORKS: FrameworkListResponse = {
       category: "control",
       placeholder: "false",
       license_required: "false",
+      text_depth: "full",
     },
     {
       id: "nist-csf-2.0",
@@ -829,6 +832,7 @@ export const DEMO_FRAMEWORKS: FrameworkListResponse = {
       category: "control",
       placeholder: "false",
       license_required: "false",
+      text_depth: "full",
     },
     {
       id: "fedramp-rev5-moderate",
@@ -838,6 +842,7 @@ export const DEMO_FRAMEWORKS: FrameworkListResponse = {
       category: "control",
       placeholder: "false",
       license_required: "false",
+      text_depth: "full",
     },
     {
       id: "cmmc-2-l2",
@@ -847,6 +852,7 @@ export const DEMO_FRAMEWORKS: FrameworkListResponse = {
       category: "control",
       placeholder: "false",
       license_required: "false",
+      text_depth: "headings",
     },
     {
       id: "eu-gdpr",
@@ -856,6 +862,7 @@ export const DEMO_FRAMEWORKS: FrameworkListResponse = {
       category: "obligation",
       placeholder: "false",
       license_required: "false",
+      text_depth: "full",
     },
     {
       id: "mitre-attack-enterprise",
@@ -865,6 +872,7 @@ export const DEMO_FRAMEWORKS: FrameworkListResponse = {
       category: "technique",
       placeholder: "false",
       license_required: "false",
+      text_depth: "full",
     },
     {
       id: "soc2-tsc",
@@ -874,6 +882,7 @@ export const DEMO_FRAMEWORKS: FrameworkListResponse = {
       category: "control",
       placeholder: "true",
       license_required: "true",
+      text_depth: "headings",
     },
     {
       id: "iso-27001-2022",
@@ -883,6 +892,7 @@ export const DEMO_FRAMEWORKS: FrameworkListResponse = {
       category: "control",
       placeholder: "true",
       license_required: "true",
+      text_depth: "headings",
     },
   ],
 };

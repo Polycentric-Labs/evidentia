@@ -40,7 +40,7 @@ framework_id: my-framework-id     # kebab-case; stable across versions
 framework_name: "Display name"
 version: "1.0"                    # framework version, not catalog version
 source: "Upstream URL or citation"
-tier: A | B | C | D                # see ATTRIBUTION.md
+tier: A | B | C | D                # redistribution tier; see "Other tier conventions"
 category: control                  # control | technique | vulnerability | obligation
 
 # Tier-C only (control text is copyrighted):
@@ -100,24 +100,45 @@ the size spectrum the YAML format is intended to serve.
 
 ## Other tier conventions
 
-- **`tier: A`** — verbatim-redistributable control text. Two
-  sub-categories:
+The tier records what may be redistributed. It does not say how much
+control text the file carries; that is the derived `text_depth` below.
+
+- **`tier: A`**: public-domain or open-licensed, redistributable
+  verbatim. Two sub-categories:
   - **Public-domain works** (US federal, NIST, CISA, FedRAMP).
   - **Permissive-licensed works** (Apache-2.0, MIT, CC-BY) where
     the upstream license explicitly permits verbatim redistribution.
     The catalog's `license_terms` field MUST cite the upstream
     license; the source URL pins the upstream commit/version so the
     chain-of-custody is auditable.
-  Catalog bundles full control bodies in both cases.
-- **`tier: B`** — copyrighted but licensed for embedded distribution
-  (rare).
-- **`tier: C`** — copyrighted; only IDs + titles bundled. Control
-  body is a placeholder; operators run `evidentia catalog import`
-  with their licensed copy to override.
-- **`tier: D`** — government edicts (statutes, regulations) —
-  uncopyrightable; full text bundled.
+  Bundle the full control bodies where the source publishes them. A
+  catalog that carries only control numbering and titles is
+  acceptable, and the manifest labels it `text_depth: headings`.
+- **`tier: B`**: free to use with attribution (MITRE ATT&CK, CISA
+  KEV).
+- **`tier: C`**: copyrighted; only IDs and neutral titles bundled.
+  Every control body is a placeholder (`placeholder: true`);
+  operators run `evidentia catalog import` with their licensed copy
+  to override.
+- **`tier: D`**: government edicts (statutes, regulations);
+  obligations restated in Evidentia's words, or
+  heading-level references where only the structure is captured.
 
-See `ATTRIBUTION.md` for the redistribution rationale per tier.
+Each manifest entry's `license` and `source_url` columns carry the
+per-catalog statement (`evidentia catalog license-info <id>` prints
+them).
+
+## Text depth (derived, never declared)
+
+`scripts/catalogs/regenerate_manifest.py` loads every catalog and
+writes a `text_depth` column into the manifest: `full` when every
+non-withdrawn entry has statement text that differs from its title,
+`headings` when none does, `partial` otherwise. Placeholder entries
+never count. You do not set it in the catalog file; the rule lives
+in `evidentia_core.models.catalog.derive_text_depth`, every catalog
+model exposes it as `.text_depth`, and `scripts/check_catalog_truth.py`
+fails the `consistency` gate if the manifest column disagrees with the
+files. `evidentia catalog list` shows it in the `Text` column.
 
 ## OSCAL sidecar artifacts (v0.10.6+)
 

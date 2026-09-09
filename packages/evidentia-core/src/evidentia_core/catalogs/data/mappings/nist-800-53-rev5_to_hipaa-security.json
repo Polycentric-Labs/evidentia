@@ -1,5 +1,5 @@
 {
-  "source_framework": "nist-800-53-mod",
+  "source_framework": "nist-800-53-rev5",
   "target_framework": "hipaa-security",
   "version": "NIST 800-53 Rev 5 / HIPAA 2013 Omnibus",
   "generated_at": "2026-04-16",

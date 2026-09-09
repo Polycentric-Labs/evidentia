@@ -21,10 +21,15 @@ Test plan:
    descriptions, flattens ``llm.*``, and drops the ``source_path``
    internal field.
 5. ``parse_frameworks_manifest`` + ``render_catalogs`` compute the
-   headline count + per-family subtotals from the data (not hardcoded).
+   headline count, per-family subtotals, and the text-depth summary from
+   the data (not hardcoded).
 6. ``parse_crosswalk`` handles both JSON shapes (with/without
-   ``verification``) and counts ``mappings`` rows; ``render_crosswalks``
-   computes the total row sum.
+   ``verification``) and counts ``mappings`` rows; with a
+   ``CrosswalkResolution`` it renders the ``n/N (p%)`` display strings, and
+   without one (or when a side has no bundled catalog) it renders
+   ``"not bundled"``. ``render_crosswalks`` computes the total row sum and
+   carries the two resolution columns. ``collect_crosswalks`` computes a
+   resolution per file when a registry is given.
 7. ``build_banner`` emits the HTML-comment marker + visible blockquote +
    H1 naming the generator.
 8. ``compare`` (the pure ``--check`` comparison) returns no drift on a
@@ -34,6 +39,7 @@ Test plan:
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -178,18 +184,21 @@ def test_parse_frameworks_manifest_and_render_counts(mod: Any) -> None:
         "  tier: A\n"
         "  category: control\n"
         "  path: us-federal/a-fed.json\n"
+        "  text_depth: full\n"
         "- id: b-intl\n"
         "  name: B Intl\n"
         "  version: '2'\n"
         "  tier: C\n"
         "  category: control\n"
         "  path: international/b-intl.json\n"
+        "  text_depth: headings\n"
         "- id: c-fed\n"
         "  name: C Fed\n"
         "  version: '3'\n"
         "  tier: A\n"
         "  category: control\n"
         "  path: us-federal/c-fed.json\n"
+        "  text_depth: partial\n"
     )
     frameworks = mod.parse_frameworks_manifest(manifest)
     assert len(frameworks) == 3
@@ -201,6 +210,38 @@ def test_parse_frameworks_manifest_and_render_counts(mod: Any) -> None:
     assert "## International (1)" in rendered
     # Within a family, frameworks are sorted by id (a-fed before c-fed).
     assert rendered.index("a-fed") < rendered.index("c-fed")
+    # Tier labels are license-only; they make no claim about text content.
+    assert "Public-domain or open-licensed, redistributable verbatim" in rendered
+    # Per-family rows carry the Text column with each entry's depth.
+    assert "| `a-fed` | A Fed | 1 | A | full | control |" in rendered
+    assert "| `b-intl` | B Intl | 2 | C | headings | control |" in rendered
+    assert "| `c-fed` | C Fed | 3 | A | partial | control |" in rendered
+    # The Text depth summary table counts one catalog per depth.
+    assert "## Text depth" in rendered
+    assert "| full | 1 |" in rendered
+    assert "| partial | 1 |" in rendered
+    assert "| headings | 1 |" in rendered
+
+
+def test_render_catalogs_text_depth_defaults_to_dash_when_absent(mod: Any) -> None:
+    manifest = (
+        "version: 1\n"
+        "frameworks:\n"
+        "- id: legacy-fw\n"
+        "  name: Legacy Framework\n"
+        "  version: '1'\n"
+        "  tier: A\n"
+        "  category: control\n"
+        "  path: us-federal/legacy-fw.json\n"
+    )
+    frameworks = mod.parse_frameworks_manifest(manifest)
+    rendered = mod.render_catalogs(frameworks)
+    # No text_depth key at all (an older manifest entry) renders "-", and
+    # does not get counted in any of the three depth buckets.
+    assert "| `legacy-fw` | Legacy Framework | 1 | A | - | control |" in rendered
+    assert "| full | 0 |" in rendered
+    assert "| partial | 0 |" in rendered
+    assert "| headings | 0 |" in rendered
 
 
 def test_parse_frameworks_manifest_rejects_bad_shape(mod: Any) -> None:
@@ -224,6 +265,10 @@ def test_parse_crosswalk_handles_both_shapes(mod: Any) -> None:
     assert row["target"] == "eu-cra"
     assert row["verification"] == "self-attested-via-upstream"
     assert row["rows"] == 2
+    # No resolution passed: both sides read "not bundled" since there is
+    # nothing to measure either side against.
+    assert row["source_resolved"] == "not bundled"
+    assert row["target_resolved"] == "not bundled"
 
     # Hand-authored shape: no `verification`; verification falls back to "".
     authored = {
@@ -236,6 +281,57 @@ def test_parse_crosswalk_handles_both_shapes(mod: Any) -> None:
     assert row2["rows"] == 1
 
 
+def test_parse_crosswalk_with_resolution_renders_percentages(mod: Any) -> None:
+    from evidentia_core.catalogs.crosswalk import CrosswalkResolution
+
+    payload = {
+        "source_framework": "nist-csf-2.0",
+        "target_framework": "nist-800-53-rev5",
+        "mappings": [{"x": 1}, {"x": 2}, {"x": 3}, {"x": 4}],
+    }
+    resolution = CrosswalkResolution(
+        file="nist-csf-2.0_to_nist-800-53-rev5.json",
+        source_framework="nist-csf-2.0",
+        target_framework="nist-800-53-rev5",
+        rows=4,
+        source_ids_known=True,
+        target_ids_known=True,
+        source_resolved=3,
+        target_resolved=4,
+        unresolved_source_ids=("GV.OC-99",),
+        unresolved_target_ids=(),
+    )
+    row = mod.parse_crosswalk("nist-csf-2.0_to_nist-800-53-rev5.json", payload, resolution)
+    assert row["source_resolved"] == "3/4 (75%)"
+    assert row["target_resolved"] == "4/4 (100%)"
+
+
+def test_parse_crosswalk_resolution_reports_not_bundled_per_side(mod: Any) -> None:
+    from evidentia_core.catalogs.crosswalk import CrosswalkResolution
+
+    payload = {
+        "source_framework": "osps-baseline",
+        "target_framework": "eu-cra",
+        "mappings": [{"x": 1}, {"x": 2}],
+    }
+    # Source is bundled and fully resolves; target has no bundled catalog.
+    resolution = CrosswalkResolution(
+        file="osps-baseline_to_eu-cra.json",
+        source_framework="osps-baseline",
+        target_framework="eu-cra",
+        rows=2,
+        source_ids_known=True,
+        target_ids_known=False,
+        source_resolved=2,
+        target_resolved=0,
+        unresolved_source_ids=(),
+        unresolved_target_ids=(),
+    )
+    row = mod.parse_crosswalk("osps-baseline_to_eu-cra.json", payload, resolution)
+    assert row["source_resolved"] == "2/2 (100%)"
+    assert row["target_resolved"] == "not bundled"
+
+
 def test_render_crosswalks_computes_totals(mod: Any) -> None:
     rows = [
         {
@@ -244,6 +340,8 @@ def test_render_crosswalks_computes_totals(mod: Any) -> None:
             "target": "t1",
             "verification": "self-attested-via-upstream",
             "rows": 100,
+            "source_resolved": "100/100 (100%)",
+            "target_resolved": "not bundled",
         },
         {
             "file": "b.json",
@@ -251,14 +349,79 @@ def test_render_crosswalks_computes_totals(mod: Any) -> None:
             "target": "t2",
             "verification": "",
             "rows": 23,
+            "source_resolved": "20/23 (87%)",
+            "target_resolved": "23/23 (100%)",
         },
     ]
     rendered = mod.render_crosswalks(rows)
     # Count + total-row-sum both computed from the data.
     assert "bundles **2** framework crosswalks" in rendered
     assert "123 control-to-control mapping rows" in rendered
-    # Empty verification renders as the em-dash placeholder.
-    assert "| `b.json` | `s2` | `t2` | — | 23 |" in rendered
+    # New columns are in the header and render each row's resolution.
+    assert "Source ids resolved" in rendered
+    assert "Target ids resolved" in rendered
+    # Empty verification uses an ASCII placeholder; resolution values remain intact.
+    placeholder = "-"
+    assert f"| `b.json` | `s2` | `t2` | {placeholder} | 23 | 20/23 (87%) | 23/23 (100%) |" in rendered
+    assert "| `a.json` | `s1` | `t1` | self-attested-via-upstream | 100 | 100/100 (100%) | not bundled |" in rendered
+
+
+# --- collect_crosswalks (registry-aware resolution) -------------------------
+
+
+class _StubRegistry:
+    """Minimal stand-in for a FrameworkRegistry's ``control_ids_for``.
+
+    Duck-typed: ``collect_crosswalks`` only ever calls this one method, so
+    the tests do not need a real registry (which would pull in the whole
+    bundled catalog set) to exercise the resolution wiring.
+    """
+
+    def __init__(self, known: dict[str, frozenset[str]]) -> None:
+        self._known = known
+
+    def control_ids_for(self, framework_id: str) -> frozenset[str] | None:
+        return self._known.get(framework_id)
+
+
+def test_collect_crosswalks_computes_resolution_when_registry_given(mod: Any, tmp_path: Path) -> None:
+    mappings_dir = tmp_path / "mappings"
+    mappings_dir.mkdir()
+    payload = {
+        "source_framework": "nist-csf-2.0",
+        "target_framework": "eu-cra",
+        "version": "1",
+        "generated_at": "2026-01-01",
+        "source": "test fixture",
+        "mappings": [
+            {"source_control_id": "GV.OC-01", "target_control_id": "AC-1", "relationship": "related"},
+            {"source_control_id": "GV.OC-99", "target_control_id": "AC-2", "relationship": "related"},
+        ],
+    }
+    (mappings_dir / "nist-csf-2.0_to_eu-cra.json").write_text(json.dumps(payload), encoding="utf-8")
+    # nist-csf-2.0 is "bundled" (one of its two ids is known); eu-cra is not.
+    registry = _StubRegistry({"nist-csf-2.0": frozenset({"GV.OC-01"})})
+    rows = mod.collect_crosswalks(mappings_dir, registry=registry)
+    assert len(rows) == 1
+    assert rows[0]["source_resolved"] == "1/2 (50%)"
+    assert rows[0]["target_resolved"] == "not bundled"
+
+
+def test_collect_crosswalks_without_registry_reads_not_bundled(mod: Any, tmp_path: Path) -> None:
+    mappings_dir = tmp_path / "mappings"
+    mappings_dir.mkdir()
+    payload = {
+        "source_framework": "a",
+        "target_framework": "b",
+        "mappings": [{"x": 1}],
+    }
+    (mappings_dir / "a_to_b.json").write_text(json.dumps(payload), encoding="utf-8")
+    # No registry: parse_crosswalk never receives a resolution, so both
+    # sides read "not bundled" without needing evidentia_core at all.
+    rows = mod.collect_crosswalks(mappings_dir)
+    assert len(rows) == 1
+    assert rows[0]["source_resolved"] == "not bundled"
+    assert rows[0]["target_resolved"] == "not bundled"
 
 
 # --- banner ----------------------------------------------------------------
@@ -316,3 +479,34 @@ def test_compare_flags_missing_page(mod: Any, tmp_path: Path) -> None:
     assert len(drift) == 1
     assert "docs/wiki/4-reference/cli.md" in drift[0]
     assert "missing" in drift[0]
+
+
+def test_generate_crosswalks_ignores_user_catalog_imports(
+    mod: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Bundled reference rows cannot be changed by an operator's local import."""
+    user_dir = tmp_path / "catalogs"
+    user_dir.mkdir()
+    monkeypatch.setenv("EVIDENTIA_CATALOG_DIR", str(user_dir))
+    baseline = mod.generate_all()[mod.PAGE_CROSSWALKS]
+    (user_dir / "soc2-tsc.json").write_text(
+        json.dumps(
+            {
+                "framework_id": "soc2-tsc",
+                "framework_name": "Imported fixture",
+                "version": "1",
+                "controls": [{"id": "LOCAL-1", "title": "Local control", "description": "Imported statement"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    from evidentia_core.catalogs.loader import load_any_catalog
+    from evidentia_core.catalogs.manifest import FrameworkManifest, load_manifest
+    from evidentia_core.catalogs.user_dir import save_user_manifest
+
+    bundled = load_manifest().get("soc2-tsc")
+    assert bundled is not None
+    imported = bundled.model_copy(update={"path": "soc2-tsc.json"})
+    save_user_manifest(FrameworkManifest(version=1, frameworks=[imported]), user_dir)
+    assert load_any_catalog("soc2-tsc").get_control("LOCAL-1") is not None
+    assert mod.generate_all()[mod.PAGE_CROSSWALKS] == baseline

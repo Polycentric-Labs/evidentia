@@ -205,7 +205,7 @@ Import a user-supplied catalog into the local user catalog directory.
 | `--license-terms` | Your statement about the content's source and licensing. |
 | `--force` | Overwrite an existing user-imported framework with the same ID. |
 | `--profile` | OSCAL profile JSON to resolve. Pair with --catalog. |
-| `--catalog` | OSCAL source catalog JSON (used with --profile). |
+| `--catalog` | Local OSCAL catalog JSON overriding the href of a profile with one import. |
 | `--tier` | Redistribution tier of imported content (A/B/C/D). Default C. |
 | `--catalog-dir` | Override user catalog directory (also via EVIDENTIA_CATALOG_DIR). |
 

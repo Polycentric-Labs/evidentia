@@ -58,39 +58,52 @@ changes require a major-version bump with a deprecation cycle.
 
 ### 1. Pydantic model fields
 
-**Package**: `evidentia_core.models.*`
+**Packages**: every module of `evidentia_core.models`, plus the
+model modules of `evidentia_core.ai_governance`, `evidentia_core.rbac`
+and `evidentia_core.retention` listed below.
 
 All exported model classes have stable field names and types.
 Adding optional fields (with defaults) is a minor-bump change.
 Renaming, removing, or changing the type of an existing field
 is a major-bump trigger.
 
-Frozen models (48+ classes across 18 modules; v0.10.0-confirmed):
+The table below enumerates the frozen modules; `scripts/check_public_surface.py`
+verifies every row (the module file is present, every listed symbol is
+defined) and that every `evidentia_core/models/*.py` module has a row.
 
 | Module | Key models |
 |--------|-----------|
-| `common.py` | `FrameworkMetadata`, `ControlMapping`, `EvidentiaModel` |
-| `control.py` | `Control`, `ControlFamily`, `ControlImplementation`, `ControlInventory`, `ControlStatus` |
-| `evidence.py` | `EvidenceArtifact`, `EvidenceBundle`, `EvidenceType`, `EvidenceSufficiency`. v0.9.5+ adds `EvidenceArtifact.version` / `lineage_id` / `predecessor_id` Optional fields + `new_version()` factory helper; these are now frozen. |
-| `finding.py` (v0.10.0+) | `SecurityFinding`, `Finding` (v0.10.1 alias — both names refer to the same class), `FindingStatus`, `ComplianceStatus`. Frozen following the v0.10.0 OCSF-alignment evolution — field changes are additive-only. v0.10.0 added the `compliance_status` + `remediation` Optional fields. v0.10.1 introduces `Finding` as the canonical name alongside `SecurityFinding`; the `SecurityFinding` alias is retained for ≥1 minor cycle per the deprecation policy. Target removal of the `SecurityFinding` alias: v1.0.0 (the earliest major bump). See [deprecation-calendar.md](deprecation-calendar.md). v0.10.5 Phase 10 adds the **deterministic-`id` derivation contract**: when a `SecurityFinding` is constructed with both `source_system` and `source_finding_id` present and no explicit `id=`, the `id` field derives as `uuid5(NAMESPACE_EVIDENTIA_FINDING, f"{source_system}\x00{source_finding_id}")`. The `NAMESPACE_EVIDENTIA_FINDING` UUID is pinned forever (`c81bcb44-9b41-5b18-9f10-72b3b9b4d3d6`). Two `collect()` calls against an unchanged source produce findings with byte-identical `id` values. Per-collector verdicts in [collector-idempotency-audit.md](collector-idempotency-audit.md). |
-| `gap.py` | `GapStatus`, `GapSeverity`, `GapAnalysisReport`, `ControlGap`, `Milestone`, `POAMState`. v0.9.5 adds `Milestone.owner` / `Milestone.reviewer` Optional fields; these are now frozen. |
-| `vendor.py` | `VendorProfile`, `VendorRiskTier` |
-| `vendor_finding.py` | `VendorFinding` |
-| `vendor_manifest.py` | `VendorManifest` |
-| `assessment.py` | `Assessment`, `AssessmentStatus` |
-| `claim.py` | `TraceClaim`, `ReasoningTrace` |
-| `oscal_profile.py` | `OSCALProfile` |
-| `catalog.py` | `CatalogEntry`, `CatalogControl`, `ControlCatalog`, `FrameworkMapping`, `CrosswalkDefinition`. v0.10.6 added the `CrosswalkDefinition.provenance` / `verification` / `verification_note` Optional fields (additive-only — backward-compatible, the eight pre-v0.10.6 crosswalks load unchanged). |
-| `tprm.py` | `TPRMAssessment`, `TPRMFinding` |
-| `governance.py` | `AISystem`, `AIRiskClassification`, `GovernanceRecord` |
+| `models/common.py` | `EvidentiaModel`, `ControlMapping`, `Severity`, `OLIRRelationship`, `NAMESPACE_EVIDENTIA_FINDING`. The callables `deterministic_finding_id()`, `new_id()`, `utc_now()` and `current_version()` are also frozen. |
+| `models/control.py` | `ControlImplementation`, `ControlInventory`, `ControlStatus` |
+| `models/evidence.py` | `EvidenceArtifact`, `EvidenceBundle`, `EvidenceType`, `EvidenceSufficiency`. v0.9.5+ adds `EvidenceArtifact.version` / `lineage_id` / `predecessor_id` optional fields plus the `new_version()` factory helper; these are now frozen. |
+| `models/finding.py` (v0.10.0+) | `SecurityFinding`, `Finding` (v0.10.1 alias: both names refer to the same class), `FindingStatus`, `ComplianceStatus`. Frozen following the v0.10.0 OCSF-alignment evolution. Field changes are additive-only. v0.10.0 added the `compliance_status` and `remediation` optional fields. v0.10.1 introduces `Finding` as the canonical name alongside `SecurityFinding`; the `SecurityFinding` alias is retained for at least 1 minor cycle per the deprecation policy. Target removal of the `SecurityFinding` alias: v1.0.0 (the earliest major bump). See [deprecation-calendar.md](deprecation-calendar.md). v0.10.5 Phase 10 adds the **deterministic-`id` derivation contract**: when a `SecurityFinding` is constructed with both `source_system` and `source_finding_id` present and no explicit `id=`, the `id` field derives as uuid5(NAMESPACE_EVIDENTIA_FINDING, f"{source_system}\x00{source_finding_id}") via `deterministic_finding_id()` in `models/common.py`. The NAMESPACE_EVIDENTIA_FINDING UUID (`c81bcb44-9b41-5b18-9f10-72b3b9b4d3d6`) is pinned forever. Two collect() calls against an unchanged source produce findings with byte-identical `id` values. Per-collector verdicts in [collector-idempotency-audit.md](collector-idempotency-audit.md). |
+| `models/gap.py` | `GapStatus`, `GapSeverity`, `GapAnalysisReport`, `ControlGap`, `Milestone`, `POAMState`, `ImplementationEffort`, `EfficiencyOpportunity`. v0.9.5 adds `Milestone.owner` / `Milestone.reviewer` optional fields; these are now frozen. |
+| `models/catalog.py` | `CatalogControl`, `ControlCatalog`, `FrameworkMapping`, `CrosswalkDefinition`, `RelationshipType`, `TextDepth`, `StatementRow`, `has_statement()`, `derive_text_depth()`. v0.10.6 added the `CrosswalkDefinition.provenance` / `verification` / `verification_note` optional fields (additive-only and backward-compatible: the eight pre-v0.10.6 crosswalks load unchanged). v0.13 adds the optional `withdrawn` field, set from the OSCAL `status` prop. |
+| `models/tprm.py` | `Vendor`, `VendorType`, `CriticalityTier`, `RegulatoryClassification`, `FourthParty`, `EvidenceRef` |
+| `models/fedramp_ksi.py` | `KsiEvidenceItem`, `KsiPersistenceCycle`, `KsiIndicatorEntry`, `FrrRequirementEntry`, `KsiStatusDocument` |
+| `models/gap_diff.py` | `GapDiffEntry`, `GapDiffSummary`, `GapDiff` |
+| `models/model_risk.py` | `Methodology`, `Provenance`, `Tier`, `ValidationStatus`, `ValidationSeverity`, `ModelInput`, `ModelOutput`, `ValidationFinding`, `ModelInventory` |
+| `models/obligation.py` | `PrivacyObligation`, `PrivacyRegime`, `ObligationCatalog` |
+| `models/risk.py` | `RiskLevel`, `LikelihoodRating`, `ImpactRating`, `RiskTreatment`, `TraceClaim`, `ReasoningTrace`, `RiskStatement`, `RiskRegister` |
+| `models/threat.py` | `AttackTechnique`, `TechniqueCatalog`, `Vulnerability`, `VulnerabilityCatalog` |
+| `models/traceability.py` | `ControlThreatMapping`, `TraceabilityMatrix` |
 | `ai_governance/classification.py` (v0.9.3+) | `AISystemDescriptor`, `AISystemClassification`, `EUAIActTier`, `NISTAIRMFFunction`, `AnnexIIIDomain` |
 | `ai_governance/registry.py` (v0.9.3+; v0.9.6 federal expansion) | `AISystemRegistryEntry`, `DeploymentStatus`, `ATOReference` (v0.9.6) |
 | `ai_governance/fips199.py` (v0.9.6+) | `FIPS199Categorization`, `FIPS199Impact` |
-| `ai_governance/omb_m_24_10.py` (v0.9.6+; **DEPRECATED v0.10.12** — OMB M-24-10 was rescinded 2025-04-03 by M-25-21) | `OMBImpactCategory`. Retained + still loads (no behaviour change, no runtime warning) per the deprecation policy; superseded by `omb_m_25_21`. |
-| `ai_governance/omb_m_25_21.py` (v0.10.12+) | `HighImpactDetermination`, `HighImpactBasis`, `OMBHighImpactAssessment`, `triggers_minimum_practices`, `crosswalk_from_legacy`. Models OMB M-25-21's single "high-impact AI" category (replaces the legacy rights-/safety-impacting split). |
+| `ai_governance/omb_m_24_10.py` (v0.9.6+; **DEPRECATED v0.10.12**: OMB M-24-10 was rescinded 2025-04-03 by M-25-21) | `OMBImpactCategory`. Retained and still loads (no behavior change, no runtime warning) per the deprecation policy; superseded by `omb_m_25_21`. |
+| `ai_governance/omb_m_25_21.py` (v0.10.12+) | `HighImpactDetermination`, `HighImpactBasis`, `OMBHighImpactAssessment`, `triggers_minimum_practices()`, `crosswalk_from_legacy()`. Models OMB M-25-21's single "high-impact AI" category (replaces the legacy rights-/safety-impacting split). |
 | `ai_governance/scr.py` (v0.9.6+) | `SCRForm`, `SCRCategory` |
-| `rbac/policy.py` (v0.9.5+) | `Role`, `RBACPolicy`. `check_permission(identity, action, policy)` + `load_policy_from_file(path)` callables also frozen. |
+| `rbac/policy.py` (v0.9.5+) | `Role`, `RBACPolicy`. `check_permission()` and `load_policy_from_file()` callables also frozen. |
 | `retention/metadata.py` (v0.7.11+) | `RetentionMetadata`, `RetentionClassification`, `RetentionLifecycleStage` |
+
+**How this table is checked**: a backticked CapWords or UPPER_SNAKE
+name (for example `EvidentiaModel` or `NAMESPACE_EVIDENTIA_FINDING`)
+is a class, enum, type alias or constant that must exist in the
+row's module. A backticked name followed by parentheses, such as
+`check_permission()`, is a callable that must exist in the module
+or on one of the classes the row lists. A backticked lowercase
+name with no parentheses is a field or a module reference, and is
+not checked.
 
 **Serialization guarantee**: JSON-serialized output of any frozen
 model at version N must be deserializable by version N+1 within
@@ -577,3 +590,6 @@ cycle.
 | **NORMATIVE** | **2026-09-06** | **v0.13 batch 5: the evidence store behind `conmon check` and `conmon health`.** Additive request fields `use_evidence_store` (default false) on `POST /api/conmon/check` and `POST /api/conmon/health`; `CheckRequest.entries` may be empty when the store is used (`minItems` 1 to 0); `CheckCycleRow.series` (nullable) carries the series verdict. The server reads its own configured store, never a client path. CLI: `--evidence-store` on both leaves, `--state-file` optional when it is given. Existing clients are unaffected. |
 | **NORMATIVE** | **2026-09-06** | **v0.13 batch 7 (V13-03): the Google Workspace collector and the Okta extension.** New `evidentia collect google-workspace` CLI leaf and `POST /api/collectors/google-workspace/collect` mirror the Vanta route's shape (base_url and customer normalization, per-field integer range validation, a token_env-named credentials_missing 503); `collectors_status()` gains a `google-workspace` entry. The collector's `GOOGLE_WORKSPACE_ACCESS_TOKEN` credential env var follows the same non-frozen convention as every other collector's token env var (`GITHUB_TOKEN`, `OKTA_API_TOKEN`, `VANTA_API_TOKEN`, etc.), none of which sit in the `EVIDENTIA_*`-scoped env-var public contract above. The Okta collector's findings now carry authored `control_mappings` instead of the discarding `control_ids` shim, gain a bounded retry on 429 and the transient 5xx class, real per-resource-type coverage counts, and a full status breakdown on the inventory finding; no Okta CLI, API or console surface changed. No removals, no renames, no breaking changes. See [designs/google-workspace-collector-design.md](designs/google-workspace-collector-design.md). |
 | **NORMATIVE** | **2026-09-07** | **v0.13 batch 8 (V13-14, V13-17).** §"Bundled catalog content" corrected: no `catalog pin` command exists or is scheduled; the documented escape hatch is `catalog import` (a user-imported catalog shadows the bundled one under the same id, `catalog where` shows which copy resolves). `SCRForm` (§1, `ai_governance/scr.py`) gains two optional fields (`certification_package_overview_uri`, `change_type_explanation`) and a `to_scn_document()` writer for the FedRAMP SCN-CSO-INF shape, validated by the new library helper `evidentia_core.fedramp.validate_scn_document` beside `validate_sdr_document`. Additive under §1: nothing renamed or removed; `to_oscal_scr_notification()` is unchanged. |
+| **NORMATIVE** | **2026-09-07** | **v0.13 batch 9 (V13-11, V13-13): section 1 corrected against the code and gated.** Seven section 1 rows named module files that do not exist anywhere under `packages/*/src` (`vendor.py`, `vendor_finding.py`, `vendor_manifest.py`, `assessment.py`, `claim.py`, `oscal_profile.py`, `governance.py`), sixteen listed class names had no definition (`FrameworkMetadata`, `Control`, `ControlFamily`, `CatalogEntry`, `TPRMAssessment`, `TPRMFinding`, `VendorProfile`, `VendorRiskTier`, `VendorFinding`, `VendorManifest`, `Assessment`, `AssessmentStatus`, `OSCALProfile`, `AISystem`, `AIRiskClassification`, `GovernanceRecord`), and seven real modules of `evidentia_core.models` had no row (`fedramp_ksi`, `gap_diff`, `model_risk`, `obligation`, `risk`, `threat`, `traceability`). The table now lists the real modules with paths relative to `evidentia_core/` and their public classes; callables are written with parentheses; `scripts/check_public_surface.py` imports every listed module, checks every listed symbol and callable, and requires a row for every `evidentia_core/models/*.py` module. **Not a breaking change**: no operator could have depended on a class that was never defined. Additive under section 1 in the same batch: `CatalogControl.withdrawn` (optional, default false, set from the OSCAL `status` prop), `TextDepth`, `StatementRow`, `has_statement()` and `derive_text_depth()` in `models/catalog.py`, the `text_depth` property on the four catalog models, and `FrameworkManifestEntry.text_depth` / `crosswalk_family`; `CrosswalkEngine` gains an optional `families` argument and consults a catalog's family on every lookup. Nothing renamed or removed. The bundled catalog content stays non-frozen; its truth is now gated by `scripts/check_catalog_truth.py`. CLI `catalog import` now validates direct JSON through the category-aware loader before registering it; malformed catalogs that previously passed import are rejected with exit 1. Validation completes before a `--force` replacement, preserving the existing catalog on rejection. |
+| **NORMATIVE** | **2026-09-08** | **v0.13 batch 9 import correction.** `evidentia_core.oscal.profile.resolve_profile()` adds the optional keyword-only `source_catalog_path` parameter; existing positional arguments retain their meaning. CLI `catalog import --profile ... --catalog ...` now uses the explicit local source instead of the profile href. An explicit override requires exactly one import; ambiguous multi-import overrides raise `ProfileResolutionError`. Relative override paths resolve from the caller working directory; hrefs still resolve from the profile directory. Profile resolution now includes top-level controls and recursively nested groups. API catalog imports validate a staged file before replacement; rejected invalid `force=true` imports preserve the installed catalog and manifest. No flags, payload fields, status codes or symbols were removed. |
+| **NORMATIVE** | **2026-09-08** | **Catalog API identifier validation.** Framework IDs must match the complete documented identifier pattern. Trailing newlines and Windows device basenames, including names followed by an extension, are rejected with 400 `invalid_id` on all platforms before filesystem use. All bundled framework IDs remain valid. Import destinations are resolved and checked against the user catalog directory; temporary cleanup failures do not hide an import result. Catalog and manifest publication remain separate filesystem writes. |

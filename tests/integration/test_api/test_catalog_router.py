@@ -17,12 +17,14 @@ crosswalks are read-only and shared.
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+import yaml
 from evidentia_core.rbac import RBACPolicy, Role
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
 # A small, valid Evidentia-format control catalog used for import tests.
@@ -109,6 +111,15 @@ class TestWhere:
         assert body["source"] == "bundled"
         assert body["path"]
         assert body["shadowed"] is False
+        # nist-csf-2.0 carries authoritative NIST subcategory text end to end.
+        assert body["text_depth"] == "full"
+
+    def test_headings_only_framework_reports_its_depth(self, cat_client: TestClient) -> None:
+        # iso-27001-2022 is a Tier C stub: public Annex A numbering and
+        # neutral titles only, no statement text.
+        r = cat_client.get("/api/catalog/where?framework_id=iso-27001-2022")
+        assert r.status_code == 200, r.text
+        assert r.json()["text_depth"] == "headings"
 
     def test_unknown_framework_returns_404(self, cat_client: TestClient) -> None:
         r = cat_client.get("/api/catalog/where?framework_id=does-not-exist")
@@ -139,6 +150,12 @@ class TestLicenseInfo:
         assert "tier" in body
         assert "license_required" in body
         assert "placeholder" in body
+        assert body["text_depth"] == "full"
+
+    def test_headings_only_framework_reports_its_depth(self, cat_client: TestClient) -> None:
+        r = cat_client.get("/api/catalog/license-info/iso-27001-2022")
+        assert r.status_code == 200, r.text
+        assert r.json()["text_depth"] == "headings"
 
     def test_unknown_framework_returns_404(self, cat_client: TestClient) -> None:
         r = cat_client.get("/api/catalog/license-info/does-not-exist")
@@ -158,20 +175,29 @@ class TestLicenseInfo:
 
 class TestCrosswalk:
     def test_returns_mappings_for_known_pair(self, cat_client: TestClient) -> None:
-        # GV.OC-01 in nist-csf-2.0 maps to AC-1 in nist-800-53-mod
-        # (bundled crosswalk nist-csf-2.0_to_nist-800-53-mod.json).
-        r = cat_client.get("/api/catalog/crosswalk?source=nist-csf-2.0&target=nist-800-53-mod&control=GV.OC-01")
+        # GV.OC-01 in nist-csf-2.0 maps to AC-1 in nist-800-53-rev5
+        # (bundled crosswalk nist-csf-2.0_to_nist-800-53-rev5.json).
+        r = cat_client.get("/api/catalog/crosswalk?source=nist-csf-2.0&target=nist-800-53-rev5&control=GV.OC-01")
         assert r.status_code == 200, r.text
         body = r.json()
         assert body["source"] == "nist-csf-2.0"
-        assert body["target"] == "nist-800-53-mod"
+        assert body["target"] == "nist-800-53-rev5"
         assert body["control"] == "GV.OC-01"
         assert body["total"] >= 1
         target_ids = {m["target_control_id"] for m in body["mappings"]}
         assert "AC-1" in target_ids
 
+    def test_baseline_member_resolves_through_its_family(self, cat_client: TestClient) -> None:
+        # The crosswalk is keyed on the full catalog; the moderate baseline is a
+        # member of that family, so the same lookup answers for it.
+        r = cat_client.get(
+            "/api/catalog/crosswalk?source=nist-csf-2.0&target=nist-800-53-rev5-moderate&control=GV.OC-01"
+        )
+        assert r.status_code == 200, r.text
+        assert "AC-1" in {m["target_control_id"] for m in r.json()["mappings"]}
+
     def test_no_mappings_returns_empty_envelope(self, cat_client: TestClient) -> None:
-        r = cat_client.get("/api/catalog/crosswalk?source=nist-csf-2.0&target=nist-800-53-mod&control=ZZ.NO-99")
+        r = cat_client.get("/api/catalog/crosswalk?source=nist-csf-2.0&target=nist-800-53-rev5&control=ZZ.NO-99")
         assert r.status_code == 200, r.text
         body = r.json()
         assert body["total"] == 0
@@ -202,11 +228,143 @@ class TestImport:
         assert detail["error"] == "already_exists"
         assert detail["resource"] == "user_catalog"
 
-    def test_duplicate_import_with_force_overwrites(self, cat_client: TestClient) -> None:
+    def test_duplicate_import_with_force_overwrites(self, cat_client: TestClient, tmp_path: Path) -> None:
         assert cat_client.post("/api/catalog/import", json=_import_payload()).status_code == 201
-        payload = {**_import_payload(), "force": True}
+        replacement = {**_SAMPLE_CATALOG, "version": "2.0", "framework_name": "Revised ACME Controls"}
+        payload = {**_import_payload(), "force": True, "content": json.dumps(replacement)}
         r = cat_client.post("/api/catalog/import", json=payload)
         assert r.status_code == 201, r.text
+        persisted = json.loads((tmp_path / "user-catalogs" / "acme-internal.json").read_text(encoding="utf-8"))
+        assert persisted == replacement
+        metadata = cat_client.get("/api/catalog/license-info/acme-internal")
+        assert metadata.status_code == 200, metadata.text
+        assert metadata.json()["name"] == "Revised ACME Controls"
+        manifest = yaml.safe_load((tmp_path / "user-catalogs" / "frameworks.yaml").read_text(encoding="utf-8"))
+        assert manifest["frameworks"][0]["version"] == "2.0"
+        assert not list((tmp_path / "user-catalogs").glob(".catalog-import-*"))
+
+    @pytest.mark.parametrize("existing", [False, True])
+    @pytest.mark.parametrize("fmt", ["json", "yaml"])
+    def test_invalid_catalog_preserves_installed_state(
+        self, cat_client: TestClient, tmp_path: Path, existing: bool, fmt: str
+    ) -> None:
+        user_dir = tmp_path / "user-catalogs"
+        catalog_path = user_dir / "acme-internal.json"
+        manifest_path = user_dir / "frameworks.yaml"
+        if existing:
+            assert cat_client.post("/api/catalog/import", json=_import_payload()).status_code == 201
+        catalog_before = catalog_path.read_bytes() if existing else None
+        manifest_before = manifest_path.read_bytes() if existing else None
+        invalid_catalog = {**_SAMPLE_CATALOG, "controls": "not a list"}
+        payload = {
+            **_import_payload(),
+            "content": json.dumps(invalid_catalog) if fmt == "json" else yaml.safe_dump(invalid_catalog),
+            "format": fmt,
+            "force": existing,
+        }
+
+        response = cat_client.post("/api/catalog/import", json=payload)
+
+        assert response.status_code == 400, response.text
+        assert response.json()["detail"]["error"] == "invalid_body"
+        if existing:
+            assert catalog_path.read_bytes() == catalog_before
+            assert manifest_path.read_bytes() == manifest_before
+            resolved = cat_client.get("/api/catalog/where?framework_id=acme-internal")
+            assert resolved.status_code == 200, resolved.text
+            assert resolved.json()["source"] == "user"
+        else:
+            assert not catalog_path.exists()
+            assert not manifest_path.exists()
+        assert not list(user_dir.glob(".catalog-import-*"))
+
+    @pytest.mark.parametrize("existing", [False, True])
+    def test_cleanup_failure_does_not_interrupt_replacement(
+        self, cat_client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, existing: bool
+    ) -> None:
+        if existing:
+            assert cat_client.post("/api/catalog/import", json=_import_payload()).status_code == 201
+        original_rmdir = os.rmdir
+        original_unlink = os.unlink
+        cleanup_roots: list[Path] = []
+        cleanup_manifests: list[bytes] = []
+        user_dir = tmp_path / "user-catalogs"
+        manifest_path = user_dir / "frameworks.yaml"
+
+        def deny_staging_cleanup(path: str | Path, *, dir_fd: int | None = None) -> None:
+            if Path(path).name.startswith(".catalog-import-"):
+                cleanup_roots.append(Path(path))
+                cleanup_manifests.append(manifest_path.read_bytes())
+                raise PermissionError("Synthetic temporary-directory cleanup failure")
+            original_rmdir(path, dir_fd=dir_fd)
+
+        def reject_directory_unlink(path: str | Path, *, dir_fd: int | None = None) -> None:
+            if Path(path).name.startswith(".catalog-import-"):
+                # POSIX reports a directory here, which can trigger recursive cleanup.
+                raise IsADirectoryError("Synthetic POSIX directory unlink failure")
+            original_unlink(path, dir_fd=dir_fd)
+
+        replacement = {**_SAMPLE_CATALOG, "version": "2.0"}
+        payload = {**_import_payload(), "force": existing, "content": json.dumps(replacement)}
+        with monkeypatch.context() as patch:
+            patch.setattr(os, "rmdir", deny_staging_cleanup)
+            patch.setattr(os, "unlink", reject_directory_unlink)
+            response = cat_client.post("/api/catalog/import", json=payload)
+
+        assert response.status_code == 201, response.text
+        assert cleanup_roots
+        assert all(path.parent == user_dir for path in cleanup_roots)
+        assert json.loads((user_dir / "acme-internal.json").read_text(encoding="utf-8")) == replacement
+        assert all(snapshot == manifest_path.read_bytes() for snapshot in cleanup_manifests)
+        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+        assert manifest["frameworks"][0]["version"] == "2.0"
+        assert manifest["frameworks"][0]["license"] == "Internal use only."
+        assert manifest["frameworks"][0]["text_depth"] == "full"
+        resolved = cat_client.get("/api/catalog/where?framework_id=acme-internal")
+        assert resolved.status_code == 200, resolved.text
+        assert resolved.json()["source"] == "user"
+        assert Path(resolved.json()["path"]) == user_dir / "acme-internal.json"
+        assert resolved.json()["text_depth"] == "full"
+
+    @pytest.mark.parametrize("existing", [False, True])
+    def test_cleanup_failure_does_not_hide_validation_error(
+        self, cat_client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, existing: bool
+    ) -> None:
+        if existing:
+            assert cat_client.post("/api/catalog/import", json=_import_payload()).status_code == 201
+        user_dir = tmp_path / "user-catalogs"
+        catalog_path = user_dir / "acme-internal.json"
+        manifest_path = user_dir / "frameworks.yaml"
+        catalog_before = catalog_path.read_bytes() if existing else None
+        manifest_before = manifest_path.read_bytes() if existing else None
+        original_rmdir = os.rmdir
+        original_unlink = os.unlink
+        cleanup_roots: list[Path] = []
+
+        def deny_staging_cleanup(path: str | Path, *, dir_fd: int | None = None) -> None:
+            if Path(path).name.startswith(".catalog-import-"):
+                cleanup_roots.append(Path(path))
+                raise PermissionError("Synthetic temporary-directory cleanup failure")
+            original_rmdir(path, dir_fd=dir_fd)
+
+        def reject_directory_unlink(path: str | Path, *, dir_fd: int | None = None) -> None:
+            if Path(path).name.startswith(".catalog-import-"):
+                raise IsADirectoryError("Synthetic POSIX directory unlink failure")
+            original_unlink(path, dir_fd=dir_fd)
+
+        invalid_catalog = {**_SAMPLE_CATALOG, "controls": "not a list"}
+        payload = {**_import_payload(), "force": existing, "content": json.dumps(invalid_catalog)}
+        with monkeypatch.context() as patch:
+            patch.setattr(os, "rmdir", deny_staging_cleanup)
+            patch.setattr(os, "unlink", reject_directory_unlink)
+            response = cat_client.post("/api/catalog/import", json=payload)
+
+        assert response.status_code == 400, response.text
+        assert response.json()["detail"]["error"] == "invalid_body"
+        assert cleanup_roots
+        assert all(path.parent == user_dir for path in cleanup_roots)
+        assert (catalog_path.read_bytes() if catalog_path.exists() else None) == catalog_before
+        assert (manifest_path.read_bytes() if manifest_path.exists() else None) == manifest_before
 
     def test_malformed_content_returns_400(self, cat_client: TestClient) -> None:
         payload = {
@@ -217,17 +375,93 @@ class TestImport:
         r = cat_client.post("/api/catalog/import", json=payload)
         assert r.status_code == 400, r.text
 
-    def test_path_traversal_framework_id_rejected(self, cat_client: TestClient) -> None:
+    @pytest.mark.parametrize(
+        "framework_id", ["../escape", "..\\escape", "/escape", "C:\\escape", "nested/name", "nested\\name", "name\n"]
+    )
+    def test_path_traversal_framework_id_rejected(self, cat_client: TestClient, framework_id: str) -> None:
         # A framework_id with path separators / .. must never reach the
         # filesystem helper — the router rejects the shape outright.
         payload = {
-            "framework_id": "../escape",
+            "framework_id": framework_id,
             "content": json.dumps(_SAMPLE_CATALOG),
             "format": "json",
         }
         r = cat_client.post("/api/catalog/import", json=payload)
         assert r.status_code == 400, r.text
         assert r.json()["detail"]["error"] == "invalid_id"
+
+    @pytest.mark.parametrize("basename", ["con", "prn", "aux", "nul", "com1", "com9", "lpt1", "lpt9"])
+    @pytest.mark.parametrize("suffix", ["", ".controls"])
+    def test_device_framework_id_rejected_without_filesystem_access(self, basename: str, suffix: str) -> None:
+        from evidentia_api.routers.catalog import _validate_framework_id
+
+        with pytest.raises(HTTPException) as error:
+            _validate_framework_id(basename + suffix)
+
+        assert error.value.status_code == 400
+        assert error.value.detail["error"] == "invalid_id"
+
+    @pytest.mark.parametrize(
+        "framework_id", ["console", "con-controls", "con_controls", "auxiliary", "com10", "lpt10", "x.con", "x.nul"]
+    )
+    def test_device_name_lookalikes_remain_valid(self, framework_id: str) -> None:
+        from evidentia_api.routers.catalog import _validate_framework_id
+
+        assert _validate_framework_id(framework_id) == framework_id
+
+    def test_bundled_framework_ids_remain_valid(self) -> None:
+        from evidentia_api.routers.catalog import _validate_framework_id
+        from evidentia_core.catalogs.manifest import load_manifest
+
+        manifest = load_manifest()
+        assert manifest.frameworks
+        for entry in manifest.frameworks:
+            assert _validate_framework_id(entry.id) == entry.id
+
+    @pytest.mark.parametrize("outside_directory", ["user-catalogs-sibling", "outside"])
+    def test_resolved_destination_escape_preserves_existing_files(
+        self, cat_client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, outside_directory: str
+    ) -> None:
+        from evidentia_api.routers import catalog as catalog_router
+
+        assert cat_client.post("/api/catalog/import", json=_import_payload()).status_code == 201
+        user_dir = tmp_path / "user-catalogs"
+        catalog_path = user_dir / "acme-internal.json"
+        manifest_path = user_dir / "frameworks.yaml"
+        catalog_before = catalog_path.read_bytes()
+        manifest_before = manifest_path.read_bytes()
+        outside_path = tmp_path / outside_directory / "acme-internal.json"
+        outside_path.parent.mkdir()
+        outside_path.write_bytes(b"Unrelated catalog bytes")
+        original_realpath = os.path.realpath
+
+        def resolve_candidate_outside(path: str | Path, *, strict: bool = False) -> str:
+            if Path(path) == catalog_path:
+                # Model the canonical target of an existing link without platform privileges.
+                return str(outside_path)
+            return original_realpath(path, strict=strict)
+
+        with monkeypatch.context() as patch:
+            patch.setattr(catalog_router.os.path, "realpath", resolve_candidate_outside)
+            response = cat_client.post("/api/catalog/import", json={**_import_payload(), "force": True})
+
+        assert response.status_code == 400, response.text
+        assert response.json()["detail"]["error"] == "invalid_id"
+        assert outside_path.read_bytes() == b"Unrelated catalog bytes"
+        assert catalog_path.read_bytes() == catalog_before
+        assert manifest_path.read_bytes() == manifest_before
+        assert not list(user_dir.glob(".catalog-import-*"))
+
+    def test_import_sets_text_depth_on_manifest_entry(self, cat_client: TestClient) -> None:
+        # _SAMPLE_CATALOG's one control carries a real description, distinct
+        # from its title, so the imported entry derives to "full".
+        r = cat_client.post("/api/catalog/import", json=_import_payload())
+        assert r.status_code == 201, r.text
+        w = cat_client.get("/api/catalog/where?framework_id=acme-internal")
+        assert w.status_code == 200, w.text
+        text_depth = w.json()["text_depth"]
+        assert isinstance(text_depth, str)
+        assert text_depth == "full"
 
     def test_content_framework_id_mismatch_uses_path_id(self, cat_client: TestClient) -> None:
         # The path/body framework_id is authoritative for where the file

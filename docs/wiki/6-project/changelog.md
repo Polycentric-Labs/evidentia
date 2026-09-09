@@ -84,9 +84,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The weekly `fedramp-schema-watch` sentinel also probes the four profiles at the
   republisher: a missing profile or a changed membership is MAJOR, metadata-only churn is a
   NOTICE.
+- **Text depth on every catalog surface (V13-13).** Each bundled catalog now carries a
+  derived `text_depth` of `full`, `partial` or `headings`, computed from its entries by
+  `evidentia_core.models.catalog.derive_text_depth` (an entry counts when its description
+  is non-empty, differs from its title and is not a placeholder; withdrawn controls are
+  left out) and never declared. It appears in `frameworks.yaml`, in `evidentia catalog
+  list` (new `Text` column), `catalog where` and `catalog license-info`, in `GET
+  /api/frameworks`, `GET /api/catalog/where` and `GET /api/catalog/license-info/{id}`,
+  and in the generated catalogs reference page; imported catalogs get it at import time.
+  The redistribution tier keeps its meaning (what may be redistributed) and no longer
+  implies that control text is present: 26 Tier A and 2 Tier D control catalogs and the
+  15 state-privacy obligation catalogs ship control numbering and titles only, and every
+  surface now says so.
+- **Crosswalk families.** `frameworks.yaml` gains `crosswalk_family`: the NIST SP 800-53
+  Rev 5 and FedRAMP Rev 5 baselines (and the legacy 16-control sample) belong to
+  `nist-800-53-rev5`; the three OSPS Baseline maturity levels belong to `osps-baseline`.
+  `CrosswalkEngine` consults a member's own key and its family's on every lookup, so a
+  gap found against a baseline receives the cross-framework value of the crosswalks keyed
+  on the parent catalog. On the bundled sample inventory, 112 of the 277 gaps against
+  `nist-800-53-rev5-moderate` now carry cross-framework value; through v0.12 the count was
+  zero, so the priority formula's cross-framework bonus never fired on the README
+  quickstart path. `evidentia_core.catalogs.crosswalk.resolve_crosswalk` and
+  `FrameworkRegistry.control_ids_for` measure how many of a crosswalk's ids exist in the
+  bundled catalogs.
+- **`CatalogControl.withdrawn`**, set from the OSCAL `status` prop. NIST SP 800-53 Rev 5
+  carries 182 withdrawn entries (24 controls and 158 enhancements).
+- **`scripts/check_catalog_truth.py`**, in the `consistency` gate scope and as pre-push
+  check 19: the manifest's text depth equals the derivation for every catalog, families
+  are well formed, every crosswalk names a bundled catalog, a family or one of three
+  declared external targets, every bundled side resolves 100 percent, Tier C entries are
+  placeholders with headings only, and the summary block in the wiki's catalog inventory
+  page equals what the script computes. `--report` prints the per-catalog and
+  per-crosswalk truth tables that seed the v1.0 catalog provenance report.
+- **Section 1 of `api-stability.md` is gated (V13-11).** `scripts/check_public_surface.py`
+  parses the frozen-model table, imports every listed module, checks that every listed
+  class and callable exists, and requires a row for every `evidentia_core/models/*.py`
+  module.
 
 ### Changed
 
+- **Direct JSON catalog imports are validated before registration.** `evidentia catalog
+  import` now loads the supplied catalog through the category-aware loader to derive its
+  text depth. Malformed catalogs that previously passed import are rejected with exit 1;
+  rejection leaves the existing catalog and manifest intact, including with `--force`.
 - **Whole-repository `ruff format`.** `ruff format --check .` had failed on `main` for
   many releases while `ruff check .` stayed clean: 500 of 989 files still carried
   hand-wrapped lines narrower than the configured 120 columns, and neither CI nor the
@@ -128,6 +168,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are unchanged and now covered by a component test. This is the single-dependency major
   bump the v0.12 isolation rule reserves for a scheduled migration, and the Dependabot
   `ignore` rule that held the major back is removed with it.
+- **Withdrawn controls are no longer gaps.** A gap analysis against the full
+  `nist-800-53-rev5` catalog reported all 182 withdrawn entries (AC-13, AC-2(10) and the
+  rest) as CRITICAL missing gaps; the analyzer now skips them. The baseline catalogs never
+  contained them, so their results are unchanged.
+- **The four legacy crosswalks keyed on the 16-control sample are re-keyed to the full
+  catalog** and renamed: `nist-csf-2.0_to_nist-800-53-rev5.json`,
+  `iso-27001-2022_to_nist-800-53-rev5.json`, `nist-800-53-rev5_to_hipaa-security.json` and
+  `nist-800-53-rev5_to_soc2-tsc.json` (whose name was already right). Keyed on
+  `nist-800-53-mod`, between half and 61 percent of the rows in three of them named
+  controls outside the sample and resolved to nothing; every row now resolves, and the
+  sample itself still answers through the family. `scripts/catalogs/gen_crosswalks.py`
+  regenerates all six hand-authored crosswalks byte for byte and gains `--check`.
+- **The five OSPS Baseline crosswalks are keyed on the `osps-baseline` family at
+  assessment-requirement level.** They declared a source framework
+  (`osps-baseline-2026.02.19`) that was not a catalog and carried rows at control level
+  (`OSPS-AC-01`) while the bundled catalogs hold assessment requirements
+  (`OSPS-AC-01.01`), so no row ever resolved. Each requirement now inherits its parent
+  control's upstream guideline mappings; six upstream target identifiers with
+  transcription errors (`ID.AM.01`, `PR.A-02`, `PR.A-05`, `P0.3.1`, `P0.4.2`, `RV 2.2`)
+  are normalized and named in their row notes; SSDF practice-level references are
+  expanded to the practice's tasks. Provenance and the `self-attested-via-upstream`
+  posture are unchanged; the generated crosswalks reference page carries the row counts
+  and the resolution of every crosswalk.
+- **The ISO/IEC 42001:2023 stub uses the published Annex A numbering.** It shipped 38
+  sequential placeholders (`A.1` to `A.38`); it now carries the 38 Annex A control
+  identifiers under their nine objectives (A.2 to A.10), with neutral titles. The NIST AI
+  RMF crosswalk onto it, whose 23 rows targeted identifiers of the form `ISO42001.A.6.1`
+  that matched nothing, is re-targeted onto the real identifiers (28 rows, `verification:
+  self-attested`, confidence reflecting title-level correspondence only).
+- **Catalog documentation matches the files.** The wiki's catalog inventory, the catalogs
+  and crosswalks reference pages, the catalog and crosswalk concept pages, the contributor
+  guide and the positioning document describe the tier as a redistribution posture and
+  report text depth separately; the counts come from the manifest (97 catalogs: 51 A, 4 B,
+  22 C, 20 D; 32 with full text, 65 with headings only). Links to a never-committed
+  `ATTRIBUTION.md` now point at the contributor guide and the manifest's license columns.
+  The OCC and FRB designators in the README and the positioning document read `OCC
+  Bulletin 2026-13 / FRB SR 26-2`, as the catalog does.
 
 ### Removed
 
@@ -142,6 +219,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **UI build dependency security.** The `js-yaml` override now requires at least
+  4.3.2, fixing [CVE-2026-84375](https://github.com/nodeca/js-yaml/security/advisories/GHSA-2883-xcg3-v3hh)
+  in development tooling. Frontend CI, release builds and the dev container use
+  Node 24, matching the supported engine range of the current `jsdom` dependency.
+- **Catalog import preservation and OSCAL source selection.** The API validates
+  JSON and YAML imports in a temporary file before replacing an installed catalog,
+  preserving the existing catalog and manifest when validation rejects a forced
+  replacement. CLI profile imports now honor `--catalog`; the resolver includes
+  top-level controls and recursively nested groups. `resolve_profile()` gains an
+  optional keyword-only `source_catalog_path` override for a single-import profile.
+  An explicit override with multiple imports fails because its source is ambiguous.
+  Direct CLI and API imports tolerate denied temporary-directory removal without
+  recursive cleanup on Python 3.12 POSIX systems. API framework IDs reject trailing
+  newlines and Windows device basenames, and resolved destinations must remain
+  inside the user catalog directory.
+- **Crosswalk lookup cost.** Mapping lookups use a control-ID index instead of
+  scanning the whole graph for every gap. Mapping order, duplicate rows, incremental
+  loads and returned report content are preserved.
 - **Published schema and runtime agree on non-blank strings.** `NonBlankStr`
   (`evidentia_core.models.common`) carries `minLength: 1` plus the full Python
   whitespace class, and every stripping core model uses it, so a schema-driven client
@@ -163,6 +258,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   catalog copy assessed against with `catalog import`, which shadows the bundled catalog
   under the same id, and confirm with `catalog where`. The verb is not built (v0.13 plan,
   ratified answer 8).
+- **`api-stability.md` section 1 described models that never existed (V13-11).** Seven
+  rows named module files with no definition anywhere under `packages/*/src`
+  (`vendor.py`, `vendor_finding.py`, `vendor_manifest.py`, `assessment.py`, `claim.py`,
+  `oscal_profile.py`, `governance.py`) and sixteen class names had no definition, while
+  seven real model modules (`fedramp_ksi`, `gap_diff`, `model_risk`, `obligation`,
+  `risk`, `threat`, `traceability`) had no row. The table now lists the real modules and
+  classes with paths relative to `evidentia_core/`, and the gate above keeps it that way.
+  Not a breaking change: no operator could have depended on a class that did not exist.
 
 ## [0.12.1] - 2026-09-05
 

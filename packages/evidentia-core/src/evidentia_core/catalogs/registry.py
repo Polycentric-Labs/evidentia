@@ -15,13 +15,13 @@ import logging
 from pathlib import Path
 
 from evidentia_core.catalogs.crosswalk import CrosswalkEngine
-from evidentia_core.catalogs.loader import load_catalog
+from evidentia_core.catalogs.loader import load_any_catalog, load_catalog
 from evidentia_core.catalogs.manifest import (
     FrameworkManifest,
     FrameworkManifestEntry,
     load_manifest,
 )
-from evidentia_core.models.catalog import CatalogControl, ControlCatalog
+from evidentia_core.models.catalog import CatalogControl, ControlCatalog, _normalize_control_id
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +54,39 @@ def _build_framework_metadata(
 FRAMEWORK_METADATA: dict[str, dict[str, str]] = _build_framework_metadata(load_manifest())
 
 
+def _crosswalk_families(manifest: FrameworkManifest) -> dict[str, str]:
+    """Member framework id -> family id, from the manifest's ``crosswalk_family`` column."""
+    return {fw.id: fw.crosswalk_family for fw in manifest.frameworks if fw.crosswalk_family}
+
+
+def _catalog_entry_ids(catalog: object) -> frozenset[str]:
+    """Every entry id of a loaded catalog, normalized the way the catalog index is.
+
+    Control catalogs contribute every control and enhancement; technique,
+    vulnerability and obligation catalogs contribute their entries' ids.
+    """
+    ids: set[str] = set()
+    if isinstance(catalog, ControlCatalog):
+
+        def _walk(ctrl: CatalogControl) -> None:
+            ids.add(_normalize_control_id(ctrl.id))
+            for enhancement in ctrl.enhancements:
+                _walk(enhancement)
+
+        for control in catalog.controls:
+            _walk(control)
+        return frozenset(ids)
+    for attr in ("obligations", "techniques", "vulnerabilities"):
+        entries = getattr(catalog, attr, None)
+        if entries is None:
+            continue
+        for entry in entries:
+            raw = getattr(entry, "id", None) or getattr(entry, "cve_id", None)
+            if raw:
+                ids.add(_normalize_control_id(str(raw)))
+    return frozenset(ids)
+
+
 class FrameworkRegistry:
     """Central registry for framework catalogs and cross-framework mappings.
 
@@ -70,8 +103,12 @@ class FrameworkRegistry:
         self._data_dir = data_dir or Path(__file__).parent / "data"
         self._catalogs: dict[str, ControlCatalog] = {}
         self._manifest = load_manifest()
-        self._crosswalk_engine = CrosswalkEngine(mappings_dir=self._data_dir / "mappings")
+        self._crosswalk_engine = CrosswalkEngine(
+            mappings_dir=self._data_dir / "mappings",
+            families=_crosswalk_families(self._manifest),
+        )
         self._crosswalk_loaded = False
+        self._entry_ids: dict[str, frozenset[str]] = {}
 
     @classmethod
     def get_instance(cls) -> FrameworkRegistry:
@@ -122,9 +159,36 @@ class FrameworkRegistry:
                 "category": e.category,
                 "placeholder": str(e.placeholder).lower(),
                 "license_required": str(e.license_required).lower(),
+                "text_depth": e.text_depth or "",
             }
             for e in entries
         ]
+
+    def family_members(self, family_id: str) -> list[str]:
+        """Bundled framework ids whose ``crosswalk_family`` is ``family_id``."""
+        return [fw.id for fw in self._manifest.frameworks if fw.crosswalk_family == family_id]
+
+    def control_ids_for(self, framework_id: str) -> frozenset[str] | None:
+        """Normalized entry ids for a bundled framework or a crosswalk family.
+
+        A bundled catalog of any category returns its own ids; a family id
+        returns the union over its members; anything else returns ``None``,
+        which callers read as "not bundled, nothing to resolve against".
+        """
+        if self._manifest.get(framework_id) is not None:
+            return self._ids_of(framework_id)
+        members = self.family_members(framework_id)
+        if not members:
+            return None
+        union: set[str] = set()
+        for member in members:
+            union |= self._ids_of(member)
+        return frozenset(union)
+
+    def _ids_of(self, framework_id: str) -> frozenset[str]:
+        if framework_id not in self._entry_ids:
+            self._entry_ids[framework_id] = _catalog_entry_ids(load_any_catalog(framework_id))
+        return self._entry_ids[framework_id]
 
     def get_catalog(self, framework_id: str) -> ControlCatalog:
         """Get a catalog by framework ID (cached)."""
