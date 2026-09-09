@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from _generators import emit_control_catalog, make_stub_control  # type: ignore[import-not-found]
 
-
 # ---------------------------------------------------------------------------
 # ISO/IEC 27001:2022 Annex A — 93 controls across 4 themes
 # ---------------------------------------------------------------------------
@@ -132,7 +131,10 @@ emit_control_catalog(
     tier="C",
     placeholder=True,
     license_required=True,
-    license_terms="© ISO/IEC. Control text is copyrighted. Ships as a stub with public Annex A numbering and neutral control titles. Purchase the standard from ISO and import your licensed copy via `evidentia catalog import`.",
+    license_terms=(
+        "© ISO/IEC. Control text is copyrighted. Ships as a stub with public Annex A numbering and neutral "
+        "control titles. Purchase the standard from ISO and import your licensed copy via `evidentia catalog import`."
+    ),
     license_url=ISO_27001_URL,
 )
 
@@ -151,38 +153,17 @@ emit_control_catalog(
     tier="C",
     placeholder=True,
     license_required=True,
-    license_terms="© ISO/IEC. Control text and implementation guidance are copyrighted. Same 93 controls as ISO 27001:2022 Annex A, but with detailed implementation guidance (ships as stub — purchase from ISO).",
+    license_terms=(
+        "© ISO/IEC. Control text and implementation guidance are copyrighted. Same 93 controls as "
+        "ISO 27001:2022 Annex A, but with detailed implementation guidance (ships as stub \u2014 purchase from ISO)."
+    ),
     license_url="https://www.iso.org/standard/27002",
 )
 
 
 # ---------------------------------------------------------------------------
-# ISO/IEC 27017:2015 — Cloud services
-# ---------------------------------------------------------------------------
-
-ISO_27017 = [
-    ("CLD.6.3.1", "Shared roles and responsibilities within a cloud computing environment", "Cloud-specific enhancements"),
-    ("CLD.8.1.5", "Removal of cloud service customer assets", "Cloud-specific enhancements"),
-    ("CLD.9.5.1", "Segregation in virtual computing environments", "Cloud-specific enhancements"),
-    ("CLD.9.5.2", "Virtual machine hardening", "Cloud-specific enhancements"),
-    ("CLD.12.1.5", "Administrator's operational security", "Cloud-specific enhancements"),
-    ("CLD.12.4.5", "Monitoring of cloud services", "Cloud-specific enhancements"),
-    ("CLD.13.1.4", "Alignment of security management for virtual and physical networks", "Cloud-specific enhancements"),
-]
-
-emit_control_catalog(
-    framework_id="iso-27017-2015",
-    framework_name="ISO/IEC 27017:2015 — Cloud services",
-    version="2015",
-    source="ISO/IEC — ISO/IEC 27017:2015",
-    families=["Cloud-specific enhancements"],
-    controls=[make_stub_control(c, t, f, "https://www.iso.org/standard/43757") for c, t, f in ISO_27017],
-    tier="C",
-    placeholder=True,
-    license_required=True,
-    license_terms="© ISO/IEC. Control text copyrighted.",
-    license_url="https://www.iso.org/standard/43757",
-)
+# ISO/IEC 27017:2015 is maintained in stubs/iso-27017-2015.yaml.
+# Do not generate a competing JSON catalog for the same framework id.
 
 
 # ---------------------------------------------------------------------------
@@ -196,7 +177,12 @@ emit_control_catalog(
     source="ISO/IEC — ISO/IEC 27018:2019",
     families=["PII-specific extensions"],
     controls=[
-        make_stub_control(f"A.{i+1}", f"ISO 27018 control A.{i+1}", "PII-specific extensions", "https://www.iso.org/standard/76559")
+        make_stub_control(
+            f"A.{i + 1}",
+            f"ISO 27018 control A.{i + 1}",
+            "PII-specific extensions",
+            "https://www.iso.org/standard/76559",
+        )
         for i in range(25)
     ],
     tier="C",
@@ -218,10 +204,21 @@ emit_control_catalog(
     source="ISO/IEC — ISO/IEC 27701:2019",
     families=["Annex A — PII Controllers", "Annex B — PII Processors"],
     controls=[
-        make_stub_control(f"A.7.{i+1}", f"PII controller control A.7.{i+1}", "Annex A — PII Controllers", "https://www.iso.org/standard/71670")
+        make_stub_control(
+            f"A.7.{i + 1}",
+            f"PII controller control A.7.{i + 1}",
+            "Annex A \u2014 PII Controllers",
+            "https://www.iso.org/standard/71670",
+        )
         for i in range(31)
-    ] + [
-        make_stub_control(f"B.8.{i+1}", f"PII processor control B.8.{i+1}", "Annex B — PII Processors", "https://www.iso.org/standard/71670")
+    ]
+    + [
+        make_stub_control(
+            f"B.8.{i + 1}",
+            f"PII processor control B.8.{i + 1}",
+            "Annex B \u2014 PII Processors",
+            "https://www.iso.org/standard/71670",
+        )
         for i in range(18)
     ],
     tier="C",
@@ -236,20 +233,80 @@ emit_control_catalog(
 # ISO/IEC 42001:2023 — AI Management System
 # ---------------------------------------------------------------------------
 
+# Annex A of ISO/IEC 42001:2023 has 38 controls under nine objectives, A.2
+# through A.10 (the first entry under each objective is the objective
+# statement itself, so control numbering within each objective starts at
+# .2). These are the published Annex A control identifiers and neutral
+# titles, not sequential placeholders: verified against two independent
+# public summaries on 2026-09-07.
+ISO_42001_URL = "https://www.iso.org/standard/81230"
+
+ISO_42001_ANNEX_A = [
+    ("A.2.2", "AI policy", "A.2 Policies related to AI"),
+    ("A.2.3", "Alignment with other organizational policies", "A.2 Policies related to AI"),
+    ("A.2.4", "Review of the AI policy", "A.2 Policies related to AI"),
+    ("A.3.2", "AI roles and responsibilities", "A.3 Internal organization"),
+    ("A.3.3", "Reporting of concerns", "A.3 Internal organization"),
+    ("A.4.2", "Resource documentation", "A.4 Resources for AI systems"),
+    ("A.4.3", "Data resources", "A.4 Resources for AI systems"),
+    ("A.4.4", "Tooling resources", "A.4 Resources for AI systems"),
+    ("A.4.5", "System and computing resources", "A.4 Resources for AI systems"),
+    ("A.4.6", "Human resources", "A.4 Resources for AI systems"),
+    ("A.5.2", "AI system impact assessment process", "A.5 Assessing impacts of AI systems"),
+    ("A.5.3", "Documentation of AI system impact assessments", "A.5 Assessing impacts of AI systems"),
+    ("A.5.4", "Assessing AI system impact on individuals or groups", "A.5 Assessing impacts of AI systems"),
+    ("A.5.5", "Assessing societal impacts of AI systems", "A.5 Assessing impacts of AI systems"),
+    ("A.6.1.2", "Objectives for responsible development of AI systems", "A.6 AI system life cycle"),
+    ("A.6.1.3", "Processes for responsible design and development of AI systems", "A.6 AI system life cycle"),
+    ("A.6.2.2", "AI system requirements and specification", "A.6 AI system life cycle"),
+    ("A.6.2.3", "Documentation of AI system design and development", "A.6 AI system life cycle"),
+    ("A.6.2.4", "AI system verification and validation", "A.6 AI system life cycle"),
+    ("A.6.2.5", "AI system deployment", "A.6 AI system life cycle"),
+    ("A.6.2.6", "AI system operation and monitoring", "A.6 AI system life cycle"),
+    ("A.6.2.7", "AI system technical documentation", "A.6 AI system life cycle"),
+    ("A.6.2.8", "AI system recording of event logs", "A.6 AI system life cycle"),
+    ("A.7.2", "Data for development and enhancement of AI systems", "A.7 Data for AI systems"),
+    ("A.7.3", "Acquisition of data", "A.7 Data for AI systems"),
+    ("A.7.4", "Quality of data for AI systems", "A.7 Data for AI systems"),
+    ("A.7.5", "Data provenance", "A.7 Data for AI systems"),
+    ("A.7.6", "Data preparation", "A.7 Data for AI systems"),
+    ("A.8.2", "System documentation and information for users", "A.8 Information for interested parties of AI systems"),
+    ("A.8.3", "External reporting", "A.8 Information for interested parties of AI systems"),
+    ("A.8.4", "Communication of incidents", "A.8 Information for interested parties of AI systems"),
+    ("A.8.5", "Information for interested parties", "A.8 Information for interested parties of AI systems"),
+    ("A.9.2", "Processes for responsible use of AI systems", "A.9 Use of AI systems"),
+    ("A.9.3", "Objectives for responsible use of AI systems", "A.9 Use of AI systems"),
+    ("A.9.4", "Intended use of the AI system", "A.9 Use of AI systems"),
+    ("A.10.2", "Allocating responsibilities", "A.10 Third-party and customer relationships"),
+    ("A.10.3", "Suppliers", "A.10 Third-party and customer relationships"),
+    ("A.10.4", "Customers", "A.10 Third-party and customer relationships"),
+]
+
 emit_control_catalog(
     framework_id="iso-42001-2023",
     framework_name="ISO/IEC 42001:2023 — AI Management System",
     version="2023",
     source="ISO/IEC — ISO/IEC 42001:2023",
-    families=["Annex A — AI management controls"],
-    controls=[
-        make_stub_control(f"A.{i+1}", f"AI management control A.{i+1}", "Annex A — AI management controls", "https://www.iso.org/standard/81230")
-        for i in range(38)
+    families=[
+        "A.2 Policies related to AI",
+        "A.3 Internal organization",
+        "A.4 Resources for AI systems",
+        "A.5 Assessing impacts of AI systems",
+        "A.6 AI system life cycle",
+        "A.7 Data for AI systems",
+        "A.8 Information for interested parties of AI systems",
+        "A.9 Use of AI systems",
+        "A.10 Third-party and customer relationships",
     ],
+    controls=[make_stub_control(c, t, f, ISO_42001_URL) for c, t, f in ISO_42001_ANNEX_A],
     tier="C",
     placeholder=True,
     license_required=True,
-    license_terms="© ISO/IEC.",
+    license_terms=(
+        "© ISO/IEC. Control text is copyrighted. Ships as a stub with public Annex A numbering and "
+        "neutral control titles. Purchase the standard from ISO and import your licensed copy via "
+        "`evidentia catalog import`."
+    ),
     license_url="https://www.iso.org/standard/81230",
 )
 
@@ -265,7 +322,12 @@ emit_control_catalog(
     source="ISO — ISO 22301:2019",
     families=["Clause 4-10 BCMS requirements"],
     controls=[
-        make_stub_control(f"Clause.{i+4}", f"BCMS clause {i+4}", "Clause 4-10 BCMS requirements", "https://www.iso.org/standard/75106")
+        make_stub_control(
+            f"Clause.{i + 4}",
+            f"BCMS clause {i + 4}",
+            "Clause 4-10 BCMS requirements",
+            "https://www.iso.org/standard/75106",
+        )
         for i in range(7)
     ],
     tier="C",
@@ -286,15 +348,31 @@ PCI_DSS_4 = [
     ("1", "Install and Maintain Network Security Controls", "Build and Maintain a Secure Network"),
     ("2", "Apply Secure Configurations to All System Components", "Build and Maintain a Secure Network"),
     ("3", "Protect Stored Account Data", "Protect Account Data"),
-    ("4", "Protect Cardholder Data with Strong Cryptography During Transmission Over Open, Public Networks", "Protect Account Data"),
+    (
+        "4",
+        "Protect Cardholder Data with Strong Cryptography During Transmission Over Open, Public Networks",
+        "Protect Account Data",
+    ),
     ("5", "Protect All Systems and Networks from Malicious Software", "Maintain a Vulnerability Management Program"),
     ("6", "Develop and Maintain Secure Systems and Software", "Maintain a Vulnerability Management Program"),
-    ("7", "Restrict Access to System Components and Cardholder Data by Business Need to Know", "Implement Strong Access Control Measures"),
+    (
+        "7",
+        "Restrict Access to System Components and Cardholder Data by Business Need to Know",
+        "Implement Strong Access Control Measures",
+    ),
     ("8", "Identify Users and Authenticate Access to System Components", "Implement Strong Access Control Measures"),
     ("9", "Restrict Physical Access to Cardholder Data", "Implement Strong Access Control Measures"),
-    ("10", "Log and Monitor All Access to System Components and Cardholder Data", "Regularly Monitor and Test Networks"),
+    (
+        "10",
+        "Log and Monitor All Access to System Components and Cardholder Data",
+        "Regularly Monitor and Test Networks",
+    ),
     ("11", "Test Security of Systems and Networks Regularly", "Regularly Monitor and Test Networks"),
-    ("12", "Support Information Security with Organizational Policies and Programs", "Maintain an Information Security Policy"),
+    (
+        "12",
+        "Support Information Security with Organizational Policies and Programs",
+        "Maintain an Information Security Policy",
+    ),
 ]
 
 emit_control_catalog(
@@ -302,12 +380,22 @@ emit_control_catalog(
     framework_name="PCI DSS v4.0.1",
     version="4.0.1 (June 2024)",
     source="PCI Security Standards Council",
-    families=["Build and Maintain a Secure Network", "Protect Account Data", "Maintain a Vulnerability Management Program", "Implement Strong Access Control Measures", "Regularly Monitor and Test Networks", "Maintain an Information Security Policy"],
+    families=[
+        "Build and Maintain a Secure Network",
+        "Protect Account Data",
+        "Maintain a Vulnerability Management Program",
+        "Implement Strong Access Control Measures",
+        "Regularly Monitor and Test Networks",
+        "Maintain an Information Security Policy",
+    ],
     controls=[make_stub_control(c, t, f, PCI_URL) for c, t, f in PCI_DSS_4],
     tier="C",
     placeholder=True,
     license_required=True,
-    license_terms="© PCI Security Standards Council. PCI DSS text is copyrighted. Download the standard (free registration required) from PCI SSC and import your licensed copy.",
+    license_terms=(
+        "© PCI Security Standards Council. PCI DSS text is copyrighted. Download the standard "
+        "(free registration required) from PCI SSC and import your licensed copy."
+    ),
     license_url=PCI_URL,
 )
 
@@ -346,8 +434,8 @@ emit_control_catalog(
     families=[f"{n}. {d}" for n, d in HITRUST_DOMAINS],
     controls=[
         make_stub_control(
-            f"{num}.{chr(ord('a')+i)}",
-            f"HITRUST CSF objective {num}.{chr(ord('a')+i)}",
+            f"{num}.{chr(ord('a') + i)}",
+            f"HITRUST CSF objective {num}.{chr(ord('a') + i)}",
             f"{num}. {domain}",
             "https://hitrustalliance.net/csf",
         )
@@ -449,7 +537,11 @@ SWIFT_CSCF = [
     ("1.2", "Operating System Privileged Account Control", "1. Restrict Internet Access and Protect Critical Systems"),
     ("1.3", "Virtualisation or Cloud Platform Protection", "1. Restrict Internet Access and Protect Critical Systems"),
     ("1.4", "Restriction of Internet Access", "1. Restrict Internet Access and Protect Critical Systems"),
-    ("1.5", "Customer Environment Protection (A4 architecture)", "1. Restrict Internet Access and Protect Critical Systems"),
+    (
+        "1.5",
+        "Customer Environment Protection (A4 architecture)",
+        "1. Restrict Internet Access and Protect Critical Systems",
+    ),
     ("2.1", "Internal Data Flow Security", "2. Reduce Attack Surface and Vulnerabilities"),
     ("2.2", "Security Updates", "2. Reduce Attack Surface and Vulnerabilities"),
     ("2.3", "System Hardening", "2. Reduce Attack Surface and Vulnerabilities"),
@@ -486,7 +578,10 @@ emit_control_catalog(
     version="v2024",
     source="SWIFT",
     families=sorted({f for _, _, f in SWIFT_CSCF}),
-    controls=[make_stub_control(c, t, f, "https://www.swift.com/myswift/customer-security-programme-csp") for c, t, f in SWIFT_CSCF],
+    controls=[
+        make_stub_control(c, t, f, "https://www.swift.com/myswift/customer-security-programme-csp")
+        for c, t, f in SWIFT_CSCF
+    ],
     tier="C",
     placeholder=True,
     license_required=True,
@@ -496,43 +591,8 @@ emit_control_catalog(
 
 
 # ---------------------------------------------------------------------------
-# CIS Controls v8.1
-# ---------------------------------------------------------------------------
-
-CIS_V8_1 = [
-    ("CIS.1", "Inventory and Control of Enterprise Assets", "CIS Controls"),
-    ("CIS.2", "Inventory and Control of Software Assets", "CIS Controls"),
-    ("CIS.3", "Data Protection", "CIS Controls"),
-    ("CIS.4", "Secure Configuration of Enterprise Assets and Software", "CIS Controls"),
-    ("CIS.5", "Account Management", "CIS Controls"),
-    ("CIS.6", "Access Control Management", "CIS Controls"),
-    ("CIS.7", "Continuous Vulnerability Management", "CIS Controls"),
-    ("CIS.8", "Audit Log Management", "CIS Controls"),
-    ("CIS.9", "Email and Web Browser Protections", "CIS Controls"),
-    ("CIS.10", "Malware Defenses", "CIS Controls"),
-    ("CIS.11", "Data Recovery", "CIS Controls"),
-    ("CIS.12", "Network Infrastructure Management", "CIS Controls"),
-    ("CIS.13", "Network Monitoring and Defense", "CIS Controls"),
-    ("CIS.14", "Security Awareness and Skills Training", "CIS Controls"),
-    ("CIS.15", "Service Provider Management", "CIS Controls"),
-    ("CIS.16", "Application Software Security", "CIS Controls"),
-    ("CIS.17", "Incident Response Management", "CIS Controls"),
-    ("CIS.18", "Penetration Testing", "CIS Controls"),
-]
-
-emit_control_catalog(
-    framework_id="cis-controls-v8.1",
-    framework_name="CIS Critical Security Controls v8.1",
-    version="v8.1 (2024)",
-    source="Center for Internet Security (CIS)",
-    families=["CIS Controls"],
-    controls=[make_stub_control(c, t, f, "https://www.cisecurity.org/controls") for c, t, f in CIS_V8_1],
-    tier="C",
-    placeholder=True,
-    license_required=True,
-    license_terms="© Center for Internet Security. CIS Controls are freely available under CIS's terms; however, redistribution in catalog form requires CIS licensing. Ships as stub — download from cisecurity.org and import.",
-    license_url="https://www.cisecurity.org/controls",
-)
+# CIS Controls v8.1 is maintained in stubs/cis-controls-v8.1.yaml.
+# Do not generate a competing JSON catalog for the same framework id.
 
 
 # ---------------------------------------------------------------------------
@@ -554,8 +614,8 @@ for bench_id, bench_name in [
         families=["Sections 1-5+ (see benchmark)"],
         controls=[
             make_stub_control(
-                f"{bench_id}.1.{i+1}",
-                f"Benchmark control 1.{i+1}",
+                f"{bench_id}.1.{i + 1}",
+                f"Benchmark control 1.{i + 1}",
                 "Sections 1-5+ (see benchmark)",
                 f"https://www.cisecurity.org/benchmark/{bench_id.replace('cis-benchmark-', '')}",
             )
@@ -564,7 +624,10 @@ for bench_id, bench_name in [
         tier="C",
         placeholder=True,
         license_required=True,
-        license_terms="© Center for Internet Security. CIS Benchmarks are freely downloadable; redistribution in catalog form requires CIS licensing.",
+        license_terms=(
+            "© Center for Internet Security. CIS Benchmarks are freely downloadable; redistribution "
+            "in catalog form requires CIS licensing."
+        ),
         license_url="https://www.cisecurity.org/cis-benchmarks",
     )
 
@@ -574,17 +637,37 @@ for bench_id, bench_name in [
 # ---------------------------------------------------------------------------
 
 SCF_DOMAINS = [
-    "Governance, Risk, and Compliance (GRC)", "Asset Management (AST)", "Business Continuity (BCD)",
-    "Capacity & Performance Planning (CAP)", "Change Management (CHG)", "Cloud Security (CLD)",
-    "Compliance (CPL)", "Configuration Management (CFG)", "Continuous Monitoring (MON)",
-    "Cryptographic Protections (CRY)", "Data Classification & Handling (DCH)", "Endpoint Security (END)",
-    "Human Resources Security (HRS)", "Identification & Authentication (IAC)",
-    "Incident Response (IRO)", "Information Assurance (IAO)", "Maintenance (MNT)",
-    "Mobile Device Management (MDM)", "Network Security (NET)", "Physical & Environmental Security (PES)",
-    "Privacy (PRI)", "Project Management (PRM)", "Risk Management (RSK)", "Security Operations (OPS)",
-    "Security Awareness and Training (SAT)", "Secure Engineering & Architecture (SEA)",
-    "Technology Development & Acquisition (TDA)", "Third-Party Management (TPM)",
-    "Threat Management (THR)", "Vulnerability & Patch Management (VPM)", "Web Security (WEB)",
+    "Governance, Risk, and Compliance (GRC)",
+    "Asset Management (AST)",
+    "Business Continuity (BCD)",
+    "Capacity & Performance Planning (CAP)",
+    "Change Management (CHG)",
+    "Cloud Security (CLD)",
+    "Compliance (CPL)",
+    "Configuration Management (CFG)",
+    "Continuous Monitoring (MON)",
+    "Cryptographic Protections (CRY)",
+    "Data Classification & Handling (DCH)",
+    "Endpoint Security (END)",
+    "Human Resources Security (HRS)",
+    "Identification & Authentication (IAC)",
+    "Incident Response (IRO)",
+    "Information Assurance (IAO)",
+    "Maintenance (MNT)",
+    "Mobile Device Management (MDM)",
+    "Network Security (NET)",
+    "Physical & Environmental Security (PES)",
+    "Privacy (PRI)",
+    "Project Management (PRM)",
+    "Risk Management (RSK)",
+    "Security Operations (OPS)",
+    "Security Awareness and Training (SAT)",
+    "Secure Engineering & Architecture (SEA)",
+    "Technology Development & Acquisition (TDA)",
+    "Third-Party Management (TPM)",
+    "Threat Management (THR)",
+    "Vulnerability & Patch Management (VPM)",
+    "Web Security (WEB)",
 ]
 
 emit_control_catalog(
@@ -595,8 +678,8 @@ emit_control_catalog(
     families=SCF_DOMAINS,
     controls=[
         make_stub_control(
-            f"{domain.split('(')[1].rstrip(')')}-{i+1:02d}",
-            f"SCF control {domain.split('(')[1].rstrip(')')}-{i+1:02d}",
+            f"{domain.split('(')[1].rstrip(')')}-{i + 1:02d}",
+            f"SCF control {domain.split('(')[1].rstrip(')')}-{i + 1:02d}",
             domain,
             "https://securecontrolsframework.com",
         )
@@ -606,7 +689,10 @@ emit_control_catalog(
     tier="C",
     placeholder=True,
     license_required=True,
-    license_terms="© Secure Controls Framework. SCF is licensed CC BY-ND — no derivatives. Download the current SCF spreadsheet from securecontrolsframework.com and import your copy.",
+    license_terms=(
+        "© Secure Controls Framework. SCF is licensed CC BY-ND \u2014 no derivatives. Download the current SCF "
+        "spreadsheet from securecontrolsframework.com and import your copy."
+    ),
     license_url="https://securecontrolsframework.com",
 )
 
@@ -619,7 +705,11 @@ IEC_62443 = [
     ("1.1", "IEC 62443-1-1: Terminology, concepts and models", "Part 1 — General"),
     ("2.1", "IEC 62443-2-1: Establishing an IACS security program", "Part 2 — Policies and Procedures"),
     ("2.3", "IEC 62443-2-3: Patch management in the IACS environment", "Part 2 — Policies and Procedures"),
-    ("2.4", "IEC 62443-2-4: Security program requirements for IACS service providers", "Part 2 — Policies and Procedures"),
+    (
+        "2.4",
+        "IEC 62443-2-4: Security program requirements for IACS service providers",
+        "Part 2 \u2014 Policies and Procedures",
+    ),
     ("3.2", "IEC 62443-3-2: Security risk assessment for system design", "Part 3 — System"),
     ("3.3", "IEC 62443-3-3: System security requirements and security levels", "Part 3 — System"),
     ("4.1", "IEC 62443-4-1: Secure product development lifecycle requirements", "Part 4 — Component"),
@@ -632,7 +722,12 @@ emit_control_catalog(
     version="Multiple parts (2018-2023)",
     source="IEC/ISA",
     families=["Part 1 — General", "Part 2 — Policies and Procedures", "Part 3 — System", "Part 4 — Component"],
-    controls=[make_stub_control(c, t, f, "https://www.isa.org/standards-and-publications/isa-standards/isa-iec-62443-series-of-standards") for c, t, f in IEC_62443],
+    controls=[
+        make_stub_control(
+            c, t, f, "https://www.isa.org/standards-and-publications/isa-standards/isa-iec-62443-series-of-standards"
+        )
+        for c, t, f in IEC_62443
+    ],
     tier="C",
     placeholder=True,
     license_required=True,

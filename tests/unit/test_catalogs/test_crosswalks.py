@@ -19,6 +19,7 @@ See ``docs/api-stability.md`` revision-history row for v0.10.6 +
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -100,12 +101,21 @@ def test_crosswalkdefinition_rejects_invalid_verification_literal() -> None:
     ],
 )
 def test_osps_crosswalks_load_and_self_attest(filename: str) -> None:
-    """Each OSPS crosswalk loads + declares upstream-osps provenance."""
+    """Each OSPS crosswalk loads + declares upstream-osps provenance.
+
+    ``source_framework`` is the exact ``osps-baseline`` family id (the
+    three bundled maturity-level catalogs' ``crosswalk_family``), not a
+    version-suffixed string, so the crosswalk engine's family resolution
+    applies. Rows are keyed at assessment-requirement level.
+    """
     path = MAPPINGS_DIR / filename
     with path.open(encoding="utf-8") as f:
         data = json.load(f)
     obj = CrosswalkDefinition.model_validate(data)
-    assert obj.source_framework.startswith("osps-baseline")
+    assert obj.source_framework == "osps-baseline"
     assert obj.provenance == "upstream-osps-guidelines"
     assert obj.verification == "self-attested-via-upstream"
     assert len(obj.mappings) > 0
+    requirement_id_re = re.compile(r"^OSPS-[A-Z]{2}-\d{2}\.\d{2}$")
+    for mapping in obj.mappings:
+        assert requirement_id_re.match(mapping.source_control_id), mapping.source_control_id

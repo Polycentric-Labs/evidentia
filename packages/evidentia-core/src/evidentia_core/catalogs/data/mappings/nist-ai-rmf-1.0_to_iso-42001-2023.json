@@ -2,198 +2,268 @@
   "source_framework": "nist-ai-rmf-1.0",
   "target_framework": "iso-42001-2023",
   "version": "NIST AI RMF 1.0 / ISO/IEC 42001:2023",
-  "generated_at": "2026-05-16",
-  "source": "Evidentia-authored (v0.9.3 P2.2) — initial concordance between NIST AI RMF subcategories and ISO/IEC 42001:2023 Annex A controls. Per-mapping confidence field surfaces low-confidence entries for SME review. Refinements via community PR.",
-  "v0_9_3_note": "Initial v0.9.3 ship: ~25 high-confidence mappings. ISO 42001:2023 Annex A control text is copyrighted (ISO/IEC); we cite IDs only. Operators with ISO licensing should verify mapping intent against the authoritative control text.",
+  "generated_at": "2026-09-07",
+  "source": "Evidentia-authored concordance between NIST AI RMF 1.0 subcategories and ISO/IEC 42001:2023 Annex A controls, keyed on the published Annex A numbering. Per-mapping confidence reflects title-level correspondence only.",
+  "v0_9_3_note": "Initial v0.9.3 ship carried 23 rows keyed on identifiers of the form ISO42001.A.x.y, which did not correspond to the Annex A numbering and resolved against no bundled catalog; re-targeted in v0.13 (see verification_note).",
   "confidence_rubric": {
     "high": "Direct semantic match: AI RMF subcategory restates an ISO 42001 Annex A control objective.",
     "medium": "Overlapping intent with partial scope; SME review recommended.",
     "low": "Related domain but ambiguous; SME review strongly recommended."
   },
+  "verification": "self-attested",
+  "verification_note": "Authored from the public Annex A control numbering and titles only; the licensed text was not consulted. Every row needs verification by an operator holding the standard before audit use.",
   "mappings": [
     {
       "source_control_id": "GOVERN-1.1",
       "source_control_title": "Legal and regulatory requirements involving AI are understood",
-      "target_control_id": "ISO42001.A.6.1",
-      "relationship": "equivalent",
-      "confidence": "high",
-      "notes": "Leadership commitment includes regulatory compliance scope."
+      "target_control_id": "A.2.2",
+      "target_control_title": "AI policy",
+      "relationship": "related",
+      "confidence": "medium",
+      "notes": "Legal and regulatory requirements for AI inform the documented AI policy."
     },
     {
       "source_control_id": "GOVERN-1.2",
       "source_control_title": "Trustworthy AI characteristics integrated into policies",
-      "target_control_id": "ISO42001.A.7.1",
+      "target_control_id": "A.2.2",
+      "target_control_title": "AI policy",
       "relationship": "equivalent",
       "confidence": "high",
-      "notes": "AI policy + commitment to AI principles."
+      "notes": "Trustworthy-AI characteristics integrated into organizational policy; A.2.2 is the AI policy control."
+    },
+    {
+      "source_control_id": "GOVERN-1.2",
+      "source_control_title": "Trustworthy AI characteristics integrated into policies",
+      "target_control_id": "A.2.3",
+      "target_control_title": "Alignment with other organizational policies",
+      "relationship": "related",
+      "confidence": "medium",
+      "notes": "Alignment of the AI policy with other organizational policies."
     },
     {
       "source_control_id": "GOVERN-2.1",
       "source_control_title": "Roles, responsibilities, lines of communication documented",
-      "target_control_id": "ISO42001.A.8.1",
+      "target_control_id": "A.3.2",
+      "target_control_title": "AI roles and responsibilities",
       "relationship": "equivalent",
       "confidence": "high",
-      "notes": "Operational planning includes role + responsibility definition."
+      "notes": "Roles, responsibilities and lines of communication for AI risk."
     },
     {
       "source_control_id": "GOVERN-3.1",
       "source_control_title": "Decision-making processes consider AI risk tolerances",
-      "target_control_id": "ISO42001.A.6.2",
+      "target_control_id": "A.4.6",
+      "target_control_title": "Human resources",
       "relationship": "related",
-      "confidence": "medium",
-      "notes": "AI objectives + planning consider risk appetite."
+      "confidence": "low",
+      "notes": "Workforce diversity in AI decision-making relates only loosely to the human-resources control."
     },
     {
       "source_control_id": "GOVERN-4.1",
       "source_control_title": "Risk-management culture is cultivated",
-      "target_control_id": "ISO42001.A.5.1",
+      "target_control_id": "A.3.3",
+      "target_control_title": "Reporting of concerns",
       "relationship": "related",
       "confidence": "medium",
-      "notes": "Context establishment includes cultural posture."
+      "notes": "A culture that raises AI risks; A.3.3 covers reporting of concerns."
     },
     {
       "source_control_id": "GOVERN-5.1",
       "source_control_title": "External stakeholder engagement",
-      "target_control_id": "ISO42001.A.5.2",
+      "target_control_id": "A.8.5",
+      "target_control_title": "Information for interested parties",
       "relationship": "related",
       "confidence": "medium",
-      "notes": "Interested-party identification covers external stakeholders."
+      "notes": "Feedback from external stakeholders; A.8.5 covers information for interested parties."
     },
     {
       "source_control_id": "GOVERN-6.1",
       "source_control_title": "Third-party engagement",
-      "target_control_id": "ISO42001.A.10.1",
+      "target_control_id": "A.10.3",
+      "target_control_title": "Suppliers",
       "relationship": "equivalent",
       "confidence": "high",
-      "notes": "Third-party + supplier relationships in AI context."
+      "notes": "Third-party AI risk policies; A.10.3 covers suppliers."
+    },
+    {
+      "source_control_id": "GOVERN-6.1",
+      "source_control_title": "Third-party engagement",
+      "target_control_id": "A.10.2",
+      "target_control_title": "Allocating responsibilities",
+      "relationship": "related",
+      "confidence": "medium",
+      "notes": "Allocation of responsibilities across the AI supply chain."
     },
     {
       "source_control_id": "MAP-1.1",
       "source_control_title": "Context is established and understood",
-      "target_control_id": "ISO42001.A.5.1",
+      "target_control_id": "A.9.4",
+      "target_control_title": "Intended use of the AI system",
       "relationship": "equivalent",
       "confidence": "high",
-      "notes": "Direct mapping: 'understand the organization and its context'."
+      "notes": "Intended purposes and context of use documented; A.9.4 is intended use of the AI system."
     },
     {
       "source_control_id": "MAP-2.1",
       "source_control_title": "Tasks and methods are described",
-      "target_control_id": "ISO42001.A.8.2",
+      "target_control_id": "A.6.2.2",
+      "target_control_title": "AI system requirements and specification",
       "relationship": "related",
       "confidence": "high",
-      "notes": "AI system impact assessment documents task scope."
+      "notes": "Tasks and methods the AI system supports; A.6.2.2 covers requirements and specification."
     },
     {
       "source_control_id": "MAP-2.2",
       "source_control_title": "AI system knowledge limits and assumptions",
-      "target_control_id": "ISO42001.A.8.3",
+      "target_control_id": "A.8.2",
+      "target_control_title": "System documentation and information for users",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Communication of AI system characteristics to users."
+      "notes": "Knowledge limits and human oversight documented for users; A.8.2 covers system documentation and information for users."
     },
     {
       "source_control_id": "MAP-2.3",
       "source_control_title": "Scientific integrity and TEVV considerations",
-      "target_control_id": "ISO42001.A.9.2",
+      "target_control_id": "A.6.2.4",
+      "target_control_title": "AI system verification and validation",
       "relationship": "equivalent",
       "confidence": "high",
-      "notes": "Performance evaluation = TEVV."
+      "notes": "Test, evaluation, verification and validation considerations; A.6.2.4 covers verification and validation."
     },
     {
       "source_control_id": "MAP-3.1",
       "source_control_title": "Potential benefits and costs identified",
-      "target_control_id": "ISO42001.A.8.2",
+      "target_control_id": "A.5.2",
+      "target_control_title": "AI system impact assessment process",
       "relationship": "related",
       "confidence": "medium",
-      "notes": "Impact assessment includes benefit/cost identification."
+      "notes": "Potential benefits examined as part of impact assessment; A.5.2 is the impact assessment process."
     },
     {
       "source_control_id": "MAP-4.1",
       "source_control_title": "Mapping risks based on impact",
-      "target_control_id": "ISO42001.A.6.1",
+      "target_control_id": "A.10.3",
+      "target_control_title": "Suppliers",
       "relationship": "related",
-      "confidence": "high",
-      "notes": "Risk management activities planned at leadership level."
+      "confidence": "medium",
+      "notes": "Legal risks of third-party software and data; A.10.3 covers suppliers."
     },
     {
       "source_control_id": "MAP-5.1",
       "source_control_title": "Likelihood and impact of AI risks assessed",
-      "target_control_id": "ISO42001.A.6.2",
+      "target_control_id": "A.5.4",
+      "target_control_title": "Assessing AI system impact on individuals or groups",
       "relationship": "equivalent",
       "confidence": "high",
-      "notes": "AI risk assessment with likelihood + impact dimensions."
+      "notes": "Likelihood and magnitude of impacts on individuals and groups."
+    },
+    {
+      "source_control_id": "MAP-5.1",
+      "source_control_title": "Likelihood and impact of AI risks assessed",
+      "target_control_id": "A.5.5",
+      "target_control_title": "Assessing societal impacts of AI systems",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Societal impacts of AI systems."
     },
     {
       "source_control_id": "MEASURE-1.1",
       "source_control_title": "Approaches and metrics for risk measurement",
-      "target_control_id": "ISO42001.A.9.1",
+      "target_control_id": "A.6.2.6",
+      "target_control_title": "AI system operation and monitoring",
       "relationship": "related",
-      "confidence": "high",
-      "notes": "Monitoring, measurement, analysis, evaluation."
+      "confidence": "medium",
+      "notes": "Metrics for AI risk measurement during operation; A.6.2.6 covers operation and monitoring."
     },
     {
       "source_control_id": "MEASURE-2.1",
       "source_control_title": "Test sets, metrics, details of evaluation",
-      "target_control_id": "ISO42001.A.7.4",
+      "target_control_id": "A.6.2.4",
+      "target_control_title": "AI system verification and validation",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Data management covers training/test/validation datasets."
+      "notes": "Test sets, metrics and tools documented; A.6.2.4 covers verification and validation."
+    },
+    {
+      "source_control_id": "MEASURE-2.1",
+      "source_control_title": "Test sets, metrics, details of evaluation",
+      "target_control_id": "A.7.4",
+      "target_control_title": "Quality of data for AI systems",
+      "relationship": "related",
+      "confidence": "medium",
+      "notes": "Quality of the data used for testing."
     },
     {
       "source_control_id": "MEASURE-2.3",
       "source_control_title": "AI system performance is regularly evaluated",
-      "target_control_id": "ISO42001.A.9.2",
+      "target_control_id": "A.6.2.4",
+      "target_control_title": "AI system verification and validation",
       "relationship": "equivalent",
       "confidence": "high",
-      "notes": "Performance evaluation."
+      "notes": "Performance and assurance criteria measured."
     },
     {
       "source_control_id": "MEASURE-3.1",
       "source_control_title": "Approaches for trustworthy characteristics measurement",
-      "target_control_id": "ISO42001.A.9.1",
+      "target_control_id": "A.6.2.6",
+      "target_control_title": "AI system operation and monitoring",
       "relationship": "related",
       "confidence": "medium",
-      "notes": "Monitoring covers trustworthy characteristic metrics."
+      "notes": "Tracking identified risks over time during operation."
     },
     {
       "source_control_id": "MEASURE-4.1",
       "source_control_title": "Measurement approaches for tracking applied",
-      "target_control_id": "ISO42001.A.8.4",
+      "target_control_id": "A.6.2.6",
+      "target_control_title": "AI system operation and monitoring",
       "relationship": "related",
-      "confidence": "high",
-      "notes": "Operational controls cover measurement tracking."
+      "confidence": "medium",
+      "notes": "Deployment-context risk measurement feeds operation and monitoring."
     },
     {
       "source_control_id": "MANAGE-1.1",
       "source_control_title": "Risk responses considered with benefits",
-      "target_control_id": "ISO42001.A.6.3",
-      "relationship": "equivalent",
-      "confidence": "high",
-      "notes": "AI risk treatment with cost-benefit consideration."
+      "target_control_id": "A.6.2.5",
+      "target_control_title": "AI system deployment",
+      "relationship": "related",
+      "confidence": "medium",
+      "notes": "The go or no-go determination precedes deployment; A.6.2.5 covers AI system deployment."
     },
     {
       "source_control_id": "MANAGE-2.1",
       "source_control_title": "Resources allocated for risk management",
-      "target_control_id": "ISO42001.A.7.1",
+      "target_control_id": "A.4.2",
+      "target_control_title": "Resource documentation",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Resources clause."
+      "notes": "Resources required to manage AI risk are documented; A.4.2 covers resource documentation."
     },
     {
       "source_control_id": "MANAGE-3.1",
       "source_control_title": "Risks and benefits documented and monitored",
-      "target_control_id": "ISO42001.A.9.1",
-      "relationship": "equivalent",
+      "target_control_id": "A.10.3",
+      "target_control_title": "Suppliers",
+      "relationship": "related",
       "confidence": "high",
-      "notes": "Monitoring + measurement documents ongoing risk posture."
+      "notes": "Third-party AI risks monitored over time."
     },
     {
       "source_control_id": "MANAGE-4.1",
       "source_control_title": "Plans for incidents and continuous improvement",
-      "target_control_id": "ISO42001.A.10.2",
+      "target_control_id": "A.6.2.6",
+      "target_control_title": "AI system operation and monitoring",
       "relationship": "equivalent",
       "confidence": "high",
-      "notes": "Incident response + continual improvement."
+      "notes": "Post-deployment monitoring plans; A.6.2.6 covers operation and monitoring."
+    },
+    {
+      "source_control_id": "MANAGE-4.1",
+      "source_control_title": "Plans for incidents and continuous improvement",
+      "target_control_id": "A.8.4",
+      "target_control_title": "Communication of incidents",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Incident communication to interested parties."
     }
   ]
 }
