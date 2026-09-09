@@ -13,6 +13,7 @@ loader.py, and the ``FrameworkId`` enum in models/common.py.
 from __future__ import annotations
 
 import logging
+from datetime import date
 from functools import cache
 from pathlib import Path
 from typing import Literal
@@ -20,7 +21,7 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
-from evidentia_core.models.catalog import TextDepth
+from evidentia_core.models.catalog import CatalogStatus, TextDepth
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +98,11 @@ class FrameworkManifestEntry(BaseModel):
         description="Family id whose crosswalks also apply to this catalog, for a "
         "baseline or maturity level of a larger catalog (e.g. 'nist-800-53-rev5')",
     )
+
+    status: CatalogStatus | None = Field(default=None, description="Publisher lifecycle in the stated source scope")
+    notes: str | None = Field(default=None, description="Operator notice about source scope and currency")
+    verified_on: date | None = Field(default=None, description="Date source currency was checked")
+    superseded_by: str | None = Field(default=None, description="Successor framework ID, without implying equivalence")
 
 
 class FrameworkManifest(BaseModel):

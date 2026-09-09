@@ -144,6 +144,10 @@ def scan_dir(subdir: str) -> list[dict]:
             ("source", "source_url"),
             ("license_terms", "license"),
             ("license_url", "license_url"),
+            ("status", "status"),
+            ("notes", "notes"),
+            ("verified_on", "verified_on"),
+            ("superseded_by", "superseded_by"),
         ]:
             val = data.get(src_field)
             if val:

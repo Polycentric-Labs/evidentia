@@ -364,6 +364,15 @@ def load_evidentia_catalog(catalog_path: Path) -> ControlCatalog:
         controls=controls,
         families=data.get("families", []),
         category=data.get("category", "control"),
+        family_hierarchy=data.get("family_hierarchy"),
+        v0_9_3_note=data.get("v0_9_3_note"),
+        annex_iii_risk_categories=data.get("annex_iii_risk_categories"),
+        status=data.get("status"),
+        notes=data.get("notes"),
+        verified_on=data.get("verified_on"),
+        superseded_by=data.get("superseded_by"),
+        audit_contexts=data.get("audit_contexts", {}),
+        publication_notices=data.get("publication_notices", []),
         # Tier / licensing metadata added in v0.1.1 for Tier-C stub
         # catalogs (e.g., SOC 2 TSC). Defaults preserve the v0.1.0 shape
         # for plain Evidentia-format catalogs that omit these fields.

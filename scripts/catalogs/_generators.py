@@ -18,15 +18,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-DATA_ROOT = (
-    REPO_ROOT
-    / "packages"
-    / "evidentia-core"
-    / "src"
-    / "evidentia_core"
-    / "catalogs"
-    / "data"
-)
+DATA_ROOT = REPO_ROOT / "packages" / "evidentia-core" / "src" / "evidentia_core" / "catalogs" / "data"
 
 
 Tier = Literal["A", "B", "C", "D"]
@@ -37,12 +29,15 @@ def _tier_dir(tier: Tier, subdir: str | None = None) -> Path:
     if subdir is not None:
         return DATA_ROOT / subdir
     # Defaults by tier if no explicit subdir is given
-    return DATA_ROOT / {
-        "A": "us-federal",
-        "B": "threats",
-        "C": "stubs",
-        "D": "international",
-    }[tier]
+    return (
+        DATA_ROOT
+        / {
+            "A": "us-federal",
+            "B": "threats",
+            "C": "stubs",
+            "D": "international",
+        }[tier]
+    )
 
 
 def emit_control_catalog(
@@ -59,6 +54,12 @@ def emit_control_catalog(
     license_required: bool = False,
     license_terms: str | None = None,
     license_url: str | None = None,
+    status: str | None = None,
+    notes: str | None = None,
+    verified_on: str | None = None,
+    superseded_by: str | None = None,
+    audit_contexts: dict[str, dict[str, Any]] | None = None,
+    publication_notices: list[dict[str, Any]] | None = None,
 ) -> Path:
     """Write a ControlCatalog JSON for a control-type framework."""
     out: dict[str, Any] = {
@@ -79,10 +80,21 @@ def emit_control_catalog(
     if license_url:
         out["license_url"] = license_url
 
+    for key, value in {
+        "status": status,
+        "notes": notes,
+        "verified_on": verified_on,
+        "superseded_by": superseded_by,
+        "audit_contexts": audit_contexts,
+        "publication_notices": publication_notices,
+    }.items():
+        if value is not None:
+            out[key] = value
+
     target_dir = _tier_dir(tier, subdir)
     target_dir.mkdir(parents=True, exist_ok=True)
     out_path = target_dir / f"{framework_id}.json"
-    with open(out_path, "w", encoding="utf-8") as f:
+    with open(out_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(out, f, indent=2, ensure_ascii=False)
     return out_path
 

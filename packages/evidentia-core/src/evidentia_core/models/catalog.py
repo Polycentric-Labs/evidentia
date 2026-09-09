@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable
+from datetime import date
 from typing import Any, Literal, NamedTuple
 
 from pydantic import Field, PrivateAttr
@@ -120,7 +121,7 @@ class CatalogControl(EvidentiaModel):
     )
     priority: str | None = Field(
         default=None,
-        description="NIST priority: 'P1' (most critical) through 'P3'",
+        description="Publisher priority label, such as P1 through P4; independent of status and applicability",
     )
     baseline_impact: list[str] = Field(
         default_factory=list,
@@ -204,6 +205,45 @@ class CatalogControl(EvidentiaModel):
         "upstream, is skipped by gap analysis, and does not count toward text depth.",
     )
 
+    properties: dict[str, str] = Field(
+        default_factory=dict,
+        description="Independent publisher attributes, such as Existing tags and raw baseline or overlay labels",
+    )
+
+
+CatalogStatus = Literal["current", "superseded", "retired", "historical"]
+
+
+class CatalogAuditContext(EvidentiaModel):
+    """A source-verified audit version for one named authority, not a national default."""
+
+    authority: str = Field(description="Authority that published this audit scope")
+    version: str = Field(description="Version used by the named authority for audits")
+    source_url: str = Field(description="Primary source for this authority's audit version")
+    verified_on: date = Field(description="Date the cited source was checked")
+    valid_through: date | None = Field(
+        default=None, description="Last date explicitly covered by the source; None means unknown"
+    )
+    notes: str | None = Field(default=None, description="Scope and limits of the audit-version statement")
+
+
+class CatalogPublicationNotice(EvidentiaModel):
+    """A publication record outside the assessed controls, with no automatic activation."""
+
+    id: str = Field(description="Publisher's designator for the announced revision")
+    title: str = Field(description="Short published heading")
+    status: Literal["approved-future", "approved-superseded", "pending"] = Field(
+        description="Status verified in the source, independent of elapsed calendar dates"
+    )
+    source_url: str = Field(description="Primary source for the publication status")
+    approved_on: date | None = Field(default=None, description="Approval or order issuance date")
+    published_on: date | None = Field(default=None, description="Publication date, when verified")
+    order_effective_on: date | None = Field(default=None, description="Effective date of the approving legal order")
+    effective_on: date | None = Field(default=None, description="Standard's general applicability date")
+    inactive_on: date | None = Field(default=None, description="Published last active date, when verified")
+    superseded_by: str | None = Field(default=None, description="Successor designator, when verified")
+    notes: str | None = Field(default=None, description="Jurisdiction, phased dates and source limitations")
+
 
 class ControlCatalog(EvidentiaModel):
     """A complete framework catalog containing all controls.
@@ -274,6 +314,21 @@ class ControlCatalog(EvidentiaModel):
     placeholder: bool = Field(
         default=False,
         description="True if the catalog as a whole is a stub (all controls have placeholder text)",
+    )
+
+    status: CatalogStatus | None = Field(
+        default=None, description="Publisher lifecycle in the stated scope; None means unverified"
+    )
+    notes: str | None = Field(default=None, description="Operator notice about source scope and currency")
+    verified_on: date | None = Field(default=None, description="Date the catalog's source and currency were checked")
+    superseded_by: str | None = Field(default=None, description="Successor framework ID, without implying equivalence")
+    audit_contexts: dict[str, CatalogAuditContext] = Field(
+        default_factory=dict,
+        description="Audit versions keyed by authority jurisdiction, such as US-TX; absent authorities are unknown",
+    )
+    publication_notices: list[CatalogPublicationNotice] = Field(
+        default_factory=list,
+        description="Announced revisions outside the assessed controls; dates never activate them automatically",
     )
 
     # Private index for fast lookup
