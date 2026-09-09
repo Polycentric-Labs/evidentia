@@ -106,3 +106,24 @@ class TestFrameworksOpenApiErrorDocs:
             responses = schema["paths"][path][method]["responses"]
             for status in statuses:
                 assert status in responses, f"{method.upper()} {path} missing {status}"
+
+
+def test_source_row_response_schema_preserves_declared_fields(api_client: TestClient) -> None:
+    schemas = api_client.get("/api/openapi.json").json()["components"]["schemas"]
+    row_ref = schemas["CatalogControl"]["properties"]["source_rows"]["items"]["$ref"].rsplit("/", 1)[-1]
+    row = schemas[row_ref]
+    assert set(row["properties"]) == {
+        "source_sha256",
+        "sheet",
+        "row",
+        "source_id",
+        "source_id_format",
+        "interpreted_id",
+        "kind",
+        "values",
+        "resolved_values",
+        "provenance",
+    }
+    assert row["additionalProperties"] is False
+    assert row["properties"]["values"]["type"] == "object"
+    assert row["properties"]["kind"]["enum"] == ["aggregate", "clause", "fragment"]

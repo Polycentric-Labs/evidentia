@@ -2,6 +2,7 @@
 
 from evidentia_core.models.catalog import (
     CatalogControl,
+    CatalogSourceRow,
     ControlCatalog,
     CrosswalkDefinition,
     FrameworkMapping,
@@ -85,6 +86,7 @@ from evidentia_core.models.tprm import (
 __all__ = [
     "AttackTechnique",
     "CatalogControl",
+    "CatalogSourceRow",
     "ControlCatalog",
     "ControlGap",
     "ControlImplementation",

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Catalog source evidence.** Optional source rows preserve original cell values,
+  source locations, identifier interpretations and explicit spreadsheet merge anchors
+  through native and API imports. These rows do not add assessed controls.
 - **Catalog currency notices (V13-09, first catalog batch).** Optional lifecycle,
   verification-date, successor, per-authority audit-context and publication-notice
   fields preserve source scope without changing gap applicability automatically.
@@ -232,6 +235,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **YAML catalog imports.** Non-string mapping keys reject before JSON conversion
+  can coerce or collapse source cells; rejected imports preserve installed files.
+- **Nested gap requirements.** Gap analysis now visits active enhancements at every
+  depth and excludes every descendant of a withdrawn control. Inventory matching
+  also searches every depth by ID or title with the existing fuzzy thresholds.
 - Accept unquoted YAML date fields in API catalog imports. Unsupported YAML values return 400 before replacing an installed catalog. Render imported source and license strings literally in CLI output.
 
 - Correct NYDFS CISO, governing-body, Class A monitoring and notice headings; add section 500.24. Prior evidence tied to the corrected IDs needs review. Keep EU AI Act Article 27 date metadata within its Annex III and deployer scope.

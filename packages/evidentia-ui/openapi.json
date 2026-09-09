@@ -959,6 +959,14 @@
             "description": "v0.9.3 P2.1: optional EU-AI-Act-style risk tier annotation ('unacceptable', 'high', 'limited', 'minimal', 'informational'). Used by AI-governance catalogs to express per-control regulatory weight. Optional for backward-compat with pre-v0.9.3 catalogs.",
             "title": "Risk Tier"
           },
+          "source_rows": {
+            "description": "Source evidence outside control indexes, statement counts and gap denominators",
+            "items": {
+              "$ref": "#/components/schemas/CatalogSourceRow"
+            },
+            "title": "Source Rows",
+            "type": "array"
+          },
           "tier": {
             "anyOf": [
               {
@@ -1185,6 +1193,145 @@
           "source_url"
         ],
         "title": "CatalogPublicationNotice",
+        "type": "object"
+      },
+      "CatalogSourceRow": {
+        "additionalProperties": false,
+        "description": "Source evidence, independent of indexed controls and applicability.",
+        "properties": {
+          "interpreted_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interpreted Id"
+          },
+          "kind": {
+            "enum": [
+              "aggregate",
+              "clause",
+              "fragment"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "provenance": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Provenance",
+            "type": "object"
+          },
+          "resolved_values": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "Reviewed source merge-anchor values, separate from raw physical blanks",
+            "title": "Resolved Values",
+            "type": "object"
+          },
+          "row": {
+            "description": "One-based physical source row",
+            "minimum": 1.0,
+            "title": "Row",
+            "type": "integer"
+          },
+          "sheet": {
+            "description": "Literal source sheet name",
+            "minLength": 1,
+            "title": "Sheet",
+            "type": "string"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "source_id_format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id Format"
+          },
+          "source_sha256": {
+            "description": "Claimed SHA-256 of source bytes; not proof of authenticity",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Source Sha256",
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "source_sha256",
+          "sheet",
+          "row",
+          "source_id",
+          "kind",
+          "values"
+        ],
+        "title": "CatalogSourceRow",
         "type": "object"
       },
       "ChallengeOutcome": {
