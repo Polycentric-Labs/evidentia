@@ -243,7 +243,7 @@ def import_catalog(
     catalog: Path | None = typer.Option(
         None,
         "--catalog",
-        help="OSCAL source catalog JSON (used with --profile).",
+        help="Local OSCAL catalog JSON overriding the href of a profile with one import.",
     ),
     tier: str = typer.Option(
         "C",
@@ -283,6 +283,7 @@ def import_catalog(
                 profile,
                 override_framework_id=framework_id,
                 override_framework_name=name,
+                source_catalog_path=catalog,
             )
         except Exception as exc:
             console.print(f"[red]Profile resolution failed: {exc}[/red]")
@@ -350,7 +351,7 @@ def import_catalog(
 
     # Validate the exact import payload before replacing a user's catalog.
     # A rejected --force import must leave the previous catalog intact.
-    with TemporaryDirectory(prefix=".catalog-import-", dir=user_dir) as staging_dir:
+    with TemporaryDirectory(prefix=".catalog-import-", dir=user_dir, ignore_cleanup_errors=True) as staging_dir:
         staged_path = Path(staging_dir) / out_path.name
         if framework_id or name:
             staged_path.write_text(json.dumps(data, indent=2), encoding="utf-8", newline="\n")
@@ -366,17 +367,17 @@ def import_catalog(
         text_depth = loaded_catalog.text_depth
         staged_path.replace(out_path)
 
-    _add_to_user_manifest(
-        catalog_dir=catalog_dir,
-        framework_id=resolved_id,
-        name=resolved_name,
-        version=version,
-        tier=tier.upper(),
-        path=out_path.name,
-        placeholder=placeholder,
-        license_terms=license_terms,
-        text_depth=text_depth,
-    )
+        _add_to_user_manifest(
+            catalog_dir=catalog_dir,
+            framework_id=resolved_id,
+            name=resolved_name,
+            version=version,
+            tier=tier.upper(),
+            path=out_path.name,
+            placeholder=placeholder,
+            license_terms=license_terms,
+            text_depth=text_depth,
+        )
 
     shadow_note = ""
     if load_manifest().get(resolved_id) is not None:

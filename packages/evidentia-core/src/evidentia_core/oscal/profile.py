@@ -19,7 +19,7 @@ binding directives.
 Usage — offline pre-resolution at build time::
 
     from evidentia_core.oscal.profile import resolve_profile
-    catalog = resolve_profile(profile_path, catalog_dir)
+    catalog = resolve_profile(profile_path, source_catalog_path=catalog_path)
     catalog_json = catalog_to_oscal_json(catalog)
 
 Usage — user-supplied profile at runtime::
@@ -34,8 +34,10 @@ import json
 import logging
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from evidentia_core.catalogs.loader import (
+    _MAX_NEST_DEPTH,
     _extract_prose,
     _iter_mappings,
     _parse_oscal_control,
@@ -287,50 +289,78 @@ def _filter_controls(
     return out
 
 
-def _load_source_catalog(profile_path: Path, profile: dict[str, Any]) -> ControlCatalog:
-    """Resolve the profile's import href and load the source OSCAL catalog.
+def _source_controls(node: dict[str, Any], family: str = "", _depth: int = 0) -> list[CatalogControl]:
+    """Collect root and grouped controls in order, inheriting untitled groups' families."""
+    if _depth > _MAX_NEST_DEPTH:
+        raise ProfileResolutionError(f"group nesting exceeds the maximum depth ({_MAX_NEST_DEPTH})")
+    context = "catalog" if _depth == 0 else "group"
+    controls = [
+        _parse_oscal_control(control, family)
+        for control in _iter_mappings(node.get("controls", []), f"{context}.controls")
+    ]
+    for group in _iter_mappings(node.get("groups", []), f"{context}.groups"):
+        controls.extend(_source_controls(group, group.get("title", family), _depth + 1))
+    return controls
 
-    Minimal: takes the first import's href. Multiple imports require
-    merging, which this implementation handles by collecting controls
-    from each resolved source in order.
+
+def _local_source_path(source_catalog_path: Path) -> Path:
+    """Resolve an explicit filesystem path without accepting URLs or network shares."""
+    raw_path = str(source_catalog_path)
+    scheme = urlsplit(raw_path).scheme
+    windows_drive = len(scheme) == 1 and raw_path[1:2] == ":"
+    if raw_path.startswith(("//", "\\\\")) or (scheme and not windows_drive):
+        raise ProfileResolutionError("Source catalog override must be a local filesystem path")
+    resolved = source_catalog_path.resolve()
+    if str(resolved).startswith(("//", "\\\\")):
+        raise ProfileResolutionError("Source catalog override must be a local filesystem path")
+    if not resolved.is_file():
+        raise ProfileResolutionError(f"Source catalog not found or not a file: {resolved}")
+    return resolved
+
+
+def _load_source_catalog(
+    profile_path: Path, profile: dict[str, Any], *, source_catalog_path: Path | None = None
+) -> ControlCatalog:
+    """Load the explicit source or the first import's OSCAL catalog.
+
+    Legacy resolution uses the first source with filters from every import;
+    it does not merge source catalogs. An explicit override requires exactly
+    one import so its target is unambiguous.
     """
     profile_section = _require_mapping(profile.get("profile", {}), "profile")
     imports = _iter_mappings(profile_section.get("imports", []), "profile.imports")
     if not imports:
         raise ProfileResolutionError(f"Profile {profile_path.name} has no imports — nothing to resolve")
 
-    base_dir = profile_path.parent
-    first_import = imports[0]
-    href = first_import.get("href", "")
-    if not href:
-        raise ProfileResolutionError(f"Profile {profile_path.name} first import missing href")
+    if source_catalog_path is not None:
+        if len(imports) != 1:
+            raise ProfileResolutionError("A source catalog override cannot be used with multiple imports")
+        catalog_path = _local_source_path(source_catalog_path)
+    else:
+        base_dir = profile_path.parent
+        first_import = imports[0]
+        href = first_import.get("href", "")
+        if not href:
+            raise ProfileResolutionError(f"Profile {profile_path.name} first import missing href")
 
-    try:
-        catalog_path = _resolve_href(href, base_dir, profile=profile)
-        catalog_missing = not catalog_path.exists()
-    except (OSError, ValueError) as exc:
-        # A malformed href can resolve to an unusable path: a 250+ char
-        # filename raises OSError ENAMETOOLONG; an embedded NUL raises
-        # ValueError — both from pathlib's .resolve()/.exists()/.stat().
-        # Convert to the module's typed error rather than leaking an
-        # uncaught exception (CWE-248; fuzz-found in fuzz_oscal_profile).
-        raise ProfileResolutionError(
-            f"Profile {profile_path.name} import href {href!r} resolves to an unusable path: {exc}"
-        ) from exc
-    if catalog_missing:
-        raise ProfileResolutionError(f"Source catalog not found: {catalog_path} (profile href: {href!r})")
+        try:
+            catalog_path = _resolve_href(href, base_dir, profile=profile)
+            catalog_missing = not catalog_path.exists()
+        except (OSError, ValueError) as exc:
+            # Invalid filenames can fail during resolve, exists, or stat.
+            # Keep these failures within the resolver's typed error contract.
+            raise ProfileResolutionError(
+                f"Profile {profile_path.name} import href {href!r} resolves to an unusable path: {exc}"
+            ) from exc
+        if catalog_missing:
+            raise ProfileResolutionError(f"Source catalog not found: {catalog_path} (profile href: {href!r})")
 
     raw = _load_oscal_json(catalog_path)
     catalog_data = _require_mapping(raw.get("catalog", raw), "source catalog")
     metadata = _require_mapping(catalog_data.get("metadata", {}), "source catalog metadata")
 
-    controls: list[CatalogControl] = []
-    families: list[str] = []
-    for group in _iter_mappings(catalog_data.get("groups", []), "catalog.groups"):
-        family_title = group.get("title", "")
-        families.append(family_title)
-        for oscal_control in _iter_mappings(group.get("controls", []), "group.controls"):
-            controls.append(_parse_oscal_control(oscal_control, family_title))
+    controls = _source_controls(catalog_data)
+    families = list(dict.fromkeys(control.family for control in controls if control.family))
 
     title = str(metadata.get("title", catalog_path.stem))
     return ControlCatalog(
@@ -347,11 +377,13 @@ def resolve_profile(
     profile_path: Path,
     override_framework_id: str | None = None,
     override_framework_name: str | None = None,
+    *,
+    source_catalog_path: Path | None = None,
 ) -> ControlCatalog:
     """Resolve an OSCAL profile into a ControlCatalog.
 
     Runs the full pipeline:
-    1. Load profile and source catalog via ``import.href``.
+    1. Load the profile and its explicit source or first ``import.href``.
     2. Filter controls per ``include-controls`` / ``exclude-controls``.
     3. Apply ``set-parameters`` overrides.
     4. Apply ``alter.adds`` modifications (guidance additions).
@@ -363,11 +395,15 @@ def resolve_profile(
         offline and wanting a stable framework ID.
     :param override_framework_name: If provided, uses this name instead
         of the profile's metadata title.
+    :param source_catalog_path: Local OSCAL catalog JSON to use instead of
+        the profile's href. Relative paths resolve against the caller's
+        working directory. Requires a profile with exactly one import;
+        URLs and network shares are rejected.
     :raises ProfileResolutionError: profile malformed or source missing.
     """
     profile = _load_oscal_json(profile_path)
     try:
-        source_catalog = _load_source_catalog(profile_path, profile)
+        source_catalog = _load_source_catalog(profile_path, profile, source_catalog_path=source_catalog_path)
         profile_section = _require_mapping(profile.get("profile", {}), "profile")
         profile_meta = _require_mapping(profile_section.get("metadata", {}), "profile.metadata")
 

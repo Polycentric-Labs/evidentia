@@ -42,6 +42,8 @@ from __future__ import annotations
 
 import json
 import re
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import yaml
 from evidentia_core.audit import EventAction, EventOutcome, get_logger
@@ -398,31 +400,31 @@ async def import_catalog(payload: CatalogImportPayload) -> dict[str, object]:
             resource_id=payload.framework_id,
         )
 
-    # Validate the catalog shape BEFORE writing so a malformed body never
-    # leaves a half-imported file on disk. Write to the canonical path,
-    # then load it back through the core loader.
-    out_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-    try:
-        loaded_catalog = load_evidentia_catalog(out_path)
-    except Exception as exc:  # normalize any load error to 400
-        # Roll back the partial write so a bad import is a no-op.
-        out_path.unlink(missing_ok=True)
-        raise api_error(
-            400,
-            "invalid_body",
-            f"Catalog content failed validation: {exc}",
-        ) from exc
+    # Validate a staged file on the same filesystem before replacing the
+    # installed catalog. Invalid force imports leave its bytes and manifest intact.
+    with TemporaryDirectory(prefix=".catalog-import-", dir=user_dir, ignore_cleanup_errors=True) as staging_dir:
+        staged_path = validate_within(Path(staging_dir) / out_path.name, user_dir)
+        staged_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        try:
+            loaded_catalog = load_evidentia_catalog(staged_path)
+        except Exception as exc:  # normalize any load error to 400
+            raise api_error(
+                400,
+                "invalid_body",
+                f"Catalog content failed validation: {exc}",
+            ) from exc
+        staged_path.replace(out_path)
 
-    _add_to_user_manifest(
-        framework_id=payload.framework_id,
-        name=resolved_name,
-        version=version,
-        tier=tier,
-        path=out_path.name,
-        placeholder=placeholder,
-        license_terms=payload.license_terms,
-        text_depth=loaded_catalog.text_depth,
-    )
+        _add_to_user_manifest(
+            framework_id=payload.framework_id,
+            name=resolved_name,
+            version=version,
+            tier=tier,
+            path=out_path.name,
+            placeholder=placeholder,
+            license_terms=payload.license_terms,
+            text_depth=loaded_catalog.text_depth,
+        )
 
     shadows_bundled = load_manifest().get(payload.framework_id) is not None
     _log.info(

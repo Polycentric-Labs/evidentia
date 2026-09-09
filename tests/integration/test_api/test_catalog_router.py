@@ -17,10 +17,12 @@ crosswalks are read-only and shared.
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+import yaml
 from evidentia_core.rbac import RBACPolicy, Role
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -226,11 +228,78 @@ class TestImport:
         assert detail["error"] == "already_exists"
         assert detail["resource"] == "user_catalog"
 
-    def test_duplicate_import_with_force_overwrites(self, cat_client: TestClient) -> None:
+    def test_duplicate_import_with_force_overwrites(self, cat_client: TestClient, tmp_path: Path) -> None:
         assert cat_client.post("/api/catalog/import", json=_import_payload()).status_code == 201
-        payload = {**_import_payload(), "force": True}
+        replacement = {**_SAMPLE_CATALOG, "version": "2.0", "framework_name": "Revised ACME Controls"}
+        payload = {**_import_payload(), "force": True, "content": json.dumps(replacement)}
         r = cat_client.post("/api/catalog/import", json=payload)
         assert r.status_code == 201, r.text
+        persisted = json.loads((tmp_path / "user-catalogs" / "acme-internal.json").read_text(encoding="utf-8"))
+        assert persisted == replacement
+        metadata = cat_client.get("/api/catalog/license-info/acme-internal")
+        assert metadata.status_code == 200, metadata.text
+        assert metadata.json()["name"] == "Revised ACME Controls"
+        manifest = yaml.safe_load((tmp_path / "user-catalogs" / "frameworks.yaml").read_text(encoding="utf-8"))
+        assert manifest["frameworks"][0]["version"] == "2.0"
+        assert not list((tmp_path / "user-catalogs").glob(".catalog-import-*"))
+
+    @pytest.mark.parametrize("existing", [False, True])
+    @pytest.mark.parametrize("fmt", ["json", "yaml"])
+    def test_invalid_catalog_preserves_installed_state(
+        self, cat_client: TestClient, tmp_path: Path, existing: bool, fmt: str
+    ) -> None:
+        user_dir = tmp_path / "user-catalogs"
+        catalog_path = user_dir / "acme-internal.json"
+        manifest_path = user_dir / "frameworks.yaml"
+        if existing:
+            assert cat_client.post("/api/catalog/import", json=_import_payload()).status_code == 201
+        catalog_before = catalog_path.read_bytes() if existing else None
+        manifest_before = manifest_path.read_bytes() if existing else None
+        invalid_catalog = {**_SAMPLE_CATALOG, "controls": "not a list"}
+        payload = {
+            **_import_payload(),
+            "content": json.dumps(invalid_catalog) if fmt == "json" else yaml.safe_dump(invalid_catalog),
+            "format": fmt,
+            "force": existing,
+        }
+
+        response = cat_client.post("/api/catalog/import", json=payload)
+
+        assert response.status_code == 400, response.text
+        assert response.json()["detail"]["error"] == "invalid_body"
+        if existing:
+            assert catalog_path.read_bytes() == catalog_before
+            assert manifest_path.read_bytes() == manifest_before
+            resolved = cat_client.get("/api/catalog/where?framework_id=acme-internal")
+            assert resolved.status_code == 200, resolved.text
+            assert resolved.json()["source"] == "user"
+        else:
+            assert not catalog_path.exists()
+            assert not manifest_path.exists()
+        assert not list(user_dir.glob(".catalog-import-*"))
+
+    def test_cleanup_failure_does_not_interrupt_replacement(
+        self, cat_client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        assert cat_client.post("/api/catalog/import", json=_import_payload()).status_code == 201
+        original_rmdir = os.rmdir
+
+        def deny_staging_cleanup(path: str | Path, *, dir_fd: int | None = None) -> None:
+            if Path(path).name.startswith(".catalog-import-"):
+                raise PermissionError("Synthetic temporary-directory cleanup failure")
+            original_rmdir(path, dir_fd=dir_fd)
+
+        replacement = {**_SAMPLE_CATALOG, "version": "2.0"}
+        payload = {**_import_payload(), "force": True, "content": json.dumps(replacement)}
+        with monkeypatch.context() as patch:
+            patch.setattr(os, "rmdir", deny_staging_cleanup)
+            response = cat_client.post("/api/catalog/import", json=payload)
+
+        assert response.status_code == 201, response.text
+        user_dir = tmp_path / "user-catalogs"
+        assert json.loads((user_dir / "acme-internal.json").read_text(encoding="utf-8")) == replacement
+        manifest = yaml.safe_load((user_dir / "frameworks.yaml").read_text(encoding="utf-8"))
+        assert manifest["frameworks"][0]["version"] == "2.0"
 
     def test_malformed_content_returns_400(self, cat_client: TestClient) -> None:
         payload = {

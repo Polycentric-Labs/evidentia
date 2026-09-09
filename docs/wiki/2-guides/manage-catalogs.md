@@ -124,8 +124,15 @@ file):
 evidentia catalog import ./my-iso27001.json
 ```
 
-**OSCAL profile** — resolve an OSCAL profile against its source catalog and import
-the result. This block uses backslash line-continuation, so it is shell-specific:
+**OSCAL profile:** resolve an OSCAL profile against its source catalog and import
+the result. `--catalog` supplies the local source for a profile with exactly one
+import, overriding that import's `href`. Relative `--catalog` paths start from the
+current working directory. Without it, the resolver uses the profile's first
+`href`, relative to the profile file. Top-level controls and nested groups are
+included before the profile's filters are applied. An explicit source override
+with multiple imports is rejected as ambiguous.
+
+This block uses backslash line-continuation, so it is shell-specific:
 
 **Bash / Linux / macOS**
 

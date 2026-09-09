@@ -10,6 +10,7 @@ profile.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -262,3 +263,161 @@ def test_invalid_catalog_import_preserves_existing_state(
         assert not user_catalog.exists()
     assert load_user_manifest().model_dump() == previous_manifest
     assert "Catalog validation failed" in result.output
+
+
+def _profile_import_files(tmp_path: Path, shape: str = "grouped") -> tuple[Path, Path]:
+    """Write valid OSCAL fixtures with a deliberately missing original href."""
+    metadata = {
+        "title": "Synthetic baseline",
+        "last-modified": "2026-09-08T00:00:00Z",
+        "version": "1.0",
+        "oscal-version": "1.1.2",
+    }
+    control = {"id": "ac-1", "title": "Policy", "parts": [{"name": "statement", "prose": "Approve policy."}]}
+    catalog = {"uuid": "a833f48b-3058-453b-a5bd-1f8e467ea0ac", "metadata": metadata}
+    if shape == "top-level":
+        catalog["controls"] = [control]
+    else:
+        group = {"id": "ac", "title": "Access Control", "controls": [control]}
+        catalog["groups"] = [{"id": "security", "title": "Security", "groups": [group]} if shape == "nested" else group]
+    source_path = tmp_path / "source.json"
+    source_path.write_text(json.dumps({"catalog": catalog}), encoding="utf-8")
+    profile = {
+        "profile": {
+            "uuid": "2528c1d6-9628-4a20-b5ed-04b8d0ddbc9b",
+            "metadata": metadata,
+            "imports": [{"href": "missing-original.json", "include-controls": [{"with-ids": ["ac-1"]}]}],
+        }
+    }
+    profile_path = tmp_path / "profile.json"
+    profile_path.write_text(json.dumps(profile), encoding="utf-8")
+    return profile_path, source_path
+
+
+@pytest.mark.parametrize("shape", ["top-level", "grouped", "nested"])
+def test_profile_import_uses_explicit_catalog(
+    runner: CliRunner, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, shape: str
+) -> None:
+    """--catalog supplies the source even when the original href is missing."""
+    profile, source = _profile_import_files(tmp_path, shape)
+
+    def unexpected_registry(*args: object, **kwargs: object) -> None:
+        pytest.fail("Profile import consulted the unrelated bundled registry")
+
+    monkeypatch.setattr(FrameworkRegistry, "get_instance", unexpected_registry)
+    result = runner.invoke(
+        app,
+        ["catalog", "import", "--profile", str(profile), "--catalog", str(source), "--framework-id", "my-baseline"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "(1 controls)" in result.output
+    saved = json.loads((tmp_path / "user-catalogs" / "my-baseline.json").read_text(encoding="utf-8"))
+    assert [control["id"] for control in saved["controls"]] == ["AC-1"]
+    assert saved["controls"][0]["description"] == "Approve policy."
+    assert saved["families"] == ([] if shape == "top-level" else ["Access Control"])
+    entry = load_user_manifest().get("my-baseline")
+    assert entry is not None
+    assert entry.text_depth == "full"
+
+
+def test_profile_import_missing_override_preserves_user_state(runner: CliRunner, tmp_path: Path) -> None:
+    """A missing explicit source fails before --force can replace a catalog."""
+    original = _minimal_user_catalog(tmp_path)
+    imported = runner.invoke(app, ["catalog", "import", str(original)])
+    assert imported.exit_code == 0, imported.output
+    saved_path = tmp_path / "user-catalogs" / "my-custom-fw.json"
+    saved_bytes = saved_path.read_bytes()
+    previous_manifest = load_user_manifest().model_dump()
+    profile, source = _profile_import_files(tmp_path)
+    profile_data = json.loads(profile.read_text(encoding="utf-8"))
+    profile_data["profile"]["imports"][0]["href"] = source.name
+    profile.write_text(json.dumps(profile_data), encoding="utf-8")
+
+    result = runner.invoke(
+        app,
+        [
+            "catalog",
+            "import",
+            "--profile",
+            str(profile),
+            "--catalog",
+            str(tmp_path / "missing-override.json"),
+            "--framework-id",
+            "my-custom-fw",
+            "--force",
+        ],
+    )
+
+    assert result.exit_code == 1, result.output
+    assert "Profile resolution failed" in result.output
+    assert "missing-override.json" in result.output
+    assert saved_path.read_bytes() == saved_bytes
+    assert load_user_manifest().model_dump() == previous_manifest
+
+
+def test_profile_import_rejects_ambiguous_override(runner: CliRunner, tmp_path: Path) -> None:
+    """A CLI override for multiple imports is rejected before publishing output."""
+    profile, source = _profile_import_files(tmp_path)
+    profile_data = json.loads(profile.read_text(encoding="utf-8"))
+    profile_data["profile"]["imports"] = [
+        {"href": source.name, "include-all": {}},
+        {"href": "another.json", "include-all": {}},
+    ]
+    profile.write_text(json.dumps(profile_data), encoding="utf-8")
+
+    result = runner.invoke(
+        app,
+        ["catalog", "import", "--profile", str(profile), "--catalog", str(source), "--framework-id", "my-baseline"],
+    )
+
+    assert result.exit_code == 1, result.output
+    assert "multiple imports" in result.output
+    assert not (tmp_path / "user-catalogs" / "my-baseline.json").exists()
+    assert load_user_manifest().get("my-baseline") is None
+
+
+@pytest.mark.parametrize("replace_existing", [False, True])
+def test_catalog_import_publishes_manifest_before_scratch_cleanup(
+    runner: CliRunner, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, replace_existing: bool
+) -> None:
+    """A locked staging directory cannot leave the published catalog without its manifest."""
+    source = _minimal_user_catalog(tmp_path)
+    if replace_existing:
+        initial = runner.invoke(app, ["catalog", "import", str(source)])
+        assert initial.exit_code == 0, initial.output
+    replacement = json.loads(source.read_text(encoding="utf-8"))
+    replacement["framework_name"] = "Replacement framework"
+    replacement["version"] = "2.0"
+    replacement["controls"][0]["description"] = ""
+    source.write_text(json.dumps(replacement), encoding="utf-8")
+    real_rmdir = os.rmdir
+    manifests_at_cleanup = []
+
+    def locked_staging_directory(path: str, *args: object, **kwargs: object) -> None:
+        if Path(path).name.startswith(".catalog-import-"):
+            manifests_at_cleanup.append(load_user_manifest().model_dump(mode="json"))
+            raise PermissionError("Synthetic staging directory lock")
+        real_rmdir(path, *args, **kwargs)
+
+    with monkeypatch.context() as cleanup_fault:
+        cleanup_fault.setattr(os, "rmdir", locked_staging_directory)
+        result = runner.invoke(
+            app,
+            ["catalog", "import", str(source), "--force", "--tier", "B", "--license-terms", "Synthetic license"],
+        )
+
+    assert manifests_at_cleanup, "The test must exercise real temporary-directory cleanup"
+    assert result.exit_code == 0, result.output
+    saved = json.loads((tmp_path / "user-catalogs" / "my-custom-fw.json").read_text(encoding="utf-8"))
+    assert saved == replacement
+    entry = load_user_manifest().get("my-custom-fw")
+    assert entry is not None
+    assert entry.name == "Replacement framework"
+    assert entry.version == "2.0"
+    assert entry.tier == "B"
+    assert entry.path == "my-custom-fw.json"
+    assert entry.placeholder is False
+    assert entry.license == "Synthetic license"
+    assert entry.text_depth == "headings"
+    assert all(manifest == load_user_manifest().model_dump(mode="json") for manifest in manifests_at_cleanup)

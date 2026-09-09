@@ -219,6 +219,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Catalog import preservation and OSCAL source selection.** The API validates
+  JSON and YAML imports in a temporary file before replacing an installed catalog,
+  preserving the existing catalog and manifest when validation rejects a forced
+  replacement. CLI profile imports now honor `--catalog`; the resolver includes
+  top-level controls and recursively nested groups. `resolve_profile()` gains an
+  optional keyword-only `source_catalog_path` override for a single-import profile.
+  An explicit override with multiple imports fails because its source is ambiguous.
 - **Published schema and runtime agree on non-blank strings.** `NonBlankStr`
   (`evidentia_core.models.common`) carries `minLength: 1` plus the full Python
   whitespace class, and every stripping core model uses it, so a schema-driven client
