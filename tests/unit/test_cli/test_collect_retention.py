@@ -429,7 +429,7 @@ def test_invalid_output_fails_before_collector_and_preserves_existing_bytes(
         assert outcome.exit_code == 1 and outcome.stdout == ""
         assert state.events == [] and existing.read_bytes() == b"previous output"
     finally:
-        existing.chmod(0o666)
+        existing.chmod(0o600)
 
 
 def test_exclusive_reservation_exists_before_collection_and_cleans_after_publish(
@@ -594,12 +594,15 @@ def test_changed_request_between_open_and_read_is_refused(
     def replace_after_open(
         path: str | bytes | os.PathLike[str] | os.PathLike[bytes],
         flags: int,
-        mode: int = 0o777,
+        mode: int = 0o600,
         *,
         dir_fd: int | None = None,
     ) -> int:
+        is_source = Path(os.fsdecode(path)) == source
+        if is_source:
+            assert flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC | os.O_APPEND) == 0
         descriptor = original_open(path, flags, mode, dir_fd=dir_fd)
-        if Path(os.fsdecode(path)) == source:
+        if is_source:
             source.write_text(json.dumps({**VALID, "scope_label": "changed"}), encoding="utf-8", newline="\n")
         return descriptor
 
